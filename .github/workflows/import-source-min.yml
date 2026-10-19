@@ -2,6 +2,7 @@ name: One-time import
 on: workflow_dispatch
 permissions:
   contents: write
+  workflows: write
 jobs:
   import:
     runs-on: ubuntu-latest
