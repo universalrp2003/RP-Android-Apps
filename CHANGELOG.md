@@ -20,6 +20,22 @@ This file indexes the five actively maintained apps. App-specific details, insta
   forward, Vocal Remover says the seek bar is not there yet, and Secret Message repeats that
   it is not independently security-reviewed.
 
+### Release train v2026.10.19 — guide in every app, published
+
+The guide reached all six apps, but four of them were still carrying the version number that was
+already on the release page, so nothing could be published: the batch workflow refuses to reuse a
+version for changed APK bytes. This train gives every changed app a new number and its own release
+notes.
+
+- **PulseEQ 1.6 (code 7)** — the guide on About; no audio-processing change.
+- **RP Vocal Remover Studio 0.1.12 (code 13)** — the guide on About; no processing change.
+- **Oor Arivippu 1.1.1 (code 6)** — the guide in its About dialog; voice behaviour unchanged.
+- **Secret Message 1.1.1 (code 3)** — the guide, and the narrow-screen layout fix it needed.
+- **Ramesh Radio 1.12 (code 12)** and **Live Guard 2.49 (code 54)** were already new versions.
+- Release notes for all six live in `releases/` (and `secretmessage/releases/`), in English and
+  Tamil, and the Live Guard note states plainly that its exact bytes were not installed on a
+  phone during this run.
+
 ### Live Guard 2.49 — My plan
 
 - **New — one screen for the whole recharge.** "What is my plan?" used to be answered in three

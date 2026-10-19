@@ -1,0 +1,3 @@
+New — a guide in the app: Settings → About → Guide opens short questions in Tamil and English; tap one and the answer opens. Nothing is hidden behind long paragraphs.
+
+Fixed — small stability and text fixes.

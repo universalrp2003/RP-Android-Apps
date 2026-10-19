@@ -65,8 +65,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_version="1.1.0"
-          expected_code="5"
+          expected_version="1.1.1"
+          expected_code="6"
           expected_package="com.oorarivippu.voiceannouncer"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           tag="oor-arivippu-v${expected_version}"
