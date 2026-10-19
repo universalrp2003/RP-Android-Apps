@@ -6,7 +6,9 @@ name: Oor Arivippu stable release
 # from arena/d4fb2344-internetradio (run 38826899278), which is also authorized for 1.0.2 and 1.1.0.
 on:
   push:
-    branches: [arena/d4fb2344-internetradio]
+    # v2.49: main is where the releases come from now; the historic branch stays allowed so
+    # nothing that worked before stops working.
+    branches: [main, arena/d4fb2344-internetradio]
     # Workflow-only edits are not a release candidate and must not start this workflow.
     paths-ignore:
       - ".github/workflows/build-apk.yml"
@@ -211,6 +213,15 @@ jobs:
           test -s "$APK" && test -s "$notes"
 
           # Create the target draft first: the updater checks RP-Android-Apps before InternetRadio.
+          # A draft with the same version can only be a leftover from our own failed run.
+          leftover=$(GH_TOKEN="$TARGET_TOKEN" gh release view "$TAG" --repo "$TARGET_REPO" --json isDraft --jq '.isDraft' 2>/dev/null || true)
+          if [[ "$leftover" == "true" ]]; then
+            echo "Removing our own leftover draft from an earlier failed run: $TAG"
+            GH_TOKEN="$TARGET_TOKEN" gh release delete "$TAG" --repo "$TARGET_REPO" --yes
+          elif [[ "$leftover" == "false" ]]; then
+            echo "::error::$TAG is already published; refusing to overwrite it."
+            exit 1
+          fi
           GH_TOKEN="$TARGET_TOKEN" gh release create "$TAG" --repo "$TARGET_REPO" \
             --target "$destination_branch" --draft --title "$title" --notes-file "$notes"
           GH_TOKEN="$TARGET_TOKEN" gh release upload "$TAG" "$APK" --repo "$TARGET_REPO"
