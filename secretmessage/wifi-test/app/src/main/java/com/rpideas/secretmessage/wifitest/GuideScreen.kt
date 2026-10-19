@@ -13,11 +13,20 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.rpideas.secretmessage.preview.ui.Panel
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rpideas.secretmessage.preview.ui.Accent
 import com.rpideas.secretmessage.preview.ui.Ink
 
 /** The guide in Tamil and English (owner request for 1.1.0); it follows the app's language. */
@@ -36,8 +45,34 @@ internal fun GuideScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Text(tr("Guide"), color = Ink, fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             LanguageToggle()
         }
+        // Owner request: the same "tap a topic, the text opens" shape as the other five apps.
+        // This app keeps its own longer 1.1.0 text because it is a separate Gradle build that
+        // cannot see shared/AppGuides.kt; the interaction is deliberately identical.
+        var open by remember { mutableStateOf<String?>(null) }
         sections.forEach { (title, body) ->
-            AppSection(title) { AppNote(body) }
+            val isOpen = open == title
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Panel,
+                modifier = Modifier.fillMaxWidth().clickable { open = if (isOpen) null else title },
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            title,
+                            color = if (isOpen) Accent else Ink,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(if (isOpen) "−" else "+", color = Accent, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                    if (isOpen) AppNote(body)
+                }
+            }
         }
         TextButton(onClick = onBack) { Text(tr("Back to settings")) }
         Spacer(Modifier.height(12.dp))

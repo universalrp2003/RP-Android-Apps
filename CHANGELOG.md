@@ -4,6 +4,22 @@ This file indexes the five actively maintained apps. App-specific details, insta
 
 ## Unreleased
 
+### Guide in every app (Tamil + English)
+
+- **New — the same compact guide in each app.** Before this, only Live Guard and Secret Message
+  had help text, and Oor Arivippu only had folded "Details" notes; Ramesh Radio, PulseEQ and
+  RP Vocal Remover Studio had none at all. Every app's About screen now opens a guide written
+  for that app, in Tamil and English, as short titles that open when tapped — the owner's
+  "click and expand" shape. The text lives in one file,
+  `shared/src/main/java/com/universalrp/updates/AppGuides.kt`, so a step that changes on a phone
+  is corrected once for all five legacy-batch apps; the screen itself is
+  `GuideScreen.kt` in the same package. Secret Message keeps its own longer 1.1.0 text in its
+  own build (it is a separate Gradle project) and now uses the same tap-to-open list.
+- The guide never promises what the app does not do: PulseEQ states plainly that only some
+  phones let one app tune other apps' sound, the radio says a live stream cannot be dragged
+  forward, Vocal Remover says the seek bar is not there yet, and Secret Message repeats that
+  it is not independently security-reviewed.
+
 ### Live Guard 2.48
 
 - **New — a daily 4G allowance that looks after itself.** Indian prepaid plans sell data by

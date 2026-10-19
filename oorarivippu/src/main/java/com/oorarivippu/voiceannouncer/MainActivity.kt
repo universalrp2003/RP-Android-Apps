@@ -257,6 +257,8 @@ fun OorArivippuScreen(
         mutableStateOf(state.destinationName)
     }
     var voiceChoicesExpanded by remember { mutableStateOf(false) }
+    // Shared guide (owner request: every app carries the same Tamil+English guide).
+    var showGuide by remember { mutableStateOf(false) }
     var destinationLookupMessage by remember { mutableStateOf("") }
     var isResolvingDestination by remember { mutableStateOf(false) }
     var destinationCandidates by remember { mutableStateOf<List<DestinationCandidate>>(emptyList()) }
@@ -347,6 +349,22 @@ fun OorArivippuScreen(
                 }
             }
         )
+    }
+
+    if (showGuide) {
+        androidx.compose.ui.window.Dialog(
+            onDismissRequest = { showGuide = false },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                com.universalrp.updates.GuideScreen(
+                    content = com.universalrp.updates.AppGuides.oorArivippu,
+                    tamil = state.appLanguage != "en",
+                    onBack = { showGuide = false },
+                    accent = Color(0xFF0F766E)
+                )
+            }
+        }
     }
 
     Scaffold(
@@ -1205,6 +1223,15 @@ fun OorArivippuScreen(
                         ) { Text(label) }
                     }
                     Divider(color = Color(0xFFE2E8F0))
+                    TextButton(
+                        onClick = { showGuide = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            if (state.appLanguage == "en") "Guide — how to use this app" else "வழிகாட்டி — எப்படிப் பயன்படுத்துவது",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                     AppUpdates.Control("Oor-Arivippu")
                 }
             }
