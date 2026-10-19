@@ -1300,6 +1300,17 @@ object Lang {
         "Ramesh Radio — GitHub release" to "Ramesh Radio — GitHub வெளியீடு",
         "PulseEQ — GitHub release" to "PulseEQ — GitHub வெளியீடு",
         "RP VOCAL REMOVER STUDIO — GitHub release" to "RP VOCAL REMOVER STUDIO — GitHub வெளியீடு",
+
+        // Live Guard 2.48 — daily 4G allowance and the call-safe speech rule.
+        "Daily 4G limit" to "தினசரி 4G வரம்பு",
+        "Resets at midnight · today only" to "நள்ளிரவில் மீட்டமைக்கப்படும் · இன்று மட்டும்",
+        "Set your plan's daily allowance" to "உங்கள் திட்டத்தின் தினசரி அளவை அமைக்கவும்",
+        "left today" to "இன்று மீதம்",
+        "Off" to "முடக்கு",
+        "Daily limit off — the pack total is the only budget." to "தினசரி வரம்பு முடக்கப்பட்டது — மொத்த பேக் அளவே ஒரே வரம்பு.",
+        "Blocked: phone call in progress" to "தடுக்கப்பட்டது: தொலைபேசி அழைப்பு நடைபெறுகிறது",
+        "Daily 4G limit set to %.1f GB; it resets at local midnight." to "தினசரி 4G வரம்பு %.1f GB ஆக அமைக்கப்பட்டது; இது அன்றைய நள்ளிரவில் மீட்டமைக்கப்படும்.",
+        "Enter a valid daily allowance, or 0 to turn it off." to "சரியான தினசரி அளவை உள்ளிடவும், அல்லது முடக்க 0 என்பதை உள்ளிடவும்.",
     )
 }
 

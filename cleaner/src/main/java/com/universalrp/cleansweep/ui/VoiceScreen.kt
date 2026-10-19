@@ -546,6 +546,7 @@ private fun voiceStageLabel(stage: com.universalrp.cleansweep.voice.VoiceDeliver
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NOT_REQUESTED -> "No request observed in this process"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.DISABLED -> "Blocked: master voice switch is off"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.EVENT_OFF -> "Blocked: this event's voice switch is off"
+    com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS -> "Blocked: phone call in progress"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.QUIET_HOURS -> "Blocked: quiet hours"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.QUEUED -> "Queued, not yet confirmed playing"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.INITIALIZING -> "Speech engine starting"

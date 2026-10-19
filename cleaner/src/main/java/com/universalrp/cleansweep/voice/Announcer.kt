@@ -373,7 +373,10 @@ object Announcer {
 
     private fun submit(context: Context, request: Request): Boolean {
         val ctx = context.applicationContext
-        val blocked = VoiceDeliveryPolicy.blocked(enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual)
+        val blocked = VoiceDeliveryPolicy.blocked(
+            enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual,
+            inCall = com.universalrp.updates.CallGuard.inCall(ctx)
+        )
         if (blocked != null) {
             main.post { record(ctx, request, blocked); request.done?.complete(false) }
             return false
@@ -403,7 +406,10 @@ object Announcer {
         if (active != null || pending.isEmpty()) return
         if (!ready) { ensureEngine(context); return }
         val request = pending.removeFirst()
-        val blocked = VoiceDeliveryPolicy.blocked(enabled(context), request.manual || allows(context, request.event), inQuietHours(context), request.manual)
+        val blocked = VoiceDeliveryPolicy.blocked(
+            enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
+            request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context)
+        )
         if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
         active = request
         val engine = tts ?: run { finish(VoiceDeliveryPolicy.Stage.NO_ENGINE, false); return }

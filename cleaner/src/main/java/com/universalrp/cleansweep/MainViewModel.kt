@@ -2757,6 +2757,32 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /**
+     * Daily 4G allowance (1.5 / 2 / 3 GB, or 0 to switch it off). The daily counter needs
+     * no reset: DataUsageTracker reads "today" from local midnight, so tomorrow starts at
+     * zero by construction.
+     */
+    fun updateDailyDataLimit(limitGb: Float) {
+        if (limitGb != 0f && (!limitGb.isFinite() || limitGb <= 0f || limitGb > 100_000f)) {
+            mutate { it.copy(message = tr("Enter a valid daily allowance, or 0 to turn it off.")) }; return
+        }
+        viewModelScope.launch {
+            val pack = withContext(Dispatchers.IO) {
+                DataUsageTracker.setDailyLimitGb(ctx, limitGb)
+                DataUsageTracker.getUsageInfo(ctx)
+            }
+            mutate {
+                it.copy(
+                    dataPackInfo = pack,
+                    message = if (limitGb <= 0f) tr("Daily limit off — the pack total is the only budget.")
+                    else tr("Daily 4G limit set to %.1f GB; it resets at local midnight.", limitGb),
+                )
+            }
+            rebuildChecklist()
+            com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
+        }
+    }
+
     fun updateDataPackLimit(limitGb: Float) {
         if (!limitGb.isFinite() || limitGb <= 0 || limitGb > 100_000) {
             mutate { it.copy(message = "Enter a valid positive quota (up to 100000 GB).") }; return
