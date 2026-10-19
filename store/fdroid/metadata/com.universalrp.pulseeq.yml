@@ -1,0 +1,35 @@
+Categories:
+  - Multimedia
+License: GPL-3.0-or-later
+AuthorName: Ramesh prathap .R
+AuthorEmail: universalrp2003@gmail.com
+WebSite: https://github.com/universalrp2003/InternetRadio
+SourceCode: https://github.com/universalrp2003/InternetRadio
+IssueTracker: https://github.com/universalrp2003/InternetRadio/issues
+
+AutoName: PulseEQ
+
+RepoType: git
+Repo: https://github.com/universalrp2003/InternetRadio.git
+
+Builds:
+  - versionName: '1.3'
+    versionCode: 4
+    commit: pulseeq-v1.3
+    subdir: equalizer
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-java-alternatives -a
+    gradle:
+      - yes
+
+MaintainerNotes: >
+  PulseEQ is one of four actively maintained apps. INTERNET is used for optional
+  GitHub release checks; audio processing stays on-device. This recipe builds the
+  current :equalizer module.
+
+AutoUpdateMode: Version
+UpdateCheckMode: RepoManifest
+CurrentVersion: '1.3'
+CurrentVersionCode: 4

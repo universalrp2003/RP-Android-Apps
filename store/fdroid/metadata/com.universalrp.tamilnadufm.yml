@@ -1,0 +1,36 @@
+Categories:
+  - Multimedia
+  - Internet
+License: GPL-3.0-or-later
+AuthorName: Ramesh prathap .R
+AuthorEmail: universalrp2003@gmail.com
+WebSite: https://github.com/universalrp2003/InternetRadio
+SourceCode: https://github.com/universalrp2003/InternetRadio
+IssueTracker: https://github.com/universalrp2003/InternetRadio/issues
+
+AutoName: Ramesh Radio
+
+RepoType: git
+Repo: https://github.com/universalrp2003/InternetRadio.git
+
+Builds:
+  - versionName: '1.9'
+    versionCode: 9
+    commit: ramesh-radio-v1.9
+    subdir: radio
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-java-alternatives -a
+    gradle:
+      - yes
+
+MaintainerNotes: >
+  Ramesh Radio is one of four actively maintained apps. Its station seed list is
+  shipped in the APK; the online Radio-Browser directory is contacted only when
+  the user explicitly searches. The current source module is :radio.
+
+AutoUpdateMode: Version
+UpdateCheckMode: RepoManifest
+CurrentVersion: '1.9'
+CurrentVersionCode: 9

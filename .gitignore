@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+
+# Local build/tool scratch and installable CI downloads are not source.
+.arena/
+.gradle/
+**/build/
+local.properties
+*.apk
+*.aab
+
+# Rust compiler outputs; only Cargo manifests and Cargo.lock are source.
+**/target/

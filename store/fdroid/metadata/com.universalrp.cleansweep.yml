@@ -1,0 +1,36 @@
+Categories:
+  - System
+  - Security
+License: GPL-3.0-or-later
+AuthorName: Ramesh prathap .R
+AuthorEmail: universalrp2003@gmail.com
+WebSite: https://github.com/universalrp2003/InternetRadio
+SourceCode: https://github.com/universalrp2003/InternetRadio
+IssueTracker: https://github.com/universalrp2003/InternetRadio/issues
+
+AutoName: CleanSweep
+
+RepoType: git
+Repo: https://github.com/universalrp2003/InternetRadio.git
+
+Builds:
+  - versionName: '2.44'
+    versionCode: 49
+    commit: live-guard-v2.44
+    subdir: cleaner
+    sudo:
+      - apt-get update
+      - apt-get install -y openjdk-17-jdk-headless
+      - update-java-alternatives -a
+    gradle:
+      - yes
+
+MaintainerNotes: >
+  This recipe builds the maintained :cleaner module. Ramesh Radio and PulseEQ
+  have separate recipes in this folder. RP Vocal Remover Studio is currently
+  distributed directly from GitHub Releases and has no F-Droid recipe here.
+
+AutoUpdateMode: Version
+UpdateCheckMode: RepoManifest
+CurrentVersion: '2.44'
+CurrentVersionCode: 49

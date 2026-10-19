@@ -1,0 +1,9 @@
+Live Guard (CleanSweep) combines user-controlled file cleanup with phone-health and security tools for Android 8 and newer.
+
+Review temporary and residual files, duplicate files, old downloads, large files and other cleanup candidates. Nothing is deleted automatically: you choose what to remove and confirm it. App-cache cleanup uses a guided hand-off to Android settings; the app has no Accessibility service and cannot tap inside other apps.
+
+Check battery, storage, temperature, CPU and memory readings where Android and the device make them available. Review permissions and security findings, and use optional Wi-Fi, mobile-data and network tools. Some readings and controls depend on Android version, permissions or the phone maker; unavailable values are labelled rather than guessed.
+
+Optional features include local histories, notifications and widgets, selected news feeds, online AI assistance, public network checks, speed tests and malware-hash lookups. These are user-controlled. Online requests go directly from your phone to the selected service; optional AI requests can include the phone details shown in the app's “see exactly what was sent” view. Review the privacy policy before using online tools.
+
+The interface is available in Tamil and English. There are no ads or developer-operated analytics. GitHub is contacted for optional update checks, and other services are contacted only when you use the corresponding online feature.
