@@ -1021,21 +1021,35 @@ jobs:
           # mirror changes for a run that has it. Nothing is ever printed from either token.
           TARGET_PUBLISH_ENABLED=false
           RELEASE_TOKEN="${RP_ANDROID_APPS_RELEASE_TOKEN:-}"
+          # v2.49.1: GITHUB_TOKEN is a GitHub App installation token, and GitHub reports
+          # ".permissions.push": false for installation tokens on /repos/{owner}/{repo} even when
+          # the job holds contents: write (github/community discussion 159031). Probing that field
+          # therefore rejected this workflow's own token and published nothing after a clean build.
+          # A same-repository run is authorised by this workflow's "permissions: contents: write";
+          # if that write were ever denied, the first "gh release create" below fails loudly and
+          # nothing becomes public. A cross-repository secret is still probed exactly as before.
+          TOKEN_IS_WORKFLOW=false
           if [[ -z "$RELEASE_TOKEN" && "$DESTINATION_REPO" == "$GITHUB_REPOSITORY" ]]; then
             RELEASE_TOKEN="$GH_TOKEN"
+            TOKEN_IS_WORKFLOW=true
             echo "OK: publishing to this repository with the workflow token (no cross-repository secret)."
           fi
           if [[ -n "$RELEASE_TOKEN" ]]; then
-            TARGET_PUSH=$(GH_TOKEN="$RELEASE_TOKEN" gh api "repos/${DESTINATION_REPO}" --jq '.permissions.push // false') || {
-              echo "FAIL: the release token cannot read its destination repository."
-              exit 1
-            }
-            if [[ "$TARGET_PUSH" != "true" ]]; then
-              echo "FAIL: the release token must have contents:write access to RP-Android-Apps."
-              exit 1
+            if [[ "$TOKEN_IS_WORKFLOW" == "true" ]]; then
+              TARGET_PUBLISH_ENABLED=true
+              echo "OK: release publication is enabled: this job's workflow token carries contents: write."
+            else
+              TARGET_PUSH=$(GH_TOKEN="$RELEASE_TOKEN" gh api "repos/${DESTINATION_REPO}" --jq '.permissions.push // false') || {
+                echo "FAIL: the release token cannot read its destination repository."
+                exit 1
+              }
+              if [[ "$TARGET_PUSH" != "true" ]]; then
+                echo "FAIL: the release token must have contents:write access to RP-Android-Apps."
+                exit 1
+              fi
+              TARGET_PUBLISH_ENABLED=true
+              echo "OK: release publication is enabled with write access."
             fi
-            TARGET_PUBLISH_ENABLED=true
-            echo "OK: release publication is enabled with write access."
           else
             echo "::error::Release publication is blocked: neither the workflow token (this repository) nor a cross-repository secret can write to ${DESTINATION_REPO}; no release drafts have been created. Do not paste a token into chat."
             exit 1
