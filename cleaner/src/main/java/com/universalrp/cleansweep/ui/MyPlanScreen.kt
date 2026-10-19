@@ -45,6 +45,7 @@ import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.NetworkSplit
 import com.universalrp.cleansweep.data.PlanDataMode
 import com.universalrp.cleansweep.data.PlanPolicy
+import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.data.PlanSettings
 import com.universalrp.cleansweep.data.PlanStore
 import com.universalrp.cleansweep.data.tr

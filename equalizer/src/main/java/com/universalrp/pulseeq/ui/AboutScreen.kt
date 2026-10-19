@@ -25,6 +25,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.universalrp.pulseeq.EqViewModel
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppLanguageToggle
 
 @Composable
