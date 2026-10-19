@@ -17,9 +17,9 @@ on:
   workflow_dispatch:
     inputs:
       publish:
-        description: "Publish the verified APK to both official repositories (otherwise build and upload a candidate only)"
-        required: true
-        default: false
+        description: "Publish the verified APK after the build (switch off to build a candidate only)"
+        required: false
+        default: true
         type: boolean
 
 permissions:
