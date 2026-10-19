@@ -151,7 +151,7 @@ jobs:
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
           SOURCE_TOKEN: ${{ github.token }}
-          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
+          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
           TAG: ${{ steps.apk.outputs.tag }}
         shell: bash
         run: |
@@ -159,17 +159,29 @@ jobs:
           source_repo="universalrp2003/InternetRadio"
           target_repo="universalrp2003/RP-Android-Apps"
           if [[ -z "$TARGET_TOKEN" ]]; then
-            echo "::error::RP_ANDROID_APPS_RELEASE_TOKEN is missing; no release was created."
+            echo "::error::No token can write the destination repository; no release was created."
             exit 1
           fi
-          GH_TOKEN="$SOURCE_TOKEN" gh api "repos/$source_repo" --jq '.full_name'
+          # v2.49: the destination is this repository, so the workflow token publishes it. The old
+          # InternetRadio copy is written only when a cross-repository token is actually available;
+          # otherwise it is left untouched and said so plainly, never silently skipped.
+          SOURCE_ENABLED=false
+          if GH_TOKEN="$SOURCE_TOKEN" gh api "repos/$source_repo" --jq '.permissions.push // false' 2>/dev/null | grep -qx true; then
+            SOURCE_ENABLED=true
+            echo "OK: the old InternetRadio repository is also writable; both will be published."
+          else
+            echo "NOTE: no cross-repository token; this run publishes RP-Android-Apps only and leaves InternetRadio untouched."
+          fi
+          echo "SOURCE_ENABLED=$SOURCE_ENABLED" >> "$GITHUB_ENV"
           GH_TOKEN="$TARGET_TOKEN" gh api "repos/$target_repo" --jq '.full_name'
           destination_branch="$(GH_TOKEN="$TARGET_TOKEN" gh api "repos/$target_repo" --jq '.default_branch')"
           if [[ -z "$destination_branch" ]]; then
             echo "::error::Could not determine the destination repository's default branch."
             exit 1
           fi
-          for repo in "$source_repo" "$target_repo"; do
+          repos_to_check=("$target_repo")
+          if [[ "$SOURCE_ENABLED" == "true" ]]; then repos_to_check=("$source_repo" "$target_repo"); fi
+          for repo in "${repos_to_check[@]}"; do
             if [[ "$repo" == "$source_repo" ]]; then token="$SOURCE_TOKEN"; else token="$TARGET_TOKEN"; fi
             if GH_TOKEN="$token" gh release view "$TAG" --repo "$repo" >/dev/null 2>&1 || \
                GH_TOKEN="$token" gh api "repos/$repo/git/ref/tags/$TAG" >/dev/null 2>&1; then
@@ -185,7 +197,7 @@ jobs:
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
           SOURCE_TOKEN: ${{ github.token }}
-          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
+          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
           SOURCE_REPO: universalrp2003/InternetRadio
           TARGET_REPO: universalrp2003/RP-Android-Apps
           TAG: ${{ steps.apk.outputs.tag }}
@@ -203,15 +215,17 @@ jobs:
             --target "$destination_branch" --draft --title "$title" --notes-file "$notes"
           GH_TOKEN="$TARGET_TOKEN" gh release upload "$TAG" "$APK" --repo "$TARGET_REPO"
 
-          GH_TOKEN="$SOURCE_TOKEN" gh release create "$TAG" --repo "$SOURCE_REPO" \
-            --target "$GITHUB_SHA" --draft --title "$title" --notes-file "$notes"
-          GH_TOKEN="$SOURCE_TOKEN" gh release upload "$TAG" "$APK" --repo "$SOURCE_REPO"
+          if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
+            GH_TOKEN="$SOURCE_TOKEN" gh release create "$TAG" --repo "$SOURCE_REPO" \
+              --target "$GITHUB_SHA" --draft --title "$title" --notes-file "$notes"
+            GH_TOKEN="$SOURCE_TOKEN" gh release upload "$TAG" "$APK" --repo "$SOURCE_REPO"
+          fi
 
       - name: Verify both draft assets are identical before publication
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
           SOURCE_TOKEN: ${{ github.token }}
-          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
+          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
           SOURCE_REPO: universalrp2003/InternetRadio
           TARGET_REPO: universalrp2003/RP-Android-Apps
           TAG: ${{ steps.apk.outputs.tag }}
@@ -257,13 +271,15 @@ jobs:
           PY
           }
           verify_asset "$TARGET_REPO" "$TARGET_TOKEN" true
-          verify_asset "$SOURCE_REPO" "$SOURCE_TOKEN" true
+          if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
+            verify_asset "$SOURCE_REPO" "$SOURCE_TOKEN" true
+          fi
 
       - name: Publish verified destination release, then the source fallback
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
           SOURCE_TOKEN: ${{ github.token }}
-          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
+          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
           SOURCE_REPO: universalrp2003/InternetRadio
           TARGET_REPO: universalrp2003/RP-Android-Apps
           TAG: ${{ steps.apk.outputs.tag }}
@@ -271,13 +287,15 @@ jobs:
         run: |
           set -euo pipefail
           GH_TOKEN="$TARGET_TOKEN" gh release edit "$TAG" --repo "$TARGET_REPO" --draft=false
-          GH_TOKEN="$SOURCE_TOKEN" gh release edit "$TAG" --repo "$SOURCE_REPO" --draft=false
+          if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
+            GH_TOKEN="$SOURCE_TOKEN" gh release edit "$TAG" --repo "$SOURCE_REPO" --draft=false
+          fi
 
       - name: Verify both public releases and final asset digests
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
           SOURCE_TOKEN: ${{ github.token }}
-          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
+          TARGET_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
           SOURCE_REPO: universalrp2003/InternetRadio
           TARGET_REPO: universalrp2003/RP-Android-Apps
           TAG: ${{ steps.apk.outputs.tag }}
@@ -289,7 +307,9 @@ jobs:
         run: |
           set -euo pipefail
           # Reuse the same strict API-asset checks after promotion; include canonical public URLs.
-          for repo in "$TARGET_REPO" "$SOURCE_REPO"; do
+          final_repos=("$TARGET_REPO")
+          if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then final_repos=("$TARGET_REPO" "$SOURCE_REPO"); fi
+          for repo in "${final_repos[@]}"; do
             if [[ "$repo" == "$TARGET_REPO" ]]; then token="$TARGET_TOKEN"; else token="$SOURCE_TOKEN"; fi
             response="$RUNNER_TEMP/${repo##*/}-${TAG}-public.json"
             GH_TOKEN="$token" gh api --paginate "repos/$repo/releases?per_page=100" > "$response"
@@ -319,5 +339,9 @@ jobs:
             echo "- Asset: $ASSET ($EXPECTED_SIZE bytes)"
             echo "- SHA-256: $EXPECTED_SHA256"
             echo "- Destination: https://github.com/$TARGET_REPO/releases/tag/$TAG"
-            echo "- Source fallback: https://github.com/$SOURCE_REPO/releases/tag/$TAG"
+            if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
+              echo "- Source fallback: https://github.com/$SOURCE_REPO/releases/tag/$TAG"
+            else
+              echo "- Old repository: left untouched (no cross-repository token)."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
