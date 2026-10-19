@@ -30,8 +30,16 @@ on:
       - ".github/workflows/secret-message-signing-key.yml"
   workflow_dispatch:
     inputs:
+      # v2.49: a manual run PUBLISHES unless you deliberately switch publish off. Typing a value
+      # on a phone was the last repeated failure: three successful runs in a row built everything
+      # and published nothing because one box was left blank.
+      publish:
+        description: 'Publish the verified APKs after the build (switch off for a build-only run)'
+        required: false
+        default: true
+        type: boolean
       release_tag:
-        description: 'New-release batch tag (e.g. v2026.10.13); blank for build-only or mirror_existing runs'
+        description: 'Optional batch label; leave blank to use today''s date'
         required: false
         type: string
       mirror_existing:
@@ -914,7 +922,7 @@ jobs:
       # candidate branches; a published release carries GitHub's own asset digests.
       - name: Record candidate APK digests
         env:
-          RELEASE_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && (inputs.release_tag != '' || inputs.mirror_existing)) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish]')) }}
+          RELEASE_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish]')) }}
         run: |
           set -e
           RECORD=docs/candidate-build-digests.md
@@ -969,7 +977,7 @@ jobs:
       # Publishing: after all checks pass, publish one stable, version-specific APK release
       # for each app, or mirror the exact existing bridge APKs without altering old releases.
       - name: Publish or mirror verified releases for four apps
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && (inputs.release_tag != '' || inputs.mirror_existing)) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/') && contains(github.event.head_commit.message, '[publish]'))
+        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/') && contains(github.event.head_commit.message, '[publish]'))
         env:
           GH_TOKEN: ${{ github.token }}
           RP_ANDROID_APPS_RELEASE_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
