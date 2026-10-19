@@ -126,6 +126,17 @@ fun RadioSplitCard() {
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                // Android's counter is cumulative and cannot be split retroactively, so say when
+                // these two figures started; otherwise they look wrong next to the day total.
+                val since = NetworkSplit.countingSinceMs(context)
+                Text(
+                    if (since > 0) "Counted since " + com.universalrp.cleansweep.data.DisplayTime.clock(since) +
+                        " — earlier usage today is in the mobile total above"
+                    else "Counting starts when this switch is turned on",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AccentCyan.copy(alpha = 0.8f),
+                    modifier = Modifier.padding(top = 4.dp),
+                )
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -158,15 +169,28 @@ fun RadioSplitCard() {
                 modifier = Modifier.padding(top = 8.dp),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                // v2.49: the chosen button is now filled and outlined; before this, every button
+                // looked identical on the dark theme and the selection could not be seen.
                 listOf("AUTO" to "Auto", "ON" to "On", "OFF" to "Off").forEach { (key, label) ->
-                    OutlinedButton(
-                        onClick = { policy = key; NetworkSplit.setPolicy(context, key) },
-                        modifier = Modifier.weight(1f),
+                    val selected = policy == key
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = if (selected) AccentCyan.copy(alpha = 0.22f) else androidx.compose.ui.graphics.Color.Transparent,
+                        border = androidx.compose.foundation.BorderStroke(
+                            1.dp,
+                            if (selected) AccentCyan else MaterialTheme.colorScheme.outline,
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { policy = key; NetworkSplit.setPolicy(context, key) },
                     ) {
                         Text(
-                            label,
+                            (if (selected) "✓ " else "") + label,
                             fontSize = 13.sp,
-                            fontWeight = if (policy == key) FontWeight.Bold else FontWeight.Normal,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                            color = if (selected) AccentCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
                         )
                     }
                 }

@@ -1,0 +1,3 @@
+New — My plan: one screen for your whole recharge. Choose no data, data every day, or a total for the pack; type any amount in GB or MB; set the start date and how many days the pack runs, and see the last day. Add a data booster and say whether your operator uses it before or after the daily data.
+
+Fixed — the 4G / 5G Auto, On and Off buttons now show which one is chosen, and the split counters say when they started counting instead of looking wrong next to today's total.

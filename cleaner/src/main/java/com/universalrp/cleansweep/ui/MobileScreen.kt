@@ -1,9 +1,7 @@
 package com.universalrp.cleansweep.ui
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SignalCellularAlt
@@ -31,12 +28,6 @@ import androidx.compose.material.icons.outlined.Speed
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -47,9 +38,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.Modifier
@@ -59,15 +50,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.InsightsTab
 import com.universalrp.cleansweep.Screen
 import com.universalrp.cleansweep.UiState
 import com.universalrp.cleansweep.data.CellTower
-import com.universalrp.cleansweep.data.DataAppUse
 import com.universalrp.cleansweep.data.SpeedMeter
-import com.universalrp.cleansweep.data.formatBytes
 import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.ui.theme.AccentCyan
 import com.universalrp.cleansweep.ui.theme.AccentViolet
@@ -949,314 +937,56 @@ private fun DataUsageCard(state: UiState, vm: MainViewModel) {
                 }
 
                 // Cumulative Pack Total & Variable Quota Entry
-                val pack = state.dataPackInfo
-                val isUnlimited = pack?.isUnlimited5g == true
-                var showResetDialog by remember { mutableStateOf(false) }
-                var showQuotaDialog by remember { mutableStateOf(false) }
 
                 Spacer(Modifier.height(10.dp))
-                // Unlimited 5G Switch
+                // One card, one screen: everything about the recharge lives in My plan now.
+                val planSummary = com.universalrp.cleansweep.data.PlanStore.load(
+                    androidx.compose.ui.platform.LocalContext.current,
+                )
+                val tamilUi = com.universalrp.cleansweep.data.Lang.isTamil
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(12.dp),
                     color = SurfaceHigh,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Row(
-                        Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                tr("Unlimited 5G Data Plan"),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = TextPrimary,
-                            )
-                            Text(
-                                tr("Turns off pack limit countdown & daily counters"),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                            )
-                        }
-                        Switch(
-                            checked = isUnlimited,
-                            onCheckedChange = { vm.setUnlimited5g(it) },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = AccentCyan,
-                                checkedTrackColor = AccentCyan.copy(alpha = 0.35f),
-                            ),
+                    Column(Modifier.padding(14.dp)) {
+                        Text(
+                            tr("My plan"),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary,
                         )
-                    }
-                }
-
-                if (!isUnlimited) {
-                    Spacer(Modifier.height(10.dp))
-                }
-                if (!isUnlimited) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = SurfaceHigh,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(Modifier.padding(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    tr("Data Pack Plan"),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextSecondary,
-                                )
-                                Text(
-                                    (pack?.formattedPackTotal ?: "0 MB") + " / " + (pack?.formattedPackLimit ?: "12 GB"),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = AccentCyan,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    (pack?.formattedRemaining ?: "12 GB") + " left",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = GoodGreen,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                                Text(
-                                    tr("Strict Mobile Only"),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary,
-                                )
-                            }
-                        }
-
-                        // Progress Bar
-                        val progress = pack?.progressRatio ?: 0f
+                        Text(
+                            com.universalrp.cleansweep.data.PlanPolicy.summary(planSummary, tamilUi),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = AccentCyan,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        val endDay = com.universalrp.cleansweep.data.PlanPolicy.expiry(planSummary.startDay, planSummary.days)
+                        Text(
+                            buildString {
+                                if (planSummary.boosterEnabled && planSummary.boosterMb > 0) {
+                                    append(tr("Booster") + " " + com.universalrp.cleansweep.data.PlanPolicy.formatMb(planSummary.boosterMb))
+                                    append(" · ")
+                                }
+                                if (endDay != null) append(tr("ends %s", endDay.toString()))
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
                         Spacer(Modifier.height(8.dp))
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(Color(0xFF1E293B))
+                        Button(
+                            onClick = { vm.navigate(com.universalrp.cleansweep.Screen.MY_PLAN) },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = AccentCyan.copy(alpha = 0.18f),
+                                contentColor = AccentCyan,
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
                         ) {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth(progress)
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(if (progress >= 0.9f) DangerRed else AccentCyan)
-                            )
-                        }
-
-                        Spacer(Modifier.height(10.dp))
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Button(
-                                onClick = { showQuotaDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = SurfaceHigh.copy(alpha = 0.6f),
-                                    contentColor = AccentCyan,
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(tr("Set Pack Size"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                            }
-                            Button(
-                                onClick = { showResetDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AccentViolet.copy(alpha = 0.25f),
-                                    contentColor = AccentViolet,
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(tr("Reset Recharge"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                            }
+                            Text(tr("Open My plan"), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
                         }
                     }
-                }
-
-                // ---- Daily 4G allowance (1.5 / 2 / 3 GB, resets at local midnight) ----
-                val daily = pack
-                val dailyOn = daily != null && daily.dailyLimitActive
-                Spacer(Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = SurfaceHigh,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(Modifier.padding(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    tr("Daily 4G limit"),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextPrimary,
-                                )
-                                Text(
-                                    if (dailyOn) tr("Resets at midnight · today only")
-                                    else tr("Set your plan's daily allowance"),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = TextSecondary,
-                                )
-                            }
-                            if (daily != null && daily.dailyLimitActive) {
-                                Text(
-                                    daily.formattedDailyRemaining.ifBlank { "0 MB" } + " " + tr("left today"),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (daily.dailyProgressRatio >= 0.9f) DangerRed else GoodGreen,
-                                )
-                            }
-                        }
-
-                        if (daily != null && daily.dailyLimitActive) {
-                            Spacer(Modifier.height(8.dp))
-                            Text(
-                                DataUsageTracker.formatBytesSafe(daily.todayMobileBytes) + " / " +
-                                    String.format(java.util.Locale.US, "%.1f", daily.dailyLimitGb) + " GB",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(Color(0xFF1E293B))
-                            ) {
-                                Box(
-                                    Modifier
-                                        .fillMaxWidth(daily.dailyProgressRatio)
-                                        .height(6.dp)
-                                        .clip(RoundedCornerShape(3.dp))
-                                        .background(if (daily.dailyProgressRatio >= 0.9f) DangerRed else AccentCyan)
-                                )
-                            }
-                        }
-
-                        Spacer(Modifier.height(10.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            DailyLimitChip(
-                                label = tr("Off"),
-                                selected = !dailyOn,
-                                modifier = Modifier.weight(1f),
-                                onClick = { vm.updateDailyDataLimit(0f) },
-                            )
-                            DataUsageTracker.DAILY_LIMIT_PRESETS.forEach { gb ->
-                                DailyLimitChip(
-                                    label = if (gb % 1f == 0f) "${gb.toInt()} GB" else "$gb GB",
-                                    selected = dailyOn && daily?.dailyLimitGb == gb,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { vm.updateDailyDataLimit(gb) },
-                                )
-                            }
-                        }
-                    }
-                }
-                }
-
-                if (showResetDialog) {
-                    var inputGb by remember { mutableStateOf(pack?.packLimitGb?.let { if (it % 1f == 0f) it.toInt().toString() else it.toString() } ?: "12") }
-                    AlertDialog(
-                        onDismissRequest = { showResetDialog = false },
-                        title = { Text(tr("Reset Recharge Data Pack"), fontWeight = FontWeight.Bold) },
-                        text = {
-                            Column {
-                                Text(
-                                    tr("Did you recharge a new data pack? Enter your pack size in GB (e.g. 1.5, 3, 6, 12, 25, 50 GB) and reset the counter to zero."),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                )
-                                Spacer(Modifier.height(12.dp))
-                                OutlinedTextField(
-                                    value = inputGb,
-                                    onValueChange = { inputGb = it },
-                                    label = { Text(tr("Pack Size in GB")) },
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = TextPrimary,
-                                        unfocusedTextColor = TextPrimary,
-                                        focusedBorderColor = AccentCyan,
-                                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.4f),
-                                    ),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    val size = inputGb.toFloatOrNull()
-                                    vm.resetDataPackCount(size)
-                                    showResetDialog = false
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentViolet),
-                            ) {
-                                Text(tr("Reset to 0 MB"), fontWeight = FontWeight.Bold)
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showResetDialog = false }) {
-                                Text(tr("Cancel"), color = TextSecondary)
-                            }
-                        },
-                    )
-                }
-
-                if (showQuotaDialog) {
-                    var inputGb by remember { mutableStateOf(pack?.packLimitGb?.let { if (it % 1f == 0f) it.toInt().toString() else it.toString() } ?: "12") }
-                    AlertDialog(
-                        onDismissRequest = { showQuotaDialog = false },
-                        title = { Text(tr("Change Data Pack Limit"), fontWeight = FontWeight.Bold) },
-                        text = {
-                            Column {
-                                Text(
-                                    tr("Update your total data quota in GB without resetting current usage counter:"),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = TextSecondary,
-                                )
-                                Spacer(Modifier.height(12.dp))
-                                OutlinedTextField(
-                                    value = inputGb,
-                                    onValueChange = { inputGb = it },
-                                    label = { Text(tr("Pack Quota (GB)")) },
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedTextColor = TextPrimary,
-                                        unfocusedTextColor = TextPrimary,
-                                        focusedBorderColor = AccentCyan,
-                                        unfocusedBorderColor = TextSecondary.copy(alpha = 0.4f),
-                                    ),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                            }
-                        },
-                        confirmButton = {
-                            Button(
-                                onClick = {
-                                    val size = inputGb.toFloatOrNull() ?: 12f
-                                    vm.updateDataPackLimit(size)
-                                    showQuotaDialog = false
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentCyan),
-                            ) {
-                                Text(tr("Save Limit"), fontWeight = FontWeight.Bold)
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { showQuotaDialog = false }) {
-                                Text(tr("Cancel"), color = TextSecondary)
-                            }
-                        },
-                    )
                 }
 
                 usage.todayTotalBytes?.let { total ->
@@ -1490,33 +1220,4 @@ private fun speedPhaseLabel(phase: String?): String? = when (phase) {
     "Starting" -> tr("Starting the test")
     "Starting upload" -> tr("Starting the upload")
     else -> phase
-}
-
-
-/**
- * One of the daily-allowance choices. Added for the 1.5 / 2 / 3 GB India prepaid plans:
- * picking a value sets the daily cap, and the counter starts from zero at local midnight.
- */
-@Composable
-private fun DailyLimitChip(
-    label: String,
-    selected: Boolean,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    Surface(
-        shape = RoundedCornerShape(50),
-        color = if (selected) AccentCyan.copy(alpha = 0.18f) else SurfaceHigh.copy(alpha = 0.5f),
-        border = if (selected) BorderStroke(1.dp, AccentCyan.copy(alpha = 0.55f)) else null,
-        modifier = modifier.clickable { onClick() },
-    ) {
-        Text(
-            label,
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
-            color = if (selected) AccentCyan else TextSecondary,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            textAlign = TextAlign.Center,
-        )
-    }
 }

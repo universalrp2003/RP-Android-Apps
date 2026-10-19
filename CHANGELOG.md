@@ -20,6 +20,37 @@ This file indexes the five actively maintained apps. App-specific details, insta
   forward, Vocal Remover says the seek bar is not there yet, and Secret Message repeats that
   it is not independently security-reviewed.
 
+### Live Guard 2.49 — My plan
+
+- **New — one screen for the whole recharge.** "What is my plan?" used to be answered in three
+  places (a pack-size dialog, a daily chip row, a start/expiry screen), and none of them could
+  express what the operators actually sell. **Mobile → My plan** now asks the questions in the
+  order a person thinks:
+  1. *What does this recharge give?* — **No data** (voice only), **Daily** (GB every day) or
+     **Total** (whole pack).
+  2. *How much?* — preset chips plus **Custom …** everywhere, and the custom box accepts **GB or
+     MB** (0.75 GB, 500 MB, 1.2 GB). A typed "1.5 GB" is understood even when MB is selected.
+  3. *How long?* — start date and a number of days (28 / 84 / 365 as shortcuts), with the last
+     day shown and a warning when the pack has ended.
+  4. *Is there a booster?* — on/off, any amount in GB or MB, and **first / after** the daily
+     data. The phone cannot see which order the carrier applied, so the app follows the order
+     the user states, and says so.
+  5. *Is 5G free?* — Auto / On / Off, with the reason in plain words.
+- **The arithmetic is a pure policy with tests.** `PlanPolicy` (new) does the amounts, the
+  inclusive expiry, the days left and the booster share; `PlanPolicyTest` covers 13 cases
+  (1536 MB from "1.5 GB", rejection of 0 / negative / typo'd / absurd values, a booster that is
+  spent first versus after the daily allowance, an unlimited total, a voice-only plan).
+  `PlanStore` is the only storage, and it mirrors the older keys so the summary card, the widget
+  and the insights screen cannot disagree.
+- **Fixed — the 4G / 5G Auto / On / Off buttons were unreadable.** All three looked identical on
+  the dark theme because only the font weight changed. The chosen one is now filled, outlined and
+  marked with a tick.
+- **Fixed — the split counters no longer look wrong.** "4G 0.89 MB used" next to "Mobile data
+  today 395 MB" was confusing, because the split can only begin when sampling begins. The card
+  now says **"Counted since 4:28 PM — earlier usage today is in the mobile total above."**
+- Nothing on the new screen resets a counter, and the footer still says the carrier's billing is
+  invisible to the phone: this follows what the user enters, it is not a carrier balance.
+
 ### Live Guard 2.48
 
 - **New — a daily 4G allowance that looks after itself.** Indian prepaid plans sell data by

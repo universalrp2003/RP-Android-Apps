@@ -67,6 +67,13 @@ object NetworkSplit {
     /** Cumulative mobile bytes at the last sample, so a delta can be computed. */
     const val KEY_LAST_CUMULATIVE = "last_cumulative"
 
+    /**
+     * When the 4G/5G counters actually started counting. Android's counter is cumulative, so a
+     * split can only begin where sampling begins; the card says so instead of implying that
+     * "0.89 MB used" is the whole day.
+     */
+    const val KEY_COUNTING_SINCE_MS = "counting_since_ms"
+
     const val MB = 1_048_576.0
     const val JIO_MIN_PRICE = 349
     const val JIO_MIN_DAILY_MB = 2.0 * 1024
@@ -95,7 +102,14 @@ object NetworkSplit {
 
     fun setSeparate(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean(KEY_SEPARATE, on).apply()
+        if (on) markCountingStarted(context)
         mirror(context)
+    }
+
+    fun countingSinceMs(context: Context): Long = prefs(context).getLong(KEY_COUNTING_SINCE_MS, 0L)
+
+    fun markCountingStarted(context: Context) {
+        prefs(context).edit().putLong(KEY_COUNTING_SINCE_MS, System.currentTimeMillis()).apply()
     }
 
     fun announceEnabled(context: Context) = prefs(context).getBoolean(KEY_ANNOUNCE, false)
@@ -174,6 +188,7 @@ object NetworkSplit {
                 .putLong(KEY_4G_TODAY, 0L)
                 .putLong(KEY_5G_TODAY, 0L)
                 .putLong(KEY_LAST_CUMULATIVE, -1L)
+                .putLong(KEY_COUNTING_SINCE_MS, System.currentTimeMillis())
                 .apply()
         }
     }
