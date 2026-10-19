@@ -1,9 +1,9 @@
 # Ramesh Radio
 
-Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Its latest published release is **1.11 / code 11**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
+Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Its latest published release is **1.12 / code 12**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
 
-- [Download Ramesh-Radio-v1.11.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.11/Ramesh-Radio-v1.11.apk) · [same release on the InternetRadio fallback](https://github.com/universalrp2003/InternetRadio/releases/download/ramesh-radio-v1.11/Ramesh-Radio-v1.11.apk) · [release notes](../releases/ramesh-radio-v1.11.md)
-- Build, unit/regression and APK checks passed in [publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- [Download Ramesh-Radio-v1.12.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.12/Ramesh-Radio-v1.12.apk) · [release notes](../releases/ramesh-radio-v1.12.md) · the previous 1.11 release stays available on the InternetRadio fallback
+- Build, unit/regression and APK checks passed in [publication run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md)
 
 ## Features

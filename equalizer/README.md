@@ -1,9 +1,9 @@
 # PulseEQ
 
-PulseEQ is a Tamil-first audio player and 20-band equalizer with an in-app English option. Its latest published release is **1.5 / code 6**, package `com.universalrp.pulseeq`, minimum Android 8.0 (API 26).
+PulseEQ is a Tamil-first audio player and 20-band equalizer with an in-app English option. Its latest published release is **1.6 / code 7**, package `com.universalrp.pulseeq`, minimum Android 8.0 (API 26).
 
-- [Download PulseEQ-v1.5.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.5/PulseEQ-v1.5.apk) · [same release on the InternetRadio fallback](https://github.com/universalrp2003/InternetRadio/releases/download/pulseeq-v1.5/PulseEQ-v1.5.apk) · [release notes](../releases/pulseeq-v1.5.md)
-- Build, unit/regression and APK checks passed in [publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- [Download PulseEQ-v1.6.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.6/PulseEQ-v1.6.apk) · [release notes](../releases/pulseeq-v1.6.md) · the previous 1.5 release stays available on the InternetRadio fallback
+- Build, unit/regression and APK checks passed in [publication run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md)
 
 ## Features and audio privacy

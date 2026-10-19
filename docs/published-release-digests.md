@@ -14,7 +14,37 @@ Secret Message 1.0.0 / code 1 was published on 17 October 2026, at the owner's r
 
 Secret Message 1.1.0 / code 2 was published on 18 October 2026 by `.github/workflows/secret-message-wifi-test.yml` in [run 39101002517](https://github.com/universalrp2003/InternetRadio/actions/runs/39101002517), from source commit `e928819`, at the owner's request after a two-phone test of the 1.1.0 test builds (Xiaomi 2406ERN9CI and motorola moto g57 power). The run passed 23 unit tests, the four-ABI native build, the signing and package checks and the emulator smoke on the signed APK through the live relay, then verified identical draft and public assets in both repositories. Its SHA-256 equals that of the phone-tested build from run 39098419129, so the published APK is the tested one. Like 1.0.0 it has not been independently security-reviewed. It is the latest release of both repositories; the other apps' updaters choose releases by their own asset names.
 
-## Current active stable releases — as of 18 October 2026
+On 19 October 2026 that release train was completed: Live Guard 2.49 / code 54, Ramesh Radio 1.12 / code 12, PulseEQ 1.6 / code 7, RP Vocal Remover Studio 0.1.12 / code 13, Oor Arivippu 1.1.1 / code 6 and Secret Message 1.1.1 / code 3 were published from `main`. Every app gained the compact bilingual in-app guide; Live Guard also gained **My plan**, and Secret Message gained the guide plus a narrow-screen layout fix. The app versions that were already public (2.46, 1.11, 1.5, 0.1.11, 1.1.0, 1.1.0) kept their release pages and assets unchanged.
+
+## Current active stable releases — as of 19 October 2026
+
+All six apps were published on 19 October 2026. The four-app batch (Live Guard, Ramesh Radio, PulseEQ
+and RP Vocal Remover Studio) was built, verified and published by Build APK [run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076)
+from `main` at merge commit `de624572`; Oor Arivippu 1.1.1 by its standalone [run 39268547086](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39268547086);
+Secret Message 1.1.1 by `.github/workflows/secret-message-wifi-test.yml` in [run 39268577963](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39268577963).
+Each run checked the package, version, minimum SDK, signing certificate and local SHA-256, promoted the
+release, and then re-read its own public release to confirm the asset name, byte size and GitHub-reported
+SHA-256. None of the six was mirrored to `InternetRadio`: that repository keeps its earlier releases
+(2.46, 1.11, 1.5, 0.1.11, Oor 1.1.0 and older, Secret Message 1.1.0) unchanged, and the updaters still
+try `RP-Android-Apps` first.
+
+| App | Version / code | RP-Android-Apps release | APK asset | Bytes | SHA-256 |
+| --- | ---: | --- | --- | ---: | --- |
+| Live Guard (CleanSweep) | 2.49 / 54 | [live-guard-v2.49](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.49) | `CleanSweep-v2.49.apk` | 13,734,860 | `ae85fc1b18267a6808f80c99713978d62b5aff33c3707f61d286dc712a2e511b` |
+| Ramesh Radio | 1.12 / 12 | [ramesh-radio-v1.12](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.12) | `Ramesh-Radio-v1.12.apk` | 14,526,813 | `ec4d0d1ea0986661fd474f8686b7b042b1afe8f360f29adbc68dafd7e8291274` |
+| PulseEQ | 1.6 / 7 | [pulseeq-v1.6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.6) | `PulseEQ-v1.6.apk` | 11,567,364 | `0cbb29f15ef018903a69b82ae2214db35555474d468e95967253ee05630a6e74` |
+| RP Vocal Remover Studio | 0.1.12 / 13 | [rp-vocal-remover-studio-v0.1.12](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.12) | `RP-Vocal-Remover-Studio-v0.1.12.apk` | 63,739,000 | `9c8015f43023099a06067051bc3fe0788eb7cb8e85a81bf483d257111ae9e6d4` |
+| Oor Arivippu | 1.1.1 / 6 | [oor-arivippu-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | `Oor-Arivippu-v1.1.1.apk` | 12,228,161 | `5fe6899685858cbd6a552aa303d7218b10f72af1190da6c72f9b8c054ca9343d` |
+| Secret Message | 1.1.1 / 3 | [secret-message-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) | `Secret-Message-v1.1.1.apk` | 29,460,361 | `35351521a72b4b1fd0f510540e15d588e05baaffd1bdd43a1fd63604ec7ddb85` |
+
+The Live Guard 2.49 permission-delta gate compared the built APK with the published 2.46 APK and found
+no newly added dangerous runtime permission (the new `FOREGROUND_SERVICE_DATA_SYNC` is a normal
+foreground-service declaration), so no new physical-device evidence record was required. The owner
+reports that he downloaded and installed all six updates on his phone from these release pages and that
+they work. That is an owner report; it does not hash-match the installed bytes to the digests above,
+and GitHub publication is not Play Protect approval or an all-device compatibility claim.
+
+## Previous active stable releases — as of 18 October 2026
 
 | App | Version / code | RP-Android-Apps release | InternetRadio fallback | APK asset | Bytes | SHA-256 |
 | --- | ---: | --- | --- | --- | ---: | --- |

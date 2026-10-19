@@ -14,6 +14,8 @@ STRING = r'"(?:\\.|[^"\\])*"'
 EXPR = rf'{STRING}(?:\s*\+\s*{STRING})*'
 PROPER = {"Ramesh Radio", "PulseEQ", "RP VOCAL REMOVER", "STUDIO", "›"}
 FORMAT_TEMPLATES = {"%.1f dB", "Preamp %.1f dB", "preamp %.1f dB", "Volume boost: %.0f dB"}
+# The legacy per-app path is retained only for a future revert: `InternetRadio` was not mirrored for
+# the 19 October 2026 releases, so this set names the newest versions that repository actually has.
 EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/live-guard-v2.46",
     "https://github.com/universalrp2003/InternetRadio/releases/tag/ramesh-radio-v1.11",
@@ -21,11 +23,11 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.46",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.11",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.5",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.11",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.0",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.49",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.12",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.6",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.12",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1",
 }
 
 
@@ -169,12 +171,12 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "live-guard"', 'version = "2.46"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.11"',
-            'tagPrefix = "pulseeq"', 'version = "1.5"',
-            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.11"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.0"',
-            'tagPrefix = "secret-message"', 'version = "1.1.0"',
+            'tagPrefix = "live-guard"', 'version = "2.49"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.12"',
+            'tagPrefix = "pulseeq"', 'version = "1.6"',
+            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.12"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.1"',
+            'tagPrefix = "secret-message"', 'version = "1.1.1"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
         if missing_tags:
