@@ -4,6 +4,27 @@ This file indexes the five actively maintained apps. App-specific details, insta
 
 ## Unreleased
 
+### Live Guard 2.48
+
+- **New — a daily 4G allowance that looks after itself.** Indian prepaid plans sell data by
+  the day (1.5 GB, 2 GB, 3 GB), but the app could only track a whole recharge. Mobile → *Daily 4G
+  limit* now offers those three sizes plus **Off**; the card shows how much is left **today**
+  with a progress bar that turns red near the end. Nothing is stored per day: "today" is
+  already measured from local midnight, so the count returns to zero every morning by
+  construction — no reset button, no midnight job that can be missed, no drift after a
+  reboot or a time-zone change.
+- **New — nothing is spoken while you are on a call.** A call — ringing, dialling, talking or
+  a screened call — now outranks every other voice gate, including a manual test. The check
+  is made at the instant of speaking (no listener, so no stale flag can either talk over a
+  call or silence the app afterwards): `AudioManager` mode covers in-call, VoIP and ringing,
+  and `TelephonyManager` call state covers phones that keep the audio mode at normal until
+  pickup. The voice screen reports "Blocked: phone call in progress" so the reason is visible.
+  Oor Arivippu already queued its announcements until the call ended; Ramesh Radio, PulseEQ,
+  Vocal Remover Studio and Secret Message have no speech path at all, so Live Guard and Oor
+  Arivippu are now the complete set.
+- Release tooling: `verify_cleaner_next_update_source.py` pins 2.48 / code 53, and the
+  prepared-test count is 368 across 42 suites in `verify_cleaner_regressions.py`.
+
 ### Ramesh Radio 1.12
 
 - **Fix — crash when opening the live station list (நேரடி நிலையப் பட்டியல்).** The directory

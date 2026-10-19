@@ -44,6 +44,17 @@
 
 ## Live Guard (CleanSweep)
 
+- 19 October 2026 (owner request): nothing may be spoken while the phone is ringing or a call
+  is active. Live Guard answers the question at the instant of speaking — `CallGuard` reads
+  `AudioManager` mode and `TelephonyManager` call state, with no listener and no cached flag —
+  and `VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS` outranks every other gate, including a
+  manual test. Oor Arivippu already queued its announcements until the call ended; Ramesh
+  Radio, PulseEQ, Vocal Remover Studio and Secret Message have no speech path. Keep it that way;
+  do not swap this for a broadcast-driven flag.
+- 19 October 2026 (owner request): a daily 4G allowance for prepaid plans (1.5 / 2 / 3 GB,
+  `0` = off). Nothing is stored per day: "today" is measured from local midnight in
+  `DataUsageTracker`, so the counter returns to zero every morning by construction. Do not add
+  a midnight reset job or a manual reset button for it.
 - Preserve the no-notification/message-reading production design. Do not restore the retired notification listener, Accessibility, SMS, contacts/call-log, or device-admin capabilities without a fresh owner decision and policy/device review. Do not bypass or disable Play Protect to address an install block.
 - Show battery, CPU, RAM, network and age estimates only from truthful available measurements; label OEM-dependent/unavailable readings honestly. A saved review date must be a real completed review, never invented by opening a screen.
 - The 44 °C owner setting is a warning, not an automatic pause threshold. Do not add a processing pause at that temperature without separate rationale.

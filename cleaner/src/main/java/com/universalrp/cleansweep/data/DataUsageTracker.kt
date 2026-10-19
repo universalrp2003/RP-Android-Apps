@@ -16,6 +16,8 @@ object DataUsageTracker {
     private const val KEY_PACK_START_MS = "pack_start_ms"
     private const val KEY_PACK_BASELINE_BYTES = "pack_baseline_bytes"
     private const val KEY_PACK_LIMIT_GB = "pack_limit_gb"
+    /** Per-day 4G allowance for plans like 1.5 GB/day or 2 GB/day. 0 = not set. */
+    private const val KEY_DAILY_LIMIT_GB = "daily_limit_gb"
     private const val KEY_UNLIMITED_5G = "unlimited_5g_enabled"
     private const val KEY_LAST_DAY = "last_recorded_day"
     private const val KEY_TODAY_BASELINE_BYTES = "today_baseline_bytes"
@@ -39,6 +41,13 @@ object DataUsageTracker {
         val isPartial: Boolean = false,
         val source: String = "Android mobile network statistics",
         val capturedAtMs: Long = 0,
+        /** 0 when the user has not set a daily allowance. */
+        val dailyLimitGb: Float = 0f,
+        val dailyLimitBytes: Long = 0,
+        val dailyRemainingBytes: Long = 0,
+        val dailyProgressRatio: Float = 0f,
+        val formattedDailyRemaining: String = "",
+        val dailyLimitActive: Boolean = false,
     )
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -50,6 +59,23 @@ object DataUsageTracker {
     /** A default UI value is not evidence of the user's actual carrier allowance. */
     fun hasConfiguredPlan(context: Context): Boolean = prefs(context).contains(KEY_PACK_LIMIT_GB)
     fun getPackLimitGb(context: Context) = prefs(context).getFloat(KEY_PACK_LIMIT_GB, DEFAULT_PACK_LIMIT_GB)
+
+    /** 0 means "no daily cap"; the pack total is then the only budget. */
+    fun getDailyLimitGb(context: Context): Float =
+        prefs(context).getFloat(KEY_DAILY_LIMIT_GB, 0f).takeIf { it.isFinite() && it > 0f } ?: 0f
+
+    /**
+     * Sets the daily 4G allowance. 0 disables it. Nothing is stored per day: the "today"
+     * figure already comes from local midnight (see [getUsageInfo]), so the counter starts
+     * at zero on its own every morning — no reset job, no missed rollover, no drift.
+     */
+    fun setDailyLimitGb(context: Context, limitGb: Float) {
+        val clean = if (limitGb.isFinite() && limitGb > 0f && limitGb <= 100_000f) limitGb else 0f
+        prefs(context).edit().putFloat(KEY_DAILY_LIMIT_GB, clean).apply()
+    }
+
+    /** 1.5 GB, 2 GB, 3 GB — the daily allowances Indian prepaid plans actually sell. */
+    val DAILY_LIMIT_PRESETS = listOf(1.5f, 2f, 3f)
     fun setPackLimitGb(context: Context, limitGb: Float) {
         if (!limitGb.isFinite() || limitGb <= 0 || limitGb > 100_000) return
         prefs(context).edit().putFloat(KEY_PACK_LIMIT_GB, limitGb).apply()
@@ -118,11 +144,17 @@ object DataUsageTracker {
         val unlimited = store.getBoolean(KEY_UNLIMITED_5G, false) || fallback.getBoolean(KEY_UNLIMITED_5G, false)
         val limit = (limitGb * 1024.0 * 1024.0 * 1024.0).toLong()
         val remaining = (limit - pack).coerceAtLeast(0)
+        val dailyGb = prefs(context).getFloat(KEY_DAILY_LIMIT_GB, 0f).takeIf { it.isFinite() && it > 0f } ?: 0f
+        val dailyLimit = (dailyGb * 1024.0 * 1024.0 * 1024.0).toLong()
+        val dailyRemaining = if (dailyGb > 0f) (dailyLimit - today).coerceAtLeast(0L) else 0L
+        val dailyProgress = if (dailyLimit > 0) (today.toFloat() / dailyLimit).coerceIn(0f, 1f) else 0f
         val result = UsageInfo(access, today, pack, start, limitGb, limit, remaining,
             if (available) formatBytesSafe(today) else "Not measured", if (available) formatBytesSafe(pack) else "Not measured",
             if (available) formatBytesSafe(remaining) else "Not measured", "%.1f GB".format(limitGb),
             if (available && limit > 0) (pack.toFloat() / limit).coerceIn(0f, 1f) else 0f, unlimited, available, partial,
-            if (!available) "Mobile statistics unavailable" else if (partial) "Observed mobile counter (partial)" else "Android mobile network statistics", now)
+            if (!available) "Mobile statistics unavailable" else if (partial) "Observed mobile counter (partial)" else "Android mobile network statistics", now,
+            dailyGb, dailyLimit, dailyRemaining, dailyProgress,
+            if (dailyGb > 0f) formatBytesSafe(dailyRemaining) else "", dailyGb > 0f)
         runCatching { DataBudgetRepo.recordToday(context, result) }
         return result
     }

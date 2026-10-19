@@ -15,7 +15,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.BatteryValuePolicyTest": 11,
     "com.universalrp.cleansweep.ai.AssistantEvidencePolicyTest": 10,
     "com.universalrp.cleansweep.widget.WidgetReadingPolicyTest": 12,
-    "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 12,
+    "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 15,
     "com.universalrp.cleansweep.data.CompatibilityReportTest": 4,
     "com.universalrp.cleansweep.data.SecurityHistoryPolicyTest": 12,
     "com.universalrp.cleansweep.data.ChargeHistoryPolicyTest": 14,

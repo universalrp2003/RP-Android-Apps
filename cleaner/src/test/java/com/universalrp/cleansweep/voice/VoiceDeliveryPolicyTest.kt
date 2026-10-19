@@ -20,6 +20,22 @@ class VoiceDeliveryPolicyTest {
     @Test fun allowedDaytimeRequestIsNotBlocked() {
         assertNull(VoiceDeliveryPolicy.blocked(true, true, false, false))
     }
+    @Test fun aPhoneCallBlocksEveryAnnouncement() {
+        // Ringing or in a call: automatic events, enabled events, quiet hours, all blocked.
+        assertEquals(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS,
+            VoiceDeliveryPolicy.blocked(true, true, false, false, inCall = true))
+        assertEquals(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS,
+            VoiceDeliveryPolicy.blocked(true, true, true, false, inCall = true))
+    }
+    @Test fun aCallAlsoBlocksAManualTestSoNothingIsSpokenIntoTheCall() {
+        assertEquals(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS,
+            VoiceDeliveryPolicy.blocked(true, true, false, true, inCall = true))
+        assertEquals(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS,
+            VoiceDeliveryPolicy.blocked(true, true, true, true, inCall = true))
+    }
+    @Test fun afterTheCallEndsSpeechIsAllowedAgain() {
+        assertNull(VoiceDeliveryPolicy.blocked(true, true, false, false, inCall = false))
+    }
     @Test fun negativeEngineStatusesAreNotAvailableLanguages() {
         for (code in listOf(-1, -2, -3)) assertFalse(VoiceDeliveryPolicy.validStatus(code))
         for (code in 0..2) assertTrue(VoiceDeliveryPolicy.validStatus(code))

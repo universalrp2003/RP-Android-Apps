@@ -2,11 +2,17 @@ package com.universalrp.cleansweep.voice
 
 /** Pure gates. An enabled switch/accepted request is never proof that sound was heard. */
 object VoiceDeliveryPolicy {
-    enum class Stage { NOT_REQUESTED, DISABLED, EVENT_OFF, QUIET_HOURS, QUEUED, INITIALIZING, NO_ENGINE,
+    enum class Stage { NOT_REQUESTED, DISABLED, CALL_IN_PROGRESS, EVENT_OFF, QUIET_HOURS, QUEUED, INITIALIZING, NO_ENGINE,
         INIT_FAILED, INIT_TIMEOUT, LANGUAGE_MISSING, ENGINE_REJECTED, PLAYING, ENGINE_FINISHED,
         ENGINE_ERROR, TIMED_OUT, CANCELLED, DUPLICATE, STALE_EVENT }
-    fun blocked(master: Boolean, eventAllowed: Boolean, quiet: Boolean, manual: Boolean): Stage? = when {
+    /**
+     * @param inCall true while the phone is ringing or in a call. It outranks every other
+     * gate, including a manual test: nothing may be spoken into a live call.
+     */
+    fun blocked(master: Boolean, eventAllowed: Boolean, quiet: Boolean, manual: Boolean,
+                inCall: Boolean = false): Stage? = when {
         !master -> Stage.DISABLED
+        inCall -> Stage.CALL_IN_PROGRESS
         !eventAllowed -> Stage.EVENT_OFF
         quiet && !manual -> Stage.QUIET_HOURS
         else -> null

@@ -1,0 +1,3 @@
+New — Daily 4G limit. Choose 1.5, 2 or 3 GB a day, the way prepaid plans are sold, and Live Guard shows how much is left today with a progress bar. The count starts again at midnight by itself, so you never reset it.
+
+New — Silence during calls. Nothing is spoken while the phone is ringing or you are on a call. Announcements wait and never talk over the other person.

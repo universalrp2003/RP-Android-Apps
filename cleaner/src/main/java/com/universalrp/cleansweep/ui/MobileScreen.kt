@@ -1,7 +1,9 @@
 package com.universalrp.cleansweep.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +59,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.InsightsTab
 import com.universalrp.cleansweep.Screen
@@ -1074,6 +1078,87 @@ private fun DataUsageCard(state: UiState, vm: MainViewModel) {
                         }
                     }
                 }
+
+                // ---- Daily 4G allowance (1.5 / 2 / 3 GB, resets at local midnight) ----
+                val daily = pack
+                val dailyOn = daily != null && daily.dailyLimitActive
+                Spacer(Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = SurfaceHigh,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(14.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(
+                                    tr("Daily 4G limit"),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                )
+                                Text(
+                                    if (dailyOn) tr("Resets at midnight · today only")
+                                    else tr("Set your plan's daily allowance"),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                )
+                            }
+                            if (daily != null && daily.dailyLimitActive) {
+                                Text(
+                                    daily.formattedDailyRemaining.ifBlank { "0 MB" } + " " + tr("left today"),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (daily.dailyProgressRatio >= 0.9f) DangerRed else GoodGreen,
+                                )
+                            }
+                        }
+
+                        if (daily != null && daily.dailyLimitActive) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                DataUsageTracker.formatBytesSafe(daily.todayMobileBytes) + " / " +
+                                    String.format(java.util.Locale.US, "%.1f", daily.dailyLimitGb) + " GB",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(6.dp)
+                                    .clip(RoundedCornerShape(3.dp))
+                                    .background(Color(0xFF1E293B))
+                            ) {
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth(daily.dailyProgressRatio)
+                                        .height(6.dp)
+                                        .clip(RoundedCornerShape(3.dp))
+                                        .background(if (daily.dailyProgressRatio >= 0.9f) DangerRed else AccentCyan)
+                                )
+                            }
+                        }
+
+                        Spacer(Modifier.height(10.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            DailyLimitChip(
+                                label = tr("Off"),
+                                selected = !dailyOn,
+                                modifier = Modifier.weight(1f),
+                                onClick = { vm.updateDailyDataLimit(0f) },
+                            )
+                            DataUsageTracker.DAILY_LIMIT_PRESETS.forEach { gb ->
+                                DailyLimitChip(
+                                    label = if (gb % 1f == 0f) "${gb.toInt()} GB" else "$gb GB",
+                                    selected = dailyOn && daily?.dailyLimitGb == gb,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { vm.updateDailyDataLimit(gb) },
+                                )
+                            }
+                        }
+                    }
+                }
                 }
 
                 if (showResetDialog) {
@@ -1405,4 +1490,33 @@ private fun speedPhaseLabel(phase: String?): String? = when (phase) {
     "Starting" -> tr("Starting the test")
     "Starting upload" -> tr("Starting the upload")
     else -> phase
+}
+
+
+/**
+ * One of the daily-allowance choices. Added for the 1.5 / 2 / 3 GB India prepaid plans:
+ * picking a value sets the daily cap, and the counter starts from zero at local midnight.
+ */
+@Composable
+private fun DailyLimitChip(
+    label: String,
+    selected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    Surface(
+        shape = RoundedCornerShape(50),
+        color = if (selected) AccentCyan.copy(alpha = 0.18f) else SurfaceHigh.copy(alpha = 0.5f),
+        border = if (selected) BorderStroke(1.dp, AccentCyan.copy(alpha = 0.55f)) else null,
+        modifier = modifier.clickable { onClick() },
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+            color = if (selected) AccentCyan else TextSecondary,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            textAlign = TextAlign.Center,
+        )
+    }
 }
