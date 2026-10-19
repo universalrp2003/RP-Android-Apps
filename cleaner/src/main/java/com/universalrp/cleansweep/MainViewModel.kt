@@ -99,7 +99,7 @@ import android.os.Environment
 
 enum class Screen {
     HOME, SCANNING, RESULTS, APP_CACHE, ASSISTANT, SETTINGS, ABOUT,
-    HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP
+    HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP, MY_PLAN
 }
 
 enum class InsightsTab { COMPATIBILITY, SECURITY_HISTORY, CHARGING_HISTORY, DATA_BUDGET, ACTION_CHECKLIST }
@@ -832,6 +832,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             Screen.AI_SETTINGS -> Screen.SETTINGS
             Screen.VOICE -> Screen.SETTINGS
             Screen.MOBILE -> Screen.HOME
+            Screen.MY_PLAN -> Screen.MOBILE
             else -> Screen.HOME
         }
         mutate { it.copy(screen = parent) }
@@ -2752,6 +2753,30 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 DataUsageTracker.getUsageInfo(ctx)
             }
             mutate { it.copy(dataPackInfo = pack, message = "Data pack counter reset locally; expiry is unchanged. Carrier billing is not changed.") }
+            rebuildChecklist()
+            com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
+        }
+    }
+
+    /**
+     * Saves the whole plan from My plan: the mode, both allowances, the validity and the
+     * booster. PlanStore mirrors the numbers the older screens and the widget read, so every
+     * surface keeps showing the same plan.
+     */
+    fun savePlan(plan: com.universalrp.cleansweep.data.PlanSettings) {
+        viewModelScope.launch {
+            val pack = withContext(Dispatchers.IO) {
+                com.universalrp.cleansweep.data.PlanStore.save(ctx, plan)
+                DataUsageTracker.getUsageInfo(ctx)
+            }
+            mutate {
+                it.copy(
+                    dataPackInfo = pack,
+                    message = tr(
+                        "Plan saved. No counter was reset and no recharge was assumed.",
+                    ),
+                )
+            }
             rebuildChecklist()
             com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
         }

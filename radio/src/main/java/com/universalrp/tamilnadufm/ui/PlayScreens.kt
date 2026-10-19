@@ -639,6 +639,18 @@ private fun Fader(
 @Composable
 fun MoreScreen(vm: MainViewModel, state: UiState) {
     val aboutContext = androidx.compose.ui.platform.LocalContext.current
+    // Guide: the owner asked for the same compact, expandable Tamil+English guide in every app.
+    var showGuide by remember { mutableStateOf(false) }
+    val tamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL
+    if (showGuide) {
+        com.universalrp.updates.GuideScreen(
+            content = com.universalrp.updates.AppGuides.rameshRadio,
+            tamil = tamil,
+            onBack = { showGuide = false },
+            accent = Saffron,
+        )
+        return
+    }
     val installedVersion = androidx.compose.runtime.remember {
         runCatching { aboutContext.packageManager.getPackageInfo(aboutContext.packageName, 0).versionName }.getOrNull() ?: "unknown"
     }
@@ -665,6 +677,23 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                     style = MaterialTheme.typography.bodySmall,
                     color = TextSecondary,
                 )
+            }
+        }
+
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(horizontal = 14.dp, vertical = 6.dp)) {
+                    Text(
+                        if (tamil) "வழிகாட்டி — எப்படிப் பயன்படுத்துவது" else "Guide — how to use this app",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Saffron,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showGuide = true }
+                            .padding(vertical = 8.dp),
+                    )
+                }
             }
         }
 

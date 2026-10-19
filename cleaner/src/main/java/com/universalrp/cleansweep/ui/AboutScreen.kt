@@ -26,6 +26,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -44,12 +46,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.background
 import com.universalrp.cleansweep.ui.theme.AccentCyan
 import com.universalrp.cleansweep.ui.theme.AccentViolet
+import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
 import com.universalrp.cleansweep.ui.theme.TextSecondary
 
 @Composable
 fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
     val sourceContext = androidx.compose.ui.platform.LocalContext.current
+    // The shared guide: same compact, expandable Tamil+English text in all six apps.
+    var showGuide by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    if (showGuide) {
+        com.universalrp.updates.GuideScreen(
+            content = com.universalrp.updates.AppGuides.liveGuard,
+            tamil = Lang.isTamil,
+            onBack = { showGuide = false },
+            accent = AccentCyan,
+            surface = SurfaceHigh,
+            contentColor = TextPrimary,
+            mutedColor = TextSecondary,
+        )
+        return
+    }
     val installedVersion = androidx.compose.runtime.remember {
         runCatching { sourceContext.packageManager.getPackageInfo(sourceContext.packageName, 0).versionName }.getOrNull() ?: "unknown"
     }
@@ -210,6 +227,18 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
+                }
+            }
+
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    TextButton(onClick = { showGuide = true }) {
+                        Text(
+                            if (Lang.isTamil) "வழிகாட்டி — எப்படிப் பயன்படுத்துவது" else "Guide — how to use this app",
+                            color = AccentCyan,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
                 }
             }
 

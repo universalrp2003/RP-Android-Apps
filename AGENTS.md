@@ -25,6 +25,14 @@
 
 ## Shared app and release requirements
 
+- 19 October 2026 (owner request): every app carries a built-in Tamil + English guide, shown as
+  short topic titles that open when tapped ("click and expand"). The text for the five apps that
+  compile `shared/` lives in one file, `shared/src/main/java/com/universalrp/updates/AppGuides.kt`,
+  rendered by `GuideScreen.kt` in the same package; never hard-code a second copy in an app. Any
+  step that changes on a phone (a settings path, a notification name) is corrected there, in
+  **both** languages. Secret Message is a separate Gradle build that cannot see `shared/`, so it
+  keeps its own longer 1.1.0 text in `secretmessage/wifi-test/.../GuideScreen.kt` and must use
+  the same tap-to-open shape. The guide must never claim something the app does not do.
 - The five active app UIs are Tamil-first with an in-app English option. When adding visible text, add both translations, preserve dynamic placeholders, and run the localization checks.
 - Do not label any contributor “Author.” About pages credit shared contributors accurately, include Ramesh prathap .R (`universalrp2003@gmail.com`) and Arena.ai Agent Mode as software assistance (no invented contact), and link to the current release pages.
 - Use the verified stable GitHub Releases updater. Check official release sources, offer only a newer stable version, verify official asset URL, size, SHA-256, package/version and pinned signing certificate, then hand off to Android. Never install silently, bypass Play Protect, or claim that the app can grant/revoke Android's per-app “Install unknown apps” access temporarily.

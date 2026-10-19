@@ -89,7 +89,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 53', 'versionName = "2.48"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 54', 'versionName = "2.49"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -198,7 +198,7 @@ def main():
         require('state.lang' not in source(display),
                 'A display site still reads the state mirror instead of the language authority: ' + display)
     expected = runpy.run_path(str(ROOT/'tools/verify_cleaner_regressions.py'))['EXPECTED']
-    require(sum(expected.values()) == 368 and len(expected) == 42, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 381 and len(expected) == 43, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -225,7 +225,7 @@ def main():
             'sameContents' in source('data/DuplicateContentHash.kt'),
             'Private-source recovery or full-content duplicate confirmation was removed')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 42 required suites / 368 prepared declarations; tests NOT executed. Release 2.48/code53/API26 matches.')
+    print('PASS: 43 required suites / 381 prepared declarations; tests NOT executed. Release 2.49/code54/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

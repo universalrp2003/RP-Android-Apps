@@ -18,6 +18,8 @@ import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -30,6 +32,16 @@ fun AboutScreen(vm: EqViewModel) {
     val sourceContext = androidx.compose.ui.platform.LocalContext.current
     val installedVersion = androidx.compose.runtime.remember {
         runCatching { sourceContext.packageManager.getPackageInfo(sourceContext.packageName, 0).versionName }.getOrNull() ?: "unknown"
+    }
+    var showGuide by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    if (showGuide) {
+        com.universalrp.updates.GuideScreen(
+            content = com.universalrp.updates.AppGuides.pulseEq,
+            tamil = AppLanguageState.current == AppLanguage.TAMIL,
+            onBack = { showGuide = false },
+            accent = Cyan,
+        )
+        return
     }
     Column(
         Modifier
@@ -65,6 +77,14 @@ fun AboutScreen(vm: EqViewModel) {
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            androidx.compose.material3.TextButton(onClick = { showGuide = true }) {
+                Text(
+                    if (AppLanguageState.current == AppLanguage.TAMIL) "வழிகாட்டி — எப்படிப் பயன்படுத்துவது"
+                    else "Guide — how to use this app",
+                    color = Cyan,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             androidx.compose.material3.TextButton(onClick = {
                 runCatching { sourceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
                     android.net.Uri.parse("https://github.com/universalrp2003/InternetRadio"))) }

@@ -50,6 +50,8 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -230,6 +232,8 @@ private fun VocalRemoverScreen(wavPlaybackController: WavPlaybackController) {
     val downloadScope = rememberCoroutineScope()
     var showCredits by remember { mutableStateOf(false) }
     var showAbout by remember { mutableStateOf(false) }
+    // The shared guide (owner request: every app carries the same Tamil+English guide).
+    var showGuide by remember { mutableStateOf(false) }
     var showSavedOutputs by remember { mutableStateOf(false) }
     var savedOutputs by remember { mutableStateOf<List<SavedAudioOutput>>(emptyList()) }
     var savedOutputsLoading by remember { mutableStateOf(false) }
@@ -506,11 +510,27 @@ private fun VocalRemoverScreen(wavPlaybackController: WavPlaybackController) {
         }
     }
 
+    if (showGuide) {
+        Dialog(onDismissRequest = { showGuide = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            Surface(color = SoftWhite, modifier = Modifier.fillMaxSize()) {
+                com.universalrp.updates.GuideScreen(
+                    content = com.universalrp.updates.AppGuides.vocalRemover,
+                    tamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL,
+                    onBack = { showGuide = false },
+                    accent = Teal,
+                    surface = Mint,
+                    contentColor = Ink,
+                    mutedColor = Muted,
+                )
+            }
+        }
+    }
     if (showCredits) CreditsDialog(onDismiss = { showCredits = false })
     if (showAbout) {
         AboutDialog(
             onDismiss = { showAbout = false },
             onModelCredits = { showAbout = false; showCredits = true },
+            onGuide = { showAbout = false; showGuide = true },
         )
     }
     if (showSavedOutputs) {
@@ -1217,7 +1237,7 @@ private fun TextButtonCompact(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AboutDialog(onDismiss: () -> Unit, onModelCredits: () -> Unit) {
+private fun AboutDialog(onDismiss: () -> Unit, onModelCredits: () -> Unit, onGuide: () -> Unit) {
     val context = LocalContext.current
     // All six apps from one shared list (this used to be four links to the old repository).
     val releaseLinks = com.universalrp.updates.SisterApps.releaseLinks()
@@ -1234,6 +1254,13 @@ private fun AboutDialog(onDismiss: () -> Unit, onModelCredits: () -> Unit) {
                     Text("App language", fontWeight = FontWeight.SemiBold, color = Ink)
                     Spacer(Modifier.weight(1f))
                     AppLanguageToggle()
+                }
+                androidx.compose.material3.TextButton(onClick = onGuide) {
+                    Text(
+                        if (com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL)
+                            "வழிகாட்டி — எப்படிப் பயன்படுத்துவது" else "Guide — how to use this app",
+                        color = Teal, fontWeight = FontWeight.SemiBold,
+                    )
                 }
                 Text("Contributors", fontWeight = FontWeight.Bold, color = Ink)
                 Text("Project development: Ramesh prathap .R · universalrp2003@gmail.com", color = Muted)
