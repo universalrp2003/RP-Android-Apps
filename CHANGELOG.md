@@ -1,6 +1,6 @@
 # Changelog — RP Ideas Android apps
 
-This file indexes the five actively maintained apps. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
+This file indexes the six actively maintained apps. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
 
 ## Unreleased
 
@@ -140,7 +140,30 @@ notes.
 - Published by standalone [GitHub Actions run 38826899278](https://github.com/universalrp2003/InternetRadio/actions/runs/38826899278) from commit `6f14f65c7cb54ab48c1a3460bab73fb75178951c`, after the Oor test workflow passed on the identical app source in [run 38826564762](https://github.com/universalrp2003/InternetRadio/actions/runs/38826564762). The workflow and a separate public-API check confirmed that both repositories serve the same stable APK (`Oor-Arivippu-v1.0.1.apk`, 12,195,397 bytes, SHA-256 `ec10c7369807748c9a5608f1a5c6a37eff5f8e1f7433cc16e984c75d8958457d`) at canonical release and download URLs. The 1.0.0 releases and assets are unchanged.
 - The owner device-tested the debug APK from [run 38776902130](https://github.com/universalrp2003/InternetRadio/actions/runs/38776902130), built from the same app source before the version was raised, and authorized this release. That build reported 1.0.0. After publication, the owner also installed the debug APK of the exact 1.0.1 source from Oor test [run 38826564762](https://github.com/universalrp2003/InternetRadio/actions/runs/38826564762); it reported 1.0.1 (3), passed Play Protect's “This app looks safe” check and showed no newer release, and the owner reports it works. Both test builds were debug-signed; the exact 1.0.1 stable bytes were not device-tested.
 
-## Latest published releases — as of 16 October 2026
+## Latest published releases — as of 19 October 2026
+
+All six apps were published on 19 October 2026 from the release-train source. The four-app batch
+was built and published by Build APK [run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076),
+Oor Arivippu 1.1.1 by its standalone [run 39268547086](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39268547086),
+and Secret Message 1.1.1 by [run 39268577963](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39268577963).
+Each publisher re-read its own public release and verified the asset name, size and SHA-256 after promotion.
+
+| App | Version | Release notes | RP-Android-Apps | InternetRadio fallback |
+|---|---:|---|---|---|
+| Live Guard (CleanSweep) | 2.49 / code 54 | [`releases/live-guard-v2.49.md`](releases/live-guard-v2.49.md) | [live-guard-v2.49](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.49) | — (not mirrored; 2.46 remains) |
+| Ramesh Radio | 1.12 / code 12 | [`releases/ramesh-radio-v1.12.md`](releases/ramesh-radio-v1.12.md) | [ramesh-radio-v1.12](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.12) | — (not mirrored; 1.11 remains) |
+| PulseEQ | 1.6 / code 7 | [`releases/pulseeq-v1.6.md`](releases/pulseeq-v1.6.md) | [pulseeq-v1.6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.6) | — (not mirrored; 1.5 remains) |
+| RP Vocal Remover Studio | 0.1.12 / code 13 | [`releases/rp-vocal-remover-studio-v0.1.12.md`](releases/rp-vocal-remover-studio-v0.1.12.md) | [rp-vocal-remover-studio-v0.1.12](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.12) | — (not mirrored; 0.1.11 remains) |
+| Oor Arivippu | 1.1.1 / code 6 | [`releases/oor-arivippu-v1.1.1.md`](releases/oor-arivippu-v1.1.1.md) | [oor-arivippu-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | — (not mirrored; 1.1.0 and older remain) |
+| Secret Message | 1.1.1 / code 3 | [`secretmessage/releases/secret-message-v1.1.1.md`](secretmessage/releases/secret-message-v1.1.1.md) | [secret-message-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) | — (not mirrored; 1.1.0 and 1.0.0 remain) |
+
+The owner reports that he downloaded and installed all six updates on his phone and that they are
+working. That is an owner report from the published release pages: it does not hash-match the
+installed bytes to the published digests, and it is not Play Protect approval. The Live Guard 2.49
+permission-delta gate found no newly added dangerous runtime permission, so no new physical-device
+evidence record was required for publication.
+
+## Published releases — 16 October 2026 snapshot
 
 | App | Version | Release notes | RP-Android-Apps | InternetRadio fallback |
 |---|---:|---|---|---|

@@ -1,6 +1,6 @@
 # Oor Arivippu — Tamil/English place announcer
 
-**Current stable release:** 1.1.0 / code 5
+**Current stable release:** 1.1.1 / code 6
 
 **Package:** `com.oorarivippu.voiceannouncer`
 
@@ -10,11 +10,13 @@ Oor Arivippu is a GPS place and destination announcer. It is a fifth active RP I
 
 ## Download the stable release
 
-- [RP-Android-Apps release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.0) — primary updater source.
-- [InternetRadio release](https://github.com/universalrp2003/InternetRadio/releases/tag/oor-arivippu-v1.1.0) — verified fallback.
-- [Release notes](../releases/oor-arivippu-v1.1.0.md) · [published APK size and SHA-256 ledger](../docs/published-release-digests.md).
+- [RP-Android-Apps release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) — primary updater source.
+- [Release notes](../releases/oor-arivippu-v1.1.1.md) · [published APK size and SHA-256 ledger](../docs/published-release-digests.md).
+- The earlier 1.1.0, 1.0.2, 1.0.1 and 1.0.0 releases remain available unchanged on both repositories as the updater's fallback.
 
-Both public releases carry `Oor-Arivippu-v1.1.0.apk`, 12,211,781 bytes, SHA-256 `34858e8c6e4831e725ac7503f6613c96bcb896d659ebbdb588dcd139afc7c8b3`. Standalone release [run 39105539892](https://github.com/universalrp2003/InternetRadio/actions/runs/39105539892) (commit `fbdcc1b`) passed the release unit tests, lint, signed build and package/version/minimum-SDK/signature checks, then verified that the two public assets have identical size and digest at canonical URLs. Before publication, the Oor test workflow passed on the 1.1.0 source in [run 39105368624](https://github.com/universalrp2003/InternetRadio/actions/runs/39105368624). At the owner's request, 1.1.0 was published as soon as these automatic checks passed, without a device test; see **1.1.0** below for what changed.
+`Oor-Arivippu-v1.1.1.apk`, 12,228,161 bytes, SHA-256 `5fe6899685858cbd6a552aa303d7218b10f72af1190da6c72f9b8c054ca9343d`. Standalone release [run 39268547086](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39268547086) passed the release unit tests, lint, signed build and package/version/minimum-SDK/signature checks, then re-read its own public release and verified the asset name, size and SHA-256. The owner reports installing this update on his phone and using it; that is an owner report, not a hash-matched device record. The older `InternetRadio` releases are unchanged.
+
+The previous stable release, 1.1.0 / code 5, remains available unchanged on both repositories: `Oor-Arivippu-v1.1.0.apk`, 12,211,781 bytes, SHA-256 `34858e8c6e4831e725ac7503f6613c96bcb896d659ebbdb588dcd139afc7c8b3`, published by standalone [run 39105539892](https://github.com/universalrp2003/InternetRadio/actions/runs/39105539892) (commit `fbdcc1b`) after the Oor test workflow passed on the same source in [run 39105368624](https://github.com/universalrp2003/InternetRadio/actions/runs/39105368624).
 
 The previous stable release, 1.0.2 / code 4, remains available unchanged on both repositories: `Oor-Arivippu-v1.0.2.apk`, 12,195,401 bytes, SHA-256 `bffdf37f525becc3a631c83988e56ca9881e620b76fd2e60bd7ce5b31efdd78b`. Standalone release [run 38840264469](https://github.com/universalrp2003/InternetRadio/actions/runs/38840264469) passed the release unit tests, lint, signed build and package/version/minimum-SDK/signature checks, then verified that the two public assets have identical size and digest at canonical URLs; a separate post-publication API check confirmed the same. Before publication, the Oor test workflow passed on the exact 1.0.2 source in [run 38840000191](https://github.com/universalrp2003/InternetRadio/actions/runs/38840000191).
 

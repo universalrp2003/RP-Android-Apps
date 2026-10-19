@@ -1,9 +1,9 @@
 # Live Guard (CleanSweep)
 
-Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.46 / code 51**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
+Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.49 / code 54**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
 
-- [Download CleanSweep-v2.46.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.46/CleanSweep-v2.46.apk) · [same release on the InternetRadio fallback](https://github.com/universalrp2003/InternetRadio/releases/download/live-guard-v2.46/CleanSweep-v2.46.apk) · [release notes](../releases/live-guard-v2.46.md)
-- Build, regression, permission-delta and APK checks passed in [publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md); no exact-build phone test is claimed.
+- [Download CleanSweep-v2.49.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.49/CleanSweep-v2.49.apk) · [release notes](../releases/live-guard-v2.49.md) · the previous 2.46 release stays available on the InternetRadio fallback
+- Build, regression, permission-delta and APK checks passed in [publication run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md); no exact-build phone test is claimed.
 - [Privacy policy](../PRIVACY.md) · [installation advisory](../docs/live-guard-play-protect-install-block.md)
 
 ## What it does
@@ -16,7 +16,7 @@ The app does not include notification/message reading, an Accessibility service,
 
 The updater checks RP-Android-Apps first and keeps InternetRadio as a verified fallback. It validates a stable release's canonical URL, size, SHA-256, package, newer version and signing certificate before handing installation to Android. It does not install silently or bypass Play Protect. Android may require per-app “Install unknown apps” permission and always presents its installer confirmation.
 
-The 2.46 permission-delta gate passed without requiring a new physical-device evidence record. The public API/source-order check found the stable 2.46 release on RP-Android-Apps and verified that its asset digest matches the InternetRadio fallback. CI/API validation does not verify an on-device download or installation of these exact bytes.
+The 2.49 permission-delta gate passed without requiring a new physical-device evidence record: 2.49 adds no dangerous runtime permission that 2.46 did not already declare. The publication run re-read its own public release and verified the asset name, size and SHA-256. The owner reports installing 2.49 on his phone and using it; CI/API validation cannot hash-match the installed bytes to the published asset.
 
 ## Build and verify
 

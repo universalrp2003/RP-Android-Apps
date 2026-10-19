@@ -1,9 +1,9 @@
 # RP Vocal Remover Studio
 
-RP Vocal Remover Studio is a local-first Android vocal-reduction tool. Its latest published direct-download release is **0.1.11 / code 12**, package `com.universalrp.vocalremover`, minimum Android 10 (API 29). The app is distributed as a standalone APK from GitHub Releases; it is not included in the store-art pipeline.
+RP Vocal Remover Studio is a local-first Android vocal-reduction tool. Its latest published direct-download release is **0.1.12 / code 13**, package `com.universalrp.vocalremover`, minimum Android 10 (API 29). The app is distributed as a standalone APK from GitHub Releases; it is not included in the store-art pipeline.
 
-- [Download RP-Vocal-Remover-Studio-v0.1.11.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.11/RP-Vocal-Remover-Studio-v0.1.11.apk) · [same release on the InternetRadio fallback](https://github.com/universalrp2003/InternetRadio/releases/download/rp-vocal-remover-studio-v0.1.11/RP-Vocal-Remover-Studio-v0.1.11.apk) · [release notes](../releases/rp-vocal-remover-studio-v0.1.11.md)
-- Build, reliability/regression and APK checks passed in [publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- [Download RP-Vocal-Remover-Studio-v0.1.12.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.12/RP-Vocal-Remover-Studio-v0.1.12.apk) · [release notes](../releases/rp-vocal-remover-studio-v0.1.12.md) · the previous 0.1.11 release stays available on the InternetRadio fallback
+- Build, reliability/regression and APK checks passed in [publication run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md)
 
 ## Audio workflow and privacy
