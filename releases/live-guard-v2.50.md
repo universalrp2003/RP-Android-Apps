@@ -22,7 +22,7 @@ The upgrade installs over 2.49 with the same signing key, so plans, settings, la
 
 Download `CleanSweep-v2.50.apk` and install it through Android. If Android asks, enable **Allow from this source** for the browser or file manager you used, then confirm in Android's installer. No silent installation and no Play Protect bypass is used.
 
-**Device testing:** this build has **not been installed on a phone** at the time these notes were written, and no physical-device test is claimed for these exact bytes yet. The release passed the configured CI build, unit and regression suites, the APK checks and the permission-delta gate. That is not Play Protect approval and not an all-device compatibility claim.
+**Device testing:** the owner installed **this exact APK** — `CleanSweep-v2.50.apk`, 13,740,236 bytes, SHA-256 `b4c183c876a8da8aff4169c975c1a1111a3229658620e99fed87cb3e645d6176` — over 2.49 on his Xiaomi phone with Play Protect on. Play Protect said *"This app looks safe — You can continue to install it"*, Android's installer completed the **update** (2.49 (54) → 2.50 (55)) without losing settings, About shows *CleanSweep v2.50*, and after allowing location the nearby-cell list appeared with four cells (serving cell `191225394 · PCI 462`). No physical-device test was performed on the Play Store app bundle, and no second phone was tested. That is not Play Protect approval and not an all-device compatibility claim; the full record is [`docs/live-guard-2.50-device-evidence.md`](../docs/live-guard-2.50-device-evidence.md).
 
 ## தமிழ்
 
@@ -43,3 +43,5 @@ Download `CleanSweep-v2.50.apk` and install it through Android. If Android asks,
 ## நிறுவுதல்
 
 `CleanSweep-v2.50.apk`-ஐ Android வழியாக நிறுவவும். கேட்டால் **இந்த மூலத்திலிருந்து நிறுவு** அனுமதியை இயக்கி உறுதிப்படுத்தவும். அமைதியான நிறுவல் இல்லை; Play Protect தவிர்க்கப்படவில்லை. 2.49-இன் மேல் அதே கையொப்பத்துடன் ஏறும் — திட்டம், அமைப்புகள், மொழி, வரலாறு அப்படியே இருக்கும். Location இயல்பாக **அணைந்தே** இருக்கும்.
+
+**சாதனச் சோதனை:** உரிமையாளர் இந்த APK-ஐ 2.49-இன் மேல் தனது Xiaomi போனில் Play Protect இயக்கத்துடன் நிறுவினார். Play Protect "This app looks safe — You can continue to install it" என்றது; நிறுவி 2.50 (55) ஆனது; About திரையில் CleanSweep v2.50 காட்டியது; location அனுமதித்த பிறகு நான்கு செல் டவர்கள் தெரிந்தன. Play Store bundle-க்கு சாதனச் சோதனை இல்லை; இரண்டாவது போன் சோதிக்கப்படவில்லை.
