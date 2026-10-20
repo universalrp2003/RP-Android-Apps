@@ -35,6 +35,10 @@ Download `Ramesh-Radio-v1.14.apk` and install it through Android. The update ins
 the same signing key, so favourites, custom stations, the equalizer and the language choice are
 kept. No new permission is added.
 
+**Verified in CI:** run 39411751316 built this changelist, ran the Ramesh Radio unit tests,
+Android lint and the full APK checks; the candidate file was 14,526,817 bytes
+(`a07808b9…c226`). The published asset is checked again after upload.
+
 **Device testing:** this build was **not installed on a phone** at the time of writing. The release
 passed the CI build, the unit and regression suites, the APK metadata checks and the published-asset
 check. That is not Play Protect approval and not an all-device compatibility claim.
