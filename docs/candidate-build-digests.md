@@ -1,22 +1,22 @@
 # Candidate build digests
 
-- Workflow run: 39416195815
-- Source commit: 7e99a6f8e5d949f76caeda0cf64fdabe4837443d
+- Workflow run: 39418752154
+- Source commit: 169a60e293e072ba4bd01e24b9f14269d343ea5c
 - Ref: refs/heads/arena/1c17a6e2-rp-android-apps
-- Built (UTC): 2026-10-20T11:41:18Z
+- Built (UTC): 2026-10-20T12:04:44Z
 - Note: candidate build output only. GitHub publication is not Play Protect approval.
 
 | File | Bytes | SHA-256 |
 | --- | --- | --- |
-| `cleaner/build/outputs/apk/debug/CleanSweep-v2.51-debug.apk` | 20146577 | `178732d796aa74a20b9b62dff293dbbb4ae6125918b449d4b4358ed092fbe963` |
-| `cleaner/build/outputs/apk/release/CleanSweep-v2.51.apk` | 13795920 | `e65a0ec6a3f415b28f07014768f73571df64ceda876e357d7369db02776c133b` |
-| `equalizer/build/outputs/apk/debug/PulseEQ-v1.7-debug.apk` | 16924871 | `ba5573f5d4d1d7ee9e32ba2074be611874223249da049cf810062ab9fbffd6e4` |
-| `equalizer/build/outputs/apk/release/PulseEQ-v1.7.apk` | 11567368 | `6ff5dd27493468a864828968cfc1738b7ff3739ba23cde144afd01c657a4d8fc` |
-| `oorarivippu/build/outputs/apk/debug/oorarivippu-debug.apk` | 17690380 | `7c9d49345f31fa076d0ca161bc2d65ecaa4db771172b18d736b2a0790afd3449` |
-| `radio/build/outputs/apk/debug/Ramesh-Radio-v1.15-debug.apk` | 20709605 | `4cf9179c07f2b550b598877f70cf3e040ecda37f93e25f10dd254749f9b29cfb` |
-| `radio/build/outputs/apk/release/Ramesh-Radio-v1.15.apk` | 14543201 | `979c99c50aae95cd186cd6f3bc773f12d99909d81c179fa397d3390b6f818261` |
-| `vocalremover/build/outputs/apk/debug/RP-Vocal-Remover-Studio-v0.1.13-debug.apk` | 81816857 | `c9ea3e4ba80c4d8ebd7b4ba5717f2f2593934ed15d3fcfacd5085f2cbac10620` |
-| `vocalremover/build/outputs/apk/release/RP-Vocal-Remover-Studio-v0.1.13.apk` | 63750340 | `8eb500a0b0926eb804e3e352de37d8ced1df6b426b6edc7685d4dd9bb993019f` |
-| `cleaner/build/outputs/bundle/release/CleanSweep-v2.51.aab` | 13512533 | `99d78c49e29f5ea2ba4ec0c4b128e1715fe210718c1cd67081636868ab0a9d92` |
-| `equalizer/build/outputs/bundle/release/PulseEQ-v1.7.aab` | 11232248 | `bdd763307e8857eb9fbb28f6cca9125d8c63cc93da9171ae24a86a4c7f957cdd` |
-| `radio/build/outputs/bundle/release/Ramesh-Radio-v1.15.aab` | 14104603 | `6c0ddcc4400753930e4dd77edcda1fb9481a1c3641111b98c50ae4b5cb9ee8ee` |
+| `cleaner/build/outputs/apk/debug/CleanSweep-v2.52-debug.apk` | 20170541 | `da427cf77725d731ed5004aa173264daa4b0a9818b90a8c57738a367dbc6d2a5` |
+| `cleaner/build/outputs/apk/release/CleanSweep-v2.52.apk` | 13811808 | `f77f254259b3716c167a0fbfa276b0e1dc4eaf1c489d9b086ec0351357764dd8` |
+| `equalizer/build/outputs/apk/debug/PulseEQ-v1.7-debug.apk` | 16924871 | `e4081b8d4a93f53d6fce9812a5d09e17196a9a3377f978c7b44dd5c589cd8ad4` |
+| `equalizer/build/outputs/apk/release/PulseEQ-v1.7.apk` | 11567368 | `55c27064b56941593334ddfeef7e62d88434b87bd9359473f9539daaf3b31c31` |
+| `oorarivippu/build/outputs/apk/debug/oorarivippu-debug.apk` | 17690380 | `df15d2051434617ee4bece74a4c0ffe4b93b9112102aa2d79235bc7b4d88368f` |
+| `radio/build/outputs/apk/debug/Ramesh-Radio-v1.15-debug.apk` | 20709605 | `26893b0cf75a98b3a9c9e4b5d2549d1e0ea62e22d3b1080c8496ddba90626be7` |
+| `radio/build/outputs/apk/release/Ramesh-Radio-v1.15.apk` | 14543201 | `6f59e143d17cfd530028c458db220535898920f70b67c320b9992ef0839f4f8d` |
+| `vocalremover/build/outputs/apk/debug/RP-Vocal-Remover-Studio-v0.1.13-debug.apk` | 81816857 | `0f1244c03bece6fc5be6676fe11ca25fc864ea5cb7329b7da4e76311317c1c0e` |
+| `vocalremover/build/outputs/apk/release/RP-Vocal-Remover-Studio-v0.1.13.apk` | 63750340 | `e9dd3fa8818434f03ef3c2600f15695557b8947071c83122f7441c55dab5a4df` |
+| `cleaner/build/outputs/bundle/release/CleanSweep-v2.52.aab` | 13528424 | `7de70b31f7bd133117ab5134512c1acf53c10d70e99a3e5256f644b6f5edb5f9` |
+| `equalizer/build/outputs/bundle/release/PulseEQ-v1.7.aab` | 11232251 | `a90a01904adb4de9b4cc03fd29640abe51c397af880fbec07f405c9bd9e5adf9` |
+| `radio/build/outputs/bundle/release/Ramesh-Radio-v1.15.aab` | 14104595 | `a66fd2be601a0c84573cec0c0c66836fc430c75b6b97a4f8fc8480fe4e88bbe7` |
