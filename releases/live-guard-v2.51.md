@@ -95,6 +95,12 @@ signing key, so the plan, settings and language are kept.
 No new Android permission is added: Location was introduced in 2.50 and this release asks for
 nothing else.
 
+**Verified in CI:** run 39406789346 built this changelist, compiled both variants, ran every
+required unit and regression suite (44 suites / 400 declarations, including the ten new
+recharge-SMS parser cases), verified the APK metadata and the permission delta, and uploaded the
+APK. The digest of the published file is recorded in `docs/candidate-build-digests.md` after the
+release.
+
 **Device testing:** this build was **not installed on a phone** at the time of writing, and no
 physical-device test is claimed for these exact bytes. The release passed the configured CI build,
 the unit and regression suites (including the plan-arithmetic and recharge-SMS parser tests),
