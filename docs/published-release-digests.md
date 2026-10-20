@@ -16,6 +16,35 @@ Secret Message 1.1.0 / code 2 was published on 18 October 2026 by `.github/workf
 
 On 19 October 2026 that release train was completed: Live Guard 2.49 / code 54, Ramesh Radio 1.12 / code 12, PulseEQ 1.6 / code 7, RP Vocal Remover Studio 0.1.12 / code 13, Oor Arivippu 1.1.1 / code 6 and Secret Message 1.1.1 / code 3 were published from `main`. Every app gained the compact bilingual in-app guide; Live Guard also gained **My plan**, and Secret Message gained the guide plus a narrow-screen layout fix. The app versions that were already public (2.46, 1.11, 1.5, 0.1.11, 1.1.0, 1.1.0) kept their release pages and assets unchanged.
 
+## Live Guard 2.51 — published alone, 20 October 2026
+
+Live Guard 2.51 / code 56 was published by Build APK [run 39407712230](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39407712230),
+from `arena/1c17a6e2-rp-android-apps` at commit `821aa52`. This was the first release under the owner's
+"one app at a time" rule: only Live Guard's version changed, so only its tag was public after the run.
+PulseEQ 1.7, Ramesh Radio 1.13 and RP Vocal Remover Studio 0.1.13 kept their existing release pages and
+assets, and Oor Arivippu and Secret Message were not touched.
+
+The run passed the build (both variants), the required unit and regression suites — 44 suites / 400
+declarations, including the ten new `RechargeSmsParserTest` cases — the Live Guard permission delta
+(no permission added), the APK metadata checks and the post-publication asset check.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.51.apk` | 13,793,884 | `260120452041fcbe9d67aa76bd8c71cc1da78a40b2d57cf235a20a387e650ec5` |
+
+The digest above is GitHub's own digest for the published asset, read back from the release API after
+publication.
+
+**What it contains:** the operator-clock expiry rule, the booster-pool counting fix, seven selectable
+colour themes, a subject-grouped side menu with a reordered Home, and the "fill My plan from the
+operator's SMS" card (copy and paste only — the app still declares no SMS permission). The local
+date-format and twelve-hour-clock rules are unchanged.
+
+**What it does not prove:** this build was not installed on a phone before publication, so no
+physical-device result is claimed for these bytes. The previous instance of this section (Live Guard
+2.50) is the last release with a recorded owner install. CI checks, a compiled APK and a published
+asset are not Play Protect approval, not Play Store review and not an all-device compatibility claim.
+
 ## Current active stable releases — as of 20 October 2026
 
 The four-app batch was rebuilt and published on 20 October 2026 by Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275),

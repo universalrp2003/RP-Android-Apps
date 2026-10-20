@@ -4,6 +4,14 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Published — Live Guard 2.51 (20 October 2026)
+
+Released alone, under the owner's one-app-at-a-time rule, by Build APK [run 39407712230](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39407712230)
+from commit `821aa52`. `CleanSweep-v2.51.apk` is 13,793,884 bytes, SHA-256
+`260120452041fcbe9d67aa76bd8c71cc1da78a40b2d57cf235a20a387e650ec5` (GitHub's digest of the published
+asset). The other five apps kept their existing releases. No device install is claimed for these
+bytes; see [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
 ### Live Guard 2.51 — themes, a subject menu and "fill my plan from the SMS"
 
 Owner request, 20 October 2026: *"we need themes to choose same color are boring"*, *"change the UI
