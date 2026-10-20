@@ -45,6 +45,31 @@ physical-device result is claimed for these bytes. The previous instance of this
 2.50) is the last release with a recorded owner install. CI checks, a compiled APK and a published
 asset are not Play Protect approval, not Play Store review and not an all-device compatibility claim.
 
+## Ramesh Radio 1.14 — published alone, 20 October 2026
+
+Ramesh Radio 1.14 / code 14 was published by Build APK [run 39413564341](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39413564341)
+from `arena/1c17a6e2-rp-android-apps`. Only Radio's version changed, so only its tag was released;
+Live Guard 2.51, PulseEQ 1.7, Vocal Remover 0.1.13, Oor Arivippu 1.1.1 and Secret Message 1.1.1 kept
+their existing releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `Ramesh-Radio-v1.14.apk` | 14,526,817 | `d3372cbf5c0bcc4a11b260c49d437541fd9a901fd2593dfc61f8da9e4bbe238a` |
+
+Digest read back from the release API after publication.
+
+**What it contains:** the More tab's update section is a readable card with its long explanation
+folded away, the first screen's search and sorting text are one-line rows that open on tap, and the
+songs tab now reads **பாடல்கள் / என் பாடல்கள்** instead of "உள்ளூர் ஒலி". No new permission.
+
+**Not claimed:** these bytes were not installed on a phone before publication. CI built every
+module, ran the radio unit tests and lint, and checked the APK metadata.
+
+**Workflow note:** this publish needed a fix of its own. The Live Guard permission gate ran even
+though Live Guard was already public and compared it against its own latest tag, then failed
+closed and published nothing (run 39412645425). The gate now applies only when Live Guard is the
+app being published.
+
 ## Current active stable releases — as of 20 October 2026
 
 The four-app batch was rebuilt and published on 20 October 2026 by Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275),

@@ -4,6 +4,14 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Published — Ramesh Radio 1.14 (20 October 2026)
+
+Released alone by Build APK run 39413564341. `Ramesh-Radio-v1.14.apk` is 14,526,817 bytes, SHA-256
+`d3372cbf5c0bcc4a11b260c49d437541fd9a901fd2593dfc61f8da9e4bbe238a` (GitHub's digest of the published
+asset). The first attempt (run 39412645425) failed in the Live Guard permission gate, which ran even
+though Live Guard was already public; the gate is now scoped to Live Guard publishes. No device
+install is claimed for these bytes.
+
 ### Ramesh Radio 1.14 — the update card, a quieter first screen and Tamil wording
 
 Owner report, 20 October 2026, with phone screenshots of the More tab: the update block was a wall
