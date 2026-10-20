@@ -2,13 +2,13 @@
 <resources>
     <string name="app_name">Live Guard</string>
     <!-- Home-screen widget (v2.4). -->
-    <string name="widget_description">Battery with the pack's remaining data and days left</string>
+    <string name="widget_description">Battery with the pack\'s remaining data and days left</string>
     <string name="widget_clean">Clean</string>
     <string name="widget_speak">Read brief</string>
     <!-- v1.3: no accessibility service description needed; CleanSweep declares no accessibility service. -->
     <string name="widget_battery_label">Live Guard • Battery &amp; plan</string>
     <string name="widget_data_label">Live Guard • Plan &amp; days</string>
     <string name="widget_phone_label">Live Guard • Security</string>
-    <string name="widget_data_description">Remaining data, days left in the pack and today's usage</string>
+    <string name="widget_data_description">Remaining data, days left in the pack and today\'s usage</string>
     <string name="widget_phone_description">The last saved permission review: high and medium risks and apps checked</string>
 </resources>
