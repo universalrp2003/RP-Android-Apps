@@ -55,6 +55,10 @@ Download `CleanSweep-v2.52.apk` and install it through Android. It installs over
 signing key, so the plan, theme, language and settings are kept. **No new permission is added** — the
 permission list is identical to 2.51.
 
+**Verified in CI:** run 39418752154 compiled both variants, ran every required unit and regression
+suite, verified the APK metadata and the permission delta (no permission added), and uploaded the
+APK. The published digest is recorded in `docs/published-release-digests.md`.
+
 **Device testing:** this build was **not installed on a phone** at the time of writing. It passed the
 CI build, the required unit and regression suites, the APK checks and the permission delta. That is
 not Play Protect approval and not an all-device compatibility claim.
