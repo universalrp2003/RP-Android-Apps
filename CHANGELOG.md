@@ -4,6 +4,43 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Live Guard 2.51 — the pack ends when the operator says, and a booster has dates
+
+Owner request, 20 October 2026: *"some provider plan expire exact time of recharge see jio, if we
+recharge today 5 pm the plan will expire same after expiry date 5pm, some not like airtel so get
+time input also do research and implement best one"* — and, from the same message, the booster
+that was "expired yesterday but i forget to turn off".
+
+**What the research says** (kept as comments in `PlanPolicy` so it cannot drift):
+
+| Operator | When the pack really ends |
+|---|---|
+| Jio | Counts from the recharge moment: 63 days recharged at 5:00 pm ends at 5:00 pm on the last day; a "1 day" data pack is 24 hours, not "until midnight". |
+| Airtel | At midnight — its published terms say *"All validities expire at midnight unless otherwise specified"*, so a 1-day pack bought at 11:50 pm dies nine minutes later. |
+| Vi / BSNL | Same as Airtel. |
+
+- **New — a recharge time in My plan.** One button opens a small dialog: type `5:00`, pick am/pm,
+  done. The time is shown in twelve-hour form everywhere (the app never displays a 24-hour clock).
+- **New — the operator, and how it ends the pack.** Four chips (Jio, Airtel, Vi, BSNL) set the
+  rule automatically, and the rule can be overridden: *Same time as recharge* or *End of the last
+  day*. The screen says which one is in force and why.
+- **The summary is exact.** "Ends 2026-12-10, 5:00 pm · Ends today" appears in My plan, and the
+  Mobile screen's My plan card now carries the same ending instead of a bare date. The countdown
+  is minute-accurate: a pack that dies at 5:00 pm today no longer pretends the day is intact.
+- **Unknown operator → the earlier ending.** If no operator is chosen the app assumes the
+  recharge time. Warning a few hours early is harmless; warning after the SIM has stopped working
+  is not. With no time at all the app keeps the whole last day rather than inventing an hour.
+- **New — booster first and last day.** Set both (or use the *Started today* / *Ends today* chips).
+  A booster whose last day has passed **stops adding to the allowance even when its switch is
+  still on** — the owner's "9.0 GB" was a 6 GB pack plus a forgotten 3 GB booster, so the plan now
+  reports 6 GB again and the card says the booster ended on that date. A booster that has not
+  started yet does not count either.
+- The mirrored pack limit is now repaired in both directions (up when a booster is added, down
+  when it expires), but only while the mirror still holds a value this store wrote — a quota set
+  by hand is never overwritten.
+- Seven new unit tests cover the Jio/Airtel arithmetic, the unknown-operator default, the typed
+  time formats, and the expired/not-yet-started booster.
+
 ### Release batch 2.50 / 1.13 / 1.7 / 0.1.13 — published 20 October 2026
 
 The four-app batch publishes Live Guard, Ramesh Radio, PulseEQ and RP Vocal Remover Studio

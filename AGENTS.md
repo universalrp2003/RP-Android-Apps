@@ -72,6 +72,21 @@
   background, never from the Wi-Fi screen on Android 13+. **Publishing this in a Live Guard
   release adds a dangerous permission (`ACCESS_COARSE_LOCATION`), so the release needs a
   recorded physical-device install before the permission gate will allow publication.**
+- 20 October 2026 (owner request, Live Guard 2.51): a prepaid pack ends on the operator's
+  clock, not at a generic midnight. **Jio** counts validity from the recharge moment (63 days
+  recharged at 5:00 pm ends at 5:00 pm on the last day; a "1 day" data pack is 24 hours).
+  **Airtel**'s terms say every validity expires at midnight, and a 1-day pack bought at 11:50 pm
+  dies nine minutes later; **Vi** and **BSNL** behave the same way. `PlanPolicy.expiryMoment`
+  therefore takes the recharge time, the operator's rule and the day count together, and the app
+  never invents an hour it was not told: with no time, the pack stays valid through the end of
+  the last day. When the operator is unknown the default is *same time as recharge*, because an
+  early warning is harmless and a late one means the SIM has already stopped. Never display a
+  24-hour clock for this (the localization gate rejects it); use `PlanPolicy.formatTime`.
+- 20 October 2026 (owner request, Live Guard 2.51): a booster carries a first and a last day, and
+  a booster whose last day has passed must stop adding to the allowance even if its switch is
+  still on — the owner's own case, where a forgotten 3 GB booster turned a 6 GB pack into
+  "9.0 GB". `PlanPolicy.boosterActive` is the only authority; the mirrored pack limit is repaired
+  downwards as well as upwards, but only while the mirror still holds a value `PlanStore` wrote.
 - Preserve the no-notification/message-reading production design. Do not restore the retired notification listener, Accessibility, SMS, contacts/call-log, or device-admin capabilities without a fresh owner decision and policy/device review. Do not bypass or disable Play Protect to address an install block.
 - Show battery, CPU, RAM, network and age estimates only from truthful available measurements; label OEM-dependent/unavailable readings honestly. A saved review date must be a real completed review, never invented by opening a screen.
 - The 44 °C owner setting is a warning, not an automatic pause threshold. Do not add a processing pause at that temperature without separate rationale.

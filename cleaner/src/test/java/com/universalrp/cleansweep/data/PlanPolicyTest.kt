@@ -6,6 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
+import java.time.LocalTime
 
 class PlanPolicyTest {
 
@@ -90,5 +91,84 @@ class PlanPolicyTest {
         assertEquals(LocalDate.of(2026, 10, 9), PlanPolicy.parseDay("2026-10-09"))
         assertNull(PlanPolicy.parseDay("09-10-2026"))
         assertNull(PlanPolicy.parseDay("2026-13-01"))
+    }
+
+    @Test fun jioCountsValidityToTheMinuteOfTheRecharge() {
+        // Recharged 9 Oct at 5:00 pm for 63 days: the last day is 10 Dec and the pack ends that
+        // day at 5:00 pm, not at midnight.
+        val moment = PlanPolicy.expiryMoment(
+            LocalDate.of(2026, 10, 9), LocalTime.of(17, 0), 63, PlanExpiryRule.SAME_TIME,
+        )
+        assertEquals(LocalDate.of(2026, 12, 10), moment!!.toLocalDate())
+        assertEquals(LocalTime.of(17, 0), moment.toLocalTime())
+    }
+
+    @Test fun airtelAndViEndThePackAtMidnight() {
+        val moment = PlanPolicy.expiryMoment(
+            LocalDate.of(2026, 10, 9), LocalTime.of(17, 0), 63, PlanExpiryRule.END_OF_DAY,
+        )
+        assertEquals(LocalDate.of(2026, 12, 10), moment!!.toLocalDate())
+        assertEquals(LocalTime.of(23, 59, 59), moment.toLocalTime())
+    }
+
+    @Test fun withoutATimeTheAppKeepsTheWholeLastDayInsteadOfInventingAnHour() {
+        val moment = PlanPolicy.expiryMoment(
+            LocalDate.of(2026, 10, 9), null, 3, PlanExpiryRule.SAME_TIME,
+        )
+        assertEquals(LocalDate.of(2026, 10, 11), moment!!.toLocalDate())
+        assertEquals(LocalTime.of(23, 59, 59), moment.toLocalTime())
+        assertNull(PlanPolicy.expiryMoment(null, LocalTime.NOON, 3, PlanExpiryRule.SAME_TIME))
+    }
+
+    @Test fun theOperatorChoosesTheDefaultRuleAndAnUnknownNameIsTheSafeOne() {
+        assertEquals(PlanExpiryRule.SAME_TIME, PlanPolicy.ruleFor("Jio"))
+        assertEquals(PlanExpiryRule.SAME_TIME, PlanPolicy.ruleFor("jio 5G"))
+        assertEquals(PlanExpiryRule.END_OF_DAY, PlanPolicy.ruleFor("Airtel"))
+        assertEquals(PlanExpiryRule.END_OF_DAY, PlanPolicy.ruleFor("Vi"))
+        assertEquals(PlanExpiryRule.END_OF_DAY, PlanPolicy.ruleFor("Vodafone Idea"))
+        assertEquals(PlanExpiryRule.END_OF_DAY, PlanPolicy.ruleFor("BSNL"))
+        // Unknown: assume the earlier ending, because warning early is harmless and warning
+        // after the SIM stopped working is not.
+        assertEquals(PlanExpiryRule.SAME_TIME, PlanPolicy.ruleFor(""))
+        assertEquals(PlanExpiryRule.SAME_TIME, PlanPolicy.ruleFor("Some Local Operator"))
+    }
+
+    @Test fun aTypedTimeIsReadTheWayPeopleTypeIt() {
+        assertEquals(LocalTime.of(17, 0), PlanPolicy.parseTime("5", true))
+        assertEquals(LocalTime.of(5, 0), PlanPolicy.parseTime("5", false))
+        assertEquals(LocalTime.of(17, 30), PlanPolicy.parseTime("5:30 pm"))
+        assertEquals(LocalTime.of(17, 30), PlanPolicy.parseTime("17:30"))
+        assertEquals(LocalTime.of(0, 0), PlanPolicy.parseTime("12 am"))
+        assertEquals(LocalTime.of(12, 0), PlanPolicy.parseTime("12 pm"))
+        assertEquals(LocalTime.of(9, 5), PlanPolicy.parseTime("905"))
+        assertNull(PlanPolicy.parseTime("99"))
+        assertNull(PlanPolicy.parseTime("5:75"))
+        assertNull(PlanPolicy.parseTime(""))
+        assertEquals("5:00 pm", PlanPolicy.formatTime(LocalTime.of(17, 0)))
+        assertEquals("12:00 am", PlanPolicy.formatTime(LocalTime.MIDNIGHT))
+        assertEquals("12:30 pm", PlanPolicy.formatTime(LocalTime.NOON.plusMinutes(30)))
+    }
+
+    @Test fun anExpiredBoosterStopsInflatingTheAllowanceEvenWhenLeftOn() {
+        val plan = PlanSettings(
+            mode = PlanDataMode.TOTAL, totalMb = 6144.0,
+            boosterEnabled = true, boosterMb = 3072.0,
+            boosterEndDay = LocalDate.of(2026, 10, 18),
+        )
+        val today = LocalDate.of(2026, 10, 20)
+        assertFalse(PlanPolicy.boosterActive(plan, today))
+        assertEquals(6144.0, PlanPolicy.effectiveTotalMb(plan, today), 0.01)
+        assertTrue(PlanPolicy.boosterActive(plan, LocalDate.of(2026, 10, 18)))
+        assertEquals(9216.0, PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 18)), 0.01)
+    }
+
+    @Test fun aBoosterThatHasNotStartedYetDoesNotCountEither() {
+        val plan = PlanSettings(
+            mode = PlanDataMode.TOTAL, totalMb = 6144.0,
+            boosterEnabled = true, boosterMb = 3072.0,
+            boosterStartDay = LocalDate.of(2026, 10, 25),
+        )
+        assertEquals(6144.0, PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 20)), 0.01)
+        assertEquals(9216.0, PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 25)), 0.01)
     }
 }

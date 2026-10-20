@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.NetworkSplit
 import com.universalrp.cleansweep.data.PlanDataMode
+import com.universalrp.cleansweep.data.PlanExpiryRule
 import com.universalrp.cleansweep.data.PlanPolicy
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.data.PlanSettings
@@ -237,6 +238,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
             // ---- 4. booster ------------------------------------------------------
             BoosterCard(
                 plan = plan,
+                today = today,
                 onChange = { persist(it) },
                 onEditAmount = { amountTarget = AmountTarget.BOOSTER; showAmountDialog = true },
             )
@@ -330,7 +332,7 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                 PlanDataMode.NONE -> Text(tr("No data plan, so nothing is counted."), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 PlanDataMode.DAILY -> {
                     val boosterShare = if (plan.boosterEnabled)
-                        PlanPolicy.boosterShareMb(todayMb, plan.boosterMb, plan.boosterFirst, plan.dailyMb) else 0.0
+                        PlanPolicy.boosterShareMb(todayMb, PlanPolicy.boosterMbNow(plan, today), plan.boosterFirst, plan.dailyMb) else 0.0
                     val remaining = PlanPolicy.dailyRemainingMb(todayMb, plan)
                     val ratio = if (plan.dailyMb > 0) (PlanPolicy.dailyUsedMb(todayMb, plan) / plan.dailyMb).coerceIn(0.0, 1.0) else 0.0
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -354,7 +356,7 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                     }
                 }
                 PlanDataMode.TOTAL -> {
-                    val total = PlanPolicy.effectiveTotalMb(plan)
+                    val total = PlanPolicy.effectiveTotalMb(plan, today)
                     if (!total.isFinite()) {
                         Text(tr("Unlimited total data on this pack."), style = MaterialTheme.typography.bodySmall, color = GoodGreen)
                     } else {
@@ -372,14 +374,19 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                         Spacer(Modifier.height(6.dp))
                         ProgressBar(ratio)
                     }
-                    val left = PlanPolicy.daysLeft(plan.startDay, plan.days, today)
-                    if (left != null) {
+                    // 2.51 — the countdown follows the clock, not just the calendar: a Jio pack
+                    // that ends at 5:00 pm today must say so on the same afternoon.
+                    val tamilUi = com.universalrp.cleansweep.data.Lang.isTamil
+                    val now = java.time.ZonedDateTime.now()
+                    val remaining = PlanPolicy.remainingText(plan, now, tamilUi)
+                    if (remaining != null) {
                         Spacer(Modifier.height(6.dp))
+                        val moment = PlanPolicy.expiryMoment(plan.startDay, plan.startTime, plan.days, plan.expiryRule)
+                        val ended = moment != null && !now.isBefore(moment)
                         Text(
-                            if (left <= 0) tr("This pack has ended.")
-                            else tr("%d days left on this pack.", left),
+                            remaining + (PlanPolicy.endsAtText(plan, tamilUi)?.let { " · " + it } ?: ""),
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (left <= 3) WarnAmber else TextSecondary,
+                            color = if (ended) DangerRed else if (moment != null && now.plusHours(24) > moment) WarnAmber else TextSecondary,
                         )
                     }
                 }
@@ -392,7 +399,8 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
 private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSettings) -> Unit) {
     var startText by remember(plan.startDay) { mutableStateOf(plan.startDay?.toString().orEmpty()) }
     var daysText by remember(plan.days) { mutableStateOf(if (plan.days > 0) plan.days.toString() else "") }
-    val expiry = PlanPolicy.expiry(plan.startDay, plan.days)
+    var showTime by remember { mutableStateOf(false) }
+    val tamil = com.universalrp.cleansweep.data.Lang.isTamil
 
     SectionCard(title = tr("3. How long is the pack?")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -433,18 +441,152 @@ private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
                 )
             }
         }
-        Spacer(Modifier.height(6.dp))
+
+        // ---- the recharge moment (2.51) -------------------------------------
+        Spacer(Modifier.height(10.dp))
+        Text(tr("Recharged at"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            AmountChip(
+                label = plan.startTime?.let { PlanPolicy.formatTime(it) } ?: tr("Add the recharge time"),
+                selected = plan.startTime != null,
+                modifier = Modifier.weight(1f),
+                onClick = { showTime = true },
+            )
+            if (plan.startTime != null) {
+                TextButton(onClick = { onChange(plan.copy(startTime = null)) }) {
+                    Text(tr("Clear"), color = TextSecondary)
+                }
+            }
+        }
         Text(
-            if (expiry == null) tr("Add a start date and the number of days to see the last day.")
-            else tr("Last day of the pack: %s.", expiry.toString()),
+            tr("The time of day decides when a pack that counts to the minute really ends."),
             style = MaterialTheme.typography.labelSmall,
-            color = if (expiry != null && expiry.isBefore(today)) DangerRed else TextSecondary,
+            color = TextSecondary,
+        )
+
+        // ---- who the operator is, and how they end a pack -------------------
+        Spacer(Modifier.height(10.dp))
+        Text(tr("Operator"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            PlanPolicy.OPERATORS.forEach { name ->
+                AmountChip(
+                    label = name,
+                    selected = plan.operatorName.equals(name, ignoreCase = true),
+                    modifier = Modifier.weight(1f),
+                    onClick = { onChange(plan.copy(operatorName = name, expiryRule = PlanPolicy.ruleFor(name))) },
+                )
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(tr("How the pack ends"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            ModeChip(
+                label = tr("Same time as recharge"),
+                hint = "Jio",
+                selected = plan.expiryRule == PlanExpiryRule.SAME_TIME,
+                modifier = Modifier.weight(1f),
+                onClick = { onChange(plan.copy(expiryRule = PlanExpiryRule.SAME_TIME)) },
+            )
+            ModeChip(
+                label = tr("End of the last day"),
+                hint = "Airtel · Vi",
+                selected = plan.expiryRule == PlanExpiryRule.END_OF_DAY,
+                modifier = Modifier.weight(1f),
+                onClick = { onChange(plan.copy(expiryRule = PlanExpiryRule.END_OF_DAY)) },
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            when {
+                plan.expiryRule == PlanExpiryRule.SAME_TIME && plan.startTime != null ->
+                    tr("Jio counts to the minute: a 63-day pack recharged at 5:00 pm ends at 5:00 pm on the last day.")
+                plan.expiryRule == PlanExpiryRule.SAME_TIME ->
+                    tr("Jio counts to the minute. Add the recharge time for the exact ending; without it the app only knows the date.")
+                else -> tr("Airtel and Vi end every pack at 11:59 pm on the last day, whatever time you recharged.")
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+        )
+
+        // ---- what that means in one line ------------------------------------
+        Spacer(Modifier.height(8.dp))
+        val moment = PlanPolicy.expiryMoment(plan.startDay, plan.startTime, plan.days, plan.expiryRule)
+        Text(
+            if (moment == null) tr("Add a start date and the number of days to see the last day.")
+            else (PlanPolicy.endsAtText(plan, tamil) ?: "") + " · " +
+                (PlanPolicy.remainingText(plan, java.time.ZonedDateTime.now(), tamil) ?: ""),
+            style = MaterialTheme.typography.labelSmall,
+            color = if (moment != null && !java.time.ZonedDateTime.now().isBefore(moment)) DangerRed else TextSecondary,
+        )
+    }
+
+    if (showTime) {
+        TimeDialog(
+            current = plan.startTime,
+            onDismiss = { showTime = false },
+            onSave = { time -> onChange(plan.copy(startTime = time)); showTime = false },
         )
     }
 }
 
 @Composable
-private fun BoosterCard(plan: PlanSettings, onChange: (PlanSettings) -> Unit, onEditAmount: () -> Unit) {
+private fun TimeDialog(current: java.time.LocalTime?, onDismiss: () -> Unit, onSave: (java.time.LocalTime) -> Unit) {
+    // Pre-fill the hour and minute without the am/pm word; the chips below decide am/pm.
+    var text by remember {
+        mutableStateOf(
+            current?.let {
+                val shown = PlanPolicy.formatTime(it).removeSuffix(" am").removeSuffix(" pm")
+                shown
+            }.orEmpty(),
+        )
+    }
+    var pm by remember { mutableStateOf(current?.hour?.let { it >= 12 } ?: true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(tr("Recharge time"), fontWeight = FontWeight.Bold) },
+        text = {
+            Column {
+                Text(
+                    tr("Type the time your recharge completed, then choose am or pm."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                )
+                Spacer(Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it; error = null },
+                    label = { Text(tr("Time")) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    AmountChip(label = "AM", selected = !pm, modifier = Modifier.weight(1f), onClick = { pm = false })
+                    AmountChip(label = "PM", selected = pm, modifier = Modifier.weight(1f), onClick = { pm = true })
+                }
+                error?.let {
+                    Spacer(Modifier.height(6.dp))
+                    Text(it, color = DangerRed, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val parsed = PlanPolicy.parseTime(text, pm)
+                if (parsed == null) error = tr("Enter a time like 5:00 or 17:00.")
+                else onSave(parsed)
+            }) { Text(tr("Save")) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Cancel")) } },
+    )
+}
+
+@Composable
+private fun BoosterCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSettings) -> Unit, onEditAmount: () -> Unit) {
     SectionCard(title = tr("4. Data booster")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -496,8 +638,79 @@ private fun BoosterCard(plan: PlanSettings, onChange: (PlanSettings) -> Unit, on
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
             )
+            Spacer(Modifier.height(10.dp))
+            // 2.51 — the date range. A booster that ran out yesterday stops counting even when
+            // its switch was left on, which is the exact case the owner reported ("9.0 GB").
+            BoosterDates(plan = plan, today = today, onChange = onChange)
         }
     }
+}
+
+@Composable
+private fun BoosterDates(plan: PlanSettings, today: LocalDate, onChange: (PlanSettings) -> Unit) {
+    var startText by remember(plan.boosterStartDay) { mutableStateOf(plan.boosterStartDay?.toString().orEmpty()) }
+    var endText by remember(plan.boosterEndDay) { mutableStateOf(plan.boosterEndDay?.toString().orEmpty()) }
+    Text(tr("Booster dates"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+    Spacer(Modifier.height(4.dp))
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        OutlinedTextField(
+            value = startText,
+            onValueChange = { text ->
+                startText = text.take(10)
+                PlanPolicy.parseDay(text)?.let { onChange(plan.copy(boosterStartDay = it)) }
+            },
+            label = { Text(tr("First day")) },
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+        )
+        Spacer(Modifier.width(6.dp))
+        OutlinedTextField(
+            value = endText,
+            onValueChange = { text ->
+                endText = text.take(10)
+                PlanPolicy.parseDay(text)?.let { onChange(plan.copy(boosterEndDay = it)) }
+            },
+            label = { Text(tr("Last day")) },
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+        )
+    }
+    Spacer(Modifier.height(4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        AmountChip(
+            label = tr("Started today"),
+            selected = plan.boosterStartDay == today,
+            modifier = Modifier.weight(1f),
+            onClick = { startText = today.toString(); onChange(plan.copy(boosterStartDay = today)) },
+        )
+        AmountChip(
+            label = tr("Ends today"),
+            selected = plan.boosterEndDay == today,
+            modifier = Modifier.weight(1f),
+            onClick = { endText = today.toString(); onChange(plan.copy(boosterEndDay = today)) },
+        )
+        AmountChip(
+            label = tr("Clear"),
+            selected = plan.boosterStartDay == null && plan.boosterEndDay == null,
+            modifier = Modifier.weight(1f),
+            onClick = {
+                startText = ""
+                endText = ""
+                onChange(plan.copy(boosterStartDay = null, boosterEndDay = null))
+            },
+        )
+    }
+    Spacer(Modifier.height(4.dp))
+    val expired = plan.boosterEndDay != null && plan.boosterEndDay.isBefore(today)
+    Text(
+        when {
+            expired -> tr("This booster ended on %s, so its data is no longer counted. Leave the switch on only for a record.", plan.boosterEndDay.toString())
+            plan.boosterEndDay != null -> tr("Counted until %s, then it stops adding to the allowance.", plan.boosterEndDay.toString())
+            else -> tr("Optional: set the days the booster is valid. Without them it counts until you switch it off.")
+        },
+        style = MaterialTheme.typography.labelSmall,
+        color = if (expired) WarnAmber else TextSecondary,
+    )
 }
 
 @Composable

@@ -1047,14 +1047,16 @@ private fun DataUsageCard(state: UiState, vm: MainViewModel) {
                             color = AccentCyan,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        val endDay = com.universalrp.cleansweep.data.PlanPolicy.expiry(planSummary.startDay, planSummary.days)
+                        // 2.51 — the ending carries the time of day too, so the summary agrees
+                        // with My plan instead of showing a date that hides seven hours.
+                        val endsText = com.universalrp.cleansweep.data.PlanPolicy.endsAtText(planSummary, tamilUi)
                         Text(
                             buildString {
                                 if (planSummary.boosterEnabled && planSummary.boosterMb > 0) {
                                     append(tr("Booster") + " " + com.universalrp.cleansweep.data.PlanPolicy.formatMb(planSummary.boosterMb))
                                     append(" · ")
                                 }
-                                if (endDay != null) append(tr("ends %s", endDay.toString()))
+                                if (endsText != null) append(endsText)
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondary,
