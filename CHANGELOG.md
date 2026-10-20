@@ -4,6 +4,12 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Published — Ramesh Radio 1.15 (20 October 2026)
+
+Released alone by Build APK run 39415226287. `Ramesh-Radio-v1.15.apk` is 14,543,201 bytes, SHA-256
+`b7ef2321f12faaf48f0d21b514a586bc6c906821d672a8f9459e55a706903ce5`. It supersedes 1.14 and carries
+its update-card fix as well. No device install is claimed.
+
 ### Ramesh Radio 1.15 — the first screen shows stations, not paragraphs
 
 Owner priority for the next Radio pass: *"home page the unnecessary text occupying the space

@@ -70,6 +70,27 @@ though Live Guard was already public and compared it against its own latest tag,
 closed and published nothing (run 39412645425). The gate now applies only when Live Guard is the
 app being published.
 
+## Ramesh Radio 1.15 — the first screen shows stations, not paragraphs (20 October 2026)
+
+Published by Build APK [run 39415226287](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39415226287)
+from `arena/1c17a6e2-rp-android-apps`. Only Radio's version changed, so only its tag was released;
+Live Guard 2.51 and the other apps kept their releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `Ramesh-Radio-v1.15.apk` | 14,543,201 | `b7ef2321f12faaf48f0d21b514a586bc6c906821d672a8f9459e55a706903ce5` |
+
+Digest read back from the release API after publication. It supersedes 1.14, published fifteen
+minutes earlier on the owner's instruction to take the Home and Tamil UI first; 1.15 contains the
+1.14 update-card fix as well, so a phone that updates once receives both.
+
+**What it contains:** six primary categories with the rest behind **More ▾ / Less ▴**, a one-line
+ellipsised header, an action-first empty state, a data pill that follows the app language, and
+unwrapped, centred bottom-bar labels for Tamil. No new permission.
+
+**Not claimed:** these bytes were not installed on a phone before publication. CI compiled every
+module, ran the radio unit tests, lint and the APK checks.
+
 ## Current active stable releases — as of 20 October 2026
 
 The four-app batch was rebuilt and published on 20 October 2026 by Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275),
