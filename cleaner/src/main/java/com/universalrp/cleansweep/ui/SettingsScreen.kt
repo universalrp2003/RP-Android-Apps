@@ -1,5 +1,8 @@
 package com.universalrp.cleansweep.ui
 
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.draw.clip
 
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -106,6 +109,27 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                     Text(tr("Core Live Guard does not read other apps' notifications or messages. It declares no notification-listener, SMS, Contacts, call-log, Accessibility or device-admin capability. Ordinary Live Guard alerts (battery, charging, storage, daily brief) remain."), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 }
             }
+            // ------------------------------------------------------- theme (2.51)
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        tr("Theme"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        tr("Pick the colours you like. Every screen of the app follows it."),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    AppThemeStrip(
+                        selected = state.themeId,
+                        onPick = { vm.setTheme(it) },
+                    )
+                }
+            }
+
             // ------------------------------------------------------- voice (v2.4)
             PanelCard(Modifier.fillMaxWidth()) {
                 Row(
@@ -712,4 +736,45 @@ private fun ModeChip(
         },
         fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
     )
+}
+
+/**
+ * 2.51 — one tappable tile per theme: the three colours that matter (background, accent, alt)
+ * so the choice is visible before it is applied, plus the name in the current language.
+ */
+@Composable
+private fun AppThemeStrip(selected: String, onPick: (String) -> Unit) {
+    val palettes = com.universalrp.cleansweep.ui.theme.Palettes.all
+    Row(
+        Modifier.horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        palettes.forEach { palette ->
+            val isSelected = palette.id == selected
+            Column(
+                Modifier
+                    .width(76.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(palette.surface)
+                    .border(1.5.dp, if (isSelected) palette.accent else palette.outline, RoundedCornerShape(14.dp))
+                    .clickable { onPick(palette.id) }
+                    .padding(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(Modifier.size(18.dp).clip(RoundedCornerShape(5.dp)).background(palette.bg))
+                    Box(Modifier.size(18.dp).clip(RoundedCornerShape(5.dp)).background(palette.accent))
+                    Box(Modifier.size(18.dp).clip(RoundedCornerShape(5.dp)).background(palette.accentAlt))
+                }
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    if (Lang.isTamil) palette.tamilName else palette.name,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isSelected) palette.accent else palette.textSecondary,
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
 }

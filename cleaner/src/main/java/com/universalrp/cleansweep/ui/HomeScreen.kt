@@ -31,7 +31,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.AutoFixHigh
 import androidx.compose.material.icons.outlined.ChevronRight
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.BatteryFull
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -41,7 +40,6 @@ import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.RecordVoiceOver
 import androidx.compose.material.icons.outlined.SmartToy
 import androidx.compose.material.icons.outlined.Wifi
-import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.VolumeOff
@@ -79,6 +77,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.ui.text.font.FontWeight
@@ -115,7 +114,12 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HomeScreen(state: UiState, vm: MainViewModel, listState: LazyListState) {
+fun HomeScreen(
+    state: UiState,
+    vm: MainViewModel,
+    listState: LazyListState,
+    onOpenMenu: () -> Unit = {},
+) {
     val owner = LocalLifecycleOwner.current
     val context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.DisposableEffect(context) {
@@ -162,18 +166,17 @@ fun HomeScreen(state: UiState, vm: MainViewModel, listState: LazyListState) {
                 ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
-                Modifier
-                    .size(34.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Brush.linearGradient(listOf(AccentCyan, AccentViolet))),
-                contentAlignment = Alignment.Center,
+            // 2.51: the logo became the menu button, so every subject is one swipe or one tap
+            // away instead of a long scroll down this list.
+            IconButton(
+                onClick = onOpenMenu,
+                modifier = Modifier.size(34.dp),
             ) {
                 Icon(
-                    Icons.Outlined.Shield,
-                    contentDescription = null,
-                    tint = TextPrimary,
-                    modifier = Modifier.size(19.dp),
+                    Icons.Outlined.Menu,
+                    contentDescription = tr("Menu"),
+                    tint = AccentCyan,
+                    modifier = Modifier.size(24.dp),
                 )
             }
             Spacer(Modifier.width(HomeLayoutPolicy.HEADER_ICON_GAP_DP.dp))
@@ -217,17 +220,6 @@ fun HomeScreen(state: UiState, vm: MainViewModel, listState: LazyListState) {
                 Icon(
                     Icons.Outlined.Settings,
                     contentDescription = tr("Settings"),
-                    tint = TextSecondary,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-            IconButton(
-                onClick = { vm.navigate(Screen.ABOUT) },
-                modifier = Modifier.size(38.dp),
-            ) {
-                Icon(
-                    Icons.Outlined.Info,
-                    contentDescription = tr("About"),
                     tint = TextSecondary,
                     modifier = Modifier.size(20.dp),
                 )
@@ -279,13 +271,11 @@ fun HomeScreen(state: UiState, vm: MainViewModel, listState: LazyListState) {
 
             item(key = "published_update") { LiveGuardUpdateCard() }
             item(key = "reviewed_feature_setup") { FeatureSetupHomeCard(state, vm) }
+
+            // 2.51 — order is now by importance, not by the date each card was added:
+            // what the phone has, then the one button that cleans it, then the plan. The
+            // owner's complaint was a long scroll before reaching anything useful.
             item(key = "storage") { LiveGuardMetricsMatrix(state, vm) }
-
-            item(key = "status_pill_controls") { StatusPillHomeControls(state, vm) }
-
-            item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
-
-            item(key = "history_tools") { InsightsShortcut(vm) }
 
             item(key = "scanbutton") {
                 GradientButton(
@@ -300,6 +290,11 @@ fun HomeScreen(state: UiState, vm: MainViewModel, listState: LazyListState) {
             if (!state.legacyStorageOk) {
                 item(key = "legacy") { LegacyStorageCard(vm) }
             }
+
+            item(key = "section_plan") { SectionTitle(tr("Your plan & alerts")) }
+            item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
+            item(key = "status_pill_controls") { StatusPillHomeControls(state, vm) }
+            item(key = "history_tools") { InsightsShortcut(vm) }
 
             state.health?.let { health ->
                 item(key = "health") {
@@ -343,10 +338,11 @@ fun HomeScreen(state: UiState, vm: MainViewModel, listState: LazyListState) {
                 }
             }
 
+            item(key = "section_help") { SectionTitle(tr("Help & analysis")) }
             item(key = "assistant") { AssistantCard(state, vm) }
 
             item(key = "quick") {
-                SectionTitle(tr("Phone health, security & network"))
+                SectionTitle(tr("Phone, network & security"))
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         QuickCard(

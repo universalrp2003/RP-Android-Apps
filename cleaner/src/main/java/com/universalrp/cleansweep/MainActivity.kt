@@ -17,6 +17,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.ui.AppRoot
 import com.universalrp.cleansweep.ui.theme.CleanSweepTheme
+import com.universalrp.cleansweep.ui.theme.Palette
+import com.universalrp.cleansweep.ui.theme.ThemeStore
 
 class MainActivity : ComponentActivity() {
 
@@ -47,6 +49,9 @@ class MainActivity : ComponentActivity() {
         // line ran could render Tamil on a phone whose saved language is English — one half of
         // the mixed-language cards the owner reported. LanguageSourcePolicy documents the rule.
         Lang.set(Lang.languageIn(this))
+        // 2.51: the chosen colour theme, applied before the first frame for the same reason as
+        // the language — no card may flash a colour that is not the saved one.
+        Palette.apply(ThemeStore.currentId(this))
         // Sensitive permissions are explained and requested from reviewed setup, not silently on launch.
         com.universalrp.cleansweep.updates.LiveGuardUpdates.checkOnLaunch(this)
         setContent {

@@ -6,18 +6,23 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.Screen
 import com.universalrp.cleansweep.ui.theme.Bg
@@ -37,6 +42,22 @@ fun AppRoot(vm: MainViewModel) {
         }
     }
 
+    // 2.51 — the side menu. A swipe from the left edge opens it from any screen, and Home also
+    // has a button, so a user who never discovers the gesture is not stuck.
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = true,
+        scrimColor = androidx.compose.ui.graphics.Color(0x99000000),
+        drawerContent = {
+            LiveGuardMenu(
+                vm = vm,
+                current = state.screen,
+                onClose = { scope.launch { drawerState.close() } },
+            )
+        },
+    ) {
     Box(
         Modifier
             .fillMaxSize()
@@ -53,11 +74,11 @@ fun AppRoot(vm: MainViewModel) {
         // keeps text composed in the old language, because tr() reads the process-wide
         // Lang.current rather than anything observable. Keying the screen tree on the language
         // mirror rebuilds it, so every tr() re-reads the authority in one consistent language.
-        key(state.lang) {
+        key(state.lang, state.themeId) {
             when (state.screen) {
                 // v2.7: the Home list state lives in the ViewModel, so coming back from a scan
                 // lands where the user was instead of jumping to the top.
-                Screen.HOME -> HomeScreen(state, vm, vm.homeListState)
+                Screen.HOME -> HomeScreen(state, vm, vm.homeListState, onOpenMenu = { scope.launch { drawerState.open() } })
                 Screen.SCANNING -> ScanScreen(state, vm)
                 Screen.RESULTS -> ResultsScreen(state, vm)
                 Screen.APP_CACHE -> AppCacheScreen(state, vm)
@@ -90,6 +111,7 @@ fun AppRoot(vm: MainViewModel) {
                 contentColor = TextPrimary,
             )
         }
+    }
     }
     LiveGuardUpdatePrompt()
 }

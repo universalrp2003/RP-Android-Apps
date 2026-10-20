@@ -204,6 +204,8 @@ data class UiState(
     val wifiPermission: Boolean = false,
     // Language (English / Tamil) — the whole menu follows it
     val lang: AppLang = AppLang.EN,
+    /** 2.51: the chosen colour theme; AppRoot keys the tree on it so a switch repaints at once. */
+    val themeId: String = "midnight",
     // Mobile network, latency, speed test and data usage
     val mobile: MobileSnapshot? = null,
     val mobileBusy: Boolean = false,
@@ -372,7 +374,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // makes UiState.lang say the same thing, so no card can render the opposite language.
         val resolvedLang = LanguageSourcePolicy.resolve(prefs.getString(Lang.KEY, null), Lang.current)
         if (Lang.current != resolvedLang) Lang.set(resolvedLang)
+        // 2.51: the palette is process-wide (the widget reads the same colours), so resolve the
+        // saved theme here too; MainActivity applies it before the first composition.
+        val resolvedTheme = com.universalrp.cleansweep.ui.theme.ThemeStore.currentId(ctx)
+        com.universalrp.cleansweep.ui.theme.Palette.apply(resolvedTheme)
         mutate { it.copy(lang = resolvedLang,
+            themeId = resolvedTheme,
             includeSystemApps = prefs.getBoolean("cache_include_system", MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM),
             securityIncludeSystemApps = prefs.getBoolean("security_include_system", MonitorDefaultsPolicy.SECURITY_INCLUDE_SYSTEM)) }
         viewModelScope.launch {
@@ -454,8 +461,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 mutate { it.copy(lang = lang) }
                 refreshAssistantWelcome()
                 ChargeMonitorService.refreshIfRunning()
-                com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
-            }
+                    }
         }
         // The speed test remembers the size the user chose last time and nothing else.
         viewModelScope.launch {
@@ -2515,6 +2521,19 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // -------------------------------------------------------------- language
 
     /** English or Tamil. Applied at once: every screen re-reads the table on recomposition. */
+    /**
+     * 2.51 — switch theme. Saves the choice, repaints the process-wide palette immediately and
+     * bumps the state so AppRoot rebuilds the screen tree (a plain object cannot be observed by
+     * Compose, and keying the tree is how the language switch already works).
+     */
+    fun setTheme(id: String) {
+        val palette = com.universalrp.cleansweep.ui.theme.Palettes.byId(id)
+        com.universalrp.cleansweep.ui.theme.ThemeStore.save(ctx, palette.id)
+        com.universalrp.cleansweep.ui.theme.Palette.apply(palette.id)
+        mutate { it.copy(themeId = palette.id, message = if (Lang.isTamil) "தோற்றம்: " + palette.tamilName else "Theme: " + palette.name) }
+        com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
+    }
+
     fun setLanguage(lang: AppLang) {
         cancelAiReport(showMessage = false); cancelDeviceIdentification(showMessage = false)
         Lang.set(lang)
