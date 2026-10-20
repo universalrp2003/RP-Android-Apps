@@ -110,6 +110,7 @@ import com.universalrp.cleansweep.ui.theme.DangerRed
 import com.universalrp.cleansweep.ui.theme.AccentViolet
 import com.universalrp.cleansweep.ui.theme.GoodGreen
 import com.universalrp.cleansweep.ui.theme.OutlineC
+import com.universalrp.cleansweep.ui.theme.SurfaceC
 import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
 import com.universalrp.cleansweep.ui.theme.TextSecondary
