@@ -23,10 +23,10 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.49",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.12",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.6",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.12",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.50",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.13",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1",
 }
 
@@ -171,10 +171,10 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "live-guard"', 'version = "2.49"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.12"',
-            'tagPrefix = "pulseeq"', 'version = "1.6"',
-            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.12"',
+            'tagPrefix = "live-guard"', 'version = "2.50"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.13"',
+            'tagPrefix = "pulseeq"', 'version = "1.7"',
+            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.13"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.1"',
             'tagPrefix = "secret-message"', 'version = "1.1.1"',
         )

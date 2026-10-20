@@ -1209,10 +1209,10 @@ fun OorArivippuScreen(
                     Divider(color = Color(0xFFE2E8F0))
                     Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                     val releaseLinks = listOf(
-                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.49",
-                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.12",
-                        ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.6",
-                        ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.12",
+                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.50",
+                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.13",
+                        ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7",
+                        ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13",
                         ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1",
                         ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1"
                     )

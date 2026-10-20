@@ -4,7 +4,26 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
-### Live Guard — nearby cell towers, and one pack number everywhere (not built or published yet)
+### Release batch 2.50 / 1.13 / 1.7 / 0.1.13 — prepared 20 October 2026, not yet published
+
+The four-app batch publishes Live Guard, Ramesh Radio, PulseEQ and RP Vocal Remover Studio
+together and refuses to reuse an existing tag, so all four versions move even though only two
+apps changed:
+
+| App | Version / code | Change |
+|---|---:|---|
+| Live Guard (CleanSweep) | 2.50 / 55 | nearby cell towers, one pack number everywhere |
+| Ramesh Radio | 1.13 / 13 | last station on launch, compact search row |
+| PulseEQ | 1.7 / 8 | no functional change; version raised for the batch |
+| RP Vocal Remover Studio | 0.1.13 / 14 | no functional change; version raised for the batch |
+
+The build (run 39351894839) already compiled and signed the pre-bump source. Publication is held
+back on purpose: 2.50 adds `ACCESS_COARSE_LOCATION`, and the owner's 12 October 2026 rule requires
+a recorded physical-device install for a newly added dangerous permission
+(`docs/live-guard-2.50-device-test-plan.md` describes the test). Nothing in this batch is
+published yet, and no device test is claimed.
+
+### Live Guard 2.50 — nearby cell towers, and one pack number everywhere (built, not yet published)
 
 Owner request, 20 October 2026: the Mobile screen said *"No cell tower details: Android only
 shares them with Location allowed"* and offered no way to fix it.
@@ -29,7 +48,7 @@ shares them with Location allowed"* and offered no way to fix it.
   for. Record a physical-device install of the candidate APK (`docs/live-guard-<version>-device-evidence.md`)
   before a release that contains this change can be published.
 
-### Live Guard — one pack number everywhere (not built or published yet)
+### Live Guard — one pack number everywhere (shipped in 2.50)
 
 Owner-reported from the phone on 19 October 2026: My plan said **3.5 GB left of 7.5 GB**
 while the Live Guard notification and pill said **488 MB left of 4.5 GB** for the same
@@ -59,7 +78,7 @@ recharge, and the 4G/5G card said **3.53 GB left** next to a **488 MB** total re
 - Version name/code are unchanged in this source tree (`2.49` / `54`); a release that
   changes the APK bytes still needs its own version bump and device test.
 
-### Ramesh Radio — last station on launch, compact search row (not built or published yet)
+### Ramesh Radio 1.13 — last station on launch, compact search row (built, not yet published)
 
 Owner request, 20 October 2026.
 
