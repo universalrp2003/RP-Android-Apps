@@ -4,6 +4,14 @@ This guide covers the four legacy batch modules and the separately released Oor 
 
 ## Publishing a single app (from 20 October 2026)
 
+### The Live Guard permission gate applies only to Live Guard publishes
+
+The strict permission/device-evidence gate runs **only when Live Guard itself is being published**.
+`gh release view "$LIVE_GUARD_TAG"` decides that, not `releases/latest-tag.txt`: on 20 October 2026
+a publish of Ramesh Radio 1.14 compared Live Guard against its own latest tag, could not read a
+previous manifest, failed closed and published nothing. Do not answer a failure like that by
+removing the gate or weakening the fail-closed comparison — scope it to the app being published.
+
 The four apps no longer have to move together. The publish step lists the four current versions,
 skips any whose release tag is already public, and publishes only the rest — so a Live Guard fix
 does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
