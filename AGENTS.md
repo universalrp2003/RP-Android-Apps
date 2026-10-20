@@ -87,6 +87,18 @@
   still on — the owner's own case, where a forgotten 3 GB booster turned a 6 GB pack into
   "9.0 GB". `PlanPolicy.boosterActive` is the only authority; the mirrored pack limit is repaired
   downwards as well as upwards, but only while the mirror still holds a value `PlanStore` wrote.
+- 20 October 2026 (owner decision): **only the app that changed may be published.** The owner's
+  words: *"No need to push all applications only bug fixed updated one must need published why
+  this unwanted update user will get irritation they will hate my application."* The publish step
+  filters the four bundled versions down to those whose release tag is not public yet, skips the
+  rest, and exits successfully when nothing is new. Never re-introduce a rule that bumps all four
+  versions for one app's fix.
+- 20 October 2026 (owner request, Live Guard 2.51): a booster is a **separate pool**. Android
+  measures every byte the radio carries, but the operator charges the booster's days to the
+  booster. `PlanPolicy.usageAgainstAllowance` subtracts the bytes measured inside the booster's
+  date range whenever the booster is not running, and adds them back while it is. This is what
+  made Live Guard say "1.05 GB left" while Airtel said "4.3 GB left" — do not "fix" it by showing
+  the raw measured total again.
 - Preserve the no-notification/message-reading production design. Do not restore the retired notification listener, Accessibility, SMS, contacts/call-log, or device-admin capabilities without a fresh owner decision and policy/device review. Do not bypass or disable Play Protect to address an install block.
 - Show battery, CPU, RAM, network and age estimates only from truthful available measurements; label OEM-dependent/unavailable readings honestly. A saved review date must be a real completed review, never invented by opening a screen.
 - The 44 °C owner setting is a warning, not an automatic pause threshold. Do not add a processing pause at that temperature without separate rationale.

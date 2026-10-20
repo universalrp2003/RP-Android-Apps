@@ -48,6 +48,14 @@ object DataUsageTracker {
         val dailyProgressRatio: Float = 0f,
         val formattedDailyRemaining: String = "",
         val dailyLimitActive: Boolean = false,
+        /**
+         * 2.51 — mobile bytes measured inside the booster's own date range (clamped to the pack
+         * window). They belong to the booster's pool, not to the base pack, so subtracting them
+         * is what makes Live Guard agree with the operator's app after a booster has ended.
+         */
+        val boosterBytes: Long = 0L,
+        /** True when [boosterBytes] came from a real measurement rather than the fallback. */
+        val boosterBytesMeasured: Boolean = false,
     )
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -118,6 +126,30 @@ object DataUsageTracker {
         val manager = context.getSystemService(Context.NETWORK_STATS_SERVICE) as? NetworkStatsManager
         val fullToday = if (access && manager != null) queryMobileTotal(manager, midnight, now) else null
         val fullPack = if (access && manager != null) queryMobileTotal(manager, start, now) else null
+        // 2.51 — a booster is a second pool. Measure the bytes that landed inside its own date
+        // range, so an expired booster can be taken out of the base pack instead of inflating
+        // the usage the operator never charged to the pack (owner's 4.95 GB vs Airtel's 4.3 GB).
+        var boosterMeasured = 0L
+        var boosterIsMeasured = false
+        val planForPools = runCatching { PlanStore.load(context) }.getOrNull()
+        runCatching {
+            val plan = planForPools
+            if (plan != null && plan.boosterEnabled && (plan.boosterStartDay != null || plan.boosterEndDay != null) && manager != null && access) {
+                val zone = java.time.ZoneId.systemDefault()
+                val from = plan.boosterStartDay?.atStartOfDay(zone)?.toInstant()?.toEpochMilli() ?: start
+                val to = plan.boosterEndDay
+                    ?.plusDays(1)?.atStartOfDay(zone)?.toInstant()?.toEpochMilli()?.coerceAtMost(now)
+                    ?: now
+                val windowStart = from.coerceAtLeast(start)
+                val windowEnd = to.coerceAtLeast(windowStart)
+                if (windowEnd > windowStart) {
+                    queryMobileTotal(manager, windowStart, windowEnd)?.let {
+                        boosterMeasured = it
+                        boosterIsMeasured = true
+                    }
+                }
+            }
+        }
         var available = fullToday != null && fullPack != null
         val partial = !available
         var today = fullToday ?: 0
@@ -141,6 +173,13 @@ object DataUsageTracker {
                     .apply { if (oldDay != todayKey) putLong(KEY_TODAY_BASELINE_BYTES, current) }.apply()
             }
         }
+        // 2.51 — the booster is a separate pool. While it is running its bytes are part of the
+        // combined allowance, so nothing is removed. Once its last day has passed (or before its
+        // first), the operator's app shows only the base pack again — and so must we, or a 6 GB
+        // pack with a spent 3 GB booster reads as 1 GB left while the carrier says 4.3 GB.
+        if (planForPools != null && boosterMeasured > 0L && planForPools.boosterEnabled) {
+            pack = PlanPolicy.usageAgainstAllowance(planForPools, pack, boosterMeasured)
+        }
         val fallback = context.getSharedPreferences("cleansweep_state", Context.MODE_PRIVATE)
         val configured = if (store.contains(KEY_PACK_LIMIT_GB)) store.getFloat(KEY_PACK_LIMIT_GB, DEFAULT_PACK_LIMIT_GB) else fallback.getFloat(KEY_PACK_LIMIT_GB, DEFAULT_PACK_LIMIT_GB)
         val limitGb = configured.takeIf { it.isFinite() && it > 0 && it <= 100_000 } ?: DEFAULT_PACK_LIMIT_GB
@@ -157,7 +196,8 @@ object DataUsageTracker {
             if (available && limit > 0) (pack.toFloat() / limit).coerceIn(0f, 1f) else 0f, unlimited, available, partial,
             if (!available) "Mobile statistics unavailable" else if (partial) "Observed mobile counter (partial)" else "Android mobile network statistics", now,
             dailyGb, dailyLimit, dailyRemaining, dailyProgress,
-            if (dailyGb > 0f) formatBytesSafe(dailyRemaining) else "", dailyGb > 0f)
+            if (dailyGb > 0f) formatBytesSafe(dailyRemaining) else "", dailyGb > 0f,
+            boosterBytes = boosterMeasured, boosterBytesMeasured = boosterIsMeasured)
         runCatching { DataBudgetRepo.recordToday(context, result) }
         return result
     }

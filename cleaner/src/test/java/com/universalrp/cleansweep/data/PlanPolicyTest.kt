@@ -162,6 +162,36 @@ class PlanPolicyTest {
         assertEquals(9216.0, PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 18)), 0.01)
     }
 
+    @Test fun bytesMeasuredDuringAnEndedBoosterAreNotChargedToTheBasePack() {
+        // The owner's real numbers on 20 October 2026: Android measured 4.95 GB in the pack
+        // window, of which 3.25 GB fell inside the 3 GB booster's three days. Airtel's app said
+        // 4.3 GB left of 6 GB, i.e. 1.7 GB used — and that is what this must return.
+        val plan = PlanSettings(
+            mode = PlanDataMode.TOTAL, totalMb = 6144.0,
+            boosterEnabled = true, boosterMb = 3072.0,
+            boosterStartDay = LocalDate.of(2026, 10, 17),
+            boosterEndDay = LocalDate.of(2026, 10, 19),
+        )
+        val measured = (4.95 * 1024 * 1024 * 1024).toLong()
+        val inBooster = (3.25 * 1024 * 1024 * 1024).toLong()
+        val used = PlanPolicy.usageAgainstAllowance(plan, measured, inBooster, LocalDate.of(2026, 10, 20))
+        assertEquals(1.70, used / (1024.0 * 1024.0 * 1024.0), 0.01)
+        val remaining = PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 20)) - used / (1024.0 * 1024.0)
+        assertEquals(4.3, remaining / 1024.0, 0.05)
+    }
+
+    @Test fun aRunningBoosterKeepsItsBytesInsideTheCombinedAllowance() {
+        val plan = PlanSettings(
+            mode = PlanDataMode.TOTAL, totalMb = 6144.0,
+            boosterEnabled = true, boosterMb = 3072.0,
+            boosterStartDay = LocalDate.of(2026, 10, 17),
+            boosterEndDay = LocalDate.of(2026, 10, 19),
+        )
+        val measured = (4.95 * 1024 * 1024 * 1024).toLong()
+        val inBooster = (3.25 * 1024 * 1024 * 1024).toLong()
+        assertEquals(measured, PlanPolicy.usageAgainstAllowance(plan, measured, inBooster, LocalDate.of(2026, 10, 18)))
+    }
+
     @Test fun aBoosterThatHasNotStartedYetDoesNotCountEither() {
         val plan = PlanSettings(
             mode = PlanDataMode.TOTAL, totalMb = 6144.0,

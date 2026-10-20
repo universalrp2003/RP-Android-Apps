@@ -85,6 +85,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
     val usage = state.dataPackInfo
     val todayMb = (usage?.todayMobileBytes ?: 0L) / (1024.0 * 1024.0)
     val packMb = (usage?.packTotalMobileBytes ?: 0L) / (1024.0 * 1024.0)
+    val boosterMbMeasured = (usage?.boosterBytes ?: 0L) / (1024.0 * 1024.0)
     val today = LocalDate.now()
 
     fun persist(next: PlanSettings) {
@@ -110,7 +111,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
             }
 
             // ---- today, computed from the plan the user stated -----------------
-            TodayCard(plan = plan, todayMb = todayMb, packMb = packMb, today = today)
+            TodayCard(plan = plan, todayMb = todayMb, packMb = packMb, today = today, usageBoosterMb = boosterMbMeasured)
             Spacer(Modifier.height(10.dp))
 
             // ---- 1. what kind of data ------------------------------------------
@@ -317,7 +318,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
 private enum class AmountTarget { DAILY, TOTAL, BOOSTER }
 
 @Composable
-private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today: LocalDate) {
+private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today: LocalDate, usageBoosterMb: Double = 0.0) {
     PanelCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Text(tr("Today"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
@@ -364,7 +365,10 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                         val ratio = if (total > 0) (packMb / total).coerceIn(0.0, 1.0) else 0.0
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                PlanPolicy.formatMb(remaining) + " " + tr("left in the pack"),
+                                // 2.51 — the same two-decimal formatter the notification and the
+                                // pill use, so one pack can never read "1.05 GB" in one place and
+                                // "1.1 GB" in another.
+                                DataUsageTracker.formatBytesSafe((remaining * 1024 * 1024).toLong()) + " " + tr("left in the pack"),
                                 fontWeight = FontWeight.Bold,
                                 color = if (ratio >= 0.9) DangerRed else GoodGreen,
                                 modifier = Modifier.weight(1f),
@@ -373,6 +377,17 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                         }
                         Spacer(Modifier.height(6.dp))
                         ProgressBar(ratio)
+                        val boosterOnly = if (plan.boosterEnabled && !PlanPolicy.boosterActive(plan, today)) {
+                            DataUsageTracker.formatBytesSafe((usageBoosterMb * 1024 * 1024).toLong())
+                        } else null
+                        if (boosterOnly != null && usageBoosterMb > 0.0) {
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                tr("%s of the measured data was used during the booster's days, so it is not counted against this pack.", boosterOnly),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = AccentViolet,
+                            )
+                        }
                     }
                     // 2.51 — the countdown follows the clock, not just the calendar: a Jio pack
                     // that ends at 5:00 pm today must say so on the same afternoon.
@@ -430,6 +445,36 @@ private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
             )
             Spacer(Modifier.width(8.dp))
         }
+        Spacer(Modifier.height(8.dp))
+        // 2.51 — the operator app always shows "Valid Till <date>". Let that date be typed in
+        // directly; the day count is derived, so a wrong day count cannot silently move the end.
+        var endText by remember(plan.startDay, plan.days) {
+            mutableStateOf(PlanPolicy.expiry(plan.startDay, plan.days)?.toString().orEmpty())
+        }
+        OutlinedTextField(
+            value = endText,
+            onValueChange = { text ->
+                endText = text.take(10)
+                val start = plan.startDay
+                val end = PlanPolicy.parseDay(text)
+                if (start != null && end != null && !end.isBefore(start)) {
+                    val derived = (java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1).toInt()
+                    if (derived in 1..3650) {
+                        daysText = derived.toString()
+                        onChange(plan.copy(days = derived))
+                    }
+                }
+            },
+            label = { Text(tr("Valid till (the date your operator shows)")) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            tr("Airtel, Jio and Vi all print this date on the plan page. Typing it here sets the day count for you."),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+        )
         Spacer(Modifier.height(6.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             PlanPolicy.DAY_PRESETS.forEach { days ->

@@ -4,6 +4,31 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Live Guard 2.51 — the booster is a second pool (the 1.05 GB / 4.3 GB disagreement)
+
+Owner question, 20 October 2026: *"Now new problem its counting correctly? I will share
+screenshot see"* — My plan said 1.05 GB left of 6 GB while the Airtel app said 4.3 GB left.
+
+Both numbers were right about different pools. Android measured 4.95 GB in the pack window; of
+that, 3.25 GB fell inside the 3 GB booster's three days (17–19 Oct). Airtel's app shows only the
+base pack once the booster is spent, so it reported 1.7 GB used / 4.3 GB left.
+
+- **Fixed — bytes measured inside the booster's own date range are charged to the booster.** With
+  the owner's numbers Live Guard now shows 1.70 GB used and 4.3 GB left of 6 GB, and says
+  *"3.25 GB of the measured data was used during the booster's days, so it is not counted against
+  this pack."* While a booster is running its bytes stay inside the combined allowance, which is
+  also what the operator shows at that time.
+- `PlanPolicy.usageAgainstAllowance` is the single rule; two tests pin the owner's exact numbers.
+- **Fixed — one rounding rule.** My plan printed "1.1 GB left" while the notification printed
+  "1.05 GB" for the same pack; both now use `formatBytesSafe`.
+- **New — Valid till.** The date the operator app prints ("Valid Till 10 Dec 2026"). Typing it
+  derives the day count, which is how the 84-vs-77 slip on the ₹489 pack cannot happen again:
+  25 Sep → 10 Dec is 77 days, not 84.
+- **Workflow — only changed apps are published.** The four-app batch used to bump every version
+  together, so a Live Guard fix pushed a meaningless update onto PulseEQ and Vocal Remover. The
+  publish step now filters to versions whose release does not exist yet, skips the rest, and
+  exits cleanly when there is nothing new.
+
 ### Live Guard 2.51 — the pack ends when the operator says, and a booster has dates
 
 Owner request, 20 October 2026: *"some provider plan expire exact time of recharge see jio, if we

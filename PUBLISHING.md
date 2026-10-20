@@ -2,6 +2,21 @@
 
 This guide covers the four legacy batch modules and the separately released Oor Arivippu app. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
+## Publishing a single app (from 20 October 2026)
+
+The four apps no longer have to move together. The publish step lists the four current versions,
+skips any whose release tag is already public, and publishes only the rest — so a Live Guard fix
+does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
+
+- Bump `versionName` / `versionCode` **only** in the module you changed, and add
+  `releases/<tag>.md` for that app only.
+- If every bundled version is already public the step prints *"Nothing to publish"* and succeeds
+  instead of failing the run.
+- A published version is still never overwritten: changing an app's bytes without raising its
+  version leaves it skipped, which is the intended safe behaviour.
+- `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
+  the baseline for the next permission delta.
+
 ## Latest published release batch — 20 October 2026
 
 | App | Gradle module | Version / code | Release tag | APK |

@@ -279,6 +279,20 @@ object PlanPolicy {
         return !today.isAfter(end)
     }
 
+    /**
+     * Measured whole-pack bytes that belong to the pool the user is actually allowed to spend.
+     *
+     * While the booster is running, its bytes are inside the combined allowance, so the measured
+     * total is the answer. Once it has ended (or before it starts) the operator's own app goes
+     * back to showing only the base pack, so the bytes measured inside the booster's days must be
+     * taken out — otherwise a 6 GB pack with a spent 3 GB booster reads as "1 GB left" while the
+     * carrier says 4.3 GB. The owner's own numbers: 4.95 GB measured, 3.25 GB inside the booster
+     * window, 1.70 GB against the pack — exactly Airtel's 4.3 GB left.
+     */
+    fun usageAgainstAllowance(plan: PlanSettings, packBytes: Long, boosterBytes: Long, today: LocalDate = LocalDate.now()): Long =
+        if (boosterActive(plan, today)) packBytes.coerceAtLeast(0L)
+        else (packBytes - boosterBytes.coerceAtLeast(0L)).coerceAtLeast(0L)
+
     /** The booster amount that is still part of today's arithmetic (0 when it has expired). */
     fun boosterMbNow(plan: PlanSettings, today: LocalDate = LocalDate.now()): Double =
         if (boosterActive(plan, today)) plan.boosterMb.coerceAtLeast(0.0) else 0.0

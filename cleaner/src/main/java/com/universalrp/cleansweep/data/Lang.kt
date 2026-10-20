@@ -1402,6 +1402,9 @@ object Lang {
         "This booster ended on %s, so its data is no longer counted. Leave the switch on only for a record." to "%s அன்று இந்தப் பூஸ்டர் முடிந்தது; அதன் தரவு இனி கணக்கிடப்படாது. பதிவுக்காக மட்டுமே switch ஆன் ஆக இருக்கலாம்.",
         "Counted until %s, then it stops adding to the allowance." to "%s வரை கணக்கிடப்படும்; பிறகு அளவில் சேர்க்கப்படாது.",
         "Optional: set the days the booster is valid. Without them it counts until you switch it off." to "விருப்பம்: பூஸ்டர் செல்லுபடியாகும் நாட்களை அமைக்கவும். இல்லாவிட்டால் நீங்கள் அணைக்கும் வரை கணக்கிடப்படும்.",
+        "Valid till (the date your operator shows)" to "இது வரை செல்லும் (உங்கள் ஆபரேட்டர் காட்டும் தேதி)",
+        "Airtel, Jio and Vi all print this date on the plan page. Typing it here sets the day count for you." to "ஏர்டெல், ஜியோ, வி எல்லாம் திட்டப் பக்கத்தில் இந்தத் தேதியைக் காட்டும். இங்கே தட்டச்சு செய்தால் நாட்கள் தானாக அமையும்.",
+        "%s of the measured data was used during the booster's days, so it is not counted against this pack." to "அளந்த தரவில் %s பூஸ்டரின் நாட்களில் பயன்படுத்தப்பட்டது; அது இந்தப் பேக்கில் கணக்கிடப்படவில்லை.",
     )
 }
 
