@@ -63,6 +63,15 @@
   `0` = off). Nothing is stored per day: "today" is measured from local midnight in
   `DataUsageTracker`, so the counter returns to zero every morning by construction. Do not add
   a midnight reset job or a manual reset button for it.
+- 20 October 2026 (owner request): Live Guard must give **Location** so the Mobile screen can
+  show the nearby cell towers, and the 4G/5G card and watch must not show their own "left"
+  figures beside the measured pack remainder. Android hides `CellInfo` from every app without
+  **Precise** location, on every API level, so `ACCESS_COARSE_LOCATION` is declared beside
+  `ACCESS_FINE_LOCATION` (Android 12+ ignores a Precise-only request) and both are asked for
+  from one card on the Mobile screen. Keep the prompt on that screen only — never in the
+  background, never from the Wi-Fi screen on Android 13+. **Publishing this in a Live Guard
+  release adds a dangerous permission (`ACCESS_COARSE_LOCATION`), so the release needs a
+  recorded physical-device install before the permission gate will allow publication.**
 - Preserve the no-notification/message-reading production design. Do not restore the retired notification listener, Accessibility, SMS, contacts/call-log, or device-admin capabilities without a fresh owner decision and policy/device review. Do not bypass or disable Play Protect to address an install block.
 - Show battery, CPU, RAM, network and age estimates only from truthful available measurements; label OEM-dependent/unavailable readings honestly. A saved review date must be a real completed review, never invented by opening a screen.
 - The 44 °C owner setting is a warning, not an automatic pause threshold. Do not add a processing pause at that temperature without separate rationale.
@@ -76,6 +85,12 @@
 - Keep Slow/Medium/Fast on the main processing screen; support pause/resume and durable long jobs. Low-RAM pauses may auto-resume only after recovery; user, thermal, storage and Android service-limit pauses remain manual. Use a foreground service/wake lock for background processing, with a keep-screen-awake option; do not promise Android battery-optimization exemptions.
 - Report CPU temperature, RAM and load only when available, and label OEM-dependent/missing values. Do not apply the Live Guard 44 °C warning as an automatic pause threshold.
 - **Ramesh Radio / PulseEQ:** process local audio locally. Describe any external-player or system-wide effect as device/ROM-dependent; do not imply universal system-wide equalization.
+- 20 October 2026 (owner request, Ramesh Radio): opening the app starts the station that was
+  played last (`resumeLast()` once per app process from `attachController`), with a saved
+  switch in **More** to turn it off. Never restart audio that a widget, notification, headset
+  or background session is already playing, and never let the resume pause it. Keep the search
+  row one line tall: the station-list action is an icon square beside the field, not a labelled
+  chip inside it, and the hint text is single-line/ellipsised so Tamil cannot stretch it.
 
 ## Verification before release
 

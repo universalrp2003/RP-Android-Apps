@@ -86,9 +86,13 @@ fun RadioSplitCard() {
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        if (separate) "4G ${NetworkSplit.format(status.fourGLeftMb)} left · 5G " +
+                        // next build: show what the split has actually counted. The old "left"
+                        // figures subtracted only the sampled radio usage from the whole
+                        // pack, so they ignored everything used before counting began and
+                        // could promise "3.53 GB left" while Live Guard said 488 MB.
+                        if (separate) "4G ${NetworkSplit.format(status.fourGUsedMb)} used · 5G " +
                             (if (status.fiveGUnlimited) "Unlimited"
-                            else NetworkSplit.format(status.fiveGLeftMb) + " left")
+                            else NetworkSplit.format(status.fiveGUsedMb) + " used")
                         else "One combined counter",
                         style = MaterialTheme.typography.labelSmall,
                         color = AccentCyan,
@@ -106,14 +110,12 @@ fun RadioSplitCard() {
                 SplitLine(
                     label = "4G",
                     used = NetworkSplit.format(status.fourGUsedMb),
-                    left = NetworkSplit.format(status.fourGLeftMb),
                     unlimited = false,
                 )
                 Spacer(Modifier.height(6.dp))
                 SplitLine(
                     label = "5G",
                     used = NetworkSplit.format(status.fiveGUsedMb),
-                    left = if (status.fiveGUnlimited) "Unlimited" else NetworkSplit.format(status.fiveGLeftMb),
                     unlimited = status.fiveGUnlimited,
                 )
                 if (status.savedBy5GMb > 0) {
@@ -231,19 +233,21 @@ fun RadioSplitCard() {
 }
 
 @Composable
-private fun SplitLine(label: String, used: String, left: String, unlimited: Boolean) {
+private fun SplitLine(label: String, used: String, unlimited: Boolean) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(Modifier.width(8.dp))
         Text(used + " used", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(1f))
-        Text(
-            if (unlimited) "Unlimited" else "$left left",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = if (unlimited) AccentCyan else MaterialTheme.colorScheme.onSurface,
-        )
+        if (unlimited) {
+            Text(
+                "Unlimited",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AccentCyan,
+            )
+        }
     }
 }
 

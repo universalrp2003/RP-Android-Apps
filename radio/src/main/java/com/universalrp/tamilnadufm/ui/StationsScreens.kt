@@ -1,6 +1,7 @@
 package com.universalrp.tamilnadufm.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -249,30 +250,62 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     }
 }
 
+/**
+ * v1.13 — the search row stays one line tall.
+ *
+ * The station-list button used to sit inside the text field as a full chip ("நிலையப் பட்டியல்"),
+ * which took almost half the width and made the Tamil hint wrap onto three lines. The button is
+ * now its own compact icon square beside the field (same action, same icon), and the hint is
+ * pinned to a single ellipsised line so no language can stretch the field again.
+ */
 @Composable
 fun SearchBar(vm: MainViewModel, state: UiState, onSearchDirectory: () -> Unit) {
-    OutlinedTextField(
-        value = state.query,
-        onValueChange = { vm.setQuery(it) },
-        placeholder = { Text("Station, city or language", color = TextSecondary) },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
-        trailingIcon = {
-            Row(Modifier.padding(end = 6.dp)) {
-                IconChip(Icons.Filled.Language, "Directory", tint = Teal) { onSearchDirectory() }
-            }
-        },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Saffron,
-            unfocusedBorderColor = OutlineC,
-            focusedContainerColor = SurfaceHigh,
-            unfocusedContainerColor = SurfaceHigh,
-            cursorColor = Saffron,
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary,
-        ),
-    )
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = { vm.setQuery(it) },
+            placeholder = {
+                Text(
+                    "Station, city or language",
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Saffron,
+                unfocusedBorderColor = OutlineC,
+                focusedContainerColor = SurfaceHigh,
+                unfocusedContainerColor = SurfaceHigh,
+                cursorColor = Saffron,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary,
+            ),
+        )
+        Box(
+            Modifier
+                .size(56.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(SurfaceHigh)
+                .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                .clickable(onClick = onSearchDirectory),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Language,
+                contentDescription = AppStrings.translate("Directory"),
+                tint = Teal,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+    }
 }
 
 /** Shared station row: logo, name, meta pills, favourite star and a play tap. */

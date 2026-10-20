@@ -336,6 +336,11 @@ object AppStrings {
         "Sleep timer" to "தூக்க நேரக் கணிப்பான்",
         "Sleep timer, your own stations, and about this app." to "தூக்க நேரக் கணிப்பான், உங்கள் நிலையங்கள், இந்தப் பயன்பாட்டைப் பற்றி.",
         "Handy for falling asleep to a station — playback pauses on its own." to "வானொலியைக் கேட்டபடி தூங்க உதவும் — நேரம் முடிந்ததும் ஒலி தானாக நிற்கும்.",
+        // v1.13 — open the app and the last station starts; this switch turns that off.
+        "Start the last station when the app opens" to "ஆப் திறக்கும்போது கடைசி நிலையம் இயங்கட்டும்",
+        "Ramesh Radio resumes what you last played; switch off to open quietly." to "நீங்கள் கடைசியாகக் கேட்டதை ரமேஷ் ரேடியோ இயக்கும்; அமைதியாகத் திறக்க இதை நிறுத்துங்கள்.",
+        "The last station will start when you open the app." to "ஆப் திறக்கும்போது கடைசி நிலையம் இயங்கும்.",
+        "Automatic start is off. Tap a station to play it." to "தானியங்கித் தொடக்கம் நிறுத்தப்பட்டுள்ளது. இயக்க ஒரு நிலையத்தைத் தட்டுங்கள்.",
         "Continue listening" to "தொடர்ந்து கேள்",
         "Off" to "முடக்கு",
         "Equalizer" to "ஒலி சமநிலையாக்கி",

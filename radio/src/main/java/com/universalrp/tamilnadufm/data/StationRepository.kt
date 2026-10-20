@@ -133,6 +133,18 @@ class StationRepository(context: Context) {
         )
     }
 
+    // ------------------------------------------------------------- start-up choice
+
+    /**
+     * v1.13 (owner request): opening the app starts the station that was playing last, without
+     * hunting through the list again. Default ON; the More screen can switch it off, and the
+     * saved choice always wins. Only a *new* launch resumes — a foreground return, a widget tap
+     * or audio that is already playing never restarts anything.
+     */
+    var autoResumeOnLaunch: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_RESUME, true)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_RESUME, value).apply()
+
     // ------------------------------------------------------------ last error
 
     var lastError: String?
@@ -194,6 +206,7 @@ class StationRepository(context: Context) {
         const val KEY_LAST_ID = "last_id"
         const val KEY_LAST_ERROR = "last_error"
         const val KEY_QUEUE = "play_queue"
+        const val KEY_AUTO_RESUME = "auto_resume"
         const val MAX_RECENT = 25
         const val MAX_QUEUE = 400
     }

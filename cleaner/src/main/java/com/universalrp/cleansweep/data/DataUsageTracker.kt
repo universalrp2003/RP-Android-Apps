@@ -103,6 +103,9 @@ object DataUsageTracker {
     }
 
     @Synchronized fun getUsageInfo(context: Context): UsageInfo {
+        // next build: repair a mirror written by the first 2.49 build (base total only) before any
+        // caller divides by it, so My plan and Live Guard always use the same allowance.
+        runCatching { PlanStore.ensureMirror(context) }
         val store = prefs(context)
         val now = System.currentTimeMillis()
         val calendar = Calendar.getInstance()

@@ -236,16 +236,54 @@ object PlanStore {
                 .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
         }.getOrNull()
 
+    /** True once My plan has written its own keys, i.e. the plan is the source of truth. */
+    fun hasSavedPlan(context: Context): Boolean = prefs(context).contains(KEY_MODE)
+
+    /**
+     * The whole-pack allowance in GB, exactly as [PlanPolicy.effectiveTotalMb] defines it:
+     * the base total plus a booster when the user described a total-only plan. Null when the
+     * result is not a finite, positive amount (unlimited, or nothing configured).
+     */
+    fun effectiveLimitGb(plan: PlanSettings): Float? {
+        val mb = PlanPolicy.effectiveTotalMb(plan)
+        return if (mb.isFinite() && mb > 0.0) (mb / PlanPolicy.MB_PER_GB).toFloat() else null
+    }
+
+    /**
+     * Repairs the legacy mirror written by the first 2.49 build. That build copied only the
+     * base total, so a plan with a booster showed two different remainders at the same time:
+     * My plan said "3.5 GB left of 7.5 GB" while Live Guard said "488 MB left of 4.5 GB".
+     *
+     * The repair is deliberately narrow: it changes the mirror only while that mirror still
+     * equals the exact base value the old code wrote. A quota the user re-synced by hand (or
+     * set through the older pack dialog) is never overwritten.
+     */
+    fun ensureMirror(context: Context) {
+        if (!hasSavedPlan(context)) return
+        val plan = load(context)
+        if (plan.mode != PlanDataMode.TOTAL) return
+        val baseGb = (plan.totalMb / PlanPolicy.MB_PER_GB).toFloat()
+        val effectiveGb = effectiveLimitGb(plan) ?: return
+        if (effectiveGb <= baseGb + 0.0005f) return
+        val mirrored = DataUsageTracker.getPackLimitGb(context)
+        if (kotlin.math.abs(mirrored - baseGb) <= 0.0005f) {
+            DataUsageTracker.setPackLimitGb(context, effectiveGb)
+        }
+    }
+
     /**
      * Saves the plan and mirrors the numbers the older screens and widgets still read, so the
      * summary card, the widget and this screen can never disagree.
      *
      * The measured window only moves when [startDay] actually changes: an unrelated edit must
-     * not silently discard the pack usage measured so far.
+     * not silently discard the pack usage measured so far. The comparison uses the start day
+     * this store last wrote, not the tracker's window, so a manual counter reset is not undone
+     * by a later booster or mode edit.
      */
     fun save(context: Context, plan: PlanSettings) {
         val p = prefs(context)
-        val previousDay = startDayFromTracker(context)
+        val previousDay = PlanPolicy.parseDay(p.getString(KEY_START_DAY, "") ?: "")
+            ?: startDayFromTracker(context)
         val edit = p.edit()
             .putString(KEY_MODE, when (plan.mode) {
                 PlanDataMode.NONE -> "none"
@@ -263,14 +301,14 @@ object PlanStore {
         if (day == null) edit.remove(KEY_START_DAY) else edit.putString(KEY_START_DAY, day.toString())
         edit.apply()
 
-        // Mirror for the existing screens.
+        // Mirror for the existing screens. A booster on a whole-pack plan is part of the
+        // allowance those screens compare with, so mirror the effective total (what My plan
+        // already shows), never the base alone.
         DataUsageTracker.setDailyLimitGb(
             context,
             if (plan.mode == PlanDataMode.DAILY) (plan.dailyMb / PlanPolicy.MB_PER_GB).toFloat() else 0f,
         )
-        if (plan.totalMb > 0.0) {
-            DataUsageTracker.setPackLimitGb(context, (plan.totalMb / PlanPolicy.MB_PER_GB).toFloat())
-        }
+        effectiveLimitGb(plan)?.let { DataUsageTracker.setPackLimitGb(context, it) }
         if (plan.startDay != null && plan.startDay != previousDay) {
             runCatching { DataUsageTracker.setPackStartDay(context, plan.startDay) }
         }

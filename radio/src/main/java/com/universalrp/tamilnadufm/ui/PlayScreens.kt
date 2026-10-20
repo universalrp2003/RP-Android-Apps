@@ -657,6 +657,8 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
 
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
+    // v1.13 — the last station starts by itself on launch; this is the owner's off switch.
+    var autoResume by remember { mutableStateOf(vm.autoResumeEnabled()) }
 
     LazyColumn(
         Modifier
@@ -709,6 +711,40 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                         Text(if (com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL) "தமிழ்" else "English", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                     }
                     AppLanguageToggle()
+                }
+            }
+        }
+
+        // Start-up behaviour (v1.13)
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Start the last station when the app opens",
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "Ramesh Radio resumes what you last played; switch off to open quietly.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary,
+                        )
+                    }
+                    Switch(
+                        checked = autoResume,
+                        onCheckedChange = {
+                            autoResume = it
+                            vm.setAutoResume(it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Saffron,
+                            checkedTrackColor = Saffron.copy(alpha = 0.35f),
+                        ),
+                    )
                 }
             }
         }

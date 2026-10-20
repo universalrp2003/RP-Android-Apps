@@ -214,6 +214,11 @@ object NetworkSplit {
     /**
      * The figures the mobile screen shows. [dailyLimitMb] is the pack allowance the user
      * already enters in DataUsageTracker (GB × 1024); 0 means "no pack set".
+     *
+     * The `…LeftMb` values are projections that subtract only the sampled traffic from that
+     * allowance. They cannot see usage from before the split was switched on, so the next build no
+     * longer displays them: the card and the ongoing watch show `…UsedMb` (and "Unlimited"
+     * for 5G) while the measured pack remainder lives in Live Guard / My plan.
      */
     fun status(context: Context, dailyLimitMb: Double): Status {
         val unlimited = fiveGUnlimited(context)

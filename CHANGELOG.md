@@ -4,6 +4,78 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Live Guard — nearby cell towers, and one pack number everywhere (not built or published yet)
+
+Owner request, 20 October 2026: the Mobile screen said *"No cell tower details: Android only
+shares them with Location allowed"* and offered no way to fix it.
+
+- **New — the nearby-cell list actually works.** Android refuses `CellInfo` (the serving cell
+  and its neighbours, with PCI/TAC and dBm) to any app without **Precise** location, on every
+  API level. `ACCESS_FINE_LOCATION` was declared with `maxSdkVersion="32"`, so from Android 13
+  the permission could never be granted at all — that is why the list stayed empty on the
+  owner's phone. It is now declared for every version, `ACCESS_COARSE_LOCATION` is declared
+  beside it (Android 12+ ignores a request for Precise on its own), and the Mobile screen has a
+  **Nearby cell towers** card with its own *Allow location and rescan* button.
+- The card says what is and is not happening: location is read only while the Mobile screen
+  builds a reading, never in the background, and nothing is uploaded. If the user chose
+  *Approximate*, the card says that is not enough for tower ids and points at the app settings.
+- The list is sorted the way "nearby" reads: the serving cell first, then the strongest
+  neighbours, up to 16. An empty list with location allowed is reported as the phone's or
+  carrier's own limit, not as a missing permission.
+- The Wi-Fi screen no longer asks for location on Android 13+ (Nearby-devices is enough
+  there); the Phone permission button asks for Phone only, so each prompt has one reason.
+- **Publishing this needs a device-evidence record.** The release permission gate compares
+  built APKs, and `ACCESS_COARSE_LOCATION` is a dangerous permission that 2.49 did not ask
+  for. Record a physical-device install of the candidate APK (`docs/live-guard-<version>-device-evidence.md`)
+  before a release that contains this change can be published.
+
+### Live Guard — one pack number everywhere (not built or published yet)
+
+Owner-reported from the phone on 19 October 2026: My plan said **3.5 GB left of 7.5 GB**
+while the Live Guard notification and pill said **488 MB left of 4.5 GB** for the same
+recharge, and the 4G/5G card said **3.53 GB left** next to a **488 MB** total remainder.
+
+- **Fixed — the booster is now part of the quota every screen uses.** `PlanStore.save`
+  mirrored only `plan.totalMb` to the older screens, while My plan's Today card used
+  `PlanPolicy.effectiveTotalMb` (base + booster on a total-only plan). The mirror now stores
+  the effective total, so My plan, the ongoing card, the floating pill, the widget and the
+  insights screen divide by the same amount. `PlanStore.ensureMirror` repairs the value the
+  first 2.49 build wrote, and only while that mirror still equals the old base value, so a
+  pack limit the owner re-synced by hand is never overwritten.
+- **Fixed — the 4G/5G card and watch no longer show two "left" figures.** The split counters
+  start when sampling starts, so subtracting them from the whole pack ignored everything
+  used before that and contradicted the measured pack line. The card and the ongoing watch
+  now show `4G … used · 5G … used` (plus `5G Unlimited` when that policy is on); the pack
+  remainder stays in Live Guard / My plan, where it is measured.
+- **Fixed — an unrelated My plan edit can no longer undo a manual reset.** `PlanStore.save`
+  compared the start date with the tracker's window, so after a reset any later booster or
+  mode change moved the window back and silently re-counted the old usage. It now compares
+  with the start date the plan itself last saved.
+- The older Home **Set Pack Size** dialog writes through `PlanStore` when a plan exists, so
+  it cannot leave My plan on a different total.
+- The Live Guard guide now explains My plan and the pill colours in Tamil and English: below
+  75% used is normal, 75–90% is amber, 90% and above is red and flashing, and that warning
+  follows the number the user entered, not a carrier message.
+- Version name/code are unchanged in this source tree (`2.49` / `54`); a release that
+  changes the APK bytes still needs its own version bump and device test.
+
+### Ramesh Radio — last station on launch, compact search row (not built or published yet)
+
+Owner request, 20 October 2026.
+
+- **New — opening the app starts the station you played last.** The resume happens once per
+  app process, only when nothing is already queued or playing, so a widget or notification
+  session is never restarted (and never paused by a duplicate play). **More** has a switch,
+  *Start the last station when the app opens*, saved in the app's own preferences and ON by
+  default. The "Continue listening" card and `resumeLast()` behave as before.
+- **Fixed — the search row is one line tall again.** The station-list action
+  ("நிலையப்பட்டியல்") was a labelled chip inside the text field, so it took roughly half the
+  width and the Tamil hint wrapped onto three lines, doubling the field's height. It is now a
+  compact icon square beside a full-width field, with the hint pinned to a single ellipsised
+  line; the same action still opens the live directory, and the section row keeps its
+  "Live directory" chip.
+- The Radio guide explains both in Tamil and English.
+
 ### Guide in every app (Tamil + English)
 
 - **New — the same compact guide in each app.** Before this, only Live Guard and Secret Message

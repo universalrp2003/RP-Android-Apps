@@ -91,6 +91,37 @@ object AppGuides {
                     "கைமுறை மீட்டமைப்பு தேவையில்லை; Wi-Fi எப்போதும் கணக்கில் வராது.",
             ),
             topic(
+                "Nearby cell towers and location",
+                "அருகிலுள்ள செல் டவர்கள் மற்றும் இருப்பிடம்",
+                "Mobile → Data can list the towers your SIM can see: the serving cell and its neighbours, " +
+                    "with PCI/TAC and dBm. Android shares that list only with apps that have Precise " +
+                    "location — Approximate is not enough — and some carriers hide it. Allow it on that " +
+                    "screen; Live Guard reads it only while the screen is open, never in the background, " +
+                    "and nothing is uploaded.",
+                "மொபைல் → தரவு என்பதில் உங்கள் சிம் பார்க்கும் டவர்களைப் பட்டியலிடலாம்: பயன்பாட்டில் உள்ள செல், " +
+                    "அதன் அண்டை செல்கள், PCI/TAC மற்றும் dBm உடன். அந்தப் பட்டியலை Android 'துல்லியமான' " +
+                    "இருப்பிடம் உள்ள ஆப்களுக்கு மட்டுமே தரும் — தோராயமானது போதாது — சில நிறுவனங்கள் அதை " +
+                    "மறைக்கின்றன. அத்திரையிலேயே அனுமதி தாருங்கள்; திரை திறந்திருக்கும்போது மட்டுமே லைவ் கார்டு " +
+                    "அதைப் படிக்கும், பின்னணியில் ஒருபோதும் படிக்காது, எதுவும் பதிவேற்றப்படுவதில்லை.",
+            ),
+            topic(
+                "My plan and the pill colours",
+                "என் திட்டம் மற்றும் பட்டி நிறங்கள்",
+                "Mobile → My plan records the recharge you actually bought: Daily or Total data, the amount, the " +
+                    "start date and days, an optional booster, and whether 5G is free. Enter the pack's total, not " +
+                    "what is left today. The floating data pill colours that total: normal below 75% used, amber " +
+                    "from 75%, red and flashing from 90%. It warns about the number you entered, not a carrier " +
+                    "message, so correct the plan if the number is wrong. A short top-up that expires belongs in " +
+                    "its own recharge, not left on as a booster.",
+                "மொபைல் → என் திட்டம் என்பது நீங்கள் வாங்கிய ரீசார்ஜைப் பதிவு செய்கிறது: தினசரி அல்லது மொத்த தரவு, " +
+                    "அளவு, தொடக்கத் தேதி மற்றும் நாட்கள், விருப்பப் பூஸ்டர், 5G இலவசமா என்பது. இன்று மீதம் உள்ளதை " +
+                    "அல்ல, பேக்கின் மொத்தத்தை உள்ளிடுங்கள். மிதக்கும் தரவுப் பட்டி அந்த மொத்தத்தின் அடிப்படையில் " +
+                    "நிறம் மாறும்: 75% வரை சாதாரணம், 75% முதல் அம்பர், 90% முதல் சிவப்பு மற்றும் மின்னல். இது " +
+                    "நிறுவனத்தின் செய்தி அல்ல, நீங்கள் உள்ளிட்ட எண்ணைப் பற்றிய எச்சரிக்கை; எண் தவறானால் திட்டத்தைத் " +
+                    "திருத்துங்கள். காலாவதியாகும் குறுகிய டாப்-அப்பை பூஸ்டராக வைத்திருக்காமல் அதற்கான ரீசார்ஜில் " +
+                    "தனியாக வைத்திருங்கள்.",
+            ),
+            topic(
                 "4G and 5G counted separately",
                 "4G மற்றும் 5G தனித்தனி கணக்கு",
                 "Android keeps one mobile counter, so Live Guard samples it and files each increase under the radio " +
@@ -151,14 +182,16 @@ object AppGuides {
             topic(
                 "Playing a live station",
                 "நேரடி நிலையம் இயக்குதல்",
-                "Open the station list, tap a station, and playback starts. Live radio has no \"forward\": the " +
-                    "seek bar shows LIVE and moves only inside the few seconds the app has already buffered. " +
-                    "If a station does not start, it is usually the station's own server; try another station " +
-                    "before changing anything.",
-                "நிலையப் பட்டியலைத் திறந்து ஒரு நிலையத்தைத் தட்டுங்கள், இயக்கம் தொடங்கும். நேரடி வானொலிக்கு " +
-                    "\"முன்னோக்கி\" கிடையாது: சீக் பட்டை LIVE என்று காட்டும், ஏற்கனவே இடையகத்தில் உள்ள சில வினாடிகளுக்குள் " +
-                    "மட்டுமே நகரும். நிலையம் தொடங்கவில்லை என்றால் பெரும்பாலும் அந்த நிலையத்தின் சேவையகம்தான் காரணம்; " +
-                    "வேறு நிலையத்தை முயற்சியுங்கள்.",
+                "Open the station list, tap a station, and playback starts. Opening the app starts the " +
+                    "station you played last; More has a switch to open quietly instead. Live radio has no " +
+                    "\"forward\": the seek bar shows LIVE and moves only inside the few seconds the app has " +
+                    "already buffered. If a station does not start, it is usually the station's own server; " +
+                    "try another station before changing anything.",
+                "நிலையப் பட்டியலைத் திறந்து ஒரு நிலையத்தைத் தட்டுங்கள், இயக்கம் தொடங்கும். ஆப்பைத் திறந்தால் " +
+                    "நீங்கள் கடைசியாகக் கேட்ட நிலையம் தொடங்கும்; அமைதியாகத் திறக்க 'More' பகுதியில் சுவிட்ச் உள்ளது. " +
+                    "நேரடி வானொலிக்கு \"முன்னோக்கி\" கிடையாது: சீக் பட்டை LIVE என்று காட்டும், ஏற்கனவே இடையகத்தில் " +
+                    "உள்ள சில வினாடிகளுக்குள் மட்டுமே நகரும். நிலையம் தொடங்கவில்லை என்றால் பெரும்பாலும் அந்த " +
+                    "நிலையத்தின் சேவையகம்தான் காரணம்; வேறு நிலையத்தை முயற்சியுங்கள்.",
             ),
             topic(
                 "Playing a file from your phone",

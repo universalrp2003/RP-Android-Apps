@@ -41,12 +41,18 @@
     <!--
       Mobile & data screen: the operator, the SIM names, "5G or 4G" and the real signal in
       dBm need READ_PHONE_STATE on modern Android. Nothing is read outside that screen and
-      nothing is sent anywhere. Location (already declared) is what unlocks cell-tower ids.
+      nothing is sent anywhere.
+
+      Location unlocks the nearby-cell list: Android refuses `CellInfo` (the serving cell and
+      its neighbours, with PCI/TAC and dBm) to any app without Precise location, on every
+      Android version. 2.50 therefore declares Location without an SDK cap and asks for it
+      only from the Mobile screen — never in the background. Android 12+ ignores a request for
+      Precise location unless Coarse is requested in the same dialog, so both are declared.
+      Approximate-only is honoured as "not enough for towers" and the screen says so.
     -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
-    <uses-permission
-        android:name="android.permission.ACCESS_FINE_LOCATION"
-        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" />
 
     <!-- Ongoing charging card in the status bar (charging watts, %, time to full). -->

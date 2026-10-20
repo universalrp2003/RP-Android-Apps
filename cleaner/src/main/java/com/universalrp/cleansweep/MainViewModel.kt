@@ -1612,14 +1612,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Android 13+ also accepts Nearby-devices for the Wi-Fi name. */
     fun wifiPermissionGranted(): Boolean = NetworkScanner.wifiPermissionGranted(ctx)
 
-    /** Wi-Fi details need Location below Android 13 and Nearby-devices from 13 up. */
+    /**
+     * Wi-Fi details need Location below Android 13 and Nearby-devices from 13 up. 2.50 keeps
+     * the Wi-Fi prompt to exactly that: location is now asked for separately, by the
+     * nearby-cell card on the Mobile screen, so the Wi-Fi screen never triggers it.
+     */
     fun networkPermissions(): Array<String> = if (Build.VERSION.SDK_INT >= 33) {
+        arrayOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+    } else {
         arrayOf(
-            Manifest.permission.NEARBY_WIFI_DEVICES,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
-    } else {
-        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     /**
@@ -2575,14 +2579,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun phonePermissionGranted(): Boolean = MobileNet.hasPhonePermission(ctx)
 
-    fun phonePermissions(): Array<String> = arrayOf(
-        Manifest.permission.READ_PHONE_STATE,
+    /** Phone readings only; location has its own card and its own dialog. */
+    fun phonePermissions(): Array<String> = arrayOf(Manifest.permission.READ_PHONE_STATE)
+
+    /**
+     * 2.50: Coarse and Precise are requested together because Android 12+ silently ignores a
+     * request for Precise location on its own. Precise is what exposes the nearby-cell list.
+     */
+    fun towerPermissions(): Array<String> = arrayOf(
+        Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
     )
 
     fun onPhonePermissionResult() {
         loadMobile()
         refreshNetworkDetails()
+    }
+
+    fun onTowerPermissionResult() {
+        loadMobile()
     }
 
     fun openAutoStartSettings() {
@@ -2814,7 +2829,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         viewModelScope.launch {
             val pack = withContext(Dispatchers.IO) {
-                DataUsageTracker.setPackLimitGb(ctx, limitGb)
+                // Once My plan exists it is the one source of truth, so the older Home dialog
+                // must edit that plan; writing only the legacy mirror would leave My plan (and
+                // the effective booster allowance) on the old number.
+                if (com.universalrp.cleansweep.data.PlanStore.hasSavedPlan(ctx)) {
+                    val plan = com.universalrp.cleansweep.data.PlanStore.load(ctx)
+                    com.universalrp.cleansweep.data.PlanStore.save(
+                        ctx,
+                        plan.copy(totalMb = limitGb * com.universalrp.cleansweep.data.PlanPolicy.MB_PER_GB),
+                    )
+                } else {
+                    DataUsageTracker.setPackLimitGb(ctx, limitGb)
+                }
                 DataUsageTracker.getUsageInfo(ctx)
             }
             mutate { it.copy(dataPackInfo = pack, message = "Configured data quota updated to %.1f GB; not a carrier balance.".format(limitGb)) }

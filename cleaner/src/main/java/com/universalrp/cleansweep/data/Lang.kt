@@ -520,6 +520,16 @@ object Lang {
         "Allow and rescan" to "அனுமதித்து மீண்டும் படி",
         "Cell towers in reach" to "அருகில் உள்ள செல் டவர்கள்",
         "in use" to "பயன்பாட்டில்",
+        // 2.50 — the nearby-cell list needs Precise location on every Android version.
+        "Nearby cell towers" to "அருகிலுள்ள செல் டவர்கள்",
+        "Location permission shows the nearby cells" to "இருப்பிட அனுமதி அருகிலுள்ள செல்களைக் காட்டும்",
+        "Live Guard never reads your location in the background: it is read only while this screen is open, and nothing leaves the phone." to
+            "லைவ் கார்டு பின்னணியில் உங்கள் இருப்பிடத்தை ஒருபோதும் படிக்காது: இந்தத் திரை திறந்திருக்கும்போது மட்டுமே படிக்கும், எதுவும் போனை விட்டு வெளியே செல்லாது.",
+        "Approximate is not enough for tower ids. Choose Precise in the app settings, then come back and rescan." to
+            "தோராயமான இருப்பிடம் டவர் அடையாளங்களுக்குப் போதாது. ஆப் அமைப்புகளில் 'துல்லியமானது' தேர்ந்தெடுத்து, திரும்பி வந்து மீண்டும் படியுங்கள்.",
+        "Allow location and rescan" to "இருப்பிடத்தை அனுமதித்து மீண்டும் படி",
+        "Serving cell first, then the strongest neighbours. This is what your modem reports — not a map or your location." to
+            "பயன்பாட்டில் உள்ள செல் முதலில், பிறகு வலுவான அண்டை செல்கள். இது உங்கள் மோடம் தரும் தகவல் — வரைபடமோ உங்கள் இருப்பிடமோ அல்ல.",
         "Check" to "சரிபார்",
         "Reading…" to "படிக்கிறது…",
         "Tap refresh" to "புதுப்பிக்கத் தொடவும்",
