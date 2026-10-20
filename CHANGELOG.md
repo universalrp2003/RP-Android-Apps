@@ -4,7 +4,7 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
-### Release batch 2.50 / 1.13 / 1.7 / 0.1.13 — prepared 20 October 2026, not yet published
+### Release batch 2.50 / 1.13 / 1.7 / 0.1.13 — published 20 October 2026
 
 The four-app batch publishes Live Guard, Ramesh Radio, PulseEQ and RP Vocal Remover Studio
 together and refuses to reuse an existing tag, so all four versions move even though only two
@@ -17,13 +17,18 @@ apps changed:
 | PulseEQ | 1.7 / 8 | no functional change; version raised for the batch |
 | RP Vocal Remover Studio | 0.1.13 / 14 | no functional change; version raised for the batch |
 
-The build (run 39351894839) already compiled and signed the pre-bump source. Publication is held
-back on purpose: 2.50 adds `ACCESS_COARSE_LOCATION`, and the owner's 12 October 2026 rule requires
-a recorded physical-device install for a newly added dangerous permission
-(`docs/live-guard-2.50-device-test-plan.md` describes the test). Nothing in this batch is
-published yet, and no device test is claimed.
+Publication: [Build APK run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275).
+2.50 adds `ACCESS_COARSE_LOCATION`, so the owner's 12 October 2026 rule required a recorded
+physical-device install first: he installed `CleanSweep-v2.50.apk`
+(`b4c183c8…6176`) over 2.49 with Play Protect on, Play Protect reported "This app looks safe",
+the installer completed the update, and the nearby-cell list then showed four cells with
+PCI/TAC/dBm. The published APK carries that same digest, so the released bytes are the installed
+ones ([`docs/live-guard-2.50-device-evidence.md`](docs/live-guard-2.50-device-evidence.md)). One
+phone only: no second device was tested and the Play Store bundle was not installed anywhere.
+Published sizes and digests: Live Guard 13,740,236 / `b4c183c8…6176`; Ramesh Radio 14,526,813 /
+`d763d585…92d1`; PulseEQ 11,567,368 / `a75c411d…1c93`; Vocal Remover 63,745,096 / `8f597a7f…e8b9`.
 
-### Live Guard 2.50 — nearby cell towers, and one pack number everywhere (built, not yet published)
+### Live Guard 2.50 — nearby cell towers, and one pack number everywhere (published)
 
 Owner request, 20 October 2026: the Mobile screen said *"No cell tower details: Android only
 shares them with Location allowed"* and offered no way to fix it.
@@ -43,10 +48,10 @@ shares them with Location allowed"* and offered no way to fix it.
   carrier's own limit, not as a missing permission.
 - The Wi-Fi screen no longer asks for location on Android 13+ (Nearby-devices is enough
   there); the Phone permission button asks for Phone only, so each prompt has one reason.
-- **Publishing this needs a device-evidence record.** The release permission gate compares
-  built APKs, and `ACCESS_COARSE_LOCATION` is a dangerous permission that 2.49 did not ask
-  for. Record a physical-device install of the candidate APK (`docs/live-guard-<version>-device-evidence.md`)
-  before a release that contains this change can be published.
+- **Published only after a recorded device install.** `ACCESS_COARSE_LOCATION` is a dangerous
+  permission 2.49 did not ask for, so the release gate required a physical-device record:
+  `docs/live-guard-2.50-device-evidence.md` holds the owner's install of the exact APK
+  (`b4c183c8…6176`, run 39353706282), including what it does not prove.
 
 ### Live Guard — one pack number everywhere (shipped in 2.50)
 
@@ -78,7 +83,7 @@ recharge, and the 4G/5G card said **3.53 GB left** next to a **488 MB** total re
 - Version name/code are unchanged in this source tree (`2.49` / `54`); a release that
   changes the APK bytes still needs its own version bump and device test.
 
-### Ramesh Radio 1.13 — last station on launch, compact search row (built, not yet published)
+### Ramesh Radio 1.13 — last station on launch, compact search row (published)
 
 Owner request, 20 October 2026.
 

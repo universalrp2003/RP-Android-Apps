@@ -16,7 +16,32 @@ Secret Message 1.1.0 / code 2 was published on 18 October 2026 by `.github/workf
 
 On 19 October 2026 that release train was completed: Live Guard 2.49 / code 54, Ramesh Radio 1.12 / code 12, PulseEQ 1.6 / code 7, RP Vocal Remover Studio 0.1.12 / code 13, Oor Arivippu 1.1.1 / code 6 and Secret Message 1.1.1 / code 3 were published from `main`. Every app gained the compact bilingual in-app guide; Live Guard also gained **My plan**, and Secret Message gained the guide plus a narrow-screen layout fix. The app versions that were already public (2.46, 1.11, 1.5, 0.1.11, 1.1.0, 1.1.0) kept their release pages and assets unchanged.
 
-## Current active stable releases — as of 19 October 2026
+## Current active stable releases — as of 20 October 2026
+
+The four-app batch was rebuilt and published on 20 October 2026 by Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275),
+from `arena/1c17a6e2-rp-android-apps` at commit `74b22a2`. The run passed the build, unit/regression suites, the Live Guard
+permission-delta gate, the APK checks and the post-publication asset checks. Live Guard 2.50 adds `ACCESS_COARSE_LOCATION`,
+which the gate treats as a newly added dangerous permission, so publication required a recorded physical-device install:
+[`live-guard-2.50-device-evidence.md`](live-guard-2.50-device-evidence.md) records the owner installing the exact
+`CleanSweep-v2.50.apk` (13,740,236 bytes) over 2.49 with Play Protect on, Play Protect reporting "This app looks safe", the
+installer completing the update and the nearby-cell list then showing four cells. **The published asset's SHA-256 is the
+tested digest**, so the released APK is the installed one. That is one phone; no second device and no Play Store bundle was
+tested. PulseEQ 1.7 and Vocal Remover 0.1.13 contain no functional change — their versions moved only because the batch
+publishes all four apps together. Oor Arivippu 1.1.1 and Secret Message 1.1.1 are unchanged from 19 October 2026.
+
+| App | Version / code | RP-Android-Apps release | APK asset | Bytes | SHA-256 |
+| --- | ---: | --- | --- | ---: | --- |
+| Live Guard (CleanSweep) | 2.50 / 55 | [live-guard-v2.50](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.50) | `CleanSweep-v2.50.apk` | 13,740,236 | `b4c183c876a8da8aff4169c975c1a1111a3229658620e99fed87cb3e645d6176` |
+| Ramesh Radio | 1.13 / 13 | [ramesh-radio-v1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.13) | `Ramesh-Radio-v1.13.apk` | 14,526,813 | `d763d585d46d29319b18dcbe98fd37bb4ad587062210e44556bc6ae7ab1792d1` |
+| PulseEQ | 1.7 / 8 | [pulseeq-v1.7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7) | `PulseEQ-v1.7.apk` | 11,567,368 | `a75c411d0e854fe17357d8dc3fc5797b5bc9f4ec5e87cdc5d4d7eb7dc6b91c93` |
+| RP Vocal Remover Studio | 0.1.13 / 14 | [rp-vocal-remover-studio-v0.1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13) | `RP-Vocal-Remover-Studio-v0.1.13.apk` | 63,745,096 | `8f597a7f621dcfdbaf26e2c76c2b32d2585fc447dce0e915576dfb819358e8b9` |
+| Oor Arivippu | 1.1.1 / 6 | [oor-arivippu-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | `Oor-Arivippu-v1.1.1.apk` | 12,228,161 | `5fe6899685858cbd6a552aa303d7218b10f72af1190da6c72f9b8c054ca9343d` |
+| Secret Message | 1.1.1 / 3 | [secret-message-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) | `Secret-Message-v1.1.1.apk` | 29,460,361 | `35351521a72b4b1fd0f510540e15d588e05baaffd1bdd43a1fd63604ec7ddb85` |
+
+The sizes and digests above are the release assets' own values as reported by the GitHub releases API after publication,
+not build-only candidate hashes.
+
+## Previous active stable releases — as of 19 October 2026
 
 All six apps were published on 19 October 2026. The four-app batch (Live Guard, Ramesh Radio, PulseEQ
 and RP Vocal Remover Studio) was built, verified and published by Build APK [run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076)

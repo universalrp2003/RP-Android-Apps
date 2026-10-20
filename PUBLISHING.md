@@ -2,7 +2,18 @@
 
 This guide covers the four legacy batch modules and the separately released Oor Arivippu app. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
-## Latest published release batch — 14 October 2026
+## Latest published release batch — 20 October 2026
+
+| App | Gradle module | Version / code | Release tag | APK |
+|---|---|---:|---|---|
+| Live Guard / CleanSweep | `cleaner` | 2.50 / 55 | `live-guard-v2.50` | `CleanSweep-v2.50.apk` |
+| Ramesh Radio | `radio` | 1.13 / 13 | `ramesh-radio-v1.13` | `Ramesh-Radio-v1.13.apk` |
+| PulseEQ | `equalizer` | 1.7 / 8 | `pulseeq-v1.7` | `PulseEQ-v1.7.apk` |
+| RP Vocal Remover Studio | `vocalremover` | 0.1.13 / 14 | `rp-vocal-remover-studio-v0.1.13` | `RP-Vocal-Remover-Studio-v0.1.13.apk` |
+
+[Publication run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275) passed the builds, unit/regression suites, permission delta, APK checks and post-publication asset verification. Live Guard 2.50 is the first release that asks for Location, so the permission gate required a recorded physical-device install; [`docs/live-guard-2.50-device-evidence.md`](docs/live-guard-2.50-device-evidence.md) records the owner's install of the exact APK (`b4c183c8…6176`), and the published asset carries that same digest. PulseEQ 1.7 and Vocal Remover 0.1.13 contain no functional change; their versions moved because the batch publishes all four apps together and refuses to reuse a tag. Published asset sizes and digests are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+## Previous published release batch — 14 October 2026
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
