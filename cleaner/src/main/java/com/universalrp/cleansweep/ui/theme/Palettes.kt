@@ -180,16 +180,20 @@ object Palettes {
 /**
  * The process-wide current palette.
  *
- * Deliberately a plain object rather than Compose state: the same colours are also used by
- * non-composable code (the widget renderer, notification builders), which cannot observe a
- * snapshot. Recompositing is handled by keying the screen tree on `UiState.themeId` in AppRoot,
- * exactly as the language switch already does, so nothing here has to be observable.
+ * Backed by a Compose snapshot state: the theme composable, every screen colour and the Material
+ * scheme all read through [current], so one `apply` repaints all of them. Reading the state
+ * outside composition (the widget, notification builders) is allowed and simply gets the value.
+ *
+ * AppRoot also keys its screen tree on `UiState.themeId`. That is deliberate belt and braces:
+ * the key rebuilds screens that read no state at all, which is the same fix the language switch
+ * needed, and it costs one flicker-free rebuild per theme change.
  */
 object Palette {
-    @Volatile
-    var current: AppPalette = Palettes.MIDNIGHT
+    private val state = androidx.compose.runtime.mutableStateOf(Palettes.MIDNIGHT)
 
-    fun apply(id: String?) { current = Palettes.byId(id) }
+    val current: AppPalette get() = state.value
+
+    fun apply(id: String?) { state.value = Palettes.byId(id) }
 }
 
 /** Storage for the chosen theme. One key, read before the first composition. */

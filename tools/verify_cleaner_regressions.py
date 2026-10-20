@@ -57,6 +57,9 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.ChargingEtaPolicyTest": 5,
     "com.universalrp.cleansweep.data.DuplicateContentHashTest": 3,
     "com.universalrp.cleansweep.data.AppNetworkTrackerReportTest": 2,
+    # 2.51: the operator SMS is copied and pasted by the user (no SMS permission);
+    # these cases pin the shapes the owner receives and what must not be guessed.
+    "com.universalrp.cleansweep.data.RechargeSmsParserTest": 10,
 }
 
 

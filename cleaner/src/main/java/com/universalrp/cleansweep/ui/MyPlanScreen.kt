@@ -46,6 +46,9 @@ import com.universalrp.cleansweep.data.NetworkSplit
 import com.universalrp.cleansweep.data.PlanDataMode
 import com.universalrp.cleansweep.data.PlanExpiryRule
 import com.universalrp.cleansweep.data.PlanPolicy
+import com.universalrp.cleansweep.data.Lang
+import com.universalrp.cleansweep.data.RechargeSmsParser
+import com.universalrp.cleansweep.data.ParsedRecharge
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.data.PlanSettings
 import com.universalrp.cleansweep.data.PlanStore
@@ -112,6 +115,38 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
 
             // ---- today, computed from the plan the user stated -----------------
             TodayCard(plan = plan, todayMb = todayMb, packMb = packMb, today = today, usageBoosterMb = boosterMbMeasured)
+            Spacer(Modifier.height(10.dp))
+
+            // ---- 0. fill it from the operator's own SMS -------------------------
+            // 2.51: the owner asked for this twice, always with the same condition — no SMS
+            // permission, ever. The message is copied by the user and pasted here; nothing
+            // touches the inbox and nothing is saved until "Use these values" is tapped.
+            RechargeSmsCard(today = today, onApply = { parsed ->
+                val statedDays = when {
+                    parsed.days > 0 -> parsed.days
+                    parsed.validTill != null -> RechargeSmsParser.daysFromToday(parsed.validTill, today)
+                    else -> 0
+                }
+                persist(
+                    plan.copy(
+                        mode = when {
+                            parsed.dailyMb > 0.0 -> PlanDataMode.DAILY
+                            parsed.totalMb > 0.0 -> PlanDataMode.TOTAL
+                            else -> plan.mode
+                        },
+                        dailyMb = if (parsed.dailyMb > 0.0) parsed.dailyMb else plan.dailyMb,
+                        totalMb = if (parsed.totalMb > 0.0) parsed.totalMb else plan.totalMb,
+                        totalUnlimited = if (parsed.totalMb > 0.0) false else plan.totalUnlimited,
+                        days = if (statedDays > 0) statedDays else plan.days,
+                        // Only a stated validity pins the start to today. A message that just
+                        // says "6 GB data" must not silently move an existing 77-day pack.
+                        startDay = if (statedDays > 0) today else plan.startDay,
+                        operatorName = parsed.operatorName.ifEmpty { plan.operatorName },
+                        expiryRule = if (parsed.operatorName.isNotEmpty()) PlanPolicy.ruleFor(parsed.operatorName) else plan.expiryRule,
+                    )
+                )
+                vm.notifyMessage(if (Lang.isTamil) "எஸ்எம்எஸ்ஸிலிருந்து பேக்கேஜ் நிரப்பப்பட்டது" else "Filled from the message")
+            })
             Spacer(Modifier.height(10.dp))
 
             // ---- 1. what kind of data ------------------------------------------
@@ -902,5 +937,130 @@ private fun ProgressBar(ratio: Double) {
             shape = RoundedCornerShape(3.dp),
             modifier = Modifier.fillMaxWidth(ratio.coerceIn(0.0, 1.0).toFloat()).height(6.dp),
         ) {}
+    }
+}
+
+/**
+ * 2.51 — "Paste the message your operator sent".
+ *
+ * The app still declares no SMS permission: this card only reads what the user pastes from the
+ * clipboard. The parse result is shown in full before anything is written, because a wrong
+ * allowance would be repeated on every screen of the app. A message that mentions no data at all
+ * (an OTP, a balance reminder) is refused rather than half-filled.
+ */
+@Composable
+private fun RechargeSmsCard(
+    today: LocalDate,
+    onApply: (ParsedRecharge) -> Unit,
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var text by remember { mutableStateOf("") }
+    var parsed by remember { mutableStateOf<ParsedRecharge?>(null) }
+    var tried by remember { mutableStateOf(false) }
+
+    SectionCard(title = tr("Fill from the operator's SMS")) {
+        Text(
+            tr("Copy the message your operator sent after the recharge and paste it here. The app never reads your messages — it only reads what you paste."),
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary,
+        )
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(
+            value = text,
+            onValueChange = {
+                text = it
+                parsed = null
+                tried = false
+            },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(tr("Recharge message")) },
+            placeholder = { Text(tr("Rs.489 successful. 6 GB data, validity 77 days.")) },
+            minLines = 2,
+            maxLines = 5,
+            textStyle = MaterialTheme.typography.bodySmall,
+        )
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(
+                onClick = {
+                    val manager = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE)
+                        as? android.content.ClipboardManager
+                    val pasted = manager?.primaryClip
+                        ?.takeIf { it.itemCount > 0 }
+                        ?.getItemAt(0)
+                        ?.coerceToText(context)
+                        ?.toString()
+                        .orEmpty()
+                    if (pasted.isNotBlank()) text = pasted
+                    parsed = null
+                    tried = false
+                },
+            ) { Text(tr("Paste")) }
+            TextButton(
+                onClick = {
+                    tried = true
+                    parsed = RechargeSmsParser.parse(text, today)
+                },
+                enabled = text.isNotBlank(),
+            ) { Text(tr("Read the message")) }
+            if (text.isNotBlank()) {
+                TextButton(onClick = {
+                    text = ""
+                    parsed = null
+                    tried = false
+                }) { Text(tr("Clear"), color = TextSecondary) }
+            }
+        }
+
+        val result = parsed
+        if (result != null) {
+            Spacer(Modifier.height(6.dp))
+            if (result.operatorName.isNotEmpty()) {
+                Text(tr("Operator") + ": " + result.operatorName,
+                    style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+            }
+            if (result.totalMb > 0.0) {
+                Text(tr("Whole pack") + ": " + PlanPolicy.formatMb(result.totalMb),
+                    style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+            }
+            if (result.dailyMb > 0.0) {
+                Text(tr("Every day") + ": " + PlanPolicy.formatMb(result.dailyMb),
+                    style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+            }
+            if (result.days > 0) {
+                Text(tr("Validity") + ": " + result.days + " " + tr("days"),
+                    style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+            }
+            if (result.validTill != null && result.days == 0) {
+                Text(tr("Valid till") + ": " + com.universalrp.cleansweep.data.RechargeSmsParser.dateText(result.validTill),
+                    style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+            }
+            if (result.priceRupees > 0) {
+                Text("₹" + result.priceRupees, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+            }
+            if (result.unlimited5g) {
+                Text(tr("5G is unlimited on this pack; the figures above are the 4G allowance."),
+                    style = MaterialTheme.typography.labelSmall, color = AccentCyan)
+            }
+            Spacer(Modifier.height(4.dp))
+            TextButton(onClick = {
+                onApply(result)
+                text = ""
+                parsed = null
+                tried = false
+            }) { Text(tr("Use these values"), color = GoodGreen, fontWeight = FontWeight.Bold) }
+        } else if (tried) {
+            Text(
+                tr("No plan found in that text. Check that you copied the message the operator sent after the recharge."),
+                style = MaterialTheme.typography.bodySmall,
+                color = WarnAmber,
+            )
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(
+            tr("Only the numbers in the message are used; anything it does not state keeps the value you already set. A validity in the message counts from today — change the start day above if the recharge was earlier."),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+        )
     }
 }

@@ -99,6 +99,22 @@
   date range whenever the booster is not running, and adds them back while it is. This is what
   made Live Guard say "1.05 GB left" while Airtel said "4.3 GB left" — do not "fix" it by showing
   the raw measured total again.
+- 20 October 2026 (owner request, Live Guard 2.51): the app must offer **selectable colour
+  themes** — *"we need themes to choose same color are boring."* Themes are palettes
+  (`ui/theme/Palettes.kt`); the colour names in `ui/theme/Theme.kt` are getters over
+  `Palette.current`, so a new theme is one palette entry and no screen edits. Keep every theme
+  dark, keep body text at >= 7:1 contrast on its own background, and keep good/warn/danger
+  recognisably green/amber/red — `verify_cleaner_next_update_source.py` checks all three.
+- 20 October 2026 (owner request, Live Guard 2.51): screens are **grouped by subject** in the side
+  menu (Cleaning · Phone · Network & data · Security · Assistant · Live Guard), reachable by an
+  edge swipe anywhere and by the Home menu button. The owner's words: *"organise intelligently
+  important items in first page not very long scrolling page, mobile signal tower are same place,
+  network quality related in one place."* Keep related network screens together and keep Home's
+  order: storage, scan, plan, help.
+- 20 October 2026 (owner request): My plan can be filled from the operator's SMS **by copy and
+  paste only**. `RechargeSmsParser` is pure, is unit-tested, and never reads the inbox; the app
+  still declares no SMS permission. Nothing is saved until the user taps "Use these values", and
+  a message that states no plan must be refused rather than half-filled.
 - Preserve the no-notification/message-reading production design. Do not restore the retired notification listener, Accessibility, SMS, contacts/call-log, or device-admin capabilities without a fresh owner decision and policy/device review. Do not bypass or disable Play Protect to address an install block.
 - Show battery, CPU, RAM, network and age estimates only from truthful available measurements; label OEM-dependent/unavailable readings honestly. A saved review date must be a real completed review, never invented by opening a screen.
 - The 44 °C owner setting is a warning, not an automatic pause threshold. Do not add a processing pause at that temperature without separate rationale.

@@ -4,6 +4,33 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Live Guard 2.51 — themes, a subject menu and "fill my plan from the SMS"
+
+Owner request, 20 October 2026: *"we need themes to choose same color are boring"*, *"change the UI
+for side sweep to go other menu organise intelligently important items in first page not very long
+scrolling page"*, and (earlier) *"add option to paste recharge sms to fill automatically"*.
+
+- **New — seven colour themes.** Midnight (the old blue, still the default), Saffron, Evergreen,
+  Violet, Slate, Black (OLED) and Rose, each with a Tamil name. The choice is saved and applied
+  before the first frame. Every screen already read its colours through `Theme.kt`, so the same
+  eleven names now resolve against the selected palette — no screen was touched to add a theme,
+  and the Material scheme (switches, fields, dialogs) is rebuilt from the same palette.
+- **New — side menu, grouped by subject.** Swipe from the left edge anywhere, or tap the menu
+  button where the logo used to be. Cleaning · Phone · Network & data (signal, towers, Wi-Fi, My
+  plan) · Security · Assistant · Live Guard. Nothing was removed from the app; the screens are
+  grouped and reachable in one tap.
+- **Home order is by importance.** Storage, then **Scan & clean junk**, then the plan and alerts,
+  then help and analysis. About moved into the menu. Three small section titles separate the
+  groups, so the long list reads as sections instead of one pile.
+- **New — fill My plan from the operator's SMS, without the SMS permission.** The user copies the
+  message and pastes it; `RechargeSmsParser` reads the operator, the data allowance, daily vs
+  total, the validity days or date and the price. Nothing is saved until **Use these values** is
+  tapped, and a message that states no plan (an OTP, a balance reminder) is refused rather than
+  half-filled. Ten unit tests pin the shapes the owner receives and the figures that must not be
+  guessed; "unlimited 5G" is shown but never turned into an unlimited total.
+- **Fixed — a theme switch repaints immediately.** The palette is Compose snapshot state, and
+  AppRoot keys its tree on the saved theme, so screens that observe no other state still rebuild.
+
 ### Live Guard 2.51 — the booster is a second pool (the 1.05 GB / 4.3 GB disagreement)
 
 Owner question, 20 October 2026: *"Now new problem its counting correctly? I will share

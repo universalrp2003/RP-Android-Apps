@@ -206,7 +206,7 @@ def main():
         require('state.lang' not in source(display),
                 'A display site still reads the state mirror instead of the language authority: ' + display)
     expected = runpy.run_path(str(ROOT/'tools/verify_cleaner_regressions.py'))['EXPECTED']
-    require(sum(expected.values()) == 390 and len(expected) == 43, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 400 and len(expected) == 44, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -284,7 +284,7 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 43 required suites / 390 prepared declarations; tests NOT executed. Release 2.51/code56/API26 matches.')
+    print('PASS: 44 required suites / 400 prepared declarations; tests NOT executed. Release 2.51/code56/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

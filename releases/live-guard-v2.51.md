@@ -5,6 +5,39 @@ balance after it has expired.
 
 ## Highlights
 
+### Choose the colours
+
+Seven themes, each with a Tamil name: **Midnight** (the blue you already have), **Saffron**,
+**Evergreen**, **Violet**, **Slate**, **Black (OLED)** and **Rose**. Settings → Theme shows a
+three-colour preview of each; the whole app, including switches and dialogs, changes at once, and
+the choice survives a restart. Warning colours stay amber/red in every theme, so an alert never
+loses its meaning to decoration.
+
+### A side menu that groups things by subject
+
+Swipe from the left edge, or tap the menu button where the logo was:
+
+| Group | What is inside |
+|---|---|
+| **Cleaning** | Home, scan & clean, last results, app cache |
+| **Phone** | Phone health, installed apps, history & budget |
+| **Network & data** | Mobile signal & towers, Wi-Fi & devices, My plan |
+| **Security** | Security check |
+| **Assistant** | Ask the assistant, AI settings, voice |
+| **Live Guard** | Guide, settings & theme, about & updates |
+
+Home is reordered by importance: what your phone has, then **Scan & clean junk**, then your plan
+and alerts, then help. The About icon moved into the menu, so the header has one less button.
+
+### Fill My plan from the operator's SMS
+
+The app still has **no SMS permission** and never reads your inbox. Copy the message your operator
+sends after a recharge, open **My plan → Fill from the operator's SMS**, tap **Paste**, then
+**Read the message**. It shows what it understood — operator, data, validity, price — and waits for
+**Use these values**. A message that contains no plan (an OTP, a balance reminder) is refused
+instead of half-filling the screen. "Unlimited 5G" is noted, but it never becomes an unlimited
+total, because the 4G allowance still ends.
+
 ### The pack ends at the operator's clock
 
 Indian operators do not agree on when validity ends, so the app now asks and follows the answer:
@@ -64,8 +97,8 @@ nothing else.
 
 **Device testing:** this build was **not installed on a phone** at the time of writing, and no
 physical-device test is claimed for these exact bytes. The release passed the configured CI build,
-the unit and regression suites (including the new plan-arithmetic tests), the APK checks and the
-permission-delta gate. That is not Play Protect approval and not an all-device compatibility claim.
+the unit and regression suites (including the plan-arithmetic and recharge-SMS parser tests),
+the APK checks and the permission-delta gate. That is not Play Protect approval and not an all-device compatibility claim.
 
 ## தமிழ்
 
@@ -80,6 +113,15 @@ permission-delta gate. That is not Play Protect approval and not an all-device c
 - **புதியது — இது வரை செல்லும்.** ஆபரேட்டர் ஆப் காட்டும் தேதியை (உ.ம். 2026-12-10) உள்ளிடுங்கள்;
   நாட்கள் தானாகக் கணக்கிடப்படும். ஏர்டெல் ₹489 = 25 செப் முதல் 77 நாட்கள்.
 - சுருக்கம்: **"முடிவு 2026-12-10, 11:59 pm · 58 நாட்கள் மீதம்"** — நிமிடம் வரை சரியாக.
+
+- **புதியது — நிறத் தோற்றங்கள்.** ஏழு தோற்றங்கள்: நள்ளிரவு (பழைய நீலம்), குங்குமப்பூ, பசுமை, ஊதா,
+  சாம்பல், கருப்பு (OLED), ரோஜா. அமைப்புகள் → தோற்றம் என்பதில் முன்னோட்டத்துடன் தேர்ந்தெடுங்கள்.
+- **புதியது — பக்கப் பட்டி.** இடது ஓரத்திலிருந்து விரலால் இழுக்கவும், அல்லது மேலே உள்ள பட்டிப்
+  பொத்தானைத் தட்டவும். சுத்தம் · ஃபோன் · நெட்வொர்க் மற்றும் டேட்டா · பாதுகாப்பு · உதவியாளர் ·
+  லைவ் கார்டு என வகைப்படுத்தப்பட்டுள்ளது.
+- **புதியது — எஸ்எம்எஸ்ஸிலிருந்து பேக்கேஜை நிரப்பு.** செயலி எஸ்எம்எஸ் அனுமதியைக் கேட்காது; நீங்கள்
+  நகலெடுத்து ஒட்டுவதை மட்டுமே படிக்கும். **இந்த மதிப்புகளைப் பயன்படுத்து** தட்டும் வரை எதுவும்
+  சேமிக்கப்படாது.
 
 - **சரிசெய்யப்பட்டது — பூஸ்டர் தனிக் கணக்கு.** 20 அக் 2026 அன்று லைவ் கார்டு "6 GB-இல் 1.05 GB மீதம்"
   என்றது, ஏர்டெல் ஆப் "4.3 GB மீதம்" என்றது. இரண்டும் சரி: Android 4.95 GB அளந்தது — அதில் 3.25 GB
