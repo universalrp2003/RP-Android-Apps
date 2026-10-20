@@ -4,6 +4,25 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Ramesh Radio 1.14 — the update card, a quieter first screen and Tamil wording
+
+Owner report, 20 October 2026, with phone screenshots of the More tab: the update block was a wall
+of near-black text between two cards, with an empty band under it. Same message: the first screen
+carried too much text, "Local" was translated in a way that read like a local radio station, and
+English looks fine while Tamil placement does not.
+
+- **Fixed — the update section is a card.** `AppUpdates.Control` now has a title, one short line,
+  explicit Material colours and a collapsed **How updates are verified** row. The long explanation
+  no longer fills the tab; the switch, the check button and the download/install flow are unchanged.
+- **First screen quieter.** The search box is one line until tapped (the live-directory button sits
+  at its end and still works from the collapsed row); the sorting explanation is folded into
+  **How this list is sorted**.
+- **Tamil wording.** `Local` → **பாடல்கள்**, `Local audio` → **என் பாடல்கள்**; the tab no longer
+  reads as a local radio station. Tamil added for the search hint, the sorting row and the update
+  explanations (shared catalog, 489 entries).
+- Version 1.14 / code 14. The shared sister-app list and the Oor Arivippu About links now point at
+  `ramesh-radio-v1.14`.
+
 ### Published — Live Guard 2.51 (20 October 2026)
 
 Released alone, under the owner's one-app-at-a-time rule, by Build APK [run 39407712230](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39407712230)

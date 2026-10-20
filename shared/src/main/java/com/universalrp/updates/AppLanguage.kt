@@ -218,9 +218,18 @@ object AppStrings {
         // Ramesh Radio navigation and local audio.
         "Radio" to "வானொலி",
         "News" to "செய்திகள்",
-        "Local" to "உள்ளூர்",
+        // v1.14: "உள்ளூர் ஒலி" read as a local radio station. This tab plays the songs
+        // already on the phone, so it says songs, not "local".
+        "How updates are verified" to "புதுப்பிப்புகள் எப்படிச் சரிபார்க்கப்படுகின்றன",
+        "Downloads stay in the app; Android shows its installer and confirmation." to "பதிவிறக்கம் இந்தப் பயன்பாட்டுக்குள்ளேயே இருக்கும்; நிறுவி மற்றும் உறுதிப்படுத்தலை Android காட்டும்.",
+        "Stable releases are checked against the app package, version, SHA-256 and installed signing certificate." to "நிலையான வெளியீடுகள் பயன்பாட்டுத் தொகுப்பு, பதிப்பு, SHA-256 மற்றும் நிறுவிய கையொப்பச் சான்றிதழுடன் ஒப்பிடப்படும்.",
+        "Search stations, city or language" to "நிலையம், நகரம் அல்லது மொழியைத் தேடுங்கள்",
+        "How this list is sorted" to "இந்தப் பட்டியல் எப்படி வரிசைப்படுத்தப்பட்டது",
+        "Local" to "பாடல்கள்",
         "More" to "மேலும்",
-        "Local audio" to "உள்ளூர் ஒலி",
+        "Local audio" to "என் பாடல்கள்",
+        "My songs" to "என் பாடல்கள்",
+        "Songs on this phone" to "இந்த ஃபோனில் உள்ள பாடல்கள்",
         "Songs on this phone, played through the same 10-band equalizer." to "இந்தப் போனிலுள்ள பாடல்கள் இதே 10-பட்டை சமநிலையாக்கி வழியாக ஒலிக்கும்.",
         "Choose folder" to "கோப்புறையைத் தேர்ந்தெடு",
         "Open a file" to "கோப்பைத் திற",

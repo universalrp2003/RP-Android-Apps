@@ -111,7 +111,7 @@ fun LocalScreen(vm: MainViewModel, state: UiState) {
         item {
             Column(Modifier.padding(top = 16.dp)) {
                 Text(
-                    "Local audio",
+                    "My songs",
                     style = MaterialTheme.typography.headlineSmall,
                     color = TextPrimary,
                     fontWeight = FontWeight.Bold,
@@ -875,7 +875,16 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
             }
         }
 
-        item { com.universalrp.updates.AppUpdates.Control("Ramesh-Radio") }
+        // v1.14 — the update block used to sit bare between two cards, which left a grey,
+        // unstyled wall and a visible empty band on the More tab (the owner's screenshot).
+        // It is a card now, like every other section, with its explanation folded away.
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    com.universalrp.updates.AppUpdates.Control("Ramesh-Radio")
+                }
+            }
+        }
         // About
         item {
             PanelCard(Modifier.fillMaxWidth()) {

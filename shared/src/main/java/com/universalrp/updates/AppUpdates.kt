@@ -13,9 +13,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +33,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -464,12 +467,63 @@ object AppUpdates {
         }
 
         if (!automatic) {
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(text("Verified GitHub APK updates"))
-                Text(text("Stable releases are checked against the app package, version, SHA-256 and installed signing certificate. Downloads stay in the app; Android shows its installer and confirmation."))
-                Text(text("Checks RP-Android-Apps first; InternetRadio remains as a grace-period fallback."))
+            // 2.51 — this block used to be a wall of unstyled body text between two cards: on a
+            // dark theme it read as grey-on-black (the owner's Tamil screenshot), and the gap
+            // after it looked empty. It now has a title, one short line, an expandable
+            // explanation, and explicit Material colours so it is readable in every app theme.
+            var showVerification by remember { mutableStateOf(false) }
+            val body = MaterialTheme.colorScheme.onSurfaceVariant
+            val strong = MaterialTheme.colorScheme.onSurface
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text("Verified GitHub APK updates"),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = strong,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text("Downloads stay in the app; Android shows its installer and confirmation."),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = body,
+                )
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { showVerification = !showVerification }
+                        .padding(vertical = 2.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text("How updates are verified"),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        text = if (showVerification) "  ▴" else "  ▾",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+                if (showVerification) {
+                    Text(
+                        text("Stable releases are checked against the app package, version, SHA-256 and installed signing certificate."),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = body,
+                    )
+                    Text(
+                        text("Checks RP-Android-Apps first; InternetRadio remains as a grace-period fallback."),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = body,
+                    )
+                }
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                    Text(text("Check for updates on app launch"), modifier = Modifier.weight(1f))
+                    Text(
+                        text("Check for updates on app launch"),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = strong,
+                        modifier = Modifier.weight(1f),
+                    )
                     Switch(checked = enabled, onCheckedChange = {
                         enabled = it
                         prefs.edit().putBoolean("automatic", it).apply()
@@ -486,11 +540,12 @@ object AppUpdates {
                         if (tamil) "\nபதிப்பு ${release.version} · ${release.size / (1024 * 1024)} MiB"
                         else "\nVersion ${release.version} · ${release.size / (1024 * 1024)} MiB"
                     } ?: ""
-                    Text(text(it) + releaseDetails)
+                    Text(text(it) + releaseDetails, style = MaterialTheme.typography.bodySmall, color = strong)
                 }
                 update?.let { release ->
-                    Text(text("Release source") + ": ${release.repository}")
-                    Text(text("What’s new") + "\n" + localizedReleaseNotes(release.notes, AppLanguageState.current))
+                    Text(text("Release source") + ": ${release.repository}", style = MaterialTheme.typography.labelSmall, color = body)
+                    Text(text("What’s new") + "\n" + localizedReleaseNotes(release.notes, AppLanguageState.current),
+                        style = MaterialTheme.typography.bodySmall, color = body)
                     if (downloading) {
                         LinearProgressIndicator(
                             progress = { (bytes.toDouble() / release.size.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f) },

@@ -41,6 +41,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +62,11 @@ import com.universalrp.updates.AppStrings
 
 @Composable
 fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
+    // v1.14 — the owner asked for a calmer first screen: the search box and the sorting
+    // explanation now take one line each and open when tapped, instead of pushing the
+    // station list down before the user has chosen anything.
+    var searchOpen by rememberSaveable { mutableStateOf(state.query.isNotBlank()) }
+    var showSortInfo by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -107,7 +116,41 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
             }
         }
 
-        item { SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() }) }
+        item {
+            if (searchOpen) {
+                SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() })
+            } else {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SurfaceHigh)
+                        .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                        .clickable { searchOpen = true }
+                        .padding(horizontal = 12.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Search stations, city or language",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        Icons.Filled.Language,
+                        contentDescription = AppStrings.translate("Directory"),
+                        tint = Teal,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clickable { vm.searchDirectory() },
+                    )
+                }
+            }
+        }
 
         item {
             Row(
@@ -198,11 +241,35 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
 
         if (state.query.isBlank() && state.category in setOf(Category.ALL, Category.TAMIL, Category.TAMIL_FM)) {
             item {
-                Text(
-                    "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                )
+                // One line, opened only when wanted — the same pattern the owner asked for on
+                // the Oor Arivippu screens instead of a paragraph above every list.
+                Column {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { showSortInfo = !showSortInfo }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "How this list is sorted",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Saffron,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(if (showSortInfo) "  ▴" else "  ▾",
+                            style = MaterialTheme.typography.labelSmall, color = Saffron)
+                    }
+                    if (showSortInfo) {
+                        Text(
+                            "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                    }
+                }
             }
         }
 
