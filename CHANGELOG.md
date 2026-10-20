@@ -4,6 +4,12 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Published — Live Guard 2.52 (20 October 2026)
+
+Released alone by Build APK run 39419657235. `CleanSweep-v2.52.apk` is 13,811,808 bytes, SHA-256
+`19ba3d6c5922062add5ae9480e0b433ffa83be2225e317741d862c7a4118171b`. No device install is claimed
+for these bytes.
+
 ### Live Guard 2.52 — a short first page, a readable menu, Tamil typography
 
 Owner verdict on 2.51, 20 October 2026: *"i am not satisfied the new design"* — and, asked which

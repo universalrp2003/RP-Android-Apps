@@ -91,6 +91,29 @@ unwrapped, centred bottom-bar labels for Tamil. No new permission.
 **Not claimed:** these bytes were not installed on a phone before publication. CI compiled every
 module, ran the radio unit tests, lint and the APK checks.
 
+## Live Guard 2.52 — short first page, readable menu, Tamil typography (20 October 2026)
+
+Published by Build APK [run 39419657235](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39419657235)
+from `arena/1c17a6e2-rp-android-apps`. Only Live Guard's version changed; Ramesh Radio 1.15,
+PulseEQ 1.7, Vocal Remover 0.1.13, Oor Arivippu 1.1.1 and Secret Message 1.1.1 kept their releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.52.apk` | 13,811,808 | `19ba3d6c5922062add5ae9480e0b433ffa83be2225e317741d862c7a4118171b` |
+
+Digest read back from the release API after publication.
+
+**What it contains:** Home rebuilt around a hero card (free storage, used/total bar, Battery · RAM ·
+Signal chips, scan button inside the card) with the plan card beneath and every other card under
+three tap-to-open sections; a rebuilt side menu (banner, group headings with rules, icon tiles with
+hints, accent rail on the current screen, language/theme footer); language-aware typography that
+gives Tamil a 1.62× line box, no extra letter spacing and slightly larger glyphs. No new
+permission.
+
+**Not claimed:** these bytes were not installed on a phone before publication. Two CI compile
+failures (a missing `SurfaceC` import and a missing `TextUnit.isSpecified` import) were fixed before
+the green run; no device result is claimed for any of them.
+
 ## Current active stable releases — as of 20 October 2026
 
 The four-app batch was rebuilt and published on 20 October 2026 by Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275),
