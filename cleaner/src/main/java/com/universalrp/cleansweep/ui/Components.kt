@@ -85,12 +85,15 @@ fun JunkKind.icon(): ImageVector = when (this) {
 @Composable
 fun PanelCard(
     modifier: Modifier = Modifier,
+    // 2.52: an open Home section is tinted one step lighter than a closed one, so "this is
+    // showing something" is visible without reading the chevron. Default unchanged.
+    color: Color = SurfaceC,
     content: @Composable () -> Unit,
 ) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = SurfaceC,
+        color = color,
     ) {
         content()
     }

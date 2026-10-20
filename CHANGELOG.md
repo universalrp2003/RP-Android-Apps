@@ -4,6 +4,28 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Live Guard 2.52 — a short first page, a readable menu, Tamil typography
+
+Owner verdict on 2.51, 20 October 2026: *"i am not satisfied the new design"* — and, asked which
+part, *"all above"*: the Home page, the side menu, the themes and the Tamil text.
+
+- **Home is three things now.** The hero card carries free storage, a used/total bar and a
+  Battery · RAM · Signal chip row, with **Scan & clean junk** inside the same card. The plan card
+  follows. Everything else lives under three tap-to-open section headers — **Cleaning tools**,
+  **Phone, network & security**, **Assistant & setup** — each of which remembers whether it was
+  open. The readings matrix, the per-kind tiles, the battery/heat line, the status-pill controls,
+  the history shortcut, the shortcut grid, the assistant and the feature-setup card are all still
+  there, one tap away instead of in the scroll path.
+- **Side menu rebuilt.** Banner header, group headings with a rule, icon tile + one-line hint on
+  every row, an accent rail on the current screen, and language/theme chips in the footer.
+- **Tamil typography.** `CleanSweepTheme` now supplies a language-aware `Typography`: in Tamil every
+  style gets a 1.62× line box, zero extra letter spacing and slightly larger glyphs; English keeps
+  Material's defaults. `UiMode` is the Compose-observable mirror of `Lang.current`, updated at
+  launch and by `setLanguage`, so the switch re-renders immediately.
+- **Themes carry further.** `PanelCard` gained an optional colour (an open section is one step
+  lighter), and the menu banner and hero use `HeroGradient`, the palette's two signature colours.
+- Version 2.52 / code 57. No new permission.
+
 ### Published — Ramesh Radio 1.15 (20 October 2026)
 
 Released alone by Build APK run 39415226287. `Ramesh-Radio-v1.15.apk` is 14,543,201 bytes, SHA-256

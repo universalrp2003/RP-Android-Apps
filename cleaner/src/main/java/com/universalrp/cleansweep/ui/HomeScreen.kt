@@ -49,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -76,7 +77,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.SignalCellularAlt
+import androidx.compose.material.icons.outlined.Speed
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.ExpandLess
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.Photo
@@ -120,6 +125,11 @@ fun HomeScreen(
     listState: LazyListState,
     onOpenMenu: () -> Unit = {},
 ) {
+    // 2.52 — which Home sections are open. Saved, so a rotation or a trip to another screen
+    // does not collapse what the user just opened.
+    var cleaningOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    var phoneOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    var helpOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     val owner = LocalLifecycleOwner.current
     val context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.DisposableEffect(context) {
@@ -270,211 +280,62 @@ fun HomeScreen(
             }
 
             item(key = "published_update") { LiveGuardUpdateCard() }
-            item(key = "reviewed_feature_setup") { FeatureSetupHomeCard(state, vm) }
 
-            // 2.51 — order is now by importance, not by the date each card was added:
-            // what the phone has, then the one button that cleans it, then the plan. The
-            // owner's complaint was a long scroll before reaching anything useful.
-            item(key = "storage") { LiveGuardMetricsMatrix(state, vm) }
+            // 2.52 — the first screen now answers three questions and nothing else: what the
+            // phone has, the one action that frees space, and the plan. Everything else is
+            // grouped into tap-to-open sections below, so the page is short until asked.
+            item(key = "hero") { HomeHeroCard(state, vm) }
 
-            item(key = "scanbutton") {
-                GradientButton(
-                    text = if (state.report != null) "Scan again" else "Scan & clean junk",
-                    icon = Icons.Outlined.AutoFixHigh,
-                    onClick = { vm.startScan() },
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = state.hasAllFilesAccess && state.legacyStorageOk,
-                )
-            }
+            item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
 
             if (!state.legacyStorageOk) {
                 item(key = "legacy") { LegacyStorageCard(vm) }
             }
 
-            item(key = "section_plan") { SectionTitle(tr("Your plan & alerts")) }
-            item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
-            item(key = "status_pill_controls") { StatusPillHomeControls(state, vm) }
-            item(key = "history_tools") { InsightsShortcut(vm) }
-
-            state.health?.let { health ->
-                item(key = "health") {
-                    PanelCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(HomeLayoutPolicy.CARD_PADDING_DP.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Outlined.BatteryFull,
-                                    contentDescription = null,
-                                    tint = GoodGreen,
-                                )
-                                Spacer(Modifier.width(12.dp))
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        "Battery ${health.battery.percent}% • " +
-                                            (health.battery.temperatureC?.let { "%.1f °C".format(it) }
-                                                ?: "temp not reported"),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Text(
-                                        buildString {
-                                            append(health.battery.statusLabel)
-                                            com.universalrp.cleansweep.data.ChargingHonestyPolicy.wattsText(health.battery.powerW)
-                                                ?.let { append(" • $it") }
-                                            health.cpuTempC?.let { append(" • CPU ${"%.0f".format(it)} °C") }
-                                            append(" • uptime ${formatUptime(health.device.uptimeMs)}")
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TextSecondary,
-                                    )
-                                }
-                                Text(tr("LIVE"),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = GoodGreen,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            item(key = "section_help") { SectionTitle(tr("Help & analysis")) }
-            item(key = "assistant") { AssistantCard(state, vm) }
-
-            item(key = "quick") {
-                SectionTitle(tr("Phone, network & security"))
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QuickCard(
-                            icon = Icons.Outlined.BatteryFull,
-                            title = tr("Phone health"),
-                            subtitle = tr("Battery, heat, CPU, watts"),
-                            onClick = { vm.navigate(Screen.HEALTH) },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.Security,
-                            title = tr("Security check"),
-                            subtitle = tr("Permissions, risky apps"),
-                            onClick = { vm.loadSecurity() },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QuickCard(
-                            icon = Icons.Outlined.SignalCellularAlt,
-                            title = tr("Mobile & data"),
-                            subtitle = tr("Signal, speed test, data used"),
-                            onClick = { vm.navigate(Screen.MOBILE); vm.loadMobile() },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.Wifi,
-                            title = tr("Wi-Fi devices"),
-                            subtitle = tr("Who is on your network"),
-                            onClick = {
-                                vm.navigate(Screen.NETWORK)
-                                vm.refreshNetworkDetails()
-                            },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.Apps,
-                            title = tr("Installed apps"),
-                            subtitle = tr("Bloatware, unused apps"),
-                            onClick = { vm.loadAppInventory() },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    QuickCard(
-                        icon = Icons.Outlined.SmartToy,
-                        title = if (state.aiConfig.ready) "AI phone analysis" else "Set up AI analysis",
-                        subtitle = if (state.aiConfig.ready) {
-                            "Explain everything in plain words"
-                        } else {
-                            "The free option needs no signup"
-                        },
-                        onClick = {
-                            if (state.aiConfig.ready) vm.runAiAnalysis() else vm.navigate(Screen.AI_SETTINGS)
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
-
-            item(key = "tiles") {
-                SectionTitle(tr("Quick cleaning actions"))
-                Text(tr("Each tile scans for its own kind of junk only — then you tick what to clean."),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                    modifier = Modifier.padding(bottom = 10.dp),
+            item(key = "group_cleaning") {
+                HomeSectionHeader(
+                    icon = Icons.Outlined.DeleteSweep,
+                    title = tr("Cleaning tools"),
+                    summary = tr("Readings, temp junk, thumbnails, APKs, duplicates"),
+                    expanded = cleaningOpen,
+                    onToggle = { cleaningOpen = !cleaningOpen },
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QuickCard(
-                            icon = Icons.Outlined.DeleteSweep,
-                            title = tr("Temp & junk"),
-                            subtitle = tr("Only .tmp, .log, leftovers"),
-                            onClick = { vm.startScan(setOf(JunkKind.RESIDUAL), JunkKind.RESIDUAL.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.Photo,
-                            title = tr("Thumbnails"),
-                            subtitle = tr("Only image cache files"),
-                            onClick = { vm.startScan(setOf(JunkKind.THUMBNAILS), JunkKind.THUMBNAILS.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QuickCard(
-                            icon = Icons.Outlined.Android,
-                            title = tr("APK files"),
-                            subtitle = tr("Only installer packages"),
-                            onClick = { vm.startScan(setOf(JunkKind.APK_FILES), JunkKind.APK_FILES.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.ContentCopy,
-                            title = tr("Duplicates"),
-                            subtitle = tr("Only identical files"),
-                            onClick = { vm.startScan(setOf(JunkKind.DUPLICATES), JunkKind.DUPLICATES.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QuickCard(
-                            icon = Icons.Outlined.Folder,
-                            title = tr("Empty folders"),
-                            subtitle = tr("Only empty folders"),
-                            onClick = { vm.startScan(setOf(JunkKind.EMPTY_FOLDERS), JunkKind.EMPTY_FOLDERS.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.FileDownload,
-                            title = tr("Old downloads"),
-                            subtitle = tr("Only old Download files"),
-                            onClick = { vm.startScan(setOf(JunkKind.OLD_DOWNLOADS), JunkKind.OLD_DOWNLOADS.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        QuickCard(
-                            icon = Icons.Outlined.SdStorage,
-                            title = tr("Large files"),
-                            subtitle = tr("Only files over the limit"),
-                            onClick = { vm.startScan(setOf(JunkKind.LARGE_FILES), JunkKind.LARGE_FILES.label) },
-                            modifier = Modifier.weight(1f),
-                        )
-                        QuickCard(
-                            icon = Icons.Outlined.Android,
-                            title = tr("App cache"),
-                            subtitle = tr("Per-app caches, cached"),
-                            onClick = { vm.navigate(Screen.APP_CACHE) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    }
+            }
+            if (cleaningOpen) {
+                item(key = "storage") { LiveGuardMetricsMatrix(state, vm) }
+                item(key = "tiles") { QuickCleaningTiles(vm) }
+            }
+
+            item(key = "group_phone") {
+                HomeSectionHeader(
+                    icon = Icons.Outlined.BatteryFull,
+                    title = tr("Phone, network & security"),
+                    summary = tr("Battery, heat, signal, permission review"),
+                    expanded = phoneOpen,
+                    onToggle = { phoneOpen = !phoneOpen },
+                )
+            }
+            if (phoneOpen) {
+                state.health?.let { health ->
+                    item(key = "health") { HealthSummaryCard(health) }
                 }
+                item(key = "status_pill_controls") { StatusPillHomeControls(state, vm) }
+                item(key = "history_tools") { InsightsShortcut(vm) }
+                item(key = "quick") { HomeQuickGrid(state, vm) }
+            }
+
+            item(key = "group_help") {
+                HomeSectionHeader(
+                    icon = Icons.Outlined.SmartToy,
+                    title = tr("Assistant & setup"),
+                    summary = tr("Ask the assistant, review what Live Guard may do"),
+                    expanded = helpOpen,
+                    onToggle = { helpOpen = !helpOpen },
+                )
+            }
+            if (helpOpen) {
+                item(key = "assistant") { AssistantCard(state, vm) }
+                item(key = "reviewed_feature_setup") { FeatureSetupHomeCard(state, vm) }
             }
         }
     }
@@ -1141,5 +1002,383 @@ private fun HomeMobileDataCard(state: UiState, vm: MainViewModel) {
                 }
             },
         )
+    }
+}
+
+/**
+ * 2.52 — the per-kind scan tiles, moved out of the Home list body so they can live inside the
+ * "Cleaning tools" section without the list turning into one long wall.
+ */
+@Composable
+private fun QuickCleaningTiles(vm: MainViewModel) {
+            Text(tr("Each tile scans for its own kind of junk only — then you tick what to clean."),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+            modifier = Modifier.padding(bottom = 10.dp),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickCard(
+                    icon = Icons.Outlined.DeleteSweep,
+                    title = tr("Temp & junk"),
+                    subtitle = tr("Only .tmp, .log, leftovers"),
+                    onClick = { vm.startScan(setOf(JunkKind.RESIDUAL), JunkKind.RESIDUAL.label) },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.Photo,
+                    title = tr("Thumbnails"),
+                    subtitle = tr("Only image cache files"),
+                    onClick = { vm.startScan(setOf(JunkKind.THUMBNAILS), JunkKind.THUMBNAILS.label) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickCard(
+                    icon = Icons.Outlined.Android,
+                    title = tr("APK files"),
+                    subtitle = tr("Only installer packages"),
+                    onClick = { vm.startScan(setOf(JunkKind.APK_FILES), JunkKind.APK_FILES.label) },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.ContentCopy,
+                    title = tr("Duplicates"),
+                    subtitle = tr("Only identical files"),
+                    onClick = { vm.startScan(setOf(JunkKind.DUPLICATES), JunkKind.DUPLICATES.label) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickCard(
+                    icon = Icons.Outlined.Folder,
+                    title = tr("Empty folders"),
+                    subtitle = tr("Only empty folders"),
+                    onClick = { vm.startScan(setOf(JunkKind.EMPTY_FOLDERS), JunkKind.EMPTY_FOLDERS.label) },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.FileDownload,
+                    title = tr("Old downloads"),
+                    subtitle = tr("Only old Download files"),
+                    onClick = { vm.startScan(setOf(JunkKind.OLD_DOWNLOADS), JunkKind.OLD_DOWNLOADS.label) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickCard(
+                    icon = Icons.Outlined.SdStorage,
+                    title = tr("Large files"),
+                    subtitle = tr("Only files over the limit"),
+                    onClick = { vm.startScan(setOf(JunkKind.LARGE_FILES), JunkKind.LARGE_FILES.label) },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.Android,
+                    title = tr("App cache"),
+                    subtitle = tr("Per-app caches, cached"),
+                    onClick = { vm.navigate(Screen.APP_CACHE) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+}
+
+/**
+ * 2.52 — the shortcut grid, grouped under "Phone, network & security".
+ */
+@Composable
+private fun HomeQuickGrid(state: UiState, vm: MainViewModel) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickCard(
+                    icon = Icons.Outlined.BatteryFull,
+                    title = tr("Phone health"),
+                    subtitle = tr("Battery, heat, CPU, watts"),
+                    onClick = { vm.navigate(Screen.HEALTH) },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.Security,
+                    title = tr("Security check"),
+                    subtitle = tr("Permissions, risky apps"),
+                    onClick = { vm.loadSecurity() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickCard(
+                    icon = Icons.Outlined.SignalCellularAlt,
+                    title = tr("Mobile & data"),
+                    subtitle = tr("Signal, speed test, data used"),
+                    onClick = { vm.navigate(Screen.MOBILE); vm.loadMobile() },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.Wifi,
+                    title = tr("Wi-Fi devices"),
+                    subtitle = tr("Who is on your network"),
+                    onClick = {
+                        vm.navigate(Screen.NETWORK)
+                        vm.refreshNetworkDetails()
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickCard(
+                    icon = Icons.Outlined.Apps,
+                    title = tr("Installed apps"),
+                    subtitle = tr("Bloatware, unused apps"),
+                    onClick = { vm.loadAppInventory() },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+            QuickCard(
+                icon = Icons.Outlined.SmartToy,
+                title = if (state.aiConfig.ready) "AI phone analysis" else "Set up AI analysis",
+                subtitle = if (state.aiConfig.ready) {
+                    "Explain everything in plain words"
+                } else {
+                    "The free option needs no signup"
+                },
+                onClick = {
+                    if (state.aiConfig.ready) vm.runAiAnalysis() else vm.navigate(Screen.AI_SETTINGS)
+                },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+}
+
+/**
+ * 2.52 — the live battery/heat line, unchanged in content, now its own composable.
+ */
+@Composable
+private fun HealthSummaryCard(health: com.universalrp.cleansweep.data.HealthSnapshot) {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(HomeLayoutPolicy.CARD_PADDING_DP.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Outlined.BatteryFull,
+                            contentDescription = null,
+                            tint = GoodGreen,
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                "Battery ${health.battery.percent}% • " +
+                                    (health.battery.temperatureC?.let { "%.1f °C".format(it) }
+                                        ?: "temp not reported"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                buildString {
+                                    append(health.battery.statusLabel)
+                                    com.universalrp.cleansweep.data.ChargingHonestyPolicy.wattsText(health.battery.powerW)
+                                        ?.let { append(" • $it") }
+                                    health.cpuTempC?.let { append(" • CPU ${"%.0f".format(it)} °C") }
+                                    append(" • uptime ${formatUptime(health.device.uptimeMs)}")
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = TextSecondary,
+                            )
+                        }
+                        Text(tr("LIVE"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = GoodGreen,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+    
+}
+
+/**
+ * 2.52 — the first thing on Home.
+ *
+ * Before this the top of the list was a four-tile readings matrix, a separate scan button and a
+ * plan card, so the owner scrolled past a screenful before reaching anything actionable. The hero
+ * shows the three numbers a person actually checks — free space, battery, signal — and puts the
+ * one action that frees space inside the same card. Everything else moved into sections below.
+ */
+@Composable
+private fun HomeHeroCard(state: UiState, vm: MainViewModel) {
+    val storage = state.storage?.takeIf { it.total > 0 && it.free in 0..it.total }
+    val battery = state.health?.battery
+    val device = state.health?.device
+    val quality = state.liveNetworkQuality
+    val storageTone = when {
+        storage == null -> TextSecondary
+        storage.usedFraction > 0.9 -> WarnAmber
+        else -> AccentCyan
+    }
+
+    PanelCard(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(HomeLayoutPolicy.CARD_PADDING_DP.dp)) {
+            Text(
+                tr("Free storage"),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextSecondary,
+            )
+            Text(
+                storage?.free?.formatBytes() ?: tr("Not measured"),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = storageTone,
+            )
+            if (storage != null) {
+                Spacer(Modifier.height(8.dp))
+                LinearProgressIndicator(
+                    progress = { storage.usedFraction.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp)),
+                    color = storageTone,
+                    trackColor = SurfaceHigh,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "${storage.used.formatBytes()} / ${storage.total.formatBytes()}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                HeroChip(
+                    icon = Icons.Outlined.BatteryFull,
+                    value = battery?.let { "${it.percent}%" } ?: tr("—"),
+                    label = tr("Battery"),
+                    tone = if ((battery?.percent ?: 100) <= 20) WarnAmber else GoodGreen,
+                    modifier = Modifier.weight(1f),
+                )
+                HeroChip(
+                    icon = Icons.Outlined.Memory,
+                    value = device?.availableRamBytes?.formatBytes() ?: tr("—"),
+                    label = tr("RAM free"),
+                    tone = AccentCyan,
+                    modifier = Modifier.weight(1f),
+                )
+                HeroChip(
+                    icon = Icons.Outlined.Speed,
+                    value = quality?.pingMs?.let { "$it ms" } ?: tr("—"),
+                    label = tr("Signal"),
+                    tone = when (quality?.grade) {
+                        com.universalrp.cleansweep.data.LiveNetworkQuality.QualityGrade.BAD_QUALITY -> DangerRed
+                        com.universalrp.cleansweep.data.LiveNetworkQuality.QualityGrade.MEDIUM_QUALITY -> WarnAmber
+                        null -> TextSecondary
+                        else -> GoodGreen
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            Spacer(Modifier.height(14.dp))
+            GradientButton(
+                text = if (state.report != null) tr("Scan again") else tr("Scan & clean junk"),
+                icon = Icons.Outlined.AutoFixHigh,
+                onClick = { vm.startScan() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = state.hasAllFilesAccess && state.legacyStorageOk,
+            )
+        }
+    }
+}
+
+/** One number with a label, inside the hero card. Muted tones only: this is a summary, not an alert. */
+@Composable
+private fun HeroChip(
+    icon: ImageVector,
+    value: String,
+    label: String,
+    tone: Color,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = SurfaceHigh,
+        modifier = modifier,
+    ) {
+        Column(Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+            Icon(icon, contentDescription = null, tint = tone, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.height(4.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+                maxLines = 1,
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
+/**
+ * 2.52 — a section header that opens and closes.
+ *
+ * The owner asked for the Oor Arivippu pattern: important things on the first page, long
+ * explanations folded away. A section is a slim card with an icon, its name, one line saying what
+ * is inside, and a chevron; tapping it shows the cards underneath without leaving Home.
+ */
+@Composable
+private fun HomeSectionHeader(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+) {
+    PanelCard(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle),
+        color = if (expanded) SurfaceHigh else SurfaceC,
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HomeLayoutPolicy.CARD_PADDING_DP.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(AccentCyan.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary,
+                )
+                Text(
+                    summary,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    maxLines = 2,
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Icon(
+                if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                contentDescription = tr(if (expanded) "Collapse" else "Expand"),
+                tint = AccentCyan,
+                modifier = Modifier.size(22.dp),
+            )
+        }
     }
 }

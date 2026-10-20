@@ -2535,6 +2535,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun setLanguage(lang: AppLang) {
+        com.universalrp.cleansweep.ui.theme.UiMode.setLanguage(lang)
         cancelAiReport(showMessage = false); cancelDeviceIdentification(showMessage = false)
         Lang.set(lang)
         prefs.edit().putString(Lang.KEY, lang.id).apply()

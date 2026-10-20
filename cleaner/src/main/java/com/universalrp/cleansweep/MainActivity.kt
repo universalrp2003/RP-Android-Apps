@@ -52,6 +52,9 @@ class MainActivity : ComponentActivity() {
         // 2.51: the chosen colour theme, applied before the first frame for the same reason as
         // the language — no card may flash a colour that is not the saved one.
         Palette.apply(ThemeStore.currentId(this))
+        // 2.52: the typography is language-aware, so Compose needs an observable copy of the
+        // language before the first frame — see UiMode in theme/Theme.kt.
+        com.universalrp.cleansweep.ui.theme.UiMode.setLanguage(Lang.current)
         // Sensitive permissions are explained and requested from reviewed setup, not silently on launch.
         com.universalrp.cleansweep.updates.LiveGuardUpdates.checkOnLaunch(this)
         setContent {
