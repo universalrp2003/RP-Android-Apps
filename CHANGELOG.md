@@ -4,6 +4,21 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Ramesh Radio 1.15 — the first screen shows stations, not paragraphs
+
+Owner priority for the next Radio pass: *"home page the unnecessary text occupying the space
+redesign it … put in drop down text … mostly english ui is looking good only tamil ui the letters
+and size placement making the look bad."*
+
+- **Categories** open with the six that matter (தமிழ், Tamil FM, Tamil News, Towns, Favourites,
+  Recent); the genre/archive chips live behind **More ▾ / Less ▴**, expanded in place.
+- **Header** subtitle is one line and ellipsised, so a long word cannot push the data pill away.
+- **Empty state** leads with the action; the explanation is one short line under it.
+- **Tamil:** the data pill follows the chosen language ("2.4 GB இன்று" / "2.4 GB Today") instead of
+  always printing Tamil; bottom-bar labels are one line, centred and unwrapped so **செய்திகள்** and
+  **பாடல்கள்** are not clipped.
+- Version 1.15 / code 15. Widget chooser and full restyle remain for 1.16.
+
 ### Published — Ramesh Radio 1.14 (20 October 2026)
 
 Released alone by Build APK run 39413564341. `Ramesh-Radio-v1.14.apk` is 14,526,817 bytes, SHA-256

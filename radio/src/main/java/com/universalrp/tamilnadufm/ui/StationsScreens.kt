@@ -67,6 +67,9 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // station list down before the user has chosen anything.
     var searchOpen by rememberSaveable { mutableStateOf(state.query.isNotBlank()) }
     var showSortInfo by rememberSaveable { mutableStateOf(false) }
+    // v1.15 — fourteen category chips pushed the list down. The six that matter open first;
+    // the genre/archive chips sit behind "More", which is the owner's "important items first".
+    var chipsExpanded by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -91,19 +94,24 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                     )
                     Text(
                         "Tamil FM from Tamil Nadu and around the world — live.",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = SurfaceHigh,
                 ) {
+                    // v1.15 — this pill used to print "இன்று" in English too. The word now
+                    // follows the chosen language; the number never does.
                     val dataMb = state.todayDataUsageMb
+                    val todayWord = AppStrings.translate("Today")
                     val text = if (dataMb >= 1024.0) {
-                        "%.2f GB இன்று".format(dataMb / 1024.0)
+                        "%.2f GB %s".format(dataMb / 1024.0, todayWord)
                     } else {
-                        "%.1f MB இன்று".format(dataMb)
+                        "%.1f MB %s".format(dataMb, todayWord)
                     }
                     Text(
                         text = text,
@@ -156,30 +164,47 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
             Row(
                 Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                val chips = listOf(
-                    // தமிழ் first: it is the default selection, so the app opens on Tamil.
+                // தமிழ் first: it is the default selection, so the app opens on Tamil.
+                val primary = listOf(
                     Category.TAMIL,
+                    Category.TAMIL_FM,
+                    Category.TAMIL_NEWS,
+                    Category.TOWNS,
+                    Category.FAVOURITES,
+                    Category.RECENT,
+                )
+                val more = listOf(
                     Category.TAMIL_ILAYARAJA,
                     Category.TAMIL_MSV,
                     Category.TAMIL_AR_RAHMAN,
                     Category.TAMIL_80S_90S,
                     Category.TAMIL_DEVOTIONAL,
-                    Category.TOWNS,
-                    Category.TAMIL_NEWS,
-                    Category.FAVOURITES,
-                    Category.RECENT,
                     Category.ALL,
-                    Category.TAMIL_FM,
                     Category.ENGLISH,
                     Category.CUSTOM,
                 )
-                chips.forEach { id ->
+                primary.forEach { id ->
                     Chip(
                         label = Category.label(id),
                         selected = state.category == id,
                         onClick = { vm.setCategory(id) },
                     )
+                }
+                Chip(
+                    label = if (chipsExpanded) "Less ▴" else "More ▾",
+                    selected = false,
+                    onClick = { chipsExpanded = !chipsExpanded },
+                )
+                if (chipsExpanded) {
+                    more.forEach { id ->
+                        Chip(
+                            label = Category.label(id),
+                            selected = state.category == id,
+                            onClick = { vm.setCategory(id) },
+                        )
+                    }
                 }
             }
         }
@@ -283,18 +308,17 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                             color = TextPrimary,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Try another category, clear the search box, or look in the live " +
-                                "directory — it has far more stations than the shipped list, " +
-                                "including the town and city stations.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                        )
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(6.dp))
                         IconChip(Icons.Filled.Refresh, "Search the directory") {
                             vm.searchDirectory()
                         }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Try another category or clear the search box. The live directory has " +
+                                "far more stations than the shipped list, including town and city stations.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
                     }
                 }
             }
