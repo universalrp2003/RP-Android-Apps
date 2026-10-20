@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,7 +34,6 @@ import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.NetworkSplit
 import com.universalrp.cleansweep.notify.RadioWatchService
 import com.universalrp.cleansweep.ui.theme.AccentCyan
-import com.universalrp.cleansweep.voice.Announcer
 
 /**
  * v2.47 — the 4G / 5G card.
@@ -51,7 +48,6 @@ fun RadioSplitCard() {
     var separate by remember { mutableStateOf(NetworkSplit.separateEnabled(context)) }
     var announce by remember { mutableStateOf(NetworkSplit.announceEnabled(context)) }
     var policy by remember { mutableStateOf(NetworkSplit.policy(context)) }
-    var volume by remember { mutableFloatStateOf(Announcer.voiceVolume(context)) }
     var expanded by remember { mutableStateOf(false) }
 
     val limitMb = if (DataUsageTracker.hasConfiguredPlan(context)) {
@@ -206,28 +202,10 @@ fun RadioSplitCard() {
             )
 
             // ---- in-app volume -------------------------------------------
+            // 2.53 — one shared control (see AnnouncementVolume.kt); this card used to carry a
+            // private copy of the slider, so Home, Settings and this card could drift apart.
             Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Announcement volume",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.weight(1f))
-                Text("${(volume * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
-            }
-            Slider(
-                value = volume,
-                onValueChange = { volume = it },
-                onValueChangeFinished = { Announcer.setVoiceVolume(context, volume) },
-                valueRange = 0f..1f,
-                steps = 19,
-            )
-            TextButton(onClick = {
-                Announcer.setVoiceVolume(context, volume)
-                Announcer.speak(context, "This is the alert volume", "இது எச்சரிக்கை ஒலி அளவு",
-                    Announcer.Event.TEST)
-            }) { Text("Test / சோதனை") }
+            AnnouncementVolumePanel()
         }
     }
 }

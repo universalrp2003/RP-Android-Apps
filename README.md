@@ -4,8 +4,8 @@ Six actively maintained, open-source Android apps developed by **Ramesh prathap 
 
 | App | Module | Current stable release (RP-Android-Apps) | Android | Purpose |
 |---|---|---:|---:|---|
-| **Live Guard (CleanSweep)** | `cleaner` | [2.50](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.50) | 8.0+ (API 26) | Phone cleanup, health and security review, network tools, and optional assistance. |
-| **Ramesh Radio** | `radio` | [1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.13) | 8.0+ (API 26) | Tamil and world radio, vote-ranked station lists, local playback, and session boost. |
+| **Live Guard (CleanSweep)** | `cleaner` | [2.52](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.52) | 8.0+ (API 26) | Phone cleanup, health and security review, network tools, and optional assistance. |
+| **Ramesh Radio** | `radio` | [1.15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.15) | 8.0+ (API 26) | Tamil and world radio, vote-ranked station lists, local playback, and session boost. |
 | **PulseEQ** | `equalizer` | [1.7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7) | 8.0+ (API 26) | Twenty-band audio DSP, presets, spectrum view, and local playback. |
 | **RP Vocal Remover Studio** | `vocalremover` | [0.1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13) | 10+ (API 29) | Local vocal reduction with WAV output and optional MP3 export. |
 | **Oor Arivippu** | `oorarivippu` | [1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | 8.0+ (API 26) | Tamil/English GPS place and destination announcer with configurable offline-status reminders. |

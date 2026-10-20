@@ -4,6 +4,31 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Live Guard 2.53 — the volume, the guide, the white box, and three widgets
+
+Owner's list after 2.52, 20 October 2026: the volume slider, *Guide* opening the wrong page, a
+status-bar icon that flickers with "a white box", update text taking too much of the first page,
+phone age on Home, the assistant as a small symbol, and the widget redesign.
+
+- **One announcement-volume control.** New `AnnouncementVolumePanel` / `AnnouncementVolumeDialog`:
+  the Home speaker opens the slider over the page (Done returns without navigating), Settings has
+  the same card, and the plan card's private copy of the slider was replaced by it. Saved on
+  release; Test speaks a sample sentence at the chosen level.
+- **Guide is the guide.** `Screen.GUIDE` added; the menu's Guide row used to call
+  `Screen.FEATURE_SETUP` (the permission checklist). Reviewed feature setup keeps its own row.
+- **One status-bar icon.** The data watch notification used `R.mipmap.ic_launcher`, which Android
+  renders as a white square because only the alpha channel is used; it now uses
+  `R.drawable.ic_stat_data`.
+- **Update card on Home is one row** (`LiveGuardUpdateCard(compact = true)`), with the full text,
+  switch, notes and install steps in its dialog. The About screen keeps the full card.
+- **Phone age on Home**, under the storage bar; **assistant is a small symbol** that opens the
+  assistant window. The large AssistantCard and its inline question box left Home.
+- **Three widgets, three jobs**, still 2×2 with the same View cycle: **Battery & plan**, **Plan &
+  days** (data left, days left, today), **Security** (the saved permission review only — no scan).
+  Class names, presets and manifest receivers unchanged so existing widgets update in place.
+- 12 new Tamil strings. Version 2.53 / code 58. No new permission.
+- See [`releases/live-guard-v2.53.md`](releases/live-guard-v2.53.md).
+
 ### Published — Live Guard 2.52 (20 October 2026)
 
 Released alone by Build APK run 39419657235. `CleanSweep-v2.52.apk` is 13,811,808 bytes, SHA-256

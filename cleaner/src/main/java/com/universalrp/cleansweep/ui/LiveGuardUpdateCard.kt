@@ -1,12 +1,17 @@
 package com.universalrp.cleansweep.ui
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -20,6 +25,8 @@ import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.formatBytes
 import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.updates.LiveGuardUpdates
+import com.universalrp.cleansweep.ui.theme.GoodGreen
+import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextSecondary
 
 private fun localizedReleaseNotes(notes: String): String {
@@ -29,7 +36,7 @@ private fun localizedReleaseNotes(notes: String): String {
 }
 
 @Composable
-fun LiveGuardUpdateCard() {
+fun LiveGuardUpdateCard(compact: Boolean = false) {
     val context = LocalContext.current
     val state by LiveGuardUpdates.state.collectAsStateWithLifecycle()
     var dialog by remember { mutableStateOf(false) }
@@ -40,17 +47,66 @@ fun LiveGuardUpdateCard() {
         val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME) canInstall = LiveGuardUpdates.canInstall(context) }
         lifecycle.lifecycle.addObserver(observer); onDispose { lifecycle.lifecycle.removeObserver(observer) }
     }
-    PanelCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+    // 2.53 — on Home this is one slim row, as the owner asked ("just put one small button if
+    // user clicks display info"). The explanations, the switch, the release notes and the
+    // download/install steps all live in the dialog; nothing was removed, it just is not read
+    // unless wanted.
+    if (compact) {
+        PanelCard(
+            Modifier
+                .fillMaxWidth()
+                .clickable { dialog = true },
+            color = SurfaceHigh,
+        ) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.SystemUpdate,
+                    contentDescription = null,
+                    tint = if (state.release != null) GoodGreen else TextSecondary,
+                    modifier = Modifier.size(18.dp),
+                )
+                Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(tr("App updates"), style = MaterialTheme.typography.titleSmall)
-                    Text(tr("Verified in-app download; Android confirms installation."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                    Text(tr("Checks RP-Android-Apps first; InternetRadio remains as a grace-period fallback."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    Text(
+                        tr("App updates"),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Text(
+                        if (state.release != null) tr("Update available") + " · " + state.release!!.version
+                        else if (state.downloading) tr("Downloading…")
+                        else tr("Up to date") + " · " + tr("tap for details"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (state.release != null) GoodGreen else TextSecondary,
+                        maxLines = 1,
+                    )
                 }
-                PulsingUpdateButton(available = state.release != null && !state.busy, onClick = { dialog = true })
+                Icon(
+                    Icons.Outlined.ChevronRight,
+                    contentDescription = null,
+                    tint = TextSecondary,
+                    modifier = Modifier.size(18.dp),
+                )
             }
-            if (state.downloading) Text(tr("Downloading %s of %s", state.bytes.formatBytes(), (state.release?.bytes ?: 0).formatBytes()), style = MaterialTheme.typography.bodySmall)
+        }
+    } else {
+        PanelCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(12.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Column(Modifier.weight(1f)) {
+                        Text(tr("App updates"), style = MaterialTheme.typography.titleSmall)
+                        Text(tr("Verified in-app download; Android confirms installation."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Text(tr("Checks RP-Android-Apps first; InternetRadio remains as a grace-period fallback."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    }
+                    PulsingUpdateButton(available = state.release != null && !state.busy, onClick = { dialog = true })
+                }
+                if (state.downloading) Text(tr("Downloading %s of %s", state.bytes.formatBytes(), (state.release?.bytes ?: 0).formatBytes()), style = MaterialTheme.typography.bodySmall)
+            }
         }
     }
     if (dialog) AlertDialog(

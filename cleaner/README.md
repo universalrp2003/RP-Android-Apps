@@ -1,8 +1,8 @@
 # Live Guard (CleanSweep)
 
-Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.50 / code 55**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
+Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.52 / code 57**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
 
-- [Download CleanSweep-v2.50.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.50/CleanSweep-v2.50.apk) · [release notes](../releases/live-guard-v2.50.md) · the previous 2.49 release stays available on the RP-Android-Apps release list
+- [Download CleanSweep-v2.52.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.52/CleanSweep-v2.52.apk) · [release notes](../releases/live-guard-v2.52.md) · the previous 2.50 release stays available on the RP-Android-Apps release list
 - Build, regression, permission-delta and APK checks passed in [publication run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md) · [installation advisory](../docs/live-guard-play-protect-install-block.md)
 

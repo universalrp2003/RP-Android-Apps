@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.BatteryFull
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.Info
@@ -190,7 +191,10 @@ fun LiveGuardMenu(vm: MainViewModel, current: Screen?, onClose: () -> Unit) {
         }
 
         MenuGroup(tr("Live Guard")) {
-            MenuRow(Icons.Outlined.MenuBook, tr("Guide"), tr("How each feature works"), current == Screen.FEATURE_SETUP) {
+            MenuRow(Icons.Outlined.MenuBook, tr("Guide"), tr("How each feature works"), current == Screen.GUIDE) {
+                vm.navigate(Screen.GUIDE); onClose()
+            }
+            MenuRow(Icons.Outlined.CheckCircle, tr("Reviewed feature setup"), tr("What Live Guard may do"), current == Screen.FEATURE_SETUP) {
                 vm.navigate(Screen.FEATURE_SETUP); onClose()
             }
             MenuRow(Icons.Outlined.Settings, tr("Settings & theme"), tr("Colours, language, permissions"), current == Screen.SETTINGS) {

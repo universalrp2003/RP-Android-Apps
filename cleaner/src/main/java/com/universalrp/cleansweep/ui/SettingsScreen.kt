@@ -130,6 +130,14 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                 }
             }
 
+            // --------------------------------------------------- announcement volume (2.53)
+            // The owner asked for the same slider here as on Home: one control, one value.
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    AnnouncementVolumePanel()
+                }
+            }
+
             // ------------------------------------------------------- voice (v2.4)
             PanelCard(Modifier.fillMaxWidth()) {
                 Row(

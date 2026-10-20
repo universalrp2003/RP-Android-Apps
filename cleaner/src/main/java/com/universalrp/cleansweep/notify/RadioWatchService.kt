@@ -263,7 +263,9 @@ class RadioWatchService : Service() {
             "4G $four · 5G $five"
         }
         return NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            // 2.53 — a launcher icon as a status-bar icon renders as a white square (Android only
+            // uses the alpha channel there). This is the same monochrome glyph the data notification uses.
+            .setSmallIcon(R.drawable.ic_stat_data)
             .setContentTitle("Live Guard")
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$detail\n$body"))

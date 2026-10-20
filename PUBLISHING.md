@@ -29,8 +29,8 @@ does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
-| Live Guard / CleanSweep | `cleaner` | 2.50 / 55 | `live-guard-v2.50` | `CleanSweep-v2.50.apk` |
-| Ramesh Radio | `radio` | 1.13 / 13 | `ramesh-radio-v1.13` | `Ramesh-Radio-v1.13.apk` |
+| Live Guard / CleanSweep | `cleaner` | 2.52 / 57 | `live-guard-v2.52` | `CleanSweep-v2.52.apk` |
+| Ramesh Radio | `radio` | 1.15 / 15 | `ramesh-radio-v1.15` | `Ramesh-Radio-v1.15.apk` |
 | PulseEQ | `equalizer` | 1.7 / 8 | `pulseeq-v1.7` | `PulseEQ-v1.7.apk` |
 | RP Vocal Remover Studio | `vocalremover` | 0.1.13 / 14 | `rp-vocal-remover-studio-v0.1.13` | `RP-Vocal-Remover-Studio-v0.1.13.apk` |
 

@@ -1,6 +1,11 @@
 package com.universalrp.cleansweep.widget
 
 object CompactWidgetPolicy {
+    /**
+     * 2.53 — the three widget views, and what each is for:
+     * BATTERY = battery details plus the plan, DATA = plan data / days / today, PHONE = security.
+     * `next()` walks them in that order for the small "View" button on the card.
+     */
     enum class Profile { BATTERY, DATA, PHONE;
         fun next(): Profile = entries[(ordinal + 1) % entries.size]
     }

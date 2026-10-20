@@ -110,49 +110,89 @@ open class CleanSweepWidget : AppWidgetProvider() {
             val profile = profile(context, id)
             val views = RemoteViews(context.packageName, R.layout.widget_cleansweep_compact)
             val percent = WidgetReadingPolicy.percent(battery?.percent, battery?.reportedLevel, battery?.reportedScale)
-            views.setTextViewText(R.id.widget_title, when (profile) {
-                CompactWidgetPolicy.Profile.BATTERY -> label("Battery now", "இப்போதைய பேட்டரி")
-                CompactWidgetPolicy.Profile.DATA -> label("Data / connection", "தரவு / இணைப்பு")
-                CompactWidgetPolicy.Profile.PHONE -> label("Phone snapshot", "போன் சுருக்கம்")
-            })
-            views.setTextViewText(R.id.widget_battery, percent)
-            val unplug = LastUnplugRepo.load(context)
-            val unplugLine = when {
-                unplug == null -> label("Last unplug: not observed", "கடைசி சார்ஜர் நீக்கம்: கவனிக்கப்படவில்லை")
-                !LastUnplugPolicy.usable(unplug, checked) -> label("Last unplug: phone clock changed", "கடைசி சார்ஜர் நீக்கம்: போன் நேரம் மாறியுள்ளது")
-                else -> label("Observed unplug: ", "கவனித்த சார்ஜர் நீக்கம்: ") + DisplayTime.dated(unplug.atMs, tamil) + " · " + CompactWidgetPolicy.wholePercent(unplug.percent)
+            val plan = runCatching { PlanStore.load(context) }.getOrNull()
+            val planSet = plan != null && (plan.mode == PlanDataMode.TOTAL || plan.mode == PlanDataMode.DAILY) && plan.startDay != null
+            val planLine = when {
+                !planSet -> label("Set your plan in the app", "ஆப்பில் திட்டத்தை அமைக்கவும்")
+                else -> PlanPolicy.remainingText(plan!!, java.time.ZonedDateTime.now(), tamil)
+                    ?: label("Plan dates are set", "திட்டத் தேதிகள் அமைக்கப்பட்டுள்ளன")
             }
-            val manager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
-            val wifi = runCatching { manager?.let { it.getNetworkCapabilities(it.activeNetwork)?.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) } == true }.getOrDefault(false)
-            val line = when (profile) {
-                CompactWidgetPolicy.Profile.BATTERY -> unplugLine
-                CompactWidgetPolicy.Profile.DATA -> when {
-                    !CompactWidgetPolicy.meteredData(wifi, data?.isUnlimited5g == true) ->
-                        (if (wifi) label("Wi-Fi", "வைஃபை") else label("Unlimited 5G · user-set", "வரம்பற்ற 5G · பயனர் தேர்வு")) +
-                            label(" · storage free ", " · காலி சேமிப்பு ") + (storage?.free?.formatBytes() ?: "—")
-                    data?.readingAvailable != true -> label("Mobile usage unavailable; set up Usage access", "மொபைல் பயன்பாடு இல்லை; பயன்பாட்டு அணுகலை அமைக்கவும்")
-                    !DataUsageTracker.hasConfiguredPlan(context) -> label("Today ", "இன்று ") + data.formattedToday + label(" · set plan limit", " · திட்ட வரம்பை அமைக்கவும்")
-                    else -> label("Today ", "இன்று ") + data.formattedToday + label(" · left ", " · மீதி ") + data.formattedRemaining +
-                        if (data.isPartial) label(" · partial", " · பகுதி") else ""
+            val leftLine = when {
+                data == null -> label("Data reading unavailable", "தரவு வாசிப்பு இல்லை")
+                !data.readingAvailable -> label("Set Usage access for data counts", "தரவு எண்ணிக்கைக்கு பயன்பாட்டு அணுகலை அமைக்கவும்")
+                !DataUsageTracker.hasConfiguredPlan(context) -> label("Set the plan limit", "திட்ட வரம்பை அமைக்கவும்")
+                else -> data.formattedRemaining
+            }
+
+            // 2.53 — three launcher entries, each with one job. Before this every entry showed the
+            // same battery card with a different subtitle, and the owner had to read the fine
+            // print to find the plan or the security review. The class names are kept because the
+            // manifest, the preset XML and the release verifier pin them; only what they say changed.
+            when (profile) {
+                // Battery details, and the plan beside them.
+                CompactWidgetPolicy.Profile.BATTERY -> {
+                    views.setTextViewText(R.id.widget_title, label("Battery & plan", "பேட்டரி & திட்டம்"))
+                    views.setTextViewText(R.id.widget_battery, percent)
+                    val unplug = LastUnplugRepo.load(context)
+                    val stateLine = when {
+                        battery == null -> label("Not reported", "தகவல் இல்லை")
+                        battery.powerConnected && battery.charging -> label("Charging", "சார்ஜ் ஆகிறது")
+                        battery.powerConnected -> label("Connected", "இணைந்துள்ளது")
+                        unplug != null && LastUnplugPolicy.usable(unplug, checked) ->
+                            label("Unplugged at ", "சார்ஜர் நீக்கியது ") + CompactWidgetPolicy.wholePercent(unplug.percent)
+                        else -> label("On battery", "பேட்டரியில் இயங்குகிறது")
+                    }
+                    views.setTextViewText(R.id.widget_state, "$stateLine · ${DisplayTime.clock(checked)}")
+                    views.setTextViewText(R.id.widget_data,
+                        (if (leftLine.isNotBlank()) (label("Left ", "மீதி ") + leftLine) else leftLine) + " · " + planLine)
+                    views.setTextViewText(R.id.widget_brief,
+                        label("Storage free ", "காலி சேமிப்பு ") + (storage?.free?.formatBytes() ?: "—") + " · " + WidgetReadingPolicy.temperature(battery?.temperatureC))
                 }
-                CompactWidgetPolicy.Profile.PHONE -> label("Storage free ", "காலி சேமிப்பு ") + (storage?.free?.formatBytes() ?: "—") + " · " + WidgetReadingPolicy.temperature(battery?.temperatureC)
+
+                // Plan details: what is left, how many days, and what was spent today.
+                CompactWidgetPolicy.Profile.DATA -> {
+                    views.setTextViewText(R.id.widget_title, label("Plan & days", "திட்டம் & நாட்கள்"))
+                    views.setTextViewText(R.id.widget_battery, if (leftLine.isNotBlank()) leftLine else "—")
+                    views.setTextViewText(R.id.widget_state, planLine)
+                    val pack = plan?.let {
+                        if (it.mode == PlanDataMode.DAILY) PlanPolicy.formatMb(it.dailyMb) + label(" / day", " / நாள்")
+                        else if (it.totalUnlimited) label("Unlimited total", "மொத்தம் வரம்பற்றது")
+                        else PlanPolicy.formatMb(PlanPolicy.effectiveTotalMb(it)) + label(" pack", " பேக்")
+                    } ?: ""
+                    val total = data?.let { label("Today ", "இன்று ") + it.formattedToday } ?: label("Today —", "இன்று —")
+                    views.setTextViewText(R.id.widget_data, listOf(pack, total).filter { it.isNotBlank() }.joinToString(" · "))
+                    views.setTextViewText(R.id.widget_brief, label("Open the app to see the full split", "முழு விவரத்திற்கு ஆப்பைத் திறக்கவும்"))
+                }
+
+                // Security: the last saved permission review, never a fresh scan from the widget.
+                CompactWidgetPolicy.Profile.PHONE -> {
+                    // Only the saved aggregate: the widget never runs a scan, so refreshing it
+                    // stays cheap and the owner's battery is not spent on a security sweep.
+                    val review = PermissionReviewStore.load(context)?.takeIf { it.valid() && !it.isFuture(checked) }
+                    val high = review?.high ?: 0
+                    views.setTextViewText(R.id.widget_title, label("Security", "பாதுகாப்பு"))
+                    views.setTextViewText(R.id.widget_battery,
+                        if (review != null) high.toString() + label(" high", " அதிக") else "—")
+                    views.setTextViewText(R.id.widget_state, when {
+                        review == null -> label("No saved review", "சேமித்த விவரம் இல்லை")
+                        review.incomplete -> label("Review was incomplete", "விவரம் முழுமையில்லை")
+                        high > 0 -> label("Fix these first", "இவற்றை முதலில் சரிசெய்யவும்")
+                        review.medium > 0 -> label("Medium risks only", "நடுத்தர ஆபத்துகள் மட்டும்")
+                        else -> label("Nothing standing out", "குறிப்பிடத்தகுந்தது இல்லை")
+                    })
+                    views.setTextViewText(R.id.widget_data, if (review != null)
+                        label("Medium ", "நடுத்தர ") + review.medium + label(" · apps ", " · ஆப்கள் ") + review.appsChecked + " · " + DisplayTime.dated(review.atMs, tamil)
+                    else label("Tap Open to run the permission review", "வேண்டுமென்றால் திற-ஐத் தட்டி சரிபார்க்கவும்"))
+                    views.setTextViewText(R.id.widget_brief,
+                        label("Storage free ", "காலி சேமிப்பு ") + (storage?.free?.formatBytes() ?: "—") + " · " + percent)
+                }
             }
-            views.setTextViewText(R.id.widget_data, line)
-            val status = when {
-                battery == null -> label("Not reported", "தகவல் இல்லை")
-                battery.powerConnected && battery.charging -> label("Charging", "சார்ஜ் ஆகிறது")
-                battery.powerConnected -> label("Connected", "இணைந்துள்ளது")
-                else -> label("On battery", "பேட்டரியில் இயங்குகிறது")
-            }
-            views.setTextViewText(R.id.widget_state, "$status · ${DisplayTime.clock(checked)}")
-            val extra = if (profile == CompactWidgetPolicy.Profile.BATTERY) label("Storage free ", "காலி சேமிப்பு ") + (storage?.free?.formatBytes() ?: "—") else unplugLine
-            views.setTextViewText(R.id.widget_brief, extra)
             views.setViewVisibility(R.id.widget_brief, if (options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 165) < 145) View.GONE else View.VISIBLE)
             views.setTextViewText(R.id.widget_mode, label("View", "காட்சி"))
             views.setTextViewText(R.id.widget_details, label("Open", "திற"))
             views.setTextViewText(R.id.widget_refresh, label("Refresh", "புதுப்பி"))
-            views.setContentDescription(R.id.widget_mode, label("Switch compact battery, data or phone view", "சிறிய பேட்டரி, தரவு, போன் காட்சியை மாற்று"))
-            views.setContentDescription(R.id.widget_battery, label("Reported battery level ", "பதிவான பேட்டரி அளவு ") + percent)
+            views.setContentDescription(R.id.widget_mode, label("Switch the plan, battery or security view", "திட்டம், பேட்டரி அல்லது பாதுகாப்புக் காட்சியை மாற்று"))
+            views.setContentDescription(R.id.widget_battery, label("Main reading ", "முதன்மை அளவு "))
             views.setOnClickPendingIntent(R.id.widget_mode, action(context, id, ACTION_MODE, false))
             views.setOnClickPendingIntent(R.id.widget_refresh, action(context, id, ACTION_REFRESH_WIDGET, false))
             views.setOnClickPendingIntent(R.id.widget_details, action(context, id, ACTION_DETAILS, true))
@@ -172,6 +212,12 @@ open class CleanSweepWidget : AppWidgetProvider() {
     }
 }
 
-/** Separate launcher entries, each retaining the same compact three-view selector. */
+/**
+ * Separate launcher entries. Same class of card, three jobs (2.53):
+ *  - [CleanSweepWidget]        battery details, with the pack's remaining data and days beside them
+ *  - [CleanSweepDataWidget]    plan details: data left, days left, today's usage
+ *  - [CleanSweepPhoneWidget]   security: the last saved permission review
+ * Names stay as they are: the manifest, the 2×2 presets and the release verifier pin them.
+ */
 class CleanSweepDataWidget : CleanSweepWidget()
 class CleanSweepPhoneWidget : CleanSweepWidget()

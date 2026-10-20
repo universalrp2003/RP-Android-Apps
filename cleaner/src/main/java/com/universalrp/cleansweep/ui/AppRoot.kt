@@ -96,6 +96,7 @@ fun AppRoot(vm: MainViewModel) {
                 Screen.VOICE -> VoiceScreen(state, vm)
                 Screen.INSIGHTS -> InsightsScreen(state, vm)
                 Screen.FEATURE_SETUP -> FeatureSetupScreen(state, vm)
+                Screen.GUIDE -> LiveGuardGuideScreen(vm)
             }
         }
 

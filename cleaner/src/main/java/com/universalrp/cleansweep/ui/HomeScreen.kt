@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Android
@@ -131,6 +132,7 @@ fun HomeScreen(
     var cleaningOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     var phoneOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     var helpOpen by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    var showVolume by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
     val owner = LocalLifecycleOwner.current
     val context = androidx.compose.ui.platform.LocalContext.current
     androidx.compose.runtime.DisposableEffect(context) {
@@ -213,13 +215,16 @@ fun HomeScreen(
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
+            // 2.53 — the speaker opens the volume slider itself, over this page, exactly as the
+            // owner asked. It used to navigate to the whole Voice screen to reach one slider; the
+            // Voice screen is still in Settings and the menu for voices, alarms and languages.
             IconButton(
-                onClick = { vm.navigate(Screen.VOICE) },
+                onClick = { showVolume = true },
                 modifier = Modifier.size(38.dp),
             ) {
                 Icon(
                     if (state.voiceOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
-                    contentDescription = tr("Voice"),
+                    contentDescription = tr("Announcement volume"),
                     tint = if (state.voiceOn) AccentCyan else TextSecondary,
                     modifier = Modifier.size(20.dp),
                 )
@@ -260,6 +265,8 @@ fun HomeScreen(
             )
         }
 
+        if (showVolume) AnnouncementVolumeDialog { showVolume = false }
+
         LazyColumn(
             state = listState,
             // 2.42: the top inset used to be missing, so the first card was drawn flush
@@ -280,7 +287,7 @@ fun HomeScreen(
                 item(key = "setup") { SetupCard(vm) }
             }
 
-            item(key = "published_update") { LiveGuardUpdateCard() }
+            item(key = "published_update") { LiveGuardUpdateCard(compact = true) }
 
             // 2.52 — the first screen now answers three questions and nothing else: what the
             // phone has, the one action that frees space, and the plan. Everything else is
@@ -342,106 +349,59 @@ fun HomeScreen(
     }
 }
 
-/** Entry point for the on-device assistant (v1.3) with quick question input directly on Home. */
+/**
+ * 2.53 — the assistant on Home is a small symbol, as the owner asked.
+ *
+ * It used to be a full card: a 40 dp gradient tile, an ONLINE AI badge, a hint line and a text
+ * field with its own Ask button — a second, half-finished assistant inside the home list. The
+ * owner wants one tap that opens the assistant window proper. So this row is now an icon, a
+ * one-line label and a chevron; the question box, the engine label and the badge all live on the
+ * assistant screen, where answers are actually read.
+ */
 @Composable
 private fun AssistantCard(state: UiState, vm: MainViewModel) {
-    val totalCache = state.appCaches.sumOf { if (it.cacheBytes > 0L) it.cacheBytes else 0L }
     val online = state.assistantOnline && state.aiConfig.ready
-    val badge = if (online) "ONLINE AI" else "ON-DEVICE"
-    val badgeColor = if (online) GoodGreen else AccentCyan
-    var quickQuestion by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
-
-    PanelCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(HomeLayoutPolicy.CARD_PADDING_DP.dp)) {
-            Row(
+    PanelCard(
+        Modifier
+            .fillMaxWidth()
+            .clickable { vm.openAssistant() },
+        color = SurfaceHigh,
+    ) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
                 Modifier
-                    .fillMaxWidth()
-                    .clickable { vm.openAssistant() },
-                verticalAlignment = Alignment.CenterVertically,
+                    .size(28.dp)
+                    .clip(RoundedCornerShape(9.dp))
+                    .background(Brush.linearGradient(listOf(AccentCyan, AccentViolet))),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    Modifier
-                        .size(40.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Brush.linearGradient(listOf(AccentCyan, AccentViolet))),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        Icons.Outlined.SmartToy,
-                        contentDescription = null,
-                        tint = TextPrimary,
-                        modifier = Modifier.size(22.dp),
-                    )
-                }
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            tr("Ask the assistant"),
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            badge,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF04202A),
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(badgeColor)
-                                .padding(horizontal = 6.dp, vertical = 2.dp),
-                        )
-                    }
-                    Text(
-                        if (online) state.aiEngineLabel else tr("Free space, cache help — answers on this phone"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        maxLines = 1,
-                    )
-                }
-                Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TextSecondary)
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            // Direct question bar on Home screen
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                androidx.compose.material3.OutlinedTextField(
-                    value = quickQuestion,
-                    onValueChange = { quickQuestion = it },
-                    placeholder = { Text(tr("Ask any question…"), style = MaterialTheme.typography.bodySmall) },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(12.dp),
+                Icon(
+                    Icons.Outlined.SmartToy,
+                    contentDescription = tr("Assistant"),
+                    tint = TextPrimary,
+                    modifier = Modifier.size(16.dp),
                 )
-                Spacer(Modifier.width(8.dp))
-                IconButton(
-                    onClick = {
-                        val q = quickQuestion.trim()
-                        if (q.isNotBlank()) {
-                            vm.askAssistant(q)
-                            vm.openAssistant()
-                        } else {
-                            vm.openAssistant()
-                        }
-                    },
-                    modifier = Modifier
-                        .size(42.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(AccentCyan),
-                ) {
-                    Icon(
-                        Icons.Outlined.Search,
-                        contentDescription = tr("Ask"),
-                        tint = Color(0xFF04202A),
-                        modifier = Modifier.size(20.dp),
-                    )
-                }
             }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    tr("Assistant"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    if (online) state.aiEngineLabel else tr("Answers on this phone"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                )
+            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
         }
     }
 }
@@ -1244,6 +1204,35 @@ private fun HomeHeroCard(state: UiState, vm: MainViewModel) {
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                 )
+            }
+
+            // 2.53 — the owner asked for the estimated phone age on Home. It is an estimate from
+            // the model family / factory Android generation, never a manufacture or purchase
+            // date; when the ROM hides that evidence the row says so instead of guessing.
+            state.phoneAge?.let { age ->
+                Spacer(Modifier.height(10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.PhoneAndroid,
+                        contentDescription = null,
+                        tint = TextSecondary,
+                        modifier = Modifier.size(15.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        tr("Phone age"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        age.displayString(com.universalrp.cleansweep.data.Lang.isTamil),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextPrimary,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                    )
+                }
             }
 
             Spacer(Modifier.height(12.dp))
