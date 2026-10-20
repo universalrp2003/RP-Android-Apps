@@ -100,9 +100,10 @@ preset XML and the manifest receivers are unchanged, so existing widgets update 
 **Static checks:** `verify_cleaner_next_update_source.py` and the regression suites pass, including
 the widget contract (three receivers, `exported=false`, three 2×2 presets) and the language pins.
 
-**CI:** the Build APK workflow compiles both variants, runs every required unit and regression
-suite, verifies the APK metadata and the permission delta, and uploads the APK. The published
-digest is recorded in `docs/published-release-digests.md`.
+**CI:** Build APK run **39426688658** compiled both variants, ran every required unit and
+regression suite, verified the APK metadata and the permission delta, and uploaded the APK
+(`CleanSweep-v2.53.apk`, candidate 13,815,072 bytes). The published digest is recorded in
+`docs/published-release-digests.md`.
 
 **Device testing:** this build was **not installed on a phone** at the time of writing. CI
 compilation and the static checks are not a device test, not Play Protect approval and not an
