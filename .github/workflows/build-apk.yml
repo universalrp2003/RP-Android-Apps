@@ -1123,7 +1123,16 @@ jobs:
           CLEANER_CODE=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+).*/\1/p' cleaner/build.gradle.kts)
           # This is a separate step from "Verify built APKs", so its tools are not inherited.
           AAPT2=$(ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools/*/aapt2 2>/dev/null | tail -1 || true)
-          if [ "${CLEANER_CODE:-0}" -gt 44 ] && [[ "${MIRROR_EXISTING:-false}" != "true" ]]; then
+          # 2.51 follow-up: this gate exists to stop a NEW Live Guard release that adds a
+          # dangerous permission. It must not run when Live Guard is already public and only
+          # another app is being published - that failure stranded Ramesh Radio 1.14, because
+          # releases/latest-tag.txt already pointed at live-guard-v2.51, so the gate compared
+          # the release against itself, could not read a previous manifest and failed closed.
+          LIVE_GUARD_ALREADY_PUBLIC=$(gh release view "$LIVE_GUARD_TAG" --json isDraft --jq '.isDraft' 2>/dev/null || true)
+          if [[ "$LIVE_GUARD_ALREADY_PUBLIC" == "false" ]]; then
+            echo "SKIP: $LIVE_GUARD_TAG is already public; the permission/device-evidence gate applies only when Live Guard itself is being published."
+          fi
+          if [ "${CLEANER_CODE:-0}" -gt 44 ] && [[ "${MIRROR_EXISTING:-false}" != "true" ]] && [[ "$LIVE_GUARD_ALREADY_PUBLIC" != "false" ]]; then
             EVIDENCE="docs/live-guard-${CLEANER_VERSION}-device-evidence.md"
             # --- 2.42: does THIS release need a recorded device install? --------------
             if [ -z "$AAPT2" ]; then
