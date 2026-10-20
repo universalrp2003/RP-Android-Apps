@@ -91,6 +91,29 @@ unwrapped, centred bottom-bar labels for Tamil. No new permission.
 **Not claimed:** these bytes were not installed on a phone before publication. CI compiled every
 module, ran the radio unit tests, lint and the APK checks.
 
+## Live Guard 2.53 — volume, guide, one status icon, three widgets (20 October 2026)
+
+Published by Build APK [run 39428035172](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39428035172)
+from `arena/1c17a6e2-rp-android-apps` (workflow run 39426688658 had already compiled and tested the
+same source). Only Live Guard's version changed; Ramesh Radio 1.15, PulseEQ 1.7, Vocal Remover
+0.1.13, Oor Arivippu 1.1.1 and Secret Message 1.1.1 kept their releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.53.apk` | 13,815,072 | `7d640e044ad62bf5841c38d18a741c8e8ccf06dfe9d0fea2b45e14ddc21104f4` |
+
+Digest read back from the release API after publication. The release asset is signed and re-packed
+by the publishing step, so its digest is not required to equal the candidate build's
+(`13db2a88…a0e8`, recorded in `docs/candidate-build-digests.md`).
+
+**What it contains:** one announcement-volume control opened over Home by the speaker button and
+also present in Settings and the plan card; **Guide** given its own screen instead of opening the
+permission checklist; the status-bar icon fixed to a monochrome glyph; the Home update card
+reduced to one row with all detail in its dialog; the estimated phone age on Home; the assistant
+reduced to a small symbol that opens the assistant window; and three 2×2 widgets — **Battery &
+plan**, **Plan & days** (data left, days left, today) and **Security** (saved review only, no
+background scan). No new permission.
+
 ## Live Guard 2.52 — short first page, readable menu, Tamil typography (20 October 2026)
 
 Published by Build APK [run 39419657235](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39419657235)
