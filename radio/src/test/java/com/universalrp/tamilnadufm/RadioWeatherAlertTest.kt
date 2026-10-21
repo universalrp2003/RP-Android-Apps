@@ -2,7 +2,7 @@ package com.universalrp.tamilnadufm
 
 import com.universalrp.weather.SharedWeatherRuntime
 import com.universalrp.weather.WeatherAlertPolicy
-import com.universalrp.weather.WeatherForecastClient
+import com.universalrp.weather.WeatherPlaceResolver
 import com.universalrp.weather.WeatherSeverity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -13,9 +13,9 @@ class RadioWeatherAlertTest {
 
     @Test
     fun pinCode622301ExtractionAndCycloneBypassWorkForRadio() {
-        val (pin, place) = WeatherForecastClient.extractPinAndPlaceQuery("alangudi 622301")
-        assertEquals("622301", pin)
-        assertEquals("alangudi", place)
+        val parsed = WeatherPlaceResolver.parseQuery("alangudi 622301")
+        assertEquals("622301", parsed.postalCode)
+        assertEquals("alangudi", parsed.placeText)
         assertFalse(WeatherSeverity.RAIN_SOON.bypassQuietHours)
         assertTrue(WeatherSeverity.VERY_HEAVY_RAIN.bypassQuietHours)
         assertTrue(WeatherSeverity.CYCLONE_SEVERE.bypassQuietHours)

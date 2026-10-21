@@ -2,7 +2,7 @@ package com.oorarivippu.voiceannouncer
 
 import com.universalrp.weather.SharedWeatherRuntime
 import com.universalrp.weather.WeatherAlertPolicy
-import com.universalrp.weather.WeatherForecastClient
+import com.universalrp.weather.WeatherPlaceResolver
 import com.universalrp.weather.WeatherSeverity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -13,8 +13,8 @@ class OorWeatherAlertTest {
 
     @Test
     fun smartWeatherRulesRespectQuietHoursForRainAndNeverSkipCyclone() {
-        val (pin, _) = WeatherForecastClient.extractPinAndPlaceQuery("622301")
-        assertEquals("622301", pin)
+        val parsed = WeatherPlaceResolver.parseQuery("622301")
+        assertEquals("622301", parsed.postalCode)
         assertFalse(WeatherSeverity.RAIN_SOON.bypassQuietHours)
         assertTrue(WeatherSeverity.VERY_HEAVY_RAIN.bypassQuietHours)
         assertTrue(WeatherSeverity.CYCLONE_SEVERE.bypassQuietHours)
