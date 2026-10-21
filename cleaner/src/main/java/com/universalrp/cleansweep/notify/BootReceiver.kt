@@ -80,5 +80,8 @@ class BootReceiver : BroadcastReceiver() {
         if (com.universalrp.cleansweep.notify.RadioWatchService.needed(app)) {
             runCatching { com.universalrp.cleansweep.notify.RadioWatchService.start(app) }
         }
+
+        // 5. v2.57: re-arm the periodic 30-min rain & storm watch if enabled by the owner.
+        runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(app) }
     }
 }

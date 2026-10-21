@@ -101,7 +101,9 @@ enum class Screen {
     HOME, SCANNING, RESULTS, APP_CACHE, ASSISTANT, SETTINGS, ABOUT,
     HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP, MY_PLAN,
     /** 2.53 — the user guide itself; the menu's "Guide" row used to open FEATURE_SETUP by mistake. */
-    GUIDE
+    GUIDE,
+    /** 2.57 — 30-min rain head-start + severe heavy rain & cyclone voice alert screen. */
+    WEATHER
 }
 
 enum class InsightsTab { COMPATIBILITY, SECURITY_HISTORY, CHARGING_HISTORY, DATA_BUDGET, ACTION_CHECKLIST }
@@ -266,6 +268,7 @@ data class UiState(
     val voiceRadioChange: Boolean = false,
     val voiceNewDevice: Boolean = true,
     val voiceUnplugStart: Int = Announcer.DEFAULT_UNPLUG_START,
+    val weather: WeatherUiSnapshot = WeatherUiSnapshot(),
     /** MACs seen on the last network scan, so a genuinely new device can be announced. */
     val knownNetworkMacs: Set<String> = emptySet(),
     val dailyScanOn: Boolean = MonitorDefaultsPolicy.DAILY_SECURITY_WATCH,
@@ -497,6 +500,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (com.universalrp.cleansweep.notify.RadioWatchService.needed(ctx)) {
             runCatching { com.universalrp.cleansweep.notify.RadioWatchService.start(ctx) }
         }
+        refreshWeatherUiState()
+        runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(ctx) }
         val savedVerified = prefs.getStringSet("verified_wifi_macs", emptySet()) ?: emptySet()
         val autoWifiScan = prefs.getBoolean("auto_wifi_scan_open", true)
         val bgWifiScan = prefs.getBoolean(com.universalrp.cleansweep.work.WifiScanWorker.KEY_BG_WIFI_SCAN, false)
@@ -3142,6 +3147,184 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 com.universalrp.cleansweep.data.AppNetworkTracker.inspectConnections(ctx)
             }.getOrNull()
             mutate { it.copy(appTrackerBusy = false, appTrackerReport = report) }
+        }
+    }
+
+    // ---------------------------------------------------------------- weather & cyclone alerts (2.57)
+
+    fun refreshWeatherUiState() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val tamil = Lang.languageIn(ctx) == AppLang.TA
+            val saved = WeatherAlertStore.savedPlace(ctx)
+            val resolved = com.universalrp.weather.WeatherPlaceResolver.resolveActiveLocation(
+                context = ctx,
+                savedName = saved?.name.orEmpty(),
+                savedDetails = saved?.details.orEmpty(),
+                savedLat = saved?.latitude ?: Double.NaN,
+                savedLon = saved?.longitude ?: Double.NaN,
+                tamil = tamil,
+            )
+            val current = _state.value.weather
+            val fresh = WeatherAlertStore.readUiSnapshot(
+                context = ctx,
+                gpsTurnedOn = resolved.gpsTurnedOn,
+                permissionGranted = resolved.permissionGranted,
+                resolvedMode = resolved.mode,
+                resolvedName = resolved.name,
+                resolvedDetails = resolved.details,
+            ).copy(
+                checkingNow = current.checkingNow,
+                searchingPlaces = current.searchingPlaces,
+                searchResults = current.searchResults,
+                statusNote = current.statusNote,
+            )
+            mutate { it.copy(weather = fresh, voiceOn = Announcer.enabled(ctx)) }
+        }
+    }
+
+    fun setWeatherAlertEnabled(on: Boolean) {
+        WeatherAlertStore.setEnabled(ctx, on)
+        runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(ctx) }
+        refreshWeatherUiState()
+        if (on) {
+            checkWeatherNow(speakPreview = false)
+        }
+    }
+
+    fun checkWeatherNow(speakPreview: Boolean = false) {
+        if (_state.value.weather.checkingNow) return
+        mutate { it.copy(weather = it.weather.copy(checkingNow = true, statusNote = "")) }
+        viewModelScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                com.universalrp.cleansweep.work.WeatherWatchWorker.executeCheck(
+                    context = ctx,
+                    speakIfTriggered = !speakPreview,
+                )
+            }
+            val decision = result.getOrNull()
+            if (speakPreview) {
+                val place = WeatherAlertStore.savedPlace(ctx)?.name?.takeIf { it.isNotBlank() }
+                    ?: _state.value.weather.activePlaceName.takeIf { it.isNotBlank() }
+                if (decision != null && decision.severity != com.universalrp.weather.WeatherSeverity.CLEAR_OR_NORMAL) {
+                    val text = if (Lang.isTamil) decision.tamilSpeech else decision.englishSpeech
+                    Announcer.speakNow(ctx, text)
+                } else {
+                    val sample = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+                        severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
+                        placeLabel = place ?: if (Lang.isTamil) "உங்கள் ஊர்" else "your location",
+                        minutesUntilRain = 30,
+                    )
+                    Announcer.speakNow(ctx, if (Lang.isTamil) sample.second else sample.first)
+                }
+            }
+            val note = when {
+                result.isFailure -> tr("Could not reach weather service — check internet connection.")
+                decision == null -> tr("Turn on GPS or search your PIN code / town below first.")
+                else -> ""
+            }
+            mutate { it.copy(weather = it.weather.copy(checkingNow = false, statusNote = note)) }
+            refreshWeatherUiState()
+        }
+    }
+
+    fun testSevereVoiceSample() {
+        val place = _state.value.weather.activePlaceName.takeIf { it.isNotBlank() }
+            ?: _state.value.weather.savedPlaceName.takeIf { it.isNotBlank() }
+            ?: if (Lang.isTamil) "உங்கள் பகுதி" else "your area"
+        val sample = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+            severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
+            placeLabel = place,
+            minutesUntilRain = 30,
+        )
+        if (!Announcer.enabled(ctx)) {
+            Announcer.setEnabled(ctx, true)
+            mutate { it.copy(voiceOn = true) }
+        }
+        Announcer.speakNow(ctx, if (Lang.isTamil) sample.second else sample.first)
+    }
+
+    fun searchWeatherPlaces(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) {
+            mutate { it.copy(weather = it.weather.copy(searchResults = emptyList(), searchingPlaces = false)) }
+            return
+        }
+        mutate { it.copy(weather = it.weather.copy(searchingPlaces = true, statusNote = "")) }
+        viewModelScope.launch {
+            val hits = runCatching {
+                com.universalrp.weather.WeatherPlaceResolver.searchCandidates(
+                    context = ctx,
+                    query = trimmed,
+                    tamil = Lang.isTamil,
+                )
+            }.getOrDefault(emptyList())
+            val note = if (hits.isEmpty()) {
+                tr("No matching place found. Try PIN code or town name (e.g. alangudi 622301).")
+            } else {
+                ""
+            }
+            mutate {
+                it.copy(
+                    weather = it.weather.copy(
+                        searchingPlaces = false,
+                        searchResults = hits,
+                        statusNote = note,
+                    )
+                )
+            }
+        }
+    }
+
+    fun selectWeatherPlace(candidate: com.universalrp.weather.WeatherPlaceCandidate) {
+        WeatherAlertStore.savePlace(ctx, candidate)
+        mutate {
+            it.copy(
+                weather = it.weather.copy(
+                    savedPlaceName = candidate.name,
+                    savedPlaceDetails = candidate.details,
+                    savedPostalCode = candidate.postalCode,
+                    searchResults = emptyList(),
+                    statusNote = "",
+                ),
+                message = tr("Location saved") + ": " + candidate.name,
+            )
+        }
+        refreshWeatherUiState()
+        if (WeatherAlertStore.enabled(ctx)) {
+            checkWeatherNow(speakPreview = false)
+        }
+    }
+
+    fun clearWeatherPlace() {
+        WeatherAlertStore.clearSavedPlace(ctx)
+        mutate {
+            it.copy(
+                weather = it.weather.copy(
+                    savedPlaceName = "",
+                    savedPlaceDetails = "",
+                    savedPostalCode = "",
+                )
+            )
+        }
+        refreshWeatherUiState()
+    }
+
+    fun saveTomorrowApiKey(rawKey: String) {
+        val ok = WeatherAlertStore.saveTomorrowKey(ctx, rawKey)
+        mutate {
+            it.copy(
+                message = if (rawKey.isBlank()) {
+                    tr("Tomorrow.io key removed — using free built-in weather radar.")
+                } else if (ok) {
+                    tr("Tomorrow.io 1-minute rain key saved securely.")
+                } else {
+                    tr("Could not encrypt key in Android Keystore.")
+                }
+            )
+        }
+        refreshWeatherUiState()
+        if (rawKey.isNotBlank() && WeatherAlertStore.enabled(ctx)) {
+            checkWeatherNow(speakPreview = false)
         }
     }
 }

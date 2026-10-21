@@ -309,6 +309,8 @@ fun HomeScreen(
 
             item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
 
+            item(key = "weather_alert") { HomeWeatherAlertCard(state, vm) }
+
             if (!state.legacyStorageOk) {
                 item(key = "legacy") { LegacyStorageCard(vm) }
             }

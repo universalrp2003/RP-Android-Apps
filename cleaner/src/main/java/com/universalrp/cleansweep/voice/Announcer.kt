@@ -57,6 +57,9 @@ object Announcer {
 
     /** v2.47: announce 4G ⇄ 5G changes, separately from Wi-Fi ⇄ mobile data. */
     const val KEY_RADIO_CHANGE = "voice_radio_change"
+
+    /** v2.57: 30-min rain head-start (quiet-hours aware) + heavy rain/cyclone alert (24x7). */
+    const val KEY_WEATHER = "voice_weather_alert"
     const val KEY_QUIET_START = "voice_quiet_start"
     const val KEY_QUIET_END = "voice_quiet_end"
     const val KEY_LOW = "voice_battery_low"
@@ -128,6 +131,9 @@ object Announcer {
 
         /** 4G ⇄ 5G on the same SIM. Off by default: phones hop between radios constantly. */
         RADIO_CHANGE(KEY_RADIO_CHANGE),
+
+        /** 30-min rain head-start (quiet-hours aware) + heavy rain/cyclone alerts (24x7). Off until enabled. */
+        WEATHER_ALERT(KEY_WEATHER),
         NEW_DEVICE(KEY_NEW_DEVICE),
         BATTERY_HEALTH(KEY_BATTERY_HEALTH),
         CHARGER_IDLE(KEY_IDLE_CHARGE),
@@ -147,7 +153,7 @@ object Announcer {
     private val automaticAnswerIds = linkedSetOf<String>()
     private data class Request(val english: String?, val tamil: String?, val wanted: AppLang?, val event: Event,
         val manual: Boolean, val done: kotlinx.coroutines.CompletableDeferred<Boolean>? = null, val onStarted: (() -> Unit)? = null,
-        val requestKey: String? = null, val preferredVoice: String? = null) {
+        val requestKey: String? = null, val preferredVoice: String? = null, val bypassQuietHours: Boolean = false) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
         var language = wanted ?: AppLang.TA
@@ -215,7 +221,7 @@ object Announcer {
         val key = event.key ?: return true
         val default = when (event) {
             // A phone that hops between radios must not narrate it until asked.
-            Event.RADIO_CHANGE, Event.NETWORK_CHANGE -> false
+            Event.RADIO_CHANGE, Event.NETWORK_CHANGE, Event.WEATHER_ALERT -> false
             else -> true
         }
         return prefs(context).getBoolean(key, default)
@@ -233,6 +239,9 @@ object Announcer {
             if (on && !enabled(context)) {
                 setEnabled(context, true)
             }
+        }
+        if (event == Event.WEATHER_ALERT && on && !enabled(context)) {
+            setEnabled(context, true)
         }
     }
 
@@ -406,11 +415,47 @@ object Announcer {
         }
     }
 
+    /**
+     * Speaks a weather / storm alert while enforcing the exact Quiet Hours rule:
+     *  - Normal 30-min approaching rain (`bypassQuietHours = false`): silent during Quiet Hours.
+     *  - Very Heavy Rain & Cyclone alerts (`bypassQuietHours = true`): speaks day OR night without skip.
+     *  - CallGuard still blocks interrupting an active phone call (`Stage.CALL_IN_PROGRESS`).
+     */
+    suspend fun speakWeatherAndWait(
+        context: Context,
+        english: String,
+        tamil: String,
+        bypassQuietHours: Boolean,
+        timeoutMs: Long = 45_000,
+    ): Boolean {
+        val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
+        val request = Request(
+            english = english.takeIf { it.isNotBlank() },
+            tamil = tamil.takeIf { it.isNotBlank() },
+            wanted = null,
+            event = Event.WEATHER_ALERT,
+            manual = false,
+            done = done,
+            bypassQuietHours = bypassQuietHours,
+        )
+        if (!submit(context, request)) return false
+        var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
+        return try {
+            kotlinx.coroutines.withTimeoutOrNull(timeoutMs) { done.await() } ?: false
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            endStage = VoiceDeliveryPolicy.Stage.CANCELLED
+            throw e
+        } finally {
+            if (!done.isCompleted) main.post { cancelRequest(request.id, endStage) }
+        }
+    }
+
     private fun submit(context: Context, request: Request): Boolean {
         val ctx = context.applicationContext
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual,
-            inCall = com.universalrp.updates.CallGuard.inCall(ctx)
+            inCall = com.universalrp.updates.CallGuard.inCall(ctx),
+            bypassQuietHours = request.bypassQuietHours,
         )
         if (blocked != null) {
             main.post { record(ctx, request, blocked); request.done?.complete(false) }
@@ -426,11 +471,11 @@ object Announcer {
                 automaticAnswerIds.add(request.key)
                 if (automaticAnswerIds.size > 128) automaticAnswerIds.remove(automaticAnswerIds.first())
             }
-            if ((request.manual || request.event == Event.OVERHEAT && active?.event == Event.ANSWER) && active != null) {
+            if ((request.manual || (request.event == Event.OVERHEAT || request.bypassQuietHours) && active?.event == Event.ANSWER) && active != null) {
                 runCatching { tts?.stop() }; finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
             }
             if (pending.size >= 4) pending.removeLast().also { record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED); it.done?.complete(false) }
-            if (request.manual || request.event == Event.OVERHEAT) pending.addFirst(request) else pending.addLast(request)
+            if (request.manual || request.event == Event.OVERHEAT || request.bypassQuietHours) pending.addFirst(request) else pending.addLast(request)
             record(ctx, request, VoiceDeliveryPolicy.Stage.QUEUED)
             drain(ctx)
         }

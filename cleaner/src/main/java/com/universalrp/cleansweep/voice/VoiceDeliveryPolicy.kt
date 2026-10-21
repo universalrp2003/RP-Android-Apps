@@ -8,13 +8,15 @@ object VoiceDeliveryPolicy {
     /**
      * @param inCall true while the phone is ringing or in a call. It outranks every other
      * gate, including a manual test: nothing may be spoken into a live call.
+     * @param bypassQuietHours true only for life/property-critical severe weather warnings
+     * (very heavy rain or cyclone), which must speak at any hour without skipping quiet hours.
      */
     fun blocked(master: Boolean, eventAllowed: Boolean, quiet: Boolean, manual: Boolean,
-                inCall: Boolean = false): Stage? = when {
+                inCall: Boolean = false, bypassQuietHours: Boolean = false): Stage? = when {
         !master -> Stage.DISABLED
         inCall -> Stage.CALL_IN_PROGRESS
         !eventAllowed -> Stage.EVENT_OFF
-        quiet && !manual -> Stage.QUIET_HOURS
+        quiet && !manual && !bypassQuietHours -> Stage.QUIET_HOURS
         else -> null
     }
     fun cooldownReady(nowMs: Long, lastMs: Long, intervalMs: Long): Boolean = lastMs <= 0 || nowMs < lastMs || nowMs - lastMs >= intervalMs

@@ -44,7 +44,7 @@ object SisterApps {
             name = "Live Guard",
             tamilName = "லைவ் கார்ட்",
             tagPrefix = "live-guard",
-            version = "2.56",
+            version = "2.57",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
         ),

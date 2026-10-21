@@ -158,6 +158,20 @@ object AppGuides {
                     "\"தடுக்கப்பட்டது: தொலைபேசி அழைப்பு நடைபெறுகிறது\" என்று தெரியும்.",
             ),
             topic(
+                "Rain and cyclone voice alerts",
+                "மழை மற்றும் புயல் குரல் எச்சரிக்கை",
+                "When switched on, Live Guard watches short-range rainfall and cyclone advisories without sending " +
+                    "daily routine weather spam. Normal 30-minute rain alerts stay silent during Quiet Hours, while " +
+                    "very heavy rain and cyclone warnings speak at any hour (still muted during live phone calls). " +
+                    "If phone GPS is on, location is automatic; if GPS is off, search your PIN code or village name " +
+                    "(such as 622301 or alangudi 622301) and pick your exact town once.",
+                "இயக்கும்போது, தினசரி சாதாரண வானிலை தொந்தரவு இல்லாமல் மழை மற்றும் புயல் முன்னறிவிப்பை லைவ் கார்டு " +
+                    "கண்காணிக்கும். சாதாரண 30 நிமிட மழை முன்னறிவிப்பு அமைதி நேரத்தில் ஒலிக்காது; ஆனால் மிகக் கனமழை " +
+                    "மற்றும் புயல் எச்சரிக்கைகள் இரவு-பகல் எப்போதும் ஒலிக்கும் (தொலைபேசி அழைப்பின்போது மட்டும் காத்திருக்கும்). " +
+                    "GPS இயக்கத்தில் இருந்தால் இடம் தானாகத் தேர்ந்தெடுக்கப்படும்; GPS அணைந்திருந்தால் உங்கள் PIN எண் " +
+                    "அல்லது ஊர்ப் பெயரை (உதா: 622301 அல்லது alangudi 622301) தேடி ஒருமுறை சேமிக்கலாம்.",
+            ),
+            topic(
                 "Updating Live Guard",
                 "லைவ் கார்டைப் புதுப்பித்தல்",
                 "Live Guard checks the official GitHub releases itself and offers only a newer stable version. " +
