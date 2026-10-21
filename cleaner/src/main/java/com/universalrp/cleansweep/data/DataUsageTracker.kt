@@ -84,8 +84,9 @@ object DataUsageTracker {
 
     /** 1.5 GB, 2 GB, 3 GB — the daily allowances Indian prepaid plans actually sell. */
     val DAILY_LIMIT_PRESETS = listOf(1.5f, 2f, 3f)
+    /** A configured 0 GB means a voice-only/no-data plan; positive values set a normal quota. */
     fun setPackLimitGb(context: Context, limitGb: Float) {
-        if (!limitGb.isFinite() || limitGb <= 0 || limitGb > 100_000) return
+        if (!limitGb.isFinite() || limitGb < 0 || limitGb > 100_000) return
         prefs(context).edit().putFloat(KEY_PACK_LIMIT_GB, limitGb).apply()
         context.getSharedPreferences("cleansweep_state", Context.MODE_PRIVATE).edit().putFloat(KEY_PACK_LIMIT_GB, limitGb).apply()
     }
@@ -182,7 +183,7 @@ object DataUsageTracker {
         }
         val fallback = context.getSharedPreferences("cleansweep_state", Context.MODE_PRIVATE)
         val configured = if (store.contains(KEY_PACK_LIMIT_GB)) store.getFloat(KEY_PACK_LIMIT_GB, DEFAULT_PACK_LIMIT_GB) else fallback.getFloat(KEY_PACK_LIMIT_GB, DEFAULT_PACK_LIMIT_GB)
-        val limitGb = configured.takeIf { it.isFinite() && it > 0 && it <= 100_000 } ?: DEFAULT_PACK_LIMIT_GB
+        val limitGb = configured.takeIf { it.isFinite() && it >= 0 && it <= 100_000 } ?: DEFAULT_PACK_LIMIT_GB
         val unlimited = store.getBoolean(KEY_UNLIMITED_5G, false) || fallback.getBoolean(KEY_UNLIMITED_5G, false)
         val limit = (limitGb * 1024.0 * 1024.0 * 1024.0).toLong()
         val remaining = (limit - pack).coerceAtLeast(0)
@@ -192,7 +193,7 @@ object DataUsageTracker {
         val dailyProgress = if (dailyLimit > 0) (today.toFloat() / dailyLimit).coerceIn(0f, 1f) else 0f
         val result = UsageInfo(access, today, pack, start, limitGb, limit, remaining,
             if (available) formatBytesSafe(today) else "Not measured", if (available) formatBytesSafe(pack) else "Not measured",
-            if (available) formatBytesSafe(remaining) else "Not measured", "%.1f GB".format(limitGb),
+            if (available) formatBytesSafe(remaining) else "Not measured", if (limitGb <= 0f) "0 MB" else "%.1f GB".format(limitGb),
             if (available && limit > 0) (pack.toFloat() / limit).coerceIn(0f, 1f) else 0f, unlimited, available, partial,
             if (!available) "Mobile statistics unavailable" else if (partial) "Observed mobile counter (partial)" else "Android mobile network statistics", now,
             dailyGb, dailyLimit, dailyRemaining, dailyProgress,

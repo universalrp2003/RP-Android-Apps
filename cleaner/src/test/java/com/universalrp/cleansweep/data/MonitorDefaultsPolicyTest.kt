@@ -4,9 +4,9 @@ import org.junit.Assert.*
 import org.junit.Test
 
 /**
- * 2.42 owner decision: the ongoing charging meter, the background battery-health monitor and
- * the security hash check's system-app scope default ON. These tests hold the defaults and the
- * re-arm rule; they cannot prove that an OEM lets a service survive, which still needs a phone.
+ * Charging and persistent battery-health monitoring keep their owner-selected defaults; the
+ * scheduled daily security-risk watch is now opt-in, with a one-time legacy migration. These
+ * tests hold the policy decisions, not whether an OEM lets a worker survive on a real phone.
  */
 class MonitorDefaultsPolicyTest {
 
@@ -30,8 +30,11 @@ class MonitorDefaultsPolicyTest {
         assertNotEquals(MonitorDefaultsPolicy.STATUS_PILL, MonitorDefaultsPolicy.CHARGE_CARD)
     }
 
-    @Test fun automaticOnlineDailySummariesStayASeparateConsent() {
+    @Test fun dailyRiskWatchAndOnlineSummariesAreOptInAndLegacyMigrationIsOneTime() {
+        assertFalse(MonitorDefaultsPolicy.DAILY_SECURITY_WATCH)
         assertFalse(MonitorDefaultsPolicy.DAILY_ONLINE_SUMMARIES)
+        assertTrue(MonitorDefaultsPolicy.dailyScanMigrationNeeded(migrationComplete = false))
+        assertFalse(MonitorDefaultsPolicy.dailyScanMigrationNeeded(migrationComplete = true))
     }
 
     /**

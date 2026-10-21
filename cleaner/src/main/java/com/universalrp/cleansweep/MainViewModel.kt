@@ -267,7 +267,7 @@ data class UiState(
     val voiceUnplugStart: Int = Announcer.DEFAULT_UNPLUG_START,
     /** MACs seen on the last network scan, so a genuinely new device can be announced. */
     val knownNetworkMacs: Set<String> = emptySet(),
-    val dailyScanOn: Boolean = true,
+    val dailyScanOn: Boolean = MonitorDefaultsPolicy.DAILY_SECURITY_WATCH,
     val dailyHour: Int = Announcer.DEFAULT_DAILY_HOUR,
     /** What the last daily brief said — shown on the Home screen. */
     val lastBrief: String = "",
@@ -367,6 +367,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = ctx.getSharedPreferences("cleansweep_state", Context.MODE_PRIVATE)
 
     init {
+        // 2.54: migrate the old daily-watch default to OFF before any worker is scheduled or
+        // the settings UI reads the switch. Later explicit user choices remain untouched.
+        Announcer.ensureDailyScanDefaultOff(ctx)
         // v2.40 core cleanup: the removed notification reader left a few private leftovers.
         // Retire exactly those, on IO, without touching any other saved choice; the marker
         // is written only after the cleanup completes, so an incomplete run is retried.
@@ -487,14 +490,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         // Voice + daily watch: read the switches, and make sure the hourly worker is alive
-        // whenever the user wants warnings or the daily brief.
+        // only when voice, the daily check or the persistent monitor needs it.
         loadVoiceSettings()
-        // 2.42: the battery-health monitor's own switch counts too, and it defaults ON, so the
-        // hourly watch is armed after an update without the owner opening Voice & daily watch.
-        if (MonitorDefaultsPolicy.healthWatchWanted(Announcer.enabled(ctx), Announcer.dailyScanOn(ctx),
-                ChargeMonitorService.persistentEnabled(ctx))) {
-            HealthWatchWorker.schedule(ctx)
-        }
+        syncHealthWatchSchedule()
         val savedVerified = prefs.getStringSet("verified_wifi_macs", emptySet()) ?: emptySet()
         val autoWifiScan = prefs.getBoolean("auto_wifi_scan_open", true)
         val bgWifiScan = prefs.getBoolean(com.universalrp.cleansweep.work.WifiScanWorker.KEY_BG_WIFI_SCAN, false)
@@ -1445,9 +1443,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(voiceLouder = on) }
     }
 
+    private fun syncHealthWatchSchedule() {
+        val wanted = MonitorDefaultsPolicy.healthWatchWanted(
+            voiceOn = Announcer.enabled(ctx),
+            dailyScanOn = Announcer.dailyScanOn(ctx),
+            persistentMonitor = ChargeMonitorService.persistentEnabled(ctx),
+        )
+        if (wanted) HealthWatchWorker.schedule(ctx) else HealthWatchWorker.cancel(ctx)
+    }
+
     fun setVoiceOn(on: Boolean) {
         Announcer.setEnabled(ctx, on)
-        if (on) HealthWatchWorker.schedule(ctx) else HealthWatchWorker.cancel(ctx)
+        syncHealthWatchSchedule()
         mutate { it.copy(voiceOn = on) }
     }
 
@@ -1456,9 +1463,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // v2.7: muting the answers is also the Stop button — anything being read out halts
         // at once instead of finishing the sentence.
         if (event == Announcer.Event.ANSWER && !on) Announcer.stop()
-        // Turning any voice event on means the hourly watch must be alive; the charging
-        // announcement additionally needs the charging monitor, which reads the same switches.
-        if (on) HealthWatchWorker.schedule(ctx)
+        // Keep the shared hourly worker alive only while at least one feature needs it.
+        syncHealthWatchSchedule()
         mutate {
             it.copy(
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
@@ -1496,7 +1502,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setDailyScanOn(on: Boolean) {
         Announcer.setDailyScanOn(ctx, on)
-        if (on) HealthWatchWorker.schedule(ctx) else HealthWatchWorker.cancel(ctx)
+        syncHealthWatchSchedule()
         mutate { it.copy(dailyScanOn = on) }
     }
 
@@ -1508,7 +1514,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Runs the daily brief right now, so the user can hear it without waiting for 8 pm. */
     fun runDailyBriefNow() {
         mutate { it.copy(message = tr("Taking today's reading…")) }
-        HealthWatchWorker.schedule(ctx)
         viewModelScope.launch {
             // The worker waits for the brief (and possibly a slow AI answer) — never on the
             // main thread, or the app would look frozen while it works.

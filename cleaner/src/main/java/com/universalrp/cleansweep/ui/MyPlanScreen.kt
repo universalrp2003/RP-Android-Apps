@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardActions
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -96,6 +99,17 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
         vm.savePlan(next)
     }
 
+    fun noDataPlan(): PlanSettings = plan.copy(
+        mode = PlanDataMode.NONE,
+        dailyMb = 0.0,
+        totalMb = 0.0,
+        totalUnlimited = false,
+        boosterEnabled = false,
+        boosterMb = 0.0,
+        boosterStartDay = null,
+        boosterEndDay = null,
+    )
+
     Box(
         Modifier
             .fillMaxSize()
@@ -127,6 +141,12 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     parsed.validTill != null -> RechargeSmsParser.daysFromToday(parsed.validTill, today)
                     else -> 0
                 }
+                val statedStartDay = if (statedDays > 0) today else plan.startDay
+                val statedEndDay = when {
+                    statedDays <= 0 -> plan.endDay
+                    parsed.validTill != null -> parsed.validTill
+                    else -> PlanPolicy.expiry(statedStartDay, statedDays)
+                }
                 persist(
                     plan.copy(
                         mode = when {
@@ -140,7 +160,10 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         days = if (statedDays > 0) statedDays else plan.days,
                         // Only a stated validity pins the start to today. A message that just
                         // says "6 GB data" must not silently move an existing 77-day pack.
-                        startDay = if (statedDays > 0) today else plan.startDay,
+                        startDay = statedStartDay,
+                        endDay = statedEndDay,
+                        startTime = if (statedDays > 0) null else plan.startTime,
+                        endTime = if (statedDays > 0) null else plan.endTime,
                         operatorName = parsed.operatorName.ifEmpty { plan.operatorName },
                         expiryRule = if (parsed.operatorName.isNotEmpty()) PlanPolicy.ruleFor(parsed.operatorName) else plan.expiryRule,
                     )
@@ -157,7 +180,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         hint = tr("Voice only"),
                         selected = plan.mode == PlanDataMode.NONE,
                         modifier = Modifier.weight(1f),
-                        onClick = { persist(plan.copy(mode = PlanDataMode.NONE)) },
+                        onClick = { persist(noDataPlan()) },
                     )
                     ModeChip(
                         label = tr("Daily"),
@@ -337,7 +360,20 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                 AmountTarget.TOTAL -> plan.totalMb
                 AmountTarget.BOOSTER -> plan.boosterMb
             },
+            zeroLabel = if (amountTarget == AmountTarget.BOOSTER) tr("Remove booster (0 MB)") else tr("No data (0 GB)"),
             onDismiss = { showAmountDialog = false },
+            onZero = {
+                persist(
+                    if (amountTarget == AmountTarget.BOOSTER) plan.copy(
+                        boosterEnabled = false,
+                        boosterMb = 0.0,
+                        boosterStartDay = null,
+                        boosterEndDay = null,
+                    )
+                    else noDataPlan(),
+                )
+                showAmountDialog = false
+            },
             onSave = { mb ->
                 persist(when (amountTarget) {
                     AmountTarget.DAILY -> plan.copy(mode = PlanDataMode.DAILY, dailyMb = mb)
@@ -431,7 +467,7 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                     val remaining = PlanPolicy.remainingText(plan, now, tamilUi)
                     if (remaining != null) {
                         Spacer(Modifier.height(6.dp))
-                        val moment = PlanPolicy.expiryMoment(plan.startDay, plan.startTime, plan.days, plan.expiryRule)
+                        val moment = PlanPolicy.expiryMoment(plan)
                         val ended = moment != null && !now.isBefore(moment)
                         Text(
                             remaining + (PlanPolicy.endsAtText(plan, tamilUi)?.let { " · " + it } ?: ""),
@@ -445,68 +481,178 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
     }
 }
 
+private enum class ValidityAnchor { START, END }
+
 @Composable
 private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSettings) -> Unit) {
-    var startText by remember(plan.startDay) { mutableStateOf(plan.startDay?.toString().orEmpty()) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     var daysText by remember(plan.days) { mutableStateOf(if (plan.days > 0) plan.days.toString() else "") }
-    var showTime by remember { mutableStateOf(false) }
-    val tamil = com.universalrp.cleansweep.data.Lang.isTamil
+    var pendingDays by remember(plan.days) { mutableStateOf<Int?>(null) }
+    var anchor by remember { mutableStateOf(ValidityAnchor.START) }
+    val tamil = Lang.isTamil
+
+    fun planWithDays(days: Int): PlanSettings? {
+        if (days !in 1..3650) return null
+        return when (anchor) {
+            ValidityAnchor.START -> plan.copy(
+                days = days,
+                endDay = PlanPolicy.expiry(plan.startDay, days),
+                endTime = null,
+            )
+            ValidityAnchor.END -> {
+                val end = PlanPolicy.expiryDay(plan)
+                val start = PlanPolicy.startFromEnd(end, days)
+                plan.copy(days = days, startDay = start ?: plan.startDay, endDay = end)
+            }
+        }
+    }
+
+    fun commitPendingDays() {
+        val days = pendingDays ?: return
+        pendingDays = null
+        planWithDays(days)?.let(onChange)
+    }
+
+    fun applyPendingDays(transform: (PlanSettings) -> PlanSettings) {
+        val base = pendingDays?.let { planWithDays(it) } ?: plan
+        pendingDays = null
+        transform(base).let(onChange)
+    }
+
+    fun chooseDateTime(
+        target: ValidityAnchor,
+        initialDay: LocalDate?,
+        initialTime: java.time.LocalTime?,
+        days: Int,
+    ) {
+        anchor = target
+        val date = initialDay ?: today
+        val time = initialTime ?: java.time.LocalTime.now().withSecond(0).withNano(0)
+        android.app.DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                val selectedDay = LocalDate.of(year, month + 1, dayOfMonth)
+                android.app.TimePickerDialog(
+                    context,
+                    { _, hourOfDay, minute ->
+                        val selectedTime = java.time.LocalTime.of(hourOfDay, minute)
+                        when (target) {
+                            ValidityAnchor.START -> onChange(
+                                plan.copy(
+                                    startDay = selectedDay,
+                                    startTime = selectedTime,
+                                    days = days,
+                                    endDay = PlanPolicy.expiry(selectedDay, days),
+                                    endTime = null,
+                                ),
+                            )
+                            ValidityAnchor.END -> {
+                                val start = PlanPolicy.startFromEnd(selectedDay, days)
+                                onChange(
+                                    plan.copy(
+                                        startDay = start ?: plan.startDay,
+                                        startTime = plan.startTime,
+                                        days = days,
+                                        endDay = selectedDay,
+                                        endTime = selectedTime,
+                                    ),
+                                )
+                            }
+                        }
+                        daysText = if (days > 0) days.toString() else ""
+                        pendingDays = null
+                    },
+                    time.hour,
+                    time.minute,
+                    false,
+                ).show()
+            },
+            date.year,
+            date.monthValue - 1,
+            date.dayOfMonth,
+        ).show()
+    }
+
+    val displayDays = pendingDays ?: plan.days
+    val storedEndDay = PlanPolicy.expiryDay(plan)
+    val endDay = when {
+        pendingDays != null && anchor == ValidityAnchor.START -> PlanPolicy.expiry(plan.startDay, displayDays)
+        else -> storedEndDay
+    }
+    val displayStartDay = if (pendingDays != null && anchor == ValidityAnchor.END) {
+        PlanPolicy.startFromEnd(endDay, displayDays) ?: plan.startDay
+    } else plan.startDay
+    val displayPlan = plan.copy(
+        days = displayDays,
+        startDay = displayStartDay,
+        endDay = endDay,
+        endTime = if (pendingDays != null && anchor == ValidityAnchor.START) null else plan.endTime,
+    )
+    val startValue = displayStartDay?.let { day ->
+        "$day · ${displayPlan.startTime?.let(PlanPolicy::formatTime) ?: tr("Time not set")}"
+    } ?: tr("Choose start date and time")
+    val endValue = endDay?.let { day -> "$day · ${PlanPolicy.formatTime(PlanPolicy.displayEndTime(displayPlan))}" }
+        ?: tr("Choose end date and time")
 
     SectionCard(title = tr("3. How long is the pack?")) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = startText,
-                onValueChange = { startText = it; PlanPolicy.parseDay(it)?.let { day -> onChange(plan.copy(startDay = day)) } },
-                label = { Text(tr("Start date (YYYY-MM-DD)")) },
-                singleLine = true,
+        Text(tr("Choose which date you know"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+        Spacer(Modifier.height(4.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            ModeChip(
+                label = tr("Start date"),
+                hint = tr("Calculate end"),
+                selected = anchor == ValidityAnchor.START,
                 modifier = Modifier.weight(1f),
+                onClick = { anchor = ValidityAnchor.START },
             )
-            Spacer(Modifier.width(8.dp))
-            TextButton(onClick = { startText = today.toString(); onChange(plan.copy(startDay = today)) }) { Text(tr("Today")) }
+            ModeChip(
+                label = tr("End date"),
+                hint = tr("Calculate start"),
+                selected = anchor == ValidityAnchor.END,
+                modifier = Modifier.weight(1f),
+                onClick = { anchor = ValidityAnchor.END },
+            )
         }
         Spacer(Modifier.height(8.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            OutlinedTextField(
-                value = daysText,
-                onValueChange = { text ->
-                    daysText = text.filter { it.isDigit() }.take(4)
-                    val days = daysText.toIntOrNull()
-                    if (days != null && days in 1..3650) onChange(plan.copy(days = days))
-                },
-                label = { Text(tr("How many days")) },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-            )
-            Spacer(Modifier.width(8.dp))
-        }
+        DateTimeField(
+            label = tr("Start date and time"),
+            value = startValue,
+            onClick = { chooseDateTime(ValidityAnchor.START, displayStartDay, displayPlan.startTime, displayDays) },
+        )
         Spacer(Modifier.height(8.dp))
-        // 2.51 — the operator app always shows "Valid Till <date>". Let that date be typed in
-        // directly; the day count is derived, so a wrong day count cannot silently move the end.
-        var endText by remember(plan.startDay, plan.days) {
-            mutableStateOf(PlanPolicy.expiry(plan.startDay, plan.days)?.toString().orEmpty())
-        }
         OutlinedTextField(
-            value = endText,
+            value = daysText,
             onValueChange = { text ->
-                endText = text.take(10)
-                val start = plan.startDay
-                val end = PlanPolicy.parseDay(text)
-                if (start != null && end != null && !end.isBefore(start)) {
-                    val derived = (java.time.temporal.ChronoUnit.DAYS.between(start, end) + 1).toInt()
-                    if (derived in 1..3650) {
-                        daysText = derived.toString()
-                        onChange(plan.copy(days = derived))
-                    }
-                }
+                daysText = text.filter { it.isDigit() }.take(4)
+                pendingDays = daysText.toIntOrNull()?.takeIf { it in 1..3650 }
             },
-            label = { Text(tr("Valid till (the date your operator shows)")) },
+            label = { Text(tr("How many days")) },
             singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { commitPendingDays() }),
             modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(8.dp))
+        DateTimeField(
+            label = tr("End date and time"),
+            value = endValue,
+            onClick = {
+                chooseDateTime(
+                    ValidityAnchor.END,
+                    endDay,
+                    displayPlan.endTime ?: PlanPolicy.displayEndTime(displayPlan),
+                    displayDays,
+                )
+            },
         )
         Spacer(Modifier.height(4.dp))
         Text(
-            tr("Airtel, Jio and Vi all print this date on the plan page. Typing it here sets the day count for you."),
+            tr("Choose a start date to calculate the end, or choose an end date and the number of days to calculate the start."),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+        )
+        Text(
+            tr("Tap either date field to choose a calendar date and time."),
             style = MaterialTheme.typography.labelSmall,
             color = TextSecondary,
         )
@@ -515,35 +661,16 @@ private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
             PlanPolicy.DAY_PRESETS.forEach { days ->
                 AmountChip(
                     label = tr("%d days", days),
-                    selected = plan.days == days,
+                    selected = displayDays == days,
                     modifier = Modifier.weight(1f),
-                    onClick = { daysText = days.toString(); onChange(plan.copy(days = days)) },
+                    onClick = {
+                        daysText = days.toString()
+                        pendingDays = null
+                        planWithDays(days)?.let(onChange)
+                    },
                 )
             }
         }
-
-        // ---- the recharge moment (2.51) -------------------------------------
-        Spacer(Modifier.height(10.dp))
-        Text(tr("Recharged at"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-        Spacer(Modifier.height(4.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            AmountChip(
-                label = plan.startTime?.let { PlanPolicy.formatTime(it) } ?: tr("Add the recharge time"),
-                selected = plan.startTime != null,
-                modifier = Modifier.weight(1f),
-                onClick = { showTime = true },
-            )
-            if (plan.startTime != null) {
-                TextButton(onClick = { onChange(plan.copy(startTime = null)) }) {
-                    Text(tr("Clear"), color = TextSecondary)
-                }
-            }
-        }
-        Text(
-            tr("The time of day decides when a pack that counts to the minute really ends."),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary,
-        )
 
         // ---- who the operator is, and how they end a pack -------------------
         Spacer(Modifier.height(10.dp))
@@ -555,7 +682,10 @@ private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
                     label = name,
                     selected = plan.operatorName.equals(name, ignoreCase = true),
                     modifier = Modifier.weight(1f),
-                    onClick = { onChange(plan.copy(operatorName = name, expiryRule = PlanPolicy.ruleFor(name))) },
+                    onClick = {
+                        val rule = PlanPolicy.ruleFor(name)
+                        applyPendingDays { it.copy(operatorName = name, expiryRule = rule, endTime = null) }
+                    },
                 )
             }
         }
@@ -568,19 +698,20 @@ private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
                 hint = "Jio",
                 selected = plan.expiryRule == PlanExpiryRule.SAME_TIME,
                 modifier = Modifier.weight(1f),
-                onClick = { onChange(plan.copy(expiryRule = PlanExpiryRule.SAME_TIME)) },
+                onClick = { applyPendingDays { it.copy(expiryRule = PlanExpiryRule.SAME_TIME, endTime = null) } },
             )
             ModeChip(
                 label = tr("End of the last day"),
                 hint = "Airtel · Vi",
                 selected = plan.expiryRule == PlanExpiryRule.END_OF_DAY,
                 modifier = Modifier.weight(1f),
-                onClick = { onChange(plan.copy(expiryRule = PlanExpiryRule.END_OF_DAY)) },
+                onClick = { applyPendingDays { it.copy(expiryRule = PlanExpiryRule.END_OF_DAY, endTime = null) } },
             )
         }
         Spacer(Modifier.height(4.dp))
         Text(
             when {
+                plan.endTime != null -> tr("The time you chose for the end overrides the operator's usual expiry time.")
                 plan.expiryRule == PlanExpiryRule.SAME_TIME && plan.startTime != null ->
                     tr("Jio counts to the minute: a 63-day pack recharged at 5:00 pm ends at 5:00 pm on the last day.")
                 plan.expiryRule == PlanExpiryRule.SAME_TIME ->
@@ -590,79 +721,48 @@ private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
             style = MaterialTheme.typography.labelSmall,
             color = TextSecondary,
         )
+        if (plan.endTime != null) {
+            TextButton(onClick = { applyPendingDays { it.copy(endTime = null) } }) {
+                Text(tr("Use the operator's usual end time"), color = AccentCyan)
+            }
+        }
 
-        // ---- what that means in one line ------------------------------------
         Spacer(Modifier.height(8.dp))
-        val moment = PlanPolicy.expiryMoment(plan.startDay, plan.startTime, plan.days, plan.expiryRule)
+        val moment = PlanPolicy.expiryMoment(plan)
         Text(
-            if (moment == null) tr("Add a start date and the number of days to see the last day.")
+            if (moment == null) tr("Add a start date or an end date and the number of days to calculate the other date.")
             else (PlanPolicy.endsAtText(plan, tamil) ?: "") + " · " +
                 (PlanPolicy.remainingText(plan, java.time.ZonedDateTime.now(), tamil) ?: ""),
             style = MaterialTheme.typography.labelSmall,
             color = if (moment != null && !java.time.ZonedDateTime.now().isBefore(moment)) DangerRed else TextSecondary,
         )
     }
-
-    if (showTime) {
-        TimeDialog(
-            current = plan.startTime,
-            onDismiss = { showTime = false },
-            onSave = { time -> onChange(plan.copy(startTime = time)); showTime = false },
-        )
-    }
 }
 
 @Composable
-private fun TimeDialog(current: java.time.LocalTime?, onDismiss: () -> Unit, onSave: (java.time.LocalTime) -> Unit) {
-    // Pre-fill the hour and minute without the am/pm word; the chips below decide am/pm.
-    var text by remember {
-        mutableStateOf(
-            current?.let {
-                val shown = PlanPolicy.formatTime(it).removeSuffix(" am").removeSuffix(" pm")
-                shown
-            }.orEmpty(),
-        )
-    }
-    var pm by remember { mutableStateOf(current?.hour?.let { it >= 12 } ?: true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(tr("Recharge time"), fontWeight = FontWeight.Bold) },
-        text = {
-            Column {
-                Text(
-                    tr("Type the time your recharge completed, then choose am or pm."),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextSecondary,
-                )
-                Spacer(Modifier.height(10.dp))
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it; error = null },
-                    label = { Text(tr("Time")) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    AmountChip(label = "AM", selected = !pm, modifier = Modifier.weight(1f), onClick = { pm = false })
-                    AmountChip(label = "PM", selected = pm, modifier = Modifier.weight(1f), onClick = { pm = true })
-                }
-                error?.let {
-                    Spacer(Modifier.height(6.dp))
-                    Text(it, color = DangerRed, style = MaterialTheme.typography.labelSmall)
-                }
+private fun DateTimeField(label: String, value: String, onClick: () -> Unit) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = SurfaceHigh.copy(alpha = 0.30f),
+        border = BorderStroke(1.dp, SurfaceHigh),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Spacer(Modifier.height(2.dp))
+                Text(value, style = MaterialTheme.typography.bodyLarge, color = TextPrimary, maxLines = 1)
             }
-        },
-        confirmButton = {
-            TextButton(onClick = {
-                val parsed = PlanPolicy.parseTime(text, pm)
-                if (parsed == null) error = tr("Enter a time like 5:00 or 17:00.")
-                else onSave(parsed)
-            }) { Text(tr("Save")) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Cancel")) } },
-    )
+            Icon(
+                Icons.Outlined.CalendarMonth,
+                contentDescription = tr("Choose date"),
+                tint = AccentCyan,
+            )
+        }
+    }
 }
 
 @Composable
@@ -797,7 +897,9 @@ private fun BoosterDates(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
 private fun AmountDialog(
     title: String,
     currentMb: Double,
+    zeroLabel: String,
     onDismiss: () -> Unit,
+    onZero: () -> Unit,
     onSave: (Double) -> Unit,
 ) {
     var text by remember { mutableStateOf(if (currentMb > 0) PlanPolicy.amountFromMb(currentMb, "GB").toString() else "") }
@@ -807,9 +909,13 @@ private fun AmountDialog(
         onDismissRequest = onDismiss,
         title = { Text(title, fontWeight = FontWeight.Bold) },
         text = {
-            Column {
+            Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(tr("Enter any amount, then choose GB or MB."), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(4.dp))
+                TextButton(onClick = onZero, modifier = Modifier.fillMaxWidth()) {
+                    Text(zeroLabel, color = AccentCyan)
+                }
+                Spacer(Modifier.height(4.dp))
                 OutlinedTextField(
                     value = text,
                     onValueChange = { text = it; error = null },
@@ -837,8 +943,8 @@ private fun AmountDialog(
         confirmButton = {
             TextButton(onClick = {
                 val mb = PlanPolicy.parseAmount(text, unit)
-                if (mb == null) error = tr("Enter a number above zero, for example 1.5 GB or 800 MB.")
-                else onSave(mb)
+                if (mb == null) error = tr("Enter an amount above zero, or use the zero option below.")
+                else if (mb == 0.0) onZero() else onSave(mb)
             }) { Text(tr("Save")) }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text(tr("Cancel")) } },

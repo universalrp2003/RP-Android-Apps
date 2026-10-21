@@ -17,8 +17,14 @@ class PlanPolicyTest {
         assertEquals(500.0, PlanPolicy.parseAmount("500 MB", "GB")!!, 0.01)
     }
 
-    @Test fun zeroNegativeAndNonsenseAmountsAreRejected() {
-        for (bad in listOf("", "0", "-1", "abc", "1.5.2", " ", "0.0")) {
+    @Test fun zeroIsAcceptedForTheDedicatedNoDataAction() {
+        assertEquals(0.0, PlanPolicy.parseAmount("0", "GB")!!, 0.0)
+        assertEquals(0.0, PlanPolicy.parseAmount("0 MB", "GB")!!, 0.0)
+        assertNull(PlanPolicy.parseAmount("-0.1", "GB"))
+    }
+
+    @Test fun negativeAndNonsenseAmountsAreRejected() {
+        for (bad in listOf("", "-1", "abc", "1.5.2", " ")) {
             assertNull(bad, PlanPolicy.parseAmount(bad, "GB"))
         }
     }
@@ -40,6 +46,17 @@ class PlanPolicyTest {
         assertEquals(LocalDate.of(2026, 10, 11), PlanPolicy.expiry(start, 3))
         assertNull(PlanPolicy.expiry(start, 0))
         assertNull(PlanPolicy.expiry(null, 28))
+    }
+
+    @Test fun anEndDateAndInclusiveValidityCanDeriveTheStartDate() {
+        val start = LocalDate.of(2026, 10, 9)
+        val end = LocalDate.of(2026, 12, 15)
+        assertEquals(68, PlanPolicy.inclusiveDays(start, end))
+        assertEquals(start, PlanPolicy.startFromEnd(end, 68))
+        assertEquals(end, PlanPolicy.expiry(start, 68))
+        assertEquals(end, PlanPolicy.startFromEnd(end, 1))
+        assertNull(PlanPolicy.startFromEnd(end, 0))
+        assertNull(PlanPolicy.inclusiveDays(end, start))
     }
 
     @Test fun daysLeftIncludesTheExpiryDayAndStopsAtZero() {
@@ -77,9 +94,17 @@ class PlanPolicyTest {
     }
 
     @Test fun voiceOnlyPlanSaysThereIsNothingToCount() {
-        val plan = PlanSettings(mode = PlanDataMode.NONE)
+        val plan = PlanSettings(
+            mode = PlanDataMode.NONE,
+            totalMb = 3072.0,
+            totalUnlimited = true,
+            boosterEnabled = true,
+            boosterMb = 1024.0,
+        )
         assertTrue(PlanPolicy.summary(plan, false).contains("No data"))
         assertTrue(PlanPolicy.summary(plan, true).contains("தரவு"))
+        assertEquals(0.0, PlanPolicy.effectiveTotalMb(plan), 0.0)
+        assertEquals(0f, PlanStore.effectiveLimitGb(plan)!!, 0f)
     }
 
     @Test fun summaryNamesTheAllowanceTheUserChose() {
@@ -101,6 +126,22 @@ class PlanPolicyTest {
         )
         assertEquals(LocalDate.of(2026, 12, 10), moment!!.toLocalDate())
         assertEquals(LocalTime.of(17, 0), moment.toLocalTime())
+    }
+
+    @Test fun anEnteredEndDateAndTimeOverrideTheCarrierDefault() {
+        val end = LocalDate.of(2026, 12, 15)
+        val plan = PlanSettings(
+            startDay = LocalDate.of(2026, 10, 9),
+            days = 68,
+            endDay = end,
+            endTime = LocalTime.of(18, 45),
+            expiryRule = PlanExpiryRule.END_OF_DAY,
+        )
+        val moment = PlanPolicy.expiryMoment(plan)
+        assertEquals(end, PlanPolicy.expiryDay(plan))
+        assertEquals(end, moment!!.toLocalDate())
+        assertEquals(LocalTime.of(18, 45), moment.toLocalTime())
+        assertEquals("Ends 2026-12-15, 6:45 pm", PlanPolicy.endsAtText(plan, false))
     }
 
     @Test fun airtelAndViEndThePackAtMidnight() {

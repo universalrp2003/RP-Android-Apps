@@ -63,12 +63,16 @@ data class PlanSettings(
     val startDay: LocalDate? = null,
     /** Validity in days, inclusive of [startDay]; 0 = not set. */
     val days: Int = 0,
+    /** Explicit or calculated last valid day. Null keeps the legacy start-day + days calculation. */
+    val endDay: LocalDate? = null,
     val boosterEnabled: Boolean = false,
     val boosterMb: Double = 0.0,
     /** True: the booster is used up before the daily allowance. False: after it. */
     val boosterFirst: Boolean = true,
     /** Time of the recharge, when the user knows it. Null = only the date is known. */
     val startTime: LocalTime? = null,
+    /** Explicit end time chosen by the user; when set it overrides the operator's usual rule. */
+    val endTime: LocalTime? = null,
     /** How this operator ends the pack; see [PlanExpiryRule]. */
     val expiryRule: PlanExpiryRule = PlanExpiryRule.SAME_TIME,
     /** Operator name as the user picked it ("Jio", "Airtel", …); "" when unknown. */
@@ -104,9 +108,8 @@ object PlanPolicy {
         if (unit.equals("MB", ignoreCase = true)) mb else mb / MB_PER_GB
 
     /**
-     * Reads "1.5" + GB, "800" + MB, or a pasted "1.5 GB". Returns null for anything that is
-     * not a positive, finite, in-range number, so the caller can show one clear error instead
-     * of silently saving a wrong allowance.
+     * Reads "1.5" + GB, "800" + MB, "0" or a pasted "1.5 GB". Returns null for anything
+     * negative, non-finite or out of range. The UI maps an explicit zero to its no-data action.
      */
     fun parseAmount(text: String, unit: String = "GB"): Double? {
         val raw = text.trim().lowercase().replace(",", ".")
@@ -115,14 +118,14 @@ object PlanPolicy {
         val explicitGb = raw.contains("gb")
         val numeric = raw.removeSuffix("mb").removeSuffix("gb").trim()
         val value = numeric.toDoubleOrNull() ?: return null
-        if (!value.isFinite() || value <= 0.0) return null
+        if (!value.isFinite() || value < 0.0) return null
         val chosenUnit = when {
             explicitMb -> "MB"
             explicitGb -> "GB"
             else -> unit
         }
         val mb = mbFrom(value, chosenUnit)
-        return mb.takeIf { it > 0.0 && it <= MAX_MB }
+        return mb.takeIf { it >= 0.0 && it <= MAX_MB }
     }
 
     /** "800 MB", "2.5 GB" — one decimal at most, never "1.50 GB". */
@@ -140,6 +143,20 @@ object PlanPolicy {
     /** Last day of the pack, counting [days] days from [startDay] (inclusive). */
     fun expiry(startDay: LocalDate?, days: Int): LocalDate? =
         if (startDay == null || days <= 0) null else startDay.plusDays(days.toLong() - 1)
+
+    /** Start day that matches an inclusive [days]-day validity ending on [endDay]. */
+    fun startFromEnd(endDay: LocalDate?, days: Int): LocalDate? =
+        if (endDay == null || days <= 0) null else endDay.minusDays(days.toLong() - 1)
+
+    /** Inclusive validity between two calendar dates; invalid or overlong ranges return null. */
+    fun inclusiveDays(startDay: LocalDate?, endDay: LocalDate?, maxDays: Int = 3650): Int? {
+        if (startDay == null || endDay == null || endDay.isBefore(startDay)) return null
+        val days = ChronoUnit.DAYS.between(startDay, endDay) + 1
+        return days.takeIf { it in 1L..maxDays.toLong() }?.toInt()
+    }
+
+    /** The effective last date, preserving a user-entered end date from newer versions. */
+    fun expiryDay(plan: PlanSettings): LocalDate? = plan.endDay ?: expiry(plan.startDay, plan.days)
 
     /** Days still left today, counting the expiry day itself; null when no expiry is known. */
     fun daysLeft(startDay: LocalDate?, days: Int, today: LocalDate): Int? {
@@ -196,6 +213,24 @@ object PlanPolicy {
         else lastDay.atTime(23, 59, 59).atZone(zone)
     }
 
+    /** The plan's end moment, including a user-selected end date/time when present. */
+    fun expiryMoment(plan: PlanSettings, zone: ZoneId = ZoneId.systemDefault()): ZonedDateTime? {
+        val lastDay = expiryDay(plan) ?: return null
+        val time = plan.endTime ?: when (plan.expiryRule) {
+            PlanExpiryRule.SAME_TIME -> plan.startTime
+            PlanExpiryRule.END_OF_DAY -> LocalTime.of(23, 59, 59)
+        }
+        return lastDay.atTime(time ?: LocalTime.of(23, 59, 59)).atZone(zone)
+    }
+
+    /** Time shown for a calculated end field when the operator rule has a safe whole-day fallback. */
+    fun displayEndTime(plan: PlanSettings): LocalTime =
+        plan.endTime ?: when {
+            plan.expiryRule == PlanExpiryRule.END_OF_DAY -> LocalTime.of(23, 59, 59)
+            plan.startTime != null -> plan.startTime
+            else -> LocalTime.of(23, 59, 59)
+        }
+
     /** "5:00 pm", "12:00 am". Twelve-hour, because the app never shows a 24-hour clock. */
     fun formatTime(time: LocalTime): String {
         val hour12 = when {
@@ -247,9 +282,9 @@ object PlanPolicy {
 
     /** "Ends 2026-12-10, 5:00 pm" — the ISO date keeps the line identical in both languages. */
     fun endsAtText(plan: PlanSettings, tamil: Boolean): String? {
-        val moment = expiryMoment(plan.startDay, plan.startTime, plan.days, plan.expiryRule) ?: return null
+        val moment = expiryMoment(plan) ?: return null
         val day = moment.toLocalDate().toString()
-        val showTime = plan.expiryRule == PlanExpiryRule.END_OF_DAY || plan.startTime != null
+        val showTime = plan.endTime != null || plan.expiryRule == PlanExpiryRule.END_OF_DAY || plan.startTime != null
         val prefix = if (tamil) "முடிவு" else "Ends"
         return if (showTime) "$prefix $day, " + formatTime(moment.toLocalTime()) else "$prefix $day"
     }
@@ -259,8 +294,7 @@ object PlanPolicy {
      * on the same afternoon instead of pretending the whole day remains.
      */
     fun remainingText(plan: PlanSettings, now: ZonedDateTime, tamil: Boolean): String? {
-        val moment = expiryMoment(plan.startDay, plan.startTime, plan.days, plan.expiryRule, now.zone)
-            ?: return null
+        val moment = expiryMoment(plan, now.zone) ?: return null
         if (!now.isBefore(moment)) return if (tamil) "இந்தப் பேக் முடிந்தது" else "This pack has ended"
         val daysLeft = ChronoUnit.DAYS.between(now.toLocalDate(), moment.toLocalDate())
         return when {
@@ -341,6 +375,7 @@ object PlanPolicy {
      * the total.
      */
     fun effectiveTotalMb(plan: PlanSettings, today: LocalDate = LocalDate.now()): Double {
+        if (plan.mode == PlanDataMode.NONE) return 0.0
         if (plan.totalUnlimited) return Double.POSITIVE_INFINITY
         val base = plan.totalMb.coerceAtLeast(0.0)
         return if (plan.mode == PlanDataMode.TOTAL && boosterActive(plan, today)) base + plan.boosterMb.coerceAtLeast(0.0)
@@ -369,10 +404,12 @@ object PlanStore {
     private const val KEY_TOTAL_UNLIMITED = "plan_total_unlimited"
     private const val KEY_START_DAY = "plan_start_day"
     private const val KEY_DAYS = "plan_days"
+    private const val KEY_END_DAY = "plan_end_day"
     private const val KEY_BOOSTER_ON = "booster_enabled"
     private const val KEY_BOOSTER_MB = "booster_mb"
     private const val KEY_BOOSTER_FIRST = "booster_first"
     private const val KEY_START_MINUTE = "plan_start_minute"
+    private const val KEY_END_MINUTE = "plan_end_minute"
     private const val KEY_EXPIRY_RULE = "plan_expiry_rule"
     private const val KEY_OPERATOR = "plan_operator"
     private const val KEY_BOOSTER_START = "booster_start_day"
@@ -396,13 +433,19 @@ object PlanStore {
                 if (daily > 0f && !p.contains(KEY_TOTAL_MB)) PlanDataMode.DAILY else PlanDataMode.TOTAL
             }
         }
-        val dailyMb = p.getFloat(KEY_DAILY_MB, 0f).toDouble().takeIf { it > 0.0 }
+        val savedDailyMb = p.getFloat(KEY_DAILY_MB, 0f).toDouble().takeIf { it > 0.0 }
             ?: (DataUsageTracker.getDailyLimitGb(context) * PlanPolicy.MB_PER_GB)
-        val totalMb = p.getFloat(KEY_TOTAL_MB, 0f).toDouble().takeIf { it > 0.0 }
+        val savedTotalMb = p.getFloat(KEY_TOTAL_MB, 0f).toDouble().takeIf { it > 0.0 }
             ?: (DataUsageTracker.getPackLimitGb(context) * PlanPolicy.MB_PER_GB)
+        // Older My plan builds changed only the mode chip and left the previous amounts in the
+        // saved record. A voice-only mode must not resurrect that stale quota if it is changed
+        // back to Daily/Total after the user opens this version.
+        val dailyMb = if (mode == PlanDataMode.NONE) 0.0 else savedDailyMb
+        val totalMb = if (mode == PlanDataMode.NONE) 0.0 else savedTotalMb
         // The recharge moment is stored as minutes after midnight (-1 = not set), and the
         // operator as a plain name, because both are only ever written by this store.
         val startMinute = p.getInt(KEY_START_MINUTE, -1)
+        val endMinute = p.getInt(KEY_END_MINUTE, -1)
         val operator = p.getString(KEY_OPERATOR, "").orEmpty()
         val rule = when (p.getString(KEY_EXPIRY_RULE, null)) {
             "same_time" -> PlanExpiryRule.SAME_TIME
@@ -413,14 +456,16 @@ object PlanStore {
             mode = mode,
             dailyMb = dailyMb,
             totalMb = totalMb,
-            totalUnlimited = p.getBoolean(KEY_TOTAL_UNLIMITED, false),
+            totalUnlimited = mode != PlanDataMode.NONE && p.getBoolean(KEY_TOTAL_UNLIMITED, false),
             startDay = PlanPolicy.parseDay(p.getString(KEY_START_DAY, "") ?: "")
                 ?: startDayFromTracker(context),
             days = p.getInt(KEY_DAYS, 0),
-            boosterEnabled = p.getBoolean(KEY_BOOSTER_ON, false),
-            boosterMb = p.getFloat(KEY_BOOSTER_MB, 0f).toDouble(),
+            endDay = PlanPolicy.parseDay(p.getString(KEY_END_DAY, "") ?: ""),
+            boosterEnabled = mode != PlanDataMode.NONE && p.getBoolean(KEY_BOOSTER_ON, false),
+            boosterMb = if (mode == PlanDataMode.NONE) 0.0 else p.getFloat(KEY_BOOSTER_MB, 0f).toDouble(),
             boosterFirst = p.getBoolean(KEY_BOOSTER_FIRST, true),
             startTime = startMinute.takeIf { it in 0..1439 }?.let { LocalTime.of(it / 60, it % 60) },
+            endTime = endMinute.takeIf { it in 0..1439 }?.let { LocalTime.of(it / 60, it % 60) },
             expiryRule = rule,
             operatorName = operator,
             boosterStartDay = PlanPolicy.parseDay(p.getString(KEY_BOOSTER_START, "") ?: ""),
@@ -440,10 +485,11 @@ object PlanStore {
 
     /**
      * The whole-pack allowance in GB, exactly as [PlanPolicy.effectiveTotalMb] defines it:
-     * the base total plus a booster when the user described a total-only plan. Null when the
-     * result is not a finite, positive amount (unlimited, or nothing configured).
+     * the base total plus a booster when the user described a total-only plan. A voice-only
+     * plan is an explicit 0 GB; null means unlimited or no finite total was configured.
      */
     fun effectiveLimitGb(plan: PlanSettings, today: LocalDate = LocalDate.now()): Float? {
+        if (plan.mode == PlanDataMode.NONE) return 0f
         val mb = PlanPolicy.effectiveTotalMb(plan, today)
         return if (mb.isFinite() && mb > 0.0) (mb / PlanPolicy.MB_PER_GB).toFloat() else null
     }
@@ -460,6 +506,11 @@ object PlanStore {
     fun ensureMirror(context: Context) {
         if (!hasSavedPlan(context)) return
         val plan = load(context)
+        if (plan.mode == PlanDataMode.NONE) {
+            DataUsageTracker.setDailyLimitGb(context, 0f)
+            DataUsageTracker.setPackLimitGb(context, 0f)
+            return
+        }
         if (plan.mode != PlanDataMode.TOTAL) return
         val baseGb = (plan.totalMb / PlanPolicy.MB_PER_GB).toFloat()
         val effectiveGb = effectiveLimitGb(plan) ?: return
@@ -504,6 +555,7 @@ object PlanStore {
             .putFloat(KEY_BOOSTER_MB, plan.boosterMb.toFloat().coerceIn(0f, PlanPolicy.MAX_MB.toFloat()))
             .putBoolean(KEY_BOOSTER_FIRST, plan.boosterFirst)
             .putInt(KEY_START_MINUTE, plan.startTime?.let { it.hour * 60 + it.minute } ?: -1)
+            .putInt(KEY_END_MINUTE, plan.endTime?.let { it.hour * 60 + it.minute } ?: -1)
             .putString(KEY_EXPIRY_RULE, when (plan.expiryRule) {
                 PlanExpiryRule.SAME_TIME -> "same_time"
                 PlanExpiryRule.END_OF_DAY -> "end_of_day"
@@ -517,6 +569,8 @@ object PlanStore {
             }
         val day = plan.startDay
         if (day == null) edit.remove(KEY_START_DAY) else edit.putString(KEY_START_DAY, day.toString())
+        val endDay = plan.endDay
+        if (endDay == null) edit.remove(KEY_END_DAY) else edit.putString(KEY_END_DAY, endDay.toString())
         edit.apply()
 
         // Mirror for the existing screens. A booster on a whole-pack plan is part of the
@@ -530,6 +584,6 @@ object PlanStore {
         if (plan.startDay != null && plan.startDay != previousDay) {
             runCatching { DataUsageTracker.setPackStartDay(context, plan.startDay) }
         }
-        DataBudgetRepo.setExpiry(context, PlanPolicy.expiry(plan.startDay, plan.days)?.toString())
+        DataBudgetRepo.setExpiry(context, PlanPolicy.expiryDay(plan)?.toString())
     }
 }

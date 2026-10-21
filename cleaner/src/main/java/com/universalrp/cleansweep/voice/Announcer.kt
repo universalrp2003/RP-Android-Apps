@@ -7,6 +7,7 @@ import android.speech.tts.UtteranceProgressListener
 import android.speech.tts.Voice
 import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.Lang
+import com.universalrp.cleansweep.data.MonitorDefaultsPolicy
 import java.util.Locale
 
 /**
@@ -72,6 +73,7 @@ object Announcer {
     const val KEY_BATTERY_HEALTH = "voice_battery_health"
     const val KEY_IDLE_CHARGE = "voice_idle_charge"
     const val KEY_DAILY_ON = "daily_scan_on"
+    private const val KEY_DAILY_OFF_MIGRATION = "daily_scan_off_migration_254"
     const val KEY_DAILY_HOUR = "daily_hour"
 
     const val KEY_LAST_DAILY = "last_daily_date"
@@ -232,9 +234,28 @@ object Announcer {
             .apply()
     }
 
-    fun dailyScanOn(context: Context): Boolean = prefs(context).getBoolean(KEY_DAILY_ON, true)
+    /**
+     * The daily security-risk watch is opt-in. The 2.54 migration also turns it OFF once on
+     * existing installs, including devices that had the old default ON; after that, a manual
+     * user choice is preserved across launches, boots and later updates.
+     */
+    @Synchronized fun ensureDailyScanDefaultOff(context: Context) {
+        val store = prefs(context)
+        val migrationComplete = store.getBoolean(KEY_DAILY_OFF_MIGRATION, false)
+        if (!MonitorDefaultsPolicy.dailyScanMigrationNeeded(migrationComplete)) return
+        store.edit()
+            .putBoolean(KEY_DAILY_ON, MonitorDefaultsPolicy.DAILY_SECURITY_WATCH)
+            .putBoolean(KEY_DAILY_OFF_MIGRATION, true)
+            .commit()
+    }
 
-    fun setDailyScanOn(context: Context, on: Boolean) {
+    fun dailyScanOn(context: Context): Boolean {
+        ensureDailyScanDefaultOff(context)
+        return prefs(context).getBoolean(KEY_DAILY_ON, MonitorDefaultsPolicy.DAILY_SECURITY_WATCH)
+    }
+
+    @Synchronized fun setDailyScanOn(context: Context, on: Boolean) {
+        ensureDailyScanDefaultOff(context)
         prefs(context).edit().putBoolean(KEY_DAILY_ON, on).apply()
     }
 

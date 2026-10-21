@@ -89,7 +89,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 58', 'versionName = "2.53"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 59', 'versionName = "2.54"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -160,6 +160,11 @@ def main():
             'Monitor defaults are not the 2.42 owner decision (the overlay pill must stay opt-in)')
     require('fun rearmAfterUpdateOrBoot' in defaults and 'fun healthWatchWanted' in defaults,
             'Monitor re-arm / health-watch policy missing')
+    require('DAILY_SECURITY_WATCH = false' in defaults and 'dailyScanMigrationNeeded' in defaults and
+            'ensureDailyScanDefaultOff' in source('voice/Announcer.kt') and
+            'ensureDailyScanDefaultOff' in source('notify/BootReceiver.kt') and
+            'DAILY_SECURITY_WATCH' in source('MainViewModel.kt'),
+            'Daily security watch is not opt-in or legacy devices are not migrated OFF on upgrade')
     require('MonitorDefaultsPolicy.CHARGE_CARD' in source('notify/ChargeMonitorService.kt') and
             'MonitorDefaultsPolicy.PERSISTENT_MONITOR' in source('notify/ChargeMonitorService.kt'),
             'The monitor service still reads its own literal default')
@@ -206,7 +211,7 @@ def main():
         require('state.lang' not in source(display),
                 'A display site still reads the state mirror instead of the language authority: ' + display)
     expected = runpy.run_path(str(ROOT/'tools/verify_cleaner_regressions.py'))['EXPECTED']
-    require(sum(expected.values()) == 400 and len(expected) == 44, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 403 and len(expected) == 44, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -284,7 +289,7 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 44 required suites / 400 prepared declarations; tests NOT executed. Release 2.53/code58/API26 matches.')
+    print('PASS: 44 required suites / 403 prepared declarations; tests NOT executed. Candidate 2.54/code59/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

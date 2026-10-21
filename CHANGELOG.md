@@ -4,6 +4,26 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
+### Candidate — Live Guard 2.54 (not published)
+
+- **Zero data is an explicit choice.** The GB/MB amount dialog now offers a one-tap **No data
+  (0 GB)** action (and typed zero is accepted too). This avoids relying on older numeric keyboards
+  to enter zero. Choosing it records a voice-only plan and mirrors a genuine 0 GB quota, instead of
+  leaving a stale allowance from an older plan. The booster dialog has its own **Remove booster
+  (0 MB)** action.
+- **Daily security-risk watch is opt-in.** New installs default to off. On the first 2.54 start,
+  existing devices are also switched off once; later manual choices are preserved. The one-time
+  **Run the daily check now** action remains available.
+- **My plan dates work in either direction.** Pick a start date/time plus the number of days to
+  calculate the end, or pick an end date/time plus the number of days to calculate the start.
+  Both fields open the Android calendar followed by its time picker; the other date updates from
+  the inclusive validity. An explicitly selected end time overrides the carrier default and can be
+  cleared to restore the Jio/Airtel/Vi rule. Existing 2.53 plans load unchanged.
+- Added policy tests for zero, inclusive reverse date calculation, and end-date/time overrides.
+  Version 2.54 / code 59; no new permission. This candidate has **not** been installed on a phone
+  or published; CI results, when run, are not device evidence.
+- Prepared notes: [`releases/live-guard-v2.54.md`](releases/live-guard-v2.54.md).
+
 ### Published — Live Guard 2.53 (20 October 2026)
 
 Released alone by Build APK run 39428035172. `CleanSweep-v2.53.apk` is 13,815,072 bytes, SHA-256
