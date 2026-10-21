@@ -565,7 +565,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         style = MaterialTheme.typography.bodySmall,
                         color = GoodGreen,
                     )
-                    AnnouncementVolumeCard()
+                    AnnouncementVolumePanel()
                 }
             }
 

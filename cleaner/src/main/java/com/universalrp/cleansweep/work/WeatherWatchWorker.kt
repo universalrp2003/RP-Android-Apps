@@ -200,7 +200,7 @@ class WeatherWatchWorker(
             val body = if (tamil) decision.tamilSpeech else decision.englishSpeech
 
             val notif = NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_stat_guard)
+                .setSmallIcon(R.drawable.ic_stat_battery)
                 .setContentTitle(title)
                 .setContentText(body)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(body))
