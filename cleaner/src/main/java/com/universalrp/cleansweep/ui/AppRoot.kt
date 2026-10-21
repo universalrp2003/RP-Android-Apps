@@ -97,6 +97,7 @@ fun AppRoot(vm: MainViewModel) {
                 Screen.INSIGHTS -> InsightsScreen(state, vm)
                 Screen.FEATURE_SETUP -> FeatureSetupScreen(state, vm)
                 Screen.GUIDE -> LiveGuardGuideScreen(vm)
+                Screen.WEATHER -> WeatherAlertScreen(state, vm)
             }
         }
 

@@ -139,6 +139,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         loadStations()
         ctx.getSharedPreferences("music_folder", Context.MODE_PRIVATE).getString("uri", null)?.let { loadMusicFolder(Uri.parse(it), false) }
         refreshTodayDataUsage()
+        RadioWeatherMonitor.initialize(ctx)
         viewModelScope.launch {
             // Keep the EQ screen honest about the engine, sleep timer ticking, and data usage updated.
             var tick = 0
@@ -149,6 +150,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 val sleep = _state.value.sleepMinutesLeft
                 if (tick % 5 == 0) {
                     refreshTodayDataUsage()
+                }
+                if (tick % 60 == 0) {
+                    RadioWeatherMonitor.maybeRunScheduledCheck(ctx)
                 }
                 mutate {
                     it.copy(

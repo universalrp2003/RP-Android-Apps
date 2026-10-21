@@ -40,6 +40,45 @@ import com.universalrp.cleansweep.voice.Announcer
  * not part of the default footprint. Runs as a `dataSync` foreground service (local work,
  * no network transfer) with an unimportant notification.
  */
+/**
+ * Pure transition and 5G bearer rules for [RadioWatchService], tested on plain JVM.
+ *
+ * Uses raw framework integer constants (`NETWORK_TYPE_NR = 20`, `OVERRIDE_NR_NSA = 3`,
+ * `OVERRIDE_NR_NSA_MMWAVE = 4`, `OVERRIDE_NR_ADVANCED = 5`) so unit tests run without Android
+ * stubs while device code passes the live `TelephonyManager` / `TelephonyDisplayInfo` values.
+ */
+object RadioTransitionPolicy {
+    const val NETWORK_TYPE_NR_CODE = 20
+    const val OVERRIDE_NR_NSA_CODE = 3
+    const val OVERRIDE_NR_NSA_MMWAVE_CODE = 4
+    const val OVERRIDE_NR_ADVANCED_CODE = 5
+
+    fun is5gBearer(
+        dataNetworkType: Int,
+        displayNetworkType: Int,
+        overrideNetworkType: Int,
+    ): Boolean =
+        dataNetworkType == NETWORK_TYPE_NR_CODE ||
+            displayNetworkType == NETWORK_TYPE_NR_CODE ||
+            overrideNetworkType == OVERRIDE_NR_NSA_CODE ||
+            overrideNetworkType == OVERRIDE_NR_NSA_MMWAVE_CODE ||
+            overrideNetworkType == OVERRIDE_NR_ADVANCED_CODE
+
+    fun nextAnnouncement(
+        previousNr: Boolean?,
+        currentNr: Boolean,
+        nowMs: Long,
+        lastAnnouncedAtMs: Long,
+        minGapMs: Long,
+    ): Boolean? {
+        if (previousNr == currentNr) return null
+        if (lastAnnouncedAtMs > 0L && nowMs >= lastAnnouncedAtMs && nowMs - lastAnnouncedAtMs < minGapMs) {
+            return null
+        }
+        return currentNr
+    }
+}
+
 class RadioWatchService : Service() {
 
     companion object {
@@ -49,6 +88,7 @@ class RadioWatchService : Service() {
 
         /** A modem can flap for a few seconds; do not narrate every hop. */
         private const val MIN_ANNOUNCE_GAP_MS = 20_000L
+        private const val KEY_VOICE_MIGRATED_256 = "radio_watch_voice_migrated_256"
 
         fun start(context: Context) {
             val intent = Intent(context, RadioWatchService::class.java)
@@ -71,8 +111,12 @@ class RadioWatchService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private var telephonyCallback: Any? = null
     private var legacyListener: PhoneStateListener? = null
+    private var registeredSubId: Int = Int.MIN_VALUE
 
-    /** Updated by the display-info listener; NR here means a real 5G bearer (incl. NSA). */
+    /** Updated by the display-info listener; covers both 5G SA (`networkType`) and NSA (`overrideType`). */
+    @Volatile
+    private var displayNetworkType: Int = TelephonyManager.NETWORK_TYPE_UNKNOWN
+
     @Volatile
     private var overrideType: Int = TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE
 
@@ -94,8 +138,22 @@ class RadioWatchService : Service() {
         createChannel()
         startForeground(NOTIFICATION_ID, buildNotification("4G/5G watch is on"))
 
+        // 2.56: earlier builds stored the 4G/5G announce toggle only under cleansweep_net_split
+        // without setting Announcer.KEY_RADIO_CHANGE or turning on master voice output.
+        if (NetworkSplit.announceEnabled(this)) {
+            Announcer.setAllows(this, Announcer.Event.RADIO_CHANGE, true)
+        }
+        val voicePrefs = Announcer.prefs(this)
+        if (!voicePrefs.getBoolean(KEY_VOICE_MIGRATED_256, false)) {
+            val edit = voicePrefs.edit().putBoolean(KEY_VOICE_MIGRATED_256, true)
+            if (NetworkSplit.announceEnabled(this) && !Announcer.enabled(this)) {
+                edit.putBoolean(Announcer.KEY_ON, true)
+            }
+            edit.apply()
+        }
+
         NetworkSplit.resetDayIfNeeded(this)
-        registerRadioListener()
+        ensureRadioListenerRegistered()
 
         // Adopt the current total as the baseline: usage from before the user switched this
         // on must not be counted again.
@@ -109,26 +167,35 @@ class RadioWatchService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(poll)
-        val tm = getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (telephonyCallback as? TelephonyCallback)?.let { cb ->
-                runCatching { tm?.unregisterTelephonyCallback(cb) }
-            }
-        }
-        legacyListener?.let { listener ->
-            @Suppress("DEPRECATION")
-            runCatching { tm?.listen(listener, PhoneStateListener.LISTEN_NONE) }
-        }
+        unregisterRadioListener()
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    private fun activeDataSubId(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            android.telephony.SubscriptionManager.getDefaultDataSubscriptionId()
+        } else {
+            -1
+        }
+
+    private fun telephonyForData(subId: Int = activeDataSubId()): TelephonyManager? {
+        val base = getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager ?: return null
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && subId >= 0) {
+            runCatching { base.createForSubscriptionId(subId) }.getOrDefault(base)
+        } else {
+            base
+        }
+    }
+
     // ------------------------------------------------------------- sampling
     private fun todayMobileBytes(): Long = UsageStats.read(this).todayMobileBytes ?: 0L
 
     private fun sample() {
+        ensureRadioListenerRegistered()
         NetworkSplit.resetDayIfNeeded(this)
+        maybeAnnounce()
 
         val cumulative = todayMobileBytes()
         if (cumulative <= 0) return
@@ -154,25 +221,23 @@ class RadioWatchService : Service() {
 
     // ------------------------------------------------------------ radio state
     /**
-     * Most Indian 5G is NSA: the modem still reports LTE as the data network type while a
-     * 5G carrier carries the traffic, and only TelephonyDisplayInfo says so. Checking
-     * dataNetworkType alone shows 4G on those phones.
+     * Most Indian 5G is NSA (Airtel) or SA (Jio): NSA reports LTE as `dataNetworkType` while
+     * `TelephonyDisplayInfo.overrideNetworkType` reports NR NSA; SA reports `NETWORK_TYPE_NR`
+     * with `OVERRIDE_NETWORK_TYPE_NONE`. [RadioTransitionPolicy.is5gBearer] handles both.
      */
     internal fun isOn5g(): Boolean {
         if (!onCellular()) return false
-        val tm = getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager ?: return false
+        val tm = telephonyForData() ?: return false
         val type = try {
             tm.dataNetworkType
         } catch (e: Exception) {
             TelephonyManager.NETWORK_TYPE_UNKNOWN
         }
-        if (type == TelephonyManager.NETWORK_TYPE_NR) return true
-        return when (overrideType) {
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA,
-            TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_NSA_MMWAVE -> true
-            else -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                overrideType == TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NR_ADVANCED
-        }
+        return RadioTransitionPolicy.is5gBearer(
+            dataNetworkType = type,
+            displayNetworkType = displayNetworkType,
+            overrideNetworkType = overrideType,
+        )
     }
 
     private fun onCellular(): Boolean {
@@ -182,14 +247,40 @@ class RadioWatchService : Service() {
         return caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
     }
 
-    private fun registerRadioListener() {
-        val tm = getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager ?: return
+    private fun unregisterRadioListener() {
+        val tm = telephonyForData(registeredSubId)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            (telephonyCallback as? TelephonyCallback)?.let { cb ->
+                runCatching { tm?.unregisterTelephonyCallback(cb) }
+            }
+        }
+        legacyListener?.let { listener ->
+            @Suppress("DEPRECATION")
+            runCatching { tm?.listen(listener, PhoneStateListener.LISTEN_NONE) }
+        }
+        telephonyCallback = null
+        legacyListener = null
+        registeredSubId = Int.MIN_VALUE
+    }
+
+    private fun ensureRadioListenerRegistered() {
+        val wantedSub = activeDataSubId()
+        if ((telephonyCallback != null || legacyListener != null) && registeredSubId == wantedSub) {
+            return
+        }
+        if (telephonyCallback != null || legacyListener != null) {
+            unregisterRadioListener()
+            displayNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN
+            overrideType = TelephonyDisplayInfo.OVERRIDE_NETWORK_TYPE_NONE
+        }
+        val tm = telephonyForData(wantedSub) ?: return
+        registeredSubId = wantedSub
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val cb = object : TelephonyCallback(), TelephonyCallback.DisplayInfoListener {
                 override fun onDisplayInfoChanged(info: TelephonyDisplayInfo) {
-                    val before = overrideType
+                    displayNetworkType = info.networkType
                     overrideType = info.overrideNetworkType
-                    if (before != overrideType) maybeAnnounce()
+                    maybeAnnounce()
                 }
             }
             telephonyCallback = cb
@@ -199,6 +290,7 @@ class RadioWatchService : Service() {
             val listener = object : PhoneStateListener() {
                 @Deprecated("Deprecated in Java")
                 override fun onDisplayInfoChanged(info: TelephonyDisplayInfo) {
+                    displayNetworkType = info.networkType
                     overrideType = info.overrideNetworkType
                     maybeAnnounce()
                 }
@@ -218,11 +310,14 @@ class RadioWatchService : Service() {
         if (!NetworkSplit.announceEnabled(this)) return
         if (!onCellular()) return
 
-        val nowNr = isOn5g()
-        if (lastAnnouncedNr == nowNr) return
-
         val now = System.currentTimeMillis()
-        if (now - lastAnnouncedAt < MIN_ANNOUNCE_GAP_MS) return
+        val nowNr = RadioTransitionPolicy.nextAnnouncement(
+            previousNr = lastAnnouncedNr,
+            currentNr = isOn5g(),
+            nowMs = now,
+            lastAnnouncedAtMs = lastAnnouncedAt,
+            minGapMs = MIN_ANNOUNCE_GAP_MS,
+        ) ?: return
 
         lastAnnouncedAt = now
         lastAnnouncedNr = nowNr

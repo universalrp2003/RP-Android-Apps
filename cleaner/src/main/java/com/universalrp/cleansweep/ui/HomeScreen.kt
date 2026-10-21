@@ -278,6 +278,29 @@ fun HomeScreen(
             )
         }
 
+        // v2.58: Compact mini floating rain / storm / spinning cyclone strip right near Live News
+        // ONLY when rain (~30 min), heavy downpour, or cyclone warning is active (or previewed).
+        val miniWeatherSeverity = state.weather.previewSeverity
+            ?: if (state.weather.enabled) state.weather.severity else com.universalrp.weather.WeatherSeverity.CLEAR_OR_NORMAL
+        com.universalrp.weather.WeatherMiniAlertBanner(
+            severity = miniWeatherSeverity,
+            placeName = state.weather.activePlaceName.ifBlank { state.weather.savedPlaceName },
+            minutesUntilRain = state.weather.minutesUntilRain ?: 30,
+            tamil = Lang.isTamil,
+            isPreview = state.weather.previewSeverity != null,
+            onClick = {
+                vm.refreshWeatherUiState()
+                vm.navigate(Screen.WEATHER)
+            },
+            onDismissPreview = { vm.dismissWeatherPreviewAnimation() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp,
+                    vertical = 3.dp,
+                ),
+        )
+
         if (showVolume) AnnouncementVolumeDialog { showVolume = false }
 
         LazyColumn(
@@ -308,6 +331,8 @@ fun HomeScreen(
             item(key = "hero") { HomeHeroCard(state, vm) }
 
             item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
+
+            item(key = "weather_alert") { HomeWeatherAlertCard(state, vm) }
 
             if (!state.legacyStorageOk) {
                 item(key = "legacy") { LegacyStorageCard(vm) }

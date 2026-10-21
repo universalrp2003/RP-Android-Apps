@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.NetworkSplit
+import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.notify.RadioWatchService
 import com.universalrp.cleansweep.ui.theme.AccentCyan
 
@@ -77,7 +78,7 @@ fun RadioSplitCard() {
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        "4G / 5G split",
+                        tr("4G / 5G split"),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                     )
@@ -87,9 +88,9 @@ fun RadioSplitCard() {
                         // pack, so they ignored everything used before counting began and
                         // could promise "3.53 GB left" while Live Guard said 488 MB.
                         if (separate) "4G ${NetworkSplit.format(status.fourGUsedMb)} used · 5G " +
-                            (if (status.fiveGUnlimited) "Unlimited"
+                            (if (status.fiveGUnlimited) tr("Unlimited")
                             else NetworkSplit.format(status.fiveGUsedMb) + " used")
-                        else "One combined counter",
+                        else tr("One combined counter"),
                         style = MaterialTheme.typography.labelSmall,
                         color = AccentCyan,
                     )
@@ -142,8 +143,8 @@ fun RadioSplitCard() {
 
             // ---- switches ------------------------------------------------
             SplitSwitch(
-                title = "Count 4G and 5G separately",
-                subtitle = "Android keeps one mobile total; this splits each 3-second sample by the radio in use.",
+                title = tr("Count 4G and 5G separately"),
+                subtitle = tr("Android keeps one mobile total; this splits each 3-second sample by the radio in use."),
                 checked = separate,
                 onChange = {
                     separate = it
@@ -152,8 +153,8 @@ fun RadioSplitCard() {
                 },
             )
             SplitSwitch(
-                title = "Announce 4G ⇄ 5G changes",
-                subtitle = "Speaks once per change, at most every 20 seconds. Quiet hours still apply.",
+                title = tr("Announce 4G ⇄ 5G changes"),
+                subtitle = tr("Speaks once per change, at most every 20 seconds. Quiet hours still apply."),
                 checked = announce,
                 onChange = {
                     announce = it
@@ -163,7 +164,7 @@ fun RadioSplitCard() {
             )
 
             Text(
-                "5G unlimited on this plan",
+                tr("5G unlimited on this plan"),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 8.dp),
@@ -171,7 +172,7 @@ fun RadioSplitCard() {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 // v2.49: the chosen button is now filled and outlined; before this, every button
                 // looked identical on the dark theme and the selection could not be seen.
-                listOf("AUTO" to "Auto", "ON" to "On", "OFF" to "Off").forEach { (key, label) ->
+                listOf("AUTO" to tr("Auto"), "ON" to tr("On"), "OFF" to tr("Off")).forEach { (key, label) ->
                     val selected = policy == key
                     Surface(
                         shape = RoundedCornerShape(10.dp),

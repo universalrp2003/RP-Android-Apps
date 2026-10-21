@@ -37,6 +37,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Folder
@@ -878,6 +879,42 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                                     .clickable { vm.removeStation(station) },
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        // v1.17 — Rain & cyclone voice alert card right above App Updates in More tab
+        item {
+            PanelCard(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(aboutContext) }
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Filled.Cloud,
+                        contentDescription = null,
+                        tint = Saffron,
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Rain & cyclone voice alert",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "Speaks ~30 min before rain, ducks radio volume smoothly, 24x7 cyclone priority",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
                     }
                 }
             }

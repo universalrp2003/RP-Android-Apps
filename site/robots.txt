@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://universalrp2003.github.io/RP-Android-Apps/sitemap.xml

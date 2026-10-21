@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.RecordVoiceOver
 import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.Thermostat
+import androidx.compose.material.icons.outlined.Thunderstorm
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -231,8 +232,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     }
                     Text(
                         tr(
-                            "Nothing is spoken between these hours — not even important warnings. " +
-                                "Anything you ask for yourself is still spoken when you ask."
+                            "Routine alerts stay silent between these hours. Very heavy rain or cyclone warnings " +
+                                "and anything you ask for yourself are still spoken."
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
@@ -373,6 +374,22 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     tint = AccentCyan,
                     checked = state.voiceNetworkChange,
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.NETWORK_CHANGE, it) },
+                )
+                VoiceSwitch(
+                    title = tr("4G ⇄ 5G switches"),
+                    subtitle = tr("Announces observed 4G/5G changes on the active data SIM, at most once every 20 seconds."),
+                    icon = Icons.Outlined.SwapHoriz,
+                    tint = AccentCyan,
+                    checked = state.voiceRadioChange,
+                    onCheckedChange = { vm.setVoiceEvent(Announcer.Event.RADIO_CHANGE, it) },
+                )
+                VoiceSwitch(
+                    title = tr("Rain & cyclone alert"),
+                    subtitle = tr("30-min rain heads-up (silent in Quiet Hours) + 24x7 heavy rain & cyclone alerts."),
+                    icon = Icons.Outlined.Thunderstorm,
+                    tint = AccentCyan,
+                    checked = state.weather.enabled,
+                    onCheckedChange = { vm.setWeatherAlertEnabled(it) },
                 )
 
                 VoiceSwitch(

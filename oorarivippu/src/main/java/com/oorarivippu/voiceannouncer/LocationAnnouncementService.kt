@@ -155,6 +155,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     override fun onCreate() {
         super.onCreate()
         AppPreferences.init(this)
+        OorWeatherMonitor.attachBackgroundHost(this)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         locationManager = getSystemService(Context.LOCATION_SERVICE) as? LocationManager
         tts = TextToSpeech(this, this)
@@ -1352,6 +1353,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
+        OorWeatherMonitor.detachBackgroundHost()
         offlineReminderJob?.cancel()
         offlineReminderJob = null
         stopOfflineBeep()

@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PlayArrow
@@ -135,6 +136,18 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         color = Saffron,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                    )
+                }
+                val radioHeaderContext = androidx.compose.ui.platform.LocalContext.current
+                IconButton(
+                    onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(radioHeaderContext) },
+                    modifier = Modifier.size(34.dp),
+                ) {
+                    Icon(
+                        Icons.Filled.Cloud,
+                        contentDescription = AppStrings.translate("Rain & cyclone voice alert"),
+                        tint = Saffron,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
                 IconButton(onClick = { showGuide = true }, modifier = Modifier.size(34.dp)) {

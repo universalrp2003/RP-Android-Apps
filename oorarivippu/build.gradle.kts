@@ -16,8 +16,8 @@ android {
         applicationId = "com.oorarivippu.voiceannouncer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.1.2"
+        versionCode = 9
+        versionName = "1.1.4"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -58,10 +58,17 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+
+    lint {
+        // Emit text + XML lint reports for CI diagnostics.
+        textReport = true
+        xmlReport = true
+    }
 }
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 
     implementation(platform("androidx.compose:compose-bom:2025.08.00"))
     implementation("androidx.core:core-ktx:1.15.0")

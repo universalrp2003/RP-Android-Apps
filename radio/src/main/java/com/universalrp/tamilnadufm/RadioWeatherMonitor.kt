@@ -1,0 +1,347 @@
+package com.universalrp.tamilnadufm
+
+import android.content.Context
+import android.os.Handler
+import android.os.Looper
+import com.universalrp.tamilnadufm.player.PlayerBus
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
+import com.universalrp.weather.SharedWeatherRuntime
+import com.universalrp.weather.SharedWeatherState
+import com.universalrp.weather.WeatherAlertPolicy
+import com.universalrp.weather.WeatherForecastClient
+import com.universalrp.weather.WeatherPlaceCandidate
+import com.universalrp.weather.WeatherPlaceResolver
+import com.universalrp.weather.WeatherSeverity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+/**
+ * Ramesh Radio (`1.17`) weather & cyclone alert controller:
+ *  - Zero Location permissions (`allowGps = false` — PIN / village picker such as `622301`).
+ *  - Auto-enables on update if phone GPS is ON.
+ *  - Smoothly ducks ExoPlayer FM/local music volume to 25%, speaks Tamil/English rain or cyclone
+ *    warning clearly, and automatically restores original music volume when speech finishes!
+ */
+object RadioWeatherMonitor {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private var serviceWatcherJob: Job? = null
+    private var activeVoiceJob: Job? = null
+
+    private val _state = MutableStateFlow(SharedWeatherState())
+    val state: StateFlow<SharedWeatherState> = _state.asStateFlow()
+
+    private val _showDialog = MutableStateFlow(false)
+    val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
+
+    fun openDialog(context: Context) {
+        refreshState(context)
+        _showDialog.value = true
+    }
+
+    fun closeDialog() {
+        _showDialog.value = false
+    }
+
+    fun initialize(context: Context) {
+        val app = context.applicationContext
+        SharedWeatherRuntime.ensureAutoEnabledWhenGpsOn(
+            context = app,
+            currentEnabled = SharedWeatherRuntime.isEnabled(app),
+            userExplicitlySet = SharedWeatherRuntime.wasExplicitlySet(app),
+            enableNow = { SharedWeatherRuntime.setEnabled(app, on = true, userInitiated = false) },
+        )
+        refreshState(app)
+        maybeRunScheduledCheck(app)
+    }
+
+    fun attachBackgroundHost(context: Context) {
+        val app = context.applicationContext
+        initialize(app)
+        if (serviceWatcherJob?.isActive == true) return
+        serviceWatcherJob = scope.launch {
+            while (true) {
+                delay(60_000L)
+                maybeRunScheduledCheck(app)
+            }
+        }
+    }
+
+    fun detachBackgroundHost() {
+        serviceWatcherJob?.cancel()
+        serviceWatcherJob = null
+    }
+
+    fun refreshState(context: Context) {
+        val app = context.applicationContext
+        val current = _state.value
+        val fresh = SharedWeatherRuntime.readState(context = app, allowGps = false)
+        _state.value = fresh.copy(
+            previewSeverity = current.previewSeverity,
+            checkingNow = current.checkingNow,
+            searchingPlaces = current.searchingPlaces,
+            searchResults = current.searchResults,
+            statusNote = current.statusNote,
+        )
+    }
+
+    fun setEnabled(context: Context, on: Boolean) {
+        val app = context.applicationContext
+        SharedWeatherRuntime.setEnabled(app, on = on, userInitiated = true)
+        refreshState(app)
+        if (on) checkNow(app, manual = false)
+    }
+
+    fun maybeRunScheduledCheck(context: Context) {
+        val app = context.applicationContext
+        if (!SharedWeatherRuntime.isEnabled(app)) return
+        if (SharedWeatherRuntime.savedPlace(app) == null) return
+        if (_state.value.checkingNow) return
+        if (System.currentTimeMillis() < SharedWeatherRuntime.nextCheckAfterMs(app)) return
+        checkNow(app, manual = false)
+    }
+
+    fun checkNow(context: Context, manual: Boolean) {
+        val app = context.applicationContext
+        if (_state.value.checkingNow) return
+        val saved = SharedWeatherRuntime.savedPlace(app)
+        val tamil = AppLanguageState.current == AppLanguage.TAMIL
+        if (saved == null) {
+            if (manual) {
+                _state.update {
+                    it.copy(
+                        statusNote = if (tamil) {
+                            "முதலில் கீழே உங்கள் PIN எண் அல்லது ஊர்ப் பெயரைத் தேடிச் சேமியுங்கள் (உதா: 622301)."
+                        } else {
+                            "Search and save your PIN code or town below first (e.g. 622301)."
+                        }
+                    )
+                }
+            }
+            return
+        }
+
+        _state.update { it.copy(checkingNow = true, statusNote = "") }
+        scope.launch {
+            val result = runCatching {
+                val key = SharedWeatherRuntime.readTomorrowKey(app)
+                val snap = WeatherForecastClient.fetchNowcast(
+                    latitude = saved.latitude,
+                    longitude = saved.longitude,
+                    tomorrowApiKey = key,
+                )
+                val decision = WeatherAlertPolicy.evaluate(
+                    snapshot = snap,
+                    placeLabel = saved.name,
+                    previous = SharedWeatherRuntime.loadMemory(app),
+                )
+                SharedWeatherRuntime.saveEvaluation(
+                    context = app,
+                    placeName = saved.name,
+                    placeDetails = saved.details,
+                    snapshot = snap,
+                    decision = decision,
+                )
+                decision
+            }
+
+            val decision = result.getOrNull()
+            if (decision != null && decision.shouldAnnounce) {
+                SharedWeatherRuntime.postWeatherNotification(
+                    context = app,
+                    smallIconRes = android.R.drawable.ic_dialog_info,
+                    decision = decision,
+                    tamil = AppLanguageState.current == AppLanguage.TAMIL,
+                )
+                speakWithRadioDuck(
+                    context = app,
+                    english = decision.englishSpeech,
+                    tamilText = decision.tamilSpeech,
+                    manual = false,
+                    bypassQuietHours = decision.bypassQuietHours,
+                )
+            }
+
+            val errNote = if (result.isFailure) {
+                if (AppLanguageState.current == AppLanguage.TAMIL) {
+                    "வானிலை சேவையை இணைக்க முடியவில்லை — இணைய இணைப்பைச் சரிபார்க்கவும்."
+                } else {
+                    "Could not reach weather service — check internet connection."
+                }
+            } else {
+                ""
+            }
+            _state.update { it.copy(checkingNow = false, statusNote = errNote) }
+            refreshState(app)
+        }
+    }
+
+    fun testVoiceWithDuck(context: Context) {
+        val app = context.applicationContext
+        val place = SharedWeatherRuntime.savedPlace(app)?.name?.takeIf { it.isNotBlank() }
+            ?: if (AppLanguageState.current == AppLanguage.TAMIL) "உங்கள் ஊர்" else "your town"
+        val sample = WeatherAlertPolicy.formatSpeech(
+            severity = WeatherSeverity.RAIN_SOON,
+            placeLabel = place,
+            minutesUntilRain = 30,
+        )
+        activeVoiceJob?.cancel()
+        activeVoiceJob = scope.launch {
+            speakWithRadioDuck(
+                context = app,
+                english = sample.first,
+                tamilText = sample.second,
+                manual = true,
+                bypassQuietHours = true,
+            )
+        }
+    }
+
+    fun readGuideAloud(context: Context, script: String) {
+        val app = context.applicationContext
+        activeVoiceJob?.cancel()
+        activeVoiceJob = scope.launch {
+            speakWithRadioDuck(
+                context = app,
+                english = script,
+                tamilText = script,
+                manual = true,
+                bypassQuietHours = true,
+            )
+        }
+    }
+
+    fun stopVoice() {
+        activeVoiceJob?.cancel()
+        activeVoiceJob = null
+    }
+
+    private suspend fun speakWithRadioDuck(
+        context: Context,
+        english: String,
+        tamilText: String,
+        manual: Boolean,
+        bypassQuietHours: Boolean,
+    ) {
+        var originalVolume: Float? = null
+        SharedWeatherRuntime.speakAlertWithOptionalDuck(
+            context = context,
+            english = english,
+            tamilText = tamilText,
+            preferTamil = AppLanguageState.current == AppLanguage.TAMIL,
+            manual = manual,
+            bypassQuietHours = bypassQuietHours,
+            duckAudio = { ducked ->
+                mainHandler.post {
+                    val p = PlayerBus.player ?: return@post
+                    if (ducked) {
+                        if (originalVolume == null) originalVolume = p.volume
+                        p.volume = (p.volume * 0.25f).coerceAtMost(0.25f)
+                    } else {
+                        originalVolume?.let { saved -> p.volume = saved }
+                        originalVolume = null
+                    }
+                }
+            },
+        )
+    }
+
+    fun cyclePreviewAnimation() {
+        _state.update { current ->
+            val next = when (current.previewSeverity) {
+                null -> WeatherSeverity.RAIN_SOON
+                WeatherSeverity.RAIN_SOON -> WeatherSeverity.VERY_HEAVY_RAIN
+                WeatherSeverity.VERY_HEAVY_RAIN -> WeatherSeverity.CYCLONE_SEVERE
+                else -> null
+            }
+            current.copy(previewSeverity = next)
+        }
+    }
+
+    fun dismissPreviewAnimation() {
+        _state.update { it.copy(previewSeverity = null) }
+    }
+
+    fun searchPlaces(context: Context, query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) {
+            _state.update { it.copy(searchResults = emptyList(), searchingPlaces = false) }
+            return
+        }
+        _state.update { it.copy(searchingPlaces = true, statusNote = "") }
+        scope.launch {
+            val hits = runCatching {
+                WeatherPlaceResolver.searchCandidates(
+                    context = context.applicationContext,
+                    query = trimmed,
+                    tamil = AppLanguageState.current == AppLanguage.TAMIL,
+                )
+            }.getOrDefault(emptyList())
+            val note = if (hits.isEmpty()) {
+                if (AppLanguageState.current == AppLanguage.TAMIL) {
+                    "பொருந்தும் ஊர் கிடைக்கவில்லை — 6 இலக்க PIN எண்ணை முயற்சிக்கவும் (உதா: 622301)."
+                } else {
+                    "No matching place found — try your 6-digit PIN code (e.g. 622301)."
+                }
+            } else {
+                ""
+            }
+            _state.update { it.copy(searchingPlaces = false, searchResults = hits, statusNote = note) }
+        }
+    }
+
+    fun selectPlace(context: Context, candidate: WeatherPlaceCandidate) {
+        val app = context.applicationContext
+        SharedWeatherRuntime.savePlace(app, candidate)
+        _state.update { it.copy(searchResults = emptyList(), statusNote = "") }
+        refreshState(app)
+        if (!SharedWeatherRuntime.isEnabled(app)) {
+            SharedWeatherRuntime.setEnabled(app, on = true, userInitiated = true)
+            refreshState(app)
+        }
+        checkNow(app, manual = false)
+    }
+
+    fun clearPlace(context: Context) {
+        val app = context.applicationContext
+        SharedWeatherRuntime.clearSavedPlace(app)
+        refreshState(app)
+    }
+
+    fun saveTomorrowKey(context: Context, rawKey: String) {
+        val app = context.applicationContext
+        val ok = SharedWeatherRuntime.saveTomorrowKey(app, rawKey)
+        val note = when {
+            rawKey.isBlank() -> if (AppLanguageState.current == AppLanguage.TAMIL) {
+                "Tomorrow.io விசை நீக்கப்பட்டது — உள்ளமைந்த இலவச ரேடார் செயலில்."
+            } else {
+                "Tomorrow.io key removed — using free built-in radar."
+            }
+            ok -> if (AppLanguageState.current == AppLanguage.TAMIL) {
+                "Tomorrow.io 1-நிமிட API விசை பாதுகாப்பாகச் சேமிக்கப்பட்டது."
+            } else {
+                "Tomorrow.io 1-minute key saved securely."
+            }
+            else -> if (AppLanguageState.current == AppLanguage.TAMIL) {
+                "விசையைச் சேமிக்க முடியவில்லை."
+            } else {
+                "Could not encrypt key in Android Keystore."
+            }
+        }
+        refreshState(app)
+        _state.update { it.copy(statusNote = note) }
+        if (ok && rawKey.isNotBlank() && SharedWeatherRuntime.savedPlace(app) != null) {
+            checkNow(app, manual = false)
+        }
+    }
+}

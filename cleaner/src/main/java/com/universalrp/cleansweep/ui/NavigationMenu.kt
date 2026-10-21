@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.material.icons.outlined.SmartToy
+import androidx.compose.material.icons.outlined.Thunderstorm
 import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.Icon
@@ -149,6 +150,9 @@ fun LiveGuardMenu(vm: MainViewModel, current: Screen?, onClose: () -> Unit) {
         MenuGroup(tr("Phone")) {
             MenuRow(Icons.Outlined.BatteryFull, tr("Phone health"), tr("Battery, heat, CPU, watts"), current == Screen.HEALTH) {
                 vm.navigate(Screen.HEALTH); onClose()
+            }
+            MenuRow(Icons.Outlined.Thunderstorm, tr("Rain & cyclone alert"), tr("30-min rain & storm voice watch"), current == Screen.WEATHER) {
+                vm.refreshWeatherUiState(); vm.navigate(Screen.WEATHER); onClose()
             }
             MenuRow(Icons.Outlined.Apps, tr("Installed apps"), tr("Bloatware, unused apps"), current == Screen.APPS) {
                 vm.loadAppInventory(); onClose()

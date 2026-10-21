@@ -17,8 +17,8 @@ android {
         applicationId = "com.universalrp.tamilnadufm"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.16"
+        versionCode = 18
+        versionName = "1.18"
     }
 
     signingConfigs {
@@ -61,6 +61,7 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
     // Media3/ExoPlayer: streaming (MP3/AAC + HLS), background playback, notification,
     // lock-screen controls and audio focus.
     val media3Version = "1.11.0"
