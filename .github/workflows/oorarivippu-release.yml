@@ -71,12 +71,21 @@ jobs:
           {
             echo "### Oor Arivippu failure summary"
             echo '```'
-            grep -E "Error:|FAILURE:|What went wrong|^> " oor-build.log | head -n 60 || true
+            grep -E "Error:|FAILURE:|What went wrong|^> |Explanation for issues" -A 4 oor-build.log | head -n 90 || true
             echo '```'
             for r in oorarivippu/build/reports/lint-results-*.txt; do
-              [ -f "$r" ] && echo "### $r" && echo '```' && head -n 120 "$r" && echo '```'
+              [ -f "$r" ] && echo "### $r" && echo '```' && cat "$r" && echo '```'
             done
-          } >> "$GITHUB_STEP_SUMMARY" || true
+          } > oor-build-failure.md
+          cat oor-build-failure.md >> "$GITHUB_STEP_SUMMARY" || true
+          if [[ "$GITHUB_REF" == refs/heads/arena/* ]]; then
+            git config user.name "ci-bot"
+            git config user.email "ci-bot@users.noreply.github.com"
+            git add oor-build-failure.md
+            git commit -m "CI: exact lint-results-release.txt" || true
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" >/dev/null 2>&1 || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" || true
+          fi
 
       - name: Verify package, version, stable signer, APK size, and SHA-256
         id: apk
