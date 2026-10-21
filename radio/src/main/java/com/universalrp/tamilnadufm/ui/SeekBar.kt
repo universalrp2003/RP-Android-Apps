@@ -26,6 +26,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universalrp.tamilnadufm.player.PlayerBus
+import com.universalrp.tamilnadufm.player.SeekWindowPolicy
 import kotlinx.coroutines.delay
 
 /**
@@ -67,16 +68,18 @@ fun SeekBar(
         }
     }
 
-    // Live: the usable range is the buffered window behind the live edge.
-    val bufferBehindMs = 60_000L
-    val rangeStart = if (isLive) (positionMs - bufferBehindMs).coerceAtLeast(0L) else 0L
-    val rangeEnd = when {
-        isLive -> positionMs.coerceAtLeast(1L)
-        durationMs > 0 -> durationMs
-        else -> 1L
-    }
-    val shown = (if (dragging) dragMs else positionMs.toFloat())
-        .coerceIn(rangeStart.toFloat(), rangeEnd.toFloat())
+    // Recorded audio spans its whole duration; live audio is limited to the recent buffer.
+    val seekWindow = SeekWindowPolicy.resolve(
+        positionMs = positionMs,
+        durationMs = durationMs,
+        isLive = isLive,
+    )
+    val rangeStart = seekWindow.minPositionMs
+    val rangeEnd = seekWindow.sliderRangeEndMs
+    val shown = SeekWindowPolicy.clampPosition(
+        if (dragging) dragMs.toLong() else positionMs,
+        seekWindow,
+    ).toFloat()
 
     Column(modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -124,10 +127,12 @@ fun SeekBar(
             onValueChangeFinished = {
                 dragging = false
                 // One seek per gesture, not one per pixel.
-                runCatching { player?.seekTo(dragMs.toLong()) }
+                runCatching {
+                    player?.seekTo(SeekWindowPolicy.clampPosition(dragMs.toLong(), seekWindow))
+                }
             },
-            valueRange = rangeStart.toFloat()..(rangeEnd.toFloat().coerceAtLeast(rangeStart + 1f)),
-            enabled = rangeEnd > rangeStart,
+            valueRange = rangeStart.toFloat()..rangeEnd.toFloat(),
+            enabled = seekWindow.isSeekable,
         )
 
         if (isLive) {

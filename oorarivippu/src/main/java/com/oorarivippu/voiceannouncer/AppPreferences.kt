@@ -57,6 +57,8 @@ data class AppStateSnapshot(
     val headsetWhereAmIEnabled: Boolean = false,
     /** Speech speed in percent of Android's normal rate (80 slow, 95 normal, 110 fast). */
     val speechRatePercent: Int = SpeechRatePolicy.DEFAULT_PERCENT,
+    /** Per-announcement TTS gain in percent; this does not change the phone's media volume. */
+    val speechVolumePercent: Int = SpeechVolumePolicy.DEFAULT_PERCENT,
     val history: List<AnnouncementLogItem> = emptyList()
 ) {
     fun selectedTtsVoiceNameFor(languageCode: String): String =
@@ -78,6 +80,7 @@ object AppPreferences {
     private const val KEY_DESTINATION_NAME = "destination_name"
     private const val KEY_DESTINATION_DETAILS = "destination_details"
     private const val KEY_SPEECH_RATE = "speech_rate_percent"
+    private const val KEY_SPEECH_VOLUME = "speech_volume_percent"
     private const val KEY_DESTINATION_LATITUDE = "destination_latitude"
     private const val KEY_DESTINATION_LONGITUDE = "destination_longitude"
     private const val KEY_DESTINATION_ALERT_MASK = "destination_alert_mask"
@@ -108,6 +111,7 @@ object AppPreferences {
             destinationAlertMask = prefs.getInt(KEY_DESTINATION_ALERT_MASK, 0),
             headsetWhereAmIEnabled = prefs.getBoolean(KEY_HEADSET_WHERE_AM_I, false),
             speechRatePercent = SpeechRatePolicy.normalize(prefs.getInt(KEY_SPEECH_RATE, SpeechRatePolicy.DEFAULT_PERCENT)),
+            speechVolumePercent = SpeechVolumePolicy.normalize(prefs.getInt(KEY_SPEECH_VOLUME, SpeechVolumePolicy.DEFAULT_PERCENT)),
             offlineReminderIntervalMinutes = OfflineReminderPolicy.normalizeInterval(
                 prefs.getInt(
                     KEY_OFFLINE_REMINDER_INTERVAL_MINUTES,
@@ -232,6 +236,12 @@ object AppPreferences {
         val normalized = SpeechRatePolicy.normalize(percent)
         prefs.edit().putInt(KEY_SPEECH_RATE, normalized).apply()
         _state.value = _state.value.copy(speechRatePercent = normalized)
+    }
+
+    fun setSpeechVolumePercent(percent: Int) {
+        val normalized = SpeechVolumePolicy.normalize(percent)
+        prefs.edit().putInt(KEY_SPEECH_VOLUME, normalized).apply()
+        _state.value = _state.value.copy(speechVolumePercent = normalized)
     }
 
     fun setAnnounceSameCitySubArea(enabled: Boolean) {

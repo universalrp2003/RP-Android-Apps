@@ -1,5 +1,6 @@
 package com.universalrp.pulseeq.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,13 +30,17 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.universalrp.pulseeq.EqTab
 import com.universalrp.pulseeq.EqViewModel
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppStrings
 
 @Composable
@@ -51,13 +56,25 @@ fun EqRoot(vm: EqViewModel) {
         }
     }
 
+    var showGuide by remember { mutableStateOf(false) }
+    if (showGuide) {
+        BackHandler { showGuide = false }
+        com.universalrp.updates.GuideScreen(
+            content = com.universalrp.updates.AppGuides.pulseEq,
+            tamil = AppLanguageState.current == AppLanguage.TAMIL,
+            onBack = { showGuide = false },
+            accent = Cyan,
+        )
+        return
+    }
+
     Box(
         Modifier
             .fillMaxSize()
             .background(Bg)
     ) {
         when (state.tab) {
-            EqTab.EQUALIZER -> EqualizerScreen(state, vm)
+            EqTab.EQUALIZER -> EqualizerScreen(state, vm, onGuide = { showGuide = true })
             EqTab.PRESETS -> PresetsScreen(state, vm)
             EqTab.PLAYER -> PlayerScreen(state, vm)
             EqTab.SETTINGS -> SettingsScreen(state, vm)

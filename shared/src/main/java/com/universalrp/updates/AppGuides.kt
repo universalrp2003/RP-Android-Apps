@@ -14,8 +14,8 @@ package com.universalrp.updates
  * text cannot silently drift apart from the app it explains.
  *
  * Secret Message is the one exception: it is a separate Gradle build (secretmessage/wifi-test has
- * its own settings.gradle.kts and forked the shared updater), so it keeps its own longer 1.1.0
- * guide in its own GuideScreen.kt, using the same tap-to-open shape. Copy the text here only if
+ * its own settings.gradle.kts and forked the shared updater), so it keeps its own detailed
+ * bilingual guide in GuideScreen.kt, using the same tap-to-open shape. Copy the text here only if
  * that app is ever pulled into the shared source set.
  *
  * Text rules, same as the rest of the project:
@@ -57,6 +57,18 @@ object AppGuides {
         introTa = "லைவ் கார்டு உங்கள் போனையே கவனிக்கிறது: பேட்டரி, சேமிப்பு, நினைவகம், தரவு, வெப்பம். " +
             "மற்ற செயலிகளின் செய்திகளையோ அறிவிப்புகளையோ இது படிக்காது. ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
+            topic(
+                "Finding the tools",
+                "கருவிகளைக் கண்டறிதல்",
+                "The Home screen groups related readings into sections that open when tapped. Use the menu " +
+                    "button at the top left (or swipe in from the left edge) to open the grouped cleaning, phone, " +
+                    "network, security, assistant and settings screens. The small book button at the top of Home " +
+                    "opens this guide directly.",
+                "முகப்புத் திரையில் தொடர்புடைய அளவீடுகள் தலைப்புகளாகக் குழுவாக உள்ளன; தொட்டால் திறக்கும். " +
+                    "சுத்தம், போன், நெட்வொர்க், பாதுகாப்பு, உதவியாளர், அமைப்புகள் திரைகளுக்குச் செல்ல மேல் இடது " +
+                    "மெனு பொத்தானைத் தட்டுங்கள் அல்லது இடது ஓரத்திலிருந்து உள்ளே இழுக்கவும். Home மேல் உள்ள சிறிய " +
+                    "புத்தகப் பொத்தான் இந்த வழிகாட்டியை நேரடியாகத் திறக்கும்.",
+            ),
             topic(
                 "Cleaning storage",
                 "சேமிப்பு சுத்தம்",
@@ -196,12 +208,19 @@ object AppGuides {
             topic(
                 "Playing a file from your phone",
                 "உங்கள் போனிலிருந்து கோப்பு இயக்குதல்",
-                "Choose a song or an audio file with the folder button. Recorded audio can be dragged anywhere " +
-                    "with the seek bar, unlike live radio. Playback stays inside the app, so you always have " +
-                    "pause and stop on screen.",
-                "கோப்புறை பொத்தானைத் தட்டி பாடலையோ ஒலிக் கோப்பையோ தேர்ந்தெடுங்கள். பதிவு செய்த ஒலியை சீக் " +
-                    "பட்டையால் எங்கு வேண்டுமானாலும் இழுக்கலாம்; நேரடி வானொலியில் அது இல்லை. இயக்கம் செயலிக்குள்ளேயே " +
-                    "நடப்பதால் இடைநிறுத்தம், நிறுத்தம் எப்போதும் திரையில் இருக்கும்.",
+                "Open Local at the bottom. Choose a folder once to list only audio in that folder and its " +
+                    "subfolders, or choose Open a file for one item. Tap a song to play it. While a local file is " +
+                    "playing, the Local screen and Now Playing sheet show elapsed time, total length and a seek bar; " +
+                    "drag it to any point in the recording. Live stations have no total duration and can seek only " +
+                    "inside the short buffered window. Folder access is granted by Android's picker; the app does " +
+                    "not scan the whole phone.",
+                "கீழே உள்ள பாடல்கள் (Local) தாவலைத் திறக்கவும். ஒரு கோப்புறையைத் தேர்ந்தெடுத்தால் அதிலும் அதன் துணைக் " +
+                    "கோப்புறைகளிலும் உள்ள ஒலி மட்டும் பட்டியலாகும்; அல்லது ஒரு கோப்பிற்கு கோப்பைத் திற (Open a file)-ஐத் " +
+                    "தேர்ந்தெடுக்கவும். பாடலைத் தொட்டு இயக்குங்கள். உள்ளூர் கோப்பு இயங்கும்போது பாடல்கள் (Local) திரையிலும் " +
+                    "Now Playing திரையிலும் கடந்த நேரம், மொத்த நீளம், சீக் பட்டை தெரியும்; பதிவின் எந்த இடத்திற்கும் " +
+                    "இழுக்கலாம். நேரடி நிலையத்திற்கு மொத்த நேரம் கிடையாது; ஏற்கனவே இடையகத்தில் உள்ள சிறிய " +
+                    "பகுதிக்குள் மட்டுமே நகரலாம். கோப்புறை அனுமதியை Android தேர்வி தரும்; போன் முழுவதையும் " +
+                    "செயலி ஸ்கேன் செய்யாது.",
             ),
             topic(
                 "News and local pages",
@@ -222,6 +241,21 @@ object AppGuides {
                 "சமநிலைப்படுத்தி, பாஸ் மற்றும் தெளிவு கட்டுப்பாடுகள், பதிவுக் கருவிகள் அனைத்தும் ரேமஷ் ரேடியோவுக்குள் " +
                     "இயங்கும் ஒலியிலேயே வேலை செய்யும். எல்லா போன்களிலும் ஒரு செயலி மற்றொரு செயலியின் ஒலியை மாற்ற " +
                     "Android அனுமதிக்காது; எனவே YouTube அல்லது உங்கள் இசை செயலியை இது மாற்றும் என்று கூறவில்லை.",
+            ),
+            topic(
+                "Favourites, your stations, and sleep timer",
+                "விருப்ப நிலையங்கள், உங்கள் நிலையங்கள், தூக்க நேரம்",
+                "Tap the star on a station to add or remove it from Favourites; open the Favourites category " +
+                    "to find it again. In More, add your own station with its name and a direct stream URL (prefer " +
+                    "HTTPS; some legacy HTTP streams are not encrypted). The Sleep timer stops playback after " +
+                    "the selected time. More also has a switch to stop the last station from auto-starting when " +
+                    "you open the app; your favourites and settings stay on this phone.",
+                "நிலையத்தில் உள்ள நட்சத்திரத்தைத் தொட்டு விருப்பத்தில் சேர்க்கவும் அல்லது நீக்கவும்; மீண்டும் காண " +
+                    "விருப்பமானவை (Favourites) வகையைத் திறக்கவும். மேலும் (More) பகுதியில் பெயரும் நேரடி ஒளிபரப்பு இணைப்பும் கொடுத்து " +
+                    "உங்கள் நிலையத்தைச் சேர்க்கலாம் (HTTPS விரும்பத்தக்கது; பழைய HTTP இணைப்புகள் குறியாக்கம் " +
+                    "செய்யப்படாமல் இருக்கலாம்). தேர்ந்த நேரம் முடிந்ததும் தூக்க நேரக் கணிப்பான் (Sleep timer) ஒலிப்பை நிறுத்தும். " +
+                    "செயலியைத் திறக்கும்போது கடைசி நிலையம் தானாகத் தொடங்குவதை மேலும் (More)-இல் முடக்கலாம்; விருப்பங்களும் " +
+                    "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
             ),
             topic(
                 "Updating Ramesh Radio",
@@ -250,12 +284,14 @@ object AppGuides {
             topic(
                 "Choosing a file and playing it",
                 "கோப்பைத் தேர்ந்தெடுத்து இயக்குதல்",
-                "Choose an audio file, then use play and pause. The screen shows the position and, when the file " +
-                    "has a known length, the total time; the seek bar for dragging is still to come, so today " +
-                    "you restart a track to hear it from the beginning.",
-                "ஒலிக் கோப்பைத் தேர்ந்தெடுத்து இயக்கு, இடைநிறுத்து பொத்தான்களைப் பயன்படுத்துங்கள். திரையில் தற்போதைய " +
-                    "நிலையும், நீளம் தெரிந்தால் மொத்த நேரமும் தெரியும்; இழுக்கக்கூடிய சீக் பட்டை இன்னும் வரவில்லை, " +
-                    "எனவே இப்போது மீண்டும் தொடக்கத்திலிருந்து கேட்க வேண்டும்.",
+                "Choose a local audio file, then use Play / pause or Stop. The player shows the current position " +
+                    "and the total length when Android can read it. There is not yet a drag-to-seek control, so " +
+                    "use Stop and choose the file again when you need to restart it. Streaming is not supported " +
+                    "in this built-in player.",
+                "சாதனத்தில் உள்ள ஒலிக் கோப்பைத் தேர்ந்தெடுத்து Play / pause அல்லது Stop பயன்படுத்துங்கள். Android " +
+                    "கண்டறிந்தால் தற்போதைய இடமும் மொத்த நீளமும் தெரியும். இழுத்துத் தேடும் கட்டுப்பாடு இன்னும் " +
+                    "இல்லை; மீண்டும் தொடங்க Stop செய்து கோப்பை மறுபடியும் தேர்ந்தெடுக்கவும். இந்த உள்ளமைந்த " +
+                    "இயக்கியில் இணைய ஒலிபரப்பு ஆதரிக்கப்படாது.",
             ),
             topic(
                 "The equalizer bands",
@@ -277,6 +313,18 @@ object AppGuides {
                 "முன்னமைவு என்பது பட்டைகளின் நிலைகளின் சேமிக்கப்பட்ட தொகுப்பு மட்டுமே. ஒன்றை ஏற்றினால் உங்கள் " +
                     "கோப்பு மாறாது; பிறகு எந்தப் பட்டையையும் நகர்த்தலாம். உங்கள் சொந்த முன்னமைவு இந்தப் போனில் " +
                     "மட்டுமே சேமிக்கப்படும்; எங்கும் பதிவேற்றப்படாது.",
+            ),
+            topic(
+                "Reset, bypass, and the spectrum",
+                "மீட்டமை, பைபாஸ், ஒலி அலைவடிவம்",
+                "Drag a band to change its frequency range; double-tap its label to return just that band to " +
+                    "zero. Reset to flat clears the whole curve. Bypass temporarily turns processing off without " +
+                    "erasing the curve, so you can compare the original and adjusted sound. The animated spectrum " +
+                    "is a visual aid, not a measurement of sound quality.",
+                "ஒரு அதிர்வெண் பகுதியை மாற்ற அதன் பட்டையை இழுக்கவும்; அந்தப் பட்டையை மட்டும் பூஜ்யத்திற்குத் " +
+                    "திருப்ப அதன் பெயரை இருமுறை தட்டவும். Reset to flat முழு வளைவையும் சமமாக்கும். Bypass " +
+                    "வளைவை அழிக்காமல் செயலாக்கத்தைத் தற்காலிகமாக அணைத்து, அசல் ஒலியுடன் ஒப்பிட உதவும். நகரும் " +
+                    "ஒலி அலைவடிவம் காட்சிக்கான உதவி மட்டுமே; ஒலி தர அளவீடு அல்ல.",
             ),
             topic(
                 "Changing other apps' sound",
@@ -315,23 +363,38 @@ object AppGuides {
                 "First steps",
                 "முதல் படிகள்",
                 "The first time, the app downloads its processing model, which needs internet; after that it " +
-                    "works offline. Choose an audio file, choose Slow, Medium or Fast, and start. Slow gives the " +
-                    "cleanest split; Fast is for a quick listen. Keep the phone cool and plugged in for a long song.",
+                    "works offline. Choose one or more MP3 files, select Slow, Medium or Fast, then start the " +
+                    "queue. Keep the phone cool and connected to power for long songs; you can pause or cancel " +
+                    "the job from its progress card.",
                 "முதல் முறை செயலாக்க மாதிரியைப் பதிவிறக்கும்; அதற்கு இணையம் தேவை, பிறகு இணையம் இல்லாமலும் " +
-                    "இயங்கும். ஒலிக் கோப்பைத் தேர்ந்தெடுத்து Slow, Medium அல்லது Fast தேர்ந்து தொடங்குங்கள். " +
-                    "Slow மிகத் தெளிவான பிரிப்பு; Fast விரைவாகக் கேட்க. நீண்ட பாடலுக்கு போனைக் குளிர்ச்சியாகவும் " +
-                    "சார்ஜில் இணைத்தும் வைத்திருங்கள்.",
+                    "இயங்கும். ஒன்று அல்லது பல MP3 கோப்புகளைத் தேர்ந்தெடுத்து Slow, Medium அல்லது Fast முறையைத் " +
+                    "தேர்ந்து வரிசையைத் தொடங்குங்கள். நீண்ட பாடலுக்கு போனைக் குளிர்ச்சியாகவும் மின்சாரத்தில் " +
+                    "இணைத்தும் வைத்திருங்கள்; முன்னேற்ற அட்டையிலிருந்து இடைநிறுத்தவோ ரத்து செய்யவோலாம்.",
+            ),
+            topic(
+                "Choosing a processing speed",
+                "செயலாக்க வேகத்தைத் தேர்வு",
+                "Slow uses one inference thread and longer cool-downs for lower device load. Medium balances " +
+                    "time and CPU use. Fast can use more threads when Android reports a normal thermal state; it " +
+                    "may run hotter and is not guaranteed to finish sooner on every phone. The app may pause a " +
+                    "job for safety and show you what to do next.",
+                "Slow ஒரு inference thread மற்றும் நீண்ட குளிர்விப்பு இடைவெளிகளைப் பயன்படுத்தி சாதனச் சுமையைக் " +
+                    "குறைக்கும். Medium நேரத்தையும் CPU பயன்பாட்டையும் சமப்படுத்தும். Android வெப்ப நிலை இயல்பாக " +
+                    "இருக்கும்போது Fast அதிக thread-களைப் பயன்படுத்தலாம்; போன் அதிகம் சூடாகலாம், எல்லா " +
+                    "போன்களிலும் விரைவாக முடியும் என உறுதி இல்லை. பாதுகாப்பிற்காக வேலை இடைநிறுத்தப்பட்டால் " +
+                    "அடுத்து என்ன செய்ய வேண்டும் என்பதைச் செயலி காட்டும்.",
             ),
             topic(
                 "What you get",
                 "என்ன கிடைக்கும்",
-                "The first pass writes an instrumental WAV next to your original. Your original file is never " +
-                    "changed. Listen to the WAV before doing anything else; if singing remains, you can start one " +
-                    "optional extra reduction pass, which may also soften some instruments.",
-                "முதல் சுற்று உங்கள் மூலக் கோப்பருகே ஒரு இசைக்கருவி WAV-ஐ உருவாக்கும். மூலக் கோப்பு " +
-                    "எப்போதும் மாறாது. மற்றதைச் செய்வதற்கு முன் WAV-ஐக் கேளுங்கள்; பாடுதல் மீதம் இருந்தால் " +
-                    "விருப்பமான ஒரு கூடுதல் குறைப்புச் சுற்றைத் தொடங்கலாம்; அது சில இசைக்கருவிகளையும் " +
-                    "மென்மையாக்கலாம்.",
+                "The first pass saves a separate instrumental stereo WAV in Music/Vocal Remover Studio. The " +
+                    "original is never changed. Listen to the WAV before doing anything else; if singing remains, " +
+                    "you can start one optional extra-reduction pass, which may also soften some instruments and " +
+                    "creates another separate WAV.",
+                "முதல் சுற்று Music/Vocal Remover Studio-வில் தனி இசைக்கருவி ஸ்டீரியோ WAV-ஐச் சேமிக்கும். " +
+                    "அசல் கோப்பு எப்போதும் மாறாது. வேறு செயலைச் செய்வதற்கு முன் WAV-ஐக் கேளுங்கள்; பாடுதல் " +
+                    "மீதமிருந்தால் விருப்பமான ஒரு கூடுதல் குறைப்புச் சுற்றைத் தொடங்கலாம்; அது சில கருவியிசையையும் " +
+                    "மென்மையாக்கி இன்னொரு தனி WAV உருவாக்கும்.",
             ),
             topic(
                 "Pause, resume and long files",
@@ -361,6 +424,19 @@ object AppGuides {
                 "இயக்கி செயலிக்குள்ளேயே இருப்பதால் இடைநிறுத்தம், நிறுத்தம் எப்போதும் திரையில் இருக்கும்; " +
                     "ஒலி அளவு ஸ்லைடர் இந்தச் செயலி எவ்வளவு சத்தமாக இயக்கும் என்பதை அமைக்கும். பாடலின் ஒரு " +
                     "பகுதிக்குத் தாவும் பட்டை இன்னும் இல்லை.",
+            ),
+            topic(
+                "Queue, saved work, and safety pauses",
+                "வரிசை, சேமித்த பணி, பாதுகாப்பு இடைநிறுத்தங்கள்",
+                "Songs in the queue are processed one at a time. The app saves progress checkpoints so a long " +
+                    "job can resume after a restart. A low-memory pause may resume automatically after recovery; " +
+                    "thermal, storage and user pauses wait for you. Check the reason shown on the job card, free " +
+                    "space or let the phone cool, then tap Resume when it is safe.",
+                "வரிசையிலுள்ள பாடல்கள் ஒவ்வொன்றாகச் செயலாக்கப்படும். நீண்ட வேலை மறுதொடக்கத்திற்குப் பிறகும் " +
+                    "தொடர முன்னேற்றச் சோதனைப் புள்ளிகளைச் செயலி சேமிக்கும். நினைவகம் குறைந்து நின்றது மீண்டதும் " +
+                    "தானாகத் தொடரலாம்; வெப்பம், சேமிப்பு, பயனர் இடைநிறுத்தங்கள் உங்கள் செயலைக் காத்திருக்கும். " +
+                    "வேலை அட்டையில் காட்டும் காரணத்தைப் பார்த்து, இடம் காலி செய்யவோ போனை குளிரவைக்கவோ செய்து, " +
+                    "பாதுகாப்பானதும் Resume தட்டுங்கள்.",
             ),
             topic(
                 "Updating Vocal Remover",
@@ -396,35 +472,75 @@ object AppGuides {
             topic(
                 "What is announced",
                 "என்ன அறிவிக்கப்படும்",
-                "Only the names: the area, then the town, then the district as you move. No filler words, no " +
-                    "\"Entering\", no walking directions. The same town is not repeated for ten minutes, so a " +
-                    "Tamil/English spelling switch does not make it speak twice, and a road with no name is " +
-                    "never announced.",
-                "பெயர்கள் மட்டுமே: நகரும் போது பகுதி, பின்னர் ஊர், பின்னர் மாவட்டம். நிரப்பு வார்த்தைகள் இல்லை, " +
-                    "\"நுழைகிறீர்கள்\" இல்லை, வழிகாட்டல் இல்லை. அதே ஊர் பத்து நிமிடங்களுக்கு மீண்டும் அறிவிக்கப்படாது; " +
-                    "எனவே தமிழ்/ஆங்கில எழுத்து மாற்றம் இருமுறை பேசாது, பெயரில்லாத சாலை எப்போதும் அறிவிக்கப்படாது.",
+                "As you travel, the app can announce a new town or village, an optional new sub-area in the " +
+                    "same town, a changed district, and a recognized highway/major landmark name. It speaks " +
+                    "place names without filler such as \"Entering\" and gives no turn-by-turn directions. " +
+                    "Repeat protection avoids saying the same town again for ten minutes; a language/script " +
+                    "change alone does not trigger another place announcement.",
+                "பயணத்தின் போது புதிய ஊர் அல்லது கிராமம், ஒரே ஊருக்குள் விருப்பமாக புதிய பகுதி, மாறிய மாவட்டம், " +
+                    "அடையாளம் காணப்பட்ட நெடுஞ்சாலை/முக்கிய இடப் பெயர் ஆகியவற்றைச் செயலி அறிவிக்கலாம். \"நுழைகிறீர்கள்\" " +
+                    "போன்ற நிரப்பு வார்த்தைகள் இல்லாமல் இடப் பெயர்களைச் சொல்லும்; திருப்பம்-திருப்பமான வழிகாட்டல் " +
+                    "இல்லை. அதே ஊரை பத்து நிமிடங்களுக்கு மீண்டும் சொல்லாமல் தடுக்கும்; மொழி/எழுத்து மாற்றம் மட்டும் " +
+                    "இன்னொரு அறிவிப்பைத் தூண்டாது.",
             ),
             topic(
                 "Choosing a destination",
                 "இலக்கைத் தேர்ந்தெடுத்தல்",
-                "Search a place and you get every match with its district, state, PIN code and distance. Pick " +
-                    "one deliberately: the app never quietly takes the first result, and it speaks the name you " +
-                    "chose as you approach it.",
-                "ஓர் இடத்தைத் தேடினால், மாவட்டம், மாநிலம், அஞ்சல் குறியீடு, தூரத்துடன் எல்லாப் பொருத்தங்களும் " +
-                    "கிடைக்கும். ஒன்றை வேண்டுமென்றே தேர்ந்தெடுங்கள்: முதல் முடிவை அமைதியாக எடுத்துக்கொள்ளாது; " +
-                    "நீங்கள் தேர்ந்த இடத்தின் பெயரையே நெருங்கும்போது கூறும்.",
+                "Enter a destination and tap Set destination. When names match multiple places, compare the district, " +
+                    "state, PIN code and distance, then choose the right result yourself; the app never silently " +
+                    "selects the first match. With internet available, it uses GPS/geocoder distance for alerts " +
+                    "at about 10 km, 5 km, 2 km and 500 m (arrival). GPS and geocoder accuracy can vary.",
+                "இலக்கை உள்ளிட்டு “இலக்கை அமை” தட்டுங்கள். ஒரே பெயரில் பல இடங்கள் வந்தால் மாவட்டம், மாநிலம், அஞ்சல் " +
+                    "குறியீடு, தூரத்தை ஒப்பிட்டு சரியான முடிவை நீங்களே தேர்ந்தெடுக்கவும்; முதல் முடிவைச் செயலி " +
+                    "அமைதியாகத் தேர்ந்தெடுக்காது. இணையம் இருக்கும்போது GPS/Geocoder தூரத்தைப் பயன்படுத்தி சுமார் " +
+                    "10 km, 5 km, 2 km, 500 m (வந்தடைந்தது) இடங்களில் அறிவிக்கும். GPS/Geocoder துல்லியம் மாறலாம்.",
             ),
             topic(
                 "Voices and speech speed",
                 "குரல்கள் மற்றும் பேச்சு வேகம்",
-                "Every Android voice of the chosen language is listed, best quality first, with a speed setting. " +
-                    "A voice that needs internet is marked; without internet the app stays silent rather than " +
-                    "guessing a place. The offline reminder uses a downloaded voice, or a short beep, and never a " +
-                    "network voice.",
-                "தேர்ந்த மொழியின் எல்லா Android குரல்களும், சிறந்த தரம் முதலில், வேக அமைப்புடன் பட்டியலிடப்படும். " +
-                    "இணையம் தேவைப்படும் குரல் குறியிடப்படும்; இணையம் இல்லாதபோது இடத்தை ஊகிக்காமல் செயலி அமைதியாக " +
-                    "இருக்கும். இணையமில்லா நினைவூட்டல் பதிவிறக்கிய குரலையோ சிறு பீப்பையோ பயன்படுத்தும்; " +
-                    "இணையக் குரலை ஒருபோதும் இல்லை.",
+                "The compact App language row changes the interface only; it is separate from the compact " +
+                    "Voice language row. Tap Voice language to expand it, then choose the announcement language, " +
+                    "an Android TTS voice, Slow/Normal/Fast speech speed and this app's own speech-volume slider; " +
+                    "test a voice after changing it. Voices that need internet are marked and may send spoken text to " +
+                    "their TTS provider. For offline reminders, the app uses an installed on-device voice or a " +
+                    "short beep, never a network voice.",
+                "சுருக்கமான செயலி மொழி (App language) வரி திரை மொழியை மட்டுமே மாற்றும்; அது குரல் மொழி " +
+                    "(Voice language) வரியிலிருந்து தனி. குரல் மொழி வரியைத் தொட்டு விரிவாக்கி அறிவிப்பு மொழி, Android TTS குரல், " +
+                    "மெதுவான/இயல்பு/வேகமான " +
+                    "பேச்சு, இந்தச் செயலிக்கான குரல் ஒலி ஸ்லைடரைத் தேர்ந்தெடுக்கவும்; மாற்றிய பிறகு குரலைச் " +
+                    "சோதியுங்கள். இணையம் தேவைப்படும் குரல்கள் குறிக்கப்படும்; பேசிய உரை " +
+                    "அந்த TTS வழங்குநருக்கு அனுப்பப்படலாம். இணையமில்லா நினைவூட்டலுக்கு நிறுவிய சாதனக் குரலையோ " +
+                    "சிறு பீப்பையையோ பயன்படுத்தும்; இணையக் குரல் இல்லை.",
+            ),
+            topic(
+                "Travel and repeat settings",
+                "பயணம் மற்றும் மீண்டும் அறிவிப்பு அமைப்புகள்",
+                "Bike/car detection can keep announcements quiet while you are stationary. The minimum-distance " +
+                    "control filters small GPS changes. Turn on the same-city option only if you want new areas " +
+                    "within one town announced; it is off by default. The option to announce immediately when " +
+                    "tracking starts can also be changed. Adaptive location intervals vary by movement; actual " +
+                    "battery use differs by phone.",
+                "பைக்/கார் பயணக் கண்டறிதல், ஒரே இடத்தில் இருக்கும்போது அறிவிப்பை அமைதியாக வைத்திருக்கலாம். " +
+                    "குறைந்தபட்ச தூரக் கட்டுப்பாடு சிறிய GPS மாற்றங்களை வடிகட்டும். ஒரே ஊருக்குள் புதிய பகுதிகளையும் " +
+                    "அறிவிக்க வேண்டும் என்றால் same-city விருப்பத்தை இயக்குங்கள்; இயல்பாக அது முடக்கப்பட்டுள்ளது. " +
+                    "கண்காணிப்பைத் தொடங்கியவுடன் அறிவிக்கும் விருப்பத்தையும் மாற்றலாம். நகர்வைப் பொறுத்து இருப்பிட " +
+                    "இடைவெளிகள் மாறும்; உண்மையான பேட்டரி பயன்பாடு போனைப் பொறுத்தது.",
+            ),
+            topic(
+                "No internet, location and privacy",
+                "இணையம், இருப்பிடம், தனியுரிமை",
+                "Place and destination lookups/announcements pause when validated internet is unavailable; " +
+                    "offline reminders are optional and use only an on-device TTS voice or a beep. Location " +
+                    "permission is needed for trip tracking, and Android may require background-location access " +
+                    "to continue with the screen off. GPS/geocoder results and battery use vary by device. The " +
+                    "app keeps its settings and announcement history on this phone; Android's geocoder provider " +
+                    "may process lookups under its own policy.",
+                "சரிபார்க்கப்பட்ட இணையம் இல்லாதபோது இடம்/இலக்கு தேடலும் அறிவிப்பும் நிற்கும்; இணையமில்லா " +
+                    "நினைவூட்டல் விருப்பமானது, சாதன TTS குரல் அல்லது பீப்பை மட்டுமே பயன்படுத்தும். பயணத்தைக் " +
+                    "கண்காணிக்க இருப்பிட அனுமதி தேவை; திரை அணைந்தபோதும் தொடர Android பின்னணி இருப்பிட அனுமதி " +
+                    "கேட்கலாம். GPS/Geocoder முடிவுகளும் பேட்டரி பயன்பாடும் சாதனத்தைப் பொறுத்து மாறும். " +
+                    "அமைப்புகளையும் அறிவிப்பு வரலாறையும் செயலி இந்தப் போனில் வைத்திருக்கும்; Android " +
+                    "Geocoder வழங்குநர் தனது கொள்கைப்படி தேடலைச் செயலாக்கலாம்.",
             ),
             topic(
                 "Calls and the headset button",

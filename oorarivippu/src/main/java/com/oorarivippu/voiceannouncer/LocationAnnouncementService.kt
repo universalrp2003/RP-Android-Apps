@@ -1217,7 +1217,13 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             }
         })
 
-        engine.speak(text, queueMode, null, "place_announce_${System.currentTimeMillis()}")
+        val speakParameters = Bundle().apply {
+            putFloat(
+                TextToSpeech.Engine.KEY_PARAM_VOLUME,
+                SpeechVolumePolicy.ttsVolume(AppPreferences.state.value.speechVolumePercent),
+            )
+        }
+        engine.speak(text, queueMode, speakParameters, "place_announce_${System.currentTimeMillis()}")
     }
 
     private fun monitorCallModeDuringSpeech(engine: TextToSpeech) {

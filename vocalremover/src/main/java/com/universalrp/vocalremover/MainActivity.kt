@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
@@ -359,7 +360,11 @@ private fun VocalRemoverScreen(wavPlaybackController: WavPlaybackController) {
                 .padding(top = 10.dp, bottom = 28.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Header(modelReady = modelReady, onAbout = { showAbout = true })
+            Header(
+                modelReady = modelReady,
+                onAbout = { showAbout = true },
+                onGuide = { showGuide = true },
+            )
             DeviceHealthCard(currentSnapshot, job, queueItems)
             OutlinedButton(
                 onClick = {
@@ -597,7 +602,7 @@ private fun VocalRemoverScreen(wavPlaybackController: WavPlaybackController) {
 }
 
 @Composable
-private fun Header(modelReady: Boolean, onAbout: () -> Unit) {
+private fun Header(modelReady: Boolean, onAbout: () -> Unit, onGuide: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(3.dp), modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Box(
@@ -612,6 +617,14 @@ private fun Header(modelReady: Boolean, onAbout: () -> Unit) {
                 Text("STUDIO", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Ink, lineHeight = 23.sp)
             }
             AppLanguageToggle()
+            IconButton(onClick = onGuide, modifier = Modifier.size(34.dp)) {
+                androidx.compose.material3.Icon(
+                    Icons.Default.HelpOutline,
+                    contentDescription = AppStrings.translate("Guide"),
+                    tint = TealDark,
+                    modifier = Modifier.size(19.dp),
+                )
+            }
             IconButton(onClick = onAbout, modifier = Modifier.size(36.dp)) {
                 androidx.compose.material3.Icon(
                     Icons.Default.Info,

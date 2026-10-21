@@ -142,6 +142,14 @@ fun LocalScreen(vm: MainViewModel, state: UiState) {
                         IconButton(onClick = { vm.next() }) { Icon(Icons.Filled.SkipNext, AppStrings.translate("Next song"), tint = Saffron) }
                         IconButton(onClick = { vm.refreshMusicFolder() }) { Icon(Icons.Filled.Refresh, AppStrings.translate("Refresh folder"), tint = Saffron) }
                     }
+                    if (state.playingLocalTitle != null) {
+                        Text(
+                            AppStrings.translate("Seek through this track"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                        SeekBar(Modifier.padding(horizontal = 4.dp))
+                    }
                     if (state.localTracks.isEmpty()) {
                         Spacer(Modifier.height(10.dp))
                         Text(

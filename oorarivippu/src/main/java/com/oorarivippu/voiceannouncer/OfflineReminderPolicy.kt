@@ -28,3 +28,15 @@ object SpeechRatePolicy {
     /** Android's speech rate (1.0 is normal); 1.0.x always used 0.95. */
     fun androidRate(percent: Int): Float = normalize(percent) / 100f
 }
+
+/** Per-utterance TTS gain, independent of the phone's media-volume buttons. */
+object SpeechVolumePolicy {
+    const val DEFAULT_PERCENT = 100
+    const val MIN_PERCENT = 0
+    const val MAX_PERCENT = 100
+
+    fun normalize(percent: Int): Int = percent.coerceIn(MIN_PERCENT, MAX_PERCENT)
+
+    /** TextToSpeech.Engine.KEY_PARAM_VOLUME accepts a linear value from 0.0 to 1.0. */
+    fun ttsVolume(percent: Int): Float = normalize(percent) / 100f
+}

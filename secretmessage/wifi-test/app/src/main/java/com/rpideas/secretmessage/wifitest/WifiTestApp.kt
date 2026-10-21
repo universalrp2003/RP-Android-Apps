@@ -90,7 +90,7 @@ internal fun WifiTestApp(
     }
 
     // While the start screen shows, ask the relay now and then which remembered phones are ready.
-    val onStartScreen = !appLock.locked && !showSettings && connection is ConnectionState.Idle
+    val onStartScreen = !appLock.locked && !showSettings && !showGuide && connection is ConnectionState.Idle
     LaunchedEffect(onStartScreen, contacts, resumeCount) {
         if (!onStartScreen) return@LaunchedEffect
         while (true) {
@@ -111,7 +111,7 @@ internal fun WifiTestApp(
             ) {
                 when {
                     appLock.locked -> LockScreen(message = appLock.lastMessage, onUnlock = onUnlockRequest)
-                    showSettings && showGuide -> GuideScreen(onBack = { showGuide = false })
+                    showGuide -> GuideScreen(onBack = { showGuide = false })
                     showSettings -> SettingsScreen(
                         settings = settings,
                         appLockMessage = lockMessage ?: appLock.lastMessage,
@@ -191,6 +191,7 @@ internal fun WifiTestApp(
                             notice = notice,
                             actions = actions,
                             onOpenSettings = { showSettings = true },
+                            onOpenGuide = { showGuide = true },
                         )
                         // As in Oor Arivippu: a verified update found at launch is offered once. The
                         // check runs on the first start screen of this app start only.

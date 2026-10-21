@@ -38,6 +38,8 @@ class BilingualStringsTest {
             assertTrue(strings.voiceStatusUnavailable.isNotBlank())
             assertTrue(strings.voiceChoiceSubtitle.isNotBlank())
             assertTrue(strings.voiceChoiceSystemDefault.isNotBlank())
+            assertTrue(strings.speechVolumeLabel.isNotBlank())
+            assertTrue(strings.speechVolumeNote.isNotBlank())
             assertTrue(strings.statusInternetUnavailable.isNotBlank())
             assertTrue(strings.internetUnavailableDetails.isNotBlank())
             assertTrue(strings.offlineReminderTitle.isNotBlank())

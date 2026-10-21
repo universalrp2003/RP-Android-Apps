@@ -84,6 +84,7 @@ import androidx.compose.material.icons.outlined.DeleteSweep
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.FileDownload
 import androidx.compose.material.icons.outlined.Photo
 import androidx.compose.ui.text.font.FontWeight
@@ -213,6 +214,18 @@ fun HomeScreen(
                     color = AccentCyan,
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
+                )
+            }
+            // A compact, always-visible shortcut opens the complete, expandable guide directly.
+            IconButton(
+                onClick = { vm.navigate(Screen.GUIDE) },
+                modifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    Icons.Outlined.MenuBook,
+                    contentDescription = tr("Guide"),
+                    tint = AccentCyan,
+                    modifier = Modifier.size(19.dp),
                 )
             }
             // 2.53 — the speaker opens the volume slider itself, over this page, exactly as the
