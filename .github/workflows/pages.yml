@@ -5,9 +5,6 @@ on:
     branches:
       - main
       - "arena/**"
-    paths:
-      - "site/**"
-      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -20,33 +17,31 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check & Setup GitHub Pages
-        id: pages_setup
-        uses: actions/configure-pages@v5
-        continue-on-error: true
-
-      - name: Guide if GitHub Pages is not enabled yet in Repo Settings
-        if: steps.pages_setup.outcome != 'success'
+      - name: Verify Google Search Console meta tag & sitemap exist
         run: |
-          echo "### Action needed once in GitHub Settings -> Pages" >> "$GITHUB_STEP_SUMMARY"
-          echo "Open **Settings -> Pages -> Build and deployment -> Source** and select **GitHub Actions**, then re-run this workflow or merge to \`main\` to publish \`https://universalrp2003.github.io/RP-Android-Apps/\`." >> "$GITHUB_STEP_SUMMARY"
+          grep -Fq 'ZxgKHtiCt5dwTUFnjnuAgb8qQXJPrKwlK--Wf-bfDy4' site/index.html
+          test -f site/sitemap.xml
+          test -f site/robots.txt
 
       - name: Upload site artifact
-        if: steps.pages_setup.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
 
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
-        if: steps.pages_setup.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4
