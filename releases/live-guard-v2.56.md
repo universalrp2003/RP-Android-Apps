@@ -15,6 +15,8 @@ Fixes the 4G ⇄ 5G voice announcement switch and removes raw `2147483647` Andro
 
 ## Verification and device testing
 
+Published on 21 October 2026 by [Build APK run 39580876173](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39580876173) from commit `cd55415`: `CleanSweep-v2.56.apk`, `13,825,964` bytes, SHA-256 `7bbb11a922860a8019e0a3cfa4fd7cc1538eaa35c4c9722754f2e08049f1dcdb`.
+
 The exact APK was **not installed on a phone before publication**. Build, unit/regression, localization, APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
 
 Version 2.56 / code 61.

@@ -6,6 +6,24 @@ This file indexes five actively maintained products (the four-app batch plus Oor
 
 _No unreleased changes._
 
+## Published — Live Guard 2.56 (21 October 2026)
+
+Published alone by Build APK
+[run 39580876173](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39580876173)
+from commit `cd55415` on `arena/12471a95-rp-android-apps`. `CleanSweep-v2.56.apk` is `13,825,964`
+bytes, SHA-256 `7bbb11a922860a8019e0a3cfa4fd7cc1538eaa35c4c9722754f2e08049f1dcdb`. No other app
+version was bumped and no Android permission was added. The exact APK was not installed on a phone
+before publication.
+
+- **4G ⇄ 5G voice announcements:** wired **Announce 4G ⇄ 5G changes** directly to
+  `Announcer.Event.RADIO_CHANGE` and master speech output (with a one-time upgrade sync for devices
+  where the switch was already enabled), bound `RadioWatchService` to the active mobile-data SIM,
+  and tracked both 5G SA and 5G NSA transitions.
+- **Nearby cell towers:** filtered Android `CellInfo.UNAVAILABLE` (`2147483647`) and
+  `CellInfo.UNAVAILABLE_LONG` (`9223372036854775807`) sentinels out of cell IDs, PCI, TAC/LAC and
+  dBm values so hidden fields display cleanly instead of `2147483647`.
+- Release notes: [`releases/live-guard-v2.56.md`](releases/live-guard-v2.56.md).
+
 ## Published — six app updates (21 October 2026)
 
 Live Guard 2.55 / code 60, Ramesh Radio 1.16 / code 16, PulseEQ 1.8 / code 9 and
