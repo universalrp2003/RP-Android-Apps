@@ -8,7 +8,7 @@ on:
   push:
     # v2.49: main is where the releases come from now; the historic branch stays allowed so
     # nothing that worked before stops working.
-    branches: [main, arena/d4fb2344-internetradio]
+    branches: [main, "arena/**", arena/d4fb2344-internetradio]
     # Workflow-only edits are not a release candidate and must not start this workflow.
     paths-ignore:
       - ".github/workflows/build-apk.yml"
@@ -67,8 +67,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_version="1.1.2"
-          expected_code="7"
+          expected_version="1.1.3"
+          expected_code="8"
           expected_package="com.oorarivippu.voiceannouncer"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           tag="oor-arivippu-v${expected_version}"

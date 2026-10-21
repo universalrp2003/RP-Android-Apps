@@ -30,6 +30,7 @@ data class WeatherUiSnapshot(
     val peakPrecipMmPerHour: Double = 0.0,
     val peakWindGustKmh: Double = 0.0,
     val source: WeatherSourceKind = WeatherSourceKind.OPEN_METEO_DEFAULT,
+    val previewSeverity: WeatherSeverity? = null,
     val checkingNow: Boolean = false,
     val searchingPlaces: Boolean = false,
     val searchResults: List<WeatherPlaceCandidate> = emptyList(),
@@ -43,6 +44,8 @@ data class WeatherUiSnapshot(
 object WeatherAlertStore {
     const val PREFS = "weather_alert_state"
     private const val KEY_SAVED_NAME = "saved_place_name"
+    private const val KEY_USER_EXPLICIT_TOGGLE = "user_explicit_weather_toggle"
+    private const val KEY_GPS_UPDATE_MIGRATED_258 = "gps_auto_enable_migrated_258"
     private const val KEY_SAVED_DETAILS = "saved_place_details"
     private const val KEY_SAVED_PIN = "saved_place_pin"
     private const val KEY_SAVED_LAT = "saved_place_lat"
@@ -73,8 +76,34 @@ object WeatherAlertStore {
     fun enabled(context: Context): Boolean =
         Announcer.allows(context, Announcer.Event.WEATHER_ALERT)
 
-    fun setEnabled(context: Context, on: Boolean) {
+    fun setEnabled(context: Context, on: Boolean, userInitiated: Boolean = true) {
         Announcer.setAllows(context, Announcer.Event.WEATHER_ALERT, on)
+        if (userInitiated) {
+            prefs(context).edit().putBoolean(KEY_USER_EXPLICIT_TOGGLE, true).apply()
+        }
+    }
+
+    /**
+     * v2.58 owner rule: on app update / startup when device GPS is ON and the user has NOT
+     * manually turned weather alerts OFF, automatically switch Rain & Storm Alerts ON once.
+     * Returns true ONLY when this call flipped the switch from OFF to ON.
+     */
+    @Synchronized
+    fun ensureAutoEnabledOnGpsUpdate(context: Context): Boolean {
+        val p = prefs(context)
+        if (enabled(context)) {
+            if (!p.getBoolean(KEY_GPS_UPDATE_MIGRATED_258, false)) {
+                p.edit().putBoolean(KEY_GPS_UPDATE_MIGRATED_258, true).apply()
+            }
+            return false
+        }
+        if (p.getBoolean(KEY_USER_EXPLICIT_TOGGLE, false)) return false
+        if (com.universalrp.weather.WeatherPlaceResolver.isDeviceLocationTurnedOn(context)) {
+            setEnabled(context, true, userInitiated = false)
+            p.edit().putBoolean(KEY_GPS_UPDATE_MIGRATED_258, true).apply()
+            return true
+        }
+        return false
     }
 
     fun savePlace(context: Context, candidate: WeatherPlaceCandidate) {

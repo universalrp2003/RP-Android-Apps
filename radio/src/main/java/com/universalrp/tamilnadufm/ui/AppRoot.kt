@@ -70,6 +70,10 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
 
     val state by vm.state.collectAsState()
     val playback by PlayerBus.state.collectAsState()
+    val weather by com.universalrp.tamilnadufm.RadioWeatherMonitor.state.collectAsState()
+    val showWeatherDialog by com.universalrp.tamilnadufm.RadioWeatherMonitor.showDialog.collectAsState()
+    val rootContext = androidx.compose.ui.platform.LocalContext.current
+    val isTamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL
 
     Column(
         Modifier
@@ -80,6 +84,19 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             // made the tabs impossible to tap.
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
+        com.universalrp.weather.WeatherMiniAlertBanner(
+            severity = weather.bannerSeverity,
+            placeName = weather.activePlaceName.ifBlank { weather.savedPlaceName },
+            minutesUntilRain = weather.minutesUntilRain ?: 30,
+            tamil = isTamil,
+            isPreview = weather.previewSeverity != null,
+            onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(rootContext) },
+            onDismissPreview = { com.universalrp.tamilnadufm.RadioWeatherMonitor.dismissPreviewAnimation() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 4.dp),
+        )
+
         Box(Modifier.weight(1f)) {
             when (state.tab) {
                 // v1.3: list states live in the ViewModel, so a tab switch keeps your place.
@@ -110,6 +127,27 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
 
     if (state.showDirectory) {
         DirectorySheet(vm, state)
+    }
+
+    if (showWeatherDialog) {
+        com.universalrp.weather.SharedWeatherControlDialog(
+            state = weather,
+            tamil = isTamil,
+            allowGps = false,
+            accentColor = Saffron,
+            ducksMusicNote = true,
+            onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
+            onSetEnabled = { com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, it) },
+            onCheckNow = { com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true) },
+            onTestVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.testVoiceWithDuck(rootContext) },
+            onCyclePreviewAnimation = { com.universalrp.tamilnadufm.RadioWeatherMonitor.cyclePreviewAnimation() },
+            onSearchPlaces = { com.universalrp.tamilnadufm.RadioWeatherMonitor.searchPlaces(rootContext, it) },
+            onSelectPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.selectPlace(rootContext, it) },
+            onClearPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.clearPlace(rootContext) },
+            onSaveTomorrowKey = { com.universalrp.tamilnadufm.RadioWeatherMonitor.saveTomorrowKey(rootContext, it) },
+            onReadGuideAloud = { com.universalrp.tamilnadufm.RadioWeatherMonitor.readGuideAloud(rootContext, it) },
+            onStopVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.stopVoice() },
+        )
     }
 }
 

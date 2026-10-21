@@ -184,6 +184,20 @@ object AppGuides {
                     "எதையும் அமைதியாக நிறுவாது.",
             ),
             topic(
+                "30-minute rain & 24×7 cyclone alerts",
+                "30 நிமிட மழை & 24×7 புயல் எச்சரிக்கை",
+                "When phone GPS is ON, Live Guard can turn on rain & storm watch automatically and use your " +
+                    "live area; if GPS is OFF, save your 6-digit PIN code or town (e.g. 622301) once. Normal " +
+                    "30-minute rain alerts stay silent during Quiet Hours, while very heavy rain and cyclone " +
+                    "warnings speak 24×7 day or night. A compact animated banner floats under Live News only " +
+                    "during active alerts. You can also get a free personal Tomorrow.io API key from the link inside.",
+                "போன் GPS இயக்கத்தில் இருந்தால் லைவ் கார்டு மழை & புயல் கண்காணிப்பைத் தானாக இயக்கி உங்கள் " +
+                    "இடத்தைப் பயன்படுத்தும்; GPS அணைந்தால் 6 இலக்க PIN எண் அல்லது ஊரை (உதா: 622301) ஒருமுறை சேமிக்கலாம். " +
+                    "சாதாரண 30 நிமிட மழை அறிவிப்பு இரவு அமைதி நேரத்தில் ஒலிக்காது; மிகக் கனமழை மற்றும் புயல் " +
+                    "எச்சரிக்கைகள் இரவு-பகல் 24×7 ஒலிக்கும். எச்சரிக்கை நேரத்தில் மட்டும் Live News கீழே சிறிய அனிமேஷன் " +
+                    "தோன்றும். உள்ளே உள்ள இணைப்பின் வழியே இலவச Tomorrow.io API விசையையும் பெறலாம்.",
+            ),
+            topic(
                 "The other RP Ideas apps",
                 "மற்ற RP Ideas செயலிகள்",
                 "About lists all six apps with their official release pages, so you can read what changed or " +
@@ -270,6 +284,19 @@ object AppGuides {
                     "செய்யப்படாமல் இருக்கலாம்). தேர்ந்த நேரம் முடிந்ததும் தூக்க நேரக் கணிப்பான் (Sleep timer) ஒலிப்பை நிறுத்தும். " +
                     "செயலியைத் திறக்கும்போது கடைசி நிலையம் தானாகத் தொடங்குவதை மேலும் (More)-இல் முடக்கலாம்; விருப்பங்களும் " +
                     "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
+            ),
+            topic(
+                "Rain & cyclone voice alerts while listening",
+                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு",
+                "Tap the cloud icon at the top of Radio (or open More) and save your 6-digit PIN code or town " +
+                    "(e.g. 622301) — Ramesh Radio never asks for Location permission. When rain approaches within " +
+                    "~30 minutes, music volume gently lowers, the voice alert plays clearly, and volume restores " +
+                    "automatically. Normal rain stays silent at night (10 PM – 7 AM); heavy rain and cyclone " +
+                    "warnings speak 24×7. A direct link and voice guide inside explain how to get a free Tomorrow.io key.",
+                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறந்து உங்கள் 6 இலக்க PIN எண் அல்லது ஊரை (உதா: " +
+                    "622301) சேமியுங்கள் — ரமேஷ் ரேடியோ இட அனுமதி கேட்காது. ~30 நிமிடத்தில் மழை வரும்போது பாடல் ஒலி " +
+                    "தானாகக் குறைந்து, அறிவிப்பு முடிந்ததும் மீண்டும் பழைய ஒலிக்குத் திரும்பும். சாதாரண மழை இரவு (10 PM – 7 AM) " +
+                    "ஒலிக்காது; மிகக் கனமழை மற்றும் புயல் 24×7 ஒலிக்கும். இலவச Tomorrow.io விசை வழிகாட்டியும் உள்ளே உள்ளது.",
             ),
             topic(
                 "Updating Ramesh Radio",
@@ -565,6 +592,19 @@ object AppGuides {
                 "போன் அடிக்கும்போதோ நீங்கள் அழைப்பில் இருக்கும்போதோ எதுவும் ஒலிக்காது: அறிவிப்பு காத்திருந்து " +
                     "அழைப்பு முடிந்த பிறகு ஒலிக்கும். ஹெட்செட்டின் பொத்தான் \"நான் எங்கே இருக்கிறேன்?\" என்று " +
                     "கேட்கும்; தற்போதைய இடம் ஒருமுறை கூறப்படும்.",
+            ),
+            topic(
+                "30-minute rain & 24×7 cyclone voice alerts",
+                "30 நிமிட மழை & 24×7 புயல் குரல் எச்சரிக்கை",
+                "Tap the cloud button at the top (or the Rain & Cyclone card on the main screen). When phone " +
+                    "GPS is ON, alerts turn on automatically on update and follow your live travel route; when " +
+                    "GPS is OFF, your saved PIN/village (e.g. 622301) or saved destination is used automatically. " +
+                    "Normal rain stays silent during Quiet Hours (10 PM – 7 AM); heavy rain and cyclone warnings " +
+                    "announce 24×7 day or night, with an animated alert banner at the top and a free Tomorrow.io key guide.",
+                "மேலே உள்ள மேகப் பொத்தானை (அல்லது முகப்பு அட்டையை) தட்டவும். போன் GPS இயக்கத்தில் இருந்தால் " +
+                    "புதுப்பிப்பின்போது தானாக இயங்கி பயண வழியைப் பின்தொடரும்; GPS அணைந்தால் சேமித்த PIN/ஊர் (உதா: 622301) " +
+                    "பயன்படும். சாதாரண மழை இரவு (10 PM – 7 AM) ஒலிக்காது; மிகக் கனமழை & புயல் 24×7 ஒலிக்கும். " +
+                    "மேலே சிறிய அனிமேஷன் பட்டையும் இலவச Tomorrow.io விசை வழிகாட்டியும் உள்ளன.",
             ),
             topic(
                 "Updating Oor Arivippu",

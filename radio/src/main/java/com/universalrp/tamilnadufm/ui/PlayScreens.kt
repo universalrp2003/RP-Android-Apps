@@ -883,6 +883,42 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
             }
         }
 
+        // v1.17 — Rain & cyclone voice alert card right above App Updates in More tab
+        item {
+            PanelCard(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(aboutContext) }
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        androidx.compose.material.icons.Icons.Filled.Cloud,
+                        contentDescription = null,
+                        tint = Saffron,
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "Rain & cyclone voice alert",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            "Speaks ~30 min before rain, ducks radio volume smoothly, 24x7 cyclone priority",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                    }
+                }
+            }
+        }
+
         // v1.14 — the update block used to sit bare between two cards, which left a grey,
         // unstyled wall and a visible empty band on the More tab (the owner's screenshot).
         // It is a card now, like every other section, with its explanation folded away.

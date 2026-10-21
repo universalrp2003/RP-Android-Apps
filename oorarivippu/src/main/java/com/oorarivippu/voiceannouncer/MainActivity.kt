@@ -117,6 +117,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         AppPreferences.init(this)
+        OorWeatherMonitor.initialize(this)
         refreshTtsVoiceCatalog()
         AppLanguageState.initialize(this)
         AppLanguageState.set(this, AppLanguage.from(AppPreferences.state.value.appLanguage))
@@ -412,6 +413,17 @@ fun OorArivippuScreen(
                             overflow = TextOverflow.Ellipsis,
                         )
                         IconButton(
+                            onClick = { OorWeatherMonitor.openDialog(context) },
+                            modifier = Modifier.size(34.dp),
+                        ) {
+                            Icon(
+                                imageVector = androidx.compose.material.icons.Icons.Default.Cloud,
+                                contentDescription = if (state.appLanguage == "en") "Rain & cyclone voice alert" else "மழை & புயல் குரல் எச்சரிக்கை",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
+                        IconButton(
                             onClick = { showGuide = true },
                             modifier = Modifier.size(34.dp),
                         ) {
@@ -436,6 +448,83 @@ fun OorArivippuScreen(
                         toggleColor = Color.White
                     )
                 }
+            }
+
+            // Floating mini rain / storm / spinning cyclone strip (hidden when sky is calm)
+            val oorWeather by OorWeatherMonitor.state.collectAsState()
+            val showOorWeatherDialog by OorWeatherMonitor.showDialog.collectAsState()
+            val oorIsTamil = state.appLanguage != "en"
+            androidx.compose.runtime.LaunchedEffect(state.isGpsEnabled) {
+                OorWeatherMonitor.refreshState(context)
+            }
+            com.universalrp.weather.WeatherMiniAlertBanner(
+                severity = oorWeather.bannerSeverity,
+                placeName = oorWeather.activePlaceName.ifBlank { oorWeather.savedPlaceName },
+                minutesUntilRain = oorWeather.minutesUntilRain ?: 30,
+                tamil = oorIsTamil,
+                isPreview = oorWeather.previewSeverity != null,
+                onClick = { OorWeatherMonitor.openDialog(context) },
+                onDismissPreview = { OorWeatherMonitor.dismissPreviewAnimation() },
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            // Quick Rain & Cyclone Voice Alert card on home screen
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { OorWeatherMonitor.openDialog(context) }
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Cloud,
+                        contentDescription = null,
+                        tint = Color(0xFF0F766E),
+                        modifier = Modifier.size(24.dp),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        val cardTitle = if (oorIsTamil) "மழை & புயல் குரல் எச்சரிக்கை" else "Rain & cyclone voice alert"
+                        val cardSub = if (oorIsTamil) {
+                            "~30 நிமிட மழை முன்னறிவிப்பு • GPS / PIN (622301) • 24×7 புயல் பாதுகாப்பு"
+                        } else {
+                            "~30-min rain alert • Auto GPS or PIN (622301) • 24×7 cyclone warning"
+                        }
+                        Text(text = cardTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF0F172A))
+                        Text(text = cardSub, fontSize = 12.sp, color = Color(0xFF475569))
+                    }
+                    Switch(
+                        checked = oorWeather.enabled,
+                        onCheckedChange = { OorWeatherMonitor.setEnabled(context, it) },
+                    )
+                }
+            }
+
+            if (showOorWeatherDialog) {
+                com.universalrp.weather.SharedWeatherControlDialog(
+                    state = oorWeather,
+                    tamil = oorIsTamil,
+                    allowGps = true,
+                    accentColor = Color(0xFF0F766E),
+                    ducksMusicNote = false,
+                    onDismiss = { OorWeatherMonitor.closeDialog() },
+                    onSetEnabled = { OorWeatherMonitor.setEnabled(context, it) },
+                    onCheckNow = { OorWeatherMonitor.checkNow(context, manual = true) },
+                    onTestVoice = { OorWeatherMonitor.testVoice(context) },
+                    onCyclePreviewAnimation = { OorWeatherMonitor.cyclePreviewAnimation() },
+                    onSearchPlaces = { OorWeatherMonitor.searchPlaces(context, it) },
+                    onSelectPlace = { OorWeatherMonitor.selectPlace(context, it) },
+                    onClearPlace = { OorWeatherMonitor.clearPlace(context) },
+                    onSaveTomorrowKey = { OorWeatherMonitor.saveTomorrowKey(context, it) },
+                    onReadGuideAloud = { OorWeatherMonitor.readGuideAloud(context, it) },
+                    onStopVoice = { OorWeatherMonitor.stopVoice() },
+                )
             }
 
             if (state.isInternetAvailable == false) {
@@ -1303,11 +1392,11 @@ fun OorArivippuScreen(
                     Divider(color = Color(0xFFE2E8F0))
                     Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                     val releaseLinks = listOf(
-                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.55",
-                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.16",
+                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.58",
+                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.17",
                         ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
                         ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
-                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.2",
+                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.3",
                         ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.2"
                     )
                     releaseLinks.forEach { (label, url) ->

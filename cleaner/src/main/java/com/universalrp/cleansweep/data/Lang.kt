@@ -1549,6 +1549,7 @@ object Lang {
         "Tomorrow.io API key" to "Tomorrow.io API விசை",
         "Save key" to "விசையைச் சேமி",
         "Remove key" to "விசையை நீக்கு",
+        "Preview animation" to "அனிமேஷன் முன்னோட்டம்",
     )
 }
 

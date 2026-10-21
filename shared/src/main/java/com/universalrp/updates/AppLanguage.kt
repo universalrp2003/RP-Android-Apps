@@ -668,5 +668,7 @@ object AppStrings {
         "PulseEQ — GitHub release" to "PulseEQ — GitHub வெளியீடு",
         "RP VOCAL REMOVER STUDIO — GitHub release" to "RP VOCAL REMOVER STUDIO — GitHub வெளியீடு",
         "universalrp2003@gmail.com" to "universalrp2003@gmail.com",
+        "Rain & cyclone voice alert" to "மழை & புயல் குரல் எச்சரிக்கை",
+        "Speaks ~30 min before rain, ducks radio volume smoothly, 24x7 cyclone priority" to "மழைக்கு ~30 நிமிடம் முன் வானொலி ஒலியைக் குறைத்துத் தெளிவாக அறிவிக்கும் • 24x7 புயல் எச்சரிக்கை",
     )
 }

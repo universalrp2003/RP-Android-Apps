@@ -23,11 +23,11 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.55",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.16",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.58",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.17",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.2",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.3",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.2",
 }
 
@@ -260,11 +260,11 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "live-guard"', 'version = "2.57"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.16"',
+            'tagPrefix = "live-guard"', 'version = "2.58"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.17"',
             'tagPrefix = "pulseeq"', 'version = "1.8"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.14"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.2"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.3"',
             'tagPrefix = "secret-message"', 'version = "1.1.2"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]

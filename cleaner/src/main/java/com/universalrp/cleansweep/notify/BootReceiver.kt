@@ -81,7 +81,16 @@ class BootReceiver : BroadcastReceiver() {
             runCatching { com.universalrp.cleansweep.notify.RadioWatchService.start(app) }
         }
 
-        // 5. v2.57: re-arm the periodic 30-min rain & storm watch if enabled by the owner.
-        runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(app) }
+        // 5. v2.57–v2.58: auto-enable on update/boot when GPS is ON (unless explicitly turned off),
+        //    then arm the periodic 30-min rain & cyclone watch.
+        val autoFlippedOn = runCatching {
+            com.universalrp.cleansweep.data.WeatherAlertStore.ensureAutoEnabledOnGpsUpdate(app)
+        }.getOrDefault(false)
+        runCatching {
+            com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(app)
+            if (autoFlippedOn) {
+                com.universalrp.cleansweep.work.WeatherWatchWorker.runImmediateCheck(app)
+            }
+        }
     }
 }

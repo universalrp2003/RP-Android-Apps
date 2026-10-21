@@ -3154,6 +3154,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun refreshWeatherUiState() {
         viewModelScope.launch(Dispatchers.IO) {
+            val newlyAutoEnabled = WeatherAlertStore.ensureAutoEnabledOnGpsUpdate(ctx)
+            if (newlyAutoEnabled) {
+                runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(ctx) }
+                runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.runImmediateCheck(ctx) }
+            }
             val tamil = Lang.languageIn(ctx) == AppLang.TA
             val saved = WeatherAlertStore.savedPlace(ctx)
             val resolved = com.universalrp.weather.WeatherPlaceResolver.resolveActiveLocation(
@@ -3173,6 +3178,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 resolvedName = resolved.name,
                 resolvedDetails = resolved.details,
             ).copy(
+                previewSeverity = current.previewSeverity,
                 checkingNow = current.checkingNow,
                 searchingPlaces = current.searchingPlaces,
                 searchResults = current.searchResults,
@@ -3180,6 +3186,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
             mutate { it.copy(weather = fresh, voiceOn = Announcer.enabled(ctx)) }
         }
+    }
+
+    fun cycleWeatherPreviewAnimation() {
+        val next = when (_state.value.weather.previewSeverity) {
+            null -> com.universalrp.weather.WeatherSeverity.RAIN_SOON
+            com.universalrp.weather.WeatherSeverity.RAIN_SOON -> com.universalrp.weather.WeatherSeverity.VERY_HEAVY_RAIN
+            com.universalrp.weather.WeatherSeverity.VERY_HEAVY_RAIN -> com.universalrp.weather.WeatherSeverity.CYCLONE_SEVERE
+            else -> null
+        }
+        mutate { it.copy(weather = it.weather.copy(previewSeverity = next)) }
+    }
+
+    fun dismissWeatherPreviewAnimation() {
+        mutate { it.copy(weather = it.weather.copy(previewSeverity = null)) }
     }
 
     fun setWeatherAlertEnabled(on: Boolean) {

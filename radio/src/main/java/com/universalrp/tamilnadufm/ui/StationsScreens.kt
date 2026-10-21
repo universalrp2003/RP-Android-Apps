@@ -137,6 +137,18 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
                     )
                 }
+                val radioHeaderContext = androidx.compose.ui.platform.LocalContext.current
+                IconButton(
+                    onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(radioHeaderContext) },
+                    modifier = Modifier.size(34.dp),
+                ) {
+                    Icon(
+                        androidx.compose.material.icons.Icons.Filled.Cloud,
+                        contentDescription = AppStrings.translate("Rain & cyclone voice alert"),
+                        tint = Saffron,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
                 IconButton(onClick = { showGuide = true }, modifier = Modifier.size(34.dp)) {
                     Icon(
                         Icons.Filled.HelpOutline,

@@ -296,7 +296,24 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                             Spacer(Modifier.width(4.dp))
                             Text(tr("Test voice"))
                         }
+
+                        OutlinedButton(onClick = { vm.cycleWeatherPreviewAnimation() }) {
+                            Icon(Icons.Outlined.Cloud, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text(tr("Preview animation"))
+                        }
                     }
+
+                    val screenBannerSeverity = w.previewSeverity ?: w.severity
+                    com.universalrp.weather.WeatherMiniAlertBanner(
+                        severity = screenBannerSeverity,
+                        placeName = w.activePlaceName.ifBlank { w.savedPlaceName },
+                        minutesUntilRain = w.minutesUntilRain ?: 28,
+                        tamil = com.universalrp.cleansweep.data.Lang.isTamil,
+                        isPreview = w.previewSeverity != null,
+                        onClick = {},
+                        onDismissPreview = { vm.dismissWeatherPreviewAnimation() },
+                    )
 
                     if (w.lastCheckedAtMs > 0L) {
                         HorizontalDivider(color = OutlineC.copy(alpha = 0.4f))
@@ -609,6 +626,17 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                     }
 
                     if (tomorrowExpanded) {
+                        val guideContext = androidx.compose.ui.platform.LocalContext.current
+                        com.universalrp.weather.TomorrowApiKeyGuideLinks(
+                            tamil = com.universalrp.cleansweep.data.Lang.isTamil,
+                            accentColor = AccentCyan,
+                            onReadGuideAloud = { script ->
+                                com.universalrp.cleansweep.voice.Announcer.speakNow(guideContext, script)
+                            },
+                            onStopVoice = {
+                                com.universalrp.cleansweep.voice.Announcer.stop()
+                            },
+                        )
                         OutlinedTextField(
                             value = apiKeyDraft,
                             onValueChange = { apiKeyDraft = it },

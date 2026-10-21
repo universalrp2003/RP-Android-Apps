@@ -86,6 +86,7 @@ class PlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
         AudioFx.load(this)
+        com.universalrp.tamilnadufm.RadioWeatherMonitor.attachBackgroundHost(this)
 
         val loadControl = DefaultLoadControl.Builder()
             // Radio-friendly buffering: quick to start, generous against dropouts.
@@ -282,6 +283,7 @@ class PlaybackService : MediaSessionService() {
     }
 
     override fun onDestroy() {
+        com.universalrp.tamilnadufm.RadioWeatherMonitor.detachBackgroundHost()
         handler.removeCallbacksAndMessages(null)
         AudioFx.release()
         PlayerBus.detach()
