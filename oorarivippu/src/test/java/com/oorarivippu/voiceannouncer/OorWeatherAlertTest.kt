@@ -19,8 +19,8 @@ class OorWeatherAlertTest {
         assertTrue(WeatherSeverity.VERY_HEAVY_RAIN.bypassQuietHours)
         assertTrue(WeatherSeverity.CYCLONE_SEVERE.bypassQuietHours)
         val (en, ta) = WeatherAlertPolicy.formatSpeech(WeatherSeverity.CYCLONE_SEVERE, "Alangudi", 10)
-        assertTrue(en.contains("Urgent weather warning"))
-        assertTrue(ta.contains("அவசர வானிலை எச்சரிக்கை"))
+        assertTrue(en.contains("Urgent storm warning"))
+        assertTrue(ta.contains("அவசர புயல் எச்சரிக்கை"))
         assertTrue(SharedWeatherRuntime.TOMORROW_KEYS_URL.startsWith("https://"))
     }
 }
