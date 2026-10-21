@@ -26,4 +26,4 @@ Following real-world physical-device verification of **Ramesh Radio 1.17** in Al
 
 ## Verification Status
 
-- The exact APK was **not installed on a phone before publication** (preceded by owner device screenshots of **Ramesh Radio 1.17** on 21 October 2026). Automated shared bilingual catalog checks, unit tests, merged manifest permission checks (`0` added permissions, `0` Location permissions), release APK signing (`Ramesh-Radio-v1.18.apk`), and SHA-256 verification executed in GitHub Actions CI.
+- The exact APK was **not installed on a phone before publication** (preceded by owner device screenshots of **Ramesh Radio 1.17** on 21 October 2026). Published by Build APK [run 39606864576](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39606864576) from commit `0d87ea2` (`Ramesh-Radio-v1.18.apk`, `14,641,505` bytes, GitHub SHA-256 `8dc0dcca9e19da1943af39119c05511c49b97ce58c98e30b927849c0f288362f`). Automated shared bilingual catalog checks, unit tests, merged manifest permission checks (`0` added permissions, `0` Location permissions), release APK signing, and SHA-256 verification executed in GitHub Actions CI.

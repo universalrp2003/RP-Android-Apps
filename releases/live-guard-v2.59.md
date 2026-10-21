@@ -30,6 +30,6 @@ Following real-world physical-device verification of **Live Guard 2.58**, **Rame
 
 ## Verification and device testing
 
-The exact APK was **not installed on a phone before publication** (the immediately preceding **Live Guard 2.58**, **Ramesh Radio 1.17**, and **Oor Arivippu 1.1.3** builds were tested on physical devices by the owner on 21 October 2026). Build, unit/regression (47 suites / 417 tests), localization, manifest permission delta (`0` added permissions), APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
+The exact APK was **not installed on a phone before publication** (the immediately preceding **Live Guard 2.58**, **Ramesh Radio 1.17**, and **Oor Arivippu 1.1.3** builds were tested on physical devices by the owner on 21 October 2026). Published by Build APK [run 39606864576](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39606864576) from commit `0d87ea2` (`CleanSweep-v2.59.apk`, `13,953,820` bytes, GitHub SHA-256 `3668a0b5f1e7dd464a851f3d3224ca87157bbba7c4def38a90ea2935b8ef5b97`). Build, unit/regression (47 suites / 417 tests), localization, manifest permission delta (`0` added permissions), APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
 
 Version 2.59 / code 64.
