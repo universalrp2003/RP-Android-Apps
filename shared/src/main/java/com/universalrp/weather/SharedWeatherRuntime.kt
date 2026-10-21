@@ -392,13 +392,21 @@ object SharedWeatherRuntime {
         }
     }
 
-    @android.annotation.SuppressLint("MissingPermission")
+    @android.annotation.SuppressLint("MissingPermission", "NotificationPermission")
     fun postWeatherNotification(
         context: Context,
         smallIconRes: Int,
         decision: WeatherAlertDecision,
         tamil: Boolean,
     ) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU &&
+            androidx.core.content.ContextCompat.checkSelfPermission(
+                context,
+                android.Manifest.permission.POST_NOTIFICATIONS,
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
         val severe = decision.bypassQuietHours
         val channelId = if (severe) "rp_weather_severe" else "rp_weather_rain"
