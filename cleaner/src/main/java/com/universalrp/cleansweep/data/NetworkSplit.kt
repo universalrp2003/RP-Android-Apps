@@ -116,6 +116,9 @@ object NetworkSplit {
 
     fun setAnnounce(context: Context, on: Boolean) {
         prefs(context).edit().putBoolean(KEY_ANNOUNCE, on).apply()
+        if (on && !Announcer.enabled(context)) {
+            Announcer.setEnabled(context, true)
+        }
         mirror(context)
     }
 
@@ -129,8 +132,10 @@ object NetworkSplit {
     /** The radio split settings are read by the voice path too; keep the plain files in step. */
     private fun mirror(context: Context) {
         val p = prefs(context)
+        val announce = p.getBoolean(KEY_ANNOUNCE, false)
         context.getSharedPreferences(Announcer.PREFS, Context.MODE_PRIVATE).edit()
-            .putBoolean(KEY_ANNOUNCE, p.getBoolean(KEY_ANNOUNCE, false))
+            .putBoolean(KEY_ANNOUNCE, announce)
+            .putBoolean(Announcer.KEY_RADIO_CHANGE, announce)
             .putFloat(KEY_VOLUME_4G5G, p.getFloat(KEY_VOLUME_4G5G, 1f))
             .apply()
     }

@@ -108,6 +108,65 @@ data class IpInfo(
     val error: String? = null,
 )
 
+/**
+ * Pure sanitation for modem cell-identity and signal fields.
+ *
+ * Android returns `CellInfo.UNAVAILABLE` (`Int.MAX_VALUE`, `2147483647`) and
+ * `CellInfo.UNAVAILABLE_LONG` (`Long.MAX_VALUE`, `9223372036854775807`) whenever a carrier,
+ * modem or missing SIB broadcast hides a cell ID, PCI, TAC/LAC or neighbour dBm reading.
+ * Filtering those sentinels keeps hidden fields genuinely `null` so the UI shows them as
+ * hidden instead of printing `2147483647` or sorting an unknown signal above `-104 dBm`.
+ */
+object CellTowerPolicy {
+    const val UNAVAILABLE_INT = Int.MAX_VALUE
+    const val UNAVAILABLE_LONG = Long.MAX_VALUE
+
+    fun validInt(value: Int?): Int? =
+        value?.takeIf { it >= 0 && it != UNAVAILABLE_INT }
+
+    fun validIntId(value: Int?): String? = validInt(value)?.toString()
+
+    fun validLongId(value: Long?): String? =
+        value?.takeIf {
+            it >= 0L && it != UNAVAILABLE_INT.toLong() && it != UNAVAILABLE_LONG
+        }?.toString()
+
+    fun validTextId(raw: String?): String? =
+        raw?.trim()?.takeIf { it.isNotEmpty() }?.toLongOrNull()?.let(::validLongId)
+
+    /** Cellular RSRP/RSCP/RSSI/SS-RSRP readings in dBm are strictly negative physical values. */
+    fun validDbm(value: Int?): Int? =
+        value?.takeIf { it in -160..-1 }
+
+    fun sortTowers(towers: Sequence<CellTower>, maxCount: Int): List<CellTower> =
+        towers
+            .sortedWith(
+                compareByDescending<CellTower> { it.registered }
+                    .thenByDescending { it.dbm ?: Int.MIN_VALUE }
+            )
+            .take(maxCount)
+            .toList()
+}
+
+@androidx.annotation.RequiresApi(Build.VERSION_CODES.Q)
+private object NrCellReader {
+    fun read(cell: CellInfoNr): CellTower {
+        val identity = cell.cellIdentity as? android.telephony.CellIdentityNr
+        val nci = try { CellTowerPolicy.validLongId(identity?.nci) } catch (_: Exception) { null }
+        val pci = try { CellTowerPolicy.validInt(identity?.pci) } catch (_: Exception) { null }
+        val tac = try { CellTowerPolicy.validInt(identity?.tac) } catch (_: Exception) { null }
+        val dbm = try { CellTowerPolicy.validDbm(cell.cellSignalStrength.dbm) } catch (_: Exception) { null }
+        return CellTower(
+            technology = "5G",
+            id = nci,
+            pci = pci,
+            tac = tac,
+            dbm = dbm,
+            registered = cell.isRegistered,
+        )
+    }
+}
+
 object MobileNet {
 
     /** A modem reports a handful of neighbours; a list longer than this is not "nearby" any more. */
@@ -287,14 +346,10 @@ object MobileNet {
                 // The modem usually reports its serving cell plus a handful of neighbours.
                 // The one in use comes first, then the strongest, so "nearby" reads sensibly.
                 towers.addAll(
-                    all.asSequence()
-                        .map { cellTower(it) }
-                        .sortedWith(
-                            compareByDescending<CellTower> { it.registered }
-                                .thenByDescending { it.dbm ?: Int.MIN_VALUE }
-                        )
-                        .take(MAX_TOWERS)
-                        .toList()
+                    CellTowerPolicy.sortTowers(
+                        all.asSequence().map { cellTower(it) },
+                        MAX_TOWERS,
+                    )
                 )
                 if (all.isEmpty()) {
                     notes.add(
@@ -355,66 +410,34 @@ object MobileNet {
      * check — that keeps the class from ever being loaded on an older phone.
      */
     private fun cellTower(cell: CellInfo): CellTower {
-        if (Build.VERSION.SDK_INT >= 29 && cell is CellInfoNr) return nrTower(cell)
+        if (Build.VERSION.SDK_INT >= 29 && cell is CellInfoNr) return NrCellReader.read(cell)
         return when (cell) {
         is CellInfoLte -> CellTower(
             technology = "4G",
-            id = try { cell.cellIdentity.ci.toString() } catch (e: Exception) { null },
-            pci = try { cell.cellIdentity.pci } catch (e: Exception) { null },
-            tac = try { cell.cellIdentity.tac } catch (e: Exception) { null },
-            dbm = try { cell.cellSignalStrength.dbm } catch (e: Exception) { null },
+            id = try { CellTowerPolicy.validIntId(cell.cellIdentity.ci) } catch (e: Exception) { null },
+            pci = try { CellTowerPolicy.validInt(cell.cellIdentity.pci) } catch (e: Exception) { null },
+            tac = try { CellTowerPolicy.validInt(cell.cellIdentity.tac) } catch (e: Exception) { null },
+            dbm = try { CellTowerPolicy.validDbm(cell.cellSignalStrength.dbm) } catch (e: Exception) { null },
             registered = cell.isRegistered,
         )
         is CellInfoWcdma -> CellTower(
             technology = "3G",
-            id = try { cell.cellIdentity.cid.toString() } catch (e: Exception) { null },
-            pci = try { cell.cellIdentity.psc } catch (e: Exception) { null },
-            tac = try { cell.cellIdentity.lac } catch (e: Exception) { null },
-            dbm = try { cell.cellSignalStrength.dbm } catch (e: Exception) { null },
+            id = try { CellTowerPolicy.validIntId(cell.cellIdentity.cid) } catch (e: Exception) { null },
+            pci = try { CellTowerPolicy.validInt(cell.cellIdentity.psc) } catch (e: Exception) { null },
+            tac = try { CellTowerPolicy.validInt(cell.cellIdentity.lac) } catch (e: Exception) { null },
+            dbm = try { CellTowerPolicy.validDbm(cell.cellSignalStrength.dbm) } catch (e: Exception) { null },
             registered = cell.isRegistered,
         )
         is CellInfoGsm -> CellTower(
             technology = "2G",
-            id = try { cell.cellIdentity.cid.toString() } catch (e: Exception) { null },
+            id = try { CellTowerPolicy.validIntId(cell.cellIdentity.cid) } catch (e: Exception) { null },
             pci = null,
-            tac = try { cell.cellIdentity.lac } catch (e: Exception) { null },
-            dbm = try { cell.cellSignalStrength.dbm } catch (e: Exception) { null },
+            tac = try { CellTowerPolicy.validInt(cell.cellIdentity.lac) } catch (e: Exception) { null },
+            dbm = try { CellTowerPolicy.validDbm(cell.cellSignalStrength.dbm) } catch (e: Exception) { null },
             registered = cell.isRegistered,
         )
         else -> CellTower("Cell", null, null, null, null, cell.isRegistered)
         }
-    }
-
-    /**
-     * 5G cell identity. The fields are read out of the identity's own text so that no
-     * Android-10-only property has to be referenced — a phone on Android 8/9 must never even
-     * touch the CellIdentityNr class.
-     */
-    private fun nrTower(cell: CellInfoNr): CellTower {
-        val text = try {
-            cell.cellIdentity.toString()
-        } catch (e: Exception) {
-            ""
-        }
-        fun field(name: String): String? {
-            val raw = text.substringAfter("$name = ", "").substringBefore("]").substringBefore(",").trim()
-            return if (raw.isNotBlank() && raw != text) raw else null
-        }
-        val nci = field("nci")
-        val pci = field("pci")?.toIntOrNull()
-        val tac = field("tac")?.toIntOrNull()
-        return CellTower(
-            technology = "5G",
-            id = nci,
-            pci = pci,
-            tac = tac,
-            dbm = try {
-                (cell.cellSignalStrength as android.telephony.CellSignalStrengthNr).dbm
-            } catch (e: Exception) {
-                null
-            },
-            registered = cell.isRegistered,
-        )
     }
 
     /** 5G / 4G / 3G / 2G in plain words. */

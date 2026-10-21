@@ -263,6 +263,7 @@ data class UiState(
     val voiceBatteryHealth: Boolean = true,
     /** Off by default: a phone that hops between Wi-Fi and data must not narrate it. */
     val voiceNetworkChange: Boolean = false,
+    val voiceRadioChange: Boolean = false,
     val voiceNewDevice: Boolean = true,
     val voiceUnplugStart: Int = Announcer.DEFAULT_UNPLUG_START,
     /** MACs seen on the last network scan, so a genuinely new device can be announced. */
@@ -493,6 +494,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // only when voice, the daily check or the persistent monitor needs it.
         loadVoiceSettings()
         syncHealthWatchSchedule()
+        if (com.universalrp.cleansweep.notify.RadioWatchService.needed(ctx)) {
+            runCatching { com.universalrp.cleansweep.notify.RadioWatchService.start(ctx) }
+        }
         val savedVerified = prefs.getStringSet("verified_wifi_macs", emptySet()) ?: emptySet()
         val autoWifiScan = prefs.getBoolean("auto_wifi_scan_open", true)
         val bgWifiScan = prefs.getBoolean(com.universalrp.cleansweep.work.WifiScanWorker.KEY_BG_WIFI_SCAN, false)
@@ -807,6 +811,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             navStack.addLast(current)
             while (navStack.size > 12) navStack.removeFirst()
         }
+        if (screen == Screen.VOICE) loadVoiceSettings()
         mutate { it.copy(screen = screen) }
     }
 
@@ -1463,10 +1468,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // v2.7: muting the answers is also the Stop button — anything being read out halts
         // at once instead of finishing the sentence.
         if (event == Announcer.Event.ANSWER && !on) Announcer.stop()
+        if (event == Announcer.Event.RADIO_CHANGE) {
+            if (com.universalrp.cleansweep.notify.RadioWatchService.needed(ctx)) {
+                runCatching { com.universalrp.cleansweep.notify.RadioWatchService.start(ctx) }
+            } else {
+                runCatching { com.universalrp.cleansweep.notify.RadioWatchService.stop(ctx) }
+            }
+        }
         // Keep the shared hourly worker alive only while at least one feature needs it.
         syncHealthWatchSchedule()
         mutate {
             it.copy(
+                voiceOn = Announcer.enabled(ctx),
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
                 voiceBatteryFull = Announcer.allows(ctx, Announcer.Event.BATTERY_FULL),
                 voiceOverheat = Announcer.allows(ctx, Announcer.Event.OVERHEAT),
@@ -1478,6 +1491,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 voiceChargerIdle = Announcer.allows(ctx, Announcer.Event.CHARGER_IDLE),
                 voiceBatteryHealth = Announcer.allows(ctx, Announcer.Event.BATTERY_HEALTH),
                 voiceNetworkChange = Announcer.allows(ctx, Announcer.Event.NETWORK_CHANGE),
+                voiceRadioChange = Announcer.allows(ctx, Announcer.Event.RADIO_CHANGE),
                 voiceNewDevice = Announcer.allows(ctx, Announcer.Event.NEW_DEVICE),
             )
         }
@@ -1549,6 +1563,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 voiceChargerIdle = Announcer.allows(ctx, Announcer.Event.CHARGER_IDLE),
                 voiceBatteryHealth = Announcer.allows(ctx, Announcer.Event.BATTERY_HEALTH),
                 voiceNetworkChange = Announcer.allows(ctx, Announcer.Event.NETWORK_CHANGE),
+                voiceRadioChange = Announcer.allows(ctx, Announcer.Event.RADIO_CHANGE),
                 voiceNewDevice = Announcer.allows(ctx, Announcer.Event.NEW_DEVICE),
                 voiceUnplugStart = Announcer.unplugStartHour(ctx),
                 dailyScanOn = Announcer.dailyScanOn(ctx),

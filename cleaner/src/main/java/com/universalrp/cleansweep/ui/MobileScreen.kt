@@ -458,7 +458,7 @@ private fun TowerCard(towers: List<CellTower>) {
                             tower.id?.let { append("cell $it") }
                             tower.pci?.let { append(if (isNotEmpty()) " • " else "").append("PCI $it") }
                             tower.tac?.let { append(if (isNotEmpty()) " • " else "").append("TAC $it") }
-                            if (isEmpty()) append("details hidden by Android")
+                            if (isEmpty()) append(tr("details hidden by Android"))
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,

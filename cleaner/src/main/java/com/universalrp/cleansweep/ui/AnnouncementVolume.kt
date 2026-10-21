@@ -80,6 +80,9 @@ fun AnnouncementVolumePanel(
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = {
+                if (!Announcer.enabled(context)) {
+                    Announcer.setEnabled(context, true)
+                }
                 Announcer.setVoiceVolume(context, volume)
                 Announcer.speak(
                     context,

@@ -260,7 +260,7 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "live-guard"', 'version = "2.55"',
+            'tagPrefix = "live-guard"', 'version = "2.56"',
             'tagPrefix = "ramesh-radio"', 'version = "1.16"',
             'tagPrefix = "pulseeq"', 'version = "1.8"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.14"',

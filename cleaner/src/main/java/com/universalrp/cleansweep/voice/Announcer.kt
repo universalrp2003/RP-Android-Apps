@@ -208,6 +208,10 @@ object Announcer {
 
     /** Per-event switch. Everything defaults to on; quiet hours do the rest. */
     fun allows(context: Context, event: Event): Boolean {
+        if (event == Event.RADIO_CHANGE) {
+            return com.universalrp.cleansweep.data.NetworkSplit.announceEnabled(context) ||
+                prefs(context).getBoolean(KEY_RADIO_CHANGE, false)
+        }
         val key = event.key ?: return true
         val default = when (event) {
             // A phone that hops between radios must not narrate it until asked.
@@ -220,6 +224,16 @@ object Announcer {
     fun setAllows(context: Context, event: Event, on: Boolean) {
         val key = event.key ?: return
         prefs(context).edit().putBoolean(key, on).apply()
+        if (event == Event.RADIO_CHANGE) {
+            context.applicationContext
+                .getSharedPreferences(com.universalrp.cleansweep.data.NetworkSplit.PREFS, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(com.universalrp.cleansweep.data.NetworkSplit.KEY_ANNOUNCE, on)
+                .apply()
+            if (on && !enabled(context)) {
+                setEnabled(context, true)
+            }
+        }
     }
 
     fun quietStart(context: Context): Int =

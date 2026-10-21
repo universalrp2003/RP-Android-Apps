@@ -374,6 +374,14 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     checked = state.voiceNetworkChange,
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.NETWORK_CHANGE, it) },
                 )
+                VoiceSwitch(
+                    title = tr("4G ⇄ 5G switches"),
+                    subtitle = tr("Announces observed 4G/5G changes on the active data SIM, at most once every 20 seconds."),
+                    icon = Icons.Outlined.SwapHoriz,
+                    tint = AccentCyan,
+                    checked = state.voiceRadioChange,
+                    onCheckedChange = { vm.setVoiceEvent(Announcer.Event.RADIO_CHANGE, it) },
+                )
 
                 VoiceSwitch(
                     title = tr("Read AI answers aloud"),

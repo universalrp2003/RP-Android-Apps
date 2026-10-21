@@ -1493,6 +1493,16 @@ object Lang {
         "Valid till (the date your operator shows)" to "இது வரை செல்லும் (உங்கள் ஆபரேட்டர் காட்டும் தேதி)",
         "Airtel, Jio and Vi all print this date on the plan page. Typing it here sets the day count for you." to "ஏர்டெல், ஜியோ, வி எல்லாம் திட்டப் பக்கத்தில் இந்தத் தேதியைக் காட்டும். இங்கே தட்டச்சு செய்தால் நாட்கள் தானாக அமையும்.",
         "%s of the measured data was used during the booster's days, so it is not counted against this pack." to "அளந்த தரவில் %s பூஸ்டரின் நாட்களில் பயன்படுத்தப்பட்டது; அது இந்தப் பேக்கில் கணக்கிடப்படவில்லை.",
+        "details hidden by Android" to "விவரங்களை Android மறைத்துள்ளது",
+        "4G / 5G split" to "4G / 5G பிரிப்பு",
+        "One combined counter" to "ஒரே கூட்டுக் கணக்கு",
+        "Count 4G and 5G separately" to "4G மற்றும் 5G தனித்தனியாகக் கணக்கிடு",
+        "Android keeps one mobile total; this splits each 3-second sample by the radio in use." to "Android மொத்த மொபைல் தரவை ஒன்றாகவே வைத்திருக்கும்; இது 3 விநாடி மாதிரியைப் பயன்படும் நெட்வொர்க் படி பிரிக்கும்.",
+        "Announce 4G ⇄ 5G changes" to "4G ⇄ 5G மாற்றத்தை அறிவி",
+        "Speaks once per change, at most every 20 seconds. Quiet hours still apply." to "ஒவ்வொரு மாற்றத்திற்கும் ஒருமுறை (குறைந்தது 20 விநாடி இடைவெளியில்) அறிவிக்கும். அமைதி நேரம் பொருந்தும்.",
+        "5G unlimited on this plan" to "இந்தத் திட்டத்தில் வரம்பற்ற 5G",
+        "4G ⇄ 5G switches" to "4G ⇄ 5G மாற்றங்கள்",
+        "Announces observed 4G/5G changes on the active data SIM, at most once every 20 seconds." to "தரவு SIM-இல் 4G/5G மாறும்போது குறைந்தது 20 விநாடி இடைவெளியில் குரலில் அறிவிக்கும்.",
     )
 }
 
