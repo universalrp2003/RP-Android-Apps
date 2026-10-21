@@ -30,7 +30,7 @@ Building directly on the physical-device verification of **Live Guard 2.56 & 2.5
 
 ## Verification and device testing
 
-The exact APK was **not installed on a phone before publication**. Build, unit/regression (47 suites / 416 tests), localization, manifest permission delta (`0` added permissions), APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
+The exact APK was **not installed on a phone before publication**. Published by Build APK [run 39595346489](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39595346489) from commit `84117c0` (`CleanSweep-v2.58.apk`, `13,950,028` bytes, GitHub SHA-256 `163c1dc1700f79679c4510d04d99da68265983a1b0540c8de7d1d023d09aeb02`). Build, unit/regression (47 suites / 416 tests), localization, manifest permission delta (`0` added permissions), APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
 
 Version 2.58 / code 63.
 

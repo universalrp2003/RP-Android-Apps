@@ -29,4 +29,4 @@
 
 ## Verification Status
 
-- Automated bilingual dictionary & About link checks, release unit tests, release Android Lint, stable signer verification (`9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`), and public GitHub Release SHA-256 verification executed in GitHub Actions CI.
+- The exact APK was **not installed on a phone before publication**. Published by `Oor Arivippu stable release` [run 39596940332](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39596940332) from commit `ae2d6bd` (`Oor-Arivippu-v1.1.3.apk`, `12,326,469` bytes, GitHub SHA-256 `583d5d8f239781586271cec5ba0074d8c58414827fc974245460bad7e379bb10`). Automated bilingual dictionary & About link checks, release unit tests, release Android Lint, stable signer verification (`9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`), and dual-repository public GitHub Release SHA-256 verification executed in GitHub Actions CI.

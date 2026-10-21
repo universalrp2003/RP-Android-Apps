@@ -31,4 +31,4 @@
 
 ## Verification Status
 
-- Automated shared bilingual catalog checks, unit tests, merged manifest permission checks (`0` added permissions), release APK signing (`Ramesh-Radio-v1.17.apk`), and SHA-256 verification executed in GitHub Actions CI.
+- The exact APK was **not installed on a phone before publication**. Published by Build APK [run 39595346489](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39595346489) from commit `84117c0` (`Ramesh-Radio-v1.17.apk`, `14,625,117` bytes, GitHub SHA-256 `50f888ccd23b2256e87c48df0097afa68c78c572eee89cb4986e5f0f7fd74859`). Automated shared bilingual catalog checks, unit tests, merged manifest permission checks (`0` added permissions, `0` Location permissions), release APK signing, and SHA-256 verification executed in GitHub Actions CI.
