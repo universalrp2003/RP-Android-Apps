@@ -38,6 +38,8 @@ internal object TamilText {
             "செயலிப் பூட்டு",
         "Ascending C6–E6–G6 arpeggio" to
             "ஏறும் C6–E6–G6 இசைத் தொடர்",
+        "Back" to
+            "பின்செல்",
         "Back to chat" to
             "திரும்பிச் செல்",
         "Back to settings" to

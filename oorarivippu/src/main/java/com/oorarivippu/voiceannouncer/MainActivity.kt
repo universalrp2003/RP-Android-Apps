@@ -38,6 +38,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.GpsFixed
 import androidx.compose.material.icons.filled.GpsOff
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PowerSettingsNew
@@ -55,6 +56,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -256,6 +258,8 @@ fun OorArivippuScreen(
     var destinationQuery by remember(state.destinationName) {
         mutableStateOf(state.destinationName)
     }
+    var appLanguageExpanded by rememberSaveable { mutableStateOf(false) }
+    var voiceSettingsExpanded by rememberSaveable { mutableStateOf(false) }
     var voiceChoicesExpanded by remember { mutableStateOf(false) }
     // Shared guide (owner request: every app carries the same Tamil+English guide).
     var showGuide by remember { mutableStateOf(false) }
@@ -402,8 +406,22 @@ fun OorArivippuScreen(
                             text = ui.appTitle,
                             color = Color.White,
                             fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                        IconButton(
+                            onClick = { showGuide = true },
+                            modifier = Modifier.size(34.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HelpOutline,
+                                contentDescription = if (state.appLanguage == "en") "Guide" else "வழிகாட்டி",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp),
+                            )
+                        }
                     }
                     Text(
                         text = ui.appSubtitle,
@@ -458,185 +476,261 @@ fun OorArivippuScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    LanguageSelectorRow(
+                    SettingsDisclosureRow(
                         icon = Icons.Default.Translate,
                         label = ui.appLanguageLabel,
-                        selectedLang = state.appLanguage,
-                        tamilLabel = ui.tamilName,
-                        englishLabel = ui.englishName,
-                        onSelect = {
-                            AppPreferences.setAppLanguage(it)
-                            AppLanguageState.set(context, AppLanguage.from(it))
-                            onRefreshVoiceCatalog()
-                        }
+                        summary = if (state.appLanguage == "en") ui.englishName else ui.tamilName,
+                        expanded = appLanguageExpanded,
+                        onClick = { appLanguageExpanded = !appLanguageExpanded },
                     )
-                    LanguageSelectorRow(
-                        icon = Icons.Default.VolumeUp,
-                        label = ui.voiceLanguageLabel,
-                        selectedLang = state.voiceLanguage,
-                        tamilLabel = ui.tamilName,
-                        englishLabel = ui.englishName,
-                        onSelect = { AppPreferences.setVoiceLanguage(it) }
-                    )
-                    val selectedVoiceName = state.selectedTtsVoiceNameFor(state.voiceLanguage)
-                    val voiceChoices = remember(
-                        state.availableTtsVoices,
-                        state.voiceLanguage,
-                        selectedVoiceName
-                    ) {
-                        TtsVoicePolicy.choicesForLanguage(
-                            voices = state.availableTtsVoices,
-                            languageCode = state.voiceLanguage,
-                            selectedVoiceName = selectedVoiceName
-                        )
-                    }
-                    val selectedVoice = state.availableTtsVoices.firstOrNull {
-                        it.languageCode == state.voiceLanguage && it.name == selectedVoiceName
-                    }
-                    val selectedVoiceButtonLabel = when {
-                        !state.isTtsVoiceCatalogLoaded && selectedVoiceName.isNotBlank() ->
-                            ui.voiceChoiceLoading
-                        selectedVoice == null && selectedVoiceName.isBlank() -> ui.voiceChoiceSystemDefault
-                        selectedVoice == null -> ui.voiceStatusSelectedUnavailable
-                        selectedVoice.requiresNetworkConnection ->
-                            "${selectedVoice.displayName} · ${ui.voiceChoiceOnline}"
-                        else -> "${selectedVoice.displayName} · ${ui.voiceChoiceOnDevice}"
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = ui.voiceChoiceLabel,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        )
-                        CollapsibleNote(
-                            text = ui.voiceChoiceSubtitle,
-                            showLabel = ui.detailsShow,
-                            hideLabel = ui.detailsHide
-                        )
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                            OutlinedButton(
-                                onClick = { voiceChoicesExpanded = true },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    text = selectedVoiceButtonLabel,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = voiceChoicesExpanded,
-                                onDismissRequest = { voiceChoicesExpanded = false },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text(ui.voiceChoiceSystemDefault) },
-                                    onClick = {
-                                        AppPreferences.setSelectedTtsVoice(state.voiceLanguage, "")
-                                        voiceChoicesExpanded = false
-                                        if (state.isTrackingEnabled) onSettingsChanged()
-                                    }
-                                )
-                                voiceChoices.forEach { voice ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Column {
-                                                Text(
-                                                    text = voice.displayName,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis
-                                                )
-                                                val qualityLabel = when (TtsVoicePolicy.qualityLevel(voice.quality)) {
-                                                    2 -> ui.voiceQualityVeryHigh
-                                                    1 -> ui.voiceQualityHigh
-                                                    else -> ui.voiceQualityStandard
-                                                }
-                                                val reach = if (voice.requiresNetworkConnection) {
-                                                    ui.voiceChoiceOnline
-                                                } else {
-                                                    ui.voiceChoiceOnDevice
-                                                }
-                                                Text(
-                                                    text = "$qualityLabel · $reach",
-                                                    color = Color(0xFF64748B),
-                                                    fontSize = 11.sp
-                                                )
-                                            }
-                                        },
-                                        onClick = {
-                                            AppPreferences.setSelectedTtsVoice(
-                                                state.voiceLanguage,
-                                                voice.name
-                                            )
-                                            voiceChoicesExpanded = false
-                                            if (state.isTrackingEnabled) onSettingsChanged()
-                                            // Play the chosen voice at once, so voices can be compared.
-                                            onTestVoice()
-                                        }
-                                    )
-                                }
-                            }
-                        }
+                    if (appLanguageExpanded) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            Text(
-                                text = ui.speechSpeedLabel,
-                                modifier = Modifier.weight(1f),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
+                            CompactChoice(
+                                label = ui.tamilName,
+                                selected = state.appLanguage == "ta",
+                                onClick = {
+                                    AppPreferences.setAppLanguage("ta")
+                                    AppLanguageState.set(context, AppLanguage.TAMIL)
+                                    onRefreshVoiceCatalog()
+                                    appLanguageExpanded = false
+                                },
                             )
-                            listOf(
-                                SpeechRatePolicy.SLOW_PERCENT to ui.speechSpeedSlow,
-                                SpeechRatePolicy.DEFAULT_PERCENT to ui.speechSpeedNormal,
-                                SpeechRatePolicy.FAST_PERCENT to ui.speechSpeedFast
-                            ).forEach { (percent, label) ->
-                                CompactChoice(
-                                    label = label,
-                                    selected = state.speechRatePercent == percent,
-                                    onClick = {
-                                        AppPreferences.setSpeechRatePercent(percent)
-                                        onTestVoice()
+                            CompactChoice(
+                                label = ui.englishName,
+                                selected = state.appLanguage == "en",
+                                onClick = {
+                                    AppPreferences.setAppLanguage("en")
+                                    AppLanguageState.set(context, AppLanguage.ENGLISH)
+                                    onRefreshVoiceCatalog()
+                                    appLanguageExpanded = false
+                                },
+                            )
+                        }
+                    }
+                    Divider(color = Color(0xFFE2E8F0))
+                    val voiceLanguageSummary = if (state.voiceLanguage == "en") ui.englishName else ui.tamilName
+                    val speedSummary = when (state.speechRatePercent) {
+                        SpeechRatePolicy.SLOW_PERCENT -> ui.speechSpeedSlow
+                        SpeechRatePolicy.FAST_PERCENT -> ui.speechSpeedFast
+                        else -> ui.speechSpeedNormal
+                    }
+                    SettingsDisclosureRow(
+                        icon = Icons.Default.VolumeUp,
+                        label = ui.voiceLanguageLabel,
+                        summary = "$voiceLanguageSummary · $speedSummary · ${state.speechVolumePercent}%",
+                        expanded = voiceSettingsExpanded,
+                        onClick = {
+                            voiceSettingsExpanded = !voiceSettingsExpanded
+                            voiceChoicesExpanded = false
+                        },
+                    )
+                    if (voiceSettingsExpanded) {
+                        LanguageSelectorRow(
+                            icon = Icons.Default.VolumeUp,
+                            label = ui.voiceLanguageLabel,
+                            selectedLang = state.voiceLanguage,
+                            tamilLabel = ui.tamilName,
+                            englishLabel = ui.englishName,
+                            onSelect = {
+                                AppPreferences.setVoiceLanguage(it)
+                                if (state.isTrackingEnabled) onSettingsChanged()
+                            }
+                        )
+                        val selectedVoiceName = state.selectedTtsVoiceNameFor(state.voiceLanguage)
+                        val voiceChoices = remember(
+                            state.availableTtsVoices,
+                            state.voiceLanguage,
+                            selectedVoiceName
+                        ) {
+                            TtsVoicePolicy.choicesForLanguage(
+                                voices = state.availableTtsVoices,
+                                languageCode = state.voiceLanguage,
+                                selectedVoiceName = selectedVoiceName
+                            )
+                        }
+                        val selectedVoice = state.availableTtsVoices.firstOrNull {
+                            it.languageCode == state.voiceLanguage && it.name == selectedVoiceName
+                        }
+                        val selectedVoiceButtonLabel = when {
+                            !state.isTtsVoiceCatalogLoaded && selectedVoiceName.isNotBlank() ->
+                                ui.voiceChoiceLoading
+                            selectedVoice == null && selectedVoiceName.isBlank() -> ui.voiceChoiceSystemDefault
+                            selectedVoice == null -> ui.voiceStatusSelectedUnavailable
+                            selectedVoice.requiresNetworkConnection ->
+                                "${selectedVoice.displayName} · ${ui.voiceChoiceOnline}"
+                            else -> "${selectedVoice.displayName} · ${ui.voiceChoiceOnDevice}"
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = ui.voiceChoiceLabel,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            CollapsibleNote(
+                                text = ui.voiceChoiceSubtitle,
+                                showLabel = ui.detailsShow,
+                                hideLabel = ui.detailsHide
+                            )
+                            Box(modifier = Modifier.fillMaxWidth()) {
+                                OutlinedButton(
+                                    onClick = { voiceChoicesExpanded = true },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = selectedVoiceButtonLabel,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                DropdownMenu(
+                                    expanded = voiceChoicesExpanded,
+                                    onDismissRequest = { voiceChoicesExpanded = false },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    DropdownMenuItem(
+                                        text = { Text(ui.voiceChoiceSystemDefault) },
+                                        onClick = {
+                                            AppPreferences.setSelectedTtsVoice(state.voiceLanguage, "")
+                                            voiceChoicesExpanded = false
+                                            if (state.isTrackingEnabled) onSettingsChanged()
+                                        }
+                                    )
+                                    voiceChoices.forEach { voice ->
+                                        DropdownMenuItem(
+                                            text = {
+                                                Column {
+                                                    Text(
+                                                        text = voice.displayName,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis
+                                                    )
+                                                    val qualityLabel = when (TtsVoicePolicy.qualityLevel(voice.quality)) {
+                                                        2 -> ui.voiceQualityVeryHigh
+                                                        1 -> ui.voiceQualityHigh
+                                                        else -> ui.voiceQualityStandard
+                                                    }
+                                                    val reach = if (voice.requiresNetworkConnection) {
+                                                        ui.voiceChoiceOnline
+                                                    } else {
+                                                        ui.voiceChoiceOnDevice
+                                                    }
+                                                    Text(
+                                                        text = "$qualityLabel · $reach",
+                                                        color = Color(0xFF64748B),
+                                                        fontSize = 11.sp
+                                                    )
+                                                }
+                                            },
+                                            onClick = {
+                                                AppPreferences.setSelectedTtsVoice(
+                                                    state.voiceLanguage,
+                                                    voice.name
+                                                )
+                                                voiceChoicesExpanded = false
+                                                if (state.isTrackingEnabled) onSettingsChanged()
+                                                // Play the chosen voice at once, so voices can be compared.
+                                                onTestVoice()
+                                            }
+                                        )
                                     }
+                                }
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text = ui.speechSpeedLabel,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                ) {
+                                    listOf(
+                                        SpeechRatePolicy.SLOW_PERCENT to ui.speechSpeedSlow,
+                                        SpeechRatePolicy.DEFAULT_PERCENT to ui.speechSpeedNormal,
+                                        SpeechRatePolicy.FAST_PERCENT to ui.speechSpeedFast,
+                                    ).forEach { (percent, label) ->
+                                        CompactChoice(
+                                            label = label,
+                                            selected = state.speechRatePercent == percent,
+                                            onClick = {
+                                                AppPreferences.setSpeechRatePercent(percent)
+                                                onTestVoice()
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        ui.speechVolumeLabel,
+                                        modifier = Modifier.weight(1f),
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                    Text(
+                                        "${state.speechVolumePercent}%",
+                                        color = Color(0xFF0F766E),
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
+                                Slider(
+                                    value = state.speechVolumePercent.toFloat(),
+                                    onValueChange = { AppPreferences.setSpeechVolumePercent(it.toInt()) },
+                                    onValueChangeFinished = onTestVoice,
+                                    valueRange = SpeechVolumePolicy.MIN_PERCENT.toFloat()..SpeechVolumePolicy.MAX_PERCENT.toFloat(),
+                                    steps = 19,
+                                )
+                                Text(
+                                    ui.speechVolumeNote,
+                                    color = Color(0xFF64748B),
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp,
+                                )
+                            }
+                            TextButton(onClick = { openTtsSettings(context) }) {
+                                Text(ui.moreVoicesButton, fontSize = 13.sp)
+                            }
+                            if (!state.isTtsVoiceCatalogLoaded) {
+                                Text(
+                                    text = ui.voiceChoiceLoading,
+                                    color = Color(0xFF64748B),
+                                    fontSize = 12.sp
+                                )
+                            } else if (voiceChoices.isEmpty()) {
+                                Text(
+                                    text = ui.voiceChoicesUnavailable,
+                                    color = Color(0xFFB45309),
+                                    fontSize = 12.sp,
+                                    lineHeight = 17.sp
                                 )
                             }
                         }
-                        TextButton(onClick = { openTtsSettings(context) }) {
-                            Text(ui.moreVoicesButton, fontSize = 13.sp)
+                        val (voiceStatusText, voiceStatusColor) = when (state.ttsVoiceStatus) {
+                            TtsVoiceStatus.UNKNOWN -> ui.voiceStatusNotChecked to Color(0xFF64748B)
+                            TtsVoiceStatus.AVAILABLE -> ui.voiceStatusAvailable to Color(0xFF15803D)
+                            TtsVoiceStatus.FALLBACK_LANGUAGE -> ui.voiceStatusFallback to Color(0xFFB45309)
+                            TtsVoiceStatus.SELECTED_VOICE_UNAVAILABLE ->
+                                ui.voiceStatusSelectedUnavailable to Color(0xFFB45309)
+                            TtsVoiceStatus.NETWORK_REQUIRED ->
+                                ui.voiceStatusNetworkRequired to Color(0xFFB45309)
+                            TtsVoiceStatus.UNAVAILABLE -> ui.voiceStatusUnavailable to Color(0xFFB91C1C)
                         }
-                        if (!state.isTtsVoiceCatalogLoaded) {
-                            Text(
-                                text = ui.voiceChoiceLoading,
-                                color = Color(0xFF64748B),
-                                fontSize = 12.sp
-                            )
-                        } else if (voiceChoices.isEmpty()) {
-                            Text(
-                                text = ui.voiceChoicesUnavailable,
-                                color = Color(0xFFB45309),
-                                fontSize = 12.sp,
-                                lineHeight = 17.sp
-                            )
-                        }
+                        Text(
+                            text = voiceStatusText,
+                            color = voiceStatusColor,
+                            fontSize = 12.sp,
+                            lineHeight = 16.sp
+                        )
                     }
-                    val (voiceStatusText, voiceStatusColor) = when (state.ttsVoiceStatus) {
-                        TtsVoiceStatus.UNKNOWN -> ui.voiceStatusNotChecked to Color(0xFF64748B)
-                        TtsVoiceStatus.AVAILABLE -> ui.voiceStatusAvailable to Color(0xFF15803D)
-                        TtsVoiceStatus.FALLBACK_LANGUAGE -> ui.voiceStatusFallback to Color(0xFFB45309)
-                        TtsVoiceStatus.SELECTED_VOICE_UNAVAILABLE ->
-                            ui.voiceStatusSelectedUnavailable to Color(0xFFB45309)
-                        TtsVoiceStatus.NETWORK_REQUIRED ->
-                            ui.voiceStatusNetworkRequired to Color(0xFFB45309)
-                        TtsVoiceStatus.UNAVAILABLE -> ui.voiceStatusUnavailable to Color(0xFFB91C1C)
-                    }
-                    Text(
-                        text = voiceStatusText,
-                        color = voiceStatusColor,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp
-                    )
                 }
             }
 
@@ -1209,12 +1303,12 @@ fun OorArivippuScreen(
                     Divider(color = Color(0xFFE2E8F0))
                     Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                     val releaseLinks = listOf(
-                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.53",
-                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.15",
-                        ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7",
-                        ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13",
-                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1",
-                        ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1"
+                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.55",
+                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.16",
+                        ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
+                        ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
+                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.2",
+                        ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.2"
                     )
                     releaseLinks.forEach { (label, url) ->
                         TextButton(
@@ -1236,6 +1330,38 @@ fun OorArivippuScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SettingsDisclosureRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    summary: String,
+    expanded: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color(0xFFF1F5F9))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(9.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = Color(0xFF0F766E), modifier = Modifier.size(19.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(label, fontSize = 12.sp, color = Color(0xFF64748B), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(summary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0F172A), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        }
+        Icon(
+            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+            contentDescription = null,
+            tint = Color(0xFF0F766E),
+            modifier = Modifier.size(20.dp),
+        )
     }
 }
 

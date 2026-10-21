@@ -20,6 +20,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.HelpOutline
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -96,6 +97,7 @@ internal fun ConnectScreen(
     notice: String?,
     actions: ConnectActions,
     onOpenSettings: () -> Unit,
+    onOpenGuide: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -105,7 +107,7 @@ internal fun ConnectScreen(
             .padding(horizontal = 14.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Header(onOpenSettings)
+        Header(onOpenSettings, onOpenGuide)
         if (notice != null) {
             Text(tr(notice), color = Warm, fontSize = 13.sp, lineHeight = 18.sp)
         }
@@ -137,15 +139,18 @@ internal fun ConnectScreen(
 }
 
 @Composable
-private fun Header(onOpenSettings: () -> Unit) {
+private fun Header(onOpenSettings: () -> Unit, onOpenGuide: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text("Secret Message", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Ink)
             Text(tr(WifiWording.SUBTITLE), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = Muted)
         }
         LanguageToggle()
+        IconButton(onClick = onOpenGuide) {
+            Icon(Icons.Outlined.HelpOutline, contentDescription = tr("Guide"), tint = Accent)
+        }
         IconButton(onClick = onOpenSettings) {
-            Icon(Icons.Outlined.Settings, contentDescription = "Settings", tint = Accent)
+            Icon(Icons.Outlined.Settings, contentDescription = tr("Settings"), tint = Accent)
         }
     }
 }

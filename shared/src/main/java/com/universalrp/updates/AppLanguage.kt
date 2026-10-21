@@ -164,6 +164,8 @@ object AppStrings {
         "Tamil" to "தமிழ்",
         "English" to "ஆங்கிலம்",
         "About" to "பற்றி",
+        "Guide" to "வழிகாட்டி",
+        "Seek through this track" to "இந்தப் பாடலை முன்னும் பின்னும் நகர்த்தவும்",
         "About PulseEQ" to "PulseEQ பற்றி",
         "Audio processing stays on your phone. GitHub update checks can be turned off below." to "ஒலி செயலாக்கம் உங்கள் போனிலேயே நடைபெறும். GitHub புதுப்பிப்புச் சோதனைகளை கீழே முடக்கலாம்.",
         "About Ramesh Radio" to "ரமேஷ் ரேடியோ பற்றி",

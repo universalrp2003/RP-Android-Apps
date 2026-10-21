@@ -35,7 +35,10 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.activity.compose.BackHandler
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -56,6 +59,8 @@ import com.universalrp.tamilnadufm.MainViewModel
 import com.universalrp.tamilnadufm.UiState
 import com.universalrp.tamilnadufm.data.Category
 import com.universalrp.tamilnadufm.data.RadioStation
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppStrings
 
 // --------------------------------------------------------------------- radio
@@ -70,6 +75,17 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // v1.15 — fourteen category chips pushed the list down. The six that matter open first;
     // the genre/archive chips sit behind "More", which is the owner's "important items first".
     var chipsExpanded by rememberSaveable { mutableStateOf(false) }
+    var showGuide by rememberSaveable { mutableStateOf(false) }
+    if (showGuide) {
+        BackHandler { showGuide = false }
+        com.universalrp.updates.GuideScreen(
+            content = com.universalrp.updates.AppGuides.rameshRadio,
+            tamil = AppLanguageState.current == AppLanguage.TAMIL,
+            onBack = { showGuide = false },
+            accent = Saffron,
+        )
+        return
+    }
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -119,6 +135,14 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         color = Saffron,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                    )
+                }
+                IconButton(onClick = { showGuide = true }, modifier = Modifier.size(34.dp)) {
+                    Icon(
+                        Icons.Filled.HelpOutline,
+                        contentDescription = AppStrings.translate("Guide"),
+                        tint = Saffron,
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }

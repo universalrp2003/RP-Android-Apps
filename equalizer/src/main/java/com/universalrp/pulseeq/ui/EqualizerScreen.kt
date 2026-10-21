@@ -23,6 +23,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Equalizer
+import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PowerSettingsNew
 import androidx.compose.material.icons.outlined.Refresh
@@ -55,7 +56,7 @@ import com.universalrp.pulseeq.audio.EqCore
 import com.universalrp.updates.AppStrings
 
 @Composable
-fun EqualizerScreen(state: EqUiState, vm: EqViewModel) {
+fun EqualizerScreen(state: EqUiState, vm: EqViewModel, onGuide: () -> Unit = {}) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -63,7 +64,7 @@ fun EqualizerScreen(state: EqUiState, vm: EqViewModel) {
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Header(state, vm) }
+        item { Header(state, vm, onGuide) }
 
         item {
             LedSpectrum(
@@ -100,7 +101,7 @@ fun EqualizerScreen(state: EqUiState, vm: EqViewModel) {
 }
 
 @Composable
-private fun Header(state: EqUiState, vm: EqViewModel) {
+private fun Header(state: EqUiState, vm: EqViewModel, onGuide: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier
@@ -122,6 +123,14 @@ private fun Header(state: EqUiState, vm: EqViewModel) {
                 "20-band sound equalizer",
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondary,
+            )
+        }
+        IconButton(onClick = onGuide, modifier = Modifier.size(34.dp)) {
+            Icon(
+                Icons.Outlined.MenuBook,
+                contentDescription = AppStrings.translate("Guide"),
+                tint = Cyan,
+                modifier = Modifier.size(19.dp),
             )
         }
         IconButton(onClick = { vm.resetFlat() }) {

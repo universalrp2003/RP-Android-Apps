@@ -23,11 +23,12 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.53",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.15",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.55",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.16",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.2",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.2",
 }
 
 
@@ -159,6 +160,94 @@ def verify_oor_bilingual_catalog() -> int:
     return len(expected_fields)
 
 
+def verify_app_guides() -> None:
+    """Check that all six apps expose a bilingual guide from their primary screen."""
+    guides_path = ROOT / "shared/src/main/java/com/universalrp/updates/AppGuides.kt"
+    guides_source = guides_path.read_text(encoding="utf-8")
+    guide_sections = (
+        ("Live Guard", "liveGuard", "// Ramesh Radio"),
+        ("Ramesh Radio", "rameshRadio", "// PulseEQ"),
+        ("PulseEQ", "pulseEq", "// RP Vocal Remover Studio"),
+        ("RP Vocal Remover Studio", "vocalRemover", "// Oor Arivippu"),
+        ("Oor Arivippu", "oorArivippu", None),
+    )
+    for app, field, end_marker in guide_sections:
+        start = guides_source.find(f"val {field} = GuideContent(")
+        if start < 0:
+            raise ValueError(f"The shared {app} guide is missing.")
+        end = guides_source.find(end_marker, start) if end_marker else len(guides_source)
+        if end < 0:
+            raise ValueError(f"Could not delimit the shared {app} guide.")
+        block = guides_source[start:end]
+        topic_count = len(re.findall(r"^\s*topic\(", block, re.M))
+        if "intro =" not in block or "introTa =" not in block or topic_count < 6:
+            raise ValueError(
+                f"The shared {app} guide needs English and Tamil introductions and at least six topics; "
+                f"found {topic_count}."
+            )
+
+    shared_screen = (ROOT / "shared/src/main/java/com/universalrp/updates/GuideScreen.kt").read_text(encoding="utf-8")
+    for required in ("topic.titleTa", "topic.title", "topic.bodyTa", "topic.body", "content.topics"):
+        if required not in shared_screen:
+            raise ValueError(f"The shared expandable guide screen is missing bilingual rendering: {required}")
+
+    direct_entry_points = {
+        "Live Guard": (
+            "cleaner/src/main/java/com/universalrp/cleansweep/ui/HomeScreen.kt",
+            ("vm.navigate(Screen.GUIDE)", "Icons.Outlined.MenuBook", 'tr("Guide")'),
+        ),
+        "Ramesh Radio": (
+            "radio/src/main/java/com/universalrp/tamilnadufm/ui/StationsScreens.kt",
+            ("AppGuides.rameshRadio", "showGuide", "Icons.Filled.HelpOutline"),
+        ),
+        "PulseEQ": (
+            "equalizer/src/main/java/com/universalrp/pulseeq/ui/EqualizerScreen.kt",
+            ("onGuide", 'AppStrings.translate("Guide")', "Icons.Outlined.MenuBook"),
+        ),
+        "RP Vocal Remover Studio": (
+            "vocalremover/src/main/java/com/universalrp/vocalremover/MainActivity.kt",
+            ("AppGuides.vocalRemover", "onGuide", 'AppStrings.translate("Guide")'),
+        ),
+        "Oor Arivippu": (
+            "oorarivippu/src/main/java/com/oorarivippu/voiceannouncer/MainActivity.kt",
+            ("AppGuides.oorArivippu", "onClick = { showGuide = true }", "HelpOutline"),
+        ),
+        "Secret Message": (
+            "secretmessage/wifi-test/app/src/main/java/com/rpideas/secretmessage/wifitest/ConnectScreen.kt",
+            ("onOpenGuide", "HelpOutline", 'tr("Guide")'),
+        ),
+    }
+    for app, (relative_path, required_tokens) in direct_entry_points.items():
+        source = (ROOT / relative_path).read_text(encoding="utf-8")
+        missing = [token for token in required_tokens if token not in source]
+        if missing:
+            raise ValueError(f"{app} main screen does not expose its guide directly: {missing}")
+
+    secret_path = ROOT / "secretmessage/wifi-test/app/src/main/java/com/rpideas/secretmessage/wifitest/GuideScreen.kt"
+    secret_source = secret_path.read_text(encoding="utf-8")
+    english = secret_source.split("private val ENGLISH_GUIDE = listOf(", 1)[1].split(
+        "private val TAMIL_GUIDE = listOf(", 1
+    )[0]
+    tamil = secret_source.split("private val TAMIL_GUIDE = listOf(", 1)[1]
+    title_pattern = r'^\s{4}"[^"\\]*(?:\\.[^"\\]*)*"\s+to\s*$'
+    english_topics = len(re.findall(title_pattern, english, re.M))
+    tamil_topics = len(re.findall(title_pattern, tamil, re.M))
+    if english_topics < 7 or english_topics != tamil_topics:
+        raise ValueError(
+            f"Secret Message needs matching English and Tamil guide topics; found {english_topics} and {tamil_topics}."
+        )
+    for required in ("IP addresses", "traffic sizes", "safety-code check", "20-digit safety code"):
+        if required not in english:
+            raise ValueError(f"Secret Message English guide is missing a key privacy/safety detail: {required}")
+    for required in ("IP முகவரி", "தரவு அளவு", "குறியீடு ஒப்பிடுவதற்கு முன்", "20 இலக்கப் பாதுகாப்புக்", "குறியீட்டின் ஒவ்வொரு இலக்கத்தையும்"):
+        if required not in tamil:
+            raise ValueError(f"Secret Message Tamil guide is missing a key privacy/safety detail: {required}")
+
+    root_source = (ROOT / "secretmessage/wifi-test/app/src/main/java/com/rpideas/secretmessage/wifitest/WifiTestApp.kt").read_text(encoding="utf-8")
+    if "GuideScreen(onBack" not in root_source or "onOpenGuide = { showGuide = true }" not in root_source:
+        raise ValueError("Secret Message does not route the connection-screen help button to its guide.")
+
+
 def verify_about_links() -> None:
     about_files = {
         "cleaner": ROOT / "cleaner/src/main/java/com/universalrp/cleansweep/ui/AboutScreen.kt",
@@ -171,12 +260,12 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "live-guard"', 'version = "2.53"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.15"',
-            'tagPrefix = "pulseeq"', 'version = "1.7"',
-            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.13"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.1"',
-            'tagPrefix = "secret-message"', 'version = "1.1.1"',
+            'tagPrefix = "live-guard"', 'version = "2.55"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.16"',
+            'tagPrefix = "pulseeq"', 'version = "1.8"',
+            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.14"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.2"',
+            'tagPrefix = "secret-message"', 'version = "1.1.2"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
         if missing_tags:
@@ -225,6 +314,7 @@ def main() -> int:
         keys = catalog_keys()
         checked = sum(verify_visible_text(module, keys) for module in ("radio", "equalizer", "vocalremover", "shared"))
         oor_fields = verify_oor_bilingual_catalog()
+        verify_app_guides()
         verify_about_links()
         verify_appstrings_accessibility_and_toasts(keys)
     except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -232,6 +322,7 @@ def main() -> int:
         return 1
     print(f"PASS: {len(keys)} unique shared Tamil catalog entries; {checked} explicit Compose labels are covered.")
     print(f"PASS: all {oor_fields} Oor Arivippu UI fields have Tamil and English strings and are referenced consistently.")
+    print("PASS: all six apps have bilingual, expandable guides and direct main-screen entry points.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

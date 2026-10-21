@@ -169,11 +169,11 @@ private fun AboutSection(versionLabel: String, context: Context) {
 
 /** The other RP Ideas apps' official releases, as listed in Oor Arivippu's About. */
 private val OTHER_APPS = listOf(
-    "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.50",
-    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.13",
-    "PulseEQ" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7",
-    "RP Vocal Remover Studio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13",
-    "Oor Arivippu" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1",
+    "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.55",
+    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.16",
+    "PulseEQ" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
+    "RP Vocal Remover Studio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
+    "Oor Arivippu" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.2",
 )
 
 @Composable
