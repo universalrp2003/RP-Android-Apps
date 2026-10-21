@@ -37,6 +37,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Folder
@@ -897,7 +898,7 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        androidx.compose.material.icons.Icons.Filled.Cloud,
+                        Icons.Filled.Cloud,
                         contentDescription = null,
                         tint = Saffron,
                     )

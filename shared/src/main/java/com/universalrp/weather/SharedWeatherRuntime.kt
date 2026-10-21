@@ -392,6 +392,7 @@ object SharedWeatherRuntime {
         }
     }
 
+    @android.annotation.SuppressLint("MissingPermission")
     fun postWeatherNotification(
         context: Context,
         smallIconRes: Int,

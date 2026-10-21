@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -417,7 +418,7 @@ fun OorArivippuScreen(
                             modifier = Modifier.size(34.dp),
                         ) {
                             Icon(
-                                imageVector = androidx.compose.material.icons.Icons.Default.Cloud,
+                                imageVector = Icons.Default.Cloud,
                                 contentDescription = if (state.appLanguage == "en") "Rain & cyclone voice alert" else "மழை & புயல் குரல் எச்சரிக்கை",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp),
@@ -483,7 +484,7 @@ fun OorArivippuScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Default.Cloud,
+                        imageVector = Icons.Default.Cloud,
                         contentDescription = null,
                         tint = Color(0xFF0F766E),
                         modifier = Modifier.size(24.dp),
