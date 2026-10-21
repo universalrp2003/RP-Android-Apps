@@ -29,16 +29,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup GitHub Pages
+      - name: Check & Setup GitHub Pages
+        id: pages_setup
         uses: actions/configure-pages@v5
-        with:
-          enablement: true
+        continue-on-error: true
+
+      - name: Guide if GitHub Pages is not enabled yet in Repo Settings
+        if: steps.pages_setup.outcome != 'success'
+        run: |
+          echo "### Action needed once in GitHub Settings -> Pages" >> "$GITHUB_STEP_SUMMARY"
+          echo "Open **Settings -> Pages -> Build and deployment -> Source** and select **GitHub Actions**, then re-run this workflow or merge to \`main\` to publish \`https://universalrp2003.github.io/RP-Android-Apps/\`." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload site artifact
+        if: steps.pages_setup.outcome == 'success'
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
 
       - name: Deploy to GitHub Pages
+        if: steps.pages_setup.outcome == 'success'
         id: deployment
         uses: actions/deploy-pages@v4
