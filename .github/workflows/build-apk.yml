@@ -16,9 +16,11 @@ on:
     paths-ignore:
       - "oorarivippu/**"
       - "secretmessage/**"
+      - "site/**"
       - "docs/secret-message-security-design.md"
       - "tools/tests/test_secretmessage_preview_contract.py"
       - ".github/workflows/build-apk.yml"
+      - ".github/workflows/pages.yml"
       - ".github/workflows/oorarivippu-release.yml"
       - ".github/workflows/oorarivippu-test-apk.yml"
       - ".github/workflows/secret-message-preview.yml"
