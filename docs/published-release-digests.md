@@ -18,7 +18,7 @@ On 19 October 2026 that release train was completed: Live Guard 2.49 / code 54, 
 
 ## Current active stable releases — as of 21 October 2026
 
-Live Guard 2.54 / code 59 was published alone by Build APK [run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599), from source commit `1f8a6d8`. The build, required unit/regression suites, APK verification and post-publication asset checks all passed. No new Android permission was added. The owner reports that 2.53 works on an OPPO A3s (3 GB RAM) except for the zero-entry issue addressed in 2.54; **2.54 itself was not installed on a phone before publication**. The other app releases were unchanged.
+Live Guard 2.54 / code 59 was published alone by Build APK [run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599), from source commit `1f8a6d8`. The build, required unit/regression suites, APK verification and post-publication asset checks all passed. No new Android permission was added. The owner reports that 2.53 worked on an OPPO A3s (3 GB RAM) except for the zero-entry issue, and that 2.54 was installed and works on an OPPO A3s and Redmi 13 5G; Google Play Protect reported “This app looks safe.” The supplied screenshots do not show the installed version or APK SHA-256, so this is a post-publication owner report, not a hash match to the public asset. The other app releases were unchanged.
 
 | App | Version / code | RP-Android-Apps release | APK asset | Bytes | SHA-256 |
 | --- | ---: | --- | --- | ---: | --- |

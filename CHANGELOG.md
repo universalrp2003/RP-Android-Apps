@@ -12,8 +12,10 @@ Published alone by Build APK [run 39526559599](https://github.com/universalrp200
 `CleanSweep-v2.54.apk` is 13,818,416 bytes, SHA-256
 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`. The run passed the build,
 required unit/regression suites, APK verification and post-publication asset checks. No new Android
-permission was added. The owner reports 2.53 works on an OPPO A3s (3 GB RAM) except for the
-zero-entry issue addressed here. These 2.54 bytes have **not** been installed on a phone.
+permission was added. The owner reports 2.53 worked on an OPPO A3s (3 GB RAM) except for the
+zero-entry issue, and that 2.54 now works on an OPPO A3s and Redmi 13 5G; Play Protect reported
+“This app looks safe.” The supplied screenshots do not show the installed version or APK SHA-256,
+so this post-publication report is not hash-matched to the public asset.
 
 ### Live Guard 2.54 — zero-data plans, bidirectional validity and opt-in daily watch
 

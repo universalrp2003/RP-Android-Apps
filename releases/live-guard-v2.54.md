@@ -46,9 +46,14 @@ The build, required unit/regression suites, APK verification and post-publicatio
 The public APK is 13,818,416 bytes; its SHA-256 is recorded in
 [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 
-This build was **not installed on a phone**; no device compatibility is claimed for these bytes.
-Automated builds, unit tests and static checks are separate evidence from a physical-phone test.
-Do not treat CI as Play Protect approval.
+This APK was not installed on a phone before publication. After publication, the owner reports
+installing and verifying that 2.54 works on an OPPO A3s (3 GB RAM) and Redmi 13 5G. Google Play
+Protect reported “This app looks safe.” The supplied in-app screenshots show a 0 MB plan and a
+start date of 2026-09-23 with 84 days calculating an end of 2026-12-15 at 11:47 am. The screenshots
+show the Play Protect prompt and Live Guard screens, but do not show the installed version or APK
+SHA-256; this is an owner-reported test, not a hash match to the public asset. It is not an
+all-device compatibility claim. CI results and Play Protect's scan are not guarantees of universal
+safety or compatibility.
 
 ## தமிழ்
 
@@ -77,6 +82,10 @@ Do not treat CI as Play Protect approval.
   நீக்கினால் Jio, Airtel/Vi போன்ற ஆபரேட்டர் விதி மீண்டும் பயன்படுத்தப்படும்.
 - 2.53-இல் சேமித்த திட்டத் தகவல் தொடர்ந்து படிக்கப்படும். புதிய அனுமதி எதுவும் சேர்க்கப்படவில்லை.
 
-2.54 APK எந்த ஃபோனிலும் நிறுவிச் சோதிக்கப்படவில்லை; சாதன இணக்கத்தன்மை உறுதியளிக்கப்படவில்லை.
-தானியங்கி கட்டமைப்பு அல்லது சோதனைகள் நேரடி ஃபோன் சோதனைக்கோ Play Protect அங்கீகாரத்திற்கோ
-சமமல்ல.
+வெளியீட்டுக்குப் பிறகு, OPPO A3s (3 GB RAM) மற்றும் Redmi 13 5G ஆகியவற்றில் 2.54-ஐ நிறுவி,
+சரிபார்த்தபோது நன்றாக இயங்கியதாக உரிமையாளர் தெரிவிக்கிறார். Google Play Protect “This app looks
+safe” என்று காட்டியது. வழங்கிய திரைப் படங்களில் Play Protect சாளரமும் Live Guard திரைகளும் உள்ளன;
+ஆனால் நிறுவப்பட்ட பதிப்பு அல்லது APK SHA-256 தெரியவில்லை. ஆகவே, இது உரிமையாளரின் சாதனச் சோதனை
+அறிக்கை மட்டுமே; வெளியிடப்பட்ட APK-யின் துல்லியமான கோப்புடன் hash பொருத்தம் செய்யப்பட்டதாக அல்ல.
+எல்லா சாதனங்களிலும் இணக்கமாக இயங்கும் உறுதி இதனால் கிடையாது. தானியங்கி சோதனைகளும் Play Protect
+சோதனையும் எல்லா சாதனங்களுக்குமான பாதுகாப்பு அல்லது இணக்கத்தன்மை உறுதி அல்ல.

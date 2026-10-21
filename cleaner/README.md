@@ -3,7 +3,7 @@
 Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.54 / code 59**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
 
 - [Download CleanSweep-v2.54.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.54/CleanSweep-v2.54.apk) · [release notes](../releases/live-guard-v2.54.md) · earlier releases remain available on the RP-Android-Apps release list
-- Build, required unit/regression suites, APK verification and post-publication asset checks passed in [publication run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599). The asset is 13,818,416 bytes with SHA-256 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`; it has not been installed on a phone. The release ledger is [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- Build, required unit/regression suites, APK verification and post-publication asset checks passed in [publication run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599). The asset is 13,818,416 bytes with SHA-256 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`. The owner reports successful post-publication testing on an OPPO A3s (3 GB RAM) and Redmi 13 5G, with Google Play Protect saying “This app looks safe”; the screenshots do not show the installed version or APK hash, so the report is not hash-matched to the public asset. The release ledger is [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md) · [installation advisory](../docs/live-guard-play-protect-install-block.md)
 
 ## What it does
