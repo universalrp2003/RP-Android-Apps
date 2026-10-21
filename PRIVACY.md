@@ -2,7 +2,7 @@
 
 **Last updated: 21 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
 
-This policy covers actively maintained Android apps and their current stable releases: **Live Guard (CleanSweep) 2.59**, **Ramesh Radio 1.18**, **PulseEQ 1.8**, **RP Vocal Remover Studio 0.1.14**, **Oor Arivippu 1.1.4**, and **Secret Message 1.1.2**. Older app versions and unreleased builds may behave differently.
+This policy covers actively maintained Android apps and their current stable releases: **Live Guard (CleanSweep) 2.60**, **Ramesh Radio 1.18**, **PulseEQ 1.8**, **RP Vocal Remover Studio 0.1.14**, **Oor Arivippu 1.1.4**, and **Secret Message 1.1.2**. Older app versions and unreleased builds may behave differently.
 
 ## The short version
 

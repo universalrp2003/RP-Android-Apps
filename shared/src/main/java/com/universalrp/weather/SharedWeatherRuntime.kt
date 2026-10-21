@@ -555,23 +555,23 @@ fun TomorrowApiKeyGuideLinks(
             Text(text = getKeyLabel, color = accentColor, style = MaterialTheme.typography.labelLarge)
         }
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(
-                onClick = {
-                    runCatching {
-                        context.startActivity(
-                            Intent(Intent.ACTION_VIEW, Uri.parse(SharedWeatherRuntime.TOMORROW_DOCS_URL))
-                        )
-                    }
-                },
-            ) {
-                Text(text = docsLabel, color = accentColor, style = MaterialTheme.typography.labelMedium)
-            }
-            TextButton(onClick = { showGuideDialog = true }) {
-                Icon(Icons.Outlined.HelpOutline, contentDescription = null, tint = accentColor, modifier = Modifier.size(15.dp))
-                Spacer(Modifier.width(4.dp))
-                Text(text = stepGuideLabel, color = accentColor, style = MaterialTheme.typography.labelMedium)
-            }
+        TextButton(
+            onClick = {
+                runCatching {
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse(SharedWeatherRuntime.TOMORROW_DOCS_URL))
+                    )
+                }
+            },
+        ) {
+            Icon(Icons.Outlined.OpenInNew, contentDescription = null, tint = accentColor, modifier = Modifier.size(15.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(text = docsLabel, color = accentColor, style = MaterialTheme.typography.labelMedium)
+        }
+        TextButton(onClick = { showGuideDialog = true }) {
+            Icon(Icons.Outlined.HelpOutline, contentDescription = null, tint = accentColor, modifier = Modifier.size(15.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(text = stepGuideLabel, color = accentColor, style = MaterialTheme.typography.labelMedium)
         }
     }
 

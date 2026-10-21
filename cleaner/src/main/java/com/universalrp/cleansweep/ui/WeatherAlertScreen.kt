@@ -265,10 +265,11 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         )
                     }
 
-                    Row(
-                        Modifier.fillMaxWidth(),
+                    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                    androidx.compose.foundation.layout.FlowRow(
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Button(
                             onClick = { vm.checkWeatherNow(speakPreview = false) },
