@@ -32,6 +32,8 @@
 
 ## Verification and device testing
 
+Published on 21 October 2026 by [Build APK run 39585872882](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39585872882) from commit `8605122`: `CleanSweep-v2.57.apk`, `13,898,564` bytes, SHA-256 `203548d3dfe3c7b2a04751c70e6192235d2252c81374f1c093fd327731a2d168`.
+
 The exact APK was **not installed on a phone before publication**. Build, unit/regression (46 suites / 413 tests), localization, APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
 
 Version 2.57 / code 62.
