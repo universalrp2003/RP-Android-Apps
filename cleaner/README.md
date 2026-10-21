@@ -1,9 +1,9 @@
 # Live Guard (CleanSweep)
 
-Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.53 / code 58**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
+Live Guard is an Android phone-care and device-monitoring app. Its latest published APK is **2.54 / code 59**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
 
-- [Download CleanSweep-v2.53.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.53/CleanSweep-v2.53.apk) · [release notes](../releases/live-guard-v2.53.md) · the previous 2.50 release stays available on the RP-Android-Apps release list
-- Build, regression, permission-delta and APK checks passed in [publication run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- [Download CleanSweep-v2.54.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.54/CleanSweep-v2.54.apk) · [release notes](../releases/live-guard-v2.54.md) · earlier releases remain available on the RP-Android-Apps release list
+- Build, required unit/regression suites, APK verification and post-publication asset checks passed in [publication run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599). The asset is 13,818,416 bytes with SHA-256 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`; it has not been installed on a phone. The release ledger is [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md) · [installation advisory](../docs/live-guard-play-protect-install-block.md)
 
 ## What it does

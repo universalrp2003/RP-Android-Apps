@@ -25,16 +25,24 @@ does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
 - `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
   the baseline for the next permission delta.
 
-## Latest published release batch — 20 October 2026
+## Latest publication — Live Guard 2.54 (21 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
+|---|---|---:|---|---|
+| Live Guard / CleanSweep | `cleaner` | 2.54 / 59 | `live-guard-v2.54` | `CleanSweep-v2.54.apk` |
+
+[Publication run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599) passed the build, required unit/regression suites, APK checks and post-publication asset verification. The public asset is 13,818,416 bytes with SHA-256 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`. It adds no Android permission and was not installed on a phone before publication; the owner reports 2.53 worked on an OPPO A3s (3 GB RAM) except for the zero-entry issue addressed here. Other apps were not republished. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+## Previous four-app batch — 20 October 2026
+
+| App | Gradle module | Version / code at end of 20 October | Release tag | APK |
 |---|---|---:|---|---|
 | Live Guard / CleanSweep | `cleaner` | 2.53 / 58 | `live-guard-v2.53` | `CleanSweep-v2.53.apk` |
 | Ramesh Radio | `radio` | 1.15 / 15 | `ramesh-radio-v1.15` | `Ramesh-Radio-v1.15.apk` |
 | PulseEQ | `equalizer` | 1.7 / 8 | `pulseeq-v1.7` | `PulseEQ-v1.7.apk` |
 | RP Vocal Remover Studio | `vocalremover` | 0.1.13 / 14 | `rp-vocal-remover-studio-v0.1.13` | `RP-Vocal-Remover-Studio-v0.1.13.apk` |
 
-[Publication run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275) passed the builds, unit/regression suites, permission delta, APK checks and post-publication asset verification. Live Guard 2.50 is the first release that asks for Location, so the permission gate required a recorded physical-device install; [`docs/live-guard-2.50-device-evidence.md`](docs/live-guard-2.50-device-evidence.md) records the owner's install of the exact APK (`b4c183c8…6176`), and the published asset carries that same digest. PulseEQ 1.7 and Vocal Remover 0.1.13 contain no functional change; their versions moved because the batch publishes all four apps together and refuses to reuse a tag. Published asset sizes and digests are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+The 20 October four-app batch itself (Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275)) published Live Guard 2.50 / code 55, Ramesh Radio 1.13 / code 13, PulseEQ 1.7 / code 8 and RP Vocal Remover Studio 0.1.13 / code 14. Later solo releases that day advanced Live Guard to 2.53 and Ramesh Radio to 1.15; the table above records the end-of-day versions. Live Guard 2.50 was the first release that asked for Location, so its permission gate required a recorded physical-device install; [`docs/live-guard-2.50-device-evidence.md`](docs/live-guard-2.50-device-evidence.md) records the owner's install of the exact APK (`b4c183c8…6176`), and the published asset carries that same digest. PulseEQ 1.7 and Vocal Remover 0.1.13 contained no functional change; their versions moved because the batch publishes all four apps together and refuses to reuse a tag. Published asset sizes and digests are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md).
 
 ## Previous published release batch — 14 October 2026
 
@@ -45,7 +53,7 @@ does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
 | PulseEQ | `equalizer` | 1.5 / 6 | `pulseeq-v1.5` | `PulseEQ-v1.5.apk` |
 | RP Vocal Remover Studio | `vocalremover` | 0.1.11 / 12 | `rp-vocal-remover-studio-v0.1.11` | `RP-Vocal-Remover-Studio-v0.1.11.apk` |
 
-[Publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254) passed the builds, unit/regression suites, APK checks and dual-repository release verification. All four stable releases are published on both [`RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps/releases) and [`InternetRadio`](https://github.com/universalrp2003/InternetRadio/releases). The published asset digests—not build-only candidate hashes—are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md). The latest non-public build record is [run 38523346072](https://github.com/universalrp2003/InternetRadio/actions/runs/38523346072), in [`docs/candidate-build-digests.md`](docs/candidate-build-digests.md); earlier candidate-run records are retained in Git history.
+[Publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254) passed the builds, unit/regression suites, APK checks and dual-repository release verification. All four stable releases are published on both [`RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps/releases) and [`InternetRadio`](https://github.com/universalrp2003/InternetRadio/releases). The published asset digests—not build-only candidate hashes—are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md). The associated non-public build record was [run 38523346072](https://github.com/universalrp2003/InternetRadio/actions/runs/38523346072), in [`docs/candidate-build-digests.md`](docs/candidate-build-digests.md); earlier candidate-run records are retained in Git history.
 
 The previously published releases, tags and assets for retired modules are retained as history. They are not built or included in new release batches.
 

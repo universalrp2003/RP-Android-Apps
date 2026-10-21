@@ -4,11 +4,22 @@ This file indexes the six actively maintained apps. App-specific details, instal
 
 ## Unreleased
 
-### Candidate — Live Guard 2.54 (not published)
+_No unreleased changes._
 
-- **Zero data is an explicit choice.** The GB/MB amount dialog now offers a one-tap **No data
-  (0 GB)** action (and typed zero is accepted too). This avoids relying on older numeric keyboards
-  to enter zero. Choosing it records a voice-only plan and mirrors a genuine 0 GB quota, instead of
+## Published — Live Guard 2.54 (21 October 2026)
+
+Published alone by Build APK [run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599).
+`CleanSweep-v2.54.apk` is 13,818,416 bytes, SHA-256
+`b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`. The run passed the build,
+required unit/regression suites, APK verification and post-publication asset checks. No new Android
+permission was added. The owner reports 2.53 works on an OPPO A3s (3 GB RAM) except for the
+zero-entry issue addressed here. These 2.54 bytes have **not** been installed on a phone.
+
+### Live Guard 2.54 — zero-data plans, bidirectional validity and opt-in daily watch
+
+- **Zero data is an explicit choice.** The GB/MB amount dialog offers a one-tap **No data
+  (0 GB)** action (typed zero is accepted too). This avoids relying on older numeric keyboards to
+  enter zero. Choosing it records a voice-only plan and mirrors a genuine 0 GB quota, instead of
   leaving a stale allowance from an older plan. The booster dialog has its own **Remove booster
   (0 MB)** action.
 - **Daily security-risk watch is opt-in.** New installs default to off. On the first 2.54 start,
@@ -20,9 +31,8 @@ This file indexes the six actively maintained apps. App-specific details, instal
   the inclusive validity. An explicitly selected end time overrides the carrier default and can be
   cleared to restore the Jio/Airtel/Vi rule. Existing 2.53 plans load unchanged.
 - Added policy tests for zero, inclusive reverse date calculation, and end-date/time overrides.
-  Version 2.54 / code 59; no new permission. This candidate has **not** been installed on a phone
-  or published; CI results, when run, are not device evidence.
-- Prepared notes: [`releases/live-guard-v2.54.md`](releases/live-guard-v2.54.md).
+  Version 2.54 / code 59; no new permission.
+- Release notes: [`releases/live-guard-v2.54.md`](releases/live-guard-v2.54.md).
 
 ### Published — Live Guard 2.53 (20 October 2026)
 
@@ -460,7 +470,7 @@ notes.
 - Published by standalone [GitHub Actions run 38826899278](https://github.com/universalrp2003/InternetRadio/actions/runs/38826899278) from commit `6f14f65c7cb54ab48c1a3460bab73fb75178951c`, after the Oor test workflow passed on the identical app source in [run 38826564762](https://github.com/universalrp2003/InternetRadio/actions/runs/38826564762). The workflow and a separate public-API check confirmed that both repositories serve the same stable APK (`Oor-Arivippu-v1.0.1.apk`, 12,195,397 bytes, SHA-256 `ec10c7369807748c9a5608f1a5c6a37eff5f8e1f7433cc16e984c75d8958457d`) at canonical release and download URLs. The 1.0.0 releases and assets are unchanged.
 - The owner device-tested the debug APK from [run 38776902130](https://github.com/universalrp2003/InternetRadio/actions/runs/38776902130), built from the same app source before the version was raised, and authorized this release. That build reported 1.0.0. After publication, the owner also installed the debug APK of the exact 1.0.1 source from Oor test [run 38826564762](https://github.com/universalrp2003/InternetRadio/actions/runs/38826564762); it reported 1.0.1 (3), passed Play Protect's “This app looks safe” check and showed no newer release, and the owner reports it works. Both test builds were debug-signed; the exact 1.0.1 stable bytes were not device-tested.
 
-## Latest published releases — as of 19 October 2026
+## Release-train snapshot — 19 October 2026
 
 All six apps were published on 19 October 2026 from the release-train source. The four-app batch
 was built and published by Build APK [run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076),

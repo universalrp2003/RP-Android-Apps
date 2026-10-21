@@ -41,9 +41,14 @@ stored locally with the rest of the plan.
 
 ## Verification status
 
-This build was **not installed on a phone**; no device compatibility is claimed. Automated
-builds, unit tests and static checks are separate evidence from a physical-phone test. Do not
-treat CI as Play Protect approval.
+Published on 21 October 2026 by [Build APK run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599).
+The build, required unit/regression suites, APK verification and post-publication asset checks passed.
+The public APK is 13,818,416 bytes; its SHA-256 is recorded in
+[`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+
+This build was **not installed on a phone**; no device compatibility is claimed for these bytes.
+Automated builds, unit tests and static checks are separate evidence from a physical-phone test.
+Do not treat CI as Play Protect approval.
 
 ## தமிழ்
 
