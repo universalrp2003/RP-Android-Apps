@@ -56,11 +56,35 @@ jobs:
           gradle-version: "8.14.3"
 
       - name: Run unit tests and release lint, then build the signed release APK
-        run: >-
-          ./gradlew --no-daemon --stacktrace
-          :oorarivippu:testReleaseUnitTest
-          :oorarivippu:lintRelease
-          :oorarivippu:assembleRelease
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace \
+            :oorarivippu:testReleaseUnitTest \
+            :oorarivippu:lintRelease \
+            :oorarivippu:assembleRelease 2>&1 | tee oor-build.log
+
+      - name: Publish Oor build/lint failure excerpt
+        if: failure()
+        shell: bash
+        run: |
+          {
+            echo "# Oor Arivippu CI failure excerpt"
+            echo '```'
+            tail -n 90 oor-build.log 2>/dev/null || true
+            echo '```'
+            for r in oorarivippu/build/reports/lint-results-*.txt oorarivippu/build/reports/tests/testReleaseUnitTest/classes/*.html; do
+              [ -f "$r" ] && echo "### $r" && echo '```' && head -n 90 "$r" && echo '```'
+            done
+          } > oor-build-failure.md
+          if [[ "$GITHUB_REF" == refs/heads/arena/* ]]; then
+            git config user.name "ci-bot"
+            git config user.email "ci-bot@users.noreply.github.com"
+            git add oor-build-failure.md
+            git commit -m "CI: publish Oor Arivippu build failure excerpt" || true
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" >/dev/null 2>&1 || true
+            git push origin "HEAD:${GITHUB_REF_NAME}" || true
+          fi
 
       - name: Verify package, version, stable signer, APK size, and SHA-256
         id: apk

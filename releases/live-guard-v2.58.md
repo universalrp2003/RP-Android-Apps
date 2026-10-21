@@ -28,7 +28,9 @@ Building directly on the physical-device verification of **Live Guard 2.56 & 2.5
 
 ---
 
-## Verification Status
+## Verification and device testing
 
-- Automated bilingual catalog, 12-hour clock (`h:mm a`), manifest permission delta (`0` added permissions), JUnit unit tests, release APK signing (`CleanSweep-v2.58.apk`), and SHA-256 verification executed in GitHub Actions CI.
-- Exact `CleanSweep-v2.58.apk` build is freshly compiled for real-phone installation via the in-app GitHub updater.
+The exact APK was **not installed on a phone before publication**. Build, unit/regression (47 suites / 416 tests), localization, manifest permission delta (`0` added permissions), APK and release-asset checks are recorded by the publishing workflow. Passing CI is not a Play Protect approval or an all-device compatibility claim.
+
+Version 2.58 / code 63.
+

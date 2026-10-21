@@ -62,6 +62,7 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 
     implementation(platform("androidx.compose:compose-bom:2025.08.00"))
     implementation("androidx.core:core-ktx:1.15.0")
