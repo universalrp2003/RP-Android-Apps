@@ -60,6 +60,7 @@ android {
     }
 
     lint {
+        // Emit text + XML lint reports for CI diagnostics.
         textReport = true
         xmlReport = true
     }
