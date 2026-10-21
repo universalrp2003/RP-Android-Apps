@@ -1,6 +1,6 @@
 # Changelog — RP Ideas Android apps
 
-This file indexes the six actively maintained apps. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
+This file indexes five actively maintained products (the four-app batch plus Oor Arivippu) and the separately published Secret Message app, which has not been independently security-reviewed. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
 
 ## Unreleased
 

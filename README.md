@@ -1,15 +1,15 @@
 # RP Ideas — Android apps
 
-Six actively maintained, open-source Android apps developed by **Ramesh prathap .R** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. The apps offer Tamil-first interfaces with an in-app English option. Current minimum Android versions are listed below; device-dependent features are described honestly in each app's documentation.
+Six Android apps are listed here: five actively maintained products (the four-app batch plus Oor Arivippu) and Secret Message, a separately published app that is not independently security-reviewed. They are developed by **Ramesh prathap .R** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. The apps offer Tamil-first interfaces with an in-app English option. Current minimum Android versions are listed below; device-dependent features are described honestly in each app's documentation.
 
-| App | Module | Current stable release (RP-Android-Apps) | Android | Purpose |
-|---|---|---:|---:|---|
-| **Live Guard (CleanSweep)** | `cleaner` | [2.54](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.54) | 8.0+ (API 26) | Phone cleanup, health and security review, network tools, and optional assistance. |
-| **Ramesh Radio** | `radio` | [1.15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.15) | 8.0+ (API 26) | Tamil and world radio, vote-ranked station lists, local playback, and session boost. |
-| **PulseEQ** | `equalizer` | [1.7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7) | 8.0+ (API 26) | Twenty-band audio DSP, presets, spectrum view, and local playback. |
-| **RP Vocal Remover Studio** | `vocalremover` | [0.1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13) | 10+ (API 29) | Local vocal reduction with WAV output and optional MP3 export. |
-| **Oor Arivippu** | `oorarivippu` | [1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | 8.0+ (API 26) | Tamil/English GPS place and destination announcer with configurable offline-status reminders. |
-| **Secret Message** | `secretmessage/wifi-test` | [1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) | 8.0+ (API 26) | Two-phone private messenger over the same Wi-Fi or the owner's relay: remembered phones, calls, Tamil and English, verified updater. Not independently security-reviewed. |
+| App · minimum Android | Current stable release (RP-Android-Apps) |
+|---|---|
+| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.54 / code 59](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.54) |
+| [**Ramesh Radio**](radio/README.md) · 8.0+ (API 26) | [1.15 / code 15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.15) |
+| [**PulseEQ**](equalizer/README.md) · 8.0+ (API 26) | [1.7 / code 8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7) |
+| [**RP Vocal Remover Studio**](vocalremover/README.md) · 10+ (API 29) | [0.1.13 / code 14](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13) |
+| [**Oor Arivippu**](oorarivippu/README.md) · 8.0+ (API 26) | [1.1.1 / code 6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) |
+| [**Secret Message**](secretmessage/wifi-test/README.md) · 8.0+ (API 26) | [1.1.1 / code 3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) |
 
 **Secret Message is published but is not independently security-reviewed.** No outside security expert has reviewed it, and the mls-rs library has not had a full third-party audit, so do not rely on it where your safety depends on secrecy. The relay sees both phones' IP addresses, when they connect and how much data they send, and the start of each session before the safety-code check; it cannot read messages, drawings or pictures. See [`secretmessage/releases/secret-message-v1.1.1.md`](secretmessage/releases/secret-message-v1.1.1.md) and [`docs/secret-message-security-design.md`](docs/secret-message-security-design.md).
 
@@ -59,7 +59,7 @@ For the **non-shipping Secret Message preview only**, run `./gradlew :secretmess
 
 ## Project scope and repository URLs
 
-There are five active products: the four legacy batch apps listed above plus Oor Arivippu, which uses its own standalone stable release workflow. Secret Message remains a separate local-only development preview. Earlier app modules were retired from the active source tree; their already-published GitHub Releases and tags are retained as historical records and are not built by current CI.
+There are five actively maintained products: the four legacy batch apps listed above plus Oor Arivippu, which uses its own standalone stable release workflow. Secret Message has a separately published 1.1.1 release, is outside that four-app batch, and has not been independently security-reviewed. The local-only `:secretmessage` development preview is separate from the published `secretmessage/wifi-test` app. Earlier app modules were retired from the active source tree; their already-published GitHub Releases and tags are retained as historical records and are not built by current CI.
 
 `RP-Android-Apps` is the primary updater source and `InternetRadio` is the verified fallback. The four legacy bridge clients check the new repository first and keep the old endpoint during the agreed migration grace period that began 14 October 2026; do not archive or rename `InternetRadio` until the migration checks are complete. On 18 October 2026 the owner decided to move the source and future development to `RP-Android-Apps`, keeping `InternetRadio` as the update backup; see [`docs/source-migration.md`](docs/source-migration.md). Oor Arivippu 1.0.0 and 1.0.1 were published to both repositories separately and are not part of that four-app bridge batch. See [`docs/repository-migration.md`](docs/repository-migration.md).
 
