@@ -16,7 +16,177 @@ Secret Message 1.1.0 / code 2 was published on 18 October 2026 by `.github/workf
 
 On 19 October 2026 that release train was completed: Live Guard 2.49 / code 54, Ramesh Radio 1.12 / code 12, PulseEQ 1.6 / code 7, RP Vocal Remover Studio 0.1.12 / code 13, Oor Arivippu 1.1.1 / code 6 and Secret Message 1.1.1 / code 3 were published from `main`. Every app gained the compact bilingual in-app guide; Live Guard also gained **My plan**, and Secret Message gained the guide plus a narrow-screen layout fix. The app versions that were already public (2.46, 1.11, 1.5, 0.1.11, 1.1.0, 1.1.0) kept their release pages and assets unchanged.
 
-## Current active stable releases — as of 19 October 2026
+## Current active stable releases — as of 21 October 2026
+
+Live Guard 2.54 / code 59 was published alone by Build APK [run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599), from source commit `1f8a6d8`. The build, required unit/regression suites, APK verification and post-publication asset checks all passed. No new Android permission was added. The owner reports that 2.53 worked on an OPPO A3s (3 GB RAM) except for the zero-entry issue, and that 2.54 was installed and works on an OPPO A3s and Redmi 13 5G; Google Play Protect reported “This app looks safe.” The supplied screenshots do not show the installed version or APK SHA-256, so this is a post-publication owner report, not a hash match to the public asset. The other app releases were unchanged.
+
+| App | Version / code | RP-Android-Apps release | APK asset | Bytes | SHA-256 |
+| --- | ---: | --- | --- | ---: | --- |
+| Live Guard (CleanSweep) | 2.54 / 59 | [live-guard-v2.54](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.54) | `CleanSweep-v2.54.apk` | 13,818,416 | `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1` |
+| Ramesh Radio | 1.15 / 15 | [ramesh-radio-v1.15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.15) | `Ramesh-Radio-v1.15.apk` | 14,543,201 | `b7ef2321f12faaf48f0d21b514a586bc6c906821d672a8f9459e55a706903ce5` |
+| PulseEQ | 1.7 / 8 | [pulseeq-v1.7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7) | `PulseEQ-v1.7.apk` | 11,567,368 | `a75c411d0e854fe17357d8dc3fc5797b5bc9f4ec5e87cdc5d4d7eb7dc6b91c93` |
+| RP Vocal Remover Studio | 0.1.13 / 14 | [rp-vocal-remover-studio-v0.1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13) | `RP-Vocal-Remover-Studio-v0.1.13.apk` | 63,745,096 | `8f597a7f621dcfdbaf26e2c76c2b32d2585fc447dce0e915576dfb819358e8b9` |
+| Oor Arivippu | 1.1.1 / 6 | [oor-arivippu-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | `Oor-Arivippu-v1.1.1.apk` | 12,228,161 | `5fe6899685858cbd6a552aa303d7218b10f72af1190da6c72f9b8c054ca9343d` |
+| Secret Message | 1.1.1 / 3 | [secret-message-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) | `Secret-Message-v1.1.1.apk` | 29,460,361 | `35351521a72b4b1fd0f510540e15d588e05baaffd1bdd43a1fd63604ec7ddb85` |
+
+The sizes and SHA-256 values are the public release assets' values reported by GitHub after publication, not build-only candidate hashes.
+
+## Live Guard 2.54 — zero-data plans, bidirectional validity and opt-in daily watch (21 October 2026)
+
+The 2.54 release notes are [`releases/live-guard-v2.54.md`](../releases/live-guard-v2.54.md). It adds a direct **No data (0 GB)** action and a separate booster-removal action; supports inclusive validity calculation in either direction with calendar/time selection for both fields; and makes the scheduled daily security-risk watch opt-in, including a one-time opt-out migration for existing installs. The one-time **Run the daily check now** action remains available. No permission was added.
+
+## Live Guard 2.51 — published alone, 20 October 2026
+
+Live Guard 2.51 / code 56 was published by Build APK [run 39407712230](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39407712230),
+from `arena/1c17a6e2-rp-android-apps` at commit `821aa52`. This was the first release under the owner's
+"one app at a time" rule: only Live Guard's version changed, so only its tag was public after the run.
+PulseEQ 1.7, Ramesh Radio 1.13 and RP Vocal Remover Studio 0.1.13 kept their existing release pages and
+assets, and Oor Arivippu and Secret Message were not touched.
+
+The run passed the build (both variants), the required unit and regression suites — 44 suites / 400
+declarations, including the ten new `RechargeSmsParserTest` cases — the Live Guard permission delta
+(no permission added), the APK metadata checks and the post-publication asset check.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.51.apk` | 13,793,884 | `260120452041fcbe9d67aa76bd8c71cc1da78a40b2d57cf235a20a387e650ec5` |
+
+The digest above is GitHub's own digest for the published asset, read back from the release API after
+publication.
+
+**What it contains:** the operator-clock expiry rule, the booster-pool counting fix, seven selectable
+colour themes, a subject-grouped side menu with a reordered Home, and the "fill My plan from the
+operator's SMS" card (copy and paste only — the app still declares no SMS permission). The local
+date-format and twelve-hour-clock rules are unchanged.
+
+**What it does not prove:** this build was not installed on a phone before publication, so no
+physical-device result is claimed for these bytes. The previous instance of this section (Live Guard
+2.50) is the last release with a recorded owner install. CI checks, a compiled APK and a published
+asset are not Play Protect approval, not Play Store review and not an all-device compatibility claim.
+
+## Ramesh Radio 1.14 — published alone, 20 October 2026
+
+Ramesh Radio 1.14 / code 14 was published by Build APK [run 39413564341](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39413564341)
+from `arena/1c17a6e2-rp-android-apps`. Only Radio's version changed, so only its tag was released;
+Live Guard 2.51, PulseEQ 1.7, Vocal Remover 0.1.13, Oor Arivippu 1.1.1 and Secret Message 1.1.1 kept
+their existing releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `Ramesh-Radio-v1.14.apk` | 14,526,817 | `d3372cbf5c0bcc4a11b260c49d437541fd9a901fd2593dfc61f8da9e4bbe238a` |
+
+Digest read back from the release API after publication.
+
+**What it contains:** the More tab's update section is a readable card with its long explanation
+folded away, the first screen's search and sorting text are one-line rows that open on tap, and the
+songs tab now reads **பாடல்கள் / என் பாடல்கள்** instead of "உள்ளூர் ஒலி". No new permission.
+
+**Not claimed:** these bytes were not installed on a phone before publication. CI built every
+module, ran the radio unit tests and lint, and checked the APK metadata.
+
+**Workflow note:** this publish needed a fix of its own. The Live Guard permission gate ran even
+though Live Guard was already public and compared it against its own latest tag, then failed
+closed and published nothing (run 39412645425). The gate now applies only when Live Guard is the
+app being published.
+
+## Ramesh Radio 1.15 — the first screen shows stations, not paragraphs (20 October 2026)
+
+Published by Build APK [run 39415226287](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39415226287)
+from `arena/1c17a6e2-rp-android-apps`. Only Radio's version changed, so only its tag was released;
+Live Guard 2.51 and the other apps kept their releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `Ramesh-Radio-v1.15.apk` | 14,543,201 | `b7ef2321f12faaf48f0d21b514a586bc6c906821d672a8f9459e55a706903ce5` |
+
+Digest read back from the release API after publication. It supersedes 1.14, published fifteen
+minutes earlier on the owner's instruction to take the Home and Tamil UI first; 1.15 contains the
+1.14 update-card fix as well, so a phone that updates once receives both.
+
+**What it contains:** six primary categories with the rest behind **More ▾ / Less ▴**, a one-line
+ellipsised header, an action-first empty state, a data pill that follows the app language, and
+unwrapped, centred bottom-bar labels for Tamil. No new permission.
+
+**Not claimed:** these bytes were not installed on a phone before publication. CI compiled every
+module, ran the radio unit tests, lint and the APK checks.
+
+## Live Guard 2.53 — volume, guide, one status icon, three widgets (20 October 2026)
+
+Published by Build APK [run 39428035172](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39428035172)
+from `arena/1c17a6e2-rp-android-apps` (workflow run 39426688658 had already compiled and tested the
+same source). Only Live Guard's version changed; Ramesh Radio 1.15, PulseEQ 1.7, Vocal Remover
+0.1.13, Oor Arivippu 1.1.1 and Secret Message 1.1.1 kept their releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.53.apk` | 13,815,072 | `7d640e044ad62bf5841c38d18a741c8e8ccf06dfe9d0fea2b45e14ddc21104f4` |
+
+Digest read back from the release API after publication. The release asset is signed and re-packed
+by the publishing step, so its digest is not required to equal the candidate build's
+(`13db2a88…a0e8`, recorded in `docs/candidate-build-digests.md`).
+
+**What it contains:** one announcement-volume control opened over Home by the speaker button and
+also present in Settings and the plan card; **Guide** given its own screen instead of opening the
+permission checklist; the status-bar icon fixed to a monochrome glyph; the Home update card
+reduced to one row with all detail in its dialog; the estimated phone age on Home; the assistant
+reduced to a small symbol that opens the assistant window; and three 2×2 widgets — **Battery &
+plan**, **Plan & days** (data left, days left, today) and **Security** (saved review only, no
+background scan). No new permission.
+
+## Live Guard 2.52 — short first page, readable menu, Tamil typography (20 October 2026)
+
+Published by Build APK [run 39419657235](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39419657235)
+from `arena/1c17a6e2-rp-android-apps`. Only Live Guard's version changed; Ramesh Radio 1.15,
+PulseEQ 1.7, Vocal Remover 0.1.13, Oor Arivippu 1.1.1 and Secret Message 1.1.1 kept their releases.
+
+| Asset | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.52.apk` | 13,811,808 | `19ba3d6c5922062add5ae9480e0b433ffa83be2225e317741d862c7a4118171b` |
+
+Digest read back from the release API after publication.
+
+**What it contains:** Home rebuilt around a hero card (free storage, used/total bar, Battery · RAM ·
+Signal chips, scan button inside the card) with the plan card beneath and every other card under
+three tap-to-open sections; a rebuilt side menu (banner, group headings with rules, icon tiles with
+hints, accent rail on the current screen, language/theme footer); language-aware typography that
+gives Tamil a 1.62× line box, no extra letter spacing and slightly larger glyphs. No new
+permission.
+
+**Not claimed:** these bytes were not installed on a phone before publication. Two CI compile
+failures (a missing `SurfaceC` import and a missing `TextUnit.isSpecified` import) were fixed before
+the green run; no device result is claimed for any of them.
+
+## Earlier four-app batch — 20 October 2026 (initial Live Guard 2.50 release)
+
+The four-app batch was rebuilt and published on 20 October 2026 by Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275),
+from `arena/1c17a6e2-rp-android-apps` at commit `74b22a2`. It published Live Guard 2.50 / code 55,
+Ramesh Radio 1.13 / code 13, PulseEQ 1.7 / code 8 and Vocal Remover 0.1.13 / code 14. Later solo
+releases that day advanced Live Guard through 2.53 and Ramesh Radio to 1.15; the table below records
+this batch's original assets, not today's version matrix. The run passed the build, unit/regression
+suites, permission-delta gate, APK checks and post-publication asset checks. Live Guard 2.50 added
+`ACCESS_COARSE_LOCATION`, which the gate treats as a newly added dangerous permission, so publication
+required a recorded physical-device install: [`live-guard-2.50-device-evidence.md`](live-guard-2.50-device-evidence.md)
+records the owner installing the exact `CleanSweep-v2.50.apk` (13,740,236 bytes) over 2.49 with Play
+Protect on, Play Protect reporting "This app looks safe", the installer completing the update and the
+nearby-cell list then showing four cells. **The published asset's SHA-256 is the tested digest**, so
+the released APK is the installed one. That is one phone; no second device and no Play Store bundle
+was tested. PulseEQ 1.7 and Vocal Remover 0.1.13 contained no functional change — their versions moved
+only because the batch publishes all four apps together. Oor Arivippu 1.1.1 and Secret Message 1.1.1
+were unchanged from 19 October 2026.
+
+| App | Version / code | RP-Android-Apps release | APK asset | Bytes | SHA-256 |
+| --- | ---: | --- | --- | ---: | --- |
+| Live Guard (CleanSweep) | 2.50 / 55 | [live-guard-v2.50](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.50) | `CleanSweep-v2.50.apk` | 13,740,236 | `b4c183c876a8da8aff4169c975c1a1111a3229658620e99fed87cb3e645d6176` |
+| Ramesh Radio | 1.13 / 13 | [ramesh-radio-v1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.13) | `Ramesh-Radio-v1.13.apk` | 14,526,813 | `d763d585d46d29319b18dcbe98fd37bb4ad587062210e44556bc6ae7ab1792d1` |
+| PulseEQ | 1.7 / 8 | [pulseeq-v1.7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.7) | `PulseEQ-v1.7.apk` | 11,567,368 | `a75c411d0e854fe17357d8dc3fc5797b5bc9f4ec5e87cdc5d4d7eb7dc6b91c93` |
+| RP Vocal Remover Studio | 0.1.13 / 14 | [rp-vocal-remover-studio-v0.1.13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.13) | `RP-Vocal-Remover-Studio-v0.1.13.apk` | 63,745,096 | `8f597a7f621dcfdbaf26e2c76c2b32d2585fc447dce0e915576dfb819358e8b9` |
+| Oor Arivippu | 1.1.1 / 6 | [oor-arivippu-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.1) | `Oor-Arivippu-v1.1.1.apk` | 12,228,161 | `5fe6899685858cbd6a552aa303d7218b10f72af1190da6c72f9b8c054ca9343d` |
+| Secret Message | 1.1.1 / 3 | [secret-message-v1.1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.1) | `Secret-Message-v1.1.1.apk` | 29,460,361 | `35351521a72b4b1fd0f510540e15d588e05baaffd1bdd43a1fd63604ec7ddb85` |
+
+The sizes and digests above are the release assets' own values as reported by the GitHub releases API after publication,
+not build-only candidate hashes.
+
+## Previous active stable releases — as of 19 October 2026
 
 All six apps were published on 19 October 2026. The four-app batch (Live Guard, Ramesh Radio, PulseEQ
 and RP Vocal Remover Studio) was built, verified and published by Build APK [run 39272003076](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39272003076)
@@ -68,7 +238,7 @@ The earlier stable Oor releases remain available unchanged on both repositories:
 
 **FTTH download observation — 14 October:** the owner reports that direct Brave downloads from both repositories over BSNL FTTH were very slow. Screenshots show `CleanSweep-v2.46.apk` (13.66 MB) at about 0.33 MB and 0.46 MB downloaded, with Brave estimating seven minutes remaining. This demonstrated the slowdown was not limited to the in-app updater. The owner later reported that restarting the BSNL router resolved it. That points to a transient router/session/network-path issue, but the exact cause was not established. The 31.8 Mbps speed test used a different endpoint and does not establish throughput to GitHub.
 
-Build-only runs [38514595315](https://github.com/universalrp2003/InternetRadio/actions/runs/38514595315) and [38523346072](https://github.com/universalrp2003/InternetRadio/actions/runs/38523346072) produced candidate APK hashes that differ from the published bytes. [`candidate-build-digests.md`](candidate-build-digests.md) records the latest non-public run; older candidate records remain in Git history. Do not substitute candidate hashes for the published digests above.
+For the 14 October bridge releases, build-only runs [38514595315](https://github.com/universalrp2003/InternetRadio/actions/runs/38514595315) and [38523346072](https://github.com/universalrp2003/InternetRadio/actions/runs/38523346072) produced candidate APK hashes that differ from the published bytes. Those historical candidate records remain in Git history; [`candidate-build-digests.md`](candidate-build-digests.md) is a rolling record replaced by later candidate builds. Do not substitute candidate hashes for the published digests above.
 
 ## Previous stable bridge releases — 14 October 2026
 

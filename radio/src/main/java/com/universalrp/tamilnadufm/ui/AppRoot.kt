@@ -295,12 +295,17 @@ private fun RowScope.NavItem(label: String, icon: ImageVector, selected: Boolean
             modifier = Modifier.size(24.dp),
         )
         Spacer(Modifier.height(3.dp))
+        // Tamil glyphs are taller and wider than Latin ones. One line, no wrapping and a
+        // centred alignment keep "செய்திகள்" from being clipped or pushed off the bar.
         Text(
             label,
             style = MaterialTheme.typography.labelSmall,
             color = if (selected) Saffron else TextSecondary,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
             maxLines = 1,
+            softWrap = false,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 2.dp),
         )
     }
 }

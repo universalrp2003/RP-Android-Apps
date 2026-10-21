@@ -1,13 +1,13 @@
 package com.universalrp.cleansweep.data
 
 /**
- * 2.42 owner decision: the ongoing status-bar charging meter and the background battery-health
- * monitor are **ON by default** (opt-out), and the file-hash security check includes
- * preinstalled system apps by default.
+ * The ongoing status-bar charging meter and background battery-health monitor are **ON by
+ * default** (opt-out); the scheduled daily security-risk watch is **OFF by default** (opt-in).
+ * The file-hash security check includes preinstalled system apps by default.
  *
- * Every switch stays in Settings and a saved OFF choice is read, never overwritten: a default
- * is only what happens when the owner has never written a choice. Turning one of these off is
- * a choice, not a failure, and OEM power savers plus an Android force-stop still apply.
+ * Every switch stays in Settings. Existing choices are normally preserved; the 2.54 migration
+ * deliberately resets the old daily-watch preference to OFF once, then preserves the owner's
+ * new choice on later launches and updates. OEM power savers and Android force-stops still apply.
  *
  * One object owns these defaults on purpose. The same switch is read from three places — the
  * DataStore flow the UI collects, the plain-prefs mirror a service or boot receiver reads, and
@@ -39,8 +39,14 @@ object MonitorDefaultsPolicy {
      */
     const val STATUS_PILL = false
 
+    /** The scheduled local security-risk scan is opt-in; new installs start OFF. */
+    const val DAILY_SECURITY_WATCH = false
+
     /** Automatic *online* daily summaries remain a separate explicit consent, default OFF. */
     const val DAILY_ONLINE_SUMMARIES = false
+
+    /** Existing installs are forced OFF once on upgrade; after migration, the user's choice wins. */
+    fun dailyScanMigrationNeeded(migrationComplete: Boolean): Boolean = !migrationComplete
 
     /**
      * True when an app update or a reboot must re-arm the ongoing card and monitor even though

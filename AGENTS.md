@@ -63,6 +63,58 @@
   `0` = off). Nothing is stored per day: "today" is measured from local midnight in
   `DataUsageTracker`, so the counter returns to zero every morning by construction. Do not add
   a midnight reset job or a manual reset button for it.
+- 20 October 2026 (owner request): Live Guard must give **Location** so the Mobile screen can
+  show the nearby cell towers, and the 4G/5G card and watch must not show their own "left"
+  figures beside the measured pack remainder. Android hides `CellInfo` from every app without
+  **Precise** location, on every API level, so `ACCESS_COARSE_LOCATION` is declared beside
+  `ACCESS_FINE_LOCATION` (Android 12+ ignores a Precise-only request) and both are asked for
+  from one card on the Mobile screen. Keep the prompt on that screen only — never in the
+  background, never from the Wi-Fi screen on Android 13+. **Publishing this in a Live Guard
+  release adds a dangerous permission (`ACCESS_COARSE_LOCATION`), so the release needs a
+  recorded physical-device install before the permission gate will allow publication.**
+- 20 October 2026 (owner request, Live Guard 2.51): a prepaid pack ends on the operator's
+  clock, not at a generic midnight. **Jio** counts validity from the recharge moment (63 days
+  recharged at 5:00 pm ends at 5:00 pm on the last day; a "1 day" data pack is 24 hours).
+  **Airtel**'s terms say every validity expires at midnight, and a 1-day pack bought at 11:50 pm
+  dies nine minutes later; **Vi** and **BSNL** behave the same way. `PlanPolicy.expiryMoment`
+  therefore takes the recharge time, the operator's rule and the day count together, and the app
+  never invents an hour it was not told: with no time, the pack stays valid through the end of
+  the last day. When the operator is unknown the default is *same time as recharge*, because an
+  early warning is harmless and a late one means the SIM has already stopped. Never display a
+  24-hour clock for this (the localization gate rejects it); use `PlanPolicy.formatTime`.
+- 20 October 2026 (owner request, Live Guard 2.51): a booster carries a first and a last day, and
+  a booster whose last day has passed must stop adding to the allowance even if its switch is
+  still on — the owner's own case, where a forgotten 3 GB booster turned a 6 GB pack into
+  "9.0 GB". `PlanPolicy.boosterActive` is the only authority; the mirrored pack limit is repaired
+  downwards as well as upwards, but only while the mirror still holds a value `PlanStore` wrote.
+- 20 October 2026 (owner decision): **only the app that changed may be published.** The owner's
+  words: *"No need to push all applications only bug fixed updated one must need published why
+  this unwanted update user will get irritation they will hate my application."* The publish step
+  filters the four bundled versions down to those whose release tag is not public yet, skips the
+  rest, and exits successfully when nothing is new. Never re-introduce a rule that bumps all four
+  versions for one app's fix.
+- 20 October 2026 (owner request, Live Guard 2.51): a booster is a **separate pool**. Android
+  measures every byte the radio carries, but the operator charges the booster's days to the
+  booster. `PlanPolicy.usageAgainstAllowance` subtracts the bytes measured inside the booster's
+  date range whenever the booster is not running, and adds them back while it is. This is what
+  made Live Guard say "1.05 GB left" while Airtel said "4.3 GB left" — do not "fix" it by showing
+  the raw measured total again.
+- 20 October 2026 (owner request, Live Guard 2.51): the app must offer **selectable colour
+  themes** — *"we need themes to choose same color are boring."* Themes are palettes
+  (`ui/theme/Palettes.kt`); the colour names in `ui/theme/Theme.kt` are getters over
+  `Palette.current`, so a new theme is one palette entry and no screen edits. Keep every theme
+  dark, keep body text at >= 7:1 contrast on its own background, and keep good/warn/danger
+  recognisably green/amber/red — `verify_cleaner_next_update_source.py` checks all three.
+- 20 October 2026 (owner request, Live Guard 2.51): screens are **grouped by subject** in the side
+  menu (Cleaning · Phone · Network & data · Security · Assistant · Live Guard), reachable by an
+  edge swipe anywhere and by the Home menu button. The owner's words: *"organise intelligently
+  important items in first page not very long scrolling page, mobile signal tower are same place,
+  network quality related in one place."* Keep related network screens together and keep Home's
+  order: storage, scan, plan, help.
+- 20 October 2026 (owner request): My plan can be filled from the operator's SMS **by copy and
+  paste only**. `RechargeSmsParser` is pure, is unit-tested, and never reads the inbox; the app
+  still declares no SMS permission. Nothing is saved until the user taps "Use these values", and
+  a message that states no plan must be refused rather than half-filled.
 - Preserve the no-notification/message-reading production design. Do not restore the retired notification listener, Accessibility, SMS, contacts/call-log, or device-admin capabilities without a fresh owner decision and policy/device review. Do not bypass or disable Play Protect to address an install block.
 - Show battery, CPU, RAM, network and age estimates only from truthful available measurements; label OEM-dependent/unavailable readings honestly. A saved review date must be a real completed review, never invented by opening a screen.
 - The 44 °C owner setting is a warning, not an automatic pause threshold. Do not add a processing pause at that temperature without separate rationale.
@@ -76,6 +128,12 @@
 - Keep Slow/Medium/Fast on the main processing screen; support pause/resume and durable long jobs. Low-RAM pauses may auto-resume only after recovery; user, thermal, storage and Android service-limit pauses remain manual. Use a foreground service/wake lock for background processing, with a keep-screen-awake option; do not promise Android battery-optimization exemptions.
 - Report CPU temperature, RAM and load only when available, and label OEM-dependent/missing values. Do not apply the Live Guard 44 °C warning as an automatic pause threshold.
 - **Ramesh Radio / PulseEQ:** process local audio locally. Describe any external-player or system-wide effect as device/ROM-dependent; do not imply universal system-wide equalization.
+- 20 October 2026 (owner request, Ramesh Radio): opening the app starts the station that was
+  played last (`resumeLast()` once per app process from `attachController`), with a saved
+  switch in **More** to turn it off. Never restart audio that a widget, notification, headset
+  or background session is already playing, and never let the resume pause it. Keep the search
+  row one line tall: the station-list action is an icon square beside the field, not a labelled
+  chip inside it, and the hint text is single-line/ellipsised so Tamil cannot stretch it.
 
 ## Verification before release
 

@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SignalCellularAlt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,7 +34,6 @@ import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.NetworkSplit
 import com.universalrp.cleansweep.notify.RadioWatchService
 import com.universalrp.cleansweep.ui.theme.AccentCyan
-import com.universalrp.cleansweep.voice.Announcer
 
 /**
  * v2.47 — the 4G / 5G card.
@@ -51,7 +48,6 @@ fun RadioSplitCard() {
     var separate by remember { mutableStateOf(NetworkSplit.separateEnabled(context)) }
     var announce by remember { mutableStateOf(NetworkSplit.announceEnabled(context)) }
     var policy by remember { mutableStateOf(NetworkSplit.policy(context)) }
-    var volume by remember { mutableFloatStateOf(Announcer.voiceVolume(context)) }
     var expanded by remember { mutableStateOf(false) }
 
     val limitMb = if (DataUsageTracker.hasConfiguredPlan(context)) {
@@ -86,9 +82,13 @@ fun RadioSplitCard() {
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
-                        if (separate) "4G ${NetworkSplit.format(status.fourGLeftMb)} left · 5G " +
+                        // next build: show what the split has actually counted. The old "left"
+                        // figures subtracted only the sampled radio usage from the whole
+                        // pack, so they ignored everything used before counting began and
+                        // could promise "3.53 GB left" while Live Guard said 488 MB.
+                        if (separate) "4G ${NetworkSplit.format(status.fourGUsedMb)} used · 5G " +
                             (if (status.fiveGUnlimited) "Unlimited"
-                            else NetworkSplit.format(status.fiveGLeftMb) + " left")
+                            else NetworkSplit.format(status.fiveGUsedMb) + " used")
                         else "One combined counter",
                         style = MaterialTheme.typography.labelSmall,
                         color = AccentCyan,
@@ -106,14 +106,12 @@ fun RadioSplitCard() {
                 SplitLine(
                     label = "4G",
                     used = NetworkSplit.format(status.fourGUsedMb),
-                    left = NetworkSplit.format(status.fourGLeftMb),
                     unlimited = false,
                 )
                 Spacer(Modifier.height(6.dp))
                 SplitLine(
                     label = "5G",
                     used = NetworkSplit.format(status.fiveGUsedMb),
-                    left = if (status.fiveGUnlimited) "Unlimited" else NetworkSplit.format(status.fiveGLeftMb),
                     unlimited = status.fiveGUnlimited,
                 )
                 if (status.savedBy5GMb > 0) {
@@ -204,46 +202,30 @@ fun RadioSplitCard() {
             )
 
             // ---- in-app volume -------------------------------------------
+            // 2.53 — one shared control (see AnnouncementVolume.kt); this card used to carry a
+            // private copy of the slider, so Home, Settings and this card could drift apart.
             Spacer(Modifier.height(10.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    "Announcement volume",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Spacer(Modifier.weight(1f))
-                Text("${(volume * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
-            }
-            Slider(
-                value = volume,
-                onValueChange = { volume = it },
-                onValueChangeFinished = { Announcer.setVoiceVolume(context, volume) },
-                valueRange = 0f..1f,
-                steps = 19,
-            )
-            TextButton(onClick = {
-                Announcer.setVoiceVolume(context, volume)
-                Announcer.speak(context, "This is the alert volume", "இது எச்சரிக்கை ஒலி அளவு",
-                    Announcer.Event.TEST)
-            }) { Text("Test / சோதனை") }
+            AnnouncementVolumePanel()
         }
     }
 }
 
 @Composable
-private fun SplitLine(label: String, used: String, left: String, unlimited: Boolean) {
+private fun SplitLine(label: String, used: String, unlimited: Boolean) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(label, fontWeight = FontWeight.Bold, fontSize = 13.sp)
         Spacer(Modifier.width(8.dp))
         Text(used + " used", style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(1f))
-        Text(
-            if (unlimited) "Unlimited" else "$left left",
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = if (unlimited) AccentCyan else MaterialTheme.colorScheme.onSurface,
-        )
+        if (unlimited) {
+            Text(
+                "Unlimited",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = AccentCyan,
+            )
+        }
     }
 }
 

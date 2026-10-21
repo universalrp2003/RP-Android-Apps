@@ -82,6 +82,10 @@ fun MobileScreen(state: UiState, vm: MainViewModel) {
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { vm.onPhonePermissionResult() }
+    // 2.50: Location is its own prompt, because it is what unlocks the nearby-cell list.
+    val locationLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { vm.onTowerPermissionResult() }
 
     LazyColumn(
         modifier = Modifier
@@ -135,6 +139,15 @@ fun MobileScreen(state: UiState, vm: MainViewModel) {
                     PhonePermissionCard(
                         hint = mobile.permissionHint.orEmpty(),
                         onAllow = { permissionLauncher.launch(vm.phonePermissions()) },
+                        onSettings = { vm.requestNetworkPermission() },
+                    )
+                }
+            }
+            if (mobile.needsLocationPermission) {
+                item {
+                    TowerLocationCard(
+                        approximateOnly = mobile.locationApproximate,
+                        onAllow = { locationLauncher.launch(vm.towerPermissions()) },
                         onSettings = { vm.requestNetworkPermission() },
                     )
                 }
@@ -349,6 +362,73 @@ private fun PhonePermissionCard(hint: String, onAllow: () -> Unit, onSettings: (
     }
 }
 
+/**
+ * 2.50 — Android hides the neighbouring-cell list from every app without **Precise** location,
+ * so the Mobile screen asks for exactly that, on its own, and explains why. Location is read
+ * only while this screen builds a snapshot; nothing is stored, uploaded or used in the background.
+ */
+@Composable
+private fun TowerLocationCard(approximateOnly: Boolean, onAllow: () -> Unit, onSettings: () -> Unit) {
+    PanelCard(
+        Modifier
+            .fillMaxWidth()
+            .border(1.dp, WarnAmber.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Outlined.Warning, contentDescription = null, tint = WarnAmber)
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    tr("Nearby cell towers"),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Text(
+                tr("Location permission shows the nearby cells"),
+                style = MaterialTheme.typography.bodySmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                tr(
+                    "Live Guard never reads your location in the background: it is read only while " +
+                        "this screen is open, and nothing leaves the phone."
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondary,
+            )
+            if (approximateOnly) {
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    tr(
+                        "Approximate is not enough for tower ids. Choose Precise in the app settings, " +
+                            "then come back and rescan."
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WarnAmber,
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = onAllow,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AccentCyan,
+                        contentColor = Color(0xFF03202B),
+                    ),
+                ) {
+                    Text(tr("Allow location and rescan"), fontWeight = FontWeight.Bold)
+                }
+                TextButton(onClick = onSettings) {
+                    Text(tr("App settings"), color = TextSecondary)
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun TowerCard(towers: List<CellTower>) {
     PanelCard(Modifier.fillMaxWidth()) {
@@ -358,8 +438,13 @@ private fun TowerCard(towers: List<CellTower>) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
+            Text(
+                tr("Serving cell first, then the strongest neighbours. This is what your modem reports — not a map or your location."),
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+            )
             Spacer(Modifier.height(6.dp))
-            towers.take(8).forEach { tower ->
+            towers.take(10).forEach { tower ->
                 Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
                     Text(
                         tower.technology,
@@ -962,14 +1047,16 @@ private fun DataUsageCard(state: UiState, vm: MainViewModel) {
                             color = AccentCyan,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        val endDay = com.universalrp.cleansweep.data.PlanPolicy.expiry(planSummary.startDay, planSummary.days)
+                        // 2.51 — the ending carries the time of day too, so the summary agrees
+                        // with My plan instead of showing a date that hides seven hours.
+                        val endsText = com.universalrp.cleansweep.data.PlanPolicy.endsAtText(planSummary, tamilUi)
                         Text(
                             buildString {
                                 if (planSummary.boosterEnabled && planSummary.boosterMb > 0) {
                                     append(tr("Booster") + " " + com.universalrp.cleansweep.data.PlanPolicy.formatMb(planSummary.boosterMb))
                                     append(" · ")
                                 }
-                                if (endDay != null) append(tr("ends %s", endDay.toString()))
+                                if (endsText != null) append(endsText)
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondary,

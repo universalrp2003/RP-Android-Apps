@@ -67,6 +67,13 @@ data class MobileSnapshot(
     val needsPhonePermission: Boolean,
     val permissionHint: String?,
     val notes: List<String>,
+    /**
+     * True when the nearby-cell list is empty only because Location is not allowed (or is
+     * approximate-only). Android shows this list to no other app, on every Android version.
+     */
+    val needsLocationPermission: Boolean = false,
+    /** The user chose Approximate, which Android does not accept for `CellInfo`. */
+    val locationApproximate: Boolean = false,
 )
 
 data class PingStats(
@@ -103,6 +110,9 @@ data class IpInfo(
 
 object MobileNet {
 
+    /** A modem reports a handful of neighbours; a list longer than this is not "nearby" any more. */
+    private const val MAX_TOWERS = 16
+
     /** Targets for the latency test: two anycast resolvers and Cloudflare's speed host. */
     private val PING_TARGETS = listOf(
         Triple("1.1.1.1", 53, "Cloudflare DNS"),
@@ -114,6 +124,20 @@ object MobileNet {
         ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) ==
             PackageManager.PERMISSION_GRANTED
 
+    /**
+     * Precise location is the only grant that opens Android's cell list to an app. The Wi-Fi
+     * name also needed it below Android 13; from 13 the Wi-Fi screen uses Nearby-devices and
+     * location is requested for the towers alone.
+     */
+    fun hasPreciseLocation(context: Context): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+
+    /** "Approximate" is granted as Coarse; it is honest to ask, but not enough for towers. */
+    fun hasApproximateLocation(context: Context): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+            PackageManager.PERMISSION_GRANTED
+
     private fun telephony(context: Context): TelephonyManager? =
         context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
 
@@ -121,6 +145,9 @@ object MobileNet {
         val tm = telephony(context)
         val notes = mutableListOf<String>()
         val allowed = hasPhonePermission(context)
+        val preciseLocation = hasPreciseLocation(context)
+        val approximateOnly = hasApproximateLocation(context) && !preciseLocation
+        var needsLocation = false
 
         var operator = ""
         var dataEnabled = false
@@ -249,18 +276,38 @@ object MobileNet {
             // Dual-SIM phones vary a lot; a missing list is not an error.
         }
 
-        try {
-            val all = tm.allCellInfo.orEmpty()
-            all.take(12).forEach { cell ->
-                towers.add(cellTower(cell))
+        if (!preciseLocation) {
+            // Android 10+ (and 8/9 in practice) answer `getAllCellInfo` with an empty list or
+            // a SecurityException unless the app holds Precise location. The screen shows the
+            // card with the button; no note is added here, so the reason is said once.
+            needsLocation = true
+        } else {
+            try {
+                val all = tm.allCellInfo.orEmpty()
+                // The modem usually reports its serving cell plus a handful of neighbours.
+                // The one in use comes first, then the strongest, so "nearby" reads sensibly.
+                towers.addAll(
+                    all.asSequence()
+                        .map { cellTower(it) }
+                        .sortedWith(
+                            compareByDescending<CellTower> { it.registered }
+                                .thenByDescending { it.dbm ?: Int.MIN_VALUE }
+                        )
+                        .take(MAX_TOWERS)
+                        .toList()
+                )
+                if (all.isEmpty()) {
+                    notes.add(
+                        "Location is allowed, but this phone or carrier reported no neighbouring cells. " +
+                            "Some modems share only the serving cell, and a few networks hide the ids completely."
+                    )
+                }
+            } catch (e: SecurityException) {
+                needsLocation = true
+                notes.add("Android refused the cell list; turn on Precise location for Live Guard and rescan.")
+            } catch (e: Exception) {
+                // Ignore: the screen simply shows what the modem answered.
             }
-            if (all.isEmpty()) {
-                notes.add("No cell tower details: Android only shares them with Location allowed, and only for the network you are on.")
-            }
-        } catch (e: SecurityException) {
-            notes.add("Tower details need Location permission (Android hides them otherwise).")
-        } catch (e: Exception) {
-            // Ignore.
         }
 
         if (signalDbm == null && allowed) {
@@ -298,6 +345,8 @@ object MobileNet {
                     "type and the real signal in dBm. It is used only on this screen and never sent anywhere."
             },
             notes = notes,
+            needsLocationPermission = needsLocation,
+            locationApproximate = approximateOnly,
         )
     }
 

@@ -99,7 +99,9 @@ import android.os.Environment
 
 enum class Screen {
     HOME, SCANNING, RESULTS, APP_CACHE, ASSISTANT, SETTINGS, ABOUT,
-    HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP, MY_PLAN
+    HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP, MY_PLAN,
+    /** 2.53 — the user guide itself; the menu's "Guide" row used to open FEATURE_SETUP by mistake. */
+    GUIDE
 }
 
 enum class InsightsTab { COMPATIBILITY, SECURITY_HISTORY, CHARGING_HISTORY, DATA_BUDGET, ACTION_CHECKLIST }
@@ -204,6 +206,8 @@ data class UiState(
     val wifiPermission: Boolean = false,
     // Language (English / Tamil) — the whole menu follows it
     val lang: AppLang = AppLang.EN,
+    /** 2.51: the chosen colour theme; AppRoot keys the tree on it so a switch repaints at once. */
+    val themeId: String = "midnight",
     // Mobile network, latency, speed test and data usage
     val mobile: MobileSnapshot? = null,
     val mobileBusy: Boolean = false,
@@ -263,7 +267,7 @@ data class UiState(
     val voiceUnplugStart: Int = Announcer.DEFAULT_UNPLUG_START,
     /** MACs seen on the last network scan, so a genuinely new device can be announced. */
     val knownNetworkMacs: Set<String> = emptySet(),
-    val dailyScanOn: Boolean = true,
+    val dailyScanOn: Boolean = MonitorDefaultsPolicy.DAILY_SECURITY_WATCH,
     val dailyHour: Int = Announcer.DEFAULT_DAILY_HOUR,
     /** What the last daily brief said — shown on the Home screen. */
     val lastBrief: String = "",
@@ -363,6 +367,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = ctx.getSharedPreferences("cleansweep_state", Context.MODE_PRIVATE)
 
     init {
+        // 2.54: migrate the old daily-watch default to OFF before any worker is scheduled or
+        // the settings UI reads the switch. Later explicit user choices remain untouched.
+        Announcer.ensureDailyScanDefaultOff(ctx)
         // v2.40 core cleanup: the removed notification reader left a few private leftovers.
         // Retire exactly those, on IO, without touching any other saved choice; the marker
         // is written only after the cleanup completes, so an incomplete run is retried.
@@ -372,7 +379,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // makes UiState.lang say the same thing, so no card can render the opposite language.
         val resolvedLang = LanguageSourcePolicy.resolve(prefs.getString(Lang.KEY, null), Lang.current)
         if (Lang.current != resolvedLang) Lang.set(resolvedLang)
+        // 2.51: the palette is process-wide (the widget reads the same colours), so resolve the
+        // saved theme here too; MainActivity applies it before the first composition.
+        val resolvedTheme = com.universalrp.cleansweep.ui.theme.ThemeStore.currentId(ctx)
+        com.universalrp.cleansweep.ui.theme.Palette.apply(resolvedTheme)
         mutate { it.copy(lang = resolvedLang,
+            themeId = resolvedTheme,
             includeSystemApps = prefs.getBoolean("cache_include_system", MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM),
             securityIncludeSystemApps = prefs.getBoolean("security_include_system", MonitorDefaultsPolicy.SECURITY_INCLUDE_SYSTEM)) }
         viewModelScope.launch {
@@ -454,8 +466,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 mutate { it.copy(lang = lang) }
                 refreshAssistantWelcome()
                 ChargeMonitorService.refreshIfRunning()
-                com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
-            }
+                    }
         }
         // The speed test remembers the size the user chose last time and nothing else.
         viewModelScope.launch {
@@ -479,14 +490,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         // Voice + daily watch: read the switches, and make sure the hourly worker is alive
-        // whenever the user wants warnings or the daily brief.
+        // only when voice, the daily check or the persistent monitor needs it.
         loadVoiceSettings()
-        // 2.42: the battery-health monitor's own switch counts too, and it defaults ON, so the
-        // hourly watch is armed after an update without the owner opening Voice & daily watch.
-        if (MonitorDefaultsPolicy.healthWatchWanted(Announcer.enabled(ctx), Announcer.dailyScanOn(ctx),
-                ChargeMonitorService.persistentEnabled(ctx))) {
-            HealthWatchWorker.schedule(ctx)
-        }
+        syncHealthWatchSchedule()
         val savedVerified = prefs.getStringSet("verified_wifi_macs", emptySet()) ?: emptySet()
         val autoWifiScan = prefs.getBoolean("auto_wifi_scan_open", true)
         val bgWifiScan = prefs.getBoolean(com.universalrp.cleansweep.work.WifiScanWorker.KEY_BG_WIFI_SCAN, false)
@@ -1437,9 +1443,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(voiceLouder = on) }
     }
 
+    private fun syncHealthWatchSchedule() {
+        val wanted = MonitorDefaultsPolicy.healthWatchWanted(
+            voiceOn = Announcer.enabled(ctx),
+            dailyScanOn = Announcer.dailyScanOn(ctx),
+            persistentMonitor = ChargeMonitorService.persistentEnabled(ctx),
+        )
+        if (wanted) HealthWatchWorker.schedule(ctx) else HealthWatchWorker.cancel(ctx)
+    }
+
     fun setVoiceOn(on: Boolean) {
         Announcer.setEnabled(ctx, on)
-        if (on) HealthWatchWorker.schedule(ctx) else HealthWatchWorker.cancel(ctx)
+        syncHealthWatchSchedule()
         mutate { it.copy(voiceOn = on) }
     }
 
@@ -1448,9 +1463,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // v2.7: muting the answers is also the Stop button — anything being read out halts
         // at once instead of finishing the sentence.
         if (event == Announcer.Event.ANSWER && !on) Announcer.stop()
-        // Turning any voice event on means the hourly watch must be alive; the charging
-        // announcement additionally needs the charging monitor, which reads the same switches.
-        if (on) HealthWatchWorker.schedule(ctx)
+        // Keep the shared hourly worker alive only while at least one feature needs it.
+        syncHealthWatchSchedule()
         mutate {
             it.copy(
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
@@ -1488,7 +1502,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setDailyScanOn(on: Boolean) {
         Announcer.setDailyScanOn(ctx, on)
-        if (on) HealthWatchWorker.schedule(ctx) else HealthWatchWorker.cancel(ctx)
+        syncHealthWatchSchedule()
         mutate { it.copy(dailyScanOn = on) }
     }
 
@@ -1500,7 +1514,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Runs the daily brief right now, so the user can hear it without waiting for 8 pm. */
     fun runDailyBriefNow() {
         mutate { it.copy(message = tr("Taking today's reading…")) }
-        HealthWatchWorker.schedule(ctx)
         viewModelScope.launch {
             // The worker waits for the brief (and possibly a slow AI answer) — never on the
             // main thread, or the app would look frozen while it works.
@@ -1612,14 +1625,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** Android 13+ also accepts Nearby-devices for the Wi-Fi name. */
     fun wifiPermissionGranted(): Boolean = NetworkScanner.wifiPermissionGranted(ctx)
 
-    /** Wi-Fi details need Location below Android 13 and Nearby-devices from 13 up. */
+    /**
+     * Wi-Fi details need Location below Android 13 and Nearby-devices from 13 up. 2.50 keeps
+     * the Wi-Fi prompt to exactly that: location is now asked for separately, by the
+     * nearby-cell card on the Mobile screen, so the Wi-Fi screen never triggers it.
+     */
     fun networkPermissions(): Array<String> = if (Build.VERSION.SDK_INT >= 33) {
+        arrayOf(Manifest.permission.NEARBY_WIFI_DEVICES)
+    } else {
         arrayOf(
-            Manifest.permission.NEARBY_WIFI_DEVICES,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION,
         )
-    } else {
-        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
     }
 
     /**
@@ -2511,7 +2528,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     // -------------------------------------------------------------- language
 
     /** English or Tamil. Applied at once: every screen re-reads the table on recomposition. */
+    /**
+     * 2.51 — switch theme. Saves the choice, repaints the process-wide palette immediately and
+     * bumps the state so AppRoot rebuilds the screen tree (a plain object cannot be observed by
+     * Compose, and keying the tree is how the language switch already works).
+     */
+    fun setTheme(id: String) {
+        val palette = com.universalrp.cleansweep.ui.theme.Palettes.byId(id)
+        com.universalrp.cleansweep.ui.theme.ThemeStore.save(ctx, palette.id)
+        com.universalrp.cleansweep.ui.theme.Palette.apply(palette.id)
+        mutate { it.copy(themeId = palette.id, message = if (Lang.isTamil) "தோற்றம்: " + palette.tamilName else "Theme: " + palette.name) }
+        com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
+    }
+
     fun setLanguage(lang: AppLang) {
+        com.universalrp.cleansweep.ui.theme.UiMode.setLanguage(lang)
         cancelAiReport(showMessage = false); cancelDeviceIdentification(showMessage = false)
         Lang.set(lang)
         prefs.edit().putString(Lang.KEY, lang.id).apply()
@@ -2575,14 +2606,25 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun phonePermissionGranted(): Boolean = MobileNet.hasPhonePermission(ctx)
 
-    fun phonePermissions(): Array<String> = arrayOf(
-        Manifest.permission.READ_PHONE_STATE,
+    /** Phone readings only; location has its own card and its own dialog. */
+    fun phonePermissions(): Array<String> = arrayOf(Manifest.permission.READ_PHONE_STATE)
+
+    /**
+     * 2.50: Coarse and Precise are requested together because Android 12+ silently ignores a
+     * request for Precise location on its own. Precise is what exposes the nearby-cell list.
+     */
+    fun towerPermissions(): Array<String> = arrayOf(
+        Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION,
     )
 
     fun onPhonePermissionResult() {
         loadMobile()
         refreshNetworkDetails()
+    }
+
+    fun onTowerPermissionResult() {
+        loadMobile()
     }
 
     fun openAutoStartSettings() {
@@ -2814,7 +2856,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         viewModelScope.launch {
             val pack = withContext(Dispatchers.IO) {
-                DataUsageTracker.setPackLimitGb(ctx, limitGb)
+                // Once My plan exists it is the one source of truth, so the older Home dialog
+                // must edit that plan; writing only the legacy mirror would leave My plan (and
+                // the effective booster allowance) on the old number.
+                if (com.universalrp.cleansweep.data.PlanStore.hasSavedPlan(ctx)) {
+                    val plan = com.universalrp.cleansweep.data.PlanStore.load(ctx)
+                    com.universalrp.cleansweep.data.PlanStore.save(
+                        ctx,
+                        plan.copy(totalMb = limitGb * com.universalrp.cleansweep.data.PlanPolicy.MB_PER_GB),
+                    )
+                } else {
+                    DataUsageTracker.setPackLimitGb(ctx, limitGb)
+                }
                 DataUsageTracker.getUsageInfo(ctx)
             }
             mutate { it.copy(dataPackInfo = pack, message = "Configured data quota updated to %.1f GB; not a carrier balance.".format(limitGb)) }

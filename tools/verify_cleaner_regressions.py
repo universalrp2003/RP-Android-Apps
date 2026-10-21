@@ -16,7 +16,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.ai.AssistantEvidencePolicyTest": 10,
     "com.universalrp.cleansweep.widget.WidgetReadingPolicyTest": 12,
     "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 15,
-    "com.universalrp.cleansweep.data.PlanPolicyTest": 13,
+    "com.universalrp.cleansweep.data.PlanPolicyTest": 25,
     "com.universalrp.cleansweep.data.CompatibilityReportTest": 4,
     "com.universalrp.cleansweep.data.SecurityHistoryPolicyTest": 12,
     "com.universalrp.cleansweep.data.ChargeHistoryPolicyTest": 14,
@@ -57,6 +57,9 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.ChargingEtaPolicyTest": 5,
     "com.universalrp.cleansweep.data.DuplicateContentHashTest": 3,
     "com.universalrp.cleansweep.data.AppNetworkTrackerReportTest": 2,
+    # 2.51: the operator SMS is copied and pasted by the user (no SMS permission);
+    # these cases pin the shapes the owner receives and what must not be guessed.
+    "com.universalrp.cleansweep.data.RechargeSmsParserTest": 10,
 }
 
 

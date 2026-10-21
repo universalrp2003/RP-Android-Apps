@@ -89,7 +89,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 54', 'versionName = "2.49"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 59', 'versionName = "2.54"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -160,6 +160,11 @@ def main():
             'Monitor defaults are not the 2.42 owner decision (the overlay pill must stay opt-in)')
     require('fun rearmAfterUpdateOrBoot' in defaults and 'fun healthWatchWanted' in defaults,
             'Monitor re-arm / health-watch policy missing')
+    require('DAILY_SECURITY_WATCH = false' in defaults and 'dailyScanMigrationNeeded' in defaults and
+            'ensureDailyScanDefaultOff' in source('voice/Announcer.kt') and
+            'ensureDailyScanDefaultOff' in source('notify/BootReceiver.kt') and
+            'DAILY_SECURITY_WATCH' in source('MainViewModel.kt'),
+            'Daily security watch is not opt-in or legacy devices are not migrated OFF on upgrade')
     require('MonitorDefaultsPolicy.CHARGE_CARD' in source('notify/ChargeMonitorService.kt') and
             'MonitorDefaultsPolicy.PERSISTENT_MONITOR' in source('notify/ChargeMonitorService.kt'),
             'The monitor service still reads its own literal default')
@@ -191,14 +196,22 @@ def main():
             'Language source-of-truth policy missing')
     require('Lang.set(Lang.languageIn(this))' in source('MainActivity.kt'),
             'The language is not resolved before the first composition')
-    require('key(state.lang)' in source('ui/AppRoot.kt'),
+    # 2.51: the same key also carries the chosen colour theme, because the palette is a
+    # process-wide object (the widget reads it) that Compose cannot observe. A theme change
+    # must rebuild the tree exactly like a language change, so both ids must be in the key.
+    root_source = source('ui/AppRoot.kt')
+    require('key(state.lang' in root_source,
             'A language toggle no longer rebuilds screens that observe no state')
+    require('state.themeId' in root_source,
+            'A theme change no longer rebuilds the screens')
+    require('Palette.apply(ThemeStore.currentId(this))' in source('MainActivity.kt'),
+            'The saved theme is not applied before the first composition')
     for display in ('ui/HomeScreen.kt', 'ui/SettingsScreen.kt', 'ui/PhoneScreens.kt',
                     'ui/VoiceScreen.kt', 'ui/AssistantScreen.kt', 'ui/LiveGuardMetricsMatrix.kt'):
         require('state.lang' not in source(display),
                 'A display site still reads the state mirror instead of the language authority: ' + display)
     expected = runpy.run_path(str(ROOT/'tools/verify_cleaner_regressions.py'))['EXPECTED']
-    require(sum(expected.values()) == 381 and len(expected) == 43, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 403 and len(expected) == 44, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -224,8 +237,59 @@ def main():
     require('PrivateSourceCopyRecovery.findExisting' in vocal_service and
             'sameContents' in source('data/DuplicateContentHash.kt'),
             'Private-source recovery or full-content duplicate confirmation was removed')
+    # 2.51 — selectable colour themes. The palettes are checked as source because no phone or
+    # emulator runs here: every theme must be dark, readable and recognisably different from the
+    # others, and every screen must read the palette rather than a frozen colour constant.
+    palette_src = source('ui/theme/Palettes.kt')
+    theme_src = source('ui/theme/Theme.kt')
+    entries = re.findall(
+        r'AppPalette\(\s*id = "([a-z]+)".*?bg = Color\((0x[0-9A-Fa-f]{8})\).*?surface = Color\((0x[0-9A-Fa-f]{8})\).*?'
+        r'accent = Color\((0x[0-9A-Fa-f]{8})\).*?accentAlt = Color\((0x[0-9A-Fa-f]{8})\).*?'
+        r'good = Color\((0x[0-9A-Fa-f]{8})\).*?warn = Color\((0x[0-9A-Fa-f]{8})\).*?'
+        r'danger = Color\((0x[0-9A-Fa-f]{8})\).*?textPrimary = Color\((0x[0-9A-Fa-f]{8})\).*?'
+        r'textSecondary = Color\((0x[0-9A-Fa-f]{8})\)',
+        palette_src, re.S)
+    require(len(entries) >= 6, 'Fewer than six selectable themes (the owner asked for a choice)')
+    require(len({e[0] for e in entries}) == len(entries), 'Two themes share an id')
+
+    def luminance(hex_value):
+        channels = []
+        for shift in (16, 8, 0):
+            c = ((int(hex_value, 16) >> shift) & 0xFF) / 255.0
+            channels.append(c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4)
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2]
+
+    def contrast(a, b):
+        la, lb = luminance(a), luminance(b)
+        high, low = max(la, lb), min(la, lb)
+        return (high + 0.05) / (low + 0.05)
+
+    accents = set()
+    for theme_id, bg, _surface, accent, accent_alt, good, warn, danger, primary, secondary in entries:
+        require(contrast(primary, bg) >= 7.0, theme_id + ': body text is not readable on its background')
+        require(contrast(secondary, bg) >= 3.5, theme_id + ': secondary text is too faint')
+        require(contrast(accent, bg) >= 3.0, theme_id + ': accent is too close to the background')
+        require(contrast(good, bg) >= 3.0 and contrast(warn, bg) >= 3.0 and contrast(danger, bg) >= 3.0,
+                theme_id + ': a status colour is unreadable on its background')
+        require(len({good.lower(), warn.lower(), danger.lower()}) == 3,
+                theme_id + ': good/warn/danger collapsed into one colour')
+        accents.add(accent.lower())
+    require(len(accents) == len(entries), 'Two themes share the same accent colour')
+    require('fun currentId(' in palette_src and 'fun save(' in palette_src,
+            'The theme choice is not persisted')
+    require('Palette.current' in theme_src and 'darkColorScheme(' in theme_src,
+            'Screens no longer read the selected palette')
+    settings_src = source('ui/SettingsScreen.kt')
+    require('AppThemeStrip(' in settings_src and 'vm.setTheme(' in settings_src,
+            'The settings screen lost the theme picker')
+    menu_src = source('ui/NavigationMenu.kt')
+    for group in ('Cleaning', 'Phone', 'Network & data', 'Security', 'Assistant'):
+        require('MenuGroup(tr("%s"))' % group in menu_src,
+                'The side menu lost the "' + group + '" group')
+    require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
+            'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 43 required suites / 381 prepared declarations; tests NOT executed. Release 2.49/code54/API26 matches.')
+    print('PASS: 44 required suites / 403 prepared declarations; tests NOT executed. Candidate 2.54/code59/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

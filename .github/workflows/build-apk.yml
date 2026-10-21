@@ -1086,8 +1086,11 @@ jobs:
           EQ_NOTES="releases/${EQ_TAG}.md"
           VOCAL_NOTES="releases/${VOCAL_TAG}.md"
 
-          for file in "$CLEANER_REL" "$RADIO_REL" "$EQ_REL" "$VOCAL_REL" \
-                      "$LIVE_NOTES" "$RADIO_NOTES" "$EQ_NOTES" "$VOCAL_NOTES"; do
+          # 2.51 (owner decision): only the apps whose version actually changed are published.
+          # The four apps used to move together, which meant a fix in Live Guard pushed a
+          # meaningless "update available" notice onto PulseEQ and Vocal Remover. A version whose
+          # release already exists is now skipped instead of forcing a new bump on the others.
+          for file in "$CLEANER_REL" "$RADIO_REL" "$EQ_REL" "$VOCAL_REL"; do
             test -f "$file" || { echo "Missing verified release input: $file"; exit 1; }
           done
           # The strict Live Guard permission/device-evidence check above remains mandatory;
@@ -1120,7 +1123,16 @@ jobs:
           CLEANER_CODE=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+).*/\1/p' cleaner/build.gradle.kts)
           # This is a separate step from "Verify built APKs", so its tools are not inherited.
           AAPT2=$(ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools/*/aapt2 2>/dev/null | tail -1 || true)
-          if [ "${CLEANER_CODE:-0}" -gt 44 ] && [[ "${MIRROR_EXISTING:-false}" != "true" ]]; then
+          # 2.51 follow-up: this gate exists to stop a NEW Live Guard release that adds a
+          # dangerous permission. It must not run when Live Guard is already public and only
+          # another app is being published - that failure stranded Ramesh Radio 1.14, because
+          # releases/latest-tag.txt already pointed at live-guard-v2.51, so the gate compared
+          # the release against itself, could not read a previous manifest and failed closed.
+          LIVE_GUARD_ALREADY_PUBLIC=$(gh release view "$LIVE_GUARD_TAG" --json isDraft --jq '.isDraft' 2>/dev/null || true)
+          if [[ "$LIVE_GUARD_ALREADY_PUBLIC" == "false" ]]; then
+            echo "SKIP: $LIVE_GUARD_TAG is already public; the permission/device-evidence gate applies only when Live Guard itself is being published."
+          fi
+          if [ "${CLEANER_CODE:-0}" -gt 44 ] && [[ "${MIRROR_EXISTING:-false}" != "true" ]] && [[ "$LIVE_GUARD_ALREADY_PUBLIC" != "false" ]]; then
             EVIDENCE="docs/live-guard-${CLEANER_VERSION}-device-evidence.md"
             # --- 2.42: does THIS release need a recorded device install? --------------
             if [ -z "$AAPT2" ]; then
@@ -1248,7 +1260,42 @@ jobs:
           elif [[ "${MIRROR_EXISTING:-false}" == "true" ]]; then
             echo "Mirror-only mode: the freshly built candidate is not being released. The already-public InternetRadio APK must pass its own size and SHA-256 checks before copying."
           fi
-          RELEASE_TAGS=("$LIVE_GUARD_TAG" "$RADIO_TAG" "$EQ_TAG" "$VOCAL_TAG")
+          ALL_TAGS=("$LIVE_GUARD_TAG" "$RADIO_TAG" "$EQ_TAG" "$VOCAL_TAG")
+          ALL_APKS=("$CLEANER_REL" "$RADIO_REL" "$EQ_REL" "$VOCAL_REL")
+          ALL_NOTES=("$LIVE_NOTES" "$RADIO_NOTES" "$EQ_NOTES" "$VOCAL_NOTES")
+          ALL_TITLES=("Live Guard $CLEANER_VERSION" "Ramesh Radio $RADIO_VERSION" "PulseEQ $EQ_VERSION" "RP VOCAL REMOVER STUDIO $VOCAL_VERSION")
+          RELEASE_TAGS=()
+          RELEASE_APKS=()
+          RELEASE_NOTES=()
+          RELEASE_TITLES=()
+          LIVE_GUARD_BEING_PUBLISHED=false
+          for i in "${!ALL_TAGS[@]}"; do
+            tag="${ALL_TAGS[$i]}"
+            if [[ "${MIRROR_EXISTING:-false}" == "true" ]]; then
+              RELEASE_TAGS+=("$tag"); RELEASE_APKS+=("${ALL_APKS[$i]}"); RELEASE_NOTES+=("${ALL_NOTES[$i]}"); RELEASE_TITLES+=("${ALL_TITLES[$i]}")
+              [[ "$tag" == "$LIVE_GUARD_TAG" ]] && LIVE_GUARD_BEING_PUBLISHED=true
+              continue
+            fi
+            state=$(gh release view "$tag" --json isDraft --jq '.isDraft' 2>/dev/null || true)
+            if [[ "$state" == "false" ]]; then
+              echo "SKIP: $tag is already published and its version is unchanged; no update is created for it."
+              continue
+            fi
+            if [[ "$state" == "true" ]]; then
+              echo "Removing our own leftover draft from an earlier failed run: $tag"
+              gh release delete "$tag" --yes >/dev/null
+            fi
+            RELEASE_TAGS+=("$tag"); RELEASE_APKS+=("${ALL_APKS[$i]}"); RELEASE_NOTES+=("${ALL_NOTES[$i]}"); RELEASE_TITLES+=("${ALL_TITLES[$i]}")
+            [[ "$tag" == "$LIVE_GUARD_TAG" ]] && LIVE_GUARD_BEING_PUBLISHED=true
+          done
+          if [[ ${#RELEASE_TAGS[@]} -eq 0 ]]; then
+            echo "Nothing to publish: every bundled version is already public. Bump a version only for the app that changed."
+            exit 0
+          fi
+          echo "Publishing ${#RELEASE_TAGS[@]} app(s): ${RELEASE_TAGS[*]}"
+          for i in "${!RELEASE_TAGS[@]}"; do
+            test -f "${RELEASE_NOTES[$i]}" || { echo "Missing release notes: ${RELEASE_NOTES[$i]}"; exit 1; }
+          done
           if [[ "$TARGET_PUBLISH_ENABLED" == "true" && "$SAME_REPO" != "true" ]]; then
             for release_tag in "${RELEASE_TAGS[@]}"; do
               if GH_TOKEN="$RELEASE_TOKEN" gh release view "$release_tag" --repo "$DESTINATION_REPO" >/dev/null 2>&1 || \
@@ -1284,9 +1331,8 @@ jobs:
             fi
           done
 
-          RELEASE_APKS=("$CLEANER_REL" "$RADIO_REL" "$EQ_REL" "$VOCAL_REL")
-          RELEASE_NOTES=("$LIVE_NOTES" "$RADIO_NOTES" "$EQ_NOTES" "$VOCAL_NOTES")
-          RELEASE_TITLES=("Live Guard $CLEANER_VERSION" "Ramesh Radio $RADIO_VERSION" "PulseEQ $EQ_VERSION" "RP VOCAL REMOVER STUDIO $VOCAL_VERSION")
+          # (The four parallel arrays were filtered above; nothing is rebuilt here, so an
+          # unchanged app can never be dragged into someone else's update.)
           if [[ "${MIRROR_EXISTING:-false}" != "true" ]]; then
             for i in "${!RELEASE_TAGS[@]}"; do
               release_tag="${RELEASE_TAGS[$i]}"
@@ -1452,7 +1498,7 @@ jobs:
 
           # Keep the previous-release pointer aligned for the next Live Guard permission delta.
           # This post-publication metadata commit does not change the just-verified APK bytes.
-          if [[ "$GITHUB_REF" == refs/heads/arena/* ]]; then
+          if [[ "$GITHUB_REF" == refs/heads/arena/* && "$LIVE_GUARD_BEING_PUBLISHED" == "true" ]]; then
             printf '%s\n' "$LIVE_GUARD_TAG" > releases/latest-tag.txt
             git config user.name "ci-bot"
             git config user.email "ci-bot@users.noreply.github.com"
@@ -1463,11 +1509,7 @@ jobs:
             fi
           fi
           [[ "$TARGET_PUBLISH_ENABLED" == "true" ]] || { echo "FAIL: dual-repository publication was not enabled."; exit 1; }
-          if [[ "$SAME_REPO" == "true" ]]; then
-            echo "All four stable app releases are published and their assets are verified in $GITHUB_REPOSITORY."
-          else
-            echo "All four stable app releases are published and their assets are verified on $GITHUB_REPOSITORY and $DESTINATION_REPO."
-          fi
+          echo "Published and verified in $GITHUB_REPOSITORY: ${RELEASE_TAGS[*]}. Apps whose version did not change were left alone."
 
       - name: Surface build errors
         if: failure()

@@ -5,6 +5,8 @@ import android.content.Context
 import android.content.Intent
 import com.universalrp.cleansweep.data.BatteryReader
 import com.universalrp.cleansweep.data.DataUsageTracker
+import com.universalrp.cleansweep.data.MonitorDefaultsPolicy
+import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.cleansweep.widget.CleanSweepWidget
 import com.universalrp.cleansweep.work.HealthWatchWorker
 
@@ -17,6 +19,8 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val app = context?.applicationContext ?: return
+        // Apply the one-time opt-in migration before any restored worker can run a daily scan.
+        Announcer.ensureDailyScanDefaultOff(app)
         FloatingVolumeControl.sync(
             app,
             app.getSharedPreferences(FloatingVolumeControl.PREFS, Context.MODE_PRIVATE)
@@ -30,11 +34,15 @@ class BootReceiver : BroadcastReceiver() {
             // Widget refresh error ignored
         }
 
-        // 2. Arm the hourly health and intruder scan worker. It is cheap and respects Doze,
-        //    and 2.42 arms it whenever any part of the background watch is wanted — the
-        //    battery-health monitor's own switch included, not only voice and the daily check.
+        // 2. Arm the hourly worker only when voice, the daily scan or the persistent monitor
+        //    needs it. The daily scan is migrated OFF above; a saved user opt-in still wins.
         try {
-            HealthWatchWorker.schedule(app)
+            val wanted = MonitorDefaultsPolicy.healthWatchWanted(
+                voiceOn = Announcer.enabled(app),
+                dailyScanOn = Announcer.dailyScanOn(app),
+                persistentMonitor = ChargeMonitorService.persistentEnabled(app),
+            )
+            if (wanted) HealthWatchWorker.schedule(app) else HealthWatchWorker.cancel(app)
         } catch (e: Exception) {
             // WorkManager error ignored
         }

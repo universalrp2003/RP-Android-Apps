@@ -1,6 +1,7 @@
 package com.universalrp.tamilnadufm.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -40,6 +41,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +62,14 @@ import com.universalrp.updates.AppStrings
 
 @Composable
 fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
+    // v1.14 — the owner asked for a calmer first screen: the search box and the sorting
+    // explanation now take one line each and open when tapped, instead of pushing the
+    // station list down before the user has chosen anything.
+    var searchOpen by rememberSaveable { mutableStateOf(state.query.isNotBlank()) }
+    var showSortInfo by rememberSaveable { mutableStateOf(false) }
+    // v1.15 — fourteen category chips pushed the list down. The six that matter open first;
+    // the genre/archive chips sit behind "More", which is the owner's "important items first".
+    var chipsExpanded by rememberSaveable { mutableStateOf(false) }
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -81,19 +94,24 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                     )
                     Text(
                         "Tamil FM from Tamil Nadu and around the world — live.",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Surface(
                     shape = RoundedCornerShape(12.dp),
                     color = SurfaceHigh,
                 ) {
+                    // v1.15 — this pill used to print "இன்று" in English too. The word now
+                    // follows the chosen language; the number never does.
                     val dataMb = state.todayDataUsageMb
+                    val todayWord = AppStrings.translate("Today")
                     val text = if (dataMb >= 1024.0) {
-                        "%.2f GB இன்று".format(dataMb / 1024.0)
+                        "%.2f GB %s".format(dataMb / 1024.0, todayWord)
                     } else {
-                        "%.1f MB இன்று".format(dataMb)
+                        "%.1f MB %s".format(dataMb, todayWord)
                     }
                     Text(
                         text = text,
@@ -106,36 +124,87 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
             }
         }
 
-        item { SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() }) }
+        item {
+            if (searchOpen) {
+                SearchBar(vm, state, onSearchDirectory = { vm.searchDirectory() })
+            } else {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SurfaceHigh)
+                        .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                        .clickable { searchOpen = true }
+                        .padding(horizontal = 12.dp, vertical = 11.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        "Search stations, city or language",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Icon(
+                        Icons.Filled.Language,
+                        contentDescription = AppStrings.translate("Directory"),
+                        tint = Teal,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clickable { vm.searchDirectory() },
+                    )
+                }
+            }
+        }
 
         item {
             Row(
                 Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                val chips = listOf(
-                    // தமிழ் first: it is the default selection, so the app opens on Tamil.
+                // தமிழ் first: it is the default selection, so the app opens on Tamil.
+                val primary = listOf(
                     Category.TAMIL,
+                    Category.TAMIL_FM,
+                    Category.TAMIL_NEWS,
+                    Category.TOWNS,
+                    Category.FAVOURITES,
+                    Category.RECENT,
+                )
+                val more = listOf(
                     Category.TAMIL_ILAYARAJA,
                     Category.TAMIL_MSV,
                     Category.TAMIL_AR_RAHMAN,
                     Category.TAMIL_80S_90S,
                     Category.TAMIL_DEVOTIONAL,
-                    Category.TOWNS,
-                    Category.TAMIL_NEWS,
-                    Category.FAVOURITES,
-                    Category.RECENT,
                     Category.ALL,
-                    Category.TAMIL_FM,
                     Category.ENGLISH,
                     Category.CUSTOM,
                 )
-                chips.forEach { id ->
+                primary.forEach { id ->
                     Chip(
                         label = Category.label(id),
                         selected = state.category == id,
                         onClick = { vm.setCategory(id) },
                     )
+                }
+                Chip(
+                    label = if (chipsExpanded) "Less ▴" else "More ▾",
+                    selected = false,
+                    onClick = { chipsExpanded = !chipsExpanded },
+                )
+                if (chipsExpanded) {
+                    more.forEach { id ->
+                        Chip(
+                            label = Category.label(id),
+                            selected = state.category == id,
+                            onClick = { vm.setCategory(id) },
+                        )
+                    }
                 }
             }
         }
@@ -197,11 +266,35 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
 
         if (state.query.isBlank() && state.category in setOf(Category.ALL, Category.TAMIL, Category.TAMIL_FM)) {
             item {
-                Text(
-                    "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                )
+                // One line, opened only when wanted — the same pattern the owner asked for on
+                // the Oor Arivippu screens instead of a paragraph above every list.
+                Column {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .clickable { showSortInfo = !showSortInfo }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "How this list is sorted",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Saffron,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(if (showSortInfo) "  ▴" else "  ▾",
+                            style = MaterialTheme.typography.labelSmall, color = Saffron)
+                    }
+                    if (showSortInfo) {
+                        Text(
+                            "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                    }
+                }
             }
         }
 
@@ -215,18 +308,17 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                             color = TextPrimary,
                             fontWeight = FontWeight.SemiBold,
                         )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "Try another category, clear the search box, or look in the live " +
-                                "directory — it has far more stations than the shipped list, " +
-                                "including the town and city stations.",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                        )
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(6.dp))
                         IconChip(Icons.Filled.Refresh, "Search the directory") {
                             vm.searchDirectory()
                         }
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            "Try another category or clear the search box. The live directory has " +
+                                "far more stations than the shipped list, including town and city stations.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
                     }
                 }
             }
@@ -249,30 +341,62 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     }
 }
 
+/**
+ * v1.13 — the search row stays one line tall.
+ *
+ * The station-list button used to sit inside the text field as a full chip ("நிலையப் பட்டியல்"),
+ * which took almost half the width and made the Tamil hint wrap onto three lines. The button is
+ * now its own compact icon square beside the field (same action, same icon), and the hint is
+ * pinned to a single ellipsised line so no language can stretch the field again.
+ */
 @Composable
 fun SearchBar(vm: MainViewModel, state: UiState, onSearchDirectory: () -> Unit) {
-    OutlinedTextField(
-        value = state.query,
-        onValueChange = { vm.setQuery(it) },
-        placeholder = { Text("Station, city or language", color = TextSecondary) },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
-        trailingIcon = {
-            Row(Modifier.padding(end = 6.dp)) {
-                IconChip(Icons.Filled.Language, "Directory", tint = Teal) { onSearchDirectory() }
-            }
-        },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Saffron,
-            unfocusedBorderColor = OutlineC,
-            focusedContainerColor = SurfaceHigh,
-            unfocusedContainerColor = SurfaceHigh,
-            cursorColor = Saffron,
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary,
-        ),
-    )
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedTextField(
+            value = state.query,
+            onValueChange = { vm.setQuery(it) },
+            placeholder = {
+                Text(
+                    "Station, city or language",
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
+            singleLine = true,
+            modifier = Modifier.weight(1f),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Saffron,
+                unfocusedBorderColor = OutlineC,
+                focusedContainerColor = SurfaceHigh,
+                unfocusedContainerColor = SurfaceHigh,
+                cursorColor = Saffron,
+                focusedTextColor = TextPrimary,
+                unfocusedTextColor = TextPrimary,
+            ),
+        )
+        Box(
+            Modifier
+                .size(56.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(SurfaceHigh)
+                .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                .clickable(onClick = onSearchDirectory),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                Icons.Filled.Language,
+                contentDescription = AppStrings.translate("Directory"),
+                tint = Teal,
+                modifier = Modifier.size(24.dp),
+            )
+        }
+    }
 }
 
 /** Shared station row: logo, name, meta pills, favourite star and a play tap. */

@@ -6,12 +6,12 @@
       locales_config.xml enables on Android 13+).
     -->
     <string name="app_name">லைவ் கார்டு</string>
-    <string name="widget_description">சிறிய பேட்டரி காட்சியும் கவனித்த கடைசி சார்ஜர் நீக்க நேரமும் அளவும்</string>
+    <string name="widget_description">பேட்டரியுடன் பேக்கின் மீதமுள்ள தரவும் மீதமுள்ள நாட்களும்</string>
     <string name="widget_clean">சுத்தம்</string>
     <string name="widget_speak">அறிக்கையைப் படி</string>
-    <string name="widget_battery_label">லைவ் கார்டு • பேட்டரி</string>
-    <string name="widget_data_label">லைவ் கார்டு • தரவு</string>
-    <string name="widget_phone_label">லைவ் கார்டு • போன்</string>
-    <string name="widget_data_description">சிறிய பேட்டரி மற்றும் மொபைல் பயன்பாடு; வைஃபை அல்லது பயனர் தேர்ந்தெடுத்த வரம்பற்ற 5G-இல் போன் விவரங்கள்</string>
-    <string name="widget_phone_description">சிறிய பேட்டரி, வெப்பம், காலி சேமிப்பு மற்றும் கவனித்த கடைசி சார்ஜர் நீக்கம்</string>
+    <string name="widget_battery_label">லைவ் கார்டு • பேட்டரி &amp; திட்டம்</string>
+    <string name="widget_data_label">லைவ் கார்டு • திட்டம் &amp; நாட்கள்</string>
+    <string name="widget_phone_label">லைவ் கார்டு • பாதுகாப்பு</string>
+    <string name="widget_data_description">மீதமுள்ள தரவு, பேக்கின் மீதமுள்ள நாட்கள், இன்றைய பயன்பாடு</string>
+    <string name="widget_phone_description">கடைசியாகச் சேமித்த அனுமதி விவரம்: அதிக, நடுத்தர ஆபத்துகளும் சரிபார்த்த ஆப்களும்</string>
 </resources>

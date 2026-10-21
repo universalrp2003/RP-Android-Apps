@@ -2,7 +2,49 @@
 
 This guide covers the four legacy batch modules and the separately released Oor Arivippu app. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
-## Latest published release batch — 14 October 2026
+## Publishing a single app (from 20 October 2026)
+
+### The Live Guard permission gate applies only to Live Guard publishes
+
+The strict permission/device-evidence gate runs **only when Live Guard itself is being published**.
+`gh release view "$LIVE_GUARD_TAG"` decides that, not `releases/latest-tag.txt`: on 20 October 2026
+a publish of Ramesh Radio 1.14 compared Live Guard against its own latest tag, could not read a
+previous manifest, failed closed and published nothing. Do not answer a failure like that by
+removing the gate or weakening the fail-closed comparison — scope it to the app being published.
+
+The four apps no longer have to move together. The publish step lists the four current versions,
+skips any whose release tag is already public, and publishes only the rest — so a Live Guard fix
+does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
+
+- Bump `versionName` / `versionCode` **only** in the module you changed, and add
+  `releases/<tag>.md` for that app only.
+- If every bundled version is already public the step prints *"Nothing to publish"* and succeeds
+  instead of failing the run.
+- A published version is still never overwritten: changing an app's bytes without raising its
+  version leaves it skipped, which is the intended safe behaviour.
+- `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
+  the baseline for the next permission delta.
+
+## Latest publication — Live Guard 2.54 (21 October 2026)
+
+| App | Gradle module | Version / code | Release tag | APK |
+|---|---|---:|---|---|
+| Live Guard / CleanSweep | `cleaner` | 2.54 / 59 | `live-guard-v2.54` | `CleanSweep-v2.54.apk` |
+
+[Publication run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599) passed the build, required unit/regression suites, APK checks and post-publication asset verification. The public asset is 13,818,416 bytes with SHA-256 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`. It adds no Android permission. Although it was not installed before publication, the owner reports successful post-publication testing on an OPPO A3s (3 GB RAM) and Redmi 13 5G, with Google Play Protect reporting “This app looks safe.” The screenshots do not show installed version or APK SHA-256, so the report is not hash-matched to the public asset. The owner had reported that 2.53 worked on the OPPO A3s apart from the zero-entry issue addressed here. Other apps were not republished. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+## Previous four-app batch — 20 October 2026
+
+| App | Gradle module | Version / code at end of 20 October | Release tag | APK |
+|---|---|---:|---|---|
+| Live Guard / CleanSweep | `cleaner` | 2.53 / 58 | `live-guard-v2.53` | `CleanSweep-v2.53.apk` |
+| Ramesh Radio | `radio` | 1.15 / 15 | `ramesh-radio-v1.15` | `Ramesh-Radio-v1.15.apk` |
+| PulseEQ | `equalizer` | 1.7 / 8 | `pulseeq-v1.7` | `PulseEQ-v1.7.apk` |
+| RP Vocal Remover Studio | `vocalremover` | 0.1.13 / 14 | `rp-vocal-remover-studio-v0.1.13` | `RP-Vocal-Remover-Studio-v0.1.13.apk` |
+
+The 20 October four-app batch itself (Build APK [run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275)) published Live Guard 2.50 / code 55, Ramesh Radio 1.13 / code 13, PulseEQ 1.7 / code 8 and RP Vocal Remover Studio 0.1.13 / code 14. Later solo releases that day advanced Live Guard to 2.53 and Ramesh Radio to 1.15; the table above records the end-of-day versions. Live Guard 2.50 was the first release that asked for Location, so its permission gate required a recorded physical-device install; [`docs/live-guard-2.50-device-evidence.md`](docs/live-guard-2.50-device-evidence.md) records the owner's install of the exact APK (`b4c183c8…6176`), and the published asset carries that same digest. PulseEQ 1.7 and Vocal Remover 0.1.13 contained no functional change; their versions moved because the batch publishes all four apps together and refuses to reuse a tag. Published asset sizes and digests are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+## Previous published release batch — 14 October 2026
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
@@ -11,7 +53,7 @@ This guide covers the four legacy batch modules and the separately released Oor 
 | PulseEQ | `equalizer` | 1.5 / 6 | `pulseeq-v1.5` | `PulseEQ-v1.5.apk` |
 | RP Vocal Remover Studio | `vocalremover` | 0.1.11 / 12 | `rp-vocal-remover-studio-v0.1.11` | `RP-Vocal-Remover-Studio-v0.1.11.apk` |
 
-[Publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254) passed the builds, unit/regression suites, APK checks and dual-repository release verification. All four stable releases are published on both [`RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps/releases) and [`InternetRadio`](https://github.com/universalrp2003/InternetRadio/releases). The published asset digests—not build-only candidate hashes—are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md). The latest non-public build record is [run 38523346072](https://github.com/universalrp2003/InternetRadio/actions/runs/38523346072), in [`docs/candidate-build-digests.md`](docs/candidate-build-digests.md); earlier candidate-run records are retained in Git history.
+[Publication run 38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254) passed the builds, unit/regression suites, APK checks and dual-repository release verification. All four stable releases are published on both [`RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps/releases) and [`InternetRadio`](https://github.com/universalrp2003/InternetRadio/releases). The published asset digests—not build-only candidate hashes—are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md). The associated non-public build was [run 38523346072](https://github.com/universalrp2003/InternetRadio/actions/runs/38523346072). Its candidate digest record and earlier records remain in Git history; [`docs/candidate-build-digests.md`](docs/candidate-build-digests.md) is a rolling record replaced by each later candidate build.
 
 The previously published releases, tags and assets for retired modules are retained as history. They are not built or included in new release batches.
 
@@ -63,14 +105,15 @@ Local commands (JDK 17, Android SDK and NDK required):
 ## Verified GitHub Releases
 
 1. Update the relevant module's `versionName` and `versionCode`; do not reuse a release version for changed APK bytes.
-2. Update that app's notes in `releases/` and `CHANGELOG.md`. State plainly whether those exact APK bytes were installed on a phone; never turn a CI pass into a device-test claim.
+2. Update that app's notes in `releases/` and `CHANGELOG.md`, and refresh its current-version link in the root `README.md` table. State plainly whether those exact APK bytes were installed on a phone; never turn a CI pass into a device-test claim.
 3. Push the verified changes to the authorized branch. For a normal batch publication, the workflow's branch trigger requires `[publish]` in the commit message. The 14 October release batch used this push path (run [38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254)); the workflow creates the four version-specific app release tags from the Gradle versions. A manual batch tag such as `v2026.10.14` is only a workflow input, not an additional app-release tag.
 4. The workflow fails closed unless `universalrp2003/RP-Android-Apps` is public, initialized, unarchived and reachable. Before publishing, configure the source repository Actions secret `RP_ANDROID_APPS_RELEASE_TOKEN` with `contents:write` access limited to `RP-Android-Apps`; never paste the credential into chat. If it is absent or invalid, the release step fails before creating any draft, so installed clients do not receive a bridge release before the new source is seeded.
 5. **One-time bridge seeding (completed):** the earlier bridge releases were already mirrored by publication run [38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254). Do not rerun `mirror_existing=true` for tags that now exist; the workflow intentionally refuses to overwrite a target tag. For a future migration-only mirror, verify that the target tags are new and run the workflow's mirror path only with owner authorization.
 6. Wait for all build, regression, permission, package, signer and asset checks to pass. The workflow stages the four releases as drafts, verifies size and SHA-256 on every configured destination, promotes only after draft checks, and verifies public URLs and asset digests again.
-7. Confirm each release is stable (not a draft or prerelease), each canonical release page contains the expected APK, and both repositories' copies match the recorded ledger in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+7. Confirm each release is stable (not a draft or prerelease) and its canonical page contains the expected APK. Record the public asset's API-reported size and SHA-256 in [`docs/published-release-digests.md`](docs/published-release-digests.md), and update the root README's current-version table and latest-publication summary. The release workflow does not automatically rewrite the README; until this documentation change is merged into `main`, the GitHub repository homepage will continue to show its previous README.
+8. Submit the release documentation to `main` through a pull request after its checks pass, then verify the repository homepage displays the updated version table. A README update on a development branch alone does not complete this step.
 
-The four legacy batch releases (Live Guard 2.46, Ramesh Radio 1.11, PulseEQ 1.5 and RP Vocal Remover Studio 0.1.11) are published on both `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`. Oor Arivippu 1.1.0 (current), 1.0.2, 1.0.1 and 1.0.0 are also public on both repositories from separate standalone release runs; their matching sizes, digests and canonical URLs are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md). The four legacy apps remain in the original batch, and their one-to-two-month migration grace period began on 14 October 2026. Keep the old repository, historical release pages, tags and assets intact; do not rename or archive it before grace-period/device validation. See [`docs/repository-migration.md`](docs/repository-migration.md) for the current gate and sequence.
+The four legacy batch releases (Live Guard 2.46, Ramesh Radio 1.11, PulseEQ 1.5 and RP Vocal Remover Studio 0.1.11) are published on both `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`. Oor Arivippu 1.1.1 (current), 1.1.0, 1.0.2, 1.0.1 and 1.0.0 are also public on both repositories from separate standalone release runs; their matching sizes, digests and canonical URLs are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md). The four legacy apps remain in the original batch, and their one-to-two-month migration grace period began on 14 October 2026. Keep the old repository, historical release pages, tags and assets intact; do not rename or archive it before grace-period/device validation. See [`docs/repository-migration.md`](docs/repository-migration.md) for the current gate and sequence.
 
 ### Live Guard permission gate
 

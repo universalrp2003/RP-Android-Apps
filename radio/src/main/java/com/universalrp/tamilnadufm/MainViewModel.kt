@@ -94,6 +94,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var sleepJob: Job? = null
     private var folderJob: Job? = null
 
+    /** v1.13: the last-station start happens once per app process, never on every resume. */
+    private var autoResumeTried = false
+
     /**
      * v1.3: the station lists' scroll positions live here. The Radio screen leaves the
      * composition on every tab switch, which used to drop the list back to the first
@@ -194,7 +197,37 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         pendingLocalTrack?.let { track ->
             pendingLocalTrack = null
             playLocal(track)
+            return
         }
+        autoResumeIfWanted(controller)
+    }
+
+    /**
+     * v1.13 (owner request): when the app is opened, start the station that was playing last.
+     *
+     * Three guards keep this from being intrusive:
+     *  * it happens at most once per app process, so rotating the phone, opening a sheet or
+     *    returning from another app never re-triggers it;
+     *  * it does nothing when the player already has a queue or is playing — the widget, a
+     *    notification button or audio that survived in the background is left alone;
+     *  * the More screen switch (saved in StationRepository) can turn it off for good.
+     */
+    private fun autoResumeIfWanted(controller: MediaController) {
+        if (autoResumeTried) return
+        autoResumeTried = true
+        if (!repo.autoResumeOnLaunch) return
+        // Audio started elsewhere (widget, notification, headset, a survivor in the
+        // background) is never restarted — and never paused by a duplicate play().
+        if (PlayerBus.state.value.isPlaying) return
+        if (controller.currentMediaItem != null || controller.isPlaying || controller.mediaItemCount > 0) return
+        resumeLast()
+    }
+
+    fun autoResumeEnabled(): Boolean = repo.autoResumeOnLaunch
+
+    fun setAutoResume(enabled: Boolean) {
+        repo.autoResumeOnLaunch = enabled
+        mutate { it.copy(message = if (enabled) "The last station will start when you open the app." else "Automatic start is off. Tap a station to play it.") }
     }
 
     fun detachController(controller: MediaController) {

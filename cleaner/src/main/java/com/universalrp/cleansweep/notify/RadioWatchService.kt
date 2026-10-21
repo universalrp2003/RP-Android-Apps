@@ -254,15 +254,18 @@ class RadioWatchService : Service() {
             val limitMb = if (DataUsageTracker.hasConfiguredPlan(this))
                 DataUsageTracker.getPackLimitGb(this) * 1024.0 else 0.0
             val status = NetworkSplit.status(this, limitMb)
-            val four = if (status.dailyLimitMb > 0) NetworkSplit.format(status.fourGLeftMb) + " left"
-            else NetworkSplit.format(status.fourGUsedMb) + " used"
+            // next build: these counters start when the switch is turned on, so they cannot know
+            // how much of the pack was already used. Report what was actually counted; the
+            // pack remainder belongs to the Live Guard card, which measures the whole pack.
+            val four = NetworkSplit.format(status.fourGUsedMb) + " used"
             val five = if (status.fiveGUnlimited) "Unlimited"
-            else if (status.dailyLimitMb > 0) NetworkSplit.format(status.fiveGLeftMb) + " left"
             else NetworkSplit.format(status.fiveGUsedMb) + " used"
             "4G $four · 5G $five"
         }
         return NotificationCompat.Builder(this, CHANNEL)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            // 2.53 — a launcher icon as a status-bar icon renders as a white square (Android only
+            // uses the alpha channel there). This is the same monochrome glyph the data notification uses.
+            .setSmallIcon(R.drawable.ic_stat_data)
             .setContentTitle("Live Guard")
             .setContentText(body)
             .setStyle(NotificationCompat.BigTextStyle().bigText("$detail\n$body"))

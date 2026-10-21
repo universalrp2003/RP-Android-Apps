@@ -393,10 +393,17 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
               Column(Modifier.fillMaxWidth()) {
                 VoiceSwitch(
                     title = tr("Daily security risk watch"),
-                    subtitle = tr(
-                        "Once a day CleanSweep checks security settings, permissions, battery and system health. " +
-                            "Speaks out loud strictly when High or Medium risk items are found."
-                    ),
+                    subtitle = if (state.dailyScanOn) {
+                        tr(
+                            "Once a day CleanSweep checks security settings, permissions, battery and system health. " +
+                                "Speaks out loud strictly when High or Medium risk items are found."
+                        )
+                    } else {
+                        tr(
+                            "Off. The scheduled daily security check is paused. Turn this on to resume it; " +
+                                "Run the daily check now remains available for a one-time check."
+                        )
+                    },
                     checked = state.dailyScanOn,
                     onCheckedChange = { vm.setDailyScanOn(it) },
                 )
