@@ -3155,7 +3155,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun refreshWeatherUiState() {
         viewModelScope.launch(Dispatchers.IO) {
             val newlyAutoEnabled = WeatherAlertStore.ensureAutoEnabledOnGpsUpdate(ctx)
-            if (newlyAutoEnabled) {
+            if (newlyAutoEnabled || (WeatherAlertStore.enabled(ctx) && WeatherAlertStore.nextCheckAfterMs(ctx) == 0L)) {
                 runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(ctx) }
                 runCatching { com.universalrp.cleansweep.work.WeatherWatchWorker.runImmediateCheck(ctx) }
             }

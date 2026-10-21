@@ -1546,6 +1546,7 @@ object Lang {
         "Tomorrow.io 1-minute precision (optional)" to "Tomorrow.io 1-நிமிட துல்லியம் (விருப்பத்தேர்வு)",
         "Personal Tomorrow.io key active (encrypted on phone)" to "தனிப்பட்ட Tomorrow.io விசை செயலில் உள்ளது (போனில் மறையாக்கம்)",
         "Works free without a key — add a personal key for 1-minute radar" to "விசை இன்றி இலவசமாக வேலை செய்யும் — 1-நிமிட துல்லியத்திற்கு விசை சேர்க்கலாம்",
+        "Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota" to "Tomorrow.io 1-நிமிட ரேடார் விசை இன்றி தானாகவே இயங்குகிறது — கூடுதல் வரம்பிற்கு மட்டும் சொந்த விசை",
         "Tomorrow.io API key" to "Tomorrow.io API விசை",
         "Save key" to "விசையைச் சேமி",
         "Remove key" to "விசையை நீக்கு",

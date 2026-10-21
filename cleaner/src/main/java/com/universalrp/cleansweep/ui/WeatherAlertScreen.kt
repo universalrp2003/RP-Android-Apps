@@ -612,7 +612,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                                 if (w.hasTomorrowKey) {
                                     tr("Personal Tomorrow.io key active (encrypted on phone)")
                                 } else {
-                                    tr("Works free without a key — add a personal key for 1-minute radar")
+                                    tr("Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota")
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (w.hasTomorrowKey) GoodGreen else TextSecondary,

@@ -260,4 +260,64 @@ class WeatherAlertAndPlacePolicyTest {
         assertEquals("622301", ranked.first().postalCode)
         assertTrue(ranked.first().details.contains("Pudukkottai"))
     }
+
+    @Test
+    fun defaultKeylessTomorrowTimelinesAndCalibratedFallbacksPreventFalseRainAlerts() {
+        val now = InstantIsoMs("2026-10-21T13:11:00Z")
+        // Exact live Alangudi keyless /v4/timelines payload at 6:41 PM IST: cloudy (97.9%), 0 mm/hr rain.
+        val alangudiKeylessJson = """
+            {
+              "data": {
+                "timelines": [
+                  {
+                    "timestep": "1h",
+                    "startTime": "2026-10-21T13:00:00Z",
+                    "endTime": "2026-10-21T15:00:00Z",
+                    "intervals": [
+                      {"startTime": "2026-10-21T13:00:00Z", "values": {"cloudCover": 97.93, "precipitationIntensity": 0, "temperature": 25.42, "weatherCode": 1001, "windGust": 4.6, "windSpeed": 2.7}},
+                      {"startTime": "2026-10-21T15:00:00Z", "values": {"cloudCover": 99.22, "precipitationIntensity": 0, "temperature": 25.09, "weatherCode": 2100, "windGust": 3.1, "windSpeed": 1.8}}
+                    ]
+                  },
+                  {
+                    "timestep": "1m",
+                    "startTime": "2026-10-21T13:11:00Z",
+                    "endTime": "2026-10-21T14:11:00Z",
+                    "intervals": [
+                      {"startTime": "2026-10-21T13:11:00Z", "values": {"cloudCover": 97.93, "precipitationIntensity": 0, "temperature": 25.42, "weatherCode": 1001, "windGust": 4.6, "windSpeed": 2.7}},
+                      {"startTime": "2026-10-21T13:36:00Z", "values": {"cloudCover": 97.66, "precipitationIntensity": 0, "temperature": 25.24, "weatherCode": 1001, "windGust": 4.2, "windSpeed": 2.5}}
+                    ]
+                  }
+                ]
+              }
+            }
+        """.trimIndent()
+        val snapDry = WeatherForecastClient.parseTomorrowTimelinesResponse(alangudiKeylessJson, now)
+        assertEquals(WeatherSourceKind.TOMORROW_IO_1M, snapDry.source)
+        assertEquals(0.0, snapDry.currentPrecipMmPerHour, 0.001)
+        val decisionDry = WeatherAlertPolicy.evaluate(snapDry, "Alangudi", WeatherEpisodeMemory(), nowMs = now)
+        assertEquals(WeatherSeverity.CLEAR_OR_NORMAL, decisionDry.severity)
+        assertFalse(decisionDry.shouldAnnounce)
+
+        // Coarse Open-Meteo NWP trace drizzle (0.15 mm over 15m, low probability) must NOT trigger a false alert:
+        val noisyOpenMeteo = """
+            {
+              "current": {"temperature_2m": 25.5, "precipitation": 0.15, "rain": 0.15, "showers": 0.0, "weather_code": 51, "cloud_cover": 95, "wind_gusts_10m": 15.0},
+              "minutely_15": {
+                "time": [${now / 1000}, ${now / 1000 + 900}],
+                "precipitation": [0.15, 0.20],
+                "rain": [0.15, 0.20],
+                "showers": [0.0, 0.0],
+                "precipitation_probability": [25, 30],
+                "wind_gusts_10m": [15.0, 16.0],
+                "weather_code": [51, 51]
+              }
+            }
+        """.trimIndent()
+        val snapNoisy = WeatherForecastClient.parseOpenMeteoResponse(noisyOpenMeteo, now)
+        val decisionNoisy = WeatherAlertPolicy.evaluate(snapNoisy, "Alangudi", WeatherEpisodeMemory(), nowMs = now)
+        assertEquals(WeatherSeverity.CLEAR_OR_NORMAL, decisionNoisy.severity)
+        assertFalse(decisionNoisy.shouldAnnounce)
+    }
+
+    private fun InstantIsoMs(iso: String): Long = java.time.Instant.parse(iso).toEpochMilli()
 }

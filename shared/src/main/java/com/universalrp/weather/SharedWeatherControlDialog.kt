@@ -152,7 +152,11 @@ fun SharedWeatherControlDialog(
     val tomorrowSub = if (state.hasTomorrowKey) {
         bi(tamil, "Personal Tomorrow.io key active (Keystore encrypted)", "Tomorrow.io விசை செயலில் உள்ளது (பாதுகாப்பாகச் சேமிக்கப்பட்டது)")
     } else {
-        bi(tamil, "Works free without a key — or get a free personal key below", "விசை இன்றி இலவசமாக வேலை செய்யும் — அல்லது இலவச விசை பெறலாம்")
+        bi(
+            tamil,
+            "Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota",
+            "Tomorrow.io 1-நிமிட ரேடார் விசை இன்றி தானாகவே இயங்குகிறது — கூடுதல் வரம்பிற்கு மட்டும் சொந்த விசை",
+        )
     }
     val keyFieldLabel = bi(tamil, "Tomorrow.io API key", "Tomorrow.io API விசை")
     val saveKeyLabel = bi(tamil, "Save key", "விசையைச் சேமி")

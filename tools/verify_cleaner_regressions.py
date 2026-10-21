@@ -63,7 +63,7 @@ EXPECTED = {
     # 2.56 & 2.57: 4G/5G radio transitions, 2147483647 cell sentinel filtering, 30-min rain
     # episode memory, 24x7 severe storm Quiet-Hours override, and PIN/village disambiguation.
     "com.universalrp.cleansweep.data.CellTowerAndRadioPolicyTest": 4,
-    "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 6,
+    "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 7,
     "com.universalrp.cleansweep.weather.WeatherUpgradeAndBannerTest": 3,
 }
 

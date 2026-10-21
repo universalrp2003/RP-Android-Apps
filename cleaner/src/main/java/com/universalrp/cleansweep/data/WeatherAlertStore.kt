@@ -161,8 +161,11 @@ object WeatherAlertStore {
         )
     }
 
-    fun nextCheckAfterMs(context: Context): Long =
-        prefs(context).getLong(KEY_NEXT_CHECK_AFTER_MS, 0L)
+    fun nextCheckAfterMs(context: Context): Long {
+        val p = prefs(context)
+        if (p.getString(KEY_LAST_SOURCE, "") != WeatherSourceKind.TOMORROW_IO_1M.name) return 0L
+        return p.getLong(KEY_NEXT_CHECK_AFTER_MS, 0L)
+    }
 
     fun saveEvaluation(
         context: Context,
