@@ -6,6 +6,31 @@ This file indexes five actively maintained products (the four-app batch plus Oor
 
 _No unreleased changes._
 
+## Published — six app updates (21 October 2026)
+
+Live Guard 2.55 / code 60, Ramesh Radio 1.16 / code 16, PulseEQ 1.8 / code 9 and
+RP Vocal Remover Studio 0.1.14 / code 15 were published by Build APK
+[run 39544037445](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39544037445);
+Oor Arivippu 1.1.2 / code 7 by its standalone workflow in
+[run 39547449350](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39547449350) and
+Secret Message 1.1.2 / code 4 by its standalone workflow in
+[run 39547449434](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39547449434).
+Verified public asset sizes and SHA-256 values are in
+[`docs/published-release-digests.md`](docs/published-release-digests.md). All six are published on
+`RP-Android-Apps` only; no new Android permission was added, and the exact APKs were not installed
+on a phone before publication.
+
+- **All six apps:** a direct Guide button on the main screen opens the bilingual, expandable
+  in-app guide.
+- **Ramesh Radio 1.16:** local audio files can be seeked with a position bar while playing.
+- **Oor Arivippu 1.1.2:** compact tap-to-open voice settings and a 0–100% speech-volume slider.
+- Release notes: [`releases/live-guard-v2.55.md`](releases/live-guard-v2.55.md),
+  [`releases/ramesh-radio-v1.16.md`](releases/ramesh-radio-v1.16.md),
+  [`releases/pulseeq-v1.8.md`](releases/pulseeq-v1.8.md),
+  [`releases/rp-vocal-remover-studio-v0.1.14.md`](releases/rp-vocal-remover-studio-v0.1.14.md),
+  [`releases/oor-arivippu-v1.1.2.md`](releases/oor-arivippu-v1.1.2.md),
+  [`secretmessage/releases/secret-message-v1.1.2.md`](secretmessage/releases/secret-message-v1.1.2.md).
+
 ## Published — Live Guard 2.54 (21 October 2026)
 
 Published alone by Build APK [run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599).

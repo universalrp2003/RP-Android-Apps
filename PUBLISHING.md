@@ -25,13 +25,20 @@ does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
 - `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
   the baseline for the next permission delta.
 
-## Latest publication — Live Guard 2.54 (21 October 2026)
+## Latest publication — six app updates (21 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
-| Live Guard / CleanSweep | `cleaner` | 2.54 / 59 | `live-guard-v2.54` | `CleanSweep-v2.54.apk` |
+| Live Guard / CleanSweep | `cleaner` | 2.55 / 60 | `live-guard-v2.55` | `CleanSweep-v2.55.apk` |
+| Ramesh Radio | `radio` | 1.16 / 16 | `ramesh-radio-v1.16` | `Ramesh-Radio-v1.16.apk` |
+| PulseEQ | `equalizer` | 1.8 / 9 | `pulseeq-v1.8` | `PulseEQ-v1.8.apk` |
+| RP Vocal Remover Studio | `vocalremover` | 0.1.14 / 15 | `rp-vocal-remover-studio-v0.1.14` | `RP-Vocal-Remover-Studio-v0.1.14.apk` |
+| Oor Arivippu | `oorarivippu` | 1.1.2 / 7 | `oor-arivippu-v1.1.2` | `Oor-Arivippu-v1.1.2.apk` |
+| Secret Message | `secretmessage/wifi-test` | 1.1.2 / 4 | `secret-message-v1.1.2` | `Secret-Message-v1.1.2.apk` |
 
-[Publication run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599) passed the build, required unit/regression suites, APK checks and post-publication asset verification. The public asset is 13,818,416 bytes with SHA-256 `b7de1d35845caa9f7e2a640c0868e7d32512a168a9aff021c4e4053c011af1b1`. It adds no Android permission. Although it was not installed before publication, the owner reports successful post-publication testing on an OPPO A3s (3 GB RAM) and Redmi 13 5G, with Google Play Protect reporting “This app looks safe.” The screenshots do not show installed version or APK SHA-256, so the report is not hash-matched to the public asset. The owner had reported that 2.53 worked on the OPPO A3s apart from the zero-entry issue addressed here. Other apps were not republished. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+The four batch apps were published by [Build APK run 39544037445](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39544037445); Oor Arivippu 1.1.2 by its standalone [run 39547449350](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39547449350) and Secret Message 1.1.2 by its standalone [run 39547449434](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39547449434), both triggered by the publish markers in the PR #12 merge commit on `main` (workflow dispatch is not available to the Arena integration, which returns 403). Each run passed its build, unit/regression, APK and post-publication asset checks; no app added an Android permission, and the exact APKs were not installed on a phone before publication. All six are published on `RP-Android-Apps` only; the older `InternetRadio` releases remain unchanged. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+Live Guard 2.54 / code 59 was published earlier the same day, alone, by [run 39526559599](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39526559599); its owner device report (OPPO A3s and Redmi 13 5G, Play Protect “This app looks safe”, not hash-matched to the public asset) is recorded in the ledger.
 
 ## Previous four-app batch — 20 October 2026
 
