@@ -30,4 +30,4 @@ Upgrading travel voice clarity across every village, town, district, landmark, d
 
 ## Verification Status
 
-- Automated bilingual UI & About link checks, release unit & live neural voice synthesis tests, release Android Lint, stable signer verification (`9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`), and public GitHub Release SHA-256 verification executed in GitHub Actions CI.
+- Published APK: **`Oor-Arivippu-v1.1.5.apk`** (`12,777,932` bytes, GitHub Release SHA-256 `1b5b5b9ef8134d77cf5565e479cd04610cc218a316baaa8f866d31eeb0f7d5a3`), built, tested, signed, and verified by `Oor Arivippu stable release` [run 39794121876](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39794121876) from commit `d25dbb3` (`arena/05a52d45-rp-android-apps`). Automated bilingual UI & About link checks (`113` Tamil/English fields), release unit & live Tamil/English neural voice synthesis tests, release Android Lint, stable signer verification (`9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`), and public GitHub Release SHA-256 verification passed in GitHub Actions CI.
