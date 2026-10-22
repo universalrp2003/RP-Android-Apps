@@ -19,7 +19,8 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent?) {
         val app = context?.applicationContext ?: return
-        // Apply the one-time opt-in migration before any restored worker can run a daily scan.
+        // Apply one-time defaults/migrations before restoring workers after boot or update.
+        Announcer.ensureHdVoiceDefaults262(app)
         Announcer.ensureDailyScanDefaultOff(app)
         FloatingVolumeControl.sync(
             app,

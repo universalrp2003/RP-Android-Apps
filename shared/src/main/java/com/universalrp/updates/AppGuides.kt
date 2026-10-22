@@ -148,14 +148,16 @@ object AppGuides {
             topic(
                 "Voice announcements and calls",
                 "குரல் அறிவிப்புகள் மற்றும் அழைப்புகள்",
-                "Voice can tell you about charging, heat, a transport change (Wi-Fi ⇄ mobile) and a 4G ⇄ 5G hop, " +
-                    "each with its own switch, in Tamil or English. Nothing is ever spoken while the phone is " +
-                    "ringing or you are on a call: announcements wait, and the Voice screen shows " +
-                    "\"Blocked: phone call in progress\" when that happens.",
-                "சார்ஜிங், வெப்பம், இணைப்பு மாற்றம் (Wi-Fi ⇄ மொபைல்), 4G ⇄ 5G மாற்றம் ஆகியவற்றை குரல் கூறும்; " +
-                    "ஒவ்வொன்றுக்கும் தனி சுவிட்ச், தமிழ் அல்லது ஆங்கிலம். போன் அடிக்கும்போதோ நீங்கள் அழைப்பில் " +
-                    "இருக்கும்போதோ எதுவும் ஒலிக்காது: அறிவிப்புகள் காத்திருக்கும், அப்போது குரல் திரையில் " +
-                    "\"தடுக்கப்பட்டது: தொலைபேசி அழைப்பு நடைபெறுகிறது\" என்று தெரியும்.",
+                "Voice defaults ON with 10 Studio Ultra-HD online voices (5 Male + 5 Female) and automatic daily " +
+                    "Male ↔ Female rotation, falling back automatically to your phone's installed Android TTS " +
+                    "voice whenever offline. It can tell you about charging, heat, transport changes (Wi-Fi ⇄ " +
+                    "mobile) and 4G ⇄ 5G hops in Tamil or English. Nothing is ever spoken during a phone call: " +
+                    "announcements wait and show \"Blocked: phone call in progress\".",
+                "குரல் அறிவிப்பு இயல்பாகவே (Default ON) 10 ஸ்டுடியோ Ultra-HD ஆன்லைன் குரல்களுடன் (5 ஆண் + 5 பெண்) " +
+                    "தினமும் ஆண் ↔ பெண் தானியங்கி மாற்றத்துடன் இயங்கும்; இணையம் இல்லாதபோது போனின் சிஸ்டம் TTS " +
+                    "குரலுக்குத் தானாக மாறும். சார்ஜிங், வெப்பம், Wi-Fi ⇄ மொபைல் மற்றும் 4G ⇄ 5G மாற்றங்களைத் " +
+                    "தமிழ் அல்லது ஆங்கிலத்தில் கூறும். தொலைபேசி அழைப்பின்போது எதுவும் ஒலிக்காது (\"தடுக்கப்பட்டது: " +
+                    "தொலைபேசி அழைப்பு நடைபெறுகிறது\").",
             ),
             topic(
                 "Rain and cyclone voice alerts",
@@ -504,11 +506,13 @@ object AppGuides {
                 "Turning it on",
                 "இயக்குதல்",
                 "Tap the main switch, allow location, and keep the ongoing notification: Android needs it for " +
-                    "tracking, and it is also your visible off switch. Tracking stops when you tap stop, and the " +
-                    "notification says so.",
+                    "tracking, and it is also your visible off switch. Oor Arivippu includes 10 Studio Ultra-HD " +
+                    "online voices (5 Male + 5 Female) with automatic daily Male ↔ Female rotation turned ON by " +
+                    "default, plus instant automatic fallback to your phone's installed Android TTS voice offline.",
                 "முதன்மை சுவிட்சைத் தட்டி, இருப்பிடத்தை அனுமதித்து, நிலை அறிவிப்பை வைத்திருங்கள்: கண்காணிப்புக்கு " +
-                    "Android அதைக் கேட்கிறது, அதுவே உங்கள் தெரியும் நிறுத்தும் பொத்தான். நிறுத்தும் பொத்தானைத் " +
-                    "தட்டியதும் கண்காணிப்பு நிற்கும்; அறிவிப்பும் அதைக் கூறும்.",
+                    "Android அதைக் கேட்கிறது, அதுவே உங்கள் நிறுத்தும் பொத்தான். ஊர் அறிவிப்பில் 10 ஸ்டுடியோ Ultra-HD " +
+                    "ஆன்லைன் குரல்களும் (5 ஆண் + 5 பெண்) தினசரி ஆண் ↔ பெண் தானியங்கி மாற்றமும் இயல்பாகவே (Default ON) " +
+                    "இயங்கும்; இணையம் இல்லாதபோது போனின் சிஸ்டம் குரலுக்குத் தானாக மாறும்.",
             ),
             topic(
                 "What is announced",

@@ -16,8 +16,8 @@ android {
         applicationId = "com.oorarivippu.voiceannouncer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 9
-        versionName = "1.1.4"
+        versionCode = 10
+        versionName = "1.1.5"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -69,6 +69,8 @@ android {
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+    testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     implementation(platform("androidx.compose:compose-bom:2025.08.00"))
     implementation("androidx.core:core-ktx:1.15.0")

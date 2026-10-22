@@ -38,7 +38,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.NotificationCompat
 import com.universalrp.updates.CallGuard
+import com.universalrp.voice.SharedNeuralVoiceEngine
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
@@ -347,10 +350,44 @@ object SharedWeatherRuntime {
         if (!manual && !bypassQuietHours && inDefaultQuietHours()) return false
 
         val mainHandler = Handler(Looper.getMainLooper())
+        duckAudio?.let { mainHandler.post { runCatching { it(true) } } }
+
+        // 1. Studio Ultra-HD Online Voice FIRST (with automatic daily Male <-> Female rotation)
+        if (SharedNeuralVoiceEngine.hasInternet(app)) {
+            val useTamil = preferTamil && tamilText.isNotBlank()
+            val chosenText = if (useTamil) tamilText else english
+            val profile = SharedNeuralVoiceEngine.scheduledVoiceForDate()
+            val playedOnline = withContext(Dispatchers.IO) {
+                val mp3 = SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
+                    cacheDir = app.cacheDir,
+                    text = chosenText,
+                    profile = profile,
+                    useTamil = useTamil,
+                )
+                if (mp3 != null && !CallGuard.inCall(app)) {
+                    val attrs = android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    SharedNeuralVoiceEngine.playMp3FileBlocking(
+                        file = mp3,
+                        volumeScalar = 1.0f,
+                        audioAttributes = attrs,
+                        shouldStop = { CallGuard.inCall(app) },
+                    )
+                } else {
+                    false
+                }
+            }
+            if (playedOnline) {
+                duckAudio?.let { mainHandler.post { runCatching { it(false) } } }
+                return true
+            }
+        }
+
+        // 2. Instant automatic fallback to installed Android System TTS when offline!
         val finished = CompletableDeferred<Boolean>()
         var engineRef: TextToSpeech? = null
-
-        duckAudio?.let { mainHandler.post { runCatching { it(true) } } }
         return try {
             mainHandler.post {
                 engineRef = TextToSpeech(app) { status ->

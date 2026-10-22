@@ -108,7 +108,16 @@ data class UiStrings(
     val destinationViewOnMap: String,
     val destinationChooseCancel: String,
     val secretMessageReleaseLabel: String,
-    val unknownPlace: String
+    val unknownPlace: String,
+    val studioHdSectionTitle: String,
+    val studioHdAutoTitle: String,
+    val studioHdAutoSubtitle: String,
+    val studioHdTodayPrefix: String,
+    val studioHdTomorrowPrefix: String,
+    val studioHdPreviewMale: String,
+    val studioHdPreviewFemale: String,
+    val studioHdPickPrompt: String,
+    val studioHdAutoRadioLabel: String,
 )
 
 object BilingualStrings {
@@ -217,7 +226,16 @@ object BilingualStrings {
         destinationViewOnMap = "வரைபடத்தில் பார்",
         destinationChooseCancel = "ரத்துசெய்",
         secretMessageReleaseLabel = "இரகசிய செய்தி (Secret Message)",
-        unknownPlace = "கண்டறியப்படவில்லை"
+        unknownPlace = "கண்டறியப்படவில்லை",
+        studioHdSectionTitle = "ஸ்டுடியோ Ultra-HD ஆன்லைன் குரல்கள் (10 குரல்கள்)",
+        studioHdAutoTitle = "தினசரி ஆண் ↔ பெண் தானியங்கி Ultra-HD குரல்",
+        studioHdAutoSubtitle = "இயல்பாகவே (Default ON) இயக்கத்தில் உள்ளது. 10 ஸ்டுடியோ Ultra-HD குரல்களில் தினமும் ஆண் ↔ பெண் குரல் தானாக மாறும்; இணையம் இல்லாதபோது போன் சிஸ்டம் குரலுக்கு மாறும்.",
+        studioHdTodayPrefix = "இன்று:",
+        studioHdTomorrowPrefix = "நாளை:",
+        studioHdPreviewMale = "👨 ஆண் HD குரல் சோதனை",
+        studioHdPreviewFemale = "👩 பெண் HD குரல் சோதனை",
+        studioHdPickPrompt = "10 ஸ்டுடியோ Ultra-HD குரல்கள் (5 ஆண் + 5 பெண் — தட்டி சோதனை செய்):",
+        studioHdAutoRadioLabel = "🔄 தினசரி ஆண் ↔ பெண் தானியங்கி மாற்றம் (பரிந்துரை)",
     )
 
     val ENGLISH = UiStrings(
@@ -324,7 +342,16 @@ object BilingualStrings {
         destinationViewOnMap = "View on map",
         destinationChooseCancel = "Cancel",
         secretMessageReleaseLabel = "Secret Message",
-        unknownPlace = "Not detected yet"
+        unknownPlace = "Not detected yet",
+        studioHdSectionTitle = "Studio Ultra-HD Online Voices (10 Voices)",
+        studioHdAutoTitle = "Daily Auto Male ↔ Female Ultra-HD Voice",
+        studioHdAutoSubtitle = "Turned ON by default. Alternates Male HD ↔ Female HD every day across 10 studio neural voices; automatically falls back to Android system voice offline.",
+        studioHdTodayPrefix = "Today:",
+        studioHdTomorrowPrefix = "Tomorrow:",
+        studioHdPreviewMale = "👨 Preview Male HD",
+        studioHdPreviewFemale = "👩 Preview Female HD",
+        studioHdPickPrompt = "10 Studio Ultra-HD Voices (5 Male + 5 Female — tap to preview):",
+        studioHdAutoRadioLabel = "🔄 Daily Auto Male ↔ Female Rotation (Recommended)",
     )
 
     fun forLang(langCode: String): UiStrings {
