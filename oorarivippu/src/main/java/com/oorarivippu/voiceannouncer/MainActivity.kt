@@ -949,6 +949,210 @@ fun OorArivippuScreen(
                 }
             }
 
+            // 4B. Studio Ultra-HD Online Voices + Daily Auto Male <-> Female Rotation (Default ON!)
+            var studioVoicesExpanded by rememberSaveable { mutableStateOf(true) }
+            val todayStudioProfile = remember {
+                com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(java.time.LocalDate.now())
+            }
+            val tomorrowStudioProfile = remember {
+                com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(java.time.LocalDate.now().plusDays(1))
+            }
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.2.dp, Color(0xFF0F766E).copy(alpha = 0.45f), RoundedCornerShape(16.dp))
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.RecordVoiceOver,
+                            contentDescription = null,
+                            tint = Color(0xFF0F766E)
+                        )
+                        Text(
+                            text = ui.studioHdSectionTitle,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp,
+                            color = Color(0xFF0F766E)
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                AppPreferences.setAutoDailyGenderSwap(!state.autoDailyGenderSwap)
+                            },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
+                            Text(
+                                text = ui.studioHdAutoTitle,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            Text(
+                                text = ui.studioHdAutoSubtitle,
+                                color = Color(0xFF64748B),
+                                fontSize = 12.sp,
+                                lineHeight = 16.sp
+                            )
+                        }
+                        Switch(
+                            checked = state.autoDailyGenderSwap,
+                            onCheckedChange = { enabled ->
+                                AppPreferences.setAutoDailyGenderSwap(enabled)
+                            }
+                        )
+                    }
+
+                    val todayVoiceText = if (state.appLanguage == "en") todayStudioProfile.titleEn else todayStudioProfile.titleTa
+                    val tomorrowVoiceText = if (state.appLanguage == "en") tomorrowStudioProfile.titleEn else tomorrowStudioProfile.titleTa
+                    val scheduleSummaryText = "${ui.studioHdTodayPrefix} $todayVoiceText\n${ui.studioHdTomorrowPrefix} $tomorrowVoiceText"
+                    Text(
+                        text = scheduleSummaryText,
+                        color = Color(0xFF0F766E),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 17.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = {
+                                AppPreferences.setOnlineNeuralHdEnabled(true)
+                                val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
+                                    action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
+                                    putExtra(LocationAnnouncementService.EXTRA_PREVIEW_GENDER, "MALE")
+                                }
+                                context.startService(previewIntent)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(text = ui.studioHdPreviewMale, fontSize = 12.sp)
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                AppPreferences.setOnlineNeuralHdEnabled(true)
+                                val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
+                                    action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
+                                    putExtra(LocationAnnouncementService.EXTRA_PREVIEW_GENDER, "FEMALE")
+                                }
+                                context.startService(previewIntent)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp)
+                        ) {
+                            Text(text = ui.studioHdPreviewFemale, fontSize = 12.sp)
+                        }
+                    }
+
+                    Divider(color = Color(0xFFE2E8F0))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { studioVoicesExpanded = !studioVoicesExpanded },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = ui.studioHdPickPrompt,
+                            modifier = Modifier.weight(1f),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Icon(
+                            imageVector = if (studioVoicesExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null,
+                            tint = Color(0xFF0F766E)
+                        )
+                    }
+
+                    if (studioVoicesExpanded) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    AppPreferences.setSelectedOnlineVoiceId("")
+                                    val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
+                                        action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
+                                        putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, todayStudioProfile.id)
+                                    }
+                                    context.startService(previewIntent)
+                                }
+                                .padding(vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            androidx.compose.material3.RadioButton(
+                                selected = state.autoDailyGenderSwap || state.selectedOnlineVoiceId.isBlank(),
+                                onClick = {
+                                    AppPreferences.setSelectedOnlineVoiceId("")
+                                    val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
+                                        action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
+                                        putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, todayStudioProfile.id)
+                                    }
+                                    context.startService(previewIntent)
+                                }
+                            )
+                            Text(
+                                text = ui.studioHdAutoRadioLabel,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+
+                        com.universalrp.voice.SharedNeuralVoiceEngine.CURATED_VOICES.forEach { profile ->
+                            val voiceLabel = if (state.appLanguage == "en") profile.titleEn else profile.titleTa
+                            val isSelected = !state.autoDailyGenderSwap && state.selectedOnlineVoiceId == profile.id
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        AppPreferences.setSelectedOnlineVoiceId(profile.id)
+                                        val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
+                                            action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
+                                            putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, profile.id)
+                                        }
+                                        context.startService(previewIntent)
+                                    }
+                                    .padding(vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                androidx.compose.material3.RadioButton(
+                                    selected = isSelected,
+                                    onClick = {
+                                        AppPreferences.setSelectedOnlineVoiceId(profile.id)
+                                        val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
+                                            action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
+                                            putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, profile.id)
+                                        }
+                                        context.startService(previewIntent)
+                                    }
+                                )
+                                Text(
+                                    text = voiceLabel,
+                                    fontSize = 12.sp,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             // 5. Current Place & Speed Telemetry Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -1393,11 +1597,11 @@ fun OorArivippuScreen(
                     Divider(color = Color(0xFFE2E8F0))
                     Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                     val releaseLinks = listOf(
-                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.61",
+                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.62",
                         ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.18",
                         ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
                         ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
-                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.4",
+                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.5",
                         ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.2"
                     )
                     releaseLinks.forEach { (label, url) ->

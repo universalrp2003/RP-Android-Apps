@@ -247,10 +247,12 @@ data class UiState(
     val aiUsedMs: Long = 0L,
     // ---------------------------------------------------------------- voice & daily watch
     /** The master voice switch (Settings → Voice). */
-    val voiceOn: Boolean = false,
+    val voiceOn: Boolean = true,
     val voiceLouder: Boolean = false,
-    /** v2.6: use the phone's natural cloud voice instead of the robotic offline one. */
+    /** v2.62: Studio Ultra-HD cloud voice + Daily Auto Male <-> Female rotation default ON. */
     val onlineVoice: Boolean = true,
+    val autoDailyGenderSwap: Boolean = true,
+    val preferredOnlineVoiceId: String = "",
     val voiceQuietStart: Int = Announcer.DEFAULT_QUIET_START,
     val voiceQuietEnd: Int = Announcer.DEFAULT_QUIET_END,
     val voiceBatteryLow: Boolean = true,
@@ -1448,6 +1450,66 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(onlineVoice = on) }
     }
 
+    fun setAutoDailyGenderSwap(on: Boolean) {
+        Announcer.setAutoDailyGenderSwap(ctx, on)
+        mutate {
+            it.copy(
+                autoDailyGenderSwap = on,
+                onlineVoice = if (on) {
+                    Announcer.setOnlineVoice(ctx, true)
+                    true
+                } else {
+                    it.onlineVoice
+                },
+            )
+        }
+    }
+
+    fun selectStudioOnlineVoice(profile: com.universalrp.voice.CuratedNeuralVoiceProfile?) {
+        if (profile == null) {
+            Announcer.setAutoDailyGenderSwap(ctx, true)
+            Announcer.setPreferredOnlineVoiceId(ctx, "")
+            Announcer.setOnlineVoice(ctx, true)
+            val today = com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate()
+            Announcer.previewOnlineVoice(ctx, today)
+            val label = if (Lang.isTamil) today.titleTa else today.titleEn
+            mutate {
+                it.copy(
+                    onlineVoice = true,
+                    autoDailyGenderSwap = true,
+                    preferredOnlineVoiceId = "",
+                    message = tr("Playing Studio Ultra-HD voice sample: %s", label),
+                )
+            }
+        } else {
+            Announcer.setAutoDailyGenderSwap(ctx, false)
+            Announcer.setPreferredOnlineVoiceId(ctx, profile.id)
+            Announcer.setOnlineVoice(ctx, true)
+            Announcer.previewOnlineVoice(ctx, profile)
+            val label = if (Lang.isTamil) profile.titleTa else profile.titleEn
+            mutate {
+                it.copy(
+                    onlineVoice = true,
+                    autoDailyGenderSwap = false,
+                    preferredOnlineVoiceId = profile.id,
+                    message = tr("Playing Studio Ultra-HD voice sample: %s", label),
+                )
+            }
+        }
+    }
+
+    fun previewGenderStudioVoice(gender: com.universalrp.voice.NeuralVoiceGender) {
+        Announcer.setOnlineVoice(ctx, true)
+        val profile = Announcer.previewGenderVoice(ctx, gender)
+        val label = if (Lang.isTamil) profile.titleTa else profile.titleEn
+        mutate {
+            it.copy(
+                onlineVoice = true,
+                message = tr("Playing Studio Ultra-HD voice sample: %s", label),
+            )
+        }
+    }
+
     fun setLouderVoice(on: Boolean) {
         Announcer.setLouderVoice(ctx, on)
         mutate { it.copy(voiceLouder = on) }
@@ -1550,11 +1612,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Re-reads everything the voice settings screen shows. */
     private fun loadVoiceSettings() {
+        Announcer.ensureHdVoiceDefaults262(ctx)
         mutate {
             it.copy(
                 voiceOn = Announcer.enabled(ctx),
                 voiceLouder = Announcer.louderVoice(ctx),
                 onlineVoice = Announcer.onlineVoice(ctx),
+                autoDailyGenderSwap = Announcer.autoDailyGenderSwap(ctx),
+                preferredOnlineVoiceId = Announcer.preferredOnlineVoiceId(ctx),
                 voiceQuietStart = Announcer.quietStart(ctx),
                 voiceQuietEnd = Announcer.quietEnd(ctx),
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),

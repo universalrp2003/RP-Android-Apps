@@ -147,6 +147,115 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
               }
             }
 
+            // ------------------------------------------------------------ Studio Ultra-HD Voices (v2.62, Default ON!)
+            PanelCard(Modifier.fillMaxWidth()) {
+                val isTa = com.universalrp.cleansweep.data.Lang.isTamil
+                val todayScheduled = com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(java.time.LocalDate.now())
+                val tomorrowScheduled = com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(java.time.LocalDate.now().plusDays(1))
+                val todayLabel = if (isTa) todayScheduled.titleTa else todayScheduled.titleEn
+                val tomorrowLabel = if (isTa) tomorrowScheduled.titleTa else tomorrowScheduled.titleEn
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        tr("Studio Ultra-HD Online Voices (10 Voices)"),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = AccentCyan,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { vm.setAutoDailyGenderSwap(!state.autoDailyGenderSwap) },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                tr("Daily Auto Male ↔ Female Ultra-HD Voice"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                            )
+                            Text(
+                                tr("Turned ON by default. Alternates Male HD ↔ Female HD every day across 10 studio neural voices; automatically falls back to Android system voice offline."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                        }
+                        Spacer(Modifier.size(8.dp))
+                        Switch(
+                            checked = state.autoDailyGenderSwap,
+                            onCheckedChange = { vm.setAutoDailyGenderSwap(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF03202B),
+                                checkedTrackColor = AccentCyan,
+                            ),
+                        )
+                    }
+                    Text(
+                        tr("Today: %s", todayLabel) + "\n" + tr("Tomorrow: %s", tomorrowLabel),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AccentCyan,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { vm.previewGenderStudioVoice(com.universalrp.voice.NeuralVoiceGender.MALE) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(tr("👨 Preview Male HD"), style = MaterialTheme.typography.labelSmall)
+                        }
+                        androidx.compose.material3.OutlinedButton(
+                            onClick = { vm.previewGenderStudioVoice(com.universalrp.voice.NeuralVoiceGender.FEMALE) },
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(tr("👩 Preview Female HD"), style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                    Text(
+                        tr("Tap any Studio Ultra-HD voice below to preview or lock (5 Male + 5 Female):"),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextPrimary,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { vm.selectStudioOnlineVoice(null) }
+                            .padding(vertical = 3.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        androidx.compose.material3.RadioButton(
+                            selected = state.autoDailyGenderSwap || state.preferredOnlineVoiceId.isBlank(),
+                            onClick = { vm.selectStudioOnlineVoice(null) },
+                        )
+                        Text(
+                            tr("🔄 Daily Auto Male ↔ Female Rotation (Recommended)"),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        )
+                    }
+                    com.universalrp.voice.SharedNeuralVoiceEngine.CURATED_VOICES.forEach { profile ->
+                        val profileLabel = if (isTa) profile.titleTa else profile.titleEn
+                        val selected = !state.autoDailyGenderSwap && state.preferredOnlineVoiceId == profile.id
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { vm.selectStudioOnlineVoice(profile) }
+                                .padding(vertical = 2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            androidx.compose.material3.RadioButton(
+                                selected = selected,
+                                onClick = { vm.selectStudioOnlineVoice(profile) },
+                            )
+                            Text(
+                                text = profileLabel,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            }
+
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(tr("Voice delivery diagnostics"), style = MaterialTheme.typography.titleMedium)

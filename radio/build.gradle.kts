@@ -61,6 +61,8 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("org.json:json:20240303")
     // Media3/ExoPlayer: streaming (MP3/AAC + HLS), background playback, notification,
     // lock-screen controls and audio focus.

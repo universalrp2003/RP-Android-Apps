@@ -48,6 +48,10 @@ data class AppStateSnapshot(
     val englishTtsVoiceName: String = "",
     val availableTtsVoices: List<TtsVoiceOption> = emptyList(),
     val isTtsVoiceCatalogLoaded: Boolean = false,
+    val onlineNeuralHdEnabled: Boolean = true,
+    val autoDailyGenderSwap: Boolean = true,
+    val selectedOnlineVoiceId: String = "",
+    val activeStudioVoiceLabel: String = "",
     val destinationName: String = "",
     /** The chosen place's district, state and PIN code, so the person can see which place it is. */
     val destinationDetails: String = "",
@@ -73,6 +77,10 @@ object AppPreferences {
     private const val KEY_VOICE_LANG = "voice_language"
     private const val KEY_TAMIL_TTS_VOICE = "tamil_tts_voice"
     private const val KEY_ENGLISH_TTS_VOICE = "english_tts_voice"
+    private const val KEY_HD_VOICE_DEFAULT_ON_115 = "hd_voice_default_on_115"
+    private const val KEY_ONLINE_NEURAL_HD_ENABLED = "online_neural_hd_enabled"
+    private const val KEY_AUTO_DAILY_GENDER_SWAP = "auto_daily_gender_swap"
+    private const val KEY_SELECTED_ONLINE_VOICE_ID = "selected_online_voice_id"
     private const val KEY_SAME_CITY_SUB_AREA = "announce_same_city_sub_area"
     private const val KEY_BIKE_CAR_MODE = "bike_car_detection_enabled"
     private const val KEY_ANNOUNCE_ON_START = "announce_immediately_on_start"
@@ -94,12 +102,22 @@ object AppPreferences {
     fun init(context: Context) {
         if (::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (!prefs.getBoolean(KEY_HD_VOICE_DEFAULT_ON_115, false)) {
+            prefs.edit()
+                .putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true)
+                .putBoolean(KEY_AUTO_DAILY_GENDER_SWAP, true)
+                .putBoolean(KEY_HD_VOICE_DEFAULT_ON_115, true)
+                .apply()
+        }
         _state.value = AppStateSnapshot(
             isTrackingEnabled = prefs.getBoolean(KEY_TRACKING_ENABLED, false),
             appLanguage = prefs.getString(KEY_APP_LANG, "ta") ?: "ta",
             voiceLanguage = prefs.getString(KEY_VOICE_LANG, "ta") ?: "ta",
             tamilTtsVoiceName = prefs.getString(KEY_TAMIL_TTS_VOICE, "") ?: "",
             englishTtsVoiceName = prefs.getString(KEY_ENGLISH_TTS_VOICE, "") ?: "",
+            onlineNeuralHdEnabled = prefs.getBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true),
+            autoDailyGenderSwap = prefs.getBoolean(KEY_AUTO_DAILY_GENDER_SWAP, true),
+            selectedOnlineVoiceId = prefs.getString(KEY_SELECTED_ONLINE_VOICE_ID, "") ?: "",
             announceSameCitySubArea = prefs.getBoolean(KEY_SAME_CITY_SUB_AREA, false),
             bikeCarDetectionEnabled = prefs.getBoolean(KEY_BIKE_CAR_MODE, true),
             announceImmediatelyOnStart = prefs.getBoolean(KEY_ANNOUNCE_ON_START, true),
@@ -164,6 +182,42 @@ object AppPreferences {
             availableTtsVoices = voices,
             isTtsVoiceCatalogLoaded = loaded
         )
+    }
+
+    fun setOnlineNeuralHdEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, enabled).apply()
+        _state.value = _state.value.copy(onlineNeuralHdEnabled = enabled)
+    }
+
+    fun setAutoDailyGenderSwap(enabled: Boolean) {
+        prefs.edit()
+            .putBoolean(KEY_AUTO_DAILY_GENDER_SWAP, enabled)
+            .apply {
+                if (enabled) putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true)
+            }
+            .apply()
+        _state.value = _state.value.copy(
+            autoDailyGenderSwap = enabled,
+            onlineNeuralHdEnabled = if (enabled) true else _state.value.onlineNeuralHdEnabled,
+        )
+    }
+
+    fun setSelectedOnlineVoiceId(voiceId: String) {
+        val autoMode = voiceId.isBlank()
+        prefs.edit()
+            .putString(KEY_SELECTED_ONLINE_VOICE_ID, voiceId)
+            .putBoolean(KEY_AUTO_DAILY_GENDER_SWAP, autoMode)
+            .putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true)
+            .apply()
+        _state.value = _state.value.copy(
+            selectedOnlineVoiceId = voiceId,
+            autoDailyGenderSwap = autoMode,
+            onlineNeuralHdEnabled = true,
+        )
+    }
+
+    fun setActiveStudioVoiceLabel(label: String) {
+        _state.value = _state.value.copy(activeStudioVoiceLabel = label)
     }
 
     fun setInternetAvailable(available: Boolean) {

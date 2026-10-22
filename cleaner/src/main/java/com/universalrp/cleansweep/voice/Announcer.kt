@@ -46,6 +46,9 @@ object Announcer {
      * offline data is needed for an offline retry; no developer audio recording occurs.
      */
     const val KEY_ONLINE = "voice_online"
+    const val KEY_HD_VOICE_DEFAULT_ON_262 = "voice_hd_default_on_262"
+    const val KEY_AUTO_DAILY_GENDER = "voice_auto_daily_gender"
+    const val KEY_PREFERRED_ONLINE_VOICE = "voice_preferred_online_id"
     const val KEY_LOUDER = "voice_louder"
 
     /**
@@ -143,6 +146,12 @@ object Announcer {
     }
 
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private val neuralExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "CleanSweepNeuralHd").apply { isDaemon = true }
+    }
+    private val malePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    private val femalePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    @Volatile private var activeMediaPlayer: android.media.MediaPlayer? = null
     @Volatile private var tts: TextToSpeech? = null
     @Volatile private var ready = false
     @Volatile private var tamilVoice = false
@@ -153,7 +162,9 @@ object Announcer {
     private val automaticAnswerIds = linkedSetOf<String>()
     private data class Request(val english: String?, val tamil: String?, val wanted: AppLang?, val event: Event,
         val manual: Boolean, val done: kotlinx.coroutines.CompletableDeferred<Boolean>? = null, val onStarted: (() -> Unit)? = null,
-        val requestKey: String? = null, val preferredVoice: String? = null, val bypassQuietHours: Boolean = false) {
+        val requestKey: String? = null, val preferredVoice: String? = null, val bypassQuietHours: Boolean = false,
+        val overrideStudioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
+        val answerSlot: Int? = null) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
         var language = wanted ?: AppLang.TA
@@ -175,13 +186,57 @@ object Announcer {
 
     // ------------------------------------------------------------------ switches
 
-    fun enabled(context: Context): Boolean = prefs(context).getBoolean(KEY_ON, false)
+    /**
+     * v2.62 owner decision: Studio Ultra-HD Online Voice + Daily Male <-> Female Rotation +
+     * Voice Announcements default ON out of the box (and once on upgrade from <= 2.61),
+     * while preserving every subsequent manual toggle made by the user.
+     */
+    @Synchronized fun ensureHdVoiceDefaults262(context: Context) {
+        val p = prefs(context)
+        if (!p.getBoolean(KEY_HD_VOICE_DEFAULT_ON_262, false)) {
+            p.edit()
+                .putBoolean(KEY_ON, true)
+                .putBoolean(KEY_ONLINE, true)
+                .putBoolean(KEY_AUTO_DAILY_GENDER, true)
+                .putBoolean(KEY_HD_VOICE_DEFAULT_ON_262, true)
+                .apply()
+        }
+    }
 
-    /** Voices installed by the phone's engine that need a network connection. */
-    fun onlineVoice(context: Context): Boolean = prefs(context).getBoolean(KEY_ONLINE, true)
+    fun enabled(context: Context): Boolean {
+        ensureHdVoiceDefaults262(context)
+        return prefs(context).getBoolean(KEY_ON, true)
+    }
+
+    /** Studio Ultra-HD online neural voice (ON by default, falls back to local TTS offline). */
+    fun onlineVoice(context: Context): Boolean {
+        ensureHdVoiceDefaults262(context)
+        return prefs(context).getBoolean(KEY_ONLINE, true)
+    }
 
     fun setOnlineVoice(context: Context, on: Boolean) {
+        ensureHdVoiceDefaults262(context)
         prefs(context).edit().putBoolean(KEY_ONLINE, on).apply()
+    }
+
+    fun autoDailyGenderSwap(context: Context): Boolean {
+        ensureHdVoiceDefaults262(context)
+        return prefs(context).getBoolean(KEY_AUTO_DAILY_GENDER, true)
+    }
+
+    fun setAutoDailyGenderSwap(context: Context, on: Boolean) {
+        ensureHdVoiceDefaults262(context)
+        prefs(context).edit().putBoolean(KEY_AUTO_DAILY_GENDER, on).apply()
+    }
+
+    fun preferredOnlineVoiceId(context: Context): String {
+        ensureHdVoiceDefaults262(context)
+        return prefs(context).getString(KEY_PREFERRED_ONLINE_VOICE, "").orEmpty()
+    }
+
+    fun setPreferredOnlineVoiceId(context: Context, id: String) {
+        ensureHdVoiceDefaults262(context)
+        prefs(context).edit().putString(KEY_PREFERRED_ONLINE_VOICE, id).apply()
     }
 
     /** Louder voice alerts: boost alert speech volume (off by default). */
@@ -208,6 +263,7 @@ object Announcer {
     }
 
     fun setEnabled(context: Context, on: Boolean) {
+        ensureHdVoiceDefaults262(context)
         prefs(context).edit().putBoolean(KEY_ON, on).apply()
         if (!on) stop()
     }
@@ -335,15 +391,59 @@ object Announcer {
             if (wanted == AppLang.TA) text else null, wanted, Event.TEST, true))
     }
 
-    /** One selected voice per answer. Automatic duplicates and cross-voice retries are forbidden. */
+    /** Previews a curated Studio Ultra-HD voice profile immediately. */
+    fun previewOnlineVoice(context: Context, profile: com.universalrp.voice.CuratedNeuralVoiceProfile): Boolean {
+        val wanted = Lang.languageIn(context)
+        val sampleEn = "Hello! Studio Ultra HD voice is active on Live Guard."
+        val sampleTa = "வணக்கம்! லைவ் கார்டின் ஸ்டுடியோ Ultra HD குரல் தெளிவாக இயங்குகிறது."
+        return submit(
+            context,
+            Request(
+                english = sampleEn,
+                tamil = sampleTa,
+                wanted = wanted,
+                event = Event.TEST,
+                manual = true,
+                requestKey = "preview:${profile.id}:${System.nanoTime()}",
+                overrideStudioProfile = profile,
+            ),
+        )
+    }
+
+    /** Cycles through all 5 Male HD or all 5 Female HD studio voices on consecutive taps. */
+    fun previewGenderVoice(context: Context, gender: com.universalrp.voice.NeuralVoiceGender): com.universalrp.voice.CuratedNeuralVoiceProfile {
+        val pool = if (gender == com.universalrp.voice.NeuralVoiceGender.FEMALE) {
+            com.universalrp.voice.SharedNeuralVoiceEngine.FEMALE_VOICES
+        } else {
+            com.universalrp.voice.SharedNeuralVoiceEngine.MALE_VOICES
+        }
+        val cursor = if (gender == com.universalrp.voice.NeuralVoiceGender.FEMALE) femalePreviewCursor else malePreviewCursor
+        val profile = pool[Math.floorMod(cursor.incrementAndGet(), pool.size)]
+        previewOnlineVoice(context, profile)
+        return profile
+    }
+
+    /** One selected voice per answer. Uses Studio Ultra-HD voice online automatically when no offline slot is forced. */
     fun speakAnswer(context: Context, text: String, language: AppLang, slot: Int, answerId: String, manual: Boolean): Boolean {
-        val name = AnswerVoicePreferences.load(context, language).voice(slot)
-        if (name == null) {
+        val savedName = AnswerVoicePreferences.load(context, language).voice(slot)
+        val canSpeakStudioOnline = onlineVoice(context) && com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
+        if (savedName == null && !canSpeakStudioOnline) {
             main.post { record(context.applicationContext, Request(null, null, language, Event.ANSWER, manual), VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING) }
             return false
         }
-        return submit(context, Request(if (language == AppLang.EN) text else null, if (language == AppLang.TA) text else null,
-            language, Event.ANSWER, manual, requestKey = "answer:$answerId", preferredVoice = name))
+        return submit(
+            context,
+            Request(
+                english = if (language == AppLang.EN) text else null,
+                tamil = if (language == AppLang.TA) text else null,
+                wanted = language,
+                event = Event.ANSWER,
+                manual = manual,
+                requestKey = "answer:$answerId",
+                preferredVoice = if (canSpeakStudioOnline) null else savedName,
+                answerSlot = slot,
+            ),
+        )
     }
 
     /** Query the actual initialized engine; no guessed male/female names and no voice downloads. */
@@ -394,7 +494,11 @@ object Announcer {
     /** Clear/cancel chat speech without cancelling unrelated battery/security alerts. */
     fun cancelAnswers() { main.post {
         pending.filter { it.event == Event.ANSWER }.forEach { pending.remove(it); it.done?.complete(false) }
-        if (active?.event == Event.ANSWER) { runCatching { tts?.stop() }; finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+        if (active?.event == Event.ANSWER) {
+            runCatching { activeMediaPlayer?.stop() }
+            runCatching { tts?.stop() }
+            finish(VoiceDeliveryPolicy.Stage.CANCELLED, false)
+        }
     } }
 
     /** Keep a worker alive until the engine finishes/fails, rather than finishing while TTS is still starting. */
@@ -472,6 +576,7 @@ object Announcer {
                 if (automaticAnswerIds.size > 128) automaticAnswerIds.remove(automaticAnswerIds.first())
             }
             if ((request.manual || (request.event == Event.OVERHEAT || request.bypassQuietHours) && active?.event == Event.ANSWER) && active != null) {
+                runCatching { activeMediaPlayer?.stop() }
                 runCatching { tts?.stop() }; finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
             }
             if (pending.size >= 4) pending.removeLast().also { record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED); it.done?.complete(false) }
@@ -482,13 +587,59 @@ object Announcer {
         return true
     }
 
+    private fun resolveStudioProfile(context: Context, request: Request): com.universalrp.voice.CuratedNeuralVoiceProfile {
+        request.overrideStudioProfile?.let { return it }
+        val autoSwap = autoDailyGenderSwap(context)
+        val savedId = preferredOnlineVoiceId(context)
+        if (!autoSwap && savedId.isNotBlank()) {
+            return com.universalrp.voice.SharedNeuralVoiceEngine.resolveActiveProfile(false, savedId)
+        }
+        val today = java.time.LocalDate.now()
+        val primary = com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(today)
+        if (request.answerSlot != null && (request.answerSlot % 2) == 1) {
+            val opposite = if (primary.gender == com.universalrp.voice.NeuralVoiceGender.MALE) {
+                com.universalrp.voice.NeuralVoiceGender.FEMALE
+            } else {
+                com.universalrp.voice.NeuralVoiceGender.MALE
+            }
+            return com.universalrp.voice.SharedNeuralVoiceEngine.scheduledGenderVoiceForDate(opposite, today)
+        }
+        return primary
+    }
+
     private fun drain(context: Context) {
         if (active != null || pending.isEmpty()) return
+
+        val next = pending.first()
+        val wantStudioOnline = next.preferredVoice == null &&
+            (next.overrideStudioProfile != null || onlineVoice(context)) &&
+            com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
+
+        if (wantStudioOnline) {
+            val request = pending.removeFirst()
+            val blocked = VoiceDeliveryPolicy.blocked(
+                enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
+                request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
+                bypassQuietHours = request.bypassQuietHours,
+            )
+            if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
+            active = request
+            val desiredLang = request.wanted ?: Lang.languageIn(context)
+            val useTamil = desiredLang == AppLang.TA && !request.tamil.isNullOrBlank()
+            request.language = if (useTamil) AppLang.TA else AppLang.EN
+            request.text = plain(if (useTamil) request.tamil.orEmpty() else request.english.orEmpty())
+            if (request.text.isBlank()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
+            request.network = true
+            startStudioOnlineUtterance(context, request)
+            return
+        }
+
         if (!ready) { ensureEngine(context); return }
         val request = pending.removeFirst()
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
-            request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context)
+            request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
+            bypassQuietHours = request.bypassQuietHours,
         )
         if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
         active = request
@@ -500,6 +651,83 @@ object Announcer {
         request.text = if (request.language == AppLang.TA) request.tamil.orEmpty() else request.english.orEmpty()
         if (request.text.isBlank()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
         startUtterance(context, request, offline = false)
+    }
+
+    private fun startStudioOnlineUtterance(context: Context, request: Request) {
+        val profile = resolveStudioProfile(context, request)
+        val useTamil = request.language == AppLang.TA
+        val requestId = request.id
+        neuralExecutor.execute {
+            if (active?.id != requestId) return@execute
+            val mp3 = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
+                cacheDir = context.cacheDir,
+                text = request.text,
+                profile = profile,
+                useTamil = useTamil,
+                ratePercent = 98,
+                timeoutMs = 3800L,
+            )
+            if (mp3 != null && active?.id == requestId && !com.universalrp.updates.CallGuard.inCall(context)) {
+                val attrs = android.media.AudioAttributes.Builder()
+                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build()
+                val played = com.universalrp.voice.SharedNeuralVoiceEngine.playMp3FileBlocking(
+                    file = mp3,
+                    volumeScalar = voiceVolume(context),
+                    audioAttributes = attrs,
+                    onStarted = {
+                        main.post {
+                            if (active?.id == requestId) {
+                                tamilVoice = true
+                                record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
+                                if (!request.started) {
+                                    request.started = true
+                                    runCatching { request.onStarted?.invoke() }
+                                }
+                            }
+                        }
+                    },
+                    shouldStop = {
+                        active?.id != requestId || com.universalrp.updates.CallGuard.inCall(context)
+                    },
+                    activePlayerSink = { player -> activeMediaPlayer = player },
+                    maxDurationMs = if (request.event == Event.ANSWER) 150_000L else 45_000L,
+                )
+                if (played) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true) }
+                    return@execute
+                }
+                if (active?.id != requestId || com.universalrp.updates.CallGuard.inCall(context)) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                    return@execute
+                }
+            }
+            // Instant automatic fallback to installed Android System TTS when offline / cloud unreachable!
+            main.post {
+                if (active?.id != requestId) return@post
+                active = null
+                request.retried = true
+                pending.addFirst(request)
+                if (!ready) {
+                    ensureEngine(context)
+                } else {
+                    val fallbackReq = pending.removeFirst()
+                    active = fallbackReq
+                    val engine = tts ?: run { finish(VoiceDeliveryPolicy.Stage.NO_ENGINE, false); return@post }
+                    val ta = runCatching { engine.isLanguageAvailable(TAMIL) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED)
+                    val bare = if (ta < 0) runCatching { engine.isLanguageAvailable(Locale("ta")) }.getOrDefault(-3) else ta
+                    tamilVoice = VoiceDeliveryPolicy.validStatus(bare)
+                    fallbackReq.language = if (tamilVoice && !fallbackReq.tamil.isNullOrBlank()) AppLang.TA else AppLang.EN
+                    fallbackReq.text = if (fallbackReq.language == AppLang.TA) fallbackReq.tamil.orEmpty() else fallbackReq.english.orEmpty()
+                    if (fallbackReq.text.isBlank()) {
+                        finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false)
+                    } else {
+                        startUtterance(context, fallbackReq, offline = true)
+                    }
+                }
+            }
+        }
     }
 
     private fun voices(engine: TextToSpeech, language: AppLang): List<Voice> = runCatching {
@@ -519,8 +747,14 @@ object Announcer {
             val connected = runCatching { network?.activeNetwork?.let { network.getNetworkCapabilities(it) }
                 ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true }.getOrDefault(false)
             val wantOnline = !offline && onlineVoice(context) && connected
+            val studioTargetFemale = resolveStudioProfile(context, request).gender == com.universalrp.voice.NeuralVoiceGender.FEMALE
             val chosen = if (request.preferredVoice != null) available.firstOrNull { it.name == request.preferredVoice }
-                else available.filter { if (wantOnline) it.isNetworkConnectionRequired else !it.isNetworkConnectionRequired }
+                else available.filter { !it.isNetworkConnectionRequired }.firstOrNull { v ->
+                    val lower = v.name.lowercase(Locale.ROOT)
+                    val looksFemale = lower.contains("female") || lower.contains("#female")
+                    val looksMale = lower.contains("male") && !lower.contains("female")
+                    if (studioTargetFemale) looksFemale else looksMale
+                } ?: available.filter { if (wantOnline) it.isNetworkConnectionRequired else !it.isNetworkConnectionRequired }
                     .maxByOrNull { it.quality } ?: available.filter { !it.isNetworkConnectionRequired }.maxByOrNull { it.quality }
             if (request.preferredVoice != null && (chosen == null || chosen.isNetworkConnectionRequired && !connected)) {
                 finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return
@@ -531,7 +765,12 @@ object Announcer {
             if (!wantOnline && request.network && request.preferredVoice == null) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
             engine.setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA)
                 .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            engine.setPitch(1.02f); engine.setSpeechRate(0.96f)
+            val pitch = if (request.preferredVoice == null && autoDailyGenderSwap(context)) {
+                if (studioTargetFemale) 1.06f else 0.94f
+            } else {
+                1.02f
+            }
+            engine.setPitch(pitch); engine.setSpeechRate(0.96f)
             val params = android.os.Bundle().apply {
                 putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC)
                 putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, voiceVolume(context))
@@ -573,19 +812,25 @@ object Announcer {
     }
 
     private fun cancelRequest(id: String, stage: VoiceDeliveryPolicy.Stage) {
-        if (active?.id == id) { runCatching { tts?.stop() }; finish(stage, false) }
+        if (active?.id == id) {
+            runCatching { activeMediaPlayer?.stop() }
+            runCatching { tts?.stop() }
+            finish(stage, false)
+        }
         else pending.firstOrNull { it.id == id }?.let {
             pending.remove(it); prefsContext?.let { ctx -> record(ctx, it, stage) }; it.done?.complete(false)
         }
     }
 
     fun stop() { main.post {
+        runCatching { activeMediaPlayer?.stop() }
         runCatching { tts?.stop() }
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
     } }
 
     fun shutdown() { main.post {
+        runCatching { activeMediaPlayer?.stop() }
         runCatching { tts?.stop(); tts?.shutdown() }
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)

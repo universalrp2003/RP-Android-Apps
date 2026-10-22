@@ -1551,6 +1551,16 @@ object Lang {
         "Save key" to "விசையைச் சேமி",
         "Remove key" to "விசையை நீக்கு",
         "Preview animation" to "அனிமேஷன் முன்னோட்டம்",
+        "Studio Ultra-HD Online Voices (10 Voices)" to "ஸ்டுடியோ Ultra-HD ஆன்லைன் குரல்கள் (10 குரல்கள்)",
+        "Daily Auto Male ↔ Female Ultra-HD Voice" to "தினசரி ஆண் ↔ பெண் தானியங்கி Ultra-HD குரல்",
+        "Turned ON by default. Alternates Male HD ↔ Female HD every day across 10 studio neural voices; automatically falls back to Android system voice offline." to "இயல்பாகவே (Default ON) இயக்கத்தில் உள்ளது. 10 ஸ்டுடியோ Ultra-HD குரல்களில் தினமும் ஆண் ↔ பெண் குரல் தானாக மாறும்; இணையம் இல்லாதபோது போன் சிஸ்டம் குரலுக்கு மாறும்.",
+        "Today: %s" to "இன்று: %s",
+        "Tomorrow: %s" to "நாளை: %s",
+        "👨 Preview Male HD" to "👨 ஆண் HD குரல் சோதனை",
+        "👩 Preview Female HD" to "👩 பெண் HD குரல் சோதனை",
+        "Tap any Studio Ultra-HD voice below to preview or lock (5 Male + 5 Female):" to "கீழேயுள்ள எந்த Ultra-HD குரலையும் தட்டி சோதனை செய்யவும் / பூட்டவும் (5 ஆண் + 5 பெண்):",
+        "🔄 Daily Auto Male ↔ Female Rotation (Recommended)" to "🔄 தினசரி ஆண் ↔ பெண் தானியங்கி மாற்றம் (பரிந்துரை)",
+        "Playing Studio Ultra-HD voice sample: %s" to "ஸ்டுடியோ Ultra-HD குரல் ஒலிக்கிறது: %s",
     )
 }
 

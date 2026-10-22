@@ -69,7 +69,10 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         const val ACTION_START_TRACKING = "com.oorarivippu.voiceannouncer.action.START_TRACKING"
         const val ACTION_STOP_TRACKING = "com.oorarivippu.voiceannouncer.action.STOP_TRACKING"
         const val ACTION_TEST_VOICE = "com.oorarivippu.voiceannouncer.action.TEST_VOICE"
+        const val ACTION_PREVIEW_ONLINE_VOICE = "com.oorarivippu.voiceannouncer.action.PREVIEW_ONLINE_VOICE"
         const val ACTION_SETTINGS_CHANGED = "com.oorarivippu.voiceannouncer.action.SETTINGS_CHANGED"
+        const val EXTRA_PREVIEW_VOICE_ID = "extra_preview_voice_id"
+        const val EXTRA_PREVIEW_GENDER = "extra_preview_gender"
 
         private const val NOTIFICATION_CHANNEL_ID = "oor_arivippu_location_channel"
         private const val NOTIFICATION_ID = 1001
@@ -80,6 +83,13 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val neuralExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "OorArivippuNeuralHd").apply { isDaemon = true }
+    }
+    private val neuralGeneration = java.util.concurrent.atomic.AtomicLong(0L)
+    private val malePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    private val femalePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    @Volatile private var activeMediaPlayer: android.media.MediaPlayer? = null
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var locationManager: LocationManager? = null
@@ -94,7 +104,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         val queueMode: Int,
         val fallbackBeepIfVoiceUnavailable: Boolean = false,
         val isOfflineReminder: Boolean = false,
-        val requireOnDeviceVoice: Boolean = false
+        val requireOnDeviceVoice: Boolean = false,
+        val overrideOnlineProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
     )
     private var pendingSpeechQueue: PendingSpeech? = null
     private var latestSpeakingRequest: PendingSpeech? = null
@@ -181,6 +192,43 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     return START_STICKY
                 }
                 return START_NOT_STICKY
+            }
+            ACTION_PREVIEW_ONLINE_VOICE -> {
+                val snap = AppPreferences.state.value
+                val voiceId = intent.getStringExtra(EXTRA_PREVIEW_VOICE_ID).orEmpty()
+                val genderTag = intent.getStringExtra(EXTRA_PREVIEW_GENDER).orEmpty()
+                val profile = when {
+                    voiceId.isNotBlank() ->
+                        com.universalrp.voice.SharedNeuralVoiceEngine.CURATED_VOICES.firstOrNull { it.id == voiceId }
+                            ?: com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate()
+                    genderTag == "FEMALE" -> {
+                        val pool = com.universalrp.voice.SharedNeuralVoiceEngine.FEMALE_VOICES
+                        pool[Math.floorMod(femalePreviewCursor.incrementAndGet(), pool.size)]
+                    }
+                    genderTag == "MALE" -> {
+                        val pool = com.universalrp.voice.SharedNeuralVoiceEngine.MALE_VOICES
+                        pool[Math.floorMod(malePreviewCursor.incrementAndGet(), pool.size)]
+                    }
+                    else -> com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate()
+                }
+                val testSentence = BilingualStrings.buildTestSpeech(
+                    voiceLang = snap.voiceLanguage,
+                    currentCity = snap.currentCityOrVillage,
+                )
+                val alternateLanguage = if (snap.voiceLanguage == "en") "ta" else "en"
+                val fallbackSentence = BilingualStrings.buildTestSpeech(
+                    voiceLang = alternateLanguage,
+                    currentCity = snap.currentCityOrVillage,
+                )
+                speakAnnouncement(
+                    text = testSentence,
+                    voiceLang = snap.voiceLanguage,
+                    alternateLanguageText = fallbackSentence,
+                    requiresInternet = false,
+                    queueMode = TextToSpeech.QUEUE_FLUSH,
+                    overrideOnlineProfile = profile,
+                )
+                return if (snap.isTrackingEnabled) START_STICKY else START_NOT_STICKY
             }
             ACTION_TEST_VOICE -> {
                 val snap = AppPreferences.state.value
@@ -991,7 +1039,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     queueMode = queued.queueMode,
                     fallbackBeepIfVoiceUnavailable = queued.fallbackBeepIfVoiceUnavailable,
                     isOfflineReminder = queued.isOfflineReminder,
-                    requireOnDeviceVoice = queued.requireOnDeviceVoice
+                    requireOnDeviceVoice = queued.requireOnDeviceVoice,
+                    overrideOnlineProfile = queued.overrideOnlineProfile,
                 )
             }
         } else {
@@ -1053,18 +1102,41 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 val selectedVoiceName = AppPreferences.state.value
                     .selectedTtsVoiceNameFor(languageCode)
                 val selectedVoice = languageVoices.firstOrNull { it.name == selectedVoiceName }
+                val snapNow = AppPreferences.state.value
+                val dailyProfile = com.universalrp.voice.SharedNeuralVoiceEngine.resolveActiveProfile(
+                    autoDailyGenderSwap = snapNow.autoDailyGenderSwap,
+                    preferredVoiceId = snapNow.selectedOnlineVoiceId,
+                )
+                val preferFemale = dailyProfile.gender == com.universalrp.voice.NeuralVoiceGender.FEMALE
+                val genderMatchedLocal = if (selectedVoice == null) {
+                    languageVoices.filter { !it.isNetworkConnectionRequired }.firstOrNull { v ->
+                        val lower = v.name.lowercase(Locale.ROOT)
+                        val looksFemale = lower.contains("female") || lower.contains("#female")
+                        val looksMale = lower.contains("male") && !lower.contains("female")
+                        if (preferFemale) looksFemale else looksMale
+                    }
+                } else {
+                    null
+                }
                 val voiceToUse = if (requireOnDeviceVoice) {
                     selectedVoice?.takeIf { !it.isNetworkConnectionRequired }
+                        ?: genderMatchedLocal
                         ?: defaultVoice?.takeIf { !it.isNetworkConnectionRequired }
                         ?: languageVoices.firstOrNull { !it.isNetworkConnectionRequired }
                 } else {
-                    selectedVoice ?: defaultVoice
+                    selectedVoice ?: genderMatchedLocal ?: defaultVoice
                 }
                 if (requireOnDeviceVoice && voiceToUse == null) continue
                 if (voiceToUse != null) engine.voice = voiceToUse
                 if (requireOnDeviceVoice && engine.voice?.isNetworkConnectionRequired != false) continue
 
-                engine.setSpeechRate(SpeechRatePolicy.androidRate(AppPreferences.state.value.speechRatePercent))
+                engine.setSpeechRate(SpeechRatePolicy.androidRate(snapNow.speechRatePercent))
+                val pitch = if (selectedVoice == null && snapNow.autoDailyGenderSwap) {
+                    if (preferFemale) 1.06f else 0.94f
+                } else {
+                    1.0f
+                }
+                engine.setPitch(pitch)
                 val voiceStatus = when {
                     languageCode != requestedLanguage -> TtsVoiceStatus.FALLBACK_LANGUAGE
                     !requireOnDeviceVoice && selectedVoiceName.isNotBlank() && selectedVoice == null ->
@@ -1090,12 +1162,14 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         queueMode: Int = TextToSpeech.QUEUE_FLUSH,
         fallbackBeepIfVoiceUnavailable: Boolean = false,
         isOfflineReminder: Boolean = false,
-        requireOnDeviceVoice: Boolean = false
+        requireOnDeviceVoice: Boolean = false,
+        overrideOnlineProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
     ) {
         val snapshot = AppPreferences.state.value
+        val isPreview = overrideOnlineProfile != null || !snapshot.isTrackingEnabled
         if (requiresInternet && snapshot.isInternetAvailable != true) return
-        // Place alerts need GPS; an explicit offline-status reminder does not.
-        if (!isOfflineReminder && !GpsStateReceiver.isGpsProviderEnabled(this) &&
+        // Place alerts need GPS; an explicit offline-status reminder or voice preview does not.
+        if (!isOfflineReminder && !isPreview && !GpsStateReceiver.isGpsProviderEnabled(this) &&
             snapshot.isTrackingEnabled
         ) return
 
@@ -1108,13 +1182,126 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             queueMode = queueMode,
             fallbackBeepIfVoiceUnavailable = fallbackBeepIfVoiceUnavailable,
             isOfflineReminder = isOfflineReminder,
-            requireOnDeviceVoice = requireOnDeviceVoice
+            requireOnDeviceVoice = requireOnDeviceVoice,
+            overrideOnlineProfile = overrideOnlineProfile,
         )
         if (isPhoneCallAudioActive()) {
             pendingSpeechQueue = speech
             AppPreferences.setCallAudioPaused(true)
             updateForegroundNotification()
             waitForPhoneCallToEnd()
+            return
+        }
+
+        // Studio Ultra-HD Online Neural Voice FIRST (ON by default, falls back to local TTS offline!)
+        val wantStudioOnline = !isOfflineReminder &&
+            !requireOnDeviceVoice &&
+            (overrideOnlineProfile != null || snapshot.onlineNeuralHdEnabled) &&
+            com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(this)
+
+        if (wantStudioOnline) {
+            val profile = overrideOnlineProfile
+                ?: com.universalrp.voice.SharedNeuralVoiceEngine.resolveActiveProfile(
+                    autoDailyGenderSwap = snapshot.autoDailyGenderSwap,
+                    preferredVoiceId = snapshot.selectedOnlineVoiceId,
+                )
+            val myGen = if (queueMode == TextToSpeech.QUEUE_FLUSH) {
+                runCatching { activeMediaPlayer?.stop() }
+                runCatching { tts?.stop() }
+                neuralGeneration.incrementAndGet()
+            } else {
+                neuralGeneration.get()
+            }
+            speakingRequiresInternet = requiresInternet
+            latestSpeakingRequest = speech
+            val mainHandler = Handler(Looper.getMainLooper())
+            neuralExecutor.execute {
+                if (neuralGeneration.get() != myGen) return@execute
+                val mp3 = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
+                    cacheDir = cacheDir,
+                    text = text,
+                    profile = profile,
+                    useTamil = (requestedLanguage != "en"),
+                    ratePercent = AppPreferences.state.value.speechRatePercent,
+                    timeoutMs = 3800L,
+                )
+                if (mp3 != null && neuralGeneration.get() == myGen) {
+                    if (isPhoneCallAudioActive()) {
+                        mainHandler.post {
+                            pendingSpeechQueue = speech
+                            AppPreferences.setCallAudioPaused(true)
+                            updateForegroundNotification()
+                            waitForPhoneCallToEnd()
+                        }
+                        return@execute
+                    }
+                    val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                    val audioAttributes = AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    var focusRequest: AudioFocusRequest? = null
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && audioManager != null) {
+                        focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+                            .setAudioAttributes(audioAttributes)
+                            .setAcceptsDelayedFocusGain(false)
+                            .setOnAudioFocusChangeListener {}
+                            .build()
+                        audioManager.requestAudioFocus(focusRequest)
+                    }
+                    val played = com.universalrp.voice.SharedNeuralVoiceEngine.playMp3FileBlocking(
+                        file = mp3,
+                        volumeScalar = SpeechVolumePolicy.ttsVolume(AppPreferences.state.value.speechVolumePercent),
+                        audioAttributes = audioAttributes,
+                        onStarted = {
+                            val label = if (AppPreferences.state.value.appLanguage == "en") profile.titleEn else profile.titleTa
+                            AppPreferences.setTtsVoiceStatus(TtsVoiceStatus.AVAILABLE)
+                            AppPreferences.setActiveStudioVoiceLabel(label)
+                        },
+                        shouldStop = {
+                            neuralGeneration.get() != myGen || isPhoneCallAudioActive()
+                        },
+                        activePlayerSink = { player -> activeMediaPlayer = player },
+                    )
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && focusRequest != null) {
+                        audioManager?.abandonAudioFocusRequest(focusRequest)
+                    }
+                    if (isPhoneCallAudioActive() && !played) {
+                        mainHandler.post {
+                            pendingSpeechQueue = speech
+                            AppPreferences.setCallAudioPaused(true)
+                            updateForegroundNotification()
+                            waitForPhoneCallToEnd()
+                        }
+                        return@execute
+                    }
+                    if (played) {
+                        mainHandler.post {
+                            if (!AppPreferences.state.value.isTrackingEnabled) stopSelf()
+                        }
+                        return@execute
+                    }
+                    if (neuralGeneration.get() != myGen) return@execute
+                }
+
+                // Instant automatic fallback to installed Android System TTS when offline / cloud unreachable!
+                mainHandler.post {
+                    val engine = tts
+                    if (!isTtsReady || engine == null) {
+                        pendingSpeechQueue = speech.copy(requireOnDeviceVoice = true, overrideOnlineProfile = null)
+                        return@post
+                    }
+                    val actualLang = configureTtsLanguage(requestedLanguage, false)
+                    if (actualLang == null) {
+                        playOfflineBeepIfRelevant(speech)
+                        if (!AppPreferences.state.value.isTrackingEnabled) stopSelf()
+                        return@post
+                    }
+                    val localized = if (actualLang == requestedLanguage) text else alternateLanguageText
+                    requestAudioFocusAndSpeak(engine, localized, queueMode, speech)
+                    monitorCallModeDuringSpeech(engine)
+                }
+            }
             return
         }
 
@@ -1254,6 +1441,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun stopVoiceImmediately() {
+        neuralGeneration.incrementAndGet()
+        runCatching { activeMediaPlayer?.stop() }
         pendingSpeechQueue = null
         latestSpeakingRequest = null
         speakingRequiresInternet = false
