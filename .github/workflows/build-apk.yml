@@ -15,6 +15,7 @@ on:
     # MLS feasibility lanes have their own test-only workflows; skip their files and workflow-only edits.
     paths-ignore:
       - "oorarivippu/**"
+      - "smsguard/**"
       - "secretmessage/**"
       - "site/**"
       - "README.md"
@@ -25,6 +26,8 @@ on:
       - ".github/workflows/pages.yml"
       - ".github/workflows/oorarivippu-release.yml"
       - ".github/workflows/oorarivippu-test-apk.yml"
+      - ".github/workflows/smsguard-release.yml"
+      - ".github/workflows/smsguard-test-apk.yml"
       - ".github/workflows/secret-message-preview.yml"
       - ".github/workflows/secret-message-mls-rs-candidate.yml"
       - ".github/workflows/secret-message-mls-spike.yml"

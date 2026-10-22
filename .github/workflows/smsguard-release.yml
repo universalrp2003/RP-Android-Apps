@@ -1,0 +1,142 @@
+name: SMS Guard stable release
+
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths-ignore:
+      - ".github/workflows/build-apk.yml"
+      - ".github/workflows/oorarivippu-release.yml"
+      - ".github/workflows/oorarivippu-test-apk.yml"
+      - ".github/workflows/smsguard-test-apk.yml"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the verified SMS Guard APK after owner phone sign-off"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: smsguard-stable-release
+  cancel-in-progress: false
+
+jobs:
+  build-verify-publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-smsguard]') }}
+    name: Test, sign, verify, and publish SMS Guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify bilingual UI and About links
+        run: python3 tools/verify_apps_localization.py
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Run unit tests (including live Neural Cloud TTS verification), release lint & assemble signed release APK
+        run: >-
+          ./gradlew --no-daemon --stacktrace
+          :smsguard:testReleaseUnitTest
+          :smsguard:lintRelease
+          :smsguard:assembleRelease
+
+      - name: Verify signed APK, publish GitHub Release & confirm live asset SHA-256
+        env:
+          GH_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="1.1.0"
+          expected_code="6"
+          expected_package="com.universalrp.smsguard"
+          expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+          tag="sms-guard-v${version}"
+          asset="SMS-Guard-v${version}.apk"
+
+          mapfile -t built_apks < <(find smsguard/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print)
+          if [[ "${#built_apks[@]}" -ne 1 ]]; then
+            echo "::error::Expected one signed SMS Guard APK, found ${#built_apks[@]}"
+            exit 1
+          fi
+
+          apk="$RUNNER_TEMP/$asset"
+          cp "${built_apks[0]}" "$apk"
+          size="$(stat -c '%s' "$apk")"
+
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          build_tools="$(find "$sdk_root/build-tools" -mindepth 1 -maxdepth 1 -type d -print | sort -V | tail -n 1)"
+          aapt="$build_tools/aapt"
+          apksigner="$build_tools/apksigner"
+
+          "$aapt" dump badging "$apk" > "$RUNNER_TEMP/badging.txt"
+          grep -Fq "package: name='${expected_package}' versionCode='${expected_code}' versionName='${version}'" "$RUNNER_TEMP/badging.txt"
+          if grep -q "application-debuggable" "$RUNNER_TEMP/badging.txt"; then
+            echo "::error::Signed APK must not be debuggable."
+            exit 1
+          fi
+
+          "$apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/sig.txt"
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' "$RUNNER_TEMP/sig.txt" | tr -d ' :\r' | tr 'A-F' 'a-f' | sort -u)"
+          if [[ "$signer" != "$expected_signer" ]]; then
+            echo "::error::Unexpected signing certificate: $signer"
+            exit 1
+          fi
+
+          sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
+
+          python3 - "$apk" "$RUNNER_TEMP/notes.md" "$version" "$expected_code" "$expected_package" "$asset" "$size" "$sha256" <<'PY'
+          import base64, json, os, sys, urllib.request
+          apk_path, notes_path, version, code, pkg, asset, size, sha256 = sys.argv[1:9]
+          with open(apk_path, "rb") as f:
+              b64 = base64.b64encode(f.read()).decode("ascii")
+          req = urllib.request.Request(
+              f"https://api.github.com/repos/{os.environ['GITHUB_REPOSITORY']}/git/blobs",
+              data=json.dumps({"content": b64, "encoding": "base64"}).encode("utf-8"),
+              headers={
+                  "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+                  "Accept": "application/vnd.github+json",
+                  "Content-Type": "application/json",
+              },
+              method="POST",
+          )
+          with urllib.request.urlopen(req, timeout=60) as resp:
+              blob_sha = json.loads(resp.read())["sha"]
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"blob_sha={blob_sha}\n")
+          notes = (
+              f"## SMS Guard (குறுஞ்செய்தி காவலன்) v{version} — Official Release\n\n"
+              f"**Package:** `{pkg}` · **Version:** `{version}` (`versionCode = {code}`) · **Minimum Android:** Android 8.0+ (API 26)\n"
+              f"**Asset:** `{asset}` (`{size}` bytes)\n"
+              f"**SHA-256:** `{sha256}`\n\n"
+              "### Key Features\n"
+              "- **Cyber Link Security Scanner (Online + NextDNS Compatible + Offline Queue):** Blocks `.apk` malware traps, lookalike phishing pages, and WhatsApp/Telegram job scams while marking verified official links green.\n"
+              "- **6 Studio Online Neural Voices (3 Male + 3 Female) & Daily Auto Male ↔ Female Rotation:** Speaks bank, security, and wake-up alerts in natural Tamil & English studio voices online first, alternating Male and Female automatically day by day with instant offline Android System TTS fallback.\n"
+              "- **100% OTP Silence & Zero Account Digits Spoken:** Never speaks OTPs or bank account digits; includes one-tap Copy OTP.\n"
+              "- **Spoof-Proof Bank, Card, UPI & FASTag Finance Ledger + Biometric Lock:** Separates Bank/UPI/Card spend from FASTag toll deductions, blocks fake `+91` payment spoofs, and locks behind fingerprint/screen lock or custom PIN.\n"
+              "- **Sleep Time Quiet Schedule & One-by-One Wake Readout:** Stays silent during sleep hours and reads queued bank messages sequentially upon waking.\n"
+              "- **Compact Responsive UI & Built-in Google Safe Browsing API Key Guide:** Clean zero-gap inbox header, dropdown search bar on `🔍`, whole-app `A−`/`A+` zoom, and step-by-step free Safe Browsing API key guide.\n"
+          )
+          with open(notes_path, "w", encoding="utf-8") as nf:
+              nf.write(notes)
+          print(f"::notice::asset={asset} bytes={size} sha256={sha256} blob_sha={blob_sha}")
+          PY
+
+          gh release create "$tag" "$apk" \
+            --repo universalrp2003/RP-Android-Apps \
+            --title "SMS Guard (குறுஞ்செய்தி காவலன்) v${version}" \
+            --notes-file "$RUNNER_TEMP/notes.md"

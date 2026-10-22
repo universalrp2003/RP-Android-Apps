@@ -88,6 +88,7 @@ object AppUpdates {
         "PulseEQ" -> AppIdentity(prefix, "com.universalrp.pulseeq")
         "RP-Vocal-Remover-Studio" -> AppIdentity(prefix, "com.universalrp.vocalremover")
         "Oor-Arivippu" -> AppIdentity(prefix, "com.oorarivippu.voiceannouncer")
+        "SMS-Guard" -> AppIdentity(prefix, "com.universalrp.smsguard")
         else -> throw IllegalArgumentException("No updater configuration exists for this app")
     }
 
