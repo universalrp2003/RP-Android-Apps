@@ -1366,7 +1366,9 @@ jobs:
             python3 - "$response_pages" "$release_tag" "$apk" "$expected_draft" "$GITHUB_REPOSITORY" <<'PY'
           import hashlib, json, pathlib, sys
           response_path, tag, apk_path, expected_draft, repo = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response_path).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response_path).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           releases = [release for page in pages for release in page]
           matches = [item for item in releases if item.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one release for {tag}, found {len(matches)}"
@@ -1434,7 +1436,9 @@ jobs:
             python3 - "$response_pages" "$release_tag" "$apk" "$expected_draft" "$DESTINATION_REPO" <<'PY'
           import hashlib, json, pathlib, sys
           response_path, tag, apk_path, expected_draft, repo = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response_path).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response_path).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           releases = [release for page in pages for release in page]
           matches = [item for item in releases if item.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one {repo} release for {tag}, found {len(matches)}"

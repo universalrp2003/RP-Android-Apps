@@ -204,10 +204,13 @@ jobs:
           if [[ "$SOURCE_ENABLED" == "true" ]]; then repos_to_check=("$source_repo" "$target_repo"); fi
           for repo in "${repos_to_check[@]}"; do
             if [[ "$repo" == "$source_repo" ]]; then token="$SOURCE_TOKEN"; else token="$TARGET_TOKEN"; fi
-            if GH_TOKEN="$token" gh release view "$TAG" --repo "$repo" >/dev/null 2>&1 || \
+            existing_draft=$(GH_TOKEN="$token" gh release view "$TAG" --repo "$repo" --json isDraft --jq '.isDraft' 2>/dev/null || true)
+            if [[ "$existing_draft" == "false" ]] || \
                GH_TOKEN="$token" gh api "repos/$repo/git/ref/tags/$TAG" >/dev/null 2>&1; then
-              echo "::error::Release or tag already exists at $repo/$TAG; refusing to overwrite it."
+              echo "::error::Published release or git tag already exists at $repo/$TAG; refusing to overwrite it."
               exit 1
+            elif [[ "$existing_draft" == "true" ]]; then
+              echo "Preflight note: leftover unpublished draft found at $repo/$TAG; Create step will replace it cleanly."
             fi
           done
           echo "Both release repositories are reachable and the version tag is unused."
@@ -273,7 +276,9 @@ jobs:
             python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" "$expected_draft" <<'PY'
           import hashlib, json, pathlib, sys
           response, repo, tag, name, apk_path, size, digest, draft = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           matches = [release for page in pages for release in page if release.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one release for {repo}/{tag}, found {len(matches)}"
           release = matches[0]
@@ -346,7 +351,9 @@ jobs:
             python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" <<'PY'
           import hashlib, json, pathlib, sys
           response, repo, tag, name, apk_path, size, digest = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           matches = [release for page in pages for release in page if release.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one public release for {repo}/{tag}"
           release = matches[0]
