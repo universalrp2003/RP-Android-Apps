@@ -248,6 +248,12 @@ internal object TamilText {
             "முடக்கம்: நினைவில் உள்ள தொலைபேசிகளுக்கு இந்தத் தொலைபேசி தொடர்பு கொள்ள முடியாததாகத் தெரியும்.",
         "Official downloads — RP-Android-Apps" to
             "அதிகாரப்பூர்வ பதிவிறக்கங்கள் — RP-Android-Apps",
+        "Official website — RP-Android-Apps" to
+            "அதிகாரப்பூர்வ இணையதளம் — RP-Android-Apps",
+        "SMS Guard (குறுஞ்செய்தி காவலன்)" to
+            "குறுஞ்செய்தி காவலன் (SMS Guard)",
+        "Secret Message" to
+            "இரகசிய செய்தி (Secret Message)",
         "Online · ready for chats" to
             "இணைப்பில் · உரையாடலுக்குத் தயார்",
         "Oor Arivippu" to

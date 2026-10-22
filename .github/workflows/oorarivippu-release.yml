@@ -86,8 +86,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_version="1.1.5"
-          expected_code="10"
+          expected_version="1.1.6"
+          expected_code="11"
           expected_package="com.oorarivippu.voiceannouncer"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           tag="oor-arivippu-v${expected_version}"
@@ -204,10 +204,13 @@ jobs:
           if [[ "$SOURCE_ENABLED" == "true" ]]; then repos_to_check=("$source_repo" "$target_repo"); fi
           for repo in "${repos_to_check[@]}"; do
             if [[ "$repo" == "$source_repo" ]]; then token="$SOURCE_TOKEN"; else token="$TARGET_TOKEN"; fi
-            if GH_TOKEN="$token" gh release view "$TAG" --repo "$repo" >/dev/null 2>&1 || \
+            existing_draft=$(GH_TOKEN="$token" gh release view "$TAG" --repo "$repo" --json isDraft --jq '.isDraft' 2>/dev/null || true)
+            if [[ "$existing_draft" == "false" ]] || \
                GH_TOKEN="$token" gh api "repos/$repo/git/ref/tags/$TAG" >/dev/null 2>&1; then
-              echo "::error::Release or tag already exists at $repo/$TAG; refusing to overwrite it."
+              echo "::error::Published release or git tag already exists at $repo/$TAG; refusing to overwrite it."
               exit 1
+            elif [[ "$existing_draft" == "true" ]]; then
+              echo "Preflight note: leftover unpublished draft found at $repo/$TAG; Create step will replace it cleanly."
             fi
           done
           echo "Both release repositories are reachable and the version tag is unused."
@@ -269,11 +272,14 @@ jobs:
           verify_asset() {
             local repo="$1" token="$2" expected_draft="$3"
             local response="$RUNNER_TEMP/${repo##*/}-${TAG}-releases.json"
-            GH_TOKEN="$token" gh api --paginate "repos/$repo/releases?per_page=100" > "$response"
-            python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" "$expected_draft" <<'PY'
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if GH_TOKEN="$token" gh api --paginate "repos/$repo/releases?per_page=100" > "$response" && \
+                 python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" "$expected_draft" <<'PY'
           import hashlib, json, pathlib, sys
           response, repo, tag, name, apk_path, size, digest, draft = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           matches = [release for page in pages for release in page if release.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one release for {repo}/{tag}, found {len(matches)}"
           release = matches[0]
@@ -299,6 +305,14 @@ jobs:
               assert asset.get("browser_download_url") == canonical_asset, f"non-canonical asset URL for {repo}/{tag}"
           print(f"VERIFIED {'DRAFT' if is_draft else 'PUBLIC'} {repo}/{tag}: {name}, {size} bytes, {expected_digest}")
           PY
+              then
+                return 0
+              fi
+              echo "Waiting for GitHub async SHA-256 digest ($repo/$TAG, attempt $attempt/12)..."
+              sleep 2
+            done
+            echo "FAIL: could not verify asset $repo/$TAG after 12 attempts"
+            return 1
           }
           verify_asset "$TARGET_REPO" "$TARGET_TOKEN" true
           if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
@@ -346,7 +360,9 @@ jobs:
             python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" <<'PY'
           import hashlib, json, pathlib, sys
           response, repo, tag, name, apk_path, size, digest = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           matches = [release for page in pages for release in page if release.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one public release for {repo}/{tag}"
           release = matches[0]

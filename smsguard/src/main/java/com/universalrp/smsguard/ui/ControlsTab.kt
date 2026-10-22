@@ -659,8 +659,12 @@ fun AboutSmsGuardScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
+            val installedVersion = remember {
+                runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }
+                    .getOrNull() ?: com.universalrp.smsguard.BuildConfig.VERSION_NAME
+            }
             Text(
-                if (tamil) "குறுஞ்செய்தி காவலன் (SMS Guard) · பதிப்பு 1.0.0" else "SMS Guard (குறுஞ்செய்தி காவலன்) · v1.0.0",
+                if (tamil) "குறுஞ்செய்தி காவலன் (SMS Guard) · பதிப்பு $installedVersion" else "SMS Guard (குறுஞ்செய்தி காவலன்) · v$installedVersion",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = palette.accent,
@@ -694,28 +698,40 @@ fun AboutSmsGuardScreen(
                 Text("Project development: Ramesh prathap .R (universalrp2003@gmail.com)", color = palette.textPrimary, fontSize = 13.sp)
                 Text("Software assistance: Arena.ai Agent Mode", color = palette.textMuted, fontSize = 12.5.sp)
 
-                LinkRow("RP-Android-Apps Official Website", "https://universalrp2003.github.io/RP-Android-Apps/", palette) { url ->
+                LinkRow(
+                    if (tamil) "RP-Android-Apps அதிகாரப்பூர்வ இணையதளம்" else "RP-Android-Apps Official Website",
+                    "https://universalrp2003.github.io/RP-Android-Apps/",
+                    palette,
+                ) { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
-                LinkRow("RP-Android-Apps GitHub Repository", "https://github.com/universalrp2003/RP-Android-Apps", palette) { url ->
+                LinkRow(
+                    if (tamil) "RP-Android-Apps GitHub களஞ்சியம்" else "RP-Android-Apps GitHub Repository",
+                    "https://github.com/universalrp2003/RP-Android-Apps",
+                    palette,
+                ) { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
-                LinkRow("Legacy Mirror Repository", "https://github.com/universalrp2003/InternetRadio", palette) { url ->
+                LinkRow(
+                    if (tamil) "முந்தைய மாற்று களஞ்சியம் (InternetRadio)" else "Legacy Mirror Repository",
+                    "https://github.com/universalrp2003/InternetRadio",
+                    palette,
+                ) { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
             }
         }
 
-        // Shared Sister Apps list
+        // Shared Sister Apps list (all 7 RP Ideas apps)
         item {
             SectionCard(palette = palette) {
                 Text(
-                    if (tamil) "எமது பிற RP Ideas செயலிகள்" else "Other RP Ideas Android Apps",
+                    if (tamil) "எமது RP Ideas செயலிகள் (7)" else "Our RP Ideas Android Apps (7)",
                     fontWeight = FontWeight.Bold,
                     color = palette.accent,
                 )
                 SisterApps.releaseLinks().forEach { (label, url) ->
-                    LinkRow(label, url, palette) { target ->
+                    LinkRow(com.universalrp.updates.AppStrings.translate(label), url, palette) { target ->
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(target)))
                     }
                 }

@@ -1357,16 +1357,17 @@ jobs:
             apk="$2"
             expected_draft="$3"
             response_pages="$RUNNER_TEMP/release-${release_tag}-pages.json"
-            # GitHub's release-by-tag endpoint intentionally hides draft releases (404).
-            # The authenticated release list includes drafts, so resolve the unique tag there.
-            if ! gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" > "$response_pages"; then
-              echo "FAIL: could not list GitHub releases while verifying $release_tag"
-              return 1
-            fi
-            python3 - "$response_pages" "$release_tag" "$apk" "$expected_draft" "$GITHUB_REPOSITORY" <<'PY'
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              # GitHub's release-by-tag endpoint intentionally hides draft releases (404).
+              # The authenticated release list includes drafts, and GitHub computes asset.digest
+              # asynchronously 1-5s after upload for large APKs (e.g. 64 MB Vocal Remover).
+              if gh api --paginate "repos/${GITHUB_REPOSITORY}/releases?per_page=100" > "$response_pages" && \
+                 python3 - "$response_pages" "$release_tag" "$apk" "$expected_draft" "$GITHUB_REPOSITORY" <<'PY'
           import hashlib, json, pathlib, sys
           response_path, tag, apk_path, expected_draft, repo = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response_path).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response_path).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           releases = [release for page in pages for release in page]
           matches = [item for item in releases if item.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one release for {tag}, found {len(matches)}"
@@ -1397,6 +1398,14 @@ jobs:
               assert download_url == expected_url, f"published download URL is not canonical: {download_url}"
           print(f"VERIFIED {'DRAFT' if is_draft else 'PUBLIC'} {tag}: {name}, {asset['size']} bytes, {expected_digest}")
           PY
+              then
+                return 0
+              fi
+              echo "Waiting for GitHub async SHA-256 digest / release propagation ($release_tag, attempt $attempt/12)..."
+              sleep 2
+            done
+            echo "FAIL: could not verify release asset $release_tag after 12 attempts"
+            return 1
           }
 
           # Verify all old-source publication inputs. In mirror mode, download and validate the
@@ -1427,14 +1436,14 @@ jobs:
             apk="$2"
             expected_draft="$3"
             response_pages="$RUNNER_TEMP/target-release-${release_tag}-pages.json"
-            if ! GH_TOKEN="$RELEASE_TOKEN" gh api --paginate "repos/${DESTINATION_REPO}/releases?per_page=100" > "$response_pages"; then
-              echo "FAIL: could not list RP-Android-Apps releases while verifying $release_tag"
-              return 1
-            fi
-            python3 - "$response_pages" "$release_tag" "$apk" "$expected_draft" "$DESTINATION_REPO" <<'PY'
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if GH_TOKEN="$RELEASE_TOKEN" gh api --paginate "repos/${DESTINATION_REPO}/releases?per_page=100" > "$response_pages" && \
+                 python3 - "$response_pages" "$release_tag" "$apk" "$expected_draft" "$DESTINATION_REPO" <<'PY'
           import hashlib, json, pathlib, sys
           response_path, tag, apk_path, expected_draft, repo = sys.argv[1:]
-          pages = [json.loads(line) for line in pathlib.Path(response_path).read_text().splitlines() if line.strip()]
+          raw_text = pathlib.Path(response_path).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
+          while (idx := next((k for k in range(idx, len(raw_text)) if not raw_text[k].isspace()), len(raw_text))) < len(raw_text):
+              page, idx = dec.raw_decode(raw_text, idx); pages.append(page)
           releases = [release for page in pages for release in page]
           matches = [item for item in releases if item.get("tag_name") == tag]
           assert len(matches) == 1, f"expected one {repo} release for {tag}, found {len(matches)}"
@@ -1463,6 +1472,14 @@ jobs:
               assert download_url == expected_url, f"destination download URL is not canonical: {download_url}"
           print(f"VERIFIED {'DRAFT' if is_draft else 'PUBLIC'} {repo}/{tag}: {name}, {asset['size']} bytes, {expected_digest}")
           PY
+              then
+                return 0
+              fi
+              echo "Waiting for GitHub async SHA-256 digest ($DESTINATION_REPO/$release_tag, attempt $attempt/12)..."
+              sleep 2
+            done
+            echo "FAIL: could not verify destination release asset $release_tag after 12 attempts"
+            return 1
           }
 
           if [[ "$TARGET_PUBLISH_ENABLED" == "true" && "$SAME_REPO" != "true" ]]; then

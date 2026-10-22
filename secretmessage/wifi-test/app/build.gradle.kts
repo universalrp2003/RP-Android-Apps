@@ -27,8 +27,8 @@ android {
         // Raise versionCode by one and versionName (1.x.y: y for fixes, x for new features) for every
         // published version, together with EXPECTED_VERSION/EXPECTED_CODE in
         // .github/workflows/secret-message-wifi-test.yml.
-        versionCode = 4
-        versionName = "1.1.2"
+        versionCode = 5
+        versionName = "1.1.3"
         manifestPlaceholders["appLabel"] = "Secret Message"
     }
 

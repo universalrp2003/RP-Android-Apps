@@ -790,7 +790,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun shareApp() {
         val text = "Ramesh Radio — Tamil FM stations, Tamil and world news radio, " +
             "a local file player and a 10-band equalizer with Clear sound. " +
-            "Built by Ramesh prathap .R."
+            "Built by Ramesh prathap .R — https://universalrp2003.github.io/RP-Android-Apps/"
         try {
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
@@ -810,7 +810,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             ctx.startActivity(
                 Intent(
                     Intent.ACTION_VIEW,
-                    Uri.parse("https://github.com/universalrp2003/InternetRadio"),
+                    Uri.parse("https://github.com/universalrp2003/RP-Android-Apps"),
                 ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             )
         } catch (t: Throwable) {

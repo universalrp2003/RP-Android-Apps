@@ -2,7 +2,7 @@
 
 **Last updated: 22 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
 
-This policy covers actively maintained Android apps and their builds: **Live Guard (CleanSweep) 2.61**, **Ramesh Radio 1.18**, **PulseEQ 1.8**, **RP Vocal Remover Studio 0.1.14**, **Oor Arivippu 1.1.4**, **Secret Message 1.1.2**, and **SMS Guard (குறுஞ்செய்தி காவலன்) 1.0.1**. Older app versions and unreleased builds may behave differently.
+This policy covers all seven actively published RP Ideas Android apps and their builds: **SMS Guard (குறுஞ்செய்தி காவலன்) 1.1.1**, **Live Guard (CleanSweep) 2.63**, **Ramesh Radio 1.19**, **PulseEQ 1.9**, **RP Vocal Remover Studio 0.1.15**, **Oor Arivippu (ஊர் அறிவிப்பு) 1.1.6**, and **Secret Message (இரகசிய செய்தி) 1.1.3**. Older app versions and unreleased builds may behave differently.
 
 ## The short version
 
@@ -74,4 +74,5 @@ These general-purpose utilities are not designed specifically for children. The 
 
 Changes to this policy will be published in this file with its date updated. Questions can be sent to **Ramesh prathap .R** at **universalrp2003@gmail.com**.
 
-Source code and issue tracker: <https://github.com/universalrp2003/InternetRadio>
+Official website: <https://universalrp2003.github.io/RP-Android-Apps/>
+Source code and issue tracker: <https://github.com/universalrp2003/RP-Android-Apps> (legacy mirror: <https://github.com/universalrp2003/InternetRadio>)

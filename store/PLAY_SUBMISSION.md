@@ -20,7 +20,7 @@ All four have stable direct-download APKs in GitHub Releases. An AAB produced by
 1. Confirm that a Play Console app exists for the exact package ID and that the owner has selected the intended app name, countries, pricing and track.
 2. Download the AAB generated from the same verified source/release run. Do not upload debug builds or substitute an APK for the bundle.
 3. Use current listing text and graphics under the relevant module's `fastlane/metadata/android/` directory. Current store art is maintained for `cleaner`, `radio` and `equalizer`; RP Vocal Remover Studio is not currently prepared for Play submission.
-4. Use the current public privacy policy: <https://github.com/universalrp2003/InternetRadio/blob/main/PRIVACY.md>. Reconfirm the URL loads the current policy after this branch is merged.
+4. Use the current public privacy policy: <https://github.com/universalrp2003/RP-Android-Apps/blob/main/PRIVACY.md> (official website: <https://universalrp2003.github.io/RP-Android-Apps/>). Reconfirm the URL loads the current policy after this branch is merged.
 5. Complete the target audience, content rating, data-safety, permission and other Play Console declarations from the app's actual behavior and the current Google Play requirements. Do not copy generic answers from an old checklist.
 6. Live Guard uses Android all-files access for its file-review/cleanup functionality. Review the current Play policy and required declaration carefully before submitting; a CI AAB does not establish permission eligibility or store approval.
 7. Keep release notes aligned with the exact version code and bytes submitted. Record the submission/review outcome separately from CI results.

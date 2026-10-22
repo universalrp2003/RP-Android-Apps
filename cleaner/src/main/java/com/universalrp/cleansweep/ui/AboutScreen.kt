@@ -101,7 +101,7 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
             // ------------------------------------------------------ who made this
             androidx.compose.material3.TextButton(onClick = {
                 runCatching { sourceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
-                    android.net.Uri.parse("https://github.com/universalrp2003/InternetRadio"))) }
+                    android.net.Uri.parse("https://github.com/universalrp2003/RP-Android-Apps"))) }
             }) { Text("Source code · GNU GPL v3") }
             LiveGuardUpdateCard()
             PanelCard(Modifier.fillMaxWidth()) {
@@ -215,9 +215,24 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         )
                     }
                     Spacer(Modifier.height(6.dp))
+                    com.universalrp.updates.SisterApps.projectLinks().forEach { (label, url) ->
+                        TextButton(
+                            onClick = {
+                                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+                            },
+                            contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp),
+                        ) {
+                            Text(
+                                "🔗 " + tr(label),
+                                color = AccentCyan,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         tr("Free software under the GNU GPL v3") + "\n" +
-                            "github.com/universalrp2003/InternetRadio",
+                            "github.com/universalrp2003/RP-Android-Apps",
                         style = MaterialTheme.typography.labelSmall,
                         color = AccentCyan,
                     )
@@ -244,12 +259,14 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
 
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(tr("App releases"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    // All six apps, one shared list (was four hard-coded links to the old repo).
+                    Text(tr("Other RP Ideas Android Apps"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AccentCyan)
+                    Spacer(Modifier.height(2.dp))
+                    Text(tr("App releases"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    // All seven RP Ideas apps from one shared list.
                     com.universalrp.updates.SisterApps.releaseLinks().forEach { (label, url) ->
                         TextButton(onClick = {
                             runCatching { sourceContext.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
-                        }) { Text(tr(label), color = AccentCyan) }
+                        }) { Text("🔗 " + tr(label), color = AccentCyan) }
                     }
                 }
             }

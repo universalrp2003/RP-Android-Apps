@@ -1323,6 +1323,14 @@ object Lang {
         "Ramesh Radio — GitHub release" to "Ramesh Radio — GitHub வெளியீடு",
         "PulseEQ — GitHub release" to "PulseEQ — GitHub வெளியீடு",
         "RP VOCAL REMOVER STUDIO — GitHub release" to "RP VOCAL REMOVER STUDIO — GitHub வெளியீடு",
+        "SMS Guard (குறுஞ்செய்தி காவலன்) — GitHub release" to "குறுஞ்செய்தி காவலன் (SMS Guard) — GitHub வெளியீடு",
+        "Oor Arivippu — GitHub release" to "ஊர் அறிவிப்பு (Oor Arivippu) — GitHub வெளியீடு",
+        "Secret Message — GitHub release" to "இரகசிய செய்தி (Secret Message) — GitHub வெளியீடு",
+        "Project development & credits" to "திட்ட உருவாக்கம் & பங்களிப்பு",
+        "Other RP Ideas Android Apps" to "எமது பிற RP Ideas செயலிகள்",
+        "RP-Android-Apps Official Website" to "RP-Android-Apps அதிகாரப்பூர்வ இணையதளம்",
+        "RP-Android-Apps GitHub Repository" to "RP-Android-Apps GitHub களஞ்சியம்",
+        "Legacy Mirror Repository" to "முந்தைய மாற்று களஞ்சியம் (InternetRadio)",
 
         // Live Guard 2.48 — daily 4G allowance and the call-safe speech rule.
         "Daily 4G limit" to "தினசரி 4G வரம்பு",
