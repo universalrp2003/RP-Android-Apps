@@ -21,6 +21,8 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.floor
 
 enum class VoiceGender {
@@ -291,8 +293,8 @@ object NeuralCloudVoiceEngine {
 
         val audioBuffer = ByteArrayOutputStream(16 * 1024)
         val doneLatch = CountDownLatch(1)
-        @Volatile var saw403ServerDate: String? = null
-        @Volatile var completedCleanly = false
+        val saw403ServerDate = AtomicReference<String?>(null)
+        val completedCleanly = AtomicBoolean(false)
 
         val ws = wsClient.newWebSocket(
             request,
@@ -324,7 +326,7 @@ object NeuralCloudVoiceEngine {
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
                     if (text.contains("Path:turn.end")) {
-                        completedCleanly = true
+                        completedCleanly.set(true)
                         runCatching { webSocket.close(1000, null) }
                         doneLatch.countDown()
                     }
@@ -347,7 +349,7 @@ object NeuralCloudVoiceEngine {
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                     if (response?.code == 403) {
-                        saw403ServerDate = response.header("Date")
+                        saw403ServerDate.set(response.header("Date"))
                     }
                     doneLatch.countDown()
                 }
@@ -364,7 +366,7 @@ object NeuralCloudVoiceEngine {
         }
 
         // Automatic clock-skew self-healing if user's phone clock is slightly off!
-        val serverDateHeader = saw403ServerDate
+        val serverDateHeader = saw403ServerDate.get()
         if (allowClockRetry && serverDateHeader != null) {
             val parsedEpoch = runCatching {
                 ZonedDateTime.parse(serverDateHeader, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond().toDouble()
@@ -376,7 +378,7 @@ object NeuralCloudVoiceEngine {
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
-        return if (completedCleanly && out.size >= 256) out else null
+        return if (completedCleanly.get() && out.size >= 256) out else null
     }
 
     private fun sha256Hex(s: String): String =
