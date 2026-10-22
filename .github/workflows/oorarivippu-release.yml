@@ -272,8 +272,9 @@ jobs:
           verify_asset() {
             local repo="$1" token="$2" expected_draft="$3"
             local response="$RUNNER_TEMP/${repo##*/}-${TAG}-releases.json"
-            GH_TOKEN="$token" gh api --paginate "repos/$repo/releases?per_page=100" > "$response"
-            python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" "$expected_draft" <<'PY'
+            for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              if GH_TOKEN="$token" gh api --paginate "repos/$repo/releases?per_page=100" > "$response" && \
+                 python3 - "$response" "$repo" "$TAG" "$ASSET" "$APK" "$EXPECTED_SIZE" "$EXPECTED_SHA256" "$expected_draft" <<'PY'
           import hashlib, json, pathlib, sys
           response, repo, tag, name, apk_path, size, digest, draft = sys.argv[1:]
           raw_text = pathlib.Path(response).read_text(encoding="utf-8"); dec = json.JSONDecoder(); pages, idx = [], 0
@@ -304,6 +305,14 @@ jobs:
               assert asset.get("browser_download_url") == canonical_asset, f"non-canonical asset URL for {repo}/{tag}"
           print(f"VERIFIED {'DRAFT' if is_draft else 'PUBLIC'} {repo}/{tag}: {name}, {size} bytes, {expected_digest}")
           PY
+              then
+                return 0
+              fi
+              echo "Waiting for GitHub async SHA-256 digest ($repo/$TAG, attempt $attempt/12)..."
+              sleep 2
+            done
+            echo "FAIL: could not verify asset $repo/$TAG after 12 attempts"
+            return 1
           }
           verify_asset "$TARGET_REPO" "$TARGET_TOKEN" true
           if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
