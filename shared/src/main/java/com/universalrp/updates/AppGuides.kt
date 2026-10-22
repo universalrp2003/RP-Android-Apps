@@ -618,4 +618,98 @@ object AppGuides {
             ),
         ),
     )
+
+    // SMS Guard (குறுஞ்செய்தி காவலன்)
+    val smsGuard = GuideContent(
+        intro = "SMS Guard (குறுஞ்செய்தி காவலன்) protects you from phishing links, fake payment SMS tricks " +
+            "and cyber scams while giving full everyday SMS, verified voice alerts and spoof-proof finance tracking. " +
+            "Tap any topic below to expand.",
+        introTa = "குறுஞ்செய்தி காவலன் (SMS Guard) போலி இணைப்புகள், போலி பண வரவு குறுஞ்செய்திகள் மற்றும் " +
+            "சைபர் மோசடிகளிலிருந்து உங்களைப் பாதுகாக்கிறது; முழு SMS வசதி, குரல் அறிவிப்பு மற்றும் துல்லியமான " +
+            "வரவு-செலவு கணக்கையும் வழங்குகிறது. தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
+        topics = listOf(
+            topic(
+                "Setting SMS Guard as your Default SMS App (Android 8–17)",
+                "இயல்புநிலை SMS செயலியாக அமைத்தல் (Android 8–17)",
+                "Tap 'Set as Default SMS App' at the top of Messages to send, receive and manage all SMS threads. " +
+                    "On Android 15 and newer, sideloaded APKs show a greyed permission switch once: tap 'Open App Info', " +
+                    "tap the top-right 3-dot menu (⋮) -> 'Allow restricted settings', then tap 'Set as Default SMS App'. " +
+                    "You can also switch back to your previous SMS app anytime with one tap.",
+                "அனைத்து SMS செய்திகளையும் அனுப்பவும் பெறவும் Messages மேல் உள்ள 'இயல்புநிலை SMS ஆப்பாக அமை' " +
+                    "பொத்தானைத் தட்டுங்கள். Android 15+ போன்களில் அனுமதி மங்கலாக இருந்தால், 'App Info திற' தட்டி மேல் " +
+                    "வலது மூலை (⋮) மெனுவில் 'Allow restricted settings' என்பதை இயக்கிய பின் இயல்புநிலை SMS ஆப்பாக " +
+                    "தேர்ந்தெடுக்கவும். எப்போது வேண்டுமானாலும் பழைய SMS ஆப்பிற்கு ஒரே தட்டலில் மாறலாம்.",
+            ),
+            topic(
+                "Green Tick Safe vs Red Don't-Touch Link Scanner",
+                "பச்சை டிக் பாதுகாப்பு vs சிவப்பு எச்சரிக்கை இணைப்பு சோதனை",
+                "Every link inside every SMS is checked without ever uploading your personal SMS text. Malicious " +
+                    ".apk files, fake KYC/bank lookalike sites and scam short-links show a red 'Unsafe — Do Not Touch' " +
+                    "shield that blocks accidental taps. Safe verified HTTPS links show a green tick with the real domain.",
+                "உங்கள் தனிப்பட்ட SMS உரையை எங்கும் அனுப்பாமலேயே ஒவ்வொரு இணைப்பும் சோதிக்கப்படும். ஆபத்தான .apk கோப்புகள், " +
+                    "போலி வங்கி/KYC இணையதளங்கள் மற்றும் சுருக்கப்பட்ட மோசடி இணைப்புகளுக்கு 'ஆபத்தான இணைப்பு — தொடாதீர்கள்' " +
+                    "என்ற சிவப்புத் தடுப்புக் கவசம் காட்டப்படும். பாதுகாப்பான இணைப்புகளுக்கு உண்மையான தளப் பெயருடன் பச்சை டிக் காட்டப்படும்.",
+            ),
+            topic(
+                "Offline Honesty & Automatic Reconnect Verification",
+                "இணையம் இல்லாத நேரப் பாதுகாப்பு & தானியங்கி மறுசோதனை",
+                "If your phone has no internet (or if you switch Internet Access OFF inside Controls), SMS Guard never " +
+                    "guesses: it warns by screen badge and voice that it cannot verify the link yet, queues the link safely, " +
+                    "and automatically verifies and speaks the real verdict as soon as internet reconnects.",
+                "போனில் இணையம் இல்லையென்றாலோ (அல்லது Controls-இல் இணைய அணுகல் நிறுத்தப்பட்டிருந்தாலோ) செயலி ஊகிக்காது: " +
+                    "'இப்போது சரிபார்க்க முடியவில்லை — தொடாதீர்கள்' என்று எச்சரித்துப் பட்டியலில் வைக்கும்; இணையம் " +
+                    "கிடைத்தவுடன் தானாகவே சரிபார்த்து உண்மையான தகவலைக் குரலில் தெரிவிக்கும்.",
+            ),
+            topic(
+                "Sender Identification & TRAI -T / -S / -P / -G Verification",
+                "அனுப்புநர் நிறுவன அடையாளம் & TRAI சான்று சோதனை",
+                "SMS Guard decodes Indian TRAI DLT carrier headers: -T (Transactional bank/OTP), -S (Service update), " +
+                    "-G (Official Government) and -P (Promotional ad), naming over 150 banks, UPI apps, carriers and " +
+                    "services clearly in Tamil and English while exposing personal SIM numbers pretending to be banks.",
+                "இந்திய TRAI விதிகளின்படி -T (வங்கி/பரிவர்த்தனை), -S (சேவை), -G (அரசு) மற்றும் -P (விளம்பரம்) " +
+                    "குறியீடுகளைப் பிரித்து 150-க்கும் மேற்பட்ட வங்கிகள், UPI ஆப்கள் மற்றும் நிறுவனங்களின் பெயரைத் " +
+                    "தெளிவாகக் காட்டி ஒலிக்கும்; வங்கி போல நடிக்கும் தனிப்பட்ட மொபைல் எண்களை உடனே காட்டிக்கொடுக்கும்.",
+            ),
+            topic(
+                "OTP Privacy Rule (100% Voice Silence)",
+                "OTP இரகசியப் பாதுகாப்பு (குரல் அறிவிப்பு இல்லை)",
+                "One-Time Passwords (OTPs) are never read aloud so nobody nearby can hear your bank or login code. " +
+                    "Instead, SMS Guard extracts the exact code and gives you a one-tap 'Copy OTP' chip.",
+                "உங்கள் வங்கி அல்லது கணக்கு OTP இரகசிய எண்களை அருகிலுள்ளவர்கள் கேட்டுவிடக் கூடாது என்பதற்காக OTP " +
+                    "எப்போதும் குரலில் படிக்கப்படாது. திரையில் ஒரே தட்டலில் 'OTP நகலெடு' பொத்தான் மட்டும் காட்டப்படும்.",
+            ),
+            topic(
+                "Spoof-Proof Finance Ledger & Separate Bank / UPI Calculation",
+                "ஏமாற்ற முடியாத வரவு-செலவு கணக்கு & தனித்தனி வங்கி / UPI கணக்கு",
+                "If anyone sends 'Rs. 5,000 credited' from a personal phone number (+91...) or a -P promotional ad, " +
+                    "SMS Guard completely blocks it from your income/spend totals and warns you aloud of a fake payment " +
+                    "message. Real bank & UPI alerts are separated by Bank Account, Card, GPay and PhonePe with UTR " +
+                    "deduplication across This Month, Selected Month, Yearly and Custom Date periods.",
+                "தனிப்பட்ட மொபைல் எண்ணிலிருந்து (+91...) யாராவது 'ரூ.5,000 வரவு' என டைப் செய்து அனுப்பினாலோ விளம்பரச் " +
+                    "செய்தி (-P) வந்தாலோ அது உங்கள் கணக்கில் ஒருபோதும் சேராது — மாறாக 'போலி பணச் செய்தி' என எச்சரிக்கும்! " +
+                    "உண்மையான வங்கி, GPay, PhonePe கணக்குகள் தனித்தனியாகப் பிரிக்கப்பட்டு இந்த மாதம், தேர்ந்தெடுத்த " +
+                    "மாதம், முழு ஆண்டு மற்றும் குறிப்பிட்ட தேதிகளுக்கான வரவு-செலவு துல்லியமாகக் கணக்கிடப்படும்.",
+            ),
+            topic(
+                "Self Volume Slider, Call Guard & Full ON/OFF Controls",
+                "தனி ஒலி அளவு கட்டுப்பாடு & முழு ON/OFF சுதந்திரம்",
+                "Controls gives independent switches for Internet Access, Voice Announcement, Short Summary for Every " +
+                    "SMS, Finance Calculation and Promo Muting, plus a dedicated 0%–100% SMS Voice Volume slider and " +
+                    "Test Voice button. Announcements automatically stay silent during phone calls.",
+                "Controls திரையில் இணைய அணுகல், குரல் அறிவிப்பு, ஒவ்வொரு செய்திக்கும் சுருக்க அறிவிப்பு, வரவு-செலவு " +
+                    "கணக்கு, விளம்பர அமைதி ஆகிய அனைத்திற்கும் தனித்தனி ON/OFF சுவிட்சுகளும், 0%–100% தனி ஒலி அளவு " +
+                    "கட்டுப்பாடும் உள்ளன. போன் அழைப்பில் இருக்கும்போது குரல் அறிவிப்பு குறுக்கிடாது.",
+            ),
+            topic(
+                "Verified Updates & Zero Message Upload Privacy",
+                "சரிபார்க்கப்பட்ட புதுப்பிப்பு & முழுத் தனியுரிமை",
+                "Your SMS messages, OTPs and finance numbers stay strictly on your phone — nothing is uploaded to any " +
+                    "cloud database. App updates check official GitHub Releases and verify APK size, SHA-256 and RP Ideas " +
+                    "signing certificate before opening Android's own install prompt.",
+                "உங்கள் குறுஞ்செய்திகள், OTP எண்கள் மற்றும் வரவு-செலவு விவரங்கள் உங்கள் போனிலேயே பாதுகாப்பாக இருக்கும் — " +
+                    "எந்த மேகச் சேவையகத்திற்கும் அனுப்பப்படாது. புதுப்பிப்புகள் அளவு, SHA-256 மற்றும் கையொப்பத்தைச் " +
+                    "சரிபார்த்த பிறகே Android நிறுவல் திரையைத் திறக்கும்.",
+            ),
+        ),
+    )
 }

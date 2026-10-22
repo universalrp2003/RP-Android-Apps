@@ -11,9 +11,12 @@ on:
     branches: [main, "arena/**", arena/d4fb2344-internetradio]
     # Workflow-only edits are not a release candidate and must not start this workflow.
     paths-ignore:
+      - "smsguard/**"
       - ".github/workflows/build-apk.yml"
       - ".github/workflows/oorarivippu-release.yml"
       - ".github/workflows/oorarivippu-test-apk.yml"
+      - ".github/workflows/smsguard-release.yml"
+      - ".github/workflows/smsguard-test-apk.yml"
   workflow_dispatch:
     inputs:
       publish:

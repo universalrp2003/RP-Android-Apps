@@ -169,7 +169,8 @@ def verify_app_guides() -> None:
         ("Ramesh Radio", "rameshRadio", "// PulseEQ"),
         ("PulseEQ", "pulseEq", "// RP Vocal Remover Studio"),
         ("RP Vocal Remover Studio", "vocalRemover", "// Oor Arivippu"),
-        ("Oor Arivippu", "oorArivippu", None),
+        ("Oor Arivippu", "oorArivippu", "// SMS Guard"),
+        ("SMS Guard", "smsGuard", None),
     )
     for app, field, end_marker in guide_sections:
         start = guides_source.find(f"val {field} = GuideContent(")
@@ -211,6 +212,10 @@ def verify_app_guides() -> None:
         "Oor Arivippu": (
             "oorarivippu/src/main/java/com/oorarivippu/voiceannouncer/MainActivity.kt",
             ("AppGuides.oorArivippu", "onClick = { showGuide = true }", "HelpOutline"),
+        ),
+        "SMS Guard": (
+            "smsguard/src/main/java/com/universalrp/smsguard/MainActivity.kt",
+            ("AppGuides.smsGuard", "vm.openGuide(true)", "HelpOutline"),
         ),
         "Secret Message": (
             "secretmessage/wifi-test/app/src/main/java/com/rpideas/secretmessage/wifitest/ConnectScreen.kt",

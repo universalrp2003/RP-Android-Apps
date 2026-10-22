@@ -1,8 +1,8 @@
 # Privacy policy — RP Ideas Android apps
 
-**Last updated: 21 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
+**Last updated: 22 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
 
-This policy covers actively maintained Android apps and their current stable releases: **Live Guard (CleanSweep) 2.61**, **Ramesh Radio 1.18**, **PulseEQ 1.8**, **RP Vocal Remover Studio 0.1.14**, **Oor Arivippu 1.1.4**, and **Secret Message 1.1.2**. Older app versions and unreleased builds may behave differently.
+This policy covers actively maintained Android apps and their builds: **Live Guard (CleanSweep) 2.61**, **Ramesh Radio 1.18**, **PulseEQ 1.8**, **RP Vocal Remover Studio 0.1.14**, **Oor Arivippu 1.1.4**, **Secret Message 1.1.2**, and **SMS Guard (குறுஞ்செய்தி காவலன்) 1.0.1**. Older app versions and unreleased builds may behave differently.
 
 ## The short version
 
@@ -46,6 +46,13 @@ The developer does not operate an app backend, account system, advertising netwo
 - Selected songs are processed on-device. The original is left unchanged; the first pass creates an instrumental WAV. A second vocal-reduction pass is optional and user-started. A separate 320 kb/s CBR MP3 export is optional; MP3 is lossy and the WAV is retained.
 - The model is downloaded from the upstream GitHub release and checked against its pinned checksum. GitHub receives normal download request metadata. The model download is not an audio upload.
 - The app does not send the selected audio to the developer, GitHub, an AI provider or an audio-processing service. Output files are written to the location selected by the user and remain subject to Android storage and backup settings.
+
+### SMS Guard (குறுஞ்செய்தி காவலன்)
+
+- **Default SMS & local processing:** When chosen by the user as Android's Default SMS App (`ROLE_SMS`), SMS Guard reads, sends, receives, and manages SMS threads locally using Android's system `Telephony.Sms` provider and stores its own scanned link verdicts, verified finance ledger entries, and user-created account labels in app-private local storage (`allowBackup=false`, cloud backup/transfer excluded). Preferences are encrypted locally using Android Keystore (`EncryptedSharedPreferences`). SMS bodies, OTP codes, phone numbers, sender names, and bank/UPI amounts are **never** uploaded to the developer or to any AI/cloud backend.
+- **Link security checks & user Internet toggle:** Offline link rules (raw `.apk`/`.xapk`/`.exe` traps, raw IPs, Punycode homographs, WhatsApp/Telegram/form job-scam redirects, high-abuse TLDs, and brand impersonation heuristics) run strictly on-device. Only when the in-app **Internet Access** switch is turned **ON**, SMS Guard performs header-only HTTP redirect unshortening (without executing JavaScript or sending SMS text) on URLs extracted from non-OTP messages, and queries encrypted DNS-over-HTTPS (`DoH`) / system DNS resolvers (**Google Public DNS `dns.google`**, **Cloudflare `1.1.1.1` / `1.1.1.2` Malware Blocking DNS**, and **Quad9 `9.9.9.9`**) to check domain existence and phishing/malware blocks. If internet is off or unavailable, links remain uncached **Pending** locally and auto-verify once connectivity returns. Turning **Internet Access** OFF blocks all link-verification network requests immediately.
+- **Voice announcements, OTP silence & CallGuard:** Voice alerts use the phone's selected Android Text-to-Speech engine with a dedicated self-volume level and `CallGuard` active-call silence. Messages containing one-time passwords (OTPs) are never spoken aloud. If the user selects a network-backed TTS voice in Android Settings, that TTS provider may process the spoken summary under its own policy.
+- **Finance ledger & biometric/PIN lock:** Transaction totals, custom date ranges, separated FASTag/toll buckets, and per-account cards/UPI views are computed entirely on-device from carrier-verified sender headers (rejecting ordinary mobile numbers and promotional `-P` headers) and stay strictly on the phone unless cleared by the user. Biometric verification uses Android's local hardware `BiometricPrompt` (`USE_BIOMETRIC` — biometric templates never leave Android's TEE), and any custom Finance PIN/password is stored locally as a salted SHA-256 hash protected by Android Keystore.
 
 ## Release checks and APK installation
 
