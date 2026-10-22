@@ -483,4 +483,68 @@ class SmsGuardEngineTest {
         assertEquals(10_000, deduped.size)
         assertTrue("10,000 SMS deduplication must finish well under 1500ms, took ${elapsedMs}ms", elapsedMs < 1500L)
     }
+
+    @Test
+    fun secMsGecV2MatchesOfficialEdgeTts731VectorsBitForBit() {
+        assertEquals(
+            "05CD31D13308C082-CA0B7B171AAF7C429C0ECC6927617FCA41076C993B856256E35DB43B651320B5",
+            com.universalrp.smsguard.service.NeuralCloudVoiceEngine.generateSecMsGecV2(1792660800.0),
+        )
+        assertEquals(
+            "B9563096D63AAF0C-A28069EF5114F534B5879E4305BF38B192D4D2102C9D91B31BB4006BDD793521",
+            com.universalrp.smsguard.service.NeuralCloudVoiceEngine.generateSecMsGecV2(1792661100.0),
+        )
+        assertEquals(
+            "99E54519B490BE5C-E162DB0977FBDCB9B86DD8148BF1BCDC3C0303176CE39852A42B415935C20654",
+            com.universalrp.smsguard.service.NeuralCloudVoiceEngine.generateSecMsGecV2(1800000000.0),
+        )
+    }
+
+    @Test
+    fun dailyMaleFemaleVoiceAlternatesStrictlyEveryDayAcrossYear() {
+        val engine = com.universalrp.smsguard.service.NeuralCloudVoiceEngine
+        assertEquals(3, engine.MALE_VOICES.size)
+        assertEquals(3, engine.FEMALE_VOICES.size)
+
+        val seenIds = mutableSetOf<String>()
+        var day = java.time.LocalDate.of(2026, 10, 22)
+        repeat(366) {
+            val todayProfile = engine.scheduledVoiceForDate(day)
+            val tomorrowProfile = engine.scheduledVoiceForDate(day.plusDays(1))
+            seenIds.add(todayProfile.id)
+            assertTrue(
+                "Consecutive days must strictly alternate Male <-> Female (${day} vs ${day.plusDays(1)})",
+                todayProfile.gender != tomorrowProfile.gender,
+            )
+            day = day.plusDays(1)
+        }
+        assertEquals("All 6 curated Male & Female HD voices must participate in daily rotation", 6, seenIds.size)
+    }
+
+    @Test
+    fun liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable() {
+        val reachable = runCatching {
+            java.net.InetAddress.getByName("speech.platform.bing.com")
+            true
+        }.getOrDefault(false)
+        if (!reachable) return // Offline sandbox environment safely skips live network check
+
+        val voicesToVerify = listOf(
+            "ta-IN-ValluvarNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",
+            "ta-IN-PallaviNeural" to "ஸ்டேட் பேங்க் ஆஃப் இந்தியா. ரூபாய் 500 வரவு.",
+            "en-IN-PrabhatNeural" to "State Bank of India. Rupees 500 received.",
+            "en-IN-NeerjaNeural" to "SMS Guard online voice protection active.",
+        )
+        for ((voiceId, sampleText) in voicesToVerify) {
+            val mp3 = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
+                text = sampleText,
+                voiceName = voiceId,
+                timeoutMs = 8000L,
+            )
+            assertTrue(
+                "Expected valid streaming MP3 audio (>1500 bytes) from $voiceId, got ${mp3?.size}",
+                mp3 != null && mp3.size > 1500,
+            )
+        }
+    }
 }

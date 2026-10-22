@@ -701,6 +701,26 @@ object AppGuides {
                     "கட்டுப்பாடும் உள்ளன. போன் அழைப்பில் இருக்கும்போது குரல் அறிவிப்பு குறுக்கிடாது.",
             ),
             topic(
+                "HD Online Male/Female Voices & Daily Auto Switch",
+                "உயர்தர ஆன்லைன் ஆண்/பெண் குரல்கள் & தினசரி தானியங்கி மாற்றம்",
+                "Controls includes 6 studio-grade Online Neural Voices (3 Male and 3 Female for both Tamil and English). " +
+                    "By default, SMS Guard automatically alternates between a Male voice one day and a Female voice the next day. " +
+                    "It uses Online Neural HD first when connected and instantly falls back to your phone's installed System TTS voice when offline.",
+                "Controls திரையில் தமிழ் மற்றும் ஆங்கிலத்திற்கு 6 உயர்தர ஆன்லைன் குரல்கள் (3 ஆண் + 3 பெண்) உள்ளன. " +
+                    "தானாகவே ஒரு நாள் ஆண் குரலும் அடுத்த நாள் பெண் குரலும் மாறி ஒலிக்கும். இணையம் உள்ளபோது ஆன்லைன் HD " +
+                    "குரலிலும், இணையம் இல்லாதபோது உடனே போனின் ஆஃப்லைன் சிஸ்டம் குரலிலும் தடையின்றி ஒலிக்கும்.",
+            ),
+            topic(
+                "Optional Free Google Safe Browsing API Key Guide",
+                "விருப்பத்தேர்வு: இலவச Google Safe Browsing API விசை பெறும் முறை",
+                "Built-in DNS and heuristic link protection works free with zero key. Power users who also want Google " +
+                    "Safe Browsing v4 checks can open Shield -> 'How to Get Free API Key', enable 'Safe Browsing API' in " +
+                    "Google Cloud Console, create an 'AIza...' key under Credentials, and save it encrypted in Android Keystore.",
+                "எந்த விசையும் இல்லாமலேயே உள்ளமைந்த இணைப்புப் பாதுகாப்பு இலவசமாக இயங்கும். கூடுதலாக Google Safe Browsing v4 " +
+                    "சோதனை வேண்டுமெனில் Shield பகுதியில் உள்ள வழிகாட்டியைத் திறந்து Google Cloud Console-இல் Safe Browsing API " +
+                    "இயக்கி 'AIza...' விசையை உருவாக்கி Android Keystore பாதுகாப்பில் சேமிக்கலாம்.",
+            ),
+            topic(
                 "Verified Updates & Zero Message Upload Privacy",
                 "சரிபார்க்கப்பட்ட புதுப்பிப்பு & முழுத் தனியுரிமை",
                 "Your SMS messages, OTPs and finance numbers stay strictly on your phone — nothing is uploaded to any " +

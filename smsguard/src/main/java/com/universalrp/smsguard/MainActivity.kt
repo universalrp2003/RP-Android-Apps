@@ -361,16 +361,16 @@ class MainActivity : ComponentActivity() {
                                 .fillMaxWidth()
                                 .background(palette.surface)
                                 .statusBarsPadding()
-                                .padding(horizontal = 10.dp, vertical = 8.dp),
+                                .padding(horizontal = 10.dp, vertical = 5.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(5.dp),
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = ui.appTitle,
                                     color = palette.accent,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 15.5.sp,
+                                    fontSize = if (prefs.tamil) 14.sp else 15.5.sp,
                                     maxLines = 1,
                                     softWrap = false,
                                     overflow = TextOverflow.Ellipsis,
@@ -378,7 +378,7 @@ class MainActivity : ComponentActivity() {
                                 Text(
                                     text = ui.appSubtitle,
                                     color = palette.textMuted,
-                                    fontSize = 10.sp,
+                                    fontSize = 9.5.sp,
                                     maxLines = 1,
                                     softWrap = false,
                                     overflow = TextOverflow.Ellipsis,

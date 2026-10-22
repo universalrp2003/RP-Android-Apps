@@ -39,6 +39,7 @@ data class GuardPrefs(
     val voiceVolumePercent: Int = 85,
     val speechRateMode: Int = 1,          // 0=Slow, 1=Normal, 2=Fast
     val voiceLanguageMode: Int = 0,       // 0=Follow UI, 1=Tamil, 2=English
+    val autoDailyGenderSwap: Boolean = true, // Alternates Male <-> Female neural voice automatically every day
     val preferredVoiceName: String = "",
     val paletteIndex: Int = 0,            // 0..5 dark themes
     val uiScalePercent: Int = 100,        // 80%..150% whole-app text & layout scale
@@ -120,6 +121,7 @@ object GuardSettingsStore {
             voiceVolumePercent = p.getInt("voice_volume_pct", 85).coerceIn(0, 100),
             speechRateMode = p.getInt("speech_rate_mode", 1).coerceIn(0, 2),
             voiceLanguageMode = p.getInt("voice_lang_mode", 0).coerceIn(0, 2),
+            autoDailyGenderSwap = p.getBoolean("auto_daily_gender_swap", true),
             preferredVoiceName = p.getString("preferred_voice_name", "").orEmpty(),
             paletteIndex = p.getInt("palette_index", 0).coerceIn(0, 5),
             uiScalePercent = p.getInt("ui_scale_percent", 100).coerceIn(80, 150),
@@ -185,6 +187,11 @@ object GuardSettingsStore {
 
     fun updateVoiceLanguageMode(context: Context, mode: Int) {
         prefs(context).edit().putInt("voice_lang_mode", mode.coerceIn(0, 2)).apply()
+        reload(context)
+    }
+
+    fun updateAutoDailyGenderSwap(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("auto_daily_gender_swap", enabled).apply()
         reload(context)
     }
 

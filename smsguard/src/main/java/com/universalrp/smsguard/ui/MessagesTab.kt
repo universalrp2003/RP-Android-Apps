@@ -5,6 +5,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +32,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.HourglassEmpty
@@ -49,11 +51,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +64,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -102,32 +106,24 @@ fun MessagesTab(
     val visibleThreads = remember(threads, filter, searchQuery) {
         vm.filterThreads(threads, filter, searchQuery)
     }
+    var searchExpanded by remember { mutableStateOf(searchQuery.isNotBlank()) }
+    val searchFocusRequester = remember { FocusRequester() }
 
-    Scaffold(
-        containerColor = palette.bg,
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onOpenNewCompose,
-                containerColor = palette.accent,
-                contentColor = palette.onAccent,
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = ui.newSmsBtn)
-                    Text(ui.newSmsBtn, fontWeight = FontWeight.Bold)
-                }
-            }
-        },
-    ) { innerPadding ->
+    LaunchedEffect(searchExpanded) {
+        if (searchExpanded) {
+            runCatching { searchFocusRequester.requestFocus() }
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(palette.bg),
+    ) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 88.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 84.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             // 1. Setup helper card until Default SMS Role is granted
             if (!isDefaultSms) {
@@ -143,56 +139,116 @@ fun MessagesTab(
                 }
             }
 
-            // 2. Quick Toggles Status Strip (1-tap Internet, Voice, Queue, Refresh)
+            // 2. Compact Quick Strip (1-tap Internet, Voice, Dropdown Search Button, Queue, Refresh)
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    QuickPill(
-                        text = if (prefs.internetEnabled) "🌐 ${ui.internetOnChip}" else "🚫 ${ui.internetOffChip}",
-                        active = prefs.internetEnabled,
-                        palette = palette,
-                        onClick = { vm.setInternetEnabled(!prefs.internetEnabled) },
-                    )
-                    QuickPill(
-                        text = if (prefs.voiceEnabled) {
-                            "🔊 ${ui.voiceOnChip} (${prefs.voiceVolumePercent}%)"
-                        } else {
-                            "🔇 ${ui.voiceOffChip}"
-                        },
-                        active = prefs.voiceEnabled,
-                        palette = palette,
-                        onClick = { vm.setVoiceEnabled(!prefs.voiceEnabled) },
-                    )
-                    if (prefs.pendingQueueCount > 0) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         QuickPill(
-                            text = "⏳ ${prefs.pendingQueueCount} Pending",
-                            active = false,
+                            text = if (prefs.internetEnabled) "🌐 ${ui.internetOnChip}" else "🚫 ${ui.internetOffChip}",
+                            active = prefs.internetEnabled,
                             palette = palette,
-                            onClick = { vm.drainOfflineQueueManually() },
+                            onClick = { vm.setInternetEnabled(!prefs.internetEnabled) },
+                        )
+                        QuickPill(
+                            text = if (prefs.voiceEnabled) {
+                                "🔊 ${ui.voiceOnChip} (${prefs.voiceVolumePercent}%)"
+                            } else {
+                                "🔇 ${ui.voiceOffChip}"
+                            },
+                            active = prefs.voiceEnabled,
+                            palette = palette,
+                            onClick = { vm.setVoiceEnabled(!prefs.voiceEnabled) },
+                        )
+                        QuickPill(
+                            text = if (searchQuery.isNotBlank()) {
+                                "🔍 ${searchQuery.take(10)}"
+                            } else if (prefs.tamil) {
+                                "🔍 தேடு"
+                            } else {
+                                "🔍 Search"
+                            },
+                            active = searchExpanded || searchQuery.isNotBlank(),
+                            palette = palette,
+                            onClick = {
+                                if (searchExpanded && searchQuery.isBlank()) {
+                                    searchExpanded = false
+                                } else {
+                                    searchExpanded = !searchExpanded
+                                }
+                            },
+                        )
+                        if (prefs.pendingQueueCount > 0) {
+                            QuickPill(
+                                text = "⏳ ${prefs.pendingQueueCount} Pending",
+                                active = false,
+                                palette = palette,
+                                onClick = { vm.drainOfflineQueueManually() },
+                            )
+                        }
+                        IconButton(
+                            onClick = { vm.refreshAll(scanUncheckedLinksOnline = true) },
+                            modifier = Modifier.size(34.dp),
+                        ) {
+                            Icon(
+                                Icons.Filled.Refresh,
+                                contentDescription = "Refresh",
+                                tint = palette.accent,
+                                modifier = Modifier.size(19.dp),
+                            )
+                        }
+                    }
+
+                    // 3. Smooth Dropdown Search Bar — expands ONLY when user clicks Search button!
+                    AnimatedVisibility(visible = searchExpanded || searchQuery.isNotBlank()) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { vm.setSearch(it) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(searchFocusRequester),
+                            singleLine = true,
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Filled.Search,
+                                    contentDescription = null,
+                                    tint = palette.accent,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                            trailingIcon = {
+                                IconButton(
+                                    onClick = {
+                                        vm.setSearch("")
+                                        searchExpanded = false
+                                    },
+                                ) {
+                                    Icon(
+                                        Icons.Filled.Close,
+                                        contentDescription = "Close search",
+                                        tint = palette.textMuted,
+                                        modifier = Modifier.size(18.dp),
+                                    )
+                                }
+                            },
+                            placeholder = {
+                                Text(
+                                    ui.searchPlaceholder,
+                                    fontSize = 12.5.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            },
+                            textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.5.sp),
+                            shape = RoundedCornerShape(12.dp),
                         )
                     }
-                    IconButton(onClick = { vm.refreshAll(scanUncheckedLinksOnline = true) }) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Refresh", tint = palette.accent)
-                    }
                 }
-            }
-
-            // 3. Search Bar
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { vm.setSearch(it) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = palette.textMuted) },
-                    placeholder = { Text(ui.searchPlaceholder, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                    shape = RoundedCornerShape(14.dp),
-                )
             }
 
             // 4. Category Filter Chips
@@ -265,6 +321,24 @@ fun MessagesTab(
                         }
                     }
                 }
+            }
+        }
+
+        FloatingActionButton(
+            onClick = onOpenNewCompose,
+            containerColor = palette.accent,
+            contentColor = palette.onAccent,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(14.dp),
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = ui.newSmsBtn)
+                Text(ui.newSmsBtn, fontWeight = FontWeight.Bold)
             }
         }
     }

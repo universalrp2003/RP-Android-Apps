@@ -44,10 +44,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universalrp.smsguard.data.GuardPrefs
+import com.universalrp.smsguard.service.NeuralCloudVoiceEngine
 import com.universalrp.smsguard.service.SleepScheduleManager
 import com.universalrp.smsguard.service.VoiceOptionItem
 import com.universalrp.updates.AppUpdates
 import com.universalrp.updates.SisterApps
+import java.time.LocalDate
 
 @Composable
 fun ControlsTab(
@@ -384,18 +386,125 @@ fun ControlsTab(
                     }
                 }
 
-                // Voice Picker expandable
+                // Studio High-Quality Online Voices + Daily Automatic Male <-> Female Alternation
+                val todayVoice = remember { NeuralCloudVoiceEngine.scheduledVoiceForDate(LocalDate.now()) }
+                val tomorrowVoice = remember { NeuralCloudVoiceEngine.scheduledVoiceForDate(LocalDate.now().plusDays(1)) }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(palette.surface)
+                        .border(1.dp, palette.accent.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                        .padding(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (prefs.tamil) {
+                                    "🔄 தினமும் ஆண் ↔ பெண் உயர்தர ஆன்லைன் குரல் மாற்றம்"
+                                } else {
+                                    "🔄 Daily Auto Male ↔ Female HD Online Voice"
+                                },
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = palette.accent,
+                            )
+                            Text(
+                                text = if (prefs.tamil) {
+                                    "இன்று: ${todayVoice.titleTa}\nநாளை: ${tomorrowVoice.titleTa}\n(இணையம் இல்லாதபோது போன் சிஸ்டம் குரலில் தானாக ஒலிக்கும்)"
+                                } else {
+                                    "Today: ${todayVoice.titleEn}\nTomorrow: ${tomorrowVoice.titleEn}\n(Online Neural HD first → automatic System Voice fallback offline)"
+                                },
+                                fontSize = 11.sp,
+                                lineHeight = 16.sp,
+                                color = palette.textMuted,
+                            )
+                        }
+                        Switch(
+                            checked = prefs.autoDailyGenderSwap,
+                            onCheckedChange = { vm.setAutoDailyGenderSwap(it) },
+                        )
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedButton(
+                            onClick = { vm.previewOnlineVoiceById("online_male_1") },
+                        ) {
+                            Text(
+                                if (prefs.tamil) "👨 ஆண் HD கேள்" else "👨 Preview Male HD",
+                                fontSize = 11.5.sp,
+                                color = palette.accent,
+                            )
+                        }
+                        OutlinedButton(
+                            onClick = { vm.previewOnlineVoiceById("online_female_1") },
+                        ) {
+                            Text(
+                                if (prefs.tamil) "👩 பெண் HD கேள்" else "👩 Preview Female HD",
+                                fontSize = 11.5.sp,
+                                color = palette.accent,
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = if (prefs.tamil) {
+                            "🎙️ 6 உயர்தர ஆன்லைன் குரல்கள் (3 ஆண் + 3 பெண் — தொட்டுத் தேர்ந்தெடுக்கவும்):"
+                        } else {
+                            "🎙️ 6 High-Quality Online Voices (3 Male + 3 Female — tap to pick manually):"
+                        },
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = palette.textPrimary,
+                    )
+
+                    NeuralCloudVoiceEngine.CURATED_VOICES.forEach { profile ->
+                        val isSelected = !prefs.autoDailyGenderSwap && prefs.preferredVoiceName == profile.id
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { vm.selectOnlineVoiceAndPreview(profile.id) },
+                            label = {
+                                Text(
+                                    text = if (prefs.tamil) profile.titleTa else profile.titleEn,
+                                    fontSize = 11.5.sp,
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+
+                // Fallback Installed System Voice Picker expandable
                 if (voices.isNotEmpty()) {
                     TextButton(onClick = { expandVoices = !expandVoices }) {
                         Text(
-                            text = if (expandVoices) "Hide Android Voices ▲" else "Choose Android TTS Voice (${voices.size}) ▼",
+                            text = if (expandVoices) {
+                                if (prefs.tamil) "ஆஃப்லைன் சிஸ்டம் குரல்களை மறை ▲" else "Hide Offline System Voices ▲"
+                            } else {
+                                if (prefs.tamil) {
+                                    "ஆஃப்லைன் போன் சிஸ்டம் குரல்கள் (${voices.size}) ▼"
+                                } else {
+                                    "Offline System TTS Voices (${voices.size}) ▼"
+                                }
+                            },
                             color = palette.accent,
                         )
                     }
                     if (expandVoices) {
                         voices.take(12).forEach { v ->
                             FilterChip(
-                                selected = prefs.preferredVoiceName == v.name,
+                                selected = !prefs.autoDailyGenderSwap && prefs.preferredVoiceName == v.name,
                                 onClick = { vm.setPreferredVoice(v.name) },
                                 label = { Text(v.label, fontSize = 11.5.sp) },
                             )

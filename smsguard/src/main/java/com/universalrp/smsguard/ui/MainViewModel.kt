@@ -45,6 +45,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val prefsFlow: StateFlow<GuardPrefs> = GuardSettingsStore.state
     val speakingFlow: StateFlow<Boolean> = SmsVoiceAnnouncer.isSpeaking
     val voicesFlow = SmsVoiceAnnouncer.availableVoices
+    val activeVoiceStatusFlow = SmsVoiceAnnouncer.activeVoiceStatus
 
     private val _currentTab = MutableStateFlow(MainTab.MESSAGES)
     val currentTab: StateFlow<MainTab> = _currentTab.asStateFlow()
@@ -792,8 +793,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         GuardSettingsStore.updateVoiceLanguageMode(getApplication(), mode)
     }
 
+    fun setAutoDailyGenderSwap(enabled: Boolean) {
+        GuardSettingsStore.updateAutoDailyGenderSwap(getApplication(), enabled)
+    }
+
+    fun selectOnlineVoiceAndPreview(profileId: String) {
+        val ctx = getApplication<Application>()
+        GuardSettingsStore.updateAutoDailyGenderSwap(ctx, false)
+        GuardSettingsStore.updatePreferredVoiceName(ctx, profileId)
+        previewOnlineVoiceById(profileId)
+    }
+
+    fun previewOnlineVoiceById(profileId: String) {
+        val ctx = getApplication<Application>()
+        val prefs = prefsFlow.value
+        val sample = if (prefs.tamil) {
+            "வணக்கம்! குறுஞ்செய்தி காவலன் உயர்தர ஆன்லைன் குரல் சோதனை தயாராக உள்ளது."
+        } else {
+            "Hello! SMS Guard high quality online studio voice is ready."
+        }
+        SmsVoiceAnnouncer.speak(ctx, sample, flushExisting = true, overrideOnlineVoiceId = profileId)
+    }
+
     fun setPreferredVoice(voiceName: String) {
-        GuardSettingsStore.updatePreferredVoiceName(getApplication(), voiceName)
+        val ctx = getApplication<Application>()
+        GuardSettingsStore.updateAutoDailyGenderSwap(ctx, false)
+        GuardSettingsStore.updatePreferredVoiceName(ctx, voiceName)
     }
 
     fun setPalette(index: Int) {
