@@ -23,9 +23,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify Google Search Console meta tag & sitemap exist
+      - name: Verify Google Search Console meta tag, HTML file & sitemap exist
         run: |
           grep -Fq 'ZxgKHtiCt5dwTUFnjnuAgb8qQXJPrKwlK--Wf-bfDy4' site/index.html
+          test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
 

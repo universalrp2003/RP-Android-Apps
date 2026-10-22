@@ -34,10 +34,10 @@ def main():
     require(provider.get(ANDROID+'exported') == 'false', 'Update files exported')
     paths = ET.parse(ROOT / 'cleaner/src/main/res/xml/liveguard_update_paths.xml').getroot()
     require(len(paths) == 1 and paths[0].tag == 'cache-path' and paths[0].get('path') == 'verified-updates/', 'Overbroad update FileProvider scope')
-    for widget in ('CleanSweepWidget', 'CleanSweepDataWidget', 'CleanSweepPhoneWidget'):
+    for widget in ('CleanSweepWidget', 'CleanSweepDataWidget', 'CleanSweepPhoneWidget', 'CleanSweepWeatherWidget'):
         node = next(item for item in app.findall('receiver') if item.get(ANDROID+'name') == '.widget.' + widget)
         require(node.get(ANDROID+'exported') == 'false', 'Widget exported')
-    for name in ('widget_cleansweep_info', 'widget_cleansweep_data_info', 'widget_cleansweep_phone_info'):
+    for name in ('widget_cleansweep_info', 'widget_cleansweep_data_info', 'widget_cleansweep_phone_info', 'widget_cleansweep_weather_info'):
         widget = ET.parse(ROOT / 'cleaner/src/main/res/xml' / (name + '.xml')).getroot()
         require(widget.get(ANDROID+'targetCellWidth') == '2' and widget.get(ANDROID+'targetCellHeight') == '2', 'Not a compact widget preset')
     announcer = source('voice/Announcer.kt')
@@ -89,7 +89,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 65', 'versionName = "2.60"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 66', 'versionName = "2.61"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -211,7 +211,7 @@ def main():
         require('state.lang' not in source(display),
                 'A display site still reads the state mirror instead of the language authority: ' + display)
     expected = runpy.run_path(str(ROOT/'tools/verify_cleaner_regressions.py'))['EXPECTED']
-    require(sum(expected.values()) == 417 and len(expected) == 47, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 420 and len(expected) == 47, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -289,7 +289,7 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 47 required suites / 417 prepared declarations; tests NOT executed. Candidate 2.60/code65/API26 matches.')
+    print('PASS: 47 required suites / 420 prepared declarations; tests NOT executed. Candidate 2.61/code66/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

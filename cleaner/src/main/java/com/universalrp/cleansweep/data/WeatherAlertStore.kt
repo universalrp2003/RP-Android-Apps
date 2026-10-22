@@ -81,6 +81,7 @@ object WeatherAlertStore {
         if (userInitiated) {
             prefs(context).edit().putBoolean(KEY_USER_EXPLICIT_TOGGLE, true).apply()
         }
+        runCatching { com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context.applicationContext) }
     }
 
     /**
@@ -116,6 +117,7 @@ object WeatherAlertStore {
             // Reset next-check gate so the newly saved location can be checked immediately.
             .putLong(KEY_NEXT_CHECK_AFTER_MS, 0L)
             .apply()
+        runCatching { com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context.applicationContext) }
     }
 
     fun clearSavedPlace(context: Context) {
@@ -126,6 +128,7 @@ object WeatherAlertStore {
             .remove(KEY_SAVED_LAT)
             .remove(KEY_SAVED_LON)
             .apply()
+        runCatching { com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context.applicationContext) }
     }
 
     fun savedPlace(context: Context): WeatherPlaceCandidate? {
@@ -194,6 +197,35 @@ object WeatherAlertStore {
             .putFloat(KEY_LAST_PEAK_GUST, decision.peakWindGustKmh.toFloat())
             .putString(KEY_LAST_SOURCE, snapshot.source.name)
             .apply()
+        runCatching { com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context.applicationContext) }
+    }
+
+    data class CachedWidgetWeather(
+        val enabled: Boolean,
+        val placeName: String,
+        val severityName: String,
+        val minutesUntilRain: Int?,
+        val temperatureC: Double?,
+        val windGustKmh: Double,
+        val sourceName: String,
+        val lastCheckedAtMs: Long,
+    )
+
+    fun readCachedForWidget(context: Context): CachedWidgetWeather {
+        val p = prefs(context)
+        val savedName = p.getString(KEY_SAVED_NAME, "").orEmpty()
+        val lastName = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
+        val minsRaw = p.getInt(KEY_LAST_MINS_TO_RAIN, -1)
+        return CachedWidgetWeather(
+            enabled = enabled(context),
+            placeName = lastName.ifBlank { savedName },
+            severityName = p.getString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name).orEmpty(),
+            minutesUntilRain = minsRaw.takeIf { it >= 0 },
+            temperatureC = p.getString(KEY_LAST_TEMP_C, "")?.toDoubleOrNull(),
+            windGustKmh = p.getFloat(KEY_LAST_PEAK_GUST, 0f).toDouble(),
+            sourceName = p.getString(KEY_LAST_SOURCE, WeatherSourceKind.OPEN_METEO_DEFAULT.name).orEmpty(),
+            lastCheckedAtMs = p.getLong(KEY_LAST_CHECKED_MS, 0L),
+        )
     }
 
     fun readUiSnapshot(
