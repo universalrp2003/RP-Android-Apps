@@ -89,7 +89,7 @@ fun AboutScreen(vm: EqViewModel) {
             }
             androidx.compose.material3.TextButton(onClick = {
                 runCatching { sourceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
-                    android.net.Uri.parse("https://github.com/universalrp2003/InternetRadio"))) }
+                    android.net.Uri.parse("https://github.com/universalrp2003/RP-Android-Apps"))) }
             }) { Text("Source code · GNU GPL v3") }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("App language", Modifier.weight(1f), color = TextSecondary)
@@ -99,16 +99,23 @@ fun AboutScreen(vm: EqViewModel) {
             com.universalrp.updates.AppUpdates.Control("PulseEQ")
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Contributors", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Cyan)
+                    Text("Project development & credits", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Cyan)
+                    Text("Contributors", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                     Text("Project development: Ramesh prathap .R", color = TextPrimary, fontWeight = FontWeight.SemiBold)
                     androidx.compose.material3.TextButton(onClick = {
                         runCatching { sourceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_SENDTO,
                             android.net.Uri.parse("mailto:universalrp2003@gmail.com"))) }
                     }) { Text("universalrp2003@gmail.com", color = Cyan) }
                     Text("AI software-assistance contributor: Arena.ai Agent Mode", color = TextSecondary)
+                    com.universalrp.updates.SisterApps.projectLinks().forEach { (label, url) ->
+                        androidx.compose.material3.TextButton(onClick = {
+                            runCatching { sourceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
+                        }) { Text(label, color = Cyan) }
+                    }
                     Spacer(Modifier.height(4.dp))
-                    Text("App releases", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    // All six apps, one shared list (was four hard-coded links to the old repo).
+                    Text("Other RP Ideas Android Apps", fontWeight = FontWeight.Bold, color = Cyan)
+                    Text("App releases", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    // All seven RP Ideas apps from one shared list.
                     com.universalrp.updates.SisterApps.releaseLinks().forEach { (label, url) ->
                         androidx.compose.material3.TextButton(onClick = {
                             runCatching { sourceContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }

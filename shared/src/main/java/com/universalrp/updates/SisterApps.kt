@@ -1,16 +1,10 @@
 package com.universalrp.updates
 
 /**
- * One list, six apps.
+ * One list, all seven RP Ideas Android apps + official project links.
  *
- * Every app's About screen renders this list, so adding or bumping an app happens in
- * exactly one place. Before this file each app hard-coded its own list — and four of them
- * still pointed at the old `InternetRadio` repository and left out Oor Arivippu and
- * Secret Message entirely.
- *
- * `version` is the current published tag suffix in
- * `universalrp2003/RP-Android-Apps`; `releaseBase` points at the new repository, with the
- * old one kept only as the updater fallback.
+ * Every app's About screen renders this shared directory so adding or bumping an app
+ * keeps every app in sync automatically.
  */
 data class SisterApp(
     /** Stable id, used to mark the app the user is currently in. */
@@ -25,11 +19,15 @@ data class SisterApp(
     val version: String,
     /** Android applicationId, used to open the app directly when it is installed. */
     val packageName: String,
-    /** The About-screen label (kept close to the old wording so tests and translations match). */
+    /** The About-screen label. */
     val aboutLabel: String,
 )
 
 object SisterApps {
+
+    const val OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"
+    const val GITHUB_REPO_URL = "https://github.com/universalrp2003/RP-Android-Apps"
+    const val LEGACY_MIRROR_URL = "https://github.com/universalrp2003/InternetRadio"
 
     private const val RELEASE_BASE =
         "https://github.com/universalrp2003/RP-Android-Apps/releases/tag"
@@ -40,11 +38,20 @@ object SisterApps {
 
     val all: List<SisterApp> = listOf(
         SisterApp(
+            id = "smsguard",
+            name = "SMS Guard (குறுஞ்செய்தி காவலன்)",
+            tamilName = "குறுஞ்செய்தி காவலன்",
+            tagPrefix = "sms-guard",
+            version = "1.1.1",
+            packageName = "com.universalrp.smsguard",
+            aboutLabel = "SMS Guard (குறுஞ்செய்தி காவலன்) — GitHub release",
+        ),
+        SisterApp(
             id = "liveguard",
             name = "Live Guard",
             tamilName = "லைவ் கார்ட்",
             tagPrefix = "live-guard",
-            version = "2.62",
+            version = "2.63",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
         ),
@@ -53,7 +60,7 @@ object SisterApps {
             name = "Ramesh Radio",
             tamilName = "ரமேஷ் ரேடியோ",
             tagPrefix = "ramesh-radio",
-            version = "1.18",
+            version = "1.19",
             packageName = "com.universalrp.tamilnadufm",
             aboutLabel = "Ramesh Radio — GitHub release",
         ),
@@ -62,7 +69,7 @@ object SisterApps {
             name = "PulseEQ",
             tamilName = "பல்ஸ்இக்யூ",
             tagPrefix = "pulseeq",
-            version = "1.8",
+            version = "1.9",
             packageName = "com.universalrp.pulseeq",
             aboutLabel = "PulseEQ — GitHub release",
         ),
@@ -71,7 +78,7 @@ object SisterApps {
             name = "RP Vocal Remover Studio",
             tamilName = "வோக்கல் ரிமூவர் ஸ்டுடியோ",
             tagPrefix = "rp-vocal-remover-studio",
-            version = "0.1.14",
+            version = "0.1.15",
             packageName = "com.universalrp.vocalremover",
             aboutLabel = "RP VOCAL REMOVER STUDIO — GitHub release",
         ),
@@ -80,22 +87,29 @@ object SisterApps {
             name = "Oor Arivippu",
             tamilName = "ஊர் அறிவிப்பு",
             tagPrefix = "oor-arivippu",
-            version = "1.1.5",
+            version = "1.1.6",
             packageName = "com.oorarivippu.voiceannouncer",
             aboutLabel = "Oor Arivippu — GitHub release",
         ),
         SisterApp(
             id = "secretmessage",
             name = "Secret Message",
-            tamilName = "ரகசிய செய்தி",
+            tamilName = "இரகசிய செய்தி",
             tagPrefix = "secret-message",
-            version = "1.1.2",
+            version = "1.1.3",
             packageName = "com.rpideas.secretmessage",
             aboutLabel = "Secret Message — GitHub release",
         ),
     )
 
-    /** `label to url`, in the order the About screens have always shown them. */
+    /** Official project hub links shown consistently across all RP Ideas About screens. */
+    fun projectLinks(): List<Pair<String, String>> = listOf(
+        "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
+        "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,
+        "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
+    )
+
+    /** `label to url` for all seven RP Ideas Android apps. */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 

@@ -157,8 +157,9 @@ private fun AboutSection(versionLabel: String, context: Context) {
         AppNote(tr("Project development: Ramesh prathap .R · universalrp2003@gmail.com"))
         AppNote(tr("AI software assistance: Arena.ai Agent Mode"))
         HorizontalDivider(color = Muted.copy(alpha = 0.3f))
-        LinkButton(tr("Source code — InternetRadio"), "https://github.com/universalrp2003/InternetRadio", context)
+        LinkButton(tr("Official website — RP-Android-Apps"), "https://universalrp2003.github.io/RP-Android-Apps/", context)
         LinkButton(tr("Official downloads — RP-Android-Apps"), "https://github.com/universalrp2003/RP-Android-Apps", context)
+        LinkButton(tr("Source code — InternetRadio"), "https://github.com/universalrp2003/InternetRadio", context)
         HorizontalDivider(color = Muted.copy(alpha = 0.3f))
         Text(tr("RP Ideas apps"), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         OTHER_APPS.forEach { (label, url) -> LinkButton(tr(label), url, context) }
@@ -167,13 +168,15 @@ private fun AboutSection(versionLabel: String, context: Context) {
     }
 }
 
-/** The other RP Ideas apps' official releases, as listed in Oor Arivippu's About. */
+/** All seven RP Ideas apps' official releases on RP-Android-Apps. */
 private val OTHER_APPS = listOf(
-    "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.55",
-    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.16",
-    "PulseEQ" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8",
-    "RP Vocal Remover Studio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14",
-    "Oor Arivippu" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.2",
+    "SMS Guard (குறுஞ்செய்தி காவலன்)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.1",
+    "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.63",
+    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.19",
+    "PulseEQ" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
+    "RP Vocal Remover Studio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
+    "Oor Arivippu" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.6",
+    "Secret Message" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3",
 )
 
 @Composable

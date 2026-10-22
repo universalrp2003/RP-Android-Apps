@@ -978,8 +978,15 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                         runCatching { aboutContext.startActivity(android.content.Intent(android.content.Intent.ACTION_SENDTO,
                             android.net.Uri.parse("mailto:universalrp2003@gmail.com"))) }
                     }) { Text("universalrp2003@gmail.com", color = Teal) }
-                    Text("App releases", fontWeight = FontWeight.Bold, color = TextPrimary)
-                    // All six apps, one shared list (was four hard-coded links to the old repo).
+                    Text("Project development & credits", fontWeight = FontWeight.Bold, color = Saffron)
+                    com.universalrp.updates.SisterApps.projectLinks().forEach { (label, url) ->
+                        androidx.compose.material3.TextButton(onClick = {
+                            runCatching { aboutContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
+                        }) { Text(label, color = Teal) }
+                    }
+                    Text("Other RP Ideas Android Apps", fontWeight = FontWeight.Bold, color = Saffron)
+                    Text("App releases", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    // All seven RP Ideas apps from one shared list.
                     com.universalrp.updates.SisterApps.releaseLinks().forEach { (label, url) ->
                         androidx.compose.material3.TextButton(onClick = {
                             runCatching { aboutContext.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }

@@ -61,8 +61,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="1.1.0"
-          expected_code="6"
+          version="1.1.1"
+          expected_code="7"
           expected_package="com.universalrp.smsguard"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           tag="sms-guard-v${version}"
@@ -140,3 +140,7 @@ jobs:
             --repo universalrp2003/RP-Android-Apps \
             --title "SMS Guard (குறுஞ்செய்தி காவலன்) v${version}" \
             --notes-file "$RUNNER_TEMP/notes.md"
+
+          gh api -X PATCH repos/universalrp2003/RP-Android-Apps \
+            -f description="RP-Android-Apps by Rameshprathap R (@universalrp2003) — Official Tamil & English open-source Android apps: SMS Guard (குறுஞ்செய்தி காவலன்), Live Guard, Ramesh Radio, Oor Arivippu (ஊர் அறிவிப்பு), PulseEQ, RP Vocal Remover Studio & Secret Message." \
+            -f homepage="https://universalrp2003.github.io/RP-Android-Apps/" >/dev/null 2>&1 || true

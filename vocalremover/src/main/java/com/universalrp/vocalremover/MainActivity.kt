@@ -1275,9 +1275,19 @@ private fun AboutDialog(onDismiss: () -> Unit, onModelCredits: () -> Unit, onGui
                         color = Teal, fontWeight = FontWeight.SemiBold,
                     )
                 }
-                Text("Contributors", fontWeight = FontWeight.Bold, color = Ink)
+                Text("Project development & credits", fontWeight = FontWeight.Bold, color = Teal)
+                Text("Contributors", fontWeight = FontWeight.SemiBold, color = Ink)
                 Text("Project development: Ramesh prathap .R · universalrp2003@gmail.com", color = Muted)
                 Text("AI software-assistance contributor: Arena.ai Agent Mode", color = Muted)
+                com.universalrp.updates.SisterApps.projectLinks().forEach { (label, url) ->
+                    TextButton(onClick = {
+                        runCatching {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }.onFailure {
+                            showToast(context, "Could not open the release page.")
+                        }
+                    }) { Text(label) }
+                }
                 Text("Processing and privacy", fontWeight = FontWeight.Bold, color = Ink)
                 Text(
                     "Selected audio is processed on this device and is not uploaded. Internet access is used to download the separation model and check app updates. The original file is preserved. The first pass saves a separate instrumental stereo WAV; the second reduction pass is optional and starts only when you tap it. A separate 320 kb/s CBR MP3 export is available; MP3 is lossy and the WAV is retained. Separation quality varies by mix; residual vocals or musical artifacts are possible.",
@@ -1297,7 +1307,8 @@ private fun AboutDialog(onDismiss: () -> Unit, onModelCredits: () -> Unit, onGui
                     style = MaterialTheme.typography.bodySmall,
                 )
                 TextButton(onClick = onModelCredits) { Text("Model credits, licences and notices") }
-                Text("App releases", fontWeight = FontWeight.Bold, color = Ink)
+                Text("Other RP Ideas Android Apps", fontWeight = FontWeight.Bold, color = Teal)
+                Text("App releases", fontWeight = FontWeight.SemiBold, color = Ink)
                 releaseLinks.forEach { (label, url) ->
                     TextButton(onClick = {
                         runCatching {

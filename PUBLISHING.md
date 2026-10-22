@@ -1,6 +1,6 @@
 # Build and release guide — RP Ideas
 
-This guide covers the four legacy batch modules and the separately released Oor Arivippu app. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
+This guide covers all seven **RP Ideas** Android apps hosted at [`universalrp2003/RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps) and [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/): the four batch modules (`cleaner` / Live Guard, `radio` / Ramesh Radio, `equalizer` / PulseEQ, `vocalremover` / RP Vocal Remover Studio) plus the three standalone workflow apps (`smsguard` / SMS Guard, `oorarivippu` / Oor Arivippu, and `secretmessage/wifi-test` / Secret Message). GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
 ## Publishing a single app (from 20 October 2026)
 

@@ -1,10 +1,20 @@
 # Changelog — RP Ideas Android apps
 
-This file indexes five actively maintained products (the four-app batch plus Oor Arivippu) and the separately published Secret Message app, which has not been independently security-reviewed. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
+This file indexes all seven published **RP Ideas** Android applications at [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/): six actively maintained utilities (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / ரமேஷ் ரேடியோ**, **PulseEQ**, **RP Vocal Remover Studio**, and **Oor Arivippu / ஊர் அறிவிப்பு**) plus the separately published **Secret Message / இரகசிய செய்தி** app, which has not been independently security-reviewed. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
 
 ## Unreleased
 
 _No unreleased changes._
+
+## Published — Unified 7-App Super About Update (22 October 2026)
+
+Upgrades all seven RP Ideas Android apps (`SMS Guard 1.1.1 / code 7`, `Live Guard 2.63 / code 68`,
+`Ramesh Radio 1.19 / code 19`, `PulseEQ 1.9 / code 10`, `RP Vocal Remover Studio 0.1.15 / code 16`,
+`Oor Arivippu 1.1.6 / code 11`, and `Secret Message 1.1.3 / code 5`) with unified bilingual Tamil
+and English **About** pages containing direct one-tap links to the **RP-Android-Apps Official
+Website (`universalrp2003.github.io/RP-Android-Apps/`)**, **RP-Android-Apps GitHub Repository**,
+**Legacy Mirror Repository**, and **all 7 RP Ideas apps** (`0` permissions added across all 7 apps).
+Verified public APK sizes and SHA-256 digests are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md).
 
 ## Published — Live Guard 2.57 (21 October 2026)
 
