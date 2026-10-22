@@ -188,6 +188,8 @@ class WeatherWatchWorker(
                 context,
                 NOTIF_ID_WEATHER,
                 Intent(context, MainActivity::class.java).apply {
+                    action = com.universalrp.cleansweep.widget.CleanSweepWidget.ACTION_DETAILS
+                    putExtra(com.universalrp.cleansweep.widget.CleanSweepWidget.EXTRA_TARGET_SCREEN, "WEATHER")
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,

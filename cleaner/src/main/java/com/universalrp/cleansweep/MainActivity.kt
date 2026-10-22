@@ -30,8 +30,9 @@ class MainActivity : ComponentActivity() {
     private val storagePermission =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
-    /** True once the widget's "Clean" tap has been turned into a scan for this activity. */
-    private var widgetActionHandled = false
+    /** Monotonic token bumped on initial launch and every `onNewIntent` so widget/notification deep-links work even when already open. */
+    private val navIntentRevision = androidx.compose.runtime.mutableIntStateOf(1)
+    private var widgetActionHandledRevision = 0
     private val alertOwner = "activity:" + java.util.UUID.randomUUID().toString()
 
     /** Android 13+: the charging card needs this, or nothing shows in the status bar. */
@@ -66,17 +67,23 @@ class MainActivity : ComponentActivity() {
                 // only *show* the scanning screen, so the scan screen sat at "Starting…"
                 // with no scan behind it. Now it really starts one, and the action is only
                 // handled once per activity so a rotation cannot restart it.
-                DisposableEffect(Unit) {
-                    if (!widgetActionHandled &&
-                        intent?.action == com.universalrp.cleansweep.widget.CleanSweepWidget.ACTION_CLEAN
-                    ) {
-                        widgetActionHandled = true
-                        vm.openScanner()
-                    } else if (!widgetActionHandled && intent?.action == com.universalrp.cleansweep.widget.CleanSweepWidget.ACTION_DETAILS) {
-                        widgetActionHandled = true
-                        vm.navigate(Screen.HEALTH)
+                val currentNavRev = navIntentRevision.intValue
+                DisposableEffect(currentNavRev) {
+                    if (widgetActionHandledRevision != currentNavRev) {
+                        val act = intent?.action
+                        if (act == com.universalrp.cleansweep.widget.CleanSweepWidget.ACTION_CLEAN) {
+                            widgetActionHandledRevision = currentNavRev
+                            vm.openScanner()
+                        } else if (act == com.universalrp.cleansweep.widget.CleanSweepWidget.ACTION_DETAILS) {
+                            widgetActionHandledRevision = currentNavRev
+                            val targetName = intent?.getStringExtra(com.universalrp.cleansweep.widget.CleanSweepWidget.EXTRA_TARGET_SCREEN)
+                            val targetScreen = runCatching { Screen.valueOf(targetName.orEmpty()) }.getOrDefault(Screen.HEALTH)
+                            vm.navigate(targetScreen)
+                        } else if (act == com.universalrp.cleansweep.notify.SetupReminder.ACTION) {
+                            widgetActionHandledRevision = currentNavRev
+                            vm.navigate(Screen.FEATURE_SETUP)
+                        }
                     }
-                    if (intent?.action == com.universalrp.cleansweep.notify.SetupReminder.ACTION) vm.navigate(Screen.FEATURE_SETUP)
                     onDispose { }
                 }
 
@@ -94,6 +101,12 @@ class MainActivity : ComponentActivity() {
                 AppRoot(vm)
             }
         }
+    }
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        navIntentRevision.intValue += 1
     }
 
     override fun onStart() {

@@ -4,7 +4,7 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
-| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.60 / code 65](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.60) | [`CleanSweep-v2.60.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.60/CleanSweep-v2.60.apk) |
+| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.61 / code 66](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.61) | [`CleanSweep-v2.61.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.61/CleanSweep-v2.61.apk) |
 | [**Ramesh Radio (ரமேஷ் ரேடியோ)**](radio/README.md) · 8.0+ (API 26) | [1.18 / code 18](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.18) | [`Ramesh-Radio-v1.18.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.18/Ramesh-Radio-v1.18.apk) |
 | [**PulseEQ**](equalizer/README.md) · 8.0+ (API 26) | [1.8 / code 9](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8) | [`PulseEQ-v1.8.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.8/PulseEQ-v1.8.apk) |
 | [**RP Vocal Remover Studio**](vocalremover/README.md) · 10+ (API 29) | [0.1.14 / code 15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.14) | [`RP-Vocal-Remover-Studio-v0.1.14.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.14/RP-Vocal-Remover-Studio-v0.1.14.apk) |
