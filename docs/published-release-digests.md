@@ -26,6 +26,7 @@ On 21 October 2026, following the physical-device verification of **Live Guard 2
 
 | App | Version / code | RP-Android-Apps release | APK asset | Bytes | SHA-256 |
 | --- | ---: | --- | --- | ---: | --- |
+| SMS Guard (குறுஞ்செய்தி காவலன்) | 1.1.0 / 6 | [sms-guard-v1.1.0](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.0) | `SMS-Guard-v1.1.0.apk` | 12,330,481 | `67567d1f39571edc918c7bf9a810c06e4729fb1b43c40226422230e0f051996c` |
 | Live Guard (CleanSweep) | 2.61 / 66 | [live-guard-v2.61](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.61) | `CleanSweep-v2.61.apk` | 13,962,740 | `e9321a64b7501aeb79df0943584978a4916f688ab57a6047350f665ccc32cf0e` |
 | Ramesh Radio | 1.18 / 18 | [ramesh-radio-v1.18](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.18) | `Ramesh-Radio-v1.18.apk` | 14,641,505 | `8dc0dcca9e19da1943af39119c05511c49b97ce58c98e30b927849c0f288362f` |
 | PulseEQ | 1.8 / 9 | [pulseeq-v1.8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.8) | `PulseEQ-v1.8.apk` | 11,567,368 | `6c20c94dd66d553c2498b3e17178e3821796f82ee2faeaaaa5b8934da9f189ed` |
