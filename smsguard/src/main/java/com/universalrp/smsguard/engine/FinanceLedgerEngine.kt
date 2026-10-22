@@ -184,6 +184,17 @@ object FinanceLedgerEngine {
         if (body.isBlank() || isOtp) {
             return FinanceParseResult(messageId, timestampMs, SpoofClassification.NOT_FINANCIAL)
         }
+        val safeBody = if (body.length > 2000) body.substring(0, 2000) else body
+        return parseSingleSmsBounded(messageId, timestampMs, safeBody, sender, userAccounts)
+    }
+
+    private fun parseSingleSmsBounded(
+        messageId: Long,
+        timestampMs: Long,
+        body: String,
+        sender: SenderIdentity,
+        userAccounts: List<UserAccountProfile>,
+    ): FinanceParseResult {
 
         // GATE 1: Personal phone numbers (+91 / human SIMs) CAN NEVER BE COUNTED AS BANK/UPI CREDITS OR DEBITS!
         if (sender.isPersonalNumber || !sender.isOfficialDltHeader) {
@@ -417,15 +428,21 @@ object FinanceLedgerEngine {
                 continue
             }
 
-            // 2. Near-simultaneous Bank SMS + UPI App SMS without UTR on one side (within 3 minutes, exact amount & direction, one bank + one UPI app)
-            val dupIndex = result.indexOfLast { prev ->
-                prev.classification == SpoofClassification.GENUINE_BANK_OR_UPI &&
+            // 2. Near-simultaneous Bank SMS + UPI App SMS without UTR on one side (O(1) bounded backwards scan within 3-minute window!)
+            var dupIndex = -1
+            for (j in result.lastIndex downTo 0) {
+                val prev = result[j]
+                if (item.timestampMs - prev.timestampMs > 180_000L) break
+                if (prev.classification == SpoofClassification.GENUINE_BANK_OR_UPI &&
                     prev.direction == item.direction &&
                     abs(prev.amountInr - item.amountInr) < 0.005 &&
-                    abs(item.timestampMs - prev.timestampMs) <= 180_000L &&
                     prev.institutionEn != item.institutionEn &&
                     (prev.accountKey.contains("Pay") || item.accountKey.contains("Pay") ||
                         prev.accountKey == "UPI" || item.accountKey == "UPI")
+                ) {
+                    dupIndex = j
+                    break
+                }
             }
             if (dupIndex >= 0) {
                 val prev = result[dupIndex]
@@ -446,21 +463,52 @@ object FinanceLedgerEngine {
             }
         }
 
-        // 3. Flag self-transfers across two distinct accounts owned by user (exact same UTR OR within 3 mins across 2 distinct bank accounts)
+        // 3. O(N) Self-Transfer Matcher across distinct user accounts (hash index on UTR + sorted 3-minute sliding window!)
+        val creditIndicesByUtr = HashMap<String, MutableList<Int>>()
+        for (j in result.indices) {
+            val b = result[j]
+            if (b.classification == SpoofClassification.GENUINE_BANK_OR_UPI && b.direction == TxDirection.CREDIT) {
+                b.utrRef?.let { creditIndicesByUtr.getOrPut(it) { ArrayList(2) }.add(j) }
+            }
+        }
+
         for (i in result.indices) {
             val a = result[i]
             if (a.classification != SpoofClassification.GENUINE_BANK_OR_UPI || a.direction != TxDirection.DEBIT) continue
-            for (j in result.indices) {
-                if (i == j) continue
+
+            // 3a. Exact matching UTR lookup in O(1)
+            a.utrRef?.let { utr ->
+                creditIndicesByUtr[utr]?.forEach { j ->
+                    if (i != j && abs(a.amountInr - result[j].amountInr) < 0.005) {
+                        result[i] = result[i].copy(isSelfTransfer = true)
+                        result[j] = result[j].copy(isSelfTransfer = true)
+                    }
+                }
+            }
+
+            // 3b. Sorted 3-minute sliding window backwards & forwards in O(1)
+            for (j in (i - 1) downTo 0) {
                 val b = result[j]
-                if (b.classification != SpoofClassification.GENUINE_BANK_OR_UPI || b.direction != TxDirection.CREDIT) continue
-                val sameAmount = abs(a.amountInr - b.amountInr) < 0.005
-                val closeInTime = abs(a.timestampMs - b.timestampMs) <= 180_000L
-                val sameUtr = a.utrRef != null && a.utrRef == b.utrRef
-                if (sameAmount && (sameUtr || (closeInTime && a.accountKey != b.accountKey))) {
-                    result[i] = a.copy(isSelfTransfer = true)
-                    result[j] = b.copy(isSelfTransfer = true)
-                    break
+                if (a.timestampMs - b.timestampMs > 180_000L) break
+                if (b.classification == SpoofClassification.GENUINE_BANK_OR_UPI &&
+                    b.direction == TxDirection.CREDIT &&
+                    a.accountKey != b.accountKey &&
+                    abs(a.amountInr - b.amountInr) < 0.005
+                ) {
+                    result[i] = result[i].copy(isSelfTransfer = true)
+                    result[j] = result[j].copy(isSelfTransfer = true)
+                }
+            }
+            for (j in (i + 1) until result.size) {
+                val b = result[j]
+                if (b.timestampMs - a.timestampMs > 180_000L) break
+                if (b.classification == SpoofClassification.GENUINE_BANK_OR_UPI &&
+                    b.direction == TxDirection.CREDIT &&
+                    a.accountKey != b.accountKey &&
+                    abs(a.amountInr - b.amountInr) < 0.005
+                ) {
+                    result[i] = result[i].copy(isSelfTransfer = true)
+                    result[j] = result[j].copy(isSelfTransfer = true)
                 }
             }
         }

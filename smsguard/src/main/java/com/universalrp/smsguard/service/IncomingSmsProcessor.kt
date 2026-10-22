@@ -166,10 +166,19 @@ object IncomingSmsProcessor {
                 GuardSettingsStore.cacheLinkResults(appCtx, linkResults)
             }
 
+            // Guard against outgoing SMS echo (Dual-SIM self-send, carrier loopback, or companion broadcast right after Send):
+            // NEVER queue offline link speech or announce voice for an SMS the user just sent from this phone!
+            val isOutgoingEcho = overrideOnlineState == null &&
+                SmsRepository.wasSentByUserRecently(appCtx, body, timestampMs)
+
             // Queue any offline-pending links for automatic verification as soon as internet reconnects!
-            val offlineUrls = linkResults
-                .filter { it.verdict == LinkVerdict.PENDING_OFFLINE || it.verdict == LinkVerdict.PENDING_INTERNET_OFF }
-                .map { it.originalUrl }
+            val offlineUrls = if (isOutgoingEcho) {
+                emptyList()
+            } else {
+                linkResults
+                    .filter { it.verdict == LinkVerdict.PENDING_OFFLINE || it.verdict == LinkVerdict.PENDING_INTERNET_OFF }
+                    .map { it.originalUrl }
+            }
             if (offlineUrls.isNotEmpty()) {
                 GuardSettingsStore.enqueuePendingLinkCheck(
                     appCtx,
@@ -193,19 +202,23 @@ object IncomingSmsProcessor {
                 userAccounts = prefs.userAccounts,
             )
 
-            val spokenScript = SmsAnnouncementPlanner.buildIncomingAnnouncement(
-                body = body,
-                sender = sender,
-                otp = otp,
-                links = linkResults,
-                finance = finance,
-                settings = AnnouncementSettingsSnapshot(
-                    tamil = prefs.tamil,
-                    voiceEnabled = prefs.voiceEnabled,
-                    shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
-                    mutePromoVoice = prefs.mutePromoVoice,
-                ),
-            )
+            val spokenScript = if (isOutgoingEcho) {
+                null
+            } else {
+                SmsAnnouncementPlanner.buildIncomingAnnouncement(
+                    body = body,
+                    sender = sender,
+                    otp = otp,
+                    links = linkResults,
+                    finance = finance,
+                    settings = AnnouncementSettingsSnapshot(
+                        tamil = prefs.tamil,
+                        voiceEnabled = prefs.voiceEnabled,
+                        shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
+                        mutePromoVoice = prefs.mutePromoVoice,
+                    ),
+                )
+            }
 
             val hasDanger = linkResults.any { it.verdict == LinkVerdict.UNSAFE } ||
                 finance.classification == SpoofClassification.SPOOF_PERSONAL_NUMBER_FAKE_MONEY

@@ -65,7 +65,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="1.0.3"
+          version="1.0.4"
           tag="sms-guard-v${version}"
           asset="SMS-Guard-v${version}.apk"
           mapfile -t built_apks < <(find smsguard/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print)

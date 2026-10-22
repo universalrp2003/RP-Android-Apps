@@ -90,7 +90,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        SmsRepository.clearContactCache()
         vm.refreshAll(scanUncheckedLinksOnline = true)
         vm.checkAndDeliverAwakeSleepQueue()
     }
@@ -120,6 +119,7 @@ class MainActivity : ComponentActivity() {
             val searchQuery by vm.searchQuery.collectAsState()
             val isDefaultSms by vm.isDefaultSms.collectAsState()
             val hasReadSms by vm.hasReadSms.collectAsState()
+            val hasMoreMessages by vm.hasMoreMessages.collectAsState()
             val sims by vm.sims.collectAsState()
             val statusBanner by vm.statusBanner.collectAsState()
             val manualScanResult by vm.manualScanResult.collectAsState()
@@ -546,6 +546,7 @@ class MainActivity : ComponentActivity() {
                                         searchQuery = searchQuery,
                                         isDefaultSms = isDefaultSms,
                                         hasReadSms = hasReadSms,
+                                        hasMoreMessages = hasMoreMessages,
                                         sims = sims,
                                         onRequestDefaultSms = ::requestDefaultSmsRole,
                                         onOpenAppInfoRestricted = ::openAppInfoForRestrictedSettings,

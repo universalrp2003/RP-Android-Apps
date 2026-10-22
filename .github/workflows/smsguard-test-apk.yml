@@ -88,8 +88,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_version="1.0.3"
-          expected_code="4"
+          expected_version="1.0.4"
+          expected_code="5"
           expected_package="com.universalrp.smsguard"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           asset="SMS-Guard-v${expected_version}.apk"
@@ -174,7 +174,7 @@ jobs:
       - name: Upload signed SMS Guard Test APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SMS-Guard-v1.0.3-test-apk
+          name: SMS-Guard-v1.0.4-test-apk
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
           retention-days: 30

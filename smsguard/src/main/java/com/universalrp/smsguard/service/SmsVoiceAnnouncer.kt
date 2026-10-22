@@ -80,11 +80,13 @@ object SmsVoiceAnnouncer {
                     while (pendingQueue.isNotEmpty()) {
                         when (val action = pendingQueue.removeFirst()) {
                             is QueuedTtsAction.Speak -> speakInternal(appCtx, action.text, action.flush)
-                            is QueuedTtsAction.Pause -> tts?.playSilentUtterance(
-                                action.durationMs,
-                                TextToSpeech.QUEUE_ADD,
-                                "smsguard_gap_${UUID.randomUUID()}",
-                            )
+                            is QueuedTtsAction.Pause -> runCatching {
+                                tts?.playSilentUtterance(
+                                    action.durationMs,
+                                    TextToSpeech.QUEUE_ADD,
+                                    "smsguard_gap_${UUID.randomUUID()}",
+                                )
+                            }
                         }
                     }
                 }
@@ -94,27 +96,37 @@ object SmsVoiceAnnouncer {
 
     fun refreshVoicesList() {
         val engine = tts ?: return
-        val voices = runCatching { engine.voices?.toList().orEmpty() }.getOrDefault(emptyList())
-        val items = voices
-            .filter { v ->
-                val lang = v.locale?.language?.lowercase(Locale.US).orEmpty()
-                lang == "ta" || lang == "en"
-            }
-            .sortedWith(
-                compareBy<Voice> { it.isNetworkConnectionRequired }
-                    .thenByDescending { it.quality }
-                    .thenBy { it.name },
-            )
-            .map { v ->
-                val langLabel = if (v.locale.language.equals("ta", true)) "தமிழ் (TA)" else "English (${v.locale.country.ifBlank { "IN" }})"
-                val offlineTag = if (v.isNetworkConnectionRequired) "Online" else "On-device"
-                VoiceOptionItem(
-                    name = v.name,
-                    label = "$langLabel · $offlineTag · ${v.name.takeLast(14)}",
-                    localeTag = v.locale.toLanguageTag(),
-                    requiresNetwork = v.isNetworkConnectionRequired,
+        val items = runCatching {
+            val voices = engine.voices?.toList().orEmpty()
+            voices
+                .filter { v ->
+                    val lang = v?.locale?.language?.lowercase(Locale.US).orEmpty()
+                    (lang == "ta" || lang == "en") && !v?.name.isNullOrBlank()
+                }
+                .sortedWith(
+                    compareBy<Voice> { it.isNetworkConnectionRequired }
+                        .thenByDescending { it.quality }
+                        .thenBy { it.name.orEmpty() },
                 )
-            }
+                .mapNotNull { v ->
+                    runCatching {
+                        val loc = v.locale ?: return@runCatching null
+                        val vName = v.name ?: return@runCatching null
+                        val langLabel = if (loc.language.equals("ta", true)) {
+                            "தமிழ் (TA)"
+                        } else {
+                            "English (${loc.country.orEmpty().ifBlank { "IN" }})"
+                        }
+                        val offlineTag = if (v.isNetworkConnectionRequired) "Online" else "On-device"
+                        VoiceOptionItem(
+                            name = vName,
+                            label = "$langLabel · $offlineTag · ${vName.takeLast(14)}",
+                            localeTag = loc.toLanguageTag(),
+                            requiresNetwork = v.isNetworkConnectionRequired,
+                        )
+                    }.getOrNull()
+                }
+        }.getOrDefault(emptyList())
         _availableVoices.value = items
     }
 
@@ -187,12 +199,15 @@ object SmsVoiceAnnouncer {
         runCatching {
             val voices = engine.voices?.toList().orEmpty()
             val explicit = prefs.preferredVoiceName.takeIf { it.isNotBlank() }
-                ?.let { wanted -> voices.firstOrNull { it.name == wanted } }
+                ?.let { wanted -> voices.firstOrNull { it?.name == wanted } }
             if (explicit != null) {
                 engine.voice = explicit
             } else {
                 val localMatch = voices
-                    .filter { it.locale.language.equals(targetLocale.language, ignoreCase = true) && !it.isNetworkConnectionRequired }
+                    .filter { v ->
+                        v?.locale?.language?.equals(targetLocale.language, ignoreCase = true) == true &&
+                            !v.isNetworkConnectionRequired
+                    }
                     .maxByOrNull { it.quality }
                 if (localMatch != null) engine.voice = localMatch
             }

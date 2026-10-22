@@ -463,4 +463,24 @@ class SmsGuardEngineTest {
         assertEquals("Message 1. State Bank of India. Rupees 500 debited.", seqEn[1])
         assertEquals("Message 2. Indian Overseas Bank. Rupees 1,200 received.", seqEn[2])
     }
+
+    @Test
+    fun massiveTenThousandSmsInboxDeduplicatesInMillisecondsWithoutLagOrOom() {
+        val baseTs = 1_760_000_000_000L
+        val sbi = SenderIdentityEngine.identify("JT-SBIINB-T")
+        val items = (1..10_000).map { i ->
+            FinanceLedgerEngine.parseSingleSms(
+                messageId = i.toLong(),
+                timestampMs = baseTs + i * 60_000L,
+                body = "Your A/c XX4821 debited by Rs.100.00 Ref ${600000000000L + i}",
+                sender = sbi,
+                isOtp = false,
+            )
+        }
+        val t0 = System.nanoTime()
+        val deduped = FinanceLedgerEngine.deduplicateAndLink(items)
+        val elapsedMs = (System.nanoTime() - t0) / 1_000_000L
+        assertEquals(10_000, deduped.size)
+        assertTrue("10,000 SMS deduplication must finish well under 1500ms, took ${elapsedMs}ms", elapsedMs < 1500L)
+    }
 }

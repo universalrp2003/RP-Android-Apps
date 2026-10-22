@@ -38,8 +38,9 @@ object OtpDetector {
 
     private val CANDIDATE_DIGITS = Regex("\\b([0-9]{4,8})\\b")
 
-    fun analyze(body: String): OtpResult {
-        if (body.isBlank()) return OtpResult(isOtp = false, code = null)
+    fun analyze(rawBody: String): OtpResult {
+        if (rawBody.isBlank()) return OtpResult(isOtp = false, code = null)
+        val body = if (rawBody.length > 2000) rawBody.substring(0, 2000) else rawBody
 
         GOOGLE_CODE.find(body)?.let { match ->
             return OtpResult(isOtp = true, code = match.groupValues[1])

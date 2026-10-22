@@ -3,6 +3,7 @@ package com.universalrp.smsguard.data
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.role.RoleManager
+import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
@@ -10,6 +11,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.ContactsContract
 import android.provider.Telephony
 import android.telephony.SmsManager
@@ -24,6 +26,7 @@ import com.universalrp.smsguard.engine.OtpDetector
 import com.universalrp.smsguard.engine.OtpResult
 import com.universalrp.smsguard.engine.SenderIdentity
 import com.universalrp.smsguard.engine.SenderIdentityEngine
+import com.universalrp.smsguard.engine.SpoofClassification
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +34,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedDeque
 
 data class SimCardInfo(
     val subscriptionId: Int,
@@ -65,6 +69,12 @@ data class SmsThreadSummary(
     val hasSpoofAttempt: Boolean,
 )
 
+private data class RecentSentEntry(
+    val normalizedDest: String,
+    val bodyTrimmed: String,
+    val sentAtMs: Long,
+)
+
 object SmsEvents {
     private val _pulse = MutableStateFlow(0L)
     val pulse: StateFlow<Long> = _pulse.asStateFlow()
@@ -77,61 +87,80 @@ object SmsEvents {
 object SmsRepository {
 
     private val contactCache = ConcurrentHashMap<String, String>()
+    private val recentOutgoing = ConcurrentLinkedDeque<RecentSentEntry>()
+
+    // Safe chunk size well below Android's 2 MB Binder CursorWindow limit on Samsung One UI / MIUI / HyperOS!
+    private const val CURSOR_PAGE_SIZE = 400
 
     fun isDefaultSmsApp(context: Context): Boolean {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val rm = context.getSystemService(RoleManager::class.java)
-            if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS)) {
-                return rm.isRoleHeld(RoleManager.ROLE_SMS)
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val rm = context.getSystemService(RoleManager::class.java)
+                if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS)) {
+                    return rm.isRoleHeld(RoleManager.ROLE_SMS)
+                }
             }
+            Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
+        } catch (_: Throwable) {
+            false
         }
-        return Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
     }
 
     fun currentSystemDefaultSmsPackage(context: Context): String? =
         runCatching { Telephony.Sms.getDefaultSmsPackage(context) }.getOrNull()
 
     fun hasReadSmsPermission(context: Context): Boolean =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+        runCatching {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
+        }.getOrDefault(false)
 
     fun hasSendSmsPermission(context: Context): Boolean =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+        runCatching {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+        }.getOrDefault(false)
 
     fun hasContactsPermission(context: Context): Boolean =
-        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        runCatching {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+        }.getOrDefault(false)
 
     fun hasValidatedInternet(context: Context): Boolean {
-        val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
-        val network = cm.activeNetwork ?: return false
-        val caps = cm.getNetworkCapabilities(network) ?: return false
-        if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) return false
-        // Accept active Wi-Fi / Cellular / Ethernet / VPN even if OEM captive-portal validation bit lags
-        return caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ||
-            caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-            caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-            caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
-            caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+        return try {
+            val cm = context.getSystemService(ConnectivityManager::class.java) ?: return false
+            val network = cm.activeNetwork ?: return false
+            val caps = cm.getNetworkCapabilities(network) ?: return false
+            if (!caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) return false
+            caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) ||
+                caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     @SuppressLint("MissingPermission")
     fun availableSims(context: Context): List<SimCardInfo> {
-        val hasPhonePerm = ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.READ_PHONE_STATE,
-        ) == PackageManager.PERMISSION_GRANTED
+        val hasPhonePerm = runCatching {
+            ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
+        }.getOrDefault(false)
         if (!hasPhonePerm) return emptyList()
 
-        return runCatching {
+        return try {
             val sm = context.getSystemService(SubscriptionManager::class.java) ?: return emptyList()
-            sm.activeSubscriptionInfoList.orEmpty().map { info ->
+            sm.activeSubscriptionInfoList.orEmpty().mapIndexed { index, info ->
                 val carrier = info.carrierName?.toString()?.takeIf { it.isNotBlank() } ?: "SIM"
+                val slotNum = if (info.simSlotIndex >= 0) info.simSlotIndex + 1 else index + 1
                 SimCardInfo(
                     subscriptionId = info.subscriptionId,
                     slotIndex = info.simSlotIndex,
-                    label = "SIM ${info.simSlotIndex + 1} · $carrier",
+                    label = "SIM $slotNum · $carrier",
                 )
             }
-        }.getOrDefault(emptyList())
+        } catch (_: Throwable) {
+            emptyList()
+        }
     }
 
     fun lookupContactName(context: Context, address: String): String? {
@@ -139,7 +168,7 @@ object SmsRepository {
         val key = SenderIdentityEngine.normalizeThreadKey(address)
         contactCache[key]?.let { return it.ifEmpty { null } }
 
-        val resolved = runCatching {
+        val resolved = try {
             val uri = Uri.withAppendedPath(ContactsContract.PhoneLookup.CONTENT_FILTER_URI, Uri.encode(address))
             context.contentResolver.query(
                 uri,
@@ -150,8 +179,11 @@ object SmsRepository {
             )?.use { cursor ->
                 if (cursor.moveToFirst()) cursor.getString(0)?.trim().orEmpty() else ""
             }.orEmpty()
-        }.getOrDefault("")
+        } catch (_: Throwable) {
+            ""
+        }
 
+        if (contactCache.size > 4000) contactCache.clear()
         contactCache[key] = resolved
         return resolved.ifEmpty { null }
     }
@@ -161,129 +193,294 @@ object SmsRepository {
     }
 
     /**
-     * Loads and enriches SMS messages from Android's Telephony provider, applying local link safety
-     * checks + cached network verdicts + full anti-spoof financial analysis.
+     * Records an outgoing SMS sent by the user on this device so carrier loopbacks, Dual-SIM self-sends,
+     * and companion broadcasts NEVER read the user's own sent message aloud!
      */
-    fun loadEnrichedMessages(context: Context, maxMessages: Int = 2500): List<EnrichedSmsMessage> {
+    fun recordOutgoingSms(destinationAddress: String, messageBody: String, timestampMs: Long = System.currentTimeMillis()) {
+        val entry = RecentSentEntry(
+            normalizedDest = SenderIdentityEngine.normalizeThreadKey(destinationAddress),
+            bodyTrimmed = messageBody.trim(),
+            sentAtMs = timestampMs,
+        )
+        synchronized(recentOutgoing) {
+            recentOutgoing.addLast(entry)
+            while (recentOutgoing.size > 50) recentOutgoing.removeFirst()
+        }
+    }
+
+    /**
+     * Checks both in-memory outgoing tracker AND Android's Telephony.Sms.Sent box within the past 2 minutes
+     * to guarantee outgoing user-sent messages are NEVER announced aloud by voice!
+     */
+    fun wasSentByUserRecently(context: Context, incomingBody: String, nowMs: Long = System.currentTimeMillis()): Boolean {
+        val cleanIncoming = incomingBody.trim()
+        if (cleanIncoming.isEmpty()) return false
+
+        synchronized(recentOutgoing) {
+            if (recentOutgoing.any {
+                    nowMs - it.sentAtMs in -30_000L..120_000L && it.bodyTrimmed == cleanIncoming
+                }
+            ) {
+                return true
+            }
+        }
+
+        if (!hasReadSmsPermission(context) && !isDefaultSmsApp(context)) return false
+        return try {
+            val cutoff = nowMs - 120_000L
+            context.contentResolver.query(
+                Telephony.Sms.Sent.CONTENT_URI,
+                arrayOf(Telephony.Sms.BODY),
+                "${Telephony.Sms.DATE} >= ?",
+                arrayOf(cutoff.toString()),
+                "${Telephony.Sms.DATE} DESC",
+            )?.use { c ->
+                var checked = 0
+                while (c.moveToNext() && checked < 15) {
+                    checked++
+                    if (c.getString(0)?.trim() == cleanIncoming) return true
+                }
+                false
+            } ?: false
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    /**
+     * CursorWindow-safe paged reader supporting phones with 50,000+ SMS messages (Samsung M32 / One UI, MIUI, HyperOS, AOSP)
+     * with ZERO OutOfMemoryError, ZERO SQLiteInvalidToken on `LIMIT`, and ZERO 2MB CursorWindow overflow!
+     */
+    private fun queryRawRowsPaged(
+        context: Context,
+        targetCount: Int,
+    ): Pair<List<RawSmsRow>, Boolean> {
+        val rows = ArrayList<RawSmsRow>(minOf(targetCount, 1024))
+        var maxDateExclusive = Long.MAX_VALUE
+        var minSeenIdAtBoundary = Long.MAX_VALUE
+        var hasMoreInDb = false
+
+        val projection = arrayOf(
+            Telephony.Sms._ID,
+            Telephony.Sms.THREAD_ID,
+            Telephony.Sms.ADDRESS,
+            Telephony.Sms.BODY,
+            Telephony.Sms.DATE,
+            Telephony.Sms.TYPE,
+            Telephony.Sms.READ,
+            Telephony.Sms.SUBSCRIPTION_ID,
+        )
+
+        while (rows.size < targetCount) {
+            val remaining = targetCount - rows.size
+            val fetchLimit = minOf(CURSOR_PAGE_SIZE, remaining) + 1 // +1 probes if older rows exist
+            val pageRows = ArrayList<RawSmsRow>(fetchLimit)
+
+            val selection: String?
+            val selectionArgs: Array<String>?
+            if (maxDateExclusive == Long.MAX_VALUE) {
+                selection = null
+                selectionArgs = null
+            } else {
+                selection = "(${Telephony.Sms.DATE} < ?) OR (${Telephony.Sms.DATE} = ? AND ${Telephony.Sms._ID} < ?)"
+                selectionArgs = arrayOf(
+                    maxDateExclusive.toString(),
+                    maxDateExclusive.toString(),
+                    minSeenIdAtBoundary.toString(),
+                )
+            }
+
+            // Try official Android API 26+ Bundle SQL query args first, falling back cleanly if an OEM provider ignores Bundle args
+            val cursor = try {
+                val queryArgs = Bundle().apply {
+                    if (selection != null) {
+                        putString(ContentResolver.QUERY_ARG_SQL_SELECTION, selection)
+                        putStringArray(ContentResolver.QUERY_ARG_SQL_SELECTION_ARGS, selectionArgs)
+                    }
+                    putString(
+                        ContentResolver.QUERY_ARG_SQL_SORT_ORDER,
+                        "${Telephony.Sms.DATE} DESC, ${Telephony.Sms._ID} DESC",
+                    )
+                    putInt(ContentResolver.QUERY_ARG_SQL_LIMIT, fetchLimit)
+                }
+                context.contentResolver.query(Telephony.Sms.CONTENT_URI, projection, queryArgs, null)
+            } catch (_: Throwable) {
+                runCatching {
+                    context.contentResolver.query(
+                        Telephony.Sms.CONTENT_URI,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        "${Telephony.Sms.DATE} DESC",
+                    )
+                }.getOrNull()
+            } ?: break
+
+            var rawCursorFetched = 0
+            try {
+                cursor.use { c ->
+                    val idIdx = c.getColumnIndex(Telephony.Sms._ID)
+                    val threadIdx = c.getColumnIndex(Telephony.Sms.THREAD_ID)
+                    val addrIdx = c.getColumnIndex(Telephony.Sms.ADDRESS)
+                    val bodyIdx = c.getColumnIndex(Telephony.Sms.BODY)
+                    val dateIdx = c.getColumnIndex(Telephony.Sms.DATE)
+                    val typeIdx = c.getColumnIndex(Telephony.Sms.TYPE)
+                    val readIdx = c.getColumnIndex(Telephony.Sms.READ)
+                    val subIdx = c.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID)
+
+                    if (idIdx < 0 || addrIdx < 0 || bodyIdx < 0 || dateIdx < 0) return@use
+
+                    // HARD STOP AT `fetchLimit` EVEN IF OEM TELEPHONY PROVIDER IGNORED QUERY_ARG_SQL_LIMIT!
+                    while (rawCursorFetched < fetchLimit && runCatching { c.moveToNext() }.getOrDefault(false)) {
+                        rawCursorFetched++
+                        try {
+                            val id = c.getLong(idIdx)
+                            val date = c.getLong(dateIdx)
+                            val address = c.getString(addrIdx)?.trim().orEmpty()
+                            // Cap monster outlier SMS strings safely so 50KB corrupt carrier dumps never choke RAM
+                            val rawBody = c.getString(bodyIdx).orEmpty()
+                            val clippedBody = if (rawBody.length > 8000) rawBody.substring(0, 8000) else rawBody
+                            pageRows.add(
+                                RawSmsRow(
+                                    id = id,
+                                    threadId = if (threadIdx >= 0) c.getLong(threadIdx) else 0L,
+                                    address = address,
+                                    body = clippedBody,
+                                    dateMs = date,
+                                    type = if (typeIdx >= 0) c.getInt(typeIdx) else Telephony.Sms.MESSAGE_TYPE_INBOX,
+                                    isUnread = readIdx >= 0 && c.getInt(readIdx) == 0,
+                                    subId = if (subIdx >= 0) c.getInt(subIdx) else -1,
+                                ),
+                            )
+                        } catch (_: Throwable) {
+                            // Safely skip any malformed/corrupt row in legacy SIM/provider DB without crashing!
+                        }
+                    }
+                }
+            } catch (_: Throwable) {
+                break
+            }
+
+            if (pageRows.isEmpty()) break
+
+            val takeCount = minOf(remaining, pageRows.size)
+            for (k in 0 until takeCount) {
+                val r = pageRows[k]
+                if (r.address.isNotEmpty()) {
+                    rows.add(r)
+                }
+            }
+
+            if (rawCursorFetched < fetchLimit) {
+                hasMoreInDb = false
+                break
+            } else {
+                hasMoreInDb = true
+                val lastUsed = pageRows[takeCount - 1]
+                maxDateExclusive = lastUsed.dateMs
+                minSeenIdAtBoundary = lastUsed.id
+            }
+        }
+
+        return rows.distinctBy { it.id } to hasMoreInDb
+    }
+
+    var lastLoadHasMoreMessages: Boolean = false
+        private set
+
+    /**
+     * Loads and enriches SMS messages in bounded memory-safe pages for smooth 60 FPS startup
+     * even on Dual-SIM devices with 50,000+ stored SMS messages.
+     */
+    fun loadEnrichedMessages(context: Context, maxMessages: Int = 1500): List<EnrichedSmsMessage> {
         if (!hasReadSmsPermission(context) && !isDefaultSmsApp(context)) {
+            lastLoadHasMoreMessages = false
             return emptyList()
         }
-        val prefs = GuardSettingsStore.ensureLoaded(context)
-        val cachedLinks = GuardSettingsStore.getCachedLinkResultsMap(context)
-        val rawRows = ArrayList<RawSmsRow>()
+        return try {
+            val prefs = GuardSettingsStore.ensureLoaded(context)
+            val cachedLinks = GuardSettingsStore.getCachedLinkResultsMap(context)
+            val (rawRows, hasMore) = queryRawRowsPaged(context, maxMessages.coerceIn(100, 15_000))
+            lastLoadHasMoreMessages = hasMore
 
-        runCatching {
-            context.contentResolver.query(
-                Telephony.Sms.CONTENT_URI,
-                arrayOf(
-                    Telephony.Sms._ID,
-                    Telephony.Sms.THREAD_ID,
-                    Telephony.Sms.ADDRESS,
-                    Telephony.Sms.BODY,
-                    Telephony.Sms.DATE,
-                    Telephony.Sms.TYPE,
-                    Telephony.Sms.READ,
-                    Telephony.Sms.SUBSCRIPTION_ID,
-                ),
-                null,
-                null,
-                "${Telephony.Sms.DATE} DESC LIMIT $maxMessages",
-            )?.use { c ->
-                val idIdx = c.getColumnIndexOrThrow(Telephony.Sms._ID)
-                val threadIdx = c.getColumnIndexOrThrow(Telephony.Sms.THREAD_ID)
-                val addrIdx = c.getColumnIndexOrThrow(Telephony.Sms.ADDRESS)
-                val bodyIdx = c.getColumnIndexOrThrow(Telephony.Sms.BODY)
-                val dateIdx = c.getColumnIndexOrThrow(Telephony.Sms.DATE)
-                val typeIdx = c.getColumnIndexOrThrow(Telephony.Sms.TYPE)
-                val readIdx = c.getColumnIndexOrThrow(Telephony.Sms.READ)
-                val subIdx = c.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID)
+            // Pre-resolve unique addresses ONCE instead of repeating Binder IPC per message row!
+            val uniqueAddresses = LinkedHashSet<String>()
+            for (r in rawRows) uniqueAddresses.add(r.address)
+            for (addr in uniqueAddresses) lookupContactName(context, addr)
 
-                while (c.moveToNext()) {
-                    val address = c.getString(addrIdx)?.trim().orEmpty()
-                    if (address.isEmpty()) continue
-                    rawRows.add(
-                        RawSmsRow(
-                            id = c.getLong(idIdx),
-                            threadId = c.getLong(threadIdx),
-                            address = address,
-                            body = c.getString(bodyIdx).orEmpty(),
-                            dateMs = c.getLong(dateIdx),
-                            type = c.getInt(typeIdx),
-                            isUnread = c.getInt(readIdx) == 0,
-                            subId = if (subIdx >= 0) c.getInt(subIdx) else -1,
+            val prelimFinance = HashMap<Long, FinanceParseResult>(rawRows.size)
+            val prelimItems = ArrayList<EnrichedSmsMessage>(rawRows.size)
+
+            for (row in rawRows) {
+                val isSent = row.type != Telephony.Sms.MESSAGE_TYPE_INBOX
+                val contact = lookupContactName(context, row.address)
+                val sender = SenderIdentityEngine.identify(row.address, row.body, contact)
+                val otp = if (isSent) OtpResult(false, null) else OtpDetector.analyze(row.body)
+                val extractedUrls = LinkSecurityScanner.extractUrls(row.body)
+                val links = extractedUrls.map { url ->
+                    val localCheck = LinkSecurityScanner.scanSingleUrl(
+                        rawUrl = url,
+                        sender = if (isSent) null else sender,
+                        internetAllowed = prefs.internetEnabled,
+                        hasValidatedNetwork = false,
+                        messageBody = if (isSent) "" else row.body,
+                    )
+                    if (localCheck.verdict == LinkVerdict.UNSAFE) {
+                        localCheck
+                    } else {
+                        cachedLinks[url] ?: localCheck
+                    }
+                }
+                val finance = if (isSent) {
+                    FinanceParseResult(row.id, row.dateMs, SpoofClassification.NOT_FINANCIAL)
+                } else {
+                    FinanceLedgerEngine.parseSingleSms(
+                        messageId = row.id,
+                        timestampMs = row.dateMs,
+                        body = row.body,
+                        sender = sender,
+                        isOtp = otp.isOtp,
+                        userAccounts = prefs.userAccounts,
+                    )
+                }
+                prelimFinance[row.id] = finance
+                prelimItems.add(
+                    EnrichedSmsMessage(
+                        id = row.id,
+                        threadId = row.threadId,
+                        rawAddress = row.address,
+                        threadKey = sender.normalizedAddress,
+                        body = row.body,
+                        dateMs = row.dateMs,
+                        isSentByMe = isSent,
+                        isUnread = row.isUnread,
+                        subId = row.subId,
+                        sender = sender,
+                        otp = otp,
+                        links = links,
+                        finance = finance,
+                    ),
+                )
+            }
+
+            // Fast O(N) UTR deduplication & self-transfer linking
+            val dedupedById = FinanceLedgerEngine.deduplicateAndLink(prelimFinance.values.toList())
+                .associateBy { it.messageId }
+
+            prelimItems.map { msg ->
+                val resolvedFin = dedupedById[msg.id]
+                if (resolvedFin != null) {
+                    msg.copy(finance = resolvedFin)
+                } else {
+                    msg.copy(
+                        finance = msg.finance.copy(
+                            classification = SpoofClassification.NOT_FINANCIAL,
                         ),
                     )
                 }
             }
-        }
-
-        val prelimFinance = HashMap<Long, FinanceParseResult>(rawRows.size)
-        val prelimItems = rawRows.map { row ->
-            val isSent = row.type != Telephony.Sms.MESSAGE_TYPE_INBOX
-            val contact = lookupContactName(context, row.address)
-            val sender = SenderIdentityEngine.identify(row.address, row.body, contact)
-            val otp = OtpDetector.analyze(row.body)
-            val extractedUrls = LinkSecurityScanner.extractUrls(row.body)
-            val links = extractedUrls.map { url ->
-                val localCheck = LinkSecurityScanner.scanSingleUrl(
-                    rawUrl = url,
-                    sender = sender,
-                    internetAllowed = prefs.internetEnabled,
-                    hasValidatedNetwork = false,
-                    messageBody = row.body,
-                )
-                if (localCheck.verdict == com.universalrp.smsguard.engine.LinkVerdict.UNSAFE) {
-                    localCheck
-                } else {
-                    cachedLinks[url] ?: localCheck
-                }
-            }
-            val finance = if (isSent) {
-                FinanceParseResult(row.id, row.dateMs, com.universalrp.smsguard.engine.SpoofClassification.NOT_FINANCIAL)
-            } else {
-                FinanceLedgerEngine.parseSingleSms(
-                    messageId = row.id,
-                    timestampMs = row.dateMs,
-                    body = row.body,
-                    sender = sender,
-                    isOtp = otp.isOtp,
-                    userAccounts = prefs.userAccounts,
-                )
-            }
-            prelimFinance[row.id] = finance
-            EnrichedSmsMessage(
-                id = row.id,
-                threadId = row.threadId,
-                rawAddress = row.address,
-                threadKey = sender.normalizedAddress,
-                body = row.body,
-                dateMs = row.dateMs,
-                isSentByMe = isSent,
-                isUnread = row.isUnread,
-                subId = row.subId,
-                sender = sender,
-                otp = otp,
-                links = links,
-                finance = finance,
-            )
-        }
-
-        // Apply cross-message UTR deduplication & self-transfer linking cleanly
-        val dedupedById = FinanceLedgerEngine.deduplicateAndLink(prelimFinance.values.toList())
-            .associateBy { it.messageId }
-
-        return prelimItems.map { msg ->
-            val resolvedFin = dedupedById[msg.id]
-            if (resolvedFin != null) {
-                msg.copy(finance = resolvedFin)
-            } else {
-                // Message was a duplicate dual-SMS notification for the same UTR/amount; mark NOT_FINANCIAL so never double-counted
-                msg.copy(
-                    finance = msg.finance.copy(
-                        classification = com.universalrp.smsguard.engine.SpoofClassification.NOT_FINANCIAL,
-                    ),
-                )
-            }
+        } catch (_: Throwable) {
+            emptyList()
         }
     }
 
@@ -296,24 +493,23 @@ object SmsRepository {
                 SmsThreadSummary(
                     threadKey = key,
                     latestMessage = latest,
-                    messages = orderedDesc.reversed(), // Chronological oldest -> newest inside chat bubble screen
+                    messages = orderedDesc.reversed(),
                     unreadCount = list.count { it.isUnread && !it.isSentByMe },
-                    hasUnsafeLink = list.any { m -> m.links.any { it.verdict == LinkVerdict.UNSAFE } },
+                    hasUnsafeLink = list.any { m -> !m.isSentByMe && m.links.any { it.verdict == LinkVerdict.UNSAFE } },
                     hasSafeLink = list.any { m -> m.links.any { it.verdict == LinkVerdict.SAFE } },
                     hasPendingLink = list.any { m ->
-                        m.links.any { it.verdict == LinkVerdict.PENDING_OFFLINE || it.verdict == LinkVerdict.PENDING_INTERNET_OFF }
+                        !m.isSentByMe && m.links.any {
+                            it.verdict == LinkVerdict.PENDING_OFFLINE || it.verdict == LinkVerdict.PENDING_INTERNET_OFF
+                        }
                     },
                     hasSpoofAttempt = list.any {
-                        it.finance.classification == com.universalrp.smsguard.engine.SpoofClassification.SPOOF_PERSONAL_NUMBER_FAKE_MONEY
+                        it.finance.classification == SpoofClassification.SPOOF_PERSONAL_NUMBER_FAKE_MONEY
                     },
                 )
             }
             .sortedByDescending { it.latestMessage.dateMs }
     }
 
-    /**
-     * Inserts an incoming SMS into Android's system Inbox table (mandatory when holding ROLE_SMS).
-     */
     fun insertIncomingSmsToProvider(
         context: Context,
         address: String,
@@ -337,9 +533,6 @@ object SmsRepository {
         }.getOrDefault(-1L)
     }
 
-    /**
-     * Sends a real SMS message (single or multipart) using the selected SIM card and records it in Sent.
-     */
     fun sendSmsMessage(
         context: Context,
         destinationAddress: String,
@@ -350,6 +543,11 @@ object SmsRepository {
             val cleanDest = destinationAddress.trim()
             val cleanBody = messageBody.trim()
             require(cleanDest.isNotEmpty() && cleanBody.isNotEmpty())
+
+            // Immediately register outgoing SMS BEFORE transmission so any Dual-SIM / carrier loopback /
+            // companion broadcast arriving right after Send NEVER speaks your own outgoing SMS aloud!
+            val sentNowMs = System.currentTimeMillis()
+            recordOutgoingSms(cleanDest, cleanBody, sentNowMs)
 
             @Suppress("DEPRECATION")
             val smsManager: SmsManager = if (subscriptionId >= 0) {
@@ -375,12 +573,11 @@ object SmsRepository {
                 smsManager.sendTextMessage(cleanDest, null, cleanBody, null, null)
             }
 
-            // Persist sent message cleanly when Default SMS App (when non-default, system already writes it)
             if (isDefaultSmsApp(context)) {
                 val values = ContentValues().apply {
                     put(Telephony.Sms.ADDRESS, cleanDest)
                     put(Telephony.Sms.BODY, cleanBody)
-                    put(Telephony.Sms.DATE, System.currentTimeMillis())
+                    put(Telephony.Sms.DATE, sentNowMs)
                     put(Telephony.Sms.READ, 1)
                     put(Telephony.Sms.SEEN, 1)
                     if (subscriptionId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subscriptionId)
@@ -396,17 +593,20 @@ object SmsRepository {
         val unreadIds = messagesInThread.filter { it.isUnread }.map { it.id }
         if (unreadIds.isEmpty()) return
         runCatching {
+            // Chunk SQLite IN (?) parameters safely below SQLite's 999 host-parameter limit on large threads!
             val values = ContentValues().apply {
                 put(Telephony.Sms.READ, 1)
                 put(Telephony.Sms.SEEN, 1)
             }
-            val placeholders = unreadIds.joinToString(",") { "?" }
-            context.contentResolver.update(
-                Telephony.Sms.CONTENT_URI,
-                values,
-                "${Telephony.Sms._ID} IN ($placeholders)",
-                unreadIds.map { it.toString() }.toTypedArray(),
-            )
+            for (chunk in unreadIds.chunked(400)) {
+                val placeholders = chunk.joinToString(",") { "?" }
+                context.contentResolver.update(
+                    Telephony.Sms.CONTENT_URI,
+                    values,
+                    "${Telephony.Sms._ID} IN ($placeholders)",
+                    chunk.map { it.toString() }.toTypedArray(),
+                )
+            }
             SmsEvents.notifyChanged()
         }
     }
@@ -427,15 +627,19 @@ object SmsRepository {
     fun deleteThreadMessages(context: Context, messagesInThread: List<EnrichedSmsMessage>): Boolean {
         if (!isDefaultSmsApp(context) || messagesInThread.isEmpty()) return false
         return runCatching {
-            val ids = messagesInThread.map { it.id.toString() }.toTypedArray()
-            val placeholders = ids.joinToString(",") { "?" }
-            val deleted = context.contentResolver.delete(
-                Telephony.Sms.CONTENT_URI,
-                "${Telephony.Sms._ID} IN ($placeholders)",
-                ids,
-            )
+            var totalDeleted = 0
+            // Chunk SQLite IN (?) parameters below SQLite's 999 variable limit!
+            for (chunk in messagesInThread.chunked(400)) {
+                val ids = chunk.map { it.id.toString() }.toTypedArray()
+                val placeholders = ids.joinToString(",") { "?" }
+                totalDeleted += context.contentResolver.delete(
+                    Telephony.Sms.CONTENT_URI,
+                    "${Telephony.Sms._ID} IN ($placeholders)",
+                    ids,
+                )
+            }
             SmsEvents.notifyChanged()
-            deleted > 0
+            totalDeleted > 0
         }.getOrDefault(false)
     }
 

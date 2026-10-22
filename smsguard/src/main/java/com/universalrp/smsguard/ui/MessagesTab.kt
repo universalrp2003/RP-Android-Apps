@@ -92,6 +92,7 @@ fun MessagesTab(
     searchQuery: String,
     isDefaultSms: Boolean,
     hasReadSms: Boolean,
+    hasMoreMessages: Boolean = false,
     sims: List<SimCardInfo>,
     onRequestDefaultSms: () -> Unit,
     onOpenAppInfoRestricted: () -> Unit,
@@ -245,6 +246,24 @@ fun MessagesTab(
                         onOpen = { vm.openThread(thread.threadKey) },
                         onCopyOtp = { vm.copyOtp(it) },
                     )
+                }
+                if (hasMoreMessages) {
+                    item {
+                        OutlinedButton(
+                            onClick = { vm.loadMoreOlderMessages() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 6.dp),
+                            shape = RoundedCornerShape(12.dp),
+                        ) {
+                            Text(
+                                if (prefs.tamil) "📥 பழைய குறுஞ்செய்திகளை மேலும் ஏற்று (+2,000)" else "📥 Load Older Messages (+2,000)",
+                                color = palette.accent,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.5.sp,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -569,7 +588,7 @@ fun ThreadDetailScreen(
                         when (link.verdict) {
                             LinkVerdict.SAFE -> openUrlSafely(context, link.finalUrl.ifBlank { link.normalizedUrl })
                             LinkVerdict.PENDING_OFFLINE, LinkVerdict.PENDING_INTERNET_OFF -> {
-                                vm.verifySingleUrlInteractive(link.originalUrl, announceAloud = true)
+                                vm.verifySingleUrlInteractive(link.originalUrl, announceAloud = !msg.isSentByMe)
                             }
                             LinkVerdict.UNSAFE -> {
                                 blockedLinkDialog = link
@@ -731,6 +750,16 @@ private fun MessageBubbleCard(
                 Text("🛑 ${ui.fakePaymentBannerTitle}", color = palette.dangerRed, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 Text(ui.fakePaymentBannerBody, color = palette.textPrimary, fontSize = 12.sp)
             }
+        }
+
+        // Clear label on outgoing messages sent by the user
+        if (msg.isSentByMe) {
+            Text(
+                text = if (tamil) "↗ நீங்கள் அனுப்பியது" else "↗ Sent by you",
+                color = palette.accent,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+            )
         }
 
         // Body text

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -49,7 +49,12 @@ fun ShieldTab(
     var apiKeyDraft by remember { mutableStateOf("") }
     val pendingItems = remember(prefs.pendingQueueCount, allMessages) { vm.pendingQueueItems() }
     val inboxLinkEntries = remember(allMessages) {
-        allMessages.flatMap { msg -> msg.links.map { link -> msg to link } }.take(40)
+        allMessages
+            .asSequence()
+            .filter { !it.isSentByMe }
+            .flatMap { msg -> msg.links.asSequence().map { link -> msg to link } }
+            .take(40)
+            .toList()
     }
 
     LazyColumn(
@@ -221,7 +226,7 @@ fun ShieldTab(
 
         // 5. Recent SMS Links Audit Log
         if (inboxLinkEntries.isNotEmpty()) {
-            items(inboxLinkEntries, key = { "${it.first.id}_${it.second.originalUrl}" }) { (msg, link) ->
+            itemsIndexed(inboxLinkEntries, key = { idx, (msg, link) -> "${msg.id}_${idx}_${link.originalUrl}" }) { _, (msg, link) ->
                 val color = when (link.verdict) {
                     LinkVerdict.SAFE -> palette.safeGreen
                     LinkVerdict.UNSAFE -> palette.dangerRed

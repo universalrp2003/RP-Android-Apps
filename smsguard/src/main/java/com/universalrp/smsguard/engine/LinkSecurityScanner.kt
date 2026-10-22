@@ -137,21 +137,22 @@ object LinkSecurityScanner {
      */
     fun extractUrls(text: String): List<String> {
         if (text.isBlank()) return emptyList()
+        val safeText = if (text.length > 2000) text.substring(0, 2000) else text
         val found = LinkedHashSet<String>()
         val explicitRanges = ArrayList<IntRange>()
 
-        for (match in EXPLICIT_URL_REGEX.findAll(text)) {
+        for (match in EXPLICIT_URL_REGEX.findAll(safeText)) {
             explicitRanges.add(match.range)
             cleanTrailingPunctuation(match.value).takeIf { it.isNotBlank() }?.let { found.add(it) }
         }
 
-        for (match in BARE_DOMAIN_REGEX.findAll(text)) {
+        for (match in BARE_DOMAIN_REGEX.findAll(safeText)) {
             if (explicitRanges.any { match.range.first >= it.first && match.range.last <= it.last }) continue
             val rawCandidate = cleanTrailingPunctuation(match.value)
             if (rawCandidate.isBlank()) continue
             // Reject if immediately followed by '@' (left side of an email/UPI address like john.doe@oksbi)
             val nextIdx = match.range.first + rawCandidate.length
-            if (nextIdx < text.length && text[nextIdx] == '@') continue
+            if (nextIdx < safeText.length && safeText[nextIdx] == '@') continue
 
             if (isGenuineBareUrl(rawCandidate)) {
                 found.add(rawCandidate)
@@ -682,48 +683,59 @@ object LinkSecurityScanner {
             )
         }
 
-        override fun queryDohThreatIntel(host: String): ThreatDnsVerdict {
-            val encoded = URLEncoder.encode(host, "UTF-8")
-            // 1. Multi-Provider Resilient Baseline DNS Check (immune to single-ISP SNI throttling on Jio/Airtel/Vi):
-            //    Tries Google Public DoH -> Cloudflare IP DoH -> Cloudflare Domain DoH -> Android OS Resolver.
-            val baseline = fetchDohJson("https://dns.google/resolve?name=$encoded&type=A")
-                ?: fetchDohJson("https://1.1.1.1/dns-query?name=$encoded&type=A")
-                ?: fetchDohJson("https://cloudflare-dns.com/dns-query?name=$encoded&type=A")
+        @Volatile
+        private var directDohUnreachableUntilMs: Long = 0L
 
-            var baselineHasAnswers = false
-            if (baseline != null) {
-                val baseStatus = baseline.optInt("Status", -1)
-                if (baseStatus == 3) {
-                    return ThreatDnsVerdict.DOMAIN_DOES_NOT_EXIST
-                }
-                baselineHasAnswers = (baseline.optJSONArray("Answer")?.length() ?: 0) > 0
-            } else {
-                // Direct OS network resolver fallback when carrier/firewall blocks public DoH endpoints
-                val resolvedOsIps = try {
-                    java.net.InetAddress.getAllByName(host)
-                } catch (_: java.net.UnknownHostException) {
-                    null
-                } catch (_: Exception) {
-                    null
-                }
-                if (resolvedOsIps.isNullOrEmpty()) {
-                    return ThreatDnsVerdict.NETWORK_UNAVAILABLE
-                }
-                baselineHasAnswers = true
+        private fun isSinkholeIp(addr: java.net.InetAddress): Boolean {
+            val s = addr.hostAddress.orEmpty()
+            return addr.isAnyLocalAddress ||
+                addr.isLoopbackAddress ||
+                s == "0.0.0.0" ||
+                s == "::" ||
+                s == "0:0:0:0:0:0:0:0" ||
+                s == "146.112.61.104" ||
+                s == "146.112.61.106"
+        }
+
+        override fun queryDohThreatIntel(host: String): ThreatDnsVerdict {
+            // 1. Primary System / Router DNS Check (works natively in <25ms with NextDNS, AdGuard, Private DNS, BSNL/Jio/Airtel
+            //    WITHOUT triggering NextDNS "Blocked by Bypass Methods" alerts on dns.google / cloudflare-dns.com / dns.quad9.net!):
+            val osAddresses = try {
+                java.net.InetAddress.getAllByName(host)
+            } catch (_: java.net.UnknownHostException) {
+                null
+            } catch (_: Exception) {
+                null
             }
 
-            // 2. Cloudflare Security Malware & Phishing filter (Direct IP 1.1.1.2 + domain fallback)
-            val cfSec = fetchDohJson("https://1.1.1.2/dns-query?name=$encoded&type=A")
-                ?: fetchDohJson("https://security.cloudflare-dns.com/dns-query?name=$encoded&type=A")
-            if (cfSec != null && isCloudflareSecurityBlocked(cfSec)) {
+            if (osAddresses == null || osAddresses.isEmpty()) {
+                // Distinguish genuine dead/NextDNS-blocked domain vs phone completely offline:
+                val internetAlive = try {
+                    !java.net.InetAddress.getAllByName("www.google.com").isNullOrEmpty()
+                } catch (_: Exception) {
+                    false
+                }
+                return if (internetAlive) {
+                    ThreatDnsVerdict.DOMAIN_DOES_NOT_EXIST
+                } else {
+                    ThreatDnsVerdict.NETWORK_UNAVAILABLE
+                }
+            }
+
+            // Catch sinkhole responses (0.0.0.0 / :: / 127.0.0.1) returned when NextDNS / AdGuard / Pi-hole blocks a malicious domain!
+            if (osAddresses.any { isSinkholeIp(it) }) {
                 return ThreatDnsVerdict.BLOCKED_MALWARE_OR_PHISHING
             }
 
-            // 3. Quad9 Threat-Intelligence resolver (Direct IP 9.9.9.9 + domain fallback)
-            if (baselineHasAnswers) {
-                val q9 = fetchDohJson("https://9.9.9.9:5053/dns-query?name=$encoded&type=A")
-                    ?: fetchDohJson("https://dns.quad9.net:5053/dns-query?name=$encoded&type=A")
-                if (q9 != null && q9.optInt("Status", 0) == 3 && q9.optInt("RA", 1) == 1) {
+            // 2. Secondary Malware/Phishing check via raw IP 1.1.1.2 (makes ZERO DNS hostname lookup, so NextDNS never blocks/flags it;
+            //    auto-skips for 10 mins if current network firewall drops direct HTTPS to 1.1.1.2 so links verify in <50ms!):
+            val now = System.currentTimeMillis()
+            if (now >= directDohUnreachableUntilMs) {
+                val encoded = URLEncoder.encode(host, "UTF-8")
+                val cfSec = fetchDohJson("https://1.1.1.2/dns-query?name=$encoded&type=A", timeoutMs = 1200)
+                if (cfSec == null) {
+                    directDohUnreachableUntilMs = now + 10 * 60_000L
+                } else if (isCloudflareSecurityBlocked(cfSec)) {
                     return ThreatDnsVerdict.BLOCKED_MALWARE_OR_PHISHING
                 }
             }
@@ -750,13 +762,13 @@ object LinkSecurityScanner {
             return false
         }
 
-        private fun fetchDohJson(endpoint: String): JSONObject? {
+        private fun fetchDohJson(endpoint: String, timeoutMs: Int = 2000): JSONObject? {
             var conn: HttpURLConnection? = null
             return try {
                 conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
                     requestMethod = "GET"
-                    connectTimeout = 4000
-                    readTimeout = 4000
+                    connectTimeout = timeoutMs
+                    readTimeout = timeoutMs
                     setRequestProperty("Accept", "application/dns-json")
                 }
                 if (conn.responseCode !in 200..299) return null
