@@ -16,3 +16,10 @@
 - Automated bilingual UI & About link checks, release unit & live Tamil/English neural voice synthesis tests, release Android Lint, stable signer verification (`9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`), and public GitHub Release SHA-256 verification executed in GitHub Actions CI.
 
 Version 1.1.6 / code 11.
+
+## Verified APK Checksum (`universalrp2003/RP-Android-Apps`)
+
+- **Official Website:** <https://universalrp2003.github.io/RP-Android-Apps/>
+- **Direct Download:** [`Oor-Arivippu-v1.1.6.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.6/Oor-Arivippu-v1.1.6.apk)
+- **Exact Size:** `12,777,932` bytes
+- **SHA-256:** `2f8313bc11d93dbc98be4d20ed84eeb2b860655662203e5d8bbba6bc7389d0c4`

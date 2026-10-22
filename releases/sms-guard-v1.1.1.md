@@ -12,3 +12,10 @@
 - **அனைத்து 7 RP Ideas செயலிகள் + அதிகாரப்பூர்வ இணையதளம்:** தமிழ் மற்றும் ஆங்கிலத்தில் அனைத்து 7 RP Ideas செயலிகளின் நேரடி இணைப்புகளும் அதிகாரப்பூர்வ இணையதள இணைப்பும் புதுப்பிக்கப்பட்டுள்ளன.
 
 Version 1.1.1 / code 7.
+
+## Verified APK Checksum (`universalrp2003/RP-Android-Apps`)
+
+- **Official Website:** <https://universalrp2003.github.io/RP-Android-Apps/>
+- **Direct Download:** [`SMS-Guard-v1.1.1.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.1/SMS-Guard-v1.1.1.apk)
+- **Exact Size:** `12,346,865` bytes
+- **SHA-256:** `d6a7f0b840f75fe3e66707fc92266bd3b2ece0816bf36f6f89f7c5c032deae0b`

@@ -16,3 +16,10 @@
 This exact `CleanSweep-v2.63.apk` release build was validated through automated localization audits, manifest permission delta checks (`0` added permissions), release lint, unit & live 20-voice neural synthesis tests (`48` suites), stable signing certificate verification (`9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`), and GitHub Release SHA-256 asset verification in GitHub Actions; these exact candidate bytes were **not installed on a phone** prior to publication. Passing CI is not Play Protect certification or an all-device compatibility claim.
 
 Version 2.63 / code 68.
+
+## Verified APK Checksum (`universalrp2003/RP-Android-Apps`)
+
+- **Official Website:** <https://universalrp2003.github.io/RP-Android-Apps/>
+- **Direct Download:** [`CleanSweep-v2.63.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.63/CleanSweep-v2.63.apk)
+- **Exact Size:** `14,281,503` bytes
+- **SHA-256:** `b4ae60770e19a7fac9fa4605b35da081626fc3a4e45f9ad5b6f643ccda24ca81`

@@ -11,3 +11,10 @@
 - **மேம்படுத்தப்பட்ட About பக்கம்:** **குறுஞ்செய்தி காவலன் (SMS Guard)** உட்பட அனைத்து **7 RP Ideas செயலிகள்** மற்றும் **RP-Android-Apps அதிகாரப்பூர்வ இணையதள** இணைப்புகள் தமிழ் மற்றும் ஆங்கிலத்தில் சேர்க்கப்பட்டுள்ளன.
 
 Version 1.19 / code 19.
+
+## Verified APK Checksum (`universalrp2003/RP-Android-Apps`)
+
+- **Official Website:** <https://universalrp2003.github.io/RP-Android-Apps/>
+- **Direct Download:** [`Ramesh-Radio-v1.19.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.19/Ramesh-Radio-v1.19.apk)
+- **Exact Size:** `15,060,196` bytes
+- **SHA-256:** `26b70e29798adf1266b0a0d7aeee518e78613b29b1b7a3281561a61f0e931858`

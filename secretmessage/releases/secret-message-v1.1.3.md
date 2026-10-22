@@ -35,3 +35,10 @@ Version 1.1.3 / code 5.
 - MLS நெறிமுறை, குறியாக்கம், செய்தி காலாவதி, relay அல்லது அழைப்பு நடத்தையில் மாற்றமில்லை. புதிய Android அனுமதி இல்லை.
 
 பதிப்பு 1.1.3 / code 5.
+
+## Verified APK Checksum (`universalrp2003/RP-Android-Apps`)
+
+- **Official Website:** <https://universalrp2003.github.io/RP-Android-Apps/>
+- **Direct Download:** [`Secret-Message-v1.1.3.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk)
+- **Exact Size:** `29,460,361` bytes
+- **SHA-256:** `2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c`
