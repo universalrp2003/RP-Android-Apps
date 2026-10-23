@@ -138,6 +138,55 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                 }
             }
 
+            // ------------------------------------------------------- Smart News Headlines Voice Announcer (2.64)
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                tr("News headlines voice announcer"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                tr("Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        Switch(
+                            checked = state.newsVoiceEnabled,
+                            onCheckedChange = { vm.setNewsVoiceEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF03202B),
+                                checkedTrackColor = AccentCyan,
+                            ),
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(30 to "30m", 60 to "1h", 120 to "2h", 180 to "3h").forEach { (mins, label) ->
+                            ModeChip(
+                                label = label,
+                                selected = state.newsVoiceIntervalMin == mins,
+                                onClick = { vm.setNewsVoiceIntervalMin(mins) },
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { vm.readTodaysNewsNow() },
+                            colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
+                        ) {
+                            Text(tr("Read today's news"))
+                        }
+                        TextButton(onClick = { vm.stopSpeakingNow() }) {
+                            Text(tr("Stop reading"))
+                        }
+                    }
+                }
+            }
+
             // ------------------------------------------------------- voice (v2.4)
             PanelCard(Modifier.fillMaxWidth()) {
                 Row(

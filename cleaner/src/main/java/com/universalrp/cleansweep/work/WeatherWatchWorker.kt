@@ -153,7 +153,9 @@ class WeatherWatchWorker(
                 decision = decision,
             )
 
-            if (speakIfTriggered && WeatherAlertStore.enabled(ctx) && decision.shouldAnnounce) {
+            if (decision.severity == WeatherSeverity.CLEAR_OR_NORMAL) {
+                ctx.getSystemService(NotificationManager::class.java)?.cancel(NOTIF_ID_WEATHER)
+            } else if (speakIfTriggered && WeatherAlertStore.enabled(ctx) && decision.shouldAnnounce) {
                 val quietBlocked = !decision.bypassQuietHours && Announcer.inQuietHours(ctx)
                 if (!quietBlocked) {
                     postAlertNotification(ctx, decision, tamil)

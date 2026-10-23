@@ -214,6 +214,8 @@ object IncomingSmsProcessor {
                     settings = AnnouncementSettingsSnapshot(
                         tamil = prefs.tamil,
                         voiceEnabled = prefs.voiceEnabled,
+                        senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                        readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                         shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                         mutePromoVoice = prefs.mutePromoVoice,
                     ),
@@ -255,6 +257,8 @@ object IncomingSmsProcessor {
                             settings = AnnouncementSettingsSnapshot(
                                 tamil = true,
                                 voiceEnabled = true,
+                                senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                                readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                                 shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                                 mutePromoVoice = prefs.mutePromoVoice,
                             ),
@@ -268,6 +272,8 @@ object IncomingSmsProcessor {
                             settings = AnnouncementSettingsSnapshot(
                                 tamil = false,
                                 voiceEnabled = true,
+                                senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                                readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                                 shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                                 mutePromoVoice = prefs.mutePromoVoice,
                             ),

@@ -195,6 +195,78 @@ object SharedNeuralVoiceEngine {
         return scheduledVoiceForDate(today)
     }
 
+    /**
+     * Configures an offline Android [android.speech.tts.TextToSpeech] instance to match today's
+     * scheduled daily Male <-> Female rotation automatically when no internet is available.
+     */
+    fun applyDailyGenderSystemVoice(
+        tts: android.speech.tts.TextToSpeech,
+        preferTamil: Boolean,
+        today: LocalDate = LocalDate.now(),
+    ): Boolean {
+        val wantFemale = scheduledVoiceForDate(today).gender == NeuralVoiceGender.FEMALE
+        val targetLang = if (preferTamil) Locale("ta", "IN") else Locale.US
+        val langCode = if (preferTamil) "ta" else "en"
+        val langAvail = tts.isLanguageAvailable(targetLang)
+        val effectiveLocale = if (preferTamil && langAvail < android.speech.tts.TextToSpeech.LANG_AVAILABLE) {
+            Locale.US
+        } else {
+            targetLang
+        }
+        tts.language = effectiveLocale
+        val effectiveCode = if (effectiveLocale.language == "ta") "ta" else "en"
+
+        val candidates = runCatching {
+            tts.voices.orEmpty()
+                .filter { v -> v.locale?.language?.equals(effectiveCode, ignoreCase = true) == true }
+                .sortedWith(
+                    compareBy<android.speech.tts.Voice> { it.isNetworkConnectionRequired }
+                        .thenBy { it.name.lowercase(Locale.US) },
+                )
+        }.getOrDefault(emptyList())
+
+        val offlinePool = candidates.filter { !it.isNetworkConnectionRequired }.ifEmpty { candidates }
+        val chosen = if (offlinePool.isNotEmpty()) {
+            val femaleMatched = offlinePool.filter { isLikelyFemaleSystemVoice(it.name) }
+            val maleMatched = offlinePool.filter { isLikelyMaleSystemVoice(it.name) }
+            when {
+                wantFemale && femaleMatched.isNotEmpty() -> femaleMatched.first()
+                !wantFemale && maleMatched.isNotEmpty() -> maleMatched.first()
+                offlinePool.size >= 2 -> if (wantFemale) offlinePool.first() else offlinePool.last()
+                else -> offlinePool.first()
+            }
+        } else {
+            null
+        }
+
+        if (chosen != null) {
+            runCatching { tts.voice = chosen }
+            // When only one system voice is installed, apply a gentle natural timbre offset so Male/Female days stay distinct.
+            val singleVoiceOnly = offlinePool.size <= 1
+            tts.setPitch(if (singleVoiceOnly) (if (wantFemale) 1.05f else 0.94f) else 1.0f)
+        } else {
+            tts.setPitch(if (wantFemale) 1.05f else 0.94f)
+        }
+        return effectiveLocale.language == "ta"
+    }
+
+    fun isLikelyFemaleSystemVoice(rawName: String): Boolean {
+        val n = rawName.lowercase(Locale.US)
+        return "female" in n || "#female" in n ||
+            "-taf-" in n || "-ena-" in n || "-end-" in n ||
+            "pallavi" in n || "neerja" in n || "lekha" in n ||
+            "samantha" in n || "victoria" in n || "ava" in n || "emma" in n
+    }
+
+    fun isLikelyMaleSystemVoice(rawName: String): Boolean {
+        val n = rawName.lowercase(Locale.US)
+        if (isLikelyFemaleSystemVoice(n)) return false
+        return "male" in n || "#male" in n ||
+            "-tag-" in n || "-enc-" in n || "-ene-" in n ||
+            "valluvar" in n || "prabhat" in n || "rishi" in n ||
+            "daniel" in n || "alex" in n || "andrew" in n || "brian" in n
+    }
+
     @SuppressLint("MissingPermission")
     fun hasInternet(context: Context): Boolean = runCatching {
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager

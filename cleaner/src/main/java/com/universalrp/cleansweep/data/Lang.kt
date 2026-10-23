@@ -1569,6 +1569,10 @@ object Lang {
         "Tap any Studio Ultra-HD voice below to preview or lock (5 Male + 5 Female):" to "கீழேயுள்ள எந்த Ultra-HD குரலையும் தட்டி சோதனை செய்யவும் / பூட்டவும் (5 ஆண் + 5 பெண்):",
         "🔄 Daily Auto Male ↔ Female Rotation (Recommended)" to "🔄 தினசரி ஆண் ↔ பெண் தானியங்கி மாற்றம் (பரிந்துரை)",
         "Playing Studio Ultra-HD voice sample: %s" to "ஸ்டுடியோ Ultra-HD குரல் ஒலிக்கிறது: %s",
+        "News headlines voice announcer" to "செய்தித் தலைப்புகள் குரல் அறிவிப்பு",
+        "Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "போன் திரை அணைந்திருக்கும்போது (Screen OFF), அழைப்பு/பாடல் இல்லாதபோது, காலை 6 – இரவு 10 மணிக்குள் மட்டும் புதிய 5 சுத்தமான செய்தித் தலைப்புகளை வாசிக்கும். படித்த செய்தியை மீண்டும் படிக்காது.",
+        "Read today's news" to "இன்றைய செய்திகளைப் படி",
+        "Stop reading" to "வாசிப்பை நிறுத்து",
     )
 }
 

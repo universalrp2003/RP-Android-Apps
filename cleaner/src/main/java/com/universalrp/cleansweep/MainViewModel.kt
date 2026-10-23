@@ -300,6 +300,8 @@ data class UiState(
     val newsOutcome: TamilInfoStripRepo.Outcome = TamilInfoStripRepo.Outcome.NO_TODAY_NEWS,
     val tamilInfoVisible: Boolean = true,
     val tamilInfoPaused: Boolean = false,
+    val newsVoiceEnabled: Boolean = false,
+    val newsVoiceIntervalMin: Int = 60,
     val autoWifiScanOnOpen: Boolean = true,
     val bgWifiScanEnabled: Boolean = false,
     val verifiedWifiMacs: Set<String> = emptySet(),
@@ -391,6 +393,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         com.universalrp.cleansweep.ui.theme.Palette.apply(resolvedTheme)
         mutate { it.copy(lang = resolvedLang,
             themeId = resolvedTheme,
+            newsVoiceEnabled = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.isEnabled(ctx),
+            newsVoiceIntervalMin = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.intervalMinutes(ctx),
             includeSystemApps = prefs.getBoolean("cache_include_system", MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM),
             securityIncludeSystemApps = prefs.getBoolean("security_include_system", MonitorDefaultsPolicy.SECURITY_INCLUDE_SYSTEM)) }
         viewModelScope.launch {
@@ -2631,7 +2635,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         cancelAiReport(showMessage = false); cancelDeviceIdentification(showMessage = false)
         Lang.set(lang)
         prefs.edit().putString(Lang.KEY, lang.id).apply()
-        mutate { it.copy(lang = lang, message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “லைவ் கார்டு”" else "Language: English") }
+        newsJob?.cancel(); newsJob = null
+        mutate {
+            it.copy(
+                lang = lang,
+                tamilInfoItems = emptyList(),
+                newsShown = emptySet(),
+                newsLoading = true,
+                message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “லைவ் கார்டு”" else "Language: English",
+            )
+        }
+        loadTamilInfoStrip(force = false)
         refreshAssistantWelcome()
         ChargeMonitorService.refreshIfRunning()
         com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
@@ -3090,12 +3104,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         newsJob = viewModelScope.launch {
             mutate { it.copy(newsLoading = true) }
             try {
-                val result = TamilInfoStripRepo.getItems(ctx, force)
-                val valid = com.universalrp.cleansweep.data.NewsPolicy.today(result.items, System.currentTimeMillis(), java.time.ZoneId.systemDefault())
-                val shown = TamilInfoStripRepo.shownToday(ctx)
-                mutate { it.copy(tamilInfoItems = valid, newsShown = shown,
-                    newsOutcome = if (valid.isEmpty() && result.items.isNotEmpty()) TamilInfoStripRepo.Outcome.NO_TODAY_NEWS else result.outcome,
-                    newsLoading = false) }
+                val isTa = Lang.languageIn(ctx) == AppLang.TA
+                val result = TamilInfoStripRepo.getItemsForLanguage(ctx, forceRefresh = force, tamil = isTa)
+                val valid = com.universalrp.cleansweep.data.NewsPolicy.todayForLanguage(
+                    result.items,
+                    System.currentTimeMillis(),
+                    java.time.ZoneId.systemDefault(),
+                    tamil = isTa,
+                )
+                val shown = TamilInfoStripRepo.shownTodayForLanguage(ctx, tamil = isTa)
+                mutate {
+                    it.copy(
+                        tamilInfoItems = valid,
+                        newsShown = shown,
+                        newsOutcome = if (valid.isEmpty() && result.items.isNotEmpty()) TamilInfoStripRepo.Outcome.NO_TODAY_NEWS else result.outcome,
+                        newsLoading = false,
+                    )
+                }
             } finally { mutate { it.copy(newsLoading = false) } }
         }
     }
@@ -3103,8 +3128,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     /** A resumed/visible Home must not retain yesterday's headline after midnight or a timezone change. */
     fun expireNewsForLocalDay() {
         val now = System.currentTimeMillis(); val zone = java.time.ZoneId.systemDefault()
-        val valid = com.universalrp.cleansweep.data.NewsPolicy.today(_state.value.tamilInfoItems, now, zone)
-        val shown = TamilInfoStripRepo.shownToday(ctx)
+        val isTa = Lang.languageIn(ctx) == AppLang.TA
+        val valid = com.universalrp.cleansweep.data.NewsPolicy.todayForLanguage(_state.value.tamilInfoItems, now, zone, tamil = isTa)
+        val shown = TamilInfoStripRepo.shownTodayForLanguage(ctx, tamil = isTa)
         if (valid != _state.value.tamilInfoItems || shown != _state.value.newsShown)
             mutate { it.copy(tamilInfoItems = valid, newsShown = shown) }
     }
@@ -3126,9 +3152,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun speakTamilText(text: String) {
-        if (text.isNotBlank()) {
-            Announcer.speakTamil(ctx, text, Announcer.Event.TEST)
+        val cleaned = com.universalrp.cleansweep.data.NewsSpeechSanitizer.cleanHeadline(text)
+        if (cleaned.isNotBlank()) {
+            Announcer.speakNow(ctx, cleaned, Lang.languageIn(ctx))
         }
+    }
+
+    fun setNewsVoiceEnabled(enabled: Boolean) {
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.setEnabled(ctx, enabled)
+        mutate { it.copy(newsVoiceEnabled = enabled) }
+    }
+
+    fun setNewsVoiceIntervalMin(minutes: Int) {
+        val norm = com.universalrp.cleansweep.data.NewsSpeechSanitizer.normalizeIntervalMinutes(minutes)
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.setIntervalMinutes(ctx, norm)
+        mutate { it.copy(newsVoiceIntervalMin = norm) }
+    }
+
+    fun readTodaysNewsNow() {
+        viewModelScope.launch {
+            val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
+            if (count <= 0) {
+                mutate {
+                    it.copy(
+                        message = if (Lang.isTamil) {
+                            "இன்றைய செய்தித் தலைப்புகள் இன்னும் கிடைக்கவில்லை — புதுப்பித்து முயற்சிக்கவும்."
+                        } else {
+                            "No clean headlines from today are ready yet — tap refresh and try again."
+                        },
+                    )
+                }
+            }
+        }
+    }
+
+    fun stopSpeakingNow() {
+        Announcer.stop()
     }
 
     // ---------------------------------------------------- Wi-Fi Verified Devices & Auto-Scan

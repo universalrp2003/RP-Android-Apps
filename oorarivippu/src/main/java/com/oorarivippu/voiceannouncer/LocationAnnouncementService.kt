@@ -141,6 +141,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     private var lastGeocodeStartedAtElapsedMs: Long = 0L
     private var geocodeRequestToken: Long = 0L
     private var latestReceivedLocation: Location? = null
+    private var sessionDistanceAnchorLocation: Location? = null
 
     private val fusedLocationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -291,6 +292,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
 
     private fun startTrackingInForeground() {
         val isGpsOn = GpsStateReceiver.isGpsProviderEnabled(this)
+        sessionDistanceAnchorLocation = null
+        AppPreferences.resetSessionDistance()
         AppPreferences.updateLiveStatus(isGpsEnabled = isGpsOn)
 
         val notification = buildForegroundNotification()
@@ -654,6 +657,20 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         }
 
         latestReceivedLocation = Location(location)
+        if (!location.hasAccuracy() || location.accuracy <= 65f) {
+            val anchor = sessionDistanceAnchorLocation
+            if (anchor == null) {
+                sessionDistanceAnchorLocation = Location(location)
+            } else {
+                val seg = anchor.distanceTo(location)
+                if (seg >= 15f && seg < 5_000f) {
+                    AppPreferences.addSessionDistanceMeters(seg)
+                    sessionDistanceAnchorLocation = Location(location)
+                } else if (seg >= 5_000f) {
+                    sessionDistanceAnchorLocation = Location(location)
+                }
+            }
+        }
         val motion = travelDetector.evaluate(
             newLocation = location,
             minDistanceMeters = snap.minDistanceMeters,

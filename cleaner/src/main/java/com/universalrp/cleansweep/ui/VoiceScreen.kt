@@ -147,6 +147,54 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
               }
             }
 
+            // ------------------------------------------------------------ Smart News Headlines Voice Announcer (v2.64)
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                tr("News headlines voice announcer"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                            )
+                            Text(
+                                tr("Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                        }
+                        Spacer(Modifier.size(8.dp))
+                        Switch(
+                            checked = state.newsVoiceEnabled,
+                            onCheckedChange = { vm.setNewsVoiceEnabled(it) },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color(0xFF03202B),
+                                checkedTrackColor = AccentCyan,
+                            ),
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(30 to "30m", 60 to "1h", 120 to "2h", 180 to "3h").forEach { (mins, label) ->
+                            ModeChipExtra(
+                                label = label,
+                                selected = state.newsVoiceIntervalMin == mins,
+                                onClick = { vm.setNewsVoiceIntervalMin(mins) },
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        VoiceChip(
+                            label = tr("Read today's news"),
+                            icon = Icons.Outlined.PlayArrow,
+                            onClick = { vm.readTodaysNewsNow() },
+                        )
+                        TextButton(onClick = { vm.stopSpeakingNow() }) {
+                            Text(tr("Stop reading"))
+                        }
+                    }
+                }
+            }
+
             // ------------------------------------------------------------ Studio Ultra-HD Voices (v2.62, Default ON!)
             PanelCard(Modifier.fillMaxWidth()) {
                 val isTa = com.universalrp.cleansweep.data.Lang.isTamil

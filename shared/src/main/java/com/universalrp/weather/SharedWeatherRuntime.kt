@@ -126,6 +126,45 @@ object SharedWeatherRuntime {
     private const val KEY_LAST_SOURCE = "last_source"
 
     private const val KEYSTORE_ALIAS = "com.universalrp.weather.tomorrow.v1"
+    const val MAX_ALERT_STALE_MS: Long = 20L * 60_000L
+    const val ACTIVE_RAIN_RECHECK_MS: Long = 3L * 60_000L
+
+    fun placesDiffer(a: String, b: String): Boolean {
+        val na = a.trim().lowercase(Locale.ROOT)
+        val nb = b.trim().lowercase(Locale.ROOT)
+        if (na.isEmpty() || nb.isEmpty()) return false
+        return na != nb
+    }
+
+    fun isCachedAlertStale(
+        lastCheckedAtMs: Long,
+        resolvedPlaceName: String,
+        cachedPlaceName: String,
+        nowMs: Long = System.currentTimeMillis(),
+    ): Boolean {
+        if (lastCheckedAtMs <= 0L) return true
+        if ((nowMs - lastCheckedAtMs) > MAX_ALERT_STALE_MS) return true
+        return placesDiffer(resolvedPlaceName, cachedPlaceName)
+    }
+
+    fun shouldAutoRefreshNow(
+        context: Context,
+        resolvedPlaceName: String = "",
+        nowMs: Long = System.currentTimeMillis(),
+    ): Boolean {
+        val p = prefs(context)
+        val lastChecked = p.getLong(KEY_LAST_CHECKED_MS, 0L)
+        if (lastChecked <= 0L) return true
+        val cachedPlace = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
+        if (placesDiffer(resolvedPlaceName, cachedPlace)) return true
+        val lastSeverity = runCatching {
+            WeatherSeverity.valueOf(p.getString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name).orEmpty())
+        }.getOrDefault(WeatherSeverity.CLEAR_OR_NORMAL)
+        if (lastSeverity != WeatherSeverity.CLEAR_OR_NORMAL) {
+            return (nowMs - lastChecked) >= ACTIVE_RAIN_RECHECK_MS
+        }
+        return nowMs >= nextCheckAfterMs(context) && (nowMs - lastChecked) >= 10L * 60_000L
+    }
 
     fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -299,26 +338,37 @@ object SharedWeatherRuntime {
             )
         }
 
-        val severity = runCatching {
+        val lastCheckedAtMs = p.getLong(KEY_LAST_CHECKED_MS, 0L)
+        val cachedPlaceName = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
+        val stale = isCachedAlertStale(
+            lastCheckedAtMs = lastCheckedAtMs,
+            resolvedPlaceName = resolved.name,
+            cachedPlaceName = cachedPlaceName,
+        )
+        if (stale && placesDiffer(resolved.name, cachedPlaceName)) {
+            p.edit().putLong(KEY_NEXT_CHECK_AFTER_MS, 0L).apply()
+        }
+        val rawSeverity = runCatching {
             WeatherSeverity.valueOf(p.getString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name).orEmpty())
         }.getOrDefault(WeatherSeverity.CLEAR_OR_NORMAL)
+        val severity = if (stale) WeatherSeverity.CLEAR_OR_NORMAL else rawSeverity
         val source = runCatching {
             WeatherSourceKind.valueOf(p.getString(KEY_LAST_SOURCE, WeatherSourceKind.OPEN_METEO_DEFAULT.name).orEmpty())
         }.getOrDefault(WeatherSourceKind.OPEN_METEO_DEFAULT)
-        val minsRaw = p.getInt(KEY_LAST_MINS_TO_RAIN, -1)
+        val minsRaw = if (stale) -1 else p.getInt(KEY_LAST_MINS_TO_RAIN, -1)
 
         return SharedWeatherState(
             enabled = isEnabled(context),
             gpsTurnedOn = gpsOn,
             permissionGranted = permitted,
             locationMode = resolved.mode,
-            activePlaceName = resolved.name.ifBlank { p.getString(KEY_LAST_PLACE_NAME, "").orEmpty() },
+            activePlaceName = resolved.name.ifBlank { cachedPlaceName },
             activePlaceDetails = resolved.details.ifBlank { p.getString(KEY_LAST_PLACE_DETAILS, "").orEmpty() },
             savedPlaceName = savedPlace(context)?.name.orEmpty(),
             savedPlaceDetails = savedPlace(context)?.details.orEmpty(),
             savedPostalCode = savedPlace(context)?.postalCode.orEmpty(),
             hasTomorrowKey = hasTomorrowKey(context),
-            lastCheckedAtMs = p.getLong(KEY_LAST_CHECKED_MS, 0L),
+            lastCheckedAtMs = lastCheckedAtMs,
             severity = severity,
             minutesUntilRain = minsRaw.takeIf { it >= 0 },
             source = source,
@@ -396,9 +446,7 @@ object SharedWeatherRuntime {
                         finished.complete(false)
                         return@TextToSpeech
                     }
-                    val taLocale = Locale("ta", "IN")
-                    val canTamil = preferTamil && tts.isLanguageAvailable(taLocale) >= TextToSpeech.LANG_AVAILABLE
-                    tts.language = if (canTamil) taLocale else Locale.US
+                    val canTamil = SharedNeuralVoiceEngine.applyDailyGenderSystemVoice(tts, preferTamil)
                     val chosenText = if (canTamil) tamilText else english
                     val utteranceId = "weather_" + UUID.randomUUID().toString()
                     tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
@@ -489,6 +537,11 @@ object SharedWeatherRuntime {
             .apply { if (pi != null) setContentIntent(pi) }
             .build()
         runCatching { nm.notify(42_580, notif) }
+    }
+
+    fun clearWeatherNotification(context: Context) {
+        val nm = context.getSystemService(NotificationManager::class.java) ?: return
+        runCatching { nm.cancel(42_580) }
     }
 
     private fun getOrCreateKeystoreSecret(): SecretKey {

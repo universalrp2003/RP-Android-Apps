@@ -186,28 +186,42 @@ object AppGuides {
                     "எதையும் அமைதியாக நிறுவாது.",
             ),
             topic(
-                "30-minute rain & 24×7 cyclone alerts",
-                "30 நிமிட மழை & 24×7 புயல் எச்சரிக்கை",
-                "When phone GPS is ON, Live Guard can turn on rain & storm watch automatically and use your " +
-                    "live area; if GPS is OFF, save your 6-digit PIN code or town (e.g. 622301) once. Normal " +
-                    "30-minute rain alerts stay silent during Quiet Hours, while very heavy rain and cyclone " +
-                    "warnings speak 24×7 day or night. A compact animated banner floats under Live News only " +
-                    "during active alerts. You can also get a free personal Tomorrow.io API key from the link inside.",
-                "போன் GPS இயக்கத்தில் இருந்தால் லைவ் கார்டு மழை & புயல் கண்காணிப்பைத் தானாக இயக்கி உங்கள் " +
-                    "இடத்தைப் பயன்படுத்தும்; GPS அணைந்தால் 6 இலக்க PIN எண் அல்லது ஊரை (உதா: 622301) ஒருமுறை சேமிக்கலாம். " +
-                    "சாதாரண 30 நிமிட மழை அறிவிப்பு இரவு அமைதி நேரத்தில் ஒலிக்காது; மிகக் கனமழை மற்றும் புயல் " +
-                    "எச்சரிக்கைகள் இரவு-பகல் 24×7 ஒலிக்கும். எச்சரிக்கை நேரத்தில் மட்டும் Live News கீழே சிறிய அனிமேஷன் " +
-                    "தோன்றும். உள்ளே உள்ள இணைப்பின் வழியே இலவச Tomorrow.io API விசையையும் பெறலாம்.",
+                "Smart news headlines reader & auto screen-off announcements",
+                "இன்றைய செய்திகள் வாசிப்பு & திரை அணைந்த நேரத் தானியங்கி அறிவிப்பு",
+                "Live Guard fetches today's real Tamil headlines when Tamil is selected, and today's real English " +
+                    "headlines when English is selected. Noisy prefixes (Breaking News, Just Now, Video tags), " +
+                    "timestamps, trailing site tags, and incomplete clickbait teasers are automatically filtered out. " +
+                    "Tap 'Read today's news' on Home or inside Today's headlines to listen anytime (with a Stop button), " +
+                    "or configure the automatic interval (30m / 1h / 2h / 3h) in Settings — automatic news speaks ONLY " +
+                    "new unannounced headlines when the screen is OFF, outside night Quiet Hours, and when no phone call " +
+                    "or other music/video is playing.",
+                "லைவ் கார்டில் தமிழ் தேர்ந்தெடுத்தால் இன்றைய தமிழ் செய்திகளும், ஆங்கிலம் தேர்ந்தெடுத்தால் இன்றைய ஆங்கிலச் " +
+                    "செய்திகளும் காட்டப்பட்டு வாசிக்கப்படும். 'Breaking News', 'Just Now', 'காணொளி:', நேரக் குறிப்புகள் மற்றும் " +
+                    "முழுமையற்ற கிளிக்பெய்ட் வரிகள் தானாகவே நீக்கப்படும். முகப்பு அல்லது செய்திப் பட்டியலில் 'இன்றைய செய்திகளை வாசி' " +
+                    "பொத்தானால் எப்போதும் கேட்கலாம்; அமைப்புகளில் நேர இடைவெளியை (30 நிமி / 1 மணி / 2 மணி / 3 மணி) " +
+                    "தேர்ந்தெடுத்தால் திரை அணைந்திருக்கும்போது, அழைப்பு/பாடல் இல்லாத நேரத்தில், ஏற்கனவே வாசிக்காத புதிய " +
+                    "செய்திகளை மட்டுமே வாசிக்கும்.",
+            ),
+            topic(
+                "30-minute rain & 24×7 cyclone background alerts",
+                "30 நிமிட மழை & 24×7 புயல் பின்னணி எச்சரிக்கை",
+                "Live Guard watches approaching rain and storms automatically in the background and clears old rain " +
+                    "banners automatically once skies dry up or your town changes. When phone GPS is ON, live location " +
+                    "is checked automatically; when GPS is OFF, your saved fallback PIN/village (e.g. 622301) is verified " +
+                    "automatically in the background with both notification and voice alerts.",
+                "லைவ் கார்டு பின்னணியில் தானாகவே மழை மற்றும் புயல் நிலையைச் சரிபார்த்து, மழை நின்றவுடன் பழைய " +
+                    "அறிவிப்பைத் தானாகவே நீக்கும். போன் GPS இயக்கத்தில் இருந்தால் நேரடி இடமும், GPS அணைந்திருந்தால் " +
+                    "நீங்கள் சேமித்த மாற்று ஊர்/PIN எண்ணும் (உதா: 622301) பின்னணியில் சரிபார்க்கப்பட்டு அறிவிப்பும் குரல் " +
+                    "எச்சரிக்கையும் வழங்கப்படும்.",
             ),
             topic(
                 "The other RP Ideas apps",
                 "மற்ற RP Ideas செயலிகள்",
-                "About lists all six apps with their official release pages, so you can read what changed or " +
-                    "download a fresh copy for another phone. Tapping an app that is installed on this phone " +
-                    "opens it; tapping one that is not opens its release page.",
-                "About பகுதியில் ஆறு செயலிகளும் அவற்றின் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்களுடன் உள்ளன; என்ன மாறியது " +
-                    "என்பதைப் படிக்கலாம், வேறு போனுக்கு புதிய நகலை பதிவிறக்கலாம். இந்தப் போனில் நிறுவிய செயலியைத் " +
-                    "தொட்டால் அது திறக்கும்; இல்லாதது வெளியீட்டுப் பக்கம் திறக்கும்.",
+                "About lists all seven RP Ideas apps with their official release pages and website links, so you can " +
+                    "read what changed or download a fresh copy. Tapping an app that is installed on this phone opens " +
+                    "it; tapping one that is not opens its release page.",
+                "About பகுதியில் ஏழு RP Ideas செயலிகளும் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்களுடன் உள்ளன; என்ன மாறியது " +
+                    "என்பதைப் படிக்கலாம் அல்லது புதிய நகலைப் பதிவிறக்கலாம். நிறுவிய செயலியைத் தொட்டால் உடனே திறக்கும்.",
             ),
         ),
     )
@@ -288,17 +302,17 @@ object AppGuides {
                     "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
             ),
             topic(
-                "Rain & cyclone voice alerts while listening",
-                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு",
-                "Tap the cloud icon at the top of Radio (or open More) and save your 6-digit PIN code or town " +
-                    "(e.g. 622301) — Ramesh Radio never asks for Location permission. When rain approaches within " +
-                    "~30 minutes, music volume gently lowers, the voice alert plays clearly, and volume restores " +
-                    "automatically. Normal rain stays silent at night (10 PM – 7 AM); heavy rain and cyclone " +
-                    "warnings speak 24×7. A direct link and voice guide inside explain how to get a free Tomorrow.io key.",
-                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறந்து உங்கள் 6 இலக்க PIN எண் அல்லது ஊரை (உதா: " +
-                    "622301) சேமியுங்கள் — ரமேஷ் ரேடியோ இட அனுமதி கேட்காது. ~30 நிமிடத்தில் மழை வரும்போது பாடல் ஒலி " +
-                    "தானாகக் குறைந்து, அறிவிப்பு முடிந்ததும் மீண்டும் பழைய ஒலிக்குத் திரும்பும். சாதாரண மழை இரவு (10 PM – 7 AM) " +
-                    "ஒலிக்காது; மிகக் கனமழை மற்றும் புயல் 24×7 ஒலிக்கும். இலவச Tomorrow.io விசை வழிகாட்டியும் உள்ளே உள்ளது.",
+                "Rain & cyclone voice alerts while listening (Mobile Tower + PIN)",
+                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு (செல்போன் டவர் + PIN)",
+                "Tap the cloud icon at the top of Radio (or open More). With optional Approximate Network Location " +
+                    "allowed, Ramesh Radio detects your current village/town automatically from your connected mobile " +
+                    "tower with zero GPS battery drain, and falls back to your saved 6-digit PIN/town (e.g. 622301) " +
+                    "when Location is off. Rain alerts check and announce ONLY while Ramesh Radio is open or playing " +
+                    "audio — lowering music smoothly to 25% and restoring volume right after speech finishes.",
+                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். தோராயமான நெட்வொர்க் இருப்பிட அனுமதி " +
+                    "இருந்தால், GPS பேட்டரி செலவின்றி உங்கள் செல்போன் டவர் வழியே ஊரைத் தானாகக் கண்டறியும்; இருப்பிடம் " +
+                    "அணைந்தால் சேமித்த PIN எண்/ஊரை (உதா: 622301) பயன்படுத்தும். ரமேஷ் ரேடியோ திறந்திருக்கும்போதோ பாடல்/வானொலி " +
+                    "ஒலிக்கும்போதோ மட்டுமே மழை எச்சரிக்கை ஒலிக்கும் — இசை 25% ஆகக் குறைந்து முடிந்ததும் இயல்பு ஒலிக்குத் திரும்பும்.",
             ),
             topic(
                 "Updating Ramesh Radio",
@@ -541,21 +555,18 @@ object AppGuides {
                     "10 km, 5 km, 2 km, 500 m (வந்தடைந்தது) இடங்களில் அறிவிக்கும். GPS/Geocoder துல்லியம் மாறலாம்.",
             ),
             topic(
-                "Voices and speech speed",
-                "குரல்கள் மற்றும் பேச்சு வேகம்",
-                "The compact App language row changes the interface only; it is separate from the compact " +
-                    "Voice language row. Tap Voice language to expand it, then choose the announcement language, " +
-                    "an Android TTS voice, Slow/Normal/Fast speech speed and this app's own speech-volume slider; " +
-                    "test a voice after changing it. Voices that need internet are marked and may send spoken text to " +
-                    "their TTS provider. For offline reminders, the app uses an installed on-device voice or a " +
-                    "short beep, never a network voice.",
-                "சுருக்கமான செயலி மொழி (App language) வரி திரை மொழியை மட்டுமே மாற்றும்; அது குரல் மொழி " +
-                    "(Voice language) வரியிலிருந்து தனி. குரல் மொழி வரியைத் தொட்டு விரிவாக்கி அறிவிப்பு மொழி, Android TTS குரல், " +
-                    "மெதுவான/இயல்பு/வேகமான " +
-                    "பேச்சு, இந்தச் செயலிக்கான குரல் ஒலி ஸ்லைடரைத் தேர்ந்தெடுக்கவும்; மாற்றிய பிறகு குரலைச் " +
-                    "சோதியுங்கள். இணையம் தேவைப்படும் குரல்கள் குறிக்கப்படும்; பேசிய உரை " +
-                    "அந்த TTS வழங்குநருக்கு அனுப்பப்படலாம். இணையமில்லா நினைவூட்டலுக்கு நிறுவிய சாதனக் குரலையோ " +
-                    "சிறு பீப்பையையோ பயன்படுத்தும்; இணையக் குரல் இல்லை.",
+                "Compact Home screen, தமிழ் | ENG switch & Settings",
+                "சுருக்கமான முகப்புத் திரை, தமிழ் | ENG பொத்தான் & அமைப்புகள்",
+                "The compact Home screen gives you a clear Start / Stop (தொடங்கு / நிறுத்து) button, live rain banner " +
+                    "(shown when Rain Alert is on and active), current City/Village card, current session distance " +
+                    "traveled in km, and destination proximity card. The top தமிழ் | ENG button switches both app UI " +
+                    "and voice announcement language together with automatic daily Male ↔ Female Studio HD voices " +
+                    "(and automatic Male/Female Android system voice fallback offline). All extra options live inside Settings (⚙️).",
+                "சுருக்கமான முகப்புத் திரையில் பெரிய தொடங்கு / நிறுத்து பொத்தான், மழை எச்சரிக்கைப் பட்டை, தற்போதைய " +
+                    "ஊர்/பகுதி விவரம், இந்தப் பயணத்தில் கடந்த தூரம் (km) மற்றும் இலக்கு தூரப் பெட்டி ஆகியவை மட்டும் " +
+                    "தெளிவாக இருக்கும். மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் " +
+                    "(ஆன்லைனில் தினசரி ஆண் ↔ பெண் HD குரல்களும், ஆஃப்லைனில் போனின் ஆண்/பெண் சிஸ்டம் குரலும் தானாக இயங்கும்). " +
+                    "மற்ற அனைத்து விருப்பங்களும் அமைப்புகள் (⚙️) உள்ளே உள்ளன.",
             ),
             topic(
                 "Travel and repeat settings",
@@ -705,14 +716,19 @@ object AppGuides {
                     "கட்டுப்பாடும் உள்ளன. போன் அழைப்பில் இருக்கும்போது குரல் அறிவிப்பு குறுக்கிடாது.",
             ),
             topic(
-                "HD Online Male/Female Voices & Daily Auto Switch",
-                "உயர்தர ஆன்லைன் ஆண்/பெண் குரல்கள் & தினசரி தானியங்கி மாற்றம்",
-                "Controls includes 6 studio-grade Online Neural Voices (3 Male and 3 Female for both Tamil and English). " +
-                    "By default, SMS Guard automatically alternates between a Male voice one day and a Female voice the next day. " +
-                    "It uses Online Neural HD first when connected and instantly falls back to your phone's installed System TTS voice when offline.",
-                "Controls திரையில் தமிழ் மற்றும் ஆங்கிலத்திற்கு 6 உயர்தர ஆன்லைன் குரல்கள் (3 ஆண் + 3 பெண்) உள்ளன. " +
-                    "தானாகவே ஒரு நாள் ஆண் குரலும் அடுத்த நாள் பெண் குரலும் மாறி ஒலிக்கும். இணையம் உள்ளபோது ஆன்லைன் HD " +
-                    "குரலிலும், இணையம் இல்லாதபோது உடனே போனின் ஆஃப்லைன் சிஸ்டம் குரலிலும் தடையின்றி ஒலிக்கும்.",
+                "தமிழ் | ENG Switch, Sender-Only Mode & Full Normal SMS Readout",
+                "தமிழ் | ENG பொத்தான், அனுப்புநர் பெயர் மட்டும் & முழுச் செய்தி வாசிப்பு",
+                "Tap தமிழ் | ENG at the top to switch both app UI and voice language together — SMS Guard automatically " +
+                    "uses daily rotating Male ↔ Female Studio HD voices online and falls back to matching Male/Female " +
+                    "system voices offline without complex voice menus. In Controls, you can enable 'Announce Sender Name Only' " +
+                    "(e.g. 'SMS from ICICI Bank' / 'ஐசிஐசிஐ வங்கியில் இருந்து குறுஞ்செய்தி') or 'Read Full Normal Message' " +
+                    "for ordinary messages. Outgoing NEFT beneficiary settlement notices never add fake income and clearly " +
+                    "confirm your transfer reached the recipient's account.",
+                "மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் — ஆன்லைனில் தினசரி மாறும் " +
+                    "ஆண் ↔ பெண் HD குரல்களும், ஆஃப்லைனில் போனின் ஆண்/பெண் சிஸ்டம் குரலும் தானாகவே ஒலிக்கும். Controls பகுதியில் " +
+                    "'அனுப்புநர் பெயர் மட்டும் சொல்' (உதா: 'ஐசிஐசிஐ வங்கியில் இருந்து குறுஞ்செய்தி') மற்றும் 'சாதாரண செய்தி முழு வாசிப்பு' " +
+                    "சுவிட்சுகளை இயக்கலாம். நீங்கள் அனுப்பிய NEFT பணம் பெறுநர் கணக்கில் சேர்ந்த உறுதிப்படுத்தல் செய்தி உங்கள் வரவுக் கணக்கில் " +
+                    "சேராது — பெறுநர் கணக்கில் சேர்ந்துவிட்டதாகத் தெளிவாகத் தெரிவிக்கும்.",
             ),
             topic(
                 "Optional Free Google Safe Browsing API Key Guide",

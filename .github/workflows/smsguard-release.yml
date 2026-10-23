@@ -61,8 +61,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="1.1.1"
-          expected_code="7"
+          version="1.1.2"
+          expected_code="8"
           expected_package="com.universalrp.smsguard"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           tag="sms-guard-v${version}"
@@ -123,13 +123,12 @@ jobs:
               f"**Package:** `{pkg}` · **Version:** `{version}` (`versionCode = {code}`) · **Minimum Android:** Android 8.0+ (API 26)\n"
               f"**Asset:** `{asset}` (`{size}` bytes)\n"
               f"**SHA-256:** `{sha256}`\n\n"
-              "### Key Features\n"
-              "- **Cyber Link Security Scanner (Online + NextDNS Compatible + Offline Queue):** Blocks `.apk` malware traps, lookalike phishing pages, and WhatsApp/Telegram job scams while marking verified official links green.\n"
-              "- **6 Studio Online Neural Voices (3 Male + 3 Female) & Daily Auto Male ↔ Female Rotation:** Speaks bank, security, and wake-up alerts in natural Tamil & English studio voices online first, alternating Male and Female automatically day by day with instant offline Android System TTS fallback.\n"
-              "- **100% OTP Silence & Zero Account Digits Spoken:** Never speaks OTPs or bank account digits; includes one-tap Copy OTP.\n"
-              "- **Spoof-Proof Bank, Card, UPI & FASTag Finance Ledger + Biometric Lock:** Separates Bank/UPI/Card spend from FASTag toll deductions, blocks fake `+91` payment spoofs, and locks behind fingerprint/screen lock or custom PIN.\n"
-              "- **Sleep Time Quiet Schedule & One-by-One Wake Readout:** Stays silent during sleep hours and reads queued bank messages sequentially upon waking.\n"
-              "- **Compact Responsive UI & Built-in Google Safe Browsing API Key Guide:** Clean zero-gap inbox header, dropdown search bar on `🔍`, whole-app `A−`/`A+` zoom, and step-by-step free Safe Browsing API key guide.\n"
+              "### What's New in v1.1.2\n"
+              "- **Full Keyboard Visibility on SMS Reply Bar:** Added edge-to-edge `imePadding()` + `navigationBarsPadding()` + automatic message list scroll when the keyboard opens, so typing a reply is never hidden behind the on-screen keyboard.\n"
+              "- **NEFT Outgoing Beneficiary Credit Fix + Voice Announcement:** Bank messages stating `amount credited to the beneficiary account` are now accurately classified as outgoing transfer delivery confirmations — **never** miscounted as your income in the Finance Ledger — while clearly announcing that your transfer reached the beneficiary's account.\n"
+              "- **Ultra-Clean Top `தமிழ் | ENG` Toggle + Automatic HD Male/Female Voices:** Replaced complicated voice-picker menus with a compact `தமிழ் | ENG` switch at the top bar that controls both UI text and voice announcements simultaneously, automatically rotating crisp HD Male ↔ Female neural voices online and falling back seamlessly to matching Male/Female Android System TTS offline.\n"
+              "- **New Normal-SMS Voice Controls (`Sender Name Only` & `Read Full SMS`):** Choose whether normal non-bank messages announce only the sender name, read the full SMS body aloud (while keeping OTPs 100% silent), or stay off.\n"
+              "- **Updated In-App Guide & Privacy Docs:** Full Tamil & English expandable user guide updated for all v1.1.2 features.\n"
           )
           with open(notes_path, "w", encoding="utf-8") as nf:
               nf.write(notes)

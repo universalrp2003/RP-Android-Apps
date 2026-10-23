@@ -1,9 +1,9 @@
 # Ramesh Radio
 
-Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option. Its latest published release is **1.13 / code 13**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
+Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, mobile cell-tower local weather resolution (`ACCESS_COARSE_LOCATION` + saved PIN fallback), and active-listening rain alerts. Its latest published release is **1.20 / code 20**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
 
-- [Download Ramesh-Radio-v1.13.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.13/Ramesh-Radio-v1.13.apk) · [release notes](../releases/ramesh-radio-v1.13.md) · the previous 1.12 release stays available on the RP-Android-Apps release list
-- Build, unit/regression and APK checks passed in [publication run 39355649275](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39355649275). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.20.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.20/Ramesh-Radio-v1.20.apk) · [release notes](../releases/ramesh-radio-v1.20.md) · earlier releases remain available on the RP-Android-Apps release list
+- Build, unit/regression and APK checks passed in [publication run 39905821149](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39905821149). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md)
 
 ## Features

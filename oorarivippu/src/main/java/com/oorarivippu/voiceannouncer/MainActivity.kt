@@ -20,19 +20,24 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.DirectionsBike
 import androidx.compose.material.icons.filled.ExpandLess
@@ -44,7 +49,8 @@ import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.RecordVoiceOver
-import androidx.compose.material.icons.filled.Translate
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,8 +58,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Divider
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -70,6 +74,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -87,14 +92,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.universalrp.updates.AppGuides
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppUpdates
+import com.universalrp.updates.GuideScreen
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 private val AppColorScheme = lightColorScheme(
     primary = Color(0xFF0F766E),
@@ -177,12 +187,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        OorWeatherMonitor.onWindowStart(this)
         internetMonitor = InternetConnectivityMonitor(this, AppPreferences::setInternetAvailable).also {
             it.start()
         }
     }
 
     override fun onStop() {
+        OorWeatherMonitor.onWindowStop()
         internetMonitor?.stop()
         internetMonitor = null
         super.onStop()
@@ -252,6 +264,7 @@ fun OorArivippuScreen(
     val context = LocalContext.current
     val state by AppPreferences.state.collectAsState()
     val ui = BilingualStrings.forLang(state.appLanguage)
+    val oorIsTamil = state.appLanguage != "en"
     val installedVersion = remember(context) {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -260,11 +273,8 @@ fun OorArivippuScreen(
     var destinationQuery by remember(state.destinationName) {
         mutableStateOf(state.destinationName)
     }
-    var appLanguageExpanded by rememberSaveable { mutableStateOf(false) }
-    var voiceSettingsExpanded by rememberSaveable { mutableStateOf(false) }
-    var voiceChoicesExpanded by remember { mutableStateOf(false) }
-    // Shared guide (owner request: every app carries the same Tamil+English guide).
     var showGuide by remember { mutableStateOf(false) }
+    var showSettings by rememberSaveable { mutableStateOf(false) }
     var destinationLookupMessage by remember { mutableStateOf("") }
     var isResolvingDestination by remember { mutableStateOf(false) }
     var destinationCandidates by remember { mutableStateOf<List<DestinationCandidate>>(emptyList()) }
@@ -358,14 +368,14 @@ fun OorArivippuScreen(
     }
 
     if (showGuide) {
-        androidx.compose.ui.window.Dialog(
+        Dialog(
             onDismissRequest = { showGuide = false },
-            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false)
         ) {
             Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                com.universalrp.updates.GuideScreen(
-                    content = com.universalrp.updates.AppGuides.oorArivippu,
-                    tamil = state.appLanguage != "en",
+                GuideScreen(
+                    content = AppGuides.oorArivippu,
+                    tamil = oorIsTamil,
                     onBack = { showGuide = false },
                     accent = Color(0xFF0F766E)
                 )
@@ -373,458 +383,166 @@ fun OorArivippuScreen(
         }
     }
 
+    val oorWeather by OorWeatherMonitor.state.collectAsState()
+    val showOorWeatherDialog by OorWeatherMonitor.showDialog.collectAsState()
+    LaunchedEffect(state.isGpsEnabled, state.isTrackingEnabled) {
+        OorWeatherMonitor.refreshState(context)
+    }
+
+    if (showOorWeatherDialog) {
+        com.universalrp.weather.SharedWeatherControlDialog(
+            state = oorWeather,
+            tamil = oorIsTamil,
+            allowGps = true,
+            accentColor = Color(0xFF0F766E),
+            ducksMusicNote = false,
+            onDismiss = { OorWeatherMonitor.closeDialog() },
+            onSetEnabled = { OorWeatherMonitor.setEnabled(context, it) },
+            onCheckNow = { OorWeatherMonitor.checkNow(context, manual = true) },
+            onTestVoice = { OorWeatherMonitor.testVoice(context) },
+            onCyclePreviewAnimation = { OorWeatherMonitor.cyclePreviewAnimation() },
+            onSearchPlaces = { OorWeatherMonitor.searchPlaces(context, it) },
+            onSelectPlace = { OorWeatherMonitor.selectPlace(context, it) },
+            onClearPlace = { OorWeatherMonitor.clearPlace(context) },
+            onSaveTomorrowKey = { OorWeatherMonitor.saveTomorrowKey(context, it) },
+            onReadGuideAloud = { OorWeatherMonitor.readGuideAloud(context, it) },
+            onStopVoice = { OorWeatherMonitor.stopVoice() },
+        )
+    }
+
+    if (showSettings) {
+        OorSettingsFullDialog(
+            state = state,
+            ui = ui,
+            oorIsTamil = oorIsTamil,
+            oorWeather = oorWeather,
+            installedVersion = installedVersion,
+            onDismiss = { showSettings = false },
+            onOpenGuide = {
+                showSettings = false
+                showGuide = true
+            },
+            onTestVoice = onTestVoice,
+            onSettingsChanged = onSettingsChanged,
+        )
+    }
+
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background
+        containerColor = MaterialTheme.colorScheme.background,
+        topBar = {
+            Surface(
+                color = Color(0xFF0F766E),
+                shadowElevation = 2.dp,
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.RecordVoiceOver,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Text(
+                        text = ui.appTitle,
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    // Unified Language Toggle (switches UI + Voice language simultaneously)
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = Color.White.copy(alpha = 0.16f),
+                        modifier = Modifier.clickable {
+                            val nextLang = if (oorIsTamil) "en" else "ta"
+                            AppPreferences.setAppLanguage(nextLang)
+                            AppLanguageState.set(
+                                context,
+                                if (nextLang == "en") AppLanguage.ENGLISH else AppLanguage.TAMIL
+                            )
+                            onRefreshVoiceCatalog()
+                            if (state.isTrackingEnabled) onSettingsChanged()
+                        }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = "தமிழ்",
+                                color = if (oorIsTamil) Color.White else Color(0xFFCCFBF1).copy(alpha = 0.68f),
+                                fontWeight = if (oorIsTamil) FontWeight.ExtraBold else FontWeight.Medium,
+                                fontSize = 11.5.sp
+                            )
+                            Text("|", color = Color.White.copy(alpha = 0.55f), fontSize = 11.sp)
+                            Text(
+                                text = "ENG",
+                                color = if (!oorIsTamil) Color.White else Color(0xFFCCFBF1).copy(alpha = 0.68f),
+                                fontWeight = if (!oorIsTamil) FontWeight.ExtraBold else FontWeight.Medium,
+                                fontSize = 11.5.sp
+                            )
+                        }
+                    }
+                    IconButton(
+                        onClick = { showSettings = true },
+                        modifier = Modifier.size(34.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = if (oorIsTamil) "அமைப்புகள்" else "Settings",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                    IconButton(
+                        onClick = { showGuide = true },
+                        modifier = Modifier.size(34.dp),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.HelpOutline,
+                            contentDescription = if (oorIsTamil) "வழிகாட்டி" else "Guide",
+                            tint = Color.White,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .imePadding()
+                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            // 1. Header Banner
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF0F766E)),
-                shape = RoundedCornerShape(18.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.RecordVoiceOver,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Text(
-                            text = ui.appTitle,
-                            color = Color.White,
-                            fontSize = 22.sp,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        IconButton(
-                            onClick = { OorWeatherMonitor.openDialog(context) },
-                            modifier = Modifier.size(34.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Cloud,
-                                contentDescription = if (state.appLanguage == "en") "Rain & cyclone voice alert" else "மழை & புயல் குரல் எச்சரிக்கை",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                        IconButton(
-                            onClick = { showGuide = true },
-                            modifier = Modifier.size(34.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.HelpOutline,
-                                contentDescription = if (state.appLanguage == "en") "Guide" else "வழிகாட்டி",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                    Text(
-                        text = ui.appSubtitle,
-                        color = Color(0xFFE2E8F0),
-                        fontSize = 13.sp
-                    )
-                    CollapsibleNote(
-                        text = ui.locationDisclosure,
-                        showLabel = ui.detailsShow,
-                        hideLabel = ui.detailsHide,
-                        color = Color(0xFFD1FAE5),
-                        toggleColor = Color.White
-                    )
-                }
-            }
-
-            // Floating mini rain / storm / spinning cyclone strip (hidden when sky is calm)
-            val oorWeather by OorWeatherMonitor.state.collectAsState()
-            val showOorWeatherDialog by OorWeatherMonitor.showDialog.collectAsState()
-            val oorIsTamil = state.appLanguage != "en"
-            androidx.compose.runtime.LaunchedEffect(state.isGpsEnabled) {
-                OorWeatherMonitor.refreshState(context)
-            }
-            com.universalrp.weather.WeatherMiniAlertBanner(
-                severity = oorWeather.bannerSeverity,
-                placeName = oorWeather.activePlaceName.ifBlank { oorWeather.savedPlaceName },
-                minutesUntilRain = oorWeather.minutesUntilRain ?: 30,
-                tamil = oorIsTamil,
-                isPreview = oorWeather.previewSeverity != null,
-                onClick = { OorWeatherMonitor.openDialog(context) },
-                onDismissPreview = { OorWeatherMonitor.dismissPreviewAnimation() },
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            // Quick Rain & Cyclone Voice Alert card on home screen
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { OorWeatherMonitor.openDialog(context) }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Cloud,
-                        contentDescription = null,
-                        tint = Color(0xFF0F766E),
-                        modifier = Modifier.size(24.dp),
-                    )
-                    Spacer(Modifier.width(12.dp))
-                    Column(Modifier.weight(1f)) {
-                        val cardTitle = if (oorIsTamil) "மழை & புயல் குரல் எச்சரிக்கை" else "Rain & cyclone voice alert"
-                        val cardSub = if (oorIsTamil) {
-                            "~30 நிமிட மழை முன்னறிவிப்பு • GPS / PIN (622301) • 24×7 புயல் பாதுகாப்பு"
-                        } else {
-                            "~30-min rain alert • Auto GPS or PIN (622301) • 24×7 cyclone warning"
-                        }
-                        Text(text = cardTitle, fontWeight = FontWeight.Bold, fontSize = 15.sp, color = Color(0xFF0F172A))
-                        Text(text = cardSub, fontSize = 12.sp, color = Color(0xFF475569))
-                    }
-                    Switch(
-                        checked = oorWeather.enabled,
-                        onCheckedChange = { OorWeatherMonitor.setEnabled(context, it) },
-                    )
-                }
-            }
-
-            if (showOorWeatherDialog) {
-                com.universalrp.weather.SharedWeatherControlDialog(
-                    state = oorWeather,
+            // 1. Active Rain / Storm / Cyclone Banner ONLY when active (hidden completely when clear!)
+            if (oorWeather.bannerSeverity != null) {
+                com.universalrp.weather.WeatherMiniAlertBanner(
+                    severity = oorWeather.bannerSeverity,
+                    placeName = oorWeather.activePlaceName.ifBlank { oorWeather.savedPlaceName },
+                    minutesUntilRain = oorWeather.minutesUntilRain ?: 30,
                     tamil = oorIsTamil,
-                    allowGps = true,
-                    accentColor = Color(0xFF0F766E),
-                    ducksMusicNote = false,
-                    onDismiss = { OorWeatherMonitor.closeDialog() },
-                    onSetEnabled = { OorWeatherMonitor.setEnabled(context, it) },
-                    onCheckNow = { OorWeatherMonitor.checkNow(context, manual = true) },
-                    onTestVoice = { OorWeatherMonitor.testVoice(context) },
-                    onCyclePreviewAnimation = { OorWeatherMonitor.cyclePreviewAnimation() },
-                    onSearchPlaces = { OorWeatherMonitor.searchPlaces(context, it) },
-                    onSelectPlace = { OorWeatherMonitor.selectPlace(context, it) },
-                    onClearPlace = { OorWeatherMonitor.clearPlace(context) },
-                    onSaveTomorrowKey = { OorWeatherMonitor.saveTomorrowKey(context, it) },
-                    onReadGuideAloud = { OorWeatherMonitor.readGuideAloud(context, it) },
-                    onStopVoice = { OorWeatherMonitor.stopVoice() },
+                    isPreview = oorWeather.previewSeverity != null,
+                    onClick = { OorWeatherMonitor.openDialog(context) },
+                    onDismissPreview = { OorWeatherMonitor.dismissPreviewAnimation() },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
 
-            if (state.isInternetAvailable == false) {
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
-                    shape = RoundedCornerShape(14.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(5.dp)
-                    ) {
-                        Text(
-                            text = ui.statusInternetUnavailable,
-                            color = Color(0xFF92400E),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
-                        )
-                        CollapsibleNote(
-                            text = ui.internetUnavailableDetails,
-                            showLabel = ui.detailsShow,
-                            hideLabel = ui.detailsHide,
-                            color = Color(0xFF92400E),
-                            toggleColor = Color(0xFF92400E)
-                        )
-                    }
-                }
-            }
-
-            // 2. Language Selection Card (App Language & Voice Announcement Language, Default Tamil)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    SettingsDisclosureRow(
-                        icon = Icons.Default.Translate,
-                        label = ui.appLanguageLabel,
-                        summary = if (state.appLanguage == "en") ui.englishName else ui.tamilName,
-                        expanded = appLanguageExpanded,
-                        onClick = { appLanguageExpanded = !appLanguageExpanded },
-                    )
-                    if (appLanguageExpanded) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            CompactChoice(
-                                label = ui.tamilName,
-                                selected = state.appLanguage == "ta",
-                                onClick = {
-                                    AppPreferences.setAppLanguage("ta")
-                                    AppLanguageState.set(context, AppLanguage.TAMIL)
-                                    onRefreshVoiceCatalog()
-                                    appLanguageExpanded = false
-                                },
-                            )
-                            CompactChoice(
-                                label = ui.englishName,
-                                selected = state.appLanguage == "en",
-                                onClick = {
-                                    AppPreferences.setAppLanguage("en")
-                                    AppLanguageState.set(context, AppLanguage.ENGLISH)
-                                    onRefreshVoiceCatalog()
-                                    appLanguageExpanded = false
-                                },
-                            )
-                        }
-                    }
-                    Divider(color = Color(0xFFE2E8F0))
-                    val voiceLanguageSummary = if (state.voiceLanguage == "en") ui.englishName else ui.tamilName
-                    val speedSummary = when (state.speechRatePercent) {
-                        SpeechRatePolicy.SLOW_PERCENT -> ui.speechSpeedSlow
-                        SpeechRatePolicy.FAST_PERCENT -> ui.speechSpeedFast
-                        else -> ui.speechSpeedNormal
-                    }
-                    SettingsDisclosureRow(
-                        icon = Icons.Default.VolumeUp,
-                        label = ui.voiceLanguageLabel,
-                        summary = "$voiceLanguageSummary · $speedSummary · ${state.speechVolumePercent}%",
-                        expanded = voiceSettingsExpanded,
-                        onClick = {
-                            voiceSettingsExpanded = !voiceSettingsExpanded
-                            voiceChoicesExpanded = false
-                        },
-                    )
-                    if (voiceSettingsExpanded) {
-                        LanguageSelectorRow(
-                            icon = Icons.Default.VolumeUp,
-                            label = ui.voiceLanguageLabel,
-                            selectedLang = state.voiceLanguage,
-                            tamilLabel = ui.tamilName,
-                            englishLabel = ui.englishName,
-                            onSelect = {
-                                AppPreferences.setVoiceLanguage(it)
-                                if (state.isTrackingEnabled) onSettingsChanged()
-                            }
-                        )
-                        val selectedVoiceName = state.selectedTtsVoiceNameFor(state.voiceLanguage)
-                        val voiceChoices = remember(
-                            state.availableTtsVoices,
-                            state.voiceLanguage,
-                            selectedVoiceName
-                        ) {
-                            TtsVoicePolicy.choicesForLanguage(
-                                voices = state.availableTtsVoices,
-                                languageCode = state.voiceLanguage,
-                                selectedVoiceName = selectedVoiceName
-                            )
-                        }
-                        val selectedVoice = state.availableTtsVoices.firstOrNull {
-                            it.languageCode == state.voiceLanguage && it.name == selectedVoiceName
-                        }
-                        val selectedVoiceButtonLabel = when {
-                            !state.isTtsVoiceCatalogLoaded && selectedVoiceName.isNotBlank() ->
-                                ui.voiceChoiceLoading
-                            selectedVoice == null && selectedVoiceName.isBlank() -> ui.voiceChoiceSystemDefault
-                            selectedVoice == null -> ui.voiceStatusSelectedUnavailable
-                            selectedVoice.requiresNetworkConnection ->
-                                "${selectedVoice.displayName} · ${ui.voiceChoiceOnline}"
-                            else -> "${selectedVoice.displayName} · ${ui.voiceChoiceOnDevice}"
-                        }
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                text = ui.voiceChoiceLabel,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            )
-                            CollapsibleNote(
-                                text = ui.voiceChoiceSubtitle,
-                                showLabel = ui.detailsShow,
-                                hideLabel = ui.detailsHide
-                            )
-                            Box(modifier = Modifier.fillMaxWidth()) {
-                                OutlinedButton(
-                                    onClick = { voiceChoicesExpanded = true },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Text(
-                                        text = selectedVoiceButtonLabel,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                }
-                                DropdownMenu(
-                                    expanded = voiceChoicesExpanded,
-                                    onDismissRequest = { voiceChoicesExpanded = false },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    DropdownMenuItem(
-                                        text = { Text(ui.voiceChoiceSystemDefault) },
-                                        onClick = {
-                                            AppPreferences.setSelectedTtsVoice(state.voiceLanguage, "")
-                                            voiceChoicesExpanded = false
-                                            if (state.isTrackingEnabled) onSettingsChanged()
-                                        }
-                                    )
-                                    voiceChoices.forEach { voice ->
-                                        DropdownMenuItem(
-                                            text = {
-                                                Column {
-                                                    Text(
-                                                        text = voice.displayName,
-                                                        maxLines = 1,
-                                                        overflow = TextOverflow.Ellipsis
-                                                    )
-                                                    val qualityLabel = when (TtsVoicePolicy.qualityLevel(voice.quality)) {
-                                                        2 -> ui.voiceQualityVeryHigh
-                                                        1 -> ui.voiceQualityHigh
-                                                        else -> ui.voiceQualityStandard
-                                                    }
-                                                    val reach = if (voice.requiresNetworkConnection) {
-                                                        ui.voiceChoiceOnline
-                                                    } else {
-                                                        ui.voiceChoiceOnDevice
-                                                    }
-                                                    Text(
-                                                        text = "$qualityLabel · $reach",
-                                                        color = Color(0xFF64748B),
-                                                        fontSize = 11.sp
-                                                    )
-                                                }
-                                            },
-                                            onClick = {
-                                                AppPreferences.setSelectedTtsVoice(
-                                                    state.voiceLanguage,
-                                                    voice.name
-                                                )
-                                                voiceChoicesExpanded = false
-                                                if (state.isTrackingEnabled) onSettingsChanged()
-                                                // Play the chosen voice at once, so voices can be compared.
-                                                onTestVoice()
-                                            }
-                                        )
-                                    }
-                                }
-                            }
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(
-                                    text = ui.speechSpeedLabel,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                ) {
-                                    listOf(
-                                        SpeechRatePolicy.SLOW_PERCENT to ui.speechSpeedSlow,
-                                        SpeechRatePolicy.DEFAULT_PERCENT to ui.speechSpeedNormal,
-                                        SpeechRatePolicy.FAST_PERCENT to ui.speechSpeedFast,
-                                    ).forEach { (percent, label) ->
-                                        CompactChoice(
-                                            label = label,
-                                            selected = state.speechRatePercent == percent,
-                                            onClick = {
-                                                AppPreferences.setSpeechRatePercent(percent)
-                                                onTestVoice()
-                                            },
-                                        )
-                                    }
-                                }
-                            }
-                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        ui.speechVolumeLabel,
-                                        modifier = Modifier.weight(1f),
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                    Text(
-                                        "${state.speechVolumePercent}%",
-                                        color = Color(0xFF0F766E),
-                                        fontSize = 13.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                }
-                                Slider(
-                                    value = state.speechVolumePercent.toFloat(),
-                                    onValueChange = { AppPreferences.setSpeechVolumePercent(it.toInt()) },
-                                    onValueChangeFinished = onTestVoice,
-                                    valueRange = SpeechVolumePolicy.MIN_PERCENT.toFloat()..SpeechVolumePolicy.MAX_PERCENT.toFloat(),
-                                    steps = 19,
-                                )
-                                Text(
-                                    ui.speechVolumeNote,
-                                    color = Color(0xFF64748B),
-                                    fontSize = 11.sp,
-                                    lineHeight = 15.sp,
-                                )
-                            }
-                            TextButton(onClick = { openTtsSettings(context) }) {
-                                Text(ui.moreVoicesButton, fontSize = 13.sp)
-                            }
-                            if (!state.isTtsVoiceCatalogLoaded) {
-                                Text(
-                                    text = ui.voiceChoiceLoading,
-                                    color = Color(0xFF64748B),
-                                    fontSize = 12.sp
-                                )
-                            } else if (voiceChoices.isEmpty()) {
-                                Text(
-                                    text = ui.voiceChoicesUnavailable,
-                                    color = Color(0xFFB45309),
-                                    fontSize = 12.sp,
-                                    lineHeight = 17.sp
-                                )
-                            }
-                        }
-                        val (voiceStatusText, voiceStatusColor) = when (state.ttsVoiceStatus) {
-                            TtsVoiceStatus.UNKNOWN -> ui.voiceStatusNotChecked to Color(0xFF64748B)
-                            TtsVoiceStatus.AVAILABLE -> ui.voiceStatusAvailable to Color(0xFF15803D)
-                            TtsVoiceStatus.FALLBACK_LANGUAGE -> ui.voiceStatusFallback to Color(0xFFB45309)
-                            TtsVoiceStatus.SELECTED_VOICE_UNAVAILABLE ->
-                                ui.voiceStatusSelectedUnavailable to Color(0xFFB45309)
-                            TtsVoiceStatus.NETWORK_REQUIRED ->
-                                ui.voiceStatusNetworkRequired to Color(0xFFB45309)
-                            TtsVoiceStatus.UNAVAILABLE -> ui.voiceStatusUnavailable to Color(0xFFB91C1C)
-                        }
-                        Text(
-                            text = voiceStatusText,
-                            color = voiceStatusColor,
-                            fontSize = 12.sp,
-                            lineHeight = 16.sp
-                        )
-                    }
-                }
-            }
-
-            // 3. Permission Prompt Banner (if not yet granted)
+            // Permission Banner (shown only until granted)
             if (!hasPermissions) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color(0xFFFEF3C7)),
@@ -832,38 +550,37 @@ fun OorArivippuScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        modifier = Modifier.padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             text = ui.permissionNeededBanner,
                             color = Color(0xFF92400E),
-                            fontSize = 13.sp,
+                            fontSize = 12.5.sp,
                             fontWeight = FontWeight.Medium
                         )
                         Button(
-                            onClick = {
-                                permissionLauncher.launch(buildPermissionArray())
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD97706))
+                            onClick = { permissionLauncher.launch(buildPermissionArray()) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD97706)),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                         ) {
-                            Text(text = ui.grantPermissionButton, color = Color.White)
+                            Text(text = ui.grantPermissionButton, color = Color.White, fontSize = 13.sp)
                         }
                     }
                 }
             }
 
-            // 4. Master ON / OFF Button & Live Status Card
+            // 2. Main Start / Stop Control Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(18.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                shape = RoundedCornerShape(16.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(18.dp),
+                    modifier = Modifier.padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     val statusColor = when {
                         !state.isTrackingEnabled -> Color(0xFF64748B)
@@ -871,7 +588,6 @@ fun OorArivippuScreen(
                         state.isInternetAvailable == false || state.isCallAudioPaused -> Color(0xFFB45309)
                         else -> Color(0xFF15803D)
                     }
-
                     val statusText = when {
                         !state.isTrackingEnabled -> ui.statusTrackingStopped
                         !state.isGpsEnabled -> ui.statusGpsOff
@@ -887,7 +603,7 @@ fun OorArivippuScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(12.dp)
+                                .size(10.dp)
                                 .clip(CircleShape)
                                 .background(statusColor)
                         )
@@ -895,13 +611,23 @@ fun OorArivippuScreen(
                             text = statusText,
                             modifier = Modifier.weight(1f),
                             color = statusColor,
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis
                         )
+                        OutlinedButton(
+                            onClick = onTestVoice,
+                            shape = RoundedCornerShape(10.dp),
+                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.height(34.dp)
+                        ) {
+                            Icon(Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(text = if (oorIsTamil) "சோதனை" else "Test", fontSize = 12.sp)
+                        }
                     }
 
-                    // Prominent Master ON / OFF Toggle Button
                     Button(
                         onClick = {
                             if (state.isTrackingEnabled) {
@@ -918,242 +644,24 @@ fun OorArivippuScreen(
                         shape = RoundedCornerShape(14.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(58.dp)
+                            .height(54.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.PowerSettingsNew,
                             contentDescription = null,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (state.isTrackingEnabled) ui.masterTurnOff else ui.masterTurnOn,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
-
-                    OutlinedButton(
-                        onClick = onTestVoice,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.VolumeUp,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(text = ui.testVoiceButton)
-                    }
                 }
             }
 
-            // 4B. Studio Ultra-HD Online Voices + Daily Auto Male <-> Female Rotation (Default ON!)
-            var studioVoicesExpanded by rememberSaveable { mutableStateOf(true) }
-            val todayStudioProfile = remember {
-                com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(java.time.LocalDate.now())
-            }
-            val tomorrowStudioProfile = remember {
-                com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(java.time.LocalDate.now().plusDays(1))
-            }
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.2.dp, Color(0xFF0F766E).copy(alpha = 0.45f), RoundedCornerShape(16.dp))
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.RecordVoiceOver,
-                            contentDescription = null,
-                            tint = Color(0xFF0F766E)
-                        )
-                        Text(
-                            text = ui.studioHdSectionTitle,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = Color(0xFF0F766E)
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                AppPreferences.setAutoDailyGenderSwap(!state.autoDailyGenderSwap)
-                            },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                            Text(
-                                text = ui.studioHdAutoTitle,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 14.sp
-                            )
-                            Text(
-                                text = ui.studioHdAutoSubtitle,
-                                color = Color(0xFF64748B),
-                                fontSize = 12.sp,
-                                lineHeight = 16.sp
-                            )
-                        }
-                        Switch(
-                            checked = state.autoDailyGenderSwap,
-                            onCheckedChange = { enabled ->
-                                AppPreferences.setAutoDailyGenderSwap(enabled)
-                            }
-                        )
-                    }
-
-                    val todayVoiceText = if (state.appLanguage == "en") todayStudioProfile.titleEn else todayStudioProfile.titleTa
-                    val tomorrowVoiceText = if (state.appLanguage == "en") tomorrowStudioProfile.titleEn else tomorrowStudioProfile.titleTa
-                    val scheduleSummaryText = "${ui.studioHdTodayPrefix} $todayVoiceText\n${ui.studioHdTomorrowPrefix} $tomorrowVoiceText"
-                    Text(
-                        text = scheduleSummaryText,
-                        color = Color(0xFF0F766E),
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        lineHeight = 17.sp
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedButton(
-                            onClick = {
-                                AppPreferences.setOnlineNeuralHdEnabled(true)
-                                val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
-                                    action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
-                                    putExtra(LocationAnnouncementService.EXTRA_PREVIEW_GENDER, "MALE")
-                                }
-                                context.startService(previewIntent)
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(text = ui.studioHdPreviewMale, fontSize = 12.sp)
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                AppPreferences.setOnlineNeuralHdEnabled(true)
-                                val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
-                                    action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
-                                    putExtra(LocationAnnouncementService.EXTRA_PREVIEW_GENDER, "FEMALE")
-                                }
-                                context.startService(previewIntent)
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text(text = ui.studioHdPreviewFemale, fontSize = 12.sp)
-                        }
-                    }
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { studioVoicesExpanded = !studioVoicesExpanded },
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = ui.studioHdPickPrompt,
-                            modifier = Modifier.weight(1f),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Icon(
-                            imageVector = if (studioVoicesExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = null,
-                            tint = Color(0xFF0F766E)
-                        )
-                    }
-
-                    if (studioVoicesExpanded) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    AppPreferences.setSelectedOnlineVoiceId("")
-                                    val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
-                                        action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
-                                        putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, todayStudioProfile.id)
-                                    }
-                                    context.startService(previewIntent)
-                                }
-                                .padding(vertical = 3.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            androidx.compose.material3.RadioButton(
-                                selected = state.autoDailyGenderSwap || state.selectedOnlineVoiceId.isBlank(),
-                                onClick = {
-                                    AppPreferences.setSelectedOnlineVoiceId("")
-                                    val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
-                                        action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
-                                        putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, todayStudioProfile.id)
-                                    }
-                                    context.startService(previewIntent)
-                                }
-                            )
-                            Text(
-                                text = ui.studioHdAutoRadioLabel,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-
-                        com.universalrp.voice.SharedNeuralVoiceEngine.CURATED_VOICES.forEach { profile ->
-                            val voiceLabel = if (state.appLanguage == "en") profile.titleEn else profile.titleTa
-                            val isSelected = !state.autoDailyGenderSwap && state.selectedOnlineVoiceId == profile.id
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        AppPreferences.setSelectedOnlineVoiceId(profile.id)
-                                        val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
-                                            action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
-                                            putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, profile.id)
-                                        }
-                                        context.startService(previewIntent)
-                                    }
-                                    .padding(vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                androidx.compose.material3.RadioButton(
-                                    selected = isSelected,
-                                    onClick = {
-                                        AppPreferences.setSelectedOnlineVoiceId(profile.id)
-                                        val previewIntent = Intent(context, LocationAnnouncementService::class.java).apply {
-                                            action = LocationAnnouncementService.ACTION_PREVIEW_ONLINE_VOICE
-                                            putExtra(LocationAnnouncementService.EXTRA_PREVIEW_VOICE_ID, profile.id)
-                                        }
-                                        context.startService(previewIntent)
-                                    }
-                                )
-                                Text(
-                                    text = voiceLabel,
-                                    fontSize = 12.sp,
-                                    lineHeight = 16.sp
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 5. Current Place & Speed Telemetry Card
+            // 3. Compact Current City / Place Details + Session Traveled Distance (km) Box
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
@@ -1161,7 +669,7 @@ fun OorArivippuScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Row(
@@ -1171,12 +679,20 @@ fun OorArivippuScreen(
                         Icon(
                             imageVector = if (state.isGpsEnabled) Icons.Default.GpsFixed else Icons.Default.GpsOff,
                             contentDescription = null,
-                            tint = if (state.isGpsEnabled) Color(0xFF0F766E) else Color(0xFFDC2626)
+                            tint = if (state.isGpsEnabled) Color(0xFF0F766E) else Color(0xFFDC2626),
+                            modifier = Modifier.size(20.dp)
                         )
                         Text(
                             text = ui.currentPlaceLabel,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 14.5.sp,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${state.currentSpeedKmh.toInt()} km/h",
+                            color = Color(0xFF0F766E),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.5.sp
                         )
                     }
 
@@ -1194,33 +710,62 @@ fun OorArivippuScreen(
                             value = state.currentDistrict
                         )
                     }
-                    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                        Text(
-                            text = ui.currentSpeedLabel,
-                            color = Color(0xFF64748B),
-                            fontSize = 13.sp
-                        )
-                        Text(
-                            text = "${state.currentSpeedKmh.toInt()} km/h",
-                            color = Color(0xFF0F172A),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        )
-                        Text(
-                            text = if (state.isVehicleMoving) ui.travelModeDetected else ui.travelModeStationary,
-                            color = if (state.isVehicleMoving) Color(0xFF15803D) else Color(0xFF64748B),
-                            fontSize = 13.sp,
-                            lineHeight = 18.sp
-                        )
+
+                    // Highlighted Current Session Traveled Distance (km) Box
+                    val sessionKm = state.sessionTraveledMeters / 1000f
+                    val sessionKmText = String.format(Locale.US, "%.2f km", sessionKm)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFFCCFBF1).copy(alpha = 0.55f))
+                            .border(1.dp, Color(0xFF0F766E).copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (oorIsTamil) "இந்தப் பயணத்தில் கடந்த தூரம்" else "Session Traveled Distance",
+                                fontSize = 12.sp,
+                                color = Color(0xFF134E4A),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = if (oorIsTamil) "புதிய தொடக்கத்தில் தானாக 0.00 km ஆகும்" else "Auto-resets to 0.00 km when started",
+                                fontSize = 10.5.sp,
+                                color = Color(0xFF0F766E)
+                            )
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Text(
+                                text = sessionKmText,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color(0xFF0F766E)
+                            )
+                            if (state.sessionTraveledMeters > 0f) {
+                                IconButton(
+                                    onClick = { AppPreferences.resetSessionDistance() },
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Refresh,
+                                        contentDescription = if (oorIsTamil) "பூஜ்ஜியமாக்கு" else "Reset distance",
+                                        tint = Color(0xFF0F766E),
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
-                    InfoRow(
-                        label = ui.locationIntervalLabel,
-                        value = "${state.locationUpdateIntervalSeconds} s"
-                    )
                 }
             }
 
-            // Destination alarms rely on the device geocoder and stored GPS coordinates.
+            // 4. Compact Destination Setting Box
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 shape = RoundedCornerShape(16.dp),
@@ -1228,18 +773,13 @@ fun OorArivippuScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(9.dp)
+                    modifier = Modifier.padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
                         text = ui.destinationSectionTitle,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
-                    )
-                    CollapsibleNote(
-                        text = ui.destinationAlertExplanation,
-                        showLabel = ui.detailsShow,
-                        hideLabel = ui.detailsHide
+                        fontSize = 14.5.sp
                     )
                     OutlinedTextField(
                         value = destinationQuery,
@@ -1248,7 +788,7 @@ fun OorArivippuScreen(
                             destinationLookupMessage = ""
                             destinationCandidates = emptyList()
                         },
-                        label = { Text(ui.destinationFieldLabel) },
+                        label = { Text(ui.destinationFieldLabel, fontSize = 12.5.sp) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -1273,8 +813,6 @@ fun OorArivippuScreen(
                                             origin = lastKnownLocation(context)
                                         )
                                         isResolvingDestination = false
-                                        // Every match is shown, even a single one, so the person
-                                        // confirms the district before relying on the alerts.
                                         destinationCandidates = found
                                         destinationLookupMessage = if (found.isEmpty()) {
                                             ui.destinationNotFoundMessage
@@ -1375,329 +913,419 @@ fun OorArivippuScreen(
                     }
                 }
             }
+        }
+    }
+}
 
-            // 6. Announcement Rules & Travel Options Card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    // Option A: Same-City Next Place Announcement ON/OFF
-                    SettingToggleItem(
-                        icon = Icons.Default.LocationCity,
-                        title = ui.sameCityOptionTitle,
-                        subtitle = ui.sameCityOptionSubtitle,
-                        detailsShow = ui.detailsShow,
-                        detailsHide = ui.detailsHide,
-                        checked = state.announceSameCitySubArea,
-                        onCheckedChange = { AppPreferences.setAnnounceSameCitySubArea(it) }
-                    )
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    // Option B: Bike / Car Travel Detection ON/OFF
-                    SettingToggleItem(
-                        icon = Icons.Default.DirectionsBike,
-                        title = ui.bikeCarModeTitle,
-                        subtitle = ui.bikeCarModeSubtitle,
-                        detailsShow = ui.detailsShow,
-                        detailsHide = ui.detailsHide,
-                        checked = state.bikeCarDetectionEnabled,
-                        onCheckedChange = { AppPreferences.setBikeCarDetectionEnabled(it) }
-                    )
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    // Option C: Announce immediately when ON button pressed
-                    SettingToggleItem(
-                        icon = Icons.Default.VolumeUp,
-                        title = ui.announceOnStartTitle,
-                        subtitle = ui.announceOnStartSubtitle,
-                        detailsShow = ui.detailsShow,
-                        detailsHide = ui.detailsHide,
-                        checked = state.announceImmediatelyOnStart,
-                        onCheckedChange = { AppPreferences.setAnnounceImmediatelyOnStart(it) }
-                    )
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    SettingToggleItem(
-                        icon = Icons.Default.VolumeUp,
-                        title = ui.headsetWhereAmITitle,
-                        subtitle = ui.headsetWhereAmISubtitle,
-                        detailsShow = ui.detailsShow,
-                        detailsHide = ui.detailsHide,
-                        checked = state.headsetWhereAmIEnabled,
-                        onCheckedChange = {
-                            AppPreferences.setHeadsetWhereAmIEnabled(it)
-                            if (state.isTrackingEnabled) onSettingsChanged()
+@Composable
+private fun OorSettingsFullDialog(
+    state: AppStateSnapshot,
+    ui: UiStrings,
+    oorIsTamil: Boolean,
+    oorWeather: com.universalrp.weather.SharedWeatherState,
+    installedVersion: String,
+    onDismiss: () -> Unit,
+    onOpenGuide: () -> Unit,
+    onTestVoice: () -> Unit,
+    onSettingsChanged: () -> Unit,
+) {
+    val context = LocalContext.current
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                Surface(color = Color(0xFF0F766E), shadowElevation = 2.dp) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .statusBarsPadding()
+                            .padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        IconButton(onClick = onDismiss) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = null, tint = Color.White)
                         }
-                    )
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(ui.offlineReminderTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        CollapsibleNote(
-                            text = ui.offlineReminderSubtitle,
-                            showLabel = ui.detailsShow,
-                            hideLabel = ui.detailsHide
-                        )
-                        listOf(listOf(0, 5, 10), listOf(15, 30)).forEach { rowOptions ->
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                rowOptions.forEach { minutes ->
-                                    FilterChip(
-                                        selected = state.offlineReminderIntervalMinutes == minutes,
-                                        onClick = {
-                                            AppPreferences.setOfflineReminderIntervalMinutes(minutes)
-                                            if (state.isTrackingEnabled) onSettingsChanged()
-                                        },
-                                        label = {
-                                            Text(
-                                                if (minutes == 0) ui.offlineReminderOff
-                                                else "$minutes ${ui.offlineReminderMinuteUnit}"
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Divider(color = Color(0xFFE2E8F0))
-
-                    // Option D: Minimum Travel Distance Slider
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = "${ui.minDistanceTitle}: ${state.minDistanceMeters} m",
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 14.sp
-                        )
-                        Slider(
-                            value = state.minDistanceMeters.toFloat(),
-                            onValueChange = { AppPreferences.setMinDistanceMeters(it.toInt()) },
-                            valueRange = 200f..3000f,
-                            steps = 13
+                            text = if (oorIsTamil) "அமைப்புகள் & விவரம்" else "Settings & About",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 17.sp,
+                            modifier = Modifier.weight(1f)
                         )
                     }
-                    CollapsibleNote(
-                        text = ui.adaptiveBatteryNote,
-                        showLabel = ui.detailsShow,
-                        hideLabel = ui.detailsHide
-                    )
                 }
             }
-
-            // 7. Recent Voice Announcements History Card
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
+        ) { inner ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(inner)
+                    .navigationBarsPadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                // 1. Voice Speed & Volume (Auto HD Male/Female online + Auto System Male/Female offline)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = ui.historySectionTitle,
+                            text = if (oorIsTamil) "🎙️ குரல் வேகம் & ஒலியளவு" else "🎙️ Voice Speed & Volume",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 15.sp,
+                            color = Color(0xFF0F766E)
                         )
-                        if (state.history.isNotEmpty()) {
-                            TextButton(onClick = { AppPreferences.clearHistory() }) {
-                                Text(text = ui.clearHistoryButton)
-                            }
-                        }
-                    }
-
-                    if (state.history.isEmpty()) {
                         Text(
-                            text = ui.emptyHistoryText,
-                            color = Color(0xFF64748B),
-                            fontSize = 13.sp
+                            text = if (oorIsTamil) {
+                                "மேலே உள்ள 'தமிழ் | ENG' தேர்விற்கு ஏற்ப தானாக உயர்தர HD ஆண் ↔ பெண் குரலில் (ஆஃப்லைனில் போன் சிஸ்டம் ஆண் ↔ பெண் குரலில்) பேசும்."
+                            } else {
+                                "Automatically speaks in HD Male ↔ Female voice matching your top 'தமிழ் | ENG' choice (with automatic offline Male ↔ Female System Voice fallback)."
+                            },
+                            fontSize = 12.sp,
+                            color = Color(0xFF475569),
+                            lineHeight = 17.sp
                         )
-                    } else {
-                        state.history.forEach { item ->
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(Color(0xFFF1F5F9))
-                                    .padding(10.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.Top
-                                ) {
-                                    Text(
-                                        text = item.title,
-                                        modifier = Modifier.weight(1f),
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = Color(0xFF0F766E),
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Text(
-                                        text = item.timestamp,
-                                        fontSize = 11.sp,
-                                        color = Color(0xFF64748B),
-                                        maxLines = 1,
-                                        softWrap = false
-                                    )
-                                }
-                                Text(
-                                    text = item.spokenText,
-                                    fontSize = 13.sp,
-                                    color = Color(0xFF334155)
+                        Text(
+                            text = ui.speechSpeedLabel,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            listOf(
+                                SpeechRatePolicy.SLOW_PERCENT to ui.speechSpeedSlow,
+                                SpeechRatePolicy.DEFAULT_PERCENT to ui.speechSpeedNormal,
+                                SpeechRatePolicy.FAST_PERCENT to ui.speechSpeedFast,
+                            ).forEach { (percent, label) ->
+                                CompactChoice(
+                                    label = label,
+                                    selected = state.speechRatePercent == percent,
+                                    onClick = {
+                                        AppPreferences.setSpeechRatePercent(percent)
+                                        onTestVoice()
+                                    },
                                 )
                             }
                         }
-                    }
-                }
-            }
-
-            Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                shape = RoundedCornerShape(16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(7.dp)
-                ) {
-                    Text(ui.aboutSectionTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text("${ui.aboutVersionLabel}: $installedVersion", color = Color(0xFF64748B), fontSize = 13.sp)
-                    Divider(color = Color(0xFFE2E8F0))
-                    Text(ui.contributorsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    Text(ui.projectDevelopmentCredit, fontSize = 13.sp)
-                    Text(ui.aiAssistanceCredit, fontSize = 13.sp)
-                    Divider(color = Color(0xFFE2E8F0))
-                    TextButton(
-                        onClick = { openExternalLink(context, "https://universalrp2003.github.io/RP-Android-Apps/") },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("🔗 " + ui.officialWebsiteLabel) }
-                    TextButton(
-                        onClick = { openExternalLink(context, "https://github.com/universalrp2003/RP-Android-Apps") },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("🔗 " + ui.downloadRepositoryLabel) }
-                    TextButton(
-                        onClick = { openExternalLink(context, "https://github.com/universalrp2003/InternetRadio") },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("🔗 " + ui.sourceRepositoryLabel) }
-                    Divider(color = Color(0xFFE2E8F0))
-                    Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                    val releaseLinks = listOf(
-                        ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.1",
-                        ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.63",
-                        ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.19",
-                        ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
-                        ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
-                        ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.6",
-                        ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3"
-                    )
-                    releaseLinks.forEach { (label, url) ->
-                        TextButton(
-                            onClick = { openExternalLink(context, url) },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("🔗 " + label) }
-                    }
-                    Divider(color = Color(0xFFE2E8F0))
-                    TextButton(
-                        onClick = { showGuide = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            if (state.appLanguage == "en") "Guide — how to use this app" else "வழிகாட்டி — எப்படிப் பயன்படுத்துவது",
-                            fontWeight = FontWeight.SemiBold
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                ui.speechVolumeLabel,
+                                modifier = Modifier.weight(1f),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                "${state.speechVolumePercent}%",
+                                color = Color(0xFF0F766E),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        Slider(
+                            value = state.speechVolumePercent.toFloat(),
+                            onValueChange = { AppPreferences.setSpeechVolumePercent(it.toInt()) },
+                            onValueChangeFinished = onTestVoice,
+                            valueRange = SpeechVolumePolicy.MIN_PERCENT.toFloat()..SpeechVolumePolicy.MAX_PERCENT.toFloat(),
+                            steps = 19,
                         )
                     }
-                    AppUpdates.Control("Oor-Arivippu")
+                }
+
+                // 2. Rain & Cyclone Alert Settings (active when announcer ON or window open)
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { OorWeatherMonitor.openDialog(context) }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Cloud,
+                            contentDescription = null,
+                            tint = Color(0xFF0F766E),
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(Modifier.width(10.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = if (oorIsTamil) "மழை & புயல் குரல் எச்சரிக்கை" else "Rain & cyclone voice alert",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.5.sp,
+                                color = Color(0xFF0F172A)
+                            )
+                            Text(
+                                text = if (oorIsTamil) {
+                                    "பயண அறிவிப்பு இயக்கத்தில் இருக்கும்போது அல்லது செயலி திறந்திருக்கும்போது மட்டும் இயங்கும்"
+                                } else {
+                                    "Runs only while announcer is ON or window is open • Tap for PIN/radar settings"
+                                },
+                                fontSize = 12.sp,
+                                color = Color(0xFF475569)
+                            )
+                        }
+                        Switch(
+                            checked = oorWeather.enabled,
+                            onCheckedChange = { OorWeatherMonitor.setEnabled(context, it) },
+                        )
+                    }
+                }
+
+                // 3. Announcement Rules & Travel Options
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        SettingToggleItem(
+                            icon = Icons.Default.LocationCity,
+                            title = ui.sameCityOptionTitle,
+                            subtitle = ui.sameCityOptionSubtitle,
+                            detailsShow = ui.detailsShow,
+                            detailsHide = ui.detailsHide,
+                            checked = state.announceSameCitySubArea,
+                            onCheckedChange = { AppPreferences.setAnnounceSameCitySubArea(it) }
+                        )
+                        Divider(color = Color(0xFFE2E8F0))
+                        SettingToggleItem(
+                            icon = Icons.Default.DirectionsBike,
+                            title = ui.bikeCarModeTitle,
+                            subtitle = ui.bikeCarModeSubtitle,
+                            detailsShow = ui.detailsShow,
+                            detailsHide = ui.detailsHide,
+                            checked = state.bikeCarDetectionEnabled,
+                            onCheckedChange = { AppPreferences.setBikeCarDetectionEnabled(it) }
+                        )
+                        Divider(color = Color(0xFFE2E8F0))
+                        SettingToggleItem(
+                            icon = Icons.Default.VolumeUp,
+                            title = ui.announceOnStartTitle,
+                            subtitle = ui.announceOnStartSubtitle,
+                            detailsShow = ui.detailsShow,
+                            detailsHide = ui.detailsHide,
+                            checked = state.announceImmediatelyOnStart,
+                            onCheckedChange = { AppPreferences.setAnnounceImmediatelyOnStart(it) }
+                        )
+                        Divider(color = Color(0xFFE2E8F0))
+                        SettingToggleItem(
+                            icon = Icons.Default.VolumeUp,
+                            title = ui.headsetWhereAmITitle,
+                            subtitle = ui.headsetWhereAmISubtitle,
+                            detailsShow = ui.detailsShow,
+                            detailsHide = ui.detailsHide,
+                            checked = state.headsetWhereAmIEnabled,
+                            onCheckedChange = {
+                                AppPreferences.setHeadsetWhereAmIEnabled(it)
+                                if (state.isTrackingEnabled) onSettingsChanged()
+                            }
+                        )
+                        Divider(color = Color(0xFFE2E8F0))
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(ui.offlineReminderTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                            CollapsibleNote(
+                                text = ui.offlineReminderSubtitle,
+                                showLabel = ui.detailsShow,
+                                hideLabel = ui.detailsHide
+                            )
+                            listOf(listOf(0, 5, 10), listOf(15, 30)).forEach { rowOptions ->
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    rowOptions.forEach { minutes ->
+                                        FilterChip(
+                                            selected = state.offlineReminderIntervalMinutes == minutes,
+                                            onClick = {
+                                                AppPreferences.setOfflineReminderIntervalMinutes(minutes)
+                                                if (state.isTrackingEnabled) onSettingsChanged()
+                                            },
+                                            label = {
+                                                Text(
+                                                    if (minutes == 0) ui.offlineReminderOff
+                                                    else "$minutes ${ui.offlineReminderMinuteUnit}"
+                                                )
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Divider(color = Color(0xFFE2E8F0))
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "${ui.minDistanceTitle}: ${state.minDistanceMeters} m",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 14.sp
+                            )
+                            Slider(
+                                value = state.minDistanceMeters.toFloat(),
+                                onValueChange = { AppPreferences.setMinDistanceMeters(it.toInt()) },
+                                valueRange = 200f..3000f,
+                                steps = 13
+                            )
+                        }
+                    }
+                }
+
+                // 4. Recent Voice Announcements History Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = ui.historySectionTitle,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            if (state.history.isNotEmpty()) {
+                                TextButton(onClick = { AppPreferences.clearHistory() }) {
+                                    Text(text = ui.clearHistoryButton)
+                                }
+                            }
+                        }
+                        if (state.history.isEmpty()) {
+                            Text(
+                                text = ui.emptyHistoryText,
+                                color = Color(0xFF64748B),
+                                fontSize = 13.sp
+                            )
+                        } else {
+                            state.history.forEach { item ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFF1F5F9))
+                                        .padding(10.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = item.title,
+                                            modifier = Modifier.weight(1f),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF0F766E),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = item.timestamp,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF64748B),
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                    Text(
+                                        text = item.spokenText,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF334155)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // 5. About, Guide & Verified Updates
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp)
+                    ) {
+                        Text(ui.aboutSectionTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                        Text("${ui.aboutVersionLabel}: $installedVersion", color = Color(0xFF64748B), fontSize = 13.sp)
+                        Divider(color = Color(0xFFE2E8F0))
+                        Text(ui.contributorsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text(ui.projectDevelopmentCredit, fontSize = 13.sp)
+                        Text(ui.aiAssistanceCredit, fontSize = 13.sp)
+                        Divider(color = Color(0xFFE2E8F0))
+                        TextButton(
+                            onClick = { openExternalLink(context, "https://universalrp2003.github.io/RP-Android-Apps/") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("🔗 " + ui.officialWebsiteLabel) }
+                        TextButton(
+                            onClick = { openExternalLink(context, "https://github.com/universalrp2003/RP-Android-Apps") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("🔗 " + ui.downloadRepositoryLabel) }
+                        TextButton(
+                            onClick = { openExternalLink(context, "https://github.com/universalrp2003/InternetRadio") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("🔗 " + ui.sourceRepositoryLabel) }
+                        Divider(color = Color(0xFFE2E8F0))
+                        Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        val releaseLinks = listOf(
+                            ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.2",
+                            ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.64",
+                            ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.20",
+                            ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
+                            ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
+                            ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.7",
+                            ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3"
+                        )
+                        releaseLinks.forEach { (label, url) ->
+                            TextButton(
+                                onClick = { openExternalLink(context, url) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text("🔗 " + label) }
+                        }
+                        Divider(color = Color(0xFFE2E8F0))
+                        TextButton(
+                            onClick = onOpenGuide,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                if (oorIsTamil) "வழிகாட்டி — எப்படிப் பயன்படுத்துவது" else "Guide — how to use this app",
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        AppUpdates.Control("Oor-Arivippu")
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-private fun SettingsDisclosureRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    summary: String,
-    expanded: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFF1F5F9))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 7.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(9.dp),
-    ) {
-        Icon(icon, contentDescription = null, tint = Color(0xFF0F766E), modifier = Modifier.size(19.dp))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(label, fontSize = 12.sp, color = Color(0xFF64748B), maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(summary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color(0xFF0F172A), maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-        Icon(
-            imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-            contentDescription = null,
-            tint = Color(0xFF0F766E),
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-@Composable
-private fun LanguageSelectorRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    selectedLang: String,
-    tamilLabel: String,
-    englishLabel: String,
-    onSelect: (String) -> Unit
-) {
-    // One line per language (owner request for 1.1.0: the language buttons took too much space).
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFF0F766E),
-            modifier = Modifier.size(18.dp)
-        )
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-            lineHeight = 16.sp
-        )
-        CompactChoice(label = tamilLabel, selected = selectedLang == "ta", onClick = { onSelect("ta") })
-        CompactChoice(label = englishLabel, selected = selectedLang == "en", onClick = { onSelect("en") })
-    }
-}
-
-/** A small rounded choice button, smaller than a Material chip. */
 @Composable
 private fun CompactChoice(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
@@ -1720,7 +1348,6 @@ private fun CompactChoice(label: String, selected: Boolean, onClick: () -> Unit)
     }
 }
 
-/** A long explanation, hidden until the person taps "Details" (owner request for 1.1.0). */
 @Composable
 private fun CollapsibleNote(
     text: String,
@@ -1758,7 +1385,6 @@ private fun CollapsibleNote(
     }
 }
 
-/** The places that match the typed destination; the person picks the right one. */
 @Composable
 private fun DestinationChooser(
     candidates: List<DestinationCandidate>,
@@ -1800,7 +1426,6 @@ private fun DestinationChooser(
     }
 }
 
-/** Opens the place in a maps app, so the person can check it before relying on the alerts. */
 private fun openMap(context: android.content.Context, latitude: Double, longitude: Double, label: String) {
     val query = Uri.encode("$latitude,$longitude($label)")
     runCatching {
@@ -1810,20 +1435,6 @@ private fun openMap(context: android.content.Context, latitude: Double, longitud
         )
     }.onFailure {
         openExternalLink(context, "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")
-    }
-}
-
-/** Android's text-to-speech settings, where more voices can be downloaded. */
-private fun openTtsSettings(context: android.content.Context) {
-    val opened = runCatching {
-        context.startActivity(Intent("com.android.settings.TTS_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }.isSuccess
-    if (!opened) {
-        runCatching {
-            context.startActivity(
-                Intent(TextToSpeech.Engine.ACTION_INSTALL_TTS_DATA).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            )
-        }
     }
 }
 
