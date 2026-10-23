@@ -4,7 +4,7 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
-| [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.3 / code 9](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.3) | [`SMS-Guard-v1.1.3.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.3/SMS-Guard-v1.1.3.apk) |
+| [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.4 / code 10](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.4) | [`SMS-Guard-v1.1.4.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.4/SMS-Guard-v1.1.4.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.65 / code 70](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.65) | [`CleanSweep-v2.65.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.65/CleanSweep-v2.65.apk) |
 | [**Ramesh Radio (ரமேஷ் ரேடியோ)**](radio/README.md) · 8.0+ (API 26) | [1.22 / code 22](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.22) | [`Ramesh-Radio-v1.22.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.22/Ramesh-Radio-v1.22.apk) |
 | [**PulseEQ**](equalizer/README.md) · 8.0+ (API 26) | [1.9 / code 10](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9) | [`PulseEQ-v1.9.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.9/PulseEQ-v1.9.apk) |
