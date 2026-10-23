@@ -62,6 +62,7 @@ fun WeatherMiniAlertBanner(
     onClick: () -> Unit,
     onDismissPreview: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    placeDetails: String = "",
 ) {
     if (severity == WeatherSeverity.CLEAR_OR_NORMAL) return
 
@@ -110,7 +111,18 @@ fun WeatherMiniAlertBanner(
         WeatherSeverity.CLEAR_OR_NORMAL -> Color(0xFF0EA5E9)
     }
 
-    val areaPrefix = placeName.trim().takeIf { it.isNotBlank() }?.let { "$it · " }.orEmpty()
+    val fullAreaLabel = buildString {
+        val base = placeName.trim()
+        val det = placeDetails.trim()
+        if (base.isNotBlank()) {
+            append(base)
+            if (det.isNotBlank() && !det.equals(base, ignoreCase = true)) {
+                append(", ")
+                append(det)
+            }
+        }
+    }
+    val areaPrefix = fullAreaLabel.takeIf { it.isNotBlank() }?.let { "$it · " }.orEmpty()
     val previewPrefix = if (isPreview) {
         pickLang(tamil, "[Preview] ", "[முன்னோட்டம்] ")
     } else {

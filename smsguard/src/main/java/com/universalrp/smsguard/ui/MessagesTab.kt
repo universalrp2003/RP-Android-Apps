@@ -61,6 +61,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -608,15 +609,22 @@ fun ThreadDetailScreen(
     isDefaultSms: Boolean,
 ) {
     val context = LocalContext.current
+    val isSpeaking by vm.speakingFlow.collectAsState()
     var replyText by remember { mutableStateOf("") }
     var selectedSimIndex by remember { mutableIntStateOf(0) }
     var blockedLinkDialog by remember { mutableStateOf<LinkScanResult?>(null) }
     var confirmDeleteThread by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
+    val orderedMessages = remember(thread.messages) {
+        thread.messages.sortedWith(
+            compareByDescending<EnrichedSmsMessage> { it.dateMs }
+                .thenByDescending { it.id },
+        )
+    }
 
-    LaunchedEffect(thread.threadKey, thread.messages.size) {
-        if (thread.messages.isNotEmpty()) {
-            listState.scrollToItem(thread.messages.lastIndex)
+    LaunchedEffect(thread.threadKey, orderedMessages.firstOrNull()?.id) {
+        if (orderedMessages.isNotEmpty()) {
+            listState.scrollToItem(0)
         }
     }
 
@@ -652,6 +660,25 @@ fun ThreadDetailScreen(
                 Text(headerTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp, color = palette.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(subLine, fontSize = 11.sp, color = palette.accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            if (isSpeaking) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 4.dp)
+                        .background(palette.dangerRed, RoundedCornerShape(8.dp))
+                        .clickable { vm.stopVoiceNow() }
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = if (prefs.tamil) "⏹ நிறுத்து" else "⏹ Stop",
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 11.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+            }
             if (isDefaultSms) {
                 IconButton(onClick = { confirmDeleteThread = true }) {
                     Icon(Icons.Filled.Delete, contentDescription = ui.deleteThreadBtn, tint = palette.dangerRed)
@@ -659,7 +686,7 @@ fun ThreadDetailScreen(
             }
         }
 
-        // Messages List
+        // Messages List — strictly NEWEST at TOP (`orderedMessages[0]` = latest SMS)
         LazyColumn(
             state = listState,
             modifier = Modifier
@@ -668,7 +695,7 @@ fun ThreadDetailScreen(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            items(thread.messages, key = { it.id }) { msg ->
+            items(orderedMessages, key = { it.id }) { msg ->
                 MessageBubbleCard(
                     msg = msg,
                     tamil = prefs.tamil,

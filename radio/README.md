@@ -1,9 +1,9 @@
 # Ramesh Radio
 
-Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, mobile cell-tower local weather resolution (`ACCESS_COARSE_LOCATION` + saved PIN fallback), and active-listening rain alerts. Its latest published release is **1.20 / code 20**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
+Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, multi-source mobile cell-tower local weather resolution (`ACCESS_COARSE_LOCATION` runtime prompt + exact place/district display + saved PIN fallback), and active-listening rain alerts that always announce exact place details. Its latest published release is **1.21 / code 21**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.20.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.20/Ramesh-Radio-v1.20.apk) · [release notes](../releases/ramesh-radio-v1.20.md) · earlier releases remain available on the RP-Android-Apps release list
-- Build, unit/regression and APK checks passed in [publication run 39905821149](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39905821149). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.21.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.21/Ramesh-Radio-v1.21.apk) (`15,076,612` bytes · SHA-256 `b5cd68048a05fb52de998401194eabf23c2da8695238bf737e452de520ab033d`) · [release notes](../releases/ramesh-radio-v1.21.md) · earlier releases remain available on the RP-Android-Apps release list
+- Build, unit/regression and APK checks passed in [publication run 39917424951](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39917424951). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md)
 
 ## Features

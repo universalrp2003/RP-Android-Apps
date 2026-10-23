@@ -283,7 +283,7 @@ object Announcer {
         val key = event.key ?: return true
         val default = when (event) {
             // A phone that hops between radios must not narrate it until asked.
-            Event.RADIO_CHANGE, Event.NETWORK_CHANGE, Event.WEATHER_ALERT, Event.NEWS_HEADLINES -> false
+            Event.RADIO_CHANGE, Event.NETWORK_CHANGE, Event.WEATHER_ALERT -> false
             else -> true
         }
         return prefs(context).getBoolean(key, default)

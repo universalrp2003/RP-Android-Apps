@@ -39,6 +39,7 @@ object NewsHeadlinesVoiceWatcher {
 
     private const val PREFS = "cleansweep_news_voice"
     private const val KEY_INTERVAL_MIN = "news_voice_interval_minutes"
+    private const val KEY_V265_DEFAULT_3H_APPLIED = "news_voice_v265_default_3h_on"
     private const val KEY_LAST_AUTO_SPOKEN_MS = "news_voice_last_auto_ms"
     private const val KEY_SPOKEN_DAY_TA = "news_spoken_day_ta"
     private const val KEY_SPOKEN_KEYS_TA = "news_spoken_keys_ta"
@@ -48,6 +49,23 @@ object NewsHeadlinesVoiceWatcher {
 
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    /**
+     * Ensures News Headlines Voice Announcer is ON by default at `3h` (`180` minutes) out of the box
+     * (including one-time upgrade activation from `v2.64` -> `v2.65`, while preserving user edits thereafter).
+     */
+    fun ensureDefaultOnThreeHours(context: Context) {
+        val app = context.applicationContext
+        val p = prefs(app)
+        if (!p.getBoolean(KEY_V265_DEFAULT_3H_APPLIED, false)) {
+            p.edit()
+                .putBoolean(KEY_V265_DEFAULT_3H_APPLIED, true)
+                .putInt(KEY_INTERVAL_MIN, NewsSpeechSanitizer.DEFAULT_INTERVAL_MINUTES)
+                .apply()
+            Announcer.setAllows(app, Announcer.Event.NEWS_HEADLINES, true)
+        }
+        runCatching { syncSchedule(app) }
+    }
 
     fun isEnabled(context: Context): Boolean =
         Announcer.allows(context, Announcer.Event.NEWS_HEADLINES)

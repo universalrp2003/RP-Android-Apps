@@ -6,7 +6,7 @@ data class AnnouncementSettingsSnapshot(
     val tamil: Boolean,
     val voiceEnabled: Boolean,
     val senderOnlyVoiceEnabled: Boolean = false,
-    val readFullNormalSmsEnabled: Boolean = false,
+    val readFullNormalSmsEnabled: Boolean = true,
     val shortEveryMessageEnabled: Boolean = false,
     val mutePromoVoice: Boolean = true,
 )
@@ -155,7 +155,7 @@ object SmsAnnouncementPlanner {
         }
 
         val textToSpeak = if (settings.readFullNormalSmsEnabled) {
-            cleanFullNormalBody(body)
+            cleanFullNormalBody(body, settings.tamil)
         } else {
             conciseGist(body)
         }
@@ -211,12 +211,41 @@ object SmsAnnouncementPlanner {
         return if (tamil) "ரூபாய் $numText" else "Rupees $numText"
     }
 
-    private fun cleanFullNormalBody(rawBody: String): String =
-        rawBody
+    private fun cleanFullNormalBody(rawBody: String, tamil: Boolean = false): String {
+        var text = rawBody
             .replace(Regex("https?://\\S+", RegexOption.IGNORE_CASE), "")
+            // Expand Ration Shop (PDS) & Indian currency / unit shorthand into natural human speech!
+            .replace(Regex("\\bPDS\\s+Bill\\s+[0-9]{10,20}\\b", RegexOption.IGNORE_CASE), if (tamil) "பொருள் விவரம்:" else "Ration bill items:")
+            .replace(Regex("\\bP\\.?\\s*Oil\\b", RegexOption.IGNORE_CASE), if (tamil) "பாமாயில்" else "Palm Oil")
+            .replace(Regex("(?<=\\d)\\s*pkt\\b", RegexOption.IGNORE_CASE), if (tamil) " பாக்கெட்" else " packet")
+            .replace(Regex("(?<=\\d)\\s*kg\\b", RegexOption.IGNORE_CASE), if (tamil) " கிலோ" else " kg")
+            .replace(Regex("(?<=\\d)\\s*ltrs?\\b", RegexOption.IGNORE_CASE), if (tamil) " லிட்டர்" else " litre")
+            .replace(
+                Regex("\\bRs\\.?\\s*([0-9][0-9,]*(?:\\.[0-9]{1,2})?)\\s*(?:/-|/-\\.)?", RegexOption.IGNORE_CASE),
+            ) { m ->
+                val rawAmt = m.groupValues[1].replace(".00", "").replace(Regex("\\.0$"), "")
+                if (tamil) "ரூபாய் $rawAmt" else "Rupees $rawAmt"
+            }
+            // Expand TN Board Exam Results (HSC / SSLC) abbreviations so every subject & mark speaks clearly!
+            .replace(Regex("\\bSub\\s*[0-9]+\\s*:\\s*", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\bLAN\\s*:\\s*", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\bTAM\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "தமிழ் " else "Tamil ")
+            .replace(Regex("\\bENG\\s*:?\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "ஆங்கிலம் " else "English ")
+            .replace(Regex("\\bPHY\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "இயற்பியல் " else "Physics ")
+            .replace(Regex("\\bCHE\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "வேதியியல் " else "Chemistry ")
+            .replace(Regex("\\bCSC\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "கணினி அறிவியல் " else "Computer Science ")
+            .replace(Regex("\\bBIO\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "உயிரியல் " else "Biology ")
+            .replace(Regex("\\bMAT\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "கணிதம் " else "Maths ")
+            .replace(Regex("\\bTOT\\s*-?\\s*(?=\\d)", RegexOption.IGNORE_CASE), if (tamil) "மொத்த மதிப்பெண் " else "Total ")
+            // Strip trailing DLT tag sign-offs like `-TNSEDU` / `-TNEPDS` since sender name is already announced cleanly at start
+            .replace(Regex("\\s*-[A-Z]{4,9}\\s*$"), "")
             .replace(Regex("\\s+"), " ")
             .trim()
-            .take(600)
+        if (text.length > 950) {
+            text = text.take(950).trimEnd()
+        }
+        return text
+    }
 
     private fun conciseGist(rawBody: String): String {
         val withoutUrls = rawBody

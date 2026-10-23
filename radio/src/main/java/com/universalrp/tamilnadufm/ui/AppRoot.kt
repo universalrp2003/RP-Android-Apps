@@ -75,6 +75,23 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     val rootContext = androidx.compose.ui.platform.LocalContext.current
     val isTamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL
 
+    val coarseLocationLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        com.universalrp.tamilnadufm.RadioWeatherMonitor.refreshState(rootContext)
+        if (granted) {
+            com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
+        }
+    }
+
+    androidx.compose.runtime.LaunchedEffect(showWeatherDialog) {
+        if (showWeatherDialog && !weather.permissionGranted) {
+            runCatching {
+                coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
+        }
+    }
+
     Column(
         Modifier
             .fillMaxSize()
@@ -95,6 +112,7 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp, vertical = 4.dp),
+            placeDetails = weather.activePlaceDetails.ifBlank { weather.savedPlaceDetails },
         )
 
         Box(Modifier.weight(1f)) {
@@ -136,9 +154,24 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             allowGps = true,
             accentColor = Saffron,
             ducksMusicNote = true,
+            isCellTowerMode = true,
+            onRequestLocationPermission = {
+                coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+            },
             onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
-            onSetEnabled = { com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, it) },
-            onCheckNow = { com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true) },
+            onSetEnabled = { on ->
+                com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, on)
+                if (on && !weather.permissionGranted) {
+                    runCatching { coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
+                }
+            },
+            onCheckNow = {
+                if (!weather.permissionGranted && weather.savedPlaceName.isBlank()) {
+                    coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                } else {
+                    com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
+                }
+            },
             onTestVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.testVoiceWithDuck(rootContext) },
             onCyclePreviewAnimation = { com.universalrp.tamilnadufm.RadioWeatherMonitor.cyclePreviewAnimation() },
             onSearchPlaces = { com.universalrp.tamilnadufm.RadioWeatherMonitor.searchPlaces(rootContext, it) },

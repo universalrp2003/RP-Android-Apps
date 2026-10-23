@@ -1,6 +1,7 @@
 package com.universalrp.smsguard.service
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -48,7 +49,32 @@ object SmsVoiceAnnouncer {
     @Volatile
     private var activeMediaPlayer: MediaPlayer? = null
 
+    @Volatile
+    private var screenReceiverRegistered = false
+
     private var activeFocusRequest: AudioFocusRequest? = null
+
+    private val screenOnReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == android.content.Intent.ACTION_SCREEN_ON) {
+                context?.let { stop(it) }
+            }
+        }
+    }
+
+    @Synchronized
+    private fun ensureScreenReceiverRegistered(appCtx: Context) {
+        if (screenReceiverRegistered) return
+        runCatching {
+            val filter = android.content.IntentFilter(android.content.Intent.ACTION_SCREEN_ON)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                appCtx.registerReceiver(screenOnReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                appCtx.registerReceiver(screenOnReceiver, filter)
+            }
+            screenReceiverRegistered = true
+        }
+    }
 
     private val speechWorker = Executors.newSingleThreadExecutor { r ->
         Thread(r, "SmsGuardVoiceWorker").apply { isDaemon = true }
@@ -65,8 +91,9 @@ object SmsVoiceAnnouncer {
 
     @Synchronized
     fun ensureInitialized(context: Context) {
-        if (tts != null) return
         val appCtx = context.applicationContext
+        ensureScreenReceiverRegistered(appCtx)
+        if (tts != null) return
         runCatching {
             tts = TextToSpeech(appCtx) { status ->
                 synchronized(this@SmsVoiceAnnouncer) {
@@ -313,10 +340,10 @@ object SmsVoiceAnnouncer {
                 return false
             }
             mp.start()
-            // Wait neatly until speech finishes (bounded safely at 45s)
+            // Wait neatly until full speech finishes (bounded safely at 90s for long exam/govt SMS)
             val waitStepMs = 150L
             var waited = 0L
-            while (waited < 45_000L && playbackEpoch.get() == epoch) {
+            while (waited < 90_000L && playbackEpoch.get() == epoch) {
                 if (done.await(waitStepMs, TimeUnit.MILLISECONDS)) break
                 waited += waitStepMs
             }
@@ -429,7 +456,7 @@ object SmsVoiceAnnouncer {
 
         if (status == TextToSpeech.SUCCESS) {
             var waited = 0L
-            while (waited < 45_000L && playbackEpoch.get() == epoch) {
+            while (waited < 90_000L && playbackEpoch.get() == epoch) {
                 if (latch.await(150L, TimeUnit.MILLISECONDS)) break
                 waited += 150L
             }

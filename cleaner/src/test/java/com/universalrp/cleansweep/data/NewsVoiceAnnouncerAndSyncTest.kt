@@ -98,6 +98,7 @@ class NewsVoiceAnnouncerAndSyncTest {
         assertEquals(60, NewsSpeechSanitizer.normalizeIntervalMinutes(60))
         assertEquals(120, NewsSpeechSanitizer.normalizeIntervalMinutes(120))
         assertEquals(180, NewsSpeechSanitizer.normalizeIntervalMinutes(180))
-        assertEquals(60, NewsSpeechSanitizer.normalizeIntervalMinutes(999))
+        assertEquals(180, NewsSpeechSanitizer.DEFAULT_INTERVAL_MINUTES)
+        assertEquals(180, NewsSpeechSanitizer.normalizeIntervalMinutes(999))
     }
 }

@@ -33,7 +33,7 @@ data class GuardPrefs(
     val internetEnabled: Boolean = true,
     val voiceEnabled: Boolean = true,
     val senderOnlyVoiceEnabled: Boolean = false,
-    val readFullNormalSmsEnabled: Boolean = false,
+    val readFullNormalSmsEnabled: Boolean = true,
     val shortEveryMessageEnabled: Boolean = false, // Default OFF per owner specification
     val financeEnabled: Boolean = true,
     val mutePromoVoice: Boolean = true,
@@ -112,12 +112,18 @@ object GuardSettingsStore {
         val sleepQueued = getSleepQueue(context).size
         val hasGsb = !KeystoreSecretStore.getSecret(context, SECRET_GSB_KEY).isNullOrBlank()
         val hasPin = !KeystoreSecretStore.getSecret(context, SECRET_FINANCE_PIN_HASH).isNullOrBlank()
+        if (!p.getBoolean("v113_full_sms_voice_default_on", false)) {
+            p.edit()
+                .putBoolean("v113_full_sms_voice_default_on", true)
+                .putBoolean("read_full_normal_sms", true)
+                .apply()
+        }
         return GuardPrefs(
             tamil = p.getBoolean("tamil", true),
             internetEnabled = p.getBoolean("internet_enabled", true),
             voiceEnabled = p.getBoolean("voice_enabled", true),
             senderOnlyVoiceEnabled = p.getBoolean("sender_only_voice", false),
-            readFullNormalSmsEnabled = p.getBoolean("read_full_normal_sms", false),
+            readFullNormalSmsEnabled = p.getBoolean("read_full_normal_sms", true),
             shortEveryMessageEnabled = p.getBoolean("short_every_msg_v2", false),
             financeEnabled = p.getBoolean("finance_enabled", true),
             mutePromoVoice = p.getBoolean("mute_promo_voice", true),

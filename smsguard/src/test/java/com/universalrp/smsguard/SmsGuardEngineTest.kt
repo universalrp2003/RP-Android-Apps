@@ -636,6 +636,93 @@ class SmsGuardEngineTest {
     }
 
     @Test
+    fun rationShopSchoolResultsAndAllGovernmentSmsAnnounceCompletelyByDefaultAndThreadsSortNewestTop() {
+        // 1. Default GuardPrefs MUST read full normal/government SMS out of the box!
+        val defaultPrefs = com.universalrp.smsguard.data.GuardPrefs()
+        assertTrue("Full normal/government SMS voice readout must be ON by default", defaultPrefs.readFullNormalSmsEnabled)
+
+        // 2. TN Ration Shop (JM-TNEPDS-S) real message check
+        val pdsBody = "PDS Bill 131671026012619 P.Oil-1.0pkt issued on 23.10.2026 for Rs.25.0/-"
+        val pdsSender = SenderIdentityEngine.identify("JM-TNEPDS-S", pdsBody)
+        assertEquals("TN Ration Shop (TNEPDS)", pdsSender.displayNameEn)
+        assertEquals("தமிழ்நாடு ரேஷன் கடை", pdsSender.displayNameTa)
+        val pdsOtp = OtpDetector.analyze(pdsBody)
+        val pdsFin = FinanceLedgerEngine.parseSingleSms(41L, 1_761_200_000_000L, pdsBody, pdsSender, pdsOtp.isOtp)
+        val pdsSpeechTa = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = pdsBody,
+            sender = pdsSender,
+            otp = pdsOtp,
+            links = emptyList(),
+            finance = pdsFin,
+            settings = AnnouncementSettingsSnapshot(tamil = true, voiceEnabled = true),
+        )
+        assertNotNull("Ration shop SMS must announce in full by default", pdsSpeechTa)
+        assertTrue(pdsSpeechTa!!.contains("தமிழ்நாடு ரேஷன் கடை"))
+        assertTrue(pdsSpeechTa.contains("பாமாயில்"))
+        assertTrue(pdsSpeechTa.contains("ரூபாய் 25"))
+        assertFalse("15-digit raw receipt ID must not be read digit by digit", pdsSpeechTa.contains("131671026012619"))
+
+        // 3. TN School Education HSC Exam Results (AX-TNSEDU-S) full marks readout check
+        val examBody = "HSC RESULTS 2026, ROLL No : 3406958, Name : INIYANEYA R, LAN : TAM- 96, ENG : 86, Sub3 : PHY - 91, Sub4 : CHE - 91, Sub5 : CSC - 100, Sub6 : MAT - 93, TOT - 557, Pass -TNSEDU"
+        val examSender = SenderIdentityEngine.identify("AX-TNSEDU-S", examBody)
+        assertEquals("TN School Education Dept", examSender.displayNameEn)
+        assertEquals("தமிழ்நாடு பள்ளிக் கல்வித் துறை", examSender.displayNameTa)
+        val examOtp = OtpDetector.analyze(examBody)
+        val examFin = FinanceLedgerEngine.parseSingleSms(42L, 1_761_210_000_000L, examBody, examSender, examOtp.isOtp)
+        val examSpeechTa = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = examBody,
+            sender = examSender,
+            otp = examOtp,
+            links = emptyList(),
+            finance = examFin,
+            settings = AnnouncementSettingsSnapshot(tamil = true, voiceEnabled = true),
+        )
+        assertNotNull("HSC exam result SMS must announce completely from start to finish", examSpeechTa)
+        assertTrue(examSpeechTa!!.contains("தமிழ்நாடு பள்ளிக் கல்வித் துறை"))
+        assertTrue(examSpeechTa.contains("தமிழ் 96"))
+        assertTrue(examSpeechTa.contains("கணினி அறிவியல் 100"))
+        assertTrue(examSpeechTa.contains("மொத்த மதிப்பெண் 557"))
+        assertTrue(examSpeechTa.contains("Pass"))
+
+        // 4. Multi-message thread view MUST put NEWEST message at index 0 (TOP) and OLDEST at bottom!
+        val iciciSender = SenderIdentityEngine.identify("VM-ICICIB-S", "ICICI alert")
+        val oct14Msg = com.universalrp.smsguard.data.EnrichedSmsMessage(
+            id = 100L,
+            threadId = 7L,
+            rawAddress = "VM-ICICIB-S",
+            threadKey = iciciSender.normalizedAddress,
+            body = "Older Oct 14 ICICI message",
+            dateMs = 1_760_400_000_000L,
+            isSentByMe = false,
+            isUnread = false,
+            subId = 1,
+            sender = iciciSender,
+            otp = com.universalrp.smsguard.engine.OtpResult(false, null),
+            links = emptyList(),
+            finance = FinanceLedgerEngine.parseSingleSms(100L, 1_760_400_000_000L, "Older Oct 14 ICICI message", iciciSender, false),
+        )
+        val oct15Msg = oct14Msg.copy(
+            id = 101L,
+            body = "Newer Oct 15 ICICI message",
+            dateMs = 1_760_490_000_000L,
+        )
+        val grouped = com.universalrp.smsguard.data.SmsRepository.groupThreads(listOf(oct14Msg, oct15Msg))
+        assertEquals(1, grouped.size)
+        assertEquals("Newest message MUST be at index 0 (TOP) of opened thread", 101L, grouped[0].messages[0].id)
+        assertEquals("Older message MUST follow below newer message", 100L, grouped[0].messages[1].id)
+
+        // 5. Shared Weather Alert speech MUST include both village/town AND district details!
+        val rainSpeech = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+            severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
+            placeLabel = "ஆலங்குடி",
+            minutesUntilRain = 30,
+            placeDetails = "புதுக்கோட்டை மாவட்டம், தமிழ்நாடு 622301",
+        )
+        assertTrue(rainSpeech.second.contains("ஆலங்குடி"))
+        assertTrue(rainSpeech.second.contains("புதுக்கோட்டை மாவட்டம்"))
+    }
+
+    @Test
     fun liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable() {
         val reachable = runCatching {
             java.net.InetAddress.getByName("speech.platform.bing.com")

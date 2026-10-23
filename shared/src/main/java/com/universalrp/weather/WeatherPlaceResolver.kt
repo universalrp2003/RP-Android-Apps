@@ -445,6 +445,18 @@ object WeatherPlaceResolver {
             .maxByOrNull { it.time }
     }
 
+    private data class CachedReverseLabel(
+        val lat: Double,
+        val lon: Double,
+        val tamil: Boolean,
+        val name: String,
+        val details: String,
+        val atMs: Long,
+    )
+
+    @Volatile
+    private var lastReverseCache: CachedReverseLabel? = null
+
     @Suppress("DEPRECATION")
     private fun reverseGeocodeLabel(
         context: Context,
@@ -452,17 +464,106 @@ object WeatherPlaceResolver {
         longitude: Double,
         tamil: Boolean,
     ): Pair<String, String> {
-        if (!Geocoder.isPresent()) return "" to ""
-        return runCatching {
+        val now = System.currentTimeMillis()
+        lastReverseCache?.let { cached ->
+            if (cached.tamil == tamil &&
+                now - cached.atMs < 20L * 60_000L &&
+                kotlin.math.abs(cached.lat - latitude) < 0.008 &&
+                kotlin.math.abs(cached.lon - longitude) < 0.008 &&
+                cached.name.isNotBlank()
+            ) {
+                return cached.name to cached.details
+            }
+        }
+
+        val districtWord = if (tamil) "மாவட்டம்" else "district"
+
+        // Layer 1: Android Geocoder (if available and non-empty)
+        val platformPair = runCatching {
+            if (!Geocoder.isPresent()) return@runCatching null
             val locale = if (tamil) Locale("ta", "IN") else Locale("en", "IN")
-            val addr: Address = Geocoder(context.applicationContext, locale)
-                .getFromLocation(latitude, longitude, 1)
-                ?.firstOrNull()
-                ?: return@runCatching "" to ""
-            val name = firstCleanPlace(addr.locality, addr.subLocality, addr.subAdminArea)
-            val districtWord = if (tamil) "மாவட்டம்" else "district"
-            name to formatDetails(name, addr.subAdminArea, addr.adminArea, addr.postalCode.orEmpty(), districtWord)
-        }.getOrDefault("" to "")
+            val list = Geocoder(context.applicationContext, locale).getFromLocation(latitude, longitude, 3)
+            val addr: Address = list?.firstOrNull {
+                firstCleanPlace(it.subLocality, it.locality, it.subAdminArea).isNotBlank()
+            } ?: list?.firstOrNull() ?: return@runCatching null
+            val name = firstCleanPlace(addr.subLocality, addr.locality, addr.thoroughfare, addr.subAdminArea, addr.adminArea)
+            if (name.isBlank()) null
+            else name to formatDetails(name, addr.subAdminArea, addr.adminArea, addr.postalCode.orEmpty(), districtWord)
+        }.getOrNull()
+
+        if (platformPair != null && platformPair.first.isNotBlank()) {
+            lastReverseCache = CachedReverseLabel(latitude, longitude, tamil, platformPair.first, platformPair.second, now)
+            return platformPair
+        }
+
+        // Layer 2: OpenStreetMap Nominatim HTTPS JSON reverse lookup (works on all Xiaomi/MIUI/HyperOS & de-Googled devices)
+        val nominatimPair = runCatching {
+            val lang = if (tamil) "ta,en" else "en"
+            val raw = WeatherForecastClient.httpGet(
+                "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$latitude&lon=$longitude&zoom=14&addressdetails=1&accept-language=$lang"
+            )
+            if (raw.isBlank()) return@runCatching null
+            val root = org.json.JSONObject(raw)
+            val addr = root.optJSONObject("address") ?: return@runCatching null
+            val name = firstCleanPlace(
+                addr.optString("village"),
+                addr.optString("suburb"),
+                addr.optString("town"),
+                addr.optString("neighbourhood"),
+                addr.optString("hamlet"),
+                addr.optString("city"),
+                addr.optString("county"),
+                addr.optString("state_district"),
+                root.optString("name"),
+            )
+            if (name.isBlank()) null
+            else {
+                val district = addr.optString("state_district").ifBlank { addr.optString("county") }.ifBlank { addr.optString("city") }
+                val state = addr.optString("state")
+                val pin = addr.optString("postcode")
+                name to formatDetails(name, district, state, pin, districtWord)
+            }
+        }.getOrNull()
+
+        if (nominatimPair != null && nominatimPair.first.isNotBlank()) {
+            lastReverseCache = CachedReverseLabel(latitude, longitude, tamil, nominatimPair.first, nominatimPair.second, now)
+            return nominatimPair
+        }
+
+        // Layer 3: Free BigDataCloud reverse geocoder fallback
+        val bdcPair = runCatching {
+            val lang = if (tamil) "ta" else "en"
+            val raw = WeatherForecastClient.httpGet(
+                "https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=$latitude&longitude=$longitude&localityLanguage=$lang"
+            )
+            if (raw.isBlank()) return@runCatching null
+            val root = org.json.JSONObject(raw)
+            val name = firstCleanPlace(
+                root.optString("locality"),
+                root.optString("city"),
+                root.optString("principalSubdivision"),
+            )
+            if (name.isBlank()) null
+            else {
+                val city = root.optString("city")
+                val state = root.optString("principalSubdivision")
+                val pin = root.optString("postcode")
+                name to formatDetails(name, city, state, pin, districtWord)
+            }
+        }.getOrNull()
+
+        if (bdcPair != null && bdcPair.first.isNotBlank()) {
+            lastReverseCache = CachedReverseLabel(latitude, longitude, tamil, bdcPair.first, bdcPair.second, now)
+            return bdcPair
+        }
+
+        // Layer 4: Guaranteed non-blank fallback when offline with cell tower fix
+        val coord = String.format(Locale.US, "%.2f°N, %.2f°E", latitude, longitude)
+        return if (tamil) {
+            "மொபைல் டவர் இடம் ($coord)" to "செல் டவர்"
+        } else {
+            "Mobile Tower Area ($coord)" to "Cell tower"
+        }
     }
 
     private fun firstCleanPlace(vararg candidates: String?): String =

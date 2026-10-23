@@ -55,11 +55,14 @@ fun ShieldTab(
     val context = LocalContext.current
     var manualUrl by remember { mutableStateOf("") }
     var apiKeyDraft by remember { mutableStateOf("") }
-    val pendingItems = remember(prefs.pendingQueueCount, allMessages) { vm.pendingQueueItems() }
+    val pendingItems = remember(prefs.pendingQueueCount, allMessages) {
+        vm.pendingQueueItems().sortedByDescending { it.queuedAtMs }
+    }
     val inboxLinkEntries = remember(allMessages) {
         allMessages
             .asSequence()
             .filter { !it.isSentByMe }
+            .sortedWith(compareByDescending<EnrichedSmsMessage> { it.dateMs }.thenByDescending { it.id })
             .flatMap { msg -> msg.links.asSequence().map { link -> msg to link } }
             .take(40)
             .toList()

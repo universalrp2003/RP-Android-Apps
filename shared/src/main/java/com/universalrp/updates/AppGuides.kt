@@ -192,15 +192,15 @@ object AppGuides {
                     "headlines when English is selected. Noisy prefixes (Breaking News, Just Now, Video tags), " +
                     "timestamps, trailing site tags, and incomplete clickbait teasers are automatically filtered out. " +
                     "Tap 'Read today's news' on Home or inside Today's headlines to listen anytime (with a Stop button), " +
-                    "or configure the automatic interval (30m / 1h / 2h / 3h) in Settings — automatic news speaks ONLY " +
+                    "or configure the automatic interval (ON by default at 3h, selectable 30m / 1h / 2h / 3h) in Settings — automatic news speaks ONLY " +
                     "new unannounced headlines when the screen is OFF, outside night Quiet Hours, and when no phone call " +
                     "or other music/video is playing.",
                 "லைவ் கார்டில் தமிழ் தேர்ந்தெடுத்தால் இன்றைய தமிழ் செய்திகளும், ஆங்கிலம் தேர்ந்தெடுத்தால் இன்றைய ஆங்கிலச் " +
                     "செய்திகளும் காட்டப்பட்டு வாசிக்கப்படும். 'Breaking News', 'Just Now', 'காணொளி:', நேரக் குறிப்புகள் மற்றும் " +
-                    "முழுமையற்ற கிளிக்பெய்ட் வரிகள் தானாகவே நீக்கப்படும். முகப்பு அல்லது செய்திப் பட்டியலில் 'இன்றைய செய்திகளை வாசி' " +
-                    "பொத்தானால் எப்போதும் கேட்கலாம்; அமைப்புகளில் நேர இடைவெளியை (30 நிமி / 1 மணி / 2 மணி / 3 மணி) " +
-                    "தேர்ந்தெடுத்தால் திரை அணைந்திருக்கும்போது, அழைப்பு/பாடல் இல்லாத நேரத்தில், ஏற்கனவே வாசிக்காத புதிய " +
-                    "செய்திகளை மட்டுமே வாசிக்கும்.",
+                    "முழுமையற்ற கிளிக்பெய்ட் வரிகள் தானாகவே நீக்கப்படும். முகப்பு அல்லது செய்திப் பட்டியலில் 'இன்றைய செய்தி படி' " +
+                    "பொத்தானால் எப்போதும் கேட்கலாம்; தானியங்கி செய்தி அறிவிப்பு இயல்பாக 3 மணி (3h) இடைவெளியில் இயங்கும் " +
+                    "(30 நிமி / 1 மணி / 2 மணி / 3 மணி மாற்றலாம்) — திரை அணைந்திருக்கும்போது, அழைப்பு/பாடல் இல்லாத நேரத்தில், " +
+                    "ஏற்கனவே வாசிக்காத புதிய செய்திகளை மட்டுமே வாசிக்கும்.",
             ),
             topic(
                 "30-minute rain & 24×7 cyclone background alerts",
@@ -304,15 +304,15 @@ object AppGuides {
             topic(
                 "Rain & cyclone voice alerts while listening (Mobile Tower + PIN)",
                 "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு (செல்போன் டவர் + PIN)",
-                "Tap the cloud icon at the top of Radio (or open More). With optional Approximate Network Location " +
-                    "allowed, Ramesh Radio detects your current village/town automatically from your connected mobile " +
-                    "tower with zero GPS battery drain, and falls back to your saved 6-digit PIN/town (e.g. 622301) " +
-                    "when Location is off. Rain alerts check and announce ONLY while Ramesh Radio is open or playing " +
-                    "audio — lowering music smoothly to 25% and restoring volume right after speech finishes.",
-                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். தோராயமான நெட்வொர்க் இருப்பிட அனுமதி " +
-                    "இருந்தால், GPS பேட்டரி செலவின்றி உங்கள் செல்போன் டவர் வழியே ஊரைத் தானாகக் கண்டறியும்; இருப்பிடம் " +
-                    "அணைந்தால் சேமித்த PIN எண்/ஊரை (உதா: 622301) பயன்படுத்தும். ரமேஷ் ரேடியோ திறந்திருக்கும்போதோ பாடல்/வானொலி " +
-                    "ஒலிக்கும்போதோ மட்டுமே மழை எச்சரிக்கை ஒலிக்கும் — இசை 25% ஆகக் குறைந்து முடிந்ததும் இயல்பு ஒலிக்குத் திரும்பும்.",
+                "Tap the cloud icon at the top of Radio (or open More). With Approximate Network Location allowed, " +
+                    "Ramesh Radio detects your exact village/town and district from your connected mobile tower with zero " +
+                    "GPS battery drain, shows that active place right at the top of the Rain Alert dialog, and always " +
+                    "speaks your exact town/village and district in every rain or storm announcement. When Location is off, " +
+                    "it uses your saved 6-digit PIN/town (e.g. 622301). Alerts run ONLY while Ramesh Radio is open or playing.",
+                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். தோராயமான மொபைல் டவர் இருப்பிட அனுமதி " +
+                    "வழங்கினால், GPS பேட்டரி செலவின்றி உங்கள் தற்போதைய ஊர் மற்றும் மாவட்டத்தைத் தானாகக் கண்டறிந்து மேலே " +
+                    "தெளிவாகக் காட்டும்; ஒவ்வொரு மழை மற்றும் புயல் குரல் அறிவிப்பிலும் உங்கள் ஊர் விவரத்தைச் சேர்த்தே ஒலிக்கும். " +
+                    "இருப்பிடம் அணைந்தால் சேமித்த PIN/ஊரைப் (உதா: 622301) பயன்படுத்தும். ரேடியோ திறந்திருக்கும்போதோ ஒலிக்கும்போதோ மட்டுமே இயங்கும்.",
             ),
             topic(
                 "Updating Ramesh Radio",
@@ -716,19 +716,19 @@ object AppGuides {
                     "கட்டுப்பாடும் உள்ளன. போன் அழைப்பில் இருக்கும்போது குரல் அறிவிப்பு குறுக்கிடாது.",
             ),
             topic(
-                "தமிழ் | ENG Switch, Sender-Only Mode & Full Normal SMS Readout",
-                "தமிழ் | ENG பொத்தான், அனுப்புநர் பெயர் மட்டும் & முழுச் செய்தி வாசிப்பு",
-                "Tap தமிழ் | ENG at the top to switch both app UI and voice language together — SMS Guard automatically " +
-                    "uses daily rotating Male ↔ Female Studio HD voices online and falls back to matching Male/Female " +
-                    "system voices offline without complex voice menus. In Controls, you can enable 'Announce Sender Name Only' " +
-                    "(e.g. 'SMS from ICICI Bank' / 'ஐசிஐசிஐ வங்கியில் இருந்து குறுஞ்செய்தி') or 'Read Full Normal Message' " +
-                    "for ordinary messages. Outgoing NEFT beneficiary settlement notices never add fake income and clearly " +
-                    "confirm your transfer reached the recipient's account.",
-                "மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் — ஆன்லைனில் தினசரி மாறும் " +
-                    "ஆண் ↔ பெண் HD குரல்களும், ஆஃப்லைனில் போனின் ஆண்/பெண் சிஸ்டம் குரலும் தானாகவே ஒலிக்கும். Controls பகுதியில் " +
-                    "'அனுப்புநர் பெயர் மட்டும் சொல்' (உதா: 'ஐசிஐசிஐ வங்கியில் இருந்து குறுஞ்செய்தி') மற்றும் 'சாதாரண செய்தி முழு வாசிப்பு' " +
-                    "சுவிட்சுகளை இயக்கலாம். நீங்கள் அனுப்பிய NEFT பணம் பெறுநர் கணக்கில் சேர்ந்த உறுதிப்படுத்தல் செய்தி உங்கள் வரவுக் கணக்கில் " +
-                    "சேராது — பெறுநர் கணக்கில் சேர்ந்துவிட்டதாகத் தெளிவாகத் தெரிவிக்கும்.",
+                "தமிழ் | ENG Switch, Full Govt/Ration/Exam Readout & Instant Voice Stop",
+                "தமிழ் | ENG பொத்தான், அரசு/ரேஷன்/தேர்வு முழு வாசிப்பு & உடனடி நிறுத்து பொத்தான்",
+                "Tap தமிழ் | ENG at the top to switch both UI and voice language together with automatic daily rotating " +
+                    "Male ↔ Female Studio HD voices online and offline system voice fallback. Government, Ration Shop " +
+                    "(TNEPDS), School Exam Results (TNSEDU), utility and normal non-OTP messages read completely by default " +
+                    "(while OTPs stay 100% silent). Turning ON your phone screen stops ongoing speech immediately, a compact " +
+                    "'⏹ Stop' button appears on every window whenever voice is playing, and all message/history threads " +
+                    "always display the newest messages at the very top.",
+                "மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும். தமிழ்நாடு ரேஷன் கடை " +
+                    "(TNEPDS), பள்ளிக் கல்வித் தேர்வு முடிவுகள் (TNSEDU), மின்சாரம், எரிவாயு உள்ளிட்ட அரசு மற்றும் சாதாரண " +
+                    "செய்திகள் இயல்பாகவே முழுமையாக வாசிக்கப்படும் (OTP எப்போதும் இரகசியமாக மௌனமாக இருக்கும்). குரல் " +
+                    "ஒலிக்கும்போது போன் திரையை இயக்கினால் (Screen ON) உடனே குரல் நின்றுவிடும்; மேலும் எல்லாத் திரைகளிலும் " +
+                    "சிறிய '⏹ நிறுத்து' பொத்தான் தோன்றும். எல்லா உரையாடல்களிலும் புதிய செய்திகள் எப்போதும் மேலேயே தெரியும்.",
             ),
             topic(
                 "Optional Free Google Safe Browsing API Key Guide",

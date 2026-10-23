@@ -47,6 +47,7 @@ object WeatherAlertPolicy {
         placeLabel: String,
         previous: WeatherEpisodeMemory,
         nowMs: Long = snapshot.fetchedAtMs,
+        placeDetails: String = "",
     ): WeatherAlertDecision {
         val nearHorizon = snapshot.timeline.filter { it.minutesAhead in 0..60 }
         val extendedHorizon = snapshot.timeline.filter { it.minutesAhead in 0..120 }
@@ -139,6 +140,7 @@ object WeatherAlertPolicy {
             placeLabel = placeLabel,
             minutesUntilRain = minutesUntilRain,
             cycloneName = snapshot.activeCyclone?.eventName,
+            placeDetails = placeDetails,
         )
 
         val anyRainIn2h = extendedHorizon.any { it.precipMmPerHour >= DRY_THRESHOLD_MM_HR } || currentlyRaining
@@ -192,25 +194,43 @@ object WeatherAlertPolicy {
         return wetCode && sample.precipMmPerHour >= 0.20
     }
 
+    fun composeSpokenPlaceLabel(placeLabel: String, placeDetails: String, fallback: String): String {
+        val base = placeLabel.trim().ifBlank { fallback }
+        val extra = placeDetails
+            .replace("·", ",")
+            .split(",")
+            .map { it.trim().replace(Regex("\\s+\\d{6}$"), "").trim() }
+            .filter { token ->
+                token.isNotBlank() &&
+                    !token.equals(base, ignoreCase = true) &&
+                    !token.matches(Regex("^\\d{6}$"))
+            }
+            .distinct()
+            .take(2)
+            .joinToString(", ")
+        return if (extra.isNotBlank() && !extra.contains(base, ignoreCase = true)) "$base, $extra" else base
+    }
+
     fun formatSpeech(
         severity: WeatherSeverity,
         placeLabel: String,
         minutesUntilRain: Int?,
         cycloneName: String? = null,
+        placeDetails: String = "",
     ): Pair<String, String> {
-        val placeEn = placeLabel.trim().ifBlank { "your area" }
-        val placeTa = placeLabel.trim().ifBlank { "உங்கள் பகுதி" }
+        val placeEn = composeSpokenPlaceLabel(placeLabel, placeDetails, "your area")
+        val placeTa = composeSpokenPlaceLabel(placeLabel, placeDetails, "உங்கள் பகுதி")
         return when (severity) {
             WeatherSeverity.CLEAR_OR_NORMAL -> "" to ""
             WeatherSeverity.RAIN_SOON -> {
                 val mins = (minutesUntilRain ?: 30).coerceIn(0, 60)
                 if (mins <= 3) {
-                    "Rain alert: rain is starting now near $placeEn." to
-                        "மழை முன்னறிவிப்பு: $placeTa பகுதியில் இப்போது மழை தொடங்குகிறது."
+                    "Rain alert for $placeEn: rain is starting now near $placeEn." to
+                        "மழை முன்னறிவிப்பு — இடம் $placeTa: இப்போது மழை தொடங்குகிறது."
                 } else {
                     val rounded = ((mins + 2) / 5 * 5).coerceAtLeast(5)
-                    "Rain alert: rain is expected near $placeEn in about $rounded minutes." to
-                        "மழை முன்னறிவிப்பு: $placeTa பகுதியில் சுமார் $rounded நிமிடங்களில் மழை பெய்ய வாய்ப்புள்ளது."
+                    "Rain alert for $placeEn: rain is expected near $placeEn in about $rounded minutes." to
+                        "மழை முன்னறிவிப்பு — இடம் $placeTa: சுமார் $rounded நிமிடங்களில் மழை பெய்ய வாய்ப்புள்ளது."
                 }
             }
             WeatherSeverity.VERY_HEAVY_RAIN -> {
@@ -219,14 +239,14 @@ object WeatherAlertPolicy {
                 } else {
                     "now"
                 }
-                "Heavy rain warning: very heavy rain is expected near $placeEn $whenEn. Please take precautions." to
-                    "கனமழை எச்சரிக்கை: $placeTa பகுதியில் மிகக் கனமழை பெய்ய வாய்ப்புள்ளது. பாதுகாப்பாக இருங்கள்."
+                "Heavy rain warning for $placeEn: very heavy rain is expected near $placeEn $whenEn. Please take precautions." to
+                    "கனமழை எச்சரிக்கை — இடம் $placeTa: மிகக் கனமழை பெய்ய வாய்ப்புள்ளது. பாதுகாப்பாக இருங்கள்."
             }
             WeatherSeverity.CYCLONE_SEVERE -> {
                 val stormTagEn = cycloneName?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
                 val stormTagTa = cycloneName?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
-                "Urgent storm warning$stormTagEn: cyclone-force winds or extreme heavy rain near $placeEn. Stay indoors in a safe place." to
-                    "அவசர புயல் எச்சரிக்கை$stormTagTa: $placeTa பகுதியில் புயல் காற்று அல்லது அதி கனமழை அபாயம் உள்ளது. உடனே பாதுகாப்பாக இருங்கள்."
+                "Urgent storm warning$stormTagEn for $placeEn: cyclone-force winds or extreme heavy rain near $placeEn. Stay indoors in a safe place." to
+                    "அவசர புயல் எச்சரிக்கை$stormTagTa — இடம் $placeTa: புயல் காற்று அல்லது அதி கனமழை அபாயம் உள்ளது. உடனே பாதுகாப்பாக இருங்கள்."
             }
         }
     }
