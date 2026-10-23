@@ -61,8 +61,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="1.1.2"
-          expected_code="8"
+          version="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' smsguard/build.gradle.kts | head -n 1)"
+          expected_code="$(sed -n 's/^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*\([0-9][0-9]*\).*/\1/p' smsguard/build.gradle.kts | head -n 1)"
+          [[ -n "$version" && -n "$expected_code" ]] || { echo "::error::Failed to parse versionName/versionCode from smsguard/build.gradle.kts"; exit 1; }
           expected_package="com.universalrp.smsguard"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           tag="sms-guard-v${version}"
@@ -118,17 +119,17 @@ jobs:
               blob_sha = json.loads(resp.read())["sha"]
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
               out.write(f"blob_sha={blob_sha}\n")
+          release_doc = f"releases/sms-guard-v{version}.md"
+          extra_notes = ""
+          if os.path.isfile(release_doc):
+              with open(release_doc, "r", encoding="utf-8") as rf:
+                  extra_notes = rf.read().strip() + "\n"
           notes = (
               f"## SMS Guard (குறுஞ்செய்தி காவலன்) v{version} — Official Release\n\n"
               f"**Package:** `{pkg}` · **Version:** `{version}` (`versionCode = {code}`) · **Minimum Android:** Android 8.0+ (API 26)\n"
               f"**Asset:** `{asset}` (`{size}` bytes)\n"
               f"**SHA-256:** `{sha256}`\n\n"
-              "### What's New in v1.1.2\n"
-              "- **Full Keyboard Visibility on SMS Reply Bar:** Added edge-to-edge `imePadding()` + `navigationBarsPadding()` + automatic message list scroll when the keyboard opens, so typing a reply is never hidden behind the on-screen keyboard.\n"
-              "- **NEFT Outgoing Beneficiary Credit Fix + Voice Announcement:** Bank messages stating `amount credited to the beneficiary account` are now accurately classified as outgoing transfer delivery confirmations — **never** miscounted as your income in the Finance Ledger — while clearly announcing that your transfer reached the beneficiary's account.\n"
-              "- **Ultra-Clean Top `தமிழ் | ENG` Toggle + Automatic HD Male/Female Voices:** Replaced complicated voice-picker menus with a compact `தமிழ் | ENG` switch at the top bar that controls both UI text and voice announcements simultaneously, automatically rotating crisp HD Male ↔ Female neural voices online and falling back seamlessly to matching Male/Female Android System TTS offline.\n"
-              "- **New Normal-SMS Voice Controls (`Sender Name Only` & `Read Full SMS`):** Choose whether normal non-bank messages announce only the sender name, read the full SMS body aloud (while keeping OTPs 100% silent), or stay off.\n"
-              "- **Updated In-App Guide & Privacy Docs:** Full Tamil & English expandable user guide updated for all v1.1.2 features.\n"
+              f"{extra_notes}"
           )
           with open(notes_path, "w", encoding="utf-8") as nf:
               nf.write(notes)
