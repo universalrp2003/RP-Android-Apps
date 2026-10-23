@@ -19,11 +19,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -553,6 +558,15 @@ private fun ThreadRowCard(
 
             if (msg.finance.classification == SpoofClassification.SPOOF_PERSONAL_NUMBER_FAKE_MONEY) {
                 StatusBadgePill("🛑 ${ui.fakePaymentBannerTitle}", palette.dangerRed)
+            } else if (msg.finance.classification == SpoofClassification.OUTGOING_TRANSFER_SETTLEMENT && msg.finance.amountInr > 0.0) {
+                StatusBadgePill(
+                    text = if (tamil) {
+                        "📤 ${FinanceLedgerEngine.formatInr(msg.finance.amountInr)} · பெறுநர் கணக்கில் சேர்ந்தது"
+                    } else {
+                        "📤 ${FinanceLedgerEngine.formatInr(msg.finance.amountInr)} · Sent to beneficiary"
+                    },
+                    color = palette.accent,
+                )
             } else if (msg.finance.classification == SpoofClassification.GENUINE_BANK_OR_UPI && msg.finance.direction != null) {
                 val isCredit = msg.finance.direction == TxDirection.CREDIT
                 val sign = if (isCredit) "+" else "-"
@@ -598,6 +612,13 @@ fun ThreadDetailScreen(
     var selectedSimIndex by remember { mutableIntStateOf(0) }
     var blockedLinkDialog by remember { mutableStateOf<LinkScanResult?>(null) }
     var confirmDeleteThread by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(thread.threadKey, thread.messages.size) {
+        if (thread.messages.isNotEmpty()) {
+            listState.scrollToItem(thread.messages.lastIndex)
+        }
+    }
 
     val latestSender = thread.latestMessage.sender
     val headerTitle = if (prefs.tamil) latestSender.displayNameTa else latestSender.displayNameEn
@@ -612,7 +633,9 @@ fun ThreadDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(palette.bg),
+            .background(palette.bg)
+            .imePadding()
+            .navigationBarsPadding(),
     ) {
         // Conversation Header
         Row(
@@ -638,6 +661,7 @@ fun ThreadDetailScreen(
 
         // Messages List
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth(),
@@ -974,7 +998,12 @@ fun NewSmsDialog(
         containerColor = palette.card,
         title = { Text(ui.newSmsBtn, color = palette.textPrimary, fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .imePadding(),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     OutlinedTextField(
                         value = recipient,

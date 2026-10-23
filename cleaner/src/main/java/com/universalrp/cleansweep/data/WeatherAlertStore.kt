@@ -211,16 +211,47 @@ object WeatherAlertStore {
         val lastCheckedAtMs: Long,
     )
 
+    private const val STALE_RAIN_ALERT_MS = 20 * 60_000L
+    private const val STALE_SEVERE_ALERT_MS = 45 * 60_000L
+
+    private fun normalizeCachedSeverity(
+        p: SharedPreferences,
+        currentResolvedName: String,
+    ): Pair<WeatherSeverity, Int?> {
+        val rawSeverity = runCatching {
+            WeatherSeverity.valueOf(p.getString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name).orEmpty())
+        }.getOrDefault(WeatherSeverity.CLEAR_OR_NORMAL)
+        if (rawSeverity == WeatherSeverity.CLEAR_OR_NORMAL) return WeatherSeverity.CLEAR_OR_NORMAL to null
+
+        val lastChecked = p.getLong(KEY_LAST_CHECKED_MS, 0L)
+        val now = System.currentTimeMillis()
+        val maxAge = if (rawSeverity.bypassQuietHours) STALE_SEVERE_ALERT_MS else STALE_RAIN_ALERT_MS
+        val lastPlace = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
+        val placeChanged = currentResolvedName.isNotBlank() &&
+            lastPlace.isNotBlank() &&
+            !currentResolvedName.equals(lastPlace, ignoreCase = true)
+        if (placeChanged || lastChecked <= 0L || (now >= lastChecked && now - lastChecked > maxAge)) {
+            p.edit()
+                .putString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name)
+                .putInt(KEY_LAST_MINS_TO_RAIN, -1)
+                .putBoolean(KEY_EPISODE_ACTIVE, false)
+                .putLong(KEY_NEXT_CHECK_AFTER_MS, 0L)
+                .apply()
+            return WeatherSeverity.CLEAR_OR_NORMAL to null
+        }
+        return rawSeverity to p.getInt(KEY_LAST_MINS_TO_RAIN, -1).takeIf { it >= 0 }
+    }
+
     fun readCachedForWidget(context: Context): CachedWidgetWeather {
         val p = prefs(context)
         val savedName = p.getString(KEY_SAVED_NAME, "").orEmpty()
         val lastName = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
-        val minsRaw = p.getInt(KEY_LAST_MINS_TO_RAIN, -1)
+        val (normSeverity, normMins) = normalizeCachedSeverity(p, currentResolvedName = "")
         return CachedWidgetWeather(
             enabled = enabled(context),
             placeName = lastName.ifBlank { savedName },
-            severityName = p.getString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name).orEmpty(),
-            minutesUntilRain = minsRaw.takeIf { it >= 0 },
+            severityName = normSeverity.name,
+            minutesUntilRain = normMins,
             temperatureC = p.getString(KEY_LAST_TEMP_C, "")?.toDoubleOrNull(),
             windGustKmh = p.getFloat(KEY_LAST_PEAK_GUST, 0f).toDouble(),
             sourceName = p.getString(KEY_LAST_SOURCE, WeatherSourceKind.OPEN_METEO_DEFAULT.name).orEmpty(),
@@ -238,10 +269,7 @@ object WeatherAlertStore {
     ): WeatherUiSnapshot {
         val p = prefs(context)
         val saved = savedPlace(context)
-        val minsRaw = p.getInt(KEY_LAST_MINS_TO_RAIN, -1)
-        val severity = runCatching {
-            WeatherSeverity.valueOf(p.getString(KEY_LAST_SEVERITY, WeatherSeverity.CLEAR_OR_NORMAL.name).orEmpty())
-        }.getOrDefault(WeatherSeverity.CLEAR_OR_NORMAL)
+        val (severity, normMins) = normalizeCachedSeverity(p, currentResolvedName = resolvedName)
         val source = runCatching {
             WeatherSourceKind.valueOf(p.getString(KEY_LAST_SOURCE, WeatherSourceKind.OPEN_METEO_DEFAULT.name).orEmpty())
         }.getOrDefault(WeatherSourceKind.OPEN_METEO_DEFAULT)
@@ -258,7 +286,7 @@ object WeatherAlertStore {
             hasTomorrowKey = hasTomorrowKey(context),
             lastCheckedAtMs = p.getLong(KEY_LAST_CHECKED_MS, 0L),
             severity = severity,
-            minutesUntilRain = minsRaw.takeIf { it >= 0 },
+            minutesUntilRain = normMins,
             temperatureC = p.getString(KEY_LAST_TEMP_C, "")?.toDoubleOrNull(),
             peakPrecipMmPerHour = p.getFloat(KEY_LAST_PEAK_PRECIP, 0f).toDouble(),
             peakWindGustKmh = p.getFloat(KEY_LAST_PEAK_GUST, 0f).toDouble(),

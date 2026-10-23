@@ -77,13 +77,19 @@ object WeatherPlaceResolver {
         }
     }
 
-    fun hasLocationPermission(context: Context): Boolean {
-        val fine = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
+    fun hasFineLocationPermission(context: Context): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
+
+    fun hasLocationPermission(context: Context): Boolean {
+        val fine = hasFineLocationPermission(context)
         val coarse = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
         return fine || coarse
     }
+
+    private const val MAX_UI_CACHED_LOCATION_AGE_MS = 30 * 60_000L
+    private const val FRESH_FIX_MAX_AGE_MS = 10 * 60_000L
 
     @SuppressLint("MissingPermission")
     fun resolveActiveLocation(
@@ -98,7 +104,10 @@ object WeatherPlaceResolver {
         val permitted = hasLocationPermission(context)
 
         if (gpsOn && permitted) {
-            val lastFix = bestCachedLocation(context)
+            val now = System.currentTimeMillis()
+            val lastFix = bestCachedLocation(context)?.takeIf { loc ->
+                loc.time <= 0L || (now - loc.time) <= MAX_UI_CACHED_LOCATION_AGE_MS
+            }
             if (lastFix != null && lastFix.latitude.isFinite() && lastFix.longitude.isFinite()) {
                 val label = reverseGeocodeLabel(context, lastFix.latitude, lastFix.longitude, tamil)
                 return ResolvedWeatherLocation(
@@ -133,9 +142,11 @@ object WeatherPlaceResolver {
     }
 
     /**
-     * Async wrapper used by workers and "Check now": if GPS/Network location is enabled and permitted
-     * yet Android's cache has no fix yet, requests a single bounded (<= 4 s) network/GPS fix once and
-     * immediately unregisters the listener so the radio never stays awake.
+     * Async wrapper used by workers and "Check now":
+     * - Whenever OS Location is ON & permitted (including Approximate Mobile-Tower `ACCESS_COARSE_LOCATION`
+     *   in Ramesh Radio!), refreshes stale cached fixes (> 10 min old) via fast cell-tower `NETWORK_PROVIDER`
+     *   first so an old village (`Venavalkudi`) never sticks after moving to a new town (`ஆலங்குடி`).
+     * - When OS Location is OFF (or no fix), uses the saved fallback place/PIN (`622301 ஆலங்குடி`).
      */
     @SuppressLint("MissingPermission")
     suspend fun resolveActiveLocationSuspend(
@@ -146,33 +157,41 @@ object WeatherPlaceResolver {
         savedLon: Double,
         tamil: Boolean,
     ): ResolvedWeatherLocation = withContext(Dispatchers.IO) {
-        val initial = resolveActiveLocation(context, savedName, savedDetails, savedLat, savedLon, tamil)
-        if (initial.mode == LocationResolutionMode.GPS_AUTOMATIC) return@withContext initial
-        if (!initial.gpsTurnedOn || !initial.permissionGranted) return@withContext initial
-
-        val fresh = requestQuickFix(context)
-        if (fresh != null && fresh.latitude.isFinite() && fresh.longitude.isFinite()) {
-            val label = reverseGeocodeLabel(context, fresh.latitude, fresh.longitude, tamil)
-            return@withContext ResolvedWeatherLocation(
-                mode = LocationResolutionMode.GPS_AUTOMATIC,
-                gpsTurnedOn = true,
-                permissionGranted = true,
-                name = label.first,
-                details = label.second,
-                latitude = fresh.latitude,
-                longitude = fresh.longitude,
-            )
+        val gpsOn = isDeviceLocationTurnedOn(context)
+        val permitted = hasLocationPermission(context)
+        if (gpsOn && permitted) {
+            val now = System.currentTimeMillis()
+            val cached = bestCachedLocation(context)
+            val freshEnough = cached != null &&
+                cached.latitude.isFinite() &&
+                cached.longitude.isFinite() &&
+                cached.time > 0L &&
+                (now - cached.time) <= FRESH_FIX_MAX_AGE_MS
+            val activeLoc = if (freshEnough) cached else (requestQuickFix(context) ?: cached)
+            if (activeLoc != null && activeLoc.latitude.isFinite() && activeLoc.longitude.isFinite()) {
+                val label = reverseGeocodeLabel(context, activeLoc.latitude, activeLoc.longitude, tamil)
+                return@withContext ResolvedWeatherLocation(
+                    mode = LocationResolutionMode.GPS_AUTOMATIC,
+                    gpsTurnedOn = true,
+                    permissionGranted = true,
+                    name = label.first,
+                    details = label.second,
+                    latitude = activeLoc.latitude,
+                    longitude = activeLoc.longitude,
+                )
+            }
         }
-        initial
+        resolveActiveLocation(context, savedName, savedDetails, savedLat, savedLon, tamil)
     }
 
     @SuppressLint("MissingPermission")
     private suspend fun requestQuickFix(context: Context): Location? {
         val manager = context.getSystemService(LocationManager::class.java) ?: return null
+        val fineAllowed = hasFineLocationPermission(context)
         val provider = when {
             runCatching { manager.isProviderEnabled(LocationManager.NETWORK_PROVIDER) }.getOrDefault(false) ->
                 LocationManager.NETWORK_PROVIDER
-            runCatching { manager.isProviderEnabled(LocationManager.GPS_PROVIDER) }.getOrDefault(false) ->
+            fineAllowed && runCatching { manager.isProviderEnabled(LocationManager.GPS_PROVIDER) }.getOrDefault(false) ->
                 LocationManager.GPS_PROVIDER
             else -> return null
         }
@@ -409,11 +428,19 @@ object WeatherPlaceResolver {
     @SuppressLint("MissingPermission")
     private fun bestCachedLocation(context: Context): Location? {
         val manager = context.getSystemService(LocationManager::class.java) ?: return null
-        return listOf(
-            LocationManager.GPS_PROVIDER,
-            LocationManager.NETWORK_PROVIDER,
-            LocationManager.PASSIVE_PROVIDER,
-        )
+        val providers = if (hasFineLocationPermission(context)) {
+            listOf(
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER,
+                LocationManager.PASSIVE_PROVIDER,
+            )
+        } else {
+            listOf(
+                LocationManager.NETWORK_PROVIDER,
+                LocationManager.PASSIVE_PROVIDER,
+            )
+        }
+        return providers
             .mapNotNull { provider -> runCatching { manager.getLastKnownLocation(provider) }.getOrNull() }
             .maxByOrNull { it.time }
     }

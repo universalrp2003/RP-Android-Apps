@@ -88,8 +88,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          expected_version="1.1.1"
-          expected_code="7"
+          expected_version="1.1.2"
+          expected_code="8"
           expected_package="com.universalrp.smsguard"
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
           asset="SMS-Guard-v${expected_version}.apk"

@@ -21,6 +21,7 @@ enum class FinanceInstrumentType {
 
 enum class SpoofClassification {
     GENUINE_BANK_OR_UPI,
+    OUTGOING_TRANSFER_SETTLEMENT,     // Outgoing NEFT/RTGS/IMPS credited to recipient/beneficiary account — NEVER income!
     SPOOF_PERSONAL_NUMBER_FAKE_MONEY, // Someone typed "Rs. 5000 credited..." from a SIM number!
     REJECTED_PROMOTIONAL_OFFER,       // Marketing/loan promo (-P) — never real money
     NOT_FINANCIAL,                    // Ordinary personal/service/OTP SMS
@@ -153,6 +154,12 @@ object FinanceLedgerEngine {
         RegexOption.IGNORE_CASE,
     )
 
+    // Outgoing NEFT / RTGS / IMPS beneficiary settlement confirmation sent hours after debit (NEVER user income!)
+    private val OUTGOING_BENEFICIARY_CREDIT_REGEX = Regex(
+        "\\b(credited\\s+to\\s+(?:the\\s+)?beneficiary(?:'s)?(?:\\s+(?:account|a/c))?|beneficiary(?:'s)?\\s+(?:account|a/c)\\s+(?:has\\s+been\\s+|is\\s+)?credited|credited\\s+to\\s+(?:the\\s+)?payee(?:'s)?(?:\\s+(?:account|a/c))?)\\b",
+        RegexOption.IGNORE_CASE,
+    )
+
     private val FAKE_PAYMENT_CLAIM_FROM_PERSONAL = Regex(
         "\\b(credited|debited|received\\s+rs|sent\\s+rs|upi\\s+ref|utr|a/c\\s*[x*0-9]|gpay|google\\s*pay|phonepe|paytm)\\b",
         RegexOption.IGNORE_CASE,
@@ -231,6 +238,23 @@ object FinanceLedgerEngine {
         // GATE 3: Must be a verified financial institution/header AND not a loan/declined/mandate/due notice
         if (!sender.isVerifiedFinancialSender || NON_REAL_MONEY_TRAPS.containsMatchIn(body)) {
             return FinanceParseResult(messageId, timestampMs, SpoofClassification.NOT_FINANCIAL)
+        }
+
+        // GATE 3B: Outgoing NEFT/RTGS/IMPS settlement confirmation ("credited to the beneficiary account"):
+        // User's account was ALREADY debited earlier; this confirmation means the recipient got the money — NEVER user income!
+        if (!DEBIT_REGEX.containsMatchIn(body) && OUTGOING_BENEFICIARY_CREDIT_REGEX.containsMatchIn(body)) {
+            val settledAmt = extractTransactionAmount(body)
+                ?.takeIf { it > 0.0 && it < 1_000_000_000.0 }
+                ?: return FinanceParseResult(messageId, timestampMs, SpoofClassification.NOT_FINANCIAL)
+            return FinanceParseResult(
+                messageId = messageId,
+                timestampMs = timestampMs,
+                classification = SpoofClassification.OUTGOING_TRANSFER_SETTLEMENT,
+                direction = null,
+                amountInr = settledAmt,
+                institutionEn = sender.displayNameEn,
+                institutionTa = sender.displayNameTa,
+            )
         }
 
         // Determine Credit vs Debit carefully (handle "debited from A/c ... and credited to VPA" where user's A/c is DEBITED!)

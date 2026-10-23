@@ -562,6 +562,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             settings = com.universalrp.smsguard.engine.AnnouncementSettingsSnapshot(
                 tamil = prefs.tamil,
                 voiceEnabled = true,
+                senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                 shortEveryMessageEnabled = true,
                 mutePromoVoice = false,
             ),
@@ -763,6 +765,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val ctx = getApplication<Application>()
         GuardSettingsStore.updateVoiceEnabled(ctx, enabled)
         if (!enabled) SmsVoiceAnnouncer.stop(ctx)
+    }
+
+    fun setLanguage(tamil: Boolean) {
+        val ctx = getApplication<Application>()
+        GuardSettingsStore.updateLanguage(ctx, tamil)
+    }
+
+    fun setSenderOnlyVoice(enabled: Boolean) {
+        GuardSettingsStore.updateSenderOnlyVoice(getApplication(), enabled)
+    }
+
+    fun setReadFullNormalSms(enabled: Boolean) {
+        GuardSettingsStore.updateReadFullNormalSms(getApplication(), enabled)
     }
 
     fun setShortEveryMessage(enabled: Boolean) {

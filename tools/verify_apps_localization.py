@@ -23,12 +23,12 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.1",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.63",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.19",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.2",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.64",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.20",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.6",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.7",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3",
 }
 
@@ -266,12 +266,12 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.1"',
-            'tagPrefix = "live-guard"', 'version = "2.63"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.19"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.2"',
+            'tagPrefix = "live-guard"', 'version = "2.64"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.20"',
             'tagPrefix = "pulseeq"', 'version = "1.9"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.6"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.7"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )

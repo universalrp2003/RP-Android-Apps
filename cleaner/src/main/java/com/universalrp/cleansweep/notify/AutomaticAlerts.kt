@@ -19,6 +19,7 @@ object AutomaticAlerts {
     private var connectivity: ConnectivityManager? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var batteryJob: Job? = null
+    private var screenOffNewsJob: Job? = null
     private val observerState = kotlinx.coroutines.flow.MutableStateFlow(VoiceObserverStatus())
     val observers: kotlinx.coroutines.flow.StateFlow<VoiceObserverStatus> = observerState
     private val powerReceiver = SystemEventWatcher()
@@ -35,6 +36,17 @@ object AutomaticAlerts {
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) { context?.applicationContext?.let { sampleBattery(it) } }
     }
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != Intent.ACTION_SCREEN_OFF) return
+            val app = context?.applicationContext ?: return
+            screenOffNewsJob?.cancel()
+            screenOffNewsJob = scope.launch {
+                delay(15_000L)
+                com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.maybeAutoAnnounceInBackground(app)
+            }
+        }
+    }
 
     fun start(context: Context, owner: String) { main.post {
         owners.add(owner)
@@ -49,6 +61,7 @@ object AutomaticAlerts {
         // Android8+ manifest implicit-power delivery can be restricted/deferred. Explicit runtime owners are required.
         val power = runCatching { context.applicationContext.registerReceiver(powerReceiver, powerFilter) }.isSuccess
         runCatching { context.applicationContext.registerReceiver(chargingReceiver, powerFilter) }
+        runCatching { context.applicationContext.registerReceiver(screenReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF)) }
         observerState.value = VoiceObserverStatus(owners.size, battery, network, power)
     } }
 
@@ -57,10 +70,12 @@ object AutomaticAlerts {
         if (owners.isNotEmpty() || !registered) { observerState.value = observerState.value.copy(owners = owners.size); return@post }
         registered = false; generation++
         main.removeCallbacks(networkRefresh)
+        screenOffNewsJob?.cancel(); screenOffNewsJob = null
         runCatching { connectivity?.unregisterNetworkCallback(callback) }
         runCatching { context?.unregisterReceiver(batteryReceiver) }
         runCatching { context?.unregisterReceiver(powerReceiver) }
         runCatching { context?.unregisterReceiver(chargingReceiver) }
+        runCatching { context?.unregisterReceiver(screenReceiver) }
         observerState.value = VoiceObserverStatus()
         batteryJob?.cancel(); batteryJob = null; context = null; knownTransport = null
     } }

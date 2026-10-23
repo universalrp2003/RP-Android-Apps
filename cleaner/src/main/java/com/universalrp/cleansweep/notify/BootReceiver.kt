@@ -89,6 +89,7 @@ class BootReceiver : BroadcastReceiver() {
         }.getOrDefault(false)
         runCatching {
             com.universalrp.cleansweep.work.WeatherWatchWorker.syncSchedule(app)
+            com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.syncSchedule(app)
             if (autoFlippedOn) {
                 com.universalrp.cleansweep.work.WeatherWatchWorker.runImmediateCheck(app)
             }

@@ -41,6 +41,7 @@ data class AppStateSnapshot(
     val currentSubArea: String = "",
     val currentDistrict: String = "",
     val currentSpeedKmh: Float = 0f,
+    val sessionTraveledMeters: Float = 0f,
     val isVehicleMoving: Boolean = false,
     val locationUpdateIntervalSeconds: Int = 5,
     val ttsVoiceStatus: TtsVoiceStatus = TtsVoiceStatus.UNKNOWN,
@@ -102,22 +103,25 @@ object AppPreferences {
     fun init(context: Context) {
         if (::prefs.isInitialized) return
         prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        if (!prefs.getBoolean(KEY_HD_VOICE_DEFAULT_ON_115, false)) {
-            prefs.edit()
-                .putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true)
-                .putBoolean(KEY_AUTO_DAILY_GENDER_SWAP, true)
-                .putBoolean(KEY_HD_VOICE_DEFAULT_ON_115, true)
-                .apply()
-        }
+        val savedLang = prefs.getString(KEY_APP_LANG, "ta") ?: "ta"
+        prefs.edit()
+            .putString(KEY_VOICE_LANG, savedLang)
+            .putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true)
+            .putBoolean(KEY_AUTO_DAILY_GENDER_SWAP, true)
+            .putString(KEY_SELECTED_ONLINE_VOICE_ID, "")
+            .putString(KEY_TAMIL_TTS_VOICE, "")
+            .putString(KEY_ENGLISH_TTS_VOICE, "")
+            .putBoolean(KEY_HD_VOICE_DEFAULT_ON_115, true)
+            .apply()
         _state.value = AppStateSnapshot(
             isTrackingEnabled = prefs.getBoolean(KEY_TRACKING_ENABLED, false),
-            appLanguage = prefs.getString(KEY_APP_LANG, "ta") ?: "ta",
-            voiceLanguage = prefs.getString(KEY_VOICE_LANG, "ta") ?: "ta",
-            tamilTtsVoiceName = prefs.getString(KEY_TAMIL_TTS_VOICE, "") ?: "",
-            englishTtsVoiceName = prefs.getString(KEY_ENGLISH_TTS_VOICE, "") ?: "",
-            onlineNeuralHdEnabled = prefs.getBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true),
-            autoDailyGenderSwap = prefs.getBoolean(KEY_AUTO_DAILY_GENDER_SWAP, true),
-            selectedOnlineVoiceId = prefs.getString(KEY_SELECTED_ONLINE_VOICE_ID, "") ?: "",
+            appLanguage = savedLang,
+            voiceLanguage = savedLang,
+            tamilTtsVoiceName = "",
+            englishTtsVoiceName = "",
+            onlineNeuralHdEnabled = true,
+            autoDailyGenderSwap = true,
+            selectedOnlineVoiceId = "",
             announceSameCitySubArea = prefs.getBoolean(KEY_SAME_CITY_SUB_AREA, false),
             bikeCarDetectionEnabled = prefs.getBoolean(KEY_BIKE_CAR_MODE, true),
             announceImmediatelyOnStart = prefs.getBoolean(KEY_ANNOUNCE_ON_START, true),
@@ -149,8 +153,36 @@ object AppPreferences {
     }
 
     fun setAppLanguage(lang: String) {
-        prefs.edit().putString(KEY_APP_LANG, lang).apply()
-        _state.value = _state.value.copy(appLanguage = lang)
+        prefs.edit()
+            .putString(KEY_APP_LANG, lang)
+            .putString(KEY_VOICE_LANG, lang)
+            .putBoolean(KEY_ONLINE_NEURAL_HD_ENABLED, true)
+            .putBoolean(KEY_AUTO_DAILY_GENDER_SWAP, true)
+            .putString(KEY_SELECTED_ONLINE_VOICE_ID, "")
+            .putString(KEY_TAMIL_TTS_VOICE, "")
+            .putString(KEY_ENGLISH_TTS_VOICE, "")
+            .apply()
+        _state.value = _state.value.copy(
+            appLanguage = lang,
+            voiceLanguage = lang,
+            onlineNeuralHdEnabled = true,
+            autoDailyGenderSwap = true,
+            selectedOnlineVoiceId = "",
+            tamilTtsVoiceName = "",
+            englishTtsVoiceName = "",
+            ttsVoiceStatus = TtsVoiceStatus.UNKNOWN,
+        )
+    }
+
+    fun resetSessionDistance() {
+        _state.value = _state.value.copy(sessionTraveledMeters = 0f)
+    }
+
+    fun addSessionDistanceMeters(deltaMeters: Float) {
+        if (deltaMeters <= 0f || !deltaMeters.isFinite()) return
+        _state.value = _state.value.copy(
+            sessionTraveledMeters = _state.value.sessionTraveledMeters + deltaMeters
+        )
     }
 
     fun setVoiceLanguage(lang: String) {

@@ -63,6 +63,9 @@ object Announcer {
 
     /** v2.57: 30-min rain head-start (quiet-hours aware) + heavy rain/cyclone alert (24x7). */
     const val KEY_WEATHER = "voice_weather_alert"
+
+    /** v2.64: Smart Screen-OFF News Headlines Voice Announcer. */
+    const val KEY_NEWS_HEADLINES = "voice_news_headlines"
     const val KEY_QUIET_START = "voice_quiet_start"
     const val KEY_QUIET_END = "voice_quiet_end"
     const val KEY_LOW = "voice_battery_low"
@@ -137,6 +140,9 @@ object Announcer {
 
         /** 30-min rain head-start (quiet-hours aware) + heavy rain/cyclone alerts (24x7). Off until enabled. */
         WEATHER_ALERT(KEY_WEATHER),
+
+        /** Smart Screen-OFF clean news bulletin (30m/1h/2h/3h, silent 10 PM–6 AM, zero duplicates). */
+        NEWS_HEADLINES(KEY_NEWS_HEADLINES),
         NEW_DEVICE(KEY_NEW_DEVICE),
         BATTERY_HEALTH(KEY_BATTERY_HEALTH),
         CHARGER_IDLE(KEY_IDLE_CHARGE),
@@ -507,6 +513,36 @@ object Announcer {
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(english.takeIf { it.isNotBlank() }, tamil.takeIf { it.isNotBlank() }, null,
             event, event == Event.TEST, done = done, onStarted = onStarted, requestKey = requestKey)
+        if (!submit(context, request)) return false
+        var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
+        return try {
+            kotlinx.coroutines.withTimeoutOrNull(timeoutMs) { done.await() } ?: false
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            endStage = VoiceDeliveryPolicy.Stage.CANCELLED
+            throw e
+        } finally {
+            if (!done.isCompleted) main.post { cancelRequest(request.id, endStage) }
+        }
+    }
+
+    suspend fun speakNewsBulletinAndWait(
+        context: Context,
+        text: String,
+        language: AppLang,
+        onStarted: (() -> Unit)? = null,
+        timeoutMs: Long = 90_000L,
+    ): Boolean {
+        val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
+        val request = Request(
+            english = if (language == AppLang.EN) text else null,
+            tamil = if (language == AppLang.TA) text else null,
+            wanted = language,
+            event = Event.NEWS_HEADLINES,
+            manual = false,
+            done = done,
+            onStarted = onStarted,
+            requestKey = "news_bulletin:${System.nanoTime()}",
+        )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
         return try {

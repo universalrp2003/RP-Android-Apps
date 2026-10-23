@@ -25,11 +25,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Ramesh Radio (`1.17`) weather & cyclone alert controller:
- *  - Zero Location permissions (`allowGps = false` — PIN / village picker such as `622301`).
- *  - Auto-enables on update if phone GPS is ON.
+ * Ramesh Radio (`1.20`) weather & cyclone alert controller:
+ *  - Uses connected mobile-tower approximate location (`ACCESS_COARSE_LOCATION` — 0% GPS drain)
+ *    when phone Location is ON, and automatically switches to saved PIN/town (`622301`) when OFF.
+ *  - Strictly runs ONLY while Ramesh Radio's window is open OR radio audio is actively playing
+ *    (never checks or announces in background when the user closed the app and stopped audio).
  *  - Smoothly ducks ExoPlayer FM/local music volume to 25%, speaks Tamil/English rain or cyclone
- *    warning clearly, and automatically restores original music volume when speech finishes!
+ *    warning clearly, and restores original music volume when speech finishes!
  */
 object RadioWeatherMonitor {
 
@@ -37,12 +39,26 @@ object RadioWeatherMonitor {
     private val mainHandler = Handler(Looper.getMainLooper())
     private var serviceWatcherJob: Job? = null
     private var activeVoiceJob: Job? = null
+    @Volatile private var windowOpen: Boolean = false
 
     private val _state = MutableStateFlow(SharedWeatherState())
     val state: StateFlow<SharedWeatherState> = _state.asStateFlow()
 
     private val _showDialog = MutableStateFlow(false)
     val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
+
+    private fun isActiveScope(): Boolean =
+        windowOpen || PlayerBus.state.value.isPlaying
+
+    fun onWindowStart(context: Context) {
+        windowOpen = true
+        val app = context.applicationContext
+        initialize(app)
+    }
+
+    fun onWindowStop() {
+        windowOpen = false
+    }
 
     fun openDialog(context: Context) {
         refreshState(context)
@@ -62,7 +78,9 @@ object RadioWeatherMonitor {
             enableNow = { SharedWeatherRuntime.setEnabled(app, on = true, userInitiated = false) },
         )
         refreshState(app)
-        maybeRunScheduledCheck(app)
+        if (isActiveScope()) {
+            maybeRunScheduledCheck(app)
+        }
     }
 
     fun attachBackgroundHost(context: Context) {
@@ -85,7 +103,7 @@ object RadioWeatherMonitor {
     fun refreshState(context: Context) {
         val app = context.applicationContext
         val current = _state.value
-        val fresh = SharedWeatherRuntime.readState(context = app, allowGps = false)
+        val fresh = SharedWeatherRuntime.readState(context = app, allowGps = true)
         _state.value = fresh.copy(
             previewSeverity = current.previewSeverity,
             checkingNow = current.checkingNow,
@@ -104,8 +122,8 @@ object RadioWeatherMonitor {
 
     fun maybeRunScheduledCheck(context: Context) {
         val app = context.applicationContext
+        if (!isActiveScope()) return
         if (!SharedWeatherRuntime.isEnabled(app)) return
-        if (SharedWeatherRuntime.savedPlace(app) == null) return
         if (_state.value.checkingNow) return
         if (System.currentTimeMillis() < SharedWeatherRuntime.nextCheckAfterMs(app)) return
         checkNow(app, manual = false)
@@ -114,41 +132,49 @@ object RadioWeatherMonitor {
     fun checkNow(context: Context, manual: Boolean) {
         val app = context.applicationContext
         if (_state.value.checkingNow) return
-        val saved = SharedWeatherRuntime.savedPlace(app)
-        val tamil = AppLanguageState.current == AppLanguage.TAMIL
-        if (saved == null) {
-            if (manual) {
-                _state.update {
-                    it.copy(
-                        statusNote = if (tamil) {
-                            "முதலில் கீழே உங்கள் PIN எண் அல்லது ஊர்ப் பெயரைத் தேடிச் சேமியுங்கள் (உதா: 622301)."
-                        } else {
-                            "Search and save your PIN code or town below first (e.g. 622301)."
-                        }
-                    )
-                }
-            }
-            return
-        }
-
         _state.update { it.copy(checkingNow = true, statusNote = "") }
         scope.launch {
+            val tamil = AppLanguageState.current == AppLanguage.TAMIL
+            val saved = SharedWeatherRuntime.savedPlace(app)
+            val resolved = WeatherPlaceResolver.resolveActiveLocationSuspend(
+                context = app,
+                savedName = saved?.name.orEmpty(),
+                savedDetails = saved?.details.orEmpty(),
+                savedLat = saved?.latitude ?: Double.NaN,
+                savedLon = saved?.longitude ?: Double.NaN,
+                tamil = tamil,
+            )
+            if (!resolved.hasCoordinates) {
+                val note = if (manual) {
+                    if (tamil) {
+                        "போன் Location-ஐ இயக்கவும் அல்லது கீழே உங்கள் PIN எண் / ஊரைத் தேடிச் சேமியுங்கள் (உதா: 622301)."
+                    } else {
+                        "Turn ON phone Location (mobile tower) or save your PIN code / town below (e.g. 622301)."
+                    }
+                } else {
+                    ""
+                }
+                _state.update { it.copy(checkingNow = false, statusNote = note) }
+                refreshState(app)
+                return@launch
+            }
+
             val result = runCatching {
                 val key = SharedWeatherRuntime.readTomorrowKey(app)
                 val snap = WeatherForecastClient.fetchNowcast(
-                    latitude = saved.latitude,
-                    longitude = saved.longitude,
+                    latitude = resolved.latitude,
+                    longitude = resolved.longitude,
                     tomorrowApiKey = key,
                 )
                 val decision = WeatherAlertPolicy.evaluate(
                     snapshot = snap,
-                    placeLabel = saved.name,
+                    placeLabel = resolved.name,
                     previous = SharedWeatherRuntime.loadMemory(app),
                 )
                 SharedWeatherRuntime.saveEvaluation(
                     context = app,
-                    placeName = saved.name,
-                    placeDetails = saved.details,
+                    placeName = resolved.name,
+                    placeDetails = resolved.details,
                     snapshot = snap,
                     decision = decision,
                 )
@@ -156,7 +182,7 @@ object RadioWeatherMonitor {
             }
 
             val decision = result.getOrNull()
-            if (decision != null && decision.shouldAnnounce) {
+            if (decision != null && decision.shouldAnnounce && (manual || isActiveScope())) {
                 SharedWeatherRuntime.postWeatherNotification(
                     context = app,
                     smallIconRes = android.R.drawable.ic_dialog_info,
@@ -188,7 +214,8 @@ object RadioWeatherMonitor {
 
     fun testVoiceWithDuck(context: Context) {
         val app = context.applicationContext
-        val place = SharedWeatherRuntime.savedPlace(app)?.name?.takeIf { it.isNotBlank() }
+        val place = _state.value.activePlaceName.takeIf { it.isNotBlank() }
+            ?: SharedWeatherRuntime.savedPlace(app)?.name?.takeIf { it.isNotBlank() }
             ?: if (AppLanguageState.current == AppLanguage.TAMIL) "உங்கள் ஊர்" else "your town"
         val sample = WeatherAlertPolicy.formatSpeech(
             severity = WeatherSeverity.RAIN_SOON,
@@ -340,7 +367,7 @@ object RadioWeatherMonitor {
         }
         refreshState(app)
         _state.update { it.copy(statusNote = note) }
-        if (ok && rawKey.isNotBlank() && SharedWeatherRuntime.savedPlace(app) != null) {
+        if (ok && rawKey.isNotBlank()) {
             checkNow(app, manual = false)
         }
     }

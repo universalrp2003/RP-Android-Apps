@@ -32,6 +32,8 @@ data class GuardPrefs(
     val tamil: Boolean = true,
     val internetEnabled: Boolean = true,
     val voiceEnabled: Boolean = true,
+    val senderOnlyVoiceEnabled: Boolean = false,
+    val readFullNormalSmsEnabled: Boolean = false,
     val shortEveryMessageEnabled: Boolean = false, // Default OFF per owner specification
     val financeEnabled: Boolean = true,
     val mutePromoVoice: Boolean = true,
@@ -114,15 +116,17 @@ object GuardSettingsStore {
             tamil = p.getBoolean("tamil", true),
             internetEnabled = p.getBoolean("internet_enabled", true),
             voiceEnabled = p.getBoolean("voice_enabled", true),
+            senderOnlyVoiceEnabled = p.getBoolean("sender_only_voice", false),
+            readFullNormalSmsEnabled = p.getBoolean("read_full_normal_sms", false),
             shortEveryMessageEnabled = p.getBoolean("short_every_msg_v2", false),
             financeEnabled = p.getBoolean("finance_enabled", true),
             mutePromoVoice = p.getBoolean("mute_promo_voice", true),
             excludeSelfTransfers = p.getBoolean("exclude_self_transfers", true),
             voiceVolumePercent = p.getInt("voice_volume_pct", 85).coerceIn(0, 100),
             speechRateMode = p.getInt("speech_rate_mode", 1).coerceIn(0, 2),
-            voiceLanguageMode = p.getInt("voice_lang_mode", 0).coerceIn(0, 2),
-            autoDailyGenderSwap = p.getBoolean("auto_daily_gender_swap", true),
-            preferredVoiceName = p.getString("preferred_voice_name", "").orEmpty(),
+            voiceLanguageMode = 0, // Unified language mode: always follows Tamil / ENG selection
+            autoDailyGenderSwap = true, // Automatic daily Male <-> Female HD + system fallback
+            preferredVoiceName = "",
             paletteIndex = p.getInt("palette_index", 0).coerceIn(0, 5),
             uiScalePercent = p.getInt("ui_scale_percent", 100).coerceIn(80, 150),
             financeLockEnabled = p.getBoolean("finance_lock_enabled", true),
@@ -140,8 +144,23 @@ object GuardSettingsStore {
     }
 
     fun updateLanguage(context: Context, tamil: Boolean) {
-        prefs(context).edit().putBoolean("tamil", tamil).apply()
+        prefs(context).edit()
+            .putBoolean("tamil", tamil)
+            .putInt("voice_lang_mode", 0)
+            .putBoolean("auto_daily_gender_swap", true)
+            .putString("preferred_voice_name", "")
+            .apply()
         AppLanguageState.set(context, if (tamil) AppLanguage.TAMIL else AppLanguage.ENGLISH)
+        reload(context)
+    }
+
+    fun updateSenderOnlyVoice(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("sender_only_voice", enabled).apply()
+        reload(context)
+    }
+
+    fun updateReadFullNormalSms(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("read_full_normal_sms", enabled).apply()
         reload(context)
     }
 

@@ -37,6 +37,38 @@ object NewsPolicy {
         }.take(MAX_ITEMS)
     }
 
+    fun todayForLanguage(items: List<NewsHeadline>, nowMs: Long, zone: ZoneId, tamil: Boolean): List<NewsHeadline> {
+        if (tamil) {
+            return today(items, nowMs, zone).mapNotNull { item ->
+                val cleaned = NewsSpeechSanitizer.cleanHeadline(item.title, item.source)
+                if (cleaned.length >= 12) item.copy(title = cleaned) else null
+            }
+        }
+        val titles = hashSetOf<String>()
+        val links = hashSetOf<String>()
+        return items.sortedByDescending { it.publishedAtMs }.mapNotNull { item ->
+            val cleaned = NewsSpeechSanitizer.cleanHeadline(item.title, item.source)
+            val key = titleKey(cleaned)
+            val url = canonicalLink(item.link)
+            val validLatin = cleaned.any { it in 'A'..'Z' || it in 'a'..'z' } &&
+                cleaned.none { it.code in 0x0B80..0x0BFF }
+            if (isToday(item.publishedAtMs, nowMs, zone) &&
+                cleaned.length in 14..500 &&
+                validLatin &&
+                key.isNotBlank() &&
+                url != null &&
+                key !in titles &&
+                url !in links
+            ) {
+                titles.add(key)
+                links.add(url)
+                item.copy(title = cleaned)
+            } else {
+                null
+            }
+        }.take(MAX_ITEMS)
+    }
+
     fun nextUnseen(items: List<NewsHeadline>, shown: Set<String>): NewsHeadline? = items.firstOrNull { it.key !in shown }
 
     fun titleKey(title: String): String = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)

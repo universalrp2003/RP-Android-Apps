@@ -269,6 +269,8 @@ fun HomeScreen(
                 onHide = { vm.toggleTamilInfoVisibility() },
                 onRefresh = { vm.loadTamilInfoStrip(force = true) },
                 onSpeak = { text -> vm.speakTamilText(text) },
+                onReadTopNews = { vm.readTodaysNewsNow() },
+                onStopSpeaking = { vm.stopSpeakingNow() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -607,6 +609,8 @@ fun TamilInfoStrip(
     onShown: (String) -> Unit,
     isPaused: Boolean, onTogglePause: () -> Unit, onHide: () -> Unit,
     onRefresh: () -> Unit, onSpeak: (String) -> Unit,
+    onReadTopNews: () -> Unit = {},
+    onStopSpeaking: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     var currentKey by remember { mutableStateOf<String?>(null) }
@@ -637,6 +641,18 @@ fun TamilInfoStrip(
         title = { Text(tr("Today's headlines")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onReadTopNews,
+                        colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
+                    ) {
+                        Text(tr("Read today's news"))
+                    }
+                    TextButton(onClick = onStopSpeaking) {
+                        Text(tr("Stop reading"))
+                    }
+                }
+                HorizontalDivider(color = OutlineC)
                 if (items.isEmpty()) Text(tr(empty))
                 items.take(com.universalrp.cleansweep.data.NewsPolicy.MAX_ITEMS).forEach { item ->
                     Text(item.title, style = MaterialTheme.typography.bodyMedium,
@@ -660,6 +676,11 @@ fun TamilInfoStrip(
             // Owner requested headlines only: no publisher/category ribbon and no static security-tip filler.
             Text(headline?.title ?: tr(empty), style = MaterialTheme.typography.bodySmall, color = TextPrimary,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+            IconButton(onClick = onReadTopNews) {
+                Icon(Icons.Outlined.VolumeUp,
+                    contentDescription = tr("Read today's news"), tint = AccentCyan,
+                    modifier = Modifier.size(18.dp))
+            }
             IconButton(onClick = onTogglePause) {
                 Icon(if (isPaused) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
                     contentDescription = tr(if (isPaused) "Resume headlines" else "Pause headlines"), tint = TextSecondary,

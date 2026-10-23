@@ -26,8 +26,11 @@ class MainActivity : ComponentActivity() {
     private var controllerFuture: ListenableFuture<MediaController>? = null
     private val controller = mutableStateOf<MediaController?>(null)
 
-    private val notificationPermission =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val startupPermissions =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            RadioWeatherMonitor.refreshState(this)
+            RadioWeatherMonitor.maybeRunScheduledCheck(this)
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,12 +38,22 @@ class MainActivity : ComponentActivity() {
 
         AudioFx.load(this)
 
-        // Android 13+: the background-player notification needs this.
-        if (Build.VERSION.SDK_INT >= 33 &&
-            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        // Android 13+ notification + optional mobile-tower approximate location for local rain alerts (0% GPS battery drain).
+        val wanted = buildList {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                add(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED
+            ) {
+                add(Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
+        }
+        if (wanted.isNotEmpty()) {
+            startupPermissions.launch(wanted.toTypedArray())
         }
 
         setContent {
@@ -54,6 +67,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        RadioWeatherMonitor.onWindowStart(this)
         if (controllerFuture == null) {
             // Bind to the playback service: this is what keeps the sound going in
             // the background, and what gives us the notification, headset buttons
@@ -71,6 +85,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        RadioWeatherMonitor.onWindowStop()
         controller.value = null
         controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null

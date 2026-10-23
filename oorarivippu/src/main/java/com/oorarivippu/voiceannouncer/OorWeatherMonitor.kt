@@ -32,6 +32,7 @@ object OorWeatherMonitor {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var backgroundJob: Job? = null
     private var activeVoiceJob: Job? = null
+    @Volatile private var windowOpen: Boolean = false
 
     private val _state = MutableStateFlow(SharedWeatherState())
     val state: StateFlow<SharedWeatherState> = _state.asStateFlow()
@@ -40,6 +41,20 @@ object OorWeatherMonitor {
     val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
 
     private fun isTamil(): Boolean = AppPreferences.state.value.appLanguage != "en"
+
+    private fun isActiveScope(): Boolean =
+        windowOpen || AppPreferences.state.value.isTrackingEnabled
+
+    fun onWindowStart(context: Context) {
+        windowOpen = true
+        val app = context.applicationContext
+        refreshState(app)
+        maybeRunScheduledCheck(app)
+    }
+
+    fun onWindowStop() {
+        windowOpen = false
+    }
 
     private fun destinationFallbackCandidate(): WeatherPlaceCandidate? {
         val prefs = AppPreferences.state.value
@@ -124,6 +139,7 @@ object OorWeatherMonitor {
 
     fun maybeRunScheduledCheck(context: Context) {
         val app = context.applicationContext
+        if (!isActiveScope()) return
         if (!SharedWeatherRuntime.isEnabled(app)) return
         if (_state.value.checkingNow) return
         if (System.currentTimeMillis() < SharedWeatherRuntime.nextCheckAfterMs(app)) return
@@ -181,7 +197,7 @@ object OorWeatherMonitor {
             }
 
             val decision = result.getOrNull()
-            if (decision != null && decision.shouldAnnounce) {
+            if (decision != null && decision.shouldAnnounce && (manual || isActiveScope())) {
                 SharedWeatherRuntime.postWeatherNotification(
                     context = app,
                     smallIconRes = android.R.drawable.ic_dialog_info,

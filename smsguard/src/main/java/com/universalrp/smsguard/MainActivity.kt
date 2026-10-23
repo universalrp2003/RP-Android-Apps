@@ -425,13 +425,26 @@ class MainActivity : ComponentActivity() {
                                         .padding(horizontal = 7.dp, vertical = 5.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(
-                                        if (prefs.tamil) "EN" else "த",
-                                        color = palette.accent,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 11.5.sp,
-                                        maxLines = 1,
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                    ) {
+                                        Text(
+                                            "தமிழ்",
+                                            color = if (prefs.tamil) palette.accent else palette.textMuted,
+                                            fontWeight = if (prefs.tamil) FontWeight.ExtraBold else FontWeight.Medium,
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                        )
+                                        Text("|", color = palette.textMuted, fontSize = 10.sp, maxLines = 1)
+                                        Text(
+                                            "ENG",
+                                            color = if (!prefs.tamil) palette.accent else palette.textMuted,
+                                            fontWeight = if (!prefs.tamil) FontWeight.ExtraBold else FontWeight.Medium,
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                        )
+                                    }
                                 }
                                 IconButton(
                                     onClick = { vm.openGuide(true) },

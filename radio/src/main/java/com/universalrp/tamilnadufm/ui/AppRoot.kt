@@ -133,7 +133,7 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
         com.universalrp.weather.SharedWeatherControlDialog(
             state = weather,
             tamil = isTamil,
-            allowGps = false,
+            allowGps = true,
             accentColor = Saffron,
             ducksMusicNote = true,
             onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
