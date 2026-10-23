@@ -9,6 +9,7 @@ data class AnnouncementSettingsSnapshot(
     val readFullNormalSmsEnabled: Boolean = true,
     val shortEveryMessageEnabled: Boolean = false,
     val mutePromoVoice: Boolean = true,
+    val muteServiceInfoVoice: Boolean = true,
 )
 
 /**
@@ -149,6 +150,14 @@ object SmsAnnouncementPlanner {
             }
         }
 
+        // RULE 7.5: Routine telecom data / validity / remaining-SMS status dumps (e.g. "Pack Valid
+        // till 10 Dec 2026. Remaining SMS:569 Bal:Rs.0.00.") stay SILENT when the owner turns this ON.
+        // Placed AFTER the verified bank credit/debit announcer (RULE 7) so the exact received/spent
+        // amount is NEVER silenced, and AFTER the scam-link / fake-payment alerts so danger still warns.
+        if (settings.muteServiceInfoVoice && ServiceInfoDetector.isServiceInfo(body)) {
+            return null
+        }
+
         // RULE 8: Full Readout for Ordinary Messages (non-bank, non-OTP) OR Short Every-Message Summary
         if (!settings.readFullNormalSmsEnabled && !settings.shortEveryMessageEnabled && !allLinksSafe) {
             return null
@@ -214,6 +223,14 @@ object SmsAnnouncementPlanner {
     private fun cleanFullNormalBody(rawBody: String, tamil: Boolean = false): String {
         var text = rawBody
             .replace(Regex("https?://\\S+", RegexOption.IGNORE_CASE), "")
+            // NEVER read the total / available bank balance aloud — only the received or spent amount matters.
+            .replace(
+                Regex(
+                    "\\b(?:avl\\.?\\s*bal(?:ance)?|available\\s+balance|clear\\s+bal(?:ance)?|closing\\s+bal(?:ance)?|bal(?:ance)?)\\s*[:\\-]?\\s*(?:rs\\.?|inr|₹)?\\s*[0-9][0-9,]*(?:\\.[0-9]{1,2})?",
+                    RegexOption.IGNORE_CASE,
+                ),
+                "",
+            )
             // Expand Ration Shop (PDS) & Indian currency / unit shorthand into natural human speech!
             .replace(Regex("\\bPDS\\s+Bill\\s+[0-9]{10,20}\\b", RegexOption.IGNORE_CASE), if (tamil) "பொருள் விவரம்:" else "Ration bill items:")
             .replace(Regex("\\bP\\.?\\s*Oil\\b", RegexOption.IGNORE_CASE), if (tamil) "பாமாயில்" else "Palm Oil")

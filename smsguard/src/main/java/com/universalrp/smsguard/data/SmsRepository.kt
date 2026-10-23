@@ -42,6 +42,11 @@ data class SimCardInfo(
     val label: String,
 )
 
+data class RecentContact(
+    val name: String,
+    val number: String,
+)
+
 data class EnrichedSmsMessage(
     val id: Long,
     val threadId: Long,
@@ -190,6 +195,52 @@ object SmsRepository {
 
     fun clearContactCache() {
         contactCache.clear()
+    }
+
+    /**
+     * Loads the phone's most frequent / recently contacted people (with a phone number) so the
+     * New SMS composer can offer one-tap recipients instead of forcing the system contact picker.
+     * Returns an empty list when the READ_CONTACTS permission has not been granted.
+     */
+    fun loadRecentContacts(context: Context, limit: Int = 40): List<RecentContact> {
+        if (!hasContactsPermission(context)) return emptyList()
+        return try {
+            val projection = arrayOf(
+                ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+                ContactsContract.CommonDataKinds.Phone.NUMBER,
+                ContactsContract.CommonDataKinds.Phone.TIMES_CONTACTED,
+                ContactsContract.CommonDataKinds.Phone.LAST_TIME_CONTACTED,
+            )
+            val selection = "${ContactsContract.CommonDataKinds.Phone.HAS_PHONE_NUMBER} > 0"
+            val sortOrder =
+                "${ContactsContract.CommonDataKinds.Phone.TIMES_CONTACTED} DESC, " +
+                    "${ContactsContract.CommonDataKinds.Phone.LAST_TIME_CONTACTED} DESC, " +
+                    "${ContactsContract.CommonDataKinds.Phone._ID} DESC"
+            val out = ArrayList<RecentContact>()
+            val seen = HashSet<String>()
+            context.contentResolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                projection,
+                selection,
+                null,
+                sortOrder,
+            )?.use { c ->
+                val nameIdx = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME)
+                val numIdx = c.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                if (nameIdx < 0 || numIdx < 0) return@use
+                while (c.moveToNext() && out.size < limit) {
+                    val number = c.getString(numIdx)?.trim().orEmpty()
+                    if (number.isEmpty()) continue
+                    val normalized = SenderIdentityEngine.normalizeThreadKey(number)
+                    if (!seen.add(normalized)) continue
+                    val name = c.getString(nameIdx)?.trim().orEmpty().ifEmpty { number }
+                    out.add(RecentContact(name = name, number = number))
+                }
+            }
+            out
+        } catch (_: Throwable) {
+            emptyList()
+        }
     }
 
     /**
@@ -527,19 +578,32 @@ object SmsRepository {
         subId: Int,
     ): Long {
         if (!isDefaultSmsApp(context)) return -1L
-        return runCatching {
-            val values = ContentValues().apply {
-                put(Telephony.Sms.ADDRESS, address)
-                put(Telephony.Sms.BODY, body)
-                put(Telephony.Sms.DATE, timestampMs)
-                put(Telephony.Sms.DATE_SENT, timestampMs)
-                put(Telephony.Sms.READ, 0)
-                put(Telephony.Sms.SEEN, 0)
-                if (subId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subId)
+        // Some OEM SMS providers (ColorOS / MIUI / One UI) occasionally reject the very first write
+        // right after a bulk delete; one short retry keeps genuine messages from being dropped.
+        repeat(2) { attempt ->
+            val id = runCatching {
+                val values = ContentValues().apply {
+                    put(Telephony.Sms.ADDRESS, address)
+                    put(Telephony.Sms.BODY, body)
+                    put(Telephony.Sms.DATE, timestampMs)
+                    put(Telephony.Sms.DATE_SENT, timestampMs)
+                    put(Telephony.Sms.READ, 0)
+                    put(Telephony.Sms.SEEN, 0)
+                    if (subId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subId)
+                }
+                val uri = context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
+                uri?.lastPathSegment?.toLongOrNull() ?: -1L
+            }.getOrDefault(-1L)
+            if (id > 0) return id
+            if (attempt == 0) {
+                try {
+                    Thread.sleep(200L)
+                } catch (_: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                }
             }
-            val uri = context.contentResolver.insert(Telephony.Sms.Inbox.CONTENT_URI, values)
-            uri?.lastPathSegment?.toLongOrNull() ?: -1L
-        }.getOrDefault(-1L)
+        }
+        return -1L
     }
 
     fun sendSmsMessage(

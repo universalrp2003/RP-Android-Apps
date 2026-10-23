@@ -12,6 +12,7 @@ import com.universalrp.smsguard.data.SimCardInfo
 import com.universalrp.smsguard.data.SmsEvents
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.data.SmsThreadSummary
+import com.universalrp.smsguard.data.SenderMutePref
 import com.universalrp.smsguard.engine.DltCategory
 import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.LinkScanResult
@@ -35,6 +36,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.YearMonth
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 enum class MainTab { MESSAGES, SHIELD, FINANCE, CONTROLS }
 enum class InboxFilter { ALL, PERSONAL, BANKS, OTP, LINKS, SCAM, PROMO }
@@ -91,6 +93,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private var targetMessageCap: Int = 1800
     private val refreshMutex = Mutex()
+
+    // Threads whose message notification we've already cleared this session (avoids repeat cancels).
+    private val clearedNotificationKeys = ConcurrentHashMap.newKeySet<String>()
     @Volatile
     private var refreshQueuedAgain: Boolean = false
 
@@ -281,6 +286,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun openThread(threadKey: String?) {
         _openThreadKey.value = threadKey
         if (threadKey != null) {
+            // Opening a conversation clears its "new message" notification immediately.
+            IncomingSmsProcessor.cancelThreadNotification(getApplication(), threadKey)
             val thread = _threads.value.firstOrNull { it.threadKey == threadKey }
             if (thread != null) {
                 viewModelScope.launch(Dispatchers.IO) {
@@ -306,7 +313,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _statusBanner.value = text
     }
 
-    fun refreshAll(scanUncheckedLinksOnline: Boolean = false) {
+    fun refreshAll(scanUncheckedLinksOnline: Boolean = false, linkScanIsManual: Boolean = false) {
         val ctx = getApplication<Application>()
         _isDefaultSms.value = SmsRepository.isDefaultSmsApp(ctx)
         _hasReadSms.value = SmsRepository.hasReadSmsPermission(ctx)
@@ -350,10 +357,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _threads.value = fullThreads
                     _hasMoreMessages.value = SmsRepository.lastLoadHasMoreMessages
                     _isLoading.value = false
+                    syncThreadNotifications(fullThreads)
                 } while (refreshQueuedAgain)
 
                 if (scanUncheckedLinksOnline) {
-                    verifyUncheckedInboxLinksInBackground()
+                    verifyUncheckedInboxLinksInBackground(isManual = linkScanIsManual)
                 }
             } finally {
                 _isLoading.value = false
@@ -367,19 +375,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         refreshAll(scanUncheckedLinksOnline = false)
     }
 
-    fun verifyUncheckedInboxLinksInBackground() {
+    /**
+     * Keeps the notification shade consistent with the inbox: once a conversation has no unread
+     * messages (read here, or read/deleted in another SMS app), its lingering "new SMS" notification
+     * is cleared exactly once. Unread conversations keep their notification and are re-armed.
+     */
+    private fun syncThreadNotifications(threads: List<SmsThreadSummary>) {
+        val ctx = getApplication<Application>()
+        for (t in threads) {
+            if (t.unreadCount > 0) {
+                clearedNotificationKeys.remove(t.threadKey)
+            } else if (clearedNotificationKeys.add(t.threadKey)) {
+                IncomingSmsProcessor.cancelThreadNotification(ctx, t.threadKey)
+            }
+        }
+    }
+
+    fun verifyUncheckedInboxLinksInBackground(isManual: Boolean = false) {
         val ctx = getApplication<Application>()
         val prefs = prefsFlow.value
         viewModelScope.launch(Dispatchers.IO) {
             val online = SmsRepository.hasValidatedInternet(ctx)
             _isOnline.value = online
             if (!prefs.internetEnabled || !online) {
-                val msg = if (prefs.tamil) {
-                    "இணையம் இல்லாததால் இப்போது சரிபார்க்க முடியவில்லை — இணையம் வந்தவுடன் தானாகச் சரிபார்க்கப்படும்."
-                } else {
-                    "Cannot verify right now (offline or internet switch OFF). Will auto-verify once connected."
+                // Auto background scans (app resume) stay SILENT here so opening SMS Guard never pops
+                // a "cannot verify" toast; only an explicit user-triggered scan reports back.
+                if (isManual) {
+                    val msg = if (prefs.tamil) {
+                        "இணையம் இல்லாததால் இப்போது சரிபார்க்க முடியவில்லை — இணையம் வந்தவுடன் தானாகச் சரிபார்க்கப்படும்."
+                    } else {
+                        "Cannot verify right now (offline or internet switch OFF). Will auto-verify once connected."
+                    }
+                    _statusBanner.value = msg
                 }
-                _statusBanner.value = msg
                 return@launch
             }
             val apiKey = GuardSettingsStore.getSafeBrowsingApiKey(ctx)
@@ -396,8 +424,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             if (unchecked.isEmpty()) {
                 NetworkReconnectMonitor.drainPendingQueueNow(ctx, announceVoice = true)
-                val msg = if (prefs.tamil) "அனைத்து இணைப்புகளும் சரிபார்க்கப்பட்டன ✓" else "All recent SMS links are verified ✓"
-                _statusBanner.value = msg
+                // Only surface "all verified" for a deliberate manual scan — never on every app open.
+                if (isManual) {
+                    val msg = if (prefs.tamil) "அனைத்து இணைப்புகளும் சரிபார்க்கப்பட்டன ✓" else "All recent SMS links are verified ✓"
+                    _statusBanner.value = msg
+                }
                 return@launch
             }
 
@@ -417,10 +448,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             NetworkReconnectMonitor.drainPendingQueueNow(ctx, announceVoice = true)
             refreshAll()
             val unsafeCount = updated.count { it.verdict == LinkVerdict.UNSAFE }
-            _statusBanner.value = if (prefs.tamil) {
-                "${updated.size} இணைப்புகள் சரிபார்க்கப்பட்டன · ஆபத்தானவை: $unsafeCount"
-            } else {
-                "Verified ${updated.size} links · Unsafe threats caught: $unsafeCount"
+            // Danger is always reported; a plain "verified N" summary only for a manual scan.
+            if (isManual || unsafeCount > 0) {
+                _statusBanner.value = if (prefs.tamil) {
+                    "${updated.size} இணைப்புகள் சரிபார்க்கப்பட்டன · ஆபத்தானவை: $unsafeCount"
+                } else {
+                    "Verified ${updated.size} links · Unsafe threats caught: $unsafeCount"
+                }
             }
         }
     }
@@ -508,10 +542,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun deleteMessage(messageId: Long) {
+    fun deleteMessage(message: EnrichedSmsMessage) {
         val ctx = getApplication<Application>()
         viewModelScope.launch(Dispatchers.IO) {
-            SmsRepository.deleteMessageById(ctx, messageId)
+            SmsRepository.deleteMessageById(ctx, message.id)
+            // Remove any lingering notification for this conversation so a deleted message
+            // never leaves a stale "new SMS" alert in the shade.
+            IncomingSmsProcessor.cancelThreadNotification(ctx, message.threadKey)
             refreshAll()
         }
     }
@@ -520,9 +557,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val ctx = getApplication<Application>()
         viewModelScope.launch(Dispatchers.IO) {
             SmsRepository.deleteThreadMessages(ctx, thread.messages)
+            IncomingSmsProcessor.cancelThreadNotification(ctx, thread.threadKey)
             _openThreadKey.value = null
             refreshAll()
         }
+    }
+
+    // --- Per-sender Notification / Voice / Block controls ---
+
+    fun senderMutePref(key: String): SenderMutePref? =
+        GuardSettingsStore.senderMuteFor(getApplication(), key)
+
+    private fun upsertSenderMute(key: String, displayName: String, transform: (SenderMutePref) -> SenderMutePref) {
+        val ctx = getApplication<Application>()
+        val base = GuardSettingsStore.senderMuteFor(ctx, key)
+            ?: SenderMutePref(key = key, displayName = displayName)
+        GuardSettingsStore.setSenderMute(ctx, transform(base.copy(displayName = displayName.ifBlank { base.displayName })))
+        refreshAll()
+    }
+
+    fun setSenderNotificationsMuted(key: String, displayName: String, muted: Boolean) {
+        // Turning notifications ON again must clear an all-off state so the pref stays meaningful.
+        upsertSenderMute(key, displayName) {
+            if (muted) it.copy(muteNotifications = true) else it.copy(muteNotifications = false)
+        }
+    }
+
+    fun setSenderVoiceMuted(key: String, displayName: String, muted: Boolean) {
+        upsertSenderMute(key, displayName) {
+            if (muted) it.copy(muteVoice = true) else it.copy(muteVoice = false)
+        }
+    }
+
+    fun setSenderBlocked(key: String, displayName: String, blocked: Boolean) {
+        val ctx = getApplication<Application>()
+        if (blocked) {
+            GuardSettingsStore.setSenderMute(
+                ctx,
+                SenderMutePref(
+                    key = key,
+                    displayName = displayName,
+                    muteNotifications = true,
+                    muteVoice = true,
+                    blocked = true,
+                ),
+            )
+            IncomingSmsProcessor.cancelThreadNotification(ctx, key)
+        } else {
+            GuardSettingsStore.removeSenderMute(ctx, key)
+        }
+        refreshAll()
+    }
+
+    fun clearSenderMute(key: String) {
+        GuardSettingsStore.removeSenderMute(getApplication(), key)
+        refreshAll()
+    }
+
+    fun setMuteServiceInfoVoice(enabled: Boolean) {
+        GuardSettingsStore.updateMuteServiceInfoVoice(getApplication(), enabled)
     }
 
     fun copyOtp(code: String) {
@@ -566,6 +659,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                 shortEveryMessageEnabled = true,
                 mutePromoVoice = false,
+                muteServiceInfoVoice = prefs.muteServiceInfoVoice,
             ),
         )
         if (script != null) {
@@ -861,7 +955,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         query: String,
     ): List<SmsThreadSummary> {
         val q = query.trim().lowercase()
+        val blockedKeys = prefsFlow.value.mutedSenders
+            .filter { it.blocked }
+            .map { it.key }
+            .toSet()
         return threads.filter { t ->
+            // Blocked senders are hidden from the inbox entirely.
+            if (t.threadKey in blockedKeys) return@filter false
             val latest = t.latestMessage
             val matchesFilter = when (filter) {
                 InboxFilter.ALL -> true

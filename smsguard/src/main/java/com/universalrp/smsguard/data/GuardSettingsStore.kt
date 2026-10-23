@@ -28,6 +28,24 @@ data class QueuedSleepAnnouncement(
     val scriptEn: String,
 )
 
+/**
+ * Per-sender notification / voice / block preference (keyed by the thread's normalized address,
+ * e.g. a DLT header like "TNEPDS" or a personal number like "+919876543210").
+ *
+ *  - [muteNotifications]: stop the system notification for this sender (danger alerts still break through).
+ *  - [muteVoice]: never speak this sender's messages aloud.
+ *  - [blocked]: fully hide this sender from the inbox and never store/announce/notify it.
+ */
+data class SenderMutePref(
+    val key: String,
+    val displayName: String = "",
+    val muteNotifications: Boolean = true,
+    val muteVoice: Boolean = true,
+    val blocked: Boolean = false,
+) {
+    val isActive: Boolean get() = muteNotifications || muteVoice || blocked
+}
+
 data class GuardPrefs(
     val tamil: Boolean = true,
     val internetEnabled: Boolean = true,
@@ -56,6 +74,8 @@ data class GuardPrefs(
     val userAccounts: List<UserAccountProfile> = emptyList(),
     val excludedFinanceIds: Set<Long> = emptySet(),
     val pendingQueueCount: Int = 0,
+    val mutedSenders: List<SenderMutePref> = emptyList(),
+    val muteServiceInfoVoice: Boolean = true, // Silence routine data/validity/SMS-balance readouts by default
 )
 
 object GuardSettingsStore {
@@ -64,6 +84,7 @@ object GuardSettingsStore {
     private const val SECRET_FINANCE_PIN_HASH = "finance_lock_pin_sha256_v1"
     private const val KEY_LINK_CACHE = "cached_links_v3"
     private const val KEY_SLEEP_QUEUE = "sleep_voice_queue_v1"
+    private const val KEY_MUTED_SENDERS = "muted_senders_v1"
 
     private val _state = MutableStateFlow(GuardPrefs())
     val state: StateFlow<GuardPrefs> = _state.asStateFlow()
@@ -146,6 +167,8 @@ object GuardSettingsStore {
             userAccounts = accounts,
             excludedFinanceIds = excluded,
             pendingQueueCount = queueSize,
+            mutedSenders = parseMutedSenders(p.getString(KEY_MUTED_SENDERS, null)),
+            muteServiceInfoVoice = p.getBoolean("mute_service_info_voice", true),
         )
     }
 
@@ -193,6 +216,76 @@ object GuardSettingsStore {
     fun updateMutePromoVoice(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean("mute_promo_voice", enabled).apply()
         reload(context)
+    }
+
+    fun updateMuteServiceInfoVoice(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("mute_service_info_voice", enabled).apply()
+        reload(context)
+    }
+
+    // --- Per-sender Notification / Voice / Block preferences ---
+
+    fun getMutedSenders(context: Context): List<SenderMutePref> =
+        ensureLoaded(context).mutedSenders
+
+    fun senderMuteFor(context: Context, key: String): SenderMutePref? {
+        if (key.isBlank()) return null
+        return ensureLoaded(context).mutedSenders.firstOrNull { it.key == key }
+    }
+
+    /** Upserts a per-sender preference, dropping it entirely when it becomes inactive. */
+    @Synchronized
+    fun setSenderMute(context: Context, pref: SenderMutePref) {
+        val current = ensureLoaded(context).mutedSenders.toMutableList()
+        current.removeAll { it.key == pref.key }
+        if (pref.isActive) current.add(pref)
+        writeMutedSenders(context, current)
+    }
+
+    @Synchronized
+    fun removeSenderMute(context: Context, key: String) {
+        val current = ensureLoaded(context).mutedSenders.filterNot { it.key == key }
+        writeMutedSenders(context, current)
+    }
+
+    private fun writeMutedSenders(context: Context, list: List<SenderMutePref>) {
+        val arr = JSONArray()
+        for (m in list) {
+            arr.put(
+                JSONObject()
+                    .put("key", m.key)
+                    .put("displayName", m.displayName)
+                    .put("muteNotifications", m.muteNotifications)
+                    .put("muteVoice", m.muteVoice)
+                    .put("blocked", m.blocked),
+            )
+        }
+        prefs(context).edit().putString(KEY_MUTED_SENDERS, arr.toString()).apply()
+        reload(context)
+    }
+
+    private fun parseMutedSenders(raw: String?): List<SenderMutePref> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            buildList {
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val key = o.optString("key")
+                    if (key.isNotBlank()) {
+                        add(
+                            SenderMutePref(
+                                key = key,
+                                displayName = o.optString("displayName"),
+                                muteNotifications = o.optBoolean("muteNotifications", true),
+                                muteVoice = o.optBoolean("muteVoice", true),
+                                blocked = o.optBoolean("blocked", false),
+                            ),
+                        )
+                    }
+                }
+            }
+        }.getOrDefault(emptyList())
     }
 
     fun updateExcludeSelfTransfers(context: Context, enabled: Boolean) {

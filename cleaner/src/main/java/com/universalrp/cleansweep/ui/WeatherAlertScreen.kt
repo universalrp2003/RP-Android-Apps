@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -66,10 +67,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.Screen
 import com.universalrp.cleansweep.UiState
+import com.universalrp.cleansweep.data.RainTimelinePoint
 import com.universalrp.cleansweep.data.WeatherUiSnapshot
 import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.ui.theme.AccentCyan
@@ -356,6 +359,11 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         )
                     }
                 }
+            }
+
+            // 1.5 Detailed rain window (current conditions + Next Precipitation chart + cyclone banner)
+            if (w.enabled && w.locationMode != LocationResolutionMode.NEEDS_SAVED_PLACE && w.lastCheckedAtMs > 0L) {
+                RainDetailsCard(w = w)
             }
 
             // 2. Smart Location Card (Automatic GPS when ON -> Oor Arivippu PIN/Town Picker when OFF)
@@ -683,6 +691,249 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
             }
 
             Spacer(Modifier.height(16.dp))
+        }
+    }
+}
+
+/**
+ * Detailed rain window shown on the Weather screen after a check has run: current conditions,
+ * a "Next Precipitation" 2-hour intensity chart, a rain-starts-in headline, and an active
+ * cyclone/storm warning banner. Fully data-driven from the persisted nowcast snapshot
+ * (no radar-map dependency).
+ */
+@Composable
+private fun RainDetailsCard(w: WeatherUiSnapshot) {
+    val accent = when (w.severity) {
+        WeatherSeverity.CYCLONE_SEVERE -> DangerRed
+        WeatherSeverity.VERY_HEAVY_RAIN -> WarnAmber
+        WeatherSeverity.RAIN_SOON -> AccentCyan
+        WeatherSeverity.CLEAR_OR_NORMAL -> GoodGreen
+    }
+    PanelCard(Modifier.fillMaxWidth()) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = if (w.severity.bypassQuietHours) Icons.Outlined.Thunderstorm else Icons.Outlined.Cloud,
+                    contentDescription = null,
+                    tint = accent,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    tr("Rain details"),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+
+            val mins = w.minutesUntilRain
+            val headline = when {
+                mins != null && mins <= 0 -> tr("Raining now")
+                mins != null -> tr("Rain will start in about %d min", mins)
+                else -> tr("No rain in the next 2 hours")
+            }
+            Text(
+                headline,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                color = accent,
+            )
+
+            Text(
+                tr("Current conditions"),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextSecondary,
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ConditionChip(
+                    label = tr("Temperature"),
+                    value = w.temperatureC?.let { String.format(java.util.Locale.US, "%.0f°C", it) } ?: "—",
+                    modifier = Modifier.weight(1f),
+                )
+                ConditionChip(
+                    label = tr("Cloud cover"),
+                    value = w.cloudCoverPercent?.let { "$it%" } ?: "—",
+                    modifier = Modifier.weight(1f),
+                )
+                ConditionChip(
+                    label = tr("Wind gust"),
+                    value = if (w.peakWindGustKmh > 0.0) String.format(java.util.Locale.US, "%.0f km/h", w.peakWindGustKmh) else "—",
+                    modifier = Modifier.weight(1f),
+                )
+                ConditionChip(
+                    label = tr("Rain now"),
+                    value = String.format(java.util.Locale.US, "%.1f mm/h", w.currentPrecipMmPerHour),
+                    modifier = Modifier.weight(1f),
+                )
+            }
+
+            Text(
+                tr("Next precipitation (next 2 hours)"),
+                style = MaterialTheme.typography.labelMedium,
+                color = TextSecondary,
+            )
+            if (w.timeline.isEmpty()) {
+                Text(
+                    tr("No rain in the next 2 hours"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondary,
+                )
+            } else {
+                PrecipitationChart(points = w.timeline)
+                val peak = w.timeline.maxOfOrNull { it.precipMmPerHour } ?: 0.0
+                Text(
+                    tr("Peak: %.1f mm/h", peak),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+            }
+
+            val cyclone = w.cyclone
+            if (cyclone != null) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = DangerRed.copy(alpha = 0.12f),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Outlined.Warning,
+                            contentDescription = null,
+                            tint = DangerRed,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                tr("Cyclone / storm warning"),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = DangerRed,
+                            )
+                            val detail = buildString {
+                                if (cyclone.eventName.isNotBlank()) append(cyclone.eventName)
+                                if (cyclone.alertLevel.isNotBlank()) {
+                                    if (isNotEmpty()) append(" · ")
+                                    append(cyclone.alertLevel)
+                                }
+                                if (cyclone.distanceKm > 0.0) {
+                                    append(" · ~")
+                                    append(cyclone.distanceKm.toInt())
+                                    append(" km")
+                                }
+                                if (cyclone.maxWindKmh > 0.0) {
+                                    append(" · ")
+                                    append(cyclone.maxWindKmh.toInt())
+                                    append(" km/h")
+                                }
+                            }
+                            if (detail.isNotBlank()) {
+                                Text(
+                                    detail,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ConditionChip(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = SurfaceHigh,
+        modifier = modifier,
+    ) {
+        Column(
+            Modifier.padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                color = TextSecondary,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(2.dp))
+            Text(
+                value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = TextPrimary,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PrecipitationChart(points: List<RainTimelinePoint>) {
+    val maxPrecip = (points.maxOfOrNull { it.precipMmPerHour } ?: 0.0).coerceAtLeast(1.0)
+    Column(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(64.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.Bottom,
+        ) {
+            points.forEach { pt ->
+                val frac = (pt.precipMmPerHour / maxPrecip).toFloat().coerceIn(0.03f, 1f)
+                val barColor = when {
+                    pt.precipMmPerHour >= 15.0 -> DangerRed
+                    pt.precipMmPerHour >= 4.0 -> WarnAmber
+                    pt.precipMmPerHour >= 0.3 -> AccentCyan
+                    else -> GoodGreen
+                }
+                Box(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight(frac)
+                        .clip(RoundedCornerShape(topStart = 3.dp, topEnd = 3.dp))
+                        .background(barColor.copy(alpha = 0.85f)),
+                )
+            }
+        }
+        Spacer(Modifier.height(3.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            points.forEach { pt ->
+                val tick = if (pt.minutesAhead % 30 == 0) {
+                    if (pt.minutesAhead == 0) "0" else "+${pt.minutesAhead}"
+                } else {
+                    ""
+                }
+                Text(
+                    tick,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }

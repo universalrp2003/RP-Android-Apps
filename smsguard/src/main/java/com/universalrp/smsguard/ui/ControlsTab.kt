@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universalrp.smsguard.data.GuardPrefs
@@ -149,6 +150,21 @@ fun ControlsTab(
                     onCheckedChange = { vm.setMutePromoVoice(it) },
                 )
                 ToggleRowItem(
+                    title = if (prefs.tamil) {
+                        "📊 தரவு / சொந்த / செல்லுபடி செய்திகளை அமைதியாக வை"
+                    } else {
+                        "📊 Silence Data / Balance / Validity Service SMS"
+                    },
+                    subtitle = if (prefs.tamil) {
+                        "\"Pack Valid till… Remaining SMS… Bal:Rs…\" போன்ற நெட்வொர்க் நிலைச் செய்திகளை குரலிலும் அறிவிப்பிலும் தெரிவிக்காது (இன்பாக்ஸில் மட்டும் காட்டும்). உண்மையான வங்கி வரவு/செலவு எப்போதும் அறிவிக்கப்படும்."
+                    } else {
+                        "Keeps routine operator status texts (\"Pack Valid till… Remaining SMS… Bal:Rs…\") out of voice & notifications (still shown in the inbox). Real bank credits/debits always still announce."
+                    },
+                    checked = prefs.muteServiceInfoVoice,
+                    palette = palette,
+                    onCheckedChange = { vm.setMuteServiceInfoVoice(it) },
+                )
+                ToggleRowItem(
                     title = if (prefs.tamil) "வரவு-செலவு பாதுகாப்பு பூட்டு (கைரேகை / கடவுச்சொல்)" else "Finance Privacy Lock (Biometric / Password)",
                     subtitle = if (prefs.tamil) {
                         "வரவு-செலவு பகுதியைத் திறக்கும் முன் கைரேகை அல்லது கடவுச்சொல் சரிபார்க்கும்"
@@ -160,6 +176,76 @@ fun ControlsTab(
                     onCheckedChange = { vm.setFinanceLockEnabled(it) },
                 )
                 Text("🔐 ${ui.otpSilentBadge}", color = palette.safeGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+
+        // 1a. Blocked & Muted Senders management (per-sender notification / voice / block)
+        item {
+            val mutedSenders = prefs.mutedSenders
+            SectionCard(palette = palette) {
+                Text(
+                    if (prefs.tamil) "🚫 தடுக்கப்பட்ட & அமைதியாக்கப்பட்ட அனுப்புநர்கள்" else "🚫 Blocked & Muted Senders",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.5.sp,
+                    color = palette.accent,
+                )
+                Text(
+                    if (prefs.tamil) {
+                        "செய்திகள் தாவலில் ஒவ்வொரு அனுப்புநரின் ⋮ மெனுவிலிருந்து அறிவிப்பு/குரல் நிறுத்தம் அல்லது முழு தடையை அமைக்கலாம். இங்கே மீண்டும் மாற்றலாம்."
+                    } else {
+                        "Set notification / voice mute or a full block from any conversation's ⋮ menu. Restore any sender here."
+                    },
+                    color = palette.textMuted,
+                    fontSize = 11.5.sp,
+                    lineHeight = 16.sp,
+                )
+                if (mutedSenders.isEmpty()) {
+                    Text(
+                        if (prefs.tamil) "தடுக்கப்பட்ட அனுப்புநர்கள் யாரும் இல்லை ✓" else "No blocked or muted senders ✓",
+                        color = palette.safeGreen,
+                        fontSize = 12.5.sp,
+                    )
+                } else {
+                    mutedSenders.forEach { pref ->
+                        val stateLabel = buildString {
+                            if (pref.blocked) {
+                                append(if (prefs.tamil) "முழு தடை" else "Blocked")
+                            } else {
+                                if (pref.muteNotifications) append(if (prefs.tamil) "அறிவிப்பு நிறுத்தம்" else "Notifications off")
+                                if (pref.muteNotifications && pref.muteVoice) append(" · ")
+                                if (pref.muteVoice) append(if (prefs.tamil) "குரல் நிறுத்தம்" else "Voice off")
+                            }
+                        }.ifEmpty { if (prefs.tamil) "அமைதி" else "Muted" }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = pref.displayName.ifBlank { pref.key },
+                                    color = palette.textPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(stateLabel, color = palette.textMuted, fontSize = 11.sp)
+                            }
+                            OutlinedButton(
+                                onClick = { vm.clearSenderMute(pref.key) },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                            ) {
+                                Text(
+                                    if (prefs.tamil) "மீட்டமை" else "Restore",
+                                    color = palette.accent,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
 

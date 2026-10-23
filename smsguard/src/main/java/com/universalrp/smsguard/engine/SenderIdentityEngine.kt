@@ -406,10 +406,14 @@ object SenderIdentityEngine {
         }
 
         // Determine if sender is genuinely eligible to record real financial debits/credits:
-        // NEVER promotional (-P), NEVER personal SIM, ONLY known bank/UPI OR carrier-verified -T transactional bank header.
+        // NEVER promotional (-P), NEVER personal SIM, ONLY known bank/UPI brand (any category) OR a
+        // carrier-verified -T transactional header whose body/template looks like a bank alert.
+        // The body-bank-name hint is deliberately limited to -T transactional headers: real money
+        // alerts are transactional per TRAI, so a -S/-G header merely *naming* a bank cannot be
+        // spoofed into announcing money that never arrived.
         val isVerifiedFinancial = category != DltCategory.PROMOTIONAL && (
             (brand?.isFinancial == true) ||
-                bodyBankHint != null ||
+                (category == DltCategory.TRANSACTIONAL && bodyBankHint != null) ||
                 (category == DltCategory.TRANSACTIONAL && looksLikeBankHeaderOrTemplate(code, lowerBody))
             )
 
