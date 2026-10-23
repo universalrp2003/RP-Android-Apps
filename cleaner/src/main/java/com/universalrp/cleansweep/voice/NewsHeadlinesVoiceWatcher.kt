@@ -16,6 +16,7 @@ import com.universalrp.cleansweep.data.NewsHeadline
 import com.universalrp.cleansweep.data.NewsPolicy
 import com.universalrp.cleansweep.data.NewsSpeechSanitizer
 import com.universalrp.cleansweep.data.TamilInfoStripRepo
+import com.universalrp.cleansweep.data.WeatherAlertStore
 import com.universalrp.updates.CallGuard
 import java.time.Instant
 import java.time.ZoneId
@@ -178,7 +179,8 @@ object NewsHeadlinesVoiceWatcher {
         )
         if (freshBatch.isEmpty()) return false
 
-        val script = NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
+        val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
+        val script = prependWeatherSafetyLead(app, newsScript, tamil)
         if (script.isBlank()) return false
 
         return Announcer.speakNewsBulletinAndWait(
@@ -217,10 +219,24 @@ object NewsHeadlinesVoiceWatcher {
             )
         }
         if (batch.isEmpty()) return 0
-        val script = NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
+        val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
+        val script = prependWeatherSafetyLead(app, newsScript, tamil)
         markHeadlinesAnnounced(app, batch, tamil = tamil)
         Announcer.speakNow(context = app, text = script, language = lang)
         return batch.size
+    }
+
+    /**
+     * Folds an active Very Heavy Rain / Cyclone warning for the user's location into the FRONT of the
+     * news bulletin (bilingual), so the spoken announcement leads with life-safety info. Returns the
+     * original [newsScript] unchanged when no severe weather is active or there is nothing to read.
+     */
+    private fun prependWeatherSafetyLead(context: Context, newsScript: String, tamil: Boolean): String {
+        if (newsScript.isBlank()) return newsScript
+        val lead = runCatching { WeatherAlertStore.readSafetyLeadSpeech(context) }.getOrNull() ?: return newsScript
+        val leadText = (if (tamil) lead.second else lead.first).trim()
+        if (leadText.isBlank()) return newsScript
+        return leadText + " " + newsScript
     }
 }
 

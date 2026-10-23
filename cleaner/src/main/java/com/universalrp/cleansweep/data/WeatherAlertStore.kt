@@ -5,12 +5,17 @@ import android.content.SharedPreferences
 import com.universalrp.cleansweep.ai.AiSecretStorage
 import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.weather.LocationResolutionMode
+import com.universalrp.weather.MinuteRainSample
+import com.universalrp.weather.OfficialCycloneAdvisory
+import com.universalrp.weather.WeatherAlertPolicy
 import com.universalrp.weather.WeatherEpisodeMemory
 import com.universalrp.weather.WeatherNowcastSnapshot
 import com.universalrp.weather.WeatherAlertDecision
 import com.universalrp.weather.WeatherPlaceCandidate
 import com.universalrp.weather.WeatherSeverity
 import com.universalrp.weather.WeatherSourceKind
+import org.json.JSONArray
+import org.json.JSONObject
 
 data class WeatherUiSnapshot(
     val enabled: Boolean = false,
@@ -29,12 +34,32 @@ data class WeatherUiSnapshot(
     val temperatureC: Double? = null,
     val peakPrecipMmPerHour: Double = 0.0,
     val peakWindGustKmh: Double = 0.0,
+    val cloudCoverPercent: Int? = null,
+    val currentPrecipMmPerHour: Double = 0.0,
+    val currentWindGustKmh: Double = 0.0,
+    val timeline: List<RainTimelinePoint> = emptyList(),
+    val cyclone: CycloneInfo? = null,
     val source: WeatherSourceKind = WeatherSourceKind.OPEN_METEO_DEFAULT,
     val previewSeverity: WeatherSeverity? = null,
     val checkingNow: Boolean = false,
     val searchingPlaces: Boolean = false,
     val searchResults: List<WeatherPlaceCandidate> = emptyList(),
     val statusNote: String = "",
+)
+
+/** One bar of the "Next Precipitation" mini-chart: forecast intensity [precipMmPerHour] at [minutesAhead]. */
+data class RainTimelinePoint(
+    val minutesAhead: Int,
+    val precipMmPerHour: Double,
+    val windGustKmh: Double = 0.0,
+)
+
+/** Active official cyclone / severe-storm advisory near the user's location, if any. */
+data class CycloneInfo(
+    val eventName: String,
+    val alertLevel: String,
+    val distanceKm: Double,
+    val maxWindKmh: Double,
 )
 
 /**
@@ -69,6 +94,12 @@ object WeatherAlertStore {
     private const val KEY_LAST_PEAK_PRECIP = "last_peak_precip"
     private const val KEY_LAST_PEAK_GUST = "last_peak_gust"
     private const val KEY_LAST_SOURCE = "last_source"
+    private const val KEY_LAST_CLOUD = "last_cloud_pct"
+    private const val KEY_LAST_CUR_PRECIP = "last_cur_precip"
+    private const val KEY_LAST_CUR_GUST = "last_cur_gust"
+    private const val KEY_LAST_CUR_CODE = "last_cur_code"
+    private const val KEY_LAST_TIMELINE = "last_timeline_json"
+    private const val KEY_LAST_CYCLONE = "last_cyclone_json"
 
     fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -196,6 +227,12 @@ object WeatherAlertStore {
             .putFloat(KEY_LAST_PEAK_PRECIP, decision.peakPrecipMmPerHour.toFloat())
             .putFloat(KEY_LAST_PEAK_GUST, decision.peakWindGustKmh.toFloat())
             .putString(KEY_LAST_SOURCE, snapshot.source.name)
+            .putString(KEY_LAST_CLOUD, snapshot.cloudCoverPercent?.toString() ?: "")
+            .putFloat(KEY_LAST_CUR_PRECIP, snapshot.currentPrecipMmPerHour.toFloat())
+            .putFloat(KEY_LAST_CUR_GUST, snapshot.currentWindGustKmh.toFloat())
+            .putInt(KEY_LAST_CUR_CODE, snapshot.currentWeatherCode)
+            .putString(KEY_LAST_TIMELINE, encodeTimeline(snapshot.timeline))
+            .putString(KEY_LAST_CYCLONE, encodeCyclone(snapshot.activeCyclone))
             .apply()
         runCatching { com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context.applicationContext) }
     }
@@ -290,7 +327,93 @@ object WeatherAlertStore {
             temperatureC = p.getString(KEY_LAST_TEMP_C, "")?.toDoubleOrNull(),
             peakPrecipMmPerHour = p.getFloat(KEY_LAST_PEAK_PRECIP, 0f).toDouble(),
             peakWindGustKmh = p.getFloat(KEY_LAST_PEAK_GUST, 0f).toDouble(),
+            cloudCoverPercent = p.getString(KEY_LAST_CLOUD, "")?.toIntOrNull(),
+            currentPrecipMmPerHour = p.getFloat(KEY_LAST_CUR_PRECIP, 0f).toDouble(),
+            currentWindGustKmh = p.getFloat(KEY_LAST_CUR_GUST, 0f).toDouble(),
+            timeline = decodeTimeline(p.getString(KEY_LAST_TIMELINE, "")),
+            cyclone = decodeCyclone(p.getString(KEY_LAST_CYCLONE, "")),
             source = source,
         )
+    }
+
+    /**
+     * Bilingual spoken safety lead for the News bulletin when a Very Heavy Rain or Cyclone warning
+     * is currently active for the user's location. Returns (english, tamil) or null when no severe
+     * weather is active. Reuses [WeatherAlertPolicy.formatSpeech] so the news lead and the standalone
+     * weather alert speak with identical wording.
+     */
+    fun readSafetyLeadSpeech(context: Context): Pair<String, String>? {
+        val p = prefs(context)
+        val (severity, mins) = normalizeCachedSeverity(p, currentResolvedName = "")
+        if (severity != WeatherSeverity.VERY_HEAVY_RAIN && severity != WeatherSeverity.CYCLONE_SEVERE) return null
+        val placeName = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
+        val placeDetails = p.getString(KEY_LAST_PLACE_DETAILS, "").orEmpty()
+        val cycloneName = decodeCyclone(p.getString(KEY_LAST_CYCLONE, ""))?.eventName?.takeIf { it.isNotBlank() }
+        val speech = WeatherAlertPolicy.formatSpeech(
+            severity = severity,
+            placeLabel = placeName,
+            minutesUntilRain = mins,
+            cycloneName = cycloneName,
+            placeDetails = placeDetails,
+        )
+        return if (speech.first.isBlank() && speech.second.isBlank()) null else speech
+    }
+
+    /** Compact JSON for a downsampled (every 10 min over a 2-hour window, <=13 points) nowcast timeline for the UI chart. */
+    private fun encodeTimeline(timeline: List<MinuteRainSample>): String = runCatching {
+        val arr = JSONArray()
+        timeline.asSequence()
+            .filter { it.minutesAhead in 0..120 && it.minutesAhead % 10 == 0 }
+            .sortedBy { it.minutesAhead }
+            .take(13)
+            .forEach { s ->
+                arr.put(JSONArray().apply {
+                    put(s.minutesAhead)
+                    put(s.precipMmPerHour)
+                    put(s.windGustKmh)
+                })
+            }
+        arr.toString()
+    }.getOrDefault("")
+
+    private fun decodeTimeline(raw: String?): List<RainTimelinePoint> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            (0 until arr.length()).mapNotNull { i ->
+                val pt = arr.optJSONArray(i) ?: return@mapNotNull null
+                if (pt.length() < 2) return@mapNotNull null
+                RainTimelinePoint(
+                    minutesAhead = pt.getInt(0),
+                    precipMmPerHour = pt.getDouble(1),
+                    windGustKmh = if (pt.length() >= 3) pt.getDouble(2) else 0.0,
+                )
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun encodeCyclone(cyclone: OfficialCycloneAdvisory?): String {
+        if (cyclone == null) return ""
+        return runCatching {
+            JSONObject().apply {
+                put("eventName", cyclone.eventName)
+                put("alertLevel", cyclone.alertLevel)
+                put("distanceKm", cyclone.distanceKm)
+                put("maxWindKmh", cyclone.maxWindKmh)
+            }.toString()
+        }.getOrDefault("")
+    }
+
+    private fun decodeCyclone(raw: String?): CycloneInfo? {
+        if (raw.isNullOrBlank()) return null
+        return runCatching {
+            val obj = JSONObject(raw)
+            CycloneInfo(
+                eventName = obj.optString("eventName"),
+                alertLevel = obj.optString("alertLevel"),
+                distanceKm = obj.optDouble("distanceKm", 0.0),
+                maxWindKmh = obj.optDouble("maxWindKmh", 0.0),
+            )
+        }.getOrNull()
     }
 }

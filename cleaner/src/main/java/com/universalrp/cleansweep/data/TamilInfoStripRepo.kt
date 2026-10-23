@@ -73,6 +73,30 @@ object TamilInfoStripRepo {
         Triple("Top News", "Google News India", "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en"),
     )
 
+    /**
+     * Latest cyber-fraud / online-scam headlines aimed at Indian & Tamil Nadu readers, so the
+     * spoken news bulletin can warn how people are being cheated right now (UPI fraud, OTP scams,
+     * fake job offers, digital-arrest calls, etc.). Uses Google News search RSS feeds; queries are
+     * URL-encoded at runtime so non-ASCII Tamil works without hand-encoded literals.
+     */
+    private fun cyberFraudFeeds(tamil: Boolean): List<Triple<String, String, String>> = if (tamil) {
+        listOf(
+            Triple(
+                "சைபர் மோசடி",
+                "இணைய மோசடி செய்திகள்",
+                "https://news.google.com/rss/search?q=" + android.net.Uri.encode("இணைய மோசடி") + "&hl=ta&gl=IN&ceid=IN:ta",
+            ),
+        )
+    } else {
+        listOf(
+            Triple(
+                "Cyber Fraud",
+                "Cyber Fraud India",
+                "https://news.google.com/rss/search?q=" + android.net.Uri.encode("cyber fraud India") + "&hl=en-IN&gl=IN&ceid=IN:en",
+            ),
+        )
+    }
+
     private fun localScope(now: Long, zone: ZoneId) = zone.id + "|" + java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
 
     @Synchronized fun shownToday(context: Context): Set<String> =
@@ -116,7 +140,7 @@ object TamilInfoStripRepo {
         val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
         val caps = runCatching { connectivity?.activeNetwork?.let { connectivity.getNetworkCapabilities(it) } }.getOrNull()
         val internet = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        val feeds = if (tamil) TAMIL_RSS_FEEDS else ENGLISH_RSS_FEEDS
+        val feeds = if (tamil) TAMIL_RSS_FEEDS + cyberFraudFeeds(tamil = true) else ENGLISH_RSS_FEEDS + cyberFraudFeeds(tamil = false)
         val fetched = if (internet) fetchFeeds(feeds) else emptyList()
         currentCoroutineContext().ensureActive()
         // Re-evaluate date AND timezone after networking, including midnight/time-zone changes during a fetch.
