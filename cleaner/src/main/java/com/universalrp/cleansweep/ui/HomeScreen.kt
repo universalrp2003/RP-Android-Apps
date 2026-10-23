@@ -641,15 +641,19 @@ fun TamilInfoStrip(
         title = { Text(tr("Today's headlines")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                androidx.compose.foundation.layout.FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     Button(
                         onClick = onReadTopNews,
                         colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
                     ) {
-                        Text(tr("Read today's news"))
+                        Text(tr("Read today's news"), maxLines = 1, softWrap = false)
                     }
-                    TextButton(onClick = onStopSpeaking) {
-                        Text(tr("Stop reading"))
+                    androidx.compose.material3.OutlinedButton(onClick = onStopSpeaking) {
+                        Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                     }
                 }
                 HorizontalDivider(color = OutlineC)

@@ -170,6 +170,7 @@ object RadioWeatherMonitor {
                     snapshot = snap,
                     placeLabel = resolved.name,
                     previous = SharedWeatherRuntime.loadMemory(app),
+                    placeDetails = resolved.details,
                 )
                 SharedWeatherRuntime.saveEvaluation(
                     context = app,
@@ -214,16 +215,32 @@ object RadioWeatherMonitor {
 
     fun testVoiceWithDuck(context: Context) {
         val app = context.applicationContext
-        val place = _state.value.activePlaceName.takeIf { it.isNotBlank() }
-            ?: SharedWeatherRuntime.savedPlace(app)?.name?.takeIf { it.isNotBlank() }
-            ?: if (AppLanguageState.current == AppLanguage.TAMIL) "உங்கள் ஊர்" else "your town"
-        val sample = WeatherAlertPolicy.formatSpeech(
-            severity = WeatherSeverity.RAIN_SOON,
-            placeLabel = place,
-            minutesUntilRain = 30,
-        )
         activeVoiceJob?.cancel()
         activeVoiceJob = scope.launch {
+            val tamil = AppLanguageState.current == AppLanguage.TAMIL
+            val saved = SharedWeatherRuntime.savedPlace(app)
+            val resolved = WeatherPlaceResolver.resolveActiveLocationSuspend(
+                context = app,
+                savedName = saved?.name.orEmpty(),
+                savedDetails = saved?.details.orEmpty(),
+                savedLat = saved?.latitude ?: Double.NaN,
+                savedLon = saved?.longitude ?: Double.NaN,
+                tamil = tamil,
+            )
+            val place = resolved.name.takeIf { it.isNotBlank() }
+                ?: _state.value.activePlaceName.takeIf { it.isNotBlank() }
+                ?: saved?.name?.takeIf { it.isNotBlank() }
+                ?: if (tamil) "உங்கள் ஊர்" else "your town"
+            val details = resolved.details.takeIf { it.isNotBlank() }
+                ?: _state.value.activePlaceDetails.takeIf { it.isNotBlank() }
+                ?: saved?.details.orEmpty()
+            refreshState(app)
+            val sample = WeatherAlertPolicy.formatSpeech(
+                severity = WeatherSeverity.RAIN_SOON,
+                placeLabel = place,
+                minutesUntilRain = 30,
+                placeDetails = details,
+            )
             speakWithRadioDuck(
                 context = app,
                 english = sample.first,

@@ -69,6 +69,8 @@ fun SharedWeatherControlDialog(
     allowGps: Boolean,
     accentColor: Color,
     ducksMusicNote: Boolean = false,
+    isCellTowerMode: Boolean = false,
+    onRequestLocationPermission: (() -> Unit)? = null,
     onDismiss: () -> Unit,
     onSetEnabled: (Boolean) -> Unit,
     onCheckNow: () -> Unit,
@@ -90,14 +92,14 @@ fun SharedWeatherControlDialog(
     val switchSub = if (ducksMusicNote) {
         bi(
             tamil,
-            "Speaks ~30 min before rain (lowers radio volume smoothly, then restores). Zero daily spam.",
-            "மழைக்கு ~30 நிமிடத்திற்கு முன் வானொலி ஒலியைக் குறைத்துத் தெளிவாக அறிவித்து மீண்டும் உயர்த்தும்.",
+            "Speaks ~30 min before rain with your exact place details (lowers radio volume smoothly, then restores).",
+            "மழைக்கு ~30 நிமிடத்திற்கு முன் உங்கள் ஊர் விவரத்துடன் வானொலி ஒலியைக் குறைத்து அறிவிக்கும்.",
         )
     } else {
         bi(
             tamil,
-            "Speaks ~30 min before rain starts. Never sends daily routine weather spam.",
-            "மழை தொடங்க ~30 நிமிடத்திற்கு முன் அறிவிக்கும். தினசரி சாதாரண வானிலை தொந்தரவு இல்லை.",
+            "Speaks ~30 min before rain starts with your exact place details. Zero daily weather spam.",
+            "மழை தொடங்க ~30 நிமிடத்திற்கு முன் ஊர் விவரத்துடன் அறிவிக்கும். தினசரி சாதாரண வானிலை தொந்தரவு இல்லை.",
         )
     }
     val checkNowLabel = bi(tamil, "Check now", "இப்போது சரிபார்")
@@ -107,17 +109,45 @@ fun SharedWeatherControlDialog(
 
     val locationHeading = bi(tamil, "Location setup", "இட அமைப்பு")
     val locationDesc = when {
+        allowGps && state.gpsTurnedOn && state.permissionGranted && isCellTowerMode ->
+            bi(
+                tamil,
+                "📡 Mobile Tower Location ON — automatically finds your current town/village (0% GPS battery drain).",
+                "📡 மொபைல் டவர் இடம் இயக்கத்தில் — உங்கள் தற்போதைய ஊரைத் தானாகக் கண்டறியும் (0% GPS பேட்டரி செலவு).",
+            )
         allowGps && state.gpsTurnedOn && state.permissionGranted ->
             bi(
                 tamil,
                 "Phone GPS is ON — location updates automatically as you travel.",
                 "போன் GPS இயக்கத்தில் உள்ளது — பயணிக்கும்போது இடம் தானாகப் புதுப்பிக்கப்படும்.",
             )
+        allowGps && !state.permissionGranted ->
+            bi(
+                tamil,
+                if (isCellTowerMode) {
+                    "Tap 'Allow Mobile Tower Location' above to detect your town automatically, or save your PIN/village below."
+                } else {
+                    "Allow Location permission to detect your town automatically, or save your PIN/village below."
+                },
+                if (isCellTowerMode) {
+                    "உங்கள் ஊரைத் தானாகக் கண்டறிய மேலே 'மொபைல் டவர் இடத்தை அனுமதி' என்பதைத் தட்டவும், அல்லது கீழே PIN/ஊரைச் சேமிக்கவும்."
+                } else {
+                    "உங்கள் ஊரைத் தானாகக் கண்டறிய இட அனுமதியை வழங்கவும், அல்லது கீழே PIN/ஊரைச் சேமிக்கவும்."
+                },
+            )
         allowGps ->
             bi(
                 tamil,
-                "GPS is OFF — using saved PIN/village below (search 622301 or alangudi 622301).",
-                "GPS அணைந்தால் கீழே சேமித்த PIN/ஊரைப் பயன்படுத்தும் (உதா: 622301 அல்லது alangudi 622301).",
+                if (isCellTowerMode) {
+                    "Phone Location is OFF — using saved PIN/village below (e.g. 622301 or alangudi 622301)."
+                } else {
+                    "GPS is OFF — using saved PIN/village below (search 622301 or alangudi 622301)."
+                },
+                if (isCellTowerMode) {
+                    "போன் Location அணைந்தால் கீழே சேமித்த PIN/ஊரைப் பயன்படுத்தும் (உதா: 622301 அல்லது alangudi 622301)."
+                } else {
+                    "GPS அணைந்தால் கீழே சேமித்த PIN/ஊரைப் பயன்படுத்தும் (உதா: 622301 அல்லது alangudi 622301)."
+                },
             )
         else ->
             bi(
@@ -181,7 +211,76 @@ fun SharedWeatherControlDialog(
                         tamil = tamil,
                         isPreview = state.previewSeverity != null,
                         onClick = {},
+                        placeDetails = state.activePlaceDetails.ifBlank { state.savedPlaceDetails },
                     )
+                }
+
+                // Always show EXACT active weather place + district details right at the top!
+                val displayPlace = state.activePlaceName.ifBlank { state.savedPlaceName }
+                val displayDetails = state.activePlaceDetails.ifBlank { state.savedPlaceDetails }
+                val sourceBadge = when {
+                    allowGps && state.gpsTurnedOn && state.permissionGranted && isCellTowerMode ->
+                        bi(tamil, "📡 Mobile Tower", "📡 மொபைல் டவர்")
+                    allowGps && state.gpsTurnedOn && state.permissionGranted ->
+                        bi(tamil, "📍 Phone GPS", "📍 போன் GPS")
+                    state.savedPlaceName.isNotBlank() ->
+                        bi(tamil, "📌 Saved PIN/Town", "📌 சேமித்த ஊர்")
+                    else ->
+                        bi(tamil, "⚠️ Location needed", "⚠️ இடம் தேவை")
+                }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = accentColor.copy(alpha = 0.14f),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(5.dp),
+                    ) {
+                        Text(
+                            text = if (displayPlace.isNotBlank()) {
+                                bi(
+                                    tamil,
+                                    "📍 Weather area: $displayPlace · $sourceBadge",
+                                    "📍 மழை கண்காணிக்கும் ஊர்: $displayPlace · $sourceBadge",
+                                )
+                            } else {
+                                bi(
+                                    tamil,
+                                    "📍 Weather area not set yet ($sourceBadge)",
+                                    "📍 மழை கண்காணிக்கும் ஊர் இன்னும் தேர்வு செய்யப்படவில்லை ($sourceBadge)",
+                                )
+                            },
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = accentColor,
+                        )
+                        if (displayDetails.isNotBlank()) {
+                            Text(
+                                text = displayDetails,
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                        if (allowGps && !state.permissionGranted && onRequestLocationPermission != null) {
+                            Button(
+                                onClick = onRequestLocationPermission,
+                                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                                modifier = Modifier.fillMaxWidth(),
+                            ) {
+                                Text(
+                                    text = if (isCellTowerMode) {
+                                        bi(tamil, "📡 Allow Mobile Tower Location", "📡 மொபைல் டவர் இடத்தை அனுமதி")
+                                    } else {
+                                        bi(tamil, "📍 Allow Location Access", "📍 இட அனுமதியை வழங்கு")
+                                    },
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
+                        }
+                    }
                 }
 
                 Row(
@@ -227,15 +326,28 @@ fun SharedWeatherControlDialog(
 
                 if (state.lastCheckedAtMs > 0L) {
                     val checkedClock = WeatherAlertPolicy.format12HourClock(state.lastCheckedAtMs)
+                    val checkedArea = buildString {
+                        val pName = state.activePlaceName.ifBlank { state.savedPlaceName }.trim()
+                        val pDet = state.activePlaceDetails.ifBlank { state.savedPlaceDetails }.trim()
+                        if (pName.isNotBlank()) {
+                            append(" · 📍 ")
+                            append(pName)
+                            if (pDet.isNotBlank() && !pDet.equals(pName, ignoreCase = true)) {
+                                append(" (")
+                                append(pDet)
+                                append(")")
+                            }
+                        }
+                    }
                     val checkedStatus = when (state.severity) {
                         WeatherSeverity.CYCLONE_SEVERE ->
-                            bi(tamil, "Checked $checkedClock · Urgent cyclone / storm warning!", "சரிபார்த்தது $checkedClock · அவசர புயல் எச்சரிக்கை!")
+                            bi(tamil, "Checked $checkedClock$checkedArea · Urgent cyclone / storm warning!", "சரிபார்த்தது $checkedClock$checkedArea · அவசர புயல் எச்சரிக்கை!")
                         WeatherSeverity.VERY_HEAVY_RAIN ->
-                            bi(tamil, "Checked $checkedClock · Very heavy rain warning", "சரிபார்த்தது $checkedClock · மிகக் கனமழை எச்சரிக்கை")
+                            bi(tamil, "Checked $checkedClock$checkedArea · Very heavy rain warning", "சரிபார்த்தது $checkedClock$checkedArea · மிகக் கனமழை எச்சரிக்கை")
                         WeatherSeverity.RAIN_SOON ->
-                            bi(tamil, "Checked $checkedClock · Rain expected within ~30 min", "சரிபார்த்தது $checkedClock · ~30 நிமிடத்தில் மழை")
+                            bi(tamil, "Checked $checkedClock$checkedArea · Rain expected within ~30 min", "சரிபார்த்தது $checkedClock$checkedArea · ~30 நிமிடத்தில் மழை")
                         WeatherSeverity.CLEAR_OR_NORMAL ->
-                            bi(tamil, "Checked $checkedClock · Clear / normal — staying silent", "சரிபார்த்தது $checkedClock · மழை அறிகுறி இல்லை — அமைதி")
+                            bi(tamil, "Checked $checkedClock$checkedArea · Clear / normal — staying silent", "சரிபார்த்தது $checkedClock$checkedArea · மழை அறிகுறி இல்லை — அமைதி")
                     }
                     Text(text = checkedStatus, style = MaterialTheme.typography.labelMedium, color = accentColor)
                 }

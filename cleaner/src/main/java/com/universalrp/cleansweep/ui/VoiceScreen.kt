@@ -182,14 +182,17 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                             )
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.foundation.layout.FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         VoiceChip(
                             label = tr("Read today's news"),
                             icon = Icons.Outlined.PlayArrow,
                             onClick = { vm.readTodaysNewsNow() },
                         )
-                        TextButton(onClick = { vm.stopSpeakingNow() }) {
-                            Text(tr("Stop reading"))
+                        androidx.compose.material3.OutlinedButton(onClick = { vm.stopSpeakingNow() }) {
+                            Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                         }
                     }
                 }

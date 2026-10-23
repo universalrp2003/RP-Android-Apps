@@ -388,6 +388,24 @@ class MainActivity : ComponentActivity() {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
+                                if (isSpeaking) {
+                                    Box(
+                                        modifier = Modifier
+                                            .background(palette.dangerRed, RoundedCornerShape(8.dp))
+                                            .clickable { vm.stopVoiceNow() }
+                                            .padding(horizontal = 8.dp, vertical = 5.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = if (prefs.tamil) "⏹ நிறுத்து" else "⏹ Stop",
+                                            color = androidx.compose.ui.graphics.Color.White,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            softWrap = false,
+                                        )
+                                    }
+                                }
                                 Box(
                                     modifier = Modifier
                                         .background(palette.card, RoundedCornerShape(8.dp))

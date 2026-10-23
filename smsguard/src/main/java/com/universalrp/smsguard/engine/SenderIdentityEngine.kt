@@ -191,18 +191,50 @@ object SenderIdentityEngine {
         brand("CREDCL", "CRED", "CRED", fin = true),
         brand("JUPITR", "Jupiter Money", "ஜூபிட்டர்", fin = true),
         brand("SLICEP", "Slice", "ஸ்லைஸ்", fin = true),
-        // Government & Public Utilities
+        // Government, Ration Shop (PDS), Education / Exam Results, Utilities, Gas & Public Services
+        brand("TNEPDS", "TN Ration Shop (TNEPDS)", "தமிழ்நாடு ரேஷன் கடை", gov = true),
+        brand("TNPDSB", "TN Ration Shop (PDS)", "தமிழ்நாடு ரேஷன் கடை", gov = true),
+        brand("PDSBIL", "Ration Shop PDS Bill", "ரேஷன் கடை பில்", gov = true),
+        brand("NFSAIN", "National Food Security Ration", "தேசிய உணவுப் பாதுகாப்பு ரேஷன்", gov = true),
+        brand("TNSEDU", "TN School Education Dept", "தமிழ்நாடு பள்ளிக் கல்வித் துறை", gov = true),
+        brand("TNDGEA", "TN Directorate of Govt Exams", "தமிழ்நாடு அரசுத் தேர்வுகள் இயக்ககம்", gov = true),
+        brand("TNDGER", "TN Exam Results (DGE)", "தமிழ்நாடு அரசுத் தேர்வு முடிவுகள்", gov = true),
+        brand("EMISTN", "TN EMIS School Education", "தமிழ்நாடு பள்ளிக் கல்வி EMIS", gov = true),
+        brand("TNPSCR", "TNPSC Tamil Nadu", "டிஎன்பிஎஸ்சி (TNPSC)", gov = true),
+        brand("TRBTNM", "TN Teachers Recruitment Board", "ஆசிரியர் தேர்வு வாரியம் (TRB)", gov = true),
+        brand("TNEACO", "TNEA Engineering Admissions", "தமிழ்நாடு பொறியியல் சேர்க்கை (TNEA)", gov = true),
         brand("UIDAIA", "UIDAI Aadhaar", "ஆதார் ஆணையம் (UIDAI)", gov = true),
         brand("ADHAAR", "UIDAI Aadhaar", "ஆதார் ஆணையம் (UIDAI)", gov = true),
+        brand("AADHAR", "UIDAI Aadhaar", "ஆதார் ஆணையம் (UIDAI)", gov = true),
         brand("ITDEPT", "Income Tax Department", "வருமான வரித் துறை", gov = true),
         brand("ITDEFL", "Income Tax e-Filing", "வருமான வரித் துறை", gov = true),
+        brand("GSTIND", "GST Portal India", "ஜிஎஸ்டி வரித் துறை (GST)", gov = true),
         brand("VAAHAN", "Parivahan Transport", "போக்குவரத்துத் துறை (Parivahan)", gov = true),
+        brand("VAHANX", "Parivahan RTO Transport", "ஆர்டிஓ போக்குவரத்துத் துறை", gov = true),
+        brand("SARTHI", "Sarathi Driving Licence", "சாரதி ஓட்டுநர் உரிமம்", gov = true),
+        brand("ECHALN", "Traffic e-Challan", "போக்குவரத்து இ-சலான்", gov = true),
         brand("MORTHV", "Ministry of Road Transport", "சாலைப் போக்குவரத்து அமைச்சகம்", gov = true),
         brand("TANGED", "TNEB / TANGEDCO", "தமிழ்நாடு மின்சார வாரியம் (TNEB)", gov = true),
         brand("TNPDCL", "TNEB / TNPDCL", "தமிழ்நாடு மின்சார வாரியம் (TNEB)", gov = true),
         brand("TNEBSV", "TNEB Electricity", "தமிழ்நாடு மின்சார வாரியம்", gov = true),
+        brand("TWADBD", "TWAD Water Supply Board", "தமிழ்நாடு குடிநீர் வடிகால் வாரியம்", gov = true),
+        brand("CMWSSB", "Chennai Metro Water", "சென்னை குடிநீர் வாரியம்", gov = true),
         brand("TNGOVT", "Government of Tamil Nadu", "தமிழ்நாடு அரசு", gov = true),
         brand("TNEGAH", "TN e-Sevai / TNeGA", "தமிழ்நாடு இ-சேவை", gov = true),
+        brand("ESEVAI", "TN e-Sevai Centre", "தமிழ்நாடு இ-சேவை மையம்", gov = true),
+        brand("CMCELL", "TN Chief Minister's Special Cell", "முதலமைச்சரின் தனிப்பிரிவு", gov = true),
+        brand("TNREVN", "TN Revenue / Patta Dept", "தமிழ்நாடு வருவாய்த் துறை", gov = true),
+        brand("KAVERI", "TN Registration Dept", "தமிழ்நாடு பத்திரப்பதிவுத் துறை", gov = true),
+        brand("TNPOLC", "Tamil Nadu Police", "தமிழ்நாடு காவல்துறை", gov = true),
+        brand("CMCHIS", "TN Chief Minister Health Insurance", "முதலமைச்சர் மருத்துவக் காப்பீடு", gov = true),
+        brand("TNSTCB", "TNSTC Bus Transport", "தமிழ்நாடு அரசுப் பேருந்து (TNSTC)", gov = true),
+        brand("SETCTN", "SETC Express Bus", "அரசு விரைவுப் பேருந்து (SETC)", gov = true),
+        brand("INDGAS", "Indane LPG Gas", "இண்டேன் கேஸ் (Indane Gas)", gov = true),
+        brand("IOCLPG", "IndianOil Indane Gas", "இண்டேன் சமையல் எரிவாயு", gov = true),
+        brand("BPCGAS", "Bharatgas LPG", "பாரத் கேஸ் (Bharatgas)", gov = true),
+        brand("HPCGAS", "HP Gas LPG", "ஹெச்பி கேஸ் (HP Gas)", gov = true),
+        brand("PASPRT", "Passport Seva India", "பாஸ்போர்ட் சேவா", gov = true),
+        brand("ECOURT", "eCourts Judiciary", "நீதிமன்ற இ-கோர்ட்ஸ்", gov = true),
         brand("EPFOHO", "EPFO Provident Fund", "வருங்கால வைப்பு நிதி (EPFO)", gov = true),
         brand("INDPST", "India Post", "இந்திய அஞ்சல் துறை", gov = true),
         brand("RBISAY", "Reserve Bank of India", "இந்திய ரிசர்வ் வங்கி (RBI)", gov = true),
@@ -365,8 +397,8 @@ object SenderIdentityEngine {
         val code = headerCode!!
         val operatorEn = prefix?.getOrNull(0)?.let { OPERATORS[it] }
         val circleEn = prefix?.getOrNull(1)?.let { CIRCLES[it] }
-        val brand = BRANDS[code] ?: matchFuzzyBrand(code)
         val lowerBody = messageBody.lowercase(Locale.US)
+        val brand = BRANDS[code] ?: matchFuzzyBrand(code) ?: matchBodyGovernmentOrUtilityHint(code, lowerBody, category)
         val bodyBankHint = if (brand == null && category != DltCategory.PROMOTIONAL) {
             TEXT_BANK_HINTS.firstOrNull { (token, _) -> token in lowerBody }?.second
         } else {
@@ -456,8 +488,41 @@ object SenderIdentityEngine {
             code.startsWith("AIRT") -> BrandProfile(code, "Airtel", "ஏர்டெல்")
             code.startsWith("BSNL") -> BrandProfile(code, "BSNL", "பிஎஸ்என்எல்")
             code.startsWith("IRCTC") -> BrandProfile(code, "IRCTC Railways", "இந்திய ரயில்வே (IRCTC)", isGovernment = true)
-            code.startsWith("TNEB") || code.startsWith("TANG") -> BrandProfile(code, "TNEB Electricity", "தமிழ்நாடு மின்சார வாரியம்", isGovernment = true)
+            code.contains("EPDS") || code.startsWith("TNPDS") || code.contains("RATION") ->
+                BrandProfile(code, "TN Ration Shop (TNEPDS)", "தமிழ்நாடு ரேஷன் கடை", isGovernment = true)
+            code.contains("SEDU") || code.startsWith("TNDGE") || code.startsWith("EMIS") ->
+                BrandProfile(code, "TN School Education Dept", "தமிழ்நாடு பள்ளிக் கல்வித் துறை", isGovernment = true)
+            code.startsWith("TNPSC") -> BrandProfile(code, "TNPSC Tamil Nadu", "டிஎன்பிஎஸ்சி (TNPSC)", isGovernment = true)
+            code.startsWith("TNEGA") || code.contains("ESEVAI") ->
+                BrandProfile(code, "TN e-Sevai", "தமிழ்நாடு இ-சேவை", isGovernment = true)
+            code.startsWith("TNSTC") || code.startsWith("SETC") ->
+                BrandProfile(code, "TN State Bus Transport", "தமிழ்நாடு அரசுப் பேருந்து", isGovernment = true)
+            code.startsWith("TNEB") || code.startsWith("TANG") || code.startsWith("TNPD") ->
+                BrandProfile(code, "TNEB Electricity", "தமிழ்நாடு மின்சார வாரியம்", isGovernment = true)
+            code.startsWith("TNGOV") || code.startsWith("GOVT") ->
+                BrandProfile(code, "Government Official Notice", "அரசு அதிகாரப்பூர்வ அறிவிப்பு", isGovernment = true)
+            code.contains("GAS") || code.startsWith("IOCL") || code.startsWith("BPCL") || code.startsWith("HPCL") ->
+                BrandProfile(code, "LPG Cooking Gas Service", "சமையல் எரிவாயு சேவை", isGovernment = true)
             code == "1930" -> BrandProfile(code, "National Cyber Crime Portal", "சைபர் பாதுகாப்பு (1930)", isGovernment = true)
+            else -> null
+        }
+    }
+
+    private fun matchBodyGovernmentOrUtilityHint(
+        code: String,
+        lowerBody: String,
+        category: DltCategory,
+    ): BrandProfile? {
+        if (category == DltCategory.PROMOTIONAL || lowerBody.isBlank()) return null
+        return when {
+            "pds bill" in lowerBody || "tnepds" in lowerBody || ("fps" in lowerBody && "rice" in lowerBody) ->
+                BrandProfile(code, "TN Ration Shop (TNEPDS)", "தமிழ்நாடு ரேஷன் கடை", isGovernment = true)
+            "hsc results" in lowerBody || "sslc results" in lowerBody || "-tnsedu" in lowerBody || "dge" in lowerBody && "marks" in lowerBody ->
+                BrandProfile(code, "TN School Education Dept", "தமிழ்நாடு பள்ளிக் கல்வித் துறை", isGovernment = true)
+            "tangedco" in lowerBody || "tneb" in lowerBody || "electricity bill" in lowerBody || "eb bill" in lowerBody ->
+                BrandProfile(code, "TNEB Electricity", "தமிழ்நாடு மின்சார வாரியம்", isGovernment = true)
+            "indane" in lowerBody || "bharatgas" in lowerBody || "hp gas" in lowerBody || "lpg refill" in lowerBody || "cylinder" in lowerBody && "dac" in lowerBody ->
+                BrandProfile(code, "LPG Cooking Gas Service", "சமையல் எரிவாயு சேவை", isGovernment = true)
             else -> null
         }
     }

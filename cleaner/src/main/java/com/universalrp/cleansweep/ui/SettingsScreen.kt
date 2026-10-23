@@ -138,7 +138,7 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                 }
             }
 
-            // ------------------------------------------------------- Smart News Headlines Voice Announcer (2.64)
+            // ------------------------------------------------------- Smart News Headlines Voice Announcer (2.65)
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -173,15 +173,19 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                             )
                         }
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+                    androidx.compose.foundation.layout.FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
                         Button(
                             onClick = { vm.readTodaysNewsNow() },
                             colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
                         ) {
-                            Text(tr("Read today's news"))
+                            Text(tr("Read today's news"), maxLines = 1, softWrap = false)
                         }
-                        TextButton(onClick = { vm.stopSpeakingNow() }) {
-                            Text(tr("Stop reading"))
+                        androidx.compose.material3.OutlinedButton(onClick = { vm.stopSpeakingNow() }) {
+                            Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                         }
                     }
                 }
@@ -450,12 +454,6 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                     if (state.statusPill && state.statusPillAllowed) {
                         Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp)) {
                             Text(
-                                tr("Ready. Watts only while connected; normal data and D/U lights return after unplugging when background monitoring is enabled. Touch-through except while positioning it."),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            Text(
                                 tr("Where it sits") + " — " + tr(
                                     "your phone writes VoLTE, VPN, the carrier name and the battery " +
                                         "percentage up there, so move the reading wherever it is free."
@@ -463,6 +461,7 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                                 style = MaterialTheme.typography.labelSmall,
                                 color = WarnAmber,
                             )
+                            Spacer(Modifier.height(6.dp))
                             ReadingMovePad(
                                 onMove = { dx, dy -> vm.moveStatusPill(dx, dy) },
                                 onReset = { vm.resetStatusPill() },

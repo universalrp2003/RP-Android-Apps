@@ -170,9 +170,9 @@ private fun AboutSection(versionLabel: String, context: Context) {
 
 /** All seven RP Ideas apps' official releases on RP-Android-Apps. */
 private val OTHER_APPS = listOf(
-    "SMS Guard (குறுஞ்செய்தி காவலன்)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.2",
-    "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.64",
-    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.20",
+    "SMS Guard (குறுஞ்செய்தி காவலன்)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.3",
+    "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.65",
+    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.21",
     "PulseEQ" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
     "RP Vocal Remover Studio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
     "Oor Arivippu" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.7",

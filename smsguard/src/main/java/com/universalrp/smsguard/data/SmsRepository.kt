@@ -478,7 +478,10 @@ object SmsRepository {
                         ),
                     )
                 }
-            }
+            }.sortedWith(
+                compareByDescending<EnrichedSmsMessage> { it.dateMs }
+                    .thenByDescending { it.id },
+            )
         } catch (_: Throwable) {
             emptyList()
         }
@@ -488,12 +491,15 @@ object SmsRepository {
         return messages
             .groupBy { it.threadKey }
             .map { (key, list) ->
-                val orderedDesc = list.sortedByDescending { it.dateMs }
+                val orderedDesc = list.sortedWith(
+                    compareByDescending<EnrichedSmsMessage> { it.dateMs }
+                        .thenByDescending { it.id },
+                )
                 val latest = orderedDesc.first()
                 SmsThreadSummary(
                     threadKey = key,
                     latestMessage = latest,
-                    messages = orderedDesc.reversed(),
+                    messages = orderedDesc,
                     unreadCount = list.count { it.isUnread && !it.isSentByMe },
                     hasUnsafeLink = list.any { m -> !m.isSentByMe && m.links.any { it.verdict == LinkVerdict.UNSAFE } },
                     hasSafeLink = list.any { m -> m.links.any { it.verdict == LinkVerdict.SAFE } },
@@ -507,7 +513,10 @@ object SmsRepository {
                     },
                 )
             }
-            .sortedByDescending { it.latestMessage.dateMs }
+            .sortedWith(
+                compareByDescending<SmsThreadSummary> { it.latestMessage.dateMs }
+                    .thenByDescending { it.latestMessage.id },
+            )
     }
 
     fun insertIncomingSmsToProvider(

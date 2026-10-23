@@ -323,6 +323,7 @@ private fun aiInline(text: String): AnnotatedString = buildAnnotatedString {
  * something different — VoLTE, VPN, the carrier name, the battery percentage — so the user
  * decides where the reading sits, and the position is remembered.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun ReadingMovePad(
     onMove: (dx: Int, dy: Int) -> Unit,
@@ -331,37 +332,42 @@ fun ReadingMovePad(
     dragging: Boolean = false,
     onToggleDrag: (() -> Unit)? = null,
 ) {
-    Column {
-        Row(
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        androidx.compose.foundation.layout.FlowRow(
             Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            TextButton(onClick = { onMove(-24, 0) }) {
-                Icon(Icons.Outlined.ArrowBack, contentDescription = tr("Move left"), tint = AccentCyan)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                androidx.compose.material3.IconButton(onClick = { onMove(-24, 0) }) {
+                    Icon(Icons.Outlined.ArrowBack, contentDescription = tr("Move left"), tint = AccentCyan)
+                }
+                androidx.compose.material3.IconButton(onClick = { onMove(24, 0) }) {
+                    Icon(Icons.Outlined.ArrowForward, contentDescription = tr("Move right"), tint = AccentCyan)
+                }
+                androidx.compose.material3.IconButton(onClick = { onMove(0, -12) }) {
+                    Icon(Icons.Outlined.ArrowUpward, contentDescription = tr("Move up"), tint = AccentCyan)
+                }
+                androidx.compose.material3.IconButton(onClick = { onMove(0, 12) }) {
+                    Icon(Icons.Outlined.ArrowDownward, contentDescription = tr("Move down"), tint = AccentCyan)
+                }
             }
-            TextButton(onClick = { onMove(24, 0) }) {
-                Icon(Icons.Outlined.ArrowForward, contentDescription = tr("Move right"), tint = AccentCyan)
-            }
-            TextButton(onClick = { onMove(0, -12) }) {
-                Icon(Icons.Outlined.ArrowUpward, contentDescription = tr("Move up"), tint = AccentCyan)
-            }
-            TextButton(onClick = { onMove(0, 12) }) {
-                Icon(Icons.Outlined.ArrowDownward, contentDescription = tr("Move down"), tint = AccentCyan)
-            }
-            Spacer(Modifier.size(6.dp))
-            TextButton(onClick = onReset) {
-                Icon(Icons.Outlined.RestartAlt, contentDescription = null, tint = GoodGreen)
-                Spacer(Modifier.size(6.dp))
-                Text(tr("Auto"), color = GoodGreen, fontWeight = FontWeight.Bold)
-            }
-            if (onToggleDrag != null) {
-                TextButton(onClick = onToggleDrag) {
-                    Text(
-                        if (dragging) tr("Done") else tr("Drag"),
-                        color = if (dragging) AccentViolet else AccentCyan,
-                        fontWeight = FontWeight.Bold,
-                    )
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onReset) {
+                    Icon(Icons.Outlined.RestartAlt, contentDescription = null, tint = GoodGreen)
+                    Spacer(Modifier.size(4.dp))
+                    Text(tr("Auto"), color = GoodGreen, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false)
+                }
+                if (onToggleDrag != null) {
+                    TextButton(onClick = onToggleDrag) {
+                        Text(
+                            if (dragging) tr("Done") else tr("Drag"),
+                            color = if (dragging) AccentViolet else AccentCyan,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            softWrap = false,
+                        )
+                    }
                 }
             }
         }

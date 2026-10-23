@@ -300,8 +300,8 @@ data class UiState(
     val newsOutcome: TamilInfoStripRepo.Outcome = TamilInfoStripRepo.Outcome.NO_TODAY_NEWS,
     val tamilInfoVisible: Boolean = true,
     val tamilInfoPaused: Boolean = false,
-    val newsVoiceEnabled: Boolean = false,
-    val newsVoiceIntervalMin: Int = 60,
+    val newsVoiceEnabled: Boolean = true,
+    val newsVoiceIntervalMin: Int = 180,
     val autoWifiScanOnOpen: Boolean = true,
     val bgWifiScanEnabled: Boolean = false,
     val verifiedWifiMacs: Set<String> = emptySet(),
@@ -391,8 +391,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // saved theme here too; MainActivity applies it before the first composition.
         val resolvedTheme = com.universalrp.cleansweep.ui.theme.ThemeStore.currentId(ctx)
         com.universalrp.cleansweep.ui.theme.Palette.apply(resolvedTheme)
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnThreeHours(ctx)
         mutate { it.copy(lang = resolvedLang,
             themeId = resolvedTheme,
+            voiceOn = Announcer.enabled(ctx),
             newsVoiceEnabled = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.isEnabled(ctx),
             newsVoiceIntervalMin = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.intervalMinutes(ctx),
             includeSystemApps = prefs.getBoolean("cache_include_system", MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM),
