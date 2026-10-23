@@ -34,7 +34,30 @@ object NewsSpeechSanitizer {
         RegexOption.IGNORE_CASE,
     )
 
-    private val EMOJI_AND_HASHTAG_REGEX = Regex("(?:#[\\p{L}\\p{M}\\p{N}_]+|[\\uD83C-\\uDBFF][\\uDC00-\\uDFFF]|[\\u2600-\\u27BF])+")
+    private val HASHTAG_REGEX = Regex("#[\\p{L}\\p{M}\\p{N}_]+")
+
+    private fun stripEmojisAndHashtags(input: String): String {
+        val withoutTags = HASHTAG_REGEX.replace(input, " ")
+        val sb = StringBuilder(withoutTags.length)
+        var i = 0
+        while (i < withoutTags.length) {
+            val cp = Character.codePointAt(withoutTags, i)
+            val count = Character.charCount(cp)
+            val type = Character.getType(cp).toByte()
+            val isEmojiOrSymbol = cp in 0x1F000..0x1FAFF ||
+                cp in 0x2600..0x27BF ||
+                cp == 0xFE0F ||
+                cp == 0x200D ||
+                type == Character.OTHER_SYMBOL
+            if (isEmojiOrSymbol) {
+                sb.append(' ')
+            } else {
+                sb.appendCodePoint(cp)
+            }
+            i += count
+        }
+        return sb.toString()
+    }
 
     private val PURE_STUB_TITLES = setOf(
         "photo gallery", "video gallery", "live updates", "top news", "breaking news",
@@ -49,7 +72,7 @@ object NewsSpeechSanitizer {
      */
     fun cleanHeadline(rawTitle: String, publisher: String = ""): String {
         var text = NewsPolicy.cleanTitle(rawTitle, publisher)
-        text = EMOJI_AND_HASHTAG_REGEX.replace(text, " ")
+        text = stripEmojisAndHashtags(text)
         repeat(3) {
             val next = LEADING_NOISE_REGEX.replace(text, "").trimStart(' ', '-', '–', '—', '|', ':', '•', '»', '>', '!')
             if (next == text) return@repeat

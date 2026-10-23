@@ -597,7 +597,7 @@ class SmsGuardEngineTest {
 
         // Personal friend full message readout
         val friendBody = "வணக்கம் நண்பா! இன்று மாலை 6 மணிக்கு திருச்சி பேருந்து நிலையம் அருகில் சந்திப்போம். மறக்காமல் வாருங்கள்!"
-        val friendSender = SenderIdentityEngine.identify("+919876543210", friendBody, contactName = "Ramesh Prathap")
+        val friendSender = SenderIdentityEngine.identify("+919876543210", friendBody, savedContactName = "Ramesh Prathap")
         val friendOtp = OtpDetector.analyze(friendBody)
         val friendFin = FinanceLedgerEngine.parseSingleSms(2L, 2_000L, friendBody, friendSender, friendOtp.isOtp)
 

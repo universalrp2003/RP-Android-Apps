@@ -283,7 +283,7 @@ object Announcer {
         val key = event.key ?: return true
         val default = when (event) {
             // A phone that hops between radios must not narrate it until asked.
-            Event.RADIO_CHANGE, Event.NETWORK_CHANGE, Event.WEATHER_ALERT -> false
+            Event.RADIO_CHANGE, Event.NETWORK_CHANGE, Event.WEATHER_ALERT, Event.NEWS_HEADLINES -> false
             else -> true
         }
         return prefs(context).getBoolean(key, default)
@@ -302,7 +302,7 @@ object Announcer {
                 setEnabled(context, true)
             }
         }
-        if (event == Event.WEATHER_ALERT && on && !enabled(context)) {
+        if ((event == Event.WEATHER_ALERT || event == Event.NEWS_HEADLINES) && on && !enabled(context)) {
             setEnabled(context, true)
         }
     }
@@ -728,7 +728,7 @@ object Announcer {
                         active?.id != requestId || com.universalrp.updates.CallGuard.inCall(context)
                     },
                     activePlayerSink = { player -> activeMediaPlayer = player },
-                    maxDurationMs = if (request.event == Event.ANSWER) 150_000L else 45_000L,
+                    maxDurationMs = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L,
                 )
                 if (played) {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true) }
@@ -901,7 +901,7 @@ object Announcer {
                             request.started = true
                             runCatching { request.onStarted?.invoke() }
                             // Startup timeout is not a replay timer. A started answer is never restarted in another voice.
-                            val limit = if (request.event == Event.ANSWER) 150_000L else 45_000L
+                            val limit = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L
                             main.postDelayed({ if (active?.attemptId == id) {
                                 runCatching { tts?.stop() }; finish(VoiceDeliveryPolicy.Stage.TIMED_OUT, false)
                             } }, limit)
