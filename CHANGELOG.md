@@ -6,6 +6,10 @@ This file indexes all seven published **RP Ideas** Android applications at [`uni
 
 _No unreleased changes._
 
+## Published — Ramesh Radio `1.22` Opt-In Location Trust Polish (23 October 2026)
+
+- **Ramesh Radio 1.22 / code 22** ([`releases/ramesh-radio-v1.22.md`](releases/ramesh-radio-v1.22.md), `Ramesh-Radio-v1.22.apk`, `15,076,612` bytes, SHA-256 `1b1a5d633141d3f278f54419cad3e120be8c103ec0a259661e9a34e649bcca71`, [Build APK run 39933357994](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39933357994)): Removed all automatic `ACCESS_COARSE_LOCATION` runtime prompts on app launch, dialog open, switch toggle, and **Check now** so users never see an unexpected Location dialog; made `📡 Enable Mobile Tower (Optional)` strictly opt-in when explicitly clicked inside **Rain & Cyclone Voice Alert**, with a transparent Tamil & English privacy card explaining Android's Mobile Signal Tower permission grouping and full 100% zero-permission support via saved PIN/Village (`0` permissions added; candidate bytes published directly after CI verification without pre-publication phone install).
+
 ## Published — Real-Phone Feedback & Polish Update (`SMS Guard 1.1.3`, `Live Guard 2.65`, `Ramesh Radio 1.21`) (23 October 2026)
 
 Follow-up release addressing physical phone feedback across **SMS Guard**, **Live Guard**, and **Ramesh Radio** (`Oor Arivippu 1.1.7`, `PulseEQ 1.9`, `RP Vocal Remover Studio 0.1.15`, and `Secret Message 1.1.3` unchanged; exact candidate bytes were not installed on a physical phone prior to GitHub release publication):

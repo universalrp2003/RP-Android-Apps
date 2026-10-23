@@ -1,6 +1,7 @@
 ## Ramesh Radio (ரமேஷ் ரேடியோ) v1.22 — Zero Surprise Location Prompts & Explicit Opt-In Mobile Tower Privacy Card
 
 **Package:** `com.universalrp.tamilnadufm` · **Version:** `1.22` (`versionCode = 22`) · **Minimum Android:** Android 8.0+ (API 26)
+**Published Signed Asset:** `Ramesh-Radio-v1.22.apk` · **`15,076,612` bytes** · **SHA-256:** `1b1a5d633141d3f278f54419cad3e120be8c103ec0a259661e9a34e649bcca71` ([Build APK run 39933357994](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39933357994))
 **Verification Note:** Built, linted, unit-tested, and verified via CI static/manifest/signature checks; this exact candidate build was not installed on a physical phone prior to GitHub release publication (`0` new permissions added over `v1.21`).
 
 ### What's New in v1.22
