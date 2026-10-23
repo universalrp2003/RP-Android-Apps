@@ -1,6 +1,7 @@
 ## SMS Guard (குறுஞ்செய்தி காவலன்) v1.1.3 — Instant Screen-ON Voice Stop, Global Stop Button, Newest-First Threads & Full Govt/Ration/Exam Voice Readout
 
 **Package:** `com.universalrp.smsguard` · **Version:** `1.1.3` (`versionCode = 9`) · **Minimum Android:** Android 8.0+ (API 26)
+**Published Signed Asset:** `SMS-Guard-v1.1.3.apk` · **`12,363,249` bytes** · **SHA-256:** `536bafa0665db72783d09205c86ed44cad2dedfd60fd29580122170f6cdb7b3a` ([SMS Guard release run 39916519051](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39916519051))
 **Verification Note:** Built, linted, unit-tested, and verified via CI static/manifest/signature checks; this exact candidate build was not installed on a physical phone prior to GitHub release publication (`0` new permissions added over `v1.1.2`).
 
 ### What's New in v1.1.3

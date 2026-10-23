@@ -1,6 +1,7 @@
 ## Ramesh Radio (ரமேஷ் ரேடியோ) v1.21 — Live Mobile-Tower Place Card, Automatic Location Prompt & Full Spoken Place Details
 
 **Package:** `com.universalrp.tamilnadufm` · **Version:** `1.21` (`versionCode = 21`) · **Minimum Android:** Android 8.0+ (API 26)
+**Published Signed Asset:** `Ramesh-Radio-v1.21.apk` · **`15,076,612` bytes** · **SHA-256:** `b5cd68048a05fb52de998401194eabf23c2da8695238bf737e452de520ab033d` ([Build APK run 39917424951](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39917424951))
 **Verification Note:** Built, linted, unit-tested, and verified via CI static/manifest/signature checks; this exact candidate build was not installed on a physical phone prior to GitHub release publication (`0` new permissions added over `v1.20`).
 
 ### What's New in v1.21

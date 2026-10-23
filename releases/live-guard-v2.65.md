@@ -1,6 +1,7 @@
 ## Live Guard (CleanSweep) v2.65 — Default 3-Hour Screen-OFF News Voice Bulletin & Clean Tamil UI Polish
 
 **Package:** `com.universalrp.cleansweep` · **Version:** `2.65` (`versionCode = 70`) · **Minimum Android:** Android 8.0+ (API 26)
+**Published Signed Asset:** `CleanSweep-v2.65.apk` · **`14,312,367` bytes** · **SHA-256:** `7d495ee3208631b930f38f48c5b82f7054f29dcc424a51a90019578543343634` ([Build APK run 39917424951](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39917424951))
 **Verification Note:** Built, linted, unit-tested, and verified via CI static/manifest/signature checks; this exact build was not installed on a phone prior to GitHub release publication (adds zero new permissions over `v2.64`).
 
 ### What's New in v2.65
