@@ -6,6 +6,15 @@ This file indexes all seven published **RP Ideas** Android applications at [`uni
 
 _No unreleased changes._
 
+## Published — Four-App Feature & Reliability Update (`SMS Guard 1.1.2`, `Live Guard 2.64`, `Ramesh Radio 1.20`, `Oor Arivippu 1.1.7`) (23 October 2026)
+
+Published across [SMS Guard run 39905821109](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39905821109), [Build APK run 39905821149](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39905821149), and [Oor Arivippu run 39905170667](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39905170667) (`PulseEQ 1.9`, `RP Vocal Remover Studio 0.1.15`, and `Secret Message 1.1.3` unchanged; exact candidate bytes were not installed on a physical phone prior to GitHub release publication):
+
+- **SMS Guard 1.1.2 / code 8** ([`releases/sms-guard-v1.1.2.md`](releases/sms-guard-v1.1.2.md)): Edge-to-edge reply keyboard visibility (`imePadding` + `navigationBarsPadding` + auto-scroll), NEFT outgoing beneficiary credit classification + recipient transfer voice announcement, clean top `தமிழ் | ENG` language/voice sync button with auto HD Male/Female online & offline system voices, and new `Sender Name Only` + `Read Full Normal SMS` toggles.
+- **Oor Arivippu 1.1.7 / code 12** ([`releases/oor-arivippu-v1.1.7.md`](releases/oor-arivippu-v1.1.7.md)): Redesigned ultra-clean Home screen with top `தமிழ் | ENG` + `⚙️ Settings` bar, big Start/Stop button, conditional active-only Rain Alert card, Current City card, live session Traveled Distance (`km`) box, Destination box, and automatic HD Male/Female voices.
+- **Ramesh Radio 1.20 / code 20** ([`releases/ramesh-radio-v1.20.md`](releases/ramesh-radio-v1.20.md)): Mobile cell-tower approximate location (`ACCESS_COARSE_LOCATION`) + saved PIN fallback, strictly active-window/playing-only rain & storm alerts, and 20-minute forecast freshness validation across all three weather-enabled apps.
+- **Live Guard 2.64 / code 69** ([`releases/live-guard-v2.64.md`](releases/live-guard-v2.64.md)): Smart Screen-OFF News Headlines Voice Announcer (`OFF/ON`, `30m/1h/2h/3h`, silent `10 PM–6 AM`, `CallGuard` + active-media guards, clean prefix/suffix/emoji sanitizer, zero duplicate headlines, plus manual `Read today's news` + `Stop reading`), full Tamil ↔ English news strip & voice synchronization, and 24×7 background rain alert freshness + notification auto-clear (`0` permissions added over `v2.63`).
+
 ## Published — Unified 7-App Super About Update (22 October 2026)
 
 Upgrades all seven RP Ideas Android apps (`SMS Guard 1.1.1 / code 7`, `Live Guard 2.63 / code 68`,
