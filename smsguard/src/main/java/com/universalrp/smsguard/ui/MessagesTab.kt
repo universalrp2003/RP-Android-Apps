@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -41,6 +42,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -49,6 +51,8 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -80,9 +84,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universalrp.smsguard.data.EnrichedSmsMessage
 import com.universalrp.smsguard.data.GuardPrefs
+import com.universalrp.smsguard.data.RecentContact
 import com.universalrp.smsguard.data.SimCardInfo
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.data.SmsThreadSummary
+import com.universalrp.smsguard.data.SenderMutePref
 import com.universalrp.smsguard.engine.DltCategory
 import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.LinkScanResult
@@ -90,6 +96,9 @@ import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.SenderTrustLevel
 import com.universalrp.smsguard.engine.SpoofClassification
 import com.universalrp.smsguard.engine.TxDirection
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun MessagesTab(
@@ -198,7 +207,7 @@ fun MessagesTab(
                             )
                         }
                         IconButton(
-                            onClick = { vm.refreshAll(scanUncheckedLinksOnline = true) },
+                            onClick = { vm.refreshAll(scanUncheckedLinksOnline = true, linkScanIsManual = true) },
                             modifier = Modifier.size(34.dp),
                         ) {
                             Icon(
@@ -300,13 +309,37 @@ fun MessagesTab(
                 }
             } else {
                 items(visibleThreads, key = { it.threadKey }) { thread ->
+                    val senderLabel = if (prefs.tamil) {
+                        thread.latestMessage.sender.displayNameTa
+                    } else {
+                        thread.latestMessage.sender.displayNameEn
+                    }
                     ThreadRowCard(
                         thread = thread,
                         tamil = prefs.tamil,
                         palette = palette,
                         ui = ui,
+                        mutePref = vm.senderMutePref(thread.threadKey),
                         onOpen = { vm.openThread(thread.threadKey) },
                         onCopyOtp = { vm.copyOtp(it) },
+                        onToggleNotifications = {
+                            val currentlyMuted = vm.senderMutePref(thread.threadKey)?.muteNotifications == true
+                            vm.setSenderNotificationsMuted(thread.threadKey, senderLabel, !currentlyMuted)
+                        },
+                        onToggleVoice = {
+                            val currentlyMuted = vm.senderMutePref(thread.threadKey)?.muteVoice == true
+                            vm.setSenderVoiceMuted(thread.threadKey, senderLabel, !currentlyMuted)
+                        },
+                        onToggleBlock = {
+                            vm.setSenderBlocked(thread.threadKey, senderLabel, true)
+                            vm.postBanner(
+                                if (prefs.tamil) {
+                                    "🚫 $senderLabel தடுக்கப்பட்டது — Controls-ல் நீக்கலாம்."
+                                } else {
+                                    "🚫 Blocked $senderLabel — unblock anytime from Controls."
+                                },
+                            )
+                        },
                     )
                 }
                 if (hasMoreMessages) {
@@ -430,12 +463,19 @@ private fun ThreadRowCard(
     tamil: Boolean,
     palette: GuardPalette,
     ui: GuardUiStrings,
+    mutePref: SenderMutePref?,
     onOpen: () -> Unit,
     onCopyOtp: (String) -> Unit,
+    onToggleNotifications: () -> Unit,
+    onToggleVoice: () -> Unit,
+    onToggleBlock: () -> Unit,
 ) {
+    var menuOpen by remember { mutableStateOf(false) }
     val msg = thread.latestMessage
     val senderName = if (tamil) msg.sender.displayNameTa else msg.sender.displayNameEn
     val isDanger = thread.hasUnsafeLink || thread.hasSpoofAttempt
+    val notificationsMuted = mutePref?.muteNotifications == true
+    val voiceMuted = mutePref?.muteVoice == true
     val borderColor = when {
         isDanger -> palette.dangerRed
         thread.unreadCount > 0 -> palette.accent.copy(alpha = 0.7f)
@@ -504,25 +544,91 @@ private fun ThreadRowCard(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = SmsRepository.formatTwelveHourTime(msg.dateMs),
-                    fontSize = 11.sp,
-                    color = palette.textMuted,
-                )
-                if (thread.unreadCount > 0) {
-                    Spacer(Modifier.height(4.dp))
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(palette.accent)
-                            .padding(horizontal = 7.dp, vertical = 2.dp),
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        text = SmsRepository.formatTwelveHourTime(msg.dateMs),
+                        fontSize = 11.sp,
+                        color = palette.textMuted,
+                    )
+                    if (thread.unreadCount > 0) {
+                        Spacer(Modifier.height(4.dp))
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(palette.accent)
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = thread.unreadCount.toString(),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = palette.onAccent,
+                            )
+                        }
+                    }
+                }
+                // Per-sender quick actions: mute notifications / don't announce / block.
+                Box {
+                    IconButton(
+                        onClick = { menuOpen = true },
+                        modifier = Modifier.size(34.dp),
                     ) {
-                        Text(
-                            text = thread.unreadCount.toString(),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = palette.onAccent,
+                        Icon(
+                            Icons.Filled.MoreVert,
+                            contentDescription = if (tamil) "செய்தி வடிகட்டி" else "Message filters",
+                            tint = palette.textMuted,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuOpen,
+                        onDismissRequest = { menuOpen = false },
+                    ) {
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (notificationsMuted) {
+                                        if (tamil) "🔔 இந்த அனுப்புநரின் அறிவிப்பை இயக்கு" else "🔔 Turn notifications ON"
+                                    } else {
+                                        if (tamil) "🔕 இந்த அனுப்புநரின் அறிவிப்பை நிறுத்து" else "🔕 Turn notifications OFF"
+                                    },
+                                    fontSize = 13.sp,
+                                )
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onToggleNotifications()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (voiceMuted) {
+                                        if (tamil) "🔊 குரலில் அறிவிக்க இயக்கு" else "🔊 Announce aloud ON"
+                                    } else {
+                                        if (tamil) "🔇 குரலில் அறிவிக்க வேண்டாம்" else "🔇 Don't announce aloud"
+                                    },
+                                    fontSize = 13.sp,
+                                )
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onToggleVoice()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    if (tamil) "🚫 இந்த அனுப்புநரை முழுவதுமாக தடு" else "🚫 Block this sender entirely",
+                                    fontSize = 13.sp,
+                                    color = palette.dangerRed,
+                                )
+                            },
+                            onClick = {
+                                menuOpen = false
+                                onToggleBlock()
+                            },
                         )
                     }
                 }
@@ -574,6 +680,20 @@ private fun ThreadRowCard(
                 StatusBadgePill(
                     text = "$sign${FinanceLedgerEngine.formatInr(msg.finance.amountInr)} · ${msg.finance.accountDisplayLabel}",
                     color = if (isCredit) palette.safeGreen else palette.warnAmber,
+                )
+            }
+
+            // Show the sender's current mute state so it is obvious why it stays quiet.
+            if (notificationsMuted) {
+                StatusBadgePill(
+                    text = if (tamil) "🔕 அறிவிப்பு நிறுத்தம்" else "🔕 Notifications muted",
+                    color = palette.textMuted,
+                )
+            }
+            if (voiceMuted) {
+                StatusBadgePill(
+                    text = if (tamil) "🔇 குரல் அறிவிப்பு இல்லை" else "🔇 Voice muted",
+                    color = palette.textMuted,
                 )
             }
         }
@@ -708,7 +828,7 @@ fun ThreadDetailScreen(
                         copyPlainText(context, msg.body)
                         vm.postBanner(if (prefs.tamil) "செய்தி நகலெடுக்கப்பட்டது" else "Message copied")
                     },
-                    onDelete = { vm.deleteMessage(msg.id) },
+                    onDelete = { vm.deleteMessage(msg) },
                     onTapLink = { link ->
                         when (link.verdict) {
                             LinkVerdict.SAFE -> openUrlSafely(context, link.finalUrl.ifBlank { link.normalizedUrl })
@@ -1012,6 +1132,7 @@ fun NewSmsDialog(
     sims: List<SimCardInfo>,
     palette: GuardPalette,
     ui: GuardUiStrings,
+    tamil: Boolean,
     onPickContact: ((String) -> Unit) -> Unit,
     onSend: (recipient: String, body: String, subId: Int) -> Unit,
     onDismiss: () -> Unit,
@@ -1019,6 +1140,27 @@ fun NewSmsDialog(
     var recipient by remember(initialRecipient) { mutableStateOf(initialRecipient) }
     var body by remember(initialBody) { mutableStateOf(initialBody) }
     var simIdx by remember { mutableIntStateOf(0) }
+    val context = LocalContext.current
+    var recentContacts by remember { mutableStateOf<List<RecentContact>>(emptyList()) }
+    var resolvedContactName by remember { mutableStateOf<String?>(null) }
+
+    // Offer the phone's frequent/recent people inline so a recipient is one tap away.
+    LaunchedEffect(Unit) {
+        recentContacts = withContext(Dispatchers.IO) {
+            SmsRepository.loadRecentContacts(context, limit = 30)
+        }
+    }
+
+    // Directly resolve and show the real contact name for whatever is typed/picked into the
+    // recipient field, so the sender's name is always visible without a separate contact picker.
+    LaunchedEffect(recipient) {
+        val query = recipient.trim()
+        resolvedContactName = if (query.length >= 4) {
+            withContext(Dispatchers.IO) { SmsRepository.lookupContactName(context, query) }
+        } else {
+            null
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1041,6 +1183,77 @@ fun NewSmsDialog(
                     )
                     IconButton(onClick = { onPickContact { picked -> recipient = picked } }) {
                         Icon(Icons.Filled.PersonAdd, contentDescription = ui.pickContactBtn, tint = palette.accent)
+                    }
+                }
+
+                // Show the resolved contact name for the current recipient (direct, no extra picker).
+                resolvedContactName?.let { name ->
+                    Text(
+                        text = if (tamil) "👤 $name" else "👤 $name",
+                        color = palette.safeGreen,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                }
+
+                // Inline recent / frequent contacts — tap to fill the recipient without leaving the dialog.
+                if (recentContacts.isNotEmpty()) {
+                    Text(
+                        text = if (tamil) "📇 சமீபத்திய தொடர்புகள்" else "📇 Recent contacts",
+                        color = palette.textMuted,
+                        fontSize = 11.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 180.dp)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        recentContacts.take(8).forEach { contact ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable { recipient = contact.number }
+                                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .clip(CircleShape)
+                                        .background(palette.accent.copy(alpha = 0.18f)),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = contact.name.take(1).uppercase(),
+                                        color = palette.accent,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = contact.name,
+                                        color = palette.textPrimary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        text = contact.number,
+                                        color = palette.textMuted,
+                                        fontSize = 11.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 if (sims.size > 1) {

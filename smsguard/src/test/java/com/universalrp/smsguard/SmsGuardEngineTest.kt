@@ -7,6 +7,7 @@ import com.universalrp.smsguard.engine.LinkSecurityScanner
 import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.OtpDetector
 import com.universalrp.smsguard.engine.SenderIdentityEngine
+import com.universalrp.smsguard.engine.ServiceInfoDetector
 import com.universalrp.smsguard.engine.SmsAnnouncementPlanner
 import com.universalrp.smsguard.engine.SpoofClassification
 import com.universalrp.smsguard.engine.UserAccountProfile
@@ -720,6 +721,65 @@ class SmsGuardEngineTest {
         )
         assertTrue(rainSpeech.second.contains("ஆலங்குடி"))
         assertTrue(rainSpeech.second.contains("புதுக்கோட்டை மாவட்டம்"))
+    }
+
+    @Test
+    fun routineDataValidityServiceStatusSmsAreSilencedWhileBankAmountStillAnnounces() {
+        // 1. Detector correctly flags routine telecom status dumps and ignores ordinary texts.
+        assertTrue(ServiceInfoDetector.isServiceInfo("Pack Valid till 10 Dec 2026. Remaining SMS:569 Bal:Rs.0.00."))
+        assertTrue(ServiceInfoDetector.isServiceInfo("Dear customer, you have used 2.5 GB. 2 GB data left. Validity till 31-Dec."))
+        assertTrue(ServiceInfoDetector.isServiceInfo("Your talktime balance is Rs.0. Recharge now."))
+        assertFalse("A friend's casual message must never be treated as service noise", ServiceInfoDetector.isServiceInfo("Your plan is valid till Friday, let's catch up!"))
+        assertFalse("A real bank credit is not a service-status dump", ServiceInfoDetector.isServiceInfo("Your A/c XX4821 credited by Rs.500.00 Avl Bal Rs.24800.00"))
+
+        // 2. Service-status message: SILENT when the owner filter is ON, read when OFF.
+        val statusBody = "Pack Valid till 10 Dec 2026. Remaining SMS:569 Bal:Rs.0.00."
+        val airtelSender = SenderIdentityEngine.identify("JM-AIRTEL-S", statusBody)
+        val statusOtp = OtpDetector.analyze(statusBody)
+        val statusFin = FinanceLedgerEngine.parseSingleSms(7001L, 1_761_300_000_000L, statusBody, airtelSender, statusOtp.isOtp)
+
+        val mutedTa = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = statusBody, sender = airtelSender, otp = statusOtp, links = emptyList(), finance = statusFin,
+            settings = AnnouncementSettingsSnapshot(tamil = true, voiceEnabled = true, muteServiceInfoVoice = true),
+        )
+        val allowedTa = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = statusBody, sender = airtelSender, otp = statusOtp, links = emptyList(), finance = statusFin,
+            settings = AnnouncementSettingsSnapshot(tamil = true, voiceEnabled = true, muteServiceInfoVoice = false),
+        )
+        assertNull("Routine data/validity status SMS must stay silent when the filter is ON", mutedTa)
+        assertNotNull("Owner can still opt to hear service-status SMS", allowedTa)
+
+        // 3. A genuine bank credit STILL announces the exact received amount (never silenced by the filter).
+        val creditBody = "Your A/c XX4821 credited by Rs.500.00 on 10Oct26 by UPI Ref 629512349876"
+        val sbiSender = SenderIdentityEngine.identify("JT-SBIINB-T", creditBody)
+        val creditOtp = OtpDetector.analyze(creditBody)
+        val creditFin = FinanceLedgerEngine.parseSingleSms(7002L, 1_761_300_000_000L, creditBody, sbiSender, creditOtp.isOtp)
+        val creditVoice = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = creditBody, sender = sbiSender, otp = creditOtp, links = emptyList(), finance = creditFin,
+            settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true, muteServiceInfoVoice = true),
+        )
+        assertNotNull(creditVoice)
+        assertTrue(creditVoice!!.contains("500"))
+        assertTrue(creditVoice.contains("received"))
+    }
+
+    @Test
+    fun fullReadoutNeverSpeaksAvailableBalanceOnlyTheRelevantAmount() {
+        // Non-financial service sender + a body carrying both a spent amount and an available balance:
+        // full-readout must keep the amount but drop the "Available balance Rs.24800" clause entirely.
+        val body = "Your last UPI payment of Rs.250.00 was successful. Available balance Rs.24,800.00 in your wallet."
+        val sender = SenderIdentityEngine.identify("AD-WALLET-S", body)
+        val otp = OtpDetector.analyze(body)
+        val fin = FinanceLedgerEngine.parseSingleSms(7100L, 1_761_300_000_000L, body, sender, otp.isOtp)
+
+        val speechEn = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body, sender = sender, otp = otp, links = emptyList(), finance = fin,
+            settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true, readFullNormalSmsEnabled = true),
+        )
+        assertNotNull(speechEn)
+        assertTrue("The transaction amount must still be spoken", speechEn!!.contains("250"))
+        assertFalse("The words 'available balance' must never be spoken", speechEn.contains("balance", ignoreCase = true))
+        assertFalse("The balance figure must never be spoken", speechEn.contains("24,800") || speechEn.contains("24800"))
     }
 
     @Test

@@ -637,6 +637,7 @@ class MainActivity : ComponentActivity() {
                         sims = sims,
                         palette = palette,
                         ui = ui,
+                        tamil = prefs.tamil,
                         onPickContact = { cb ->
                             contactPickedCallback = cb
                             contactPickerLauncher.launch(

@@ -31,6 +31,7 @@ import com.universalrp.smsguard.engine.LinkSecurityScanner
 import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.OtpDetector
 import com.universalrp.smsguard.engine.SenderIdentityEngine
+import com.universalrp.smsguard.engine.ServiceInfoDetector
 import com.universalrp.smsguard.engine.SmsAnnouncementPlanner
 import com.universalrp.smsguard.engine.SpoofClassification
 import java.util.concurrent.ConcurrentLinkedDeque
@@ -143,14 +144,25 @@ object IncomingSmsProcessor {
             ensureChannels(appCtx)
             val prefs = GuardSettingsStore.ensureLoaded(appCtx)
 
-            val insertedId = if (persistToProvider) {
+            val contactName = SmsRepository.lookupContactName(appCtx, rawAddress)
+            val sender = SenderIdentityEngine.identify(rawAddress, body, contactName)
+
+            // Per-sender owner preferences: mute notifications, mute voice, or fully block (hide + drop).
+            val mutePref = GuardSettingsStore.senderMuteFor(appCtx, sender.normalizedAddress)
+            val isBlocked = mutePref?.blocked == true
+            val notificationsMuted = mutePref?.muteNotifications == true
+            val voiceMuted = mutePref?.muteVoice == true
+
+            // Routine data / validity / remaining-SMS status dumps are silenced (voice + notification)
+            // when the owner turns the service-info filter ON — but they are still stored in the inbox.
+            val isServiceInfoNoise = prefs.muteServiceInfoVoice && ServiceInfoDetector.isServiceInfo(body)
+
+            val insertedId = if (persistToProvider && !isBlocked) {
                 SmsRepository.insertIncomingSmsToProvider(appCtx, rawAddress, body, timestampMs, subId)
             } else {
                 -timestampMs
             }
 
-            val contactName = SmsRepository.lookupContactName(appCtx, rawAddress)
-            val sender = SenderIdentityEngine.identify(rawAddress, body, contactName)
             val otp = OtpDetector.analyze(body)
             val online = overrideOnlineState ?: SmsRepository.hasValidatedInternet(appCtx)
             val apiKey = GuardSettingsStore.getSafeBrowsingApiKey(appCtx)
@@ -172,7 +184,7 @@ object IncomingSmsProcessor {
                 SmsRepository.wasSentByUserRecently(appCtx, body, timestampMs)
 
             // Queue any offline-pending links for automatic verification as soon as internet reconnects!
-            val offlineUrls = if (isOutgoingEcho) {
+            val offlineUrls = if (isOutgoingEcho || isBlocked) {
                 emptyList()
             } else {
                 linkResults
@@ -202,7 +214,7 @@ object IncomingSmsProcessor {
                 userAccounts = prefs.userAccounts,
             )
 
-            val spokenScript = if (isOutgoingEcho) {
+            val spokenScript = if (isOutgoingEcho || isBlocked || voiceMuted) {
                 null
             } else {
                 SmsAnnouncementPlanner.buildIncomingAnnouncement(
@@ -218,6 +230,7 @@ object IncomingSmsProcessor {
                         readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                         shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                         mutePromoVoice = prefs.mutePromoVoice,
+                        muteServiceInfoVoice = prefs.muteServiceInfoVoice,
                     ),
                 )
             }
@@ -225,7 +238,16 @@ object IncomingSmsProcessor {
             val hasDanger = linkResults.any { it.verdict == LinkVerdict.UNSAFE } ||
                 finance.classification == SpoofClassification.SPOOF_PERSONAL_NUMBER_FAKE_MONEY
 
-            if (postSystemNotification || hasDanger) {
+            // Only raise a normal message notification when the message actually landed in the inbox
+            // (persisted), the sender isn't muted/blocked, and it isn't a routine service-status dump.
+            // Danger (scam link / fake payment) ALWAYS breaks through regardless of any mute.
+            val persistOk = insertedId > 0
+            val shouldNotifyRegular =
+                postSystemNotification && persistOk && !notificationsMuted && !isBlocked && !isServiceInfoNoise
+
+            // A fully blocked sender stays completely silent (even danger); a notification-muted
+            // sender still gets scam-link / fake-payment safety alerts to break through.
+            if (!isBlocked && (hasDanger || shouldNotifyRegular)) {
                 showSmartNotification(
                     context = appCtx,
                     threadKey = sender.normalizedAddress,
@@ -261,6 +283,7 @@ object IncomingSmsProcessor {
                                 readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                                 shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                                 mutePromoVoice = prefs.mutePromoVoice,
+                                muteServiceInfoVoice = prefs.muteServiceInfoVoice,
                             ),
                         ).orEmpty()
                         val enScript = SmsAnnouncementPlanner.buildIncomingAnnouncement(
@@ -276,6 +299,7 @@ object IncomingSmsProcessor {
                                 readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                                 shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                                 mutePromoVoice = prefs.mutePromoVoice,
+                                muteServiceInfoVoice = prefs.muteServiceInfoVoice,
                             ),
                         ).orEmpty()
                         if (taScript.isNotBlank() || enScript.isNotBlank()) {
@@ -393,6 +417,17 @@ object IncomingSmsProcessor {
     fun copyOtpToClipboard(context: Context, code: String) {
         val cm = context.getSystemService(ClipboardManager::class.java) ?: return
         cm.setPrimaryClip(ClipData.newPlainText("OTP", code))
+    }
+
+    /**
+     * Clears a thread's active message notification (same id scheme as [showSmartNotification]) so a
+     * message that was read or deleted never leaves a stale "you have a new SMS" notification behind.
+     */
+    fun cancelThreadNotification(context: Context, threadKey: String) {
+        if (threadKey.isBlank()) return
+        runCatching {
+            NotificationManagerCompat.from(context).cancel(threadKey.hashCode() and 0x7FFFFFFF)
+        }
     }
 }
 

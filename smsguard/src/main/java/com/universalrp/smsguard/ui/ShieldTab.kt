@@ -101,7 +101,7 @@ fun ShieldTab(
                         Text(ui.checkLinkBtn, fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(
-                        onClick = { vm.verifyUncheckedInboxLinksInBackground() },
+                        onClick = { vm.verifyUncheckedInboxLinksInBackground(isManual = true) },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                     ) {
