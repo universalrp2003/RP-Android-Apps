@@ -28,3 +28,9 @@
 
 ### Verification
 Built, unit-tested, linted, and signature-verified in CI before this release was created. A physical-phone test on the target device is still recommended before wide distribution. `0` new permissions over `v1.1.3`.
+
+**Signing certificate (verify the publisher before installing):** the release APK is signed with the
+official RP Ideas key — certificate SHA-256 `9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`.
+You can confirm any downloaded `SMS-Guard-v1.1.4.apk` matches this signer with
+`apksigner verify --print-certs SMS-Guard-v1.1.4.apk`. The APK's own SHA-256 is printed in the
+release header above by the CI release workflow.
