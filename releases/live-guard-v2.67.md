@@ -1,7 +1,7 @@
 ## Live Guard (CleanSweep) v2.67 — Readable News Headlines (HTML/XML Entity Decoding)
 
 **Package:** `com.universalrp.cleansweep` · **Version:** `2.67` (`versionCode = 72`) · **Minimum Android:** Android 8.0+ (API 26)
-**Published Signed Asset:** `CleanSweep-v2.67.apk` · **`<size-pending>` bytes** · **SHA-256:** `<digest-pending>` ([Build APK run `<run-pending>`](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/0))
+**Published Signed Asset:** `CleanSweep-v2.67.apk` · **`14,330,071` bytes** · **SHA-256:** `ea8eedd2ddb13d5200347da2db580a45ee8fb628634b798183aaf5765650adf4` ([Build APK run 39990781045](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39990781045))
 **Verification Note:** Built, unit-tested, and verified via CI static/manifest/signature/localization checks; this exact build was **not installed on a phone** prior to GitHub release publication (**adds zero new permissions** over `v2.66` — no dangerous-permission delta, so no device-install record is required). GitHub publication is not Play Protect approval or all-device certification.
 
 ### What's New in v2.67
