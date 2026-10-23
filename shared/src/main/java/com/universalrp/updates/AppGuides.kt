@@ -302,17 +302,21 @@ object AppGuides {
                     "அமைப்புகளும் இந்தப் போனிலேயே இருக்கும்.",
             ),
             topic(
-                "Rain & cyclone voice alerts while listening (Mobile Tower + PIN)",
-                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு (செல்போன் டவர் + PIN)",
-                "Tap the cloud icon at the top of Radio (or open More). With Approximate Network Location allowed, " +
-                    "Ramesh Radio detects your exact village/town and district from your connected mobile tower with zero " +
-                    "GPS battery drain, shows that active place right at the top of the Rain Alert dialog, and always " +
-                    "speaks your exact town/village and district in every rain or storm announcement. When Location is off, " +
-                    "it uses your saved 6-digit PIN/town (e.g. 622301). Alerts run ONLY while Ramesh Radio is open or playing.",
-                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். தோராயமான மொபைல் டவர் இருப்பிட அனுமதி " +
-                    "வழங்கினால், GPS பேட்டரி செலவின்றி உங்கள் தற்போதைய ஊர் மற்றும் மாவட்டத்தைத் தானாகக் கண்டறிந்து மேலே " +
-                    "தெளிவாகக் காட்டும்; ஒவ்வொரு மழை மற்றும் புயல் குரல் அறிவிப்பிலும் உங்கள் ஊர் விவரத்தைச் சேர்த்தே ஒலிக்கும். " +
-                    "இருப்பிடம் அணைந்தால் சேமித்த PIN/ஊரைப் (உதா: 622301) பயன்படுத்தும். ரேடியோ திறந்திருக்கும்போதோ ஒலிக்கும்போதோ மட்டுமே இயங்கும்.",
+                "Rain & cyclone voice alerts while listening (PIN or Optional Mobile Tower)",
+                "பாடல் / வானொலி கேட்கும்போது மழை & புயல் அறிவிப்பு (PIN அல்லது விருப்ப மொபைல் டவர்)",
+                "Tap the cloud icon at the top of Radio (or open More). Ramesh Radio NEVER asks for Location " +
+                    "permission automatically — enter your 6-digit PIN code or village/town once (e.g. 622301) " +
+                    "for 100% accurate rain alerts with zero Location permission! Because Android places Mobile " +
+                    "Signal Tower lookup inside the 'Location' permission group, an optional 'Enable Mobile Tower' " +
+                    "button is available inside Rain Settings only if you explicitly want automatic mobile-tower " +
+                    "town detection (0% GPS drain, never tracks or stores movements). Every alert shows and speaks " +
+                    "your exact village/town and district, only while Ramesh Radio is open or playing.",
+                "வானொலி மேலே உள்ள மேகப் பொத்தானை (அல்லது More) திறக்கவும். ரமேஷ் ரேடியோ ஒருபோதும் தானாக Location " +
+                    "அனுமதி கேட்காது — எந்த அனுமதியும் இன்றி உங்கள் 6-இலக்க PIN எண் அல்லது ஊர்ப் பெயரை (உதா: 622301) " +
+                    "ஒருமுறை சேமித்தாலே 100% துல்லிய மழை எச்சரிக்கை கிடைக்கும்! மொபைல் சிக்னல் டவர் ஊர் அறிதலை " +
+                    "Android 'Location' அனுமதிக்குள் வைத்திருப்பதால், தானியங்கி டவர் கண்டறிதல் தேவைப்பட்டால் மட்டும் " +
+                    "உள்ளே உள்ள 'மொபைல் டவர் இயக்கு (விருப்பம்)' பொத்தானை நீங்களாக அழுத்தலாம் (0% GPS செலவு; " +
+                    "பயணத்தைக் கண்காணிக்காது). ரேடியோ இயங்கும்போது மட்டும் உங்கள் ஊர் மற்றும் மாவட்டப் பெயருடன் அறிவிக்கும்.",
             ),
             topic(
                 "Updating Ramesh Radio",
