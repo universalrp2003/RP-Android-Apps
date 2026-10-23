@@ -75,20 +75,15 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     val rootContext = androidx.compose.ui.platform.LocalContext.current
     val isTamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL
 
+    // STRICT OPT-IN ONLY: Never auto-request Location permission on app launch, when opening
+    // Rain Settings, when toggling the switch, or on Check Now — only when the user explicitly
+    // clicks 'Enable Mobile Tower (Optional)' inside SharedWeatherControlDialog.
     val coarseLocationLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
         contract = androidx.activity.result.contract.ActivityResultContracts.RequestPermission(),
     ) { granted ->
         com.universalrp.tamilnadufm.RadioWeatherMonitor.refreshState(rootContext)
         if (granted) {
             com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
-        }
-    }
-
-    androidx.compose.runtime.LaunchedEffect(showWeatherDialog) {
-        if (showWeatherDialog && !weather.permissionGranted) {
-            runCatching {
-                coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
         }
     }
 
@@ -161,16 +156,9 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
             onSetEnabled = { on ->
                 com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, on)
-                if (on && !weather.permissionGranted) {
-                    runCatching { coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION) }
-                }
             },
             onCheckNow = {
-                if (!weather.permissionGranted && weather.savedPlaceName.isBlank()) {
-                    coarseLocationLauncher.launch(android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                } else {
-                    com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
-                }
+                com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
             },
             onTestVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.testVoiceWithDuck(rootContext) },
             onCyclePreviewAnimation = { com.universalrp.tamilnadufm.RadioWeatherMonitor.cyclePreviewAnimation() },

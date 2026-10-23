@@ -125,12 +125,12 @@ fun SharedWeatherControlDialog(
             bi(
                 tamil,
                 if (isCellTowerMode) {
-                    "Tap 'Allow Mobile Tower Location' above to detect your town automatically, or save your PIN/village below."
+                    "Zero permission required: save your 6-digit PIN or town once below (recommended). Optional Mobile Tower lookup is never requested unless you click 'Enable Mobile Tower' above."
                 } else {
                     "Allow Location permission to detect your town automatically, or save your PIN/village below."
                 },
                 if (isCellTowerMode) {
-                    "உங்கள் ஊரைத் தானாகக் கண்டறிய மேலே 'மொபைல் டவர் இடத்தை அனுமதி' என்பதைத் தட்டவும், அல்லது கீழே PIN/ஊரைச் சேமிக்கவும்."
+                    "எந்த அனுமதியும் தேவையில்லை: கீழே உங்கள் 6-இலக்க PIN எண் அல்லது ஊரை ஒருமுறை சேமிக்கவும் (பரிந்துரைக்கப்படுகிறது). மேலே 'மொபைல் டவர் இயக்கு' பொத்தானை நீங்கள் அழுத்தினால் மட்டுமே அனுமதி கேட்கப்படும்."
                 } else {
                     "உங்கள் ஊரைத் தானாகக் கண்டறிய இட அனுமதியை வழங்கவும், அல்லது கீழே PIN/ஊரைச் சேமிக்கவும்."
                 },
@@ -264,20 +264,52 @@ fun SharedWeatherControlDialog(
                                 fontWeight = FontWeight.Medium,
                             )
                         }
+                        if (isCellTowerMode) {
+                            Text(
+                                text = if (state.permissionGranted) {
+                                    bi(
+                                        tamil,
+                                        "🔒 Privacy note: Android puts Mobile Signal Tower town lookup inside 'Location' permission. Ramesh Radio NEVER tracks or stores your movements. Prefer zero Location permission? Set Location → Don't allow in Android App permissions anytime and save your PIN/Town below!",
+                                        "🔒 தனியுரிமைக் குறிப்பு: மொபைல் சிக்னல் டவர் ஊர் அறிதலை Android 'Location' அனுமதிக்குள் வைத்துள்ளது. ரமேஷ் ரேடியோ உங்கள் பயணத்தை ஒருபோதும் கண்காணிப்பதோ சேமிப்பதோ இல்லை. Location அனுமதியே வேண்டாம் எனில், App permissions → Location → Don't allow செய்துவிட்டு கீழே உங்கள் PIN/ஊரைச் சேமிக்கலாம்!",
+                                    )
+                                } else {
+                                    bi(
+                                        tamil,
+                                        "🔒 Why optional Location permission exists: Android blocks reading your SIM's Mobile Signal Tower without 'Location' permission. Ramesh Radio NEVER asks automatically and NEVER tracks your movements — type your PIN/Town once below for 100% zero-permission accuracy, or tap below only if you want optional Mobile Tower detection.",
+                                        "🔒 விருப்ப Location அனுமதி ஏன் உள்ளது: 'Location' அனுமதி இல்லாமல் மொபைல் சிக்னல் டவரைப் படிக்க Android அனுமதிக்காது. ரமேஷ் ரேடியோ ஒருபோதும் தானாக அனுமதி கேட்காது; உங்கள் பயணத்தைக் கண்காணிக்கவும் செய்யாது. எந்த அனுமதியும் இன்றி கீழே PIN/ஊரைச் சேமிக்கலாம், அல்லது விருப்பப்பட்டால் மட்டும் கீழுள்ள பொத்தானை அழுத்தலாம்.",
+                                    )
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         if (allowGps && !state.permissionGranted && onRequestLocationPermission != null) {
-                            Button(
-                                onClick = onRequestLocationPermission,
-                                colors = ButtonDefaults.buttonColors(containerColor = accentColor),
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text(
-                                    text = if (isCellTowerMode) {
-                                        bi(tamil, "📡 Allow Mobile Tower Location", "📡 மொபைல் டவர் இடத்தை அனுமதி")
-                                    } else {
-                                        bi(tamil, "📍 Allow Location Access", "📍 இட அனுமதியை வழங்கு")
-                                    },
-                                    fontWeight = FontWeight.Bold,
-                                )
+                            if (isCellTowerMode) {
+                                OutlinedButton(
+                                    onClick = onRequestLocationPermission,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = bi(
+                                            tamil,
+                                            "📡 Enable Mobile Tower (Optional)",
+                                            "📡 மொபைல் டவர் இயக்கு (விருப்பம்)",
+                                        ),
+                                        color = accentColor,
+                                        fontWeight = FontWeight.SemiBold,
+                                    )
+                                }
+                            } else {
+                                Button(
+                                    onClick = onRequestLocationPermission,
+                                    colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = bi(tamil, "📍 Allow Location Access", "📍 இட அனுமதியை வழங்கு"),
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                }
                             }
                         }
                     }

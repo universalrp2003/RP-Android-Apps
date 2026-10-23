@@ -2,7 +2,7 @@
 
 **Last updated: 23 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
 
-This policy covers all seven actively published RP Ideas Android apps and their builds: **SMS Guard (குறுஞ்செய்தி காவலன்) 1.1.2**, **Live Guard (CleanSweep) 2.64**, **Ramesh Radio 1.20**, **PulseEQ 1.9**, **RP Vocal Remover Studio 0.1.15**, **Oor Arivippu (ஊர் அறிவிப்பு) 1.1.7**, and **Secret Message (இரகசிய செய்தி) 1.1.3**. Older app versions and unreleased builds may behave differently.
+This policy covers all seven actively published RP Ideas Android apps and their builds: **SMS Guard (குறுஞ்செய்தி காவலன்) 1.1.3**, **Live Guard (CleanSweep) 2.65**, **Ramesh Radio 1.22**, **PulseEQ 1.9**, **RP Vocal Remover Studio 0.1.15**, **Oor Arivippu (ஊர் அறிவிப்பு) 1.1.7**, and **Secret Message (இரகசிய செய்தி) 1.1.3**. Older app versions and unreleased builds may behave differently.
 
 ## The short version
 
@@ -25,6 +25,7 @@ The developer does not operate an app backend, account system, advertising netwo
 - Station audio streams directly from the station selected by the user. HTTPS is preferred when a station offers it; legacy HTTP streams remain available for compatibility. HTTP audio is not encrypted in transit, so other parties on the network may be able to observe or alter the stream. The station and hosting provider receive the connection and normal network metadata.
 - The bundled station list is available offline. A public Radio-Browser directory search is made only when the user starts a search; the directory receives the search terms and normal connection metadata.
 - Local songs are selected and played on-device. The app does not upload local audio. Audio/media permissions or Android's file picker are used to choose local files.
+- **Strictly optional Mobile Tower permission (`ACCESS_COARSE_LOCATION`):** Because Android classifies Mobile Signal Tower town lookup inside the system `Location` permission group, `Ramesh Radio` never requests Location permission automatically on launch, when opening Rain Settings, or when checking forecasts. Saving a 6-digit PIN code or town/village works with Location permission completely turned off (`Don't allow`). `ACCESS_COARSE_LOCATION` is requested only if the user explicitly taps **`Enable Mobile Tower (Optional)`** inside **Rain & Cyclone Voice Alert**, never uses GPS (`0%` GPS drain), never tracks or stores movement history, and can be revoked at any time in Android App Permissions.
 
 ### PulseEQ
 
