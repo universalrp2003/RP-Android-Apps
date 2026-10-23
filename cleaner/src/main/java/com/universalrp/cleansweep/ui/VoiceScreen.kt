@@ -175,7 +175,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         listOf(30 to "30m", 60 to "1h", 120 to "2h", 180 to "3h").forEach { (mins, label) ->
-                            ModeChip(
+                            ModeChipExtra(
                                 label = label,
                                 selected = state.newsVoiceIntervalMin == mins,
                                 onClick = { vm.setNewsVoiceIntervalMin(mins) },

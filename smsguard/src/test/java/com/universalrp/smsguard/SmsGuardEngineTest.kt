@@ -525,28 +525,24 @@ class SmsGuardEngineTest {
     fun outgoingNeftBeneficiarySettlementIsNeverCountedAsIncomeAndAnnouncesTransferDelivered() {
         val neftBody = "ICICI BANK NEFT Transaction with reference number IN12629660952897 for Rs. 700.00 has been credited to the beneficiary account on 23-10-2026 at 09:02:27"
         val sender = SenderIdentityEngine.identify("VM-ICICIB-S", neftBody)
-        val otp = OtpDetector.detect(neftBody, sender)
-        val parsed = FinanceLedgerEngine.parseSms(
+        val otp = OtpDetector.analyze(neftBody)
+        val ts = LocalDate.of(2026, 10, 23).atTime(9, 2, 27).atZone(zone).toInstant().toEpochMilli()
+        val parsed = FinanceLedgerEngine.parseSingleSms(
             messageId = 9001L,
-            timestampMs = 1_792_726_347_000L,
+            timestampMs = ts,
             body = neftBody,
             sender = sender,
-            otp = otp,
+            isOtp = otp.isOtp,
         )
         assertEquals(SpoofClassification.OUTGOING_TRANSFER_SETTLEMENT, parsed.classification)
         assertNull("Beneficiary settlement confirmation MUST NOT have CREDIT or DEBIT direction", parsed.direction)
         assertEquals(700.0, parsed.amountInr, 0.001)
 
         // Ledger summary must report 0 income and 0 spend for the settlement confirmation itself
-        val summary = FinanceLedgerEngine.summarizePeriod(
-            allResults = listOf(parsed),
-            startInclusiveMs = 0L,
-            endInclusiveMs = Long.MAX_VALUE,
-            accountFilterKey = null,
-            userProfiles = emptyList(),
-        )
-        assertEquals(0.0, summary.totalIncomeInr, 0.001)
-        assertEquals(0.0, summary.totalSpendInr, 0.001)
+        val (mStart, mEnd) = FinanceLedgerEngine.monthBounds(YearMonth.of(2026, 10), zone)
+        val summary = FinanceLedgerEngine.summarizePeriod(listOf(parsed), mStart, mEnd, zoneId = zone)
+        assertEquals(0.0, summary.totalIncome, 0.001)
+        assertEquals(0.0, summary.totalSpend, 0.001)
 
         // Voice announcement must confirm transfer reached beneficiary (never say received!)
         val taSpeech = SmsAnnouncementPlanner.buildIncomingAnnouncement(
@@ -577,8 +573,8 @@ class SmsGuardEngineTest {
     fun senderOnlyVoiceAndReadFullNormalSmsModesWorkSafelyWhilePreservingOtpSilenceAndScamAlerts() {
         val bankBody = "Your A/c XX4821 is credited with Rs. 1500.00 on 23-10-2026."
         val bankSender = SenderIdentityEngine.identify("VM-ICICIB-S", bankBody)
-        val bankOtp = OtpDetector.detect(bankBody, bankSender)
-        val bankFin = FinanceLedgerEngine.parseSms(1L, 1_000L, bankBody, bankSender, bankOtp)
+        val bankOtp = OtpDetector.analyze(bankBody)
+        val bankFin = FinanceLedgerEngine.parseSingleSms(1L, 1_000L, bankBody, bankSender, bankOtp.isOtp)
 
         val senderOnlyTa = SmsAnnouncementPlanner.buildIncomingAnnouncement(
             body = bankBody,
@@ -596,14 +592,14 @@ class SmsGuardEngineTest {
             finance = bankFin,
             settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true, senderOnlyVoiceEnabled = true),
         )
-        assertEquals("ஐசிஐசிஐ வங்கியில் இருந்து குறுஞ்செய்தி.", senderOnlyTa)
+        assertEquals("ICICI வங்கியில் இருந்து குறுஞ்செய்தி.", senderOnlyTa)
         assertEquals("SMS from ICICI Bank.", senderOnlyEn)
 
         // Personal friend full message readout
         val friendBody = "வணக்கம் நண்பா! இன்று மாலை 6 மணிக்கு திருச்சி பேருந்து நிலையம் அருகில் சந்திப்போம். மறக்காமல் வாருங்கள்!"
         val friendSender = SenderIdentityEngine.identify("+919876543210", friendBody, contactName = "Ramesh Prathap")
-        val friendOtp = OtpDetector.detect(friendBody, friendSender)
-        val friendFin = FinanceLedgerEngine.parseSms(2L, 2_000L, friendBody, friendSender, friendOtp)
+        val friendOtp = OtpDetector.analyze(friendBody)
+        val friendFin = FinanceLedgerEngine.parseSingleSms(2L, 2_000L, friendBody, friendSender, friendOtp.isOtp)
 
         val fullReadTa = SmsAnnouncementPlanner.buildIncomingAnnouncement(
             body = friendBody,
@@ -620,8 +616,8 @@ class SmsGuardEngineTest {
         // OTP must STILL stay 100% silent even when both senderOnlyVoice & readFullNormalSms are ON!
         val otpBody = "Your OTP for login is 849201. Do not share with anyone."
         val otpSender = SenderIdentityEngine.identify("VM-ICICIB-S", otpBody)
-        val otpRes = OtpDetector.detect(otpBody, otpSender)
-        val otpFin = FinanceLedgerEngine.parseSms(3L, 3_000L, otpBody, otpSender, otpRes)
+        val otpRes = OtpDetector.analyze(otpBody)
+        val otpFin = FinanceLedgerEngine.parseSingleSms(3L, 3_000L, otpBody, otpSender, otpRes.isOtp)
         assertNull(
             SmsAnnouncementPlanner.buildIncomingAnnouncement(
                 body = otpBody,
