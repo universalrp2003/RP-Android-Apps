@@ -19,6 +19,11 @@ object OtpDetector {
     // Google style: "G-482910 is your Google verification code"
     private val GOOGLE_CODE = Regex("\\bG-([0-9]{6})\\b")
 
+    // Bare verification-code phrasings without a qualified keyword, e.g. "your code is 482910",
+    // "code: 482910", "code 482910". Biased toward detection: a false positive only silences a
+    // non-secret message from voice, whereas a miss would SPEAK a real one-time code aloud.
+    private val CODE_WITH_DIGITS = Regex("\\bcode\\b\\s*(?:is|:|=)?\\s*[0-9]{4,8}\\b", RegexOption.IGNORE_CASE)
+
     // Android SMS Retriever API auto-hash marker at end of message
     private val RETRIEVER_MARKER = Regex("<#>.*\\b([0-9]{4,8})\\b")
 
@@ -46,7 +51,9 @@ object OtpDetector {
             return OtpResult(isOtp = true, code = match.groupValues[1])
         }
 
-        val hasOtpKeyword = OTP_KEYWORDS.containsMatchIn(body) || RETRIEVER_MARKER.containsMatchIn(body)
+        val hasOtpKeyword = OTP_KEYWORDS.containsMatchIn(body) ||
+            RETRIEVER_MARKER.containsMatchIn(body) ||
+            CODE_WITH_DIGITS.containsMatchIn(body)
         if (!hasOtpKeyword) {
             return OtpResult(isOtp = false, code = null)
         }

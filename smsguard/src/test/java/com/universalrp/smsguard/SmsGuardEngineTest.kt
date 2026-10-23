@@ -783,6 +783,48 @@ class SmsGuardEngineTest {
     }
 
     @Test
+    fun bareCodePhrasingIsTreatedAsOtpAndNeverSpoken() {
+        // "your code is 482910" (no qualified keyword) must STILL be detected as an OTP so RULE 1 keeps it silent.
+        val body = "Hi, your code is 482910. It expires in 10 minutes. Do not share it with anyone."
+        val otp = OtpDetector.analyze(body)
+        assertTrue("A bare one-time code must be recognised as an OTP", otp.isOtp)
+        assertEquals("482910", otp.code)
+
+        val sender = SenderIdentityEngine.identify("AD-GENERL-T", body)
+        val speech = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = FinanceLedgerEngine.parseSingleSms(8001L, 1L, body, sender, otp.isOtp),
+            settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true),
+        )
+        assertNull("A one-time code must NEVER be spoken aloud", speech)
+
+        // Ordinary 'code' usage with no nearby digits must NOT be treated as an OTP.
+        assertFalse(OtpDetector.analyze("Enter your area code to continue browsing the shop.").isOtp)
+    }
+
+    @Test
+    fun serviceHeaderNamingABankCannotAnnounceFakeMoneyButTransactionalCan() {
+        val body = "Federal Bank: Your A/c XX1234 credited Rs.500.00 on 23Oct26"
+        val tHeader = SenderIdentityEngine.identify("XY-ZZWFT-T", body)
+        val sHeader = SenderIdentityEngine.identify("XY-ZZWFT-S", body)
+
+        // A genuine -T transactional header from an (unlisted) bank is still trusted.
+        assertTrue(tHeader.isVerifiedFinancialSender)
+        // A -S service header merely NAMING a bank must NOT be treated as a real money sender (anti-spoof).
+        assertFalse(sHeader.isVerifiedFinancialSender)
+
+        // Therefore the -S fake-money message is NOT recorded as a genuine credit...
+        val finS = FinanceLedgerEngine.parseSingleSms(8002L, 1L, body, sHeader, isOtp = false)
+        assertEquals(SpoofClassification.NOT_FINANCIAL, finS.classification)
+        // ...while the -T one IS a genuine credit.
+        val finT = FinanceLedgerEngine.parseSingleSms(8003L, 1L, body, tHeader, isOtp = false)
+        assertEquals(SpoofClassification.GENUINE_BANK_OR_UPI, finT.classification)
+    }
+
+    @Test
     fun liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable() {
         val reachable = runCatching {
             java.net.InetAddress.getByName("speech.platform.bing.com")
