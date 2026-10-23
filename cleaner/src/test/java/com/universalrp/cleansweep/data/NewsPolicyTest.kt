@@ -70,4 +70,39 @@ class NewsPolicyTest {
         assertEquals(today.first(), NewsPolicy.nextUnseen(today, emptySet()))
         assertNull(NewsPolicy.nextUnseen(today, today.map { it.key }.toSet()))
     }
+    @Test fun namedHtmlEntitiesInHeadlinesAreDecoded() {
+        assertEquals("R&D செய்தித் தலைப்பு", NewsPolicy.cleanTitle("R&amp;D செய்தித் தலைப்பு", ""))
+        assertEquals("“முக்கிய” செய்தி", NewsPolicy.cleanTitle("&ldquo;முக்கிய&rdquo; செய்தி", ""))
+        assertEquals("India–Pakistan — வழிமுறை", NewsPolicy.cleanTitle("India&ndash;Pakistan &mdash; வழிமுறை", ""))
+        assertEquals("Café செய்தி", NewsPolicy.cleanTitle("Caf&eacute; செய்தி", ""))
+    }
+    @Test fun numericAndHexEntitiesAreDecoded() {
+        assertEquals("It's 100% செய்தி", NewsPolicy.cleanTitle("It&#39;s 100% செய்தி", ""))
+        assertEquals("Quotes “x” செய்தி", NewsPolicy.cleanTitle("Quotes &#x201C;x&#x201D; செய்தி", ""))
+        assertEquals("Café செய்தி", NewsPolicy.cleanTitle("Caf&#233; செய்தி", ""))
+    }
+    @Test fun nbspAndUnicodeSpacesCollapseToPlainSpaces() {
+        assertEquals("a b செய்தி", NewsPolicy.cleanTitle("a&nbsp;b செய்தி", ""))
+    }
+    @Test fun unknownOrOutOfRangeEntitiesAreLeftIntact() {
+        assertEquals("&bogus; செய்தி", NewsPolicy.cleanTitle("&bogus; செய்தி", ""))
+        assertEquals("&#xFFFFFF; செய்தி", NewsPolicy.cleanTitle("&#xFFFFFF; செய்தி", ""))
+        assertEquals("&#xD800; செய்தி", NewsPolicy.cleanTitle("&#xD800; செய்தி", ""))
+    }
+    @Test fun entityDecodingIsSinglePassSoAmpersandSequencesDoNotCollapse() {
+        // "&amp;lt;" is the escaped literal "&lt;"; a single pass yields "&lt;", never "<".
+        assertEquals("&lt;b&gt; செய்தி", NewsPolicy.cleanTitle("&amp;lt;b&amp;gt; செய்தி", ""))
+    }
+    @Test fun literalAngleBracketsSurviveSoComparisonHeadlinesAreNotMangled() {
+        // Entities decode AFTER tag-stripping, so a decoded "<" is never treated as a tag.
+        assertEquals("5 < 10 செய்தி", NewsPolicy.cleanTitle("5 &lt; 10 செய்தி", ""))
+    }
+    @Test fun rssDoubleEncodedEntitiesDecodeToReadableHeadlines() {
+        val xml = """<rss><channel><item><title>R&amp;amp;D செலவு அதிகரிப்பு</title><link>https://example.org/a</link><pubDate>Sun, 11 Oct 2026 10:00:00 GMT</pubDate></item></channel></rss>"""
+        assertEquals("R&D செலவு அதிகரிப்பு", NewsPolicy.parseFeed(xml, "செய்தி", "Publisher").single().title)
+    }
+    @Test fun decodeEntitiesHandlesMixedReferencesDirectly() {
+        assertEquals("A & B < C > D", NewsPolicy.decodeEntities("A &amp; B &lt; C &gt; D"))
+        assertEquals("‘q’ “r” … — ", NewsPolicy.decodeEntities("&lsquo;q&rsquo; &ldquo;r&rdquo; &hellip; &mdash; "))
+    }
 }

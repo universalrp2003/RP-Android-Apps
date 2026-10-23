@@ -11,7 +11,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.ai.SecurityAiPromptTest": 9,
     "com.universalrp.cleansweep.data.ReadingPolicyTest": 10,
     "com.universalrp.cleansweep.data.PhoneAgeEstimatorTest": 12,
-    "com.universalrp.cleansweep.data.NewsPolicyTest": 14,
+    "com.universalrp.cleansweep.data.NewsPolicyTest": 22,
     "com.universalrp.cleansweep.data.BatteryValuePolicyTest": 11,
     "com.universalrp.cleansweep.ai.AssistantEvidencePolicyTest": 10,
     "com.universalrp.cleansweep.widget.WidgetReadingPolicyTest": 12,

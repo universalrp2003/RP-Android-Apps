@@ -74,8 +74,60 @@ object NewsPolicy {
     fun titleKey(title: String): String = Normalizer.normalize(title, Normalizer.Form.NFKC).lowercase(Locale.ROOT)
         .replace(Regex("[^\\p{L}\\p{M}\\p{N}]+"), "").take(500)
 
+    private val ENTITY_PATTERN = Regex("&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z][a-zA-Z0-9]*);")
+
+    private val NAMED_ENTITIES = mapOf(
+        "amp" to "&", "lt" to "<", "gt" to ">", "quot" to "\"", "apos" to "'", "nbsp" to " ",
+        "copy" to "\u00A9", "reg" to "\u00AE", "trade" to "\u2122",
+        "hellip" to "\u2026", "mdash" to "\u2014", "ndash" to "\u2013",
+        "lsquo" to "\u2018", "rsquo" to "\u2019", "ldquo" to "\u201C", "rdquo" to "\u201D",
+        "laquo" to "\u00AB", "raquo" to "\u00BB", "bull" to "\u2022", "middot" to "\u00B7",
+        "deg" to "\u00B0", "plusmn" to "\u00B1", "times" to "\u00D7", "divide" to "\u00F7",
+        "euro" to "\u20AC", "pound" to "\u00A3", "yen" to "\u00A5", "cent" to "\u00A2",
+        "sect" to "\u00A7", "para" to "\u00B6", "permil" to "\u2030",
+        "frac12" to "\u00BD", "frac14" to "\u00BC", "frac34" to "\u00BE",
+        "iexcl" to "\u00A1", "iquest" to "\u00BF",
+        "agrave" to "\u00E0", "aacute" to "\u00E1", "acirc" to "\u00E2", "atilde" to "\u00E3",
+        "auml" to "\u00E4", "aring" to "\u00E5", "aelig" to "\u00E6", "ccedil" to "\u00E7",
+        "egrave" to "\u00E8", "eacute" to "\u00E9", "ecirc" to "\u00EA", "euml" to "\u00EB",
+        "igrave" to "\u00EC", "iacute" to "\u00ED", "icirc" to "\u00EE", "iuml" to "\u00EF",
+        "ntilde" to "\u00F1", "ograve" to "\u00F2", "oacute" to "\u00F3", "ocirc" to "\u00F4",
+        "otilde" to "\u00F5", "ouml" to "\u00F6", "oslash" to "\u00F8", "ugrave" to "\u00F9",
+        "uacute" to "\u00FA", "ucirc" to "\u00FB", "uuml" to "\u00FC", "yacute" to "\u00FD",
+        "yuml" to "\u00FF", "szlig" to "\u00DF",
+    )
+
+    /**
+     * Decode numeric (&#39;, &#x2019;) and common named HTML entities (&amp;, &rsquo;, &nbsp; …)
+     * that survive into a headline after XML parsing (e.g. double-encoded feed text).
+     * Single pass — the output is never re-scanned, so "&amp;lt;" stays "&lt;" instead of
+     * collapsing to "<". Unknown or out-of-range references are left untouched.
+     */
+    fun decodeEntities(raw: String): String =
+        ENTITY_PATTERN.replace(raw) { match ->
+            val body = match.groupValues[1]
+            val decoded: String? = when {
+                body.startsWith("#x") || body.startsWith("#X") ->
+                    body.substring(2).toIntOrNull(16)?.let { codePointToSafeString(it) }
+                body.startsWith("#") ->
+                    body.substring(1).toIntOrNull()?.let { codePointToSafeString(it) }
+                else -> NAMED_ENTITIES[body]
+            }
+            decoded ?: match.value
+        }
+
+    private fun codePointToSafeString(cp: Int): String? = when {
+        cp == 0x00A0 || cp in 0x2000..0x200A || cp == 0x202F || cp == 0x205F || cp == 0x3000 -> " "
+        cp in 0x20..0x7E -> cp.toChar().toString()
+        cp in 0xA1..0xD7FF -> cp.toChar().toString()
+        cp in 0xE000..0x10FFFF -> String(Character.toChars(cp))
+        else -> null
+    }
+
     fun cleanTitle(raw: String, publisher: String): String {
-        val plain = raw.replace(Regex("<[^>]*>"), " ").replace(Regex("\\s+"), " ").trim()
+        // Strip literal HTML/XML tags FIRST, then decode entities, so a decoded "<"/">" is never re-stripped.
+        val stripped = raw.replace(Regex("<[^>]*>"), " ")
+        val plain = decodeEntities(stripped).replace(Regex("\\s+"), " ").trim()
         // Remove ONLY an identified publisher suffix, never arbitrary words after a dash.
         val suffix = Regex("\\s+[-–—|]\\s+" + Regex.escape(publisher.trim()) + "$", RegexOption.IGNORE_CASE)
         return (if (publisher.isNotBlank()) plain.replace(suffix, "") else plain).take(500).trim()
