@@ -321,7 +321,7 @@ object Announcer {
                 setEnabled(context, true)
             }
         }
-        if ((event == Event.WEATHER_ALERT || event == Event.NEWS_HEADLINES) && on && !enabled(context)) {
+        if ((event == Event.WEATHER_ALERT || event == Event.NEWS_HEADLINES || event == Event.NETWORK_CHANGE) && on && !enabled(context)) {
             setEnabled(context, true)
         }
     }

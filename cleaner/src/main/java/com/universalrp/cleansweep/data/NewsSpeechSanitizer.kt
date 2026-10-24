@@ -151,6 +151,32 @@ object NewsSpeechSanitizer {
     }
 
     /**
+     * Turns an AI-written bulletin into speech-safe text: drops markdown emphasis/headings,
+     * list bullets and numbering, collapses newlines, keeps whole sentences and caps the
+     * spoken length. Returns "" when nothing usable remains, so the caller can fall back to
+     * the on-device sanitized bulletin.
+     */
+    fun cleanAiBulletin(raw: String): String {
+        if (raw.isBlank()) return ""
+        var text = raw
+            .replace("**", "").replace("__", "").replace("`", "")
+            .replace(Regex("(?m)^\\s*#{1,6}\\s*"), "")
+            .replace(Regex("(?m)^\\s*(?:[-*•–—>]+|\\d+[.)])\\s+"), "")
+            .replace(Regex("[\\r\\n]+"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        if (text.isBlank()) return ""
+        val sentences = text.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.length >= 8 }
+        var joined = (if (sentences.isNotEmpty()) sentences.joinToString(" ") else text).trim()
+        if (joined.length > 700) {
+            val cut = joined.take(700)
+            val lastStop = maxOf(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'))
+            joined = if (lastStop > 200) cut.substring(0, lastStop + 1) else "${cut.trimEnd()}."
+        }
+        return joined
+    }
+
+    /**
      * Enforces night quiet hours for automatic background news announcements:
      * silent strictly from 10:00 PM (`22`) through 6:00 AM (`6`), plus user's own Quiet Hours!
      */
