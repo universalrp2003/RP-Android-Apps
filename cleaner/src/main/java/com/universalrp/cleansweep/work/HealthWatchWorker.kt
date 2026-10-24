@@ -270,7 +270,7 @@ class HealthWatchWorker(
             "wifi" -> Announcer.speakAndWait(
                 ctx,
                 "You are back on Wi-Fi.",
-                "நீங்கள் மீண்டும் Wi-Fi-ல் உள்ளீர்கள்.",
+                "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.",
                 Announcer.Event.NETWORK_CHANGE,
             )
         }

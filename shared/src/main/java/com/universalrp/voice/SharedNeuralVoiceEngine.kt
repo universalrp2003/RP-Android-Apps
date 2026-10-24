@@ -394,6 +394,39 @@ object SharedNeuralVoiceEngine {
         return null
     }
 
+    /**
+     * Cache-only lookup for a curated profile: returns the already-synthesised 0ms MP3 if it is on
+     * disk, otherwise null. Never touches the network — lets Live Guard replay a cached HD
+     * announcement while offline (fast, no data) and only fall back to the phone's built-in TTS
+     * when that exact clip was never cached.
+     */
+    fun cachedProfileFileOrNull(
+        cacheDir: File?,
+        text: String,
+        profile: CuratedNeuralVoiceProfile,
+        useTamil: Boolean,
+        ratePercent: Int = 98,
+    ): File? {
+        val voice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
+        val pitch = if (useTamil) profile.pitchTa else profile.pitchEn
+        return cachedFileOrNull(cacheDir, text, voice, rateFromPercent(ratePercent), pitch)
+    }
+
+    private fun cachedFileOrNull(
+        cacheDir: File?,
+        text: String,
+        neuralVoiceName: String,
+        rate: String,
+        pitch: String,
+    ): File? {
+        val trimmed = text.trim().take(1200)
+        if (trimmed.isEmpty()) return null
+        val cacheKey = sha256Hex("v2|$neuralVoiceName|$rate|$pitch|$trimmed")
+        val targetDir = cacheDir?.let { File(it, "rp_neural_hd_tts").apply { mkdirs() } } ?: return null
+        val cachedFile = File(targetDir, "$cacheKey.mp3")
+        return if (cachedFile.exists() && cachedFile.length() > 256L) cachedFile else null
+    }
+
     fun synthesizeToFileOrNull(
         cacheDir: File?,
         text: String,

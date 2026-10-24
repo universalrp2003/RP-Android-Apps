@@ -9,9 +9,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
+import com.universalrp.cleansweep.R
 import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.Lang
 
@@ -65,13 +69,25 @@ object UiMode {
  * a taller line box, no extra letter spacing (Latin tracking pulls Tamil clusters apart) and a
  * barely larger glyph size. English keeps Material's defaults untouched.
  */
+/**
+ * Bundled Noto Sans Tamil (static Regular + Bold). Many phones ship a default UI font whose Tamil
+ * glyphs are broken — the AI vowel sign renders like ன and ண/ன collide — so Tamil text looked
+ * garbled even though the strings were correct. Shipping our own font makes Tamil render correctly
+ * and identically on every device. English keeps the platform default (this family is Tamil-mode
+ * only).
+ */
+private val TamilFontFamily = FontFamily(
+    Font(R.font.noto_sans_tamil_regular, FontWeight.Normal),
+    Font(R.font.noto_sans_tamil_bold, FontWeight.Bold),
+)
+
 private fun TextStyle.forTamil(): TextStyle {
-    if (!fontSize.isSpecified) return this
-    return copy(
+    val tuned = if (!fontSize.isSpecified) this else copy(
         fontSize = (fontSize.value * 1.03f).sp,
         lineHeight = (fontSize.value * 1.62f).sp,
         letterSpacing = 0.sp,
     )
+    return tuned.copy(fontFamily = TamilFontFamily)
 }
 
 private fun typography(tamil: Boolean): Typography {

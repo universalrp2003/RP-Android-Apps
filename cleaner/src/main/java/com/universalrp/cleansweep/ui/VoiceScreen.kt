@@ -492,7 +492,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
               }
             }
 
-            AnswerVoicesCard(com.universalrp.cleansweep.data.Lang.current, vm)
+            // 2.69 owner decision: the manual "Voice A / Voice B" system-voice picker was removed.
+            // Answers now use the Studio Ultra-HD voice automatically (rotating male/female in random
+            // mode) and fall back to the phone's built-in voice only when offline with no cached clip.
 
             // ------------------------------------------------------------ the daily check
             PanelCard(Modifier.fillMaxWidth()) {
