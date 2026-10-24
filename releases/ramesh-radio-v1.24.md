@@ -2,7 +2,7 @@
 
 **Package:** `com.universalrp.tamilnadufm` · **Version:** `1.24` (`versionCode = 24`) · **Minimum Android:** Android 8.0+ (API 26)
 **Published Signed Asset:** `Ramesh-Radio-v1.24.apk` (signed and published by CI).
-**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks; this exact candidate build was **not installed on a physical phone** prior to GitHub release publication. Permission delta over `v1.23`: `ACCESS_COARSE_LOCATION` **removed** — `0` new permissions added.
+**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks; this exact candidate build was **not installed on a phone** prior to GitHub release publication. Permission delta over `v1.23`: `ACCESS_COARSE_LOCATION` **removed** — `0` new permissions added.
 
 ### Why this release
 Ramesh Radio asked for approximate (mobile-tower) location only to power local rain & storm alerts. This release removes that permission entirely: rain & cyclone alerts now work from your saved PIN code / town alone, so the app no longer needs any location access.

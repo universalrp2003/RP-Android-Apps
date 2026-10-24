@@ -2,7 +2,7 @@
 
 **Package:** `com.universalrp.voiceannouncer` · **Version:** `1.1.8` (`versionCode = 13`) · **Minimum Android:** Android 8.0+ (API 26)
 **Published Signed Asset:** `Oor-Arivippu-v1.1.8.apk` (signed and published by CI).
-**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks; this exact candidate build was **not installed on a physical phone** prior to GitHub release publication. Permission delta over `v1.1.7`: `0` new permissions added.
+**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks; this exact candidate build was **not installed on a phone** prior to GitHub release publication. Permission delta over `v1.1.7`: `0` new permissions added.
 
 ### Why this release
 Oor Arivippu shares its rain & storm alert engine with Live Guard and Ramesh Radio. This release ships the shared accuracy improvement so the town rain alerts stop firing on dark-but-dry days.
