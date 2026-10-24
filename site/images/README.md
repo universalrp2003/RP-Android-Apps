@@ -12,7 +12,7 @@ automatically; until then a neat "coming soon" placeholder is shown.
 | Oor Arivippu | `oor-arivippu.jpg` |
 | PulseEQ | `pulseeq.jpg` |
 | RP Vocal Remover Studio | `vocal-remover.jpg` |
-| Secret Message | `secret-message.jpg` |
+| Secret Message | `secret-message-card.jpg` |
 
 Tips: phone screenshots (PNG is fine — rename to `.jpg`, or tell me and I'll
 accept `.png`), portrait, ~1080px wide. One clear home-screen shot per app is
