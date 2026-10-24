@@ -54,6 +54,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.roundToLong
 
 private val DATE_FMT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.ENGLISH)
 
@@ -435,7 +436,7 @@ private fun AddEditBillDialog(
     onDismiss: () -> Unit,
 ) {
     var biller by remember { mutableStateOf(existing?.let { if (tamil) it.billerTa else it.billerEn }.orEmpty()) }
-    var amountText by remember { mutableStateOf(existing?.amountInr?.let { kotlin.math.roundToLong(it).toString() }.orEmpty()) }
+    var amountText by remember { mutableStateOf(existing?.amountInr?.let { it.roundToLong().toString() }.orEmpty()) }
     var due by remember { mutableStateOf(existing?.dueDate ?: LocalDate.now()) }
     var category by remember { mutableStateOf(existing?.category ?: BillCategory.OTHER) }
     var pickingDate by remember { mutableStateOf(false) }

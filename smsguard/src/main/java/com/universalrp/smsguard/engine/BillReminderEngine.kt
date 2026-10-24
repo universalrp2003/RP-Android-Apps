@@ -3,6 +3,7 @@ package com.universalrp.smsguard.engine
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
+import kotlin.math.roundToLong
 
 /**
  * Bill / payment-due reminder categories. Kept intentionally small & reliable across every
@@ -276,7 +277,7 @@ object BillReminderEngine {
     }
 
     fun spokenAmount(amount: Double, tamil: Boolean): String {
-        val rounded = kotlin.math.roundToLong(amount)
+        val rounded = amount.roundToLong()
         val hasPaise = kotlin.math.abs(amount - rounded) >= 0.01
         val numText = if (hasPaise) String.format(Locale.US, "%.2f", amount) else formatIndianDigits(rounded)
         return if (tamil) "ரூபாய் $numText" else "Rupees $numText"
@@ -403,7 +404,7 @@ object BillReminderEngine {
     }
 
     private fun buildContentKey(senderKey: String, dueDate: LocalDate, amount: Double?): String {
-        val amt = amount?.let { kotlin.math.roundToLong(it).toString() } ?: "na"
+        val amt = amount?.let { it.roundToLong().toString() } ?: "na"
         return "${senderKey.uppercase(Locale.ENGLISH)}|${dueDate.toEpochDay()}|$amt"
     }
 
