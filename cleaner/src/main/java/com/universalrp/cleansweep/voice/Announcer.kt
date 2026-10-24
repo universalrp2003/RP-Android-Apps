@@ -53,6 +53,8 @@ object Announcer {
     const val KEY_AUTO_DAILY_GENDER = "voice_auto_daily_gender"
     const val KEY_PREFERRED_ONLINE_VOICE = "voice_preferred_online_id"
     const val KEY_VOICE_GENDER_MODE = "voice_gender_mode"
+    const val KEY_STABLE_MALE_VOICE = "voice_stable_male_id"
+    const val KEY_STABLE_FEMALE_VOICE = "voice_stable_female_id"
     const val KEY_LOUDER = "voice_louder"
 
     /**
@@ -161,6 +163,13 @@ object Announcer {
     }
     private val malePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     private val femalePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    // RANDOM announcement rotation: flip gender every announcement and step to the NEXT Ultra-HD
+    // voice inside that gender, so two announcements in a row never share the same voice.
+    private val randomGenderFlip = java.util.concurrent.atomic.AtomicBoolean(false)
+    private val randomMaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    private val randomFemaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    // Offline system-TTS rotation within the chosen gender (RANDOM mode fallback path).
+    private val systemVoiceCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     @Volatile private var activeMediaPlayer: android.media.MediaPlayer? = null
     @Volatile private var tts: TextToSpeech? = null
     @Volatile private var ready = false
@@ -183,6 +192,9 @@ object Announcer {
         var retried = false
         var started = false
         var attemptId = ""
+        // Resolved once per announcement so RANDOM advances the voice exactly one step, even if the
+        // online HD attempt fails and we retry on the phone's built-in TTS.
+        var studioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null
     }
     private val pending = ArrayDeque<Request>() // Only touched on main.
     private var active: Request? = null
@@ -450,12 +462,9 @@ object Announcer {
 
     /** One selected voice per answer. Uses Studio Ultra-HD voice online automatically when no offline slot is forced. */
     fun speakAnswer(context: Context, text: String, language: AppLang, slot: Int, answerId: String, manual: Boolean): Boolean {
-        val savedName = AnswerVoicePreferences.load(context, language).voice(slot)
-        val canSpeakStudioOnline = onlineVoice(context) && com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
-        if (savedName == null && !canSpeakStudioOnline) {
-            main.post { record(context.applicationContext, Request(null, null, language, Event.ANSWER, manual), VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING) }
-            return false
-        }
+        // 2.69 owner decision: no manual "Voice A / Voice B" system-voice picker. Answers use the
+        // Studio Ultra-HD voice (preferredVoice = null → rotating male/female in random mode) and,
+        // when offline with no cached clip, automatically fall back to the phone's built-in voice.
         return submit(
             context,
             Request(
@@ -465,7 +474,7 @@ object Announcer {
                 event = Event.ANSWER,
                 manual = manual,
                 requestKey = "answer:$answerId",
-                preferredVoice = if (canSpeakStudioOnline) null else savedName,
+                preferredVoice = null,
                 answerSlot = slot,
             ),
         )
@@ -642,27 +651,68 @@ object Announcer {
         return true
     }
 
+    /**
+     * RANDOM mode: alternate male/female every announcement and step to the NEXT Ultra-HD voice in
+     * that gender's pool — male, then female, then the next male, and so on, never the same voice
+     * twice in a row.
+     */
+    private fun nextRandomStudioVoice(): com.universalrp.voice.CuratedNeuralVoiceProfile {
+        val engine = com.universalrp.voice.SharedNeuralVoiceEngine
+        val female = randomGenderFlip.getAndSet(!randomGenderFlip.get())
+        return if (female) {
+            engine.FEMALE_VOICES[Math.floorMod(randomFemaleCursor.incrementAndGet(), engine.FEMALE_VOICES.size)]
+        } else {
+            engine.MALE_VOICES[Math.floorMod(randomMaleCursor.incrementAndGet(), engine.MALE_VOICES.size)]
+        }
+    }
+
+    /**
+     * A stable per-install voice for the fixed male/female modes. The HD engine caches MP3 by
+     * (voice, text); keeping one fixed voice means unchanged announcements (battery, weather, town
+     * alerts…) replay instantly from the 0ms disk cache instead of re-synthesising every time.
+     */
+    private fun stableStudioVoice(context: Context, female: Boolean): com.universalrp.voice.CuratedNeuralVoiceProfile {
+        val pool = if (female) com.universalrp.voice.SharedNeuralVoiceEngine.FEMALE_VOICES
+                   else com.universalrp.voice.SharedNeuralVoiceEngine.MALE_VOICES
+        val key = if (female) KEY_STABLE_FEMALE_VOICE else KEY_STABLE_MALE_VOICE
+        val p = prefs(context)
+        var id = p.getString(key, "").orEmpty()
+        if (id.isEmpty() || pool.none { it.id == id }) {
+            id = pool.random().id
+            p.edit().putString(key, id).apply()
+        }
+        return pool.first { it.id == id }
+    }
+
     private fun resolveStudioProfile(context: Context, request: Request): com.universalrp.voice.CuratedNeuralVoiceProfile {
         request.overrideStudioProfile?.let { return it }
         // Simple owner-facing choice: random male/female, male only, or female only.
-        // Offline, the caller falls back to the phone's installed system voice automatically.
-        val engine = com.universalrp.voice.SharedNeuralVoiceEngine
+        // RANDOM rotates a different Ultra-HD voice each announcement (male/female/male…, next voice
+        // each time); the fixed male/female modes keep one stable voice so unchanged alerts hit the
+        // 0ms HD disk cache instead of re-synthesising.
         return when (voiceGenderMode(context)) {
-            VoiceGenderMode.FEMALE -> engine.FEMALE_VOICES.random()
-            VoiceGenderMode.MALE -> engine.MALE_VOICES.random()
-            VoiceGenderMode.RANDOM -> engine.CURATED_VOICES.random()
+            VoiceGenderMode.FEMALE -> stableStudioVoice(context, female = true)
+            VoiceGenderMode.MALE -> stableStudioVoice(context, female = false)
+            VoiceGenderMode.RANDOM -> nextRandomStudioVoice()
         }
     }
+
+    /** Resolve the HD profile exactly once per announcement (cached on the request). */
+    private fun Request.resolveProfile(context: Context): com.universalrp.voice.CuratedNeuralVoiceProfile =
+        studioProfile ?: resolveStudioProfile(context, this).also { studioProfile = it }
 
     private fun drain(context: Context) {
         if (active != null || pending.isEmpty()) return
 
         val next = pending.first()
-        val wantStudioOnline = next.preferredVoice == null &&
-            (next.overrideStudioProfile != null || onlineVoice(context)) &&
-            com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
+        // Prefer Studio Ultra-HD whenever the online voice is enabled: online it synthesises
+        // (0ms cache + network); offline startStudioOnlineUtterance replays a cached clip if we have
+        // one and otherwise instantly falls back to the phone's built-in TTS. A request that already
+        // fell back (retried) skips straight to TTS so we never re-attempt the studio path.
+        val wantStudio = next.preferredVoice == null && !next.retried &&
+            (next.overrideStudioProfile != null || onlineVoice(context))
 
-        if (wantStudioOnline) {
+        if (wantStudio) {
             val request = pending.removeFirst()
             val blocked = VoiceDeliveryPolicy.blocked(
                 enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
@@ -701,19 +751,32 @@ object Announcer {
     }
 
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
-        val profile = resolveStudioProfile(context, request)
+        val profile = request.resolveProfile(context)
         val useTamil = request.language == AppLang.TA
+        val online = com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
         val requestId = request.id
         neuralExecutor.execute {
             if (active?.id != requestId) return@execute
-            val mp3 = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
-                cacheDir = context.cacheDir,
-                text = request.text,
-                profile = profile,
-                useTamil = useTamil,
-                ratePercent = 98,
-                timeoutMs = 3800L,
-            )
+            // Online: synthesise (0ms cache hit, else network — HD start delay is fine, we wait).
+            // Offline: only replay an already-cached HD clip (never block on the network); if that
+            // exact clip was never cached we fall straight back to the phone's built-in TTS below.
+            val mp3 = if (online) {
+                com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
+                    cacheDir = context.cacheDir,
+                    text = request.text,
+                    profile = profile,
+                    useTamil = useTamil,
+                    ratePercent = 98,
+                    timeoutMs = 8000L,
+                )
+            } else {
+                com.universalrp.voice.SharedNeuralVoiceEngine.cachedProfileFileOrNull(
+                    cacheDir = context.cacheDir,
+                    text = request.text,
+                    profile = profile,
+                    useTamil = useTamil,
+                )
+            }
             if (mp3 != null && active?.id == requestId && !com.universalrp.updates.CallGuard.inCall(context)) {
                 val attrs = android.media.AudioAttributes.Builder()
                     .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
@@ -794,13 +857,20 @@ object Announcer {
             val connected = runCatching { network?.activeNetwork?.let { network.getNetworkCapabilities(it) }
                 ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true }.getOrDefault(false)
             val wantOnline = !offline && onlineVoice(context) && connected
-            val studioTargetFemale = resolveStudioProfile(context, request).gender == com.universalrp.voice.NeuralVoiceGender.FEMALE
+            val studioTargetFemale = request.resolveProfile(context).gender == com.universalrp.voice.NeuralVoiceGender.FEMALE
+            val genderMatches = available.filter { !it.isNetworkConnectionRequired }.filter { v ->
+                val lower = v.name.lowercase(Locale.ROOT)
+                val looksFemale = lower.contains("female") || lower.contains("#female")
+                val looksMale = lower.contains("male") && !lower.contains("female")
+                if (studioTargetFemale) looksFemale else looksMale
+            }
             val chosen = if (request.preferredVoice != null) available.firstOrNull { it.name == request.preferredVoice }
-                else available.filter { !it.isNetworkConnectionRequired }.firstOrNull { v ->
-                    val lower = v.name.lowercase(Locale.ROOT)
-                    val looksFemale = lower.contains("female") || lower.contains("#female")
-                    val looksMale = lower.contains("male") && !lower.contains("female")
-                    if (studioTargetFemale) looksFemale else looksMale
+                else when {
+                    // RANDOM: step through the matching system voices so the offline fallback voice
+                    // also changes each announcement instead of always grabbing the same one.
+                    voiceGenderMode(context) == VoiceGenderMode.RANDOM && genderMatches.isNotEmpty() ->
+                        genderMatches[Math.floorMod(systemVoiceCursor.incrementAndGet(), genderMatches.size)]
+                    else -> genderMatches.firstOrNull()
                 } ?: available.filter { if (wantOnline) it.isNetworkConnectionRequired else !it.isNetworkConnectionRequired }
                     .maxByOrNull { it.quality } ?: available.filter { !it.isNetworkConnectionRequired }.maxByOrNull { it.quality }
             if (request.preferredVoice != null && (chosen == null || chosen.isNetworkConnectionRequired && !connected)) {
