@@ -4,7 +4,11 @@ This file indexes all seven published **RP Ideas** Android applications at [`uni
 
 ## Unreleased
 
-_No unreleased changes._
+Coordinated weather-accuracy + privacy update across three apps. Exact candidate bytes were **not installed on a physical phone** prior to GitHub release publication (no dangerous-permission delta was introduced, so no device-install record is required); verified APK digests are recorded in [`docs/published-release-digests.md`](docs/published-release-digests.md) once each release is public.
+
+- **Live Guard 2.70 / code 75** ([`releases/live-guard-v2.70.md`](releases/live-guard-v2.70.md)): (1) the compact home-screen **widget's rain card now shows the real rain detail** — a "Falling now · X mm/hr" / "Up to X mm/hr in ~N min" brief (Tamil "இப்போது வருகிறது ·" / "~N நிமிடத்தில் X மிமீ/மணி வரை") driven by the observed current and peak 60-minute precipitation rate, instead of a generic quiet-hours note; (2) the shared **rain "starting now" classification now requires a *noticeable* rate** (`NOTICEABLE_RAIN_MM_HR = 0.40` mm/hr on current/peak 60-minute precipitation) across Live Guard, Ramesh Radio and Oor Arivippu, so a faint drizzle no longer announces "rain now". `0` new permissions over `v2.69`.
+- **Ramesh Radio 1.24 / code 24** ([`releases/ramesh-radio-v1.24.md`](releases/ramesh-radio-v1.24.md)): **removed the `ACCESS_COARSE_LOCATION` (mobile-tower) location permission** and every location prompt/dialog; rain & cyclone voice alerts now use the saved PIN/Village with zero location access (also benefits from the shared noticeable-rain gate). Net `-1` permission over `v1.23`.
+- **Oor Arivippu 1.1.8 / code 13** ([`releases/oor-arivippu-v1.1.8.md`](releases/oor-arivippu-v1.1.8.md), [release run 40098498419](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40098498419)): **published** — About-screen sister-app links bumped to Live Guard `2.70`, Ramesh Radio `1.24` and Oor Arivippu `1.1.8` (also benefits from the shared noticeable-rain gate). `0` new permissions over `v1.1.7`.
 
 ## Published — Ramesh Radio `1.23` Keep Playing With The Screen Off — In-App Background-Playback Guide (24 October 2026)
 
