@@ -118,5 +118,17 @@ radio/fastlane/metadata/android/ta-IN/images/featureGraphic.png          1024x50
 Publication layout: destination=universalrp2003/RP-Android-Apps source=universalrp2003/RP-Android-Apps same_repo=true
 OK: publishing to this repository with the workflow token (no cross-repository secret).
 OK: release publication is enabled: this job's workflow token carries contents: write.
-FAIL: Live Guard notes must state honestly whether this exact build had a device test.
+WARN: releases/latest-tag.txt already points at live-guard-v2.70; there is no earlier release to compare.
+CANDIDATE-PERMISSIONS: 21
+CANDIDATE-DANGEROUS: android.permission.ACCESS_COARSE_LOCATION, android.permission.ACCESS_FINE_LOCATION, android.permission.NEARBY_WIFI_DEVICES, android.permission.POST_NOTIFICATIONS, android.permission.READ_EXTERNAL_STORAGE, android.permission.READ_PHONE_STATE, android.permission.WRITE_EXTERNAL_STORAGE
+ADDED-DANGEROUS: none
+REMOVED-DANGEROUS: none
+EVIDENCE-PRESENT: no
+EVIDENCE-REQUIRED: yes
+REASON: the previously published release's permissions could not be determined, so it cannot be shown that no dangerous permission was added
+A 'no' here means no dangerous permission was added. It is NOT Play Protect approval, NOT a device installation test and NOT all-device certification.
+FAIL: CleanSweep 2.70 (code 75) adds a dangerous permission and has no recorded physical-device evidence.
+       Expected: docs/live-guard-2.70-device-evidence.md
+       Install the exact candidate APK from the normal download route with Play Protect ON,
+       record the real outcome, and commit that record before publishing. Nothing was published.
 ```
