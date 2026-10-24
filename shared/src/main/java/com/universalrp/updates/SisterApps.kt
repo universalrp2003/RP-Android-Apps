@@ -60,7 +60,7 @@ object SisterApps {
             name = "Ramesh Radio",
             tamilName = "ரமேஷ் ரேடியோ",
             tagPrefix = "ramesh-radio",
-            version = "1.22",
+            version = "1.23",
             packageName = "com.universalrp.tamilnadufm",
             aboutLabel = "Ramesh Radio — GitHub release",
         ),
