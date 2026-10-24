@@ -370,6 +370,7 @@
 
     /* Screenshot slot */
     .shot {
+      position: relative;
       margin: 4px 0 2px; border-radius: 12px; overflow: hidden;
       border: 1px solid var(--surface-border);
       background: linear-gradient(135deg, rgba(41, 211, 232, 0.10), rgba(167, 139, 250, 0.10));
@@ -378,6 +379,13 @@
     .shot.has-img { background: rgba(0, 0, 0, 0.4); }
     .shot.has-img img { display: block; }
     .shot.has-img figcaption { display: none; }
+    .shot .concept-badge { display: none; }
+    .shot.has-img .concept-badge {
+      display: inline-block; position: absolute; left: 10px; bottom: 10px;
+      padding: 4px 10px; font-size: 0.72rem; line-height: 1.2;
+      border-radius: 999px; background: rgba(0, 0, 0, 0.62); color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
     .shot figcaption {
       padding: 11px 14px; text-align: center; color: var(--muted); font-size: 0.78rem;
       display: flex; align-items: center; justify-content: center; gap: 7px; flex-wrap: wrap;
@@ -960,8 +968,9 @@
             </div>
             <p class="ta-note">இரண்டு போன்களுக்கு இடையே சாதாரண உரையில் ஒரு இரகசிய செய்தியை மறைக்கலாம் (சோதனை); சரியான திறவுகோல் மட்டுமே உண்மையைக் காட்டும்; முழுமையாக ஆஃப்லைன்.</p>
             <figure class="shot">
-              <img loading="lazy" src="images/secret-message.jpg" alt="Secret Message screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
+              <img loading="lazy" src="images/secret-message.jpg" alt="Secret Message — concept illustration of the two-phone hidden-message flow (not a real screenshot)" onload="this.parentElement.classList.add('has-img')">
+              <span class="concept-badge">🎨 Concept illustration · கருத்துரு படம்</span>
+              <figcaption>🎨 <strong>Concept illustration</strong> · கருத்துரு படம்</figcaption>
             </figure>
             <details class="feat">
               <summary><span class="feat-icon">⚙️</span> Full features · முழு விவரங்கள்</summary>
