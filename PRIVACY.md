@@ -2,7 +2,7 @@
 
 **Last updated: 23 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
 
-This policy covers all seven actively published RP Ideas Android apps and their builds: **SMS Guard (குறுஞ்செய்தி காவலன்) 1.1.3**, **Live Guard (CleanSweep) 2.65**, **Ramesh Radio 1.22**, **PulseEQ 1.9**, **RP Vocal Remover Studio 0.1.15**, **Oor Arivippu (ஊர் அறிவிப்பு) 1.1.7**, and **Secret Message (இரகசிய செய்தி) 1.1.3**. Older app versions and unreleased builds may behave differently.
+This policy covers all seven actively published RP Ideas Android apps and their builds: **SMS Guard (குறுஞ்செய்தி காவலன்) 1.1.3**, **Live Guard (CleanSweep) 2.65**, **Ramesh Radio 1.23**, **PulseEQ 1.9**, **RP Vocal Remover Studio 0.1.15**, **Oor Arivippu (ஊர் அறிவிப்பு) 1.1.7**, and **Secret Message (இரகசிய செய்தி) 1.1.3**. Older app versions and unreleased builds may behave differently.
 
 ## The short version
 
