@@ -26,8 +26,8 @@ import kotlinx.coroutines.launch
 
 /**
  * Ramesh Radio (`1.20`) weather & cyclone alert controller:
- *  - Uses connected mobile-tower approximate location (`ACCESS_COARSE_LOCATION` — 0% GPS drain)
- *    when phone Location is ON, and automatically switches to saved PIN/town (`622301`) when OFF.
+ *  - Uses your saved PIN code / town only (no location permission requested); rain & storm alerts
+ *    resolve from the saved place, e.g. Alangudi / PIN `622301`.
  *  - Strictly runs ONLY while Ramesh Radio's window is open OR radio audio is actively playing
  *    (never checks or announces in background when the user closed the app and stopped audio).
  *  - Smoothly ducks ExoPlayer FM/local music volume to 25%, speaks Tamil/English rain or cyclone
@@ -103,7 +103,7 @@ object RadioWeatherMonitor {
     fun refreshState(context: Context) {
         val app = context.applicationContext
         val current = _state.value
-        val fresh = SharedWeatherRuntime.readState(context = app, allowGps = true)
+        val fresh = SharedWeatherRuntime.readState(context = app, allowGps = false)
         _state.value = fresh.copy(
             previewSeverity = current.previewSeverity,
             checkingNow = current.checkingNow,
@@ -147,9 +147,9 @@ object RadioWeatherMonitor {
             if (!resolved.hasCoordinates) {
                 val note = if (manual) {
                     if (tamil) {
-                        "போன் Location-ஐ இயக்கவும் அல்லது கீழே உங்கள் PIN எண் / ஊரைத் தேடிச் சேமியுங்கள் (உதா: 622301)."
+                        "கீழே உங்கள் PIN எண் / ஊரைத் தேடிச் சேமியுங்கள் (உதா: 622301)."
                     } else {
-                        "Turn ON phone Location (mobile tower) or save your PIN code / town below (e.g. 622301)."
+                        "Save your PIN code / town below (e.g. 622301)."
                     }
                 } else {
                     ""

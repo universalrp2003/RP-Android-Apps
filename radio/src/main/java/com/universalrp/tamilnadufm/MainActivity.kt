@@ -39,18 +39,13 @@ class MainActivity : ComponentActivity() {
 
         AudioFx.load(this)
 
-        // Android 13+ notification + optional mobile-tower approximate location for local rain alerts (0% GPS battery drain).
+        // Android 13+ notification permission (rain & storm alerts use your saved PIN/town — no location permission).
         val wanted = buildList {
             if (Build.VERSION.SDK_INT >= 33 &&
                 ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) !=
                 PackageManager.PERMISSION_GRANTED
             ) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-            if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED
-            ) {
-                add(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
         }
         if (wanted.isNotEmpty()) {

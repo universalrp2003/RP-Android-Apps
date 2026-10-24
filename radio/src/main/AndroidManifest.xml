@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Streaming needs the network. Optional approximate mobile-tower location powers local rain alerts (with saved PIN fallback when Location is OFF). -->
+    <!-- Streaming needs the network. Rain & storm alerts use your saved PIN/town only — no location permission. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- Background playback + its notification. -->
