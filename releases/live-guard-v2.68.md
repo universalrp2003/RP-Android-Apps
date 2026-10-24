@@ -1,6 +1,7 @@
 ## Live Guard (CleanSweep) v2.68 — Simpler Voice, Cleaner News, Rain Forecast & Professional AI Bulletins
 
 **Package:** `com.universalrp.cleansweep` · **Version:** `2.68` (`versionCode = 73`) · **Minimum Android:** Android 8.0+ (API 26)
+**Published Signed Asset:** `CleanSweep-v2.68.apk` · **`14,335,191` bytes** · **SHA-256:** `97ac7855473a7d42caae7b4641b421578af2a0bbae761dad3a21ff608b26c86d` ([Build APK run 40068206709](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40068206709))
 **Verification Note:** Built, unit-tested, and verified via CI static/manifest/signature/localization checks; this exact build was **not installed on a phone** prior to GitHub release publication (**adds zero new permissions** over `v2.67` — no dangerous-permission delta, so no device-install record is required). GitHub publication is not Play Protect approval or all-device certification.
 
 ### What's New in v2.68
