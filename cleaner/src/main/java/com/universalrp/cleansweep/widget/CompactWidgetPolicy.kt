@@ -110,7 +110,7 @@ object CompactWidgetPolicy {
                     hero = "~${shown}m"
                     statusLabel = label("Rain in ~${shown} min", "~${shown} நிமிடத்தில் மழை")
                 }
-                brief = label("~30 min heads-up · Quiet Hours respected", "~30 நிமிட முன்னறிவிப்பு · அமைதி நேரம் மதிக்கும்")
+                brief = label("~30 min heads-up · Quiet Hours respected", "~30 நிமிட முன்னறிவிப்பு · அமைதி நேரத்தில் ஓசை இல்லை")
             }
             else -> {
                 hero = tempLabel ?: label("Clear", "அமைதி")
