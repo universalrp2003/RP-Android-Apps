@@ -19,6 +19,7 @@ import com.universalrp.tamilnadufm.audio.AudioFx
 import com.universalrp.updates.AppLanguageState
 import com.universalrp.tamilnadufm.player.PlaybackService
 import com.universalrp.tamilnadufm.ui.AppRoot
+import com.universalrp.tamilnadufm.ui.BackgroundPlayGuide
 import com.universalrp.tamilnadufm.ui.TamilFmTheme
 
 class MainActivity : ComponentActivity() {
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TamilFmTheme {
                 com.universalrp.updates.AppUpdates.Control("Ramesh-Radio", automatic = true)
+                BackgroundPlayGuide.Control()
                 val vm: MainViewModel = viewModel()
                 AppRoot(vm, controller.value)
             }

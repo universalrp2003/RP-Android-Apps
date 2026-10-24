@@ -1296,7 +1296,7 @@ private fun OorSettingsFullDialog(
                         val releaseLinks = listOf(
                             ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.4",
                             ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.65",
-                            ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.22",
+                            ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.23",
                             ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
                             ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
                             ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.7",
