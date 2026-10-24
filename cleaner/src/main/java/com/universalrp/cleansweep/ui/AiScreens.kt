@@ -817,9 +817,9 @@ fun AiReportScreen(state: UiState, vm: MainViewModel) {
 }
 
 /** One AI answer split on markdown-style headings so it renders as readable cards. */
-private data class AiSection(val heading: String, val lines: List<String>)
+internal data class AiSection(val heading: String, val lines: List<String>)
 
-private fun splitAnswer(answer: String): List<AiSection> {
+internal fun splitAnswer(answer: String): List<AiSection> {
     val sections = mutableListOf<AiSection>()
     var heading = "Summary"
     var lines = mutableListOf<String>()
@@ -864,7 +864,7 @@ private fun ModeChip2(label: String, selected: Boolean, onClick: () -> Unit) {
 }
 
 @Composable
-private fun AiSectionCard(section: AiSection) {
+internal fun AiSectionCard(section: AiSection) {
     val headingState = headingTone(section.heading)
     PanelCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {

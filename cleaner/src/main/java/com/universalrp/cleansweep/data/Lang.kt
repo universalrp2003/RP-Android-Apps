@@ -100,6 +100,11 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Announcement voice" to "அறிவிப்பு குரல்",
+        "Choose how the announcer sounds. With internet it uses studio Ultra-HD neural voices; with no internet it automatically uses your phone's installed voice." to "அறிவிப்பு குரல் எப்படி இருக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும். இணையம் இருந்தால் ஸ்டுடியோ அல்ட்ரா-HD நரம்பியல் குரல்கள் பயன்படுத்தப்படும்; இணையம் இல்லாதபோது உங்கள் தொலைபேசியில் நிறுவப்பட்ட குரல் தானாக பயன்படுத்தப்படும்.",
+        "🔀 Random male / female each time" to "🔀 ஒவ்வொரு முறையும் மாறிமாறி ஆண் / பெண் குரல்",
+        "👨 Male voice only" to "👨 ஆண் குரல் மட்டும்",
+        "👩 Female voice only" to "👩 பெண் குரல் மட்டும்",
         // ------------------------------------------------------------- app chrome
         "Live Guard" to "லைவ் கார்டு",
         "About Live Guard" to "லைவ் கார்டு பற்றி",

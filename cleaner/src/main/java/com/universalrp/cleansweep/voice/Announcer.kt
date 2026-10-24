@@ -33,6 +33,9 @@ import java.util.Locale
  *  * **Preferences live in plain SharedPreferences**, because a worker or service can wake up
  *    in a fresh process where the DataStore flow has not been read yet.
  */
+
+/** How the announcer picks its online neural voice for each announcement. */
+enum class VoiceGenderMode { RANDOM, MALE, FEMALE }
 object Announcer {
 
     /** Same plain file the charging service already reads. */
@@ -49,6 +52,7 @@ object Announcer {
     const val KEY_HD_VOICE_DEFAULT_ON_262 = "voice_hd_default_on_262"
     const val KEY_AUTO_DAILY_GENDER = "voice_auto_daily_gender"
     const val KEY_PREFERRED_ONLINE_VOICE = "voice_preferred_online_id"
+    const val KEY_VOICE_GENDER_MODE = "voice_gender_mode"
     const val KEY_LOUDER = "voice_louder"
 
     /**
@@ -243,6 +247,21 @@ object Announcer {
     fun setPreferredOnlineVoiceId(context: Context, id: String) {
         ensureHdVoiceDefaults262(context)
         prefs(context).edit().putString(KEY_PREFERRED_ONLINE_VOICE, id).apply()
+    }
+
+    /** Simple, owner-facing voice choice: random male/female, male only, or female only. */
+    fun voiceGenderMode(context: Context): VoiceGenderMode {
+        ensureHdVoiceDefaults262(context)
+        return when (prefs(context).getString(KEY_VOICE_GENDER_MODE, VoiceGenderMode.RANDOM.name)) {
+            VoiceGenderMode.MALE.name -> VoiceGenderMode.MALE
+            VoiceGenderMode.FEMALE.name -> VoiceGenderMode.FEMALE
+            else -> VoiceGenderMode.RANDOM
+        }
+    }
+
+    fun setVoiceGenderMode(context: Context, mode: VoiceGenderMode) {
+        ensureHdVoiceDefaults262(context)
+        prefs(context).edit().putString(KEY_VOICE_GENDER_MODE, mode.name).apply()
     }
 
     /** Louder voice alerts: boost alert speech volume (off by default). */
@@ -625,22 +644,14 @@ object Announcer {
 
     private fun resolveStudioProfile(context: Context, request: Request): com.universalrp.voice.CuratedNeuralVoiceProfile {
         request.overrideStudioProfile?.let { return it }
-        val autoSwap = autoDailyGenderSwap(context)
-        val savedId = preferredOnlineVoiceId(context)
-        if (!autoSwap && savedId.isNotBlank()) {
-            return com.universalrp.voice.SharedNeuralVoiceEngine.resolveActiveProfile(false, savedId)
+        // Simple owner-facing choice: random male/female, male only, or female only.
+        // Offline, the caller falls back to the phone's installed system voice automatically.
+        val engine = com.universalrp.voice.SharedNeuralVoiceEngine
+        return when (voiceGenderMode(context)) {
+            VoiceGenderMode.FEMALE -> engine.FEMALE_VOICES.random()
+            VoiceGenderMode.MALE -> engine.MALE_VOICES.random()
+            VoiceGenderMode.RANDOM -> engine.CURATED_VOICES.random()
         }
-        val today = java.time.LocalDate.now()
-        val primary = com.universalrp.voice.SharedNeuralVoiceEngine.scheduledVoiceForDate(today)
-        if (request.answerSlot != null && (request.answerSlot % 2) == 1) {
-            val opposite = if (primary.gender == com.universalrp.voice.NeuralVoiceGender.MALE) {
-                com.universalrp.voice.NeuralVoiceGender.FEMALE
-            } else {
-                com.universalrp.voice.NeuralVoiceGender.MALE
-            }
-            return com.universalrp.voice.SharedNeuralVoiceEngine.scheduledGenderVoiceForDate(opposite, today)
-        }
-        return primary
     }
 
     private fun drain(context: Context) {

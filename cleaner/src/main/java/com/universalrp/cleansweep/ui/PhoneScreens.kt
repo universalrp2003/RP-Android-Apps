@@ -974,7 +974,14 @@ fun NetworkScreen(state: UiState, vm: MainViewModel) {
                             if (state.aiDeviceBusy) AiOperationProgress(state.aiDeviceStartedMs, 90,
                                 if (state.networkBusy) "Scanning the network locally…" else "Waiting for the selected provider…", onCancel = { vm.cancelDeviceIdentification() })
                             else TextButton(onClick = { vm.identifyDevicesWithAi() }) { Text(tr("Send current device facts to AI")) }
-                            state.aiDeviceResult?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            state.aiDeviceResult?.let { result ->
+                                Column(
+                                    modifier = Modifier.padding(top = 10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    splitAnswer(result).forEach { section -> AiSectionCard(section) }
+                                }
+                            }
                         }
                     }
                 }

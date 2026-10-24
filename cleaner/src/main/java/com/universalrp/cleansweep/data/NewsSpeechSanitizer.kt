@@ -138,23 +138,16 @@ object NewsSpeechSanitizer {
 
     /**
      * Builds a smooth, natural broadcast script for TTS in Tamil or English.
+     * No numeric ordinals ("news 1, news 2 …") — just a clean intro followed by the headlines,
+     * each separated by a spoken sentence pause.
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
-        if (headlines.isEmpty()) return ""
-        val ordinalsTa = listOf("ஒன்று", "இரண்டு", "மூன்று", "நான்கு", "ஐந்து")
-        val ordinalsEn = listOf("First", "Second", "Third", "Fourth", "Fifth")
-        return buildString {
-            append(if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. ")
-            headlines.forEachIndexed { idx, h ->
-                val clean = cleanHeadline(h.title, h.source).trimEnd('.', '!', '?')
-                val prefix = if (tamil) {
-                    ordinalsTa.getOrElse(idx) { "செய்தி ${idx + 1}" }
-                } else {
-                    ordinalsEn.getOrElse(idx) { "Headline ${idx + 1}" }
-                }
-                append(prefix).append(": ").append(clean).append(". ")
-            }
-        }.trim()
+        val cleaned = headlines
+            .map { cleanHeadline(it.title, it.source).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .filter { it.isNotBlank() }
+        if (cleaned.isEmpty()) return ""
+        val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "
+        return intro + cleaned.joinToString(". ") + "."
     }
 
     /**
