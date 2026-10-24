@@ -25,7 +25,25 @@ does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
 - `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
   the baseline for the next permission delta.
 
-## Latest publication — Live Guard 2.67 solo (23 October 2026)
+## Latest publication — Weather Accuracy & Privacy Update: Live Guard 2.70 + Ramesh Radio 1.24 + Oor Arivippu 1.1.8 (24 October 2026)
+
+| App | Gradle module | Version / code | Release tag | APK |
+|---|---|---:|---|---|
+| Live Guard / CleanSweep | `cleaner` | 2.70 / 75 | `live-guard-v2.70` | `CleanSweep-v2.70.apk` |
+| Ramesh Radio | `radio` | 1.24 / 24 | `ramesh-radio-v1.24` | `Ramesh-Radio-v1.24.apk` |
+| Oor Arivippu | `oorarivippu` | 1.1.8 / 13 | `oor-arivippu-v1.1.8` | `Oor-Arivippu-v1.1.8.apk` |
+
+Live Guard 2.70 / code 75, Ramesh Radio 1.24 / code 24 and Oor Arivippu 1.1.8 / code 13 were published on 24 October 2026 from the `arena` branch by [Build APK run 40101594815](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40101594815) (Live Guard + Ramesh Radio, `CleanSweep-v2.70.apk` `14,419,847` bytes SHA-256 `8fc9f0a348a958f03c365148c4a8e012e63b85f939cf8eb71933040217beb52c`, `Ramesh-Radio-v1.24.apk` `15,076,580` bytes SHA-256 `d3454873fc179241f37acd6e7acf5060418091c1ede6b640b14c32e5988b4749`) and [Oor Arivippu run 40098498419](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40098498419) (`Oor-Arivippu-v1.1.8.apk` `12,777,932` bytes SHA-256 `1e66733e85f0fbbe43e3f34c1f47fa0b1e90a92bdf1a55da0a3a28f10b1b4f77`), leaving `PulseEQ 1.9`, `RP Vocal Remover Studio 0.1.15` and `Secret Message 1.1.3` untouched (the \"one app at a time\" rule: only the three apps' versions changed, so only their tags became public). Live Guard's home-screen widget rain card now shows the real observed/peak 60-minute precipitation rate instead of a generic quiet-hours note, and the shared rain \"starting now\" classification now requires a *noticeable* rate (`NOTICEABLE_RAIN_MM_HR = 0.40` mm/hr) across Live Guard, Ramesh Radio and Oor Arivippu. Ramesh Radio **removed the `ACCESS_COARSE_LOCATION` (mobile-tower) permission** and every location prompt, so rain and cyclone voice alerts use the saved PIN/Village with zero location access — a net `-1` permission. Oor Arivippu only bumped its About-screen sister-app links. Live Guard added `0` dangerous permissions over `v2.69`, so the permission-delta gate required no device-install record and the exact candidate bytes were published directly after full CI localization / manifest / regression / signature / release-asset checks without a pre-publication phone install. `releases/latest-tag.txt` advanced to `live-guard-v2.70` for the next delta. After publication the owner installed all three APKs on their phone and confirmed they work. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+## Also on 24 October 2026 — SMS Guard 1.1.5 solo
+
+| App | Gradle module | Version / code | Release tag | APK |
+|---|---|---:|---|---|
+| SMS Guard | `smsguard` | 1.1.5 / 11 | `sms-guard-v1.1.5` | `SMS-Guard-v1.1.5.apk` |
+
+SMS Guard 1.1.5 / code 11 was published **alone** on 24 October 2026 by [SMS Guard run 40048301709](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40048301709) (`SMS-Guard-v1.1.5.apk`, `12,412,513` bytes, SHA-256 `021d86dd573668aaf4e4776327458ad99fef436fc0d5af3cdb8dcbc48705445d`), leaving the six other apps untouched. It adds a dedicated **Bills (பில்கள்)** tab that captures bill SMS (credit card, TNEB, broadband, LPG, postpaid, water, insurance, loan EMI) automatically with per-reminder voice/notification/mark-paid/delete controls, a \"Read Aloud Now\" button, a daily voice cap (default 2) that never suppresses a near-due or overdue bill, and anti-spoof rules so only verified official senders can create a reminder. OTP silence is unchanged. This release **adds `1` permission** — `RECEIVE_BOOT_COMPLETED`, so the daily bill check survives a reboot; no new data collection, and bills stay in the app's private storage. Because `RECEIVE_BOOT_COMPLETED` is a normal (non-dangerous) permission, the Live Guard permission-delta gate was not triggered and no device-install record was required; the exact candidate bytes were published directly after full CI unit / lint / regression / signature / release-asset checks. The exact `1.1.5` build has **not** been installed on a phone, so a real-device check is recommended before wide distribution. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+## Previous publication — Live Guard 2.67 solo (23 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
