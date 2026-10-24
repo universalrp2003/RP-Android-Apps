@@ -1,0 +1,17 @@
+## Live Guard (CleanSweep) v2.68 — Simpler Voice, Cleaner News, Rain Forecast & Professional AI Bulletins
+
+**Package:** `com.universalrp.cleansweep` · **Version:** `2.68` (`versionCode = 73`) · **Minimum Android:** Android 8.0+ (API 26)
+**Verification Note:** Built, unit-tested, and verified via CI static/manifest/signature/localization checks; this exact build was **not installed on a phone** prior to GitHub release publication (**adds zero new permissions** over `v2.67` — no dangerous-permission delta, so no device-install record is required). GitHub publication is not Play Protect approval or all-device certification.
+
+### What's New in v2.68
+
+- **Simpler announcer voice (one clear choice):** the old "Studio Ultra-HD Voices" list and the daily auto male↔female toggle are replaced by a single **"Announcement voice"** card with three plain options — **🔀 Random male / female each time**, **👨 Male voice only**, **👩 Female voice only**. With internet it uses the studio neural voices; with **no internet it automatically falls back to your phone's installed system voice**. The HD/system-voice detail screens are hidden at the program level. Tamil + English throughout.
+- **News no longer says "news 1, news 2…":** the spoken bulletin drops numeric ordinals and reads as a clean intro followed by the headlines.
+- **Professional WiFi-scan AI results:** the AI device-scan answer is now rendered as proper headings and paragraphs (shared section renderer) instead of a raw markdown text block.
+- **Reliable Wi-Fi ⇄ mobile-data switching announcement:** turning on the **"Wi-Fi ⇄ mobile data switches"** switch now also switches on voice output (so it actually speaks and keeps the hourly fallback worker scheduled). The **4G ⇄ 5G** and **Wi-Fi ⇄ mobile** switches remain fully independent — turning one off never silences the other. No new always-on background listener is added; the live announcement runs while Live Guard is open, with the hourly check as a delayed fallback (least battery).
+- **Rain window reworked:** the **rain details** (current conditions + 2-hour forecast) now sit at the **top** of the screen; the **"Test voice"** and **"Preview animation"** buttons are folded into a single **Preview ▾** dropdown (Check now stays the primary button); and a **rain forecast** line summarises the next 2 hours — when rain is expected, the heaviest intensity, and a **chance-of-rain** rating (High / Medium / Low / None) derived from the forecast intensity. Tamil + English.
+- **Optional professional AI news bulletins:** when you have an AI provider configured in AI settings (Groq / Gemini / OpenAI / free / custom — the same key as the assistant), today's headlines are rewritten into a short, professional, spoken news bulletin in complete sentences, dropping incomplete or non-newsworthy items. If **no AI is configured, you are offline, or the reply is unusable**, it **falls back automatically** to the on-device sanitized bulletin — news is never blocked on the AI. (Note: headlines are fetched from **Google News RSS**, not from the AI; the AI only rewrites them for a cleaner read-out.)
+
+### Notes
+- **Zero new permissions** over `v2.67`; package name, verified updater and signing key are unchanged.
+- News still comes from **Google News RSS** (today-only, your timezone); the configured AI is used only to polish the spoken bulletin, with a guaranteed on-device fallback.
