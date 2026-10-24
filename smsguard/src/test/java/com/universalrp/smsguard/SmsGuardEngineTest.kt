@@ -956,13 +956,13 @@ class SmsGuardEngineTest {
         )
 
         val plan = BillReminderEngine.planDailyAnnouncements(reminders, billToday, routineAlreadySpokenToday = 0, maxDailyRoutine = 2)
-        assertEquals(setOf("u_today", "u_tmr", "overdue"), plan.urgentBills.map { it.billerEn }.toSet())
-        assertEquals(setOf("r4", "r7"), plan.routineBills.map { it.billerEn }.toSet())
+        assertEquals(setOf("u_today", "u_tmr", "overdue"), plan.urgentBills.map { it.id }.toSet())
+        assertEquals(setOf("r4", "r7"), plan.routineBills.map { it.id }.toSet())
 
         // Routine is capped: once 2 routine announcements already happened today, routine is empty but urgent still fires.
         val capped = BillReminderEngine.planDailyAnnouncements(reminders, billToday, routineAlreadySpokenToday = 2, maxDailyRoutine = 2)
         assertTrue(capped.routineBills.isEmpty())
-        assertEquals(setOf("u_today", "u_tmr", "overdue"), capped.urgentBills.map { it.billerEn }.toSet())
+        assertEquals(setOf("u_today", "u_tmr", "overdue"), capped.urgentBills.map { it.id }.toSet())
 
         // A bill already announced today is de-duplicated (not re-announced).
         val todayEd = billToday.toEpochDay()
