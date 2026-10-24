@@ -1,6 +1,8 @@
 package com.universalrp.smsguard.data
 
 import android.content.Context
+import com.universalrp.smsguard.engine.BillCategory
+import com.universalrp.smsguard.engine.BillReminder
 import com.universalrp.smsguard.engine.LinkScanResult
 import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.UserAccountProfile
@@ -76,6 +78,15 @@ data class GuardPrefs(
     val pendingQueueCount: Int = 0,
     val mutedSenders: List<SenderMutePref> = emptyList(),
     val muteServiceInfoVoice: Boolean = true, // Silence routine data/validity/SMS-balance readouts by default
+    // --- Bill / payment-due reminders ---
+    val billRemindersEnabled: Boolean = true,      // Master switch for the whole bill-reminder feature
+    val billVoiceEnabled: Boolean = true,          // Voice-announce bill reminders (near-due always breaks through)
+    val billNotifyEnabled: Boolean = true,         // Show a system notification for near-due bills
+    val billMaxDailyAnnouncements: Int = 2,        // Gentle "coming up soon" voice announcements per day (near-due is exempt)
+    val billReminderMinuteOfDay: Int = 9 * 60,     // Daily check time, default 9:00 AM
+    val billReminderCount: Int = 0,                // Unpaid reminder count (for the nav badge)
+    val billAnnounceDate: String = "",             // "yyyy-MM-dd" of the current daily-announcement counter
+    val billAnnounceCount: Int = 0,                // Routine bill voice announcements already spoken today
 )
 
 object GuardSettingsStore {
@@ -85,6 +96,7 @@ object GuardSettingsStore {
     private const val KEY_LINK_CACHE = "cached_links_v3"
     private const val KEY_SLEEP_QUEUE = "sleep_voice_queue_v1"
     private const val KEY_MUTED_SENDERS = "muted_senders_v1"
+    private const val KEY_BILL_REMINDERS = "bill_reminders_v1"
 
     private val _state = MutableStateFlow(GuardPrefs())
     val state: StateFlow<GuardPrefs> = _state.asStateFlow()
@@ -131,6 +143,7 @@ object GuardSettingsStore {
             .toSet()
         val queueSize = getPendingQueue(context).size
         val sleepQueued = getSleepQueue(context).size
+        val bills = getBillReminders(context)
         val hasGsb = !KeystoreSecretStore.getSecret(context, SECRET_GSB_KEY).isNullOrBlank()
         val hasPin = !KeystoreSecretStore.getSecret(context, SECRET_FINANCE_PIN_HASH).isNullOrBlank()
         if (!p.getBoolean("v113_full_sms_voice_default_on", false)) {
@@ -169,6 +182,14 @@ object GuardSettingsStore {
             pendingQueueCount = queueSize,
             mutedSenders = parseMutedSenders(p.getString(KEY_MUTED_SENDERS, null)),
             muteServiceInfoVoice = p.getBoolean("mute_service_info_voice", true),
+            billRemindersEnabled = p.getBoolean("bill_reminders_enabled", true),
+            billVoiceEnabled = p.getBoolean("bill_voice_enabled", true),
+            billNotifyEnabled = p.getBoolean("bill_notify_enabled", true),
+            billMaxDailyAnnouncements = p.getInt("bill_max_daily", 2).coerceIn(0, 10),
+            billReminderMinuteOfDay = p.getInt("bill_reminder_minute", 9 * 60).coerceIn(0, 1439),
+            billReminderCount = bills.count { !it.isPaid },
+            billAnnounceDate = p.getString("bill_announce_date", "").orEmpty(),
+            billAnnounceCount = p.getInt("bill_announce_count", 0).coerceIn(0, 999),
         )
     }
 
@@ -220,6 +241,33 @@ object GuardSettingsStore {
 
     fun updateMuteServiceInfoVoice(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean("mute_service_info_voice", enabled).apply()
+        reload(context)
+    }
+
+    // --- Bill / payment-due reminder settings ---
+
+    fun updateBillRemindersEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("bill_reminders_enabled", enabled).apply()
+        reload(context)
+    }
+
+    fun updateBillVoiceEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("bill_voice_enabled", enabled).apply()
+        reload(context)
+    }
+
+    fun updateBillNotifyEnabled(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("bill_notify_enabled", enabled).apply()
+        reload(context)
+    }
+
+    fun updateBillMaxDailyAnnouncements(context: Context, count: Int) {
+        prefs(context).edit().putInt("bill_max_daily", count.coerceIn(0, 10)).apply()
+        reload(context)
+    }
+
+    fun updateBillReminderMinuteOfDay(context: Context, minuteOfDay: Int) {
+        prefs(context).edit().putInt("bill_reminder_minute", minuteOfDay.coerceIn(0, 1439)).apply()
         reload(context)
     }
 
@@ -608,5 +656,165 @@ object GuardSettingsStore {
             )
         }
         prefs(context).edit().putString("pending_links_queue_v1", arr.toString()).apply()
+    }
+
+    // --- Bill / payment-due reminders storage ---
+
+    fun getBillReminders(context: Context): List<BillReminder> {
+        val raw = prefs(context).getString(KEY_BILL_REMINDERS, null) ?: return emptyList()
+        return runCatching {
+            val arr = JSONArray(raw)
+            buildList {
+                for (i in 0 until arr.length()) {
+                    val o = arr.getJSONObject(i)
+                    val id = o.optString("id")
+                    if (id.isBlank()) continue
+                    val category = runCatching {
+                        BillCategory.valueOf(o.optString("category", "OTHER"))
+                    }.getOrDefault(BillCategory.OTHER)
+                    add(
+                        BillReminder(
+                            id = id,
+                            contentKey = o.optString("contentKey"),
+                            billerEn = o.optString("billerEn"),
+                            billerTa = o.optString("billerTa"),
+                            amountInr = if (o.has("amountInr") && !o.isNull("amountInr")) o.optDouble("amountInr") else null,
+                            dueEpochDay = o.optLong("dueEpochDay", 0L),
+                            category = category,
+                            sourceMessageId = if (o.has("sourceMessageId") && !o.isNull("sourceMessageId")) o.optLong("sourceMessageId") else null,
+                            sourceBody = o.optString("sourceBody"),
+                            isPaid = o.optBoolean("isPaid", false),
+                            voiceEnabled = o.optBoolean("voiceEnabled", true),
+                            notifyEnabled = o.optBoolean("notifyEnabled", true),
+                            createdAtMs = o.optLong("createdAtMs", 0L),
+                            lastAnnouncedEpochDay = if (o.has("lastAnnouncedEpochDay") && !o.isNull("lastAnnouncedEpochDay")) {
+                                o.optLong("lastAnnouncedEpochDay")
+                            } else {
+                                null
+                            },
+                        ),
+                    )
+                }
+            }
+        }.getOrDefault(emptyList())
+    }
+
+    private fun writeBillReminders(context: Context, list: List<BillReminder>) {
+        val arr = JSONArray()
+        for (b in list) {
+            arr.put(
+                JSONObject()
+                    .put("id", b.id)
+                    .put("contentKey", b.contentKey)
+                    .put("billerEn", b.billerEn)
+                    .put("billerTa", b.billerTa)
+                    .put("amountInr", b.amountInr ?: JSONObject.NULL)
+                    .put("dueEpochDay", b.dueEpochDay)
+                    .put("category", b.category.name)
+                    .put("sourceMessageId", b.sourceMessageId ?: JSONObject.NULL)
+                    .put("sourceBody", b.sourceBody)
+                    .put("isPaid", b.isPaid)
+                    .put("voiceEnabled", b.voiceEnabled)
+                    .put("notifyEnabled", b.notifyEnabled)
+                    .put("createdAtMs", b.createdAtMs)
+                    .put("lastAnnouncedEpochDay", b.lastAnnouncedEpochDay ?: JSONObject.NULL),
+            )
+        }
+        prefs(context).edit().putString(KEY_BILL_REMINDERS, arr.toString()).apply()
+        reload(context)
+    }
+
+    /**
+     * Inserts or refreshes a reminder. SMS-derived reminders are de-duplicated by [BillReminder.contentKey]
+     * so the same bill arriving twice updates the existing entry (keeping the owner's paid/voice/notify choices)
+     * instead of creating a duplicate. Returns the effective stored reminder.
+     */
+    @Synchronized
+    fun upsertBillReminder(context: Context, incoming: BillReminder): BillReminder {
+        val current = getBillReminders(context).toMutableList()
+        val existingIdx = if (incoming.contentKey.isNotBlank()) {
+            current.indexOfFirst { it.contentKey == incoming.contentKey }
+        } else {
+            -1
+        }
+        val merged = if (existingIdx >= 0) {
+            val prev = current[existingIdx]
+            incoming.copy(
+                id = prev.id,
+                createdAtMs = if (prev.createdAtMs > 0L) prev.createdAtMs else incoming.createdAtMs,
+                // Preserve the owner's manual choices across refreshes.
+                isPaid = prev.isPaid,
+                voiceEnabled = prev.voiceEnabled,
+                notifyEnabled = prev.notifyEnabled,
+            )
+        } else {
+            incoming
+        }
+        if (existingIdx >= 0) current[existingIdx] = merged else current.add(merged)
+        // Keep only the nearest 120 reminders so storage never grows unbounded.
+        val trimmed = current.sortedByDescending { it.dueEpochDay }.take(120)
+        writeBillReminders(context, trimmed)
+        return merged
+    }
+
+    @Synchronized
+    fun removeBillReminder(context: Context, id: String) {
+        writeBillReminders(context, getBillReminders(context).filterNot { it.id == id })
+    }
+
+    @Synchronized
+    fun setBillPaid(context: Context, id: String, paid: Boolean) {
+        writeBillReminders(context, getBillReminders(context).map { if (it.id == id) it.copy(isPaid = paid) else it })
+    }
+
+    @Synchronized
+    fun setBillVoiceEnabled(context: Context, id: String, enabled: Boolean) {
+        writeBillReminders(context, getBillReminders(context).map { if (it.id == id) it.copy(voiceEnabled = enabled) else it })
+    }
+
+    @Synchronized
+    fun setBillNotifyEnabled(context: Context, id: String, enabled: Boolean) {
+        writeBillReminders(context, getBillReminders(context).map { if (it.id == id) it.copy(notifyEnabled = enabled) else it })
+    }
+
+    /** Marks the given bill ids as announced on [todayEpochDay] (daily de-dup). */
+    @Synchronized
+    fun markBillsAnnounced(context: Context, ids: Set<String>, todayEpochDay: Long) {
+        if (ids.isEmpty()) return
+        writeBillReminders(
+            context,
+            getBillReminders(context).map { if (it.id in ids) it.copy(lastAnnouncedEpochDay = todayEpochDay) else it },
+        )
+    }
+
+    /** Gentle housekeeping: drops paid reminders whose due date is older than [olderThanEpochDay]. */
+    @Synchronized
+    fun pruneOldPaidBills(context: Context, olderThanEpochDay: Long) {
+        writeBillReminders(context, getBillReminders(context).filterNot { it.isPaid && it.dueEpochDay < olderThanEpochDay })
+    }
+
+    // --- Daily bill-announcement cap (near-due bills are exempt and always announce) ---
+
+    /** How many routine bill announcements were already spoken today; resets the counter on a new day. */
+    @Synchronized
+    fun billRoutineSpokenToday(context: Context, todayIso: String): Int {
+        val p = prefs(context)
+        val storedDate = p.getString("bill_announce_date", "").orEmpty()
+        if (storedDate != todayIso) {
+            p.edit().putString("bill_announce_date", todayIso).putInt("bill_announce_count", 0).apply()
+            return 0
+        }
+        return p.getInt("bill_announce_count", 0).coerceIn(0, 999)
+    }
+
+    /** Records one routine bill announcement against today's cap. */
+    @Synchronized
+    fun recordBillRoutineAnnouncement(context: Context, todayIso: String) {
+        val current = billRoutineSpokenToday(context, todayIso)
+        prefs(context).edit()
+            .putString("bill_announce_date", todayIso)
+            .putInt("bill_announce_count", current + 1)
+            .apply()
+        reload(context)
     }
 }

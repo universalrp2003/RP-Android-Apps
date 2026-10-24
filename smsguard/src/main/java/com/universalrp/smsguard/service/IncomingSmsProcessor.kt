@@ -24,6 +24,8 @@ import com.universalrp.smsguard.data.QueuedSmsLinkCheck
 import com.universalrp.smsguard.data.SmsEvents
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.engine.AnnouncementSettingsSnapshot
+import com.universalrp.smsguard.engine.BillReminder
+import com.universalrp.smsguard.engine.BillReminderEngine
 import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.FinanceParseResult
 import com.universalrp.smsguard.engine.LinkScanResult
@@ -47,8 +49,7 @@ object IncomingSmsProcessor {
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val nm = context.getSystemService(NotificationManager::class.java) ?: return
-        nm.createNotificationChannels(
-            listOf(
+        nm.createNotificationChannels(            listOf(
                 NotificationChannel(
                     CH_THREAT,
                     "Cyber Scam & Fake SMS Alerts",
@@ -72,6 +73,8 @@ object IncomingSmsProcessor {
                 },
             ),
         )
+        // Bill / payment-due reminders live in their own high-importance channel.
+        BillReminderScheduler.ensureChannel(context)
     }
 
     fun handleIncomingBroadcast(
@@ -213,6 +216,38 @@ object IncomingSmsProcessor {
                 isOtp = otp.isOtp,
                 userAccounts = prefs.userAccounts,
             )
+
+            // Bill / payment-due capture into its OWN dedicated box (NEVER counted as Finance income/spend).
+            // A fully-blocked sender is skipped; a voice-muted sender is still stored (the owner reviews it
+            // in the Bills tab) but never announces. A near-due bill announces + notifies immediately.
+            if (!isBlocked && prefs.billRemindersEnabled) {
+                val parsedBill = BillReminderEngine.parseBillSms(
+                    body = body,
+                    sender = sender,
+                    isOtp = otp.isOtp,
+                    nowMs = timestampMs,
+                )
+                if (parsedBill != null) {
+                    val storedBill = GuardSettingsStore.upsertBillReminder(
+                        appCtx,
+                        BillReminder(
+                            id = java.util.UUID.randomUUID().toString(),
+                            contentKey = parsedBill.contentKey,
+                            billerEn = parsedBill.billerEn,
+                            billerTa = parsedBill.billerTa,
+                            amountInr = parsedBill.amountInr,
+                            dueEpochDay = parsedBill.dueDate.toEpochDay(),
+                            category = parsedBill.category,
+                            sourceMessageId = insertedId,
+                            sourceBody = body,
+                            createdAtMs = timestampMs,
+                        ),
+                    )
+                    if (!voiceMuted && !isOutgoingEcho && !isServiceInfoNoise) {
+                        BillReminderScheduler.onBillCaptured(appCtx, storedBill)
+                    }
+                }
+            }
 
             val spokenScript = if (isOutgoingEcho || isBlocked || voiceMuted) {
                 null

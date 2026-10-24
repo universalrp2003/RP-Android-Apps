@@ -13,6 +13,9 @@ import com.universalrp.smsguard.data.SmsEvents
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.data.SmsThreadSummary
 import com.universalrp.smsguard.data.SenderMutePref
+import com.universalrp.smsguard.engine.BillCategory
+import com.universalrp.smsguard.engine.BillReminder
+import com.universalrp.smsguard.engine.BillReminderEngine
 import com.universalrp.smsguard.engine.DltCategory
 import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.LinkScanResult
@@ -22,6 +25,7 @@ import com.universalrp.smsguard.engine.PeriodSummary
 import com.universalrp.smsguard.engine.SpoofClassification
 import com.universalrp.smsguard.engine.UserAccountProfile
 import com.universalrp.smsguard.service.IncomingSmsProcessor
+import com.universalrp.smsguard.service.BillReminderScheduler
 import com.universalrp.smsguard.service.NetworkReconnectMonitor
 import com.universalrp.smsguard.service.SleepScheduleManager
 import com.universalrp.smsguard.service.SmsVoiceAnnouncer
@@ -38,9 +42,10 @@ import java.time.YearMonth
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-enum class MainTab { MESSAGES, SHIELD, FINANCE, CONTROLS }
+enum class MainTab { MESSAGES, SHIELD, FINANCE, BILLS, CONTROLS }
 enum class InboxFilter { ALL, PERSONAL, BANKS, OTP, LINKS, SCAM, PROMO }
 enum class FinancePeriodMode { THIS_MONTH, SELECTED_MONTH, YEARLY, CUSTOM_RANGE }
+enum class BillFilter { ALL, UNPAID, PAID, DUE_SOON }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -130,11 +135,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _financeUnlockedInSession = MutableStateFlow(false)
     val financeUnlockedInSession: StateFlow<Boolean> = _financeUnlockedInSession.asStateFlow()
 
+    // Bill / payment-due reminder state
+    private val _billReminders = MutableStateFlow<List<BillReminder>>(emptyList())
+    val billReminders: StateFlow<List<BillReminder>> = _billReminders.asStateFlow()
+
+    private val _billFilter = MutableStateFlow(BillFilter.UNPAID)
+    val billFilter: StateFlow<BillFilter> = _billFilter.asStateFlow()
+
     init {
         val ctx = getApplication<Application>()
         GuardSettingsStore.ensureLoaded(ctx)
         SmsVoiceAnnouncer.ensureInitialized(ctx)
         refreshAll()
+        refreshBills()
 
         viewModelScope.launch {
             SmsEvents.pulse.collect { pulse ->
@@ -357,6 +370,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     _threads.value = fullThreads
                     _hasMoreMessages.value = SmsRepository.lastLoadHasMoreMessages
                     _isLoading.value = false
+                    _billReminders.value = GuardSettingsStore.getBillReminders(ctx)
                     syncThreadNotifications(fullThreads)
                 } while (refreshQueuedAgain)
 
@@ -834,6 +848,134 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun pendingQueueItems(): List<QueuedSmsLinkCheck> =
         GuardSettingsStore.getPendingQueue(getApplication())
+
+    // --- Bill / payment-due reminders ---
+
+    fun refreshBills() {
+        _billReminders.value = GuardSettingsStore.getBillReminders(getApplication())
+    }
+
+    fun setBillFilter(filter: BillFilter) {
+        _billFilter.value = filter
+    }
+
+    /** Pure filtered + sorted view of reminders for the Bills tab (soonest due first, unpaid before paid). */
+    fun filterBills(bills: List<BillReminder>, filter: BillFilter, today: LocalDate): List<BillReminder> {
+        return bills
+            .filter { b ->
+                when (filter) {
+                    BillFilter.ALL -> true
+                    BillFilter.UNPAID -> !b.isPaid
+                    BillFilter.PAID -> b.isPaid
+                    BillFilter.DUE_SOON -> !b.isPaid && BillReminderEngine.isUrgent(b.dueDate, today)
+                }
+            }
+            .sortedWith(
+                compareBy<BillReminder> { it.isPaid }
+                    .thenBy { it.dueEpochDay }
+                    .thenBy { it.billerEn },
+            )
+    }
+
+    fun addBillReminder(
+        billerEn: String,
+        billerTa: String,
+        amountInr: Double?,
+        dueDate: LocalDate,
+        category: BillCategory,
+    ) {
+        val ctx = getApplication<Application>()
+        val cleanEn = billerEn.trim().ifBlank { return }
+        val reminder = BillReminder(
+            id = UUID.randomUUID().toString(),
+            contentKey = BillReminderEngine.contentKeyFor(cleanEn, dueDate, amountInr),
+            billerEn = cleanEn,
+            billerTa = billerTa.trim().ifBlank { cleanEn },
+            amountInr = amountInr,
+            dueEpochDay = dueDate.toEpochDay(),
+            category = category,
+            sourceMessageId = null, // manual
+            createdAtMs = System.currentTimeMillis(),
+        )
+        GuardSettingsStore.upsertBillReminder(ctx, reminder)
+        refreshBills()
+        _statusBanner.value = if (prefsFlow.value.tamil) {
+            "பில் நினைவூட்டல் சேமிக்கப்பட்டது ✓"
+        } else {
+            "Bill reminder saved ✓"
+        }
+    }
+
+    fun updateBillReminder(reminder: BillReminder) {
+        val ctx = getApplication<Application>()
+        val cleanEn = reminder.billerEn.trim().ifBlank { return }
+        GuardSettingsStore.upsertBillReminder(
+            ctx,
+            reminder.copy(
+                billerEn = cleanEn,
+                billerTa = reminder.billerTa.trim().ifBlank { cleanEn },
+                contentKey = BillReminderEngine.contentKeyFor(cleanEn, reminder.dueDate, reminder.amountInr),
+            ),
+        )
+        refreshBills()
+        _statusBanner.value = if (prefsFlow.value.tamil) {
+            "பில் நினைவூட்டல் புதுப்பிக்கப்பட்டது ✓"
+        } else {
+            "Bill reminder updated ✓"
+        }
+    }
+
+    fun removeBillReminder(id: String) {
+        GuardSettingsStore.removeBillReminder(getApplication(), id)
+        refreshBills()
+    }
+
+    fun setBillPaid(id: String, paid: Boolean) {
+        GuardSettingsStore.setBillPaid(getApplication(), id, paid)
+        refreshBills()
+    }
+
+    fun setBillVoiceEnabled(id: String, enabled: Boolean) {
+        GuardSettingsStore.setBillVoiceEnabled(getApplication(), id, enabled)
+        refreshBills()
+    }
+
+    fun setBillNotifyEnabled(id: String, enabled: Boolean) {
+        GuardSettingsStore.setBillNotifyEnabled(getApplication(), id, enabled)
+        refreshBills()
+    }
+
+    /** "Read Aloud Now": speaks every unpaid reminder immediately (ignores the daily cap on explicit request). */
+    fun announceBillsNow() {
+        val ctx = getApplication<Application>()
+        viewModelScope.launch(Dispatchers.IO) {
+            BillReminderScheduler.announceAllUnpaidNow(ctx)
+        }
+    }
+
+    fun setBillRemindersEnabled(enabled: Boolean) {
+        val ctx = getApplication<Application>()
+        GuardSettingsStore.updateBillRemindersEnabled(ctx, enabled)
+        BillReminderScheduler.scheduleNext(ctx)
+    }
+
+    fun setBillVoiceAnnouncementsEnabled(enabled: Boolean) {
+        GuardSettingsStore.updateBillVoiceEnabled(getApplication(), enabled)
+    }
+
+    fun setBillNotificationsEnabled(enabled: Boolean) {
+        GuardSettingsStore.updateBillNotifyEnabled(getApplication(), enabled)
+    }
+
+    fun setBillMaxDailyAnnouncements(count: Int) {
+        GuardSettingsStore.updateBillMaxDailyAnnouncements(getApplication(), count)
+    }
+
+    fun setBillReminderMinuteOfDay(minuteOfDay: Int) {
+        val ctx = getApplication<Application>()
+        GuardSettingsStore.updateBillReminderMinuteOfDay(ctx, minuteOfDay)
+        BillReminderScheduler.scheduleNext(ctx)
+    }
 
     // --- Toggle wrappers ---
 
