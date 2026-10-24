@@ -36,6 +36,7 @@ import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
@@ -68,6 +69,7 @@ import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.service.SmsStateChangeSignal
 import com.universalrp.smsguard.ui.AboutSmsGuardScreen
 import com.universalrp.smsguard.ui.BilingualCatalog
+import com.universalrp.smsguard.ui.BillsTab
 import com.universalrp.smsguard.ui.ControlsTab
 import com.universalrp.smsguard.ui.FinanceTab
 import com.universalrp.smsguard.ui.MainTab
@@ -516,6 +518,12 @@ class MainActivity : ComponentActivity() {
                                     label = { Text(ui.navFinance, fontSize = 11.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) },
                                 )
                                 NavigationBarItem(
+                                    selected = tab == MainTab.BILLS,
+                                    onClick = { vm.selectTab(MainTab.BILLS) },
+                                    icon = { Icon(Icons.Filled.Receipt, contentDescription = ui.navBills) },
+                                    label = { Text(ui.navBills, fontSize = 11.sp, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis) },
+                                )
+                                NavigationBarItem(
                                     selected = tab == MainTab.CONTROLS,
                                     onClick = { vm.selectTab(MainTab.CONTROLS) },
                                     icon = { Icon(Icons.Filled.Tune, contentDescription = ui.navControls) },
@@ -612,6 +620,12 @@ class MainActivity : ComponentActivity() {
                                         financeUnlocked = financeUnlocked,
                                         onRequestBiometricUnlock = ::requestFinanceBiometricUnlock,
                                     )
+                                    MainTab.BILLS -> BillsTab(
+                                        vm = vm,
+                                        prefs = prefs,
+                                        palette = palette,
+                                        ui = ui,
+                                    )
                                     MainTab.CONTROLS -> ControlsTab(
                                         vm = vm,
                                         prefs = prefs,
@@ -664,6 +678,10 @@ class MainActivity : ComponentActivity() {
 
     private fun handleIncomingIntent(intent: Intent?) {
         if (intent == null) return
+        if (intent.getBooleanExtra(EXTRA_OPEN_BILLS_TAB, false)) {
+            vm.selectTab(MainTab.BILLS)
+            return
+        }
         intent.getStringExtra(EXTRA_OPEN_THREAD_KEY)?.takeIf { it.isNotBlank() }?.let { key ->
             vm.openThread(key)
             return
@@ -683,5 +701,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_THREAD_KEY = "extra_open_thread_key"
+        const val EXTRA_OPEN_BILLS_TAB = "extra_open_bills_tab"
     }
 }

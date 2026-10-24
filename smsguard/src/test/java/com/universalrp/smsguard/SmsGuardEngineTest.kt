@@ -1,6 +1,9 @@
 package com.universalrp.smsguard
 
 import com.universalrp.smsguard.engine.AnnouncementSettingsSnapshot
+import com.universalrp.smsguard.engine.BillCategory
+import com.universalrp.smsguard.engine.BillReminder
+import com.universalrp.smsguard.engine.BillReminderEngine
 import com.universalrp.smsguard.engine.DltCategory
 import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.LinkSecurityScanner
@@ -849,5 +852,152 @@ class SmsGuardEngineTest {
                 mp3 != null && mp3.size > 1500,
             )
         }
+    }
+
+    // --- Bill / payment-due reminders ---
+
+    private val billToday: LocalDate = LocalDate.of(2026, 10, 24)
+
+    private fun billNowMs(): Long =
+        billToday.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
+
+    private fun bill(
+        id: String,
+        due: LocalDate,
+        paid: Boolean = false,
+        announcedEpochDay: Long? = null,
+        biller: String = "X",
+        voice: Boolean = true,
+        notify: Boolean = true,
+    ): BillReminder = BillReminder(
+        id = id,
+        contentKey = "$id|key",
+        billerEn = biller,
+        billerTa = biller,
+        amountInr = 500.0,
+        dueEpochDay = due.toEpochDay(),
+        category = BillCategory.OTHER,
+        sourceMessageId = 1L,
+        isPaid = paid,
+        voiceEnabled = voice,
+        notifyEnabled = notify,
+        createdAtMs = billNowMs(),
+        lastAnnouncedEpochDay = announcedEpochDay,
+    )
+
+    @Test
+    fun billDueSmsAreParsedIntoRemindersWhileSpoofsAndReceiptsAreRejected() {
+        val tneb = SenderIdentityEngine.identify(
+            "AT-TANGED-G",
+            "TNEB: Electricity bill of Rs.850.00 for Oct 2026 is due on 27-10-2026. Pay before due date to avoid disconnection. -TANGEDCO",
+        )
+        val eb = BillReminderEngine.parseBillSms(
+            "TNEB: Electricity bill of Rs.850.00 for Oct 2026 is due on 27-10-2026. Pay before due date to avoid disconnection. -TANGEDCO",
+            tneb, false, billNowMs(), zone,
+        )
+        assertNotNull("A genuine TNEB bill must parse", eb)
+        assertEquals(850.0, eb!!.amountInr!!, 0.001)
+        assertEquals(LocalDate.of(2026, 10, 27), eb.dueDate)
+        assertEquals(BillCategory.ELECTRICITY, eb.category)
+
+        // Credit card: total amount due must win over the smaller minimum due.
+        val ccBody = "HDFC Bank Credit Card XX5521 statement generated. Total amount due Rs.12,450. Minimum amount due Rs.620. Payment due date 28-10-2026."
+        val hdfc = SenderIdentityEngine.identify("AD-HDFCBK-T", ccBody)
+        val cc = BillReminderEngine.parseBillSms(ccBody, hdfc, false, billNowMs(), zone)
+        assertNotNull(cc)
+        assertEquals(12450.0, cc!!.amountInr!!, 0.001)
+        assertEquals(BillCategory.CREDIT_CARD, cc.category)
+
+        // Postpaid mobile with "DD Mon YYYY".
+        val airBody = "Dear Customer, your Airtel postpaid bill of Rs.399 is due on 26 Oct 2026. Pay now to avoid late fee."
+        val airtel = SenderIdentityEngine.identify("JM-AIRTEL-S", airBody)
+        val air = BillReminderEngine.parseBillSms(airBody, airtel, false, billNowMs(), zone)
+        assertNotNull(air)
+        assertEquals(LocalDate.of(2026, 10, 26), air!!.dueDate)
+        assertEquals(BillCategory.MOBILE, air.category)
+
+        // Indane gas with "DD-Mon-YY".
+        val gasBody = "Indane gas refill due date 27-Oct-26. Amount Rs.805. Book your cylinder."
+        val indane = SenderIdentityEngine.identify("AT-INDGAS-G", gasBody)
+        val gas = BillReminderEngine.parseBillSms(gasBody, indane, false, billNowMs(), zone)
+        assertNotNull(gas)
+        assertEquals(LocalDate.of(2026, 10, 27), gas!!.dueDate)
+        assertEquals(BillCategory.GAS, gas.category)
+
+        // Anti-spoof: personal number, promo, paid-receipt, OTP and plain bank transactions are all rejected.
+        val personal = SenderIdentityEngine.identify("+919876543210", "Your electricity bill Rs.850 due on 27-10-2026 pay now")
+        assertNull(BillReminderEngine.parseBillSms("Your electricity bill Rs.850 due on 27-10-2026 pay now", personal, false, billNowMs(), zone))
+
+        val promo = SenderIdentityEngine.identify("JD-LOANAD-P", "Bill due Rs.500 pay by 27-10-2026")
+        assertNull(BillReminderEngine.parseBillSms("Bill due Rs.500 pay by 27-10-2026", promo, false, billNowMs(), zone))
+
+        val receipt = "Your HDFC credit card bill of Rs.12000 has been paid. Thank you for your payment."
+        assertNull(BillReminderEngine.parseBillSms(receipt, hdfc, false, billNowMs(), zone))
+        assertNull(BillReminderEngine.parseBillSms("Payment of Rs.12000 received towards your credit card bill.", hdfc, false, billNowMs(), zone))
+
+        val otp = OtpDetector.analyze("482910 is your OTP for bill payment of Rs.850")
+        assertNull(BillReminderEngine.parseBillSms("482910 is your OTP for bill payment of Rs.850", tneb, otp.isOtp, billNowMs(), zone))
+
+        val debit = "Your A/c XX4821 is debited by Rs.500.00 on 24-10-2026 Ref 629512349876 Avl Bal Rs.24800"
+        val sbi = SenderIdentityEngine.identify("JT-SBIINB-T", debit)
+        assertNull("A bank debit is a transaction, never a bill reminder", BillReminderEngine.parseBillSms(debit, sbi, false, billNowMs(), zone))
+    }
+
+    @Test
+    fun nearDueBillsAlwaysAnnounceWhileRoutineBillsAreCappedAndDeDuplicated() {
+        val reminders = listOf(
+            bill("u_today", billToday, biller = "today"),
+            bill("u_tmr", billToday.plusDays(1), biller = "tomorrow"),
+            bill("overdue", billToday.minusDays(3), biller = "overdue"),
+            bill("r4", billToday.plusDays(4), biller = "routine4"),
+            bill("r7", billToday.plusDays(7), biller = "routine7"),
+            bill("far", billToday.plusDays(20), biller = "far"),
+            bill("paid", billToday.plusDays(1), paid = true, biller = "paid"),
+        )
+
+        val plan = BillReminderEngine.planDailyAnnouncements(reminders, billToday, routineAlreadySpokenToday = 0, maxDailyRoutine = 2)
+        assertEquals(setOf("u_today", "u_tmr", "overdue"), plan.urgentBills.map { it.billerEn }.toSet())
+        assertEquals(setOf("r4", "r7"), plan.routineBills.map { it.billerEn }.toSet())
+
+        // Routine is capped: once 2 routine announcements already happened today, routine is empty but urgent still fires.
+        val capped = BillReminderEngine.planDailyAnnouncements(reminders, billToday, routineAlreadySpokenToday = 2, maxDailyRoutine = 2)
+        assertTrue(capped.routineBills.isEmpty())
+        assertEquals(setOf("u_today", "u_tmr", "overdue"), capped.urgentBills.map { it.billerEn }.toSet())
+
+        // A bill already announced today is de-duplicated (not re-announced).
+        val todayEd = billToday.toEpochDay()
+        val dedup = BillReminderEngine.planDailyAnnouncements(
+            listOf(bill("done", billToday.plusDays(1), announcedEpochDay = todayEd, biller = "done")),
+            billToday, routineAlreadySpokenToday = 0, maxDailyRoutine = 2,
+        )
+        assertTrue(dedup.urgentBills.isEmpty())
+    }
+
+    @Test
+    fun billAnnouncementScriptsAndNotificationsAreBilingualAndNeverSpeakAccountDigits() {
+        val eb = bill("eb", billToday.plusDays(1), biller = "TNEB Electricity").copy(
+            billerTa = "தமிழ்நாடு மின்சாரம்",
+            amountInr = 850.0,
+        )
+        val urgentTa = BillReminderEngine.buildUrgentScript(listOf(eb), billToday, tamil = true)
+        val urgentEn = BillReminderEngine.buildUrgentScript(listOf(eb), billToday, tamil = false)
+        assertTrue(urgentTa.contains("தமிழ்நாடு மின்சாரம்"))
+        assertTrue(urgentTa.contains("ரூபாய் 850"))
+        assertTrue(urgentTa.contains("நாளை"))
+        assertTrue(urgentEn.contains("TNEB Electricity"))
+        assertTrue(urgentEn.contains("Rupees 850"))
+        assertTrue(urgentEn.contains("tomorrow"))
+
+        val (titleTa, bodyTa) = BillReminderEngine.buildUrgentNotification(listOf(eb), billToday, tamil = true)
+        val (titleEn, bodyEn) = BillReminderEngine.buildUrgentNotification(listOf(eb), billToday, tamil = false)
+        assertTrue(titleTa.contains("பில்"))
+        assertTrue(bodyTa.contains("தமிழ்நாடு மின்சாரம்"))
+        assertTrue(titleEn.contains("bill"))
+
+        // Routine script for a bill due in 5 days.
+        val r = bill("r", billToday.plusDays(5), biller = "Airtel")
+        val routineEn = BillReminderEngine.buildRoutineScript(listOf(r), billToday, tamil = false)
+        assertTrue(routineEn.contains("Airtel"))
+        assertTrue(routineEn.contains("in 5 days"))
     }
 }
