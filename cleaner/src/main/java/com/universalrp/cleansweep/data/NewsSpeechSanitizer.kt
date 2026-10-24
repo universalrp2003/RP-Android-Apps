@@ -138,23 +138,42 @@ object NewsSpeechSanitizer {
 
     /**
      * Builds a smooth, natural broadcast script for TTS in Tamil or English.
+     * No numeric ordinals ("news 1, news 2 …") — just a clean intro followed by the headlines,
+     * each separated by a spoken sentence pause.
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
-        if (headlines.isEmpty()) return ""
-        val ordinalsTa = listOf("ஒன்று", "இரண்டு", "மூன்று", "நான்கு", "ஐந்து")
-        val ordinalsEn = listOf("First", "Second", "Third", "Fourth", "Fifth")
-        return buildString {
-            append(if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. ")
-            headlines.forEachIndexed { idx, h ->
-                val clean = cleanHeadline(h.title, h.source).trimEnd('.', '!', '?')
-                val prefix = if (tamil) {
-                    ordinalsTa.getOrElse(idx) { "செய்தி ${idx + 1}" }
-                } else {
-                    ordinalsEn.getOrElse(idx) { "Headline ${idx + 1}" }
-                }
-                append(prefix).append(": ").append(clean).append(". ")
-            }
-        }.trim()
+        val cleaned = headlines
+            .map { cleanHeadline(it.title, it.source).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .filter { it.isNotBlank() }
+        if (cleaned.isEmpty()) return ""
+        val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "
+        return intro + cleaned.joinToString(". ") + "."
+    }
+
+    /**
+     * Turns an AI-written bulletin into speech-safe text: drops markdown emphasis/headings,
+     * list bullets and numbering, collapses newlines, keeps whole sentences and caps the
+     * spoken length. Returns "" when nothing usable remains, so the caller can fall back to
+     * the on-device sanitized bulletin.
+     */
+    fun cleanAiBulletin(raw: String): String {
+        if (raw.isBlank()) return ""
+        var text = raw
+            .replace("**", "").replace("__", "").replace("`", "")
+            .replace(Regex("(?m)^\\s*#{1,6}\\s*"), "")
+            .replace(Regex("(?m)^\\s*(?:[-*•–—>]+|\\d+[.)])\\s+"), "")
+            .replace(Regex("[\\r\\n]+"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+        if (text.isBlank()) return ""
+        val sentences = text.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.length >= 8 }
+        var joined = (if (sentences.isNotEmpty()) sentences.joinToString(" ") else text).trim()
+        if (joined.length > 700) {
+            val cut = joined.take(700)
+            val lastStop = maxOf(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'))
+            joined = if (lastStop > 200) cut.substring(0, lastStop + 1) else "${cut.trimEnd()}."
+        }
+        return joined
     }
 
     /**

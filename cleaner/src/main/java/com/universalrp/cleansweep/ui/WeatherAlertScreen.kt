@@ -40,6 +40,8 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Thunderstorm
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -196,6 +198,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
     var query by rememberSaveable { mutableStateOf("") }
     var tomorrowExpanded by rememberSaveable { mutableStateOf(false) }
     var apiKeyDraft by rememberSaveable { mutableStateOf("") }
+    var previewMenuOpen by rememberSaveable { mutableStateOf(false) }
 
     val permLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions(),
@@ -236,6 +239,11 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
+            // Rain details first (top): current conditions + 2-hour rain forecast
+            if (w.enabled && w.locationMode != LocationResolutionMode.NEEDS_SAVED_PLACE && w.lastCheckedAtMs > 0L) {
+                RainDetailsCard(w = w)
+            }
+
             // 1. Master ON / OFF + Check Now + Voice Preview
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(
@@ -295,16 +303,29 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                             Text(tr("Check now"))
                         }
 
-                        OutlinedButton(onClick = { vm.testSevereVoiceSample() }) {
-                            Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text(tr("Test voice"))
-                        }
-
-                        OutlinedButton(onClick = { vm.cycleWeatherPreviewAnimation() }) {
-                            Icon(Icons.Outlined.Cloud, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text(tr("Preview animation"))
+                        Box {
+                            OutlinedButton(onClick = { previewMenuOpen = true }) {
+                                Icon(Icons.Outlined.PlayArrow, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text(tr("Preview"))
+                                Spacer(Modifier.width(4.dp))
+                                Icon(Icons.Outlined.ExpandMore, contentDescription = null, modifier = Modifier.size(16.dp))
+                            }
+                            DropdownMenu(
+                                expanded = previewMenuOpen,
+                                onDismissRequest = { previewMenuOpen = false },
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(tr("Test voice")) },
+                                    leadingIcon = { Icon(Icons.Outlined.PlayArrow, contentDescription = null) },
+                                    onClick = { previewMenuOpen = false; vm.testSevereVoiceSample() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text(tr("Preview animation")) },
+                                    leadingIcon = { Icon(Icons.Outlined.Cloud, contentDescription = null) },
+                                    onClick = { previewMenuOpen = false; vm.cycleWeatherPreviewAnimation() },
+                                )
+                            }
                         }
                     }
 
@@ -359,11 +380,6 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         )
                     }
                 }
-            }
-
-            // 1.5 Detailed rain window (current conditions + Next Precipitation chart + cyclone banner)
-            if (w.enabled && w.locationMode != LocationResolutionMode.NEEDS_SAVED_PLACE && w.lastCheckedAtMs > 0L) {
-                RainDetailsCard(w = w)
             }
 
             // 2. Smart Location Card (Automatic GPS when ON -> Oor Arivippu PIN/Town Picker when OFF)
@@ -789,8 +805,32 @@ private fun RainDetailsCard(w: WeatherUiSnapshot) {
             } else {
                 PrecipitationChart(points = w.timeline)
                 val peak = w.timeline.maxOfOrNull { it.precipMmPerHour } ?: 0.0
+                val wetPoints = w.timeline.filter { it.precipMmPerHour > 0.05 }
+                if (wetPoints.isEmpty()) {
+                    Text(
+                        tr("No rain in the next 2 hours"),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                    )
+                } else {
+                    val startMin = wetPoints.minOf { it.minutesAhead }
+                    val endMin = wetPoints.maxOf { it.minutesAhead }
+                    val peakAtMin = w.timeline.maxByOrNull { it.precipMmPerHour }?.minutesAhead ?: 0
+                    Text(
+                        tr("Rain expected from ~+%d to ~+%d min; heaviest ~%.1f mm/h near +%d min.", startMin, endMin, peak, peakAtMin),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                    )
+                }
+                val wetCount = wetPoints.size
+                val wetFraction = if (w.timeline.isNotEmpty()) wetCount.toFloat() / w.timeline.size else 0f
+                val chanceLabel = if (wetCount == 0) tr("None") else when {
+                    peak >= 6.0 || (peak >= 2.0 && wetFraction >= 0.4f) -> tr("High")
+                    peak >= 2.0 || (peak >= 0.5 && wetFraction >= 0.3f) -> tr("Medium")
+                    else -> tr("Low")
+                }
                 Text(
-                    tr("Peak: %.1f mm/h", peak),
+                    tr("Chance of rain (next 2 h): %s", chanceLabel),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                 )

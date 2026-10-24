@@ -253,6 +253,8 @@ data class UiState(
     val onlineVoice: Boolean = true,
     val autoDailyGenderSwap: Boolean = true,
     val preferredOnlineVoiceId: String = "",
+    /** v2.68: simple announcer voice choice — random male/female, male only, or female only. */
+    val voiceGenderMode: com.universalrp.cleansweep.voice.VoiceGenderMode = com.universalrp.cleansweep.voice.VoiceGenderMode.RANDOM,
     val voiceQuietStart: Int = Announcer.DEFAULT_QUIET_START,
     val voiceQuietEnd: Int = Announcer.DEFAULT_QUIET_END,
     val voiceBatteryLow: Boolean = true,
@@ -1471,6 +1473,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Simple voice choice (random / male / female). Turning on online voice so neural voices are used. */
+    fun setVoiceGenderMode(mode: com.universalrp.cleansweep.voice.VoiceGenderMode) {
+        Announcer.setVoiceGenderMode(ctx, mode)
+        Announcer.setOnlineVoice(ctx, true)
+        mutate { it.copy(voiceGenderMode = mode, onlineVoice = true) }
+    }
+
     fun selectStudioOnlineVoice(profile: com.universalrp.voice.CuratedNeuralVoiceProfile?) {
         if (profile == null) {
             Announcer.setAutoDailyGenderSwap(ctx, true)
@@ -1626,6 +1635,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 onlineVoice = Announcer.onlineVoice(ctx),
                 autoDailyGenderSwap = Announcer.autoDailyGenderSwap(ctx),
                 preferredOnlineVoiceId = Announcer.preferredOnlineVoiceId(ctx),
+                voiceGenderMode = Announcer.voiceGenderMode(ctx),
                 voiceQuietStart = Announcer.quietStart(ctx),
                 voiceQuietEnd = Announcer.quietEnd(ctx),
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),

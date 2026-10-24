@@ -100,6 +100,11 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Announcement voice" to "அறிவிப்பு குரல்",
+        "Choose how the announcer sounds. With internet it uses studio Ultra-HD neural voices; with no internet it automatically uses your phone's installed voice." to "அறிவிப்பு குரல் எப்படி இருக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும். இணையம் இருந்தால் ஸ்டுடியோ அல்ட்ரா-HD நரம்பியல் குரல்கள் பயன்படுத்தப்படும்; இணையம் இல்லாதபோது உங்கள் தொலைபேசியில் நிறுவப்பட்ட குரல் தானாக பயன்படுத்தப்படும்.",
+        "🔀 Random male / female each time" to "🔀 ஒவ்வொரு முறையும் மாறிமாறி ஆண் / பெண் குரல்",
+        "👨 Male voice only" to "👨 ஆண் குரல் மட்டும்",
+        "👩 Female voice only" to "👩 பெண் குரல் மட்டும்",
         // ------------------------------------------------------------- app chrome
         "Live Guard" to "லைவ் கார்டு",
         "About Live Guard" to "லைவ் கார்டு பற்றி",
@@ -1570,6 +1575,11 @@ object Lang {
         "Save key" to "விசையைச் சேமி",
         "Remove key" to "விசையை நீக்கு",
         "Preview animation" to "அனிமேஷன் முன்னோட்டம்",
+        "Rain expected from ~+%d to ~+%d min; heaviest ~%.1f mm/h near +%d min." to "மழை ~+%d முதல் ~+%d நிமிடம் வரை எதிர்பார்க்கப்படுகிறது; ~%.1f mm/h என ~+%d நிமிடத்தில் மிக அதிகம்.",
+        "Chance of rain (next 2 h): %s" to "மழை வாய்ப்பு (அடுத்த 2 மணி): %s",
+        "High" to "உயர்",
+        "Medium" to "நடுத்தரம்",
+        "Low" to "குறைவு",
         "Studio Ultra-HD Online Voices (10 Voices)" to "ஸ்டுடியோ Ultra-HD ஆன்லைன் குரல்கள் (10 குரல்கள்)",
         "Daily Auto Male ↔ Female Ultra-HD Voice" to "தினசரி ஆண் ↔ பெண் தானியங்கி Ultra-HD குரல்",
         "Turned ON by default. Alternates Male HD ↔ Female HD every day across 10 studio neural voices; automatically falls back to Android system voice offline." to "இயல்பாகவே (Default ON) இயக்கத்தில் உள்ளது. 10 ஸ்டுடியோ Ultra-HD குரல்களில் தினமும் ஆண் ↔ பெண் குரல் தானாக மாறும்; இணையம் இல்லாதபோது போன் சிஸ்டம் குரலுக்கு மாறும்.",
