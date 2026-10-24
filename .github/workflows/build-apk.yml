@@ -19,6 +19,18 @@ on:
       - "secretmessage/**"
       - "site/**"
       - "README.md"
+      # Documentation-only files. Editing these cannot change any APK's bytes, so a
+      # docs-only commit has nothing to build and nothing to publish.
+      # INVARIANT: never add a version-bearing path here. Publishing always bumps a
+      # `versionCode` in <module>/build.gradle.kts (cleaner / radio / equalizer /
+      # vocalremover), which is never one of these paths, so a real publish — branch
+      # `[publish]` marker, `workflow_dispatch`, or a `v*` tag — always still fires.
+      - "CHANGELOG.md"
+      - "PUBLISHING.md"
+      - "docs/published-release-digests.md"
+      # Release NOTES only — `releases/latest-tag.txt` is deliberately NOT ignored:
+      # the Live Guard permission-delta gate reads it as the previous-release baseline.
+      - "releases/*.md"
       - "docs/next-update-backlog.md"
       - "docs/secret-message-security-design.md"
       - "tools/tests/test_secretmessage_preview_contract.py"

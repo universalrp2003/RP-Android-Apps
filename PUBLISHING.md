@@ -25,6 +25,14 @@ does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
 - `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
   the baseline for the next permission delta.
 
+## What triggers the Build APK workflow
+
+`Build APK` ignores documentation-only paths (see `paths-ignore` in `.github/workflows/build-apk.yml`), so a commit that touches only `README.md`, `CHANGELOG.md`, `PUBLISHING.md`, `docs/published-release-digests.md` or a `releases/*.md` release note produces **no build run at all** — there is nothing to build and nothing to publish. Editing one of those files and seeing no run is the expected behaviour, not a broken pipeline.
+
+Publishing is unaffected. A real publish always bumps a `versionCode` in `<module>/build.gradle.kts` (`cleaner`, `radio`, `equalizer`, `vocalremover`), which is never one of the ignored paths, so the build still runs for app source, gradle files and tests, and for all three publish triggers: a `[publish]` marker in the head commit message on an `arena/**` branch, `workflow_dispatch` with publish/mirror enabled, or a `v*` tag push.
+
+`releases/latest-tag.txt` is deliberately **not** ignored: the Live Guard permission-delta gate reads it as the previous-release baseline, so changing it still triggers a run.
+
 ## Latest publication — Weather Accuracy & Privacy Update: Live Guard 2.70 + Ramesh Radio 1.24 + Oor Arivippu 1.1.8 (24 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
