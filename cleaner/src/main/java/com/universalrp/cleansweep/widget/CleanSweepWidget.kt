@@ -237,6 +237,8 @@ open class CleanSweepWidget : AppWidgetProvider() {
                         sourceName = weather?.sourceName.orEmpty(),
                         lastCheckedAtMs = weather?.lastCheckedAtMs ?: 0L,
                         clockLabel = weatherClock,
+                        peakPrecipMmPerHour = weather?.peakPrecipMmPerHour ?: 0.0,
+                        currentPrecipMmPerHour = weather?.currentPrecipMmPerHour ?: 0.0,
                     )
                     views.setTextViewText(R.id.widget_title, card.title)
                     views.setTextViewText(R.id.widget_battery, card.hero)

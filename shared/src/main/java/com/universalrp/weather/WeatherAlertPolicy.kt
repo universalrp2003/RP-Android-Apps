@@ -21,6 +21,14 @@ object WeatherAlertPolicy {
     const val RAIN_START_MM_HR = 0.30
     const val DRY_THRESHOLD_MM_HR = 0.12
 
+    /**
+     * Minimum forecast rate a rain/shower code (or the peak in the next hour) must reach before a
+     * "rain is starting soon" heads-up is spoken. Raised above trace so a dark, chilly, merely
+     * drizzling sky — Tomorrow.io nowcasts often report a wet code at 0.2–0.4 mm/hr with no
+     * noticeable rain — does NOT trigger a spoken alert.
+     */
+    const val NOTICEABLE_RAIN_MM_HR = 0.40
+
     /** Heavy / intense downpour threshold (mm/hr) warranting day-or-night warning. */
     const val VERY_HEAVY_RAIN_MM_HR = 15.0
     const val EXTREME_CLOUDBURST_MM_HR = 35.0
@@ -180,18 +188,23 @@ object WeatherAlertPolicy {
         if (peakPrecip60 >= VERY_HEAVY_RAIN_MM_HR || squall) {
             return WeatherSeverity.VERY_HEAVY_RAIN
         }
-        // 30-minute rain warning: either approaching within 1..38 minutes while dry, or just started (0 min).
-        if (minutesUntilRain != null && minutesUntilRain in 0..TARGET_LEAD_MAX_MINUTES) {
+        // 30-minute rain warning: approaching within 1..38 minutes (or just started) AND the expected
+        // rain reaches a noticeable rate — a merely dark, chilly, trace-drizzle sky must not speak.
+        if (minutesUntilRain != null && minutesUntilRain in 0..TARGET_LEAD_MAX_MINUTES && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
             return WeatherSeverity.RAIN_SOON
         }
-        return if (currentlyRaining) WeatherSeverity.RAIN_SOON else WeatherSeverity.CLEAR_OR_NORMAL
+        return if (currentlyRaining && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
+            WeatherSeverity.RAIN_SOON
+        } else {
+            WeatherSeverity.CLEAR_OR_NORMAL
+        }
     }
 
     private fun isRainSample(sample: MinuteRainSample): Boolean {
         if (sample.precipMmPerHour >= RAIN_START_MM_HR) return true
-        // WMO rain / shower / thunderstorm codes (51..67, 80..82, 95..99) with measurable moisture.
+        // WMO rain / shower / thunderstorm codes (51..67, 80..82, 95..99) with noticeable moisture.
         val wetCode = sample.weatherCode in 51..67 || sample.weatherCode in 80..82 || sample.weatherCode in 95..99
-        return wetCode && sample.precipMmPerHour >= 0.20
+        return wetCode && sample.precipMmPerHour >= NOTICEABLE_RAIN_MM_HR
     }
 
     fun composeSpokenPlaceLabel(placeLabel: String, placeDetails: String, fallback: String): String {

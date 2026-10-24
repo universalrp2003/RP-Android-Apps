@@ -246,6 +246,8 @@ object WeatherAlertStore {
         val windGustKmh: Double,
         val sourceName: String,
         val lastCheckedAtMs: Long,
+        val peakPrecipMmPerHour: Double = 0.0,
+        val currentPrecipMmPerHour: Double = 0.0,
     )
 
     private const val STALE_RAIN_ALERT_MS = 20 * 60_000L
@@ -293,6 +295,8 @@ object WeatherAlertStore {
             windGustKmh = p.getFloat(KEY_LAST_PEAK_GUST, 0f).toDouble(),
             sourceName = p.getString(KEY_LAST_SOURCE, WeatherSourceKind.OPEN_METEO_DEFAULT.name).orEmpty(),
             lastCheckedAtMs = p.getLong(KEY_LAST_CHECKED_MS, 0L),
+            peakPrecipMmPerHour = p.getFloat(KEY_LAST_PEAK_PRECIP, 0f).toDouble(),
+            currentPrecipMmPerHour = p.getFloat(KEY_LAST_CUR_PRECIP, 0f).toDouble(),
         )
     }
 
