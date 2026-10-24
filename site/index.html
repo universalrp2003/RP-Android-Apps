@@ -242,6 +242,8 @@
       margin-bottom: 28px;
     }
     .card {
+      position: relative;
+      overflow: hidden;
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 18px;
@@ -252,6 +254,11 @@
       gap: 14px;
       box-shadow: 0 10px 28px rgba(0, 0, 0, 0.26);
       transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+    }
+    .card::before {
+      content: "";
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #29d3e8, #a78bfa);
     }
     .card:hover {
       transform: translateY(-3px);
@@ -370,15 +377,19 @@
     details[open].benefit > summary::after, details[open].trust > summary::after { content: "\u25b4"; }
     details.benefit .ta, details.trust .ta { color: var(--muted); font-size: 0.83rem; margin-top: 8px; line-height: 1.5; }
     .shot {
-      margin: 2px 0 12px; border-radius: 14px; overflow: hidden;
-      border: 1px dashed var(--surface-border); background: rgba(255, 255, 255, 0.02);
+      margin: 4px 0 10px; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--surface-border);
+      background: linear-gradient(135deg, rgba(41, 211, 232, 0.10), rgba(167, 139, 250, 0.10));
     }
     .shot img { display: none; width: 100%; height: auto; }
-    .shot.has-img { border-style: solid; }
+    .shot.has-img { background: rgba(0, 0, 0, 0.4); }
     .shot.has-img img { display: block; }
     .shot.has-img figcaption { display: none; }
-    .shot figcaption { padding: 26px 14px; text-align: center; color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
-    .shot figcaption strong { color: var(--accent); }
+    .shot figcaption {
+      padding: 11px 14px; text-align: center; color: var(--muted); font-size: 0.78rem;
+      display: flex; align-items: center; justify-content: center; gap: 7px; flex-wrap: wrap;
+    }
+    .shot figcaption strong { color: var(--accent); font-weight: 600; }
   </style>
 </head>
 <body>
@@ -409,7 +420,7 @@
             <p class="desc-ta">போலி இணைப்புக் கவசம், போன் திரையை ஆன் செய்தவுடன் உடனடி குரல் நிறுத்தம் + எல்லா பக்கங்களிலும் சிறிய <code>⏹ நிறுத்து</code> பொத்தான், உரையாடல் &amp; வரலாற்றில் புதிய செய்திகள் எப்போதும் மேலே, அரசு / ரேஷன் (<code>TNEPDS</code>) / பள்ளித் தேர்வு முடிவு (<code>TNSEDU</code>) மற்றும் சாதாரண குறுஞ்செய்திகள் முழு வாசிப்பு, OTP இரகசியப் பாதுகாப்பு மற்றும் வங்கி / UPI / FASTag கணக்கு.</p>
             <figure class="shot">
               <img loading="lazy" src="images/sms-guard.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
@@ -484,7 +495,7 @@
             <p class="desc-ta">இயல்பாகவே <code>3 மணி</code> இடைவெளியில் இயங்கும் அறிவார்ந்த செய்தித் தலைப்புக் குரல் அறிவிப்பு (போன் திரை அணைந்திருக்கும்போது மட்டும் + உடனடி படி/நிறுத்து), செங்குத்தாக நசுங்காத தெளிவான தமிழ் பொத்தான்கள், 24×7 ஊர் + மாவட்ட மழை &amp; புயல் எச்சரிக்கை, பேட்டரி மற்றும் டேட்டா பாதுகாப்பு.</p>
             <figure class="shot">
               <img loading="lazy" src="images/live-guard.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
@@ -560,7 +571,7 @@
             <p class="desc-ta">தமிழ் மற்றும் உலக இணைய வானொலி, பாடல் இயக்கி, தானாக Location அனுமதி கேட்காத நம்பகமான வடிவமைப்பு (PIN/ஊர் மூலம் அனுமதியின்றி 100% இயங்கும் + விருப்ப மொபைல் டவர் பொத்தான் &amp; தனியுரிமை விளக்கம்), மற்றும் ஊர் + மாவட்டப் பெயருடன் கூடிய மழை &amp; புயல் குரல் எச்சரிக்கை.</p>
             <figure class="shot">
               <img loading="lazy" src="images/ramesh-radio.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
@@ -631,7 +642,7 @@
             <p class="desc-ta">சுருக்கமான புதிய முகப்புத் திரை (<code>தமிழ் | ENG</code> + <code>⚙️ Settings</code>), முதன்மை தொடங்கு/நிறுத்து பொத்தான், மழை இருந்தால் மட்டும் எச்சரிக்கைப் பட்டை, தற்போதைய ஊர், பயணித்த தூரம் (<code>km</code>), சேருமிடம் (Destination) மற்றும் தானியங்கி HD ஆண்/பெண் குரல்கள்.</p>
             <figure class="shot">
               <img loading="lazy" src="images/oor-arivippu.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
@@ -700,7 +711,7 @@
             <p class="desc-ta">தெளிவான ஒலி சமநிலைப்படுத்தி (Equalizer), Bass Boost, ஒலி மேம்படுத்தி மற்றும் 7 செயலிகள் கொண்ட புதிய About பக்கம் — விளம்பரங்கள் இல்லாத தமிழ் &amp; ஆங்கில வடிவமைப்பு.</p>
             <figure class="shot">
               <img loading="lazy" src="images/pulseeq.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
@@ -766,7 +777,7 @@
             <p class="desc-ta">பாடல்களில் இருந்து குரலையும் இசையையும் (Karaoke) இணையம் இன்றி உங்கள் போனிலேயே பிரிக்கும் AI கருவி (WAV &amp; MP3 வெளியீடு) + 7 செயலிகள் கொண்ட புதிய About பக்கம்.</p>
             <figure class="shot">
               <img loading="lazy" src="images/vocal-remover.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
@@ -833,7 +844,7 @@
             <p class="desc-ta">இரண்டு போன்களுக்கு இடையில் பாதுகாப்பான குறுஞ்செய்தி, ஓவியம், குரல், படப் பகிர்வு மற்றும் 7 செயலிகள் கொண்ட புதிய About இணைப்புகள்.</p>
             <figure class="shot">
               <img loading="lazy" src="images/secret-message.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
-              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+              <figcaption>📱 <strong>Screenshot</strong> coming soon · படம் விரைவில்</figcaption>
             </figure>
             <details class="feat" open>
               <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
