@@ -67,8 +67,8 @@
             "operatingSystem": "Android 8.0+",
             "applicationCategory": "UtilitiesApplication",
             "softwareVersion": "2.68",
-            "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/CleanSweep-v2.68.apk",
-            "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.68",
+            "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/CleanSweep-v2.69.apk",
+            "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.69",
             "description": "Tamil & English phone guard: default-ON 3h smart screen-OFF news voice announcer (Google News RSS, optional AI-polished bulletin), simple random/male/female announcement voice with offline system-voice fallback, 24x7 village+district rain & cyclone alerts with a 2-hour forecast, battery/data guard, WiFi-scan AI and a verified in-app updater.",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" }
           }
@@ -350,6 +350,35 @@
     .feat-icon { font-size: 0.95rem; }
     .rel-line { font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
     .rel-line a { color: var(--accent); text-decoration: none; }
+
+    details.benefit, details.trust {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--surface-border);
+      border-radius: 12px;
+      padding: 9px 12px;
+      margin-top: 8px;
+    }
+    details.benefit > summary, details.trust > summary {
+      cursor: pointer; font-weight: 700; font-size: 0.87rem; color: var(--accent);
+      list-style: none; display: flex; align-items: center; gap: 7px;
+    }
+    details.benefit > summary::-webkit-details-marker,
+    details.trust > summary::-webkit-details-marker { display: none; }
+    details.benefit > summary::after, details.trust > summary::after {
+      content: "\u25be"; margin-left: auto; color: var(--muted); font-size: 0.8rem;
+    }
+    details[open].benefit > summary::after, details[open].trust > summary::after { content: "\u25b4"; }
+    details.benefit .ta, details.trust .ta { color: var(--muted); font-size: 0.83rem; margin-top: 8px; line-height: 1.5; }
+    .shot {
+      margin: 2px 0 12px; border-radius: 14px; overflow: hidden;
+      border: 1px dashed var(--surface-border); background: rgba(255, 255, 255, 0.02);
+    }
+    .shot img { display: none; width: 100%; height: auto; }
+    .shot.has-img { border-style: solid; }
+    .shot.has-img img { display: block; }
+    .shot.has-img figcaption { display: none; }
+    .shot figcaption { padding: 26px 14px; text-align: center; color: var(--muted); font-size: 0.82rem; line-height: 1.5; }
+    .shot figcaption strong { color: var(--accent); }
   </style>
 </head>
 <body>
@@ -378,8 +407,12 @@
             </div>
             <p class="desc-en">Default SMS &amp; phishing link shield (NextDNS compatible), instant voice auto-stop on screen-ON + global <code>⏹ Stop</code> pill, newest-first threads &amp; history, default-ON readout for Govt / <code>TNEPDS</code> Ration / <code>TNSEDU</code> Exam &amp; non-OTP SMS, 100% OTP silence, biometric Bank/UPI/FASTag ledger, and a new <strong>Bills tab</strong> with automatic bill-SMS capture &amp; due-date reminders.</p>
             <p class="desc-ta">போலி இணைப்புக் கவசம், போன் திரையை ஆன் செய்தவுடன் உடனடி குரல் நிறுத்தம் + எல்லா பக்கங்களிலும் சிறிய <code>⏹ நிறுத்து</code> பொத்தான், உரையாடல் &amp; வரலாற்றில் புதிய செய்திகள் எப்போதும் மேலே, அரசு / ரேஷன் (<code>TNEPDS</code>) / பள்ளித் தேர்வு முடிவு (<code>TNSEDU</code>) மற்றும் சாதாரண குறுஞ்செய்திகள் முழு வாசிப்பு, OTP இரகசியப் பாதுகாப்பு மற்றும் வங்கி / UPI / FASTag கணக்கு.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/sms-guard.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li><strong>Green-tick / red link shield</strong> (NextDNS, AdGuard &amp; Cloudflare 1.1.1.2 compatible) that inspects every link on-device and blocks <code>.apk</code> malware, brand-lookalikes and scam job traps.</li>
@@ -393,8 +426,34 @@
                 </ul>
               </div>
             </details>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
+              <div class="body">
+                <ul>
+                  <li>Blocks scam &amp; phishing SMS and dangerous links <strong>before</strong> you tap — protects your money.</li>
+                  <li>Reads any SMS aloud instantly (bank, Govt / TNEPDS Ration, exam, delivery) without opening it.</li>
+                  <li><strong>Never speaks OTP codes</strong> — your accounts stay safe even in a crowded place.</li>
+                  <li><strong>Bills tab</strong> auto-captures bill SMS and reminds you before the due date; biometric-locked ledger.</li>
+                  <li>100% voice auto-stop the moment the screen turns ON; global Stop pill; newest-first threads &amp; history.</li>
+                </ul>
+                <p class="ta">ஒரு தொடுதலிலேயே மோசடி / ஃபிஷிங் SMS-ஐத் தடுக்கும்; வங்கி, அரசு / TNEPDS ரேஷன், தேர்வு SMS-ஐ திறக்காமலே சத்தமாக படிக்கும்; OTP-ஐ ஒருபோதும் சத்தமாக படிக்காது; பில் SMS-ஐ தானியங்கி பிடித்து நினைவூட்டும்.</p>
+              </div>
+            </details>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Your SMS is read <strong>on your phone only</strong> — nothing is uploaded anywhere.</li>
+                  <li>NextDNS-compatible phishing shield; biometric Bank/UPI/FASTag ledger.</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; SMS உங்கள் போனிலேயே இருக்கும், எங்கும் அனுப்பப்படாது; நிறுவன்முன் URL / அளவு / SHA-256 / கையொப்பம் சரிபார்க்கப்படும்.</p>
+              </div>
+            </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
                   <li><strong>New Bills (பில்கள்) tab:</strong> credit-card, TNEB electricity, internet, LPG, postpaid, water, insurance &amp; loan-EMI bill SMS are captured automatically — never counted as income/spend.</li>
@@ -419,12 +478,16 @@
           <div class="card-top">
             <div class="card-header">
               <h2>Live Guard (CleanSweep)</h2>
-              <span class="ver">v2.68 · Android 8.0+</span>
+              <span class="ver">v2.69 · Android 8.0+</span>
             </div>
             <p class="desc-en">Default-ON <code>3h</code> Smart Screen-OFF News Voice Announcer (<code>30m/1h/2h/3h</code> + manual read/stop, silent 10 PM–6 AM, zero duplicates) — news from Google News RSS, optionally rewritten by AI into a clean professional bulletin. Simple <strong>announcement voice</strong> picker (random male/female · male · female; offline uses your phone's voice), 24×7 village + district rain &amp; cyclone alerts with a 2-hour rain forecast, battery/data guard, WiFi-scan AI, and a verified in-app updater.</p>
             <p class="desc-ta">இயல்பாகவே <code>3 மணி</code> இடைவெளியில் இயங்கும் அறிவார்ந்த செய்தித் தலைப்புக் குரல் அறிவிப்பு (போன் திரை அணைந்திருக்கும்போது மட்டும் + உடனடி படி/நிறுத்து), செங்குத்தாக நசுங்காத தெளிவான தமிழ் பொத்தான்கள், 24×7 ஊர் + மாவட்ட மழை &amp; புயல் எச்சரிக்கை, பேட்டரி மற்றும் டேட்டா பாதுகாப்பு.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/live-guard.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li><strong>Simple announcement voice:</strong> random male/female each time · male only · female only — no complicated menus; offline automatically uses your phone's installed voice.</li>
@@ -438,27 +501,52 @@
                 </ul>
               </div>
             </details>
-            <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
               <div class="body">
                 <ul>
-                  <li><strong>Simpler voice picker</strong> replaces the old HD-voice list &amp; daily auto toggle — one card: random male/female · male · female.</li>
-                  <li>News no longer says &quot;news 1 / news 2…&quot; — a clean intro followed by the headlines.</li>
-                  <li>WiFi-scan AI output now renders as proper headings/paragraphs instead of a raw text block.</li>
-                  <li>Wi-Fi ⇄ mobile-data switch announcement now also switches on voice output (reliable); independent of the 4G ⇄ 5G switch.</li>
-                  <li>Rain window: details on top, &quot;Test voice&quot;/&quot;Preview animation&quot; folded into a Preview dropdown, plus a 2-hour forecast + chance-of-rain.</li>
-                  <li>Optional <strong>AI rewrite</strong> of headlines into a professional spoken bulletin (auto-falls back to the on-device bulletin).</li>
+                  <li>Hears the news <strong>hands-free in a natural HD voice</strong> — even with the screen off.</li>
+                  <li>24×7 village + district <strong>rain &amp; cyclone voice alerts</strong> with a 2-hour forecast — plan your day.</li>
+                  <li>Junk cleanup, battery / data guard, WiFi-scan AI and a helpful assistant in one light app.</li>
+                  <li>Speaks only what you choose, silent 10&nbsp;PM–6&nbsp;AM, and never repeats the same news.</li>
                 </ul>
-                <p class="ta">எளிதான <strong>அறிவிப்பு குரல்</strong> தேர்வு (சர்ஸரி ஆண்/பெண் · ஆண் · பெண்), செய்தி எண்கள் நீக்கப்பட்டது, WiFi-AI தெளிவாக, Wi-Fi⇄mobile மாற்ற அறிவிப்பு நம்பகமாக, மழைச் சாளரத்தில் 2-மணி முன்னறிவிப்பு + மழை வாய்ப்பு.</p>
+                <p class="ta">திரை அணைந்திருக்கும்போதே இயல்பான HD குரலில் செய்தியைக் கேட்கலாம்; ஊர் + மாவட்ட மழை &amp; புயல் எச்சரிக்கை 2-மணி முன்னறிவிப்புடன்; குப்பை அழித்தல், பேட்டரி / டேட்டா பாதுகாப்பு, WiFi-AI உதவியாளர் — ஒரே இலகுவான ஆப்பில்.</p>
               </div>
             </details>
-            <div class="hash">Size: 14,335,191 bytes · SHA-256: 97ac7855473a7d42caae7b4641b421578af2a0bbae761dad3a21ff608b26c86d</div>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Core Live Guard does <strong>not</strong> read other apps' notifications or messages — no notification-listener, SMS, Contacts, call-log, Accessibility or device-admin permission.</li>
+                  <li>HD voice is optional &amp; online-only; offline it uses your phone's built-in voice and uploads nothing personal.</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; மற்ற ஆப்களின் அறிவிப்பு / செய்திகளை வாசிக்காது; HD குரல் விருப்பமானது, ஆஃப்லைனில் போனின் குரல் பயன்படுத்தப்படும், தனிப்பட்ட தகவல் எதுவும் அனுப்பப்படாது.</p>
+              </div>
+            </details>
+            <details class="news">
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <div class="body">
+                <ul>
+                  <li><strong>The announcement voice now changes every time</strong> in random mode — male, then female, then the next male… a different Ultra-HD voice each announcement, never the same twice in a row.</li>
+                  <li><strong>Repeated alerts replay instantly</strong> — fixed male/female keep one steady voice, so everyday alerts come straight from the on-device HD cache (no re-generating).</li>
+                  <li><strong>HD voice is preferred, even offline</strong> — it waits a little longer for a clean start, replays a cached HD clip with no internet, and only uses the phone's built-in voice as a last resort.</li>
+                  <li><strong>Removed the "Voice A / Voice B" picker</strong> — answers use the HD voice automatically.</li>
+                  <li><strong>Tamil now looks right on every phone</strong> — Live Guard ships the Noto Sans Tamil font, fixing garbled Tamil glyphs on some devices.</li>
+                  <li><strong>Wi-Fi announcement fixed</strong> — reconnecting now speaks "வைஃபை" correctly instead of dropping the word.</li>
+                </ul>
+                <p class="ta">சர்ஸரி பயன்முறையில் ஒவ்வொரு அறிவிப்பிலும் <strong>வேறு HD குரல்</strong> (ஆண் → பெண் → அடுத்த ஆண்…); மீண்டும் வரும் எச்சரிக்கைகள் HD cache-இலிருந்து <strong>உடனே</strong>; இணையம் இல்லாவிட்டால் cache செய்யப்பட்ட HD பயன்படுத்தப்படும், இல்லையெனில் போனின் குரல்; "Voice A / B" தேர்வு நீக்கப்பட்டது; <strong>Noto Sans Tamil</strong> font சேர்ந்தால் Tamil எல்லா போனிலும் சரியாகத் தெரியும்; Wi-Fi மீண்டும் இணைந்தால் "வைஃபை" சரியாகச் சொல்லும்.</p>
+              </div>
+            </details>
+            <div class="hash">Size: 14,418,423 bytes · SHA-256: e75264f9f32447c25729b9f8cb97abd6e1b5f1dc7c3219331b8bb056458c3a6d</div>
             <div class="dl-status" id="st-liveguard"></div>
           </div>
           <div class="hero-links">
-            <a class="btn btn-zip" download="CleanSweep-v2.68.zip" href="apks/CleanSweep-v2.68.zip">📦 Download .ZIP (Instant)</a>
-            <a class="btn btn-primary" data-apk="apks/CleanSweep-v2.68.apk" data-name="CleanSweep-v2.68.apk" data-sha="97ac7855473a7d42caae7b4641b421578af2a0bbae761dad3a21ff608b26c86d" data-status="st-liveguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.68/CleanSweep-v2.68.apk">⚡ Direct APK (v2.68)</a>
-            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.68">Release Notes</a>
+            <a class="btn btn-zip" download="CleanSweep-v2.69.zip" href="apks/CleanSweep-v2.69.zip">📦 Download .ZIP (Instant)</a>
+            <a class="btn btn-primary" data-apk="apks/CleanSweep-v2.69.apk" data-name="CleanSweep-v2.69.apk" data-sha="e75264f9f32447c25729b9f8cb97abd6e1b5f1dc7c3219331b8bb056458c3a6d" data-status="st-liveguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.69/CleanSweep-v2.69.apk">⚡ Direct APK (v2.69)</a>
+            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.69">Release Notes</a>
           </div>
         </article>
 
@@ -470,8 +558,12 @@
             </div>
             <p class="desc-en">Live Tamil &amp; world internet FM radio player, local song player with seeking &amp; sound tools, zero surprise Location prompts (works 100% with saved PIN/Village &amp; optional user-clicked Mobile Tower detection with transparent privacy card), and active-only rain &amp; storm voice alerts that always speak exact place details.</p>
             <p class="desc-ta">தமிழ் மற்றும் உலக இணைய வானொலி, பாடல் இயக்கி, தானாக Location அனுமதி கேட்காத நம்பகமான வடிவமைப்பு (PIN/ஊர் மூலம் அனுமதியின்றி 100% இயங்கும் + விருப்ப மொபைல் டவர் பொத்தான் &amp; தனியுரிமை விளக்கம்), மற்றும் ஊர் + மாவட்டப் பெயருடன் கூடிய மழை &amp; புயல் குரல் எச்சரிக்கை.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/ramesh-radio.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li>Live <strong>Tamil &amp; world internet FM radio</strong> with station presets, favourites and search; the bundled station list works offline.</li>
@@ -483,8 +575,33 @@
                 </ul>
               </div>
             </details>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
+              <div class="body">
+                <ul>
+                  <li>Live Tamil Nadu FM stations + world radio with one-tap play.</li>
+                  <li><strong>Zero surprise Location prompts</strong> — works 100% with a saved PIN / Village.</li>
+                  <li>Active-only <strong>rain &amp; storm voice alerts</strong> that speak the exact place; transparent privacy card.</li>
+                  <li>Sleep timer, seeking &amp; sound tools for a great listening experience.</li>
+                </ul>
+                <p class="ta">தமிழ்நாடு FM நிலையங்கள் + உலக radio ஒரே தொடுதலில்; சேமித்த PIN / ஊருள் 100% வேலை செய்யும், திடீர் Location அனுமதி இல்லை; இயக்கத்திலேயே மழை / புயல் எச்சரிக்கை சரியான இடத்தைச் சொல்லும்; தூக்க டைமர், சௌண்ட் கருவிகள்.</p>
+              </div>
+            </details>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Optional Mobile-Tower detection is <strong>user-clicked only</strong> — no background location.</li>
+                  <li>No personal data is uploaded.</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; Mobile-Tower கண்டறிதல் பயனர் தொடும்போதே; பின்னணி Location இல்லை; தனிப்பட்ட தகவல் அனுப்பப்படாது.</p>
+              </div>
+            </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
                   <li><strong>Never auto-prompts for Location</strong> — removed the automatic permission dialog on launch, opening Rain &amp; Cyclone Alert, flipping the enable switch or tapping Check now.</li>
@@ -512,8 +629,12 @@
             </div>
             <p class="desc-en">Compact redesigned Home screen with top <code>தமிழ் | ENG</code> + <code>⚙️ Settings</code> bar, primary Start/Stop button, conditional active Rain Alert banner, Current City card, live Traveled Distance (<code>km</code>) trip box, Destination box, and automatic HD Male/Female online + offline system voices.</p>
             <p class="desc-ta">சுருக்கமான புதிய முகப்புத் திரை (<code>தமிழ் | ENG</code> + <code>⚙️ Settings</code>), முதன்மை தொடங்கு/நிறுத்து பொத்தான், மழை இருந்தால் மட்டும் எச்சரிக்கைப் பட்டை, தற்போதைய ஊர், பயணித்த தூரம் (<code>km</code>), சேருமிடம் (Destination) மற்றும் தானியங்கி HD ஆண்/பெண் குரல்கள்.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/oor-arivippu.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li>Compact <strong>GPS village/town voice announcer</strong> in Tamil &amp; English with a top <code>தமிழ் | ENG</code> + <code>⚙️ Settings</code> bar and a big Start/Stop button.</li>
@@ -525,8 +646,31 @@
                 </ul>
               </div>
             </details>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
+              <div class="body">
+                <ul>
+                  <li>A <strong>compact home</strong> with only the notices that matter to your village / town.</li>
+                  <li>Automatic HD <strong>male / female voices</strong>; active-only rain announcements.</li>
+                  <li>Clear, easy-to-read local alerts in Tamil &amp; English.</li>
+                </ul>
+                <p class="ta">உங்கள் ஊர் / நகரத்திற்குத் தேவையான அறிவிப்புகள் மட்டும் — சுருக்கமான முகப்பு; தானியங்கி HD ஆண் / பெண் குரல்; இயக்கத்திலேயே மழை அறிவிப்பு; தமிழ் &amp; ஆங்கிலத்தில் தெளிவான இருப்பு அறிவிப்புகள்.</p>
+              </div>
+            </details>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Everything runs on-device; no personal data leaves your phone.</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; எல்லாம் போனிலேயே இயங்கும், தனிப்பட்ட தகவல் வெளியே போகாது.</p>
+              </div>
+            </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
                   <li><strong>Redesigned ultra-clean home screen:</strong> header bar, primary Start/Stop, conditional rain banner, current-city card, traveled-distance box and destination box.</li>
@@ -554,8 +698,12 @@
             </div>
             <p class="desc-en">Clean, ad-free Android audio equalizer, bass boost, loudness enhancer, and preset manager with bilingual Tamil &amp; English controls and unified 7-app Super About screen. All audio processing stays on your device.</p>
             <p class="desc-ta">தெளிவான ஒலி சமநிலைப்படுத்தி (Equalizer), Bass Boost, ஒலி மேம்படுத்தி மற்றும் 7 செயலிகள் கொண்ட புதிய About பக்கம் — விளம்பரங்கள் இல்லாத தமிழ் &amp; ஆங்கில வடிவமைப்பு.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/pulseeq.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li><strong>20-band equalizer</strong>, bass boost and loudness enhancer with saved custom presets.</li>
@@ -566,8 +714,31 @@
                 </ul>
               </div>
             </details>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
+              <div class="body">
+                <ul>
+                  <li>Studio-quality <strong>equalizer</strong>, bass &amp; treble tuning with presets for every genre.</li>
+                  <li>Make your music sound exactly how you like — loud, clear and full.</li>
+                  <li>Bilingual About for the whole 7-app suite.</li>
+                </ul>
+                <p class="ta">ஒவ்வொரு பாணிக்கும் ஏற்ற preset-ஓடு ஸ்டுடியோ தரமான equalizer, bass &amp; treble; உங்கள் இசையை விருப்பமாக செய்யுங்கள்; 7-ஆப் தொகுப்பிற்கும் இருமொழி About.</p>
+              </div>
+            </details>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Audio is processed <strong>on-device</strong>; nothing is uploaded.</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; ஒலி செயலாக்கம் போனிலேயே, எதுவும் அனுப்பப்படாது.</p>
+              </div>
+            </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
                   <li><strong>Upgraded bilingual About screen:</strong> one-tap links to the RP-Android-Apps official website, the GitHub repository and the legacy mirror, plus all 7 RP Ideas apps (Tamil &amp; English).</li>
@@ -593,8 +764,12 @@
             </div>
             <p class="desc-en">100% offline on-device AI vocal remover &amp; karaoke stem separator with unified 7-app Super About screen. Splits songs into clean vocals and instrumental tracks directly on your phone (WAV + MP3 export; zero audio upload).</p>
             <p class="desc-ta">பாடல்களில் இருந்து குரலையும் இசையையும் (Karaoke) இணையம் இன்றி உங்கள் போனிலேயே பிரிக்கும் AI கருவி (WAV &amp; MP3 வெளியீடு) + 7 செயலிகள் கொண்ட புதிய About பக்கம்.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/vocal-remover.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li><strong>100% offline on-device AI vocal remover</strong> &amp; karaoke instrumental splitter — selected songs never leave your phone.</li>
@@ -606,8 +781,31 @@
                 </ul>
               </div>
             </details>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
+              <div class="body">
+                <ul>
+                  <li><strong>Remove vocals / make karaoke</strong> from any song on your phone.</li>
+                  <li>Works <strong>offline</strong>; clean bilingual interface.</li>
+                  <li>Save the result and share it however you like.</li>
+                </ul>
+                <p class="ta">உங்கள் போனில் உள்ள எந்தப் பாடலிலிருந்தும் பாடகர் குரலை நீக்கி karaoke உருவாக்கலாம்; ஆஃப்லைனில் வேலை செய்யும்; இருமொழி இடைமுகம்; முடிவைச் சேமித்து பங்கிடலாம்.</p>
+              </div>
+            </details>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Audio is processed <strong>on-device</strong>; your files never leave the phone.</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; ஒலி கோப்புகள் போனிலேயே செயலாக்கப்படும், வெளியே போகாது.</p>
+              </div>
+            </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
                   <li><strong>Upgraded bilingual About dialog</strong> with one-tap links to the RP-Android-Apps official website, the GitHub repository and the legacy mirror, plus all 7 RP Ideas apps (Tamil &amp; English).</li>
@@ -633,8 +831,12 @@
             </div>
             <p class="desc-en">Two-phone MLS-encrypted private chat with text, drawings, voice notes, pictures, and unified 7-app Super About links. Published openly with transparent security documentation.</p>
             <p class="desc-ta">இரண்டு போன்களுக்கு இடையில் பாதுகாப்பான குறுஞ்செய்தி, ஓவியம், குரல், படப் பகிர்வு மற்றும் 7 செயலிகள் கொண்ட புதிய About இணைப்புகள்.</p>
-            <details class="feat">
-              <summary><span class="feat-icon">✨</span> Full features</summary>
+            <figure class="shot">
+              <img loading="lazy" src="images/secret-message.jpg" alt="App screenshot" onload="this.parentElement.classList.add('has-img')">
+              <figcaption>📱 <strong>App screenshot</strong> — coming soon · படம் விரைவில் சேர்க்கப்படும்</figcaption>
+            </figure>
+            <details class="feat" open>
+              <summary><span class="feat-icon">⚙️</span> What it does · இது என்ன செய்யும்</summary>
               <div class="body">
                 <ul>
                   <li><strong>Two-phone MLS-encrypted private chat</strong> (experimental; not independently security-reviewed).</li>
@@ -645,8 +847,31 @@
                 </ul>
               </div>
             </details>
+            <details class="benefit" open>
+              <summary><span class="feat-icon">🎁</span> Benefits · உங்களுக்கு என்ன நன்மை</summary>
+              <div class="body">
+                <ul>
+                  <li>Hide a <strong>secret message inside an ordinary-looking message</strong> (experimental 2-phone MLS).</li>
+                  <li>Only the correct key reveals the real text — everyone else sees the decoy.</li>
+                  <li>Lightweight and fully offline.</li>
+                </ul>
+                <p class="ta">சாதாரணமான தோற்றத்தில் ஒரு இரகசிய செய்தியை மறைக்கலாம் (சோதனை 2-போன் MLS); சரியான திறவுகோல் மட்டுமே உண்மையான உரையைக் காட்டும், மற்றவர்கள் தோற்றத்தை மட்டும் பார்ப்பார்கள்; இலகுவான, முழுமையாக ஆஃப்லைன்.</p>
+              </div>
+            </details>
+            <details class="trust" open>
+              <summary><span class="feat-icon">🔒</span> Reliable &amp; secure · நம்பகமான &amp; பாதுகாப்பான</summary>
+              <div class="body">
+                <ul>
+                  <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
+                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li>Verified in-app updater checks URL, size, SHA-256 and app signer before installing.</li>
+                  <li>Keys stay on your own devices; nothing is uploaded. (Experimental feature.)</li>
+                </ul>
+                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; திறவுகோள்கள் உங்கள் சாதனங்களிலேயே, எதுவும் அனுப்பப்படாது (சோதனை வசதி).</p>
+              </div>
+            </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new</summary>
+              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
                   <li>Current published build <strong>1.1.3</strong> — a two-phone MLS encrypted messenger with text, drawings, voice notes and photo sharing.</li>
