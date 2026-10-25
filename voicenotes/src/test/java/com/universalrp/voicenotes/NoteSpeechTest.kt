@@ -84,18 +84,26 @@ class NoteSpeechTest {
     @Test
     fun aProfileWithNoTamilVoiceFallsBackToItsEnglishVoice() {
         // Not every curated profile has a Tamil id. A Tamil note must still be spoken by something
-        // rather than silently dropped.
+        // rather than silently skipped, and the pitch must follow the voice that was chosen.
         assertEquals("en-US-JennyNeural", NoteSpeech.neuralIdFor(englishOnly, "வணக்கம்"))
+        assertEquals("+0Hz", NoteSpeech.pitchFor(englishOnly, "வணக்கம்"))
+    }
+
+    @Test
+    fun theChosenVoiceIsNeverBlankWhileTheProfileHasOne() {
+        // A blank id is the failure that looks like an outage: the caller skips the note and the
+        // owner hears nothing at all.
+        for (text in listOf("வணக்கம்", "hello", "₹500", "")) {
+            assertTrue("blank voice for $text", NoteSpeech.neuralIdFor(englishOnly, text).isNotBlank())
+            assertTrue("blank voice for $text", NoteSpeech.neuralIdFor(tamil, text).isNotBlank())
+        }
     }
 
     @Test
     fun theVoiceIsChosenByTheTextNotByTheInterfaceLanguage() {
         // An English note on a Tamil phone is still an English note.
         assertEquals("en-IN-PrabhatNeural", NoteSpeech.neuralIdFor(tamil, "buy milk"))
-        assertEquals(
-            "ta-IN-ValluvarNeural",
-            NoteSpeech.neuralIdFor(tamil, "பால் வாங்க"),
-        )
+        assertEquals("ta-IN-ValluvarNeural", NoteSpeech.neuralIdFor(tamil, "பால் வாங்க"))
     }
 
     // ------------------------------------------------------------------ how much to send
@@ -125,16 +133,6 @@ class NoteSpeechTest {
     }
 
     @Test
-    fun aSingleSentenceLongerThanTheCeilingIsHardSplitButNeverDropped() {
-        // A dictated note can be one enormous run-on sentence. It still has to be spoken in full.
-        val text = "word ".repeat(500).trim()
-        val chunks = NoteSpeech.chunk(text, maxChars = 100)
-        assertTrue("expected many chunks", chunks.size > 5)
-        chunks.forEach { assertTrue(it.length <= 100) }
-        assertEquals(text, chunks.joinToString(" "))
-    }
-
-    @Test
     fun tamilSentenceBoundariesAreRespected() {
         val text = "முதல் வாக்கியம். இரண்டாம் வாக்கியம். மூன்றாம் வாக்கியம்."
         val sentences = NoteSpeech.splitSentences(text)
@@ -144,13 +142,40 @@ class NoteSpeechTest {
     }
 
     @Test
-    fun chunkingNeverLosesCharacters() {
+    fun chunkingNeverLosesCharactersWhenEverySentenceFits() {
         // The property that matters most: whatever the split, the note read back is the note
         // dictated. Losing a middle chunk is the failure an owner would never detect.
+        //
+        // The ceiling here is at or above the longest sentence, so no hard split is needed and the
+        // round trip must be exact.
         val text = "வாக்கியம் ஒன்று. வாக்கியம் இரண்டு! வாக்கியம் மூன்று? சில கூடுதல் சொற்கள்."
-        for (max in listOf(5, 12, 30, 80, 10_000)) {
+        val longest = NoteSpeech.splitSentences(text).maxOf { it.length }
+        for (max in listOf(longest, longest + 1, 30, 80, 10_000)) {
             assertEquals("max=$max", text, NoteSpeech.chunk(text, max).joinToString(" "))
         }
+    }
+
+    @Test
+    fun aSentenceLongerThanTheCeilingIsSplitAtWordBoundariesAndStillRoundTrips() {
+        // One enormous run-on sentence. It still has to be spoken in full, and cutting just after
+        // a space keeps the round trip exact because the join reinserts that one space.
+        val text = "word ".repeat(500).trim()
+        val chunks = NoteSpeech.chunk(text, maxChars = 100)
+        assertTrue("expected many chunks", chunks.size > 5)
+        chunks.forEach { assertTrue("chunk over ceiling: ${it.length}", it.length <= 100) }
+        assertEquals(text, chunks.joinToString(" "))
+    }
+
+    @Test
+    fun aWordLongerThanTheCeilingKeepsEveryCharacterAndStaysUnderTheCeiling() {
+        // Tamil is an abugida, so a cluster cut between characters cannot round-trip exactly. The
+        // honest guarantee here is weaker and stated as such: no character is lost, and no chunk
+        // exceeds the ceiling.
+        val text = "க".repeat(50)
+        val chunks = NoteSpeech.chunk(text, maxChars = 10)
+        assertTrue("expected several chunks", chunks.size > 1)
+        chunks.forEach { assertTrue("chunk over ceiling: ${it.length}", it.length <= 10) }
+        assertEquals(text, chunks.joinToString("").replace(" ", ""))
     }
 
     @Test

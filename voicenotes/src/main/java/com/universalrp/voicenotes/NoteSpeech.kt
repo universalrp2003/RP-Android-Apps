@@ -13,15 +13,29 @@ import com.universalrp.voice.SharedNeuralVoiceEngine
  *  1. **Which voice.** A note dictated in Tamil must be spoken by the Tamil neural voice, not the
  *     English one - `ta-IN-ValluvarNeural` reading Tamil text is intelligible, while
  *     `en-IN-PrabhatNeural` reading the same text is not. So the script of the text chooses the
- *     voice, never the app's interface language.
+ *     voice, never the app's interface language. A profile that has no Tamil voice falls back to
+ *     its English one rather than returning a blank id, because a note that is spoken badly is
+ *     better than a note that is not spoken at all.
+ *
  *  2. **How much to send at once.** The neural endpoint is a bounded request. A long note sent
  *     whole fails or truncates, so it is split at sentence boundaries into chunks small enough to
  *     succeed, and the chunks are spoken in order.
+ *
+ * On the round-trip guarantee, stated plainly because it is the thing a test could otherwise
+ * overclaim: [chunk] joins back to exactly the input **as long as every sentence fits inside the
+ * ceiling**, which is the normal case and the case the app is tuned for. When a single sentence is
+ * itself longer than the ceiling it has to be split at a word boundary, and if a single *word* is
+ * longer than the ceiling it has to be split between characters. Tamil is an abugida, so cutting
+ * between characters of one cluster cannot round-trip exactly; the guarantee in that case is
+ * weaker and honest - no character is lost and no chunk exceeds the ceiling.
  */
 object NoteSpeech {
 
     /** Chunk ceiling in characters. The engine's own timeout is a few seconds of speech. */
     const val MAX_CHUNK_CHARS = 900
+
+    /** The voice id and pitch that belong together, chosen once per note. */
+    data class VoiceChoice(val neuralId: String, val pitch: String)
 
     /**
      * True when [text] contains Tamil.
@@ -32,13 +46,31 @@ object NoteSpeech {
      */
     fun containsTamil(text: String): Boolean = text.any { it.code in 0x0B80..0x0BFF }
 
-    /** The neural voice id that should read [text]. */
+    /** The voice id that should read [text], never blank while the profile has any voice at all. */
     fun neuralIdFor(profile: CuratedNeuralVoiceProfile, text: String): String =
-        if (containsTamil(text)) profile.tamilNeuralId else profile.englishNeuralId
+        voiceChoiceFor(profile, text).neuralId
 
     /** The pitch that goes with [neuralIdFor]'s choice, so a voice is never pitch-mismatched. */
     fun pitchFor(profile: CuratedNeuralVoiceProfile, text: String): String =
-        if (containsTamil(text)) profile.pitchTa else profile.pitchEn
+        voiceChoiceFor(profile, text).pitch
+
+    /**
+     * Picks the Tamil voice for Tamil text and the English voice otherwise, then falls back to
+     * whichever voice the profile actually has.
+     *
+     * The fallback is the point: not every curated profile carries a Tamil id, and returning a
+     * blank id would make the caller silently skip the note.
+     */
+    internal fun voiceChoiceFor(profile: CuratedNeuralVoiceProfile, text: String): VoiceChoice {
+        val tamilId = profile.tamilNeuralId
+        val englishId = profile.englishNeuralId
+        return when {
+            containsTamil(text) && tamilId.isNotBlank() -> VoiceChoice(tamilId, profile.pitchTa)
+            englishId.isNotBlank() -> VoiceChoice(englishId, profile.pitchEn)
+            tamilId.isNotBlank() -> VoiceChoice(tamilId, profile.pitchTa)
+            else -> VoiceChoice("", "+0Hz")
+        }
+    }
 
     /**
      * The text to send to the engine for [note].
@@ -49,8 +81,8 @@ object NoteSpeech {
     fun speechText(note: VoiceNote): String = note.text.trim()
 
     /**
-     * [text] split into chunks no longer than [MAX_CHUNK_CHARS], broken at sentence boundaries
-     * where possible.
+     * [text] split into chunks no longer than [maxChars], broken at sentence boundaries where
+     * possible.
      *
      * The rule is: never exceed the ceiling, and never split a sentence unless a single sentence
      * is itself longer than the ceiling. Splitting mid-sentence is why a read-back sounds like it
@@ -61,25 +93,26 @@ object NoteSpeech {
         if (trimmed.isEmpty()) return emptyList()
         if (trimmed.length <= maxChars) return listOf(trimmed)
 
-        val sentences = splitSentences(trimmed)
         val chunks = ArrayList<String>()
         val current = StringBuilder()
-        for (sentence in sentences) {
-            if (current.isEmpty()) {
-                if (sentence.length <= maxChars) {
-                    current.append(sentence)
-                } else {
-                    // A single sentence longer than the ceiling has to be hard-split.
-                    chunks.addAll(hardSplit(sentence, maxChars))
+        for (sentence in splitSentences(trimmed)) {
+            if (sentence.length > maxChars) {
+                // A sentence longer than the ceiling cannot be packed with anything else.
+                if (current.isNotEmpty()) {
+                    chunks.add(current.toString())
+                    current.setLength(0)
                 }
+                chunks.addAll(hardSplit(sentence, maxChars))
                 continue
             }
-            if (current.length + 1 + sentence.length <= maxChars) {
+            if (current.isEmpty()) {
+                current.append(sentence)
+            } else if (current.length + 1 + sentence.length <= maxChars) {
                 current.append(' ').append(sentence)
             } else {
                 chunks.add(current.toString())
                 current.setLength(0)
-                if (sentence.length <= maxChars) current.append(sentence) else chunks.addAll(hardSplit(sentence, maxChars))
+                current.append(sentence)
             }
         }
         if (current.isNotEmpty()) chunks.add(current.toString())
@@ -119,19 +152,25 @@ object NoteSpeech {
         return out.filter { it.isNotEmpty() }
     }
 
+    /**
+     * A single sentence longer than the ceiling, split at word boundaries wherever there is one.
+     *
+     * Cutting just after a space keeps the space at the end of the chunk, and the chunk is
+     * trimmed, so the join's separator restores exactly the one space that was there. Only a
+     * single word longer than the ceiling is cut between characters.
+     */
     private fun hardSplit(sentence: String, maxChars: Int): List<String> {
         val out = ArrayList<String>()
-        var i = 0
-        while (i < sentence.length) {
-            val end = minOf(i + maxChars, sentence.length)
-            // Prefer a space near the end so the split lands between words.
-            val slice = sentence.substring(i, end)
-            val lastSpace = slice.lastIndexOf(' ')
-            val cut = if (lastSpace > maxChars / 2) i + lastSpace + 1 else end
-            out.add(sentence.substring(i, cut).trim())
-            i = cut
+        var rest = sentence
+        while (rest.length > maxChars) {
+            val window = rest.substring(0, maxChars)
+            val lastSpace = window.lastIndexOf(' ')
+            val cut = if (lastSpace > 0) lastSpace + 1 else maxChars
+            out.add(rest.substring(0, cut).trim())
+            rest = rest.substring(cut)
         }
-        return out.filter { it.isNotEmpty() }
+        if (rest.isNotBlank()) out.add(rest.trim())
+        return out.filter { it.isNotBlank() }
     }
 
     /**
@@ -160,8 +199,9 @@ object NoteSpeech {
     fun containsEnglish(text: String): Boolean = text.any { it in 'a'..'z' || it in 'A'..'Z' }
 
     /** The gender label for a profile, in the app's language. */
-    fun genderLabel(profile: CuratedNeuralVoiceProfile, tamil: Boolean): String = when (profile.gender) {
-        NeuralVoiceGender.MALE -> if (tamil) "ஆண் குரல்" else "Male voice"
-        NeuralVoiceGender.FEMALE -> if (tamil) "பெண் குரல்" else "Female voice"
-    }
+    fun genderLabel(profile: CuratedNeuralVoiceProfile, tamil: Boolean): String =
+        when (profile.gender) {
+            NeuralVoiceGender.MALE -> if (tamil) "ஆண் குரல்" else "Male voice"
+            NeuralVoiceGender.FEMALE -> if (tamil) "பெண் குரல்" else "Female voice"
+        }
 }
