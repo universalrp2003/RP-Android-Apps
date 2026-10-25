@@ -3,6 +3,7 @@ package com.universalrp.cleansweep.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,11 +56,16 @@ import com.universalrp.cleansweep.ui.theme.AccentCyan
 import com.universalrp.cleansweep.ui.theme.AccentViolet
 import com.universalrp.cleansweep.ui.theme.DangerRed
 import com.universalrp.cleansweep.ui.theme.GoodGreen
+import com.universalrp.cleansweep.ui.theme.OutlineC
 import com.universalrp.cleansweep.ui.theme.SurfaceC
 import com.universalrp.cleansweep.ui.theme.TextPrimary
 import com.universalrp.cleansweep.ui.theme.TextSecondary
 import com.universalrp.cleansweep.ui.theme.WarnAmber
 import com.universalrp.cleansweep.voice.Announcer
+import com.universalrp.cleansweep.voice.SilentPlaceSlot
+
+/** 2.72: ISO order, 1 = Monday, matching [Announcer.SILENT_PLACE_DAY_LABELS]. */
+private val SILENT_PLACE_DAY_LABELS = Announcer.SILENT_PLACE_DAY_LABELS
 
 /**
  * Voice & daily watch.
@@ -240,9 +246,16 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(tr("Voice delivery diagnostics"), style = MaterialTheme.typography.titleMedium)
-                    Text(tr("Last request: %s", voiceStageLabel(delivery.stage)), style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        tr("Last request: %s", voiceStageLabel(delivery.stage, context)),
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                     Text(tr("Last automatic event: %s", automatic.event.ifEmpty { tr("Not observed yet") }), style = MaterialTheme.typography.bodySmall)
-                    Text(voiceStageLabel(automatic.stage), style = MaterialTheme.typography.bodySmall, color = AccentCyan)
+                    Text(
+                        voiceStageLabel(automatic.stage, context),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = AccentCyan,
+                    )
                     if (automatic.atMs > 0) Text(com.universalrp.cleansweep.data.DisplayTime.dated(automatic.atMs, com.universalrp.cleansweep.data.Lang.isTamil, seconds = true), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                     delivery.tamilAvailable?.let { Text(tr(if (it) "Tamil language reported available" else "Tamil language not available; install voice data"),
                         style = MaterialTheme.typography.labelSmall, color = if (it) TextSecondary else WarnAmber) }
@@ -299,6 +312,23 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
+                // 2.72: if the HD voice has been unreachable for a sustained period, say so
+                // here too. The notification card only appears after 30 seconds of outage,
+                // but this screen should not need the owner to wait for it.
+                val hdWaiting =
+                    automatic.stage == com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET ||
+                        delivery.stage == com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET
+                if (hdWaiting) {
+                    Text(
+                        "\u23F3 " + tr(
+                            "HD voice is waiting for the internet; announcements are paused, " +
+                                "not dropped."
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = WarnAmber,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                }
                 VoiceSwitch(
                     title = tr("Louder voice alerts"),
                     subtitle = tr(
@@ -415,10 +445,10 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     }
                     Text(
                         tr(
-                            "For office and working people: choose the hours every voice function must " +
-                                "be off. Nothing is spoken inside these slots — not rain warnings, not " +
-                                "battery or charging alerts, not answers. Add as many start/stop times as " +
-                                "you need."
+                            "For office and working people: choose the days and hours every voice " +
+                                "function must be off. Nothing is spoken inside these slots — not rain " +
+                                "warnings, not battery or charging alerts, not answers. Tap a day to " +
+                                "include it, and add as many start/stop times as you need."
                         ),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
@@ -431,11 +461,44 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         onCheckedChange = { vm.setSilentPlaceOn(it) },
                     )
                     Spacer(Modifier.height(8.dp))
+                    val hourNow = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
                     state.silentPlaceSlots.forEachIndexed { index, slot ->
+                        // 2.72: which days this slot covers. ISO numbering, 1 = Monday.
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            for (day in 1..7) {
+                                val label = tr(SILENT_PLACE_DAY_LABELS[day - 1])
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(MaterialTheme.shapes.small)
+                                        .background(
+                                            if (day in slot.days) AccentViolet else OutlineC,
+                                        )
+                                        .clickable { vm.toggleSilentPlaceDay(index, day) }
+                                        .padding(vertical = 6.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        label,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                        color = if (day in slot.days) {
+                                            androidx.compose.ui.graphics.Color.White
+                                        } else {
+                                            TextSecondary
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             HourPicker(
-                                value = slot.first,
-                                onPick = { vm.setSilentPlaceSlot(index, it..slot.last) },
+                                value = slot.hours.first,
+                                onPick = { vm.setSilentPlaceSlot(index, SilentPlaceSlot(slot.days, it..slot.hours.last)) },
                             )
                             Text(
                                 "  " + tr("to") + "  ",
@@ -443,8 +506,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             HourPicker(
-                                value = slot.last,
-                                onPick = { vm.setSilentPlaceSlot(index, slot.first..it) },
+                                value = slot.hours.last,
+                                onPick = { vm.setSilentPlaceSlot(index, SilentPlaceSlot(slot.days, slot.hours.first..it)) },
                             )
                             if (state.silentPlaceSlots.size > 1) {
                                 Spacer(Modifier.size(6.dp))
@@ -459,6 +522,15 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                                 )
                             }
                         }
+                        Spacer(Modifier.height(4.dp))
+                        // Which days this slot covers, and whether it is covering today.
+                        val todayIso = Announcer.isoDayOfWeek()
+                        Text(
+                            vm.silentPlaceSlotDays(index) + "  " +
+                                if (todayIso in slot.days) tr("Today") else tr("Not today"),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (vm.silentPlaceSlotActiveAt(index, hourNow, todayIso)) WarnAmber else TextSecondary,
+                        )
                         Spacer(Modifier.height(6.dp))
                     }
                     if (state.silentPlaceSlots.size < Announcer.MAX_SILENT_PLACE_SLOTS) {
@@ -472,12 +544,21 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                             color = TextSecondary,
                         )
                     }
+                    // 2.72: the profile being ON is no longer the same as it being active today, so
+                    // say which of the two it is instead of implying voice is paused when it is not.
                     if (state.silentPlaceOn && vm.silentPlaceActive()) {
                         Spacer(Modifier.height(8.dp))
                         Text(
                             "🔇 " + tr("Silent place is active right now, so all voice is paused."),
                             style = MaterialTheme.typography.labelSmall,
                             color = WarnAmber,
+                        )
+                    } else if (state.silentPlaceOn) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "🔈 " + tr("Silent place is on, but no slot covers today."),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
                         )
                     }
                 }
@@ -769,13 +850,22 @@ private fun ModeChipExtra(label: String, selected: Boolean, onClick: () -> Unit)
     )
 }
 
-private fun voiceStageLabel(stage: com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage): String = tr(when (stage) {
+private fun voiceStageLabel(
+    stage: com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage,
+    context: android.content.Context,
+): String = tr(when (stage) {
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NOT_REQUESTED -> "No request observed in this process"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.DISABLED -> "Blocked: master voice switch is off"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.EVENT_OFF -> "Blocked: this event's voice switch is off"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS -> "Blocked: phone call in progress"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.QUIET_HOURS -> "Blocked: quiet hours"
-    com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.SILENT_PLACE -> "Blocked: silent place profile is active now"
+    com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.SILENT_PLACE -> if (
+        Announcer.silentPlaceOn(context) && !Announcer.inSilentPlace(context)
+    ) {
+        "Silent place is on, but not today"
+    } else {
+        "Blocked: silent place profile is active now"
+    }
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET -> "Waiting: internet disconnected, HD voice will speak when it returns"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.QUEUED -> "Queued, not yet confirmed playing"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.INITIALIZING -> "Speech engine starting"

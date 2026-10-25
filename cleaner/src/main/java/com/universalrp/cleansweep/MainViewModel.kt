@@ -70,6 +70,7 @@ import com.universalrp.cleansweep.notify.FloatingVolumeControl
 import com.universalrp.cleansweep.notify.StatusPill
 import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.cleansweep.voice.AnswerVoicePolicy
+import com.universalrp.cleansweep.voice.SilentPlaceSlot
 import com.universalrp.cleansweep.widget.CleanSweepWidget
 import com.universalrp.cleansweep.work.HealthWatchWorker
 import android.provider.Settings
@@ -256,9 +257,9 @@ data class UiState(
     val voiceGenderMode: com.universalrp.cleansweep.voice.VoiceGenderMode = com.universalrp.cleansweep.voice.VoiceGenderMode.RANDOM,
     val voiceQuietStart: Int = Announcer.DEFAULT_QUIET_START,
     val voiceQuietEnd: Int = Announcer.DEFAULT_QUIET_END,
-    /** Silent place / office profile: master switch and its start/stop hour slots. */
+    /** Silent place / office profile: master switch and its day + start/stop hour slots. */
     val silentPlaceOn: Boolean = false,
-    val silentPlaceSlots: List<IntRange> = emptyList(),
+    val silentPlaceSlots: List<SilentPlaceSlot> = emptyList(),
     /** True while an HD announcement is actually playing, for the global stop button. */
     val voiceSpeaking: Boolean = false,
     val voiceBatteryLow: Boolean = true,
@@ -1586,12 +1587,27 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Replaces one slot, or appends it when [index] is past the end of the current list. */
-    fun setSilentPlaceSlot(index: Int, range: IntRange) {
+    fun setSilentPlaceSlot(index: Int, slot: SilentPlaceSlot) {
         val slots = Announcer.silentPlaceSlots(ctx).toMutableList()
-        if (index in slots.indices) slots[index] = range else slots.add(range)
+        if (index in slots.indices) slots[index] = slot else slots.add(slot)
         val trimmed = slots.take(Announcer.MAX_SILENT_PLACE_SLOTS)
         Announcer.setSilentPlaceSlots(ctx, trimmed)
         mutate { it.copy(silentPlaceSlots = trimmed) }
+    }
+
+    /** Toggles one ISO day (1 = Monday to 7 = Sunday) on one slot. */
+    fun toggleSilentPlaceDay(index: Int, day: Int) {
+        if (day !in 1..7) return
+        val slots = Announcer.silentPlaceSlots(ctx).toMutableList()
+        if (index !in slots.indices) return
+        val days = slots[index].days.toMutableSet()
+        if (!days.add(day)) days.remove(day)
+        // An empty day set would mean "never", which the owner can already express by switching the
+        // whole profile off, so keep at least one day and the slot always means something.
+        if (days.isEmpty()) return
+        slots[index] = SilentPlaceSlot(days, slots[index].hours)
+        Announcer.setSilentPlaceSlots(ctx, slots)
+        mutate { it.copy(silentPlaceSlots = slots) }
     }
 
     fun addSilentPlaceSlot() {
@@ -1610,8 +1626,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(silentPlaceSlots = slots) }
     }
 
-    /** True when the profile is on and the current hour is inside one of its slots. */
+    /** True when the profile is on and the current day AND hour are inside one of its slots. */
     fun silentPlaceActive(): Boolean = Announcer.inSilentPlace(ctx)
+
+    /**
+     * Day + hour gate for the silent-place card. A slot only counts on the days it names, so a
+     * Mon-Fri office slot is correctly silent on Saturday. [dayOfWeek] is ISO, 1 = Monday.
+     */
+    fun silentPlaceActiveAt(hour: Int, dayOfWeek: Int): Boolean {
+        if (!Announcer.silentPlaceOn(ctx)) return false
+        return Announcer.silentPlaceSlots(ctx).any { it.covers(dayOfWeek, hour) }
+    }
+
+    /** Day + hour gate for one slot, for the "on this day" note beside it. */
+    fun silentPlaceSlotActiveAt(index: Int, hour: Int, dayOfWeek: Int): Boolean {
+        if (!Announcer.silentPlaceOn(ctx)) return false
+        val slot = Announcer.silentPlaceSlots(ctx).getOrNull(index) ?: return false
+        return slot.covers(dayOfWeek, hour)
+    }
+
+    /** "Every day", "Monday to Friday", or "Monday, Wednesday" for one slot. */
+    fun silentPlaceSlotDays(index: Int): String {
+        val slot = Announcer.silentPlaceSlots(ctx).getOrNull(index) ?: return ""
+        val days = slot.days.filter { it in 1..7 }.sorted()
+        if (days.isEmpty()) return ""
+        if (days.size == Announcer.ALL_DAYS.size) return Lang.t("Every day")
+        // A contiguous run inside the week reads as "Monday to Friday"; a scattered selection is
+        // listed, because "Monday to Wednesday" for Mon+Wed+Fri would be wrong.
+        val contiguous = days.zipWithNext().all { (a, b) -> b == a + 1 }
+        val first = Lang.t(Announcer.SILENT_PLACE_DAY_NAMES[days.first() - 1])
+        val last = Lang.t(Announcer.SILENT_PLACE_DAY_NAMES[days.last() - 1])
+        return if (contiguous) {
+            Lang.t("%s to %s").format(first, last)
+        } else {
+            days.joinToString(", ") { Lang.t(Announcer.SILENT_PLACE_DAY_NAMES[it - 1]) }
+        }
+    }
 
     /**
      * 2.71 — the small stop button that is visible on every screen while an announcement is

@@ -2,13 +2,9 @@ package com.universalrp.cleansweep.voice
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
-import android.speech.tts.Voice
 import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.MonitorDefaultsPolicy
-import java.util.Locale
 
 /**
  * CleanSweep's voice.
@@ -79,9 +75,18 @@ object Announcer {
     const val KEY_SILENT_PLACE_ON = "silent_place_on"
     const val KEY_SILENT_PLACE_SLOTS = "silent_place_slots"
     /** A working day, 9 AM to 6 PM, until the owner picks their own slots. */
-    const val DEFAULT_SILENT_PLACE_SLOTS = "9-18"
-    /** A slot added by the "add another time" button: a plain 09:00–18:00 office window. */
-    val DEFAULT_SILENT_PLACE_SLOT = 9..18
+    const val DEFAULT_SILENT_PLACE_SLOTS = "1,2,3,4,5 9-18"
+    /** Every ISO day: 1 = Monday … 7 = Sunday. */
+    val ALL_DAYS: Set<Int> = setOf(1, 2, 3, 4, 5, 6, 7)
+
+    /** One-letter day labels for the day chips, in ISO order, so index 0 is Monday. */
+    val SILENT_PLACE_DAY_LABELS: List<String> = listOf("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")
+
+    /** Full day names in the same ISO order, for the slot summary line. */
+    val SILENT_PLACE_DAY_NAMES: List<String> =
+        listOf("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+    /** A slot added by the "add another time" button: every day, a plain 09:00–18:00 window. */
+    val DEFAULT_SILENT_PLACE_SLOT = SilentPlaceSlot(ALL_DAYS, 9..18)
     /** Most slots we keep, so the picker cannot be filled without bound. */
     const val MAX_SILENT_PLACE_SLOTS = 6
     /**
@@ -93,6 +98,14 @@ object Announcer {
      */
     const val MAX_HD_ATTEMPTS = 3
     const val HD_RETRY_DELAY_MS = 1_500L
+
+    /**
+     * 2.72 - how long the HD voice must stay unreachable before the "voice is waiting" card is
+     * posted. A short network blip must not nag the owner with a notification, so this is far
+     * longer than the retry delay: it takes several failed HD attempts AND a sustained outage
+     * before anything is shown.
+     */
+    const val VOICE_UNAVAILABLE_NOTICE_MS = 30_000L
     const val KEY_LOW = "voice_battery_low"
     const val KEY_FULL = "voice_battery_full"
     const val KEY_HOT = "voice_overheat"
@@ -188,15 +201,16 @@ object Announcer {
     private val randomMaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     private val randomFemaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     // Offline system-TTS rotation within the chosen gender (RANDOM mode fallback path).
-    private val systemVoiceCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     @Volatile private var activeMediaPlayer: android.media.MediaPlayer? = null
-    @Volatile private var tts: TextToSpeech? = null
-    @Volatile private var ready = false
     @Volatile private var tamilVoice = false
-    private var initializing = false
-    private var generation = 0
+
+    /**
+     * 2.72 - when the HD voice first became unreachable, 0 while it is fine. Only read and
+     * written on the main thread, alongside the rest of the queue bookkeeping.
+     */
+    private var hdUnavailableSince = 0L
+    private var voiceUnavailableNotified = false
     private var prefsContext: Context? = null
-    private val previewedChoices = hashSetOf<String>() // This engine/session only; no claim the preview was physically heard.
     private val automaticAnswerIds = linkedSetOf<String>()
     private data class Request(val english: String?, val tamil: String?, val wanted: AppLang?, val event: Event,
         val manual: Boolean, val done: kotlinx.coroutines.CompletableDeferred<Boolean>? = null, val onStarted: (() -> Unit)? = null,
@@ -208,14 +222,12 @@ object Announcer {
         var language = wanted ?: AppLang.TA
         var text = ""
         var network = false
-        var retried = false
         var started = false
-        var attemptId = ""
         // 2.71 — how many times the HD-only path has tried and failed to produce a clip. There is
         // no system voice to fall back to, so this bounds the wait instead of looping forever.
         var hdAttempts = 0
         // Resolved once per announcement so RANDOM advances the voice exactly one step, even if
-        // an HD attempt fails and the same sentence is retried on the HD voice again.
+        // an HD attempt fails and the same sentence is retried on the HD voice.
         var studioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null
     }
     private val pending = ArrayDeque<Request>() // Only touched on main.
@@ -494,40 +506,79 @@ object Announcer {
     }
 
     /**
-     * The owner's slots, each an inclusive hour range. Stored as "9-18,13-14" so a phone with no
-     * data yet still reads the default. Overlapping and duplicate ranges are kept as typed; the
-     * gate only asks "is this hour inside any slot", so overlaps are harmless.
+     * The owner's slots. Each one carries the ISO days it applies on (1 = Monday … 7 = Sunday) and
+     * an inclusive hour range, so "office hours Mon–Fri 9–18" is one slot rather than five.
+     *
+     * Stored as `"1,2,3,4,5 9-18;6,7 10-14"` — days, a space, the hour range, slots separated by
+     * `;`. The pre-2.72 format `"9-18,13-14"` (no day part) still reads as *every* day, so an
+     * existing owner's slots survive the upgrade unchanged. Overlapping and duplicate slots are
+     * kept as typed; the gate only asks "is this hour inside one of them on this day", so
+     * overlaps are harmless.
      */
-    fun silentPlaceSlots(context: Context): List<IntRange> {
+    fun silentPlaceSlots(context: Context): List<SilentPlaceSlot> {
         val decoded = decodeSlots(prefs(context).getString(KEY_SILENT_PLACE_SLOTS, DEFAULT_SILENT_PLACE_SLOTS).orEmpty())
         // An empty list means "owner deleted every slot"; show the default so the card always has
         // something to edit, and so the profile has a sane starting point.
         return decoded.ifEmpty { decodeSlots(DEFAULT_SILENT_PLACE_SLOTS) }
     }
 
-    fun setSilentPlaceSlots(context: Context, slots: List<IntRange>) {
+    fun setSilentPlaceSlots(context: Context, slots: List<SilentPlaceSlot>) {
         prefs(context).edit().putString(KEY_SILENT_PLACE_SLOTS, encodeSlots(slots)).apply()
     }
 
-    /** True only when the profile is on AND the current hour falls inside one of its slots. */
-    fun inSilentPlace(context: Context, hour: Int = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)): Boolean {
+    /**
+     * True only when the profile is on AND the current day AND hour fall inside one of its slots.
+     * [dayOfWeek] is an ISO-8601 day number, 1 = Monday … 7 = Sunday.
+     */
+    fun inSilentPlace(
+        context: Context,
+        hour: Int = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY),
+        dayOfWeek: Int = isoDayOfWeek(),
+    ): Boolean {
         if (!silentPlaceOn(context)) return false
-        return silentPlaceSlots(context).any { hour in it }
+        return silentPlaceSlots(context).any { dayOfWeek in it.days && hour in it.hours }
     }
 
-    private fun encodeSlots(slots: List<IntRange>): String =
-        slots.asSequence()
-            .filter { !it.isEmpty() && it.first in 0..23 && it.last in 0..23 }
-            .take(MAX_SILENT_PLACE_SLOTS)
-            .joinToString(",") { "${it.first}-${it.last}" }
+    /** ISO-8601 day number of [calendar]: 1 = Monday … 7 = Sunday. */
+    fun isoDayOfWeek(calendar: java.util.Calendar = java.util.Calendar.getInstance()): Int =
+        ((calendar.get(java.util.Calendar.DAY_OF_WEEK) + 5) % 7) + 1
 
-    private fun decodeSlots(raw: String): List<IntRange> =
-        raw.split(',').mapNotNull { part ->
-            val ends = part.trim().split('-')
-            val from = ends.getOrNull(0)?.trim()?.toIntOrNull() ?: return@mapNotNull null
-            val to = ends.getOrNull(1)?.trim()?.toIntOrNull() ?: return@mapNotNull null
-            if (from !in 0..23 || to !in 0..23 || to < from) null else from..to
+    private fun encodeSlots(slots: List<SilentPlaceSlot>): String =
+        slots.asSequence()
+            .filter { it.days.isNotEmpty() && !it.hours.isEmpty() && it.hours.first in 0..23 && it.hours.last in 0..23 }
+            .take(MAX_SILENT_PLACE_SLOTS)
+            .joinToString(";") { it.days.sorted().joinToString(",") + " " + "${it.hours.first}-${it.hours.last}" }
+
+    private fun decodeSlots(raw: String): List<SilentPlaceSlot> {
+        val out = mutableListOf<SilentPlaceSlot>()
+        for (part in raw.split(';')) {
+            val chunk = part.trim()
+            if (chunk.isEmpty()) continue
+            val bits = chunk.split(Regex("\\s+"))
+            if (bits.size >= 2) {
+                val days = bits[0].split(',').mapNotNull { it.trim().toIntOrNull() }.filter { it in 1..7 }.toSet()
+                val hours = parseHourRange(bits[1])
+                if (days.isNotEmpty() && hours != null) {
+                    out += SilentPlaceSlot(days, hours)
+                    continue
+                }
+            }
+            // Pre-2.72 values ("9-18" and the comma-joined "9-18,13-14") carry no day part and
+            // therefore mean every day.
+            for (legacy in chunk.split(',')) {
+                parseHourRange(legacy.trim())?.let { out += SilentPlaceSlot(ALL_DAYS, it) }
+            }
         }
+        return out
+    }
+
+    private fun parseHourRange(text: String): IntRange? {
+        val ends = text.split('-')
+        val from = ends.getOrNull(0)?.trim()?.toIntOrNull() ?: return null
+        val to = ends.getOrNull(1)?.trim()?.toIntOrNull() ?: return null
+        if (from !in 0..23 || to !in 0..23 || to < from) return null
+        return from..to
+    }
 
     // ------------------------------------------------------------------ speaking
 
@@ -580,8 +631,9 @@ object Announcer {
     /** One selected voice per answer. Uses Studio Ultra-HD voice online automatically when no offline slot is forced. */
     fun speakAnswer(context: Context, text: String, language: AppLang, slot: Int, answerId: String, manual: Boolean): Boolean {
         // 2.69 owner decision: no manual "Voice A / Voice B" system-voice picker. Answers use the
-        // Studio Ultra-HD voice (preferredVoice = null → rotating male/female in random mode) and,
-        // when offline with no cached clip, automatically fall back to the phone's built-in voice.
+        // Studio Ultra-HD voice (preferredVoice = null → rotating male/female in random mode).
+        // 2.71: there is no built-in-voice fallback any more — an HD clip that is not ready yet is
+        // retried and waited for, never substituted.
         return submit(
             context,
             Request(
@@ -597,57 +649,11 @@ object Announcer {
         )
     }
 
-    /** Query the actual initialized engine; no guessed male/female names and no voice downloads. */
-    suspend fun installedAnswerVoices(context: Context, language: AppLang): List<InstalledAnswerVoice> =
-        kotlinx.coroutines.suspendCancellableCoroutine { continuation -> main.post {
-            val app = context.applicationContext
-            val started = android.os.SystemClock.elapsedRealtime()
-            ensureEngine(app)
-            fun check() {
-                if (!continuation.isActive) return
-                val engine = tts
-                if (ready && engine != null) {
-                    val inventory = voices(engine, language).sortedWith(compareBy<Voice> { it.isNetworkConnectionRequired }.thenBy { it.name })
-                        .map { InstalledAnswerVoice(it.name, it.locale.toLanguageTag(), it.isNetworkConnectionRequired) }
-                    continuation.resumeWith(Result.success(inventory))
-                } else if (!initializing || android.os.SystemClock.elapsedRealtime() - started >= 10_500) {
-                    continuation.resumeWith(Result.success(emptyList()))
-                } else main.postDelayed({ check() }, 100)
-            }
-            check()
-        } }
-
-    private fun choiceToken(engine: TextToSpeech, language: AppLang, name: String) = engine.defaultEngine.orEmpty() + ":" + language.id + ":" + name
-
-    /** Preview exactly the requested installed voice. No automatic alternative can disguise a failed candidate. */
-    suspend fun previewAnswerVoice(context: Context, language: AppLang, name: String): Boolean {
-        val valid = AnswerVoicePolicy.validPreference(name) ?: return false
-        val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
-        val text = if (language == AppLang.TA) "வணக்கம். இது லைவ் கார்டு உதவியாளரின் குரல் முன்னோட்டம். ஒவ்வொரு பதிலும் ஒரு முறை மட்டுமே வாசிக்கப்படும். இந்தக் குரலைக் கேட்டு, குரல் ஏ அல்லது பி ஆகத் தேர்ந்தெடுக்கலாம்."
-            else "Hello. This is a Live Guard assistant voice preview. Each answer uses one voice and is read once. Listen to this voice, then choose it as Voice A or Voice B if you prefer."
-        val request = Request(if (language == AppLang.EN) text else null, if (language == AppLang.TA) text else null,
-            language, Event.TEST, true, done = done, preferredVoice = valid)
-        if (!submit(context, request)) return false
-        try { return kotlinx.coroutines.withTimeoutOrNull(35_000) { done.await() } ?: false } finally { if (!done.isCompleted) main.post { cancelRequest(request.id, VoiceDeliveryPolicy.Stage.CANCELLED) } }
-    }
-
-    suspend fun saveAnswerVoice(context: Context, language: AppLang, slot: Int, name: String): Boolean =
-        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-            val engine = tts ?: return@withContext false
-            if (!ready || slot !in 0..1 || choiceToken(engine, language, name) !in previewedChoices ||
-                voices(engine, language).none { it.name == name }) return@withContext false
-            val pair = AnswerVoicePreferences.load(context, language)
-            if (name == (if (slot == 0) pair.second else pair.first)) return@withContext false
-            AnswerVoicePreferences.save(context, language, slot, name)
-            true
-        }
-
     /** Clear/cancel chat speech without cancelling unrelated battery/security alerts. */
     fun cancelAnswers() { main.post {
         pending.filter { it.event == Event.ANSWER }.forEach { pending.remove(it); it.done?.complete(false) }
         if (active?.event == Event.ANSWER) {
             runCatching { activeMediaPlayer?.stop() }
-            runCatching { tts?.stop() }
             finish(VoiceDeliveryPolicy.Stage.CANCELLED, false)
         }
     } }
@@ -759,7 +765,7 @@ object Announcer {
             }
             if ((request.manual || (request.event == Event.OVERHEAT || request.bypassQuietHours) && active?.event == Event.ANSWER) && active != null) {
                 runCatching { activeMediaPlayer?.stop() }
-                runCatching { tts?.stop() }; finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
+                finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
             }
             if (pending.size >= 4) pending.removeLast().also { record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED); it.done?.complete(false) }
             if (request.manual || request.event == Event.OVERHEAT || request.bypassQuietHours) pending.addFirst(request) else pending.addLast(request)
@@ -891,6 +897,7 @@ object Announcer {
                             if (active?.id == requestId) {
                                 tamilVoice = true
                                 speakingState.value = true
+                                noteHdAvailable(context)
                                 record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
                                 if (!request.started) {
                                     request.started = true
@@ -925,93 +932,18 @@ object Announcer {
                 request.hdAttempts++
                 if (request.hdAttempts >= MAX_HD_ATTEMPTS) {
                     record(context, request, VoiceDeliveryPolicy.Stage.NO_INTERNET)
+                    noteHdUnavailable(context)
                     request.done?.complete(false)
                     drain(context)
                     return@post
                 }
                 pending.addFirst(request)
                 record(context, request, VoiceDeliveryPolicy.Stage.NO_INTERNET)
+                noteHdUnavailable(context)
                 watchInternet(context)
                 main.postDelayed({ if (active == null) drain(context) }, HD_RETRY_DELAY_MS)
             }
         }
-    }
-
-    private fun voices(engine: TextToSpeech, language: AppLang): List<Voice> = runCatching {
-        engine.voices.orEmpty().filter { it.locale.language == (if (language == AppLang.TA) "ta" else "en") &&
-            "notInstalled" !in it.features.orEmpty() }
-    }.getOrDefault(emptyList())
-
-    private fun startUtterance(context: Context, request: Request, offline: Boolean) {
-        val engine = tts ?: run { finish(VoiceDeliveryPolicy.Stage.NO_ENGINE, false); return }
-        try {
-            val locale = if (request.language == AppLang.TA) TAMIL else Locale.US
-            var languageResult = engine.setLanguage(locale)
-            if (languageResult < 0) languageResult = engine.setLanguage(if (request.language == AppLang.TA) Locale("ta") else Locale.ENGLISH)
-            if (!VoiceDeliveryPolicy.validStatus(languageResult)) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
-            val available = voices(engine, request.language)
-            val network = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
-            val connected = runCatching { network?.activeNetwork?.let { network.getNetworkCapabilities(it) }
-                ?.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET) == true }.getOrDefault(false)
-            val wantOnline = !offline && onlineVoice(context) && connected
-            val studioTargetFemale = request.resolveProfile(context).gender == com.universalrp.voice.NeuralVoiceGender.FEMALE
-            val genderMatches = available.filter { !it.isNetworkConnectionRequired }.filter { v ->
-                val lower = v.name.lowercase(Locale.ROOT)
-                val looksFemale = lower.contains("female") || lower.contains("#female")
-                val looksMale = lower.contains("male") && !lower.contains("female")
-                if (studioTargetFemale) looksFemale else looksMale
-            }
-            val chosen = if (request.preferredVoice != null) available.firstOrNull { it.name == request.preferredVoice }
-                else when {
-                    // RANDOM: step through the matching system voices so the offline fallback voice
-                    // also changes each announcement instead of always grabbing the same one.
-                    voiceGenderMode(context) == VoiceGenderMode.RANDOM && genderMatches.isNotEmpty() ->
-                        genderMatches[Math.floorMod(systemVoiceCursor.incrementAndGet(), genderMatches.size)]
-                    else -> genderMatches.firstOrNull()
-                } ?: available.filter { if (wantOnline) it.isNetworkConnectionRequired else !it.isNetworkConnectionRequired }
-                    .maxByOrNull { it.quality } ?: available.filter { !it.isNetworkConnectionRequired }.maxByOrNull { it.quality }
-            if (request.preferredVoice != null && (chosen == null || chosen.isNetworkConnectionRequired && !connected)) {
-                finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return
-            }
-            if (offline && chosen == null) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
-            if (chosen != null && engine.setVoice(chosen) != TextToSpeech.SUCCESS) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
-            request.network = chosen?.isNetworkConnectionRequired ?: (engine.voice?.isNetworkConnectionRequired == true)
-            if (!wantOnline && request.network && request.preferredVoice == null) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
-            engine.setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH).build())
-            val pitch = if (request.preferredVoice == null && autoDailyGenderSwap(context)) {
-                if (studioTargetFemale) 1.06f else 0.94f
-            } else {
-                1.02f
-            }
-            engine.setPitch(pitch); engine.setSpeechRate(0.96f)
-            val params = android.os.Bundle().apply {
-                putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC)
-                putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, voiceVolume(context))
-            }
-            request.attemptId = request.id + if (request.retried) "-offline" else "-first"
-            val result = engine.speak(plain(request.text).take(TextToSpeech.getMaxSpeechInputLength()), TextToSpeech.QUEUE_FLUSH, params, request.attemptId)
-            if (result != TextToSpeech.SUCCESS) { voiceError(request.attemptId, VoiceDeliveryPolicy.Stage.ENGINE_REJECTED); return }
-            record(context, request, VoiceDeliveryPolicy.Stage.QUEUED)
-            val attempt = request.attemptId
-            main.postDelayed({ if (active?.attemptId == attempt && !request.started) {
-                runCatching { tts?.stop() }
-                voiceError(attempt, VoiceDeliveryPolicy.Stage.TIMED_OUT)
-            } }, if (request.network) 12_000 else 20_000)
-        } catch (e: Exception) { finish(VoiceDeliveryPolicy.Stage.ENGINE_ERROR, false) }
-    }
-
-    private fun voiceError(utteranceId: String?, failedStage: VoiceDeliveryPolicy.Stage = VoiceDeliveryPolicy.Stage.ENGINE_ERROR) {
-        val request = active ?: return
-        if (request.attemptId != utteranceId) return // Old/duplicate callback cannot affect a newer utterance.
-        val ctx = prefsContext ?: return
-        val engine = tts ?: return
-        val offline = voices(engine, request.language).any { !it.isNetworkConnectionRequired }
-        if (request.preferredVoice == null && AnswerVoicePolicy.retryInAnotherVoice(request.started, request.event == Event.ANSWER) &&
-            VoiceDeliveryPolicy.retryOffline(request.network, request.retried, offline)) {
-            request.retried = true
-            startUtterance(ctx, request, offline = true) // Explicit installed OFFLINE voice in the SAME language; once per request.
-        } else finish(failedStage, false)
     }
 
     private fun finish(stage: VoiceDeliveryPolicy.Stage, success: Boolean, pump: Boolean = true) {
@@ -1019,17 +951,51 @@ object Announcer {
         active = null
         speakingState.value = false
         prefsContext?.let { record(it, request, stage) }
-        if (success && request.event == Event.TEST && request.preferredVoice != null) tts?.let {
-            previewedChoices.add(choiceToken(it, request.language, request.preferredVoice))
-        }
         request.done?.complete(success)
         if (pump) prefsContext?.let { drain(it) }
+    }
+
+    // ---------------------------------------------------- HD unavailability (2.72)
+
+    /**
+     * Records that an HD attempt just failed. The first failure starts the clock; once the
+     * voice has been unreachable for [VOICE_UNAVAILABLE_NOTICE_MS] the "voice is waiting"
+     * card is posted exactly once, so a sustained outage is visible instead of looking like
+     * plain silence.
+     *
+     * Called on the main thread from the retry path only, so the two fields it touches need
+     * no lock.
+     */
+    private fun noteHdUnavailable(context: Context) {
+        if (!enabled(context)) return
+        val now = System.currentTimeMillis()
+        if (hdUnavailableSince == 0L) hdUnavailableSince = now
+        if (voiceUnavailableNotified) return
+        if (now - hdUnavailableSince < VOICE_UNAVAILABLE_NOTICE_MS) return
+        voiceUnavailableNotified = true
+        runCatching {
+            com.universalrp.cleansweep.notify.VoiceNotifier.post(context.applicationContext)
+        }
+    }
+
+    /**
+     * An HD clip actually started playing, so the voice is fine again: reset the clock and
+     * cancel the card, whether or not it was ever posted.
+     */
+    private fun noteHdAvailable(context: Context) {
+        val wasNotified = voiceUnavailableNotified
+        hdUnavailableSince = 0L
+        voiceUnavailableNotified = false
+        if (wasNotified) {
+            runCatching {
+                com.universalrp.cleansweep.notify.VoiceNotifier.clear(context.applicationContext)
+            }
+        }
     }
 
     private fun cancelRequest(id: String, stage: VoiceDeliveryPolicy.Stage) {
         if (active?.id == id) {
             runCatching { activeMediaPlayer?.stop() }
-            runCatching { tts?.stop() }
             finish(stage, false)
         }
         else pending.firstOrNull { it.id == id }?.let {
@@ -1039,7 +1005,7 @@ object Announcer {
 
     fun stop() { main.post {
         runCatching { activeMediaPlayer?.stop() }
-        runCatching { tts?.stop() }
+        prefsContext?.let { noteHdAvailable(it) }
         speakingState.value = false
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
@@ -1047,68 +1013,16 @@ object Announcer {
 
     fun shutdown() { main.post {
         runCatching { activeMediaPlayer?.stop() }
-        runCatching { tts?.stop(); tts?.shutdown() }
+        prefsContext?.let { noteHdAvailable(it) }
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
-        tts = null; ready = false; initializing = false; tamilVoice = false; generation++
-        previewedChoices.clear()
+        tamilVoice = false
     } }
-
-    /** Always constructed/used on main; callback is deferred until the constructor's holder is assigned. */
-    private fun ensureEngine(context: Context) {
-        if (ready || initializing) return
-        initializing = true; generation++
-        val mine = generation
-        pending.firstOrNull()?.let { record(context, it, VoiceDeliveryPolicy.Stage.INITIALIZING) }
-        try {
-            var created: TextToSpeech? = null
-            val made = TextToSpeech(context) { result -> main.post {
-                if (mine != generation) return@post
-                val engine = created
-                initializing = false
-                if (result == TextToSpeech.SUCCESS && engine != null) {
-                    tts = engine; ready = true
-                    drain(context)
-                } else failInitialization(context, VoiceDeliveryPolicy.Stage.INIT_FAILED)
-            } }
-            created = made
-            made.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                override fun onStart(id: String?) { main.post {
-                    val request = active ?: return@post
-                    if (request.attemptId == id) {
-                        record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
-                        if (!request.started) {
-                            request.started = true
-                            runCatching { request.onStarted?.invoke() }
-                            // Startup timeout is not a replay timer. A started answer is never restarted in another voice.
-                            val limit = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L
-                            main.postDelayed({ if (active?.attemptId == id) {
-                                runCatching { tts?.stop() }; finish(VoiceDeliveryPolicy.Stage.TIMED_OUT, false)
-                            } }, limit)
-                        }
-                    }
-                } }
-                override fun onDone(id: String?) { main.post { if (active?.attemptId == id) finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true) } }
-                @Suppress("OVERRIDE_DEPRECATION") override fun onError(id: String?) { main.post { voiceError(id) } }
-                override fun onError(id: String?, errorCode: Int) { main.post { voiceError(id) } }
-            })
-            tts = made
-            main.postDelayed({ if (mine == generation && !ready) failInitialization(context, VoiceDeliveryPolicy.Stage.INIT_TIMEOUT) }, 10_000)
-        } catch (e: Exception) { failInitialization(context, VoiceDeliveryPolicy.Stage.NO_ENGINE) }
-    }
-
-    private fun failInitialization(context: Context, stage: VoiceDeliveryPolicy.Stage) {
-        generation++; initializing = false; ready = false
-        previewedChoices.clear()
-        runCatching { tts?.shutdown() }; tts = null
-        val failed = pending.toList(); pending.clear()
-        failed.forEach { record(context, it, stage); it.done?.complete(false) }
-    }
 
     private fun record(context: Context, request: Request, stage: VoiceDeliveryPolicy.Stage) {
         val volume = runCatching { (context.getSystemService(Context.AUDIO_SERVICE) as? android.media.AudioManager)
             ?.getStreamVolume(android.media.AudioManager.STREAM_MUSIC) }.getOrNull()
-        val snapshot = VoiceDeliveryStatus(stage, request.event.name, System.currentTimeMillis(), if (ready) tamilVoice else null,
+        val snapshot = VoiceDeliveryStatus(stage, request.event.name, System.currentTimeMillis(), tamilVoice,
             volume, request.network, request.language.id)
         runtimeState.value = snapshot
         if (!request.manual) {
@@ -1131,13 +1045,6 @@ object Announcer {
     }
 
     fun pick(context: Context, english: String, tamil: String): String = if (tamilVoice && tamil.isNotBlank()) tamil else english
-
-    /** Availability hint only; a test's callback/locale result, not this flag, is delivery evidence. */
-    fun canSpeak(context: Context): Boolean = runCatching {
-        context.packageManager.queryIntentServices(android.content.Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE), 0).isNotEmpty()
-    }.getOrDefault(false)
-
-    private val TAMIL = Locale.forLanguageTag("ta-IN")
 
     // ------------------------------------------------------------------ text for speech
 
@@ -1183,4 +1090,17 @@ object Announcer {
         false
     }
 
+}
+
+/**
+ * 2.72 — one silent-place slot: the ISO days it applies on (1 = Monday … 7 = Sunday, see
+ * [Announcer.ALL_DAYS]) and the inclusive hour range it covers on those days.
+ *
+ * The owner asked for "when voice functions start and stop" with multiple slots; a real office
+ * pattern is "Mon–Fri 9–18, Sat 10–14", which needs the day as well as the hour, so both live here
+ * rather than the day being faked by repeating one slot five times.
+ */
+data class SilentPlaceSlot(val days: Set<Int>, val hours: IntRange) {
+    /** True when this slot covers [dayOfWeek] (ISO, 1 = Monday) at [hour]. */
+    fun covers(dayOfWeek: Int, hour: Int): Boolean = dayOfWeek in days && hour in hours
 }

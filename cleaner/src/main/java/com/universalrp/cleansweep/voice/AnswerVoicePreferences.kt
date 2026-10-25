@@ -31,10 +31,11 @@ object AnswerVoicePreferences {
     /**
      * 2.42: write the **automatic** default pair chosen from the phone's own inventory.
      *
-     * A manual save ([Announcer.saveAnswerVoice]) still requires a completed preview and two
-     * distinct voices; this path exists so a first answer is spoken instead of being refused
-     * with an error, which is what the owner asked for. Names are validated, and writing
-     * nothing at all is better than storing an unusable preference.
+     * 2.72: the manual "Voice A / Voice B" system-voice picker is gone and Live Guard now speaks
+     * with the Studio Ultra-HD voice only, so nothing calls this any more. The store is kept so an
+     * existing install keeps its saved choice readable, but the announcer never reads it to pick a
+     * voice. Names are still validated, because writing an unusable preference is worse than
+     * writing nothing.
      */
     fun saveAutomatic(context: Context, language: AppLang, first: String?, second: String?): Boolean {
         val a = AnswerVoicePolicy.validPreference(first) ?: return false
