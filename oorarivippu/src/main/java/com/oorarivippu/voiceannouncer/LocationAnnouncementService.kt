@@ -106,6 +106,11 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         val isOfflineReminder: Boolean = false,
         val requireOnDeviceVoice: Boolean = false,
         val overrideOnlineProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
+        /**
+         * A5 - the title this announcement is reported under, or null for a voice preview, which is
+         * deliberately not part of the delivery report.
+         */
+        val logTitle: String? = null,
     )
     private var pendingSpeechQueue: PendingSpeech? = null
     private var latestSpeakingRequest: PendingSpeech? = null
@@ -383,8 +388,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     if (alternateLanguage == "en") Locale("en", "IN") else Locale("ta", "IN")
                 ).format(java.util.Date())
             )
-            AppPreferences.appendAnnouncementLog("Current place: $city", primary)
-            speakAnnouncement(primary, current.voiceLanguage, alternate)
+            speakAnnouncement(
+                text = primary,
+                voiceLang = current.voiceLanguage,
+                alternateLanguageText = alternate,
+                logTitle = "Current place: $city"
+            )
         }
     }
 
@@ -848,8 +857,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     travelDetector.markPlaceAnnounced(location)
                     val primary = primaryParts.joinToString(" ")
                     val alternate = alternateParts.joinToString(" ")
-                    AppPreferences.appendAnnouncementLog(logTitle, primary)
-                    speakAnnouncement(primary, current.voiceLanguage, alternate)
+                    speakAnnouncement(
+                        text = primary,
+                        voiceLang = current.voiceLanguage,
+                        alternateLanguageText = alternate,
+                        logTitle = logTitle
+                    )
                 }
             } finally {
                 if (requestToken == geocodeRequestToken) reverseGeocodeJob = null
@@ -904,12 +917,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             distanceMeters = alertDistance,
             arrived = arrived
         )
-        AppPreferences.appendAnnouncementLog(name, primary)
         speakAnnouncement(
             text = primary,
             voiceLang = snapshot.voiceLanguage,
             alternateLanguageText = alternate,
-            queueMode = TextToSpeech.QUEUE_ADD
+            queueMode = TextToSpeech.QUEUE_ADD,
+            logTitle = name
         )
     }
 
@@ -948,8 +961,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         val displayTitle = if (subArea.isNotBlank() &&
             !PlaceDataPolicy.samePlaceName(subArea, cityOrVillage)
         ) "$cityOrVillage ($subArea)" else cityOrVillage
-        AppPreferences.appendAnnouncementLog(displayTitle, primary)
-        speakAnnouncement(primary, voiceLanguage, alternate)
+        speakAnnouncement(
+            text = primary,
+            voiceLang = voiceLanguage,
+            alternateLanguageText = alternate,
+            logTitle = displayTitle
+        )
     }
 
     private fun shouldStartReverseGeocode(location: Location): Boolean {
@@ -1181,14 +1198,21 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         isOfflineReminder: Boolean = false,
         requireOnDeviceVoice: Boolean = false,
         overrideOnlineProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
+        logTitle: String? = null,
     ) {
         val snapshot = AppPreferences.state.value
         val isPreview = overrideOnlineProfile != null || !snapshot.isTrackingEnabled
-        if (requiresInternet && snapshot.isInternetAvailable != true) return
+        if (requiresInternet && snapshot.isInternetAvailable != true) {
+            logDelivery(logTitle, text, AnnouncementDeliveryReport.Outcome.NO_INTERNET)
+            return
+        }
         // Place alerts need GPS; an explicit offline-status reminder or voice preview does not.
         if (!isOfflineReminder && !isPreview && !GpsStateReceiver.isGpsProviderEnabled(this) &&
             snapshot.isTrackingEnabled
-        ) return
+        ) {
+            logDelivery(logTitle, text, AnnouncementDeliveryReport.Outcome.NO_GPS)
+            return
+        }
 
         val requestedLanguage = if (voiceLang == "en") "en" else "ta"
         val speech = PendingSpeech(
@@ -1201,8 +1225,10 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             isOfflineReminder = isOfflineReminder,
             requireOnDeviceVoice = requireOnDeviceVoice,
             overrideOnlineProfile = overrideOnlineProfile,
+            logTitle = logTitle,
         )
         if (isPhoneCallAudioActive()) {
+            logDelivery(logTitle, text, AnnouncementDeliveryReport.Outcome.QUEUED_CALL)
             pendingSpeechQueue = speech
             AppPreferences.setCallAudioPaused(true)
             updateForegroundNotification()
@@ -1284,6 +1310,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                         audioManager?.abandonAudioFocusRequest(focusRequest)
                     }
                     if (isPhoneCallAudioActive() && !played) {
+                        logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.QUEUED_CALL)
                         mainHandler.post {
                             pendingSpeechQueue = speech
                             AppPreferences.setCallAudioPaused(true)
@@ -1293,23 +1320,29 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                         return@execute
                     }
                     if (played) {
+                        logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.SPOKEN)
                         mainHandler.post {
                             if (!AppPreferences.state.value.isTrackingEnabled) stopSelf()
                         }
                         return@execute
                     }
-                    if (neuralGeneration.get() != myGen) return@execute
+                    if (neuralGeneration.get() != myGen) {
+                        logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.SKIPPED)
+                        return@execute
+                    }
                 }
 
                 // Instant automatic fallback to installed Android System TTS when offline / cloud unreachable!
                 mainHandler.post {
                     val engine = tts
                     if (!isTtsReady || engine == null) {
+                        logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE)
                         pendingSpeechQueue = speech.copy(requireOnDeviceVoice = true, overrideOnlineProfile = null)
                         return@post
                     }
                     val actualLang = configureTtsLanguage(requestedLanguage, false)
                     if (actualLang == null) {
+                        logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE)
                         playOfflineBeepIfRelevant(speech)
                         if (!AppPreferences.state.value.isTrackingEnabled) stopSelf()
                         return@post
@@ -1324,12 +1357,14 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
 
         val engine = tts
         if (!isTtsReady || engine == null) {
+            logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE)
             pendingSpeechQueue = speech
             return
         }
 
         val actualLanguage = configureTtsLanguage(requestedLanguage, requireOnDeviceVoice)
         if (actualLanguage == null) {
+            logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE)
             playOfflineBeepIfRelevant(speech)
             if (!snapshot.isTrackingEnabled) stopSelf()
             return
@@ -1339,6 +1374,20 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         latestSpeakingRequest = speech
         requestAudioFocusAndSpeak(engine, localizedText, queueMode, speech)
         monitorCallModeDuringSpeech(engine)
+    }
+
+    /**
+     * A5 - write one row of the delivery report. A null title means a voice preview: those are not
+     * tracked announcements and must never appear in the owner's report.
+     */
+    private fun logDelivery(
+        title: String?,
+        text: String,
+        outcome: AnnouncementDeliveryReport.Outcome
+    ) {
+        if (title.isNullOrBlank()) return
+        val storedText = text.ifBlank { title }
+        AppPreferences.appendAnnouncementLog(title.trim(), storedText, outcome.name)
     }
 
     private fun isPhoneCallAudioActive(): Boolean {
@@ -1404,8 +1453,15 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         }
 
         engine.setAudioAttributes(audioAttributes)
+        // One row per utterance: whichever of start/error arrives first is the answer, so a failed
+        // utterance can never also be logged as delivered.
+        val reported = java.util.concurrent.atomic.AtomicBoolean(false)
         engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-            override fun onStart(utteranceId: String?) {}
+            override fun onStart(utteranceId: String?) {
+                if (reported.compareAndSet(false, true)) {
+                    logDelivery(speech.logTitle, text, AnnouncementDeliveryReport.Outcome.SPOKEN)
+                }
+            }
             override fun onDone(utteranceId: String?) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && focusRequest != null) {
                     audioManager?.abandonAudioFocusRequest(focusRequest)
@@ -1414,6 +1470,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             }
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) {
+                if (reported.compareAndSet(false, true)) {
+                    logDelivery(speech.logTitle, text, AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE)
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && focusRequest != null) {
                     audioManager?.abandonAudioFocusRequest(focusRequest)
                 }

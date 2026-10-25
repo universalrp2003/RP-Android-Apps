@@ -4,7 +4,13 @@ This file indexes all seven published **RP Ideas** Android applications at [`uni
 
 ## Unreleased
 
-_No unreleased changes._
+Three releases are merged and CI-green but **not yet published** — the GitHub release assets and
+their digests do not exist yet, so no byte sizes or SHA-256 values are quoted here. Each will move
+into a `Published` section with its build run, size and digest once the publish step has run.
+
+- **SMS Guard 1.1.6 / code 12** ([`releases/sms-guard-v1.1.6.md`](releases/sms-guard-v1.1.6.md)): a monthly-spend card on the Finance tab — this month versus last month, the change in rupees and percent (suppressed when last month had no spending), the running daily average, the projected month end, the days remaining, and a plain-language trend. The month ends at the last instant of the calendar month, not at midnight of the last day. `0` new permissions over `1.1.5`.
+- **Ramesh Radio 1.25 / code 25** ([`releases/ramesh-radio-v1.25.md`](releases/ramesh-radio-v1.25.md)): more than one saved place for rain and cyclone voice alerts — a row of chips under the weather banner, one tap to switch, the active chip removes with the next place promoted. Up to 12 places, with dedupe by coordinates. `0` new permissions over `1.24`.
+- **Oor Arivippu 1.1.9 / code 14** ([`releases/oor-arivippu-v1.1.9.md`](releases/oor-arivippu-v1.1.9.md)): the announcement list now records what actually happened to each announcement (spoken / held for a call / no internet / GPS off / no voice / not spoken) with a summary line, survives the process being killed, and its empty state explains that an empty list means the voice was not delivered. `0` new permissions over `1.1.8`.
 
 ## Published — Weather Accuracy & Privacy Update (`Live Guard 2.70`, `Ramesh Radio 1.24`, `Oor Arivippu 1.1.8`) (24 October 2026)
 

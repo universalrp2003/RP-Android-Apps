@@ -1221,6 +1221,25 @@ private fun OorSettingsFullDialog(
                                 fontSize = 13.sp
                             )
                         } else {
+                            val summary = AnnouncementDeliveryReport.summarize(state.history)
+                            Text(
+                                text = String.format(
+                                    ui.deliverySummaryFormat,
+                                    summary.spoken,
+                                    summary.total
+                                ),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0F766E)
+                            )
+                            Text(
+                                text = String.format(
+                                    ui.deliveryPlacesFormat,
+                                    summary.distinctPlaces
+                                ),
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
                             state.history.forEach { item ->
                                 Column(
                                     modifier = Modifier
@@ -1255,6 +1274,29 @@ private fun OorSettingsFullDialog(
                                         text = item.spokenText,
                                         fontSize = 13.sp,
                                         color = Color(0xFF334155)
+                                    )
+                                    val outcome = AnnouncementDeliveryReport.outcomeOf(item)
+                                    val outcomeLabel = when (outcome) {
+                                        AnnouncementDeliveryReport.Outcome.SPOKEN -> ui.outcomeSpoken
+                                        AnnouncementDeliveryReport.Outcome.QUEUED_CALL -> ui.outcomeQueuedCall
+                                        AnnouncementDeliveryReport.Outcome.NO_INTERNET -> ui.outcomeNoInternet
+                                        AnnouncementDeliveryReport.Outcome.NO_GPS -> ui.outcomeNoGps
+                                        AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE -> ui.outcomeVoiceUnavailable
+                                        AnnouncementDeliveryReport.Outcome.SKIPPED -> ui.outcomeSkipped
+                                    }
+                                    Text(
+                                        text = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
+                                            "\u2713 " + outcomeLabel
+                                        } else {
+                                            "\u26A0 " + outcomeLabel
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
+                                            Color(0xFF15803D)
+                                        } else {
+                                            Color(0xFFB45309)
+                                        }
                                     )
                                 }
                             }
@@ -1299,7 +1341,7 @@ private fun OorSettingsFullDialog(
                             ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.24",
                             ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
                             ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
-                            ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.8",
+                            ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9",
                             ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3"
                         )
                         releaseLinks.forEach { (label, url) ->
