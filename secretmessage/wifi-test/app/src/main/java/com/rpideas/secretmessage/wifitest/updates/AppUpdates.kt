@@ -36,6 +36,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.Dp
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -491,7 +502,8 @@ object AppUpdates {
                 }
                 update?.let { release ->
                     Text(text("Release source") + ": ${release.repository}")
-                    Text(text("What’s new") + "\n" + localizedReleaseNotes(release.notes, tamil))
+                    Text(text("What’s new"))
+                    ReleaseNotes(localizedReleaseNotes(release.notes, tamil))
                     if (downloading) {
                         LinearProgressIndicator(
                             progress = { (bytes.toDouble() / release.size.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f) },
@@ -549,7 +561,8 @@ object AppUpdates {
                         } else if (verifiedApk == null) {
                             Text(text("SHA-256, package name, newer version and signing certificate are checked before Android opens the installer."))
                             Text(text("Android requires Install unknown apps permission for this app and its own confirmation for each install. Play Protect is not bypassed."))
-                            Text(text("What’s new") + "\n" + localizedReleaseNotes(release.notes, tamil))
+                            Text(text("What’s new"))
+                            ReleaseNotes(localizedReleaseNotes(release.notes, tamil))
                         }
                     }
                 },
@@ -570,5 +583,155 @@ object AppUpdates {
                 },
             )
         }
+    }
+}
+
+// --- Release-note markdown ---------------------------------------------------------------
+// The notes used to be printed raw, so the screen showed the literal `**bold**`, `## headings`
+// and `- bullets`. This parses the small subset the notes use and lays it out. Keep in step
+// with `shared/src/main/java/com/universalrp/updates/ReleaseNotesMarkdown.kt`.
+
+private enum class ReleaseNoteLineKind { Title, Heading, Paragraph, Bullet, SubBullet }
+
+private data class ReleaseNoteLine(
+    val kind: ReleaseNoteLineKind,
+    val text: AnnotatedString,
+)
+
+private fun parseReleaseNotes(markdown: String): List<ReleaseNoteLine> {
+    val blocks = mutableListOf<ReleaseNoteLine>()
+    for (raw in markdown.lines()) {
+        if (raw.isBlank()) continue
+        val trimmed = raw.trim()
+        val indent = raw.length - raw.trimStart().length
+        if (indent > 0 && trimmed.startsWith("- ")) {
+            blocks.add(
+                ReleaseNoteLine(ReleaseNoteLineKind.SubBullet, inlineMarkdown(trimmed.removePrefix("- ")))
+            )
+            continue
+        }
+        if (indent > 0 && blocks.isNotEmpty()) {
+            val last = blocks.removeAt(blocks.size - 1)
+            blocks.add(last.copy(text = last.text + AnnotatedString(" ") + inlineMarkdown(trimmed)))
+            continue
+        }
+        val kind = when {
+            trimmed.startsWith("# ") -> ReleaseNoteLineKind.Title
+            trimmed.startsWith("## ") -> ReleaseNoteLineKind.Heading
+            trimmed.startsWith("- ") -> ReleaseNoteLineKind.Bullet
+            else -> ReleaseNoteLineKind.Paragraph
+        }
+        val content = when (kind) {
+            ReleaseNoteLineKind.Title -> trimmed.removePrefix("# ")
+            ReleaseNoteLineKind.Heading -> trimmed.removePrefix("## ")
+            ReleaseNoteLineKind.Bullet -> trimmed.removePrefix("- ")
+            // A sub-bullet is turned into a block before this point, so this branch is never
+            // reached; it is here so the `when` stays exhaustive over the enum.
+            ReleaseNoteLineKind.SubBullet -> trimmed.removePrefix("- ")
+            ReleaseNoteLineKind.Paragraph -> trimmed
+        }
+        blocks.add(ReleaseNoteLine(kind, inlineMarkdown(content)))
+    }
+    return blocks
+}
+
+private fun closingIndex(text: String, start: Int, open: String, close: String): Int? {
+    if (!text.startsWith(open, start)) return null
+    val end = text.indexOf(close, start + open.length)
+    if (end < start + open.length + 1) return null
+    val content = text.substring(start + open.length, end)
+    if (content.contains(open) || content.contains(close)) return null
+    return end
+}
+
+private fun inlineMarkdown(text: String): AnnotatedString = buildAnnotatedString {
+    var i = 0
+    while (i < text.length) {
+        val bold = closingIndex(text, i, "**", "**")
+        if (bold != null) {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(text.substring(i + 2, bold)) }
+            i = bold + 2
+            continue
+        }
+        val code = closingIndex(text, i, "`", "`")
+        if (code != null) {
+            withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) { append(text.substring(i + 1, code)) }
+            i = code + 1
+            continue
+        }
+        val italic = closingIndex(text, i, "*", "*")
+        if (italic != null) {
+            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(text.substring(i + 1, italic)) }
+            i = italic + 1
+            continue
+        }
+        if (text[i] == '[') {
+            val label = text.indexOf(']', i + 1)
+            if (label > i + 1 && label + 1 < text.length && text[label + 1] == '(') {
+                val end = text.indexOf(')', label + 2)
+                if (end > label + 2) {
+                    append(text.substring(i + 1, label))
+                    append(" (")
+                    append(text.substring(label + 2, end))
+                    append(")")
+                    i = end + 1
+                    continue
+                }
+            }
+        }
+        append(text[i])
+        i++
+    }
+}
+
+@Composable
+private fun ReleaseNotes(markdown: String) {
+    val lines = remember(markdown) { parseReleaseNotes(markdown) }
+    Column(
+        Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        val body = MaterialTheme.colorScheme.onSurfaceVariant
+        val strong = MaterialTheme.colorScheme.onSurface
+        lines.forEach { line ->
+            when (line.kind) {
+                ReleaseNoteLineKind.Title -> Text(
+                    text = line.text,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = strong,
+                )
+                ReleaseNoteLineKind.Heading -> Text(
+                    text = line.text,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = strong,
+                )
+                ReleaseNoteLineKind.Paragraph -> Text(
+                    text = line.text,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = body,
+                )
+                ReleaseNoteLineKind.Bullet -> NoteBullet(line.text, body, 0.dp)
+                ReleaseNoteLineKind.SubBullet -> NoteBullet(line.text, body, 14.dp, dash = true)
+            }
+        }
+    }
+}
+
+@Composable
+private fun NoteBullet(text: AnnotatedString, color: Color, indent: Dp, dash: Boolean = false) {
+    Row(Modifier.fillMaxWidth().padding(start = indent)) {
+        Text(
+            text = if (dash) "–  " else "•  ",
+            style = MaterialTheme.typography.bodySmall,
+            color = color,
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = color,
+            modifier = Modifier.weight(1f),
+        )
     }
 }

@@ -12,7 +12,12 @@ import java.util.Locale
 data class AnnouncementLogItem(
     val timestamp: String,
     val title: String,
-    val spokenText: String
+    val spokenText: String,
+    /**
+     * A5 - how this announcement ended: [AnnouncementDeliveryReport.Outcome] name, or "" for a row
+     * written before outcomes were recorded (those were all spoken).
+     */
+    val outcome: String = ""
 )
 
 enum class TtsVoiceStatus {
@@ -95,6 +100,7 @@ object AppPreferences {
     private const val KEY_DESTINATION_ALERT_MASK = "destination_alert_mask"
     private const val KEY_HEADSET_WHERE_AM_I = "headset_where_am_i_enabled"
     private const val KEY_OFFLINE_REMINDER_INTERVAL_MINUTES = "offline_reminder_interval_minutes"
+    private const val KEY_ANNOUNCEMENT_LOG = "announcement_log_v1"
 
     private lateinit var prefs: SharedPreferences
     private val _state = MutableStateFlow(AppStateSnapshot())
@@ -139,6 +145,9 @@ object AppPreferences {
                     KEY_OFFLINE_REMINDER_INTERVAL_MINUTES,
                     OfflineReminderPolicy.DEFAULT_INTERVAL_MINUTES
                 )
+            ),
+            history = AnnouncementDeliveryReport.decodeAll(
+                prefs.getString(KEY_ANNOUNCEMENT_LOG, "") ?: ""
             )
         )
     }
@@ -370,18 +379,36 @@ object AppPreferences {
         )
     }
 
-    fun appendAnnouncementLog(placeTitle: String, spokenText: String) {
+    /**
+     * A5 - record one announcement and what happened to it. The outcome is decided by the caller
+     * that actually knows: the service records a drop, the speech engine records that it started.
+     */
+    fun appendAnnouncementLog(
+        placeTitle: String,
+        spokenText: String,
+        outcome: String = AnnouncementDeliveryReport.Outcome.SPOKEN.name
+    ) {
         val timeFmt = SimpleDateFormat("hh:mm:ss a", Locale.getDefault()).format(Date())
         val item = AnnouncementLogItem(
             timestamp = timeFmt,
             title = placeTitle,
-            spokenText = spokenText
+            spokenText = spokenText,
+            outcome = outcome
         )
-        val updated = listOf(item) + _state.value.history.take(29)
+        val updated = (listOf(item) + _state.value.history)
+            .take(AnnouncementDeliveryReport.MAX_HISTORY)
+        persistHistory(updated)
         _state.value = _state.value.copy(history = updated)
     }
 
+    private fun persistHistory(history: List<AnnouncementLogItem>) {
+        prefs.edit()
+            .putString(KEY_ANNOUNCEMENT_LOG, AnnouncementDeliveryReport.encodeAll(history))
+            .apply()
+    }
+
     fun clearHistory() {
+        persistHistory(emptyList())
         _state.value = _state.value.copy(history = emptyList())
     }
 }

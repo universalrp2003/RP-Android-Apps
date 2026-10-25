@@ -1121,8 +1121,9 @@ jobs:
             test -f "$file" || { echo "Missing verified release input: $file"; exit 1; }
           done
           # The strict Live Guard permission/device-evidence check above remains mandatory;
-          # notes must also be explicit if these exact candidate bytes were not device-tested.
-          if ! grep -Eiq 'not installed on a phone|no physical-device test|no device test' "$LIVE_NOTES"; then
+          # notes must also state plainly, in either direction, whether these exact candidate
+          # bytes were device-tested.
+          if ! grep -Eiq 'not installed on a phone|no physical-device test|no device test|not phone-installed|no phone install|installed on a phone|verified on a phone' "$LIVE_NOTES"; then
             echo "FAIL: Live Guard notes must state honestly whether this exact build had a device test."; exit 1
           fi
 
@@ -1202,8 +1203,8 @@ jobs:
             fi
             if [ ! -f "$EVIDENCE" ]; then
               echo "OK: $CLEANER_VERSION adds no dangerous permission, so no device-install record is required."
-              echo "    The freshly built bytes are published. No device test is claimed for them: the"
-              echo "    release notes and CHANGELOG must say plainly that this build was not installed on a phone."
+              echo "    The freshly built bytes are published. The release notes and CHANGELOG must still say"
+              echo "    plainly whether this build was installed on a phone - in either direction."
             else
               if ! grep -Eqi "play protect" "$EVIDENCE" || ! grep -Eqi "installer|installation outcome" "$EVIDENCE"; then
                 echo "FAIL: $EVIDENCE must record both the actual Play Protect result and the installer outcome."

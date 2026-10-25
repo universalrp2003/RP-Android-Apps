@@ -47,6 +47,11 @@ object RadioWeatherMonitor {
     private val _showDialog = MutableStateFlow(false)
     val showDialog: StateFlow<Boolean> = _showDialog.asStateFlow()
 
+    /** A4: the owner's own list of places. The shared runtime still holds only the
+     * active one; this list is Ramesh Radio's, so switching between places is one tap. */
+    private val _savedPlaces = MutableStateFlow<List<SavedPlace>>(emptyList())
+    val savedPlaces: StateFlow<List<SavedPlace>> = _savedPlaces.asStateFlow()
+
     private fun isActiveScope(): Boolean =
         windowOpen || PlayerBus.state.value.isPlaying
 
@@ -111,6 +116,7 @@ object RadioWeatherMonitor {
             searchResults = current.searchResults,
             statusNote = current.statusNote,
         )
+        refreshSavedPlaces(app)
     }
 
     fun setEnabled(context: Context, on: Boolean) {
@@ -347,6 +353,8 @@ object RadioWeatherMonitor {
     fun selectPlace(context: Context, candidate: WeatherPlaceCandidate) {
         val app = context.applicationContext
         SharedWeatherRuntime.savePlace(app, candidate)
+        // A4: every place the owner picks is remembered, so it is one tap to come back to it.
+        _savedPlaces.value = SavedPlacesStore.add(app, SavedPlace.from(candidate))
         _state.update { it.copy(searchResults = emptyList(), statusNote = "") }
         refreshState(app)
         if (!SharedWeatherRuntime.isEnabled(app)) {
@@ -360,6 +368,40 @@ object RadioWeatherMonitor {
         val app = context.applicationContext
         SharedWeatherRuntime.clearSavedPlace(app)
         refreshState(app)
+    }
+
+    /** A4: switch to one of the owner's saved places without searching for it again. */
+    fun selectSavedPlace(context: Context, place: SavedPlace) {
+        val app = context.applicationContext
+        _savedPlaces.value = SavedPlacesStore.setActive(app, place)
+        SharedWeatherRuntime.savePlace(app, place.toCandidate())
+        _state.update { it.copy(searchResults = emptyList(), statusNote = "") }
+        refreshState(app)
+        if (!SharedWeatherRuntime.isEnabled(app)) {
+            SharedWeatherRuntime.setEnabled(app, on = true, userInitiated = true)
+            refreshState(app)
+        }
+        checkNow(app, manual = false)
+    }
+
+    /** A4: forget one saved place. */
+    fun removeSavedPlace(context: Context, place: SavedPlace) {
+        val app = context.applicationContext
+        val remaining = SavedPlacesStore.remove(app, place)
+        _savedPlaces.value = remaining
+        // If the place just removed was the active one, promote the next one so the owner is
+        // never left with alerts pointing at a place they deleted.
+        val activeKey = SavedPlacesStore.active(app)?.key
+        if (activeKey == null && remaining.isNotEmpty()) {
+            selectSavedPlace(app, remaining.first())
+        } else {
+            refreshState(app)
+        }
+    }
+
+    /** A4: reload the list from disk, e.g. when the window opens. */
+    fun refreshSavedPlaces(context: Context) {
+        _savedPlaces.value = SavedPlacesStore.all(context.applicationContext)
     }
 
     fun saveTomorrowKey(context: Context, rawKey: String) {

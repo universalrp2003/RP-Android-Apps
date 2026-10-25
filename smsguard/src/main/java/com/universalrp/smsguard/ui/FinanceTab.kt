@@ -331,10 +331,11 @@ fun FinanceTab(
 
         // A3: the monthly-spend card. The ledger totals whatever period the owner picked; this is
         // the one number people open the tab for, with last month beside it. Every figure comes
-        // from MonthlySpendPolicy, which applies the same genuine-and-not-a-self-transfer filter as
-        // the ledger, so the two can never disagree.
+        // from MonthlySpendPolicy, which applies the genuine-bank/UPI, not-a-self-transfer, debit
+        // filter. It does not apply the ledger's account or per-message exclusions, because this
+        // card is meant to be the whole-month, every-account figure; the period summary below
+        // still reflects whatever filter the owner has chosen.
         item {
-            // Same source the summary uses, so the two can never disagree.
             val parsedAll = remember(allMessages) { allMessages.map { it.finance } }
             val monthly = remember(parsedAll) {
                 MonthlySpendPolicy.facts(
@@ -385,28 +386,55 @@ fun FinanceTab(
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "${ui.monthlySpendVsLastMonth}: ${FinanceLedgerEngine.formatInr(monthly.lastMonthSpend)}",
+                        ui.monthlySpendVsLastMonth,
                         color = palette.textMuted,
                         fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
                     )
-                    Text(changeText, color = changeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    // An amount never wraps; the label beside it does instead.
+                    Text(
+                        FinanceLedgerEngine.formatInr(monthly.lastMonthSpend),
+                        color = palette.textMuted,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
                 }
+                Spacer(Modifier.height(2.dp))
+                // The trend is a sentence, not a number. "Last month had no spend" is longer than
+                // this row is wide in Tamil, and 1.1.7 clipped it to one line, which cut the
+                // owner's screen off mid-word: "கடந்த மாதம் செலவு இ" and nothing more.
+                Text(
+                    changeText,
+                    color = changeColor,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(6.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(ui.monthlySpendDailyAverage, color = palette.textMuted, fontSize = 12.sp)
+                    Text(
+                        ui.monthlySpendDailyAverage,
+                        color = palette.textMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
                         FinanceLedgerEngine.formatInr(monthly.dailyAverage),
                         color = palette.textPrimary,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                 }
                 Spacer(Modifier.height(4.dp))
@@ -417,12 +445,19 @@ fun FinanceTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(ui.monthlySpendProjected, color = palette.textMuted, fontSize = 12.sp)
+                    Text(
+                        ui.monthlySpendProjected,
+                        color = palette.textMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
                         FinanceLedgerEngine.formatInr(monthly.projectedMonthEnd),
                         color = palette.accent,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                 }
             }
@@ -520,7 +555,7 @@ fun FinanceTab(
                     modifier = Modifier.weight(1f),
                     title = ui.incomeLabel,
                     amount = "+${FinanceLedgerEngine.formatInr(summary.totalIncome)}",
-                    subtitle = "${summary.creditCount} verified credits",
+                    subtitle = "${summary.creditCount} ${ui.verifiedCredits}",
                     accentColor = palette.safeGreen,
                     palette = palette,
                 )
@@ -528,7 +563,7 @@ fun FinanceTab(
                     modifier = Modifier.weight(1f),
                     title = ui.spendLabel,
                     amount = "-${FinanceLedgerEngine.formatInr(summary.totalSpend)}",
-                    subtitle = "${summary.debitCount} verified debits",
+                    subtitle = "${summary.debitCount} ${ui.verifiedDebits}",
                     accentColor = palette.dangerRed,
                     palette = palette,
                 )

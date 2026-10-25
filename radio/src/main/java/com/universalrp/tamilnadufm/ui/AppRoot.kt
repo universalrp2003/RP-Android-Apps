@@ -3,6 +3,8 @@ package com.universalrp.tamilnadufm.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -40,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,6 +75,10 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     val playback by PlayerBus.state.collectAsState()
     val weather by com.universalrp.tamilnadufm.RadioWeatherMonitor.state.collectAsState()
     val showWeatherDialog by com.universalrp.tamilnadufm.RadioWeatherMonitor.showDialog.collectAsState()
+    val savedPlaces by com.universalrp.tamilnadufm.RadioWeatherMonitor.savedPlaces.collectAsState()
+    val activePlaceKey = remember(savedPlaces, weather.savedPlaceName) {
+        savedPlaces.firstOrNull { it.name == weather.savedPlaceName && it.details == weather.savedPlaceDetails }?.key
+    }
     val rootContext = androidx.compose.ui.platform.LocalContext.current
     val isTamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL
 
@@ -97,6 +104,73 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
                 .padding(horizontal = 14.dp, vertical = 4.dp),
             placeDetails = weather.activePlaceDetails.ifBlank { weather.savedPlaceDetails },
         )
+
+        // A4: the owner's own places. One tap switches the rain/cyclone alerts to another town
+        // without searching for it again, and the long-press X forgets it.
+        //
+        // Shown from the very first place, not from the second: the owner reported that adding a
+        // place "just replaces" the one before it, and the only way to tell a growing list from a
+        // single changing place was to look at the weather card, which shows just the active one.
+        // A labelled row of chips makes the list itself visible, so growth is obvious and a real
+        // regression in the store would show up as one chip that changes name.
+        if (savedPlaces.isNotEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 2.dp),
+            ) {
+                Text(
+                    text = if (isTamil) "சேமித்த ஊர்கள்" else "Saved places",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+                Spacer(Modifier.height(3.dp))
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    savedPlaces.forEach { place ->
+                        val isActive = place.key == activePlaceKey
+                        Surface(
+                            color = if (isActive) Saffron else SurfaceHigh,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.clickable {
+                                com.universalrp.tamilnadufm.RadioWeatherMonitor.selectSavedPlace(rootContext, place)
+                            },
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = place.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                                )
+                                if (savedPlaces.size > 1) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "✕",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                                        modifier = Modifier.clickable {
+                                            com.universalrp.tamilnadufm.RadioWeatherMonitor.removeSavedPlace(
+                                                rootContext,
+                                                place,
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Box(Modifier.weight(1f)) {
             when (state.tab) {

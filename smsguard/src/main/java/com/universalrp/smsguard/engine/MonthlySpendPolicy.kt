@@ -80,8 +80,13 @@ data class MonthlySpendFacts(
 object MonthlySpendPolicy {
 
     /**
-     * Builds [MonthlySpendFacts] from the raw parsed messages, applying the same genuine-and-not-a-
-     * self-transfer filter [FinanceLedgerEngine.summarizePeriod] uses so the two never disagree.
+     * Builds [MonthlySpendFacts] from the raw parsed messages, applying the genuine-bank/UPI,
+     * not-a-self-transfer, debit filter - so a spoofed amount can never inflate a total.
+     *
+     * Deliberately narrower than [FinanceLedgerEngine.summarizePeriod], which additionally
+     * narrows to one selected account and drops individually excluded messages. This card is
+     * the whole-month, every-account figure on purpose, so it can be larger than a ledger view
+     * the owner has filtered down; it is not a second opinion on that filtered view.
      *
      * [nowMs] is injectable so the policy is testable without a clock.
      */

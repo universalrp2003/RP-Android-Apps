@@ -2,9 +2,139 @@
 
 This file indexes all seven published **RP Ideas** Android applications at [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/): six actively maintained utilities (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / ரமேஷ் ரேடியோ**, **PulseEQ**, **RP Vocal Remover Studio**, and **Oor Arivippu / ஊர் அறிவிப்பு**) plus the separately published **Secret Message / இரகசிய செய்தி** app, which has not been independently security-reviewed. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
 
+## Published — Ramesh Radio 1.26 (25 October 2026)
+
+**Ramesh Radio 1.26 / code 26** was published from the `arena` branch by [Build APK run 40212579939](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40212579939) (`Ramesh-Radio-v1.26.apk`, `15,092,964` bytes, SHA-256 `238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13`), from source commit `a5eec30`. The list logic was audited and found correct; what this release fixes is that the list was invisible until the second place and that its write was not durable. `0` new permissions over `1.25`.
+
+- The saved-places row is now labelled and drawn from the very first place saved, so a growing list is visible on the main screen instead of being inferable only from the weather card, which shows just the active place.
+- The list is written with `commit()` rather than `apply()`. `apply()` reaches disk asynchronously, so Android killing the process first silently lost every place except the newest one on the next launch.
+- The list algebra now lives in `addToList()` / `removeFromList()`, which `add()` and `remove()` delegate to, so it is testable without a device. Nine tests cover it: a second and a third place both survive, order is newest first, a re-pick moves rather than duplicates, the same town under two spellings is one chip, the cap keeps the newest, removal leaves the rest in order, and every added place survives the encode/decode round trip.
+- `addToList()` was first written to append the new place, which the new test `addingASecondPlaceKeepsTheFirst` caught on `:radio:testDebugUnitTest` before publication. Appending makes the cap discard the newest places and keep the oldest, the opposite of what a capped recently-saved list is for.
+
+**No device test before publication:** the exact published bytes were **not installed on a phone** prior to GitHub release publication, and the release note said so at the moment it was published. The release passed the full CI unit / lint / regression / signature / release-asset checks.
+
+## Published — Voice overhaul follow-ups: Live Guard 2.72, Ramesh Radio 1.25, SMS Guard 1.1.6 & Oor Arivippu 1.1.9 (25 October 2026)
+
+Four apps published on 25 October 2026 from the `arena` branch, each by its own workflow: Live Guard
+2.72 and Ramesh Radio 1.25 by [Build APK run 40183935239](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935239),
+SMS Guard 1.1.6 by [SMS Guard run 40183935196](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935196),
+and Oor Arivippu 1.1.9 by [Oor Arivippu run 40183935183](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935183).
+`PulseEQ 1.9`, `RP Vocal Remover Studio 0.1.15` and `Secret Message 1.1.3` were already public at these
+versions, so the batch step skipped them and their releases are unchanged.
+
+- **Live Guard 2.72 / code 77** ([`releases/live-guard-v2.72.md`](releases/live-guard-v2.72.md), `CleanSweep-v2.72.apk`, `14,413,927` bytes, SHA-256 `e6664f5d14f7fe31a8a754b5d35bde62ba14d1b6ee894ba2b454f4ab7952fc0b`, [Build APK run 40183935239](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935239)): each silent-place slot can now be limited to chosen weekdays, so "Mon-Fri 9 AM-6 PM, Sat 10 AM-2 PM" is two slots instead of five repeated ones; a slot that names no days is impossible and the card no longer claims voice is paused when no slot covers today; a sustained HD-voice outage is visible on the voice screen (wait, then announce - never a quieter fallback voice and never a silent drop); and the dead system text-to-speech code that 2.71 made unreachable is removed. `0` new dangerous permissions over `v2.71` - the manifest is byte-identical, so the permission-delta gate required no device-install record.
+- **Ramesh Radio 1.25 / code 25** ([`releases/ramesh-radio-v1.25.md`](releases/ramesh-radio-v1.25.md), `Ramesh-Radio-v1.25.apk`, `15,092,968` bytes, SHA-256 `49f7a4321e2e6facc20c2fccf0bec696a3cf9c7eab833afc3056cfafd3cec634`, [Build APK run 40183935239](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935239)): rain and cyclone voice alerts can point at more than one place - a row of chips under the weather banner, one tap to switch, the X forgets a place and promotes the next one, and every place picked from the search box is remembered. Up to 12 places, deduped by coordinates. `SharedWeatherRuntime` is deliberately unchanged, so Live Guard and Oor Arivippu see the new active place exactly as before. `0` new permissions over `v1.24`.
+- **SMS Guard 1.1.6 / code 12** ([`releases/sms-guard-v1.1.6.md`](releases/sms-guard-v1.1.6.md), `SMS-Guard-v1.1.6.apk`, `12,428,897` bytes, SHA-256 `3e129c31dd1556fc4cedfdfcd36f50147fda2edb3963ee10575bb244b064b8b8`, [SMS Guard run 40183935196](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935196)): a monthly-spend card on the Finance tab - this month against last month, the change in rupees and percent (suppressed when last month had no spending), the running daily average, the projected month end, the days remaining and a plain-language trend. The month ends at the last instant of the calendar month, not midnight on the last day. The card is deliberately the whole calendar month across every account, so it can read larger than the filtered period summary beneath it (on the owner's test phone, ₹10,427 against ₹10,302); the phone test also caught the projected figure wrapping mid-number, so every amount in the card is now a single non-wrapping line. OTP silence unchanged. `0` new permissions over `v1.1.5`.
+- **Oor Arivippu 1.1.9 / code 14** ([`releases/oor-arivippu-v1.1.9.md`](releases/oor-arivippu-v1.1.9.md), `Oor-Arivippu-v1.1.9.apk`, `12,794,316` bytes, SHA-256 `6915d597faa0ca9c0665bab695863d02fa04f56675796babcd9ce6446e286679`, [Oor Arivippu run 40183935183](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935183)): the announcement list now records what actually happened to each announcement (spoken / held for a call / no internet / GPS off / no voice / not spoken) with a summary line, survives the process being killed, and its empty state says plainly that an empty list means the voice was not delivered. Voice previews are excluded. `0` new permissions over `v1.1.8`.
+
+**No device test before publication (25 October 2026):** the exact published bytes of Live Guard 2.72, Ramesh Radio 1.25, SMS Guard 1.1.6 and Oor Arivippu 1.1.9 were **not installed on a phone** prior to GitHub release publication, and each note said so at the moment it was published. All four passed the full CI unit / lint / regression / signature / release-asset checks before publication.
+
+**Device test after publication (25 October 2026):** the owner installed the published APKs on their own phone and returned screenshots. Play Protect reported "This app looks safe" on Live Guard 2.72 and Oor Arivippu 1.1.9; Ramesh Radio updated in-app from 1.24 to 1.25. Confirmed on screen: Live Guard's silent-place day chips (seven chips, Monday first, all seven selected, "9:00 AM - 6:00 PM" and "+ another slot"), Oor Arivippu's `Version: 1.1.9` About line and the new A5 empty state, and Ramesh Radio's saved place, rain dialog and zero-location-permission message with a live check at Inunganur (Karur district, Tamil Nadu 639205). The owner then confirmed that SMS Guard 1.1.6 was installed as well, so its note now states a real phone install rather than the opposite; the card's figures against a real month of messages are still the open part of that check. The screenshots show no APK SHA-256, so these are owner-reported device results, not hash-matched ones. Still unverified: Ramesh Radio's chip strip, because the phone held exactly one saved place and the strip only appears with more than one.
+
+**Second batch of screenshots (25 October 2026), which settles two of those open points.** Android's App info screen shows SMS Guard at `1.1.6`, installed by the package installer and last updated `2026/10/25 18:11:37`, so the A3 bytes really are phone-installed. And the owner's Ramesh Radio screenshots show the answer to "no option for 2nd place": there is no separate add-place button by design - the search box under "PIN code or place name" is the way in. The owner typed `madurai`, picked Madurai, then typed `alangudi` and got three matches (Alangudi, Tamil Nadu 622301; Alangudi, Tiruvarur district; Alanguudi, Nagapattinam district), and "Saved place" moved from Madurai to Alangudi. Picking from the search results is what fills the list, so the list does hold more than one place. Still not photographed: the chip strip on the main screen, which is the one thing that needs a screenshot to confirm. The same batch caught the SMS Guard update dialog mid-download, where the release notes are intentionally hidden (`else if (verifiedApk == null)`), so the new markdown renderer has still not been seen on a screen.
+
+**Two release-note defects found by that test, both fixed:** the 2.72 note claimed a Monday-to-Friday default silent-place slot that the code does not have (the default is `SilentPlaceSlot(ALL_DAYS, 9..18)`), and none of the four notes carried a `## ` Tamil section, so `AppUpdates.localizedReleaseNotes` showed a Tamil-language owner the English text inside a Tamil app. `tools/verify_apps_localization.py` now requires exactly one Tamil section, requires it to be the last section, and requires the bare `## ` marker with no words after it - `substringAfter` keeps whatever follows the marker, so `## Tamil summary` used to leave the word "summary" as the first line of the Tamil release notes in the app; `releases/pulseeq-v1.9.md` and `releases/rp-vocal-remover-studio-v0.1.15.md` had a mid-note Tamil section that hid their checksum blocks from English readers. Both are fixed, and the six current notes now use the bare marker that 38 older notes already used. The four live release bodies were re-published with the corrected notes; editing a release body does not change the installed APK bytes.
+
+## Published — SMS Guard 1.1.8 / code 14 (25 October 2026)
+
+Published by [SMS Guard run 40208094170](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40208094170): `SMS-Guard-v1.1.8.apk`, `12,445,281` bytes, SHA-256 `de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582`.
+
+Bumped to code 14 / 1.1.8. The third release the owner's phone test has driven.
+
+The owner installed 1.1.7 and the wrap fix held: the projected month-end figure reads
+₹12,929.48 on one line. The same screenshots then showed what 1.1.7 had broken beside those
+amounts, and what 1.1.6 had been showing in Tamil since the card was new.
+
+Five defects, all repaired:
+
+1. **The trend sentence was clipped.** 1.1.7 gave the "vs last month" row a single
+   non-wrapping line, on the assumption it held a number. When last month had no spend it holds
+   a sentence, and the owner's phone ran it off the edge of the card: "கடந்த மாதம் செலவு இ" and
+   nothing more. The amount now has its own place beside the label and the sentence wraps
+   underneath.
+2. **"மீதம் நாடகள்"** - நாடகள் means dramas, not days. The card read "6 மீதம் நாடகள்".
+3. **"உறியாக்க செலவுகள்"** and **"மாஸம் முடிசெய்யும் பதவிடத்தில் (நிறுமணம்)"** - neither is a
+   Tamil phrase.
+4. **"பின்னும் மாஸத்தில்"** - பின்னும் means more, not last.
+5. **"9 verified credits" / "11 verified debits"** - hardcoded English on a Tamil screen, now
+   catalog fields.
+
+A sixth defect surfaced while writing the gate for the first five: **the two app subtitles were
+swapped.** The Tamil block named the app "SMS Guard" and the English block named it in Tamil, so
+every screenshot the owner sent showed the app bar reading "SMS Guard" in Tamil mode.
+
+`verify_smsguard_bilingual_catalog()` is new. It parses the catalog's declarations and its two
+value blocks and requires every declared field to be assigned in both, no Tamil value to be
+empty or Latin-only, and no English value to be Tamil. It caught the subtitle swap on its first
+run against the real file. 66 tests now cover all seven gates.
+
+The markdown renderer is still unverified on a screen, and the reason is now understood: the
+screenshots the owner sent at 20:01 show literal `**bold**` and `- bullets`, but they were taken
+while 1.1.6 was installed, and 1.1.6 predates the renderer. 1.1.7 is the first build that has
+it, so 1.1.7's own update screen is the first place it can be seen - which needs a release newer
+than 1.1.7, which is what this is.
+
+Play Protect blocked the 1.1.7 install with "Harmful app blocked". That is a heuristic false
+positive on an SMS-reading app installed from outside Play, not something this release
+introduced; the owner tapped "Install anyway" and it installed. It is recorded here because it
+is friction the owner will hit on every update until the app reaches Play.
+
+## Published — SMS Guard 1.1.7 / code 13 (25 October 2026)
+
+Published by [SMS Guard run 40202187916](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40202187916): `SMS-Guard-v1.1.7.apk`, `12,428,897` bytes, SHA-256 `b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371`. A one-line layout fix and an honest correction, both prompted by the owner's second batch of
+screenshots ([`releases/sms-guard-v1.1.7.md`](releases/sms-guard-v1.1.7.md)):
+
+- **The projected month-end figure no longer wraps inside its own digits.** The 1.1.6 card read
+  "Rs.12,92" and then "9.48" on the next line, because the long Tamil label beside it left the
+  amount no room. Every amount in the card is now a single non-wrapping line and the label wraps
+  instead. The figures themselves are unchanged and the card's unit tests are untouched.
+- **The claim that the card and the ledger "can never disagree" is withdrawn.** On the owner's
+  phone the card read Rs.10,427 and the October summary Rs.10,302, because the card is always the
+  whole calendar month across every account while the summary honours the selected account and any
+  excluded message. `MonthlySpendPolicy.facts` applies only the genuine-bank/UPI,
+  not-a-self-transfer, debit filter; `FinanceLedgerEngine.summarizePeriod` additionally narrows to
+  one account and drops excluded messages. Both numbers are correct; they answer different
+  questions. The code comment and the note now say so. `0` new permissions over `1.1.6`.
+
+The exact bytes of 1.1.7 were **not installed on a phone** before publication - no device test was
+run - and the note says so. What still needs a physical-device check is exactly what this release
+is for: that the projected figure sits on one line on a narrow screen in Tamil.
+
 ## Unreleased
 
-_No unreleased changes._
+**Release-note markdown is now rendered instead of printed (unreleased, source change only).** The
+third defect the phone test found: every app's in-app update screen showed the raw markup, because
+`AppUpdates.kt` put `localizedReleaseNotes(...)` straight into a `Text()` - an owner read the
+literal `**bold**`, `## headings` and `- bullets`. A new pure parser plus composable,
+`shared/src/main/java/com/universalrp/updates/ReleaseNotesMarkdown.kt`, renders the small subset
+the notes actually use (`# title`, `## heading`, `- bullet`, `  - sub-bullet`, `**bold**`,
+`*italic*`, backtick code, `[text](url)`), and `LiveGuardUpdateCard.kt` and the shared updater's
+card and update-available dialog now call it. Secret Message's updater is a deliberate fork - it
+has its own release key and does not compile `shared/src/main/java` - so it carries the same parser
+as private declarations in its own copy, as it already does for the rest of that file.
+`verify_apps_localization.py` grew `verify_release_notes_markdown_subset()`, which refuses a pinned
+note using any construct the renderer would not understand (third-level headings, block quotes,
+numbered lists, rules, fences, images, tables, strikethrough, or a sub-bullet nested deeper than
+one level), so the notes cannot drift out of the supported subset again. Because there is no JDK,
+Gradle or Android SDK here, CI compiles this; no new release was built for it.
+
+**CI verification of that compile.** Two runs were needed. [Build APK 40198820056](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40198820056)
+and the SMS Guard Test APK both failed at `:smsguard:compileReleaseKotlin` on a
+`'when' expression must be exhaustive` error, because `SubBullet` had been added to the enum
+without a branch in the `when (kind)` that strips a line's prefix; then the next attempt failed on
+an `import androidx.compose.foundation.layout.weight` that does not exist, `weight` being a
+`RowScope` member extension rather than an importable function. Both are fixed, and
+`verify_kotlin_when_exhaustiveness()` now reads the sources so neither class of mistake can reach
+CI silently again. [Build APK 40200070221](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40200070221)
+then passed, as did the SMS Guard Test APK, the OorArivippu test APK, the Secret Message build
+(the one that compiles the fork's private parser copy) and the website deploy. The two
+live-network neural-voice suites that were red on `130ce8c` and `4e2a728` also passed here with no
+Kotlin change to them, which is further evidence those failures were the Azure speech endpoint and
+not this branch.
+
+- **SMS Guard 1.1.6 / code 12** ([`releases/sms-guard-v1.1.6.md`](releases/sms-guard-v1.1.6.md)): a monthly-spend card on the Finance tab — this month versus last month, the change in rupees and percent (suppressed when last month had no spending), the running daily average, the projected month end, the days remaining, and a plain-language trend. The month ends at the last instant of the calendar month, not at midnight of the last day. `0` new permissions over `1.1.5`.
+- **Ramesh Radio 1.25 / code 25** ([`releases/ramesh-radio-v1.25.md`](releases/ramesh-radio-v1.25.md)): more than one saved place for rain and cyclone voice alerts — a row of chips under the weather banner, one tap to switch, the active chip removes with the next place promoted. Up to 12 places, with dedupe by coordinates. `0` new permissions over `1.24`.
+- **Oor Arivippu 1.1.9 / code 14** ([`releases/oor-arivippu-v1.1.9.md`](releases/oor-arivippu-v1.1.9.md)): the announcement list now records what actually happened to each announcement (spoken / held for a call / no internet / GPS off / no voice / not spoken) with a summary line, survives the process being killed, and its empty state explains that an empty list means the voice was not delivered. `0` new permissions over `1.1.8`.
 
 ## Published — Weather Accuracy & Privacy Update (`Live Guard 2.70`, `Ramesh Radio 1.24`, `Oor Arivippu 1.1.8`) (24 October 2026)
 

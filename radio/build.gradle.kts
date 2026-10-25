@@ -17,8 +17,8 @@ android {
         applicationId = "com.universalrp.tamilnadufm"
         minSdk = 26
         targetSdk = 36
-        versionCode = 24
-        versionName = "1.24"
+        versionCode = 26
+        versionName = "1.26"
     }
 
     signingConfigs {
