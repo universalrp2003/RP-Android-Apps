@@ -37,23 +37,6 @@ empty, the voice was not delivered.
 Voice previews are deliberately not part of the report: tapping "Test Voice" proves the voice works,
 it is not a tracked announcement, and it never appears here.
 
-## தமிழ் சுருக்கம்
-
-- **அறிவிப்பு பட்டியல் இயங்கியது என்ன ஆனது என்பதை பதிவு செய்கிறது.** இதுவரை செயலி *முயற்சித்தது*
-  என்பது மட்டும் பதிவாகியது — பயணம் முடிந்த பிறகு அது பயன்படாத ஒன்று. உண்மையான கேள்வி
-  "குரல் உண்மையில் வெளியே வந்ததா?".
-- **ஆறு வகை முடிவுகள், ஒவ்வொரு வரிசையிலும் தெரியும்:** பேசப்பட்டது · அழைப்புக்காகக் காத்திருந்தது ·
-  இணையம் இல்லை · GPS அணைந்திருந்தது · குரல் கிடைக்கவில்லை · பேசப்படவில்லை.
-- **பட்டியலுக்கு மேலே ஒரு சுருக்க வரி:** "M அறிவிப்புகளில் N பேசப்பட்டது", மற்றும் பயணத்தில்
-  எத்தனை வேறுபட்ட ஊர்கள் உண்டு — வரிசை வரிசையாக பார்க்காமல் ஒரே பார்வையில் சரிபார்க்கலாம்.
-- **செயலி மூடினாலும் பட்டியல் அழியாது.** சாதனத்தில் சேமிக்கப்படுகிறது; 40 அறிவிப்புகள் வரை
-  vaikkappadum.
-- **காலி நிலை இப்போது உண்மையைச் சொல்கிறது.** "இன்னும் எந்த ஊர் அறிவிப்பும் செய்யப்படவில்லை"
-  என்று மட்டும் இருக்காது; பயணத்தில் எதுவும் அறிவிக்கப்படவில்லை என்றால் பட்டியல் காலியாக
-  இருக்கும் — குரல் வழங்கப்படவில்லை என்பது இதன் பொருள்.
-- **குரல் சோதனை (Test Voice) பட்டியலில் இல்லை.** அது குரல் வேலை செய்கிறது என்பதை நிரூபிக்கும்,
-  கண்காணிக்கப்படும் அறிவிப்பு அல்ல.
-
 ## How it is built
 
 The decision rules and the summary arithmetic are a pure object over strings and numbers
@@ -65,9 +48,35 @@ Storage is one line per announcement with control-character separators, so a mal
 you one row rather than the whole history. Rows written by 1.1.8 carry no outcome; they all read as
 spoken, because the old code only ever logged a line when it spoke.
 
-## Not verified
+## Device test
 
-The exact bytes in this release were not installed on a phone before publication: no device test
-was run for 1.1.9. CI unit, lint, regression, signature and release-asset checks pass. A real trip
-with a real phone call, a real dead spot, and the app being killed mid-announcement still needs a
-physical-device check.
+Installed on a phone through Play Protect on 25 October 2026. Play Protect reported "This app looks
+safe", the About screen reads Version: 1.1.9, and the new empty state is live on the screen: "No
+announcements recorded yet. If a trip announced nothing and this list stays empty, the voice was not
+delivered." That is exactly the sentence this release added, so the A5 empty state is confirmed.
+
+Still to check on a phone: the six outcomes on a real trip, the summary line, and the list
+surviving the process being killed. A real trip with a real phone call, a real dead spot and the app
+killed mid-announcement still needs a physical-device check.
+
+## தமிழ் சுருக்கம்
+
+- **அறிவிப்பு பட்டியல் இயங்கியது என்ன ஆனது என்பதை பதிவு செய்கிறது.** இதுவரை செயலி *முயற்சித்தது*
+  என்பது மட்டும் பதிவாகியது — பயணம் முடிந்த பிறகு அது பயன்படாத ஒன்று. உண்மையான கேள்வி
+  "குரல் உண்மையில் வெளியே வந்ததா?".
+- **ஆறு வகை முடிவுகள், ஒவ்வொரு வரிசையிலும் தெரியும்:** பேசப்பட்டது · அழைப்புக்காகக் காத்திருந்தது ·
+  இணையம் இல்லை · GPS அணைந்திருந்தது · குரல் கிடைக்கவில்லை · பேசப்படவில்லை.
+- **பட்டியலுக்கு மேலே ஒரு சுருக்க வரி:** "M அறிவிப்புகளில் N பேசப்பட்டது", மற்றும் பயணத்தில்
+  எத்தனை வேறுபட்ட ஊர்கள் உண்டு — வரிசை வரிசையாக பார்க்காமல் ஒரே பார்வையில் சரிபார்க்கலாம்.
+- **செயலி மூடினாலும் பட்டியல் அழியாது.** சாதனத்தில் சேமிக்கப்படுகிறது; 40 அறிவிப்புகள் வரை
+  சேமிக்கப்படும்.
+- **காலி நிலை இப்போது உண்மையைச் சொல்கிறது.** "இன்னும் எந்த ஊர் அறிவிப்பும் செய்யப்படவில்லை"
+  என்று மட்டும் இருக்காது; பயணத்தில் எதுவும் அறிவிக்கப்படவில்லை என்றால் பட்டியல் காலியாக
+  இருக்கும் — குரல் வழங்கப்படவில்லை என்பது இதன் பொருள்.
+- **குரல் சோதனை (Test Voice) பட்டியலில் இல்லை.** அது குரல் வேலை செய்கிறது என்பதை நிரூபிக்கும்,
+  கண்காணிக்கப்படும் அறிவிப்பு அல்ல.
+- **ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026).** Play Protect "இந்த செயலி
+  பாதுகாப்பானது" என்று தெரிவித்தது; About திரையில் Version: 1.1.9 எனத் தெரியும். புதிய
+  காலி நிலை செய்தியும் இப்போது திரையில் உள்ளது. அதனால் A5 காலி நிலை உறுதியாகிறது.
+- **இன்னும் சோதிக்கப்படவில்லை:** உண்மையான பயணத்தில் ஆறு வகை முடிவுகள், சுருக்க வரி,
+  மற்றும் செயலி கொல்லப்பட்டாலும் பட்டியல் தங்குவது என்பது.

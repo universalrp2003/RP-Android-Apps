@@ -278,12 +278,21 @@ def module_version(module: str) -> str:
 
 
 def verify_release_notes_tamil_section() -> int:
-    """The note for each app's current version must carry a `## தமிழ்` section.
+    """The note for each app's current version must carry exactly one `## தமிழ்` section, last.
 
     The in-app update screen calls `localizedReleaseNotes`, which splits the note on that exact
     marker. A note without it makes a Tamil-language owner read the English text instead, because
     `substringBefore` then returns the whole note. That is silent: nothing fails, the screen just
     shows the wrong language.
+
+    Two more failures are equally silent, and both were real:
+
+    * a second `## தமிழ்` heading leaves the Tamil view with the English sections that sat between
+      the two copies, because `substringAfter` takes everything to the end of the file;
+    * a Tamil section that is not the LAST section makes the *English* view lose everything after
+      it, because `substringBefore` stops at the marker.
+
+    So the gate requires exactly one Tamil heading and requires it to be the final section.
     """
     marker = "## தமிழ்"
     checked = 0
@@ -295,11 +304,72 @@ def verify_release_notes_tamil_section() -> int:
         if not note.exists():
             continue
         text = note.read_text(encoding="utf-8")
+        rel = note.relative_to(ROOT)
+        headings = [line for line in text.split("\n") if line.startswith("## ")]
+        tamil_headings = [line for line in headings if line.startswith(marker)]
         if marker not in text:
-            rel = note.relative_to(ROOT)
             raise ValueError(
                 f"{rel} has no `{marker}` section, so a Tamil-language owner is shown the English "
                 f"text in the in-app update screen. Add the Tamil section."
+            )
+        if len(tamil_headings) != 1:
+            raise ValueError(
+                f"{rel} has {len(tamil_headings)} `{marker}` sections. `localizedReleaseNotes` "
+                f"takes everything after the first one, so a duplicate drags the English sections "
+                f"that sit between the copies into the Tamil view. Keep exactly one."
+            )
+        if not headings or headings[-1] not in tamil_headings:
+            raise ValueError(
+                f"{rel} has a `{marker}` section that is not the last section. The English view is "
+                f"`substringBefore(marker)`, so every section after the Tamil one is dropped for "
+                f"an English reader. Move the Tamil section to the end of the note."
+            )
+        checked += 1
+    return checked
+
+
+def verify_release_notes_tamil_words() -> int:
+    """No Tamil release note may hide a transliterated English word inside its Tamil section.
+
+    The Tamil sections are written in Tamil, with the product's own technical words left in
+    Latin script on purpose (`chip`, `slot`, `Play Protect`, `HD`). What must never appear is a
+    Tamil sentence with a whole English or transliterated word dropped into it - the 1.1.9 note
+    really did ship `40 vaikkappadum` where `சேமிக்கப்படும்` belonged, and a Tamil reader sees
+    that instantly.
+
+    The rule is deliberately self-maintaining: a Latin word of five letters or more is allowed
+    when the same word appears in the *English* half of the same note (so every product and
+    technical term is fine), and is refused otherwise. A tiny allow-list covers the two words
+    whose English form in the note is inflected (`highlight` / `highlighted`).
+    """
+    marker = "## தமிழ்"
+    allowed = {"highlight", "highlights"}
+    checked = 0
+    for module, prefix in sorted(RELEASE_TAG_PREFIX.items()):
+        version = module_version(module)
+        if not version:
+            continue
+        note = ROOT / "releases" / f"{prefix}-v{version}.md"
+        if not note.exists():
+            continue
+        text = note.read_text(encoding="utf-8")
+        if marker not in text:
+            continue
+        tamil = text.split(marker, 1)[1]
+        english = text.split(marker, 1)[0].lower()
+        rel = note.relative_to(ROOT)
+        for match in re.finditer(r"[A-Za-z][A-Za-z\-']*[A-Za-z]|[A-Za-z]", tamil):
+            word = match.group(0).strip("-'")
+            if len(word) < 5 or word.lower() in allowed:
+                continue
+            if word.lower() in english:
+                continue
+            line = tamil[: match.start()].count("\n") + 1
+            raise ValueError(
+                f"{rel} Tamil section line {line} contains the Latin word {word!r}, which "
+                f"appears nowhere in the note's English text. A Tamil sentence with an "
+                f"English or transliterated word dropped into it is not Tamil; write the word "
+                f"in Tamil script, or add it to the allow-list if it really is a product term."
             )
         checked += 1
     return checked
@@ -313,15 +383,18 @@ def verify_release_notes_honesty() -> int:
     version of every module here turns a publish-time failure into a source-time one, without
     rewriting notes for versions that are already public.
     """
-    # Equivalent honest wordings. The publish step's own grep uses the first three; the rest are
-    # phrasings the notes already use to say the same thing, and refusing them would only push
-    # someone into rewriting a published note instead of stating the fact.
+    # Equivalent honest wordings, in both directions. The publish step's own grep uses a subset
+    # of these; the rest are phrasings the notes already use to say the same thing, and refusing
+    # them would only push someone into rewriting a published note instead of stating the fact.
+    # A note that was really installed on a phone is just as required to say so.
     phrases = (
         "not installed on a phone",
         "no physical-device test",
         "no device test",
         "not phone-installed",
         "no phone install",
+        "installed on a phone",
+        "verified on a phone",
     )
     checked = 0
     for module, prefix in sorted(RELEASE_TAG_PREFIX.items()):
@@ -451,6 +524,7 @@ def main() -> int:
         kotlin_files = verify_kotlin_format_strings()
         notes_checked = verify_release_notes_honesty()
         tamil_notes = verify_release_notes_tamil_section()
+        tamil_words = verify_release_notes_tamil_words()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -459,7 +533,8 @@ def main() -> int:
     print("PASS: all six apps have bilingual, expandable guides and direct main-screen entry points.")
     print(f"PASS: {kotlin_files} Kotlin sources have no unescaped positional format specifiers in string literals.")
     print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
-    print(f"PASS: {tamil_notes} pinned release notes each carry a Tamil section for the in-app update screen.")
+    print(f"PASS: {tamil_notes} pinned release notes each carry exactly one Tamil section, last, for the in-app update screen.")
+    print(f"PASS: {tamil_words} pinned release notes keep their Tamil sections free of stray Latin words.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

@@ -502,6 +502,8 @@
                   <li>Bilingual card, same style as the rest of the Finance tab. OTP silence is unchanged.</li>
                 </ul>
                 <p class="ta">நிதித் தாவலில் புதிய <strong>மாதாந்திர செலவு அட்டை</strong> — இந்த மாதம் மற்றும் கடந்த மாதம் ஒப்பீடு, ரூபாயிலும் சதவீதத்திலும் மாற்றம், நாள் வரியான சராசரி, மாத இறுதியில் எதிர்பார்க்கும் செலவு, மீதமுள்ள நாட்கள், எளிய மொழியில் உள்ள பிரவணம். மாதம் கடந்த நாள் நள்ளிரவில் அல்ல, நாள் இறுதியில் முடுகிறது. OTP ஒலிக்கப்படாதது உறுதி.</p>
+                <p class="note"><strong>Not phone-tested:</strong> this exact build was not installed on a phone before publication and no device result is claimed for it. Every CI unit, lint, regression, signature and release-asset check passed.</p>
+                <p class="ta">இந்த துல்லியமான கோப்புகள் வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை; சாதன சோதனை எதுவும் உரையாற் படவில்லை. CI சோதனைகள் அனைத்தும் வெற்றி.</p>
               </div>
             </details>
             <div class="mini">12.4 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -602,6 +604,8 @@
                   <li>The dead system text-to-speech code that 2.71 made unreachable has been removed from the announcer.</li>
                 </ul>
                 <p class="ta">அமைதி இடச் slots இனி குறிப்பிட்ட நாட்களுக்கு மட்டுமே — &quot;திங்கள்&ndash;வெள்ளி 9&ndash;6, சனி 10&ndash;2&quot; ஐந்து slots-க்கு பதிலாக இரண்டு slots. HD குரல் நீண்ட நேரம் கிடைக்கவில்லை என்றால் பேசாமல் அமைதியாக இருப்பதற்கு பதிலாக அது தெரியும், மீண்டும் முயற்சிக்கும். மென்மையான மாற்று குரல் இல்லை, ஒலியின்றி அமைதியாகவும் இல்லை.</p>
+                <p class="note"><strong>Phone-tested 25 October 2026:</strong> installed with Play Protect on, which reported &quot;This app looks safe&quot;. The silent-place day chips were seen on screen with all seven days selected and the slot reading 9:00 AM - 6:00 PM. Still to check on a phone: the HD-outage notice after a real outage, and the chips on a narrow screen with a scattered day selection.</p>
+                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): Play Protect ON நிலையில் நிறுவப்பட்டது, &quot;இந்த செயலி பாதுகாப்பானது&quot; என்று தெரிவித்தது. அமைதி இட நாள் chip-கள் ஏழு நாட்களும் தேர்வு செய்யப்பட்ட நிலையில் திரையில் காட்டப்படுகின்றன. இன்னும் சோதிக்க வேண்டியவை: உண்மையான HD செயலிழப்புக்குப் பிறகு அறிவிப்பு, மற்றும் சிதறிய நாள் தேர்வுடன் குறுகிய திரையில் chip-கள்.</p>
               </div>
             </details>
             <div class="mini">14.4 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -693,6 +697,8 @@
                   <li>Chips only appear once you have more than one place, so a first-time owner sees nothing extra.</li>
                 </ul>
                 <p class="ta">மழை &amp; புயல் குரல் எச்சரிக்கைகளுக்கு ஒன்றுக்கு மேற்பட்ட ஊர்களைச் சேமிக்கலாம் — வானிலை பட்டியின் கீழ் chips வரிசையாகத் தெரியும். ஒரு தட்டுதலால் இயக்க ஊர் மாறும், புதிய ஊருக்கு எச்சரிக்கை மீண்டும் சோதித்து பேசும். &times; அழுத்தியால் ஊர் அழிகிறது; இயக்க ஊரை அழித்தால் அடுத்த ஊர் தானாக எடுக்கப்படும். தேடலில் தேர்வு செய்த ஒவ்வொரு ஊரும் தானாகச் சேமிக்கப்படும். 12 ஊர்கள் வரை.</p>
+                <p class="note"><strong>Phone-tested 25 October 2026:</strong> updated in-app from 1.24. The saved place, the rain dialog and the zero-location-permission message all render, and a live check returned a real town and district. The chip strip has not been seen yet: the test phone held exactly one saved place, and the chips only appear once there is more than one.</p>
+                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): 1.24-ல் இருந்து செயலியில் மேம்படுத்தப்பட்டது. சேமித்த ஊர், மழை உரையாடல் மற்றும் இருப்பிட அனுமதி இல்லாத நிலை செய்தி — இவை மூன்றும் சரியாகத் தெரியும். Chip வரிசை இன்னும் காட்டப்படவில்லை: சோதனை ஃபோனில் ஒரே ஒரு சேமித்த ஊர் மட்டுமே இருந்தது, chip-கள் ஒன்றுக்கு மேற்பட்ட ஊர் இருந்தால் மட்டுமே தெரியும்.</p>
               </div>
             </details>
             <div class="mini">15.1 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -781,6 +787,8 @@
                   <li>Voice previews are deliberately excluded — testing the voice is not a tracked announcement.</li>
                 </ul>
                 <p class="ta">அறிவிப்பு பட்டியல் இயங்கியது என்ன ஆனது என்பதை பதிவு செய்கிறது — பேசப்பட்டது, அழைப்புக்காகக் காத்திருந்தது, இணையம் இல்லை, GPS அணைந்திருந்தது, குரல் கிடைக்கவில்லை, பேசப்படவில்லை. பட்டியலுக்கு மேலே &quot;M அறிவிப்புகளில் N பேசப்பட்டது&quot; என்ற சுருக்கம் மற்றும் பயணத்தில் உள்ள ஊர்களின் எண்ணிக்கை. செயலி மூடினாலும் பட்டியல் அழியாது. பயணத்தில் எதுவும் அறிவிக்கப்படவில்லை என்றால் பட்டியல் காலியாக இருக்கும் — குரல் வழங்கப்படவில்லை என்பது இதன் பொருள்.</p>
+                <p class="note"><strong>Phone-tested 25 October 2026:</strong> installed with Play Protect on, which reported &quot;This app looks safe&quot;. The About screen reads 1.1.9 and the new empty state is live on screen. Still to check on a phone: the six outcomes on a real trip, the summary line, and the list surviving the app being killed.</p>
+                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): Play Protect ON நிலையில் நிறுவப்பட்டது, &quot;இந்த செயலி பாதுகாப்பானது&quot; என்று தெரிவித்தது. About திரையில் 1.1.9 எனத் தெரியும், புதிய காலி நிலை செய்தியும் திரையில் உள்ளது. இன்னும் சோதிக்க வேண்டியவை: உண்மையான பயணத்தில் ஆறு வகை முடிவுகள், சுருக்க வரி, மற்றும் செயலி கொல்லப்பட்டாலும் பட்டியல் தங்குவது.</p>
               </div>
             </details>
             <div class="mini">12.8 MB · <strong>SHA-256 verified ✓</strong></div>
