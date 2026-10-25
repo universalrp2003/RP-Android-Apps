@@ -69,7 +69,7 @@ Still to check on a phone: the notification card appearing after a real 30-secon
 Voice screen waiting line during one, and the day chips on a narrow screen with a scattered day
 selection. CI compilation, the APK symbol contract and all local verifiers pass.
 
-## தமிழ் சுருக்கம்
+## தமிழ்
 
 - **அமைதி இட slot-கள் இப்போது நாட்களைக் குறிக்கும்.** ஒவ்வொரு தொடக்கம்→நிறுத்தம் slot-ம்
   குறிப்பிட்ட வார நாட்களுக்கு மட்டும் வரம்பிடலாம். "திங்கள்–வெள்ளி 9 AM–6 PM, சனி

@@ -37,7 +37,7 @@ run for 1.1.6. CI unit, lint, regression, signature and release-asset checks pas
 on a narrow screen and the numbers against a real month of messages still need a physical-device
 check.
 
-## தமிழ் சுருக்கம்
+## தமிழ்
 
 - **நிதித் (Finance) தாவலில் புதிய மாதாந்திர செலவு அட்டை:** இந்த மாதம் எத்தனை, கடந்த மாதம்
   எத்தனை, இரண்டுக்கும் இடையேயான மாற்றம் ரூபாயிலும் சதவீதத்திலும்.

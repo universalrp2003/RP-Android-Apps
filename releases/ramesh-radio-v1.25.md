@@ -45,7 +45,7 @@ and the chips only appear once there is more than one, so the chip strip, one-ta
 highlight following the active place, and the X forgetting a place have not been exercised on a
 device yet.
 
-## தமிழ் சுருக்கம்
+## தமிழ்
 
 - **ஒன்றுக்கு மேற்பட்ட சேமித்த ஊர்கள்:** மழை & புயல் குரல் எச்சரிக்கைகள் இதுவரை ஒரு ஊரை மட்டும்
   காட்டிவந்தன. இப்போது உங்கள் சொந்த ஊர் பட்டியலை வைத்துக்கொள்ளலாம் — வானிலை பட்டியின் கீழ்

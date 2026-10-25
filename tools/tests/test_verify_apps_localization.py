@@ -114,6 +114,14 @@ class ReleaseNoteGatesTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.verify_release_notes_tamil_section()
 
+    def test_tamil_section_rejects_a_heading_with_words_after_the_marker(self) -> None:
+        # `substringAfter` keeps whatever follows the marker, so "## Tamil summary" leaves the
+        # word "summary" as the first line of the Tamil release notes in the app.
+        self.write(GOOD_HEAD + "\n" + TAMIL_HEADING
+                   + " \u0b9a\u0bc1\u0bb0\u0bc1\u0b95\u0bcd\u0b95\u0bae\u0bcd\n\n" + TAMIL_LINE + "\n")
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_tamil_section()
+
     # -- stray Latin words in the Tamil section ------------------------------
     def test_tamil_words_accept_tamil_with_the_note_s_own_terms(self) -> None:
         self.write(GOOD_HEAD + "\n" + TAMIL_HEADING + "\n\n" + TAMIL_LINE

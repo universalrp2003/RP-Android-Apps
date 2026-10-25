@@ -59,7 +59,7 @@ Still to check on a phone: the six outcomes on a real trip, the summary line, an
 surviving the process being killed. A real trip with a real phone call, a real dead spot and the app
 killed mid-announcement still needs a physical-device check.
 
-## தமிழ் சுருக்கம்
+## தமிழ்
 
 - **அறிவிப்பு பட்டியல் இயங்கியது என்ன ஆனது என்பதை பதிவு செய்கிறது.** இதுவரை செயலி *முயற்சித்தது*
   என்பது மட்டும் பதிவாகியது — பயணம் முடிந்த பிறகு அது பயன்படாத ஒன்று. உண்மையான கேள்வி

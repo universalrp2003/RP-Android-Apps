@@ -318,6 +318,13 @@ def verify_release_notes_tamil_section() -> int:
                 f"takes everything after the first one, so a duplicate drags the English sections "
                 f"that sit between the copies into the Tamil view. Keep exactly one."
             )
+        if tamil_headings[0] != marker:
+            raise ValueError(
+                f"{rel}'s Tamil heading is {tamil_headings[0]!r}. `localizedReleaseNotes` returns "
+                f"`substringAfter(marker)`, so whatever follows the marker becomes the first line "
+                f"of the Tamil release notes in the app - `## {marker[3:]} summary` leaves the word "
+                f"\"summary\" sitting on its own at the top of the note. Use the bare marker."
+            )
         if not headings or headings[-1] not in tamil_headings:
             raise ValueError(
                 f"{rel} has a `{marker}` section that is not the last section. The English view is "
