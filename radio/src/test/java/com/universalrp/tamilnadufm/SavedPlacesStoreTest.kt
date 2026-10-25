@@ -80,4 +80,95 @@ class SavedPlacesStoreTest {
         assertEquals(many.size, SavedPlacesStore.decode(stored).size)
         assertTrue(20 > SavedPlacesStore.MAX_SAVED_PLACES)
     }
+
+    // ------------------------------------------------- the list algebra add() writes
+
+    private val madurai = SavedPlace("Madurai", "Madurai district, Tamil Nadu", "625001", 9.9252, 78.1198)
+    private val alangudi = SavedPlace("Alangudi", "Pudukkottai, Tamil Nadu", "622301", 10.4500, 78.9000)
+    private val trichy = SavedPlace("Trichy", "Tiruchirappalli", "620001", 10.7905, 78.7047)
+
+    @Test
+    fun addingASecondPlaceKeepsTheFirst() {
+        // The defect the owner reported: adding a place looked like it replaced the one before it.
+        // Whatever the display did, the list must hold both, newest first.
+        val afterFirst = SavedPlacesStore.addToList(emptyList(), madurai)
+        val afterSecond = SavedPlacesStore.addToList(afterFirst, alangudi)
+        assertEquals(listOf(alangudi, madurai), afterSecond)
+        assertEquals(2, afterSecond.size)
+    }
+
+    @Test
+    fun addingAThirdPlaceKeepsEveryEarlierOneInOrder() {
+        var list = SavedPlacesStore.addToList(emptyList(), madurai)
+        list = SavedPlacesStore.addToList(list, alangudi)
+        list = SavedPlacesStore.addToList(list, trichy)
+        assertEquals(listOf(trichy, alangudi, madurai), list)
+    }
+
+    @Test
+    fun rePickingASavedPlaceMovesItToTheFrontInsteadOfDuplicatingIt() {
+        var list = SavedPlacesStore.addToList(emptyList(), madurai)
+        list = SavedPlacesStore.addToList(list, alangudi)
+        val rePicked = SavedPlacesStore.addToList(list, madurai)
+        assertEquals(listOf(madurai, alangudi), rePicked)
+        assertEquals(2, rePicked.size)
+    }
+
+    @Test
+    fun rePickingUnderADifferentSpellingOfTheSameTownIsStillOneChip() {
+        // Identity is the rounded coordinates, so the geocoder's "Alangudi" and Open-Meteo's
+        // "Alangudi" for the same town must not become two entries.
+        var list = SavedPlacesStore.addToList(emptyList(), alangudi)
+        list = SavedPlacesStore.addToList(list, alangudi.copy(name = "Alangudi (Pudukkottai)"))
+        assertEquals(1, list.size)
+        assertEquals("Alangudi (Pudukkottai)", list.single().name)
+    }
+
+    @Test
+    fun theListIsCappedAtTheMaximumAndKeepsTheNewest() {
+        var list = emptyList<SavedPlace>()
+        for (i in 1..SavedPlacesStore.MAX_SAVED_PLACES + 5) {
+            list = SavedPlacesStore.addToList(
+                list,
+                SavedPlace("Town $i", "d", "62230$i", 10.0 + i, 78.0),
+            )
+        }
+        assertEquals(SavedPlacesStore.MAX_SAVED_PLACES, list.size)
+        // The oldest towns fall off the end; the newest survive.
+        assertEquals("Town ${SavedPlacesStore.MAX_SAVED_PLACES + 5}", list.first().name)
+        assertEquals("Town 6", list.last().name)
+    }
+
+    @Test
+    fun removingAPlaceLeavesTheOthersInOrder() {
+        var list = SavedPlacesStore.addToList(emptyList(), madurai)
+        list = SavedPlacesStore.addToList(list, alangudi)
+        list = SavedPlacesStore.addToList(list, trichy)
+        assertEquals(listOf(trichy, madurai), SavedPlacesStore.removeFromList(list, alangudi))
+    }
+
+    @Test
+    fun removingAPlaceThatWasNeverSavedChangesNothing() {
+        val list = SavedPlacesStore.addToList(emptyList(), madurai)
+        assertEquals(list, SavedPlacesStore.removeFromList(list, trichy))
+    }
+
+    @Test
+    fun addingThenRemovingReturnsToAnEmptyList() {
+        val list = SavedPlacesStore.addToList(emptyList(), madurai)
+        assertTrue(SavedPlacesStore.removeFromList(list, madurai).isEmpty())
+    }
+
+    @Test
+    fun everyAddedPlaceSurvivesTheEncodeDecodeRoundTrip() {
+        // A place that encodes but does not decode would vanish on the next reload and look
+        // exactly like the owner's report, so pin the round trip for real towns rather than
+        // synthetic ones.
+        var list = emptyList<SavedPlace>()
+        list = SavedPlacesStore.addToList(list, madurai)
+        list = SavedPlacesStore.addToList(list, alangudi)
+        list = SavedPlacesStore.addToList(list, trichy)
+        assertEquals(list, SavedPlacesStore.decode(SavedPlacesStore.encode(list)))
+        assertEquals(3, SavedPlacesStore.decode(SavedPlacesStore.encode(list)).size)
+    }
 }

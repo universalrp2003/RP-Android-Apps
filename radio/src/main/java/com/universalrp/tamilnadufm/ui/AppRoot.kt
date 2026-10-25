@@ -106,49 +106,65 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
         )
 
         // A4: the owner's own places. One tap switches the rain/cyclone alerts to another town
-        // without searching for it again, and the long-press X forgets it. Only shown once there
-        // is more than one place, so a first-time owner sees nothing extra.
-        if (savedPlaces.size > 1) {
-            androidx.compose.foundation.layout.Row(
+        // without searching for it again, and the long-press X forgets it.
+        //
+        // Shown from the very first place, not from the second: the owner reported that adding a
+        // place "just replaces" the one before it, and the only way to tell a growing list from a
+        // single changing place was to look at the weather card, which shows just the active one.
+        // A labelled row of chips makes the list itself visible, so growth is obvious and a real
+        // regression in the store would show up as one chip that changes name.
+        if (savedPlaces.isNotEmpty()) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
                     .padding(horizontal = 14.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                savedPlaces.forEach { place ->
-                    val isActive = place.key == activePlaceKey
-                    Surface(
-                        color = if (isActive) Saffron else SurfaceHigh,
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.clickable {
-                            com.universalrp.tamilnadufm.RadioWeatherMonitor.selectSavedPlace(rootContext, place)
-                        },
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                Text(
+                    text = if (isTamil) "சேமித்த ஊர்கள்" else "Saved places",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+                Spacer(Modifier.height(3.dp))
+                androidx.compose.foundation.layout.Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    savedPlaces.forEach { place ->
+                        val isActive = place.key == activePlaceKey
+                        Surface(
+                            color = if (isActive) Saffron else SurfaceHigh,
+                            shape = MaterialTheme.shapes.small,
+                            modifier = Modifier.clickable {
+                                com.universalrp.tamilnadufm.RadioWeatherMonitor.selectSavedPlace(rootContext, place)
+                            },
                         ) {
-                            Text(
-                                text = place.name,
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isActive) Color(0xFF2A1200) else TextSecondary,
-                            )
-                            if (savedPlaces.size > 2) {
-                                Spacer(Modifier.width(6.dp))
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
                                 Text(
-                                    text = "✕",
-                                    style = MaterialTheme.typography.labelSmall,
+                                    text = place.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
                                     color = if (isActive) Color(0xFF2A1200) else TextSecondary,
-                                    modifier = Modifier.clickable {
-                                        com.universalrp.tamilnadufm.RadioWeatherMonitor.removeSavedPlace(
-                                            rootContext,
-                                            place,
-                                        )
-                                    },
                                 )
+                                if (savedPlaces.size > 1) {
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = "✕",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                                        modifier = Modifier.clickable {
+                                            com.universalrp.tamilnadufm.RadioWeatherMonitor.removeSavedPlace(
+                                                rootContext,
+                                                place,
+                                            )
+                                        },
+                                    )
+                                }
                             }
                         }
                     }

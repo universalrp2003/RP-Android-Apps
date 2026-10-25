@@ -77,10 +77,7 @@ object SavedPlacesStore {
      * front rather than adding a duplicate, so the list never grows from tapping the same chip.
      */
     fun add(context: Context, place: SavedPlace): List<SavedPlace> {
-        val current = all(context).toMutableList()
-        current.removeAll { it.key == place.key }
-        current.add(0, place)
-        val trimmed = current.take(MAX_SAVED_PLACES)
+        val trimmed = addToList(all(context), place)
         persist(context, trimmed)
         setActiveKey(context, place.key)
         return trimmed
@@ -88,10 +85,10 @@ object SavedPlacesStore {
 
     /** Removes one place. Removing the active place leaves nothing active until a new pick. */
     fun remove(context: Context, place: SavedPlace): List<SavedPlace> {
-        val trimmed = all(context).filterNot { it.key == place.key }
+        val trimmed = removeFromList(all(context), place)
         persist(context, trimmed)
         if (prefs(context).getString(KEY_ACTIVE, null) == place.key) {
-            prefs(context).edit().remove(KEY_ACTIVE).apply()
+            prefs(context).edit().remove(KEY_ACTIVE).commit()
         }
         return trimmed
     }
@@ -105,12 +102,32 @@ object SavedPlacesStore {
     }
 
     private fun setActiveKey(context: Context, key: String) {
-        prefs(context).edit().putString(KEY_ACTIVE, key).apply()
+        prefs(context).edit().putString(KEY_ACTIVE, key).commit()
     }
 
     private fun persist(context: Context, list: List<SavedPlace>) {
-        prefs(context).edit().putString(KEY_LIST, encode(list)).apply()
+        // commit(), not apply(): apply() writes to disk asynchronously and the write is lost if
+        // Android kills the process first. The list is a handful of short lines written only when
+        // the owner taps a place, so the synchronous cost is nothing, and losing the write is
+        // exactly the failure the owner reported - every place but the newest one silently gone.
+        prefs(context).edit().putString(KEY_LIST, encode(list)).commit()
     }
+
+    // ------------------------------------------------------ pure list algebra (unit tested)
+
+    /**
+     * The list [add] writes, computed without touching disk so it can be tested.
+     *
+     * The newest place goes to the front, a re-pick of a place already saved moves it rather than
+     * duplicating it, and the list is capped. Identity is [SavedPlace.key], the rounded
+     * coordinates, so the same town picked twice is one chip however its name is spelled.
+     */
+    internal fun addToList(current: List<SavedPlace>, place: SavedPlace): List<SavedPlace> =
+        (current.filterNot { it.key == place.key } + place).take(MAX_SAVED_PLACES)
+
+    /** The list [remove] writes. Removing a place that is not saved changes nothing. */
+    internal fun removeFromList(current: List<SavedPlace>, place: SavedPlace): List<SavedPlace> =
+        current.filterNot { it.key == place.key }
 
     // ------------------------------------------------------ pure encode/decode (unit tested)
 

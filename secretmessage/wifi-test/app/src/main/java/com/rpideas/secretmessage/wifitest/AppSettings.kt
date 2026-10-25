@@ -172,7 +172,7 @@ private fun AboutSection(versionLabel: String, context: Context) {
 private val OTHER_APPS = listOf(
     "SMS Guard (குறுஞ்செய்தி காவலன்)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
     "Live Guard (CleanSweep)" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
-    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.25",
+    "Ramesh Radio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.26",
     "PulseEQ" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
     "RP Vocal Remover Studio" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
     "Oor Arivippu" to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9",
