@@ -3,10 +3,79 @@ package com.universalrp.cleansweep.voice
 import android.content.SharedPreferences
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+
+/** The single backing store every fake in this file reads and writes. */
+private val store = mutableMapOf<String, Any?>()
+
+/** The editor half of the fake: records putBoolean and commits straight into [store]. */
+private class EditorHandler : InvocationHandler {
+    private var pending: Pair<String, Any?>? = null
+
+    override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
+        @Suppress("UNCHECKED_CAST")
+        return when (method.name) {
+            "putBoolean" -> {
+                pending = (args!![0] as String) to args[1]
+                proxy
+            }
+            "commit" -> {
+                pending?.let { (k, v) -> store[k] = v }
+                pending = null
+                true
+            }
+            "apply" -> {
+                pending?.let { (k, v) -> store[k] = v }
+                pending = null
+                Unit
+            }
+            "toString" -> "FakeEditor"
+            "hashCode" -> System.identityHashCode(proxy)
+            "equals" -> proxy === args!![0]
+            else -> null
+        }
+    }
+}
+
+/** The preferences half of the fake: reads booleans from [store], hands out an editor. */
+private class PrefsHandler : InvocationHandler {
+    override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
+        @Suppress("UNCHECKED_CAST")
+        return when (method.name) {
+            "getBoolean" -> store[args!![0] as String] as? Boolean ?: false
+            "contains" -> store.containsKey(args!![0] as String)
+            "edit" -> Proxy.newProxyInstance(
+                SharedPreferences.Editor::class.java.classLoader,
+                arrayOf(SharedPreferences.Editor::class.java),
+                EditorHandler(),
+            ) as SharedPreferences.Editor
+            "toString" -> "FakePrefs($store)"
+            "hashCode" -> System.identityHashCode(proxy)
+            "equals" -> proxy === args!![0]
+            else -> when (method.returnType) {
+                Boolean::class.javaPrimitiveType -> false
+                Int::class.javaPrimitiveType -> 0
+                Long::class.javaPrimitiveType -> 0L
+                Float::class.javaPrimitiveType -> 0f
+                else -> null
+            }
+        }
+    }
+}
+
+/**
+ * A fresh [SharedPreferences] instance over the shared [store], which is what a new process
+ * reading the same preferences file looks like.
+ */
+private fun prefs(): SharedPreferences = Proxy.newProxyInstance(
+    SharedPreferences::class.java.classLoader,
+    arrayOf(SharedPreferences::class.java),
+    PrefsHandler(),
+) as SharedPreferences
 
 /**
  * A3 - the "shown once, then never again" contract behind the HD-voice explainer.
@@ -23,71 +92,11 @@ import java.lang.reflect.Proxy
  */
 class HdVoiceExplainerTest {
 
-    /** The single backing store every [prefs] instance reads and writes. */
-    private val store = mutableMapOf<String, Any?>()
-
-    private class PrefsHandler(private val store: MutableMap<String, Any?>) : InvocationHandler {
-        override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
-            @Suppress("UNCHECKED_CAST")
-            return when (method.name) {
-                "getBoolean" -> store[args!![0] as String] as? Boolean ?: false
-                "contains" -> store.containsKey(args!![0] as String)
-                "edit" -> editor(store)
-                "toString" -> "FakePrefs($store)"
-                "hashCode" -> System.identityHashCode(proxy)
-                "equals" -> proxy === args!![0]
-                else -> when (method.returnType) {
-                    Boolean::class.javaPrimitiveType -> false
-                    Int::class.javaPrimitiveType -> 0
-                    Long::class.javaPrimitiveType -> 0L
-                    Float::class.javaPrimitiveType -> 0f
-                    else -> null
-                }
-            }
-        }
+    @Before
+    fun clearTheStore() {
+        // Each test starts from a phone that has never opened the Voice screen.
+        store.clear()
     }
-
-    private class EditorHandler(private val store: MutableMap<String, Any?>) : InvocationHandler {
-        private var pending: Pair<String, Any?>? = null
-
-        override fun invoke(proxy: Any, method: Method, args: Array<out Any>?): Any? {
-            @Suppress("UNCHECKED_CAST")
-            return when (method.name) {
-                "putBoolean" -> {
-                    pending = (args!![0] as String) to args[1]
-                    proxy
-                }
-                "commit" -> {
-                    pending?.let { (k, v) -> store[k] = v }
-                    pending = null
-                    true
-                }
-                "apply" -> {
-                    pending?.let { (k, v) -> store[k] = v }
-                    pending = null
-                    Unit
-                }
-                "toString" -> "FakeEditor"
-                "hashCode" -> System.identityHashCode(proxy)
-                "equals" -> proxy === args!![0]
-                else -> null
-            }
-        }
-    }
-
-    private fun editor(store: MutableMap<String, Any?>): SharedPreferences.Editor =
-        Proxy.newProxyInstance(
-            SharedPreferences.Editor::class.java.classLoader,
-            arrayOf(SharedPreferences.Editor::class.java),
-            EditorHandler(store),
-        ) as SharedPreferences.Editor
-
-    /** A fresh instance over the shared store, i.e. a new process reading the same file. */
-    private fun prefs(): SharedPreferences = Proxy.newProxyInstance(
-        SharedPreferences::class.java.classLoader,
-        arrayOf(SharedPreferences::class.java),
-        PrefsHandler(store),
-    ) as SharedPreferences
 
     @Test
     fun theExplainerIsShownTheFirstTime() {
