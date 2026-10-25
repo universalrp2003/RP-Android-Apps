@@ -66,8 +66,6 @@ EXPECTED = {
     "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 7,
     "com.universalrp.cleansweep.weather.WeatherUpgradeAndBannerTest": 3,
     "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 5,
-    # C1: the one live-network suite, excluded from the gate by cleaner/build.gradle.kts.
-    "com.universalrp.cleansweep.voice.LiveStudioVoiceSynthesisTest": 1,
 }
 
 

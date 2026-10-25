@@ -221,7 +221,16 @@ def main():
         require('state.lang' not in source(display),
                 'A display site still reads the state mirror instead of the language authority: ' + display)
     expected = runpy.run_path(str(ROOT/'tools/verify_cleaner_regressions.py'))['EXPECTED']
-    require(sum(expected.values()) == 434 and len(expected) == 49, 'Future required regression gate count differs')
+    # C1: the live-network suite must stay out of the normal Test tasks, or one bad moment on
+    # the Edge TTS service turns main red and blocks a release again.
+    gradle = (ROOT/'cleaner/build.gradle.kts').read_text(encoding='utf-8')
+    require('LiveStudioVoiceSynthesisTest' in gradle and 'excludeTestsMatching' in gradle,
+            'The live-network suite is no longer excluded from the test tasks')
+    require('testLiveStudioVoice' in gradle and 'ignoreFailures = true' in gradle,
+            'The dedicated live-voice task is missing or gates the build')
+    require(not (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text().count('@Test') == 0,
+            'The live-network suite disappeared instead of being excluded')
+    require(sum(expected.values()) == 433 and len(expected) == 48, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -299,7 +308,7 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 49 required suites / 434 prepared declarations (1 live-network suite excluded from the gate); tests NOT executed. Candidate 2.72/code77/API26 matches.')
+    print('PASS: 48 required suites / 433 prepared declarations (the live-network suite is excluded from the gate); tests NOT executed. Candidate 2.72/code77/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 
