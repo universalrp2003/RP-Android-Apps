@@ -2,7 +2,6 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/voicenotes/src/main/java/com/universalrp/voicenotes/MainActivity.kt:159:21 Unresolved reference 'recognizer'.
 ```
 
 ## Gradle summary
@@ -12,15 +11,11 @@ e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/voicenotes/src/main/
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':voicenotes:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
+Execution failed for task ':voicenotes:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/voicenotes/build/reports/tests/testDebugUnitTest/index.html
 
 * Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
@@ -28,8 +23,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 40s
-222 actionable tasks: 84 executed, 138 from cache
+BUILD FAILED in 2m 37s
+232 actionable tasks: 90 executed, 142 from cache
 ```
 
 ## Store artwork step
