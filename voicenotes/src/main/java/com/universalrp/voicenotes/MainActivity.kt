@@ -34,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -152,8 +153,20 @@ fun VoiceNotesScreen(
         store.save(next)
     }
 
+    // Release the recogniser when the screen goes away: it holds the microphone and an audio
+    // resource, and leaking it means the mic stays hot after the owner has left.
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { recognizer?.destroy() }
+    }
+
     val recognizer = remember {
-        if (SpeechRecognizer.isRecognitionAvailable(context)) SpeechRecognizer(context) else null
+        // createSpeechRecognizer is the public factory; the constructor is package-private.
+        // Created here, on the main thread, because SpeechRecognizer requires it.
+        if (SpeechRecognizer.isRecognitionAvailable(context)) {
+            SpeechRecognizer.createSpeechRecognizer(context)
+        } else {
+            null
+        }
     }
 
     // The listener is recreated per composition; it captures only the current state it needs.
