@@ -3,6 +3,8 @@ package com.universalrp.tamilnadufm.ui
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,6 +74,10 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
     val playback by PlayerBus.state.collectAsState()
     val weather by com.universalrp.tamilnadufm.RadioWeatherMonitor.state.collectAsState()
     val showWeatherDialog by com.universalrp.tamilnadufm.RadioWeatherMonitor.showDialog.collectAsState()
+    val savedPlaces by com.universalrp.tamilnadufm.RadioWeatherMonitor.savedPlaces.collectAsState()
+    val activePlaceKey = remember(savedPlaces, weather.savedPlaceName) {
+        savedPlaces.firstOrNull { it.name == weather.savedPlaceName && it.details == weather.savedPlaceDetails }?.key
+    }
     val rootContext = androidx.compose.ui.platform.LocalContext.current
     val isTamil = com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL
 
@@ -97,6 +103,57 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
                 .padding(horizontal = 14.dp, vertical = 4.dp),
             placeDetails = weather.activePlaceDetails.ifBlank { weather.savedPlaceDetails },
         )
+
+        // A4: the owner's own places. One tap switches the rain/cyclone alerts to another town
+        // without searching for it again, and the long-press X forgets it. Only shown once there
+        // is more than one place, so a first-time owner sees nothing extra.
+        if (savedPlaces.size > 1) {
+            androidx.compose.foundation.layout.Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 14.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                savedPlaces.forEach { place ->
+                    val isActive = place.key == activePlaceKey
+                    Surface(
+                        color = if (isActive) Saffron else SurfaceHigh,
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.clickable {
+                            com.universalrp.tamilnadufm.RadioWeatherMonitor.selectSavedPlace(rootContext, place)
+                        },
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = place.name,
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+                                color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                            )
+                            if (savedPlaces.size > 2) {
+                                Spacer(Modifier.width(6.dp))
+                                Text(
+                                    text = "✕",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = if (isActive) Color(0xFF2A1200) else TextSecondary,
+                                    modifier = Modifier.clickable {
+                                        com.universalrp.tamilnadufm.RadioWeatherMonitor.removeSavedPlace(
+                                            rootContext,
+                                            place,
+                                        )
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Box(Modifier.weight(1f)) {
             when (state.tab) {
