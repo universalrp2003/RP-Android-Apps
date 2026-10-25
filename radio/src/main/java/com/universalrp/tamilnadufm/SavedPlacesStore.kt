@@ -119,11 +119,13 @@ object SavedPlacesStore {
      * The list [add] writes, computed without touching disk so it can be tested.
      *
      * The newest place goes to the front, a re-pick of a place already saved moves it rather than
-     * duplicating it, and the list is capped. Identity is [SavedPlace.key], the rounded
+     * duplicating it, and the list is capped. Newest-first is what makes the cap meaningful: the
+     * list is trimmed from the end, so the places that fall off are the ones the owner saved
+     * longest ago, never the one just picked. Identity is [SavedPlace.key], the rounded
      * coordinates, so the same town picked twice is one chip however its name is spelled.
      */
     internal fun addToList(current: List<SavedPlace>, place: SavedPlace): List<SavedPlace> =
-        (current.filterNot { it.key == place.key } + place).take(MAX_SAVED_PLACES)
+        (listOf(place) + current.filterNot { it.key == place.key }).take(MAX_SAVED_PLACES)
 
     /** The list [remove] writes. Removing a place that is not saved changes nothing. */
     internal fun removeFromList(current: List<SavedPlace>, place: SavedPlace): List<SavedPlace> =
