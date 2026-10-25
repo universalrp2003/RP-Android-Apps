@@ -209,7 +209,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     )
                     Text(
-                        tr("Choose how the announcer sounds. With internet it uses studio Ultra-HD neural voices; with no internet it automatically uses your phone's installed voice."),
+                        tr("Choose how the announcer sounds. Live Guard uses the Studio Ultra-HD neural voices and nothing else; with no internet it waits for the network and then speaks in HD."),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
@@ -604,8 +604,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             }
 
             // 2.69 owner decision: the manual "Voice A / Voice B" system-voice picker was removed.
-            // Answers now use the Studio Ultra-HD voice automatically (rotating male/female in random
-            // mode) and fall back to the phone's built-in voice only when offline with no cached clip.
+            // 2.71: the offline fallback it described is gone too — answers now use the Studio
+            // Ultra-HD voice automatically (rotating male/female in random mode) and, when the HD
+            // clip is not available yet, wait and retry instead of using any built-in voice.
 
             // ------------------------------------------------------------ the daily check
             PanelCard(Modifier.fillMaxWidth()) {
