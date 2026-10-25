@@ -116,6 +116,7 @@ object RadioWeatherMonitor {
             searchResults = current.searchResults,
             statusNote = current.statusNote,
         )
+        refreshSavedPlaces(app)
     }
 
     fun setEnabled(context: Context, on: Boolean) {

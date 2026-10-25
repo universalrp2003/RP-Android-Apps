@@ -23,7 +23,12 @@ data class SavedPlace(
     val longitude: Double,
 ) {
     /** Stable identity for dedupe and removal: the same coordinates is the same place. */
-    val key: String get() = "%.5f,%.5f".format(latitude, longitude)
+    val key: String get() = java.lang.String.format(
+        java.util.Locale.ROOT,
+        "%.5f,%.5f",
+        latitude,
+        longitude,
+    )
 
     fun toCandidate(): WeatherPlaceCandidate = WeatherPlaceCandidate(
         name = name,

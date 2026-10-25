@@ -71,10 +71,13 @@ class SavedPlacesStoreTest {
     }
 
     @Test
-    fun theCapKeepsTheListBounded() {
-        val many = (1..20).map { SavedPlace("Place $it", "", "", 10.0 + it, 78.0) }
-        val trimmed = many.take(SavedPlacesStore.MAX_SAVED_PLACES)
-        assertEquals(SavedPlacesStore.MAX_SAVED_PLACES, trimmed.size)
-        assertTrue(many.size > SavedPlacesStore.MAX_SAVED_PLACES)
+    fun theFormatIsIdempotentSoAReloadNeverGrowsOrShrinksTheList() {
+        // This is the whole persistence contract: what comes back out must re-encode to exactly
+        // what was stored, or a rotate-and-reload would drift the owner's list.
+        val many = (1..20).map { SavedPlace("Place $it", "details $it", "62230$it", 10.0 + it, 78.0) }
+        val stored = SavedPlacesStore.encode(many)
+        assertEquals(stored, SavedPlacesStore.encode(SavedPlacesStore.decode(stored)))
+        assertEquals(many.size, SavedPlacesStore.decode(stored).size)
+        assertTrue(20 > SavedPlacesStore.MAX_SAVED_PLACES)
     }
 }
