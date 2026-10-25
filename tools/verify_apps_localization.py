@@ -327,6 +327,31 @@ def verify_about_links() -> None:
         raise ValueError(f"Secret Message About is missing current 7-app links or official website URL: {EXPECTED_OOR_RELEASE_URLS - secret_urls}")
 
 
+def verify_kotlin_format_strings() -> int:
+    """Every Kotlin string literal that holds a positional format specifier must escape its `$`.
+
+    Kotlin reads `"%1$d"` as the literal `%1` followed by a template reference to a variable named
+    `d`, which fails to compile only once the module is built. Escaping it as `%1\$d` keeps the
+    specifier intact for String.format.
+    """
+    pattern = re.compile(r'(?<!\\)%\d+\$[A-Za-z]')
+    checked = 0
+    for path in sorted(ROOT.rglob("*.kt")):
+        if "build" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8")
+        checked += 1
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if pattern.search(line):
+                rel = path.relative_to(ROOT)
+                raise ValueError(
+                    f"{rel}:{lineno} has an unescaped positional format specifier in a Kotlin "
+                    f"string literal - Kotlin reads `$x` as a template reference, so the `$` must "
+                    f"be written as `\$`: {line.strip()}"
+                )
+    return checked
+
+
 def main() -> int:
     try:
         keys = catalog_keys()
@@ -335,12 +360,14 @@ def main() -> int:
         verify_app_guides()
         verify_about_links()
         verify_appstrings_accessibility_and_toasts(keys)
+        kotlin_files = verify_kotlin_format_strings()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
     print(f"PASS: {len(keys)} unique shared Tamil catalog entries; {checked} explicit Compose labels are covered.")
     print(f"PASS: all {oor_fields} Oor Arivippu UI fields have Tamil and English strings and are referenced consistently.")
     print("PASS: all six apps have bilingual, expandable guides and direct main-screen entry points.")
+    print(f"PASS: {kotlin_files} Kotlin sources have no unescaped positional format specifiers in string literals.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0
