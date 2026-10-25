@@ -2,7 +2,7 @@
 
 **Package:** `com.universalrp.cleansweep` · **Version:** `2.71` (`versionCode = 76`) · **Minimum Android:** Android 8.0+ (API 26)
 **Published Signed Asset:** `CleanSweep-v2.71.apk` (signed and published by CI).
-**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks. Permission delta over `v2.70`: `0` new permissions added. This is a voice-output change only; no new permission is requested.
+**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks. Permission delta over `v2.70`: `0` new permissions added. This is a voice-output change only; no new permission is requested. **This exact build has not been installed on a phone and has had no physical-device test** — the voice behaviour described below is verified by source and unit tests only, and the owner's own install is the confirmation that still has to happen.
 
 ### Why this release
 The owner asked for five things about Live Guard's voice, plus the usual build/publish pass:
