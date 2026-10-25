@@ -386,23 +386,36 @@ fun FinanceTab(
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "${ui.monthlySpendVsLastMonth}: ${FinanceLedgerEngine.formatInr(monthly.lastMonthSpend)}",
+                        ui.monthlySpendVsLastMonth,
                         color = palette.textMuted,
                         fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
                     )
+                    // An amount never wraps; the label beside it does instead.
                     Text(
-                        changeText,
-                        color = changeColor,
+                        FinanceLedgerEngine.formatInr(monthly.lastMonthSpend),
+                        color = palette.textMuted,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,
                         maxLines = 1,
                         softWrap = false,
                     )
                 }
+                Spacer(Modifier.height(2.dp))
+                // The trend is a sentence, not a number. "Last month had no spend" is longer than
+                // this row is wide in Tamil, and 1.1.7 clipped it to one line, which cut the
+                // owner's screen off mid-word: "கடந்த மாதம் செலவு இ" and nothing more.
+                Text(
+                    changeText,
+                    color = changeColor,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(Modifier.height(6.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -542,7 +555,7 @@ fun FinanceTab(
                     modifier = Modifier.weight(1f),
                     title = ui.incomeLabel,
                     amount = "+${FinanceLedgerEngine.formatInr(summary.totalIncome)}",
-                    subtitle = "${summary.creditCount} verified credits",
+                    subtitle = "${summary.creditCount} ${ui.verifiedCredits}",
                     accentColor = palette.safeGreen,
                     palette = palette,
                 )
@@ -550,7 +563,7 @@ fun FinanceTab(
                     modifier = Modifier.weight(1f),
                     title = ui.spendLabel,
                     amount = "-${FinanceLedgerEngine.formatInr(summary.totalSpend)}",
-                    subtitle = "${summary.debitCount} verified debits",
+                    subtitle = "${summary.debitCount} ${ui.verifiedDebits}",
                     accentColor = palette.dangerRed,
                     palette = palette,
                 )

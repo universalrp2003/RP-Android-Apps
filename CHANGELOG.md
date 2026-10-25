@@ -24,6 +24,48 @@ versions, so the batch step skipped them and their releases are unchanged.
 
 **Two release-note defects found by that test, both fixed:** the 2.72 note claimed a Monday-to-Friday default silent-place slot that the code does not have (the default is `SilentPlaceSlot(ALL_DAYS, 9..18)`), and none of the four notes carried a `## ` Tamil section, so `AppUpdates.localizedReleaseNotes` showed a Tamil-language owner the English text inside a Tamil app. `tools/verify_apps_localization.py` now requires exactly one Tamil section, requires it to be the last section, and requires the bare `## ` marker with no words after it - `substringAfter` keeps whatever follows the marker, so `## Tamil summary` used to leave the word "summary" as the first line of the Tamil release notes in the app; `releases/pulseeq-v1.9.md` and `releases/rp-vocal-remover-studio-v0.1.15.md` had a mid-note Tamil section that hid their checksum blocks from English readers. Both are fixed, and the six current notes now use the bare marker that 38 older notes already used. The four live release bodies were re-published with the corrected notes; editing a release body does not change the installed APK bytes.
 
+## Published — SMS Guard 1.1.8 / code 14 (25 October 2026)
+
+Bumped to code 14 / 1.1.8. The third release the owner's phone test has driven.
+
+The owner installed 1.1.7 and the wrap fix held: the projected month-end figure reads
+₹12,929.48 on one line. The same screenshots then showed what 1.1.7 had broken beside those
+amounts, and what 1.1.6 had been showing in Tamil since the card was new.
+
+Five defects, all repaired:
+
+1. **The trend sentence was clipped.** 1.1.7 gave the "vs last month" row a single
+   non-wrapping line, on the assumption it held a number. When last month had no spend it holds
+   a sentence, and the owner's phone ran it off the edge of the card: "கடந்த மாதம் செலவு இ" and
+   nothing more. The amount now has its own place beside the label and the sentence wraps
+   underneath.
+2. **"மீதம் நாடகள்"** - நாடகள் means dramas, not days. The card read "6 மீதம் நாடகள்".
+3. **"உறியாக்க செலவுகள்"** and **"மாஸம் முடிசெய்யும் பதவிடத்தில் (நிறுமணம்)"** - neither is a
+   Tamil phrase.
+4. **"பின்னும் மாஸத்தில்"** - பின்னும் means more, not last.
+5. **"9 verified credits" / "11 verified debits"** - hardcoded English on a Tamil screen, now
+   catalog fields.
+
+A sixth defect surfaced while writing the gate for the first five: **the two app subtitles were
+swapped.** The Tamil block named the app "SMS Guard" and the English block named it in Tamil, so
+every screenshot the owner sent showed the app bar reading "SMS Guard" in Tamil mode.
+
+`verify_smsguard_bilingual_catalog()` is new. It parses the catalog's declarations and its two
+value blocks and requires every declared field to be assigned in both, no Tamil value to be
+empty or Latin-only, and no English value to be Tamil. It caught the subtitle swap on its first
+run against the real file. 66 tests now cover all seven gates.
+
+The markdown renderer is still unverified on a screen, and the reason is now understood: the
+screenshots the owner sent at 20:01 show literal `**bold**` and `- bullets`, but they were taken
+while 1.1.6 was installed, and 1.1.6 predates the renderer. 1.1.7 is the first build that has
+it, so 1.1.7's own update screen is the first place it can be seen - which needs a release newer
+than 1.1.7, which is what this is.
+
+Play Protect blocked the 1.1.7 install with "Harmful app blocked". That is a heuristic false
+positive on an SMS-reading app installed from outside Play, not something this release
+introduced; the owner tapped "Install anyway" and it installed. It is recorded here because it
+is friction the owner will hit on every update until the app reaches Play.
+
 ## Published — SMS Guard 1.1.7 / code 13 (25 October 2026)
 
 Published by [SMS Guard run 40202187916](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40202187916): `SMS-Guard-v1.1.7.apk`, `12,428,897` bytes, SHA-256 `b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371`. A one-line layout fix and an honest correction, both prompted by the owner's second batch of

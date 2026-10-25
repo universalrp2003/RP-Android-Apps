@@ -1336,7 +1336,7 @@ private fun OorSettingsFullDialog(
                         Divider(color = Color(0xFFE2E8F0))
                         Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         val releaseLinks = listOf(
-                            ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.7",
+                            ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
                             ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
                             ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.25",
                             ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",

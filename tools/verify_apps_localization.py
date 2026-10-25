@@ -23,7 +23,7 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.7",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.25",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
@@ -468,6 +468,89 @@ _NON_TAMIL_INDIC = (
 )
 
 
+def verify_smsguard_bilingual_catalog() -> int:
+    """Every SMS Guard UI string must be declared once and assigned in both languages.
+
+    The catalog is one data class of `val name: String` fields with two value blocks, Tamil and
+    English. Nothing compared them, so a field could be declared and assigned in English only,
+    or assigned to empty or Latin-only text in the Tamil block, and no gate would notice.
+
+    The owner's 1.1.7 screenshots found exactly that: "9 verified credits" and "11 verified
+    debits" were hardcoded English in FinanceTab.kt rather than catalog fields at all, and the
+    monthly-spend card's Tamil read "மீதம் நாடகள்" - "remaining dramas".
+
+    This checks the declared field set against both blocks, that no Tamil value is empty or
+    Latin-only, and that no Odia or Bengali reaches the Tamil block. Whether the Tamil is *good*
+    Tamil is not something a gate can decide.
+    """
+    catalog = ROOT / "smsguard/src/main/java/com/universalrp/smsguard/ui/BilingualCatalog.kt"
+    text = catalog.read_text(encoding="utf-8")
+    rel = catalog.relative_to(ROOT)
+
+    declared = set(re.findall(r"^    val (\w+): String,", text, re.M))
+    if not declared:
+        raise ValueError(f"{rel} declares no String fields")
+
+    # Split on the two object declarations, not on the script of each value. A value that is
+    # Latin-only is exactly the defect this gate exists to catch, so it must land in the Tamil
+    # block and be reported there - classifying by script would silently move it to English and
+    # then complain only that the Tamil block was short a field.
+    def block(label: str) -> dict[str, str]:
+        start = text.find(f"val {label} = GuardUiStrings(")
+        if start < 0:
+            raise ValueError(f"{rel} has no `val {label} = GuardUiStrings(` block")
+        end = text.find("\n    )", start)
+        if end < 0:
+            raise ValueError(f"{rel}'s {label} block never closes")
+        return dict(re.findall(r'^        (\w+) = "([^"]*)",$', text[start:end], re.M))
+
+    tamil = block("TAMIL")
+    english = block("ENGLISH")
+
+    for label, values in (("Tamil", tamil), ("English", english)):
+        missing = declared - set(values)
+        extra = set(values) - declared
+        if missing:
+            raise ValueError(
+                f"{rel} never assigns these declared fields in the {label} block: {sorted(missing)}"
+            )
+        if extra:
+            raise ValueError(f"{rel} assigns undeclared fields in the {label} block: {sorted(extra)}")
+
+    empty = sorted(name for name, value in tamil.items() if not value.strip())
+    if empty:
+        raise ValueError(f"{rel} has empty Tamil values for: {empty}")
+
+    latin_only = sorted(
+        name for name, value in tamil.items() if not any("\u0B80" <= ch <= "\u0BFF" for ch in value)
+    )
+    if latin_only:
+        raise ValueError(
+            f"{rel} has Tamil-block values with no Tamil script at all, which is how "
+            f"'verified credits' reached a Tamil screen: {latin_only}"
+        )
+
+    # The mirror check, and the one that catches the subtitle swap the owner saw on every screen:
+    # the Tamil block named the app "SMS Guard" and the English block named it in Tamil.
+    tamil_in_english = sorted(
+        name for name, value in english.items() if any("\u0B80" <= ch <= "\u0BFF" for ch in value)
+    )
+    if tamil_in_english:
+        raise ValueError(
+            f"{rel} has English-block values written in Tamil, which is how the two app subtitles "
+            f"came to be swapped: {tamil_in_english}"
+        )
+
+    for name, lo, hi in _NON_TAMIL_INDIC:
+        bad = sorted({name for name, value in tamil.items() if any(lo <= ch <= hi for ch in value)})
+        if bad:
+            raise ValueError(
+                f"{rel} has {name} codepoints in the Tamil block for: {bad}. Writing Tamil with "
+                f"\\u0b.. escapes straddles the Tamil and Odia blocks; write Tamil literally."
+            )
+    return len(declared)
+
+
 def verify_site_tamil_blocks() -> int:
     r"""No Indic script other than Tamil may appear in the published site or the pinned notes.
 
@@ -615,7 +698,7 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.7"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.8"',
             'tagPrefix = "live-guard"', 'version = "2.72"',
             'tagPrefix = "ramesh-radio"', 'version = "1.25"',
             'tagPrefix = "pulseeq"', 'version = "1.9"',
@@ -714,6 +797,7 @@ def main() -> int:
         tamil_notes = verify_release_notes_tamil_section()
         tamil_words = verify_release_notes_tamil_words()
         tamil_blocks = verify_site_tamil_blocks()
+        smsguard_catalog = verify_smsguard_bilingual_catalog()
         exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
     except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -727,6 +811,7 @@ def main() -> int:
     print(f"PASS: {tamil_notes} pinned release notes each carry exactly one Tamil section, last, for the in-app update screen.")
     print(f"PASS: {tamil_words} pinned release notes keep their Tamil sections free of stray Latin words.")
     print(f"PASS: {tamil_blocks} published files use Tamil and no other Indic script.")
+    print(f"PASS: {smsguard_catalog} SMS Guard UI fields are assigned in both languages.")
     print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
