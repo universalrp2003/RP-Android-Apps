@@ -28,6 +28,7 @@ on:
       - "CHANGELOG.md"
       - "PUBLISHING.md"
       - "docs/published-release-digests.md"
+      - "docs/live-guard-2.42-device-evidence.md"
       # Release NOTES only — `releases/latest-tag.txt` is deliberately NOT ignored:
       # the Live Guard permission-delta gate reads it as the previous-release baseline.
       - "releases/*.md"

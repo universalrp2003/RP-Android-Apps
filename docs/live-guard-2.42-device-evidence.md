@@ -56,7 +56,7 @@ safe — You can continue to install it"** → the owner installed → the packa
 
 **Play Protect was never disabled, bypassed or worked around.** Nothing here changes the package
 name or the signing key, and the 2.39 install-block advisory
-([`live-guard-play-protect-install-block.md`](../live-guard-play-protect-install-block.md)) stands
+([`live-guard-play-protect-install-block.md`](live-guard-play-protect-install-block.md)) stands
 as written for the older builds.
 
 ## What this evidence does and does not cover
@@ -85,6 +85,6 @@ kernel that reports no current through either Android path; what it can do is st
 and that is what 2.43 does. The A3s' own charge history (real 4.6–4.8 W sessions) remains
 evidence that some path reported current on some builds; it is not evidence about this one.
 
-See [`live-guard-2.42-scope.md`](../live-guard-2.42-scope.md) item 1 and
-[`live-guard-2.42-device-test-plan.md`](../live-guard-2.42-device-test-plan.md) for the remaining
+See [`live-guard-2.42-scope.md`](live-guard-2.42-scope.md) item 1 and
+[`live-guard-2.42-device-test-plan.md`](live-guard-2.42-device-test-plan.md) for the remaining
 open checks (per-ROM permission routing, font-scale layout, the automatic voice pair).
