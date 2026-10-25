@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -331,10 +332,11 @@ fun FinanceTab(
 
         // A3: the monthly-spend card. The ledger totals whatever period the owner picked; this is
         // the one number people open the tab for, with last month beside it. Every figure comes
-        // from MonthlySpendPolicy, which applies the same genuine-and-not-a-self-transfer filter as
-        // the ledger, so the two can never disagree.
+        // from MonthlySpendPolicy, which applies the genuine-bank/UPI, not-a-self-transfer, debit
+        // filter. It does not apply the ledger's account or per-message exclusions, because this
+        // card is meant to be the whole-month, every-account figure; the period summary below
+        // still reflects whatever filter the owner has chosen.
         item {
-            // Same source the summary uses, so the two can never disagree.
             val parsedAll = remember(allMessages) { allMessages.map { it.finance } }
             val monthly = remember(parsedAll) {
                 MonthlySpendPolicy.facts(
@@ -393,7 +395,14 @@ fun FinanceTab(
                         color = palette.textMuted,
                         fontSize = 12.sp,
                     )
-                    Text(changeText, color = changeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                    Text(
+                        changeText,
+                        color = changeColor,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
                 }
                 Spacer(Modifier.height(6.dp))
                 Row(
@@ -401,12 +410,19 @@ fun FinanceTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(ui.monthlySpendDailyAverage, color = palette.textMuted, fontSize = 12.sp)
+                    Text(
+                        ui.monthlySpendDailyAverage,
+                        color = palette.textMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
                         FinanceLedgerEngine.formatInr(monthly.dailyAverage),
                         color = palette.textPrimary,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                 }
                 Spacer(Modifier.height(4.dp))
@@ -417,12 +433,19 @@ fun FinanceTab(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(ui.monthlySpendProjected, color = palette.textMuted, fontSize = 12.sp)
+                    Text(
+                        ui.monthlySpendProjected,
+                        color = palette.textMuted,
+                        fontSize = 12.sp,
+                        modifier = Modifier.weight(1f),
+                    )
                     Text(
                         FinanceLedgerEngine.formatInr(monthly.projectedMonthEnd),
                         color = palette.accent,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 12.sp,
+                        maxLines = 1,
+                        softWrap = false,
                     )
                 }
             }

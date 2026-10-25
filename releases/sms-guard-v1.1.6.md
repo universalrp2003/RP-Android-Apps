@@ -22,20 +22,36 @@ bar per month. What was missing is the number people open the tab for, so the ne
 
 ## What it deliberately does not do
 
-It does not guess. Every figure comes from `MonthlySpendPolicy`, which applies exactly the same
-genuine-bank/UPI-and-not-a-self-transfer filter the ledger already uses, so the card and the ledger
-can never disagree. A spoofed "₹500 debited" from a random personal number can never inflate a spend
-total, and paying your own credit-card bill is still a transfer rather than spending.
+It does not guess. Every figure comes from `MonthlySpendPolicy`, which applies the same
+genuine-bank/UPI-and-not-a-self-transfer filter the ledger uses, so a spoofed "₹500 debited"
+from a random personal number can never inflate a spend total, and paying your own credit-card
+bill is still a transfer rather than spending.
+
+One deliberate difference from the period summary below it: the card is always the whole
+calendar month across every account, while the summary honours the account you have selected
+and any message you have excluded. On the owner's test phone the card read ₹10,427 and the
+October summary read ₹10,302 for exactly that reason, so the two are allowed to differ and
+neither is wrong.
 
 The month is clamped to its real length — 28 in February, 30 in September — and a month that has
 already finished is not projected past its own last day.
 
-## Not verified
+## Device test
 
-The exact bytes in this release were not installed on a phone before publication: no device test was
-run for 1.1.6. CI unit, lint, regression, signature and release-asset checks pass. The card's layout
-on a narrow screen and the numbers against a real month of messages still need a physical-device
-check.
+Installed on a phone on 25 October 2026. The app opens and the Finance tab reaches the new monthly
+spend card. The owner confirmed the install after this note was first written, so the exact bytes
+of 1.1.6 are phone-installed rather than untested.
+
+CI unit, lint, regression, signature and release-asset checks all pass, and the month clamp, the
+projection rule and the "last month had no spend" wording are unit-tested. Still to check on a
+phone: the card's figures against a real month of messages.
+
+The layout part of that check is now done, and it found one defect: on the owner's phone the
+projected month-end figure wrapped inside its own digits, reading "₹12,92" and then "9.48" on the
+next line, because the long Tamil label beside it left the amount no room. The figure itself was
+right; this is a layout fault, not a numbers fault. Every amount in the card is now a single
+non-wrapping line, and the label wraps instead. That fix is in the source for the next build, not
+in the 1.1.6 bytes described here.
 
 ## தமிழ்
 
@@ -52,6 +68,9 @@ check.
   (DEBIT) மட்டும். பில் SMS வரவு/செலவாக கணக்கிடப்படாது.
 - **OTP ஒலிக்கப்படாதது உறுதி.** ஒரு முறை குறியீடுகள் எப்போதும் பில் நினைவூட்டலின் பகுதியாகவும்
   ஒலிக்கப்படுவதில்லை.
-- **இந்த வெளியீட்டின் துல்லியமான கோப்புகள் வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை:**
-  1.1.6-க்கு சாதன சோதனை இல்லை. CI சோதனைகள் வெற்றி; அட்டையின் குறுகிய திரையில் தோற்றம்
-  மற்றும் உண்மையான மாத செய்திகளுக்கு எண்கள் இன்னும் சோதிக்க வேண்டும்.
+- **ஃபோனில் நிறுவப்பட்டது (25 அக்டோபர் 2026).** இந்த குறிப்பு எழுதப்பட்ட பிறகு 1.1.6-ன்
+  துல்லியமான கோப்புகள் நிறுவப்பட்டதாக உறுதி செய்யப்பட்டன. செயலி திறந்து நிதித் தாவலில்
+  புதிய மாதாந்திர செலவு அட்டை எட்டுகிறது.
+- **இன்னும் சோதிக்க வேண்டியது:** ஒரு உண்மையான மாதத்தின் செய்திகளுக்கு அட்டையின் எண்கள்,
+  மற்றும் குறுகிய திரையில் அட்டையின் தோற்றம். CI சோதனைகள் எல்லாம் வெற்றி; மாதம் கடந்த
+  நள்ளிரவில் அல்லாமல் நாள் இறுதியில் முடுவது unit சோதனையில் சரிபார்க்கப்பட்டுள்ளது.

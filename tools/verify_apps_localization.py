@@ -382,6 +382,64 @@ def verify_release_notes_tamil_words() -> int:
     return checked
 
 
+def verify_release_notes_markdown_subset() -> int:
+    """A pinned note may only use the markdown the in-app renderer understands.
+
+    `ReleaseNotesMarkdown.parseReleaseNotes` renders `# title`, `## heading`, `- bullet`,
+    `  - sub-bullet`, `**bold**`, `*italic*`, backtick code and `[text](url)` - and nothing else.
+    Any other construct would reach the screen as literal markup again, which is exactly the
+    defect the renderer was written to end. Checking the notes here turns that into a source-time
+    failure instead of something an owner has to spot on a phone.
+
+    One level of sub-bullet is allowed, and it has to be exactly two spaces deep: a deeper one
+    would be flattened into its parent's text.
+    """
+    checked = 0
+    for module, prefix in sorted(RELEASE_TAG_PREFIX.items()):
+        version = module_version(module)
+        if not version:
+            continue
+        note = ROOT / "releases" / f"{prefix}-v{version}.md"
+        if not note.exists():
+            continue
+        rel = note.relative_to(ROOT)
+        for number, raw in enumerate(note.read_text(encoding="utf-8").split("\n"), 1):
+            if raw.strip() == "":
+                continue
+            trimmed = raw.strip()
+            indent = len(raw) - len(raw.lstrip())
+            problem = None
+            if trimmed.startswith("###"):
+                problem = "a third-level heading"
+            elif trimmed.startswith(">"):
+                problem = "a block quote"
+            elif re.match(r"^\d+\. ", trimmed):
+                problem = "a numbered list item"
+            elif trimmed.startswith(("---", "***", "___")):
+                problem = "a horizontal rule"
+            elif trimmed.startswith("```"):
+                problem = "a fenced code block"
+            elif trimmed.startswith("!["):
+                problem = "an image"
+            elif "~~" in trimmed:
+                problem = "strikethrough"
+            elif "|" in trimmed:
+                problem = "a table"
+            elif indent > 0 and trimmed.startswith("- ") and indent != 2:
+                problem = "a sub-bullet nested deeper than one level"
+            elif indent > 0 and trimmed.startswith("#"):
+                problem = "an indented heading"
+            if problem:
+                raise ValueError(
+                    f"{rel} line {number} uses {problem}, which the in-app release-note renderer "
+                    f"does not understand, so it would reach the screen as literal markup. Use "
+                    f"one of: a # title, a ## heading, a - bullet, a two-space - sub-bullet, "
+                    f"**bold**, *italic*, backtick code, [text](url), or plain text."
+                )
+        checked += 1
+    return checked
+
+
 def verify_release_notes_honesty() -> int:
     """The note for each app's current version must state its device-test status.
 
@@ -532,6 +590,7 @@ def main() -> int:
         notes_checked = verify_release_notes_honesty()
         tamil_notes = verify_release_notes_tamil_section()
         tamil_words = verify_release_notes_tamil_words()
+        markdown_notes = verify_release_notes_markdown_subset()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -542,6 +601,7 @@ def main() -> int:
     print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
     print(f"PASS: {tamil_notes} pinned release notes each carry exactly one Tamil section, last, for the in-app update screen.")
     print(f"PASS: {tamil_words} pinned release notes keep their Tamil sections free of stray Latin words.")
+    print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

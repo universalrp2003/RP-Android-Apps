@@ -498,12 +498,13 @@
                 <ul>
                   <li><strong>New monthly-spend card on the Finance (நிதி) tab:</strong> this month against last month, the change in rupees <em>and</em> percent, your running daily average, what the month is projected to end at, the days left, and a plain-language trend.</li>
                   <li>The month is measured to its <strong>last instant</strong>, not to midnight on the last day, so the projection is never a day short.</li>
+                  <li>The card is always the whole calendar month across <strong>every account</strong>; the period summary below it still honours the account you selected, so the two can differ and neither is wrong.</li>
                   <li>When last month had no spending at all, the percent change is left out instead of showing a meaningless number.</li>
                   <li>Bilingual card, same style as the rest of the Finance tab. OTP silence is unchanged.</li>
                 </ul>
                 <p class="ta">நிதித் தாவலில் புதிய <strong>மாதாந்திர செலவு அட்டை</strong> — இந்த மாதம் மற்றும் கடந்த மாதம் ஒப்பீடு, ரூபாயிலும் சதவீதத்திலும் மாற்றம், நாள் வரியான சராசரி, மாத இறுதியில் எதிர்பார்க்கும் செலவு, மீதமுள்ள நாட்கள், எளிய மொழியில் உள்ள பிரவணம். மாதம் கடந்த நாள் நள்ளிரவில் அல்ல, நாள் இறுதியில் முடுகிறது. OTP ஒலிக்கப்படாதது உறுதி.</p>
-                <p class="note"><strong>Not phone-tested:</strong> this exact build was not installed on a phone before publication and no device result is claimed for it. Every CI unit, lint, regression, signature and release-asset check passed.</p>
-                <p class="ta">இந்த துல்லியமான கோப்புகள் வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை; சாதன சோதனை எதுவும் உரையாற் படவில்லை. CI சோதனைகள் அனைத்தும் வெற்றி.</p>
+                <p class="note"><strong>Phone-tested 25 October 2026:</strong> the owner installed this exact build and the Finance tab reaches the new monthly-spend card. Still to check on a phone: the card's figures against a real month of messages, and its layout on a narrow screen. Every CI unit, lint, regression, signature and release-asset check passed.</p>
+                <p class="ta">இந்த துல்லியமான கோப்பு 25 அக்டோபர் 2026-ல் ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது; நிதித் தாவலில் புதிய மாதாந்திர செலவு அட்டை எட்டுகிறது. இன்னும் சோதிக்க வேண்டியது: ஒரு உண்மையான மாதத்தின் செய்திகளுக்கு அட்டையின் எண்கள், மற்றும் குறுகிய திரையில் அட்டையின் தோற்றம். CI சோதனைகள் அனைத்தும் வெற்றி.</p>
               </div>
             </details>
             <div class="mini">12.4 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -697,8 +698,8 @@
                   <li>Chips only appear once you have more than one place, so a first-time owner sees nothing extra.</li>
                 </ul>
                 <p class="ta">மழை &amp; புயல் குரல் எச்சரிக்கைகளுக்கு ஒன்றுக்கு மேற்பட்ட ஊர்களைச் சேமிக்கலாம் — வானிலை பட்டியின் கீழ் chips வரிசையாகத் தெரியும். ஒரு தட்டுதலால் இயக்க ஊர் மாறும், புதிய ஊருக்கு எச்சரிக்கை மீண்டும் சோதித்து பேசும். &times; அழுத்தியால் ஊர் அழிகிறது; இயக்க ஊரை அழித்தால் அடுத்த ஊர் தானாக எடுக்கப்படும். தேடலில் தேர்வு செய்த ஒவ்வொரு ஊரும் தானாகச் சேமிக்கப்படும். 12 ஊர்கள் வரை.</p>
-                <p class="note"><strong>Phone-tested 25 October 2026:</strong> updated in-app from 1.24. The saved place, the rain dialog and the zero-location-permission message all render, and a live check returned a real town and district. The chip strip has not been seen yet: the test phone held exactly one saved place, and the chips only appear once there is more than one.</p>
-                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): 1.24-ல் இருந்து செயலியில் மேம்படுத்தப்பட்டது. சேமித்த ஊர், மழை உரையாடல் மற்றும் இருப்பிட அனுமதி இல்லாத நிலை செய்தி — இவை மூன்றும் சரியாகத் தெரியும். Chip வரிசை இன்னும் காட்டப்படவில்லை: சோதனை ஃபோனில் ஒரே ஒரு சேமித்த ஊர் மட்டுமே இருந்தது, chip-கள் ஒன்றுக்கு மேற்பட்ட ஊர் இருந்தால் மட்டுமே தெரியும்.</p>
+                <p class="note"><strong>Phone-tested 25 October 2026:</strong> updated in-app from 1.24. The saved place, the rain dialog and the zero-location-permission message all render, and a live check returned a real town and district. Adding a second place is confirmed: the search box is the way in, and the owner picked Madurai, then searched <code>alangudi</code> and got three matches, and "Saved place" moved from Madurai to Alangudi. The chip strip itself has not been photographed yet, so switching, the highlight and the X are still to check on a phone.</p>
+                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): 1.24-ல் இருந்து செயலியில் மேம்படுத்தப்பட்டது. சேமித்த ஊர், மழை உரையாடல் மற்றும் இருப்பிட அனுமதி இல்லாத நிலை செய்தி — இவை மூன்றும் சரியாகத் தெரியும். இரண்டாவது ஊர் சேர்க்கும் வழி உறுதியாகிறது: தேடல் பெட்டியே வழி — madurai தேடி ஒரு ஊரைத் தேர்வு செய்து, பிறகு alangudi தேடி மூன்று பதில்கள் கிடைத்தன, சேமிட்ட ஊர் Madurai-விலிருந்து Alangudi-வுக்கு மாறியது. Chip வரிசையே இன்னும் படமாக காட்டப்படவில்லை; அதுவெனறே, ஊர் மாற்றுவது, இயக்க ஊர் highlight ஆவது, × அழிப்பது — இவை இன்னும் சோதிக்க வேண்டும்.</p>
               </div>
             </details>
             <div class="mini">15.1 MB · <strong>SHA-256 verified ✓</strong></div>

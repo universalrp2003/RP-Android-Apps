@@ -546,8 +546,12 @@ object AppUpdates {
                 }
                 update?.let { release ->
                     Text(text("Release source") + ": ${release.repository}", style = MaterialTheme.typography.labelSmall, color = body)
-                    Text(text("What’s new") + "\n" + localizedReleaseNotes(release.notes, AppLanguageState.current),
-                        style = MaterialTheme.typography.bodySmall, color = body)
+                    Text(text("What’s new"), style = MaterialTheme.typography.labelMedium, color = strong)
+                    ReleaseNotes(
+                        markdown = localizedReleaseNotes(release.notes, AppLanguageState.current),
+                        bodyColor = body,
+                        strongColor = strong,
+                    )
                     if (downloading) {
                         LinearProgressIndicator(
                             progress = { (bytes.toDouble() / release.size.coerceAtLeast(1L)).toFloat().coerceIn(0f, 1f) },
@@ -605,7 +609,10 @@ object AppUpdates {
                         } else if (verifiedApk == null) {
                             Text(text("SHA-256, package name, newer version and signing certificate are checked before Android opens the installer."))
                             Text(text("Android requires Install unknown apps permission for this app and its own confirmation for each install. Play Protect is not bypassed."))
-                            Text(text("What’s new") + "\n" + localizedReleaseNotes(release.notes, AppLanguageState.current))
+                            Text(text("What’s new"))
+                            ReleaseNotes(
+                                markdown = localizedReleaseNotes(release.notes, AppLanguageState.current),
+                            )
                         }
                     }
                 },

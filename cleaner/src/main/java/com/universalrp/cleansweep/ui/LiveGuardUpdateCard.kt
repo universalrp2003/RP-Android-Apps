@@ -25,6 +25,7 @@ import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.formatBytes
 import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.updates.LiveGuardUpdates
+import com.universalrp.updates.ReleaseNotes
 import com.universalrp.cleansweep.ui.theme.GoodGreen
 import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextSecondary
@@ -126,7 +127,12 @@ fun LiveGuardUpdateCard(compact: Boolean = false) {
                 Text(tr("Published version: %s", release.version))
                 Text(tr("Release source") + ": ${release.repository}", style = MaterialTheme.typography.labelSmall)
                 Text(tr("Published: %s", DisplayTime.dated(release.publishedAt, Lang.languageIn(context) == AppLang.TA)), style = MaterialTheme.typography.labelSmall)
-                Text(localizedReleaseNotes(release.notes).ifBlank { tr("No release notes were published.") }, style = MaterialTheme.typography.bodySmall)
+                val notes = localizedReleaseNotes(release.notes)
+                if (notes.isBlank()) {
+                    Text(tr("No release notes were published."), style = MaterialTheme.typography.bodySmall)
+                } else {
+                    ReleaseNotes(markdown = notes)
+                }
                 if (state.downloading) {
                     LinearProgressIndicator(progress = { (state.bytes.toDouble() / release.bytes).toFloat().coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
                     Text(tr(if (state.bytes == release.bytes) "Verifying downloaded APK…" else "Downloading APK inside Live Guard…"))

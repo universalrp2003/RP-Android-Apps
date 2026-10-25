@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
 """Unit tests for the release-note gates in verify_apps_localization.py.
 
-Three gates are covered, all of them silent in production before they were written:
+Four gates are covered, all of them silent in production before they were written:
 
 * the note must state its device-test status (the publish step greps for it);
 * the note must carry exactly one `## தமிழ்` section, and it must be the last section,
   because `AppUpdates.localizedReleaseNotes` splits on that marker;
 * the Tamil section must not contain a Latin word that appears nowhere in the note's English
-  text, which is how `40 vaikkappadum` reached a published note.
+  text, which is how `40 vaikkappadum` reached a published note;
+* the note must only use the markdown the in-app renderer understands, which is how the notes
+  came to print their own `**bold**` and `## headings` on the update screen.
 
 The gates read the real repository, so each test points `ROOT` and `module_version` at a
 temporary tree holding one fake app's note.
 """
+import re
 import sys
 import tempfile
 import unittest
@@ -32,6 +35,11 @@ GOOD_HEAD = """# Fake App 9.9
 ## What changed
 
 - One thing changed. The chip strip shows a row of chips, and the slot default is every day.
+- A second thing changed, wrapped onto two lines:
+  the projection is clamped to the last instant of the month.
+- A parent point:
+  - one sub-point
+  - another sub-point
 
 ## How it is built
 
@@ -142,6 +150,73 @@ class ReleaseNoteGatesTest(unittest.TestCase):
     def test_tamil_words_skips_a_note_without_a_tamil_section(self) -> None:
         self.write(GOOD_HEAD)
         self.assertEqual(mod.verify_release_notes_tamil_words(), 0)
+
+    # -- markdown subset the in-app renderer understands ---------------------
+    def test_markdown_subset_accepts_every_construct_the_notes_use(self) -> None:
+        # The shapes below are lifted from the six pinned notes: a wrapped bullet, one level of
+        # sub-bullet, bold, italic, backtick code and a markdown link.
+        self.write(GOOD_HEAD + "\n" + TAMIL_HEADING + "\n\n" + TAMIL_LINE + "\n")
+        self.assertEqual(mod.verify_release_notes_markdown_subset(), 1)
+
+    def test_markdown_subset_rejects_a_third_level_heading(self) -> None:
+        self.write(GOOD_HEAD + "\n### A sub-heading\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError) as caught:
+            mod.verify_release_notes_markdown_subset()
+        self.assertIn("literal markup", str(caught.exception))
+
+    def test_markdown_subset_rejects_a_block_quote(self) -> None:
+        self.write(GOOD_HEAD.replace("## How it is built", "## How it is built\n\n> quoted")
+                   + "\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_markdown_subset()
+
+    def test_markdown_subset_rejects_a_numbered_list(self) -> None:
+        self.write(GOOD_HEAD.replace("## What changed", "## What changed\n\n1. first\n2. second")
+                   + "\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_markdown_subset()
+
+    def test_markdown_subset_rejects_a_horizontal_rule(self) -> None:
+        self.write(GOOD_HEAD.replace("## Not verified", "## Not verified\n\n---")
+                   + "\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_markdown_subset()
+
+    def test_markdown_subset_rejects_a_fenced_code_block(self) -> None:
+        self.write(GOOD_HEAD.replace("## How it is built", "## How it is built\n\n```\ncode\n```")
+                   + "\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_markdown_subset()
+
+    def test_markdown_subset_rejects_a_table(self) -> None:
+        self.write(GOOD_HEAD.replace("## What changed", "## What changed\n\n| a | b |\n| - | - |")
+                   + "\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_markdown_subset()
+
+    def test_markdown_subset_rejects_a_sub_bullet_nested_deeper_than_one_level(self) -> None:
+        # The renderer flattens an indented line into the block above it, so a second level of
+        # nesting would silently merge two separate points into one sentence.
+        self.write(GOOD_HEAD.replace("  - one sub-point", "    - one sub-point") + "\n" + GOOD_TAIL)
+        with self.assertRaises(ValueError):
+            mod.verify_release_notes_markdown_subset()
+
+    def test_markdown_subset_accepts_a_two_space_sub_bullet(self) -> None:
+        self.write(GOOD_HEAD + "\n" + GOOD_TAIL)
+        self.assertEqual(mod.verify_release_notes_markdown_subset(), 1)
+
+    def test_markdown_subset_skips_a_note_that_does_not_exist(self) -> None:
+        self.assertEqual(mod.verify_release_notes_markdown_subset(), 0)
+
+    # -- the six real pinned notes -------------------------------------------
+    def test_real_notes_still_pass_every_gate(self) -> None:
+        # The temp tree is gone by now, so this runs against the repository itself.
+        mod.ROOT = self._orig_root
+        mod.module_version = self._orig_version
+        self.assertGreaterEqual(mod.verify_release_notes_honesty(), 1)
+        self.assertGreaterEqual(mod.verify_release_notes_tamil_section(), 1)
+        self.assertGreaterEqual(mod.verify_release_notes_tamil_words(), 1)
+        self.assertGreaterEqual(mod.verify_release_notes_markdown_subset(), 1)
 
 
 if __name__ == "__main__":

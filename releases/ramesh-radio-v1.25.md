@@ -45,6 +45,13 @@ and the chips only appear once there is more than one, so the chip strip, one-ta
 highlight following the active place, and the X forgetting a place have not been exercised on a
 device yet.
 
+Later the same day the owner worked the search box - typed `madurai`, picked Madurai, then typed
+`alangudi` and got three matches (Alangudi, Tamil Nadu 622301; Alangudi, Tiruvarur district;
+Alanguudi, Nagapattinam district) - and "Saved place" moved from Madurai to Alangudi. So the
+search results are how a second place is added, and the list does hold more than one. There is no
+separate "add place" button, on purpose: every place picked from the search box is remembered
+automatically. The chip strip itself has still not been photographed.
+
 ## தமிழ்
 
 - **ஒன்றுக்கு மேற்பட்ட சேமித்த ஊர்கள்:** மழை & புயல் குரல் எச்சரிக்கைகள் இதுவரை ஒரு ஊரை மட்டும்
