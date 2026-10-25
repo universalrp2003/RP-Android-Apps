@@ -277,6 +277,34 @@ def module_version(module: str) -> str:
     return match.group(1) if match else ""
 
 
+def verify_release_notes_tamil_section() -> int:
+    """The note for each app's current version must carry a `## தமிழ்` section.
+
+    The in-app update screen calls `localizedReleaseNotes`, which splits the note on that exact
+    marker. A note without it makes a Tamil-language owner read the English text instead, because
+    `substringBefore` then returns the whole note. That is silent: nothing fails, the screen just
+    shows the wrong language.
+    """
+    marker = "## தமிழ்"
+    checked = 0
+    for module, prefix in sorted(RELEASE_TAG_PREFIX.items()):
+        version = module_version(module)
+        if not version:
+            continue
+        note = ROOT / "releases" / f"{prefix}-v{version}.md"
+        if not note.exists():
+            continue
+        text = note.read_text(encoding="utf-8")
+        if marker not in text:
+            rel = note.relative_to(ROOT)
+            raise ValueError(
+                f"{rel} has no `{marker}` section, so a Tamil-language owner is shown the English "
+                f"text in the in-app update screen. Add the Tamil section."
+            )
+        checked += 1
+    return checked
+
+
 def verify_release_notes_honesty() -> int:
     """The note for each app's current version must state its device-test status.
 
@@ -422,6 +450,7 @@ def main() -> int:
         verify_appstrings_accessibility_and_toasts(keys)
         kotlin_files = verify_kotlin_format_strings()
         notes_checked = verify_release_notes_honesty()
+        tamil_notes = verify_release_notes_tamil_section()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -430,6 +459,7 @@ def main() -> int:
     print("PASS: all six apps have bilingual, expandable guides and direct main-screen entry points.")
     print(f"PASS: {kotlin_files} Kotlin sources have no unescaped positional format specifiers in string literals.")
     print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
+    print(f"PASS: {tamil_notes} pinned release notes each carry a Tamil section for the in-app update screen.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

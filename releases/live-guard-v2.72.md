@@ -23,7 +23,30 @@ but each slot now also names the days it applies on. A real pattern — "Mon–F
 - The card no longer claims voice is paused when the profile is on but no slot covers today; it says
   "Silent place is on, but no slot covers today." instead.
 - Slots saved by an earlier version keep working: the old format carried no day, so it is read as
-  *every* day, and the default slot is now Mon–Fri 9–18.
+  *every* day. The default slot is every day, 9 AM–6 PM — it has always covered all seven days, so
+  an owner who never touches the day chips keeps exactly the behaviour 2.71 gave them.
+
+## தமிழ் சுருக்கம்
+
+- **அமைதி இட slot-கள் இப்போது நாட்களைக் குறிக்கும்.** ஒவ்வொரு தொடக்கம்→நிறுத்தம் slot-ம்
+  குறிப்பிட்ட வார நாட்களுக்கு மட்டும் வரம்பிடலாம். "திங்கள்–வெள்ளி 9 AM–6 PM, சனி
+  10 AM–2 PM" என்பது ஐந்து slot-களை மீண்டும் சேர்க்காமல் இரண்டு slot-ஆக இருக்கும்.
+- **ஒவ்வொரு slot-ம் ஏழு நாள் chip-களைக் காட்டும், திங்கள் முதலில்.** ஒரு நாளைத் தட்டினால்
+  அது on/off ஆகும்.
+- **நாட்கள் இல்லாத slot சாத்தியமில்லை:** கடைசி நாளை அழிப்பது மறுக்கப்படும், ஏனெனில்
+  முழு profile-ஐ off செய்வது ஏற்கனவே "ஒருபோதும் இல்லை" என்பதைக் குறிக்கிறது.
+- **ஒவ்வொரு slot-ம் கீழும் எந்த நாட்களை உள்ளடக்கியது என்பது தெரியும்** ("ஒவ்வொரு நாளும்",
+  "திங்கள் முதல் வெள்ளி வரை", அல்லது சிதறிய தேர்வுக்கான பட்டியல்) மற்றும் இன்று அதில்
+  உள்ளதா என்பது.
+- **நாட்கள் இல்லாத slot காரணமாக profile on ஆக இருக்கும்போது குரல் நிறுத்தப்பட்டது என்பது
+  இனி காட்டப்படாது.** "அமைதி இடம் on, ஆனால் இன்று எந்த slot-ம் இல்லை" என்று சொல்லும்.
+- **HD குரல் நீண்ட நேரம் கிடைக்கவில்லை என்றால் அது தெரியும்.** குரல் திரை HD குரலுக்குக்
+  காத்திருக்கிறது என்று சொல்லி மீண்டும் முயற்சிக்கும். மென்மையான மாற்று குரல் இல்லை,
+  ஒலியின்றி அமைதியாகவும் இல்லை.
+- **பழைய version-ல் சேமித்த slot-கள் வேலை செய்யும்:** பழைய format-ல் நாள் இல்லை, அதனால்
+  *ஒவ்வொரு நாளும்* என்றே படிக்கப்படும். **இயல்புநிலை slot ஒவ்வொரு நாளும் 9 AM–6 PM** —
+  எப்போதும் ஏழு நாட்களையும் உள்ளடக்கியது, அதனால் நாள் chip-ஐ தொடாத உரிமையாளருக்கு 2.71
+  வழங்கிய நடத்தையே கிடைக்கிறது.
 
 ## 2. Sustained HD-voice outage is visible (A2)
 
