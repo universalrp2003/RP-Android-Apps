@@ -263,6 +263,7 @@ RELEASE_TAG_PREFIX = {
     "vocalremover": "rp-vocal-remover-studio",
     "oorarivippu": "oor-arivippu",
     "smsguard": "sms-guard",
+    "voicenotes": "voice-notes",
     "secretmessage": "secret-message",
 }
 
@@ -705,6 +706,7 @@ def verify_about_links() -> None:
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
+            'tagPrefix = "voice-notes"', 'version = "1.0"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]

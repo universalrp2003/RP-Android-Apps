@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A microphone: dictate a note, hear it back. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FF8A3D"
+        android:pathData="M54,26c-4.4,0 -8,3.6 -8,8v18c0,4.4 3.6,8 8,8s8,-3.6 8,-8V34c0,-4.4 -3.6,-8 -8,-8z" />
+    <path
+        android:fillColor="#FF8A3D"
+        android:pathData="M70,44v8c0,8.8 -7.2,16 -16,16s-16,-7.2 -16,-16v-8h-5v8c0,10.5 7.6,19.2 17.5,21.2V82h-9v5h23v-5h-9v-8.8C67.4,71.2 75,62.5 75,52v-8z" />
+</vector>

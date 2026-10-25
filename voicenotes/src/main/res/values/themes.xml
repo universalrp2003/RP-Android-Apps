@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="voicenotes_bg">#0B0713</color>
+
+    <style name="Theme.VoiceNotes" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/voicenotes_bg</item>
+        <item name="android:statusBarColor">@color/voicenotes_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/voicenotes_bg</item>
+    </style>
+</resources>

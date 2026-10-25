@@ -100,6 +100,15 @@ object SisterApps {
             packageName = "com.rpideas.secretmessage",
             aboutLabel = "Secret Message — GitHub release",
         ),
+        SisterApp(
+            id = "voicenotes",
+            name = "Voice Notes",
+            tamilName = "குறல் குறிப்பு",
+            tagPrefix = "voice-notes",
+            version = "1.0",
+            packageName = "com.universalrp.voicenotes",
+            aboutLabel = "Voice Notes — GitHub release",
+        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
