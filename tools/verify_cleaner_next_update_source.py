@@ -230,7 +230,7 @@ def main():
             'The dedicated live-voice task is missing or gates the build')
     require(not (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text().count('@Test') == 0,
             'The live-network suite disappeared instead of being excluded')
-    require(sum(expected.values()) == 433 and len(expected) == 48, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 439 and len(expected) == 49, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -308,7 +308,7 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 48 required suites / 433 prepared declarations (the live-network suite is excluded from the gate); tests NOT executed. Candidate 2.72/code77/API26 matches.')
+    print('PASS: ' + str(len(expected)) + ' required suites / ' + str(sum(expected.values())) + ' prepared declarations (the live-network suite is excluded from the gate); tests NOT executed. Candidate 2.72/code77/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 
