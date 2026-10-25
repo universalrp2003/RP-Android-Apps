@@ -5,6 +5,16 @@ on:
     branches:
       - main
       - "arena/**"
+    # Documentation-only files cannot change the deployed site: this workflow reads only
+    # site/** plus the published release assets it mirrors. A docs-only commit therefore
+    # has nothing to redeploy. Keep this list in step with build-apk.yml.
+    paths-ignore:
+      - "README.md"
+      - "CHANGELOG.md"
+      - "PUBLISHING.md"
+      - "docs/published-release-digests.md"
+      # Release NOTES only — releases/latest-tag.txt is not a site input.
+      - "releases/*.md"
   workflow_dispatch:
 
 permissions:

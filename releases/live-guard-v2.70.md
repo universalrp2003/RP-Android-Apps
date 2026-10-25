@@ -1,8 +1,8 @@
 ## Live Guard (லைவ் கார்டு) v2.70 — Rain Alert Now Shows the Real Rain Rate (+ fewer false "rain now")
 
 **Package:** `com.universalrp.cleansweep` · **Version:** `2.70` (`versionCode = 75`) · **Minimum Android:** Android 8.0+ (API 26)
-**Published Signed Asset:** `Live-Guard-v2.70.apk` (signed and published by CI).
-**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks; this exact candidate build was **not installed on a phone** prior to GitHub release publication. Permission delta over `v2.69`: `0` new permissions added.
+**Published Signed Asset:** `CleanSweep-v2.70.apk` (signed and published by CI).
+**Verification Note:** Built, linted, unit-tested, and verified via CI static / manifest / signature checks. Permission delta over `v2.69`: `0` new permissions added. **Post-publication device confirmation (24 October 2026):** the owner installed `CleanSweep-v2.70.apk` on their phone and confirmed it works.
 
 ### Why this release
 Two things about the rain & storm alert. First, the status line under a rain alert carried a confusing phrase. Second, on dark, chilly-but-dry days the app sometimes announced "rain is starting now" when no noticeable rain actually fell.
