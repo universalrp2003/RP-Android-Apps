@@ -42,7 +42,14 @@ def main():
         require(widget.get(ANDROID+'targetCellWidth') == '2' and widget.get(ANDROID+'targetCellHeight') == '2', 'Not a compact widget preset')
     announcer = source('voice/Announcer.kt')
     require('speakNotification' not in announcer and 'Event.MESSAGES' not in announcer and 'voice_messages' not in announcer, 'Private-message speech path returned')
-    require('fun speakAnswer' in announcer and 'fun speakNow' in announcer and 'retryOffline' in announcer, 'General speech/offline fallback was removed with the reader')
+    # 2.71/2.72: HD only. The old contract demanded that the offline system-voice fallback still
+    # exist. That fallback is deliberately gone, so the contract is now the opposite one: the
+    # announcer must contain no system-TTS path at all, only the general speech entry points.
+    require('fun speakAnswer' in announcer and 'fun speakNow' in announcer, 'General speech path was removed')
+    require('retryOffline' not in announcer and 'startUtterance' not in announcer and
+            'ensureEngine' not in announcer and 'installedAnswerVoices' not in announcer and
+            'TextToSpeech' not in announcer,
+            'The removed system-TTS fallback came back into the announcer')
     require('never save utterance text' in announcer, 'Voice diagnostics privacy contract missing')
     require('CorePrivacyMigration.run' in source('MainViewModel.kt') and 'CorePrivacyMigrationPolicy' in source('data/CorePrivacyMigration.kt'), 'Core privacy cleanup not wired')
     require('SHA-256' in source('updates/LiveGuardUpdates.kt') and 'getPackageArchiveInfo' in source('updates/LiveGuardUpdates.kt') and 'trustedSigner' in source('updates/LiveGuardUpdates.kt'), 'APK identity/signing checks missing')
@@ -89,7 +96,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 76', 'versionName = "2.71"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 77', 'versionName = "2.72"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -292,7 +299,7 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: 48 required suites / 434 prepared declarations; tests NOT executed. Candidate 2.71/code76/API26 matches.')
+    print('PASS: 48 required suites / 434 prepared declarations; tests NOT executed. Candidate 2.72/code77/API26 matches.')
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

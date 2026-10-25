@@ -53,6 +53,10 @@ class MainActivity : ComponentActivity() {
         // 2.51: the chosen colour theme, applied before the first frame for the same reason as
         // the language — no card may flash a colour that is not the saved one.
         Palette.apply(ThemeStore.currentId(this))
+        // 2.72: create the voice channel up front so it exists in the phone's notification
+        // settings from the first launch, rather than only appearing the day the HD voice
+        // happens to be unreachable.
+        com.universalrp.cleansweep.notify.VoiceNotifier.channel(this)
         // 2.52: the typography is language-aware, so Compose needs an observable copy of the
         // language before the first frame — see UiMode in theme/Theme.kt.
         com.universalrp.cleansweep.ui.theme.UiMode.setLanguage(Lang.current)

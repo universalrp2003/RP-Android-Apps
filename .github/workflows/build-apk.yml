@@ -669,6 +669,8 @@ jobs:
                         AiRequestPolicy RequestBudget BoundedHttp ProductEvidencePolicy PermissionReviewStore DisplayTime \
                         AnswerVoicePreferences FeatureSetupScreen CorePrivacyMigrationPolicy \
                         inSilentPlace silentPlaceSlots NO_INTERNET SILENT_PLACE \
+                        SilentPlaceSlot toggleSilentPlaceDay VoiceNotifier \
+                        isoDayOfWeek ALL_DAYS SILENT_PLACE_DAY_LABELS \
                         CorePrivacyMigration LiveGuardUpdates VerifiedApkDownload UpdatePolicy \
                         LastUnplugRepo CompactWidgetPolicy CleanSweepDataWidget CleanSweepPhoneWidget \
                         LocalReadGate cancelAiReport cancelDeviceIdentification \

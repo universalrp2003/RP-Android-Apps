@@ -1603,12 +1603,34 @@ object Lang {
         "Waiting: internet disconnected, HD voice will speak when it returns" to "காத்திருக்கிறது: இணையம் இல்லை, இணையம் திரும்பும்போது HD குரல் பேசும்",
         // ---------------------------------------------------- silent place (2.71)
         "Silent place (office profile)" to "அமைதி இடம் (அலுவலக விவரக்குறிப்பு)",
-        "For office and working people: choose the hours every voice function must be off. Nothing is spoken inside these slots — not rain warnings, not battery or charging alerts, not answers. Add as many start/stop times as you need." to "அலுவலகம் மற்றும் வேலை செய்பவர்களுக்கு: குரல் இயந்திரங்கள் அணைந்திருக்க வேண்டிய நேரங்களைத் தேர்ந்தெடுக்கவும். இந்த நேரங்களில் எதுவும் பேசப்படாது — மழை எச்சரிக்கை, பேட்டரி அல்லது சார்ஜ் அறிவிப்பு, பதில்கள் எதுவும் இல்லை. உங்களுக்குத் தேவையான அளவுக்கு தொடங்கு/நிறுத்து நேரங்களைச் சேர்க்கவும்.",
+        "For office and working people: choose the days and hours every voice function must be off. Nothing is spoken inside these slots — not rain warnings, not battery or charging alerts, not answers. Tap a day to include it, and add as many start/stop times as you need." to "அலுவலகம் மற்றும் வேலை செய்பவர்க்கு: குரல் இயந்த்ரகங்கள் அணிஃ஦ிரக்க நேரகளையும் நாடகளையும் தேர்ந்தெடுக்கவும். இந்த நேரங்களில் ஏதுவும் பேசப்படாத, மழை எச்சரிக்கை, பாட்டரி அல்லது சார்ஜி அரிப்பிப்பு, பதில்கள் ஏதுவும் இல்லை. ஒரு நாளைச் சேர்த்துக்கோண்னல் அது அந்த நாளில் மட்டுமே பொருட்படுத்தப்படும்; உங்களுக்குத் தேவையான அளவுக்கு தோடங்கு/நிருத்து நேரங்களைச் சேர்க்கவும்.",
         "Silent place profile" to "அமைதி இட விவரக்குறிப்பு",
         "On = voice is off during the times below. Off = the times are ignored." to "இயக்கு = கீழேயுள்ள நேரங்களில் குரல் அணைந்திருக்கும். அணை = நேரங்கள் பொருட்படுத்தப்படாது.",
         "Add another time" to "இன்னொரு நேரத்தைச் சேர்",
         "You can keep up to %s slots." to "அதிகபட்சம் %s நேரங்களை வைக்கலாம்.",
         "Silent place is active right now, so all voice is paused." to "அமைதி இடம் இப்போது செயலில் உள்ளது, எனவே எல்லா குரலும் இடைநிறுத்தப்பட்டுள்ளன.",
+        // full day names, same ISO order as the day chips (2.72)
+        "Monday" to "திங்கள்",
+        "Tuesday" to "செவ்வாய்",
+        "Wednesday" to "புதன்",
+        "Thursday" to "வியாழன்",
+        "Friday" to "வெள்ளி",
+        "Saturday" to "சனி",
+        "Sunday" to "ஞாயிறு",
+        // silent-place day-gated status lines (2.72)
+        "%s to %s" to "%s முடியும் %s",
+        "Not today" to "இன்று அல்லது",
+        "Silent place is on, but not today" to "அமைதி இடம் இயக்கப்பட்டுள்ளது, இன்று அல்ல",
+        "Silent place is on, but no slot covers today." to "அமைதி இடம் இயக்கப்பட்டுள்ளது, இன்று நாளை ஒரு நேரமும் கடக்கவில்லை.",
+        "Silent place today" to "இன்று நாலில் அமைதி இடம்",
+        "This slot stops them today; another slot starts them tomorrow." to "இந்த நேரம் இன்று நாலில் மாட்டுமே அமைதித்திலை முடித்தும்; மறுநாள் மதியாலை மற்றொரு நேரம் அவறொதை தோடங்கும்.",
+        // HD-voice-unavailable notification (2.72)
+        "Live Guard voice" to "லைவ் கார்ட் குரல்",
+        "Live Guard voice is waiting for the internet" to "லைவ் கார்ட் குரல் இணையத்திற்கு காத்திருக்கிறது",
+        "The HD voice could not be reached. Nothing was spoken, and nothing was switched to another voice. Announcements will play when the network returns." to "HD குரலை ஐதிய முடியவில்லை. எதுவும் பேசப்படவில்லை, மறொரு குரலுக்கும் மாற்றபடவும் இல்லை. இணகம் திரும்பும்போது அறிப்பிடைகள் பேசப்பறும்.",
+        "Shown only while the HD voice cannot be reached and announcements are waiting" to "HD குரலை ஐதிய முடியாததால், அறிப்பிடைகள் காத்திருக்கும்போது மட்டுமே காட்டியது",
+        "HD voice is waiting for the internet; announcements are paused, not dropped." to "HD குரல் இணையத்திற்கு காத்திருக்கிறது; அறிப்பிடைகள் இடைநிறுத்தப்பட்டுளன, நீக்கப்படவில்லை.",
+        "Waiting for HD voice; nothing was switched to the phone voice." to "HD குரலுக்கு காத்திருக்கிறது; தொலைபேசியின் குரலுக்கு மாற்றபடவில்லை.",
         // ---------------------------------------------------- global stop button (2.71)
         "Stop speaking" to "பேசுவதை நிறுத்து",
     )
