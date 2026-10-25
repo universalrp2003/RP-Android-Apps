@@ -77,23 +77,32 @@ class NeuralCloudVoiceEngineTest {
         }.getOrDefault(false)
         if (!reachable) return
 
+        // This is the one test in the gated suites that talks to a real external service, so it
+        // must not fail the whole build on a transient network blip: five workflows share the
+        // runner pool and a 7-second timeout is easily exceeded under that load. A real
+        // regression — a wrong voice id, a moved endpoint, broken auth — fails every attempt,
+        // so retrying three times keeps the test meaningful while tolerating one bad moment.
+        fun synthOrNull(text: String, voiceName: String, pitch: String): ByteArray? {
+            repeat(3) { attempt ->
+                val mp3 = SharedNeuralVoiceEngine.synthesizeRawMp3(
+                    text = text,
+                    voiceName = voiceName,
+                    pitch = pitch,
+                    timeoutMs = 15_000L,
+                )
+                if (mp3 != null && mp3.size > 512) return mp3
+                if (attempt < 2) Thread.sleep(1_000L)
+            }
+            return null
+        }
+
         for (profile in SharedNeuralVoiceEngine.CURATED_VOICES) {
-            val tamilMp3 = SharedNeuralVoiceEngine.synthesizeRawMp3(
-                text = "வணக்கம்! லைவ் கார்டு தயாராக உள்ளது.",
-                voiceName = profile.tamilNeuralId,
-                pitch = profile.pitchTa,
-                timeoutMs = 7000L,
-            )
-            assertNotNull("Tamil MP3 null for ${profile.id} (${profile.tamilNeuralId})", tamilMp3)
+            val tamilMp3 = synthOrNull("வணக்கம்! லைவ் கார்டு தயாராக உள்ளது.", profile.tamilNeuralId, profile.pitchTa)
+            assertNotNull("Tamil MP3 null for ${profile.id} (${profile.tamilNeuralId}) after 3 attempts", tamilMp3)
             assertTrue("Tamil MP3 too small for ${profile.id}", (tamilMp3?.size ?: 0) > 512)
 
-            val englishMp3 = SharedNeuralVoiceEngine.synthesizeRawMp3(
-                text = "Live Guard studio voice ready.",
-                voiceName = profile.englishNeuralId,
-                pitch = profile.pitchEn,
-                timeoutMs = 7000L,
-            )
-            assertNotNull("English MP3 null for ${profile.id} (${profile.englishNeuralId})", englishMp3)
+            val englishMp3 = synthOrNull("Live Guard studio voice ready.", profile.englishNeuralId, profile.pitchEn)
+            assertNotNull("English MP3 null for ${profile.id} (${profile.englishNeuralId}) after 3 attempts", englishMp3)
             assertTrue("English MP3 too small for ${profile.id}", (englishMp3?.size ?: 0) > 512)
         }
     }
