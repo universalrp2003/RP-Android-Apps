@@ -1,6 +1,6 @@
 # Live Guard 2.72 — Silent place by day, and voice waits visibly
 
-**Version:** 2.72 · **version code 77 · **App:** Live Guard (CleanSweep)
+**Version:** 2.72 · **version code 77** · **App:** Live Guard (CleanSweep)
 
 This release does three things: silent-place slots can now be limited to specific days of the week, a
 sustained HD-voice outage is visible instead of looking like plain silence, and the dead system

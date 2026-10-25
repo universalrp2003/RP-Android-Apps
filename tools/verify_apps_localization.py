@@ -23,9 +23,9 @@ EXPECTED_RELEASE_URLS = {
     "https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.11",
 }
 EXPECTED_OOR_RELEASE_URLS = {
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.4",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.6",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.24",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.25",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9",
@@ -254,6 +254,66 @@ def verify_app_guides() -> None:
         raise ValueError("Secret Message does not route the connection-screen help button to its guide.")
 
 
+# The release-tag prefix for each app module. The module's own versionName is what the publish
+# step builds, so the note that has to be honest is the one for that exact version.
+RELEASE_TAG_PREFIX = {
+    "cleaner": "live-guard",
+    "radio": "ramesh-radio",
+    "equalizer": "pulseeq",
+    "vocalremover": "rp-vocal-remover-studio",
+    "oorarivippu": "oor-arivippu",
+    "smsguard": "sms-guard",
+    "secretmessage": "secret-message",
+}
+
+
+def module_version(module: str) -> str:
+    path = ROOT / module / "build.gradle.kts"
+    if not path.exists():
+        return ""
+    match = re.search(
+        r'versionName\s*=\s*"([^"]+)"', path.read_text(encoding="utf-8")
+    )
+    return match.group(1) if match else ""
+
+
+def verify_release_notes_honesty() -> int:
+    """The note for each app's current version must state its device-test status.
+
+    The publish step greps the note for one of these phrases and fails closed without it, so a note
+    that omits the truth about a physical install cannot be published at all. Checking the *current*
+    version of every module here turns a publish-time failure into a source-time one, without
+    rewriting notes for versions that are already public.
+    """
+    # Equivalent honest wordings. The publish step's own grep uses the first three; the rest are
+    # phrasings the notes already use to say the same thing, and refusing them would only push
+    # someone into rewriting a published note instead of stating the fact.
+    phrases = (
+        "not installed on a phone",
+        "no physical-device test",
+        "no device test",
+        "not phone-installed",
+        "no phone install",
+    )
+    checked = 0
+    for module, prefix in sorted(RELEASE_TAG_PREFIX.items()):
+        version = module_version(module)
+        if not version:
+            continue
+        note = ROOT / "releases" / f"{prefix}-v{version}.md"
+        if not note.exists():
+            continue
+        text = note.read_text(encoding="utf-8").lower()
+        if not any(phrase in text for phrase in phrases):
+            rel = note.relative_to(ROOT)
+            raise ValueError(
+                f"{rel} does not state whether the published bytes were installed on a phone. "
+                f"Every release note must contain one of: {phrases}"
+            )
+        checked += 1
+    return checked
+
+
 def verify_about_links() -> None:
     about_files = {
         "cleaner": ROOT / "cleaner/src/main/java/com/universalrp/cleansweep/ui/AboutScreen.kt",
@@ -266,9 +326,9 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.4"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.6"',
             'tagPrefix = "live-guard"', 'version = "2.72"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.24"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.25"',
             'tagPrefix = "pulseeq"', 'version = "1.9"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
@@ -361,6 +421,7 @@ def main() -> int:
         verify_about_links()
         verify_appstrings_accessibility_and_toasts(keys)
         kotlin_files = verify_kotlin_format_strings()
+        notes_checked = verify_release_notes_honesty()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -368,6 +429,7 @@ def main() -> int:
     print(f"PASS: all {oor_fields} Oor Arivippu UI fields have Tamil and English strings and are referenced consistently.")
     print("PASS: all six apps have bilingual, expandable guides and direct main-screen entry points.")
     print(f"PASS: {kotlin_files} Kotlin sources have no unescaped positional format specifiers in string literals.")
+    print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0
