@@ -39,7 +39,7 @@ Publishing is unaffected. A real publish always bumps a `versionCode` in `<modul
 | --- | --- | --- | --- | --- |
 | SMS Guard | `smsguard` | 1.1.7 / 13 | `sms-guard-v1.1.7` | `SMS-Guard-v1.1.7.apk` |
 
-Published by the standalone SMS Guard workflow. Two changes, both prompted by the owner's second
+Published by [SMS Guard run 40202187916](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40202187916): `SMS-Guard-v1.1.7.apk`, `12,428,897` bytes, SHA-256 `b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371`. Two changes, both prompted by the owner's second
 batch of screenshots: the projected month-end figure in the monthly-spend card no longer wraps
 inside its own digits (every amount is now a single non-wrapping line, and the label wraps instead),
 and the claim that the card and the period summary can never disagree is withdrawn - the card is

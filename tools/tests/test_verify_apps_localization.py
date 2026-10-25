@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Unit tests for the release-note and Kotlin-source gates in verify_apps_localization.py.
+"""Unit tests for the release-note, Kotlin-source and script gates in verify_apps_localization.py.
 
-Five gates are covered, all of them silent in production before they were written:
+Six gates are covered, all of them silent in production before they were written:
 
 * the note must state its device-test status (the publish step greps for it);
 * the note must carry exactly one `## தமிழ்` section, and it must be the last section,
@@ -11,7 +11,9 @@ Five gates are covered, all of them silent in production before they were writte
 * the note must only use the markdown the in-app renderer understands, which is how the notes
   came to print their own `**bold**` and `## headings` on the update screen;
 * a `when` expression on an enum must cover every value, which is how adding
-  `ReleaseNoteLineKind.SubBullet` reddened two CI runs on a compile error.
+  `ReleaseNoteLineKind.SubBullet` reddened two CI runs on a compile error;
+* no Indic script other than Tamil may reach the published site, which is how `\\u0b..` escapes
+  produced half-Odia Tamil in `site/index.html` twice.
 
 The gates read the real repository, so each test points `ROOT` and `module_version` at a
 temporary tree holding one fake app's note.
@@ -74,6 +76,13 @@ object Pick {
     }
 }
 """
+
+GOOD_SITE = (
+    '<!doctype html><html><body>\n'
+    '<p class="ta">\u0ba4\u0bae\u0bbf\u0bb4\u0bcd \u0bae\u0b9f\u0bcd\u0b9f\u0bc1\u0bae\u0bc7 '
+    '\u0b89\u0bb0\u0bc1\u0bb5\u0bbe\u0b95\u0bcd\u0b95\u0bc1\u0bae\u0bcd.</p>\n'
+    "</body></html>\n"
+)
 
 
 class ReleaseNoteGatesTest(unittest.TestCase):
@@ -283,6 +292,40 @@ enum class Route { HOME, HEALTH }
     def test_when_gate_runs_over_the_real_repository(self) -> None:
         mod.ROOT = self._orig_root
         self.assertGreaterEqual(mod.verify_kotlin_when_exhaustiveness(), 1)
+
+    # -- Tamil, and only Tamil, in the published files -----------------------
+    def _write_site(self, body: str) -> None:
+        (self.root / "site").mkdir(exist_ok=True)
+        (self.root / "site" / "index.html").write_text(body, encoding="utf-8")
+
+    def test_tamil_block_gate_accepts_a_tamil_site(self) -> None:
+        self.write(GOOD_HEAD + "\n" + GOOD_TAIL)
+        self._write_site(GOOD_SITE)
+        self.assertGreaterEqual(mod.verify_site_tamil_blocks(), 1)
+
+    def test_tamil_block_gate_rejects_odia(self) -> None:
+        # `\u0b13` is in the Odia block, not the Tamil one, and this is the exact mistake that
+        # put half-Odia text into site/index.html.
+        self.write(GOOD_HEAD + "\n" + GOOD_TAIL)
+        self._write_site(GOOD_SITE.replace(
+            "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd", "\u0b13\u0baa\u0bcd\u0baa\u0bcb"
+        ))
+        with self.assertRaises(ValueError) as caught:
+            mod.verify_site_tamil_blocks()
+        self.assertIn("Oriya", str(caught.exception))
+
+    def test_tamil_block_gate_rejects_bengali(self) -> None:
+        self.write(GOOD_HEAD + "\n" + GOOD_TAIL)
+        self._write_site(GOOD_SITE.replace(
+            "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd", "\u09a4\u09ae\u09bf\u09b4\u09cd"
+        ))
+        with self.assertRaises(ValueError) as caught:
+            mod.verify_site_tamil_blocks()
+        self.assertIn("Bengali", str(caught.exception))
+
+    def test_tamil_block_gate_covers_the_real_repository(self) -> None:
+        mod.ROOT = self._orig_root
+        self.assertGreaterEqual(mod.verify_site_tamil_blocks(), 1)
 
 
 if __name__ == "__main__":

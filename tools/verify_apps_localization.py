@@ -454,6 +454,57 @@ def verify_kotlin_when_exhaustiveness() -> int:
     return checked
 
 
+# Indic blocks that are NOT Tamil. Tamil itself is U+0B80-U+0BFF.
+_NON_TAMIL_INDIC = (
+    ("Devanagari", "\u0900", "\u097F"),
+    ("Bengali", "\u0980", "\u09FF"),
+    ("Gurmukhi", "\u0A00", "\u0A7F"),
+    ("Gujarati", "\u0A80", "\u0AFF"),
+    ("Oriya", "\u0B00", "\u0B7F"),
+    ("Telugu", "\u0C00", "\u0C7F"),
+    ("Kannada", "\u0C80", "\u0CFF"),
+    ("Malayalam", "\u0D00", "\u0D7F"),
+    ("Sinhala", "\u0D80", "\u0DFF"),
+)
+
+
+def verify_site_tamil_blocks() -> int:
+    r"""No Indic script other than Tamil may appear in the published site or the pinned notes.
+
+    Tamil has been written here twice with `\u0b..` escapes, and both attempts were wrong: the
+    escapes straddle the Tamil block and the Odia block, so one produced half-Odia text and the
+    other picked the wrong vowel signs. Both reached `site/index.html` and were caught by eye
+    rather than by a gate.
+
+    This refuses any non-Tamil Indic codepoint in `site/index.html` and in the six pinned release
+    notes, so that class of mistake cannot ship again. It cannot catch a wrong-but-valid Tamil
+    vowel; only reading the text does that.
+    """
+    checked = 0
+    paths = [ROOT / "site/index.html"]
+    for module, prefix in sorted(RELEASE_TAG_PREFIX.items()):
+        version = module_version(module)
+        if not version:
+            continue
+        note = ROOT / "releases" / f"{prefix}-v{version}.md"
+        if note.exists():
+            paths.append(note)
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT)
+        for name, low, high in _NON_TAMIL_INDIC:
+            found = sorted({ch for ch in text if low <= ch <= high})
+            if found:
+                raise ValueError(
+                    f"{rel} contains {len(found)} {name} codepoint(s) "
+                    f"({', '.join(hex(ord(c)) for c in found[:6])}). Tamil is the only Indic script "
+                    f"these files may use. Writing Tamil with \\u0b.. escapes straddles the Tamil "
+                    f"and Odia blocks; write the Tamil characters literally and read them back."
+                )
+        checked += 1
+    return checked
+
+
 def verify_release_notes_markdown_subset() -> int:
     """A pinned note may only use the markdown the in-app renderer understands.
 
@@ -662,6 +713,7 @@ def main() -> int:
         notes_checked = verify_release_notes_honesty()
         tamil_notes = verify_release_notes_tamil_section()
         tamil_words = verify_release_notes_tamil_words()
+        tamil_blocks = verify_site_tamil_blocks()
         exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
     except (OSError, ValueError, json.JSONDecodeError) as error:
@@ -674,6 +726,7 @@ def main() -> int:
     print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
     print(f"PASS: {tamil_notes} pinned release notes each carry exactly one Tamil section, last, for the in-app update screen.")
     print(f"PASS: {tamil_words} pinned release notes keep their Tamil sections free of stray Latin words.")
+    print(f"PASS: {tamil_blocks} published files use Tamil and no other Indic script.")
     print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")

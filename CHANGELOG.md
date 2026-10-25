@@ -26,7 +26,7 @@ versions, so the batch step skipped them and their releases are unchanged.
 
 ## Published — SMS Guard 1.1.7 / code 13 (25 October 2026)
 
-A one-line layout fix and an honest correction, both prompted by the owner's second batch of
+Published by [SMS Guard run 40202187916](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40202187916): `SMS-Guard-v1.1.7.apk`, `12,428,897` bytes, SHA-256 `b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371`. A one-line layout fix and an honest correction, both prompted by the owner's second batch of
 screenshots ([`releases/sms-guard-v1.1.7.md`](releases/sms-guard-v1.1.7.md)):
 
 - **The projected month-end figure no longer wraps inside its own digits.** The 1.1.6 card read
