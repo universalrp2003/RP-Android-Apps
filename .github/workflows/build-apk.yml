@@ -937,6 +937,7 @@ jobs:
           rename_apk radio     Ramesh-Radio    release ""
           rename_apk equalizer PulseEQ         release ""
           rename_apk vocalremover RP-Vocal-Remover-Studio release ""
+          rename_apk voicenotes Voice-Notes      release ""
           rename_apk cleaner   CleanSweep      debug   "-debug"
           rename_apk radio     Ramesh-Radio    debug   "-debug"
           rename_apk equalizer PulseEQ         debug   "-debug"
