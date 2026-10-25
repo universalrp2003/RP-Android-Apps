@@ -2,7 +2,7 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/voicenotes/src/main/java/com/universalrp/voicenotes/MainActivity.kt:156:63 Cannot access 'constructor(): SpeechRecognizer': it is package-private in 'android.speech.SpeechRecognizer'.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/voicenotes/src/main/java/com/universalrp/voicenotes/MainActivity.kt:159:21 Unresolved reference 'recognizer'.
 ```
 
 ## Gradle summary
@@ -28,7 +28,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 1m 35s
+BUILD FAILED in 2m 40s
 222 actionable tasks: 84 executed, 138 from cache
 ```
 
