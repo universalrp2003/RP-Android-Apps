@@ -52,8 +52,8 @@
             "operatingSystem": "Android 8.0+",
             "applicationCategory": "SecurityApplication",
             "softwareVersion": "1.1.5",
-            "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/SMS-Guard-v1.1.7.apk",
-            "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.7",
+            "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/SMS-Guard-v1.1.8.apk",
+            "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
             "description": "Reads every SMS aloud in Tamil/English and blocks scam & phishing links, while never speaking your OTP or bank numbers. Scam-link shield, biometric Bank/UPI ledger, and a Bills tab with due-date reminders.",
             "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" }
           }
@@ -424,7 +424,7 @@
           <div class="card-top">
             <div class="card-header">
               <h2><span class="emoji">🛡️</span>SMS Guard <span class="ta-name">(குறுஞ்செய்தி காவலன்)</span></h2>
-              <span class="ver">v1.1.7 · Android 8.0+</span>
+              <span class="ver">v1.1.8 · Android 8.0+</span>
             </div>
             <p class="tagline">Reads every SMS aloud in Tamil or English and blocks scam &amp; phishing links — <strong>while never speaking your OTP or bank numbers.</strong></p>
             <div class="opts">
@@ -489,30 +489,30 @@
                   <li>Your SMS is read <strong>on your phone only</strong> — nothing is uploaded anywhere.</li>
                 </ul>
                 <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; SMS உங்கள் போனிலேயே இருக்கும், எங்கும் அனுப்பப்படாது.</p>
-                <div class="sha">SHA-256: b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371</div>
+                <div class="sha">SHA-256: de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582</div>
               </div>
             </details>
             <details class="news">
               <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
-                  <li><strong>Every rupee amount in the monthly-spend card now sits on one line.</strong> In 1.1.6 the projected month-end figure wrapped inside its own digits - it read ₹12,92 and then 9.48 on the next line - because the long Tamil label beside it left the amount no room. The figures themselves are unchanged.</li>
-                  <li>The card is the whole calendar month across <strong>every account</strong>; the period summary below it still honours the account you selected and any message you excluded, so the two can differ and neither is wrong.</li>
-                  <li>When last month had no spending at all, the percent change is left out instead of showing a meaningless number, and the month is measured to its <strong>last instant</strong> rather than midnight on the last day.</li>
+                  <li><strong>The monthly-spend card's Tamil now reads as Tamil.</strong> The card had said "6 மீதம் நாடகள்" - நாடகள் means dramas, not days - and "உறியாக்க செலவுகள்", which is not a Tamil phrase. Five such strings are repaired, and the two summary counters that were left in English on a Tamil screen are translated.</li>
+                  <li>The "vs last month" sentence is no longer cut off the edge of the card, and every rupee amount still sits on one line as 1.1.7 arranged.</li>
+                  <li>The two app subtitles were swapped - Tamil mode named the app "SMS Guard" and English mode named it in Tamil. Both are the right way round.</li>
                   <li>Bilingual card, same style as the rest of the Finance tab. OTP silence is unchanged.</li>
                 </ul>
                 <p class="ta">நிதித் தாவலில் புதிய <strong>மாதாந்திர செலவு அட்டை</strong> — இந்த மாதம் மற்றும் கடந்த மாதம் ஒப்பீடு, ரூபாயிலும் சதவீதத்திலும் மாற்றம், நாள் வரியான சராசரி, மாத இறுதியில் எதிர்பார்க்கும் செலவு, மீதமுள்ள நாட்கள், எளிய மொழியில் உள்ள பிரவணம். மாதம் கடந்த நாள் நள்ளிரவில் அல்ல, நாள் இறுதியில் முடுகிறது. OTP ஒலிக்கப்படாதது உறுதி.</p>
-                <p class="note"><strong>Not phone-tested:</strong> this exact build was not installed on a phone before publication and no device result is claimed for it. Every CI unit, lint, regression, signature and release-asset check passed. The 1.1.6 build before it was installed, and its screenshots are what found the wrapped figure this release fixes.</p>
-                <p class="ta">இந்த துல்லியமான கோப்பு வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை; சாதன சோதனை எதுவும் உரையாற்றப்படவில்லை. CI சோதனைகள் அனைத்தும் வெற்றி. இதற்கு முன் இருந்த 1.1.6 கோப்பு நிறுவப்பட்டது; அதன் படங்களிலேயே இந்த வெளியீடு சரி செய்யும் வரி பிரிவு கண்டறியப்பட்டது.</p>
+                <p class="note"><strong>Not phone-tested:</strong> this exact build was not installed on a phone before publication and no device result is claimed for it. Every CI unit, lint, regression, signature and release-asset check passed. The 1.1.7 build before it was installed on 25 October 2026, and its screenshots are what found every defect this release repairs. Installing it asks Google Play Protect to scan it first, because it reads SMS and comes from outside Play; the owner tapped "Install anyway" and it installed.</p>
+                <p class="ta">இந்த துல்லியமான கோப்பு வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை; சாதன சோதனை எதுவும் உரையாற்றப்படவில்லை. CI சோதனைகள் அனைத்தும் வெற்றி. இதற்கு முன் இருந்த 1.1.7 கோப்பு 25 அக்டோபர் 2026-ல் ஃபோனில் நிறுவப்பட்டது; அதன் படங்களிலேயே இந்த வெளியீடு சரி செய்யும் தவறுகள் கண்டறியப்பட்டன.</p>
               </div>
             </details>
             <div class="mini">12.4 MB · <strong>SHA-256 verified ✓</strong></div>
             <div class="dl-status" id="st-smsguard"></div>
           </div>
           <div class="hero-links">
-            <a class="btn btn-zip" download="SMS-Guard-v1.1.7.zip" href="apks/SMS-Guard-v1.1.7.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.7.apk" data-name="SMS-Guard-v1.1.7.apk" data-sha="b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371" data-status="st-smsguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.7/SMS-Guard-v1.1.7.apk">⚡ Direct APK (v1.1.7)</a>
-            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.7">Release Notes</a>
+            <a class="btn btn-zip" download="SMS-Guard-v1.1.8.zip" href="apks/SMS-Guard-v1.1.8.zip">📦 Download .ZIP</a>
+            <a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.8.apk" data-name="SMS-Guard-v1.1.8.apk" data-sha="de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582" data-status="st-smsguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.8/SMS-Guard-v1.1.8.apk">⚡ Direct APK (v1.1.8)</a>
+            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8">Release Notes</a>
           </div>
         </article>
 

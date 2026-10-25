@@ -44,7 +44,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
-              ("sms-guard-v1.1.7", "SMS-Guard-v1.1.7.apk", 12428897, "b1f01bf25127f1e0e4bd69cea3fc2fda1f9f2f9a59b0ac429c9387e0bf4c1371"),
+              ("sms-guard-v1.1.8", "SMS-Guard-v1.1.8.apk", 12445281, "de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582"),
               ("live-guard-v2.72", "CleanSweep-v2.72.apk", 14413927, "e6664f5d14f7fe31a8a754b5d35bde62ba14d1b6ee894ba2b454f4ab7952fc0b"),
               ("ramesh-radio-v1.25", "Ramesh-Radio-v1.25.apk", 15092968, "49f7a4321e2e6facc20c2fccf0bec696a3cf9c7eab833afc3056cfafd3cec634"),
               ("oor-arivippu-v1.1.9", "Oor-Arivippu-v1.1.9.apk", 12794316, "6915d597faa0ca9c0665bab695863d02fa04f56675796babcd9ce6446e286679"),
@@ -77,8 +77,8 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
-          test -s site/apks/SMS-Guard-v1.1.7.apk
-          test -s site/apks/SMS-Guard-v1.1.7.zip
+          test -s site/apks/SMS-Guard-v1.1.8.apk
+          test -s site/apks/SMS-Guard-v1.1.8.zip
           test -s site/apks/CleanSweep-v2.72.apk
           test -s site/apks/CleanSweep-v2.72.zip
           test -s site/apks/Ramesh-Radio-v1.25.apk

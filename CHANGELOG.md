@@ -26,6 +26,8 @@ versions, so the batch step skipped them and their releases are unchanged.
 
 ## Published — SMS Guard 1.1.8 / code 14 (25 October 2026)
 
+Published by [SMS Guard run 40208094170](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40208094170): `SMS-Guard-v1.1.8.apk`, `12,445,281` bytes, SHA-256 `de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582`.
+
 Bumped to code 14 / 1.1.8. The third release the owner's phone test has driven.
 
 The owner installed 1.1.7 and the wrap fix held: the projected month-end figure reads
