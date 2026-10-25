@@ -2,6 +2,17 @@
 
 This file indexes all seven published **RP Ideas** Android applications at [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/): six actively maintained utilities (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / ரமேஷ் ரேடியோ**, **PulseEQ**, **RP Vocal Remover Studio**, and **Oor Arivippu / ஊர் அறிவிப்பு**) plus the separately published **Secret Message / இரகசிய செய்தி** app, which has not been independently security-reviewed. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
 
+## Published — Ramesh Radio 1.26 (25 October 2026)
+
+**Ramesh Radio 1.26 / code 26** was published from the `arena` branch by [Build APK run 40212579939](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40212579939) (`Ramesh-Radio-v1.26.apk`, `15,092,964` bytes, SHA-256 `238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13`), from source commit `a5eec30`. The list logic was audited and found correct; what this release fixes is that the list was invisible until the second place and that its write was not durable. `0` new permissions over `1.25`.
+
+- The saved-places row is now labelled and drawn from the very first place saved, so a growing list is visible on the main screen instead of being inferable only from the weather card, which shows just the active place.
+- The list is written with `commit()` rather than `apply()`. `apply()` reaches disk asynchronously, so Android killing the process first silently lost every place except the newest one on the next launch.
+- The list algebra now lives in `addToList()` / `removeFromList()`, which `add()` and `remove()` delegate to, so it is testable without a device. Nine tests cover it: a second and a third place both survive, order is newest first, a re-pick moves rather than duplicates, the same town under two spellings is one chip, the cap keeps the newest, removal leaves the rest in order, and every added place survives the encode/decode round trip.
+- `addToList()` was first written to append the new place, which the new test `addingASecondPlaceKeepsTheFirst` caught on `:radio:testDebugUnitTest` before publication. Appending makes the cap discard the newest places and keep the oldest, the opposite of what a capped recently-saved list is for.
+
+**No device test before publication:** the exact published bytes were **not installed on a phone** prior to GitHub release publication, and the release note said so at the moment it was published. The release passed the full CI unit / lint / regression / signature / release-asset checks.
+
 ## Published — Voice overhaul follow-ups: Live Guard 2.72, Ramesh Radio 1.25, SMS Guard 1.1.6 & Oor Arivippu 1.1.9 (25 October 2026)
 
 Four apps published on 25 October 2026 from the `arena` branch, each by its own workflow: Live Guard

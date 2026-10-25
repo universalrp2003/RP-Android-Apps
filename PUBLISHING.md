@@ -54,7 +54,7 @@ before publication, so no device test is claimed for them.
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
 | Live Guard / CleanSweep | `cleaner` | 2.72 / 77 | `live-guard-v2.72` | `CleanSweep-v2.72.apk` |
-| Ramesh Radio | `radio` | 1.25 / 25 | `ramesh-radio-v1.25` | `Ramesh-Radio-v1.25.apk` |
+| Ramesh Radio | `radio` | 1.26 / 26 | `ramesh-radio-v1.26` | `Ramesh-Radio-v1.26.apk` |
 | SMS Guard | `smsguard` | 1.1.6 / 12 | `sms-guard-v1.1.6` | `SMS-Guard-v1.1.6.apk` |
 | Oor Arivippu | `oorarivippu` | 1.1.9 / 14 | `oor-arivippu-v1.1.9` | `Oor-Arivippu-v1.1.9.apk` |
 

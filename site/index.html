@@ -81,7 +81,7 @@
             "name": "Ramesh Radio (ரமேஷ் ரேடியோ)",
             "operatingSystem": "Android 8.0+",
             "applicationCategory": "MultimediaApplication",
-            "softwareVersion": "1.24",
+            "softwareVersion": "1.26",
             "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/Ramesh-Radio-v1.25.apk",
             "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.25",
             "description": "Live Tamil & world internet FM radio plus your own songs with equalizer tools — village rain & storm voice alerts and zero surprise location prompts.",
@@ -690,15 +690,15 @@
               <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
               <div class="body">
                 <ul>
-                  <li><strong>More than one saved place.</strong> Rain &amp; cyclone voice alerts could only ever point at one town; you now keep your own list, shown as a row of chips under the weather banner.</li>
-                  <li><strong>One tap switches the active place</strong> — the alert re-checks and speaks for the new town, with no searching and no re-typing the PIN.</li>
-                  <li><strong>The &times; forgets a place.</strong> Removing the active place promotes the next one, so alerts never keep pointing at a town you deleted.</li>
-                  <li>Every place you pick from the search box is remembered automatically. Up to 12 places, and two picks that resolve to the same coordinates count as one.</li>
-                  <li>Chips only appear once you have more than one place, so a first-time owner sees nothing extra.</li>
+                  <li><strong>The saved-places row is now labelled.</strong> &ldquo;Saved places&rdquo; sits above the chips, so the list is something you read rather than something you have to guess at.</li>
+                  <li><strong>The row shows from the very first place you save.</strong> It used to stay hidden until you had two, which left no way to tell a list that was growing from a single place that kept changing.</li>
+                  <li><strong>Your places are written to storage straight away.</strong> The write used to be queued for later, so Android could stop the app before it reached the phone and every place except the newest one would be gone on the next open.</li>
+                  <li><strong>Newest place first, always.</strong> The list is trimmed from the end, so the place that falls off when you save your thirteenth is the one you saved longest ago &mdash; never the one you just picked.</li>
+                  <li>Up to 12 places, deduped by coordinates, one tap to switch, the &times; forgets a place and promotes the next one.</li>
                 </ul>
+                <p class="ta">சேமித்த உர்கள் வரிசை இப்போது தலைப்புடன் காட்டப்படும். முதல் உர்கை சேமித்தற்கும் பின்னும் வரைசை காட்டப்படும். உங்கள் உர்கள் இப்போது நேரடியாக எழுதுகின்றன. புதிய உர் எத்திர்பார்த்த இருக்கும், 12-ம் உர்கை வரை, ஒரு தட்டுதல் இயக்க உர் மாறும்.</p>
                 <p class="ta">மழை &amp; புயல் குரல் எச்சரிக்கைகளுக்கு ஒன்றுக்கு மேற்பட்ட ஊர்களைச் சேமிக்கலாம் — வானிலை பட்டியின் கீழ் chips வரிசையாகத் தெரியும். ஒரு தட்டுதலால் இயக்க ஊர் மாறும், புதிய ஊருக்கு எச்சரிக்கை மீண்டும் சோதித்து பேசும். &times; அழுத்தியால் ஊர் அழிகிறது; இயக்க ஊரை அழித்தால் அடுத்த ஊர் தானாக எடுக்கப்படும். தேடலில் தேர்வு செய்த ஒவ்வொரு ஊரும் தானாகச் சேமிக்கப்படும். 12 ஊர்கள் வரை.</p>
-                <p class="note"><strong>Phone-tested 25 October 2026:</strong> updated in-app from 1.24. The saved place, the rain dialog and the zero-location-permission message all render, and a live check returned a real town and district. Adding a second place is confirmed: the search box is the way in, and the owner picked Madurai, then searched <code>alangudi</code> and got three matches, and "Saved place" moved from Madurai to Alangudi. The chip strip itself has not been photographed yet, so switching, the highlight and the X are still to check on a phone.</p>
-                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): 1.24-ல் இருந்து செயலியில் மேம்படுத்தப்பட்டது. சேமித்த ஊர், மழை உரையாடல் மற்றும் இருப்பிட அனுமதி இல்லாத நிலை செய்தி — இவை மூன்றும் சரியாகத் தெரியும். இரண்டாவது ஊர் சேர்க்கும் வழி உறுதியாகிறது: தேடல் பெட்டியே வழி — madurai தேடி ஒரு ஊரைத் தேர்வு செய்து, பிறகு alangudi தேடி மூன்று பதில்கள் கிடைத்தன, சேமிட்ட ஊர் Madurai-விலிருந்து Alangudi-வுக்கு மாறியது. Chip வரிசையே இன்னும் படமாக காட்டப்படவில்லை; அதுவெனறே, ஊர் மாற்றுவது, இயக்க ஊர் highlight ஆவது, × அழிப்பது — இவை இன்னும் சோதிக்க வேண்டும்.</p>
+                <p class="note"><strong>Not installed on a phone:</strong> Ramesh Radio 1.26 was published without a device test. 1.25 was installed and phone-tested on 25 October 2026, and that test is what produced the defect this release answers: the owner reported that adding another place just replaces the saved place instead of adding to the list. The list logic was audited and is correct &mdash; a new place goes in front, a re-pick moves rather than duplicates, the list is capped at twelve &mdash; so what changed here is that the list is now visible from the first place and its write is durable. The list algebra is now covered by nine unit tests, and the first version of that refactor appended instead of inserting at the front, which the new tests caught before publication.</p>
               </div>
             </details>
             <div class="mini">15.1 MB · <strong>SHA-256 verified ✓</strong></div>
