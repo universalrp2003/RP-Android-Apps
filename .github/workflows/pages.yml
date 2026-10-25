@@ -77,12 +77,12 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
-          test -s site/apks/SMS-Guard-v1.1.5.apk
-          test -s site/apks/SMS-Guard-v1.1.5.zip
+          test -s site/apks/SMS-Guard-v1.1.6.apk
+          test -s site/apks/SMS-Guard-v1.1.6.zip
           test -s site/apks/CleanSweep-v2.71.apk
           test -s site/apks/CleanSweep-v2.71.zip
-          test -s site/apks/Ramesh-Radio-v1.24.apk
-          test -s site/apks/Ramesh-Radio-v1.24.zip
+          test -s site/apks/Ramesh-Radio-v1.25.apk
+          test -s site/apks/Ramesh-Radio-v1.25.zip
           test -s site/apks/Oor-Arivippu-v1.1.8.apk
           test -s site/apks/Oor-Arivippu-v1.1.8.zip
 
