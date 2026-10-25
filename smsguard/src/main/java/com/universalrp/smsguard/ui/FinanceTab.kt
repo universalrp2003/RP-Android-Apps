@@ -51,6 +51,8 @@ import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.engine.AccountBucketSummary
 import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.MonthBarPoint
+import com.universalrp.smsguard.engine.MonthlySpendFacts
+import com.universalrp.smsguard.engine.MonthlySpendPolicy
 import com.universalrp.smsguard.engine.PeriodSummary
 import com.universalrp.smsguard.engine.TxDirection
 import java.time.Instant
@@ -325,6 +327,105 @@ fun FinanceTab(
                 }
             }
             return@LazyColumn
+        }
+
+        // A3: the monthly-spend card. The ledger totals whatever period the owner picked; this is
+        // the one number people open the tab for, with last month beside it. Every figure comes
+        // from MonthlySpendPolicy, which applies the same genuine-and-not-a-self-transfer filter as
+        // the ledger, so the two can never disagree.
+        item {
+            // Same source the summary uses, so the two can never disagree.
+            val parsedAll = remember(allMessages) { allMessages.map { it.finance } }
+            val monthly = remember(parsedAll) {
+                MonthlySpendPolicy.facts(
+                    allParsed = parsedAll,
+                    month = YearMonth.now(),
+                    nowMs = System.currentTimeMillis(),
+                )
+            }
+            SectionCard(palette = palette) {
+                Text(
+                    "📅 ${ui.monthlySpendTitle}",
+                    color = palette.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "-${FinanceLedgerEngine.formatInr(monthly.thisMonthSpend)}",
+                    color = palette.dangerRed,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 26.sp,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "${monthly.debitCount} ${ui.monthlySpendDebits} \u00b7 " +
+                        "${monthly.daysRemaining} ${ui.monthlySpendDaysLeft}",
+                    color = palette.textMuted,
+                    fontSize = 12.sp,
+                )
+                Spacer(Modifier.height(10.dp))
+
+                // Last month. "New" replaces a percentage when there is nothing to compare with,
+                // because "up 100% from Rs.0" is arithmetic rather than information.
+                val changeText = when (monthly.trend) {
+                    MonthlySpendFacts.Trend.NO_SPENDING_YET -> ui.monthlySpendNoSpendingYet
+                    MonthlySpendFacts.Trend.NEW_SPENDING -> ui.monthlySpendNewMonth
+                    else -> {
+                        val pct = monthly.changePercentVsLastMonth
+                        val sign = if (monthly.changeVsLastMonth >= 0) "+" else ""
+                        val pctText = pct?.let { String.format(Locale.US, "%+.1f%%", it) } ?: ""
+                        "$sign${FinanceLedgerEngine.formatInr(monthly.changeVsLastMonth)} $pctText"
+                    }
+                }
+                val changeColor = when (monthly.trend) {
+                    MonthlySpendFacts.Trend.HIGHER_THAN_LAST_MONTH -> palette.dangerRed
+                    MonthlySpendFacts.Trend.LOWER_THAN_LAST_MONTH -> palette.safeGreen
+                    else -> palette.textMuted
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "${ui.monthlySpendVsLastMonth}: ${FinanceLedgerEngine.formatInr(monthly.lastMonthSpend)}",
+                        color = palette.textMuted,
+                        fontSize = 12.sp,
+                    )
+                    Text(changeText, color = changeColor, fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(ui.monthlySpendDailyAverage, color = palette.textMuted, fontSize = 12.sp)
+                    Text(
+                        FinanceLedgerEngine.formatInr(monthly.dailyAverage),
+                        color = palette.textPrimary,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                    )
+                }
+                Spacer(Modifier.height(4.dp))
+                // Labelled an estimate everywhere it is shown: this is a rate multiplied by a
+                // length, not money that has moved.
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(ui.monthlySpendProjected, color = palette.textMuted, fontSize = 12.sp)
+                    Text(
+                        FinanceLedgerEngine.formatInr(monthly.projectedMonthEnd),
+                        color = palette.accent,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                    )
+                }
+            }
         }
 
         // 2. Period Selector Chips (This Month | Select Month | Yearly | Custom Period)
