@@ -1002,6 +1002,25 @@ jobs:
             echo "Publication run or non-candidate ref; digest record stays local to this run."
           fi
 
+      # A commit message that merely *talks about* the publish marker must not publish anything.
+      # This is not hypothetical: a commit that added a release workflow described the marker in
+      # its own body, contains() matched the prose, and that app was published by accident. The
+      # marker is therefore only honoured on the subject line, and anything else fails closed.
+      - name: Refuse to publish unless the marker is on the subject line
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/') && contains(github.event.head_commit.message, '[publish]')
+        shell: bash
+        run: |
+          set -euo pipefail
+          subject="$(git log -1 --format=%s)"
+          if printf '%s' "$subject" | grep -qF '[publish]'; then
+            echo "OK: the publish marker is on the subject line, so this run publishes."
+          else
+            echo "::error::The publish marker appears only in the commit body, not the subject line."
+            echo "::error::Reword the commit so the marker is at the end of the subject, or drop it."
+            echo "::error::Nothing was published."
+            exit 1
+          fi
+
       # Publishing: after all checks pass, publish one stable, version-specific APK release
       # for each app, or mirror the exact existing bridge APKs without altering old releases.
       - name: Publish or mirror verified releases for four apps

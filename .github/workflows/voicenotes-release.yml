@@ -183,6 +183,26 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      # A commit message that merely *talks about* the marker must not publish. This is not
+      # hypothetical: the commit that added this workflow described the marker in its own body,
+      # contains() matched the prose, and Voice Notes 1.0 was published by accident. So the marker
+      # is only honoured on the subject line, and anything else is a hard failure rather than a
+      # silent publish.
+      - name: Refuse to publish unless the marker is on the subject line
+        if: ${{ env.PUBLISH_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          subject="$(git log -1 --format=%s)"
+          if printf '%s' "$subject" | grep -qF '[publish-voicenotes]'; then
+            echo "OK: the marker is on the subject line, so this run publishes."
+          else
+            echo "::error::The publish marker appears only in the commit body, not the subject line."
+            echo "::error::Reword the commit so the marker is at the end of the subject, or drop it."
+            echo "::error::Nothing was published."
+            exit 1
+          fi
+
       - name: Publish the release
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
