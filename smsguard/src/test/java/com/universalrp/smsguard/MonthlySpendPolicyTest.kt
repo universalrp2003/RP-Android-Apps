@@ -129,7 +129,8 @@ class MonthlySpendPolicyTest {
         )
         assertEquals(30, facts.dayOfMonth)
         assertEquals(0, facts.daysRemaining)
-        assertEquals(300.0, facts.dailyAverage, 0.001)
+        // 300 spread over all 30 days is 10 a day, so a finished month projects to its own total.
+        assertEquals(10.0, facts.dailyAverage, 0.001)
         assertEquals(300.0, facts.projectedMonthEnd, 0.001)
     }
 
