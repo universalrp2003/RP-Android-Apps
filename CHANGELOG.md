@@ -42,6 +42,20 @@ numbered lists, rules, fences, images, tables, strikethrough, or a sub-bullet ne
 one level), so the notes cannot drift out of the supported subset again. Because there is no JDK,
 Gradle or Android SDK here, CI compiles this; no new release was built for it.
 
+**CI verification of that compile.** Two runs were needed. [Build APK 40198820056](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40198820056)
+and the SMS Guard Test APK both failed at `:smsguard:compileReleaseKotlin` on a
+`'when' expression must be exhaustive` error, because `SubBullet` had been added to the enum
+without a branch in the `when (kind)` that strips a line's prefix; then the next attempt failed on
+an `import androidx.compose.foundation.layout.weight` that does not exist, `weight` being a
+`RowScope` member extension rather than an importable function. Both are fixed, and
+`verify_kotlin_when_exhaustiveness()` now reads the sources so neither class of mistake can reach
+CI silently again. [Build APK 40200070221](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40200070221)
+then passed, as did the SMS Guard Test APK, the OorArivippu test APK, the Secret Message build
+(the one that compiles the fork's private parser copy) and the website deploy. The two
+live-network neural-voice suites that were red on `130ce8c` and `4e2a728` also passed here with no
+Kotlin change to them, which is further evidence those failures were the Azure speech endpoint and
+not this branch.
+
 - **SMS Guard 1.1.6 / code 12** ([`releases/sms-guard-v1.1.6.md`](releases/sms-guard-v1.1.6.md)): a monthly-spend card on the Finance tab — this month versus last month, the change in rupees and percent (suppressed when last month had no spending), the running daily average, the projected month end, the days remaining, and a plain-language trend. The month ends at the last instant of the calendar month, not at midnight of the last day. `0` new permissions over `1.1.5`.
 - **Ramesh Radio 1.25 / code 25** ([`releases/ramesh-radio-v1.25.md`](releases/ramesh-radio-v1.25.md)): more than one saved place for rain and cyclone voice alerts — a row of chips under the weather banner, one tap to switch, the active chip removes with the next place promoted. Up to 12 places, with dedupe by coordinates. `0` new permissions over `1.24`.
 - **Oor Arivippu 1.1.9 / code 14** ([`releases/oor-arivippu-v1.1.9.md`](releases/oor-arivippu-v1.1.9.md)): the announcement list now records what actually happened to each announcement (spoken / held for a call / no internet / GPS off / no voice / not spoken) with a summary line, survives the process being killed, and its empty state explains that an empty list means the voice was not delivered. `0` new permissions over `1.1.8`.
