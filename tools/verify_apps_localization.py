@@ -382,6 +382,78 @@ def verify_release_notes_tamil_words() -> int:
     return checked
 
 
+def _kotlin_when_block(text: str, open_paren: int) -> tuple[str, int]:
+    """The `when (...) { ... }` body starting at the '(' at [open_paren], and the offset after it."""
+    i = open_paren
+    while i < len(text) and text[i] != "{":
+        i += 1
+    start = i
+    depth = 0
+    while i < len(text):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start + 1 : i], i + 1
+        i += 1
+    return text[start + 1 :], len(text)
+
+
+def verify_kotlin_when_exhaustiveness() -> int:
+    """Every `when` *expression* that branches on an enum must cover all of its values.
+
+    A `when` used as an expression has to be exhaustive. A `when` used as a statement does not,
+    which is why this only looks at `= when (...)` and `return when (...)` - the expression
+    positions - and never at a bare `when (...)`.
+
+    Adding a value to an enum and forgetting one of its `when`s is a compile error nothing else
+    here can catch earlier. That is exactly what happened when `ReleaseNoteLineKind.SubBullet` was
+    added and the `val content = when (kind) { ... }` that strips a line's prefix was left with
+    four of the five branches, which reddened two CI runs.
+    """
+    checked = 0
+    for path in sorted(ROOT.rglob("*.kt")):
+        if not path.is_file() or "build" in path.parts:
+            continue
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT)
+        for enum_match in re.finditer(r"enum\s+class\s+(\w+)\s*\{([^}]*)\}", text):
+            name = enum_match.group(1)
+            values = [
+                item.strip().split("(")[0].split("=")[0].strip()
+                for item in enum_match.group(2).split(",")
+            ]
+            values = [v for v in values if v and v[0].isupper() and " " not in v]
+            if len(values) < 2:
+                continue
+            wanted = {f"{name}.{v}" for v in values}
+            # Expression positions only: `= when (...)` or `return when (...)`, on one line.
+            # [ \t]* rather than \s*, because a `val x = expr` on the line above must not make
+            # the `when` on this line look like the value of an assignment.
+            for when_match in re.finditer(r"(?:=[ \t]*|return[ \t]+)when[ \t]*\(", text):
+                body, _ = _kotlin_when_block(text, when_match.end() - 1)
+                # Only the branch labels count. A `navigate(Screen.HEALTH)` inside some other
+                # `when`'s body is not a branch on Screen.
+                present = {
+                    w for w in wanted
+                    if re.search(r"\b" + re.escape(w) + r"\b[ \t]*->", body)
+                }
+                if not present or len(present) == len(wanted):
+                    continue
+                if re.search(r"\belse\s*->", body):
+                    continue
+                missing = sorted(wanted - present)
+                raise ValueError(
+                    f"{rel}: a `when` expression branches on {name} but only covers "
+                    f"{', '.join(sorted(present))}. Missing {', '.join(missing)}. A `when` used as "
+                    f"an expression must be exhaustive, so this does not compile; add the branch "
+                    f"or an `else ->`."
+                )
+            checked += 1
+    return checked
+
+
 def verify_release_notes_markdown_subset() -> int:
     """A pinned note may only use the markdown the in-app renderer understands.
 
@@ -590,6 +662,7 @@ def main() -> int:
         notes_checked = verify_release_notes_honesty()
         tamil_notes = verify_release_notes_tamil_section()
         tamil_words = verify_release_notes_tamil_words()
+        exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
@@ -601,6 +674,7 @@ def main() -> int:
     print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
     print(f"PASS: {tamil_notes} pinned release notes each carry exactly one Tamil section, last, for the in-app update screen.")
     print(f"PASS: {tamil_words} pinned release notes keep their Tamil sections free of stray Latin words.")
+    print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")

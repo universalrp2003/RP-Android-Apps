@@ -77,6 +77,9 @@ public fun parseReleaseNotes(markdown: String): List<ReleaseNoteLine> {
             ReleaseNoteLineKind.Title -> trimmed.removePrefix("# ")
             ReleaseNoteLineKind.Heading -> trimmed.removePrefix("## ")
             ReleaseNoteLineKind.Bullet -> trimmed.removePrefix("- ")
+            // A sub-bullet is turned into a block before this point, so this branch is never
+            // reached; it is here so the `when` stays exhaustive over the enum.
+            ReleaseNoteLineKind.SubBullet -> trimmed.removePrefix("- ")
             ReleaseNoteLineKind.Paragraph -> trimmed
         }
         blocks.add(ReleaseNoteLine(kind, inlineMarkdown(content)))

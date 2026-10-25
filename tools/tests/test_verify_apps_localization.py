@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Unit tests for the release-note gates in verify_apps_localization.py.
+"""Unit tests for the release-note and Kotlin-source gates in verify_apps_localization.py.
 
-Four gates are covered, all of them silent in production before they were written:
+Five gates are covered, all of them silent in production before they were written:
 
 * the note must state its device-test status (the publish step greps for it);
 * the note must carry exactly one `## தமிழ்` section, and it must be the last section,
@@ -9,12 +9,13 @@ Four gates are covered, all of them silent in production before they were writte
 * the Tamil section must not contain a Latin word that appears nowhere in the note's English
   text, which is how `40 vaikkappadum` reached a published note;
 * the note must only use the markdown the in-app renderer understands, which is how the notes
-  came to print their own `**bold**` and `## headings` on the update screen.
+  came to print their own `**bold**` and `## headings` on the update screen;
+* a `when` expression on an enum must cover every value, which is how adding
+  `ReleaseNoteLineKind.SubBullet` reddened two CI runs on a compile error.
 
 The gates read the real repository, so each test points `ROOT` and `module_version` at a
 temporary tree holding one fake app's note.
 """
-import re
 import sys
 import tempfile
 import unittest
@@ -52,6 +53,27 @@ was run for 9.9.
 """
 
 GOOD_TAIL = TAMIL_HEADING + "\n\n" + TAMIL_LINE + "\n"
+
+GOOD_KOTLIN = """package fake
+
+enum class Shade { LIGHT, DARK, DIM }
+
+object Pick {
+    fun label(shade: Shade): String = when (shade) {
+        Shade.LIGHT -> "light"
+        Shade.DARK -> "dark"
+        Shade.DIM -> "dim"
+    }
+
+    // A statement `when` needs no else, and must not be flagged.
+    fun apply(shade: Shade) {
+        when (shade) {
+            Shade.LIGHT -> println("light")
+            else -> println("other")
+        }
+    }
+}
+"""
 
 
 class ReleaseNoteGatesTest(unittest.TestCase):
@@ -208,15 +230,59 @@ class ReleaseNoteGatesTest(unittest.TestCase):
     def test_markdown_subset_skips_a_note_that_does_not_exist(self) -> None:
         self.assertEqual(mod.verify_release_notes_markdown_subset(), 0)
 
-    # -- the six real pinned notes -------------------------------------------
-    def test_real_notes_still_pass_every_gate(self) -> None:
-        # The temp tree is gone by now, so this runs against the repository itself.
+    # -- `when` exhaustiveness over an enum ----------------------------------
+    def _write_kotlin(self, source: str) -> None:
+        (self.root / "src").mkdir(exist_ok=True)
+        (self.root / "src" / "Fake.kt").write_text(source, encoding="utf-8")
+
+    def test_when_gate_accepts_a_complete_expression_when(self) -> None:
+        self._write_kotlin(GOOD_KOTLIN)
+        self.assertGreaterEqual(mod.verify_kotlin_when_exhaustiveness(), 1)
+
+    def test_when_gate_rejects_a_missing_branch(self) -> None:
+        # This is the exact shape that failed to compile: a new enum value added, and the
+        # `when` expression that strips a line's prefix left with four of five branches.
+        self._write_kotlin(GOOD_KOTLIN.replace('        Shade.DIM -> "dim"\n', ""))
+        with self.assertRaises(ValueError) as caught:
+            mod.verify_kotlin_when_exhaustiveness()
+        self.assertIn("Shade.DIM", str(caught.exception))
+
+    def test_when_gate_allows_an_else_branch(self) -> None:
+        self._write_kotlin(GOOD_KOTLIN.replace('        Shade.DIM -> "dim"\n', '        else -> "dim"\n'))
+        self.assertGreaterEqual(mod.verify_kotlin_when_exhaustiveness(), 1)
+
+    def test_when_gate_ignores_a_statement_when(self) -> None:
+        # A `when` statement needs no else. The assignment is on the line above, and must not
+        # make this look like an expression.
+        self._write_kotlin(GOOD_KOTLIN.replace(
+            "    fun apply(shade: Shade) {\n        when (shade) {\n",
+            "    fun apply(shade: Shade) {\n        val picked =\n        when (shade) {\n",
+        ).replace(
+            '            Shade.LIGHT -> println("light")\n            else -> println("other")\n',
+            '            Shade.LIGHT -> println("light")\n            Shade.DARK -> println("dark")\n',
+        ))
+        self.assertGreaterEqual(mod.verify_kotlin_when_exhaustiveness(), 1)
+
+    def test_when_gate_ignores_a_value_used_inside_another_whens_body(self) -> None:
+        # `navigate(Screen.HEALTH)` inside some other `when`'s body is not a branch on Screen.
+        self._write_kotlin("""package fake
+
+enum class Screen { HOME, HEALTH }
+
+object Nav {
+    fun go(route: Route): Unit = when (route) {
+        Route.HEALTH -> pick(Screen.HEALTH)
+        Route.HOME -> pick(Screen.HOME)
+    }
+}
+
+enum class Route { HOME, HEALTH }
+""")
+        self.assertGreaterEqual(mod.verify_kotlin_when_exhaustiveness(), 2)
+
+    def test_when_gate_runs_over_the_real_repository(self) -> None:
         mod.ROOT = self._orig_root
-        mod.module_version = self._orig_version
-        self.assertGreaterEqual(mod.verify_release_notes_honesty(), 1)
-        self.assertGreaterEqual(mod.verify_release_notes_tamil_section(), 1)
-        self.assertGreaterEqual(mod.verify_release_notes_tamil_words(), 1)
-        self.assertGreaterEqual(mod.verify_release_notes_markdown_subset(), 1)
+        self.assertGreaterEqual(mod.verify_kotlin_when_exhaustiveness(), 1)
 
 
 if __name__ == "__main__":
