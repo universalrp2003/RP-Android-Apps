@@ -24,6 +24,27 @@ versions, so the batch step skipped them and their releases are unchanged.
 
 **Two release-note defects found by that test, both fixed:** the 2.72 note claimed a Monday-to-Friday default silent-place slot that the code does not have (the default is `SilentPlaceSlot(ALL_DAYS, 9..18)`), and none of the four notes carried a `## ` Tamil section, so `AppUpdates.localizedReleaseNotes` showed a Tamil-language owner the English text inside a Tamil app. `tools/verify_apps_localization.py` now requires exactly one Tamil section, requires it to be the last section, and requires the bare `## ` marker with no words after it - `substringAfter` keeps whatever follows the marker, so `## Tamil summary` used to leave the word "summary" as the first line of the Tamil release notes in the app; `releases/pulseeq-v1.9.md` and `releases/rp-vocal-remover-studio-v0.1.15.md` had a mid-note Tamil section that hid their checksum blocks from English readers. Both are fixed, and the six current notes now use the bare marker that 38 older notes already used. The four live release bodies were re-published with the corrected notes; editing a release body does not change the installed APK bytes.
 
+## Published — SMS Guard 1.1.7 / code 13 (25 October 2026)
+
+A one-line layout fix and an honest correction, both prompted by the owner's second batch of
+screenshots ([`releases/sms-guard-v1.1.7.md`](releases/sms-guard-v1.1.7.md)):
+
+- **The projected month-end figure no longer wraps inside its own digits.** The 1.1.6 card read
+  "Rs.12,92" and then "9.48" on the next line, because the long Tamil label beside it left the
+  amount no room. Every amount in the card is now a single non-wrapping line and the label wraps
+  instead. The figures themselves are unchanged and the card's unit tests are untouched.
+- **The claim that the card and the ledger "can never disagree" is withdrawn.** On the owner's
+  phone the card read Rs.10,427 and the October summary Rs.10,302, because the card is always the
+  whole calendar month across every account while the summary honours the selected account and any
+  excluded message. `MonthlySpendPolicy.facts` applies only the genuine-bank/UPI,
+  not-a-self-transfer, debit filter; `FinanceLedgerEngine.summarizePeriod` additionally narrows to
+  one account and drops excluded messages. Both numbers are correct; they answer different
+  questions. The code comment and the note now say so. `0` new permissions over `1.1.6`.
+
+The exact bytes of 1.1.7 were **not installed on a phone** before publication - no device test was
+run - and the note says so. What still needs a physical-device check is exactly what this release
+is for: that the projected figure sits on one line on a narrow screen in Tamil.
+
 ## Unreleased
 
 **Release-note markdown is now rendered instead of printed (unreleased, source change only).** The

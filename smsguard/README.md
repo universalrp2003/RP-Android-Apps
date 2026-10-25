@@ -1,6 +1,6 @@
 # SMS Guard (குறுஞ்செய்தி காவலன்)
 
-**Package:** `com.universalrp.smsguard` · **Current Stable Release:** [`v1.1.6` (`versionCode = 12`)](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.6) (`12,428,897` bytes · SHA-256 `3e129c31dd1556fc4cedfdfcd36f50147fda2edb3963ee10575bb244b064b8b8`) · **Minimum Android:** Android 8.0+ (API 26)
+**Package:** `com.universalrp.smsguard` · **Current Stable Release:** [`v1.1.7` (`versionCode = 13`)](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.7) — a one-line layout fix to the monthly-spend card and an honest correction to what the note claimed. The published 1.1.6 bytes are unchanged and still available. · **Minimum Android:** Android 8.0+ (API 26)
 
 Full-featured open-source **Tamil (`தமிழ்`) & English** Android Default SMS app, cyber phishing shield, smart voice announcer (instant screen-ON auto-stop, global `⏹ Stop / நிறுத்து` button across every window, newest-messages-at-top thread/history sorting, and default-ON full readout for Government, `TNEPDS` Ration Shop, `TNSEDU` School Education Exam Results, Utilities, and non-OTP senders), and spoof-proof Bank / Card / UPI / FASTag finance tracker.
 

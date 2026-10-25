@@ -33,6 +33,22 @@ Publishing is unaffected. A real publish always bumps a `versionCode` in `<modul
 
 `releases/latest-tag.txt` is deliberately **not** ignored: the Live Guard permission-delta gate reads it as the previous-release baseline, so changing it still triggers a run. `site/**` is of course never ignored — it is the site's own content.
 
+## Latest publication — SMS Guard 1.1.7 / code 13 (25 October 2026)
+
+| App | Gradle module | Version / code | Tag | Asset |
+| --- | --- | --- | --- | --- |
+| SMS Guard | `smsguard` | 1.1.7 / 13 | `sms-guard-v1.1.7` | `SMS-Guard-v1.1.7.apk` |
+
+Published by the standalone SMS Guard workflow. Two changes, both prompted by the owner's second
+batch of screenshots: the projected month-end figure in the monthly-spend card no longer wraps
+inside its own digits (every amount is now a single non-wrapping line, and the label wraps instead),
+and the claim that the card and the period summary can never disagree is withdrawn - the card is
+always the whole calendar month across every account, while the summary honours the selected
+account and any excluded message, so the two legitimately differ (Rs.10,427 against Rs.10,302 on
+the owner's phone). The figures, the month clamp, the projection rule and OTP silence are unchanged.
+`0` new permissions over `1.1.6`. The exact candidate bytes were **not installed on a phone**
+before publication, so no device test is claimed for them.
+
 ## Latest publication — Voice overhaul follow-ups: Live Guard 2.72, Ramesh Radio 1.25, SMS Guard 1.1.6 and Oor Arivippu 1.1.9 (25 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
