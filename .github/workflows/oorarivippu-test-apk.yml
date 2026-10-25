@@ -33,6 +33,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: oorarivippu-test-apk
+  cancel-in-progress: true
+
 jobs:
   test-debug-apk:
     name: Build test-only debug APK

@@ -33,6 +33,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: smsguard-test-apk
+  cancel-in-progress: true
+
 jobs:
   build-signed-test-apk:
     name: Test, lint, sign & verify SMS Guard Test APK (no public release)
