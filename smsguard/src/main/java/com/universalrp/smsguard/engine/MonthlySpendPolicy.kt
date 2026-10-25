@@ -93,10 +93,12 @@ object MonthlySpendPolicy {
     ): MonthlySpendFacts {
         val zone = zoneId
         val startOfMonth = month.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val endOfMonth = month.atEndOfMonth().atEndOfDay(zone).toInstant().toEpochMilli()
+        val endOfMonth = month.atEndOfMonth().atTime(java.time.LocalTime.MAX)
+            .atZone(zone).toInstant().toEpochMilli()
         val previous = month.minusMonths(1)
         val startOfPrevious = previous.atDay(1).atStartOfDay(zone).toInstant().toEpochMilli()
-        val endOfPrevious = previous.atEndOfMonth().atEndOfDay(zone).toInstant().toEpochMilli()
+        val endOfPrevious = previous.atEndOfMonth().atTime(java.time.LocalTime.MAX)
+            .atZone(zone).toInstant().toEpochMilli()
 
         fun spendBetween(from: Long, to: Long): Pair<Double, Int> {
             var total = 0.0
