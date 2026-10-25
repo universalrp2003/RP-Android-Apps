@@ -19,7 +19,7 @@
 - One new permission: `RECEIVE_BOOT_COMPLETED` (so the daily bill check survives a reboot). No new data collection.
 
 ### Verification
-Built, unit-tested (new bill-parser / planner / bilingual-script tests), linted and signature-verified in CI before this release was created. **This exact v1.1.5 build has NOT been installed or exercised on a physical phone** — no on-device test has been performed yet; a real-device check on a few phones is strongly recommended before wide distribution.
+Built, unit-tested (new bill-parser / planner / bilingual-script tests), linted and signature-verified in CI before this release was created. **Post-publication device confirmation (24 October 2026):** the owner installed `SMS-Guard-v1.1.5.apk` on their phone and reports that it works, with the new **Bills (பில்கள்)** tab visible in the bottom navigation and the About screen showing version `1.1.5`. One phone only, and the screenshots do not show an APK SHA-256, so the installed bytes are **not hash-matched** to the published asset; a real-device check on a few more phones is still recommended before wide distribution.
 
 **Signing certificate (verify the publisher before installing):** the release APK is signed with the
 official RP Ideas key — certificate SHA-256 `9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55`.

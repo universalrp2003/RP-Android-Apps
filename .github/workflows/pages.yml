@@ -5,6 +5,17 @@ on:
     branches:
       - main
       - "arena/**"
+    # Documentation-only files cannot change the deployed site: this workflow reads only
+    # site/** plus the published release assets it mirrors. A docs-only commit therefore
+    # has nothing to redeploy. Keep this list in step with build-apk.yml.
+    paths-ignore:
+      - "README.md"
+      - "CHANGELOG.md"
+      - "PUBLISHING.md"
+      - "docs/published-release-digests.md"
+      - "docs/live-guard-2.42-device-evidence.md"
+      # Release NOTES only — releases/latest-tag.txt is not a site input.
+      - "releases/*.md"
   workflow_dispatch:
 
 permissions:
@@ -34,9 +45,9 @@ jobs:
 
           RELEASES = [
               ("sms-guard-v1.1.5", "SMS-Guard-v1.1.5.apk", 12412513, "021d86dd573668aaf4e4776327458ad99fef436fc0d5af3cdb8dcbc48705445d"),
-              ("live-guard-v2.69", "CleanSweep-v2.69.apk", 14418423, "e75264f9f32447c25729b9f8cb97abd6e1b5f1dc7c3219331b8bb056458c3a6d"),
-              ("ramesh-radio-v1.22", "Ramesh-Radio-v1.22.apk", 15076612, "1b1a5d633141d3f278f54419cad3e120be8c103ec0a259661e9a34e649bcca71"),
-              ("oor-arivippu-v1.1.7", "Oor-Arivippu-v1.1.7.apk", 12777932, "651d20490f5cbf50cf2063d23f66ec0ef30c0e15f2ab5931e38a83c772b5d256"),
+              ("live-guard-v2.70", "CleanSweep-v2.70.apk", 14419847, "8fc9f0a348a958f03c365148c4a8e012e63b85f939cf8eb71933040217beb52c"),
+              ("ramesh-radio-v1.24", "Ramesh-Radio-v1.24.apk", 15076580, "d3454873fc179241f37acd6e7acf5060418091c1ede6b640b14c32e5988b4749"),
+              ("oor-arivippu-v1.1.8", "Oor-Arivippu-v1.1.8.apk", 12777932, "1e66733e85f0fbbe43e3f34c1f47fa0b1e90a92bdf1a55da0a3a28f10b1b4f77"),
               ("pulseeq-v1.9", "PulseEQ-v1.9.apk", 12100805, "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced"),
               ("rp-vocal-remover-studio-v0.1.15", "RP-Vocal-Remover-Studio-v0.1.15.apk", 65032741, "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
@@ -68,12 +79,12 @@ jobs:
           test -f site/robots.txt
           test -s site/apks/SMS-Guard-v1.1.5.apk
           test -s site/apks/SMS-Guard-v1.1.5.zip
-          test -s site/apks/CleanSweep-v2.69.apk
-          test -s site/apks/CleanSweep-v2.69.zip
-          test -s site/apks/Ramesh-Radio-v1.22.apk
-          test -s site/apks/Ramesh-Radio-v1.22.zip
-          test -s site/apks/Oor-Arivippu-v1.1.7.apk
-          test -s site/apks/Oor-Arivippu-v1.1.7.zip
+          test -s site/apks/CleanSweep-v2.70.apk
+          test -s site/apks/CleanSweep-v2.70.zip
+          test -s site/apks/Ramesh-Radio-v1.24.apk
+          test -s site/apks/Ramesh-Radio-v1.24.zip
+          test -s site/apks/Oor-Arivippu-v1.1.8.apk
+          test -s site/apks/Oor-Arivippu-v1.1.8.zip
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

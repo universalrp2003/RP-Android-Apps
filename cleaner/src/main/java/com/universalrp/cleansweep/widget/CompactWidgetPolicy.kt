@@ -44,6 +44,14 @@ object CompactWidgetPolicy {
     fun meteredData(wifi: Boolean, userSetUnlimited5g: Boolean): Boolean = !wifi && !userSetUnlimited5g
     fun wholePercent(value: Int?): String = value?.takeIf { it in 0..100 }?.let { "$it%" } ?: "— %"
 
+    /** Human rain rate like "2.4 mm/hr" / "2.4 மிமீ/மணி", or a trace note when below 0.1 mm/hr. */
+    private fun precipLabel(mmPerHour: Double, tamil: Boolean): String {
+        val v = mmPerHour.takeIf { it.isFinite() && it >= 0.0 } ?: 0.0
+        if (v < 0.1) return if (tamil) "மிக லேசாக" else "very light"
+        val num = String.format(java.util.Locale.US, "%.1f", v)
+        return if (tamil) "$num மிமீ/மணி" else "$num mm/hr"
+    }
+
     fun formatWeatherCard(
         tamil: Boolean,
         enabled: Boolean,
@@ -55,6 +63,8 @@ object CompactWidgetPolicy {
         sourceName: String,
         lastCheckedAtMs: Long,
         clockLabel: String,
+        peakPrecipMmPerHour: Double = 0.0,
+        currentPrecipMmPerHour: Double = 0.0,
     ): WeatherCardText {
         fun label(en: String, ta: String) = if (tamil) ta else en
         val title = label("Rain & storm", "மழை & புயல்")
@@ -105,12 +115,19 @@ object CompactWidgetPolicy {
                 if (mins != null && mins <= 2) {
                     hero = label("Rain", "மழை")
                     statusLabel = label("Rain starting now", "இப்போது மழை தொடங்குகிறது")
+                    brief = label(
+                        "Falling now · ${precipLabel(currentPrecipMmPerHour, false)}",
+                        "இப்போது வருகிறது · ${precipLabel(currentPrecipMmPerHour, true)}",
+                    )
                 } else {
                     val shown = mins ?: 30
                     hero = "~${shown}m"
                     statusLabel = label("Rain in ~${shown} min", "~${shown} நிமிடத்தில் மழை")
+                    brief = label(
+                        "Up to ${precipLabel(peakPrecipMmPerHour, false)} in ~${shown} min",
+                        "~${shown} நிமிடத்தில் ${precipLabel(peakPrecipMmPerHour, true)} வரை",
+                    )
                 }
-                brief = label("~30 min heads-up · Quiet Hours respected", "~30 நிமிட முன்னறிவிப்பு · அமைதி நேரம் மதிக்கும்")
             }
             else -> {
                 hero = tempLabel ?: label("Clear", "அமைதி")

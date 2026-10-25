@@ -24,7 +24,7 @@
 ### Security hardening in v1.1.4
 - **OTP gap closed:** bare *"your code is 482910"* / *"code: 482910"* phrasings are now recognised as OTP and kept **silent** (one-time codes are never spoken aloud).
 - **Spoof surface reduced:** only genuine `-T` transactional bank headers (or known bank/UPI brands) can announce money; a service/government header merely *naming* a bank can no longer announce money that never arrived.
-- Full catalogue, threat model and honest residual-risk notes: [`smsguard/SECURITY.md`](../blob/arena/a7c60edc-rp-android-apps/smsguard/SECURITY.md).
+- Full catalogue, threat model and honest residual-risk notes: [`smsguard/SECURITY.md`](../smsguard/SECURITY.md).
 
 ### Verification
 Built, unit-tested, linted, and signature-verified in CI before this release was created. A physical-phone test on the target device is still recommended before wide distribution. `0` new permissions over `v1.1.3`.
