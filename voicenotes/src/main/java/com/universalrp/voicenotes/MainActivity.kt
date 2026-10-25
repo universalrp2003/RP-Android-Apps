@@ -153,12 +153,6 @@ fun VoiceNotesScreen(
         store.save(next)
     }
 
-    // Release the recogniser when the screen goes away: it holds the microphone and an audio
-    // resource, and leaking it means the mic stays hot after the owner has left.
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose { recognizer?.destroy() }
-    }
-
     val recognizer = remember {
         // createSpeechRecognizer is the public factory; the constructor is package-private.
         // Created here, on the main thread, because SpeechRecognizer requires it.
@@ -167,6 +161,12 @@ fun VoiceNotesScreen(
         } else {
             null
         }
+    }
+
+    // Release the recogniser when the screen goes away: it holds the microphone and an audio
+    // resource, and leaking it means the mic stays hot after the owner has left.
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { recognizer?.destroy() }
     }
 
     // The listener is recreated per composition; it captures only the current state it needs.
