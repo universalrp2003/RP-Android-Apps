@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.BatteryAlert
 import androidx.compose.material.icons.outlined.BatteryFull
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.ElectricalServices
+import androidx.compose.material.icons.outlined.MeetingRoom
 import androidx.compose.material.icons.outlined.PowerOff
 import androidx.compose.material.icons.outlined.SdStorage
 import androidx.compose.material.icons.outlined.SwapHoriz
@@ -208,7 +209,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                     )
                     Text(
-                        tr("Choose how the announcer sounds. With internet it uses studio Ultra-HD neural voices; with no internet it automatically uses your phone's installed voice."),
+                        tr("Choose how the announcer sounds. Live Guard uses the Studio Ultra-HD neural voices and nothing else; with no internet it waits for the network and then speaks in HD."),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
@@ -256,7 +257,17 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         Text(tr("Network listener: %s", listenerLabel(observers.network)), style = MaterialTheme.typography.labelSmall)
                     }
                     TextButton(onClick = { vm.testAutomaticVoice() }) { Text(tr("Test automatic charging voice")) }
-                    TextButton(onClick = { vm.openTtsSettings() }) { Text(tr("Text-to-speech settings")) }
+                    Text(
+                        tr(
+                            "Live Guard has no built-in phone voice any more: the HD neural voice is " +
+                                "the only voice it uses, so there is no system text-to-speech engine to " +
+                                "open settings for. Silence while the internet is disconnected is expected — " +
+                                "the announcement waits for the network."
+                        ),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
                     Text(tr("The automatic test uses the real master/event/quiet-hour gates. It is not a charger connection. Actual early-unplug alerts only apply below 90% after your chosen hour."),
                         style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                     Text(tr("Live power/battery/network listeners run while the app is visible or its existing monitor is active. Without an active owner, Android8+ manifest power broadcasts may be missed or deferred. Jobs and hourly checks can be delayed; force-stop prevents delivery. No new persistent monitor is enabled."),
@@ -265,20 +276,28 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             }
 
             // ------------------------------------------------------------ voice quality (v2.6)
-            // The phone's own engine is the fallback and always works offline; the online voice
-            // is opt-in because it sends the sentence (never files, never the key) to the
-            // configured AI provider and speaks the returned audio.
+            // 2.71 — HD only. Live Guard speaks with the Studio Ultra-HD neural voices and nothing
+            // else; the phone's built-in system voice has been removed from this app entirely, so
+            // there is no longer a switch to turn it on. With no internet the announcement waits
+            // for the network and is then spoken in HD.
             PanelCard(Modifier.fillMaxWidth()) {
               Column(Modifier.fillMaxWidth()) {
-                VoiceSwitch(
-                    title = tr("Natural voice (online)"),
-                    subtitle = tr(
-                        "Sounds far more human than the phone's built-in robot voice: Android's own " +
-                            "cloud voice reads the sentence instead of the offline one. Only the words " +
-                            "being spoken leave the phone — never a file, never a message."
+                Text(
+                    tr("HD voice only"),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp),
+                )
+                Text(
+                    tr(
+                        "Live Guard speaks with the Ultra-HD neural voice and nothing else — the phone's " +
+                            "built-in robot voice has been removed. Only the words being spoken leave the " +
+                            "phone, never a file, never a message. If the internet is disconnected, voice " +
+                            "stops completely and the announcement waits for the network and is then spoken in HD."
                     ),
-                    checked = state.onlineVoice,
-                    onCheckedChange = { vm.setOnlineVoice(it) },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                 )
                 VoiceSwitch(
                     title = tr("Louder voice alerts"),
@@ -291,9 +310,10 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 )
                 Text(
                     tr(
-                        "Uses an installed Tamil/English voice. If a network voice fails, an installed " +
-                            "offline voice in the same language is tried once. Missing voice data or engine " +
-                            "errors are shown in diagnostics; offline speech is not guaranteed. No API key is used."
+                        "The HD voice speaks Tamil and English in the app's language. If the HD voice " +
+                            "cannot load yet the announcement is retried for a short while and then spoken " +
+                            "— it is never switched to the phone's own voice. Voice state is shown in " +
+                            "diagnostics; no API key is used."
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
@@ -365,6 +385,97 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         Spacer(Modifier.height(8.dp))
                         Text(
                             "🌙 " + tr("It is quiet time right now, so warnings are paused."),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = WarnAmber,
+                        )
+                    }
+                }
+            }
+
+            // ------------------------------------------------------------ silent place (2.71)
+            // The office / working-people profile: the owner picks the hours voice functions must
+            // be off, in as many start/stop slots as they need, and switches the whole profile on
+            // or off with one button. Unlike quiet hours this silences every automatic voice
+            // function, so it is deliberately ranked above them.
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Outlined.MeetingRoom,
+                            contentDescription = null,
+                            tint = AccentViolet,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(Modifier.size(8.dp))
+                        Text(
+                            tr("Silent place (office profile)"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        )
+                    }
+                    Text(
+                        tr(
+                            "For office and working people: choose the hours every voice function must " +
+                                "be off. Nothing is spoken inside these slots — not rain warnings, not " +
+                                "battery or charging alerts, not answers. Add as many start/stop times as " +
+                                "you need."
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    VoiceSwitch(
+                        title = tr("Silent place profile"),
+                        subtitle = tr("On = voice is off during the times below. Off = the times are ignored."),
+                        checked = state.silentPlaceOn,
+                        onCheckedChange = { vm.setSilentPlaceOn(it) },
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    state.silentPlaceSlots.forEachIndexed { index, slot ->
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            HourPicker(
+                                value = slot.first,
+                                onPick = { vm.setSilentPlaceSlot(index, it..slot.last) },
+                            )
+                            Text(
+                                "  " + tr("to") + "  ",
+                                color = TextSecondary,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            HourPicker(
+                                value = slot.last,
+                                onPick = { vm.setSilentPlaceSlot(index, slot.first..it) },
+                            )
+                            if (state.silentPlaceSlots.size > 1) {
+                                Spacer(Modifier.size(6.dp))
+                                Text(
+                                    "✕",
+                                    color = WarnAmber,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .clip(MaterialTheme.shapes.small)
+                                        .clickable { vm.removeSilentPlaceSlot(index) }
+                                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                    }
+                    if (state.silentPlaceSlots.size < Announcer.MAX_SILENT_PLACE_SLOTS) {
+                        TextButton(onClick = { vm.addSilentPlaceSlot() }) {
+                            Text("+ " + tr("Add another time"))
+                        }
+                    } else {
+                        Text(
+                            tr("You can keep up to %s slots.", Announcer.MAX_SILENT_PLACE_SLOTS),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                    }
+                    if (state.silentPlaceOn && vm.silentPlaceActive()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            "🔇 " + tr("Silent place is active right now, so all voice is paused."),
                             style = MaterialTheme.typography.labelSmall,
                             color = WarnAmber,
                         )
@@ -493,8 +604,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             }
 
             // 2.69 owner decision: the manual "Voice A / Voice B" system-voice picker was removed.
-            // Answers now use the Studio Ultra-HD voice automatically (rotating male/female in random
-            // mode) and fall back to the phone's built-in voice only when offline with no cached clip.
+            // 2.71: the offline fallback it described is gone too — answers now use the Studio
+            // Ultra-HD voice automatically (rotating male/female in random mode) and, when the HD
+            // clip is not available yet, wait and retry instead of using any built-in voice.
 
             // ------------------------------------------------------------ the daily check
             PanelCard(Modifier.fillMaxWidth()) {
@@ -663,6 +775,8 @@ private fun voiceStageLabel(stage: com.universalrp.cleansweep.voice.VoiceDeliver
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.EVENT_OFF -> "Blocked: this event's voice switch is off"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS -> "Blocked: phone call in progress"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.QUIET_HOURS -> "Blocked: quiet hours"
+    com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.SILENT_PLACE -> "Blocked: silent place profile is active now"
+    com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET -> "Waiting: internet disconnected, HD voice will speak when it returns"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.QUEUED -> "Queued, not yet confirmed playing"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.INITIALIZING -> "Speech engine starting"
     com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_ENGINE -> "Speech engine could not be created"

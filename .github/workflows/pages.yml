@@ -45,7 +45,7 @@ jobs:
 
           RELEASES = [
               ("sms-guard-v1.1.5", "SMS-Guard-v1.1.5.apk", 12412513, "021d86dd573668aaf4e4776327458ad99fef436fc0d5af3cdb8dcbc48705445d"),
-              ("live-guard-v2.70", "CleanSweep-v2.70.apk", 14419847, "8fc9f0a348a958f03c365148c4a8e012e63b85f939cf8eb71933040217beb52c"),
+              ("live-guard-v2.71", "CleanSweep-v2.71.apk", 14414007, "f133ebbae5d6a407baf4258a012034e462c2a714e4466cd4a713aaacb5a0700c"),
               ("ramesh-radio-v1.24", "Ramesh-Radio-v1.24.apk", 15076580, "d3454873fc179241f37acd6e7acf5060418091c1ede6b640b14c32e5988b4749"),
               ("oor-arivippu-v1.1.8", "Oor-Arivippu-v1.1.8.apk", 12777932, "1e66733e85f0fbbe43e3f34c1f47fa0b1e90a92bdf1a55da0a3a28f10b1b4f77"),
               ("pulseeq-v1.9", "PulseEQ-v1.9.apk", 12100805, "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced"),
@@ -79,8 +79,8 @@ jobs:
           test -f site/robots.txt
           test -s site/apks/SMS-Guard-v1.1.5.apk
           test -s site/apks/SMS-Guard-v1.1.5.zip
-          test -s site/apks/CleanSweep-v2.70.apk
-          test -s site/apks/CleanSweep-v2.70.zip
+          test -s site/apks/CleanSweep-v2.71.apk
+          test -s site/apks/CleanSweep-v2.71.zip
           test -s site/apks/Ramesh-Radio-v1.24.apk
           test -s site/apks/Ramesh-Radio-v1.24.zip
           test -s site/apks/Oor-Arivippu-v1.1.8.apk

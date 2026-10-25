@@ -33,7 +33,15 @@ Publishing is unaffected. A real publish always bumps a `versionCode` in `<modul
 
 `releases/latest-tag.txt` is deliberately **not** ignored: the Live Guard permission-delta gate reads it as the previous-release baseline, so changing it still triggers a run. `site/**` is of course never ignored — it is the site's own content.
 
-## Latest publication — Weather Accuracy & Privacy Update: Live Guard 2.70 + Ramesh Radio 1.24 + Oor Arivippu 1.1.8 (24 October 2026)
+## Latest publication — HD Voice Only: Live Guard 2.71 (25 October 2026)
+
+| App | Gradle module | Version / code | Release tag | APK |
+|---|---|---:|---|---|
+| Live Guard / CleanSweep | `cleaner` | 2.71 / 76 | `live-guard-v2.71` | `CleanSweep-v2.71.apk` |
+
+Live Guard 2.71 / code 76 was published on 25 October 2026 from the `arena` branch by [Build APK run 40168932746](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40168932746) (`CleanSweep-v2.71.apk` `14,414,007` bytes SHA-256 `f133ebbae5d6a407baf4258a012034e462c2a714e4466cd4a713aaacb5a0700c`). Only Live Guard's version changed, so only its tag became public: `Ramesh Radio 1.24`, `Oor Arivippu 1.1.8`, `SMS Guard 1.1.5`, `PulseEQ 1.9`, `RP Vocal Remover Studio 0.1.15` and `Secret Message 1.1.3` were left completely untouched (the \"one app at a time\" rule). The Studio Ultra-HD neural voice is now the **only** voice Live Guard uses — the phone's built-in system voice, the system-voice picker card, the system text-to-speech settings shortcut and the offline system-voice fallback are all removed, and an HD clip that is not ready yet is retried and waited for instead of being replaced or dropped. Voice functions stop entirely when the internet is disconnected, and the announcement is then spoken when it returns. A new **silent place / office profile** has an on/off switch plus up to six start/stop hour slots that silence every voice function inside them. The main-page announcement-volume slider is now the single master control for all voice output, and a small **Stop voice** button is visible on every screen while an announcement is actually playing. Live Guard added `0` dangerous permissions over `v2.70`, so the permission-delta gate required no device-install record; the exact candidate bytes were **not installed on a phone** before publication, and the release notes say so plainly. `releases/latest-tag.txt` advanced to `live-guard-v2.71` for the next delta. The complete asset ledger is in [`docs/published-release-digests.md`](docs/published-release-digests.md).
+
+### Previous publication — Weather Accuracy & Privacy Update: Live Guard 2.70 + Ramesh Radio 1.24 + Oor Arivippu 1.1.8 (24 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|

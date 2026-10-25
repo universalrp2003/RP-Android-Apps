@@ -661,13 +661,14 @@ jobs:
                         UsageStats MobileScreen ReadingMovePad moveBy applySaved savedFor \
                         setDraggable togglePillDrag setSpeedSizeMb speedSizeMb \
                         Announcer HealthWatchWorker VoiceScreen speakAnswer runDailyBriefNow \
-                        setVoiceEvent setQuietHours speakNow offlineFallback \
+                        setVoiceEvent setQuietHours speakNow offlineFallback stopVoice setSilentPlaceSlot \
                         SystemEventWatcher CleanSweepWidget answerLanguage setAnswerLanguage \
                         setUnplugStartHour ChargerWatchWorker ChargeNotifier canSearchWeb \
                         setOnlineVoice openScanner CrashLog StatusPillContent showNetworkMeter \
                         SecuritySettingsRoutes FindingApp SecurityAiPrompt runSecurityAiAnalysis powerConnected \
                         AiRequestPolicy RequestBudget BoundedHttp ProductEvidencePolicy PermissionReviewStore DisplayTime \
-                        AnswerVoicePreferences AnswerVoicesCard FeatureSetupScreen CorePrivacyMigrationPolicy \
+                        AnswerVoicePreferences FeatureSetupScreen CorePrivacyMigrationPolicy \
+                        inSilentPlace silentPlaceSlots NO_INTERNET SILENT_PLACE \
                         CorePrivacyMigration LiveGuardUpdates VerifiedApkDownload UpdatePolicy \
                         LastUnplugRepo CompactWidgetPolicy CleanSweepDataWidget CleanSweepPhoneWidget \
                         LocalReadGate cancelAiReport cancelDeviceIdentification \
