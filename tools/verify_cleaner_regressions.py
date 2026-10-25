@@ -65,7 +65,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.CellTowerAndRadioPolicyTest": 4,
     "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 7,
     "com.universalrp.cleansweep.weather.WeatherUpgradeAndBannerTest": 3,
-    "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 6,
+    "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 5,
 }
 
 

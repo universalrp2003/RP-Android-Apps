@@ -67,6 +67,39 @@ android {
     }
 }
 
+// ---------------------------------------------------------------------------
+// C1: the one live-network suite is not a build gate.
+//
+// LiveStudioVoiceSynthesisTest really calls the Edge TTS service. That is a monitoring concern,
+// not a correctness concern: no unit test can prove an external service is up, and a red build
+// cannot bring it back. It used to run inside `test`, which is exactly what turned `main` red on
+// 25 October 2026 and blocked a release that had nothing to do with voice.
+//
+// So it is excluded from every normal test task and runs only from `testLiveStudioVoice`, which
+// the scheduled "Live Studio Voice Check" workflow calls. The suite itself still retries three
+// times and skips when there is no DNS, so a blip cannot fail it either.
+// ---------------------------------------------------------------------------
+tasks.withType<Test>().configureEach {
+    if (name != "testLiveStudioVoice") {
+        filter {
+            isFailOnNoMatchingTests = false
+            excludeTestsMatching("com.universalrp.cleansweep.voice.LiveStudioVoiceSynthesisTest")
+        }
+    }
+}
+
+tasks.register<Test>("testLiveStudioVoice") {
+    group = "verification"
+    description = "Live network synthesis check. Deliberately NOT part of any build or release gate."
+    filter {
+        isFailOnNoMatchingTests = false
+        includeTestsMatching("com.universalrp.cleansweep.voice.LiveStudioVoiceSynthesisTest")
+    }
+    // Report a failure instead of blocking anything: this task is monitoring, and a scheduled run
+    // that turns red on a network blip trains people to ignore red.
+    ignoreFailures = true
+}
+
 dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
