@@ -24,7 +24,7 @@ EXPECTED_RELEASE_URLS = {
 }
 EXPECTED_OOR_RELEASE_URLS = {
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.4",
-    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.70",
+    "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.71",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.24",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
     "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
@@ -267,7 +267,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.4"',
-            'tagPrefix = "live-guard"', 'version = "2.70"',
+            'tagPrefix = "live-guard"', 'version = "2.71"',
             'tagPrefix = "ramesh-radio"', 'version = "1.24"',
             'tagPrefix = "pulseeq"', 'version = "1.9"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',

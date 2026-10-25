@@ -70,7 +70,6 @@ import com.universalrp.cleansweep.notify.FloatingVolumeControl
 import com.universalrp.cleansweep.notify.StatusPill
 import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.cleansweep.voice.AnswerVoicePolicy
-import com.universalrp.cleansweep.voice.AnswerVoicePreferences
 import com.universalrp.cleansweep.widget.CleanSweepWidget
 import com.universalrp.cleansweep.work.HealthWatchWorker
 import android.provider.Settings
@@ -257,6 +256,11 @@ data class UiState(
     val voiceGenderMode: com.universalrp.cleansweep.voice.VoiceGenderMode = com.universalrp.cleansweep.voice.VoiceGenderMode.RANDOM,
     val voiceQuietStart: Int = Announcer.DEFAULT_QUIET_START,
     val voiceQuietEnd: Int = Announcer.DEFAULT_QUIET_END,
+    /** Silent place / office profile: master switch and its start/stop hour slots. */
+    val silentPlaceOn: Boolean = false,
+    val silentPlaceSlots: List<IntRange> = emptyList(),
+    /** True while an HD announcement is actually playing, for the global stop button. */
+    val voiceSpeaking: Boolean = false,
     val voiceBatteryLow: Boolean = true,
     val voiceBatteryFull: Boolean = true,
     val voiceOverheat: Boolean = true,
@@ -404,6 +408,15 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             com.universalrp.cleansweep.data.PermissionReviewStore.observe(ctx).collect { previous ->
                 mutate { it.copy(lastPermissionReview = previous, lastPermissionReviewLoaded = true) }
+            }
+        }
+        // 2.71 — mirror the announcer's real playback state so the small stop-voice button can
+        // be shown on every screen. This is driven by the engine's own "playback started" and
+        // "finished" callbacks, never by a queued request, so it never claims sound that did
+        // not actually start.
+        viewModelScope.launch {
+            Announcer.speaking.collect { speaking ->
+                mutate { it.copy(voiceSpeaking = speaking) }
             }
         }
         viewModelScope.launch {
@@ -1340,34 +1353,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // Read it in the language it is actually written in, not the menu language: an
         // English answer should not be handed to a Tamil voice.
         val language = languageOf(short)
-        // 2.42: Voice A / Voice B are chosen automatically from the phone's own installed
-        // voices instead of refusing with "choose and preview two voices". A stored choice
-        // keeps the synchronous fast path; only a missing or stale choice queries the engine.
-        if (AnswerVoicePreferences.load(ctx, language).configured) {
-            Announcer.speakAnswer(ctx, short, language, message.answerVoiceSlot, message.id, forced)
-            return
-        }
-        viewModelScope.launch {
-            ensureAnswerVoices(language)
-            Announcer.speakAnswer(ctx, short, language, message.answerVoiceSlot, message.id, forced)
-        }
-    }
-
-    /**
-     * Fills Voice A and Voice B for [language] from the engine's **real** inventory when the
-     * owner has not chosen, or when a saved voice is no longer reported, and saves the result
-     * so the Voice & daily watch card shows what will actually be used. The owner can still
-     * preview and swap both slots there, and a manual save still requires a preview.
-     *
-     * When the engine reports no usable voice for that language, nothing is saved and nothing
-     * is spoken: [Announcer] records the real delivery stage in the voice diagnostics. No
-     * error message is shown, and no voice is invented or substituted from another language.
-     */
-    private suspend fun ensureAnswerVoices(language: AppLang) {
-        val stored = AnswerVoicePreferences.load(ctx, language)
-        val inventory = runCatching { Announcer.installedAnswerVoices(ctx, language) }.getOrDefault(emptyList())
-        val resolved = AnswerVoicePolicy.effectivePair(stored.first, stored.second, inventory.map { it.name })
-        AnswerVoicePreferences.saveAutomatic(ctx, language, resolved.first, resolved.second)
+        // 2.71 — HD only. Answers go straight to the Studio Ultra-HD voice; the phone's installed
+        // system-voice inventory is no longer queried, so no system TTS engine is ever created.
+        Announcer.speakAnswer(ctx, short, language, message.answerVoiceSlot, message.id, forced)
     }
 
     /** True when the text is mostly Tamil script. */
@@ -1443,14 +1431,6 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             Announcer.speakAndWait(ctx, "This is a test of enabled automatic charging speech, not a charger connection event.",
                 "இது தானியங்கி சார்ஜ் குரலின் சோதனை மட்டும்; சார்ஜர் இணைப்பு நிகழ்வு அல்ல.", Announcer.Event.CHARGING)
         }
-    }
-
-    fun openTtsSettings() {
-        val intent = android.content.Intent("com.android.settings.TTS_SETTINGS").addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        val opened = runCatching {
-            if (intent.resolveActivity(ctx.packageManager) == null) false else { ctx.startActivity(intent); true }
-        }.getOrDefault(false)
-        if (!opened) mutate { it.copy(message = tr("Search Android Settings for Text-to-speech output and installed Tamil voice data.")) }
     }
 
     fun setOnlineVoice(on: Boolean) {
@@ -1596,6 +1576,53 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(voiceQuietStart = Announcer.quietStart(ctx), voiceQuietEnd = Announcer.quietEnd(ctx)) }
     }
 
+    // ------------------------------------------------- silent place / office profile (2.71)
+    // The owner picks the hours voice functions must be off (for example office hours), in as
+    // many start/stop slots as they need, and switches the whole profile on or off.
+
+    fun setSilentPlaceOn(on: Boolean) {
+        Announcer.setSilentPlaceOn(ctx, on)
+        mutate { it.copy(silentPlaceOn = on) }
+    }
+
+    /** Replaces one slot, or appends it when [index] is past the end of the current list. */
+    fun setSilentPlaceSlot(index: Int, range: IntRange) {
+        val slots = Announcer.silentPlaceSlots(ctx).toMutableList()
+        if (index in slots.indices) slots[index] = range else slots.add(range)
+        val trimmed = slots.take(Announcer.MAX_SILENT_PLACE_SLOTS)
+        Announcer.setSilentPlaceSlots(ctx, trimmed)
+        mutate { it.copy(silentPlaceSlots = trimmed) }
+    }
+
+    fun addSilentPlaceSlot() {
+        val slots = Announcer.silentPlaceSlots(ctx).toMutableList()
+        if (slots.size < Announcer.MAX_SILENT_PLACE_SLOTS) {
+            slots.add(Announcer.DEFAULT_SILENT_PLACE_SLOT)
+        }
+        Announcer.setSilentPlaceSlots(ctx, slots)
+        mutate { it.copy(silentPlaceSlots = slots) }
+    }
+
+    fun removeSilentPlaceSlot(index: Int) {
+        val slots = Announcer.silentPlaceSlots(ctx).toMutableList()
+        if (index in slots.indices) slots.removeAt(index)
+        Announcer.setSilentPlaceSlots(ctx, slots)
+        mutate { it.copy(silentPlaceSlots = slots) }
+    }
+
+    /** True when the profile is on and the current hour is inside one of its slots. */
+    fun silentPlaceActive(): Boolean = Announcer.inSilentPlace(ctx)
+
+    /**
+     * 2.71 — the small stop button that is visible on every screen while an announcement is
+     * playing. It stops the HD playback and drops the queue so nothing more is spoken until the
+     * next request.
+     */
+    fun stopVoice() {
+        Announcer.stop()
+        mutate { it.copy(voiceSpeaking = false) }
+    }
+
     fun setDailyScanOn(on: Boolean) {
         Announcer.setDailyScanOn(ctx, on)
         syncHealthWatchSchedule()
@@ -1638,6 +1665,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 voiceGenderMode = Announcer.voiceGenderMode(ctx),
                 voiceQuietStart = Announcer.quietStart(ctx),
                 voiceQuietEnd = Announcer.quietEnd(ctx),
+                silentPlaceOn = Announcer.silentPlaceOn(ctx),
+                silentPlaceSlots = Announcer.silentPlaceSlots(ctx),
+                voiceSpeaking = Announcer.speaking.value,
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
                 voiceBatteryFull = Announcer.allows(ctx, Announcer.Event.BATTERY_FULL),
                 voiceOverheat = Announcer.allows(ctx, Announcer.Event.OVERHEAT),

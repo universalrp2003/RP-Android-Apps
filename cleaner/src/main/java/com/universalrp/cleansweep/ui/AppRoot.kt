@@ -2,15 +2,25 @@ package com.universalrp.cleansweep.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.StopCircle
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,12 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.Screen
+import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.ui.theme.Bg
+import com.universalrp.cleansweep.ui.theme.DangerRed
 import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
 
@@ -98,6 +112,38 @@ fun AppRoot(vm: MainViewModel) {
                 Screen.FEATURE_SETUP -> FeatureSetupScreen(state, vm)
                 Screen.GUIDE -> LiveGuardGuideScreen(vm)
                 Screen.WEATHER -> WeatherAlertScreen(state, vm)
+            }
+        }
+
+        // 2.71 — the small "stop speaking" button. It is visible on EVERY screen while an HD
+        // announcement is actually playing, so the user can stop the voice from any window at
+        // any time. It is driven by the engine's own playback-started/finished callbacks, so it
+        // is never shown for a request that did not really start speaking.
+        if (state.voiceSpeaking) {
+            Row(
+                Modifier
+                    .align(Alignment.TopEnd)
+                    .statusBarsPadding()
+                    .padding(12.dp)
+                    .clip(MaterialTheme.shapes.large)
+                    .background(DangerRed)
+                    .clickable { vm.stopVoice() }
+                    .padding(horizontal = 12.dp, vertical = 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    Icons.Outlined.StopCircle,
+                    contentDescription = tr("Stop speaking"),
+                    tint = Color.White,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.size(6.dp))
+                Text(
+                    tr("Stop voice"),
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                )
             }
         }
 

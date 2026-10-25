@@ -74,6 +74,25 @@ object Announcer {
     const val KEY_NEWS_HEADLINES = "voice_news_headlines"
     const val KEY_QUIET_START = "voice_quiet_start"
     const val KEY_QUIET_END = "voice_quiet_end"
+    // 2.71 — "silent place" (office / working-people) profile: several start→stop hour slots in
+    // which Live Guard makes no sound at all, behind one on/off switch.
+    const val KEY_SILENT_PLACE_ON = "silent_place_on"
+    const val KEY_SILENT_PLACE_SLOTS = "silent_place_slots"
+    /** A working day, 9 AM to 6 PM, until the owner picks their own slots. */
+    const val DEFAULT_SILENT_PLACE_SLOTS = "9-18"
+    /** A slot added by the "add another time" button: a plain 09:00–18:00 office window. */
+    val DEFAULT_SILENT_PLACE_SLOT = 9..18
+    /** Most slots we keep, so the picker cannot be filled without bound. */
+    const val MAX_SILENT_PLACE_SLOTS = 6
+    /**
+     * 2.71 — HD-only retry policy. There is no system voice to fall back to, so a request that
+     * cannot produce an HD clip yet is retried this many times, [HD_RETRY_DELAY_MS] apart, before
+     * it is given up on. Three tries (each with its own network timeout) keeps the total wait
+     * inside the preview path's own deadline, so a "Test" tap is never reported as a failure
+     * while the voice is still legitimately loading.
+     */
+    const val MAX_HD_ATTEMPTS = 3
+    const val HD_RETRY_DELAY_MS = 1_500L
     const val KEY_LOW = "voice_battery_low"
     const val KEY_FULL = "voice_battery_full"
     const val KEY_HOT = "voice_overheat"
@@ -192,8 +211,11 @@ object Announcer {
         var retried = false
         var started = false
         var attemptId = ""
-        // Resolved once per announcement so RANDOM advances the voice exactly one step, even if the
-        // online HD attempt fails and we retry on the phone's built-in TTS.
+        // 2.71 — how many times the HD-only path has tried and failed to produce a clip. There is
+        // no system voice to fall back to, so this bounds the wait instead of looping forever.
+        var hdAttempts = 0
+        // Resolved once per announcement so RANDOM advances the voice exactly one step, even if
+        // an HD attempt fails and the same sentence is retried on the HD voice again.
         var studioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null
     }
     private val pending = ArrayDeque<Request>() // Only touched on main.
@@ -202,6 +224,55 @@ object Announcer {
     private val automaticState = kotlinx.coroutines.flow.MutableStateFlow(VoiceDeliveryStatus())
     val runtime: kotlinx.coroutines.flow.StateFlow<VoiceDeliveryStatus> = runtimeState
     val automatic: kotlinx.coroutines.flow.StateFlow<VoiceDeliveryStatus> = automaticState
+
+    /**
+     * 2.71 — true while an HD announcement is actually playing, so any window can show the small
+     * "stop speaking" button. It is set from the same callback that records PLAYING and cleared in
+     * [finish], so it can never claim sound that the engine did not report as started.
+     */
+    private val speakingState = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val speaking: kotlinx.coroutines.flow.StateFlow<Boolean> = speakingState
+
+    /**
+     * 2.71 — Live Guard speaks with the Studio Ultra-HD neural voices ONLY. There is no system
+     * voice path any more, so with no internet there is nothing to synthesise with: the request
+     * waits here until the network is back, then announces. [internetCallback] is registered
+     * lazily and never unregistered — it is one app-process-wide listener that only ever asks the
+     * queue to drain again.
+     */
+    private var internetCallback: android.net.ConnectivityManager.NetworkCallback? = null
+    private var internetWatching: Context? = null
+
+    private fun watchInternet(context: Context) {
+        if (internetWatching != null) return
+        val cm = runCatching {
+            context.applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager
+        }.getOrNull() ?: return
+        internetWatching = context.applicationContext
+        val callback = object : android.net.ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: android.net.Network) {
+                main.post {
+                    val ctx = prefsContext ?: internetWatching ?: return@post
+                    if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) drain(ctx)
+                }
+            }
+            // 2.71 — "if internet disconnected stop all voice functions". HD is the only voice, so
+            // losing the network means there is nothing left to speak with: cut the announcement
+            // that is playing and drop the queue rather than let a half-loaded clip run on.
+            override fun onLost(network: android.net.Network) {
+                main.post {
+                    val ctx = prefsContext ?: internetWatching ?: return@post
+                    if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) return@post
+                    speakingState.value = false
+                    runCatching { activeMediaPlayer?.stop() }
+                    pending.forEach { it.done?.complete(false) }; pending.clear()
+                    if (active != null) finish(VoiceDeliveryPolicy.Stage.NO_INTERNET, false, pump = false)
+                }
+            }
+        }
+        internetCallback = callback
+        runCatching { cm.registerDefaultNetworkCallback(callback) }
+    }
 
     fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -411,6 +482,52 @@ object Announcer {
         if (start == end) return false
         return if (start < end) hour in start until end else hour >= start || hour < end
     }
+
+    // ------------------------------------------------------------ silent place (2.71)
+
+    /** Master switch for the office / working-people profile. Off means the slots are ignored. */
+    fun silentPlaceOn(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_SILENT_PLACE_ON, false)
+
+    fun setSilentPlaceOn(context: Context, on: Boolean) {
+        prefs(context).edit().putBoolean(KEY_SILENT_PLACE_ON, on).apply()
+    }
+
+    /**
+     * The owner's slots, each an inclusive hour range. Stored as "9-18,13-14" so a phone with no
+     * data yet still reads the default. Overlapping and duplicate ranges are kept as typed; the
+     * gate only asks "is this hour inside any slot", so overlaps are harmless.
+     */
+    fun silentPlaceSlots(context: Context): List<IntRange> {
+        val decoded = decodeSlots(prefs(context).getString(KEY_SILENT_PLACE_SLOTS, DEFAULT_SILENT_PLACE_SLOTS).orEmpty())
+        // An empty list means "owner deleted every slot"; show the default so the card always has
+        // something to edit, and so the profile has a sane starting point.
+        return decoded.ifEmpty { decodeSlots(DEFAULT_SILENT_PLACE_SLOTS) }
+    }
+
+    fun setSilentPlaceSlots(context: Context, slots: List<IntRange>) {
+        prefs(context).edit().putString(KEY_SILENT_PLACE_SLOTS, encodeSlots(slots)).apply()
+    }
+
+    /** True only when the profile is on AND the current hour falls inside one of its slots. */
+    fun inSilentPlace(context: Context, hour: Int = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)): Boolean {
+        if (!silentPlaceOn(context)) return false
+        return silentPlaceSlots(context).any { hour in it }
+    }
+
+    private fun encodeSlots(slots: List<IntRange>): String =
+        slots.asSequence()
+            .filter { !it.isEmpty() && it.first in 0..23 && it.last in 0..23 }
+            .take(MAX_SILENT_PLACE_SLOTS)
+            .joinToString(",") { "${it.first}-${it.last}" }
+
+    private fun decodeSlots(raw: String): List<IntRange> =
+        raw.split(',').mapNotNull { part ->
+            val ends = part.trim().split('-')
+            val from = ends.getOrNull(0)?.trim()?.toIntOrNull() ?: return@mapNotNull null
+            val to = ends.getOrNull(1)?.trim()?.toIntOrNull() ?: return@mapNotNull null
+            if (from !in 0..23 || to !in 0..23 || to < from) null else from..to
+        }
 
     // ------------------------------------------------------------------ speaking
 
@@ -624,6 +741,7 @@ object Announcer {
             enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual,
             inCall = com.universalrp.updates.CallGuard.inCall(ctx),
             bypassQuietHours = request.bypassQuietHours,
+            silentPlace = inSilentPlace(ctx),
         )
         if (blocked != null) {
             main.post { record(ctx, request, blocked); request.done?.complete(false) }
@@ -704,50 +822,32 @@ object Announcer {
     private fun drain(context: Context) {
         if (active != null || pending.isEmpty()) return
 
-        val next = pending.first()
-        // Prefer Studio Ultra-HD whenever the online voice is enabled: online it synthesises
-        // (0ms cache + network); offline startStudioOnlineUtterance replays a cached clip if we have
-        // one and otherwise instantly falls back to the phone's built-in TTS. A request that already
-        // fell back (retried) skips straight to TTS so we never re-attempt the studio path.
-        val wantStudio = next.preferredVoice == null && !next.retried &&
-            (next.overrideStudioProfile != null || onlineVoice(context))
-
-        if (wantStudio) {
-            val request = pending.removeFirst()
-            val blocked = VoiceDeliveryPolicy.blocked(
-                enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
-                request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
-                bypassQuietHours = request.bypassQuietHours,
-            )
-            if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
-            active = request
-            val desiredLang = request.wanted ?: Lang.languageIn(context)
-            val useTamil = desiredLang == AppLang.TA && !request.tamil.isNullOrBlank()
-            request.language = if (useTamil) AppLang.TA else AppLang.EN
-            request.text = plain(if (useTamil) request.tamil.orEmpty() else request.english.orEmpty())
-            if (request.text.isBlank()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
-            request.network = true
-            startStudioOnlineUtterance(context, request)
+        // 2.71 — HD only. The Studio Ultra-HD neural voices are the ONLY voice Live Guard uses;
+        // the phone's built-in system voice is gone entirely. With no internet there is nothing to
+        // synthesise with, so the request stays queued and is announced when the network comes
+        // back (see watchInternet) rather than falling back to a system voice or being dropped.
+        if (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)) {
+            pending.forEach { record(context, it, VoiceDeliveryPolicy.Stage.NO_INTERNET) }
+            watchInternet(context)
             return
         }
 
-        if (!ready) { ensureEngine(context); return }
         val request = pending.removeFirst()
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
             request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
             bypassQuietHours = request.bypassQuietHours,
+            silentPlace = inSilentPlace(context),
         )
         if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
         active = request
-        val engine = tts ?: run { finish(VoiceDeliveryPolicy.Stage.NO_ENGINE, false); return }
-        val ta = runCatching { engine.isLanguageAvailable(TAMIL) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED)
-        val bare = if (ta < 0) runCatching { engine.isLanguageAvailable(Locale("ta")) }.getOrDefault(-3) else ta
-        tamilVoice = VoiceDeliveryPolicy.validStatus(bare)
-        request.language = request.wanted ?: if (tamilVoice && request.tamil.orEmpty().any { it.code in 0x0B80..0x0BFF }) AppLang.TA else AppLang.EN
-        request.text = if (request.language == AppLang.TA) request.tamil.orEmpty() else request.english.orEmpty()
+        val desiredLang = request.wanted ?: Lang.languageIn(context)
+        val useTamil = desiredLang == AppLang.TA && !request.tamil.isNullOrBlank()
+        request.language = if (useTamil) AppLang.TA else AppLang.EN
+        request.text = plain(if (useTamil) request.tamil.orEmpty() else request.english.orEmpty())
         if (request.text.isBlank()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
-        startUtterance(context, request, offline = false)
+        request.network = true
+        startStudioOnlineUtterance(context, request)
     }
 
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
@@ -758,8 +858,8 @@ object Announcer {
         neuralExecutor.execute {
             if (active?.id != requestId) return@execute
             // Online: synthesise (0ms cache hit, else network — HD start delay is fine, we wait).
-            // Offline: only replay an already-cached HD clip (never block on the network); if that
-            // exact clip was never cached we fall straight back to the phone's built-in TTS below.
+            // Offline: replay an already-cached HD clip only; a clip we never cached cannot be
+            // produced at all, so the request is retried below instead of using any system voice.
             val mp3 = if (online) {
                 com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
                     cacheDir = context.cacheDir,
@@ -790,6 +890,7 @@ object Announcer {
                         main.post {
                             if (active?.id == requestId) {
                                 tamilVoice = true
+                                speakingState.value = true
                                 record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
                                 if (!request.started) {
                                     request.started = true
@@ -813,29 +914,25 @@ object Announcer {
                     return@execute
                 }
             }
-            // Instant automatic fallback to installed Android System TTS when offline / cloud unreachable!
+            // 2.71 — there is NO system-voice fallback any more. If the HD clip could not be
+            // produced (still loading, a slow network, or a synthesis failure) the request goes
+            // back to the front of the queue and is retried after a short pause: it waits for the
+            // HD voice to load and then announces. [hdAttempts] bounds the wait so a permanently
+            // unreachable service cannot spin forever.
             main.post {
                 if (active?.id != requestId) return@post
                 active = null
-                request.retried = true
-                pending.addFirst(request)
-                if (!ready) {
-                    ensureEngine(context)
-                } else {
-                    val fallbackReq = pending.removeFirst()
-                    active = fallbackReq
-                    val engine = tts ?: run { finish(VoiceDeliveryPolicy.Stage.NO_ENGINE, false); return@post }
-                    val ta = runCatching { engine.isLanguageAvailable(TAMIL) }.getOrDefault(TextToSpeech.LANG_NOT_SUPPORTED)
-                    val bare = if (ta < 0) runCatching { engine.isLanguageAvailable(Locale("ta")) }.getOrDefault(-3) else ta
-                    tamilVoice = VoiceDeliveryPolicy.validStatus(bare)
-                    fallbackReq.language = if (tamilVoice && !fallbackReq.tamil.isNullOrBlank()) AppLang.TA else AppLang.EN
-                    fallbackReq.text = if (fallbackReq.language == AppLang.TA) fallbackReq.tamil.orEmpty() else fallbackReq.english.orEmpty()
-                    if (fallbackReq.text.isBlank()) {
-                        finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false)
-                    } else {
-                        startUtterance(context, fallbackReq, offline = true)
-                    }
+                request.hdAttempts++
+                if (request.hdAttempts >= MAX_HD_ATTEMPTS) {
+                    record(context, request, VoiceDeliveryPolicy.Stage.NO_INTERNET)
+                    request.done?.complete(false)
+                    drain(context)
+                    return@post
                 }
+                pending.addFirst(request)
+                record(context, request, VoiceDeliveryPolicy.Stage.NO_INTERNET)
+                watchInternet(context)
+                main.postDelayed({ if (active == null) drain(context) }, HD_RETRY_DELAY_MS)
             }
         }
     }
@@ -920,6 +1017,7 @@ object Announcer {
     private fun finish(stage: VoiceDeliveryPolicy.Stage, success: Boolean, pump: Boolean = true) {
         val request = active ?: return
         active = null
+        speakingState.value = false
         prefsContext?.let { record(it, request, stage) }
         if (success && request.event == Event.TEST && request.preferredVoice != null) tts?.let {
             previewedChoices.add(choiceToken(it, request.language, request.preferredVoice))
@@ -942,6 +1040,7 @@ object Announcer {
     fun stop() { main.post {
         runCatching { activeMediaPlayer?.stop() }
         runCatching { tts?.stop() }
+        speakingState.value = false
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
     } }

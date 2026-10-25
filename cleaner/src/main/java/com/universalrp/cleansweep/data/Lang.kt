@@ -1594,6 +1594,23 @@ object Lang {
         "Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "போன் திரை அணைந்திருக்கும்போது மட்டும் புதிய 5 செய்திகளை வாசிக்கும் (6 AM – 10 PM).",
         "Read today's news" to "இன்றைய செய்தி படி",
         "Stop reading" to "⏹ நிறுத்து",
+        // ---------------------------------------------------- HD-only voice (2.71)
+        "HD voice only" to "HD குரல் மட்டும்",
+        "Live Guard speaks with the Ultra-HD neural voice and nothing else — the phone's built-in robot voice has been removed. Only the words being spoken leave the phone, never a file, never a message. If the internet is disconnected, voice stops completely and the announcement waits for the network and is then spoken in HD." to "லைவ் கார்டு Ultra-HD நரம்பியல் குரலை மட்டுமே பயன்படுத்துகிறது — தொலைபேசியின் உள்ளமைந்த ரோபோ குரல் நீக்கப்பட்டது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன, கோப்போ செய்தியோ அல்ல. இணையம் இல்லாதபோது குரல் முழுவதுமாக நின்றுவிடும், அறிவிப்பு இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசப்படும்.",
+        "The HD voice speaks Tamil and English in the app's language. If the HD voice cannot load yet the announcement is retried for a short while and then spoken — it is never switched to the phone's own voice. Voice state is shown in diagnostics; no API key is used." to "HD குரல் செயலியின் மொழியில் தமிழ் மற்றும் ஆங்கிலம் பேசும். HD குரல் இன்னும் ஏற்றப்படாவிட்டால் அறிவிப்பு சிறிது நேரம் முயற்சி செய்யப்பட்டு பின் பேசப்படும் — தொலைபேசியின் சொந்த குரலுக்கு மாற்றப்படாது. குரல் நிலை சிக்கல் தீர்வில் காட்டப்படும்; எந்த API விசையும் பயன்படுத்தப்படுவதில்லை.",
+        "Live Guard has no built-in phone voice any more: the HD neural voice is the only voice it uses, so there is no system text-to-speech engine to open settings for. Silence while the internet is disconnected is expected — the announcement waits for the network." to "லைவ் கார்டுக்கு இனி தொலைபேசியின் உள்ளமைந்த குரல் இல்லை: HD நரம்பியல் குரல் மட்டுமே பயன்படுத்தப்படுகிறது, எனவே அமைப்புகளைத் திறக்க எந்த கணினி உரை-க்கு-பேச்சு இயந்திரமும் இல்லை. இணையம் இல்லாதபோது அமைதி இயல்பானது — அறிவிப்பு இணையத்திற்காகக் காத்திருக்கும்.",
+        "Blocked: silent place profile is active now" to "தடுக்கப்பட்டது: அமைதி இட விவரக்குறிப்பு இப்போது செயலில் உள்ளது",
+        "Waiting: internet disconnected, HD voice will speak when it returns" to "காத்திருக்கிறது: இணையம் இல்லை, இணையம் திரும்பும்போது HD குரல் பேசும்",
+        // ---------------------------------------------------- silent place (2.71)
+        "Silent place (office profile)" to "அமைதி இடம் (அலுவலக விவரக்குறிப்பு)",
+        "For office and working people: choose the hours every voice function must be off. Nothing is spoken inside these slots — not rain warnings, not battery or charging alerts, not answers. Add as many start/stop times as you need." to "அலுவலகம் மற்றும் வேலை செய்பவர்களுக்கு: குரல் இயந்திரங்கள் அணைந்திருக்க வேண்டிய நேரங்களைத் தேர்ந்தெடுக்கவும். இந்த நேரங்களில் எதுவும் பேசப்படாது — மழை எச்சரிக்கை, பேட்டரி அல்லது சார்ஜ் அறிவிப்பு, பதில்கள் எதுவும் இல்லை. உங்களுக்குத் தேவையான அளவுக்கு தொடங்கு/நிறுத்து நேரங்களைச் சேர்க்கவும்.",
+        "Silent place profile" to "அமைதி இட விவரக்குறிப்பு",
+        "On = voice is off during the times below. Off = the times are ignored." to "இயக்கு = கீழேயுள்ள நேரங்களில் குரல் அணைந்திருக்கும். அணை = நேரங்கள் பொருட்படுத்தப்படாது.",
+        "Add another time" to "இன்னொரு நேரத்தைச் சேர்",
+        "You can keep up to %s slots." to "அதிகபட்சம் %s நேரங்களை வைக்கலாம்.",
+        "Silent place is active right now, so all voice is paused." to "அமைதி இடம் இப்போது செயலில் உள்ளது, எனவே எல்லா குரலும் இடைநிறுத்தப்பட்டுள்ளன.",
+        // ---------------------------------------------------- global stop button (2.71)
+        "Stop speaking" to "பேசுவதை நிறுத்து",
     )
 }
 
