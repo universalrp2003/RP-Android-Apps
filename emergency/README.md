@@ -105,4 +105,10 @@ ARM only (`arm64-v8a`, `armeabi-v7a`) - the same restriction Vasanthi AI and Voc
 
 ## Status
 
+**Published 2026-10-26T16:40:39Z** as [emergency-v1.0](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/emergency-v1.0):
+
+- Asset: `Emergency-Alert-v1.0.apk`, **17,348,330 bytes**
+- SHA-256: `40144825bf8dbada29c30de924a2df65527fba8eadc377464d0a0aafb8b30538`
+- Release run: [40360826395](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40360826395)
+
 Version 1.0 has **not been installed on a phone**, so it has had no device test. What is covered by unit tests: the wire protocol, the duplicate suppression, the emergency vocabulary against the shipped model, and the state store. What is not: whether the microphone stays open for a whole night, whether the packets cross a real home router, and behaviour on a phone with aggressive battery management.
