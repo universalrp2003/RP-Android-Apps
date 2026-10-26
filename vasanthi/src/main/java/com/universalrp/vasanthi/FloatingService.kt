@@ -377,8 +377,14 @@ class FloatingService : Service() {
         if (VasanthiState.listening) startCapture()
     }
 
-    /** Gives the recogniser a turn with the microphone, unless it has given up. */
-    private val speechTick = object : Runnable {
+    /**
+     * Gives the recogniser a turn with the microphone, unless it has given up.
+     *
+     * The type is written out rather than inferred: this runnable schedules the watchdog and the
+     * watchdog schedules this one, so leaving either type to inference is a cycle the compiler
+     * refuses to resolve.
+     */
+    private val speechTick: Runnable = object : Runnable {
         override fun run() {
             if (!VasanthiState.listening) return
             if (micWithRecognizer) {
@@ -406,7 +412,7 @@ class FloatingService : Service() {
      * The platform is not obliged to call the listener at all, and a silent recogniser would
      * otherwise stop sound naming for good, which is the one failure this app cannot afford.
      */
-    private val speechWatchdog = object : Runnable {
+    private val speechWatchdog: Runnable = object : Runnable {
         override fun run() {
             if (!micWithRecognizer) return
             resumeMic()
