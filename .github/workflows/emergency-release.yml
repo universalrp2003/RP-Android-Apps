@@ -116,12 +116,13 @@ jobs:
               [ -f "$r" ] && echo "### $r" && echo '```' && head -n 120 "$r" && echo '```'
             done
           } >> "$GITHUB_STEP_SUMMARY" || true
-          # The step summary is only readable in the web UI. Mirror the reason into annotations as
-          # well, because a release workflow whose failure cannot be read from the API cannot be
-          # diagnosed at all from here, and each blind round costs a full cycle.
-          grep -E "e: file|error:|FAILURE:|What went wrong|^> " vn-build.log 2>/dev/null \
-            | head -n 25 \
-            | while IFS= read -r line; do echo "::error::$line"; done || true
+          # The step summary is only readable in the web UI. Mirror the tail of the build log into
+          # annotations as well, because a release workflow whose failure cannot be read from the
+          # API cannot be diagnosed at all from here, and each blind round costs a full cycle.
+          tail -n 60 vn-build.log 2>/dev/null \
+            | while IFS= read -r line; do
+                [ -n "$line" ] && echo "::error::$line"
+              done || true
 
       # The release note must say, in plain words, whether these exact bytes were installed on a
       # phone. A note that omits the truth cannot be published at all.
