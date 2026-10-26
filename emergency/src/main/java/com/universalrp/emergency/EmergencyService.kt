@@ -2,6 +2,7 @@ package com.universalrp.emergency
 
 import android.app.Notification
 import android.app.NotificationChannel
+import androidx.core.app.NotificationCompat
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
@@ -279,17 +280,25 @@ class EmergencyService : Service() {
         }
     }
 
+    /**
+     * Puts the service in the foreground, with the microphone type while it has the microphone.
+     *
+     * The fallback is there because a build that rejects the type should still end up foregrounded
+     * with a notification rather than not foregrounded at all, which is a crash on some OEM builds.
+     */
     private fun startForegroundCompat() {
         val notification = buildOngoingNotification()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val posted = runCatching {
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE,
+                )
+            }
+            if (posted.isSuccess) return
         }
+        runCatching { startForeground(NOTIFICATION_ID, notification) }
     }
 
     private fun buildOngoingNotification(): Notification {
@@ -311,13 +320,16 @@ class EmergencyService : Service() {
         } else {
             getString(R.string.notification_ongoing_text)
         }
-        return Notification.Builder(this, CHANNEL_ONGOING)
+        return NotificationCompat.Builder(this, CHANNEL_ONGOING)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.notification_ongoing_title))
             .setContentText(text)
             .setContentIntent(open)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .addAction(
-                Notification.Action.Builder(null, getString(R.string.action_stop), stop).build(),
+                R.drawable.ic_notification,
+                getString(R.string.action_stop),
+                stop,
             )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
@@ -342,13 +354,14 @@ class EmergencyService : Service() {
         } else {
             alert.message
         }
-        val notification = Notification.Builder(this, CHANNEL_ALERT)
+        val notification = NotificationCompat.Builder(this, CHANNEL_ALERT)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
             .setContentText(body)
             .setContentIntent(open)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setAutoCancel(true)
-            .setCategory(Notification.CATEGORY_ALARM)
             .build()
         notificationManager.notify(NOTIFICATION_ALERT_ID, notification)
     }

@@ -7,7 +7,6 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.NetworkInterface
-import java.net.SocketTimeoutException
 
 /**
  * Sends an emergency to every other phone on the same Wi-Fi, without any server and without

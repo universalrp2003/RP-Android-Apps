@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -251,10 +250,17 @@ private fun FamilyCard(sources: List<String>) {
                 color = Color.White,
             )
             Text(
+                text = context.getString(R.string.what_it_does),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            Text(
                 text = context.getString(R.string.what_it_does_body),
                 fontSize = 13.sp,
                 color = Muted,
-                modifier = Modifier.padding(top = 6.dp),
+                modifier = Modifier.padding(top = 4.dp),
             )
             Spacer(Modifier.height(10.dp))
             Text(
@@ -278,14 +284,13 @@ private fun FamilyCard(sources: List<String>) {
                             .padding(top = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .height(8.dp)
-                                .padding(end = 8.dp),
-                        ) {
-                            Text(text = "•", color = Live, fontSize = 18.sp)
-                        }
-                        Text(text = name, fontSize = 14.sp, color = Color.White)
+                        Text(text = "•", color = Live, fontSize = 16.sp)
+                        Text(
+                            text = name,
+                            fontSize = 14.sp,
+                            color = Color.White,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
                     }
                 }
             }
