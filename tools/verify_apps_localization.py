@@ -873,6 +873,68 @@ def verify_resource_comments() -> int:
 
 
 
+def verify_site_versions_match_downloads() -> int:
+    """Every version the website states must be the version it actually downloads.
+
+    The owner's complaint about this page was that it showed old information, and he was right in
+    three places that had nothing to do with any release: the Live Guard card offered 2.72 when
+    2.73 was current, the Ramesh Radio card offered 1.25 when 1.26 was current, and the JSON-LD
+    `softwareVersion` values lagged their own `downloadUrl` by a release or two.
+
+    The download link is the thing that matters - it is what a visitor clicks - so it is the source
+    of truth and every other version string is checked against it. That direction is deliberate: a
+    card whose badge says 2.73 but links to 2.72 is a broken download, while the reverse is only a
+    cosmetic mismatch, and only one of those can be caught by comparing to the link.
+    """
+    site = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+
+    # The JSON-LD block: softwareVersion and downloadUrl sit on adjacent lines in one entry.
+    entries = re.findall(
+        r'"softwareVersion": "([^"]+)",\s*\n\s*"downloadUrl": "[^"]*?/apks/[A-Za-z0-9._-]*?-v([0-9][0-9A-Za-z.]*)\.apk"',
+        site,
+    )
+    if not entries:
+        raise ValueError(
+            "site/index.html has no JSON-LD softwareVersion/downloadUrl pairs, so this gate would "
+            "check nothing."
+        )
+    mismatched = [
+        f"{stated} vs {linked}"
+        for stated, linked in entries
+        if stated != linked
+    ]
+    if mismatched:
+        raise ValueError(
+            "site/index.html states a version its own download link does not match: "
+            + ", ".join(mismatched)
+        )
+
+    # The per-card download buttons: the visible label, the asset name and the URL must agree.
+    buttons = re.findall(
+        r'data-apk="apks/([A-Za-z0-9._-]+)\.apk" data-name="[A-Za-z0-9._-]+\.apk" '
+        r'data-sha="[0-9a-f]{64}" data-status="[a-z]+" '
+        r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1\.apk"',
+        site,
+    )
+    broken = [f"{asset} at {tag}" for asset, tag in buttons if not tag.endswith("-v" + asset_tag(asset))]
+    if broken:
+        raise ValueError(
+            "site/index.html has download buttons whose asset and release tag disagree: "
+            + ", ".join(broken)
+        )
+
+    return len(entries)
+
+
+def asset_tag(asset: str) -> str:
+    """The version half of an asset filename, e.g. `CleanSweep-v2.73.apk` -> `2.73`."""
+    match = re.search(r"-v([0-9][0-9A-Za-z.]*)\.apk$", asset)
+    if not match:
+        raise ValueError(f"cannot read a version out of the asset name {asset!r}")
+    return match.group(1)
+
+
+
 def main() -> int:
     try:
         keys = catalog_keys()
@@ -891,6 +953,7 @@ def main() -> int:
         markdown_notes = verify_release_notes_markdown_subset()
         module_readmes = verify_module_readmes()
         resource_comments = verify_resource_comments()
+        site_versions = verify_site_versions_match_downloads()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -907,6 +970,7 @@ def main() -> int:
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
     print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
+    print(f"PASS: every version the website states is the version its own download link serves ({site_versions} JSON-LD entries).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

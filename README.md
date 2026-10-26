@@ -4,7 +4,7 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
-| [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.7 / code 13](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.7) | [`SMS-Guard-v1.1.7.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.7/SMS-Guard-v1.1.7.apk) |
+| [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.8 / code 14](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8) | [`SMS-Guard-v1.1.8.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.8/SMS-Guard-v1.1.8.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.73 / code 78](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.73) | [`CleanSweep-v2.73.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.73/CleanSweep-v2.73.apk) |
 | [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.1 / code 2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.1) | [`Voice-Notes-v1.1.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.1/Voice-Notes-v1.1.apk) |
 | [**Expense Tracker (செலவு கண்காணிப்பு)**](expensetracker/README.md) · 8.0+ (API 26) | [1.1 / code 2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.1) | [`Expense-Tracker-v1.1.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.1/Expense-Tracker-v1.1.apk) |
