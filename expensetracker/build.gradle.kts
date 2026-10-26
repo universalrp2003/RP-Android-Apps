@@ -9,6 +9,15 @@ val stableKeystore = rootProject.file("ci-keystore/release.p12")
 
 android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
+
+    // This app declares no INTERNET permission, so the network engines in shared/ are not even
+    // compiled into it. Compiling them would drag okhttp into an app that cannot open a socket -
+    // dead weight in the APK, and a dependency that contradicts the app's whole promise. What is
+    // kept is the anti-spoof finance parser and the bilingual UI/update plumbing, neither of which
+    // makes a network call. Excluding by source path, not by deleting anything: shared/ is still
+    // compiled in full by the seven apps that do have the permission.
+    sourceSets.getByName("main").java.exclude("com/universalrp/voice/**")
+    sourceSets.getByName("main").java.exclude("com/universalrp/weather/**")
     namespace = "com.universalrp.expensetracker"
     compileSdk = 36
 

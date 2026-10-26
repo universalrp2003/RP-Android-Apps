@@ -205,6 +205,7 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
             PermissionCard(
                 tamil = tamil,
                 onGrant = { onRequestSms { hasPermission = true } },
+                modifier = Modifier.weight(1f),
             )
         } else {
             // -------------------------------------------------------------- the month
@@ -304,10 +305,11 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
 }
 
 @Composable
-private fun PermissionCard(tamil: Boolean, onGrant: () -> Unit) {
+// weight() is a ColumnScope/RowScope extension, so it cannot be used on the root of a plain
+// Composable - the caller, which is inside a Column, hands it in instead.
+private fun PermissionCard(tamil: Boolean, onGrant: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier
-            .weight(1f)
+        modifier = modifier
             .fillMaxWidth()
             .padding(28.dp),
         verticalArrangement = Arrangement.Center,

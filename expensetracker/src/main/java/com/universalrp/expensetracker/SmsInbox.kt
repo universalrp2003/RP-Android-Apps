@@ -1,9 +1,7 @@
 package com.universalrp.expensetracker
 
-import android.content.ContentUris
 import android.content.Context
 import android.database.ContentObserver
-import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Telephony
@@ -27,6 +25,27 @@ object SmsInbox {
 
     /** How far back the first scan looks. Two years covers a statement history without a stall. */
     private const val SCAN_WINDOW_DAYS = 730L
+
+    /**
+     * A stable id for one SMS, derived from its content rather than from the provider's row id.
+     *
+     * This exists because there are two ways a transaction enters the ledger - the live receiver,
+     * which sees an [android.telephony.SmsMessage] and has no row id, and the inbox scan, which
+     * reads `Telephony.Sms._ID`. Those two ids disagree for the same message, and the store
+     * deduplicates by id, so a disagreement would store every message twice. Hashing the content
+     * makes both paths agree, which is what keeps the ledger honest.
+     */
+    fun stableId(timestampMs: Long, address: String, body: String): Long {
+        var hash = -3750763034362895579L // FNV-1a 64-bit offset basis
+        fun mix(value: Long) {
+            hash = (hash xor value) * 1099511628211L
+        }
+        mix(timestampMs)
+        for (ch in address) mix(ch.code.toLong())
+        mix(31L)
+        for (ch in body) mix(ch.code.toLong())
+        return hash
+    }
 
     private val PROJECTION = arrayOf(
         Telephony.Sms._ID,
@@ -71,10 +90,10 @@ object SmsInbox {
                     val address = cursor.getString(addressColumn) ?: continue
                     val date = cursor.getLong(dateColumn)
                     if (date <= 0L) continue
-                    val id = cursor.getLong(idColumn)
+                    // The content hash, not the row id, so this scan and the live receiver agree
+                    // on which message this is.
+                    val id = stableId(date, address, body)
                     val sender = SenderIdentityEngine.identify(address)
-                    // OTP detection is the shared engine's job; this app has no interest in the
-                    // body beyond what the parser says about it.
                     val result = FinanceLedgerEngine.parseSingleSms(
                         messageId = id,
                         timestampMs = date,
@@ -127,7 +146,4 @@ object SmsInbox {
     fun hasPermission(context: Context): Boolean =
         context.checkSelfPermission(android.Manifest.permission.READ_SMS) ==
             android.content.pm.PackageManager.PERMISSION_GRANTED
-
-    /** The message id for a row, used only by the receiver to deduplicate against the scan. */
-    fun messageIdOf(uri: Uri): Long = runCatching { ContentUris.parseId(uri) }.getOrDefault(-1L)
 }
