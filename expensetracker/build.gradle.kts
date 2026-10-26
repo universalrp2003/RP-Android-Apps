@@ -98,6 +98,11 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")
-    testImplementation("org.robolectric:robolectric:4.13")
+    // org.json ships with Android, so the APK needs nothing extra; the artifact is here purely so
+    // the ledger's encode/decode round-trip is testable on the JVM. Without it the Android stubs
+    // throw "not mocked" and the store's tests fail for a reason that has nothing to do with the
+    // store. Same line every other module in this repository carries.
+    testImplementation("org.json:json:20240303")
+
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
 }
