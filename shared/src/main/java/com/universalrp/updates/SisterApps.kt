@@ -123,7 +123,7 @@ object SisterApps {
             name = "Vasanthi AI",
             tamilName = "வசந்தி AI",
             tagPrefix = "vasanthi-ai",
-            version = "1.0",
+            version = "1.0.1",
             packageName = "com.universalrp.vasanthi",
             aboutLabel = "Vasanthi AI — GitHub release",
         ),
