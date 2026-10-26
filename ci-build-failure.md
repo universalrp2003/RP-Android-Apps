@@ -23,9 +23,22 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 34s
-282 actionable tasks: 146 executed, 136 from cache
+BUILD FAILED in 2m 8s
+275 actionable tasks: 140 executed, 135 from cache
 ```
+com.universalrp.expensetracker.MonthlyLedgerTest :: aSelfTransferIsExcludedFromBothSidesAndReported
+    java.lang.AssertionError: expected:<500.0> but was:<20500.0>
+
+com.universalrp.expensetracker.MonthlyLedgerTest :: spendAndIncomeAreCountedSeparately
+    java.lang.AssertionError: expected:<-4300.0> but was:<4300.0>
+
+com.universalrp.expensetracker.TransactionStoreTest :: aSelfTransferIsNeverStored
+    java.lang.AssertionError: expected null, but was:<Transaction(messageId=1, amountInr=20000.0, direction=DEBIT, category=FOOD, counterparty=SWIGGY, accountKey=, institutionEn=, timestampMs=1700000000000)>
+
+com.universalrp.expensetracker.TransactionStoreTest :: rebuildingFromAParseBatchKeepsOnlyWhatCounts
+    java.lang.AssertionError: expected:<[60.0, 250.0]> but was:<[60.0, 250.0, 20000.0]>
+
+(4 failing test(s))
 
 ## Store artwork step
 ```
