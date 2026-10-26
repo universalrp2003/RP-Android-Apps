@@ -56,6 +56,7 @@ jobs:
               ("voice-notes-v1.1", "Voice-Notes-v1.1.apk", 12047956, "171e924c68fdde29c8009f754287303b078a078c068a6a0d351ced76c2543f88"),
               ("live-guard-v2.73", "CleanSweep-v2.73.apk", 14426215, "a5c5f0186a9843ca4761fb89b775b8401885283263d90ab9085397611310e05e"),
               ("vasanthi-ai-v1.0", "Vasanthi-AI-v1.0.apk", 17355218, "c558b5a35875e1b12cb5e00b88cf2e4493505979437223f642ce78a9572511fa"),
+              ("vasanthi-ai-v1.0.1", "Vasanthi-AI-v1.0.1.apk", 17355222, "5477cfc46f3376207499ea239a8e5edefed0f68d07306cb2df47115ee2e05090"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -100,6 +101,8 @@ jobs:
           test -s site/apks/CleanSweep-v2.73.zip
           test -s site/apks/Vasanthi-AI-v1.0.apk
           test -s site/apks/Vasanthi-AI-v1.0.zip
+          test -s site/apks/Vasanthi-AI-v1.0.1.apk
+          test -s site/apks/Vasanthi-AI-v1.0.1.zip
           test -s site/apks/PulseEQ-v1.9.apk
           test -s site/apks/PulseEQ-v1.9.zip
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.apk
