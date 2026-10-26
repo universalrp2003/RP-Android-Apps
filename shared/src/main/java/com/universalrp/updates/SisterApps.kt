@@ -118,6 +118,15 @@ object SisterApps {
             packageName = "com.universalrp.voicenotes",
             aboutLabel = "Voice Notes — GitHub release",
         ),
+        SisterApp(
+            id = "vasanthi",
+            name = "Vasanthi AI",
+            tamilName = "வசந்தி AI",
+            tagPrefix = "vasanthi-ai",
+            version = "1.0",
+            packageName = "com.universalrp.vasanthi",
+            aboutLabel = "Vasanthi AI — GitHub release",
+        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */

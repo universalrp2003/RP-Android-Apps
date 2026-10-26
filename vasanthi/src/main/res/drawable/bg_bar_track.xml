@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The track behind a bar. Slightly lighter than the panel so the bar's fill has something to
+     be measured against; without it a low reading looks identical to a broken bar. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#1FFFFFFF" />
+    <corners android:radius="4dp" />
+</shape>

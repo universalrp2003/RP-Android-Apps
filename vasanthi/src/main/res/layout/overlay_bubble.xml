@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The always-available button. A single tappable circle that floats over every other app.
+
+  It is deliberately not a FAB and not a system bubble: those are tied to an Activity's window and
+  disappear the moment the user leaves the app, which is exactly when she needs them. This is
+  added to the WindowManager by the service, so it survives switching apps, and it is draggable so
+  it can be parked out of the way of whatever is being read.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/bubble_root"
+    android:layout_width="56dp"
+    android:layout_height="56dp"
+    android:background="@drawable/bg_bubble"
+    android:contentDescription="@string/bubble_content_description"
+    android:focusable="true">
+
+    <ImageView
+        android:id="@+id/bubble_icon"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center"
+        android:contentDescription="@string/bubble_content_description"
+        android:src="@drawable/ic_notification" />
+</FrameLayout>

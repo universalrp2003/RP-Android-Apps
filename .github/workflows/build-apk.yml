@@ -255,6 +255,8 @@ jobs:
         run: |
           python3 tools/verify_cleaner_localization.py
           python3 tools/verify_apps_localization.py
+          # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
+          python3 tools/verify_vasanthi_sound_labels.py
           # v2.40 core: the retired notification reader must not exist in the manifest,
           # the production tree or the build scripts. Historical 2.39 sources stay in
           # docs/archived-notification-reader-2.39 and are never compiled.
@@ -271,7 +273,7 @@ jobs:
           # local-only preview: run its policy tests and build only its debug APK. It is
           # deliberately excluded from every release/bundle task below. Vocal Remover is
           # standalone and distributed by direct APK download, so it has no Play bundle.
-          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :radio:testDebugUnitTest :radio:testReleaseUnitTest :equalizer:testDebugUnitTest :equalizer:testReleaseUnitTest :vocalremover:testDebugUnitTest :vocalremover:testReleaseUnitTest :secretmessage:testDebugUnitTest :expensetracker:testDebugUnitTest :voicenotes:testDebugUnitTest assembleDebug :cleaner:assembleRelease :radio:assembleRelease :equalizer:assembleRelease :vocalremover:assembleRelease :expensetracker:assembleRelease :voicenotes:assembleRelease :cleaner:bundleRelease :radio:bundleRelease :equalizer:bundleRelease --no-daemon 2>&1 | tee build.log
+          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :radio:testDebugUnitTest :radio:testReleaseUnitTest :equalizer:testDebugUnitTest :equalizer:testReleaseUnitTest :vocalremover:testDebugUnitTest :vocalremover:testReleaseUnitTest :secretmessage:testDebugUnitTest :expensetracker:testDebugUnitTest :voicenotes:testDebugUnitTest :vasanthi:testDebugUnitTest assembleDebug :cleaner:assembleRelease :radio:assembleRelease :equalizer:assembleRelease :vocalremover:assembleRelease :expensetracker:assembleRelease :voicenotes:assembleRelease :vasanthi:assembleRelease :cleaner:bundleRelease :radio:bundleRelease :equalizer:bundleRelease --no-daemon 2>&1 | tee build.log
 
       - name: Verify required CleanSweep regression suites
         run: python3 tools/verify_cleaner_regressions.py
@@ -290,6 +292,7 @@ jobs:
             vocalremover/build/test-results/test*UnitTest/*.xml
             secretmessage/product/build/test-results/testDebugUnitTest/*.xml
             expensetracker/build/test-results/testDebugUnitTest/*.xml
+            vasanthi/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
 
       - name: Verify built APKs
@@ -940,6 +943,7 @@ jobs:
           rename_apk vocalremover RP-Vocal-Remover-Studio release ""
           rename_apk voicenotes Voice-Notes      release ""
           rename_apk expensetracker Expense-Tracker release ""
+          rename_apk vasanthi    Vasanthi-AI      release ""
           rename_apk cleaner   CleanSweep      debug   "-debug"
           rename_apk radio     Ramesh-Radio    debug   "-debug"
           rename_apk equalizer PulseEQ         debug   "-debug"

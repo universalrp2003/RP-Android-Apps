@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Open the full screen: four arrows pointing outwards, the same glyph every app uses. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFBFFFFFFF">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M7,14H5v5h5v-2H7V14zM5,10h2V7h3V5H5V10zM12,19h2v-3h3v-2h-5V19zM14,5v3h3v2h2V5H14z" />
+</vector>

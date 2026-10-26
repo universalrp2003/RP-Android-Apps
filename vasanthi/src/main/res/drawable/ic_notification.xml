@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status-bar icon. Android tints this white, so it is drawn as a flat silhouette with no
+     colour of its own: a source dot and the waves it sends. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFFFF">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M6,12 m-3,0 a3,0 0 1,0 6,0 a3,0 0 1,0 -6,0" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M11,8.5 A 5,5 0 0 1 11,15.5" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M14.5,5.5 A 9,9 0 0 1 14.5,18.5" />
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8"
+        android:strokeLineCap="round"
+        android:pathData="M18,2.8 A 12.5,12.5 0 0 1 18,21.2" />
+</vector>
