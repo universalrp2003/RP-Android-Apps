@@ -24,7 +24,7 @@ class EmergencyAlertTest {
         englishLabel = "Smoke detector, smoke alarm",
         message = message,
         severity = severity,
-        confidence = 0.82f,
+        confidence = 0.75f,
         detectedAt = 1_772_100_000_000L,
         sourceName = "SM-A127F",
     )
@@ -37,12 +37,22 @@ class EmergencyAlertTest {
         assertEquals("SM-A127F", decoded.sourceName)
         assertEquals("புகை எச்சரிக்கை", decoded.tamilLabel)
         assertEquals(EmergencySeverity.CRITICAL, decoded.severity)
-        assertEquals(0.82f, decoded.confidence, 0.01f)
+        assertEquals(0.75f, decoded.confidence, 1e-6f)
         assertEquals(1_772_100_000_000L, decoded.detectedAt)
         assertEquals(
             "புகை எச்சரிக்கை ஒலி கேட்கப்படுகிறது. உடனே பாருங்கள்.",
             decoded.message,
         )
+    }
+
+    @Test
+    fun theConfidenceIsSentAsAPercentNotATruncatedFloat() {
+        // The regression this pins: `0.82f.toInt()` is 0, so a confidence written as a truncated
+        // float reached every other phone as zero and looked like a false alert. It is now sent as
+        // a whole-number percent, and the packet must say so.
+        val encoded = sample().encode()
+        val field = encoded.split("|")[5]
+        assertEquals("75", field)
     }
 
     @Test

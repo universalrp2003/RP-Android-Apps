@@ -74,9 +74,20 @@ class EmergencyStateTest {
     fun theSameClassFromAnotherPhoneIsASeparateEvent() {
         // Two phones in one house both hearing the smoke alarm is the normal case, not a
         // duplicate: the screen has to show that both of them heard it.
-        assertTrue(EmergencyState.addLocal(alert(from = "SM-A127F", at = 1_000L)))
-        assertTrue(EmergencyState.addLocal(alert(from = "SM-G991B", at = 1_200L)))
-        assertEquals(2, EmergencyState.localSnapshot().size)
+        assertTrue(EmergencyState.addReceived(alert(from = "SM-A127F", at = 1_000L)))
+        assertTrue(EmergencyState.addReceived(alert(from = "SM-G991B", at = 1_200L)))
+        assertEquals(2, EmergencyState.receivedSnapshot().size)
+        assertEquals(setOf("SM-A127F", "SM-G991B"), EmergencyState.sourcesSnapshot().toSet())
+    }
+
+    @Test
+    fun aLocalAlertAlwaysCarriesThisPhonesName() {
+        // A local alert is one this phone heard itself, so the service stamps it with this phone's
+        // name and there is nothing to compare. Recording that here stops the duplicate rule from
+        // being "fixed" later into something that depends on a name that is always the same.
+        val alert = alert(from = DeviceNames.thisPhone())
+        assertTrue(EmergencyState.addLocal(alert))
+        assertEquals(DeviceNames.thisPhone(), EmergencyState.localSnapshot().first().sourceName)
     }
 
     @Test

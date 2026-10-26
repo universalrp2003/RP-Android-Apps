@@ -46,7 +46,9 @@ data class EmergencyAlert(
         severity.name,
         tamilLabel,
         message,
-        confidence.toInt().toString(),
+        // Percent, not the raw float. `0.82f.toInt()` is 0, so a confidence sent as a truncated
+        // float would reach every other phone as zero and look like a false alert.
+        (confidence * 100).toInt().coerceIn(0, 100).toString(),
         detectedAt.toString(),
     ).joinToString("|")
 
