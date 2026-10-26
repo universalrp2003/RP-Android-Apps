@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' expensetracker/build.gradle.kts | head -n 1)"
-          notes="releases/voice-notes-v${version}.md"
+          notes="releases/expense-tracker-v${version}.md"
           test -s "$notes" || { echo "::error::Missing release note: $notes"; exit 1; }
           if ! grep -Eiq 'not installed on a phone|no physical-device test|no device test|not phone-installed|no phone install|installed on a phone|verified on a phone' "$notes"; then
             echo "::error::$notes must state honestly whether this exact build had a device test."
