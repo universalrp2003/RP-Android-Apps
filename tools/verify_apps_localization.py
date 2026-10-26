@@ -788,6 +788,55 @@ def verify_kotlin_format_strings() -> int:
     return checked
 
 
+
+# Modules that publish a README next to their source. Each one must start with a markdown heading
+# that names its own app.
+MODULE_READMES = {
+    "cleaner": "Live Guard",
+    "radio": "Ramesh Radio",
+    "equalizer": "PulseEQ",
+    "vocalremover": "Vocal Remover",
+    "oorarivippu": "Oor Arivippu",
+    "smsguard": "SMS Guard",
+    "voicenotes": "Voice Notes",
+    "expensetracker": "Expense Tracker",
+}
+
+
+def verify_module_readmes() -> int:
+    """Every module README must still be that module's README.
+
+    Commit a1aaf7d meant to add a website entry and instead overwrote
+    expensetracker/README.md with the whole of .github/workflows/pages.yml. Nothing caught it: the
+    release-note gates read releases/, the sister-app pins read SisterApps.kt, and no check looked
+    at the module READMEs at all, so a file that had become a GitHub Actions workflow shipped in a
+    commit whose message said it had just recorded a digest.
+
+    A clobbered file is easy to recognise - a README starts with a markdown heading, and a workflow
+    starts with a YAML key - so check exactly that, and name the app in the first line so a file
+    swapped between two modules cannot pass either.
+    """
+    checked = 0
+    for module, app_name in sorted(MODULE_READMES.items()):
+        path = ROOT / module / "README.md"
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8").lstrip()
+        first = text.split("\n", 1)[0]
+        if not first.startswith("# "):
+            raise ValueError(
+                f"{module}/README.md does not start with a markdown heading (it starts with "
+                f"{first[:40]!r}), so it is not this module's README. Restore it from git."
+            )
+        if app_name.lower() not in first.lower():
+            raise ValueError(
+                f"{module}/README.md is titled {first[:60]!r}, which does not name {app_name}. "
+                f"A README belonging to another module has been written here."
+            )
+        checked += 1
+    return checked
+
+
 def main() -> int:
     try:
         keys = catalog_keys()
@@ -804,6 +853,7 @@ def main() -> int:
         smsguard_catalog = verify_smsguard_bilingual_catalog()
         exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
+        module_readmes = verify_module_readmes()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -818,6 +868,7 @@ def main() -> int:
     print(f"PASS: {smsguard_catalog} SMS Guard UI fields are assigned in both languages.")
     print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
+    print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

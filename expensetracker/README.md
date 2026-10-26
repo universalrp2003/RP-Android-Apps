@@ -1,107 +1,39 @@
-name: Deploy Official Website to GitHub Pages
+# Expense Tracker — செலவு கண்காணிப்பு / Tamil expense tracker
 
-on:
-  push:
-    branches:
-      - main
-      - "arena/**"
-    # Documentation-only files cannot change the deployed site: this workflow reads only
-    # site/** plus the published release assets it mirrors. A docs-only commit therefore
-    # has nothing to redeploy. Keep this list in step with build-apk.yml.
-    paths-ignore:
-      - "README.md"
-      - "CHANGELOG.md"
-      - "PUBLISHING.md"
-      - "docs/published-release-digests.md"
-      - "docs/live-guard-2.42-device-evidence.md"
-      # Release NOTES only — releases/latest-tag.txt is not a site input.
-      - "releases/*.md"
-  workflow_dispatch:
+**Current stable release:** 1.1 / code 2
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+**Package:** `com.universalrp.expensetracker`
 
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
+**Minimum Android:** 8.0 / API 26
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+Expense Tracker reads the owner's bank and UPI SMS and shows the month as categories. It answers the question SMS Guard deliberately does not: not "how much left my account" but "what did I spend it on". It is built on the anti-spoof sender verification and transaction parsing that SMS Guard already proves, now shared from `shared/` so both apps run identical code.
 
-      - name: Fetch all 7 official signed APKs, verify SHA-256, and build .apk + .zip CDN mirrors
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p site/apks
-          python3 - <<'PY'
-          import hashlib, pathlib, urllib.request, zipfile
+## What it does
 
-          RELEASES = [
-              ("sms-guard-v1.1.8", "SMS-Guard-v1.1.8.apk", 12445281, "de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582"),
-              ("live-guard-v2.72", "CleanSweep-v2.72.apk", 14413927, "e6664f5d14f7fe31a8a754b5d35bde62ba14d1b6ee894ba2b454f4ab7952fc0b"),
-              ("ramesh-radio-v1.26", "Ramesh-Radio-v1.26.apk", 15092964, "238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13"),
-              ("oor-arivippu-v1.1.9", "Oor-Arivippu-v1.1.9.apk", 12794316, "6915d597faa0ca9c0665bab695863d02fa04f56675796babcd9ce6446e286679"),
-              ("pulseeq-v1.9", "PulseEQ-v1.9.apk", 12100805, "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced"),
-              ("rp-vocal-remover-studio-v0.1.15", "RP-Vocal-Remover-Studio-v0.1.15.apk", 65032741, "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9"),
-              ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
-              ("expense-tracker-v1.0", "Expense-Tracker-v1.0.apk", 11547831, "6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7"),
-          ]
+- Reads bank and UPI SMS, keeps only what survived the anti-spoof parser, and shows the month as categories with each one's share of the total.
+- **No internet permission at all.** There is no `android.permission.INTERNET` in the manifest, so the ledger cannot leave the phone even by accident, and Android's own permission screen says "No internet access". That is also why there is no voice here: the HD neural voice is a network call and this app makes no network calls.
+- The parser refuses a personal mobile number claiming "Rs.5000 credited", a promotional loan offer, an OTP-shaped message, and an outgoing NEFT settlement confirmation. Refusals are counted and shown, so you can see how much was thrown away rather than trusting a tracker that silently drops rows.
+- Money is formatted the way a bank statement reads it: Indian digit grouping, `₹1,23,456`, paise rounded once at the boundary.
+- Month-over-month navigation, income/spend/net totals, and a delete for a row you disagree with.
 
-          out_dir = pathlib.Path("site/apks")
-          for tag, apk_name, expected_size, expected_sha in RELEASES:
-              url = f"https://github.com/universalrp2003/RP-Android-Apps/releases/download/{tag}/{apk_name}"
-              apk_path = out_dir / apk_name
-              urllib.request.urlretrieve(url, apk_path)
-              data = apk_path.read_bytes()
-              actual_sha = hashlib.sha256(data).hexdigest()
-              assert len(data) == expected_size, f"Size mismatch for {apk_name}: {len(data)} != {expected_size}"
-              assert actual_sha == expected_sha, f"SHA-256 mismatch for {apk_name}: {actual_sha} != {expected_sha}"
+## Permissions
 
-              # Create zero-overhead store ZIP package (.zip bypasses Android browser .apk FUSE/SafeBrowsing 100% hang)
-              zip_name = apk_name[:-4] + ".zip"
-              zip_path = out_dir / zip_name
-              with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_STORED) as zf:
-                  zf.writestr(apk_name, data)
-              print(f"VERIFIED CDN MIRROR: {apk_name} ({expected_size:,} B) + {zip_name} ({zip_path.stat().st_size:,} B)")
-          PY
+`READ_SMS` and `RECEIVE_SMS`. **No internet, no location, no contacts, no storage, no camera, no phone state, no account, no advertising id.**
 
-      - name: Verify Google Search Console meta tag, HTML file, CDN APKs/ZIPs & sitemap exist
-        run: |
-          grep -Fq 'ZxgKHtiCt5dwTUFnjnuAgb8qQXJPrKwlK--Wf-bfDy4' site/index.html
-          test -f site/google07eb97f28234915c.html
-          test -f site/sitemap.xml
-          test -f site/robots.txt
-          test -s site/apks/SMS-Guard-v1.1.8.apk
-          test -s site/apks/SMS-Guard-v1.1.8.zip
-          test -s site/apks/CleanSweep-v2.72.apk
-          test -s site/apks/CleanSweep-v2.72.zip
-          test -s site/apks/Ramesh-Radio-v1.26.apk
-          test -s site/apks/Ramesh-Radio-v1.26.zip
-          test -s site/apks/Oor-Arivippu-v1.1.9.apk
-          test -s site/apks/Oor-Arivippu-v1.1.9.zip
-          test -s site/apks/Expense-Tracker-v1.0.apk
-          test -s site/apks/Expense-Tracker-v1.0.zip
+## Download the stable release
 
-      - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./site
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Expense-Tracker-v1.1.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.1/Expense-Tracker-v1.1.apk) · [release notes](../releases/expense-tracker-v1.1.md) · [all 9 RP Ideas apps](../README.md)
 
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. Its byte size and SHA-256 are recorded here once the published asset has been read back, because a release build is not byte-reproducible and the candidate digest is never the published one.
+
+## Device test status
+
+1.0 was installed on the owner's phone and showed a month of zeroes, because it only scanned the inbox when a **new** message arrived — a phone whose inbox already held months of bank SMS never triggered a scan. 1.1 scans when the screen opens and when the permission is granted, and reports how many messages it checked.
+
+The exact 1.1 bytes have **not** been installed on a phone, and reading a real inbox is the one thing 1.1 exists to fix, so it needs the owner's phone before it can be called working. The categoriser, the month totals, the ledger round trip and the message-identity rule are unit-tested.
+
+## Build and test
+
+```
+./gradlew :expensetracker:testDebugUnitTest :expensetracker:assembleRelease
+```
