@@ -96,7 +96,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 77', 'versionName = "2.72"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 78', 'versionName = "2.73"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -308,7 +308,13 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print('PASS: ' + str(len(expected)) + ' required suites / ' + str(sum(expected.values())) + ' prepared declarations (the live-network suite is excluded from the gate); tests NOT executed. Candidate 2.72/code77/API26 matches.')
+    gradle_version = re.search(r'versionName = "([^"]+)"', gradle)
+    gradle_code = re.search(r'versionCode = (\d+)', gradle)
+    candidate = 'Candidate %s/code%s/API26 matches.' % (
+        gradle_version.group(1) if gradle_version else '?',
+        gradle_code.group(1) if gradle_code else '?',
+    )
+    print('PASS: ' + str(len(expected)) + ' required suites / ' + str(sum(expected.values())) + ' prepared declarations (the live-network suite is excluded from the gate); tests NOT executed. ' + candidate)
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 
