@@ -40,8 +40,8 @@ class SpeechEngine(context: Context) {
     private var recognizer: SpeechRecognizer? = null
     private var running = false
     private var preferOffline = true
-    private var onText: ((String) -> Unit)? = null
-    private var onModeChanged: ((RecognitionMode) -> Unit)? = null
+    private var onText: (String) -> Unit = {}
+    private var onModeChanged: (RecognitionMode) -> Unit = {}
     private var consecutiveErrors = 0
 
     /** The application context is held, so a destroyed Activity cannot leak the recogniser. */
@@ -99,8 +99,8 @@ class SpeechEngine(context: Context) {
         runCatching { recognizer?.cancel() }
         recognizer?.destroy()
         recognizer = null
-        onText = null
-        onModeChanged = null
+        onText = {}
+        onModeChanged = {}
     }
 
     private fun listen() {
@@ -161,7 +161,7 @@ class SpeechEngine(context: Context) {
                 ?.firstOrNull()
                 ?.trim()
                 .orEmpty()
-            if (text.isNotEmpty()) onText?.invoke(text)
+            if (text.isNotEmpty()) onText(text)
         }
     }
 
