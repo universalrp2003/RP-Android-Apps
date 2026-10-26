@@ -2,7 +2,6 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/expensetracker/src/main/java/com/universalrp/expensetracker/MainActivity.kt:310:14 Unresolved reference 'weight'.
 e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/shared/src/main/java/com/universalrp/voice/SharedNeuralVoiceEngine.kt:9:8 Unresolved reference 'okhttp3'.
 e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/shared/src/main/java/com/universalrp/voice/SharedNeuralVoiceEngine.kt:10:8 Unresolved reference 'okhttp3'.
 e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/shared/src/main/java/com/universalrp/voice/SharedNeuralVoiceEngine.kt:11:8 Unresolved reference 'okhttp3'.
@@ -68,7 +67,7 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 3m 7s
+BUILD FAILED in 2m 56s
 224 actionable tasks: 99 executed, 125 from cache
 ```
 
