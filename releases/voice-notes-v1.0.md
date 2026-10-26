@@ -36,6 +36,26 @@ does not decode is a note the owner dictated and then lost, with nothing on scre
 a Tamil note read by the English neural voice sounds like the voice service is broken, not like
 the wrong voice was chosen.
 
+## Install and test
+
+Package name: `com.universalrp.voicenotes`. It installs beside the other apps and shares nothing
+with them, so it can be removed on its own.
+
+What to try, roughly in order of what is most likely to be wrong:
+
+- **The first launch.** Nothing in this app has ever been run on a phone. If it crashes on open, that
+   is the first thing to know.
+- **Grant the microphone**, then dictate one short Tamil sentence and stop. The text should appear
+   with Tamil words, not transliteration.
+- **Tap the speaker on a note.** It needs internet, because the HD neural voice is a network call.
+   With no internet it should say the voice is waiting rather than going silent.
+- **Dictate a long note** - a paragraph, not a line. It is split into chunks and spoken in order, so
+   this is where a truncation would show.
+- **Switch the interface to Tamil** with the toggle and check the wording reads as Tamil.
+
+The dictation flow, the neural playback and the Tamil wording on a real screen are the parts the
+unit tests cannot reach. Everything above is what they do not cover.
+
 ## தமிழ்
 
 தமிழில் ஒரு குறிப்பைப் பேசுங்கள், HD நரம்பியல் குரளில் திரும்பக் கேளுங்கள், தொலைபேசியிலேயே சேமிக்கவும். கணக்கு இல்லை, கிளவ் இல்லை, பதிவேற்றம் இல்லை — குறிப்புகள் இந்தச் செயலியின் தனியார் சேமிப்பிலேயே இருக்கும். குறிப்பின் எழுத்து வகைக்கு ஏற்ப குரல் தேர்ந்தெடுக்கப்படும்: தமிழ் குறிப்பு தமிழ் நரம்பியல் குரளில், ஆங்கிலக் குறிப்பு ஆங்கிலக் குரளில். நீண்ட குறிப்புகள் வாக்கிய எல்லையில் பிரிக்கப்பட்டு வரிசையாகப் பேசப்படும். இணையம் இல்லாதபோது குரள் காத்திருக்கும் என்று சொல்லும் — ரோபோ குரளுக்கு மாறாது, குறிப்பை மௌனமாக விடாது. அனுமதிகள்: பேச்சுக்கான மைக் மற்றும் குரளுக்கான இணையம் மட்டும்.
