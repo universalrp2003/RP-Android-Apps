@@ -1,6 +1,6 @@
 # Expense Tracker — செலவு கண்காணிப்பு / Tamil expense tracker
 
-**Current stable release:** none yet — 1.0 is written and CI-verified, not published and not installed on a phone.
+**Current stable release:** 1.0 / code 1
 
 **Package:** `com.universalrp.expensetracker`
 
@@ -22,7 +22,9 @@ Expense Tracker reads the owner's bank and UPI SMS and shows the month as catego
 
 ## Download the stable release
 
-There is no published APK yet. The release note at [../releases/expense-tracker-v1.0.md](../releases/expense-tracker-v1.0.md) states its device-test status honestly, and the row in [../README.md](../README.md) and on the website hub appears only once a signed release exists to link to.
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Expense-Tracker-v1.0.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.0/Expense-Tracker-v1.0.apk) · [release notes](../releases/expense-tracker-v1.0.md) · [all 9 RP Ideas apps](../README.md)
+
+> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The exact byte size and SHA-256 are recorded in [../README.md](../README.md) once the published asset has been read back, because a release build is not byte-reproducible and the candidate digest is not the published one.
 
 ## Device test status
 
