@@ -802,6 +802,7 @@ MODULE_READMES = {
     "smsguard": "SMS Guard",
     "voicenotes": "Voice Notes",
     "expensetracker": "Expense Tracker",
+    "vasanthi": "Vasanthi AI",
 }
 
 
