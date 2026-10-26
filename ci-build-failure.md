@@ -23,8 +23,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 3m 46s
-317 actionable tasks: 167 executed, 150 from cache
+BUILD FAILED in 2m 34s
+282 actionable tasks: 146 executed, 136 from cache
 ```
 
 ## Store artwork step
