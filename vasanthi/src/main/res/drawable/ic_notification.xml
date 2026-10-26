@@ -5,8 +5,7 @@
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#FFFFFFFF">
+    android:viewportHeight="24">
     <path
         android:fillColor="#FFFFFFFF"
         android:pathData="M6,12 m-3,0 a3,0 0 1,0 6,0 a3,0 0 1,0 -6,0" />
