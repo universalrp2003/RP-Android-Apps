@@ -31,8 +31,14 @@ object VasanthiState {
     /** True while the microphone is open and at least one of the two functions is on. */
     var listening by mutableStateOf(false)
 
-    /** Whether the app names the sounds in the room. */
-    var soundEnabled by mutableStateOf(true)
+    /**
+     * Whether the app names the sounds in the room.
+     *
+     * Off by default. Sound naming and speech want the same microphone, and while sound naming
+     * holds it the recogniser only gets the gaps between classifications, which is why speech kept
+     * missing what was said. The owner asked for the voice function to be the one that is on.
+     */
+    var soundEnabled by mutableStateOf(false)
 
     /** Whether the app writes down what someone says. */
     var voiceEnabled by mutableStateOf(true)
@@ -104,16 +110,15 @@ object VasanthiState {
         // Shown at once, in whatever the recogniser gave, so she is never looking at a blank line
         // while a translation is still arriving.
         liveSpeech = trimmed
-        if (isLatinScript(trimmed)) {
-            // English. Translated before it is written down, because a line she cannot read is
-            // not a line. The Tamil arrives on the main thread and replaces what is on screen.
-            TamilTranslator.translate(trimmed) { tamil ->
-                liveSpeech = tamil
-                storeSpeech(tamil, timestampMs)
-            }
-            return
+        // Every English word in it is translated before the line is written down, because a line
+        // she cannot read is not a line. The recogniser returns Tamil with English left inside it
+        // far more often than it returns English outright, so the words are found individually
+        // rather than by testing the whole line. The Tamil arrives on the main thread and replaces
+        // what is on screen.
+        TamilTranslator.translate(trimmed) { tamil ->
+            liveSpeech = tamil
+            storeSpeech(tamil, timestampMs)
         }
-        storeSpeech(trimmed, timestampMs)
     }
 
     private fun storeSpeech(text: String, timestampMs: Long) {

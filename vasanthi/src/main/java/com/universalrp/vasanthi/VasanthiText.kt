@@ -17,18 +17,22 @@ fun tr(ta: String, en: String): String =
     if (AppLanguageState.current == AppLanguage.TAMIL) ta else en
 
 /**
- * Whether a line is written in the Latin alphabet, which for this app means it is English.
+ * A run of Latin letters, which is one English word the way the recogniser writes it.
  *
- * The recogniser is asked for Tamil and usually gives Tamil, but not always. Most of the
- * letters have to be Latin for the line to count, because a Tamil sentence that happens to
- * contain one English word in it is still a Tamil sentence.
+ * An apostrophe is allowed inside a word so "don't" stays one word rather than becoming "don" and
+ * a stray quote mark. Tamil letters are never matched, so a Tamil sentence is left completely
+ * alone - which is the point, because most of what the recogniser returns is Tamil with one
+ * English word in it rather than English.
  */
-fun isLatinScript(text: String): Boolean {
-    val letters = text.count { it.isLetter() }
-    if (letters == 0) return false
-    val latin = text.count { it.code in 0x0041..0x005A || it.code in 0x0061..0x007A }
-    return latin * 2 > letters
-}
+private val LATIN_RUN = Regex("[A-Za-z][A-Za-z'’]*")
+
+/** The distinct English words in a line, in the order they first appear. */
+fun latinWords(text: String): List<String> =
+    LATIN_RUN.findAll(text).map { it.value }.distinct().toList()
+
+/** Swaps each English word for its Tamil, leaving everything else exactly as it was. */
+fun substituteWords(text: String, translations: Map<String, String>): String =
+    LATIN_RUN.replace(text) { match -> translations[match.value] ?: match.value }
 
 /**
  * A line naming why recognition is producing no text, when it is not.

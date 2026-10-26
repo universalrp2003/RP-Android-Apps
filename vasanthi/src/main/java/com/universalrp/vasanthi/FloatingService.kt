@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.graphics.PixelFormat
 import android.media.AudioFormat
 import android.media.AudioRecord
@@ -77,10 +78,12 @@ class FloatingService : Service() {
      */
     private class PanelViews(val root: View) {
         val title: TextView = root.findViewById(R.id.panel_title)
+        val nowLabel: TextView = root.findViewById(R.id.panel_now_label)
         val sound: TextView = root.findViewById(R.id.panel_sound)
         val confidence: ProgressBar = root.findViewById(R.id.panel_confidence)
         val confidenceNote: TextView = root.findViewById(R.id.panel_confidence_note)
         val level: ProgressBar = root.findViewById(R.id.panel_level)
+        val levelLabel: TextView = root.findViewById(R.id.panel_level_label)
         val levelNote: TextView = root.findViewById(R.id.panel_level_note)
         val speech: TextView = root.findViewById(R.id.panel_speech)
         val speechScroll: ScrollView = root.findViewById(R.id.panel_speech_scroll)
@@ -102,21 +105,43 @@ class FloatingService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
-            stopEverything()
-            return START_NOT_STICKY
+        when (intent?.action) {
+            ACTION_STOP -> {
+                // The only thing that ends the service. Everything else just pauses the microphone
+                // and leaves the notification, and the bubble, where they were.
+                stopEverything()
+                return START_NOT_STICKY
+            }
+            ACTION_TOGGLE -> {
+                if (!enterForeground()) return START_NOT_STICKY
+                if (VasanthiState.listening) {
+                    pauseListening()
+                } else {
+                    if (!VasanthiState.overlayVisible) showBubble()
+                    startListening()
+                    refreshNotification()
+                }
+                return START_STICKY
+            }
         }
-        try {
-            startInForeground()
-        } catch (error: Exception) {
-            // Android 14 refuses a microphone foreground service started from the background. There
-            // is nothing to fall back to, so say nothing rather than half-starting.
-            stopSelf()
-            return START_NOT_STICKY
-        }
+        if (!enterForeground()) return START_NOT_STICKY
         if (!VasanthiState.overlayVisible) showBubble()
         startListening()
         return START_STICKY
+    }
+
+    /**
+     * Puts the service in the foreground, or gives up.
+     *
+     * Android 14 refuses a microphone foreground service started from the background, and there is
+     * nothing to fall back to, so it says nothing rather than half-starting.
+     */
+    private fun enterForeground(): Boolean = try {
+        startInForeground()
+        true
+    } catch (error: Exception) {
+        stopSelf()
+        false
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -141,6 +166,18 @@ class FloatingService : Service() {
             }
             manager.createNotificationChannel(channel)
         }
+        val listening = VasanthiState.listening
+
+        // The toggle is the reason this notification exists: the owner asked to be able to turn
+        // listening on without going to find the app, and a notification that only offers a stop
+        // makes him hunt for the launcher every time.
+        val toggleIntent = Intent(this, FloatingService::class.java).setAction(ACTION_TOGGLE)
+        val togglePending = PendingIntent.getService(
+            this,
+            1,
+            toggleIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
         val stopIntent = Intent(this, FloatingService::class.java).setAction(ACTION_STOP)
         val stopPending = PendingIntent.getService(
             this,
@@ -150,15 +187,72 @@ class FloatingService : Service() {
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle(getString(R.string.notification_title))
-            .setContentText(getString(R.string.notification_text))
+            .setContentTitle(
+                getString(
+                    if (listening) R.string.notification_title else R.string.notification_paused_title,
+                ),
+            )
+            .setContentText(
+                getString(
+                    if (listening) R.string.notification_text else R.string.notification_paused_text,
+                ),
+            )
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(0, getString(R.string.stop), stopPending)
+            .addAction(
+                R.drawable.ic_notification,
+                getString(
+                    if (listening) R.string.stop else R.string.notification_action_start,
+                ),
+                togglePending,
+            )
+            .addAction(
+                R.drawable.ic_close,
+                getString(R.string.notification_action_close),
+                stopPending,
+            )
             .build()
-        startForeground(NOTIFICATION_ID, notification)
+        postForeground(notification, listening)
         return notification
+    }
+
+    /**
+     * Puts the service in the foreground, with the microphone type only while it has the microphone.
+     *
+     * A microphone-typed foreground service that never touches the microphone is timed out by
+     * Android 15 and stopped, and this service is now meant to outlive a pause. The fallback is
+     * there because a build that rejects a type of zero should still end up foregrounded with a
+     * notification rather than not foregrounded at all.
+     */
+    private fun postForeground(notification: Notification, listening: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val type = if (listening) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+            } else {
+                0
+            }
+            val posted = runCatching { startForeground(NOTIFICATION_ID, notification, type) }
+            if (posted.isSuccess) return
+        }
+        runCatching { startForeground(NOTIFICATION_ID, notification) }
+    }
+
+    /** Redraws the notification to say what the app is doing now, without restarting anything. */
+    private fun refreshNotification() {
+        runCatching { startInForeground() }
+    }
+
+    /**
+     * Stops the microphone but leaves the service, the notification and the bubble in place.
+     *
+     * This is what turning both switches off does. The alternative - tearing the whole service
+     * down - is what 1.1 did, and it is the behaviour the owner was complaining about.
+     */
+    private fun pauseListening() {
+        handler.removeCallbacks(refresher)
+        stopListening()
+        refreshNotification()
     }
 
     // ---------------------------------------------------------------- overlay
@@ -317,6 +411,9 @@ class FloatingService : Service() {
 
         handler.post(refresher)
         if (VasanthiState.voiceEnabled) scheduleSpeechAttempt()
+        // The service was put in the foreground before listening began, so the notification was
+        // drawn saying it was stopped. Redraw it now that it is not.
+        refreshNotification()
     }
 
     /**
@@ -346,7 +443,9 @@ class FloatingService : Service() {
      */
     private fun applyEnabled() {
         if (!VasanthiState.anyEnabled) {
-            stopEverything()
+            // Nothing is on, so the microphone closes - but the service, the notification and the
+            // bubble stay, so he can start again with one tap from anywhere.
+            pauseListening()
             return
         }
         if (!VasanthiState.listening) {
@@ -538,10 +637,8 @@ class FloatingService : Service() {
     private fun modeNote(): String {
         val base = if (VasanthiState.voiceEnabled) {
             tr(
-                "பேச்சு அறிதல் Google-இல் நடக்கிறது, ஒலி இணையம் வழியாகச் செல்கிறது. " +
-                    "பேச்சு அறிதல் இருக்கும்போது தொலைபேசி ஒலிகள் நிற்கும்.",
-                "Speech is recognised by Google and audio is sent over the internet. " +
-                    "Phone sounds are paused while speech recognition is on.",
+                "Google-இல் அறிதல். ஒலி இணையம் வழியாகச் செல்கிறது.",
+                "Recognised by Google. Audio is sent over the internet.",
             )
         } else {
             tr("பேச்சு அறிதல் நிறுத்தப்பட்டுள்ளது.", "Speech recognition is off.")
@@ -640,12 +737,21 @@ class FloatingService : Service() {
     private fun refreshPanel() {
         val views = panelViews ?: return
 
+        // The whole room block is hidden unless sound naming is on, which it is not by default.
+        // The owner's complaint was that the panel was mostly things he did not ask for, and the
+        // sound name, its confidence bar, the loudness bar and the loudness word are four things
+        // he did not ask for. Speech is what he asked for, so it leads and these follow it.
+        val roomVisibility = if (VasanthiState.soundEnabled) View.VISIBLE else View.GONE
+        views.nowLabel.visibility = roomVisibility
+        views.sound.visibility = roomVisibility
+        views.confidence.visibility = roomVisibility
+        views.confidenceNote.visibility = roomVisibility
+        views.levelLabel.visibility = roomVisibility
+        views.level.visibility = roomVisibility
+        views.levelNote.visibility = roomVisibility
+
         val sound = VasanthiState.currentSound
-        views.sound.text = if (VasanthiState.soundEnabled) {
-            sound?.tamilLabel ?: getString(R.string.nothing_heard_yet)
-        } else {
-            tr("ஒலி அறிதல் நிறுத்தப்பட்டுள்ளது", "Sound naming is off")
-        }
+        views.sound.text = sound?.tamilLabel ?: getString(R.string.nothing_heard_yet)
         views.confidence.progress = ((sound?.confidence ?: 0f) * 100f).roundToInt()
         views.confidenceNote.text = sound
             ?.let { tr("நம்பகத்தன்மை", "confidence") + " " + percent(it.confidence) + "%" }
@@ -708,6 +814,7 @@ class FloatingService : Service() {
         private const val CHANNEL_ID = "vasanthi_listening"
         private const val NOTIFICATION_ID = 4701
         private const val ACTION_STOP = "com.universalrp.vasanthi.STOP"
+        private const val ACTION_TOGGLE = "com.universalrp.vasanthi.TOGGLE"
         private const val BUBBLE_START_Y = 220
         private const val REFRESH_MS = 200L
         private const val URGENT_BUZZ_MS = 220L
@@ -754,6 +861,13 @@ class FloatingService : Service() {
         fun stop(context: Context) {
             context.startService(
                 Intent(context, FloatingService::class.java).setAction(ACTION_STOP),
+            )
+        }
+
+        /** Turns listening on or off without ending the service or its notification. */
+        fun toggle(context: Context) {
+            context.startService(
+                Intent(context, FloatingService::class.java).setAction(ACTION_TOGGLE),
             )
         }
     }

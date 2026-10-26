@@ -23,4 +23,12 @@
     <string name="notification_channel_description">மிதக்கும் திரையில் குரல் அறிதல் மற்றும் ஒலி அறிதல்.</string>
     <string name="notification_title">வசந்தி AI கேட்கிறது</string>
     <string name="notification_text">ஒலியைத் தமிழ் எழுத்தாகக் காட்டுகிறது. நிறுத்த இங்கே தட்டுங்கள்.</string>
+
+    <!-- The same notification, paused. The owner asked for a permanent notification so he can
+         turn listening on without searching for the app, which means it has to stay when the
+         microphone is closed and say how to start it again. -->
+    <string name="notification_paused_title">வசந்தி AI நிறுத்தப்பட்டுள்ளது</string>
+    <string name="notification_paused_text">தொடங்க இங்கே தட்டுங்கள்.</string>
+    <string name="notification_action_start">தொடங்கு</string>
+    <string name="notification_action_close">மூடு</string>
 </resources>

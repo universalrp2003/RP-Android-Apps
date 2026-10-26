@@ -1,6 +1,6 @@
 # Vasanthi AI - வசந்தி AI / Tamil sound and speech window
 
-**Current stable release:** 1.1 / code 3
+**Current stable release:** 1.1.1 / code 4
 
 **Package:** `com.universalrp.vasanthi`
 

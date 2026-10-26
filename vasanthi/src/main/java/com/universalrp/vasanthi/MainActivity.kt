@@ -217,180 +217,122 @@ private fun VasanthiScreen() {
             }
         }
 
-        // ---------------------------------------------------------------- the switch
+        // ---------------------------------------------------------------- one card of controls
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = tr(
-                            if (VasanthiState.listening) "கேட்கிறது" else "நிறுத்தப்பட்டது",
-                            if (VasanthiState.listening) "Listening" else "Stopped",
-                        ),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (VasanthiState.listening) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        },
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = tr(
-                            "மிதக்கும் திரை எல்லா செயலியிலும் தெரியும். ஒலியைப் பார்க்க எப்போதும் தட்டுங்கள்.",
-                            "The floating window works in every app. Tap it any time to see what is happening.",
-                        ),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Button(
-                        onClick = {
-                            if (VasanthiState.listening) {
-                                FloatingService.stop(context)
-                            } else {
-                                FloatingService.start(context)
-                            }
-                        },
-                        enabled = ready,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = tr(
-                                if (VasanthiState.listening) "கேட்பதை நிறுத்து" else "கேட்கத் தொடங்கு",
-                                if (VasanthiState.listening) "Stop listening" else "Start listening",
-                            ),
-                            fontSize = 16.sp,
-                        )
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = tr(
+                                    if (VasanthiState.listening) "கேட்கிறது" else "நிறுத்தப்பட்டது",
+                                    if (VasanthiState.listening) "Listening" else "Stopped",
+                                ),
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (VasanthiState.listening) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                            )
+                            Text(
+                                text = tr(
+                                    "மிதக்கும் திரை எல்லா செயலியிலும் தெரியும்.",
+                                    "The floating window is in every app.",
+                                ),
+                                fontSize = 12.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            )
+                        }
+                        // Toggle, not stop. Stopping tears down the service and the permanent
+                        // notification, which is the thing he asked to keep.
+                        Button(
+                            onClick = { FloatingService.toggle(context) },
+                            enabled = ready,
+                        ) {
+                            Text(
+                                text = tr(
+                                    if (VasanthiState.listening) "நிறுத்து" else "தொடங்கு",
+                                    if (VasanthiState.listening) "Stop" else "Start",
+                                ),
+                                fontSize = 14.sp,
+                            )
+                        }
                     }
+                    Spacer(Modifier.height(6.dp))
+                    switchRow(
+                        title = tr("பேச்சு அறிதல்", "Speech recognition"),
+                        checked = VasanthiState.voiceEnabled,
+                    ) { on -> VasanthiState.voiceEnabled = on }
+                    switchRow(
+                        title = tr("ஒலி அறிதல்", "Sound naming"),
+                        checked = VasanthiState.soundEnabled,
+                    ) { on -> VasanthiState.soundEnabled = on }
+                    Text(
+                        text = tr(
+                            "பேச்சு அறிதல் Google-இல் நடக்கிறது; ஒலி இணையம் வழியாகச் செல்கிறது.",
+                            "Speech is recognised by Google; audio is sent over the internet.",
+                        ),
+                        fontSize = 11.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    )
                 }
             }
         }
 
-        // ---------------------------------------------------------------- what it hears
+        // ---------------------------------------------------------------- what was just said
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = tr("இப்போது", "Right now"),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    val sound = VasanthiState.currentSound
-                    Text(
-                        text = sound?.tamilLabel ?: tr("ஒன்றுமே கேட்கப்படவில்லை", "Nothing named yet"),
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    if (sound != null) {
-                        Spacer(Modifier.height(6.dp))
-                        LinearProgressIndicator(
-                            progress = { sound.confidence },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = tr("நம்பகத்தன்மை", "confidence") + " " +
-                                ((sound.confidence * 100).toInt()) + "% · " + sound.englishLabel,
-                            fontSize = 11.sp,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                        )
-                    }
-
-                    Spacer(Modifier.height(14.dp))
-                    Text(
-                        text = tr("அறை சத்தம்", "Room loudness"),
-                        fontSize = 13.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    LinearProgressIndicator(
-                        progress = { VasanthiState.level },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    val (levelTa, levelEn) = SoundMeter.describe(VasanthiState.level)
-                    Text(
-                        text = tr(levelTa, levelEn),
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-
-                    Spacer(Modifier.height(14.dp))
+                Column(modifier = Modifier.padding(14.dp)) {
                     Text(
                         text = tr("பேச்சு", "Speech"),
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
-                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = VasanthiState.liveSpeech.ifEmpty {
                             tr("இன்னும் பேச்சு இல்லை", "Nothing said yet")
                         },
-                        fontSize = 18.sp,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }
         }
 
-        // ---------------------------------------------------------------- the two switches
-        item {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = tr("எதைப் பயன்படுத்த வேண்டும்", "What to use"),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = tr(
-                            "இரண்டும் ஒரே ஒலிவாங்கியைப் பயன்படுத்துகின்றன, எனவே ஒரே நேரத்தில் " +
-                                "இரண்டையும் முழுமையாகச் செய்ய முடியாது.",
-                            "Both use one microphone, so neither can have it fully while the other is on.",
-                        ),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    switchRow(
-                        title = tr("ஒலி அறிதல்", "Sound naming"),
-                        detail = tr(
-                            "சுற்றியுள்ள ஒலியைப் பெயரிடும். டெலிவி, அலாரம், அழும் குழந்தை.",
-                            "Names the sound around you: television, alarm, a crying child.",
-                        ),
-                        checked = VasanthiState.soundEnabled,
-                    ) { on -> VasanthiState.soundEnabled = on }
-                    switchRow(
-                        title = tr("பேச்சு அறிதல்", "Speech recognition"),
-                        detail = tr(
-                            "Google-இல் அறிதல். துல்லியம் அதிகம். ஒலி இணையம் வழியாகச் செல்கிறது, " +
-                                "தொலைபேசி ஒலிகளும் நிற்கும்.",
-                            "Recognised by Google. More accurate. Audio is sent over the internet " +
-                                "and phone sounds pause.",
-                        ),
-                        checked = VasanthiState.voiceEnabled,
-                    ) { on -> VasanthiState.voiceEnabled = on }
-                    if (!VasanthiState.translatorReady) {
+        // ---------------------------------------------------------------- the room, only when asked for
+        // Sound naming is off by default, so this whole block is gone unless he turns it on. It
+        // used to sit above the speech and print the sound's English name beside its Tamil one.
+        if (VasanthiState.soundEnabled) {
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(14.dp)) {
+                        val sound = VasanthiState.currentSound
                         Text(
-                            text = tr(
-                                "ஆங்கிலத்தைத் தமிழ் மாற்றும் மாதிரி இன்னும் பதிவிறக்கப்படுகிறது.",
-                                "The English-to-Tamil model is still downloading.",
-                            ),
-                            fontSize = 12.sp,
-                            color = Color(0xFFFFD166),
+                            text = sound?.tamilLabel
+                                ?: tr("ஒன்றுமே கேட்கப்படவில்லை", "Nothing named yet"),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
                         )
+                        if (sound != null) {
+                            Spacer(Modifier.height(6.dp))
+                            LinearProgressIndicator(
+                                progress = { sound.confidence },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Text(
+                                text = tr("நம்பகத்தன்மை", "confidence") + " " +
+                                    ((sound.confidence * 100).toInt()) + "%",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                            )
+                        }
                     }
-                    Text(
-                        text = tr(
-                            "இந்த அமைப்பை மாற்றியபின் கேட்பதை நிறுத்தி மீண்டும் தொடங்குங்கள்.",
-                            "After changing this, stop listening and start again.",
-                        ),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                    )
                 }
             }
         }
+
 
         // ---------------------------------------------------------------- history
         item {
@@ -457,62 +399,38 @@ private fun VasanthiScreen() {
             }
         }
 
-        // ---------------------------------------------------------------- about
+        // ---------------------------------------------------------------- two limits, stated once
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = tr("இந்தச் செயலி என்ன செய்யும்", "What this app does"),
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Bullet(tr(
-                        "சுற்றியுள்ள ஒலியைப் பேசி, அதைத் தமிழ் எழுத்தாகக் காட்டும்.",
-                        "Names the sounds around you, in Tamil text.",
-                    ))
-                    Bullet(tr(
-                        "யாரோ பேசினால் அதைத் தமிழில் எழுதி காட்டும்.",
-                        "Writes down what someone says, in Tamil.",
-                    ))
-                    Bullet(tr(
-                        "அறை எவ்வளவு சத்தம் என்று ஒரு கோடு மற்றும் ஒரு வார்த்தையாகக் காட்டும்.",
-                        "Shows how loud the room is, as a bar and a word.",
-                    ))
-                    Bullet(tr(
-                        "முக்கியமான ஒலி வந்தால் தொலைபேசு அதை நடுத்து.",
-                        "Vibrates when an important sound arrives.",
-                    ))
-                    Bullet(tr(
-                        "கேட்டதை எல்லாம் சேமித்து, பின்னால் படித்துப் பார்க்கலாம்.",
-                        "Saves everything it heard, so it can be read back later.",
-                    ))
-                    Spacer(Modifier.height(12.dp))
-                    HorizontalDivider()
-                    Spacer(Modifier.height(12.dp))
+                Column(modifier = Modifier.padding(14.dp)) {
                     Text(
                         text = tr("இது செய்யாதது", "What it does not do"),
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                     )
-                    Spacer(Modifier.height(6.dp))
-                    Bullet(tr(
-                        "தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது. ஆண்ட்ராய்டு எந்தச் செயலிக்கும் அதை அனுமதிக்காது. " +
-                            "முகமுகமாகப் பேசுபவரின் பேச்சு மட்டுமே எழுத்தாகும்.",
-                        "It cannot hear a phone call. Android does not allow any app to. Only speech " +
-                            "spoken to you in person is written down.",
-                    ))
-                    Bullet(tr(
-                        "ஒலி அறிதல் சில நேரம் தவறாக இருக்கலாம். அதனால் ஒவ்வொரு ஒலிக்கும் நம்பகத்தன்மை காட்டப்படுகிறது.",
-                        "Sound naming is sometimes wrong, which is why every sound shows its confidence.",
-                    ))
-                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        text = tr(
+                            "தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது. ஆண்ட்ராய்டு எந்தச் " +
+                                "செயலிக்கும் அதை அனுமதிக்காது.",
+                            "It cannot hear a phone call. Android does not allow any app to.",
+                        ),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                    Text(
+                        text = tr(
+                            "பேச்சு அறிதல் சில நேரம் தவறாக இருக்கலாம்.",
+                            "Speech recognition is sometimes wrong.",
+                        ),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
                     Text(
                         text = tr(
                             "இந்தச் செயலி உரிமையாளரின் சகோதரிக்காக உருவாக்கப்பட்டது.",
                             "This app was built for the owner's sister.",
                         ),
-                        fontSize = 13.sp,
+                        fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.primary,
                     )
                 }
@@ -634,22 +552,30 @@ private fun timeText(timestampMs: Long): String {
  * look identical on a screen that only reports whether listening is on. Reading VasanthiState here
  * rather than passing values in keeps the line live without another observable.
  */
-/** One switch with a name and a plain line of what it does. */
+/**
+ * One switch, and its name. No explanation unless one is asked for.
+ *
+ * The owner called the 1.1 screen "big unwanted text", and most of that text was the two
+ * paragraphs that used to sit under these switches. The switches are self-describing; what they
+ * cost is said once, under both of them.
+ */
 @Composable
 private fun switchRow(
     title: String,
-    detail: String,
     checked: Boolean,
     onChange: (Boolean) -> Unit,
+    detail: String = "",
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
             Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-            Text(
-                text = detail,
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-            )
+            if (detail.isNotEmpty()) {
+                Text(
+                    text = detail,
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                )
+            }
         }
         Switch(checked = checked, onCheckedChange = onChange)
     }

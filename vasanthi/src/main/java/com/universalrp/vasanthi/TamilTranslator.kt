@@ -8,11 +8,16 @@ import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 
 /**
- * English to Tamil, on the phone, for the words the recogniser hands back in English.
+ * English to Tamil, on the phone, for the English the recogniser leaves behind.
  *
- * The recogniser is asked for Tamil and usually gives Tamil, but not always: a name, a word it
- * knows only in English, or someone who actually spoke English. Showing those on a screen that is
- * read in Tamil is showing her nothing, so they are translated before they are written down.
+ * The recogniser is asked for Tamil and usually gives Tamil. What it does not do is give *only*
+ * Tamil: a name, a word it knows only in English, or a word it heard phonetically and wrote down
+ * in Latin letters all arrive inside a Tamil sentence. The owner installed 1.1 and called the
+ * result "thanglish" - Tamil with English words dropped into it - and asked for Tamil.
+ *
+ * So the words are found individually rather than testing the whole line. A line that is mostly
+ * Tamil with one English word in it is still mostly Tamil, and a whole-string test for Latin
+ * script misses it completely, which is exactly what 1.1 did.
  *
  * The Tamil model is about thirty megabytes and is downloaded the first time it is needed, which
  * is deliberately not at install time. A household that speaks only Tamil never downloads it, and
@@ -65,41 +70,93 @@ object TamilTranslator {
     }
 
     /**
-     * Translates one line and hands it back on the main thread.
+     * Replaces every English word in [text] with its Tamil, and hands the result back.
      *
      * [onTranslated] always receives something: the Tamil if it worked, the original if it did
-     * not, and the original immediately if the model has not arrived yet.
+     * not, and the original immediately if there was no English in it to begin with.
      */
     fun translate(text: String, onTranslated: (String) -> Unit) {
-        translate(text, 0, onTranslated)
-    }
-
-    /**
-     * Waits a short while for the model rather than giving up on the first English line.
-     *
-     * The recogniser does not wait for anything. The first thing it ever hands back in English is
-     * very likely to arrive while the thirty-megabyte model is still coming down, and writing it
-     * straight into the history would put a line she cannot read in the one place that is supposed
-     * to hold only Tamil. So it waits, and gives up on English rather than on the line.
-     */
-    private fun translate(text: String, attempt: Int, onTranslated: (String) -> Unit) {
-        val client = translator
-        if (client != null && modelReady) {
-            client.translate(text)
-                .addOnSuccessListener { translated ->
-                    if (translated.isBlank()) onTranslated(text) else onTranslated(translated)
-                }
-                .addOnFailureListener { onTranslated(text) }
-            return
-        }
-        if (attempt >= MODEL_WAIT_ATTEMPTS || unavailable) {
+        val words = latinWords(text)
+        if (words.isEmpty()) {
+            // Nothing to translate. Handing the line back straight away is what keeps a purely
+            // Tamil sentence from ever waiting on a model it does not need.
             onTranslated(text)
             return
         }
-        Handler(Looper.getMainLooper()).postDelayed(
-            { translate(text, attempt + 1, onTranslated) },
-            MODEL_WAIT_MS,
+        whenModelReady(
+            onReady = {
+                val client = translator ?: return@whenModelReady
+                val done = LinkedHashMap<String, String>()
+                translateAll(client, words, 0, done) {
+                    onTranslated(substituteWords(text, done))
+                }
+            },
+            onGiveUp = { onTranslated(text) },
         )
+    }
+
+    /**
+     * Waits a short while for the model rather than giving up on the first English word.
+     *
+     * The recogniser does not wait for anything. The first thing it ever hands back with English
+     * in it is very likely to arrive while the thirty-megabyte model is still coming down, and
+     * writing it straight into the history would put a line she cannot read in the one place that
+     * is supposed to hold only Tamil. So it waits, and gives up on English rather than on the line.
+     */
+    private fun whenModelReady(onReady: () -> Unit, onGiveUp: () -> Unit) {
+        if (translator != null && modelReady) {
+            attempts = 0
+            onReady()
+            return
+        }
+        if (unavailable) {
+            onGiveUp()
+            return
+        }
+        attempts += 1
+        if (attempts > MODEL_WAIT_ATTEMPTS) {
+            attempts = 0
+            // No model and none coming. The line still has to be written down, because a line she
+            // cannot read is better than no line, and losing it is not one of the options.
+            onGiveUp()
+            return
+        }
+        Handler(Looper.getMainLooper()).postDelayed({
+            whenModelReady(onReady, onGiveUp)
+        }, MODEL_WAIT_MS)
+    }
+
+    /**
+     * Translates one word at a time and walks the list, so nothing is dropped on a failure.
+     *
+     * Sequential rather than all at once because the recogniser hands back a line every few
+     * seconds and firing twenty requests at once is how a phone gets rate-limited. A failure keeps
+     * the original word and carries on to the next one, so one bad word costs one word.
+     */
+    private fun translateAll(
+        client: Translator,
+        words: List<String>,
+        index: Int,
+        done: MutableMap<String, String>,
+        onComplete: () -> Unit,
+    ) {
+        if (index >= words.size) {
+            attempts = 0
+            onComplete()
+            return
+        }
+        val word = words[index]
+        client.translate(word)
+            .addOnSuccessListener { translated ->
+                // An empty result is not a translation. Keeping the original word is honest; a
+                // blank would silently delete part of what somebody actually said.
+                done[word] = if (translated.isBlank()) word else translated.trim()
+                translateAll(client, words, index + 1, done, onComplete)
+            }
+            .addOnFailureListener {
+                done[word] = word
+                translateAll(client, words, index + 1, done, onComplete)
+            }
     }
 
     fun release() {
@@ -108,9 +165,14 @@ object TamilTranslator {
         modelReady = false
     }
 
-    /** How many seconds to keep checking for the model before giving up on a line. */
-    private const val MODEL_WAIT_ATTEMPTS = 10
+    companion object {
+        /** How many seconds to keep checking for the model before giving up on a line. */
+        private const val MODEL_WAIT_ATTEMPTS = 10
 
-    /** How long between those checks. */
-    private const val MODEL_WAIT_MS = 1_000L
+        /** How long between those checks. */
+        private const val MODEL_WAIT_MS = 1_000L
+
+        /** How many lines are currently waiting for the model, so one line does not spawn many. */
+        private var attempts = 0
+    }
 }
