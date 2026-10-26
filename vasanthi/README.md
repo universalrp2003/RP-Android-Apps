@@ -34,9 +34,9 @@ This app is for one person. The owner's sister is deaf from birth - there is no 
 
 ## Download the stable release
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.1.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1/Vasanthi-AI-v1.1.apk) · [release notes](../releases/vasanthi-ai-v1.1.md) · [all RP Ideas apps](../README.md)
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.1.1.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.1/Vasanthi-AI-v1.1.1.apk) · [release notes](../releases/vasanthi-ai-v1.1.1.md) · [all RP Ideas apps](../README.md)
 
-> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The published asset for 1.1 is 45,771,966 bytes, SHA-256 4f9a8d1f3a62a684ac71f6b8cfdffefdc155933ce0861513b2ac2365cc7cd5b6, published 2026-10-26T11:54:50Z. It is larger than 1.0.1 because it carries the on-device English-to-Tamil translation library, which is about twenty-eight megabytes; the Tamil model it needs is downloaded the first time the recogniser hands back English, so a Tamil-only household never pays for it. The candidate build that preceded it had a different SHA-256, because a release build is not byte-reproducible, which is why the published digest is the only one worth recording.
+> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The published asset for 1.1.1 is 45,773,770 bytes, SHA-256 90acaf684a4a36d95786266dba0b1fc1a05cba312163c1530ed89abb9d898e4c, published 2026-10-26T13:23:31Z. It is larger than 1.0.1 because it carries the on-device English-to-Tamil translation library, which is about twenty-eight megabytes; the Tamil model it needs is downloaded the first time the recogniser hands back English, so a Tamil-only household never pays for it. The candidate build that preceded it had a different SHA-256, because a release build is not byte-reproducible, which is why the published digest is the only one worth recording.
 
 ## The model, and where it came from
 
@@ -46,7 +46,7 @@ The model takes raw audio, not a spectrogram - its log-mel front end is inside t
 
 ## Device test status
 
-**1.0 and 1.0.1 were installed on a phone by the owner**, on his own Xiaomi. The screenshots he sent from those two installs are what found the recogniser that never got the microphone, and the history writer that rewrote the whole file per line on the main thread until the system killed the process. **This 1.1 build has not been installed on a phone by anyone.** The store, the translator wiring, the cooldowns and the wording are covered by unit tests. Whether the app now survives a television left on all afternoon, whether the English-to-Tamil model downloads and works on his phone, and whether two switches read clearly on a small screen are not, and this app exists precisely to be used by one particular person, so it needs her phone before it can be called anything at all.
+**1.0, 1.0.1 and 1.1 were all installed on a phone by the owner**, on his own Xiaomi. The screenshots he sent from those three installs are what found the recogniser that never got the microphone, the history writer that rewrote the whole file per line on the main thread until the system killed the process, and the thanglish the recogniser produced when it returned Tamil with English words left inside it. **This 1.1.1 build has not been installed on a phone by anyone.** The store, the translator wiring, the cooldowns, the word-finding and the wording are covered by unit tests. Whether speech now keeps up with a television left on all afternoon, whether the permanent notification survives hours unattended, and whether the smaller screen still reads clearly are not, and this app exists precisely to be used by one particular person, so it needs her phone before it can be called anything at all.
 
 ## Build and test
 

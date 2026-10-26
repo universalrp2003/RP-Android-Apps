@@ -58,6 +58,7 @@ jobs:
               ("vasanthi-ai-v1.0", "Vasanthi-AI-v1.0.apk", 17355218, "c558b5a35875e1b12cb5e00b88cf2e4493505979437223f642ce78a9572511fa"),
               ("vasanthi-ai-v1.0.1", "Vasanthi-AI-v1.0.1.apk", 17355222, "5477cfc46f3376207499ea239a8e5edefed0f68d07306cb2df47115ee2e05090"),
               ("vasanthi-ai-v1.1", "Vasanthi-AI-v1.1.apk", 45771966, "4f9a8d1f3a62a684ac71f6b8cfdffefdc155933ce0861513b2ac2365cc7cd5b6"),
+              ("vasanthi-ai-v1.1.1", "Vasanthi-AI-v1.1.1.apk", 45773770, "90acaf684a4a36d95786266dba0b1fc1a05cba312163c1530ed89abb9d898e4c"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -106,6 +107,8 @@ jobs:
           test -s site/apks/Vasanthi-AI-v1.0.1.zip
           test -s site/apks/Vasanthi-AI-v1.1.apk
           test -s site/apks/Vasanthi-AI-v1.1.zip
+          test -s site/apks/Vasanthi-AI-v1.1.1.apk
+          test -s site/apks/Vasanthi-AI-v1.1.1.zip
           test -s site/apks/PulseEQ-v1.9.apk
           test -s site/apks/PulseEQ-v1.9.zip
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.apk
