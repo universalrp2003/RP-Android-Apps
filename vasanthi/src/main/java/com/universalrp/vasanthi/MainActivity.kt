@@ -49,8 +49,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import com.universalrp.updates.AppLanguageToggle
+import com.universalrp.updates.AppGuides
+import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
+import com.universalrp.updates.AppLanguageToggle
+import com.universalrp.updates.GuideScreen
+import com.universalrp.updates.SisterApps
 import java.time.Instant
 import java.time.ZoneId
 
@@ -120,6 +124,18 @@ private fun VasanthiScreen() {
 
     val ready = micGranted && overlayGranted
 
+    // The shared guide: the same compact, tap-to-open Tamil and English text the other apps use,
+    // so a step that changes on a phone is corrected once for every app.
+    var showGuide by remember { mutableStateOf(false) }
+    if (showGuide) {
+        GuideScreen(
+            content = AppGuides.vasanthi,
+            tamil = AppLanguageState.current == AppLanguage.TAMIL,
+            onBack = { showGuide = false },
+        )
+        return
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -145,8 +161,8 @@ private fun VasanthiScreen() {
             }
             Text(
                 text = tr(
-                    "ஒலியைத் தமிழ் எழுத்தாகக் காட்டும் செயலி",
-                    "Shows sound as Tamil text",
+                    "சுற்றியுள்ள ஒலியையும் பேச்சையும் தமிழில் காட்டும் செயலி",
+                    "Shows the sound and speech around you in Tamil",
                 ),
                 fontSize = 13.sp,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
@@ -398,13 +414,35 @@ private fun VasanthiScreen() {
             }
         }
 
-        // ---------------------------------------------------------------- two limits, stated once
+        // ---------------------------------------------------------------- about, guide, other apps
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(14.dp)) {
                     Text(
-                        text = tr("இது செய்யாதது", "What it does not do"),
+                        text = tr("இந்தச் செயலி", "About this app"),
                         fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = tr(
+                            "யாருக்கும் பயன்படும். செவிடு அல்லது கேள்வி மெதுவானவர்கள், " +
+                                "டெலிவி அல்லது அழைப்பைத் தெளிவாகக் கேட்க முடியாதவர்கள், " +
+                                "கேட்பதை விட படிக்க விரும்புவோர்.",
+                            "For anyone. People who are deaf or hard of hearing, people who cannot " +
+                                "hear a television or a call clearly, and anyone who would rather " +
+                                "read than listen.",
+                        ),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = { showGuide = true }) {
+                        Text(tr("வழிகாட்டி", "Guide"), fontSize = 13.sp)
+                    }
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        text = tr("இது செய்யாதது", "What it does not do"),
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                     )
                     Text(
@@ -424,19 +462,42 @@ private fun VasanthiScreen() {
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
+                    Spacer(Modifier.height(10.dp))
                     Text(
-                        text = tr(
-                            "இந்தச் செயலி உரிமையாளரின் சகோதரிக்காக உருவாக்கப்பட்டது.",
-                            "This app was built for the owner's sister.",
-                        ),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
+                        text = tr("மற்ற RP Ideas செயலிகள்", "Other RP Ideas apps"),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
                     )
+                    // Every other app in the suite, from the one shared list, plus the project
+                    // links. The same directory every other app's About screen renders, so adding
+                    // an app here adds it everywhere.
+                    SisterApps.releaseLinks("vasanthi").forEach { (label, url) ->
+                        TextButton(onClick = { openUrl(context, url) }) {
+                            Text(label, fontSize = 12.sp)
+                        }
+                    }
+                    SisterApps.projectLinks().forEach { (label, url) ->
+                        TextButton(onClick = { openUrl(context, url) }) {
+                            Text(label, fontSize = 12.sp)
+                        }
+                    }
                 }
             }
         }
 
         item { Spacer(Modifier.height(24.dp)) }
+    }
+}
+
+/** Opens a link in the browser, and says nothing if there is no browser to open it with. */
+private fun openUrl(context: android.content.Context, url: String) {
+    runCatching {
+        context.startActivity(
+            android.content.Intent(
+                android.content.Intent.ACTION_VIEW,
+                android.net.Uri.parse(url),
+            ),
+        )
     }
 }
 

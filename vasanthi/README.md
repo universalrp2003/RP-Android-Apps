@@ -1,12 +1,14 @@
 # Vasanthi AI - வசந்தி AI / Tamil sound and speech window
 
-**Current stable release:** 1.1.1 / code 4
+**Current stable release:** 1.1.2 / code 5
 
 **Package:** `com.universalrp.vasanthi`
 
 **Minimum Android:** 8.0 / API 26
 
-This app is for one person. The owner's sister is deaf from birth - there is no neural connection between her ear and her brain, so she has never heard a sound and cannot speak. She reads Tamil. Vasanthi AI listens to the room and shows her, in Tamil, what it heard: what sound is happening, how loud it is, and what someone just said. It is named after her.
+Vasanthi AI turns the sound around you into Tamil text. It listens to the room and shows, in Tamil, what sound is happening, how loud it is, and what somebody just said - and it keeps all of it so it can be read again later.
+
+It is for anyone who wants to see what is being said or what is happening in the room in Tamil: people who are deaf or hard of hearing, people who cannot hear a television or a call clearly, and anyone who would rather read than listen. It started as an app for one person, and it is now published for everyone.
 
 ## What it does
 
@@ -18,6 +20,8 @@ This app is for one person. The owner's sister is deaf from birth - there is no 
 - **Two switches, one microphone.** ஒலி names the sounds and பேச்சு writes down speech, and they are separate switches because they want the same microphone and only one of them can have it properly. With ஒலி off the recogniser has the microphone outright, which is both more accurate and reaches further, which is the owner's complaint about speech from a little way away. Either can be on alone, or both together.
 - **Vibrates on the sounds that matter.** The doorbell, a smoke alarm, a crying child, breaking glass. This is the part that works when the phone is in her pocket and she is not looking at it.
 - **Saves everything.** Every line of speech and every named sound, timestamped, filterable, re-readable, deletable.
+- **A built-in guide.** A வழிகாட்டி button on the main screen opens a tap-to-open Tamil and English guide covering the floating circle, the two switches, the translation, the notification and the privacy position - the same shared guide the other RP Ideas apps use.
+- **Links to every other RP Ideas app.** The About section lists the whole suite and the project links, so the app is one door into the rest of it.
 
 ## What it cannot do
 
@@ -46,7 +50,7 @@ The model takes raw audio, not a spectrogram - its log-mel front end is inside t
 
 ## Device test status
 
-**1.0, 1.0.1 and 1.1 were all installed on a phone by the owner**, on his own Xiaomi. The screenshots he sent from those three installs are what found the recogniser that never got the microphone, the history writer that rewrote the whole file per line on the main thread until the system killed the process, and the thanglish the recogniser produced when it returned Tamil with English words left inside it. **This 1.1.1 build has not been installed on a phone by anyone.** The store, the translator wiring, the cooldowns, the word-finding and the wording are covered by unit tests. Whether speech now keeps up with a television left on all afternoon, whether the permanent notification survives hours unattended, and whether the smaller screen still reads clearly are not, and this app exists precisely to be used by one particular person, so it needs her phone before it can be called anything at all.
+**1.0, 1.0.1, 1.1 and 1.1.1 were all installed on a phone by the owner**, on his own Xiaomi, and 1.1.1 was installed by his sister as well. The screenshots he sent from those installs are what found the recogniser that never got the microphone, the history writer that rewrote the whole file per line on the main thread until the system killed the process, the "thanglish" the recogniser produced when it returned Tamil with English words left inside it, and the speech that kept missing what was said because both switches were on at once. **This 1.1.2 build has not been installed on a phone by anyone.** The guide, the word-finding, the store, the cooldowns and the wording are covered by unit tests. Whether the guide reads clearly on a small screen and whether the other-app links open the right pages are not, and it is now an app for anyone, so it needs more than one phone before it can be called anything at all.
 
 ## Build and test
 
