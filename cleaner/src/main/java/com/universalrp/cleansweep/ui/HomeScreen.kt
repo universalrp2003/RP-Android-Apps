@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,6 +72,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -228,16 +230,31 @@ fun HomeScreen(
                     modifier = Modifier.size(19.dp),
                 )
             }
-            // 2.53 — the speaker opens the volume slider itself, over this page, exactly as the
-            // owner asked. It used to navigate to the whole Voice screen to reach one slider; the
-            // Voice screen is still in Settings and the menu for voices, alarms and languages.
-            IconButton(
-                onClick = { showVolume = true },
-                modifier = Modifier.size(38.dp),
+            // One voice symbol, one tap. The owner asked for exactly this: a single button on the
+            // home screen that turns spoken announcements on and off, rather than an icon that
+            // merely reports the state and opens a page to change it.
+            //
+            // The icon already showed on/off through its shape and colour, so it is now the
+            // control rather than an indicator. A long press still opens the volume slider, which
+            // is the master level and stays reachable without burying the toggle.
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .pointerInput(state.voiceOn) {
+                        detectTapGestures(
+                            onTap = { vm.setVoiceOn(!state.voiceOn) },
+                            onLongPress = { showVolume = true },
+                        )
+                    },
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     if (state.voiceOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
-                    contentDescription = tr("Announcement volume"),
+                    contentDescription = if (state.voiceOn) {
+                        tr("Voice announcements on. Tap to turn off")
+                    } else {
+                        tr("Voice announcements off. Tap to turn on")
+                    },
                     tint = if (state.voiceOn) AccentCyan else TextSecondary,
                     modifier = Modifier.size(20.dp),
                 )
