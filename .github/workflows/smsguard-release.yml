@@ -8,6 +8,7 @@ on:
       - ".github/workflows/oorarivippu-release.yml"
       - ".github/workflows/oorarivippu-test-apk.yml"
       - ".github/workflows/smsguard-test-apk.yml"
+      - "vasanthi/**"
   workflow_dispatch:
     inputs:
       publish:

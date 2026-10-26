@@ -30,6 +30,7 @@ on:
       - "equalizer/**"
       - "vocalremover/**"
       - "secretmessage/**"
+      - "vasanthi/**"
   workflow_dispatch:
     inputs:
       publish:
