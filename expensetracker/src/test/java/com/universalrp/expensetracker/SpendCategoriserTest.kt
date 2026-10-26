@@ -121,6 +121,18 @@ class SpendCategoriserTest {
         )
         assertEquals(
             SpendCategory.FOOD,
+            SpendCategoriser.categorise(result(counterparty = "Zomato")),
+        )
+    }
+
+    @Test
+    fun aGroceryArmOfAFoodAppIsGroceriesNotFood() {
+        // "Swiggy Instamart" names both a food app and a grocery service, and GROCERIES sits above
+        // FOOD in the rule table on purpose: a grocery run is the kind of spend an owner wants
+        // separated from a restaurant bill, so the more specific row wins. This was written
+        // expecting FOOD and the code was right, not the test.
+        assertEquals(
+            SpendCategory.GROCERIES,
             SpendCategoriser.categorise(result(counterparty = "Swiggy Instamart")),
         )
     }
@@ -181,6 +193,17 @@ class SpendCategoriserTest {
     fun anUnknownMerchantFallsToOtherRatherThanBeingDropped() {
         assertEquals(
             SpendCategory.OTHER,
+            SpendCategoriser.categorise(result(counterparty = "RAMESH TRADERS")),
+        )
+    }
+
+    @Test
+    fun aShopIsShoppingEvenWhenNothingMoreSpecificMatches() {
+        // This test used to expect OTHER for "SOME LOCAL SHOP" and failed, which was the test being
+        // wrong: a shop is a shop, and SHOPPING is the honest answer. OTHER means "no rule matched",
+        // not "I could not be bothered".
+        assertEquals(
+            SpendCategory.SHOPPING,
             SpendCategoriser.categorise(result(counterparty = "SOME LOCAL SHOP")),
         )
     }
