@@ -2,6 +2,7 @@
 
 ## Kotlin / resource errors
 ```
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/SpeechEngine.kt:142:17 Reference has a nullable type 'Function1<RecognitionMode, Unit>?'. Use explicit '?.invoke' to make a function-like call instead.
 ```
 
 ## Gradle summary
@@ -11,13 +12,9 @@
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':vasanthi:processDebugResources'.
-> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
-   > Android resource linking failed
-     ERROR: /home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/res/drawable/ic_close.xml:7: AAPT: error: '#FFBFFFFFFF' is incompatible with attribute tint (attr) color.
-         
-     ERROR: /home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/res/drawable/ic_open_full.xml:8: AAPT: error: '#FFBFFFFFFF' is incompatible with attribute tint (attr) color.
-         
+Execution failed for task ':vasanthi:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
 
 * Try:
 > Run with --stacktrace option to get the stack trace.
@@ -31,8 +28,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 3m
-272 actionable tasks: 139 executed, 133 from cache
+BUILD FAILED in 2m
+287 actionable tasks: 150 executed, 137 from cache
 ```
 (no failing tests recorded in the JUnit XML)
 
