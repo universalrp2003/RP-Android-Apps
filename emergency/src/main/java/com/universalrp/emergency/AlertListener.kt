@@ -45,7 +45,7 @@ class AlertListener(private val onAlert: (EmergencyAlert) -> Unit) : Thread("ale
             } catch (error: Exception) {
                 // Usually "address already in use" while the broadcaster still holds the port.
                 // Wait and try again rather than dying, because the broadcaster may be closing.
-                runCatching { sleep(RETRY_MS) }
+                runCatching { Thread.sleep(RETRY_MS) }
                 continue
             }
             try {
@@ -62,7 +62,7 @@ class AlertListener(private val onAlert: (EmergencyAlert) -> Unit) : Thread("ale
                 }
             } catch (error: Exception) {
                 // An unexpected failure on one socket must not end listening for good.
-                runCatching { sleep(RETRY_MS) }
+                runCatching { Thread.sleep(RETRY_MS) }
             } finally {
                 runCatching { active.close() }
                 socket = null
