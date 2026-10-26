@@ -116,10 +116,12 @@ jobs:
               [ -f "$r" ] && echo "### $r" && echo '```' && head -n 120 "$r" && echo '```'
             done
           } >> "$GITHUB_STEP_SUMMARY" || true
-          # The step summary is only readable in the web UI. Mirror the tail of the build log into
-          # annotations as well, because a release workflow whose failure cannot be read from the
-          # API cannot be diagnosed at all from here, and each blind round costs a full cycle.
-          tail -n 60 vn-build.log 2>/dev/null \
+          # The step summary is only readable in the web UI, and GitHub keeps only the last ten
+          # annotations on a check run, so a blanket dump of the log tail is useless: it fills the
+          # budget with stack frames and hides the exception. Grep for the diagnostic lines and emit
+          # at most eight of them, newest last, so all of them survive the cap.
+          grep -E "What went wrong|^Execution failed|^> Could not|Caused by|^\* Exception is|error:|e: file|FAILED|BUILD FAILED|A problem occurred" \
+            vn-build.log 2>/dev/null | tail -n 8 \
             | while IFS= read -r line; do
                 [ -n "$line" ] && echo "::error::$line"
               done || true
