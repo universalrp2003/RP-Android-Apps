@@ -35,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -121,39 +122,56 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
         mutableStateOf(SmsInbox.hasPermission(context))
     }
     var excludedSpoofs by remember { mutableStateOf(0) }
+    // How many messages the last scan actually looked at. Without this the empty state is a lie:
+    // "no transactions" reads the same whether the app read two thousand messages and found
+    // nothing, or never opened the inbox at all. The owner reported exactly that ambiguity as
+    // "it not seeing old alredy recived sms" and had no way to tell the two apart.
+    var scannedCount by remember { mutableStateOf(0) }
 
     val tamil = AppLanguageState.current == AppLanguage.TAMIL
 
     fun tr(en: String, ta: String) = if (tamil) ta else en
 
-    // Re-read the inbox whenever the screen comes back, so a scan run from the permission dialog
-    // or from another screen shows up here without a restart.
     val scope = rememberCoroutineScope()
-    DisposableEffect(Unit) {
-        val watcher = SmsInbox.observe(context) {
-            if (!SmsInbox.hasPermission(context)) return@observe
-            // The scan is a ContentResolver walk over up to two years of messages, so it happens
-            // off the main thread. Doing it inline is what turns this screen into a frozen screen
-            // on a phone with a large inbox.
-            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                scanning = true
-                val results = SmsInbox.scan(context)
-                LedgerWriter.replaceAll(context, results)
-                val reloaded = LedgerWriter.load(context)
-                excludedSpoofs = results.count {
+
+    fun rescan() {
+        if (!SmsInbox.hasPermission(context)) return
+        // The scan is a ContentResolver walk over up to two years of messages, so it happens off
+        // the main thread. Doing it inline is what turns this screen into a frozen screen on a
+        // phone with a large inbox.
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            scanning = true
+            val results = SmsInbox.scan(context)
+            LedgerWriter.replaceAll(context, results)
+            val reloaded = LedgerWriter.load(context)
+            val refused = results.count {
+                it.classification ==
+                    com.universalrp.smsguard.engine.SpoofClassification
+                        .SPOOF_PERSONAL_NUMBER_FAKE_MONEY ||
                     it.classification ==
-                        com.universalrp.smsguard.engine.SpoofClassification
-                            .SPOOF_PERSONAL_NUMBER_FAKE_MONEY ||
-                        it.classification ==
-                        com.universalrp.smsguard.engine.SpoofClassification
-                            .REJECTED_PROMOTIONAL_OFFER
-                }
-                withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    transactions = reloaded
-                    scanning = false
-                }
+                    com.universalrp.smsguard.engine.SpoofClassification
+                        .REJECTED_PROMOTIONAL_OFFER
+            }
+            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                transactions = reloaded
+                excludedSpoofs = refused
+                scannedCount = results.size
+                scanning = false
             }
         }
+    }
+
+    // The first scan, and a re-scan the moment the permission is granted. This is the whole fix for
+    // the owner's report: 1.0 only ever scanned from the ContentObserver below, which fires when a
+    // NEW message arrives. On a phone whose inbox already held months of bank SMS nothing ever
+    // fired, so the ledger stayed empty forever and looked like the app could not read SMS.
+    LaunchedEffect(hasPermission) {
+        if (hasPermission) rescan()
+    }
+
+    // And keep it current while the app is open.
+    DisposableEffect(Unit) {
+        val watcher = SmsInbox.observe(context) { rescan() }
         onDispose { SmsInbox.unobserver(context, watcher) }
     }
 
@@ -250,15 +268,37 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
             ) {
                 if (monthRows.isEmpty()) {
                     item {
-                        Text(
-                            text = tr(
-                                "இந்த மாதத்தில் எந்த சலுகையும் இல்லை.",
-                                "No transactions recorded for this month.",
-                            ),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = TextSecondary,
-                            modifier = Modifier.padding(16.dp),
-                        )
+                        // Say what was actually checked. "No transactions" on its own cannot be
+                        // told apart from "never looked", and the owner read the empty screen as
+                        // the latter and was right.
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = if (scannedCount > 0) {
+                                    tr(
+                                        "இந்த மாதத்தில் எந்த வங்கி அல்லது UPI பரிவர்த்தனையும் இல்லை.",
+                                        "No bank or UPI transaction for this month.",
+                                    )
+                                } else {
+                                    tr(
+                                        "உங்கள் SMS-கள் இன்னும் படிக்கப்படவில்லை.",
+                                        "Your SMS has not been read yet.",
+                                    )
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextSecondary,
+                            )
+                            if (scannedCount > 0) {
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    text = tr(
+                                        "$scannedCount செய்திகள் படிக்கப்பட்டது.",
+                                        "$scannedCount messages checked.",
+                                    ),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = TextSecondary,
+                                )
+                            }
+                        }
                     }
                 }
                 items(monthRows, key = { it.messageId }) { transaction ->

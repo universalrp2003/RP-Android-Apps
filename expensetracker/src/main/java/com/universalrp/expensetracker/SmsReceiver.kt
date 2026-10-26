@@ -28,7 +28,8 @@ class SmsReceiver : BroadcastReceiver() {
             val address = message.originatingAddress ?: continue
             val timestamp = message.timestampMillis
             if (timestamp <= 0L) continue
-            val sender = com.universalrp.smsguard.engine.SenderIdentityEngine.identify(address)
+            val sender = com.universalrp.smsguard.engine.SenderIdentityEngine
+                .identify(address, body)
             val result = com.universalrp.smsguard.engine.FinanceLedgerEngine.parseSingleSms(
                 // The same content hash the inbox scan uses, so the row this writes and the row the
                 // scan later reads are the same row and the store deduplicates them.

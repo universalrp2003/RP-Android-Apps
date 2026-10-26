@@ -93,7 +93,10 @@ object SmsInbox {
                     // The content hash, not the row id, so this scan and the live receiver agree
                     // on which message this is.
                     val id = stableId(date, address, body)
-                    val sender = SenderIdentityEngine.identify(address)
+                    // The body matters: identify() uses it to tell a promotional
+                    // header from a transactional one, and SMS Guard's own repository
+                    // passes it for the same reason.
+                    val sender = SenderIdentityEngine.identify(address, body)
                     val result = FinanceLedgerEngine.parseSingleSms(
                         messageId = id,
                         timestampMs = date,
