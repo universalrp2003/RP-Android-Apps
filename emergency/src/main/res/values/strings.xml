@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tamil first, as everywhere else in this repository. Every string the owner sees is Tamil;
+         the only English anywhere on screen is the app name the launcher is filed under. -->
+    <string name="app_name">அவசர எச்சரிக்கை</string>
+
+    <!-- ---------------------------------------------------------------- the two controls -->
+    <string name="start_listening">கேட்கத் தொடங்கு</string>
+    <string name="stop_listening">கேட்பதை நிறுத்து</string>
+    <string name="listening">கேட்கிறது</string>
+    <string name="stopped">நிறுத்தப்பட்டது</string>
+    <string name="action_stop">நிறுத்து</string>
+
+    <!-- ---------------------------------------------------------------- the cards -->
+    <string name="what_it_does">என்ன கேட்கிறது</string>
+    <string name="what_it_does_body">புகை எச்சரிக்கை, தீ எச்சரிக்கை, சைரன், கத்தல், குழந்தை அழுகை, கண்ணாடி உடைவு, கதவு மணி - இவற்றைக் கேட்டு உடனே குடும்பத் தொலைபேசிகளுக்குத் தெரிவிக்கிறது.</string>
+
+    <string name="family_phones">குடும்பத் தொலைபேசிகள்</string>
+    <string name="family_phones_body">இணையம் தேவை இல்லை. எல்லா தொலைபேசிகளும் ஒரே வைஃபையில் இருந்தால் மட்டுமே எச்சரிக்கை செல்லும். ஒவ்வொரு தொலைபேசியிலும் இந்தச் செயலியைத் திறந்து கேட்கத் தொடங்கு என்பதைத் தட்ட வேண்டும்.</string>
+    <string name="connected_phones">இணைந்துள்ள தொலைபேசிகள்</string>
+    <string name="no_phones_yet">இன்னும் வேறு எந்தத் தொலைபேசியும் கண்டப்படவில்லை</string>
+    <string name="phones_count">%1$d தொலைபேசிகள்</string>
+
+    <!-- ---------------------------------------------------------------- the alerts -->
+    <string name="alerts_received">வந்த எச்சரிக்கைகள்</string>
+    <string name="alerts_from_here">இந்தத் தொலைபேசியில் கேட்பட்டது</string>
+    <string name="alerts_from_family">குடும்பத் தொலைபேசியிலிருந்து</string>
+    <string name="no_alerts_yet">இன்னும் எச்சரிக்கை இல்லை</string>
+    <string name="clear_alerts">அழி</string>
+    <string name="confidence">நம்பகத்தன்மை %1$d%%</string>
+
+    <!-- ---------------------------------------------------------------- status lines -->
+    <string name="status_idle">கேட்கவில்லை. தொடங்கு என்பதைத் தட்டுங்கள்.</string>
+    <string name="status_listening">கேட்கிறது - அவசர ஒலிக்காகக் காத்திருக்கிறது.</string>
+    <string name="status_mic_failed">மைக்கை திறக்க முடியவில்லை. அமைப்பில் இந்தச் செயலிக்கு மைக் அனுமதி உள்ளதா எனப் பாருங்கள்.</string>
+    <string name="status_model_failed">ஒலியை ஒப்பிடும் கோப்பை ஏற்ற முடியவில்லை. செயலியை மீண்டும் நிறுவுங்கள்.</string>
+    <string name="status_permission_needed">மைக் அனுமதி தேவை. கேட்கத் தொடங்கு என்பதைத் தட்டி அனுமதி கொடுங்கள்.</string>
+    <string name="status_alert_sent">%1$s - குடும்பத்திற்கு அனுப்பப்பட்டது.</string>
+    <string name="status_alert_no_network">%1$s - இன்னொரு தொலைபேசி கண்டுபிடிக்கப்படவில்லை.</string>
+
+    <!-- ---------------------------------------------------------------- the honest limits -->
+    <string name="cannot_hear_call">தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது. ஆண்ட்ராய்டு எந்தச் செயலிக்கும் அதை அனுமதிக்காது. அருகில் பேசும் ஒலியை மட்டுமே கேட்கும்.</string>
+    <string name="false_alerts">சில நேரம் பொதுவான ஒலியை அவசர ஒலி என நினைக்கும். இது ஒரு எச்சரிக்கை, காவலர் அல்ல. சந்தேகம் வந்தால் சரிபாருங்கள்.</string>
+
+    <!-- ---------------------------------------------------------------- the notification -->
+    <string name="channel_ongoing_name">கேட்கும் சேவை</string>
+    <string name="channel_ongoing_desc">அவசர ஒலிக்காகக் காத்திருக்கும் பின்னணி சேவை.</string>
+    <string name="channel_alert_name">அவசர எச்சரிக்கை</string>
+    <string name="channel_alert_desc">அவசர ஒலி கேட்கப்பட்டதும் வரும் அறிவிப்பு.</string>
+    <string name="notification_ongoing_title">அவசர எச்சரிக்கை கேட்கிறது</string>
+    <string name="notification_ongoing_text">அவசர ஒலி கேட்கப்பட்டு குடும்பத்திற்குத் தெரிவிக்கப்படும்.</string>
+    <string name="notification_ongoing_text_connected">%1$d தொலைபேசிகள் இணைந்துள்ளன.</string>
+    <string name="notification_alert_title">%1$s</string>
+    <string name="notification_alert_from_me">இந்தத் தொலைபேசியில் அவசர ஒலி</string>
+    <string name="notification_alert_from_other">%1$s ஃபோனில் அவசர ஒலி</string>
+    <string name="notification_alert_body">%1$s</string>
+    <string name="notification_paused_title">அவசர எச்சரிக்கை நிறுத்தப்பட்டுள்ளது</string>
+    <string name="notification_paused_text">தொடங்க இங்கே தட்டுங்கள்.</string>
+    <string name="notification_action_start">தொடங்கு</string>
+    <string name="notification_action_close">மூடு</string>
+</resources>
