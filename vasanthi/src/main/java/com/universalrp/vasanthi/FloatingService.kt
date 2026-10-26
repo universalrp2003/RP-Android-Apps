@@ -68,6 +68,28 @@ class FloatingService : Service() {
 
     private var lastUrgentHandled = 0L
 
+    /**
+     * The panel's views, resolved once when it is opened.
+     *
+     * refreshPanel() runs four times a second, and resolving eight views by id each time is eight
+     * tree walks four times a second. On the 4 GB Samsung this app is built for that is real work
+     * for nothing, so the references are held instead.
+     */
+    private class PanelViews(val root: View) {
+        val title: TextView = root.findViewById(R.id.panel_title)
+        val sound: TextView = root.findViewById(R.id.panel_sound)
+        val confidence: ProgressBar = root.findViewById(R.id.panel_confidence)
+        val confidenceNote: TextView = root.findViewById(R.id.panel_confidence_note)
+        val level: ProgressBar = root.findViewById(R.id.panel_level)
+        val levelNote: TextView = root.findViewById(R.id.panel_level_note)
+        val speech: TextView = root.findViewById(R.id.panel_speech)
+        val speechScroll: ScrollView = root.findViewById(R.id.panel_speech_scroll)
+        val listen: Button = root.findViewById(R.id.panel_listen)
+        val mode: TextView = root.findViewById(R.id.panel_mode)
+    }
+
+    private var panelViews: PanelViews? = null
+
     override fun onCreate() {
         super.onCreate()
         VasanthiState.attach(this)
@@ -210,6 +232,7 @@ class FloatingService : Service() {
             .onSuccess {
                 panelView = view
                 panelParams = params
+                panelViews = PanelViews(view)
                 refreshPanel()
             }
     }
@@ -218,6 +241,7 @@ class FloatingService : Service() {
         panelView?.let { runCatching { windowManager.removeView(it) } }
         panelView = null
         panelParams = null
+        panelViews = null
     }
 
     /** Drags the bubble, and tells a tap apart from a drag. */
@@ -380,29 +404,24 @@ class FloatingService : Service() {
     }
 
     private fun refreshPanel() {
-        val view = panelView ?: return
+        val views = panelViews ?: return
 
         val sound = VasanthiState.currentSound
-        view.findViewById<TextView>(R.id.panel_sound).text = sound?.tamilLabel
-            ?: getString(R.string.nothing_heard_yet)
-        val confidence = view.findViewById<ProgressBar>(R.id.panel_confidence)
-        confidence.progress = ((sound?.confidence ?: 0f) * 100f).roundToInt()
-        view.findViewById<TextView>(R.id.panel_confidence_note).text =
+        views.sound.text = sound?.tamilLabel ?: getString(R.string.nothing_heard_yet)
+        views.confidence.progress = ((sound?.confidence ?: 0f) * 100f).roundToInt()
+        views.confidenceNote.text =
             sound?.let { tr("நம்பகத்தன்மை", "confidence") + " " + percent(it.confidence) + "%" } ?: ""
 
         val level = VasanthiState.level
-        view.findViewById<ProgressBar>(R.id.panel_level).progress = (level * 100f).roundToInt()
+        views.level.progress = (level * 100f).roundToInt()
         val (ta, en) = SoundMeter.describe(level)
-        view.findViewById<TextView>(R.id.panel_level_note).text = tr(ta, en)
+        views.levelNote.text = tr(ta, en)
 
         val speech = VasanthiState.liveSpeech
-        val speechText = view.findViewById<TextView>(R.id.panel_speech)
-        speechText.text = speech.ifEmpty { getString(R.string.nothing_said_yet) }
-        view.findViewById<ScrollView>(R.id.panel_speech_scroll).post {
-            view.findViewById<ScrollView>(R.id.panel_speech_scroll).fullScroll(View.FOCUS_DOWN)
-        }
+        views.speech.text = speech.ifEmpty { getString(R.string.nothing_said_yet) }
+        views.speechScroll.post { views.speechScroll.fullScroll(View.FOCUS_DOWN) }
 
-        view.findViewById<Button>(R.id.panel_listen).setText(
+        views.listen.setText(
             if (VasanthiState.listening) R.string.stop else R.string.start_listening,
         )
 
@@ -420,7 +439,7 @@ class FloatingService : Service() {
                 "No speech recogniser. Sound naming still works.",
             )
         }
-        view.findViewById<TextView>(R.id.panel_mode).text = modeText
+        views.mode.text = modeText
 
         handleUrgent()
     }

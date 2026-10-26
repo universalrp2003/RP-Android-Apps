@@ -29,6 +29,10 @@ android {
         versionCode = 1
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
+        // ARM only, the same restriction Vocal Remover already carries. The phone this app is for
+        // is a 4 GB Samsung, which is always ARM; the x86 and x86_64 libraries exist for emulators
+        // and would be several megabytes of download for nothing.
+        ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
     signingConfigs {
@@ -94,7 +98,6 @@ dependencies {
     implementation(composeBom)
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material:material-icons-extended")
 
     debugImplementation(composeBom)
     debugImplementation("androidx.compose.ui:ui-tooling")
