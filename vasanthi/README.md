@@ -35,7 +35,7 @@ This app is for one person. The owner's sister is deaf from birth - there is no 
 
 - [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.0.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.0/Vasanthi-AI-v1.0.apk) · [release notes](../releases/vasanthi-ai-v1.0.md) · [all RP Ideas apps](../README.md)
 
-> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The candidate build this release was cut from measured 17,355,218 bytes, SHA-256 edba8e57800379edf87575a217811d05ea1f3e12fc0a256aa2ef709763b4d9ba - a candidate figure, not the published one, because a release build is not byte-reproducible. The published asset's own size and digest are recorded here once they have been read back.
+> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The published asset for 1.0 is 17,355,218 bytes, SHA-256 c558b5a35875e1b12cb5e00b88cf2e4493505979437223f642ce78a9572511fa. The candidate build that preceded it had the same size but a different SHA-256, because a release build is not byte-reproducible, which is why the published digest is the only one worth recording.
 
 ## The model, and where it came from
 

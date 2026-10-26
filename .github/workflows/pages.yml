@@ -53,6 +53,9 @@ jobs:
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
               ("expense-tracker-v1.0", "Expense-Tracker-v1.0.apk", 11547831, "6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7"),
               ("expense-tracker-v1.1", "Expense-Tracker-v1.1.apk", 11564215, "dd39091be62fba2d725300ced0132ae04a4da5ff528ca0be73638845272ee3f9"),
+              ("voice-notes-v1.1", "Voice-Notes-v1.1.apk", 12047956, "171e924c68fdde29c8009f754287303b078a078c068a6a0d351ced76c2543f88"),
+              ("live-guard-v2.73", "CleanSweep-v2.73.apk", 14426215, "a5c5f0186a9843ca4761fb89b775b8401885283263d90ab9085397611310e05e"),
+              ("vasanthi-ai-v1.0", "Vasanthi-AI-v1.0.apk", 17355218, "c558b5a35875e1b12cb5e00b88cf2e4493505979437223f642ce78a9572511fa"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -91,6 +94,18 @@ jobs:
           test -s site/apks/Expense-Tracker-v1.0.zip
           test -s site/apks/Expense-Tracker-v1.1.apk
           test -s site/apks/Expense-Tracker-v1.1.zip
+          test -s site/apks/Voice-Notes-v1.1.apk
+          test -s site/apks/Voice-Notes-v1.1.zip
+          test -s site/apks/CleanSweep-v2.73.apk
+          test -s site/apks/CleanSweep-v2.73.zip
+          test -s site/apks/Vasanthi-AI-v1.0.apk
+          test -s site/apks/Vasanthi-AI-v1.0.zip
+          test -s site/apks/PulseEQ-v1.9.apk
+          test -s site/apks/PulseEQ-v1.9.zip
+          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.apk
+          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.zip
+          test -s site/apks/Secret-Message-v1.1.3.apk
+          test -s site/apks/Secret-Message-v1.1.3.zip
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
