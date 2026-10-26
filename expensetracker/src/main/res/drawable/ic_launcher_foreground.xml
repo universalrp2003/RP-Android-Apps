@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A rupee sign: money in, money out, and nothing else. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- top bar -->
+    <path
+        android:fillColor="#FF4ADE80"
+        android:pathData="M38,31 h30 v6 h-30 z" />
+    <!-- the vertical spine -->
+    <path
+        android:fillColor="#FF4ADE80"
+        android:pathData="M44,31 h7 v40 h-7 z" />
+    <!-- the nose: the stroke that makes it a rupee and not an R -->
+    <path
+        android:fillColor="#FF4ADE80"
+        android:pathData="M51,47 h19 v6 h-19 z" />
+    <!-- the two bars at the foot -->
+    <path
+        android:fillColor="#FF4ADE80"
+        android:pathData="M38,63 h30 v6 h-30 z" />
+    <path
+        android:fillColor="#FF4ADE80"
+        android:pathData="M38,71 h26 v6 h-26 z" />
+</vector>

@@ -43,13 +43,19 @@
         </activity>
 
         <!--
-          Keeps the ledger current without the app being open. Declared with the default
-          (non-exported) visibility, so only the system can deliver to it.
+          Keeps the ledger current without the app being open.
+
+          exported="true" is required here and is not a hole: SMS_RECEIVED is a protected
+          broadcast, and android:permission="android.permission.BROADCAST_SMS" means only the
+          system - which holds that permission - can deliver to this receiver. A receiver marked
+          exported="false" is silently skipped for this broadcast, which is a live-update path
+          that never fires. This is the same declaration SMS Guard uses.
         -->
         <receiver
             android:name=".SmsReceiver"
-            android:exported="false">
-            <intent-filter>
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
             </intent-filter>
         </receiver>
