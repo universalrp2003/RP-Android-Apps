@@ -172,6 +172,9 @@ class TransactionStoreTest {
         direction = direction,
         amountInr = amount,
         counterparty = counterparty,
+        // Forwarded, not dropped. The parameter existed and was ignored, so the self-transfer cases
+        // below were testing ordinary debits and passing for the wrong reason.
+        isSelfTransfer = isSelfTransfer,
     )
 
     @Test

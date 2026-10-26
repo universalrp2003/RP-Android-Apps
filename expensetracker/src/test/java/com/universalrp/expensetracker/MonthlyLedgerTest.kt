@@ -43,6 +43,10 @@ class MonthlyLedgerTest {
         direction = direction,
         amountInr = amount,
         counterparty = counterparty,
+        // The flag has to be forwarded. It was accepted as a parameter and silently dropped, so
+        // every "self-transfer" in this suite was really an ordinary debit and the suite passed for
+        // the wrong reason until a run with real assertions caught it.
+        isSelfTransfer = isSelfTransfer,
     )
 
     // ------------------------------------------------------------------- the totals
@@ -73,7 +77,10 @@ class MonthlyLedgerTest {
         val totals = MonthlyLedger.summarise(results, october, zone)
         assertEquals(700.0, totals.spend, 0.001)
         assertEquals(5000.0, totals.income, 0.001)
-        assertEquals(-4300.0, totals.net, 0.001)
+        // net is income minus spend, so a month that earned more than it spent is positive. This
+        // was written as -4300 on the assumption that spend always exceeds income, which is true of
+        // an ordinary month and false of this one.
+        assertEquals(4300.0, totals.net, 0.001)
         assertEquals(2, totals.spendCount)
         assertEquals(1, totals.incomeCount)
     }
