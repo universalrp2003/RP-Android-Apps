@@ -2,7 +2,16 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/SpeechEngine.kt:142:17 Reference has a nullable type 'Function1<RecognitionMode, Unit>?'. Use explicit '?.invoke' to make a function-like call instead.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:22:9 Platform declaration clash: The following declarations have the same JVM signature (setListening(Z)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:30:9 Platform declaration clash: The following declarations have the same JVM signature (setLevel(F)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:38:9 Platform declaration clash: The following declarations have the same JVM signature (setMode(Lcom/universalrp/vasanthi/RecognitionMode;)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:53:9 Platform declaration clash: The following declarations have the same JVM signature (setOverlayVisible(Z)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:57:9 Platform declaration clash: The following declarations have the same JVM signature (setPreferOffline(Z)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:74:5 Platform declaration clash: The following declarations have the same JVM signature (setPreferOffline(Z)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:78:5 Platform declaration clash: The following declarations have the same JVM signature (setListening(Z)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:82:5 Platform declaration clash: The following declarations have the same JVM signature (setMode(Lcom/universalrp/vasanthi/RecognitionMode;)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:86:5 Platform declaration clash: The following declarations have the same JVM signature (setLevel(F)V):
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/vasanthi/src/main/java/com/universalrp/vasanthi/VasanthiState.kt:90:5 Platform declaration clash: The following declarations have the same JVM signature (setOverlayVisible(Z)V):
 ```
 
 ## Gradle summary
@@ -28,8 +37,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m
-287 actionable tasks: 150 executed, 137 from cache
+BUILD FAILED in 3m 31s
+288 actionable tasks: 151 executed, 137 from cache
 ```
 (no failing tests recorded in the JUnit XML)
 
