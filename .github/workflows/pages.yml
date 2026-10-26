@@ -52,6 +52,7 @@ jobs:
               ("rp-vocal-remover-studio-v0.1.15", "RP-Vocal-Remover-Studio-v0.1.15.apk", 65032741, "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
               ("expense-tracker-v1.0", "Expense-Tracker-v1.0.apk", 11547831, "6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7"),
+              ("expense-tracker-v1.1", "Expense-Tracker-v1.1.apk", 11564215, "dd39091be62fba2d725300ced0132ae04a4da5ff528ca0be73638845272ee3f9"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -88,6 +89,8 @@ jobs:
           test -s site/apks/Oor-Arivippu-v1.1.9.zip
           test -s site/apks/Expense-Tracker-v1.0.apk
           test -s site/apks/Expense-Tracker-v1.0.zip
+          test -s site/apks/Expense-Tracker-v1.1.apk
+          test -s site/apks/Expense-Tracker-v1.1.zip
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

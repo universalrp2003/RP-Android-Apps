@@ -24,7 +24,7 @@ Expense Tracker reads the owner's bank and UPI SMS and shows the month as catego
 
 - [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Expense-Tracker-v1.1.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.1/Expense-Tracker-v1.1.apk) · [release notes](../releases/expense-tracker-v1.1.md) · [all 9 RP Ideas apps](../README.md)
 
-> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The published asset for 1.0 was 11,547,831 bytes, SHA-256 6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7. The 1.1 digest is recorded here once its asset has been read back, because a release build is not byte-reproducible and the candidate digest is never the published one.
+> The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning. The published asset for 1.0 was 11,547,831 bytes, SHA-256 6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7. The 1.1 asset is 11,564,215 bytes, SHA-256 dd39091be62fba2d725300ced0132ae04a4da5ff528ca0be73638845272ee3f9.
 
 ## Device test status
 
