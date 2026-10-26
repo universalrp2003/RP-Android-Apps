@@ -16,9 +16,8 @@ automatically; until then a neat "coming soon" placeholder is shown.
 | Expense Tracker | `expense-tracker-card.jpg` |
 | Voice Notes | `voice-notes-card.jpg` |
 | Vasanthi AI | `vasanthi-ai-card.jpg` |
-| Emergency Alert | `emergency-alert-card.jpg` |
 
-The four `-card.jpg` files above are **concept illustrations, not screenshots**. They were drawn
+The three `-card.jpg` files above are **concept illustrations, not screenshots**. They were drawn
 because no phone screenshot exists for those apps yet, and a card that claims to show an app it
 cannot show is worse than a card that says plainly it is an illustration. Each one is labelled as a
 concept illustration on the card itself. When a real screenshot arrives, drop it in under the same
