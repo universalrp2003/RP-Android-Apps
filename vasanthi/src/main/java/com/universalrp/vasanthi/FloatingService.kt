@@ -299,26 +299,146 @@ class FloatingService : Service() {
         startCapture()
 
         speech = speech ?: SpeechEngine(this)
+        // The microphone is handed over for one attempt at a time, and taken straight back. The
+        // recognition service runs in another application's process, so it cannot share the
+        // microphone with the classifier that names sounds.
+        speech?.onAttemptStarting = { releaseMic() }
+        speech?.onAttemptFinished = { onSpeechAttemptFinished() }
         speech?.start(
             preferOffline = VasanthiState.preferOffline,
             onText = { text -> VasanthiState.recordSpeech(text) },
             onModeChanged = { mode -> VasanthiState.mode = mode },
+            onProblemChanged = { problem -> VasanthiState.problem = problem },
         )
 
         VasanthiState.listening = true
         handler.post(refresher)
+        scheduleSpeechAttempt()
     }
 
     private fun stopListening() {
+        handler.removeCallbacks(speechTick)
+        handler.removeCallbacks(speechWatchdog)
         runCatching { audioRecord?.stop() }
         captureThread?.interrupt()
         captureThread = null
         audioRecord?.release()
         audioRecord = null
         pendingCount = 0
+        micWithRecognizer = false
         speech?.stop()
         VasanthiState.onStopped()
     }
+
+    // ---------------------------------------------------------------- microphone sharing
+
+    /**
+     * True while the recogniser holds the microphone and the classifier is paused.
+     *
+     * The classifier needs the raw microphone continuously to name sounds, and the recogniser
+     * needs it too. They cannot have it at the same time: the recognition service runs inside
+     * another application's process, and Android will not let two applications capture at once.
+     * The first version of this app held the microphone open for the classifier and then asked the
+     * recogniser to start anyway, so every attempt failed and the app reported that the phone had
+     * no recogniser at all, while sound naming worked perfectly.
+     *
+     * So the microphone is handed over for one attempt at a time. Sound naming is the app's
+     * primary job and it is never stopped for long.
+     */
+    private var micWithRecognizer = false
+
+    /** Hands the microphone to the recogniser. */
+    private fun releaseMic() {
+        if (micWithRecognizer) return
+        micWithRecognizer = true
+        val record = audioRecord
+        val reader = captureThread
+        audioRecord = null
+        captureThread = null
+        // stop() before anything else: it is what makes a read that is already in flight return,
+        // so the thread leaves its loop on its own rather than having to be killed under it.
+        runCatching { record?.stop() }
+        reader?.interrupt()
+        // Wait for it to actually leave before releasing the object it reads from. This happens
+        // several times a minute, so it has to be short: stop() has already unblocked the read,
+        // and what is left is at most one classification pass.
+        runCatching { reader?.join(READER_JOIN_MS) }
+        runCatching { record?.release() }
+        // Drop the half-filled window rather than carry it across the gap, so a window is never
+        // half from before the handover and half from after it.
+        pendingCount = 0
+        VasanthiState.level = 0f
+    }
+
+    /** Takes the microphone back for the classifier. */
+    private fun resumeMic() {
+        micWithRecognizer = false
+        pendingCount = 0
+        if (VasanthiState.listening) startCapture()
+    }
+
+    /** Gives the recogniser a turn with the microphone, unless it has given up. */
+    private val speechTick = object : Runnable {
+        override fun run() {
+            if (!VasanthiState.listening) return
+            if (micWithRecognizer) {
+                // Every path that posts this tick has already taken the microphone back, so this
+                // should be unreachable. Reschedule rather than silently stopping recognition for
+                // good, which is the one failure this schedule must not have.
+                handler.postDelayed(this, SPEECH_GAP_MS)
+                return
+            }
+            if (VasanthiState.mode == RecognitionMode.UNAVAILABLE) return
+            releaseMic()
+            val started = speech?.attempt() ?: false
+            if (!started) {
+                resumeMic()
+                handler.postDelayed(this, SPEECH_GAP_MS)
+                return
+            }
+            handler.postDelayed(speechWatchdog, SPEECH_MAX_MS)
+        }
+    }
+
+    /**
+     * A recogniser that never reports back must not keep the microphone.
+     *
+     * The platform is not obliged to call the listener at all, and a silent recogniser would
+     * otherwise stop sound naming for good, which is the one failure this app cannot afford.
+     */
+    private val speechWatchdog = object : Runnable {
+        override fun run() {
+            if (!micWithRecognizer) return
+            resumeMic()
+            handler.postDelayed(speechTick, SPEECH_GAP_MS)
+        }
+    }
+
+    private fun onSpeechAttemptFinished() {
+        handler.removeCallbacks(speechWatchdog)
+        val wasHeld = micWithRecognizer
+        resumeMic()
+        if (wasHeld && VasanthiState.listening) {
+            // Ask less often when it keeps failing for the same reason, so a phone with no Tamil
+            // pack is not retrying every few seconds all day.
+            handler.postDelayed(speechTick, SPEECH_GAP_MS + (speech?.backoffMs() ?: 0L))
+        }
+    }
+
+    private fun scheduleSpeechAttempt() {
+        handler.removeCallbacks(speechTick)
+        handler.removeCallbacks(speechWatchdog)
+        handler.postDelayed(speechTick, FIRST_SPEECH_DELAY_MS)
+    }
+
+    /**
+     * A line naming what to do, when recognition is failing for a fixable reason.
+     *
+     * A mode on its own tells the owner what the app is trying. This tells him why it is not
+     * working, which is the part he can actually act on, and the three common causes need three
+     * different actions. The wording is shared with the main screen so the two never disagree.
+     */
+    private fun problemNote(): String = recognitionProblemNote(VasanthiState.problem)
 
     private fun stopEverything() {
         handler.removeCallbacks(refresher)
@@ -342,6 +462,9 @@ class FloatingService : Service() {
      * app would silently do nothing on exactly that hardware.
      */
     private fun startCapture() {
+        // The recogniser owns the microphone while it is listening. Opening here as well would
+        // fail the very next attempt it makes.
+        if (micWithRecognizer) return
         val minBuffer = AudioRecord.getMinBufferSize(
             SoundClassifier.SAMPLE_RATE,
             AudioFormat.CHANNEL_IN_MONO,
@@ -439,7 +562,7 @@ class FloatingService : Service() {
                 "No speech recogniser. Sound naming still works.",
             )
         }
-        views.mode.text = modeText
+        views.mode.text = modeText + problemNote()
 
         handleUrgent()
     }
@@ -480,6 +603,35 @@ class FloatingService : Service() {
         private const val REFRESH_MS = 200L
         private const val URGENT_BUZZ_MS = 220L
         private const val TAP_SLOP = 12f
+
+        /**
+         * How long the classifier keeps the microphone between recognition attempts.
+         *
+         * Long enough for several windows of sound naming, because that is the job the app is
+         * really for, and short enough that a sentence spoken in the gap is not missed for long.
+         */
+        private const val SPEECH_GAP_MS = 4_000L
+
+        /**
+         * The longest one recognition attempt may hold the microphone.
+         *
+         * The platform is not obliged to report back, so this is the backstop that guarantees
+         * sound naming resumes. It has to be generous, because the recogniser needs time to
+         * initialise before it can hear anything.
+         */
+        private const val SPEECH_MAX_MS = 6_000L
+
+        /** Let the classifier settle before the recogniser's first turn. */
+        private const val FIRST_SPEECH_DELAY_MS = 1_200L
+
+        /**
+         * How long to wait for the microphone reader to leave before releasing the AudioRecord.
+         *
+         * Bounded, because this is on the main thread and happens several times a minute. stop()
+         * has already unblocked any read in flight, so the only thing being waited for is the tail
+         * of one classification pass.
+         */
+        private const val READER_JOIN_MS = 150L
 
         fun start(context: Context) {
             val intent = Intent(context, FloatingService::class.java)

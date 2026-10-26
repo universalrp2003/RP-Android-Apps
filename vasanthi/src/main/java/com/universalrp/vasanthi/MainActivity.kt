@@ -382,6 +382,12 @@ private fun VasanthiScreen() {
                         fontSize = 11.sp,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = recognitionStatus(),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                    )
                 }
             }
         }
@@ -623,4 +629,42 @@ private fun timeText(timestampMs: Long): String {
     val minute = local.minute.toString().padStart(2, '0')
     val meridiem = if (local.hour < 12) "AM" else "PM"
     return "$shown:$minute $meridiem"
+}
+
+/**
+ * What recognition is doing right now, and why not when it is not.
+ *
+ * The owner needs to be able to tell "she has not spoken yet" from "this cannot work", and those
+ * look identical on a screen that only reports whether listening is on. Reading VasanthiState here
+ * rather than passing values in keeps the line live without another observable.
+ */
+private fun recognitionStatus(): String {
+    val (ta, en) = when {
+        !VasanthiState.listening -> Pair(
+            "கேட்பது நிறுத்தப்பட்டுள்ளது. ஒலி அறிதலும் நின்றுள்ளது.",
+            "Listening is stopped, so sound naming is stopped too.",
+        )
+        VasanthiState.mode == RecognitionMode.UNAVAILABLE &&
+            VasanthiState.problem == RecognitionProblem.NO_RECOGNISER -> Pair(
+            "இந்தத் தொலைபேசியில் பேச்சு அறிதல் சேவை இல்லை. ஒலி அறிதல் மட்டும் வேலை செய்யும்.",
+            "This phone has no speech recognition service. Sound naming still works.",
+        )
+        VasanthiState.mode == RecognitionMode.UNAVAILABLE -> Pair(
+            "பேச்சு அறிதல் கிடைக்கவில்லை. ஒலி அறிதல் மட்டும் வேலை செய்யும்.",
+            "Speech recognition is unavailable. Sound naming still works.",
+        )
+        VasanthiState.problem != RecognitionProblem.NONE -> Pair(
+            "பேச்சு அறிதல் தடையில் உள்ளது. காரணம் கீழே காட்டப்படும்.",
+            "Speech recognition is blocked. The reason is shown below.",
+        )
+        VasanthiState.mode == RecognitionMode.ON_DEVICE -> Pair(
+            "பேச்சு அறிதல் இந்தத் தொலைபேசியிலேயே நடக்கிறது. ஒலி வெளியே செல்வதில்லை.",
+            "Speech is recognised on this phone. Audio does not leave it.",
+        )
+        else -> Pair(
+            "பேச்சு அறிதல் Google-இல் நடக்கிறது. ஒலி இணையம் வழியாகச் செல்கிறது.",
+            "Speech is recognised by Google. Audio is sent over the internet.",
+        )
+    }
+    return tr(ta, en) + recognitionProblemNote(VasanthiState.problem)
 }

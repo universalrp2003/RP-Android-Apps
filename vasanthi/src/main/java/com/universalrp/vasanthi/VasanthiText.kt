@@ -16,6 +16,40 @@ import com.universalrp.updates.AppLanguageState
 fun tr(ta: String, en: String): String =
     if (AppLanguageState.current == AppLanguage.TAMIL) ta else en
 
+/**
+ * A line naming why recognition is producing no text, when it is not.
+ *
+ * Returns an empty string when nothing is wrong, so callers can append it unconditionally. A
+ * missing Tamil pack, no internet and a microphone somebody else is holding each need a different
+ * fix, so they are named separately rather than folded into one apology.
+ */
+fun recognitionProblemNote(problem: RecognitionProblem): String {
+    val (ta, en) = when (problem) {
+        RecognitionProblem.NO_RECOGNISER -> Pair(
+            "\nஇந்தத் தொலைபேசியில் பேச்சு அறிதல் சேவை இல்லை.",
+            "\nThis phone has no speech recognition service.",
+        )
+        RecognitionProblem.NO_TAMIL -> Pair(
+            "\nதமிழ் மொழிக் கட்டி இல்லை. அமைப்பில் தமிழைப் பதிவிறக்கச் செய்யுங்கள்.",
+            "\nNo Tamil language pack. Download Tamil in Settings.",
+        )
+        RecognitionProblem.NO_NETWORK -> Pair(
+            "\nஇணையம் இல்லை. இணைப்பைச் சரிபார்க்கவும்.",
+            "\nNo internet. Check the connection.",
+        )
+        RecognitionProblem.MIC_BUSY -> Pair(
+            "\nமைக் வேறு செயலியால் பயன்பாட்டில் உள்ளது.",
+            "\nThe microphone is in use by another app.",
+        )
+        RecognitionProblem.OTHER -> Pair(
+            "\nபேச்சு அறிதல் தொடங்க முடியவில்லை.",
+            "\nSpeech recognition could not start.",
+        )
+        RecognitionProblem.NONE -> return ""
+    }
+    return tr(ta, en)
+}
+
 /** A number formatted the way an Indian screen reads it: 1,23,456. */
 fun indianGrouping(value: Long): String {
     val negative = value < 0

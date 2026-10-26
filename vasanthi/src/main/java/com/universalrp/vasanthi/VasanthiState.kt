@@ -38,6 +38,15 @@ object VasanthiState {
     /** Which recogniser is in use, so the screen can say so rather than imply either. */
     var mode by mutableStateOf(RecognitionMode.UNAVAILABLE)
 
+    /**
+     * Why recognition is producing no text, if it is not.
+     *
+     * "No speech recogniser" alone sends the owner looking for a setting that does not exist. A
+     * missing Tamil pack, no internet and a held microphone each need a different fix, so the
+     * screen can name which one it is.
+     */
+    var problem by mutableStateOf(RecognitionProblem.NONE)
+
     /** The saved history, newest first. */
     var entries by mutableStateOf<List<VasanthiEntry>>(emptyList())
 
