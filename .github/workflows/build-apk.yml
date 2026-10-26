@@ -289,6 +289,7 @@ jobs:
             radio/build/test-results/test*UnitTest/*.xml
             vocalremover/build/test-results/test*UnitTest/*.xml
             secretmessage/product/build/test-results/testDebugUnitTest/*.xml
+            expensetracker/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
 
       - name: Verify built APKs
@@ -1642,41 +1643,11 @@ jobs:
             else
               echo "_No Gradle build log: the failure happened before or after the build._"
             fi
-            # A failing unit test is the one failure this report used to be blind to: the Gradle
-            # summary only says "there were failing tests" and names none of them, which turns a
-            # wrong assertion into a guessing game. The JUnit XML is right there, so read it.
-            echo ""
-            echo "## Failing unit tests"
-            echo '```'
-            python3 - <<'PYEOF_TESTS' || true
-import glob
-import xml.etree.ElementTree as ET
+            # A failing unit test is the one failure this report used to be blind to: Gradle
+            # says only "there were failing tests" and names none of them, which turns a wrong
+            # assertion into guesswork. The JUnit XML is right there, so read it.
+            python3 tools/report_failing_tests.py || true
 
-found = False
-patterns = [
-    "*/build/test-results/**/*.xml",
-    "secretmessage/product/build/test-results/**/*.xml",
-]
-paths = []
-for pattern in patterns:
-    paths.extend(sorted(glob.glob(pattern, recursive=True)))
-for path in paths:
-    try:
-        root = ET.parse(path).getroot()
-    except Exception:
-        continue
-    for case in root.iter("testcase"):
-        for bad in list(case.iter("failure")) + list(case.iter("error")):
-            found = True
-            print("%s :: %s" % (case.get("classname"), case.get("name")))
-            text = (bad.get("message") or bad.text or "").strip()
-            for line in text.splitlines()[:8]:
-                print("    " + line)
-            print()
-if not found:
-    print("(no failing tests recorded in the JUnit XML)")
-PYEOF_TESTS
-            echo '```'
             if [ -f verify.log ]; then
               echo ""
               echo "## APK verification output"
