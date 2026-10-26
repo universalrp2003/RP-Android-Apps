@@ -165,14 +165,12 @@ object TamilTranslator {
         modelReady = false
     }
 
-    companion object {
-        /** How many seconds to keep checking for the model before giving up on a line. */
-        private const val MODEL_WAIT_ATTEMPTS = 10
+    /** How many seconds to keep checking for the model before giving up on a line. */
+    private const val MODEL_WAIT_ATTEMPTS = 10
 
-        /** How long between those checks. */
-        private const val MODEL_WAIT_MS = 1_000L
+    /** How long between those checks. */
+    private const val MODEL_WAIT_MS = 1_000L
 
-        /** How many lines are currently waiting for the model, so one line does not spawn many. */
-        private var attempts = 0
-    }
+    /** How many lines are currently waiting for the model, so one line does not spawn many. */
+    private var attempts = 0
 }

@@ -29,7 +29,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -461,18 +460,6 @@ private fun PermissionRow(
 }
 
 @Composable
-private fun Bullet(text: String) {
-    Row(modifier = Modifier.padding(vertical = 3.dp)) {
-        Text(
-            text = "•",
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.width(16.dp),
-        )
-        Text(text = text, fontSize = 13.sp)
-    }
-}
-
-@Composable
 private fun HistoryRow(entry: VasanthiEntry) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -563,8 +550,8 @@ private fun timeText(timestampMs: Long): String {
 private fun switchRow(
     title: String,
     checked: Boolean,
-    onChange: (Boolean) -> Unit,
     detail: String = "",
+    onChange: (Boolean) -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f)) {
