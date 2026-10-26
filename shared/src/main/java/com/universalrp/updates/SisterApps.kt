@@ -101,6 +101,15 @@ object SisterApps {
             aboutLabel = "Secret Message — GitHub release",
         ),
         SisterApp(
+            id = "expensetracker",
+            name = "Expense Tracker",
+            tamilName = "செலவு கண்காணிப்பு",
+            tagPrefix = "expense-tracker",
+            version = "1.0",
+            packageName = "com.universalrp.expensetracker",
+            aboutLabel = "Expense Tracker — GitHub release",
+        ),
+        SisterApp(
             id = "voicenotes",
             name = "Voice Notes",
             tamilName = "குரல் குறிப்பு",

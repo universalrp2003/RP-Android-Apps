@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="expensetracker_bg">#0A0F0B</color>
+
+    <!--
+      B2 - a green ledger, deliberately not the purple of Voice Notes. The two apps sit side by
+      side on the same phone and the owner should be able to tell them apart from the icon alone.
+    -->
+    <style name="Theme.ExpenseTracker" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/expensetracker_bg</item>
+        <item name="android:statusBarColor">@color/expensetracker_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:navigationBarColor">@color/expensetracker_bg</item>
+    </style>
+</resources>
