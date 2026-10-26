@@ -17,8 +17,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -220,10 +222,17 @@ fun VoiceNotesScreen(
         }
     }
 
+    // targetSdk is 36, so on Android 15 and later this app cannot opt out of edge-to-edge: the
+    // window always extends behind the status and navigation bars. Without these insets the title
+    // is drawn under the clock and the footer under the navigation bar, which is exactly what the
+    // owner's screenshots showed. On older Android the decor already consumes those insets, so the
+    // modifiers are no-ops there rather than double padding.
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Background),
+            .background(Background)
+            .statusBarsPadding()
+            .navigationBarsPadding(),
     ) {
         // ---------------------------------------------------------------- header
         Row(

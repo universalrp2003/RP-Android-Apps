@@ -103,9 +103,9 @@ object SisterApps {
         SisterApp(
             id = "voicenotes",
             name = "Voice Notes",
-            tamilName = "குறல் குறிப்பு",
+            tamilName = "குரல் குறிப்பு",
             tagPrefix = "voice-notes",
-            version = "1.0",
+            version = "1.1",
             packageName = "com.universalrp.voicenotes",
             aboutLabel = "Voice Notes — GitHub release",
         ),
