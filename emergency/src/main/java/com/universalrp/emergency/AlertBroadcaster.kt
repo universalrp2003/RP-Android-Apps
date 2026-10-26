@@ -1,6 +1,5 @@
 package com.universalrp.emergency
 
-import android.util.Log
 import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
@@ -22,8 +21,6 @@ import java.net.NetworkInterface
  * send is in flight.
  */
 object AlertBroadcaster {
-
-    private const val TAG = "AlertBroadcaster"
 
     @Volatile
     private var socket: DatagramSocket? = null
@@ -138,13 +135,4 @@ object AlertBroadcaster {
     const val MAX_PACKET = 1_400
 
     const val SEND_COPIES = 3
-
-    private fun debugLog(message: String) {
-        if (BuildConfig.DEBUG) Log.d(TAG, message)
-    }
-
-    init {
-        // Keep a reference so the object is never collected while the service holds it.
-        debugLog("broadcaster ready")
-    }
 }
