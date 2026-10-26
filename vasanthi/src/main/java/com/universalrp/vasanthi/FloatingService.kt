@@ -167,7 +167,7 @@ class FloatingService : Service() {
             .onSuccess {
                 bubbleView = view
                 bubbleParams = params
-                VasanthiState.setOverlayVisible(true)
+                VasanthiState.overlayVisible = true
             }
     }
 
@@ -175,7 +175,7 @@ class FloatingService : Service() {
         bubbleView?.let { runCatching { windowManager.removeView(it) } }
         bubbleView = null
         bubbleParams = null
-        VasanthiState.setOverlayVisible(false)
+        VasanthiState.overlayVisible = false
     }
 
     private fun showPanel() {
@@ -267,7 +267,7 @@ class FloatingService : Service() {
         if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
             android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
-            VasanthiState.setMode(RecognitionMode.UNAVAILABLE)
+            VasanthiState.mode = RecognitionMode.UNAVAILABLE
             return
         }
 
@@ -278,10 +278,10 @@ class FloatingService : Service() {
         speech?.start(
             preferOffline = VasanthiState.preferOffline,
             onText = { text -> VasanthiState.recordSpeech(text) },
-            onModeChanged = { mode -> VasanthiState.setMode(mode) },
+            onModeChanged = { mode -> VasanthiState.mode = mode },
         )
 
-        VasanthiState.setListening(true)
+        VasanthiState.listening = true
         handler.post(refresher)
     }
 
@@ -350,7 +350,7 @@ class FloatingService : Service() {
                 if (state != AudioRecord.RECORDSTATE_RECORDING) break
                 val read = record.read(shorts, 0, shorts.size)
                 if (read <= 0) continue
-                VasanthiState.setLevel(SoundMeter.levelOf(shorts, read))
+                VasanthiState.level = SoundMeter.levelOf(shorts, read)
                 if (pendingCount + read < SoundClassifier.WINDOW_SAMPLES) {
                     for (i in 0 until read) pending[pendingCount + i] = shorts[i] / 32768f
                     pendingCount += read

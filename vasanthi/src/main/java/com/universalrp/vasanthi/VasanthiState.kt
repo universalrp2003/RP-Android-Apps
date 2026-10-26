@@ -14,47 +14,44 @@ import java.util.concurrent.atomic.AtomicLong
  * history screen shows. Putting the state in a plain singleton rather than in a ViewModel means
  * the Service, which has no composition scope of its own, can update it just as easily as the
  * Activity can read it.
+ *
+ * The properties are deliberately settable rather than `private set` with wrapper functions. A
+ * `private set` still emits a JVM setter called setXxx, and a public function of the same name
+ * emits the same signature, so Kotlin rejects the pair as a platform declaration clash. Wrappers
+ * would have to be named something else to compile, which is a naming constraint bought for no
+ * gain on an object that exists to be written from two places.
  */
 object VasanthiState {
 
     /** True while the microphone is open. */
     var listening by mutableStateOf(false)
-        private set
 
     /** The sound the classifier is most confident about right now, if it has a Tamil name. */
     var currentSound by mutableStateOf<SoundScore?>(null)
-        private set
 
     /** The room's loudness, 0..1. */
     var level by mutableStateOf(0f)
-        private set
 
     /** The most recent line of recognised Tamil speech. */
     var liveSpeech by mutableStateOf("")
-        private set
 
     /** Which recogniser is in use, so the screen can say so rather than imply either. */
     var mode by mutableStateOf(RecognitionMode.UNAVAILABLE)
-        private set
 
     /** The saved history, newest first. */
     var entries by mutableStateOf<List<VasanthiEntry>>(emptyList())
-        private set
 
     /**
      * When an urgent sound was last heard. The floating window watches this to vibrate, and the
      * value is a timestamp rather than a boolean so a repeat of the same sound still triggers it.
      */
     var urgentAt by mutableStateOf(0L)
-        private set
 
     /** Whether the floating window is on screen at all. */
     var overlayVisible by mutableStateOf(false)
-        private set
 
     /** Whether the on-device-only speech mode is selected. */
     var preferOffline by mutableStateOf(true)
-        private set
 
     private var store: VasanthiStore? = null
 
@@ -69,26 +66,6 @@ object VasanthiState {
             store = VasanthiStore.create(context)
         }
         entries = store?.load().orEmpty()
-    }
-
-    fun setPreferOffline(value: Boolean) {
-        preferOffline = value
-    }
-
-    fun setListening(value: Boolean) {
-        listening = value
-    }
-
-    fun setMode(value: RecognitionMode) {
-        mode = value
-    }
-
-    fun setLevel(value: Float) {
-        level = value
-    }
-
-    fun setOverlayVisible(value: Boolean) {
-        overlayVisible = value
     }
 
     /** Records a spoken line. Only called with final results, so the history is not flooded. */

@@ -356,7 +356,7 @@ private fun VasanthiScreen() {
                         Switch(
                             checked = !VasanthiState.preferOffline,
                             onCheckedChange = { cloud ->
-                                VasanthiState.setPreferOffline(!cloud)
+                                VasanthiState.preferOffline = !cloud
                             },
                         )
                     }
