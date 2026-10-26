@@ -17,6 +17,20 @@ fun tr(ta: String, en: String): String =
     if (AppLanguageState.current == AppLanguage.TAMIL) ta else en
 
 /**
+ * Whether a line is written in the Latin alphabet, which for this app means it is English.
+ *
+ * The recogniser is asked for Tamil and usually gives Tamil, but not always. Most of the
+ * letters have to be Latin for the line to count, because a Tamil sentence that happens to
+ * contain one English word in it is still a Tamil sentence.
+ */
+fun isLatinScript(text: String): Boolean {
+    val letters = text.count { it.isLetter() }
+    if (letters == 0) return false
+    val latin = text.count { it.code in 0x0041..0x005A || it.code in 0x0061..0x007A }
+    return latin * 2 > letters
+}
+
+/**
  * A line naming why recognition is producing no text, when it is not.
  *
  * Returns an empty string when nothing is wrong, so callers can append it unconditionally. A
@@ -28,10 +42,6 @@ fun recognitionProblemNote(problem: RecognitionProblem): String {
         RecognitionProblem.NO_RECOGNISER -> Pair(
             "\nஇந்தத் தொலைபேசியில் பேச்சு அறிதல் சேவை இல்லை.",
             "\nThis phone has no speech recognition service.",
-        )
-        RecognitionProblem.NO_TAMIL -> Pair(
-            "\nதமிழ் மொழிக் கட்டி இல்லை. அமைப்பில் தமிழைப் பதிவிறக்கச் செய்யுங்கள்.",
-            "\nNo Tamil language pack. Download Tamil in Settings.",
         )
         RecognitionProblem.NO_NETWORK -> Pair(
             "\nஇணையம் இல்லை. இணைப்பைச் சரிபார்க்கவும்.",

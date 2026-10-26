@@ -26,8 +26,8 @@ android {
         applicationId = "com.universalrp.vasanthi"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.1"
         vectorDrawables.useSupportLibrary = true
         // ARM only, the same restriction Vocal Remover already carries. The phone this app is for
         // is a 4 GB Samsung, which is always ARM; the x86 and x86_64 libraries exist for emulators
@@ -108,6 +108,10 @@ dependencies {
     // costs a whole CI round for no benefit. The Apache-2.0 model itself is committed under
     // src/main/assets with its own provenance recorded in the module README.
     implementation("org.tensorflow:tensorflow-lite:2.16.1")
+    // English->Tamil translation, on device. The recogniser returns Tamil or English depending on
+    // what the speaker used, and the owner asked for English speech to arrive as Tamil, so it has
+    // to be translated rather than dropped.
+    implementation("com.google.mlkit:translate:17.0.2")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1")

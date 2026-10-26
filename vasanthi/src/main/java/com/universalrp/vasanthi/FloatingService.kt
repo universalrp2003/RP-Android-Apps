@@ -84,7 +84,8 @@ class FloatingService : Service() {
         val levelNote: TextView = root.findViewById(R.id.panel_level_note)
         val speech: TextView = root.findViewById(R.id.panel_speech)
         val speechScroll: ScrollView = root.findViewById(R.id.panel_speech_scroll)
-        val listen: Button = root.findViewById(R.id.panel_listen)
+        val soundToggle: Button = root.findViewById(R.id.panel_sound_toggle)
+        val voiceToggle: Button = root.findViewById(R.id.panel_voice_toggle)
         val mode: TextView = root.findViewById(R.id.panel_mode)
     }
 
@@ -95,6 +96,9 @@ class FloatingService : Service() {
         VasanthiState.attach(this)
         windowManager = getSystemService(WindowManager::class.java)
         vibrator = resolveVibrator()
+        // Only downloads the Tamil model if the recogniser ever hands back English, so a
+        // Tamil-speaking household never pays for a capability it does not use.
+        TamilTranslator.prepare()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -222,11 +226,21 @@ class FloatingService : Service() {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             )
         }
-        view.findViewById<Button>(R.id.panel_listen).setOnClickListener {
-            if (VasanthiState.listening) stopListening() else startListening()
+        // A switch is thrown by hand, at any moment, from a tap on a view a Service owns. Neither
+        // the apply nor the redraw may take the process down with it.
+        view.findViewById<Button>(R.id.panel_sound_toggle).setOnClickListener {
+            runCatching {
+                VasanthiState.soundEnabled = !VasanthiState.soundEnabled
+                applyEnabled()
+                refreshPanel()
+            }
         }
-        view.findViewById<Button>(R.id.panel_stop).setOnClickListener {
-            stopEverything()
+        view.findViewById<Button>(R.id.panel_voice_toggle).setOnClickListener {
+            runCatching {
+                VasanthiState.voiceEnabled = !VasanthiState.voiceEnabled
+                applyEnabled()
+                refreshPanel()
+            }
         }
         runCatching { windowManager.addView(view, params) }
             .onSuccess {
@@ -288,43 +302,79 @@ class FloatingService : Service() {
 
     private fun startListening() {
         if (VasanthiState.listening) return
+        if (!VasanthiState.anyEnabled) return
         if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
             android.content.pm.PackageManager.PERMISSION_GRANTED
         ) {
-            VasanthiState.mode = RecognitionMode.UNAVAILABLE
+            VasanthiState.problem = RecognitionProblem.NO_RECOGNISER
             return
         }
 
+        VasanthiState.listening = true
         classifier = classifier ?: SoundClassifier.create(this)
-        startCapture()
+        if (VasanthiState.soundEnabled) startCapture()
+        if (VasanthiState.voiceEnabled) startSpeech()
 
+        handler.post(refresher)
+        if (VasanthiState.voiceEnabled) scheduleSpeechAttempt()
+    }
+
+    /**
+     * Creates the recogniser and wires it to the microphone handover.
+     *
+     * The microphone is handed over for one attempt at a time and taken straight back, because the
+     * recognition service runs in another application's process and cannot share the microphone
+     * with the classifier that names sounds.
+     */
+    private fun startSpeech() {
         speech = speech ?: SpeechEngine(this)
-        // The microphone is handed over for one attempt at a time, and taken straight back. The
-        // recognition service runs in another application's process, so it cannot share the
-        // microphone with the classifier that names sounds.
         speech?.onAttemptStarting = { releaseMic() }
         speech?.onAttemptFinished = { onSpeechAttemptFinished() }
         speech?.start(
-            preferOffline = VasanthiState.preferOffline,
             onText = { text -> VasanthiState.recordSpeech(text) },
-            onModeChanged = { mode -> VasanthiState.mode = mode },
+            onPartial = { text -> VasanthiState.liveSpeech = text },
             onProblemChanged = { problem -> VasanthiState.problem = problem },
         )
+    }
 
-        VasanthiState.listening = true
-        handler.post(refresher)
-        scheduleSpeechAttempt()
+    /**
+     * Applies a change to either switch without disturbing the other.
+     *
+     * They are separate switches rather than one master because they compete for a single
+     * microphone. Turning sound naming off hands it to the recogniser outright, which is both more
+     * accurate and reaches further, and that is the whole reason the owner asked for two.
+     */
+    private fun applyEnabled() {
+        if (!VasanthiState.anyEnabled) {
+            stopEverything()
+            return
+        }
+        if (!VasanthiState.listening) {
+            startListening()
+            return
+        }
+        if (VasanthiState.soundEnabled) {
+            if (audioRecord == null && !micWithRecognizer) startCapture()
+        } else {
+            closeClassifierMic()
+        }
+        if (VasanthiState.voiceEnabled) {
+            // Always, not only when the engine is missing. start() is what sets running back to
+            // true, and an engine that was stopped by the switch being thrown off stays stopped
+            // until start() is called on it again.
+            startSpeech()
+            scheduleSpeechAttempt()
+        } else {
+            handler.removeCallbacks(speechTick)
+            handler.removeCallbacks(speechWatchdog)
+            speech?.stop()
+        }
     }
 
     private fun stopListening() {
         handler.removeCallbacks(speechTick)
         handler.removeCallbacks(speechWatchdog)
-        runCatching { audioRecord?.stop() }
-        captureThread?.interrupt()
-        captureThread = null
-        audioRecord?.release()
-        audioRecord = null
-        pendingCount = 0
+        closeClassifierMic()
         micWithRecognizer = false
         speech?.stop()
         VasanthiState.onStopped()
@@ -347,10 +397,27 @@ class FloatingService : Service() {
      */
     private var micWithRecognizer = false
 
-    /** Hands the microphone to the recogniser. */
+    /**
+     * Hands the microphone to the recogniser.
+     *
+     * The reader thread is waited for before the AudioRecord it reads from is released. Releasing
+     * under a live reader is a native crash, and this runs several times a minute, so it is the
+     * one thing here that must never be hurried.
+     */
     private fun releaseMic() {
         if (micWithRecognizer) return
         micWithRecognizer = true
+        closeClassifierMic()
+    }
+
+    /**
+     * Closes the classifier's microphone, leaving the recogniser's alone.
+     *
+     * The reader thread is waited for before the AudioRecord it reads from is released. Releasing
+     * under a live reader is a native crash, and this runs several times a minute and again every
+     * time a switch is thrown, so it is the one thing here that must never be hurried.
+     */
+    private fun closeClassifierMic() {
         val record = audioRecord
         val reader = captureThread
         audioRecord = null
@@ -359,11 +426,15 @@ class FloatingService : Service() {
         // so the thread leaves its loop on its own rather than having to be killed under it.
         runCatching { record?.stop() }
         reader?.interrupt()
-        // Wait for it to actually leave before releasing the object it reads from. This happens
-        // several times a minute, so it has to be short: stop() has already unblocked the read,
-        // and what is left is at most one classification pass.
         runCatching { reader?.join(READER_JOIN_MS) }
-        runCatching { record?.release() }
+        if (reader != null && reader.isAlive) {
+            // It did not leave in time. Leave the object stopped rather than release it under a
+            // thread that is still reading, and accept that the classifier pauses for this
+            // cycle: a missed sound is recoverable, a crash is not.
+            runCatching { record?.stop() }
+        } else {
+            runCatching { record?.release() }
+        }
         // Drop the half-filled window rather than carry it across the gap, so a window is never
         // half from before the handover and half from after it.
         pendingCount = 0
@@ -387,6 +458,8 @@ class FloatingService : Service() {
     private val speechTick: Runnable = object : Runnable {
         override fun run() {
             if (!VasanthiState.listening) return
+            if (!VasanthiState.voiceEnabled) return
+            if (VasanthiState.problem == RecognitionProblem.NO_RECOGNISER) return
             if (micWithRecognizer) {
                 // Every path that posts this tick has already taken the microphone back, so this
                 // should be unreachable. Reschedule rather than silently stopping recognition for
@@ -394,7 +467,18 @@ class FloatingService : Service() {
                 handler.postDelayed(this, SPEECH_GAP_MS)
                 return
             }
-            if (VasanthiState.mode == RecognitionMode.UNAVAILABLE) return
+            // Sound naming is off, so the recogniser can have the microphone outright and listen
+            // without interruption. That is both more accurate and reaches further, which is what
+            // the owner asked for when he asked for two switches.
+            if (!VasanthiState.soundEnabled) {
+                val started = speech?.attempt() ?: false
+                if (!started) {
+                    handler.postDelayed(this, SPEECH_GAP_MS)
+                } else {
+                    handler.postDelayed(speechWatchdog, SPEECH_MAX_MS)
+                }
+                return
+            }
             releaseMic()
             val started = speech?.attempt() ?: false
             if (!started) {
@@ -423,12 +507,17 @@ class FloatingService : Service() {
     private fun onSpeechAttemptFinished() {
         handler.removeCallbacks(speechWatchdog)
         val wasHeld = micWithRecognizer
-        resumeMic()
-        if (wasHeld && VasanthiState.listening) {
-            // Ask less often when it keeps failing for the same reason, so a phone with no Tamil
-            // pack is not retrying every few seconds all day.
-            handler.postDelayed(speechTick, SPEECH_GAP_MS + (speech?.backoffMs() ?: 0L))
+        if (wasHeld) resumeMic()
+        if (!VasanthiState.listening || !VasanthiState.voiceEnabled) return
+        // Ask less often when it keeps failing for the same reason, so a phone with no network is
+        // not retrying every few seconds all day. With sound naming off there is nothing to give
+        // back, so the next attempt starts at once.
+        val gap = if (VasanthiState.soundEnabled) {
+            SPEECH_GAP_MS + (speech?.backoffMs() ?: 0L)
+        } else {
+            0L
         }
+        handler.postDelayed(speechTick, gap)
     }
 
     private fun scheduleSpeechAttempt() {
@@ -438,13 +527,27 @@ class FloatingService : Service() {
     }
 
     /**
-     * A line naming what to do, when recognition is failing for a fixable reason.
+     * The line under the two switches: what recognition is doing, and what it costs.
      *
-     * A mode on its own tells the owner what the app is trying. This tells him why it is not
-     * working, which is the part he can actually act on, and the three common causes need three
-     * different actions. The wording is shared with the main screen so the two never disagree.
+     * Three things are said rather than left to be discovered. Audio goes to Google, so that is
+     * stated outright. Phone sounds are paused while recognition runs, because the recogniser beeps
+     * on every session it starts and stopping that beep is what the owner asked for. And when
+     * recognition is failing the reason is named, because no network and a held microphone need
+     * different fixes.
      */
-    private fun problemNote(): String = recognitionProblemNote(VasanthiState.problem)
+    private fun modeNote(): String {
+        val base = if (VasanthiState.voiceEnabled) {
+            tr(
+                "பேச்சு அறிதல் Google-இல் நடக்கிறது, ஒலி இணையம் வழியாகச் செல்கிறது. " +
+                    "பேச்சு அறிதல் இருக்கும்போது தொலைபேசி ஒலிகள் நிற்கும்.",
+                "Speech is recognised by Google and audio is sent over the internet. " +
+                    "Phone sounds are paused while speech recognition is on.",
+            )
+        } else {
+            tr("பேச்சு அறிதல் நிறுத்தப்பட்டுள்ளது.", "Speech recognition is off.")
+        }
+        return base + recognitionProblemNote(VasanthiState.problem)
+    }
 
     private fun stopEverything() {
         handler.removeCallbacks(refresher)
@@ -527,7 +630,9 @@ class FloatingService : Service() {
 
     private val refresher = object : Runnable {
         override fun run() {
-            refreshPanel()
+            // A panel that cannot be drawn must not take the process down with it. This runs four
+            // times a second for as long as the app is open, which is a lot of chances.
+            runCatching { refreshPanel() }
             handler.postDelayed(this, REFRESH_MS)
         }
     }
@@ -536,10 +641,15 @@ class FloatingService : Service() {
         val views = panelViews ?: return
 
         val sound = VasanthiState.currentSound
-        views.sound.text = sound?.tamilLabel ?: getString(R.string.nothing_heard_yet)
+        views.sound.text = if (VasanthiState.soundEnabled) {
+            sound?.tamilLabel ?: getString(R.string.nothing_heard_yet)
+        } else {
+            tr("ஒலி அறிதல் நிறுத்தப்பட்டுள்ளது", "Sound naming is off")
+        }
         views.confidence.progress = ((sound?.confidence ?: 0f) * 100f).roundToInt()
-        views.confidenceNote.text =
-            sound?.let { tr("நம்பகத்தன்மை", "confidence") + " " + percent(it.confidence) + "%" } ?: ""
+        views.confidenceNote.text = sound
+            ?.let { tr("நம்பகத்தன்மை", "confidence") + " " + percent(it.confidence) + "%" }
+            .orEmpty()
 
         val level = VasanthiState.level
         views.level.progress = (level * 100f).roundToInt()
@@ -547,28 +657,21 @@ class FloatingService : Service() {
         views.levelNote.text = tr(ta, en)
 
         val speech = VasanthiState.liveSpeech
-        views.speech.text = speech.ifEmpty { getString(R.string.nothing_said_yet) }
+        views.speech.text = if (VasanthiState.voiceEnabled) {
+            speech.ifEmpty { getString(R.string.nothing_said_yet) }
+        } else {
+            tr("பேச்சு அறிதல் நிறுத்தப்பட்டுள்ளது", "Speech recognition is off")
+        }
         views.speechScroll.post { views.speechScroll.fullScroll(View.FOCUS_DOWN) }
 
-        views.listen.setText(
-            if (VasanthiState.listening) R.string.stop else R.string.start_listening,
-        )
+        // The two switches, each saying plainly which way it is. Tamil only: this panel is read by
+        // someone who reads Tamil, and an English word on it is a word she does not have.
+        views.soundToggle.text = tr("ஒலி", "Sound") + " · " +
+            if (VasanthiState.soundEnabled) tr("ஆன்", "on") else tr("ஆஃப்", "off")
+        views.voiceToggle.text = tr("பேச்சு", "Speech") + " · " +
+            if (VasanthiState.voiceEnabled) tr("ஆன்", "on") else tr("ஆஃப்", "off")
 
-        val modeText = when (VasanthiState.mode) {
-            RecognitionMode.ON_DEVICE -> tr(
-                "பேச்சு அறிதல் இந்த தொலைபேசியிலேயே நடக்கிறது. ஒலி வெளியே செல்வதில்லை.",
-                "Speech is recognised on this phone. Audio does not leave it.",
-            )
-            RecognitionMode.CLOUD -> tr(
-                "பேச்சு அறிதல் Google-இல் நடக்கிறது. ஒலி இணையம் வழியாகச் செல்கிறது.",
-                "Speech is recognised by Google. Audio is sent over the internet.",
-            )
-            RecognitionMode.UNAVAILABLE -> tr(
-                "பேச்சு அறிதல் இல்லை. ஒலி அறிதல் மட்டும் வேலை செய்யும்.",
-                "No speech recogniser. Sound naming still works.",
-            )
-        }
-        views.mode.text = modeText + problemNote()
+        views.mode.text = modeNote()
 
         handleUrgent()
     }
@@ -625,7 +728,7 @@ class FloatingService : Service() {
          * sound naming resumes. It has to be generous, because the recogniser needs time to
          * initialise before it can hear anything.
          */
-        private const val SPEECH_MAX_MS = 6_000L
+        private const val SPEECH_MAX_MS = 12_000L
 
         /** Let the classifier settle before the recogniser's first turn. */
         private const val FIRST_SPEECH_DELAY_MS = 1_200L

@@ -2,6 +2,7 @@ package com.universalrp.vasanthi
 
 import android.content.Context
 import java.io.File
+import java.util.concurrent.Executors
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -35,10 +36,62 @@ data class VasanthiEntry(
  * so an uncapped store grows without limit and eventually fills the phone of the one person who
  * cannot simply turn the app off to make the problem go away. The oldest entries go first, and
  * the store says how many it is holding so nothing disappears unnoticed.
+ *
+ * The list is held in memory and the file is a mirror, written on a background thread. The first
+ * version re-read, re-parsed and re-wrote the whole file for every single entry, on the main
+ * thread, and with speech arriving every few seconds that is quadratic disk I/O on the thread
+ * that also draws the screen. The app stopped after a few minutes, which is exactly how long it
+ * took the history to grow large enough for that to matter.
  */
 class VasanthiStore(private val file: File) {
 
+    /**
+     * The list, newest first. Null until the file has been read once, so a corrupt file is only
+     * ever read once rather than on every call.
+     */
+    private var cached: List<VasanthiEntry>? = null
+
+    private val writer = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "vasanthi-history-writer").apply { isDaemon = true }
+    }
+
+    /** Reads the file the first time and returns the in-memory list after that. */
     fun load(): List<VasanthiEntry> {
+        cached?.let { return it }
+        val read = readFile()
+        cached = read
+        return read
+    }
+
+    /** Appends one entry, drops the oldest past the cap, and schedules a write. */
+    fun add(entry: VasanthiEntry): List<VasanthiEntry> {
+        val merged = (listOf(entry) + load()).sortedByDescending { it.timestampMs }.take(MAX_ENTRIES)
+        cached = merged
+        scheduleWrite()
+        return merged
+    }
+
+    fun delete(id: Long): List<VasanthiEntry> {
+        val kept = load().filterNot { it.id == id }
+        cached = kept
+        scheduleWrite()
+        return kept
+    }
+
+    fun clear() {
+        cached = emptyList()
+        scheduleWrite()
+    }
+
+    private fun scheduleWrite() {
+        writer.execute {
+            // Snapshot the reference, so a write never sees a half-updated list.
+            val snapshot = cached ?: return@execute
+            runCatching { writeFile(snapshot) }
+        }
+    }
+
+    private fun readFile(): List<VasanthiEntry> {
         if (!file.exists()) return emptyList()
         return try {
             val array = JSONArray(file.readText())
@@ -64,24 +117,7 @@ class VasanthiStore(private val file: File) {
         }
     }
 
-    /** Appends one entry and returns the new list, dropping the oldest past the cap. */
-    fun add(entry: VasanthiEntry): List<VasanthiEntry> {
-        val merged = (load() + entry).sortedByDescending { it.timestampMs }.take(MAX_ENTRIES)
-        save(merged)
-        return merged
-    }
-
-    fun delete(id: Long): List<VasanthiEntry> {
-        val kept = load().filterNot { it.id == id }
-        save(kept)
-        return kept
-    }
-
-    fun clear() {
-        save(emptyList())
-    }
-
-    private fun save(entries: List<VasanthiEntry>) {
+    private fun writeFile(entries: List<VasanthiEntry>) {
         val array = JSONArray()
         entries.forEach { entry ->
             array.put(

@@ -333,60 +333,60 @@ private fun VasanthiScreen() {
             }
         }
 
-        // ---------------------------------------------------------------- privacy
+        // ---------------------------------------------------------------- the two switches
         item {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = tr("பேச்சு அறிதல்", "Speech recognition"),
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                text = tr(
-                                    "இந்தத் தொலைபேசியிலேயே அறிதல். ஒலி வெளியே செல்வதில்லை.",
-                                    "Recognised on this phone. Audio does not leave it.",
-                                ),
-                                fontSize = 12.sp,
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                            )
-                        }
-                        Switch(
-                            checked = !VasanthiState.preferOffline,
-                            onCheckedChange = { cloud ->
-                                VasanthiState.preferOffline = !cloud
-                            },
-                        )
-                    }
-                    if (!VasanthiState.preferOffline) {
-                        Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = tr("எதைப் பயன்படுத்த வேண்டும்", "What to use"),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = tr(
+                            "இரண்டும் ஒரே ஒலிவாங்கியைப் பயன்படுத்துகின்றன, எனவே ஒரே நேரத்தில் " +
+                                "இரண்டையும் முழுமையாகச் செய்ய முடியாது.",
+                            "Both use one microphone, so neither can have it fully while the other is on.",
+                        ),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    switchRow(
+                        title = tr("ஒலி அறிதல்", "Sound naming"),
+                        detail = tr(
+                            "சுற்றியுள்ள ஒலியைப் பெயரிடும். டெலிவி, அலாரம், அழும் குழந்தை.",
+                            "Names the sound around you: television, alarm, a crying child.",
+                        ),
+                        checked = VasanthiState.soundEnabled,
+                    ) { on -> VasanthiState.soundEnabled = on }
+                    switchRow(
+                        title = tr("பேச்சு அறிதல்", "Speech recognition"),
+                        detail = tr(
+                            "Google-இல் அறிதல். துல்லியம் அதிகம். ஒலி இணையம் வழியாகச் செல்கிறது, " +
+                                "தொலைபேசி ஒலிகளும் நிற்கும்.",
+                            "Recognised by Google. More accurate. Audio is sent over the internet " +
+                                "and phone sounds pause.",
+                        ),
+                        checked = VasanthiState.voiceEnabled,
+                    ) { on -> VasanthiState.voiceEnabled = on }
+                    if (!VasanthiState.translatorReady) {
                         Text(
                             text = tr(
-                                "Google-இல் அறிதல். துல்லியம் அதிகம், ஆனால் ஒலி இணையம் வழியாகச் செல்கிறது. " +
-                                    "தமிழ் மொழிக் கட்டி இந்தத் தொலைபேசியில் நிறுவப்பட்டிருக்க வேண்டும்.",
-                                "Recognised by Google. More accurate, but audio is sent over the internet. " +
-                                    "The Tamil language pack must be installed on this phone.",
+                                "ஆங்கிலத்தைத் தமிழ் மாற்றும் மாதிரி இன்னும் பதிவிறக்கப்படுகிறது.",
+                                "The English-to-Tamil model is still downloading.",
                             ),
                             fontSize = 12.sp,
                             color = Color(0xFFFFD166),
                         )
                     }
-                    Spacer(Modifier.height(4.dp))
                     Text(
                         text = tr(
-                            "இந்த அமைப்பை மாற்றியபின் கேட்பதை நிறுத்தி மீண்டும் தொடங்குங்கள்.",
+                            "இந்த அமைப்பை மாற்றியபின் கேட்பதை நிறுத்தி மீண்டும் தொடங்குங்கள்.",
                             "After changing this, stop listening and start again.",
                         ),
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        text = recognitionStatus(),
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                     )
                 }
             }
@@ -586,10 +586,6 @@ private fun HistoryRow(entry: VasanthiEntry) {
                                 EntryKind.SPEECH -> "பேச்சு"
                             },
                         )
-                        if (entry.detail.isNotEmpty()) {
-                            append(" · ")
-                            append(entry.detail)
-                        }
                         if (entry.kind == EntryKind.SOUND) {
                             append(" · ")
                             append((entry.confidence * 100).toInt())
@@ -638,28 +634,44 @@ private fun timeText(timestampMs: Long): String {
  * look identical on a screen that only reports whether listening is on. Reading VasanthiState here
  * rather than passing values in keeps the line live without another observable.
  */
+/** One switch with a name and a plain line of what it does. */
+@Composable
+private fun switchRow(
+    title: String,
+    detail: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(
+                text = detail,
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
+    }
+}
+
 private fun recognitionStatus(): String {
     val (ta, en) = when {
         !VasanthiState.listening -> Pair(
-            "கேட்பது நிறுத்தப்பட்டுள்ளது. ஒலி அறிதலும் நின்றுள்ளது.",
-            "Listening is stopped, so sound naming is stopped too.",
+            "கேட்பது நிறுத்தப்பட்டுள்ளது.",
+            "Listening is stopped.",
         )
-        VasanthiState.mode == RecognitionMode.UNAVAILABLE &&
-            VasanthiState.problem == RecognitionProblem.NO_RECOGNISER -> Pair(
+        !VasanthiState.voiceEnabled -> Pair(
+            "பேச்சு அறிதல் நிறுத்தப்பட்டுள்ளது. ஒலி அறிதல் மட்டும் வேலை செய்யும்.",
+            "Speech recognition is off. Sound naming still works.",
+        )
+        VasanthiState.problem == RecognitionProblem.NO_RECOGNISER -> Pair(
             "இந்தத் தொலைபேசியில் பேச்சு அறிதல் சேவை இல்லை. ஒலி அறிதல் மட்டும் வேலை செய்யும்.",
             "This phone has no speech recognition service. Sound naming still works.",
-        )
-        VasanthiState.mode == RecognitionMode.UNAVAILABLE -> Pair(
-            "பேச்சு அறிதல் கிடைக்கவில்லை. ஒலி அறிதல் மட்டும் வேலை செய்யும்.",
-            "Speech recognition is unavailable. Sound naming still works.",
         )
         VasanthiState.problem != RecognitionProblem.NONE -> Pair(
             "பேச்சு அறிதல் தடையில் உள்ளது. காரணம் கீழே காட்டப்படும்.",
             "Speech recognition is blocked. The reason is shown below.",
-        )
-        VasanthiState.mode == RecognitionMode.ON_DEVICE -> Pair(
-            "பேச்சு அறிதல் இந்தத் தொலைபேசியிலேயே நடக்கிறது. ஒலி வெளியே செல்வதில்லை.",
-            "Speech is recognised on this phone. Audio does not leave it.",
         )
         else -> Pair(
             "பேச்சு அறிதல் Google-இல் நடக்கிறது. ஒலி இணையம் வழியாகச் செல்கிறது.",

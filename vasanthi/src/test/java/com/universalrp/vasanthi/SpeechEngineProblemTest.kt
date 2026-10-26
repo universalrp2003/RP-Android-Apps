@@ -25,9 +25,6 @@ class SpeechEngineProblemTest {
             SpeechRecognizer.ERROR_AUDIO to RecognitionProblem.MIC_BUSY,
             SpeechRecognizer.ERROR_NETWORK to RecognitionProblem.NO_NETWORK,
             SpeechRecognizer.ERROR_NETWORK_TIMEOUT to RecognitionProblem.NO_NETWORK,
-            SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED to RecognitionProblem.NO_TAMIL,
-            SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE to RecognitionProblem.NO_TAMIL,
-            SpeechRecognizer.ERROR_CANNOT_CHECK_SUPPORT to RecognitionProblem.NO_TAMIL,
         )
         for ((code, problem) in expected) {
             assertEquals("error code $code", problem, SpeechEngine.problemFor(code))

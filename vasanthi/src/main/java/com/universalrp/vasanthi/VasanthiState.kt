@@ -20,11 +20,26 @@ import java.util.concurrent.atomic.AtomicLong
  * emits the same signature, so Kotlin rejects the pair as a platform declaration clash. Wrappers
  * would have to be named something else to compile, which is a naming constraint bought for no
  * gain on an object that exists to be written from two places.
+ *
+ * Sound naming and speech are two separate switches, because the owner asked for them to be and
+ * because they compete for one microphone. Turning sound naming off gives the recogniser the
+ * microphone outright, which is both more accurate and further-reaching; leaving both on shares
+ * it between them.
  */
 object VasanthiState {
 
-    /** True while the microphone is open. */
+    /** True while the microphone is open and at least one of the two functions is on. */
     var listening by mutableStateOf(false)
+
+    /** Whether the app names the sounds in the room. */
+    var soundEnabled by mutableStateOf(true)
+
+    /** Whether the app writes down what someone says. */
+    var voiceEnabled by mutableStateOf(true)
+
+    /** Whether anything at all is on, so the microphone has a reason to be open. */
+    val anyEnabled: Boolean
+        get() = soundEnabled || voiceEnabled
 
     /** The sound the classifier is most confident about right now, if it has a Tamil name. */
     var currentSound by mutableStateOf<SoundScore?>(null)
@@ -35,17 +50,17 @@ object VasanthiState {
     /** The most recent line of recognised Tamil speech. */
     var liveSpeech by mutableStateOf("")
 
-    /** Which recogniser is in use, so the screen can say so rather than imply either. */
-    var mode by mutableStateOf(RecognitionMode.UNAVAILABLE)
-
     /**
-     * Why recognition is producing no text, if it is not.
+     * Why speech is producing no text, if it is not.
      *
      * "No speech recogniser" alone sends the owner looking for a setting that does not exist. A
      * missing Tamil pack, no internet and a held microphone each need a different fix, so the
      * screen can name which one it is.
      */
     var problem by mutableStateOf(RecognitionProblem.NONE)
+
+    /** Whether the English-to-Tamil translator has its language model ready. */
+    var translatorReady by mutableStateOf(false)
 
     /** The saved history, newest first. */
     var entries by mutableStateOf<List<VasanthiEntry>>(emptyList())
@@ -59,14 +74,13 @@ object VasanthiState {
     /** Whether the floating window is on screen at all. */
     var overlayVisible by mutableStateOf(false)
 
-    /** Whether the on-device-only speech mode is selected. */
-    var preferOffline by mutableStateOf(true)
-
     private var store: VasanthiStore? = null
 
     /** Monotonic ids, seeded from the clock so a restart does not reuse yesterday's ids. */
     private val idSource = AtomicLong(System.currentTimeMillis())
 
+    private var lastSpeechText = ""
+    private var lastSpeechAt = 0L
     private var lastSoundLabel = ""
     private var lastSoundAt = 0L
 
@@ -77,19 +91,44 @@ object VasanthiState {
         entries = store?.load().orEmpty()
     }
 
-    /** Records a spoken line. Only called with final results, so the history is not flooded. */
+    /**
+     * Records a spoken line. Only called with final results, so the history is not flooded.
+     *
+     * The recogniser restarts constantly and usually returns the same sentence again, so a repeat
+     * inside the cooldown is dropped. Without this, a television left on fills the history with
+     * the same line dozens of times, and a history nobody can read is worse than no history.
+     */
     fun recordSpeech(text: String, timestampMs: Long = System.currentTimeMillis()) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
+        // Shown at once, in whatever the recogniser gave, so she is never looking at a blank line
+        // while a translation is still arriving.
         liveSpeech = trimmed
-        // The same sentence repeated by a recogniser that restarted is one sentence, not two.
-        if (trimmed == entries.firstOrNull()?.text) return
+        if (isLatinScript(trimmed)) {
+            // English. Translated before it is written down, because a line she cannot read is
+            // not a line. The Tamil arrives on the main thread and replaces what is on screen.
+            TamilTranslator.translate(trimmed) { tamil ->
+                liveSpeech = tamil
+                storeSpeech(tamil, timestampMs)
+            }
+            return
+        }
+        storeSpeech(trimmed, timestampMs)
+    }
+
+    private fun storeSpeech(text: String, timestampMs: Long) {
+        if (text.isEmpty()) return
+        if (text == lastSpeechText && timestampMs - lastSpeechAt < SPEECH_COOLDOWN_MS) return
+        lastSpeechText = text
+        lastSpeechAt = timestampMs
         val entry = VasanthiEntry(
             id = idSource.incrementAndGet(),
             timestampMs = timestampMs,
             kind = EntryKind.SPEECH,
-            text = trimmed,
-            detail = mode.name,
+            text = text,
+            // Nothing is written here. The English name of the recogniser used to be, and a
+            // Tamil-only reader should not be shown a word she does not read.
+            detail = "",
             confidence = 0f,
             urgent = false,
         )
@@ -116,7 +155,7 @@ object VasanthiState {
             timestampMs = timestampMs,
             kind = EntryKind.SOUND,
             text = score.tamilLabel,
-            detail = score.englishLabel,
+            detail = "",
             confidence = score.confidence,
             urgent = urgent,
         )
@@ -139,6 +178,7 @@ object VasanthiState {
         level = 0f
         currentSound = null
         lastSoundLabel = ""
+        lastSpeechText = ""
     }
 
     private fun prepend(entry: VasanthiEntry): List<VasanthiEntry> {
@@ -146,6 +186,14 @@ object VasanthiState {
         return written ?: (listOf(entry) + entries).take(VasanthiStore.MAX_ENTRIES)
     }
 
-    /** How long the same sound must stay quiet before it can be recorded again. */
+    /** How long the same sentence must stay unheard before it can be recorded again. */
     const val SOUND_COOLDOWN_MS = 12_000L
+
+    /**
+     * How long the same spoken line must wait before it is written again.
+     *
+     * Longer than the sound cooldown, because a recogniser that restarts every few seconds returns
+     * the same sentence each time and the sentence is longer than a sound label.
+     */
+    const val SPEECH_COOLDOWN_MS = 25_000L
 }
