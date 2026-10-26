@@ -4,14 +4,14 @@
          the only English anywhere on screen is the app name the launcher is filed under. -->
     <string name="app_name">அவசர எச்சரிக்கை</string>
 
-    <!-- ---------------------------------------------------------------- the two controls -->
+    <!-- the two controls -->
     <string name="start_listening">கேட்கத் தொடங்கு</string>
     <string name="stop_listening">கேட்பதை நிறுத்து</string>
     <string name="listening">கேட்கிறது</string>
     <string name="stopped">நிறுத்தப்பட்டது</string>
     <string name="action_stop">நிறுத்து</string>
 
-    <!-- ---------------------------------------------------------------- the cards -->
+    <!-- the cards -->
     <string name="what_it_does">என்ன கேட்கிறது</string>
     <string name="what_it_does_body">புகை எச்சரிக்கை, தீ எச்சரிக்கை, சைரன், கத்தல், குழந்தை அழுகை, கண்ணாடி உடைவு, கதவு மணி - இவற்றைக் கேட்டு உடனே குடும்பத் தொலைபேசிகளுக்குத் தெரிவிக்கிறது.</string>
 
@@ -21,7 +21,7 @@
     <string name="no_phones_yet">இன்னும் வேறு எந்தத் தொலைபேசியும் கண்டப்படவில்லை</string>
     <string name="phones_count">%1$d தொலைபேசிகள்</string>
 
-    <!-- ---------------------------------------------------------------- the alerts -->
+    <!-- the alerts -->
     <string name="alerts_received">வந்த எச்சரிக்கைகள்</string>
     <string name="alerts_from_here">இந்தத் தொலைபேசியில் கேட்பட்டது</string>
     <string name="alerts_from_family">குடும்பத் தொலைபேசியிலிருந்து</string>
@@ -29,7 +29,7 @@
     <string name="clear_alerts">அழி</string>
     <string name="confidence">நம்பகத்தன்மை %1$d%%</string>
 
-    <!-- ---------------------------------------------------------------- status lines -->
+    <!-- status lines -->
     <string name="status_idle">கேட்கவில்லை. தொடங்கு என்பதைத் தட்டுங்கள்.</string>
     <string name="status_listening">கேட்கிறது - அவசர ஒலிக்காகக் காத்திருக்கிறது.</string>
     <string name="status_mic_failed">மைக்கை திறக்க முடியவில்லை. அமைப்பில் இந்தச் செயலிக்கு மைக் அனுமதி உள்ளதா எனப் பாருங்கள்.</string>
@@ -38,11 +38,11 @@
     <string name="status_alert_sent">%1$s - குடும்பத்திற்கு அனுப்பப்பட்டது.</string>
     <string name="status_alert_no_network">%1$s - இன்னொரு தொலைபேசி கண்டுபிடிக்கப்படவில்லை.</string>
 
-    <!-- ---------------------------------------------------------------- the honest limits -->
+    <!-- the honest limits -->
     <string name="cannot_hear_call">தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது. ஆண்ட்ராய்டு எந்தச் செயலிக்கும் அதை அனுமதிக்காது. அருகில் பேசும் ஒலியை மட்டுமே கேட்கும்.</string>
     <string name="false_alerts">சில நேரம் பொதுவான ஒலியை அவசர ஒலி என நினைக்கும். இது ஒரு எச்சரிக்கை, காவலர் அல்ல. சந்தேகம் வந்தால் சரிபாருங்கள்.</string>
 
-    <!-- ---------------------------------------------------------------- the notification -->
+    <!-- the notification -->
     <string name="channel_ongoing_name">கேட்கும் சேவை</string>
     <string name="channel_ongoing_desc">அவசர ஒலிக்காகக் காத்திருக்கும் பின்னணி சேவை.</string>
     <string name="channel_alert_name">அவசர எச்சரிக்கை</string>

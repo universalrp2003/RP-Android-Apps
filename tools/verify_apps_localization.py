@@ -843,6 +843,39 @@ def verify_module_readmes() -> int:
     return checked
 
 
+def verify_resource_comments() -> int:
+    """No XML comment in any module's values/ may contain a double hyphen.
+
+    Emergency Alert's first release failed CI on exactly this. Its strings.xml used
+    `<!-- ---------------- the two controls -->` as a section divider, and AAPT rejects any
+    comment containing `--` with "The string \"--\" is not permitted within comments". The
+    message names a line and a column, but the line is the comment, so nothing about it points at
+    the divider, and a full Gradle round is spent to learn that a decorative line of hyphens is
+    illegal XML.
+
+    The gate reads every module's `res/values/*.xml` and looks at comment *bodies* only, because
+    `<!--` and `-->` themselves contain the pair and a naive search would fail on every file.
+    """
+    checked = 0
+    for module in sorted(RELEASE_TAG_PREFIX):
+        values = ROOT / module / "src" / "main" / "res" / "values"
+        if not values.is_dir():
+            continue
+        for path in sorted(values.glob("*.xml")):
+            text = path.read_text(encoding="utf-8")
+            for match in re.finditer(r"<!--(.*?)-->", text, re.S):
+                if "--" in match.group(1):
+                    line = text.count("\n", 0, match.start()) + 1
+                    raise ValueError(
+                        f"{path.relative_to(ROOT)}:{line} has an XML comment containing \"--\", "
+                        "which AAPT rejects. Use a plain sentence, or `=`, instead of a line of "
+                        "hyphens, as a section divider."
+                    )
+            checked += 1
+    return checked
+
+
+
 def main() -> int:
     try:
         keys = catalog_keys()
@@ -860,6 +893,7 @@ def main() -> int:
         exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
         module_readmes = verify_module_readmes()
+        resource_comments = verify_resource_comments()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -875,6 +909,7 @@ def main() -> int:
     print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
+    print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0
