@@ -22,6 +22,8 @@
 - Publisher content and availability can change. A responding audio URL is not an end-to-end listening test or a review of every story.
 - Streaming needs internet; no offline download queue, playback-speed control or sleep timer is promised.
 
+Candidate unit tests and release compilation passed in [CI run 40471829272](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40471829272). This is not physical-device evidence for the rebuilt published APK.
+
 ## தமிழ்
 
 - **கதை சொல்லி** என்ற தமிழ்ப் பெயருடன் ஆங்கிலப் பெயரும் உள்ளது. முந்தைய செயலிக்கு மேலேயே புதுப்பிக்கலாம்.
