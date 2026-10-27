@@ -3,7 +3,7 @@
 ## Requested corrections
 
 - Shorten the website front page. Keep detailed device-test history behind a collapsed release-details disclosure and link to the evidence, rather than a large warning narrative above the downloads.
-- Correct Secret Message: Internet chat uses the relay; same-network chat needs both phones on the local network. It is not fully offline. Encrypted Internet traffic is sent to the relay; do not claim nothing is uploaded. The security design remains explicit about metadata and lack of an independent audit.
+- Correct Secret Message: Internet chat uses the relay; same-network chat needs both phones on the local network. It is not fully offline. Remove the unsupported decoy/steganography copy from the card and structured metadata: the documented product is an MLS chat with timed messages, not ordinary-text steganography. Encrypted Internet traffic is sent to the relay; do not claim nothing is uploaded. The security design remains explicit about metadata and lack of an independent audit.
 - The owner selected the exact Tamil display name **என்னைச் சுற்றி** for Vasanthi AI. Change user-visible Tamil names, not the package, English brand, release prefix or update lineage.
 
 ## Candidate versions, not stable publications
@@ -34,3 +34,21 @@ Science fiction is a separate category from science/space education. Existing el
 - Before publication, test two or more stories/selected files through a real end-of-track transition with screen off; continuous off; repeat one/all; random order; Previous/Next; pause/resume; service recreation; and offline playback with connectivity disabled. Confirm the selected Tamil name and upgrade behavior. Document observed results, not assumed device success.
 
 No new app release is authorized by this implementation report alone. Original screenshots remain private.
+
+
+## Verified candidate result
+
+[Candidate run 40495158373](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40495158373) completed successfully at source `4318a7ba23deb0fb3d08820817de6c96ca1daa0c`. All five module test/build/signature/identity/receipt jobs passed. All fourteen RSS and sampled HTTPS audio-prefix checks passed, including the three new sources. This is not full-episode listening, a phone test or a security audit.
+
+The first run exposed a stale expected catalogue size/category count; the exact assertions now require fourteen feeds/nine categories and retain uniqueness, valid-URL and non-fallback category checks. The superseded compile-failure excerpt is removed after the successful replacement run.
+
+Download the owner-test APKs from this exact run, not a later rebuild. Each artifact contains an APK and its source/version/code/size/hash receipt plus real test output:
+
+- [Podcast 1.5 / code 7](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40495158373/artifacts/12729214176)
+- [Ramesh Radio 1.27 / code 27](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40495158373/artifacts/12730313180)
+- [PulseEQ 1.10 / code 11](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40495158373/artifacts/12729728799)
+- [Vasanthi AI / என்னைச் சுற்றி 1.1.5 / code 8](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40495158373/artifacts/12729818124)
+
+Launcher was compiled as a shared-source compatibility check, not a requested new release. Do not ask the owner to reinstall it.
+
+The public-release API audit verified all twelve existing stable tags and the SHA-256 metadata behind twenty-four primary download buttons. Shared directory published-version pins match those same public tags. Pages run 40495158311 passed. New candidate versions are not advertised as public stable releases; promotion remains held for owner phone confirmation.
