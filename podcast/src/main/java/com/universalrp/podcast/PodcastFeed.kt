@@ -48,9 +48,13 @@ data class Episode(
  * enclosure - so extracting those four things with string operations is both testable and honest
  * about how much of the format is actually used.
  *
- * What it deliberately does NOT do: handle CDATA, namespaces, entities beyond the five XML ones,
- * or Atom. A feed that needs any of those is a feed this app will show as empty rather than as
- * wrong, which is the failure that is easier to notice and to report.
+ * What it deliberately does NOT do: handle namespaces beyond `itunes`, or entities beyond the five
+ * XML ones. CDATA is unwrapped, because a podcast puts a description in it more often than not.
+ * `looksLikeFeed` accepts an `<rss>`, `<rdf>` or `<feed>` root, because a host that blocks a
+ * request answers with HTML and HTML has a `<title>` - and a parser that only looks for titles
+ * reads a block page as a show. Episodes themselves still come from `<item>`, so an Atom feed is
+ * recognised and then shown as empty rather than as wrong, which is the failure that is easier to
+ * notice and to report.
  */
 object RssReader {
 
