@@ -266,6 +266,7 @@ RELEASE_TAG_PREFIX = {
     "voicenotes": "voice-notes",
     "expensetracker": "expense-tracker",
     "vasanthi": "vasanthi-ai",
+    "podcast": "tamil-podcast",
     "secretmessage": "secret-message",
 }
 
@@ -711,6 +712,7 @@ def verify_about_links() -> None:
             'tagPrefix = "expense-tracker"', 'version = "1.1"',
             'tagPrefix = "voice-notes"', 'version = "1.1"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.2"',
+            'tagPrefix = "tamil-podcast"', 'version = "1.0"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
@@ -803,6 +805,7 @@ MODULE_READMES = {
     "voicenotes": "Voice Notes",
     "expensetracker": "Expense Tracker",
     "vasanthi": "Vasanthi AI",
+    "podcast": "Tamil Podcast Player",
 }
 
 

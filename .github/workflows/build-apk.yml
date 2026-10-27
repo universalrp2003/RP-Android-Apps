@@ -273,7 +273,7 @@ jobs:
           # local-only preview: run its policy tests and build only its debug APK. It is
           # deliberately excluded from every release/bundle task below. Vocal Remover is
           # standalone and distributed by direct APK download, so it has no Play bundle.
-          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :radio:testDebugUnitTest :radio:testReleaseUnitTest :equalizer:testDebugUnitTest :equalizer:testReleaseUnitTest :vocalremover:testDebugUnitTest :vocalremover:testReleaseUnitTest :secretmessage:testDebugUnitTest :expensetracker:testDebugUnitTest :voicenotes:testDebugUnitTest :vasanthi:testDebugUnitTest assembleDebug :cleaner:assembleRelease :radio:assembleRelease :equalizer:assembleRelease :vocalremover:assembleRelease :expensetracker:assembleRelease :voicenotes:assembleRelease :vasanthi:assembleRelease :cleaner:bundleRelease :radio:bundleRelease :equalizer:bundleRelease --no-daemon 2>&1 | tee build.log
+          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :radio:testDebugUnitTest :radio:testReleaseUnitTest :equalizer:testDebugUnitTest :equalizer:testReleaseUnitTest :vocalremover:testDebugUnitTest :vocalremover:testReleaseUnitTest :secretmessage:testDebugUnitTest :expensetracker:testDebugUnitTest :voicenotes:testDebugUnitTest :vasanthi:testDebugUnitTest :podcast:testDebugUnitTest assembleDebug :cleaner:assembleRelease :radio:assembleRelease :equalizer:assembleRelease :vocalremover:assembleRelease :expensetracker:assembleRelease :voicenotes:assembleRelease :vasanthi:assembleRelease :podcast:assembleRelease :cleaner:bundleRelease :radio:bundleRelease :equalizer:bundleRelease --no-daemon 2>&1 | tee build.log
 
       - name: Verify required CleanSweep regression suites
         run: python3 tools/verify_cleaner_regressions.py
@@ -293,6 +293,7 @@ jobs:
             secretmessage/product/build/test-results/testDebugUnitTest/*.xml
             expensetracker/build/test-results/testDebugUnitTest/*.xml
             vasanthi/build/test-results/testDebugUnitTest/*.xml
+            podcast/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
 
       - name: Verify built APKs
