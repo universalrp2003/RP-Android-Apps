@@ -18,6 +18,8 @@
 - This exact build is **not installed on a phone** and has **no physical-device test** in this session. In particular, camera permission/torch, the home-role chooser, Back and battery updates need a phone test.
 - Never call the emergency number for testing. Default-home selection and permission settings vary by manufacturer.
 
+Candidate unit tests and release compilation passed in [CI run 40471829272](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40471829272). This is not physical-device evidence for the rebuilt published APK.
+
 ## தமிழ்
 
 - முகப்புத் திரையாக அமை பொத்தான் ஆண்ட்ராய்டின் உண்மையான தேர்வைத் திறக்கும். ரத்து செய்தாலும் மீண்டும் முயலலாம்.
