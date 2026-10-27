@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,11 +49,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
@@ -264,17 +270,12 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             } else {
                 for (app in apps) {
                     item {
-                        BigButton(
-                            label = app.label,
-                            height = 84,
-                            background = CardBg,
-                            onClick = {
-                                val result = LauncherActions.launchApp(context, app.packageName)
-                                if (result is LauncherActions.Result.Failed) {
-                                    notice = context.getString(result.reasonRes)
-                                }
-                            },
-                        )
+                        AppRow(app = app, onClick = {
+                            val result = LauncherActions.launchApp(context, app.packageName)
+                            if (result is LauncherActions.Result.Failed) {
+                                notice = context.getString(result.reasonRes)
+                            }
+                        })
                     }
                 }
             }
@@ -421,6 +422,78 @@ private fun handleAction(
     BigButtons.Action.APP_LIST -> {
         onAppList()
         LauncherActions.Result.Done
+    }
+}
+
+/** Pixel size an app icon is decoded at, which is plenty for a 44dp row. */
+private const val ICON_PIXELS = 96
+
+/**
+ * One app in the list: its own icon, its name, and a chevron.
+ *
+ * The icon comes from the phone, so it is the same artwork the app uses everywhere else and the
+ * list is recognisable at a glance rather than a column of names to read.
+ */
+@Composable
+private fun AppRow(app: AppEntry, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(84.dp),
+        shape = RoundedCornerShape(20.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = CardBg),
+        contentPadding = PaddingValues(horizontal = 14.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier.size(46.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                val icon = app.icon
+                if (icon != null) {
+                    Image(
+                        bitmap = icon.toBitmap(ICON_PIXELS, ICON_PIXELS).asImageBitmap(),
+                        contentDescription = null,
+                        modifier = Modifier.size(44.dp),
+                    )
+                } else {
+                    // An app that publishes no usable icon still gets a tile with its first letter.
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Accent.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = app.label.take(1),
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Accent,
+                        )
+                    }
+                }
+            }
+            Text(
+                text = app.label,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Start,
+                maxLines = 2,
+                modifier = Modifier
+                    .padding(start = 12.dp)
+                    .weight(1f),
+            )
+            Text(
+                text = "\u203a",
+                fontSize = 26.sp,
+                color = Muted,
+            )
+        }
     }
 }
 
