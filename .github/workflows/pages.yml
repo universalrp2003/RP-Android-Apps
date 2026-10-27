@@ -34,7 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fetch all 7 official signed APKs, verify SHA-256, and build .apk + .zip CDN mirrors
+      - name: Fetch official signed APKs, verify SHA-256, and build .apk + .zip CDN mirrors
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -68,6 +68,9 @@ jobs:
               ("tamil-podcast-v1.2", "Tamil-Podcast-Player-v1.2.apk", 11916695, "d50ae13968e0b1d45d5ce9c286dc2447afa26d0d93246cfa08eeb0d3d1d01814"),
               ("elderly-launcher-v1.2", "Elderly-Launcher-v1.2.apk", 11497823, "029b39e2d03f27aca299cde03650448db8b185dfac3003c4ea7ec4732f18dc09"),
               ("vasanthi-ai-v1.1.3", "Vasanthi-AI-v1.1.3.apk", 45773770, "4dd6de04fc4ae121e487521202e7e64184225af5aa8274ae448e0794aeae5f65"),
+              ("tamil-podcast-v1.3", "Tamil-Podcast-Player-v1.3.apk", 11950127, "15770ec6cfcf671b81cb886bceff7d2b9f3ea620d23f795145f7940b5075bb3e"),
+              ("elderly-launcher-v1.3", "Elderly-Launcher-v1.3.apk", 11514983, "33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745"),
+              ("vasanthi-ai-v1.1.4", "Vasanthi-AI-v1.1.4.apk", 45790702, "b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -143,6 +146,13 @@ jobs:
           test -s site/apks/Elderly-Launcher-v1.2.zip
           test -s site/apks/Vasanthi-AI-v1.1.3.apk
           test -s site/apks/Vasanthi-AI-v1.1.3.zip
+
+          test -s site/apks/Tamil-Podcast-Player-v1.3.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.3.zip
+          test -s site/apks/Elderly-Launcher-v1.3.apk
+          test -s site/apks/Elderly-Launcher-v1.3.zip
+          test -s site/apks/Vasanthi-AI-v1.1.4.apk
+          test -s site/apks/Vasanthi-AI-v1.1.4.zip
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
