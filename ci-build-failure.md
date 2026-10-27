@@ -3,11 +3,6 @@
 ## Kotlin / resource errors
 ```
 e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:216:26 None of the following candidates is applicable:
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:223:21 Syntax error: Expecting an element.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:223:23 Unresolved reference 'signature'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:223:37 Unresolved reference 'nothing'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:223:48 Unresolved reference 'resolve'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:224:21 The expression cannot be a selector (cannot occur after a dot).
 ```
 
 ## Gradle summary
@@ -33,8 +28,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 42s
-337 actionable tasks: 192 executed, 145 from cache
+BUILD FAILED in 3m 37s
+338 actionable tasks: 193 executed, 145 from cache
 ```
 (no failing tests recorded in the JUnit XML)
 
