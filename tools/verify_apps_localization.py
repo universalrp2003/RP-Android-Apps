@@ -909,26 +909,69 @@ def verify_site_versions_match_downloads() -> int:
             + ", ".join(mismatched)
         )
 
-    # The per-card download buttons: the visible label, the asset name and the URL must agree.
+    # The download buttons, both in the latest-releases table and in the app cards: the asset name,
+    # the release tag it points at and the stated version must all name the same file.
     buttons = re.findall(
         r'data-apk="apks/([A-Za-z0-9._-]+)\.apk" data-name="[A-Za-z0-9._-]+\.apk" '
-        r'data-sha="[0-9a-f]{64}" data-status="[a-z]+" '
+        r'data-sha="[0-9a-f]{64}" data-status="[a-z][a-z-]*" '
         r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1\.apk"',
         site,
     )
-    broken = [f"{asset} at {tag}" for asset, tag in buttons if not tag.endswith("-v" + asset_tag(asset))]
+    if not buttons:
+        raise ValueError(
+            "site/index.html has no verified download buttons, so this gate would check nothing."
+        )
+    broken = [
+        f"{asset} at {tag}"
+        for asset, tag in buttons
+        if not tag.endswith("-v" + asset_tag(asset))
+    ]
     if broken:
         raise ValueError(
             "site/index.html has download buttons whose asset and release tag disagree: "
             + ", ".join(broken)
         )
 
-    return len(entries)
+    # The latest-releases table must offer exactly one row per published app, and the version it
+    # prints must be the version its own button downloads. A table that lists nine of the ten apps,
+    # or that names a version the button does not serve, is the "old info" the owner reported.
+    rows = re.findall(
+        r'<td class="lver">v([0-9][0-9A-Za-z.]*)</td>\s*\n\s*'
+        r'<td class="lsize">[^<]*</td>\s*\n\s*'
+        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+)\.apk"',
+        site,
+    )
+    if not rows:
+        raise ValueError(
+            "site/index.html has no latest-releases table rows, so the table is missing or empty."
+        )
+    row_mismatch = [
+        f"row says {stated} but downloads {asset_tag(asset)}"
+        for stated, asset in rows
+        if stated != asset_tag(asset)
+    ]
+    if row_mismatch:
+        raise ValueError(
+            "site/index.html latest-releases table: " + ", ".join(row_mismatch)
+        )
+
+    expected_apps = 10
+    if len(rows) != expected_apps:
+        raise ValueError(
+            f"site/index.html latest-releases table has {len(rows)} rows, expected {expected_apps} "
+            "published apps. A missing row is an app a visitor cannot find from the top of the page."
+        )
+
+    return len(entries) + len(buttons), expected_apps
 
 
 def asset_tag(asset: str) -> str:
-    """The version half of an asset filename, e.g. `CleanSweep-v2.73.apk` -> `2.73`."""
-    match = re.search(r"-v([0-9][0-9A-Za-z.]*)\.apk$", asset)
+    """The version half of an asset name, with or without its extension.
+
+    `CleanSweep-v2.73.apk` -> `2.73`, and `CleanSweep-v2.73` -> `2.73`, because the JSON-LD block
+    carries the full filename while the download-button regex captures the name without it.
+    """
+    match = re.search(r"-v([0-9][0-9A-Za-z.]*)(?:\.apk)?$", asset)
     if not match:
         raise ValueError(f"cannot read a version out of the asset name {asset!r}")
     return match.group(1)
@@ -953,7 +996,7 @@ def main() -> int:
         markdown_notes = verify_release_notes_markdown_subset()
         module_readmes = verify_module_readmes()
         resource_comments = verify_resource_comments()
-        site_versions = verify_site_versions_match_downloads()
+        site_versions, expected_apps = verify_site_versions_match_downloads()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -970,7 +1013,7 @@ def main() -> int:
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
     print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
-    print(f"PASS: every version the website states is the version its own download link serves ({site_versions} JSON-LD entries).")
+    print(f"PASS: every version the website states is the version its own download link serves ({site_versions} download links, all {expected_apps} apps in the latest-releases table).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0
