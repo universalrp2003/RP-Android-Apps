@@ -340,3 +340,11 @@ These historical release pages, tags and APK assets remain on `InternetRadio`:
 | RP Vocal Remover Studio | [rp-vocal-remover-studio-v0.1.9](https://github.com/universalrp2003/InternetRadio/releases/tag/rp-vocal-remover-studio-v0.1.9) | `RP-Vocal-Remover-Studio-v0.1.9.apk` | 63,659,576 | `e49ca9fbf96aed66351d13ae63c3d2878280b6b09be42b050c00de9d97e6b208` |
 
 For every release, installation remains under Android's per-app **Install unknown apps** permission and installer confirmation. The updater does not silently install or bypass Play Protect.
+
+## Round 2 releases - 27 October 2026
+
+Verified against the GitHub Releases API asset metadata on 27 October 2026. These are published assets, not candidate-build digests. The owner subsequently reported phone testing of the podcast and launcher; this does not verify every feature or Vasanthi 1.1.3.
+
+- [Tamil-Podcast-Player 1.2 / code 4](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.2): `Tamil-Podcast-Player-v1.2.apk`, 11,916,695 bytes, SHA-256 `d50ae13968e0b1d45d5ce9c286dc2447afa26d0d93246cfa08eeb0d3d1d01814`.
+- [Elderly-Launcher 1.2 / code 3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.2): `Elderly-Launcher-v1.2.apk`, 11,497,823 bytes, SHA-256 `029b39e2d03f27aca299cde03650448db8b185dfac3003c4ea7ec4732f18dc09`.
+- [Vasanthi-AI 1.1.3 / code 6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.3): `Vasanthi-AI-v1.1.3.apk`, 45,773,770 bytes, SHA-256 `4dd6de04fc4ae121e487521202e7e64184225af5aa8274ae448e0794aeae5f65`.
