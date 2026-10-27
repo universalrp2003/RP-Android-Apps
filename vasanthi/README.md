@@ -1,5 +1,7 @@
 # Vasanthi AI - என்னைச் சுற்றி / Tamil sound and speech window
 
+> Unreleased candidate 1.1.5: continuous playback / naming follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+
 **Current stable release:** 1.1.4 / code 7
 
 **Package:** `com.universalrp.vasanthi`

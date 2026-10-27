@@ -159,7 +159,9 @@ fun PlayerScreen(state: EqUiState, vm: EqViewModel) {
                     }
                     androidx.compose.material3.TextButton(onClick = { vm.previousTrack() }) { Text(AppStrings.translate("Previous song")) }
                     androidx.compose.material3.TextButton(onClick = { vm.nextTrack() }) { Text(AppStrings.translate("Next song")) }
-                    Text("${AppStrings.translate("Continuous queue")}: ${state.queueSize}")
+                    androidx.compose.material3.TextButton(onClick = { vm.toggleContinuous() }) {
+                        Text(AppStrings.translate(if (state.continuous) "Continuous: on" else "Continuous: off") + " · ${state.queueSize}")
+                    }
                     androidx.compose.material3.TextButton(onClick = { vm.toggleRandom() }) {
                         Text(if (state.randomMode) AppStrings.translate("Random: on") else AppStrings.translate("Random: off"))
                     }

@@ -3,6 +3,7 @@
 ## Local continuous, random and repeat controls
 
 - Select multiple audio documents. The existing DSP decoder worker opens the next file only after releasing the previous codec and audio track. Random visits each selected track once per cycle; Repeat off/one/all and Previous/Next are available. The queue and modes persist; access depends on the document provider and offline availability. No streaming or new broad-storage permission.
+- Continuous is on by default. Switching it off pauses/stops after the current track; repeat settings apply while continuous is on.
 - Candidate only: not installed on a phone. Do not describe this build as phone-tested or publish it before owner checks.
 - Existing public download links remain on the previous stable release until publication succeeds.
 

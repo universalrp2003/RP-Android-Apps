@@ -237,6 +237,7 @@ object AppGuides {
         introTa = "ரமேஷ் ரேடியோ இணையத்திலிருந்து தமிழ் FM நிலையங்களையும் உங்கள் சொந்த ஒலிக் கோப்புகளையும் " +
             "இயக்கும். ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
+            topic("Local continuous, random and repeat", "உள்ளூர் தொடர்ச்சி, சீரற்ற வரிசை, மீண்டும் இயக்கம்", "Choose a folder for a local queue. Continuous is on by default; turn it off to pause after the current track. Random uses the player shuffle order; Repeat is off, one or all. These settings are remembered for local files, not live radio stations.", "உள்ளூர் பாடல் வரிசைக்குக் கோப்புறையைத் தேர்ந்தெடுக்கவும். இயல்பாகத் தொடர்ச்சி இயக்கத்தில் இருக்கும்; அதை நிறுத்தினால் தற்போதைய பாடலுடன் இடைநிறுத்தப்படும். சீரற்ற வரிசை, ஒரு பாடலை மீண்டும் இயக்குதல், அனைத்தையும் மீண்டும் இயக்குதல் ஆகியவை உள்ளன. இவை உள்ளூர் கோப்புகளுக்கான சேமித்த அமைப்புகள்; நேரடி வானொலிக்கானவை அல்ல."),
             topic(
                 "Playing a live station",
                 "நேரடி நிலையம் இயக்குதல்",
@@ -344,7 +345,7 @@ object AppGuides {
         introTa = "பல்ஸ்இக்யூ தனக்குள் இயக்கும் ஒலியின் தன்மையை மாற்றும்; சில போன்களில் கணினி ஒலியையும் " +
             "சரிசெய்யும். ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
-            topic("Continuous local playlist", "உள்ளூர் பாடல்களைத் தொடர்ந்து கேட்க", "Choose audio files supports multiple selection. Tracks play through the existing DSP in the selected order; Random visits each track once per cycle. Repeat is off, one or all. Previous/Next change track. The queue and modes are saved; document access must still be valid and cloud files must be available offline.", "ஒலிக் கோப்புகளைத் தேர்ந்தெடு பொத்தானில் பல கோப்புகளைத் தேர்ந்தெடுக்கலாம். அவை ஒலி அமைப்புகள் வழியாகத் தொடர்ந்து இயங்கும். சீரற்ற வரிசையில் ஒரு சுற்றில் ஒவ்வொரு பாடலும் ஒருமுறை இயங்கும். மீண்டும் இயக்குவதை நிறுத்தலாம்; ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். வரிசையும் அமைப்புகளும் சேமிக்கப்படும். கோப்பு அணுகல் செல்லுபடியாகவும் கோப்புகள் இணையமின்றிக் கிடைக்கவும் வேண்டும்."),
+            topic("Continuous local playlist", "உள்ளூர் பாடல்களைத் தொடர்ந்து கேட்க", "Choose audio files supports multiple selection. Tracks play through the existing DSP in the selected order; Random visits each track once per cycle. Continuous off stops after the current track. Repeat is off, one or all while Continuous is on. Previous/Next change track. The queue and modes are saved; document access must still be valid and cloud files must be available offline.", "ஒலிக் கோப்புகளைத் தேர்ந்தெடு பொத்தானில் பல கோப்புகளைத் தேர்ந்தெடுக்கலாம். அவை ஒலி அமைப்புகள் வழியாகத் தொடர்ந்து இயங்கும். சீரற்ற வரிசையில் ஒரு சுற்றில் ஒவ்வொரு பாடலும் ஒருமுறை இயங்கும். தொடர்ச்சியை நிறுத்தினால் தற்போதைய பாடலுடன் நிற்கும். தொடர்ச்சி இயக்கத்தில் இருக்கும்போது ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். வரிசையும் அமைப்புகளும் சேமிக்கப்படும். கோப்பு அணுகல் செல்லுபடியாகவும் கோப்புகள் இணையமின்றிக் கிடைக்கவும் வேண்டும்."),
             topic(
                 "Choosing a file and playing it",
                 "கோப்பைத் தேர்ந்தெடுத்து இயக்குதல்",

@@ -51,6 +51,7 @@ data class EqUiState(
     val playerDurationMs: Long = 0L,
     val lastUri: String? = null,
     val lastTitle: String? = null,
+    val continuous: Boolean = true,
     val randomMode: Boolean = false,
     val repeatMode: Int = 0,
     val queueSize: Int = 0,
@@ -95,6 +96,7 @@ class EqViewModel(app: Application) : AndroidViewModel(app) {
                 mutate {
                     it.copy(
                         playerState = player.state,
+                        continuous = player.continuous,
                         randomMode = player.randomMode,
                         repeatMode = player.repeatMode,
                         queueSize = player.queueSize,
@@ -293,6 +295,7 @@ class EqViewModel(app: Application) : AndroidViewModel(app) {
         player.playQueue(uris.take(1000))
         settings.lastUri = uris.first().toString()
     }
+    fun toggleContinuous() { player.toggleContinuous(); mutate { it.copy(continuous = player.continuous) } }
     fun toggleRandom() { player.toggleRandom(); mutate { it.copy(randomMode = player.randomMode) } }
     fun cycleRepeat() { player.cycleRepeat(); mutate { it.copy(repeatMode = player.repeatMode) } }
     fun nextTrack() { player.nextTrack() }

@@ -65,6 +65,9 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
     private val queuePrefs = context.getSharedPreferences("player_queue", Context.MODE_PRIVATE)
     @Volatile private var queue: List<Uri> = emptyList()
     @Volatile private var queueIndex = 0
+    @Volatile var continuous = queuePrefs.getBoolean("continuous", true)
+        private set
+    fun toggleContinuous() { continuous = !continuous; queuePrefs.edit().putBoolean("continuous", continuous).apply() }
     @Volatile var randomMode = queuePrefs.getBoolean("random", false)
         private set
     @Volatile var repeatMode = queuePrefs.getInt("repeat", 0).coerceIn(0, 2)
@@ -114,6 +117,14 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
                 durationMs = 0L
                 runPipeline(uri)
                 if (stopRequested || state != State.FINISHED) break
+                // A pause/focus loss at the file boundary must not start the next track.
+                if (paused) {
+                    state = State.PAUSED
+                    onStateChanged?.invoke(state)
+                    synchronized(pauseLock) { while (paused && !stopRequested) pauseLock.wait(120) }
+                }
+                if (stopRequested) break
+                if (!continuous) { state = State.FINISHED; onStateChanged?.invoke(state); break }
                 if (randomMode && repeatMode == 2 && played.size >= queue.size) {
                     played.clear()
                     played.add(queueIndex)
@@ -298,6 +309,10 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
                 }
             }
 
+            if (!stopRequested && framesWritten == 0L) {
+                fail("This file produced no audio samples")
+                return
+            }
             val drainDeadline = android.os.SystemClock.elapsedRealtime() + 5000L
             while (!stopRequested && ((track?.playbackHeadPosition?.toLong() ?: framesWritten) and 0xffffffffL) < framesWritten && android.os.SystemClock.elapsedRealtime() < drainDeadline) {
                 Thread.sleep(10)

@@ -3,6 +3,7 @@
 ## Local continuous, random and repeat controls
 
 - Local folder tracks continue in the Media3 queue. Visible Random and Repeat off/one/all controls persist and are restored by the service, including notification/widget sessions. Radio streams do not inherit local random/repeat settings.
+- Continuous is on by default. Switching it off pauses/stops after the current track; repeat settings apply while continuous is on.
 - Candidate only: not installed on a phone. Do not describe this build as phone-tested or publish it before owner checks.
 - Existing public download links remain on the previous stable release until publication succeeds.
 

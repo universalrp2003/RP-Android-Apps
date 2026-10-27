@@ -37,3 +37,8 @@ class ContinuousPlaybackGateTest(unittest.TestCase):
         data = gate.sources()
         data['links'] = data['links'].replace('${app.publishedVersion}', '${app.version}')
         with self.assertRaises(ValueError): gate.verify(data)
+
+    def test_continuous_toggle_cannot_be_cosmetic(self):
+        data = gate.sources()
+        data['pulse'] = data['pulse'].replace('if (!continuous)', 'if (false)')
+        with self.assertRaises(ValueError): gate.verify(data)

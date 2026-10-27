@@ -35,6 +35,8 @@ def verify(data):
     need('pulse', 'PlaybackOrder.next(queue.size, queueIndex, repeatMode, randomMode, played)')
     if re.search(r'state = State.FINISHED\s+onStateChanged', data['pulse']):
         raise ValueError('Pulse completion callback runs before decoder cleanup')
+    need('pulse', 'if (!continuous) { state = State.FINISHED; onStateChanged?.invoke(state); break }')
+    need('radio_service', 'player?.pauseAtEndOfMediaItems = local && !prefs.getBoolean("continuous", true)')
     need('pulse_ui', 'ActivityResultContracts.OpenMultipleDocuments()')
     need('radio', 'c.shuffleModeEnabled = _state.value.localShuffle')
     need('radio', 'c.repeatMode = _state.value.localRepeat')

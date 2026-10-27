@@ -1,5 +1,7 @@
 # Ramesh Radio
 
+> Unreleased candidate 1.27: continuous playback / naming follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+
 Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, zero surprise Location prompts (100% accurate rain alerts via saved PIN/Village with optional user-initiated Mobile Tower town detection and clear privacy disclosure), and active-listening rain alerts that always announce exact place details. Its latest published release is **1.23 / code 23**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
 
 - [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.26.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.26/Ramesh-Radio-v1.26.apk) (`15,092,964` bytes · SHA-256 `238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13`) · [release notes](../releases/ramesh-radio-v1.26.md) · earlier releases remain available on the RP-Android-Apps release list

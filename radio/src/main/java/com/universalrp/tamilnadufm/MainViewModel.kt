@@ -69,6 +69,7 @@ data class UiState(
     val localPermission: Boolean = false,
     val localFolder: String = "",
     val localLoading: Boolean = false,
+    val localContinuous: Boolean = true,
     val localShuffle: Boolean = false,
     val localRepeat: Int = Player.REPEAT_MODE_OFF,
     // equalizer
@@ -137,7 +138,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         val modes = ctx.getSharedPreferences("local_playback_modes", Context.MODE_PRIVATE)
-        mutate { it.copy(localShuffle = modes.getBoolean("shuffle", false), localRepeat = modes.getInt("repeat", Player.REPEAT_MODE_OFF).coerceIn(0, 2)) }
+        mutate { it.copy(localContinuous = modes.getBoolean("continuous", true), localShuffle = modes.getBoolean("shuffle", false), localRepeat = modes.getInt("repeat", Player.REPEAT_MODE_OFF).coerceIn(0, 2)) }
         AudioFx.load(ctx)
         mutate { it.copy(eq = AudioFx.settings, eqEngine = AudioFx.engineName) }
         loadStations()
@@ -449,6 +450,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             mutate { it.copy(message = "Player is still starting — tap again in a second.") }
             return
         }
+        PlayerBus.player?.pauseAtEndOfMediaItems = false
         c.shuffleModeEnabled = false
         c.repeatMode = Player.REPEAT_MODE_OFF
         if (c.currentMediaItem?.mediaId == station.url) {
@@ -483,6 +485,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
         pendingLocalTrack = null
+        PlayerBus.player?.pauseAtEndOfMediaItems = !_state.value.localContinuous
         c.shuffleModeEnabled = _state.value.localShuffle
         c.repeatMode = _state.value.localRepeat
         // The phone's own tracks queue up the same way stations do: next/previous walk the
@@ -503,6 +506,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         c.prepare()
         c.play()
         mutate { it.copy(playingLocalTitle = track.title, nowPlaying = null, busy = true) }
+    }
+
+    fun toggleLocalContinuous() {
+        val value = !_state.value.localContinuous
+        mutate { it.copy(localContinuous = value) }
+        ctx.getSharedPreferences("local_playback_modes", Context.MODE_PRIVATE).edit().putBoolean("continuous", value).apply()
+        PlayerBus.player?.pauseAtEndOfMediaItems = _state.value.playingLocalTitle != null && !value
     }
 
     fun toggleLocalShuffle() {

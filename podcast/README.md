@@ -1,5 +1,7 @@
 # Tamil Podcast Player (கதை சொல்லி)
 
+> Unreleased candidate 1.5: continuous playback / naming follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+
 **Current stable release:** 1.4 / code 6
 
 Package `com.universalrp.podcast`. Android 8.0 / API 26 or later.
