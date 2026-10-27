@@ -34,7 +34,11 @@ fun SuiteAbout(appId: String, prefix: String, onBack: () -> Unit) {
         Text(suiteText("உருவாக்கம்: ரமேஷ்பிரதாப் - RP Ideas", "RP Ideas - Rameshprathap R"))
         Text(suiteText("இலவசம். விளம்பரங்களோ கண்காணிப்போ இல்லை.", "Free, no ads or tracking."))
         Text(suiteText("புதுப்பிப்பை நிறுவ உங்கள் ஒப்புதல் தேவை.", "Updates require your confirmation."))
-        AppUpdates.Control(prefix = prefix)
+        if (appId in setOf("podcast", "launcher")) {
+            BrowserReleaseUpdates(prefix)
+        } else {
+            AppUpdates.Control(prefix = prefix)
+        }
         Text(suiteText("மற்ற செயலிகள்", "Other apps"), style = MaterialTheme.typography.titleMedium)
         (SisterApps.releaseLinks(appId) + SisterApps.projectLinks()).forEach { (label, url) ->
             TextButton(onClick = {

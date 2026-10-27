@@ -108,7 +108,7 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
             ACTION_PLAY -> {
                 val url = intent.getStringExtra(EXTRA_URL)
                 if (url != null && PlaybackPolicy.isWebAudio(url)) {
-                    play(url, intent.getStringExtra(EXTRA_TITLE).orEmpty(), intent.getIntExtra(EXTRA_POSITION, 0))
+                    play(url, intent.getStringExtra(EXTRA_TITLE).orEmpty(), intent.getIntExtra(EXTRA_POSITION, 0), intent.getBooleanExtra(EXTRA_OFFLINE_ONLY, false))
                 } else finishPlayback()
             }
             else -> finishPlayback()
@@ -117,7 +117,7 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
         return START_NOT_STICKY
     }
 
-    private fun play(url: String, episodeTitle: String, position: Int) {
+    private fun play(url: String, episodeTitle: String, position: Int, offlineOnly: Boolean = false) {
         savePosition()
         releasePlayer()
         audioUrl = url
@@ -133,7 +133,10 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
             created.setOnPreparedListener(this)
             created.setOnCompletionListener(this)
             created.setOnErrorListener(this)
-            created.setDataSource(url)
+            val local = runCatching { PodcastDownloads(this).completedFile(url) }.getOrNull()
+            val source = OfflineAudioPolicy.playbackSource(url, local?.absolutePath, offlineOnly)
+                ?: error("The complete offline file is unavailable")
+            created.setDataSource(source)
             created.prepareAsync()
         } catch (error: Exception) { fail() }
     }
@@ -300,12 +303,13 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
         const val EXTRA_URL = "url"
         const val EXTRA_TITLE = "title"
         const val EXTRA_POSITION = "position"
+        const val EXTRA_OFFLINE_ONLY = "offline_only"
         private const val CHANNEL = "podcast-playback"
         private const val NOTIFICATION_ID = 4601
 
-        fun play(context: Context, url: String, title: String, positionMs: Int = 0) {
+        fun play(context: Context, url: String, title: String, positionMs: Int = 0, offlineOnly: Boolean = false) {
             ContextCompat.startForegroundService(context, Intent(context, PodcastPlaybackService::class.java)
-                .setAction(ACTION_PLAY).putExtra(EXTRA_URL, url).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_POSITION, positionMs))
+                .setAction(ACTION_PLAY).putExtra(EXTRA_URL, url).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_POSITION, positionMs).putExtra(EXTRA_OFFLINE_ONLY, offlineOnly))
         }
         fun pause(context: Context) { command(context, ACTION_PAUSE) }
         fun resume(context: Context) {

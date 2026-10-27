@@ -1,35 +1,34 @@
 # Elderly Launcher (முதியவர் திரை)
 
-**Current stable release:** 1.3 / code 4
+**Current stable release:** 1.4 / code 5
 
 Package `com.universalrp.launcher`. Android 8.0 / API 26 or later.
 
-Large, predictable home-screen buttons, favourite calls and a live battery reading.
-
 ## Features
 
-- **Set default home:** A dedicated button opens Android’s home-role chooser or Home settings. Cancelled selection can be retried.
-- **Contextual permissions:** Phone permission when calling, contacts permission when adding a favourite, camera permission for the torch. Denied phone access falls back to the dialler.
-- **Live battery status:** Real percentage and charging/full state. Missing readings are labelled unknown rather than shown as zero.
-- **Back behaves as home:** Returns from app lists and help pages without closing the home screen. Installed apps retain their real icons.
-- **Help and updates:** Built-in Tamil/English guide, About, sister-app links and a verified updater requiring Android installation confirmation.
+- **Readable controls:** Explicit high-contrast foregrounds for app rows, large buttons, favourites and emergency confirmation, including disabled states; palette regression checks require at least 4.5:1.
+- **Default home and battery:** A dedicated default-home chooser, live battery percentage/charging information and Back navigation that returns to home without closing it.
+- **Contextual permissions:** Contacts when adding a favourite, phone access when calling, and camera access for the torch. No unused notification permission. Never call an emergency number for testing.
+- **Browser updates:** No package-install permission or update APK provider. About opens official release pages in the browser; the launcher does not download or install APK updates.
 
 ## Permissions and privacy
 
-No ads, account or analytics. Contacts/favourites stay on the phone. The launcher posts no notifications, so it does not ask for notification access. Internet is used for the optional verified updater; project links open in the browser.
+No account, ads or app analytics. Contacts/favourites stay on the phone. The launcher posts no notifications. Calls, contacts and torch use contextual Android permissions. Project and release links open in the browser; there is no package-install permission.
 
 ## Release and testing
 
-[Official release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.3) - [APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.3/Elderly-Launcher-v1.3.apk) - [release notes](../releases/elderly-launcher-v1.3.md).
+[Official release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.4) - [APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.4/Elderly-Launcher-v1.4.apk) - [release notes](../releases/elderly-launcher-v1.4.md).
 
-Published APK: 11,514,983 bytes; SHA-256 `33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745`.
+Published APK: 11,514,811 bytes; SHA-256 `7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232`.
 
-No physical-device test of 1.3. CAMERA is newly declared for the torch. Default-home selection, permission prompts, torch and battery updates still need phone testing. Never call 108 for testing.
+The owner installed the version 1.4 candidates and supplied Play Protect screens saying This app looks safe, then confirmed All good. These releases promote the same immutable candidate APKs from run 40485186570, not new binaries. This is owner phone evidence, not an independent security audit or a guarantee about future scans. Stop if any security warning appears.
+
+Owner screenshots show readable controls and the default-home chooser. The chooser alone does not establish role completion. All OEM permission flows, torch behavior, larger font settings and every screen are not individually verified by the supplied screenshots.
+
+[Publication workflow](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40487465425) passed package/version, signer, size/hash and promotion provenance checks. [Detailed evidence and limitations](../docs/2026-10-27-device-follow-up.md). The earlier warning’s precise cause and the separate signing-trust concern are not declared resolved.
 
 ## தமிழ்
 
-பெரிய பொத்தான்கள் கொண்ட முகப்புத் திரை. விருப்ப நபர்களை அழைக்கலாம்; மின்கல அளவும் மின்னேற்ற நிலையும் தெரியும்.
+பெரிய பொத்தான்கள், முக்கிய நபர்கள், அவசர அழைப்பு உறுதிப்படுத்தல் ஆகியவற்றில் தெளிவான எழுத்துகள் உள்ளன. முகப்புத் திரைத் தேர்வு, மின்கல விவரம், பின்செல்லல், தேவைக்கேற்ற அனுமதிகள் உள்ளன. புதுப்பிப்புகள் உலாவியில் திறக்கும். சோதனைக்காக அவசர எண்ணை அழைக்க வேண்டாம்.
 
-முகப்புத் திரையாக அமை பொத்தானில் இதை இயல்புநிலை முகப்புத் திரையாகத் தேர்ந்தெடுக்கலாம். அழைக்கும்போதும் தொடர்பைச் சேர்க்கும்போதும் விளக்கை இயக்கும்போதும் தேவையான அனுமதி கேட்கப்படும். பின்செல் பட்டியல்களிலிருந்து முகப்புத் திரைக்குத் திரும்பும்; முகப்புத் திரையை மூடாது.
-
-இந்தப் பதிப்பு தொலைபேசியில் நிறுவிச் சோதிக்கப்படவில்லை. விளக்கிற்காக கேமரா அனுமதி புதிதாகச் சேர்க்கப்பட்டுள்ளது. முகப்புத் திரைத் தேர்வு, அனுமதிகள், விளக்கு, மின்கல நிலை சாதனத்தில் சோதிக்கப்பட வேண்டும். சோதனைக்காக அவசர எண்ணை அழைக்காதீர்கள்.
+புதிய பதிப்புகளை உரிமையாளர் தொலைபேசியில் நிறுவினார். பாதுகாப்புச் சோதனை ஏற்றுக்கொண்ட படங்களை அளித்து அனைத்தும் நன்றாக இருப்பதாக உறுதிப்படுத்தினார். சோதித்த அதே கோப்புகளே வெளியிடப்பட்டுள்ளன. இது தனிப்பட்ட சாதனச் சோதனை; அனைத்துச் சாதனங்களுக்கும் எதிர்காலச் சோதனைகளுக்கும் உத்தரவாதம் அல்ல. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.

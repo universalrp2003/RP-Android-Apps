@@ -27,7 +27,7 @@
       A launcher is the home screen, so it has to be the thing that answers the home button.
       CATEGORY_HOME is what makes that happen; CATEGORY_LAUNCHER would make it just another app.
     -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Updates open official releases in the browser; no package-install capability. -->
 
     <application
         android:allowBackup="false"
@@ -36,14 +36,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Launcher">
 
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.updates.files"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/app_update_paths" />
-        </provider>
 
         <activity
             android:name=".MainActivity"

@@ -45,6 +45,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: launcher-stable-release
@@ -125,6 +126,28 @@ jobs:
             exit 1
           fi
           echo "OK: $notes states its device-test status."
+
+      - name: Validate pinned phone-tested candidate provenance
+        id: promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/promote_phone_tested_apk.py prepare launcher
+
+      - name: Download immutable phone-tested candidate
+        if: steps.promotion.outputs.eligible == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.promotion.outputs.artifact }}
+          run-id: ${{ steps.promotion.outputs.run }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/phone-tested-launcher
+
+      - name: Promote exact tested APK instead of the fresh rebuild
+        if: steps.promotion.outputs.eligible == 'true'
+        run: |
+          python3 -m unittest discover -s tools/tests -p test_promote_phone_tested_apk.py
+          python3 tools/promote_phone_tested_apk.py promote launcher --artifact-root "$RUNNER_TEMP/phone-tested-launcher"
+          python3 tools/verify_browser_update_policy.py --apk "launcher/build/outputs/apk/release/launcher-release.apk"
 
       - name: Verify package, version, stable signer, APK size, and SHA-256
         id: apk
@@ -273,7 +296,7 @@ jobs:
             exit 1
           fi
 
-          GH_TOKEN="$GH_TOKEN" gh release create "$TAG" \
+          GH_TOKEN="$GH_TOKEN" gh release create "$TAG" --target "${{ github.sha }}" \
             --title "Elderly Launcher $VERSION" \
             --notes-file "releases/${TAG}.md" \
             "$APK_PATH#$ASSET"
