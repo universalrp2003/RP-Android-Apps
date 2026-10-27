@@ -879,6 +879,31 @@ def verify_resource_comments() -> int:
 
 
 
+def verify_no_duplicate_resource_names() -> int:
+    """No values XML file may declare the same resource name twice.
+
+    AAPT rejects this with "Found item String/<name> more than one time", which is a build failure
+    that costs a full CI cycle and says nothing about which file was edited twice. It happened when
+    a scripted insert added a `retry` string that already existed. Checking every module here turns
+    it into a local failure instead.
+    """
+    checked = 0
+    for values in sorted(ROOT.rglob("src/main/res/values/*.xml")):
+        if "build" in values.parts:
+            continue
+        text = values.read_text(encoding="utf-8")
+        checked += 1
+        for kind in ("string", "color", "style", "dimen", "integer", "bool", "string-array"):
+            names = re.findall(r'<%s name="([^"]+)"' % kind, text)
+            for name in sorted({n for n in names if names.count(n) > 1}):
+                rel = values.relative_to(ROOT)
+                raise ValueError(
+                    f"{rel} declares <{kind} name=\"{name}\"> more than once. AAPT rejects this at "
+                    "mergeDebugResources, so it fails the build after every test has already passed."
+                )
+    return checked
+
+
 def verify_readme_app_table() -> int:
     """The README's release table must have exactly one row per published app.
 
@@ -1036,6 +1061,7 @@ def main() -> int:
         resource_comments = verify_resource_comments()
         site_versions, expected_apps = verify_site_versions_match_downloads()
         readme_rows = verify_readme_app_table()
+        value_files = verify_no_duplicate_resource_names()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -1053,6 +1079,7 @@ def main() -> int:
     print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
     print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
     print(f"PASS: README.md lists {readme_rows} published apps exactly once each.")
+    print(f"PASS: {value_files} values XML files declare no resource name twice.")
     print(f"PASS: every version the website states is the version its own download link serves ({site_versions} download links, all {expected_apps} apps in the latest-releases table).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")

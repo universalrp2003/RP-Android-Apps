@@ -39,7 +39,6 @@
     <string name="open_show">கேட்க</string>
     <string name="back">பின்செல்</string>
     <string name="remove">நீக்கு</string>
-    <string name="retry">மீண்டும்</string>
     <string name="feed_load_failed">இந்த நாட்காட்டியை ஏற்ற முடியவில்லை</string>
     <string name="feed_load_failed_hint">இணைய இணைப்பைப் பாருங்கள், அல்லது இந்த நாட்காட்டி நின்றிருக்கலாம். பிறகு மீண்டும் முயற்சிக்கவும்.</string>
     <string name="feed_already">இந்த நாட்காட்டி ஏற்கனவே உள்ளது</string>
