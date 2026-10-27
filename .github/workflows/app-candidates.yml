@@ -83,6 +83,7 @@ jobs:
           name: ${{ matrix.module }}-candidate
           path: |
             ${{ matrix.module }}/build/outputs/apk/release/*.apk
+            ${{ matrix.module }}/build/outputs/apk/release/candidate-info.txt
             ${{ matrix.module }}/build/test-results/testDebugUnitTest/*.xml
             candidate-build.log
             candidate-feeds.log

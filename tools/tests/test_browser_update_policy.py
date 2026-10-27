@@ -4,10 +4,19 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from verify_browser_update_policy import ROOT, verify_manifest, verify_apk_permissions, verify_sources
+from verify_browser_update_policy import ROOT, verify_manifest, verify_apk_permissions, verify_sources, verify_apk_identity
 
 
 class BrowserUpdatePolicyTest(unittest.TestCase):
+    def test_actual_apk_version_must_match_source(self):
+        gradle = 'applicationId = "com.example.app"\nversionName = "1.4"\nversionCode = 6'
+        good = "package: name='com.example.app' versionCode='6' versionName='1.4' platformBuildVersionName='16'"
+        self.assertEqual('1.4', verify_apk_identity(good, gradle)['versionName'])
+        with self.assertRaisesRegex(ValueError, 'differs'):
+            verify_apk_identity(good.replace("versionCode='6'", "versionCode='5'"), gradle)
+        with self.assertRaisesRegex(ValueError, 'exactly one'):
+            verify_apk_identity(good, '')
+
     def test_current_sources(self):
         verify_sources()
 

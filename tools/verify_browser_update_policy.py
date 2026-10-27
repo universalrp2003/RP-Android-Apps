@@ -2,6 +2,7 @@
 """Check the two reviewed apps' source and, in CI, actual merged APK capabilities."""
 from pathlib import Path
 import argparse
+import hashlib
 import os
 import re
 import subprocess
@@ -45,6 +46,19 @@ def verify_sources():
     print('PASS: launcher and podcast use browser releases without package-install permissions/providers')
 
 
+def verify_apk_identity(badging, gradle):
+    values = {}
+    for field, pattern in [('applicationId', r'applicationId\s*=\s*"([^"\n]+)"'), ('versionName', r'versionName\s*=\s*"([^"\n]+)"'), ('versionCode', r'versionCode\s*=\s*(\d+)')]:
+        matches = re.findall(pattern, gradle)
+        if len(matches) != 1:
+            raise ValueError(f'Expected exactly one {field}; refusing to guess APK identity')
+        values[field] = matches[0]
+    expected = f"package: name='{values['applicationId']}' versionCode='{values['versionCode']}' versionName='{values['versionName']}'"
+    if not any(line.startswith(expected) for line in badging.splitlines()):
+        raise ValueError('Actual APK package/version differs from its source configuration')
+    return values
+
+
 def verify_apk(apk):
     sdk = Path(os.environ.get('ANDROID_HOME') or os.environ.get('ANDROID_SDK_ROOT') or '')
     tools = list((sdk / 'build-tools').glob('*/aapt'))
@@ -58,6 +72,19 @@ def verify_apk(apk):
         raise ValueError('Empty APK manifest dump')
     if '.updates.files' in manifest:
         raise ValueError('Merged APK contains an update APK provider')
+    module = apk.resolve().relative_to(ROOT).parts[0]
+    if module not in MODULES:
+        raise ValueError('Unexpected module for browser-only APK inspection')
+    badging = subprocess.check_output([str(aapt), 'dump', 'badging', str(apk)], text=True)
+    identity = verify_apk_identity(badging, (ROOT / module / 'build.gradle.kts').read_text())
+    digest = hashlib.sha256()
+    with apk.open('rb') as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
+            digest.update(chunk)
+    info = '\n'.join(f'{key}: {value}' for key, value in identity.items())
+    info += f'\nSource: {os.environ.get("GITHUB_SHA", "local")}\nFile: {apk.name}\nBytes: {apk.stat().st_size}\nSHA-256: {digest.hexdigest()}\nCandidate only; not a published release or a Play Protect assessment.\n'
+    (apk.parent / 'candidate-info.txt').write_text(info)
+    print(info)
     print(f'PASS: actual APK {apk.name} has no package-install permission or update APK provider')
 
 

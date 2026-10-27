@@ -6,11 +6,11 @@ Package `com.universalrp.launcher`. Android 8.0 / API 26 or later.
 
 Large, predictable home-screen buttons, favourite calls and a live battery reading.
 
-## Unreleased candidate — not in the APK linked below
+## Version 1.4 candidate / code 5 — not published
 
 - Explicit high-contrast text for app rows, large controls, favourites and emergency confirmation, including disabled states. The palette/source regression gate checks six color pairs at 4.5:1 or better and rejects the previous inherited foreground bug.
 - Package-install permission and update APK provider removed. About opens official releases in the browser instead of in-app APK download/installation.
-- **Play Protect report unresolved. Do not bypass its warning.** No new stable APK has been published. [Investigation, limitations and device checklist](../docs/2026-10-27-device-follow-up.md).
+- **Owner phone evidence:** the preceding candidate received “This app looks safe” from Play Protect and the owner reported normal operation. This does not determine the earlier warning’s cause or clear the rebuilt 1.4 APK. Do not bypass any new warning. No new stable APK has been published. [Investigation, limitations and device checklist](../docs/2026-10-27-device-follow-up.md).
 
 ## Published 1.3 features
 

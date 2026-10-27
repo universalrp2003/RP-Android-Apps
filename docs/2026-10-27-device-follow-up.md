@@ -92,3 +92,19 @@ Recommended retention:
 - Phone tests: all launcher button/screens at different font sizes; download completion, queued Wi-Fi behavior, retry, cancellation, app relaunch, offline-only playback in airplane mode, resume/seek, missing-file handling, deletion/storage recovery and uninstall cleanup.
 - Play Protect classification remains a release-blocking unresolved report, independent of functional tests.
 - Separate existing SMS Guard live neural-voice issue: https://github.com/universalrp2003/RP-Android-Apps/issues/49 . Its tests are not weakened by this work.
+
+
+## Subsequent owner phone tests and versioned rebuilds
+
+On 27 October 2026 the owner supplied Play Protect screens saying **This app looks safe** for both candidate APKs, launcher screenshots with readable controls and the default-home chooser, and reported **No warning everything working fine**. This is evidence for those tested candidate files, not a blanket security audit or a determination of the earlier classification's cause.
+
+The owner then confirmed **Its playing offline**. Screenshots show a completed 4.94 MB episode download, airplane mode enabled, Wi-Fi off/mobile data unavailable, and playback at 2:58 of 5:23. This establishes one downloaded episode playing offline on the owner's phone. Relaunch, deletion/storage recovery, every episode, every permission and home-role completion are not separately established by these screenshots.
+
+Owner-supplied SHA-256 strings transcribed from the file-manager screenshots:
+
+- Podcast: `a64aa4281a463f901c14c4156051b5d5538aa8a369216865fa23780730a9849e`.
+- Launcher: `f6ccbeaa442257e9828c7b8dfa97a9ca9b65e56379b366838c57f1cc940b9a1a`.
+
+These are screenshot transcriptions, not independently computed hashes of files received from the phone, and have not been matched to a particular CI artifact. Originals remain private user attachments; no screenshot is copied into the public repository.
+
+With the owner's approval, prepare version 1.4: podcast version code 6 and launcher version code 5. These are unpublished rebuilds, with package/signing identity unchanged. Existing published download links, site versions and official published hashes remain at 1.3 until actual publication. The exact rebuilt 1.4 APKs still need their own final phone checks; do not transfer the candidate's Play Protect verdict to new bytes.
