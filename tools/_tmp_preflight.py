@@ -152,6 +152,31 @@ if note is not None:
         if low.count("## தமிழ்") != 1:
             bad("%s must carry exactly one '## தமிழ்' heading" % note.name)
 
+# ---------------------------------------------------------------- 9. known-bad Android patterns
+# Each of these cost a CI cycle, so they are checked here instead of on the runner.
+for f in all_kt:
+    raw = f.read_text(encoding="utf-8")
+    # Comments stripped before matching, so an explanatory comment that names the bad constant
+    # does not trip the check that exists because of it.
+    text = re.sub(r"//[^\n]*", "", raw)
+    text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
+    if "Intent.CATEGORY_APP_CAMERA" in text:
+        bad("%s uses Intent.CATEGORY_APP_CAMERA, which does not exist. Use "
+            "MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA." % f.name)
+    if "onNewIntent(intent: Intent?)" in text:
+        bad("%s declares onNewIntent with a nullable parameter; this androidx version wants Intent."
+            % f.name)
+    if re.search(r'onClick\s*=\s*\{[^}]*LocalContext\.current', text, re.S):
+        bad("%s reads LocalContext.current inside an onClick lambda, which is not a composable "
+            "context." % f.name)
+    # LazyColumn and LazyVerticalGrid need DIFFERENT items overloads. The grid overload is correct
+    # inside a grid, so its presence alone is not a defect; using it where only a LazyColumn exists
+    # is, and so is a grid that never imported it.
+    if "lazy.grid.items" in text and "LazyVerticalGrid" not in text:
+        bad("%s imports the grid items overload but has no LazyVerticalGrid." % f.name)
+    if "LazyVerticalGrid" in text and "lazy.grid.items" not in text:
+        bad("%s uses a LazyVerticalGrid but does not import its items overload." % f.name)
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))
