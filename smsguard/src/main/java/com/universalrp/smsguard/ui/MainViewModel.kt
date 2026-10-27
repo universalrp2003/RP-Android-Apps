@@ -10,6 +10,8 @@ import com.universalrp.smsguard.data.QueuedSleepAnnouncement
 import com.universalrp.smsguard.data.QueuedSmsLinkCheck
 import com.universalrp.smsguard.data.SimCardInfo
 import com.universalrp.smsguard.data.SmsEvents
+import com.universalrp.smsguard.data.InboxLoadResult
+import com.universalrp.smsguard.data.messagesOrPrevious
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.data.SmsThreadSummary
 import com.universalrp.smsguard.data.SenderMutePref
@@ -349,13 +351,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         val quickBatch = withContext(Dispatchers.IO) {
                             SmsRepository.loadEnrichedMessages(ctx, maxMessages = 250)
                         }
-                        if (quickBatch.isNotEmpty()) {
+                        if (quickBatch is InboxLoadResult.Success && quickBatch.messages.isNotEmpty()) {
                             val quickThreads = withContext(Dispatchers.Default) {
-                                SmsRepository.groupThreads(quickBatch)
+                                SmsRepository.groupThreads(quickBatch.messages)
                             }
-                            _allMessages.value = quickBatch
+                            _allMessages.value = quickBatch.messages
                             _threads.value = quickThreads
-                            _hasMoreMessages.value = SmsRepository.lastLoadHasMoreMessages
+                            _hasMoreMessages.value = quickBatch.hasMore
                         }
                     }
 
@@ -363,12 +365,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val fullLoaded = withContext(Dispatchers.IO) {
                         SmsRepository.loadEnrichedMessages(ctx, maxMessages = targetMessageCap)
                     }
+                    val retainedMessages = fullLoaded.messagesOrPrevious(_allMessages.value)
                     val fullThreads = withContext(Dispatchers.Default) {
-                        SmsRepository.groupThreads(fullLoaded)
+                        SmsRepository.groupThreads(retainedMessages)
                     }
-                    _allMessages.value = fullLoaded
+                    _allMessages.value = retainedMessages
                     _threads.value = fullThreads
-                    _hasMoreMessages.value = SmsRepository.lastLoadHasMoreMessages
+                    if (fullLoaded is InboxLoadResult.Success) {
+                        _hasMoreMessages.value = fullLoaded.hasMore
+                    } else {
+                        _statusBanner.value = if (prefsFlow.value.tamil) {
+                            if (fullLoaded is InboxLoadResult.PermissionRequired) "பழைய செய்திகளைப் பார்க்க SMS வாசிப்பு அனுமதி தேவை."
+                            else "செய்திகளை மீளேற்ற முடியவில்லை. முன்பு ஏற்றியவை உள்ளன; மீண்டும் முயலுங்கள்."
+                        } else {
+                            if (fullLoaded is InboxLoadResult.PermissionRequired) "SMS read permission is required to view stored messages."
+                            else "Could not refresh messages. Previously loaded messages are retained; please retry."
+                        }
+                    }
                     _isLoading.value = false
                     _billReminders.value = GuardSettingsStore.getBillReminders(ctx)
                     syncThreadNotifications(fullThreads)

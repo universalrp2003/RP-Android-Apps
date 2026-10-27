@@ -14,6 +14,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.ContactsContract
 import android.provider.Telephony
+import kotlinx.coroutines.CancellationException
 import android.telephony.SmsManager
 import android.telephony.SubscriptionManager
 import androidx.core.content.ContextCompat
@@ -299,8 +300,8 @@ object SmsRepository {
     }
 
     /**
-     * CursorWindow-safe paged reader supporting phones with 50,000+ SMS messages (Samsung M32 / One UI, MIUI, HyperOS, AOSP)
-     * with ZERO OutOfMemoryError, ZERO SQLiteInvalidToken on `LIMIT`, and ZERO 2MB CursorWindow overflow!
+     * Bounded paged reader for large SMS stores. Provider and cursor failures must
+     * surface as unavailable, never as an authoritative empty inbox.
      */
     private fun queryRawRowsPaged(
         context: Context,
@@ -355,17 +356,18 @@ object SmsRepository {
                     putInt(ContentResolver.QUERY_ARG_SQL_LIMIT, fetchLimit)
                 }
                 context.contentResolver.query(Telephony.Sms.CONTENT_URI, projection, queryArgs, null)
-            } catch (_: Throwable) {
+                    ?: throw IllegalStateException("SMS provider returned no cursor")
+            } catch (_: Exception) {
                 runCatching {
                     context.contentResolver.query(
                         Telephony.Sms.CONTENT_URI,
                         projection,
                         selection,
                         selectionArgs,
-                        "${Telephony.Sms.DATE} DESC",
+                        "${Telephony.Sms.DATE} DESC, ${Telephony.Sms._ID} DESC",
                     )
                 }.getOrNull()
-            } ?: break
+            } ?: throw IllegalStateException("SMS provider unavailable")
 
             var rawCursorFetched = 0
             try {
@@ -379,10 +381,10 @@ object SmsRepository {
                     val readIdx = c.getColumnIndex(Telephony.Sms.READ)
                     val subIdx = c.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID)
 
-                    if (idIdx < 0 || addrIdx < 0 || bodyIdx < 0 || dateIdx < 0) return@use
+                    check(idIdx >= 0 && addrIdx >= 0 && bodyIdx >= 0 && dateIdx >= 0) { "SMS provider columns unavailable" }
 
                     // HARD STOP AT `fetchLimit` EVEN IF OEM TELEPHONY PROVIDER IGNORED QUERY_ARG_SQL_LIMIT!
-                    while (rawCursorFetched < fetchLimit && runCatching { c.moveToNext() }.getOrDefault(false)) {
+                    while (rawCursorFetched < fetchLimit && c.moveToNext()) {
                         rawCursorFetched++
                         try {
                             val id = c.getLong(idIdx)
@@ -408,11 +410,16 @@ object SmsRepository {
                         }
                     }
                 }
-            } catch (_: Throwable) {
-                break
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (failure: Exception) {
+                throw IllegalStateException("SMS cursor read unavailable", failure)
             }
 
-            if (pageRows.isEmpty()) break
+            if (pageRows.isEmpty()) {
+                check(rawCursorFetched == 0) { "SMS page could not be decoded" }
+                break
+            }
 
             val takeCount = minOf(remaining, pageRows.size)
             for (k in 0 until takeCount) {
@@ -443,10 +450,10 @@ object SmsRepository {
      * Loads and enriches SMS messages in bounded memory-safe pages for smooth 60 FPS startup
      * even on Dual-SIM devices with 50,000+ stored SMS messages.
      */
-    fun loadEnrichedMessages(context: Context, maxMessages: Int = 1500): List<EnrichedSmsMessage> {
+    fun loadEnrichedMessages(context: Context, maxMessages: Int = 1500): InboxLoadResult<EnrichedSmsMessage> {
         if (!hasReadSmsPermission(context) && !isDefaultSmsApp(context)) {
             lastLoadHasMoreMessages = false
-            return emptyList()
+            return InboxLoadResult.PermissionRequired
         }
         return try {
             val prefs = GuardSettingsStore.ensureLoaded(context)
@@ -518,7 +525,7 @@ object SmsRepository {
             val dedupedById = FinanceLedgerEngine.deduplicateAndLink(prelimFinance.values.toList())
                 .associateBy { it.messageId }
 
-            prelimItems.map { msg ->
+            val enriched = prelimItems.map { msg ->
                 val resolvedFin = dedupedById[msg.id]
                 if (resolvedFin != null) {
                     msg.copy(finance = resolvedFin)
@@ -533,8 +540,15 @@ object SmsRepository {
                 compareByDescending<EnrichedSmsMessage> { it.dateMs }
                     .thenByDescending { it.id },
             )
-        } catch (_: Throwable) {
-            emptyList()
+            InboxLoadResult.Success(enriched, hasMore)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: SecurityException) {
+            // OEM app-ops can deny access even when the runtime grant looks present.
+            InboxLoadResult.PermissionRequired
+        } catch (_: Exception) {
+            // No message bodies, contacts or addresses are logged.
+            InboxLoadResult.Unavailable
         }
     }
 
