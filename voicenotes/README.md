@@ -6,19 +6,19 @@
 
 **Minimum Android:** 8.0 / API 26
 
-Voice Notes is a standalone recorder-and-read-back app for Tamil. Tap the microphone, speak a note, hear it read back in the HD neural voice, and keep it. There is no account, no cloud and no upload: the notes file lives in this app's private storage and nowhere else. It is part of the eight-app **RP Ideas** open-source suite at [universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/).
+Voice Notes is a standalone dictation-and-read-back app for Tamil. Tap the microphone, speak a note, search and edit saved notes, then hear one read back in the HD neural voice. Notes are stored in this app's private storage; the first HD playback asks before sending that selected note's text to the online neural voice service. No account is required. Dictation uses the device's speech-recognition service, whose audio handling depends on the installed provider. It is part of the eight-app **RP Ideas** open-source suite at [universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/).
 
 ## What it does
 
 - Dictate a note in Tamil, hear it spoken back, keep it on the phone.
 - The voice is chosen by the script of the note, not by the app's interface language. A Tamil note is read by `ta-IN-ValluvarNeural`; an English note by the English voice. Reading Tamil with the English voice produces noise rather than wrong words, so the text decides.
 - Long notes are split at sentence boundaries into chunks the neural endpoint can actually return, and spoken in order.
-- With no internet the app says the voice is waiting rather than falling back to a robot voice or dropping the note silently.
+- HD neural voice is retained. With no internet, playback reports that HD voice is unavailable; there is deliberately no robotic voice fallback.
 - One tap on the speaker symbol beside a note reads it back; the bin deletes it.
 
 ## Permissions
 
-Microphone, for dictation, and internet, for the voice. **No location, no contacts, no SMS, no storage, no camera.**
+Microphone, for dictation; internet, for HD neural playback. **No location, no contacts, no SMS, no camera.** Notes use private app storage.
 
 ## Download the stable release
 
