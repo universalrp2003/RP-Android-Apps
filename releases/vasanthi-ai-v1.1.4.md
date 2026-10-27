@@ -11,6 +11,8 @@
 
 - This exact build is **not installed on a phone** and has **no physical-device test** in this session. CI is not proof of a successful update installation or a microphone/volume test.
 
+Candidate unit tests and release compilation passed in [CI run 40471829272](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40471829272). This is not physical-device evidence for the rebuilt published APK.
+
 ## தமிழ்
 
 - செயலி விவரப் பகுதியில் வழிகாட்டி மற்றும் பிற செயலிகளின் இணைப்புகளுடன் சரிபார்க்கப்பட்ட புதுப்பிப்பும் உள்ளது.
