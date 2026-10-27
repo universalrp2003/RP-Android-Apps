@@ -79,9 +79,16 @@ Recommended retention:
 - Record archive contents, sizes and SHA-256 hashes, confirm the remote copy, then remove only explicitly approved disposable local copies. Uploading without that cleanup cannot reclaim space.
 - Do not remove source, release evidence or the repository root to solve a storage warning. Build artifacts already follow the repository's ignore rules.
 
-## Validation still required
+## Validation completed
 
-- CI Kotlin compilation, JVM tests, live feeds and merged-APK capability checks.
+- Source commit: `5eeafc96e26f6c493dcf0f789da0b079820967a4`.
+- [Candidate run 40480048906](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40480048906): launcher, podcast and Vasanthi all passed their debug JVM test tasks and signed release assembly. Both affected actual APKs passed the no-installer-permission/provider inspection.
+- The podcast's live gate passed all eleven RSS feeds and sampled first-audio responses. These are endpoint smoke checks, not whole-episode listening or offline phone tests.
+- Local checks: all eighteen localization gates, sound labels, all three module preflights, contrast/browser capability guards, eighty-eight Python tests and `git diff --check` passed.
+- CleanSweep's local verifier was run before each commit and correctly refused to pass because local real JUnit XML is absent; no local Android SDK/JDK is available. The separate [broad CI run 40479496557](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40479496557) at preceding source `0294dd091e8c9483d12622fc1faf35affda475b2` passed its real CleanSweep and Vocal Remover regression gates. It is not described as a local pass or a phone test.
+- Root README and website carry visible warnings for the existing affected stable downloads; they do not advertise candidate features as released.
+
+## Validation still required
 - Phone tests: all launcher button/screens at different font sizes; download completion, queued Wi-Fi behavior, retry, cancellation, app relaunch, offline-only playback in airplane mode, resume/seek, missing-file handling, deletion/storage recovery and uninstall cleanup.
 - Play Protect classification remains a release-blocking unresolved report, independent of functional tests.
 - Separate existing SMS Guard live neural-voice issue: https://github.com/universalrp2003/RP-Android-Apps/issues/49 . Its tests are not weakened by this work.

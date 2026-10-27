@@ -2,6 +2,10 @@
 
 Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**[universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/)**) for twelve open-source Android apps in **தமிழ் (Tamil)** and **English**: nine actively maintained utilities (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / ரமேஷ் ரேடியோ**, **PulseEQ**, **RP Vocal Remover Studio**, **Oor Arivippu / ஊர் அறிவிப்பு**, **Vasanthi AI / வசந்தி AI**) plus **Secret Message**, a separately published app that is not independently security-reviewed. Developed by **Rameshprathap R (`@universalrp2003`)** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. Current minimum Android versions and signed GitHub Release APKs are listed below; device-dependent features are described honestly in each app's documentation.
 
+**பாதுகாப்பு எச்சரிக்கை — 27 அக்டோபர் 2026:** கதை சொல்லி மற்றும் முதியவர் திரை செயலிகளுக்கு பாதுகாப்புத் தடை வந்ததாக உரிமையாளர் தெரிவித்துள்ளார். எச்சரிக்கையைத் தவிர்த்து நிறுவ வேண்டாம். திருத்தங்கள் இன்னும் புதிய வெளியீடாக வரவில்லை.
+
+**Play Protect report under review:** The owner reported “Harmful app blocked” for Tamil Podcast Player and Elderly Launcher. Do not bypass the warning. New source candidates reduce update privileges, but no corrected stable APK or Play Protect clearance is claimed. [Investigation and testing status](docs/2026-10-27-device-follow-up.md).
+
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.8 / code 14](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8) | [`SMS-Guard-v1.1.8.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.8/SMS-Guard-v1.1.8.apk) |

@@ -36,3 +36,8 @@ The extractor now identifies literal URLs in actual `show(id, title, feedUrl)` e
 - **Not shipped.** News/world: **உலகின் கதை / BBC Tamil** — `https://podcasts.files.bbci.co.uk/p0l97701.rss`. [Official BBC podcast page](https://www.bbc.com/tamil/podcasts/p0l97701) and its indexed webFeed metadata publish this address. International weekly analysis, not a children's story feed.
 
 Candidate run `40479496687` compiled the podcast, passed all fifty JVM tests and inspected its actual APK successfully, but rejected this BBC feed with **Missing channel title or playable HTTPS enclosures**. The gate tried all twelve researched feeds, not only the first failure. BBC is removed rather than counted as playable, converted to a guessed alternate URL, or allowed through by weakening the HTTPS requirement. The other eleven are rechecked in the final candidate run. Directory support and an official podcast page are not substitutes for a passing playback-source check.
+
+
+## Final live candidate result
+
+[Run 40480048906](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40480048906), source `5eeafc96e26f6c493dcf0f789da0b079820967a4`, passed all eleven included RSS feeds and first-audio-prefix smoke checks. All three candidate app build/test jobs passed, including the podcast. The BBC source above remains excluded. This does not establish whole-episode playback, episode-level suitability, worldwide availability or offline behavior on a phone.
