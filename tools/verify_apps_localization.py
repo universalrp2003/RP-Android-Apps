@@ -879,6 +879,34 @@ def verify_resource_comments() -> int:
 
 
 
+def verify_readme_app_table() -> int:
+    """The README's release table must have exactly one row per published app.
+
+    A duplicated row is not cosmetic. The owner reads this table to find the current version of each
+    app, and two rows for one app is the exact confusion this repository has already had with stale
+    links. This gate exists because a scripted insert during a rebase landed the Elderly Launcher row
+    twice on `main`, and every other gate passed.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    names = []
+    for row in readme.splitlines():
+        if row.startswith("| [**"):
+            names.append(row.split("](")[0].replace("| [**", "").replace("**", "").strip())
+    duplicates = sorted({n for n in names if names.count(n) > 1})
+    if duplicates:
+        raise ValueError(
+            "README.md lists %s more than once in its release table. A duplicated row tells the "
+            "reader two different current versions for one app." % ", ".join(duplicates)
+        )
+    expected = len(RELEASE_TAG_PREFIX)
+    if len(names) != expected:
+        raise ValueError(
+            "README.md release table has %d rows but %d apps have published releases. A missing row "
+            "is an app a reader cannot find the current version of." % (len(names), expected)
+        )
+    return len(names)
+
+
 def verify_site_versions_match_downloads() -> int:
     """Every version the website states must be the version it actually downloads.
 
@@ -1007,6 +1035,7 @@ def main() -> int:
         module_readmes = verify_module_readmes()
         resource_comments = verify_resource_comments()
         site_versions, expected_apps = verify_site_versions_match_downloads()
+        readme_rows = verify_readme_app_table()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -1023,6 +1052,7 @@ def main() -> int:
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
     print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
     print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
+    print(f"PASS: README.md lists {readme_rows} published apps exactly once each.")
     print(f"PASS: every version the website states is the version its own download link serves ({site_versions} download links, all {expected_apps} apps in the latest-releases table).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
