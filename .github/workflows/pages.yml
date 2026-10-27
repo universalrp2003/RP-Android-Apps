@@ -61,6 +61,7 @@ jobs:
               ("vasanthi-ai-v1.1.1", "Vasanthi-AI-v1.1.1.apk", 45773770, "90acaf684a4a36d95786266dba0b1fc1a05cba312163c1530ed89abb9d898e4c"),
               ("vasanthi-ai-v1.1.2", "Vasanthi-AI-v1.1.2.apk", 45773770, "04f24d557b5971460b26fb6528554f02f27654c8cb9bac2c587908c6100f7c4f"),
               ("tamil-podcast-v1.0", "Tamil-Podcast-Player-v1.0.apk", 11912659, "f84204f78219a4f8aed7648f9a0a2574de40cc1d22471d33bd19b7bc7f13d94b"),
+              ("elderly-launcher-v1.0", "Elderly-Launcher-v1.0.apk", 11473971, "9fdb5cc700cdf95fb8a113328f72e442098b9dbb5cb8217cf00ed9924be7f23b"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -115,6 +116,8 @@ jobs:
           test -s site/apks/Vasanthi-AI-v1.1.2.zip
           test -s site/apks/Tamil-Podcast-Player-v1.0.apk
           test -s site/apks/Tamil-Podcast-Player-v1.0.zip
+          test -s site/apks/Elderly-Launcher-v1.0.apk
+          test -s site/apks/Elderly-Launcher-v1.0.zip
           test -s site/apks/PulseEQ-v1.9.apk
           test -s site/apks/PulseEQ-v1.9.zip
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.apk
