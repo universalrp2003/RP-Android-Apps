@@ -127,12 +127,20 @@ object RssReader {
      *
      * A host that blocks a request answers with HTML, and HTML has a `<title>`, so a parser that
      * only looks for titles will happily read a block page as a show. This is the check that stops
-     * that: a real feed declares an `<rss>` or `<feed>` root and carries at least one `<item>`.
+     * that: a real feed declares an `<rss>`, `<rdf>` or `<feed>` root and carries at least one
+     * entry, which is `<item>` in RSS and `<entry>` in Atom.
+     *
+     * An Atom feed therefore passes this check and then parses as empty, because episodes are read
+     * from `<item>` and an Atom feed has none. That is the honest outcome: the app says "this feed
+     * has no episodes" rather than inventing a show name out of a page title, which is the failure
+     * the owner actually reported. No Atom feed is built in, so nothing in this app reaches it.
      */
     fun looksLikeFeed(xml: String): Boolean {
         val head = xml.take(2_000).lowercase()
+        val body = xml.lowercase()
         val hasRoot = "<rss" in head || "<feed" in head || "<rdf" in head
-        return hasRoot && "<item" in xml.lowercase()
+        val hasEntry = "<item" in body || "<entry" in body
+        return hasRoot && hasEntry
     }
 
     /** The show's own title, which is the first title outside any item. */
