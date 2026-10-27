@@ -2,9 +2,6 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:453:37 Unresolved reference 'size'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:461:45 Unresolved reference 'size'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:467:30 Unresolved reference 'size'.
 ```
 
 ## Gradle summary
@@ -14,15 +11,11 @@ e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/ja
 FAILURE: Build failed with an exception.
 
 * What went wrong:
-Execution failed for task ':launcher:compileDebugKotlin'.
-> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
-   > Compilation error. See log for more details
+Execution failed for task ':podcast:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/podcast/build/reports/tests/testDebugUnitTest/index.html
 
 * Try:
-> Run with --stacktrace option to get the stack trace.
-> Run with --info or --debug option to get more log output.
 > Run with --scan to get full insights.
-> Get more help at https://help.gradle.org.
 
 Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
 
@@ -30,10 +23,13 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 5s
-323 actionable tasks: 126 executed, 197 from cache
+BUILD FAILED in 2m 18s
+360 actionable tasks: 156 executed, 204 from cache
 ```
-(no failing tests recorded in the JUnit XML)
+com.universalrp.podcast.RssReaderTest :: anAtomFeedIsAFeed
+    java.lang.AssertionError
+
+(1 failing test(s))
 
 ## Store artwork step
 ```
