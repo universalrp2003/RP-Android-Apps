@@ -67,7 +67,7 @@ jobs:
           set -o pipefail
           gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:assembleRelease --no-daemon --stacktrace 2>&1 | tee candidate-build.log
       - name: Inspect actual browser-only APK capabilities
-        if: matrix.module == 'launcher' || matrix.module == 'podcast'
+        if: matrix.module == 'launcher' || matrix.module == 'podcast' || matrix.module == 'equalizer'
         shell: bash
         env:
           MODULE: ${{ matrix.module }}

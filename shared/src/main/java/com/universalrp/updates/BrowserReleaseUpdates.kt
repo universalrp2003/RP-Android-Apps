@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 
-/** Manual browser releases for the two apps under Play Protect review. No APK installer calls. */
+/** Manual browser releases for apps using the reduced-permission update policy. No APK installer calls. */
 @Composable
 fun BrowserReleaseUpdates(prefix: String) {
     val context = LocalContext.current

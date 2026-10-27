@@ -207,9 +207,8 @@ fun PlayerScreen(state: EqUiState, vm: EqViewModel) {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "It plays local files — streaming is not supported. Internet access is only for update checks, not " +
-                            "online music. For YouTube, Spotify and other apps, use the Background/Settings " +
-                            "options: the system-wide effect or the cooperating-player sessions.",
+                        "It plays local files — streaming is not supported. Updates open in your external browser. " +
+                            "For YouTube, Spotify and other apps, use Background/Settings: the system-wide effect or cooperating-player sessions.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )

@@ -1,6 +1,6 @@
 # Tamil Podcast Player (கதை சொல்லி)
 
-> Unreleased candidate 1.5: continuous playback / naming follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+> Unreleased candidate 1.6: expanded Tamil story catalogue / browser-only update follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
 
 **Current stable release:** 1.4 / code 6
 
@@ -34,3 +34,5 @@ The owner demonstrated one completed 4.94 MB episode playing with airplane mode 
 பகுதிகளைப் பதிவிறக்கிப் பதிவிறக்கங்கள் பக்கத்தில் இணையமின்றிக் கேட்கலாம். இயல்பாக வைஃபை மட்டும் பயன்படுத்தப்படும். அளவு, முன்னேற்றம், மீண்டும் முயற்சி, ரத்து செய்தல், நீக்குதல் உள்ளன. ஆறு பிரிவுகளில் பதினொரு ஊட்டங்களையும் நிகழ்ச்சித் தேடலையும் பயன்படுத்தலாம். இயக்கம், இடைநிறுத்தம், நேரம், இழுத்துத் தேடல், தொடர்ந்து கேட்பது ஆகியவை உள்ளன.
 
 புதிய பதிப்புகளை உரிமையாளர் தொலைபேசியில் நிறுவினார். பாதுகாப்புச் சோதனை ஏற்றுக்கொண்ட படங்களை அளித்து அனைத்தும் நன்றாக இருப்பதாக உறுதிப்படுத்தினார். சோதித்த அதே கோப்புகளே வெளியிடப்பட்டுள்ளன. இது தனிப்பட்ட சாதனச் சோதனை; அனைத்துச் சாதனங்களுக்கும் எதிர்காலச் சோதனைகளுக்கும் உத்தரவாதம் அல்ல. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.
+
+See [latest device report and PulseEQ hold](../docs/2026-10-27-pulseeq-device-review.md). The new candidate has not been installed on a phone.

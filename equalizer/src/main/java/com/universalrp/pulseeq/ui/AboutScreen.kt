@@ -95,8 +95,8 @@ fun AboutScreen(vm: EqViewModel) {
                 Text("App language", Modifier.weight(1f), color = TextSecondary)
                 AppLanguageToggle()
             }
-            Text("Audio processing stays on your phone. GitHub update checks can be turned off below.", color = TextSecondary)
-            com.universalrp.updates.AppUpdates.Control("PulseEQ")
+            Text("Audio processing stays on your phone. Updates open in your browser; this app does not download or install APKs.", color = TextSecondary)
+            com.universalrp.updates.BrowserReleaseUpdates("PulseEQ")
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text("Project development & credits", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Cyan)

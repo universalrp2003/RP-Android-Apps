@@ -1,6 +1,6 @@
 # PulseEQ
 
-> Unreleased candidate 1.10: continuous playback / naming follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+> Unreleased candidate 1.11: expanded Tamil story catalogue / browser-only update follow-up. Not installed on a phone yet; public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
 
 PulseEQ is a Tamil-first audio player and 20-band equalizer with an in-app English option. Its latest published release is **1.7 / code 8**, package `com.universalrp.pulseeq`, minimum Android 8.0 (API 26).
 
@@ -24,3 +24,5 @@ The updater checks RP-Android-Apps first and InternetRadio as fallback, displays
 ```
 
 The release workflow also produces an Android App Bundle and verifies application identity, version, manifest, signing certificate and release asset digest.
+
+See [latest device report and PulseEQ hold](../docs/2026-10-27-pulseeq-device-review.md). The new candidate has not been installed on a phone.

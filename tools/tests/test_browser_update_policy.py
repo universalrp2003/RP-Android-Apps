@@ -4,10 +4,23 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from verify_browser_update_policy import ROOT, verify_manifest, verify_apk_permissions, verify_sources, verify_apk_identity
+from verify_browser_update_policy import ROOT, verify_manifest, verify_apk_permissions, verify_sources, verify_apk_identity, verify_entry
 
 
 class BrowserUpdatePolicyTest(unittest.TestCase):
+    def test_pulseeq_cannot_regress_to_in_app_updates(self):
+        entry = 'com.universalrp.updates.BrowserReleaseUpdates("PulseEQ")'
+        verify_entry('equalizer', entry)
+        with self.assertRaises(ValueError): verify_entry('equalizer', '')
+        with self.assertRaises(ValueError): verify_entry('equalizer', entry.replace('BrowserReleaseUpdates', 'AppUpdates.Control'))
+        source = (ROOT / 'equalizer/src/main/AndroidManifest.xml').read_text()
+        self.assertNotIn('android.permission.INTERNET', source)
+        for permission in ['REQUEST_INSTALL_PACKAGES', 'INSTALL_PACKAGES']:
+            bad = source.replace('<application', '<uses-permission android:name="android.permission.' + permission + '"/><application', 1)
+            with self.assertRaises(ValueError): verify_manifest(bad)
+        bad = source.replace('</application>', '<provider android:authorities="com.universalrp.pulseeq.updates.files"/></application>')
+        with self.assertRaises(ValueError): verify_manifest(bad)
+
     def test_actual_apk_version_must_match_source(self):
         gradle = 'applicationId = "com.example.app"\nversionName = "1.4"\nversionCode = 6'
         good = "package: name='com.example.app' versionCode='6' versionName='1.4' platformBuildVersionName='16'"
