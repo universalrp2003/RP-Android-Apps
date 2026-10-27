@@ -14,6 +14,8 @@
 - A Play Protect result is not an independent security audit or a guarantee about future scans. The earlier warning's precise cause was not established. Stop if any security warning appears; do not bypass protection.
 - The package and signing identity remain unchanged for upgrades. Version code increases to 5. Signing trust requires a separate reviewed production plan; no identity change is used to evade a classification.
 
+- Promotion provenance: [phone-tested CI run 40485186570](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40485186570), immutable artifact `12724268538`. The release gate checks its original APK receipt and preserves its SHA-256.
+
 ## தமிழ்
 
 - செயலிப் பட்டியல், பெரிய பொத்தான்கள், முக்கிய நபர்கள் மற்றும் அவசர அழைப்பு உறுதிப்படுத்தலில் தெளிவான வெள்ளை எழுத்துகள் உள்ளன. முடக்கப்பட்ட பொத்தான்களுக்கும் தனியான தெளிவான நிறங்கள் உள்ளன.
