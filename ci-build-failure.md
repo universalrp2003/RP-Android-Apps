@@ -2,10 +2,7 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:216:26 None of the following candidates is applicable:
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:220:27 Argument type mismatch: actual type is 'List<BigButtons.Button>', but 'Int' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:222:75 Unresolved reference 'labelRes'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:228:53 Unresolved reference 'action'.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:217:26 None of the following candidates is applicable:
 ```
 
 ## Gradle summary
@@ -31,8 +28,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 2m 9s
-326 actionable tasks: 185 executed, 141 from cache
+BUILD FAILED in 3m 23s
+341 actionable tasks: 196 executed, 145 from cache
 ```
 (no failing tests recorded in the JUnit XML)
 
