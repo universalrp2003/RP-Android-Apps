@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -87,7 +86,7 @@ class MainActivity : ComponentActivity() {
     }
 
     /** The home button must never stack copies of this screen. */
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
     }
@@ -192,18 +191,20 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     )
                 }
             } else {
-                items(apps) { app ->
-                    BigButton(
-                        label = app.label,
-                        height = 84,
-                        background = CardBg,
-                        onClick = {
-                            val result = LauncherActions.launchApp(context, app.packageName)
-                            if (result is LauncherActions.Result.Failed) {
-                                notice = context.getString(result.reasonRes)
-                            }
-                        },
-                    )
+                for (app in apps) {
+                    item {
+                        BigButton(
+                            label = app.label,
+                            height = 84,
+                            background = CardBg,
+                            onClick = {
+                                val result = LauncherActions.launchApp(context, app.packageName)
+                                if (result is LauncherActions.Result.Failed) {
+                                    notice = context.getString(result.reasonRes)
+                                }
+                            },
+                        )
+                    }
                 }
             }
         } else {
@@ -258,6 +259,11 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
         item { Spacer(Modifier.height(20.dp)) }
     }
 
+    // Resolved here, in the composable body, because an onClick lambda is not a composable context
+    // and LocalContext.current cannot be read inside one.
+    val emergencyNumber = LocalContext.current.getString(R.string.emergency_number)
+    val yesLabel = LocalContext.current.getString(R.string.emergency_yes)
+
     if (confirmEmergency) {
         AlertDialog(
             onDismissRequest = { confirmEmergency = false },
@@ -268,25 +274,15 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     fontWeight = FontWeight.Bold,
                 )
             },
-            text = {
-                Text(
-                    text = LocalContext.current.getString(R.string.emergency_number),
-                    fontSize = 20.sp,
-                )
-            },
+            text = { Text(text = emergencyNumber, fontSize = 20.sp) },
             confirmButton = {
                 Button(
                     onClick = {
                         confirmEmergency = false
-                        onEmergency(LocalContext.current.getString(R.string.emergency_number))
+                        onEmergency(emergencyNumber)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmergencyBg),
-                ) {
-                    Text(
-                        text = LocalContext.current.getString(R.string.emergency_yes),
-                        fontSize = 18.sp,
-                    )
-                }
+                ) { Text(text = yesLabel, fontSize = 18.sp) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmEmergency = false }) {
@@ -305,10 +301,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             title = { Text(text = text, fontSize = 18.sp) },
             confirmButton = {
                 TextButton(onClick = { notice = null }) {
-                    Text(
-                        text = LocalContext.current.getString(R.string.emergency_yes),
-                        fontSize = 16.sp,
-                    )
+                    Text(text = yesLabel, fontSize = 16.sp)
                 }
             },
         )

@@ -88,12 +88,31 @@ object LauncherActions {
         )
     }
 
-    fun openCamera(context: Context): Result = start(
-        context,
-        Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CAMERA)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        R.string.big_camera,
-    )
+    fun openCamera(context: Context): Result {
+        // MediaStore's still-image-camera action, not Intent.CATEGORY_APP_CAMERA - that constant
+        // does not exist, and this is the one that is answered by every phone's camera app.
+        val camera = Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (context.packageManager.queryIntentActivities(camera, 0).isNotEmpty()) {
+            return start(context, camera, R.string.big_camera)
+        }
+        return start(
+            context,
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_DEFAULT)
+                .setPackage(defaultCameraPackage(context))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            R.string.big_camera,
+        )
+    }
+
+    /** The package the system says handles the camera, or null. */
+    private fun defaultCameraPackage(context: Context): String? = try {
+        val intent = Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
+        context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+            ?.activityInfo?.packageName
+    } catch (error: Exception) {
+        null
+    }
 
     fun openContacts(context: Context): Result {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("content://contacts/people/"))

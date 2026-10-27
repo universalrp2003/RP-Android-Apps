@@ -714,7 +714,6 @@ def verify_about_links() -> None:
             'tagPrefix = "voice-notes"', 'version = "1.1"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.2"',
             'tagPrefix = "tamil-podcast"', 'version = "1.0"',
-            'tagPrefix = "elderly-launcher"', 'version = "1.0"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
@@ -961,11 +960,15 @@ def verify_site_versions_match_downloads() -> int:
             "site/index.html latest-releases table: " + ", ".join(row_mismatch)
         )
 
-    expected_apps = 10
+    # Derived from the shared sister-app directory rather than hard-coded, so adding an app there
+    # and forgetting the table is a failure rather than a silent gap.
+    sister_source = (ROOT / "shared" / "src" / "main" / "java" / "com" / "universalrp" / "updates" / "SisterApps.kt").read_text(encoding="utf-8")
+    expected_apps = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
     if len(rows) != expected_apps:
         raise ValueError(
-            f"site/index.html latest-releases table has {len(rows)} rows, expected {expected_apps} "
-            "published apps. A missing row is an app a visitor cannot find from the top of the page."
+            f"site/index.html latest-releases table has {len(rows)} rows, but SisterApps.kt lists "
+            f"{expected_apps} apps. A missing row is an app a visitor cannot find from the top of "
+            "the page."
         )
 
     return len(entries) + len(buttons), expected_apps

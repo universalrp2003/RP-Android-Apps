@@ -1,7 +1,7 @@
 package com.universalrp.updates
 
 /**
- * One list, all twelve RP Ideas Android apps + official project links.
+ * One list, all eleven RP Ideas Android apps + official project links.
  *
  * Every app's About screen renders this shared directory so adding or bumping an app
  * keeps every app in sync automatically.
@@ -136,15 +136,6 @@ object SisterApps {
             packageName = "com.universalrp.podcast",
             aboutLabel = "Tamil Podcast Player — GitHub release",
         ),
-        SisterApp(
-            id = "launcher",
-            name = "Elderly Launcher",
-            tamilName = "முதியவர் திரை",
-            tagPrefix = "elderly-launcher",
-            version = "1.0",
-            packageName = "com.universalrp.launcher",
-            aboutLabel = "Elderly Launcher — GitHub release",
-        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
@@ -154,7 +145,7 @@ object SisterApps {
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
     )
 
-    /** `label to url` for all twelve RP Ideas Android apps. */
+    /** `label to url` for all eleven RP Ideas Android apps. */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 
