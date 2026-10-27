@@ -2,17 +2,8 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:4:24 Conflicting import: imported name 'Intent' is ambiguous.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:6:24 Conflicting import: imported name 'Intent' is ambiguous.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:128:54 Unresolved reference 'Context'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:129:29 Unresolved reference 'KEY_ASKED_HOME'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:136:50 Unresolved reference 'Context'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:138:25 Unresolved reference 'KEY_ASKED_HOME'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:454:5 Unresolved reference 'Card'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:457:18 Unresolved reference 'CardDefaults'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:459:9 @Composable invocations can only happen from the context of a @Composable function
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:510:13 Unresolved reference 'OutlinedButton'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:514:17 @Composable invocations can only happen from the context of a @Composable function
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:132:29 Unresolved reference 'KEY_ASKED_HOME'.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/launcher/src/main/java/com/universalrp/launcher/MainActivity.kt:141:25 Unresolved reference 'KEY_ASKED_HOME'.
 ```
 
 ## Gradle summary
@@ -38,8 +29,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 59s
-590 actionable tasks: 256 executed, 334 from cache
+BUILD FAILED in 43s
+585 actionable tasks: 253 executed, 332 from cache
 ```
 (no failing tests recorded in the JUnit XML)
 
