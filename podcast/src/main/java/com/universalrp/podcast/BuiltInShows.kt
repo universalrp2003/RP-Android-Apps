@@ -3,35 +3,30 @@ package com.universalrp.podcast
 /**
  * The shows the app starts with.
  *
- * These are public RSS feeds, chosen because they publish in Tamil and because they are long-running
- * rather than because of any relationship with this project. A feed that stops publishing simply
- * shows an empty list; nothing here is a promise about availability.
+ * Two things about this list are deliberate, and both come from the first release being wrong.
  *
- * They are held as URLs and titles only, never as a bundled audio file or a cached episode, so the
- * app stays small and the content stays the publisher's.
+ * The URLs are ones I have a real source for, not ones I invented. The first release shipped four
+ * plausible-looking URLs that did not exist, so every fetch failed and the screen sat on "loading"
+ * with no way back - which is exactly what the owner reported. A feed that 404s is now a visible
+ * error with a retry, but a list of dead links is still a bad first impression, so the two here are
+ * public feeds that were listed with their RSS addresses by a podcast directory.
+ *
+ * Nothing is bundled and nothing is cached: no audio, no episode. The app stays small and the
+ * content stays the publisher's. Adding a feed by URL is the primary way this app is meant to grow,
+ * and the built-in two are a starting point rather than the product.
  */
 object BuiltInShows {
 
     fun all(): List<PodcastShow> = listOf(
         show(
-            id = "tamil-news",
-            title = "தமிழ் செய்திகள்",
-            url = "https://feeds.simplecast.com/54nAGcIl",
+            id = "kadhai-ketkum-neram",
+            title = "கதை கேட்கும் நேரம்",
+            url = "https://feeds.buzzsprout.com/1143884",
         ),
         show(
-            id = "tamil-kathai",
-            title = "தமிழ் கதைகள்",
-            url = "https://feeds.megaphone.fm/kathaikaga",
-        ),
-        show(
-            id = "tamil-thai",
-            title = "தாய் கற்றுத் தரும் உண்மை",
-            url = "https://anchor.fm/s/7c0e4c8/podcast/rss",
-        ),
-        show(
-            id = "tamil-sirukathaigal",
-            title = "சிறுகதைகள்",
-            url = "https://feeds.transistor.fm/sirukathaigal",
+            id = "millennial-thoughts",
+            title = "Tamil Podcast \u00b7 Millennial Thoughts",
+            url = "https://anchor.fm/s/2c4ecfc4/podcast/rss",
         ),
     )
 

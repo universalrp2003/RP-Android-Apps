@@ -713,8 +713,8 @@ def verify_about_links() -> None:
             'tagPrefix = "expense-tracker"', 'version = "1.1"',
             'tagPrefix = "voice-notes"', 'version = "1.1"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.2"',
-            'tagPrefix = "tamil-podcast"', 'version = "1.0"',
-            'tagPrefix = "elderly-launcher"', 'version = "1.0"',
+            'tagPrefix = "tamil-podcast"', 'version = "1.1"',
+            'tagPrefix = "elderly-launcher"', 'version = "1.1"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]

@@ -36,6 +36,14 @@
     <string name="channel_desc">போட்காஸ்ட் இயக்கும் போனின் அறிவிப்பு.</string>
     <string name="notification_title">போட்காஸ்ட் பிளேயர்</string>
 
+    <string name="open_show">கேட்க</string>
+    <string name="back">பின்செல்</string>
+    <string name="remove">நீக்கு</string>
+    <string name="retry">மீண்டும்</string>
+    <string name="feed_load_failed">இந்த நாட்காட்டியை ஏற்ற முடியவில்லை</string>
+    <string name="feed_load_failed_hint">இணைய இணைப்பைப் பாருங்கள், அல்லது இந்த நாட்காட்டி நின்றிருக்கலாம். பிறகு மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="feed_already">இந்த நாட்காட்டி ஏற்கனவே உள்ளது</string>
+    <string name="feed_note">நாட்காட்டி இணைப்புகளை நேரலையில் பதிவிறக்கப்படுகின்றன. ஒரு நாட்காட்டி கிடைக்கவில்லை என்றால் அது தெரிவிக்கப்படும், மறைக்கப்படாது.</string>
     <string name="what_it_does">என்ன செய்யும்</string>
     <string name="what_it_does_body">தமிழ் நாட்காட்டிகளைக் கேட்கலாம். இணையம் இருந்தால் நேரலையில், இல்லையென்றால் பதிவிறக்கியதைக் கேட்கலாம். திரை அணைந்தாலும் இயக்கம் தொடரும்.</string>
 

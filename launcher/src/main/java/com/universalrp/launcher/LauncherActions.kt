@@ -168,13 +168,14 @@ object LauncherActions {
     }
 
     /**
-     * Dials the emergency number.
+     * Places a call to an arbitrary number, directly.
      *
-     * ACTION_CALL places the call directly, which needs CALL_PHONE and is what an emergency button
-     * is for. If the permission has not been granted the dialler is opened with the number filled
-     * in instead, so the button still does something useful rather than nothing.
+     * ACTION_CALL dials without a confirmation step, which needs CALL_PHONE and is what both the
+     * emergency button and the one-tap favourite buttons are for. If the permission has not been
+     * granted, or the dialler refuses, the dialler is opened with the number already filled in
+     * instead, so the button still does something useful rather than nothing.
      */
-    fun placeEmergencyCall(context: Context, number: String): Result {
+    fun placeDirectCall(context: Context, number: String): Result {
         val call = Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         val granted = context.checkSelfPermission(android.Manifest.permission.CALL_PHONE) ==
@@ -189,6 +190,10 @@ object LauncherActions {
         }
         return openDialerWithNumber(context, number)
     }
+
+    /** Dials the emergency number. A special case of a direct call, kept named for the caller. */
+    fun placeEmergencyCall(context: Context, number: String): Result =
+        placeDirectCall(context, number)
 
     private fun openDialerWithNumber(context: Context, number: String): Result = start(
         context,
