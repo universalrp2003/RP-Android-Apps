@@ -81,6 +81,7 @@ def verify(url: str) -> None:
         first = response.read(1024)
         if not first or "html" in kind or first.lstrip().lower().startswith((b"<!doctype html", b"<html")):
             raise ValueError("Audio enclosure returned an empty body or HTML")
+    print("::notice::Verified RSS and first audio prefix: " + url.replace("%", "%25"))
     print(f"PASS: {title}: {len(audio_urls)} sampled audio enclosures; first audio responded ({url})")
 
 

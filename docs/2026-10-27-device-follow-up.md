@@ -30,7 +30,7 @@ These are unpublished source candidates, not a new stable release or a claim tha
 
 ## Catalogue
 
-The candidate has twelve published RSS addresses across six sections: news/world, history, literature, science/space, learning/self-development and children's stories. Show search and category filters supplement the existing episode search. Added feeds remain a separate section. See [feed evidence](podcast-feed-evidence.md).
+The candidate has eleven published RSS addresses across six sections: news/world, history, literature, science/space, learning/self-development and children's stories. Show search and category filters supplement the existing episode search. Added feeds remain a separate section. See [feed evidence](podcast-feed-evidence.md). BBC Tamil was researched but excluded after its feed failed the unchanged HTTPS enclosure gate; it is not counted as a working source.
 
 This is a curated starting catalogue, not all Tamil audio on the internet. A directory address is not sufficient to ship: every source must pass the bounded live RSS/first-audio-prefix CI check. No claim is made about every episode's suitability, current publishing activity or availability in every country.
 

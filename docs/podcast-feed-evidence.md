@@ -17,9 +17,8 @@ This is not proof of every episode's suitability, a full playback test, or physi
 
 ## Expanded candidate catalogue — unpublished
 
-The new source list contains twelve RSS addresses across six categories. The seven additions below were discovered from published provider/directory links on 27 October 2026, not inferred from show titles. Their live CI results are recorded separately after the run completes.
+The new source list contains eleven RSS addresses across six categories. The six included additions below were discovered from published provider/directory links on 27 October 2026, not inferred from show titles. Their live CI results are recorded separately after the run completes.
 
-- News/world: **உலகின் கதை / BBC Tamil** — `https://podcasts.files.bbci.co.uk/p0l97701.rss`. [Official BBC podcast page](https://www.bbc.com/tamil/podcasts/p0l97701) and its indexed webFeed metadata publish this address. International weekly analysis, not a children's story feed.
 - News/world and Australian Tamil diaspora: **SBS Tamil** — `https://sbs-ondemand.streamguys1.com/sbs-tamil/`. [Official SBS show](https://www.sbs.com.au/language/tamil/en/podcast/sbs-tamil), [published RSS address](https://www.podchaser.com/podcasts/sbs-tamil-sbs-41427).
 - History: **Tamil Varalaru** — `https://anchor.fm/s/4e1c054/podcast/rss`. [Published feed and producer description](https://podnews.net/podcast/itp6). This includes an older archive; inclusion does not promise frequent new episodes.
 - Literature: **Tamil Lit Stories**, Jeya Maran — `https://anchor.fm/s/2e5b1c14/podcast/rss`. [Published RSS address](https://radiopublic.com/tamil-lit-stories-6r3V5R), [directory corroboration](https://www.podchaser.com/podcasts/tamil-lit-stories-1375619).
@@ -30,3 +29,10 @@ The new source list contains twelve RSS addresses across six categories. The sev
 The original five story shows remain together in Children's stories. Added user feeds have their own category. All episodes retain publisher titles and audio. News, analysis and historical topics can concern adults; no claim is made that the entire catalogue is child-safe.
 
 The extractor now identifies literal URLs in actual `show(id, title, feedUrl)` entries rather than assuming every publisher uses Anchor's URL format. It still rejects zero matches, duplicate URLs and any extra source URL not included in verification. Tests cover BBC/SBS format acceptance and deliberately reintroduce an unmatched URL. Live verification attempts every feed and fails the gate if any fails; a failure no longer hides the status of later sources.
+
+
+## Researched but excluded from the candidate
+
+- **Not shipped.** News/world: **உலகின் கதை / BBC Tamil** — `https://podcasts.files.bbci.co.uk/p0l97701.rss`. [Official BBC podcast page](https://www.bbc.com/tamil/podcasts/p0l97701) and its indexed webFeed metadata publish this address. International weekly analysis, not a children's story feed.
+
+Candidate run `40479496687` compiled the podcast, passed all fifty JVM tests and inspected its actual APK successfully, but rejected this BBC feed with **Missing channel title or playable HTTPS enclosures**. The gate tried all twelve researched feeds, not only the first failure. BBC is removed rather than counted as playable, converted to a guessed alternate URL, or allowed through by weakening the HTTPS requirement. The other eleven are rechecked in the final candidate run. Directory support and an official podcast page are not substitutes for a passing playback-source check.

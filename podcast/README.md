@@ -9,7 +9,7 @@ A Tamil-first story player with persistent transport controls and saved-position
 ## Unreleased candidate — not in the APK linked below
 
 - Real episode downloads and a Downloads library: persistent system transfers, default Wi-Fi-only requests, progress, stored sizes, retry, cancellation/deletion and offline-only playback without streaming fallback.
-- Twelve published RSS sources across news/world, history, literature, science/space, learning and children's stories; category filters and show search. [Source evidence](../docs/podcast-feed-evidence.md). Live validation is required; this is not every Tamil podcast on the internet.
+- Eleven live-checkable RSS sources across news/world, history, literature, science/space, learning and children's stories; category filters and show search. [Source evidence](../docs/podcast-feed-evidence.md). Live validation is required; this is not every Tamil podcast on the internet.
 - Package-install permission and update APK provider removed. About opens official releases in the browser instead of in-app APK download/installation.
 - **Play Protect report unresolved. Do not bypass its warning.** No new stable APK has been published. [Investigation, limitations and device checklist](../docs/2026-10-27-device-follow-up.md).
 

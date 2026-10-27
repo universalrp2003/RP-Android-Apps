@@ -5,7 +5,6 @@ package com.universalrp.podcast
  */
 object BuiltInShows {
     fun all(): List<PodcastShow> = listOf(
-        show("bbc-ulagin-kadhai", "உலகின் கதை / BBC Tamil", "https://podcasts.files.bbci.co.uk/p0l97701.rss"),
         show("sbs-tamil", "எஸ்பிஎஸ் தமிழ் / SBS Tamil (Australia)", "https://sbs-ondemand.streamguys1.com/sbs-tamil/"),
         show("tamil-varalaru", "தமிழ் வரலாறு / Tamil Varalaru", "https://anchor.fm/s/4e1c054/podcast/rss"),
         show("tamil-lit-stories", "தமிழ் இலக்கியக் கதைகள் / Tamil Lit Stories", "https://anchor.fm/s/2e5b1c14/podcast/rss"),
@@ -20,7 +19,7 @@ object BuiltInShows {
     )
 
     fun category(id: String): PodcastCategory = when (id) {
-        "bbc-ulagin-kadhai", "sbs-tamil" -> PodcastCategory.NEWS
+        "sbs-tamil" -> PodcastCategory.NEWS
         "tamil-varalaru" -> PodcastCategory.HISTORY
         "tamil-lit-stories" -> PodcastCategory.LITERATURE
         "kalakki", "space-news-tamil" -> PodcastCategory.SCIENCE
