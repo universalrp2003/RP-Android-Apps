@@ -175,6 +175,15 @@ for f in all_kt:
     if "lazy.grid.items" in text and "LazyVerticalGrid" not in text:
         bad("%s imports the grid items overload but has no LazyVerticalGrid." % f.name)
 
+# ---------------------------------------------------------------- 10. stray '#' comment markers
+# A '#' opening a trimmed line is never valid Kotlin. It is what a scripted edit leaves behind when
+# a replacement string is written in Python and the '//' is lost, and the resulting error message
+# points at the line below the mistake, which sends you looking in the wrong place.
+for f in all_kt:
+    for lineno, line in enumerate(f.read_text(encoding="utf-8").splitlines(), 1):
+        if line.lstrip().startswith("# ") and not line.lstrip().startswith("#!"):
+            bad("%s:%d starts a line with '#', which is not a Kotlin comment" % (f.name, lineno))
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))

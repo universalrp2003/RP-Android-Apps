@@ -220,7 +220,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     // A plain loop over item {}, not the items() extension. The grid's own member
                     // items(count: Int) shadows the List overload for the compiler's purposes, and
                     // resolving that costs a CI cycle to discover. item {} is a member with one
-                    # signature and nothing to resolve.
+                    // signature and nothing to resolve.
                     for (button in BigButtons.home()) {
                         item {
                             BigButton(
