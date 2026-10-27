@@ -213,7 +213,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     columns = GridCells.Fixed(2),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(BUTTON_GRID_HEIGHT),
+                        .height(BUTTON_GRID_HEIGHT_DP),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
@@ -375,7 +375,7 @@ private fun currentTimeText(): String {
     return "$hour:$mm"
 }
 
-private const val BUTTON_GRID_HEIGHT = 340
+private val BUTTON_GRID_HEIGHT_DP = 340.dp
 
 private val Bg = Color(0xFF101418)
 private val CardBg = Color(0xFF1E262E)

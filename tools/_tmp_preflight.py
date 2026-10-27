@@ -184,6 +184,17 @@ for f in all_kt:
         if line.lstrip().startswith("# ") and not line.lstrip().startswith("#!"):
             bad("%s:%d starts a line with '#', which is not a Kotlin comment" % (f.name, lineno))
 
+# ---------------------------------------------------------------- 11. bare integers where Dp is wanted
+# Every one of these modifiers takes a Dp, and a bare integer literal is a compile error whose
+# message points at the enclosing call rather than at the argument, which is why it cost a cycle to
+# find the first time.
+DP_MODIFIERS = ("height", "width", "size", "padding", "offset", "absoluteOffset", "paddingFrom")
+for f in all_kt:
+    text = re.sub(r"//[^\n]*", "", f.read_text(encoding="utf-8"))
+    for match in re.finditer(r"\.(height|width|size|padding|offset|absoluteOffset)\(\s*(\d+)\s*[,)]", text):
+        bad("%s passes the bare integer %s to .%s(), which takes a Dp - write %s.dp"
+            % (f.name, match.group(2), match.group(1), match.group(2)))
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))
