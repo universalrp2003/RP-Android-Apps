@@ -62,6 +62,7 @@ jobs:
               ("vasanthi-ai-v1.1.2", "Vasanthi-AI-v1.1.2.apk", 45773770, "04f24d557b5971460b26fb6528554f02f27654c8cb9bac2c587908c6100f7c4f"),
               ("tamil-podcast-v1.0", "Tamil-Podcast-Player-v1.0.apk", 11912659, "f84204f78219a4f8aed7648f9a0a2574de40cc1d22471d33bd19b7bc7f13d94b"),
               ("tamil-podcast-v1.1", "Tamil-Podcast-Player-v1.1.apk", 11916239, "ced6b0e5ba0280c65d777dae8b1c63e2969483135e292c80b88c0db1d05e4441"),
+              ("tamil-podcast-v1.1.1", "Tamil-Podcast-Player-v1.1.1.apk", 11916067, "73d4acc9f3052fec1507e1511d825c8f76cc22e5348cde80771eb842a28b3ede"),
               ("elderly-launcher-v1.0", "Elderly-Launcher-v1.0.apk", 11473971, "9fdb5cc700cdf95fb8a113328f72e442098b9dbb5cb8217cf00ed9924be7f23b"),
               ("elderly-launcher-v1.1", "Elderly-Launcher-v1.1.apk", 11497795, "a395ca9be8e351e1f42982c2fa3cd5fcc8e368a8ec11c32eb4582b00ab555402"),
           ]
@@ -118,6 +119,8 @@ jobs:
           test -s site/apks/Vasanthi-AI-v1.1.2.zip
           test -s site/apks/Tamil-Podcast-Player-v1.0.apk
           test -s site/apks/Tamil-Podcast-Player-v1.1.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.1.1.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.1.1.zip
           test -s site/apks/Tamil-Podcast-Player-v1.1.zip
           test -s site/apks/Tamil-Podcast-Player-v1.0.zip
           test -s site/apks/Elderly-Launcher-v1.0.apk
