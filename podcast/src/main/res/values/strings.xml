@@ -41,6 +41,7 @@
     <string name="remove">நீக்கு</string>
     <string name="feed_load_failed">இந்த ஊட்டத்தை ஏற்ற முடியவில்லை</string>
     <string name="feed_load_failed_hint">இணைய இணைப்பைப் பாருங்கள், அல்லது இந்த ஊட்டம் நின்றிருக்கலாம். பிறகு மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="feed_not_a_feed_hint">இந்த இணைப்பு ஒரு போட்காஸ்ட் ஊட்டம் அல்ல. போட்காஸ்ட் ஊட்டத்தின் RSS இணைப்பு ஒட்டுங்கள்.</string>
     <string name="feed_already">இந்த ஊட்டம் ஏற்கனவே உள்ளது</string>
     <string name="feed_note">ஊட்ட இணைப்புகளை நேரலையில் பதிவிறக்கப்படுகின்றன. ஒரு ஊட்டம் கிடைக்கவில்லை என்றால் அது தெரிவிக்கப்படும், மறைக்கப்படாது.</string>
     <string name="what_it_does">என்ன செய்யும்</string>

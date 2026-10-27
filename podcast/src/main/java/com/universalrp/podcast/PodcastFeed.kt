@@ -1,5 +1,19 @@
 package com.universalrp.podcast
 
+/**
+ * Why a feed could not be read, when it could not.
+ *
+ * The two are told apart because they need different words on screen. "Unreachable" is a network
+ * problem the owner can retry; "not a feed" means the link is not a podcast at all, and retrying it
+ * will fail forever. Before this distinction existed, a Cloudflare challenge page was parsed as if
+ * it were a feed and its HTML title - "Attention Required! | Cloudflare" - was shown as the name of
+ * a podcast, which is how the owner found it.
+ */
+enum class FeedProblem {
+    UNREACHABLE,
+    NOT_A_FEED,
+}
+
 /** One show the user follows. */
 data class PodcastShow(
     val id: String,
@@ -7,6 +21,10 @@ data class PodcastShow(
     val feedUrl: String,
     val builtIn: Boolean,
     val episodes: List<Episode> = emptyList(),
+    /** Cover art the feed publishes for itself, or null when it publishes none. */
+    val imageUrl: String? = null,
+    /** Set when the last fetch could not read this feed. */
+    val problem: FeedProblem? = null,
 )
 
 /** One playable item inside a show. */
@@ -76,6 +94,41 @@ object RssReader {
         } catch (error: Exception) {
             emptyList()
         }
+    }
+
+    /**
+     * The show's cover art.
+     *
+     * `itunes:image` is where a podcast puts it, and it is an attribute rather than an element, so
+     * it needs its own pattern. The RSS-level `<image><url>` form is the fallback for feeds that
+     * predate itunes. Both are absolute URLs in practice; a relative one is dropped rather than
+     * guessed at, for the same reason a relative enclosure is.
+     */
+    fun parseImage(xml: String): String? {
+        val itunes = Regex("<itunes:image\\b[^>]*\\bhref\\s*=\\s*\"([^\"]+)\"")
+            .find(xml)?.groupValues?.getOrNull(1)
+        if (itunes != null) {
+            val url = clean(itunes)
+            if (url.startsWith("http", ignoreCase = true)) return url
+        }
+        val block = Regex("<image\\b[^>]*>(.*?)</image>", RegexOption.DOT_MATCHES_ALL)
+            .find(xml)?.groupValues?.getOrNull(1) ?: return null
+        val url = Regex("<url\\b[^>]*>(.*?)</url>", RegexOption.DOT_MATCHES_ALL)
+            .find(block)?.groupValues?.getOrNull(1)?.let { clean(it) } ?: return null
+        return if (url.startsWith("http", ignoreCase = true)) url else null
+    }
+
+    /**
+     * True when the body looks like a podcast feed rather than like a web page.
+     *
+     * A host that blocks a request answers with HTML, and HTML has a `<title>`, so a parser that
+     * only looks for titles will happily read a block page as a show. This is the check that stops
+     * that: a real feed declares an `<rss>` or `<feed>` root and carries at least one `<item>`.
+     */
+    fun looksLikeFeed(xml: String): Boolean {
+        val head = xml.take(2_000).lowercase()
+        val hasRoot = "<rss" in head || "<feed" in head || "<rdf" in head
+        return hasRoot && "<item" in xml.lowercase()
     }
 
     /** The show's own title, which is the first title outside any item. */

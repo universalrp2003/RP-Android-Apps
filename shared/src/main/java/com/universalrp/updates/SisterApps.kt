@@ -132,7 +132,7 @@ object SisterApps {
             name = "Tamil Podcast Player",
             tamilName = "தமிழ் போட்காஸ்ட் பிளேயர்",
             tagPrefix = "tamil-podcast",
-            version = "1.1.1",
+            version = "1.2",
             packageName = "com.universalrp.podcast",
             aboutLabel = "Tamil Podcast Player — GitHub release",
         ),
