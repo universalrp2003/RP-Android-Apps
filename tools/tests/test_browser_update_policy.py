@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from verify_browser_update_policy import ROOT, verify_manifest, verify_apk_permissions, verify_sources, verify_apk_identity, verify_entry
+from verify_browser_update_policy import ROOT, verify_manifest, verify_apk_permissions, verify_sources, verify_apk_identity, verify_entry, verify_workflow
 
 
 class BrowserUpdatePolicyTest(unittest.TestCase):
@@ -20,6 +20,13 @@ class BrowserUpdatePolicyTest(unittest.TestCase):
             with self.assertRaises(ValueError): verify_manifest(bad)
         bad = source.replace('</application>', '<provider android:authorities="com.universalrp.pulseeq.updates.files"/></application>')
         with self.assertRaises(ValueError): verify_manifest(bad)
+
+    def test_broad_apk_gate_rejects_the_retired_network_requirement(self):
+        source = (ROOT / '.github/workflows/build-apk.yml').read_text()
+        verify_workflow(source)
+        with self.assertRaises(ValueError): verify_workflow('')
+        with self.assertRaises(ValueError): verify_workflow(source + '\nPulseEQ update checker requires INTERNET')
+        with self.assertRaises(ValueError): verify_workflow(source.replace('python3 tools/verify_browser_update_policy.py --apk "$EQ"', 'echo skipped'))
 
     def test_actual_apk_version_must_match_source(self):
         gradle = 'applicationId = "com.example.app"\nversionName = "1.4"\nversionCode = 6'

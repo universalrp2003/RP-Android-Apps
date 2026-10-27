@@ -43,7 +43,16 @@ def verify_entry(module, source):
         raise ValueError('PulseEQ About is not routed to the browser')
 
 
+def verify_workflow(source):
+    command = 'python3 tools/verify_browser_update_policy.py --apk "$EQ"'
+    if source.count(command) != 1:
+        raise ValueError('Broad workflow must inspect exactly one actual PulseEQ APK')
+    if 'PulseEQ update checker requires INTERNET' in source:
+        raise ValueError('Broad workflow still enforces the retired network updater')
+
+
 def verify_sources():
+    verify_workflow((ROOT / '.github/workflows/build-apk.yml').read_text())
     suite = (ROOT / 'shared/src/main/java/com/universalrp/updates/SuiteAbout.kt').read_text()
     if not re.search(r'if \(appId in setOf\("podcast", "launcher"\)\)\s*\{\s*BrowserReleaseUpdates\(prefix\)', suite):
         raise ValueError('The two apps are not routed to browser-only releases')
