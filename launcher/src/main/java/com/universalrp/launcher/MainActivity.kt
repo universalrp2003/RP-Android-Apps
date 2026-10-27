@@ -58,6 +58,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
+/** SharedPreferences key recording that the first-run home-screen prompt has been shown. */
+private const val KEY_ASKED_HOME = "asked_for_home"
+
 /**
  * The home screen.
  *

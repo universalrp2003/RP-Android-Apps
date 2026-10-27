@@ -223,6 +223,58 @@ for f in all_kt:
     if not first.startswith("package "):
         bad("%s does not start with a package declaration" % f.name)
 
+# ------------------------------------------------- 14. undeclared top-level constants
+# A module-wide private constant that is used but never declared is a compile error whose message is
+# only "Unresolved reference 'X'" and names no file, so it costs a CI cycle to place. This is what a
+# scripted edit that writes the use site but forgets the declaration produces.
+#
+# Comments are stripped first: a KDoc that names a constant is prose, not a declaration. Member
+# accesses are stripped next, because `Manifest.permission.CALL_PHONE` is somebody else's constant.
+# What is left is compared against real declarations - keyword declarations, enum entries and imports
+# - gathered from every main source in the module.
+def strip_comments(code):
+    code = re.sub(r"/\*.*?\*/", " ", code, flags=re.S)
+    return re.sub(r"//[^\n]*", "", code)
+
+
+def strip_noise(code):
+    """Comments and string literals. Neither can declare anything, and both name constants in prose
+    (`" ASC"`, a KDoc mentioning CALL_PHONE) that would otherwise read as undeclared references."""
+    code = strip_comments(code)
+    return re.sub(r'"(?:[^"\\\n]|\\.)*"', '""', code)
+
+
+# Constants a module may use unqualified because it inherits them from an Android base class
+# (Service.onStartCommand returning START_STICKY, say). Resolving a supertype chain is out of scope
+# for a local gate, so the set is named explicitly rather than inferred.
+INHERITED_ANDROID_CONSTANTS = {
+    "START_STICKY", "START_NOT_STICKY", "START_REDELIVER_INTENT",
+    "RESULT_OK", "RESULT_CANCELED", "RESULT_FIRST_USER",
+    "MODE_PRIVATE", "MODE_WORLD_READABLE", "MODE_APPEND",
+}
+
+MEMBER_ACCESS = re.compile(r"\.\s*[A-Z][A-Z0-9_]{2,}")
+main_kt = [f for f in all_kt if "src/main" in str(f)]
+declared_caps = set()
+for f in main_kt:
+    code = strip_noise(f.read_text(encoding="utf-8"))
+    declared_caps |= set(re.findall(
+        r"\b(?:const\s+)?(?:val|var|object|class|enum\s+class)\s+([A-Z][A-Z0-9_]{2,})\b", code))
+    # Enum entries, however the enum is laid out. `enum class Status { STOPPED, PLAYING }` puts every
+    # entry on one line, so a line-anchored pattern silently misses all of them.
+    for body in re.findall(r"enum\s+class\s+[A-Za-z0-9_]+\s*\{([^{}]*)\}", code):
+        declared_caps |= set(re.findall(r"\b([A-Z][A-Z0-9_]{2,})\b", body))
+    declared_caps |= {l.strip().split(".")[-1]
+                      for l in f.read_text(encoding="utf-8").splitlines() if l.startswith("import ")}
+for f in main_kt:
+    code = strip_noise(f.read_text(encoding="utf-8"))
+    body = "\n".join(l for l in code.splitlines() if not l.startswith("package ") and not l.startswith("import "))
+    body = MEMBER_ACCESS.sub("", body)
+    for name in sorted(set(re.findall(r"\b([A-Z][A-Z0-9_]{2,})\b", body))
+                       - declared_caps - INHERITED_ANDROID_CONSTANTS):
+        bad("%s uses ALL_CAPS identifier %s which is declared nowhere in module %s"
+            % (f.name, name, MODULE))
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))
