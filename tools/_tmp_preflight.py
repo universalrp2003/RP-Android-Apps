@@ -248,8 +248,12 @@ def strip_noise(code):
 # (Service.onStartCommand returning START_STICKY, say). Resolving a supertype chain is out of scope
 # for a local gate, so the set is named explicitly rather than inferred.
 INHERITED_ANDROID_CONSTANTS = {
+    # Service lifecycle.
     "START_STICKY", "START_NOT_STICKY", "START_REDELIVER_INTENT",
+    "STOP_FOREGROUND_REMOVE", "STOP_FOREGROUND_DETACH", "STOP_FOREGROUND_LEGACY",
+    # Activity results.
     "RESULT_OK", "RESULT_CANCELED", "RESULT_FIRST_USER",
+    # Context modes.
     "MODE_PRIVATE", "MODE_WORLD_READABLE", "MODE_APPEND",
 }
 
