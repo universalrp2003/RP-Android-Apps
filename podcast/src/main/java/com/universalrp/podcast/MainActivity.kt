@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -55,6 +56,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
@@ -104,7 +107,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         com.universalrp.updates.AppLanguageState.initialize(this)
         setContent {
-            MaterialTheme(colorScheme = darkColorScheme(primary = Accent, background = Bg, surface = CardBg)) {
+            MaterialTheme(colorScheme = darkColorScheme(primary = Accent, onPrimary = Bg, background = Bg, onBackground = Color.White, surface = CardBg, onSurface = Color.White, onSurfaceVariant = Muted)) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
                     PodcastScreen()
                 }
@@ -120,6 +123,8 @@ private enum class Load { IDLE, LOADING, OK, FAILED }
 private fun PodcastScreen() {
     val context = LocalContext.current
     val store = remember { PodcastStore(context) }
+    val downloads = remember { PodcastDownloads(context.applicationContext) }
+    val downloadScope = rememberCoroutineScope()
 
     // The built-ins, plus anything the owner added before. The URLs are kept on disk, so a feed
     // added in one session is still there in the next; seeding from the built-ins alone lost them.
@@ -135,27 +140,31 @@ private fun PodcastScreen() {
     var openId by remember { mutableStateOf<String?>(null) }
     var adding by remember { mutableStateOf(false) }
     var newUrl by remember { mutableStateOf("") }
+    var showQuery by rememberSaveable { mutableStateOf("") }
+    var categoryFilter by rememberSaveable { mutableStateOf("") }
     var addError by remember { mutableStateOf<String?>(null) }
     var playerRevision by remember { mutableIntStateOf(PodcastState.revision) }
     var page by rememberSaveable { mutableStateOf("") }
     var pendingUrl by rememberSaveable { mutableStateOf("") }
     var pendingTitle by rememberSaveable { mutableStateOf("") }
     var pendingPosition by rememberSaveable { mutableIntStateOf(0) }
+    var pendingOffline by rememberSaveable { mutableStateOf(false) }
     var permissionDenied by rememberSaveable { mutableStateOf(false) }
     val notificationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         permissionDenied = !granted
-        if (pendingUrl.isNotBlank()) PodcastPlaybackService.play(context, pendingUrl, pendingTitle, pendingPosition)
+        if (pendingUrl.isNotBlank()) PodcastPlaybackService.play(context, pendingUrl, pendingTitle, pendingPosition, pendingOffline)
         pendingUrl = ""
     }
-    fun playEpisode(url: String, title: String, position: Int = 0) {
+    fun playEpisode(url: String, title: String, position: Int = 0, offlineOnly: Boolean = false) {
         val prefs = context.getSharedPreferences("podcast_permissions", android.content.Context.MODE_PRIVATE)
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED && !prefs.getBoolean("asked", false)) {
             pendingUrl = url
             pendingTitle = title
             pendingPosition = position
+            pendingOffline = offlineOnly
             prefs.edit().putBoolean("asked", true).apply()
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else PodcastPlaybackService.play(context, url, title, position)
+        } else PodcastPlaybackService.play(context, url, title, position, offlineOnly)
     }
     BackHandler(enabled = page.isNotEmpty() || openId != null || adding) {
         when {
@@ -180,6 +189,22 @@ private fun PodcastScreen() {
             playerRevision = PodcastState.revision
             delay(400)
         }
+    }
+
+    if (page == "downloads") {
+        Column(Modifier.fillMaxSize().background(Bg).statusBarsPadding().navigationBarsPadding()) {
+            OfflineDownloadsScreen(
+                downloads = downloads,
+                onBack = { page = "" },
+                onPlay = { entry -> playEpisode(entry.url, entry.title, offlineOnly = true) },
+                onBeforeDelete = { entry ->
+                    if (store.lastPlayed() == entry.url && PodcastState.isActive()) PodcastPlaybackService.stop(context)
+                },
+                modifier = Modifier.weight(1f),
+            )
+            NowPlayingCard(context, playerRevision)
+        }
+        return
     }
 
     Column(Modifier.fillMaxSize().background(Bg).statusBarsPadding().navigationBarsPadding()) {
@@ -213,6 +238,12 @@ private fun PodcastScreen() {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { page = "guide" }) { Text("வழிகாட்டி / Guide") }
                     OutlinedButton(onClick = { page = "about" }) { Text("விவரம் / Update") }
+                }
+            }
+
+            item {
+                OutlinedButton(onClick = { page = "downloads" }, modifier = Modifier.fillMaxWidth()) {
+                    Text("பதிவிறக்கங்கள் / Downloads")
                 }
             }
 
@@ -290,26 +321,60 @@ private fun PodcastScreen() {
                         }
                     }
                 }
-                shows.value.forEach { show ->
-                    item {
-                        ShowCard(
-                            show = show,
-                            load = loads[show.id] ?: Load.IDLE,
-                            onOpen = {
-                                openId = show.id
-                                loads[show.id] = Load.LOADING
-                            },
-                            onRetry = { loads[show.id] = Load.LOADING },
-                            onRemove = if (show.builtIn) {
-                                null
-                            } else {
-                                {
-                                    store.removeFeedUrl(show.feedUrl)
-                                    shows.value = shows.value.filterNot { it.id == show.id }
-                                    loads.remove(show.id)
+                item {
+                    Text("உலகெங்குமுள்ள தமிழ் நிகழ்ச்சிகளின் தேர்ந்தெடுத்த பட்டியல்; முழு இணையத்தின் பட்டியல் அல்ல. வெளியீட்டாளரின் உள்ளடக்கம் மாறலாம்; அனைத்தும் சிறுவர்களுக்கானவை அல்ல. / A curated worldwide Tamil catalogue, not the entire web. Publisher content may change; not all shows are for children.", color = Muted, fontSize = 13.sp)
+                    OutlinedTextField(
+                        value = showQuery,
+                        onValueChange = { showQuery = it },
+                        label = { Text("நிகழ்ச்சிகளைத் தேடு / Search shows") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                    )
+                }
+                item {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        item {
+                            OutlinedButton(onClick = { categoryFilter = "" }) {
+                                Text(if (categoryFilter.isEmpty()) "✓ அனைத்தும் / All" else "அனைத்தும் / All")
+                            }
+                        }
+                        PodcastCategory.entries.forEach { category ->
+                            item {
+                                OutlinedButton(onClick = { categoryFilter = category.name }) {
+                                    Text((if (categoryFilter == category.name) "✓ " else "") + category.label)
                                 }
-                            },
-                        )
+                            }
+                        }
+                    }
+                }
+                val selected = shows.value.filter { show ->
+                    (categoryFilter.isEmpty() || BuiltInShows.category(show.id).name == categoryFilter) &&
+                        show.title.contains(showQuery.trim(), ignoreCase = true)
+                }
+                if (selected.isEmpty()) item { Text("நிகழ்ச்சிகள் இல்லை. / No matching shows.", color = Muted) }
+                selected.groupBy { BuiltInShows.category(it.id) }.forEach { (category, categoryShows) ->
+                    item { Text(category.label, color = Accent, fontWeight = FontWeight.Bold, fontSize = 18.sp) }
+                    categoryShows.forEach { show ->
+                        item {
+                            ShowCard(
+                                show = show,
+                                load = loads[show.id] ?: Load.IDLE,
+                                onOpen = {
+                                    openId = show.id
+                                    loads[show.id] = Load.LOADING
+                                },
+                                onRetry = { loads[show.id] = Load.LOADING },
+                                onRemove = if (show.builtIn) {
+                                    null
+                                } else {
+                                    {
+                                        store.removeFeedUrl(show.feedUrl)
+                                        shows.value = shows.value.filterNot { it.id == show.id }
+                                        loads.remove(show.id)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             } else {
@@ -330,6 +395,14 @@ private fun PodcastScreen() {
                             onBack = { openId = null },
                             onRetry = { loads[show.id] = Load.LOADING },
                             onPlay = { episode -> playEpisode(episode.audioUrl, episode.title) },
+                            onDownload = { episode ->
+                                downloadScope.launch {
+                                    val result = runCatching { withContext(Dispatchers.IO) { downloads.enqueue(episode.audioUrl, episode.title) } }
+                                    val message = if (result.isSuccess) "பதிவிறக்கங்கள் பகுதியில் நிலையைப் பார்க்கவும். வைஃபைக்காகக் காத்திருக்கலாம். / See Downloads for status; it may be waiting for Wi-Fi."
+                                        else "பதிவிறக்கத்தைத் தொடங்க முடியவில்லை. பதிவிறக்கச் சேவை, சேமிப்பிடம் மற்றும் 100 கோப்பு வரம்பைச் சரிபார்க்கவும். / Could not start. Check the download service, storage and 100-file limit."
+                                    android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_LONG).show()
+                                }
+                            },
                         )
                     }
                 }
@@ -576,6 +649,7 @@ private fun EpisodeCard(
     onBack: () -> Unit,
     onRetry: () -> Unit,
     onPlay: (Episode) -> Unit,
+    onDownload: (Episode) -> Unit,
 ) {
     val context = LocalContext.current
     var query by remember(show.id) { mutableStateOf("") }
@@ -720,12 +794,13 @@ private fun EpisodeCard(
                                         )
                                     }
                                 }
-                                TextButton(onClick = { onPlay(episode) }) {
-                                    Text(
-                                        text = context.getString(R.string.play),
-                                        color = Accent,
-                                        fontSize = 13.sp,
-                                    )
+                                Column {
+                                    TextButton(onClick = { onPlay(episode) }) {
+                                        Text(context.getString(R.string.play), color = Accent, fontSize = 13.sp)
+                                    }
+                                    TextButton(onClick = { onDownload(episode) }) {
+                                        Text("பதிவிறக்கு / Download", color = Accent, fontSize = 12.sp)
+                                    }
                                 }
                             }
                         }

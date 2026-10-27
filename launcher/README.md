@@ -6,7 +6,13 @@ Package `com.universalrp.launcher`. Android 8.0 / API 26 or later.
 
 Large, predictable home-screen buttons, favourite calls and a live battery reading.
 
-## Features
+## Unreleased candidate — not in the APK linked below
+
+- Explicit high-contrast text for app rows, large controls, favourites and emergency confirmation, including disabled states. The palette/source regression gate checks six color pairs at 4.5:1 or better and rejects the previous inherited foreground bug.
+- Package-install permission and update APK provider removed. About opens official releases in the browser instead of in-app APK download/installation.
+- **Play Protect report unresolved. Do not bypass its warning.** No new stable APK has been published. [Investigation, limitations and device checklist](../docs/2026-10-27-device-follow-up.md).
+
+## Published 1.3 features
 
 - **Set default home:** A dedicated button opens Android’s home-role chooser or Home settings. Cancelled selection can be retried.
 - **Contextual permissions:** Phone permission when calling, contacts permission when adding a favourite, camera permission for the torch. Denied phone access falls back to the dialler.
@@ -24,7 +30,7 @@ No ads, account or analytics. Contacts/favourites stay on the phone. The launche
 
 Published APK: 11,514,983 bytes; SHA-256 `33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745`.
 
-No physical-device test of 1.3. CAMERA is newly declared for the torch. Default-home selection, permission prompts, torch and battery updates still need phone testing. Never call 108 for testing.
+At publication, 1.3 had no physical-device test. The owner subsequently reported working basic behavior and a Play Protect block; not every scenario has been tested. CAMERA is newly declared for the torch. Default-home selection, permission prompts, torch and battery updates still need phone testing. Never call 108 for testing.
 
 ## தமிழ்
 

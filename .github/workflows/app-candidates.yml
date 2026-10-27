@@ -9,6 +9,10 @@ on:
       - "vasanthi/**"
       - "shared/src/main/java/com/universalrp/updates/**"
       - "tools/verify_podcast_feeds.py"
+      - "tools/verify_launcher_contrast.py"
+      - "tools/verify_browser_update_policy.py"
+      - "tools/tests/test_browser_update_policy.py"
+      - "tools/tests/test_launcher_contrast.py"
       - "tools/tests/test_podcast_feeds.py"
       - ".github/workflows/app-candidates.yml"
 
@@ -34,12 +38,11 @@ jobs:
         run: |
           python3 tools/verify_apps_localization.py
           python3 tools/verify_vasanthi_sound_labels.py
+          python3 tools/verify_launcher_contrast.py
+          python3 tools/verify_browser_update_policy.py
+          python3 -m unittest discover -s tools/tests -p test_browser_update_policy.py
+          python3 -m unittest discover -s tools/tests -p test_launcher_contrast.py
           python3 tools/_tmp_preflight.py ${{ matrix.module }}
-      - name: Verify real podcast feeds and audio
-        if: matrix.module == 'podcast'
-        run: |
-          python3 -m unittest discover -s tools/tests -p test_podcast_feeds.py
-          python3 tools/verify_podcast_feeds.py
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -53,6 +56,26 @@ jobs:
         run: |
           set -o pipefail
           gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:assembleRelease --no-daemon --stacktrace 2>&1 | tee candidate-build.log
+      - name: Inspect actual browser-only APK capabilities
+        if: matrix.module == 'launcher' || matrix.module == 'podcast'
+        shell: bash
+        env:
+          MODULE: ${{ matrix.module }}
+        run: |
+          set -euo pipefail
+          mapfile -t apks < <(find "$MODULE/build/outputs/apk/release" -maxdepth 1 -name '*.apk')
+          if [ "${#apks[@]}" -ne 1 ]; then
+            echo "Expected exactly one release APK; refusing to inspect nothing or guess."
+            exit 1
+          fi
+          python3 tools/verify_browser_update_policy.py --apk "${apks[0]}"
+      - name: Verify real podcast feeds and audio
+        if: matrix.module == 'podcast'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools/tests -p test_podcast_feeds.py
+          python3 tools/verify_podcast_feeds.py 2>&1 | tee candidate-feeds.log
       - name: Upload candidate and real JUnit reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -62,6 +85,7 @@ jobs:
             ${{ matrix.module }}/build/outputs/apk/release/*.apk
             ${{ matrix.module }}/build/test-results/testDebugUnitTest/*.xml
             candidate-build.log
+            candidate-feeds.log
           if-no-files-found: warn
       - name: Record compiler failure for restricted log clients
         if: failure() && steps.compile.outcome == 'failure'

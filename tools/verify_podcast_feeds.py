@@ -11,7 +11,7 @@ MAX_BYTES = 8 * 1024 * 1024
 
 
 def feed_urls(source: str) -> list[str]:
-    urls = re.findall(r'"(https://[^"\s]+/podcast/rss)"', source)
+    urls = re.findall(r'show\("[^"\n]+",\s*"[^"\n]+",\s*"(https://[^"\s]+)"\)', source)
     if not urls:
         raise ValueError("No built-in feed URLs matched; refusing to verify nothing")
     if len(urls) != len(set(urls)):
@@ -85,14 +85,23 @@ def verify(url: str) -> None:
 
 
 def main() -> int:
+    def failure(message):
+        print(f"FAIL: {message}", file=sys.stderr)
+        escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print("::error::" + escaped)
     try:
-        for url in feed_urls(SOURCE.read_text(encoding="utf-8")):
-            verify(url)
+        urls = feed_urls(SOURCE.read_text(encoding="utf-8"))
     except Exception as error:
-        print(f"FAIL: {error}", file=sys.stderr)
-        print("::error::" + str(error).replace("\n", " "))
+        failure(str(error))
         return 1
-    return 0
+    failed = False
+    for url in urls:
+        try:
+            verify(url)
+        except Exception as error:
+            failure(f"{url}: {error}")
+            failed = True
+    return int(failed)
 
 
 if __name__ == "__main__":

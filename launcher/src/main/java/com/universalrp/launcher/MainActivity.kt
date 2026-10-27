@@ -103,7 +103,19 @@ class MainActivity : ComponentActivity() {
         pendingEmergencyNumber = savedInstanceState?.getString("pending_call")
         com.universalrp.updates.AppLanguageState.initialize(this)
         setContent {
-            MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(primary = Accent, background = Bg, surface = CardBg)) {
+            MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(
+                primary = Accent,
+                onPrimary = Bg,
+                secondary = Accent,
+                onSecondary = Bg,
+                background = Bg,
+                onBackground = Color.White,
+                surface = CardBg,
+                onSurface = Color.White,
+                onSurfaceVariant = Muted,
+                error = EmergencyBg,
+                onError = Color.White,
+            )) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
                     LauncherScreen(
                         onEmergency = { number -> requestEmergencyCall(number) },
@@ -439,7 +451,12 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                         confirmEmergency = false
                         onEmergency(emergencyNumber)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = EmergencyBg),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = EmergencyBg,
+                        contentColor = ButtonText,
+                        disabledContainerColor = CardBg,
+                        disabledContentColor = Muted,
+                    ),
                 ) { Text(text = yesLabel, fontSize = 15.sp) }
             },
             dismissButton = {
@@ -510,7 +527,12 @@ private fun AppRow(app: AppEntry, onClick: () -> Unit) {
             .fillMaxWidth()
             .height(84.dp),
         shape = RoundedCornerShape(20.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = CardBg),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = CardBg,
+            contentColor = ButtonText,
+            disabledContainerColor = CardBg,
+            disabledContentColor = Muted,
+        ),
         contentPadding = PaddingValues(horizontal = 14.dp),
     ) {
         Row(
@@ -578,7 +600,12 @@ private fun BigButton(
             .fillMaxWidth()
             .then(if (height > 0) Modifier.height(height.dp) else Modifier.aspectRatio(1.15f)),
         shape = RoundedCornerShape(20.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = background),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = background,
+            contentColor = ButtonText,
+            disabledContainerColor = CardBg,
+            disabledContentColor = Muted,
+        ),
     ) {
         Text(
             text = label,
@@ -632,7 +659,12 @@ private fun FavouritesCard(
                                 onClick = { onCall(favourite) },
                                 modifier = Modifier.height(64.dp),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = AccentBg),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = AccentBg,
+                                    contentColor = ButtonText,
+                                    disabledContainerColor = CardBg,
+                                    disabledContentColor = Muted,
+                                ),
                             ) {
                                 Text(
                                     text = favourite.name,
@@ -679,9 +711,11 @@ private fun currentTimeText(): String {
 
 private val BUTTON_GRID_HEIGHT_DP = 340.dp
 
-private val Bg = Color(0xFF101418)
-private val CardBg = Color(0xFF1E262E)
-private val AccentBg = Color(0xFF24402C)
-private val EmergencyBg = Color(0xFFB3261E)
-private val Accent = Color(0xFF7BD389)
-private val Muted = Color(0xFFB6C2CC)
+private val Bg = Color(LauncherPalette.BACKGROUND)
+private val CardBg = Color(LauncherPalette.CARD)
+private val AccentBg = Color(LauncherPalette.FAVOURITE)
+private val EmergencyBg = Color(LauncherPalette.EMERGENCY)
+private val Accent = Color(LauncherPalette.ACCENT)
+private val Muted = Color(LauncherPalette.MUTED)
+
+private val ButtonText = Color(LauncherPalette.BUTTON_TEXT)
