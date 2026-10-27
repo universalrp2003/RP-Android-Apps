@@ -41,3 +41,14 @@ Podcast 1.6 / code 8 distinguishes the expanded catalogue from the owner-approve
 - [PulseEQ 1.11 / code 12, artifact 12732476730](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40500082478/artifacts/12732476730).
 
 Each artifact is a ZIP containing the actual APK, source/identity/hash receipt and JUnit evidence. ZIP size is not the APK size. These two new APKs have not been installed on the owner's phone and are not stable publications. Other modules were rebuilt because shared inputs changed; those rebuilt bytes are not substitutes for the older phone-approved Radio/Vasanthi artifacts. Retain original approvals only for their original files. Broader run 40500082577 compiled the apps and passed the real Cleaner/Vocal suites, then correctly exposed a stale separate APK rule requiring PulseEQ INTERNET for the retired updater. Replace that rule with actual browser-policy APK inspection and merged-manifest network/install/provider rejection; a regression test must reject restoration of the old rule. This is a gate migration, not a reason to restore unnecessary app permissions. Await the replacement broad run before claiming full success.
+
+## Latest handoff after the gate correction
+
+Replacement [candidate run 40501281341](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40501281341) and [full broad run 40501281336](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40501281336) both passed at `759fc224da036cea498ee6be376dd424e6b7bd1d`. This includes all five candidate builds/tests, all seventeen live RSS/audio-prefix checks, actual browser-only APK capability inspection, and real required Cleaner/Vocal regression suites and broad APK checks. The superseded failure excerpt was cleared only after the passing run.
+
+Use these latest uninstalled candidates, not the earlier 1.6/1.11 archives linked in the historical entry above:
+
+- [Podcast 1.6 / code 8, artifact 12732722376](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40501281341/artifacts/12732722376).
+- [PulseEQ 1.11 / code 12, artifact 12732937057](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40501281341/artifacts/12732937057).
+
+The APK and `candidate-info.txt` inside each ZIP identify the actual package/version/code/source/bytes/hash. No phone test or Play Protect clearance is implied. Stop if protection warns. No new release was published and the original Radio/Vasanthi approvals remain tied to run 40495158373. Subsequent handoff edits are documentation/CI metadata only, not changes to compiled Android inputs.
