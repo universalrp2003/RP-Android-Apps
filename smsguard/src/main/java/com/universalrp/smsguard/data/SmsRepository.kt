@@ -96,7 +96,7 @@ object SmsRepository {
     private val recentOutgoing = ConcurrentLinkedDeque<RecentSentEntry>()
 
     // Safe chunk size well below Android's 2 MB Binder CursorWindow limit on Samsung One UI / MIUI / HyperOS!
-    private const val CURSOR_PAGE_SIZE = 400
+    private const val CURSOR_PAGE_SIZE = 100
 
     fun isDefaultSmsApp(context: Context): Boolean {
         return try {
@@ -455,17 +455,21 @@ object SmsRepository {
             lastLoadHasMoreMessages = false
             return InboxLoadResult.PermissionRequired
         }
+        var failureStage = InboxLoadFailureStage.SETTINGS
         return try {
             val prefs = GuardSettingsStore.ensureLoaded(context)
             val cachedLinks = GuardSettingsStore.getCachedLinkResultsMap(context)
+            failureStage = InboxLoadFailureStage.PROVIDER_QUERY
             val (rawRows, hasMore) = queryRawRowsPaged(context, maxMessages.coerceIn(100, 15_000))
             lastLoadHasMoreMessages = hasMore
 
             // Pre-resolve unique addresses ONCE instead of repeating Binder IPC per message row!
             val uniqueAddresses = LinkedHashSet<String>()
             for (r in rawRows) uniqueAddresses.add(r.address)
+            failureStage = InboxLoadFailureStage.CONTACT_LOOKUP
             for (addr in uniqueAddresses) lookupContactName(context, addr)
 
+            failureStage = InboxLoadFailureStage.MESSAGE_ENRICHMENT
             val prelimFinance = HashMap<Long, FinanceParseResult>(rawRows.size)
             val prelimItems = ArrayList<EnrichedSmsMessage>(rawRows.size)
 
@@ -522,6 +526,7 @@ object SmsRepository {
             }
 
             // Fast O(N) UTR deduplication & self-transfer linking
+            failureStage = InboxLoadFailureStage.FINANCE_LINKING
             val dedupedById = FinanceLedgerEngine.deduplicateAndLink(prelimFinance.values.toList())
                 .associateBy { it.messageId }
 
@@ -547,8 +552,8 @@ object SmsRepository {
             // OEM app-ops can deny access even when the runtime grant looks present.
             InboxLoadResult.PermissionRequired
         } catch (_: Exception) {
-            // No message bodies, contacts or addresses are logged.
-            InboxLoadResult.Unavailable
+            // Report only this coarse phase; never log SMS bodies, contacts or addresses.
+            InboxLoadResult.Unavailable(failureStage)
         }
     }
 

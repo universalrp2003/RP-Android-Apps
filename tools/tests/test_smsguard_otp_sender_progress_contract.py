@@ -28,6 +28,16 @@ class SmsGuardOtpSenderAndProgressContractTest(unittest.TestCase):
         self.assertIn('isInboxLoading by vm.isLoading.collectAsState()', ACTIVITY)
         self.assertIn('loadedMessageCount = allMessages.size', ACTIVITY)
 
+    def test_small_oem_cursor_pages_and_private_safe_failure_stage(self):
+        repository = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/data/SmsRepository.kt").read_text(encoding="utf-8")
+        result = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/data/InboxLoadResult.kt").read_text(encoding="utf-8")
+        view_model = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/ui/MainViewModel.kt").read_text(encoding="utf-8")
+        self.assertIn("CURSOR_PAGE_SIZE = 100", repository)
+        self.assertIn("InboxLoadResult.Unavailable(failureStage)", repository)
+        self.assertIn("enum class InboxLoadFailureStage", result)
+        self.assertIn("Could not refresh messages [$stage]", view_model)
+        self.assertIn("SMS bodies, contacts or addresses", repository)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -376,10 +376,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     } else {
                         _statusBanner.value = if (prefsFlow.value.tamil) {
                             if (fullLoaded is InboxLoadResult.PermissionRequired) "பழைய செய்திகளைப் பார்க்க SMS வாசிப்பு அனுமதி தேவை."
-                            else "செய்திகளை மீளேற்ற முடியவில்லை. முன்பு ஏற்றியவை உள்ளன; மீண்டும் முயலுங்கள்."
+                            else {
+                                val stage = (fullLoaded as? InboxLoadResult.Unavailable)?.stage?.code.orEmpty()
+                                "செய்திகளை மீளேற்ற முடியவில்லை [$stage]. முன்பு ஏற்றியவை உள்ளன; மீண்டும் முயலுங்கள்."
+                            }
                         } else {
                             if (fullLoaded is InboxLoadResult.PermissionRequired) "SMS read permission is required to view stored messages."
-                            else "Could not refresh messages. Previously loaded messages are retained; please retry."
+                            else {
+                                val stage = (fullLoaded as? InboxLoadResult.Unavailable)?.stage?.code.orEmpty()
+                                "Could not refresh messages [$stage]. Previously loaded messages are retained; please retry."
+                            }
                         }
                     }
                     _isLoading.value = false
