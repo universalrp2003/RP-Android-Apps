@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Audio can be downloaded again. System transfer IDs are not portable across devices. -->
+    <exclude domain="external" path="Podcasts/offline/" />
+    <exclude domain="sharedpref" path="podcast_offline.xml" />
+</full-backup-content>

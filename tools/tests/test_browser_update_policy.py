@@ -1,5 +1,6 @@
 import sys
 import unittest
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -26,6 +27,19 @@ class BrowserUpdatePolicyTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Merged APK'):
             verify_apk_permissions("uses-permission: name='android.permission.REQUEST_INSTALL_PACKAGES'")
         verify_apk_permissions("uses-permission: name='android.permission.INTERNET'")
+
+    def test_offline_files_and_device_specific_receipts_are_excluded_from_backups(self):
+        resources = ROOT / 'podcast/src/main/res/xml'
+        required = {('external', 'Podcasts/offline/'), ('sharedpref', 'podcast_offline.xml')}
+        legacy = ET.fromstring((resources / 'backup_rules.xml').read_text())
+        modern = ET.fromstring((resources / 'data_extraction_rules.xml').read_text())
+        for section in (legacy, modern.find('cloud-backup'), modern.find('device-transfer')):
+            self.assertIsNotNone(section)
+            exclusions = {(node.get('domain'), node.get('path')) for node in section.findall('exclude')}
+            self.assertTrue(required.issubset(exclusions))
+        manifest = (ROOT / 'podcast/src/main/AndroidManifest.xml').read_text()
+        self.assertIn('android:fullBackupContent="@xml/backup_rules"', manifest)
+        self.assertIn('android:dataExtractionRules="@xml/data_extraction_rules"', manifest)
 
     def test_reintroduced_provider_is_rejected(self):
         source = (ROOT / 'launcher/src/main/AndroidManifest.xml').read_text()

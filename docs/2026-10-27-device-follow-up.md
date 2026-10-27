@@ -24,6 +24,7 @@ These are unpublished source candidates, not a new stable release or a claim tha
 - A file is offered offline only after DownloadManager reports success, the app-owned file exists and is nonempty, and a recognised audio-container prefix is present. This is a header check, not full decoding or an assurance that publisher media is trustworthy.
 - Play offline passes an explicit offline-only flag. The service resolves the app's own complete file and fails instead of silently streaming when that file is unavailable. Regular Play prefers a complete local download but may otherwise stream.
 - Playback still uses the existing media session, audio-focus handling, seek controls and original-URL bookmark identity. No arbitrary file/content URI from an intent is accepted.
+- Offline audio and DownloadManager receipt preferences are excluded from standard Android cloud backup and device transfer. Restoring stale system download IDs on another device must not produce false ready entries or affect unrelated transfers.
 - No directory/feed refresh is required to open the stored library offline. Removing the app also removes its downloaded audio.
 - Download only material the listener is entitled to retain. The app does not bypass paywalls, DRM or host restrictions.
 
@@ -40,6 +41,7 @@ This is a curated starting catalogue, not all Tamil audio on the internet. A dir
 - Owner screenshots show **Harmful app blocked**, with the generic text **This app may be harmful**, for முதியவர் திரை and கதை சொல்லி. They do not show a specific malware family, detailed classification, APK version or APK hash.
 - The reports followed updater integration. Both published source manifests request `REQUEST_INSTALL_PACKAGES` and declare a non-exported FileProvider for verified update APKs. This correlation does not establish the cause.
 - Source inspection of `AppUpdates.kt` found official-repository and HTTPS redirect restrictions, bounded downloads, digest/size checks, package/version checks, signer pinning and Android installer confirmation. These controls protect aspects of the update flow; they are not malware-scanner results or proof that Google's classification is mistaken.
+- The current CI signing material is tracked in this public repository. Matching that certificate does not prove exclusive publisher control. A private production-signing migration requires a separately reviewed plan to preserve Android upgrade continuity; no key is rotated here. This is an additional trust concern, not proof of the Play Protect trigger.
 - Official launcher 1.3 asset SHA-256: `33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745`.
 - Official podcast 1.3 asset SHA-256: `15770ec6cfcf671b81cb886bceff7d2b9f3ea620d23f795145f7940b5075bb3e`.
 - The blocked files' actual bytes have not been collected from the phone or matched against those published hashes. No Play Protect or third-party scanner verdict for the candidate has been obtained.
