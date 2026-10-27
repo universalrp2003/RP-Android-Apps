@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -218,24 +217,30 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    items(BigButtons.home()) { button ->
-                        BigButton(
-                            label = LocalContext.current.getString(button.labelRes),
-                            height = 0,
-                            background = CardBg,
-                            onClick = {
-                                val result = handleAction(
-                                    context = context,
-                                    action = button.action,
-                                    torchOn = torchOn,
-                                    onTorch = { torchOn = it },
-                                    onAppList = { showAppList = true },
-                                )
-                                if (result is LauncherActions.Result.Failed) {
-                                    notice = context.getString(result.reasonRes)
-                                }
-                            },
-                        )
+                    // A plain loop over item {}, not the items() extension. The grid's own member
+                    // items(count: Int) shadows the List overload for the compiler's purposes, and
+                    // resolving that costs a CI cycle to discover. item {} is a member with one
+                    # signature and nothing to resolve.
+                    for (button in BigButtons.home()) {
+                        item {
+                            BigButton(
+                                label = LocalContext.current.getString(button.labelRes),
+                                height = 0,
+                                background = CardBg,
+                                onClick = {
+                                    val result = handleAction(
+                                        context = context,
+                                        action = button.action,
+                                        torchOn = torchOn,
+                                        onTorch = { torchOn = it },
+                                        onAppList = { showAppList = true },
+                                    )
+                                    if (result is LauncherActions.Result.Failed) {
+                                        notice = context.getString(result.reasonRes)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
             }

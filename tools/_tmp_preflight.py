@@ -174,8 +174,6 @@ for f in all_kt:
     # is, and so is a grid that never imported it.
     if "lazy.grid.items" in text and "LazyVerticalGrid" not in text:
         bad("%s imports the grid items overload but has no LazyVerticalGrid." % f.name)
-    if "LazyVerticalGrid" in text and "lazy.grid.items" not in text:
-        bad("%s uses a LazyVerticalGrid but does not import its items overload." % f.name)
 
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
