@@ -49,6 +49,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,6 +95,8 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         )
         return
     }
+    // Cache rows in composition, not in the non-composable LazyListScope builder.
+    val iconRows = remember(state.visible) { state.visible.chunked(4) }
     LazyColumn(
         Modifier
             .fillMaxSize()
@@ -381,7 +384,6 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         }
 
         if (iconView) {
-            val iconRows = remember(state.visible) { state.visible.chunked(4) }
             items(iconRows, key = { row -> row.first().url }) { row ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),

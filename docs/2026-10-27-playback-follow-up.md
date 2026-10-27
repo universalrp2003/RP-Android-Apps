@@ -52,3 +52,12 @@ Download the owner-test APKs from this exact run, not a later rebuild. Each arti
 Launcher was compiled as a shared-source compatibility check, not a requested new release. Do not ask the owner to reinstall it.
 
 The public-release API audit verified all twelve existing stable tags and the SHA-256 metadata behind twenty-four primary download buttons. Shared directory published-version pins match those same public tags. Pages run 40495158311 passed. New candidate versions are not advertised as public stable releases; promotion remains held for owner phone confirmation.
+
+## Radio icon candidate compile-error follow-up
+
+- Continued prior branch history on the session branch `arena/86d1a321-rp-android-apps` without switching branches.
+- Manual `build-apk.yml` dispatch with explicit `publish=false` is still rejected with HTTP 403 (Resource not accessible by integration).
+- Run 40544324236 log download still fails, but its repository `ci-build-failure.md` report identifies a composable `remember` inside the non-composable LazyListScope builder and an unresolved Material3 `TextButton`.
+- Moved row memoization into RadioScreen composition before LazyColumn and imported Material3 TextButton. Added a source regression check for both errors.
+- All 112 Python tests, app localization, continuous-playback and browser-update source checks pass. No local Gradle/Android SDK is available; Android compilation remains unverified until CI succeeds.
+- Candidate remains radio 1.28/code 28; no public release authorized or issued. Historical CI failure reports are retained, not represented as a new successful build. SMS Guard OEM behavior still requires device validation.

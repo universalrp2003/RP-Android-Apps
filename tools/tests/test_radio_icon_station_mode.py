@@ -13,6 +13,13 @@ class RadioIconStationModeTest(unittest.TestCase):
         self.assertIn('"Switch to icon view" to "சின்னக் காட்சிக்கு மாறு"', LANGUAGE)
         self.assertIn('"Switch to list view" to "பட்டியல் காட்சிக்கு மாறு"', LANGUAGE)
 
+    def test_compose_calls_stay_outside_lazy_list_builder(self):
+        radio_screen = SCREEN.split("fun RadioScreen(", 1)[1].split("fun ", 1)[0]
+        rows = "val iconRows = remember(state.visible) { state.visible.chunked(4) }"
+        self.assertEqual(radio_screen.count(rows), 1)
+        self.assertLess(radio_screen.index(rows), radio_screen.index("LazyColumn("))
+        self.assertIn("import androidx.compose.material3.TextButton", SCREEN)
+
     def test_grid_is_four_columns_and_station_tap_opens_confirmation_not_playback(self):
         self.assertIn("state.visible.chunked(4)", SCREEN)
         self.assertIn(".clickable { selectedIconStation = station }", SCREEN)
