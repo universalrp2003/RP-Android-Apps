@@ -1,6 +1,6 @@
 # Ramesh Radio
 
-> Unreleased candidate 1.27: continuous playback / naming follow-up. The owner approved the original candidate from run 40495158373 on a phone; subsequent rebuilds are not that tested file. Public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
+> Unreleased candidate 1.28: compact station-icon grid with a name-confirmation before playback. Candidate 1.27 playback / naming follow-up remains included. The owner approved the original candidate from run 40495158373 on a phone; subsequent rebuilds are not that tested file. Public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
 
 Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, zero surprise Location prompts (100% accurate rain alerts via saved PIN/Village with optional user-initiated Mobile Tower town detection and clear privacy disclosure), and active-listening rain alerts that always announce exact place details. Its latest published release is **1.23 / code 23**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
 

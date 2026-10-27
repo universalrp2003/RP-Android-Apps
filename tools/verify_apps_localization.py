@@ -705,7 +705,7 @@ def verify_about_links() -> None:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.8"',
             'tagPrefix = "live-guard"', 'version = "2.73"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.27"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.28"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',

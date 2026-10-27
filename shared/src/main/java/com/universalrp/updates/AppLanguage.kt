@@ -251,6 +251,8 @@ object AppStrings {
         "More ▾" to "மேலும் ▾",
         "Less ▴" to "குறைவு ▴",
         "How this list is sorted" to "இந்தப் பட்டியல் எப்படி வரிசைப்படுத்தப்பட்டது",
+        "Switch to icon view" to "சின்னக் காட்சிக்கு மாறு",
+        "Switch to list view" to "பட்டியல் காட்சிக்கு மாறு",
         "Local" to "பாடல்கள்",
         "More" to "மேலும்",
         "Local audio" to "என் பாடல்கள்",
