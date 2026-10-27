@@ -16,8 +16,8 @@ android {
         applicationId = "com.universalrp.smsguard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 14
-        versionName = "1.1.8"
+        versionCode = 15
+        versionName = "1.1.9"
         vectorDrawables.useSupportLibrary = true
     }
 
