@@ -262,6 +262,7 @@ object IncomingSmsProcessor {
                         tamil = prefs.tamil,
                         voiceEnabled = prefs.voiceEnabled,
                         senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                        announceOtpSenderOnly = prefs.announceOtpSenderOnly,
                         readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                         shortEveryMessageEnabled = prefs.shortEveryMessageEnabled,
                         mutePromoVoice = prefs.mutePromoVoice,

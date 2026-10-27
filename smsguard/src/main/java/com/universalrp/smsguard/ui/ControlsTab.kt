@@ -118,6 +118,17 @@ fun ControlsTab(
                     onCheckedChange = { vm.setSenderOnlyVoice(it) },
                 )
                 ToggleRowItem(
+                    title = if (prefs.tamil) "OTP அனுப்புநரை மட்டும் குரலில் அறிவி" else "Announce OTP sender only",
+                    subtitle = if (prefs.tamil) {
+                        "இயக்கினால், OTP வந்தபோது அனுப்புநர் பெயர் மட்டும் சொல்லப்படும். OTP எண் அல்லது செய்தி உரை ஒருபோதும் குரலில் சொல்லப்படாது."
+                    } else {
+                        "Optional: announce who sent an OTP message, but never its code or message text. Off by default."
+                    },
+                    checked = prefs.announceOtpSenderOnly,
+                    palette = palette,
+                    onCheckedChange = { vm.setAnnounceOtpSenderOnly(it) },
+                )
+                ToggleRowItem(
                     title = if (prefs.tamil) "சாதாரண குறுஞ்செய்தியை முழுமையாகப் படி" else "Read Full Normal SMS",
                     subtitle = if (prefs.tamil) {
                         "வங்கி மற்றும் OTP அல்லாத சாதாரண தனிப்பட்ட/சேவை குறுஞ்செய்திகளை முழுமையாகப் படிக்கும்"

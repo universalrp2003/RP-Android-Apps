@@ -683,6 +683,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 tamil = prefs.tamil,
                 voiceEnabled = true,
                 senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                announceOtpSenderOnly = prefs.announceOtpSenderOnly,
                 readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                 shortEveryMessageEnabled = true,
                 mutePromoVoice = false,
@@ -1023,6 +1024,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSenderOnlyVoice(enabled: Boolean) {
         GuardSettingsStore.updateSenderOnlyVoice(getApplication(), enabled)
+    }
+
+    fun setAnnounceOtpSenderOnly(enabled: Boolean) {
+        GuardSettingsStore.updateAnnounceOtpSenderOnly(getApplication(), enabled)
     }
 
     fun setReadFullNormalSms(enabled: Boolean) {

@@ -809,6 +809,60 @@ class SmsGuardEngineTest {
     }
 
     @Test
+    fun otpSenderAnnouncementIsExplicitOptInAndNeverContainsTheVerificationCode() {
+        val body = "Your ICICI Bank OTP is 482910. Do not share it."
+        val otp = OtpDetector.analyze(body)
+        assertTrue(otp.isOtp)
+        assertEquals("482910", otp.code)
+        val sender = SenderIdentityEngine.identify("AD-ICICIB-T", body)
+        val finance = FinanceLedgerEngine.parseSingleSms(8010L, 2L, body, sender, otp.isOtp)
+
+        val defaultSpeech = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = finance,
+            settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true),
+        )
+        assertNull("OTP sender voice must be opt-in", defaultSpeech)
+
+        val english = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = finance,
+            settings = AnnouncementSettingsSnapshot(
+                tamil = false,
+                voiceEnabled = true,
+                announceOtpSenderOnly = true,
+            ),
+        )
+        assertNotNull(english)
+        val englishScript = requireNotNull(english)
+        assertTrue(englishScript.contains("ICICI", ignoreCase = true))
+        assertFalse("The verification digits must never enter the speech script", englishScript.contains("482910"))
+        assertFalse("OTP body must never be read", englishScript.contains("Do not share"))
+
+        val tamil = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = finance,
+            settings = AnnouncementSettingsSnapshot(
+                tamil = true,
+                voiceEnabled = true,
+                announceOtpSenderOnly = true,
+            ),
+        )
+        assertNotNull(tamil)
+        val tamilScript = requireNotNull(tamil)
+        assertFalse("Tamil speech must also omit the verification digits", tamilScript.contains("482910"))
+    }
+
+    @Test
     fun serviceHeaderNamingABankCannotAnnounceFakeMoneyButTransactionalCan() {
         val body = "Federal Bank: Your A/c XX1234 credited Rs.500.00 on 23Oct26"
         val tHeader = SenderIdentityEngine.identify("XY-ZZWFT-T", body)

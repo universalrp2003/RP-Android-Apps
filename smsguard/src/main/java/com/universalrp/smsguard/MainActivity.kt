@@ -122,6 +122,7 @@ class MainActivity : ComponentActivity() {
             val isDefaultSms by vm.isDefaultSms.collectAsState()
             val hasReadSms by vm.hasReadSms.collectAsState()
             val hasMoreMessages by vm.hasMoreMessages.collectAsState()
+            val isInboxLoading by vm.isLoading.collectAsState()
             val sims by vm.sims.collectAsState()
             val statusBanner by vm.statusBanner.collectAsState()
             val manualScanResult by vm.manualScanResult.collectAsState()
@@ -586,6 +587,8 @@ class MainActivity : ComponentActivity() {
                                         isDefaultSms = isDefaultSms,
                                         hasReadSms = hasReadSms,
                                         hasMoreMessages = hasMoreMessages,
+                                        isLoading = isInboxLoading,
+                                        loadedMessageCount = allMessages.size,
                                         sims = sims,
                                         onRequestDefaultSms = ::requestDefaultSmsRole,
                                         onOpenAppInfoRestricted = ::openAppInfoForRestrictedSettings,
