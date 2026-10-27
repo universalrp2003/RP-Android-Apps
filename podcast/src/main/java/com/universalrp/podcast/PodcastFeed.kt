@@ -83,7 +83,7 @@ object RssReader {
                     val title = firstGroup(TITLE, block)?.let { clean(it) } ?: return@mapNotNull null
                     val audio = firstGroup(ENCLOSURE, block)?.let { clean(it) }
                         ?: return@mapNotNull null
-                    if (!audio.startsWith("http", ignoreCase = true)) return@mapNotNull null
+                    if (!PlaybackPolicy.isWebAudio(audio)) return@mapNotNull null
                     val duration = firstGroup(DURATION, block)?.let { parseDuration(it) } ?: 0
                     val published = firstGroup(PUBDATE, block)?.let { parseDate(it) } ?: 0L
                     Episode(
@@ -236,7 +236,7 @@ object RssReader {
         "jul" to 7, "aug" to 8, "sep" to 9, "oct" to 10, "nov" to 11, "dec" to 12,
     )
 
-    const val MAX_EPISODES = 60
+    const val MAX_EPISODES = 300
 
     /** A show name longer than this is a feed that has put its whole description in the title. */
     const val MAX_TITLE = 120

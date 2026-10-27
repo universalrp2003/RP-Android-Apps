@@ -19,6 +19,7 @@ on:
       - "secretmessage/**"
       - "site/**"
       - "README.md"
+      - "**/README.md"
       # Documentation-only files. Editing these cannot change any APK's bytes, so a
       # docs-only commit has nothing to build and nothing to publish.
       # INVARIANT: never add a version-bearing path here. Publishing always bumps a

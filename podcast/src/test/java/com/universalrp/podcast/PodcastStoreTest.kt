@@ -16,10 +16,8 @@ class PodcastStoreTest {
 
     @Test
     fun aFeedUrlMustBeHttpOrHttps() {
-        // The check is duplicated from the store's own guard rather than called through it, because
-        // the store needs a Context and this test must run on the JVM. If the store's rule changes,
-        // this test is the thing that should fail.
-        fun acceptable(url: String) = url.trim().startsWith("http", ignoreCase = true)
+        // Exercise the same pure guard used by the actual store, UI and RSS reader.
+        fun acceptable(url: String) = PlaybackPolicy.isWebAudio(url.trim())
 
         assertTrue(acceptable("https://example.com/feed.xml"))
         assertTrue(acceptable("http://example.com/feed.xml"))

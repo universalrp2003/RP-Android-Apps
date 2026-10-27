@@ -89,6 +89,9 @@ object AppUpdates {
         "RP-Vocal-Remover-Studio" -> AppIdentity(prefix, "com.universalrp.vocalremover")
         "Oor-Arivippu" -> AppIdentity(prefix, "com.oorarivippu.voiceannouncer")
         "SMS-Guard" -> AppIdentity(prefix, "com.universalrp.smsguard")
+        "Tamil-Podcast-Player" -> AppIdentity(prefix, "com.universalrp.podcast")
+        "Elderly-Launcher" -> AppIdentity(prefix, "com.universalrp.launcher")
+        "Vasanthi-AI" -> AppIdentity(prefix, "com.universalrp.vasanthi")
         else -> throw IllegalArgumentException("No updater configuration exists for this app")
     }
 

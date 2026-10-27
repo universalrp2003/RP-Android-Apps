@@ -153,7 +153,7 @@ class RssReaderTest {
 
     @Test
     fun episodesAreCappedSoAFeedCannotFloodTheScreen() {
-        val many = (1..200).joinToString("") { index ->
+        val many = (1..RssReader.MAX_EPISODES + 25).joinToString("") { index ->
             "<item><title>e$index</title>" +
                 "<enclosure url=\"https://e.com/$index.mp3\"/></item>"
         }

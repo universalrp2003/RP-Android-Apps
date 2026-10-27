@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import com.universalrp.updates.AppUpdates
 import com.universalrp.updates.AppGuides
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
@@ -440,6 +441,7 @@ private fun VasanthiScreen() {
                     OutlinedButton(onClick = { showGuide = true }) {
                         Text(tr("வழிகாட்டி", "Guide"), fontSize = 13.sp)
                     }
+                    AppUpdates.Control(prefix = "Vasanthi-AI")
                     Spacer(Modifier.height(10.dp))
                     Text(
                         text = tr("இது செய்யாதது", "What it does not do"),

@@ -348,3 +348,11 @@ Verified against the GitHub Releases API asset metadata on 27 October 2026. Thes
 - [Tamil-Podcast-Player 1.2 / code 4](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.2): `Tamil-Podcast-Player-v1.2.apk`, 11,916,695 bytes, SHA-256 `d50ae13968e0b1d45d5ce9c286dc2447afa26d0d93246cfa08eeb0d3d1d01814`.
 - [Elderly-Launcher 1.2 / code 3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.2): `Elderly-Launcher-v1.2.apk`, 11,497,823 bytes, SHA-256 `029b39e2d03f27aca299cde03650448db8b185dfac3003c4ea7ec4732f18dc09`.
 - [Vasanthi-AI 1.1.3 / code 6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.3): `Vasanthi-AI-v1.1.3.apk`, 45,773,770 bytes, SHA-256 `4dd6de04fc4ae121e487521202e7e64184225af5aa8274ae448e0794aeae5f65`.
+
+## Round 3 releases - 27 October 2026
+
+Metadata read from the published GitHub Releases API after each independent release. These digests refer to published APKs, not candidate artifacts. No physical-device test of these exact builds was performed in this session.
+
+- [Tamil-Podcast-Player 1.3 / code 5](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.3): `Tamil-Podcast-Player-v1.3.apk`, 11,950,127 bytes, SHA-256 `15770ec6cfcf671b81cb886bceff7d2b9f3ea620d23f795145f7940b5075bb3e`, published `2026-10-27T08:20:11Z`.
+- [Elderly-Launcher 1.3 / code 4](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.3): `Elderly-Launcher-v1.3.apk`, 11,514,983 bytes, SHA-256 `33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745`, published `2026-10-27T08:24:39Z`.
+- [Vasanthi-AI 1.1.4 / code 7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.4): `Vasanthi-AI-v1.1.4.apk`, 45,790,702 bytes, SHA-256 `b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e`, published `2026-10-27T08:29:15Z`.

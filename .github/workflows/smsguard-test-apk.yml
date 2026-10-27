@@ -77,6 +77,9 @@ jobs:
         if: failure()
         shell: bash
         run: |
+          python3 tools/report_failing_tests.py | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error::$line"
+          done
           {
             grep -E "^e: |FAILED$|AssertionError" smsguard-build.log || true
             for r in smsguard/build/reports/lint-results-*.txt; do

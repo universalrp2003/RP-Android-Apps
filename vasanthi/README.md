@@ -1,6 +1,6 @@
 # Vasanthi AI - வசந்தி AI / Tamil sound and speech window
 
-**Current stable release:** 1.1.3 / code 6
+**Current stable release:** 1.1.4 / code 7
 
 **Package:** `com.universalrp.vasanthi`
 
@@ -38,9 +38,9 @@ It is for anyone who wants to see what is being said or what is happening in the
 
 ## Download the stable release
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.1.3.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.3/Vasanthi-AI-v1.1.3.apk) · [release notes](../releases/vasanthi-ai-v1.1.3.md) · [all RP Ideas apps](../README.md)
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Vasanthi-AI-v1.1.4.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.4/Vasanthi-AI-v1.1.4.apk) · [release notes](../releases/vasanthi-ai-v1.1.4.md) · [all RP Ideas apps](../README.md)
 
-The published asset for 1.1.3 is 45,773,770 bytes, SHA-256 4dd6de04fc4ae121e487521202e7e64184225af5aa8274ae448e0794aeae5f65, published 2026-10-27T06:04:35Z. It is larger than 1.0.1 because it carries the on-device English-to-Tamil translation library, which is about twenty-eight megabytes; the Tamil model it needs is downloaded the first time the recogniser hands back English, so a Tamil-only household never pays for it. The candidate build that preceded it had a different SHA-256, because a release build is not byte-reproducible, which is why the published digest is the only one worth recording.
+The published asset for 1.1.4 is 45,790,702 bytes, SHA-256 b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e, published 2026-10-27T08:29:15Z. Published metadata is authoritative; candidate digests are not reused.
 
 ## The model, and where it came from
 
@@ -60,3 +60,5 @@ python3 tools/verify_vasanthi_sound_labels.py
 ```
 
 Version 1.1.3 persists saved audio-stream volumes so the next launch can restore them after process death. It has no independently verified physical-device test; see the current release notes for limitations.
+
+Version 1.1.4 adds verified update controls to About and system-Back handling to the shared guide. No physical-device test of this exact build was performed in this session.

@@ -24,7 +24,7 @@ class PodcastStore(context: Context) {
 
     fun addFeedUrl(url: String): Boolean {
         val clean = url.trim()
-        if (!clean.startsWith("http", ignoreCase = true)) return false
+        if (!PlaybackPolicy.isWebAudio(clean)) return false
         val existing = userFeedUrls()
         if (existing.any { it.equals(clean, ignoreCase = true) }) return false
         preferences.edit().putString(KEY_FEEDS, (existing + clean).joinToString(SEP)).apply()
@@ -58,6 +58,19 @@ class PodcastStore(context: Context) {
 
     fun setLastPlayed(audioUrl: String) {
         preferences.edit().putString(KEY_LAST, audioUrl).apply()
+    }
+
+    data class Bookmark(val url: String, val title: String, val positionMs: Int)
+
+    fun bookmark(): Bookmark? {
+        val url = lastPlayed()?.takeIf { PlaybackPolicy.isWebAudio(it) } ?: return null
+        return Bookmark(url, preferences.getString("last_title", "").orEmpty(), preferences.getInt("last_position", 0).coerceAtLeast(0))
+    }
+
+    fun saveBookmark(url: String, title: String, positionMs: Int) {
+        if (!PlaybackPolicy.isWebAudio(url)) return
+        preferences.edit().putString(KEY_LAST, url).putString("last_title", title)
+            .putInt("last_position", positionMs.coerceAtLeast(0)).apply()
     }
 
     companion object {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">போட்காஸ்ட் பிளேயர்</string>
+    <string name="app_name">கதை சொல்லி · Tamil Podcast Player</string>
 
     <string name="tab_shows">ஊட்டங்கள்</string>
     <string name="tab_downloads">பதிவிறக்கியவை</string>
@@ -34,7 +34,7 @@
 
     <string name="channel_name">இயக்கம்</string>
     <string name="channel_desc">போட்காஸ்ட் இயக்கும் போனின் அறிவிப்பு.</string>
-    <string name="notification_title">போட்காஸ்ட் பிளேயர்</string>
+    <string name="notification_title">கதை சொல்லி · Tamil Podcast Player</string>
 
     <string name="open_show">கேட்க</string>
     <string name="back">பின்செல்</string>
