@@ -380,7 +380,7 @@ private suspend fun fetch(show: PodcastShow): PodcastShow = withContext(Dispatch
             if (!response.isSuccessful) {
                 return@withContext show.copy(episodes = emptyList(), problem = FeedProblem.UNREACHABLE)
             }
-            val body = response.body?.string().orEmpty()
+            val body = response.body?.byteStream()?.use { FeedDownload.readPrefix(it) }.orEmpty()
             if (!RssReader.looksLikeFeed(body)) {
                 // The link works, but it is not a podcast feed. Retrying it will fail forever, so
                 // the screen must say that rather than "check your connection".

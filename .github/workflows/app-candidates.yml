@@ -16,8 +16,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: app-candidates-${{ github.ref }}
-  cancel-in-progress: true
+  group: app-candidates-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: false
 
 jobs:
   candidate:
@@ -70,6 +70,12 @@ jobs:
           BRANCH: ${{ github.ref_name }}
         shell: bash
         run: |
+          python3 -c 'from pathlib import Path; lines=Path("candidate-build.log").read_text(errors="replace").splitlines(); [print("::error::" + line.replace("%", "%25")) for line in lines if line.startswith("e:")][:40]'
+          git fetch origin "$BRANCH"
+          if ! git diff --quiet "${{ github.sha }}" "origin/$BRANCH" -- "$MODULE" shared; then
+            echo "Source has moved on; do not publish a stale failure report."
+            exit 0
+          fi
           report="ci-candidate-${MODULE}-failure.md"
           {
             echo "# ${MODULE} candidate compile failure"
