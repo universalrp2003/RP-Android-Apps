@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,8 +21,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -49,8 +53,17 @@ import java.util.concurrent.TimeUnit
 /**
  * The one screen: shows, episodes, and the player.
  *
- * Tamil-first and deliberately plain. This app is for listening while doing something else, so the
- * screen does one thing - pick an episode - and gets out of the way.
+ * Tamil-first and deliberately plain, because this app is for listening while doing something else.
+ *
+ * The state machine is the part worth reading. The first release had a single `busy` flag that was
+ * set when a show was opened and cleared only when the fetch succeeded. A feed that could not be
+ * reached - which was every built-in feed, because the URLs in the first release were invented -
+ * left the flag set forever, so the screen sat on "loading" and neither the back button nor the
+ * cancel button did anything. The owner reported exactly that.
+ *
+ * So: the load state lives per show in a map, every path through the fetch sets it exactly once,
+ * and the screen the user is looking at is a single nullable field that any button can clear. There
+ * is no state that a failed network call can leave stuck.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,37 +78,53 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+/** Where a feed fetch got to, per show. */
+private enum class Load { IDLE, LOADING, OK, FAILED }
+
 @Composable
 private fun PodcastScreen() {
     val context = LocalContext.current
     val store = remember { PodcastStore(context) }
 
-    var shows by remember { mutableStateOf(BuiltInShows.all()) }
-    var openShow by remember { mutableStateOf<String?>(null) }
-    var busy by remember { mutableStateOf(false) }
+    val shows = remember { mutableStateOf(BuiltInShows.all()) }
+    // Per show, so one dead feed cannot freeze the whole screen.
+    val loads = remember { mutableStateMapOf<String, Load>() }
+    var openId by remember { mutableStateOf<String?>(null) }
     var adding by remember { mutableStateOf(false) }
     var newUrl by remember { mutableStateOf("") }
-    var revision by remember { mutableIntStateOf(PodcastState.revision) }
+    var addError by remember { mutableStateOf<String?>(null) }
+    var playerRevision by remember { mutableIntStateOf(PodcastState.revision) }
 
+    // The player card has to refresh as playback changes state, so it polls rather than being
+    // pushed to. 400ms is frequent enough to feel immediate and cheap enough to ignore.
     LaunchedEffect(Unit) {
         while (true) {
-            revision = PodcastState.revision
+            playerRevision = PodcastState.revision
             delay(400)
         }
     }
 
-    // A feed is fetched once per show and cached in memory for the life of the screen.
-    suspend fun load(show: PodcastShow): PodcastShow = withContext(Dispatchers.IO) {
-        val request = Request.Builder().url(show.feedUrl).build()
-        val client = OkHttpClient.Builder()
-            .callTimeout(20, TimeUnit.SECONDS)
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .build()
-        client.newCall(request).execute().use { response ->
-            val body = response.body?.string().orEmpty()
-            val title = RssReader.parseTitle(body)
-            val episodes = RssReader.parseEpisodes(body)
-            show.copy(title = title, episodes = episodes)
+    /**
+     * Fetches one feed. Never throws: a network failure is a status the screen shows, not an
+     * exception that kills the coroutine and takes the screen's state with it.
+     */
+    suspend fun fetch(show: PodcastShow): PodcastShow = withContext(Dispatchers.IO) {
+        try {
+            val client = OkHttpClient.Builder()
+                .callTimeout(20, TimeUnit.SECONDS)
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .build()
+            val request = Request.Builder().url(show.feedUrl).build()
+            client.newCall(request).execute().use { response ->
+                val body = response.body?.string().orEmpty()
+                val title = RssReader.parseTitle(body)
+                val episodes = RssReader.parseEpisodes(body)
+                show.copy(title = title, episodes = episodes)
+            }
+        } catch (error: Exception) {
+            // An empty episode list is what the UI reads as "nothing came back", and the FAILED
+            // marker set by the caller is what makes it say so out loud.
+            show.copy(episodes = emptyList())
         }
     }
 
@@ -110,7 +139,7 @@ private fun PodcastScreen() {
     ) {
         item { Header() }
 
-        if (openShow == null) {
+        if (openId == null) {
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -129,32 +158,53 @@ private fun PodcastScreen() {
                         colors = CardDefaults.cardColors(containerColor = CardBg),
                     ) {
                         Column(modifier = Modifier.padding(14.dp)) {
-                            androidx.compose.material3.OutlinedTextField(
+                            OutlinedTextField(
                                 value = newUrl,
-                                onValueChange = { newUrl = it },
+                                onValueChange = {
+                                    newUrl = it
+                                    addError = null
+                                },
                                 label = { Text(context.getString(R.string.feed_url_hint)) },
                                 singleLine = true,
+                                isError = addError != null,
                                 modifier = Modifier.fillMaxWidth(),
                             )
+                            addError?.let { message ->
+                                Text(
+                                    text = message,
+                                    fontSize = 12.sp,
+                                    color = ErrorColor,
+                                    modifier = Modifier.padding(top = 6.dp),
+                                )
+                            }
                             Spacer(Modifier.height(10.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(
                                     onClick = {
                                         val url = newUrl.trim()
-                                        if (url.startsWith("http", true) &&
-                                            store.addFeedUrl(url)
-                                        ) {
-                                            shows = shows + PodcastShow(
-                                                id = url, title = url, feedUrl = url,
+                                        if (!url.startsWith("http", ignoreCase = true)) {
+                                            addError = context.getString(R.string.feed_add_failed)
+                                        } else if (store.addFeedUrl(url)) {
+                                            shows.value = shows.value + PodcastShow(
+                                                id = url,
+                                                title = url,
+                                                feedUrl = url,
                                                 builtIn = false,
                                             )
                                             newUrl = ""
                                             adding = false
+                                            addError = null
+                                        } else {
+                                            // Either a duplicate or a URL that is already there.
+                                            addError = context.getString(R.string.feed_already)
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Accent),
                                 ) { Text(context.getString(R.string.feed_add_confirm)) }
-                                TextButton(onClick = { adding = false }) {
+                                TextButton(onClick = {
+                                    adding = false
+                                    addError = null
+                                }) {
                                     Text(context.getString(R.string.feed_cancel), color = Muted)
                                 }
                             }
@@ -162,33 +212,46 @@ private fun PodcastScreen() {
                     }
                 }
             }
-            items@ for (show in shows) {
-                item {
+            for (show in shows.value) {
+                item(key = "show-${show.id}") {
                     ShowCard(
                         show = show,
-                        busy = busy,
+                        load = loads[show.id] ?: Load.IDLE,
                         onOpen = {
-                            openShow = show.id
-                            busy = true
+                            openId = show.id
+                            if (loads[show.id] == null) loads[show.id] = Load.LOADING
                         },
+                        onRetry = { loads[show.id] = Load.LOADING },
                         onRemove = if (show.builtIn) null else {
                             {
                                 store.removeFeedUrl(show.feedUrl)
-                                shows = shows.filterNot { it.id == show.id }
+                                shows.value = shows.value.filterNot { it.id == show.id }
+                                loads.remove(show.id)
                             }
                         },
                     )
                 }
             }
+            item {
+                Text(
+                    text = context.getString(R.string.feed_note),
+                    fontSize = 12.sp,
+                    color = Muted,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+            }
         } else {
-            val show = shows.firstOrNull { it.id == openShow }
+            val show = shows.value.firstOrNull { it.id == openId }
             if (show == null) {
-                openShow = null
+                // The show was removed while open. Nothing to show, so go back.
+                openId = null
             } else {
-                item {
-                    EpisodeListCard(
+                item(key = "detail-${show.id}") {
+                    EpisodeCard(
                         show = show,
-                        onBack = { openShow = null },
+                        load = loads[show.id] ?: Load.IDLE,
+                        onBack = { openId = null },
+                        onRetry = { loads[show.id] = Load.LOADING },
                         onPlay = { episode ->
                             PodcastState.markBuffering(episode.title)
                             PodcastPlaybackService.play(context, episode.audioUrl, episode.title)
@@ -198,18 +261,19 @@ private fun PodcastScreen() {
             }
         }
 
-        item { NowPlayingCard(context) }
+        item { NowPlayingCard(context, playerRevision) }
         item { Spacer(Modifier.height(24.dp)) }
     }
 
-    // Fetch the episodes of the show that was just opened.
-    LaunchedEffect(openShow, busy) {
-        val id = openShow ?: return@LaunchedEffect
-        if (!busy) return@LaunchedEffect
-        val show = shows.firstOrNull { it.id == id } ?: return@LaunchedEffect
-        val loaded = load(show)
-        shows = shows.map { if (it.id == id) loaded else it }
-        busy = false
+    // The fetch. Keyed on the load state of the open show, so it starts exactly once per attempt and
+    // a retry is just setting the state back to LOADING.
+    LaunchedEffect(openId, loads[openId]) {
+        val id = openId ?: return@LaunchedEffect
+        if (loads[id] != Load.LOADING) return@LaunchedEffect
+        val target = shows.value.firstOrNull { it.id == id } ?: return@LaunchedEffect
+        val loaded = fetch(target)
+        shows.value = shows.value.map { if (it.id == id) loaded else it }
+        loads[id] = if (loaded.episodes.isEmpty()) Load.FAILED else Load.OK
     }
 }
 
@@ -235,8 +299,9 @@ private fun Header() {
 @Composable
 private fun ShowCard(
     show: PodcastShow,
-    busy: Boolean,
+    load: Load,
     onOpen: () -> Unit,
+    onRetry: () -> Unit,
     onRemove: (() -> Unit)?,
 ) {
     val context = LocalContext.current
@@ -262,24 +327,41 @@ private fun ShowCard(
                 color = Accent,
                 modifier = Modifier.padding(top = 2.dp),
             )
-            if (show.episodes.isNotEmpty()) {
-                Text(
+            when (load) {
+                Load.OK -> Text(
                     text = context.getString(R.string.episode_count, show.episodes.size),
                     fontSize = 12.sp,
                     color = Muted,
                     modifier = Modifier.padding(top = 2.dp),
                 )
+                Load.FAILED -> Text(
+                    text = context.getString(R.string.feed_load_failed),
+                    fontSize = 12.sp,
+                    color = ErrorColor,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                Load.LOADING -> Text(
+                    text = context.getString(R.string.loading),
+                    fontSize = 12.sp,
+                    color = Muted,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+                Load.IDLE -> Unit
             }
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(
                     onClick = onOpen,
-                    enabled = !busy,
                     colors = ButtonDefaults.buttonColors(containerColor = Accent),
-                ) { Text(context.getString(R.string.tab_shows)) }
+                ) { Text(context.getString(R.string.open_show)) }
+                if (load == Load.FAILED) {
+                    TextButton(onClick = onRetry) {
+                        Text(context.getString(R.string.retry), color = Accent, fontSize = 13.sp)
+                    }
+                }
                 if (onRemove != null) {
                     TextButton(onClick = onRemove) {
-                        Text(context.getString(R.string.feed_cancel), color = Muted, fontSize = 12.sp)
+                        Text(context.getString(R.string.remove), color = Muted, fontSize = 12.sp)
                     }
                 }
             }
@@ -288,9 +370,11 @@ private fun ShowCard(
 }
 
 @Composable
-private fun EpisodeListCard(
+private fun EpisodeCard(
     show: PodcastShow,
+    load: Load,
     onBack: () -> Unit,
+    onRetry: () -> Unit,
     onPlay: (Episode) -> Unit,
 ) {
     val context = LocalContext.current
@@ -306,49 +390,98 @@ private fun EpisodeListCard(
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
-            if (show.episodes.isEmpty()) {
-                Text(
-                    text = context.getString(R.string.loading),
-                    fontSize = 13.sp,
-                    color = Muted,
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-            } else {
-                show.episodes.forEach { episode ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = episode.title,
-                                fontSize = 14.sp,
-                                color = Color.White,
-                            )
-                            val length = formatDuration(episode.durationSeconds)
-                            if (length.isNotEmpty()) {
-                                Text(text = length, fontSize = 11.sp, color = Muted)
-                            }
+            when (load) {
+                Load.LOADING -> Row(
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Accent,
+                        strokeWidth = 2.dp,
+                    )
+                    Text(
+                        text = context.getString(R.string.loading),
+                        fontSize = 13.sp,
+                        color = Muted,
+                        modifier = Modifier.padding(start = 10.dp),
+                    )
+                }
+                Load.FAILED -> Column(modifier = Modifier.padding(top = 10.dp)) {
+                    Text(
+                        text = context.getString(R.string.feed_load_failed),
+                        fontSize = 14.sp,
+                        color = ErrorColor,
+                    )
+                    Text(
+                        text = context.getString(R.string.feed_load_failed_hint),
+                        fontSize = 12.sp,
+                        color = Muted,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = onRetry,
+                            colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                        ) { Text(context.getString(R.string.retry)) }
+                        TextButton(onClick = onBack) {
+                            Text(context.getString(R.string.back), color = Muted, fontSize = 13.sp)
                         }
-                        TextButton(onClick = { onPlay(episode) }) {
-                            Text(context.getString(R.string.play), color = Accent, fontSize = 13.sp)
+                    }
+                }
+                Load.OK, Load.IDLE -> {
+                    if (show.episodes.isEmpty()) {
+                        Text(
+                            text = context.getString(R.string.no_episodes),
+                            fontSize = 13.sp,
+                            color = Muted,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                    } else {
+                        show.episodes.forEach { episode ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = episode.title,
+                                        fontSize = 14.sp,
+                                        color = Color.White,
+                                    )
+                                    val length = formatDuration(episode.durationSeconds)
+                                    if (length.isNotEmpty()) {
+                                        Text(text = length, fontSize = 11.sp, color = Muted)
+                                    }
+                                }
+                                TextButton(onClick = { onPlay(episode) }) {
+                                    Text(
+                                        text = context.getString(R.string.play),
+                                        color = Accent,
+                                        fontSize = 13.sp,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
             Spacer(Modifier.height(6.dp))
             TextButton(onClick = onBack) {
-                Text(context.getString(R.string.feed_cancel), color = Muted, fontSize = 12.sp)
+                Text(context.getString(R.string.back), color = Muted, fontSize = 13.sp)
             }
         }
     }
 }
 
 @Composable
-private fun NowPlayingCard(context: android.content.Context) {
-    val state = PodcastState.status
+private fun NowPlayingCard(context: android.content.Context, revision: Int) {
+    // Re-reading the state when the revision changes is what makes this card recompose as
+    // playback moves between buffering, playing, paused and failed.
+    val state = remember(revision) { PodcastState.status }
     if (!PodcastState.isActive() && state != PodcastState.Status.FAILED) return
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -369,7 +502,12 @@ private fun NowPlayingCard(context: android.content.Context) {
                 PodcastState.Status.FAILED -> context.getString(R.string.status_failed)
                 PodcastState.Status.STOPPED -> context.getString(R.string.status_stopped)
             }
-            Text(text = statusText, fontSize = 12.sp, color = Muted, modifier = Modifier.padding(top = 2.dp))
+            Text(
+                text = statusText,
+                fontSize = 12.sp,
+                color = Muted,
+                modifier = Modifier.padding(top = 2.dp),
+            )
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 when (state) {
@@ -397,3 +535,4 @@ private val Bg = Color(0xFF0C0714)
 private val CardBg = Color(0xFF1A1226)
 private val Accent = Color(0xFFB388FF)
 private val Muted = Color(0xFFB9AECB)
+private val ErrorColor = Color(0xFFFF8A80)

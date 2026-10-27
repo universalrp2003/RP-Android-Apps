@@ -713,8 +713,8 @@ def verify_about_links() -> None:
             'tagPrefix = "expense-tracker"', 'version = "1.1"',
             'tagPrefix = "voice-notes"', 'version = "1.1"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.2"',
-            'tagPrefix = "tamil-podcast"', 'version = "1.0"',
-            'tagPrefix = "elderly-launcher"', 'version = "1.0"',
+            'tagPrefix = "tamil-podcast"', 'version = "1.1.1"',
+            'tagPrefix = "elderly-launcher"', 'version = "1.1"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
@@ -879,6 +879,31 @@ def verify_resource_comments() -> int:
 
 
 
+def verify_no_duplicate_resource_names() -> int:
+    """No values XML file may declare the same resource name twice.
+
+    AAPT rejects this with "Found item String/<name> more than one time", which is a build failure
+    that costs a full CI cycle and says nothing about which file was edited twice. It happened when
+    a scripted insert added a `retry` string that already existed. Checking every module here turns
+    it into a local failure instead.
+    """
+    checked = 0
+    for values in sorted(ROOT.rglob("src/main/res/values/*.xml")):
+        if "build" in values.parts:
+            continue
+        text = values.read_text(encoding="utf-8")
+        checked += 1
+        for kind in ("string", "color", "style", "dimen", "integer", "bool", "string-array"):
+            names = re.findall(r'<%s name="([^"]+)"' % kind, text)
+            for name in sorted({n for n in names if names.count(n) > 1}):
+                rel = values.relative_to(ROOT)
+                raise ValueError(
+                    f"{rel} declares <{kind} name=\"{name}\"> more than once. AAPT rejects this at "
+                    "mergeDebugResources, so it fails the build after every test has already passed."
+                )
+    return checked
+
+
 def verify_readme_app_table() -> int:
     """The README's release table must have exactly one row per published app.
 
@@ -905,6 +930,72 @@ def verify_readme_app_table() -> int:
             "is an app a reader cannot find the current version of." % (len(names), expected)
         )
     return len(names)
+
+
+def verify_module_versions_match_sister_apps() -> int:
+    """Every module's versionName must equal the version its SisterApps entry advertises.
+
+    The sister-app list is the only place an app learns a sibling's version, and it is hand-maintained
+    next to twelve other entries. It went stale twice in one afternoon while both modules were being
+    bumped, and nothing caught it: the site gate reads the HTML, the README gate reads the README, and
+    neither looks here. A stale entry points every app's "our other apps" screen at the previous
+    release, which is the same "old info" defect the owner reported on the website.
+
+    The guard against a vacuous pass is explicit: the tree must contain at least ten versioned modules.
+    """
+    txt = Path("shared/src/main/java/com/universalrp/updates/SisterApps.kt").read_text(encoding="utf-8")
+    # Split on the constructor rather than matching to a close paren: several names carry parentheses
+    # of their own ("SMS Guard (குறுஞ்செய்தி காவலன்)"), which truncates a lazy .*?\) match.
+    chunks = txt.split("SisterApp(")[1:]
+    sisters = {}
+    for chunk in chunks:
+        block = chunk.split("\n        ),")[0]
+        mid = re.search(r'id = "([^"]+)"', block)
+        ver = re.search(r'version = "([^"]+)"', block)
+        if mid and ver:
+            sisters[mid.group(1)] = ver.group(1)
+    if len(sisters) < 10:
+        raise ValueError(
+            "only %d SisterApp entries parsed - this gate would verify almost nothing" % len(sisters)
+        )
+
+    # A module directory is not a sister-app id: the directory is `cleaner` and the app is `liveguard`,
+    # `equalizer` and `pulseeq`. The package name is the identifier both sides actually agree on, so it
+    # is what joins them.
+    by_package = {}
+    for chunk in chunks:
+        block = chunk.split("\n        ),")[0]
+        pkg = re.search(r'packageName = "([^"]+)"', block)
+        ver = re.search(r'version = "([^"]+)"', block)
+        if pkg and ver:
+            by_package[pkg.group(1)] = ver.group(1)
+    if len(by_package) < 10:
+        raise ValueError(
+            "only %d SisterApp package names parsed - this gate would verify almost nothing"
+            % len(by_package)
+        )
+
+    checked = 0
+    for gradle in sorted(ROOT.glob("*/build.gradle.kts")):
+        body = gradle.read_text(encoding="utf-8")
+        ver = re.search(r'versionName = "([^"]+)"', body)
+        pkg = re.search(r'namespace = "([^"]+)"', body)
+        if not ver or not pkg:
+            continue
+        checked += 1
+        if pkg.group(1) not in by_package:
+            raise ValueError(
+                "module %s (namespace %s) has a versionName but no SisterApps entry"
+                % (gradle.parent.name, pkg.group(1))
+            )
+        if by_package[pkg.group(1)] != ver.group(1):
+            raise ValueError(
+                "module %s is version %s but SisterApps advertises %s for %s"
+                % (gradle.parent.name, ver.group(1), by_package[pkg.group(1)], pkg.group(1))
+            )
+    if checked < 10:
+        raise ValueError("only %d modules checked - the gate is not covering the tree" % checked)
+    return checked
 
 
 def verify_site_versions_match_downloads() -> int:
@@ -1036,6 +1127,8 @@ def main() -> int:
         resource_comments = verify_resource_comments()
         site_versions, expected_apps = verify_site_versions_match_downloads()
         readme_rows = verify_readme_app_table()
+        value_files = verify_no_duplicate_resource_names()
+        sister_app_versions = verify_module_versions_match_sister_apps()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -1053,6 +1146,8 @@ def main() -> int:
     print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
     print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
     print(f"PASS: README.md lists {readme_rows} published apps exactly once each.")
+    print(f"PASS: {value_files} values XML files declare no resource name twice.")
+    print(f"PASS: all {sister_app_versions} versioned modules agree with their SisterApps entries.")
     print(f"PASS: every version the website states is the version its own download link serves ({site_versions} download links, all {expected_apps} apps in the latest-releases table).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")

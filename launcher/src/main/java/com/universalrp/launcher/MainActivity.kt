@@ -1,15 +1,20 @@
 package com.universalrp.launcher
-
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.ContactsContract
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -26,13 +31,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -45,10 +54,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.activity.ComponentActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+
+/** SharedPreferences key recording that the first-run home-screen prompt has been shown. */
+private const val KEY_ASKED_HOME = "asked_for_home"
 
 /**
  * The home screen.
@@ -111,6 +122,66 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
     var torchOn by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
     var confirmEmergency by remember { mutableStateOf(false) }
+    var favourites by remember { mutableStateOf(Favourites.load(context)) }
+    var addingFavourite by remember { mutableStateOf(false) }
+
+    // First run only: offer to become the home screen. A launcher that has to be found in Settings
+    // is a launcher nobody sets, which is what the owner reported - they had to go to
+    // Settings > Default Home screen by hand. This intent is the one the system answers with its own
+    // home-app chooser, so there is nothing to configure here.
+    var askedForHome by remember {
+        mutableStateOf(
+            context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
+                .getBoolean(KEY_ASKED_HOME, false),
+        )
+    }
+    val homePrompt = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        // Whatever the user chose, do not ask again.
+        context.getSharedPreferences("launcher", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_ASKED_HOME, true)
+            .apply()
+        askedForHome = true
+    }
+
+    val contactPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        val uri = result.data?.data
+        val picked = uri?.let { readPickedContact(context, it) }
+        if (picked == null) {
+            addingFavourite = false
+            return@rememberLauncherForActivityResult
+        }
+        val favourite = picked.toFavourite()
+        if (Favourites.add(context, favourite)) {
+            favourites = Favourites.load(context)
+        } else {
+            notice = context.getString(
+                if (Favourites.load(context).size >= Favourites.MAX) {
+                    R.string.favourites_full
+                } else {
+                    R.string.favourites_duplicate
+                },
+            )
+        }
+        addingFavourite = false
+    }
+
+    // Offer the home screen once, after the first frame, so the screen is already drawn behind it.
+    LaunchedEffect(askedForHome) {
+        if (!askedForHome) {
+            delay(600)
+            homePrompt.launch(
+                Intent(Intent.ACTION_MAIN)
+                    .addCategory(Intent.CATEGORY_HOME)
+                    .addCategory(Intent.CATEGORY_DEFAULT)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+    }
 
     // A launcher's screen is recreated constantly, so the app list is loaded once per composition
     // on a background thread and never on the main thread.
@@ -147,7 +218,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             ) {
                 Text(
                     text = now,
-                    fontSize = 44.sp,
+                    fontSize = 36.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )
@@ -168,13 +239,13 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                 ) {
                     Text(
                         text = LocalContext.current.getString(R.string.all_apps),
-                        fontSize = 22.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                     )
                     TextButton(onClick = { showAppList = false }) {
                         Text(
-                            text = LocalContext.current.getString(R.string.big_phone),
+                            text = LocalContext.current.getString(R.string.back),
                             color = Accent,
                             fontSize = 16.sp,
                         )
@@ -244,6 +315,18 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     }
                 }
             }
+            item { FavouritesCard(favourites = favourites, onCall = { favourite ->
+                    Favourites.call(context, favourite)
+                }, onAdd = {
+                    addingFavourite = true
+                    contactPicker.launch(
+                        Intent(Intent.ACTION_PICK)
+                            .setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE),
+                    )
+                }, onRemove = { number ->
+                    Favourites.remove(context, number)
+                    favourites = Favourites.load(context)
+                }) }
             item {
                 BigButton(
                     label = LocalContext.current.getString(BigButtons.emergency().labelRes),
@@ -276,11 +359,11 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             title = {
                 Text(
                     text = LocalContext.current.getString(R.string.emergency_confirm),
-                    fontSize = 22.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                 )
             },
-            text = { Text(text = emergencyNumber, fontSize = 20.sp) },
+            text = { Text(text = emergencyNumber, fontSize = 17.sp) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -288,13 +371,13 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                         onEmergency(emergencyNumber)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmergencyBg),
-                ) { Text(text = yesLabel, fontSize = 18.sp) }
+                ) { Text(text = yesLabel, fontSize = 15.sp) }
             },
             dismissButton = {
                 TextButton(onClick = { confirmEmergency = false }) {
                     Text(
                         text = LocalContext.current.getString(R.string.emergency_no),
-                        fontSize = 18.sp,
+                        fontSize = 15.sp,
                     )
                 }
             },
@@ -304,10 +387,10 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
     notice?.let { text ->
         AlertDialog(
             onDismissRequest = { notice = null },
-            title = { Text(text = text, fontSize = 18.sp) },
+            title = { Text(text = text, fontSize = 15.sp) },
             confirmButton = {
                 TextButton(onClick = { notice = null }) {
-                    Text(text = yesLabel, fontSize = 16.sp)
+                    Text(text = yesLabel, fontSize = 14.sp)
                 }
             },
         )
@@ -358,11 +441,89 @@ private fun BigButton(
     ) {
         Text(
             text = label,
-            fontSize = 20.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            lineHeight = 26.sp,
+            lineHeight = 22.sp,
         )
+    }
+}
+
+@Composable
+private fun FavouritesCard(
+    favourites: List<Favourite>,
+    onCall: (Favourite) -> Unit,
+    onAdd: () -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBg),
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = context.getString(R.string.favourites),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+            if (favourites.isEmpty()) {
+                Text(
+                    text = context.getString(R.string.favourites_empty),
+                    fontSize = 13.sp,
+                    color = Muted,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            } else {
+                // Wrapping rather than a grid, so a long name does not push a button off the edge.
+                FlowRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    for (favourite in favourites) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Button(
+                                onClick = { onCall(favourite) },
+                                modifier = Modifier.height(64.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = AccentBg),
+                            ) {
+                                Text(
+                                    text = favourite.name,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    lineHeight = 19.sp,
+                                )
+                            }
+                            TextButton(onClick = { onRemove(favourite.number) }) {
+                                Text(
+                                    text = context.getString(R.string.favourites_remove),
+                                    color = Muted,
+                                    fontSize = 12.sp,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            OutlinedButton(
+                onClick = onAdd,
+                modifier = Modifier.height(52.dp),
+            ) {
+                Text(
+                    text = context.getString(R.string.favourites_add),
+                    fontSize = 15.sp,
+                    color = Accent,
+                )
+            }
+        }
     }
 }
 

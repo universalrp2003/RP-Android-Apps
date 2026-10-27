@@ -15,7 +15,7 @@ automatically; until then a neat "coming soon" placeholder is shown.
 | Secret Message | `secret-message-card.jpg` |
 | Expense Tracker | `expense-tracker-card.jpg` |
 | Voice Notes | `voice-notes-card.jpg` |
-| Vasanthi AI | `vasanthi-ai-card.jpg` |
+| Vasanthi AI | `vasanthi-ai-card.jpg` (a diagram with no lettering, so no Tamil can be wrong) |
 | Tamil Podcast Player | `tamil-podcast-card.jpg` |
 | Elderly Launcher | `elderly-launcher-card.jpg` |
 

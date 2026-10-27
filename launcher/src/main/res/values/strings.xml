@@ -31,6 +31,22 @@
     <string name="volume_up">ஒலி அதிகரிப்பு</string>
     <string name="volume_down">ஒலி குறைப்பு</string>
 
+    <string name="set_as_home_title">இதை முகத் திரையாக்கு</string>
+    <string name="set_as_home_body">இந்தத் திரையை தொலைபேசியின் முகத் திரையாக மாற்ற, அடுத்த திரையில் "முதியவர் திரை" என்பதைத் தேர்ந்தெடுக்கவும்.</string>
+    <string name="set_as_home_go">அமைக்கச் செல்</string>
+    <string name="back">பின்செல்</string>
+    <string name="set_as_home_later">பிறகு</string>
+    <string name="favourites">முக்கிய நபர்கள்</string>
+    <string name="favourites_empty">இன்னும் யாரும் இல்லை. கீழே உள்ள பொத்தானைத் தட்டி சேர்க்கவும்.</string>
+    <string name="favourites_add">நபரைச் சேர்</string>
+    <string name="favourites_remove">நீக்கு</string>
+    <string name="favourites_pick">அழைக்கும் நபரைத் தேர்ந்தெடுங்கள்</string>
+    <string name="favourites_duplicate">இந்த எண் ஏற்கனவே உள்ளது</string>
+    <string name="favourites_added">நபர் சேர்க்கப்பட்டார்</string>
+    <string name="favourites_removed">நபர் நீக்கப்பட்டார்</string>
+    <string name="favourites_full">எட்டு நபர்களே சேர்க்கலாம்</string>
+    <string name="favourites_permission">தொடர்புகளைப் படிக்க அனுமதி தேவை</string>
+    <string name="favourites_call">அழை</string>
     <string name="what_it_does">என்ன செய்யும்</string>
     <string name="what_it_does_body">திரை முழுவதும் பெரிய பொத்தான்கள். ஒளி, ஒலி, பேட்டரி, அவசர அழைப்பு - எல்லாம் ஒரே திரையில், சிறிய எழுத்து இல்லாமல்.</string>
 

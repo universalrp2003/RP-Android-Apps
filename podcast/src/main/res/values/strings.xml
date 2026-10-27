@@ -2,19 +2,19 @@
 <resources>
     <string name="app_name">போட்காஸ்ட் பிளேயர்</string>
 
-    <string name="tab_shows">நாட்காட்டிகள்</string>
+    <string name="tab_shows">ஊட்டங்கள்</string>
     <string name="tab_downloads">பதிவிறக்கியவை</string>
 
-    <string name="add_feed">நாட்காட்டி சேர்</string>
+    <string name="add_feed">ஊட்டம் சேர்</string>
     <string name="feed_url_hint">RSS இணைப்பு (https://...)</string>
     <string name="feed_add_confirm">சேர்</string>
     <string name="feed_cancel">ரத்து</string>
-    <string name="feed_added">நாட்காட்டி சேர்க்கப்பட்டது</string>
-    <string name="feed_add_failed">இந்த இணைப்பில் நாட்காட்டி இல்லை</string>
+    <string name="feed_added">ஊட்டம் சேர்க்கப்பட்டது</string>
+    <string name="feed_add_failed">இந்த இணைப்பில் ஊட்டம் இல்லை</string>
 
     <string name="loading">ஏற்றுகிறது...</string>
-    <string name="empty_shows">இன்னும் நாட்காட்டி இல்லை. மேலே உள்ள பொத்தானைத் தட்டி சேர்க்கவும்.</string>
-    <string name="no_episodes">இந்த நாட்காட்டியில் எதுவும் இல்லை</string>
+    <string name="empty_shows">இன்னும் ஊட்டம் இல்லை. மேலே உள்ள பொத்தானைத் தட்டி சேர்க்கவும்.</string>
+    <string name="no_episodes">இந்த ஊட்டத்தில் எதுவும் இல்லை</string>
     <string name="no_downloads">பதிவிறக்கம் எதுவும் இல்லை</string>
 
     <string name="play">இயக்கு</string>
@@ -36,11 +36,18 @@
     <string name="channel_desc">போட்காஸ்ட் இயக்கும் போனின் அறிவிப்பு.</string>
     <string name="notification_title">போட்காஸ்ட் பிளேயர்</string>
 
+    <string name="open_show">கேட்க</string>
+    <string name="back">பின்செல்</string>
+    <string name="remove">நீக்கு</string>
+    <string name="feed_load_failed">இந்த ஊட்டத்தை ஏற்ற முடியவில்லை</string>
+    <string name="feed_load_failed_hint">இணைய இணைப்பைப் பாருங்கள், அல்லது இந்த ஊட்டம் நின்றிருக்கலாம். பிறகு மீண்டும் முயற்சிக்கவும்.</string>
+    <string name="feed_already">இந்த ஊட்டம் ஏற்கனவே உள்ளது</string>
+    <string name="feed_note">ஊட்ட இணைப்புகளை நேரலையில் பதிவிறக்கப்படுகின்றன. ஒரு ஊட்டம் கிடைக்கவில்லை என்றால் அது தெரிவிக்கப்படும், மறைக்கப்படாது.</string>
     <string name="what_it_does">என்ன செய்யும்</string>
-    <string name="what_it_does_body">தமிழ் நாட்காட்டிகளைக் கேட்கலாம். இணையம் இருந்தால் நேரலையில், இல்லையென்றால் பதிவிறக்கியதைக் கேட்கலாம். திரை அணைந்தாலும் இயக்கம் தொடரும்.</string>
+    <string name="what_it_does_body">தமிழ் ஊட்டங்களைக் கேட்கலாம். இணையம் இருந்தால் நேரலையில், இல்லையென்றால் பதிவிறக்கியதைக் கேட்கலாம். திரை அணைந்தாலும் இயக்கம் தொடரும்.</string>
 
-    <string name="builtin_shows">உள்ளேயே உள்ள நாட்காட்டிகள்</string>
-    <string name="your_shows">நீங்கள் சேர்த்த நாட்காட்டிகள்</string>
+    <string name="builtin_shows">உள்ளேயே உள்ள ஊட்டங்கள்</string>
+    <string name="your_shows">நீங்கள் சேர்த்த ஊட்டங்கள்</string>
 
     <string name="episode_count">%1$d பகுதிகள்</string>
     <string name="size_mb">%1$s MB</string>
