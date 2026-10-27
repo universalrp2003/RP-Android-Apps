@@ -60,6 +60,7 @@ def main() -> int:
             verify(url)
     except Exception as error:
         print(f"FAIL: {error}", file=sys.stderr)
+        print("::error::" + str(error).replace("\n", " "))
         return 1
     return 0
 

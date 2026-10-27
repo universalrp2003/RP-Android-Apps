@@ -1,0 +1,86 @@
+name: Verify launcher podcast and Vasanthi candidates
+
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "launcher/**"
+      - "podcast/**"
+      - "vasanthi/**"
+      - "shared/src/main/java/com/universalrp/updates/**"
+      - "tools/verify_podcast_feeds.py"
+      - "tools/tests/test_podcast_feeds.py"
+      - ".github/workflows/app-candidates.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-candidates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  candidate:
+    name: Verify ${{ matrix.module }} candidate (no publication)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [launcher, podcast, vasanthi]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source gates
+        run: |
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_vasanthi_sound_labels.py
+          python3 tools/_tmp_preflight.py ${{ matrix.module }}
+      - name: Verify real podcast feeds and audio
+        if: matrix.module == 'podcast'
+        run: |
+          python3 -m unittest discover -s tools/tests -p test_podcast_feeds.py
+          python3 tools/verify_podcast_feeds.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+      - name: Test and compile release candidate
+        id: compile
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:assembleRelease --no-daemon --stacktrace 2>&1 | tee candidate-build.log
+      - name: Upload candidate and real JUnit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.module }}-candidate
+          path: |
+            ${{ matrix.module }}/build/outputs/apk/release/*.apk
+            ${{ matrix.module }}/build/test-results/testDebugUnitTest/*.xml
+            candidate-build.log
+          if-no-files-found: warn
+      - name: Record compiler failure for restricted log clients
+        if: failure() && steps.compile.outcome == 'failure'
+        env:
+          MODULE: ${{ matrix.module }}
+          BRANCH: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          report="ci-candidate-${MODULE}-failure.md"
+          {
+            echo "# ${MODULE} candidate compile failure"
+            echo "Source: ${{ github.sha }}"
+            echo '```'
+            grep -E '(^e:|FAILURE:|What went wrong|^> |FAILED|tests completed)' -A 5 candidate-build.log | head -n 160 || true
+            echo '```'
+          } > "$report"
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add "$report"
+          git commit -m "CI: record ${MODULE} candidate compile failure" || exit 0
+          git pull --rebase origin "$BRANCH"
+          git push origin "HEAD:$BRANCH"
