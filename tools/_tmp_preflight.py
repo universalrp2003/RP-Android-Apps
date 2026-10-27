@@ -279,6 +279,34 @@ for f in main_kt:
         bad("%s uses ALL_CAPS identifier %s which is declared nowhere in module %s"
             % (f.name, name, MODULE))
 
+# ---------------------------------------------- 15. a Modifier extension that is not imported
+# `Modifier.size(...)` with `androidx.compose.foundation.layout.size` missing from the imports
+# compiles to "Unresolved reference 'size'" and names no file, and it is exactly what a scripted
+# rebuild of an import block produces: the new call site is written, the import is forgotten. This
+# is what happened to the launcher's icon row in round 2, and it cost a release cycle.
+#
+# The check is narrow on purpose, and nothing here is inferred: the name on the call site and the
+# name in the import are compared literally, so a wrong import cannot pass by being close enough.
+SCOPE_MEMBERS = {"weight", "align", "matchParentSize"}
+modifier_calls = 0
+for f in all_kt:
+    text = f.read_text(encoding="utf-8")
+    imports = {l.strip()[len("import "):] for l in text.splitlines() if l.startswith("import ")}
+    layout_imports = {n.rsplit(".", 1)[1] for n in imports
+                      if n.startswith("androidx.compose.foundation.layout.")}
+    used = set(re.findall(r"\bModifier\.([A-Za-z][A-Za-z0-9_]*)\s*\(", strip_noise(text)))
+    modifier_calls += len(used)
+    if not used and not layout_imports:
+        continue  # a file that never mentions a Modifier verifies nothing and is not checked
+    # `weight` and `align` are members of RowScope/ColumnScope/BoxScope, not layout extensions,
+    # so they are deliberately never imported. They are the two that would otherwise make this
+    # gate cry wolf on a correct file.
+    for name in sorted(used - layout_imports - SCOPE_MEMBERS):
+        bad("%s calls Modifier.%s(...) without importing "
+            "androidx.compose.foundation.layout.%s" % (f.name, name, name))
+if modifier_calls == 0:
+    bad("no Modifier call was found in module %s, so this gate verified nothing" % MODULE)
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))

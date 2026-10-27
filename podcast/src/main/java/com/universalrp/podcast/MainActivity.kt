@@ -103,7 +103,15 @@ private fun PodcastScreen() {
     val context = LocalContext.current
     val store = remember { PodcastStore(context) }
 
-    val shows = remember { mutableStateOf(BuiltInShows.all()) }
+    // The built-ins, plus anything the owner added before. The URLs are kept on disk, so a feed
+    // added in one session is still there in the next; seeding from the built-ins alone lost them.
+    val shows = remember {
+        mutableStateOf(
+            BuiltInShows.all() + store.userFeedUrls().map { url ->
+                PodcastShow(id = url, title = url, feedUrl = url, builtIn = false)
+            },
+        )
+    }
     // Per show, so one dead feed cannot freeze the whole screen.
     val loads = remember { mutableStateMapOf<String, Load>() }
     var openId by remember { mutableStateOf<String?>(null) }
@@ -175,12 +183,21 @@ private fun PodcastScreen() {
                                 Button(
                                     onClick = {
                                         val url = newUrl.trim()
-                                        val reason = store.add(url)
-                                        if (reason != null) {
-                                            addError = context.getString(reason)
-                                        } else {
+                                        if (!url.startsWith("http", ignoreCase = true)) {
+                                            addError = context.getString(R.string.feed_add_failed)
+                                        } else if (store.addFeedUrl(url)) {
+                                            shows.value = shows.value + PodcastShow(
+                                                id = url,
+                                                title = url,
+                                                feedUrl = url,
+                                                builtIn = false,
+                                            )
                                             newUrl = ""
                                             adding = false
+                                            addError = null
+                                        } else {
+                                            // Either a duplicate or a URL that is already there.
+                                            addError = context.getString(R.string.feed_already)
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Accent),
@@ -211,8 +228,9 @@ private fun PodcastScreen() {
                             null
                         } else {
                             {
-                                store.remove(show.feedUrl)
-                                shows.value = store.load()
+                                store.removeFeedUrl(show.feedUrl)
+                                shows.value = shows.value.filterNot { it.id == show.id }
+                                loads.remove(show.id)
                             }
                         },
                     )
