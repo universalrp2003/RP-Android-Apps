@@ -10,6 +10,6 @@ object PlaybackPolicy {
 
     fun isWebAudio(url: String): Boolean = runCatching {
         val uri = java.net.URI(url)
-        uri.scheme in listOf("http", "https") && !uri.host.isNullOrBlank()
+        uri.scheme?.lowercase() in listOf("http", "https") && !uri.host.isNullOrBlank()
     }.getOrDefault(false)
 }

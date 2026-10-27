@@ -56,6 +56,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -180,162 +182,163 @@ private fun PodcastScreen() {
         }
     }
 
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Bg)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        item { Header() }
-        item { NowPlayingCard(context, playerRevision) }
-        item {
-            val bookmark = remember(playerRevision) { store.bookmark() }
-            if (bookmark != null && !PodcastState.isActive()) {
-                Button(onClick = { playEpisode(bookmark.url, bookmark.title, bookmark.positionMs) }, modifier = Modifier.fillMaxWidth()) {
-                    Column {
-                        Text("▶ தொடர்ந்து கேள் / Continue listening")
-                        Text(bookmark.title, fontSize = 13.sp, maxLines = 2)
-                        Text(formatDuration(bookmark.positionMs / 1000), fontSize = 12.sp)
-                    }
-                }
-            }
-            if (permissionDenied) {
-                Text("அறிவிப்பு அனுமதி மறுக்கப்பட்டது; கேட்பது தொடரும். / Listening is available without notification permission.", color = Muted, fontSize = 13.sp)
-                TextButton(onClick = {
-                    runCatching { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }
-                }) { Text("அறிவிப்பு அமைப்புகள் / Notification settings") }
-            }
-        }
-        item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { page = "guide" }) { Text("வழிகாட்டி / Guide") }
-                OutlinedButton(onClick = { page = "about" }) { Text("விவரம் / Update") }
-            }
-        }
-
-        if (openId == null) {
+    Column(Modifier.fillMaxSize().background(Bg).statusBarsPadding().navigationBarsPadding()) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            item { Header() }
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedButton(onClick = { adding = !adding }) {
-                        Text(context.getString(R.string.add_feed))
+                val bookmark = remember(playerRevision) { store.bookmark() }
+                if (bookmark != null && !PodcastState.isActive()) {
+                    Button(onClick = { playEpisode(bookmark.url, bookmark.title, bookmark.positionMs) }, modifier = Modifier.fillMaxWidth()) {
+                        Column {
+                            Text("▶ தொடர்ந்து கேள் / Continue listening")
+                            Text(bookmark.title, fontSize = 13.sp, maxLines = 2)
+                            Text(formatDuration(bookmark.positionMs / 1000), fontSize = 12.sp)
+                        }
                     }
                 }
+                if (permissionDenied) {
+                    Text("அறிவிப்பு அனுமதி மறுக்கப்பட்டது; கேட்பது தொடரும். / Listening is available without notification permission.", color = Muted, fontSize = 13.sp)
+                    TextButton(onClick = {
+                        runCatching { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }
+                    }) { Text("அறிவிப்பு அமைப்புகள் / Notification settings") }
+                }
             }
-            if (adding) {
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { page = "guide" }) { Text("வழிகாட்டி / Guide") }
+                    OutlinedButton(onClick = { page = "about" }) { Text("விவரம் / Update") }
+                }
+            }
+
+            if (openId == null) {
                 item {
-                    Card(
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = CardBg),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            OutlinedTextField(
-                                value = newUrl,
-                                onValueChange = {
-                                    newUrl = it
-                                    addError = null
-                                },
-                                label = { Text(context.getString(R.string.feed_url_hint)) },
-                                singleLine = true,
-                                isError = addError != null,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            addError?.let { message ->
-                                Text(
-                                    text = message,
-                                    fontSize = 12.sp,
-                                    color = ErrorColor,
-                                    modifier = Modifier.padding(top = 6.dp),
-                                )
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(
-                                    onClick = {
-                                        val url = newUrl.trim()
-                                        if (!PlaybackPolicy.isWebAudio(url)) {
-                                            addError = context.getString(R.string.feed_add_failed)
-                                        } else if (store.addFeedUrl(url)) {
-                                            shows.value = shows.value + PodcastShow(
-                                                id = url,
-                                                title = url,
-                                                feedUrl = url,
-                                                builtIn = false,
-                                            )
-                                            newUrl = ""
-                                            adding = false
-                                            addError = null
-                                        } else {
-                                            // Either a duplicate or a URL that is already there.
-                                            addError = context.getString(R.string.feed_already)
-                                        }
+                        OutlinedButton(onClick = { adding = !adding }) {
+                            Text(context.getString(R.string.add_feed))
+                        }
+                    }
+                }
+                if (adding) {
+                    item {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = CardBg),
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                OutlinedTextField(
+                                    value = newUrl,
+                                    onValueChange = {
+                                        newUrl = it
+                                        addError = null
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = Accent),
-                                ) { Text(context.getString(R.string.feed_add_confirm)) }
-                                TextButton(onClick = { adding = false }) {
+                                    label = { Text(context.getString(R.string.feed_url_hint)) },
+                                    singleLine = true,
+                                    isError = addError != null,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                addError?.let { message ->
                                     Text(
-                                        context.getString(R.string.feed_cancel),
-                                        color = Muted,
-                                        fontSize = 13.sp,
+                                        text = message,
+                                        fontSize = 12.sp,
+                                        color = ErrorColor,
+                                        modifier = Modifier.padding(top = 6.dp),
                                     )
+                                }
+                                Spacer(Modifier.height(8.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(
+                                        onClick = {
+                                            val url = newUrl.trim()
+                                            if (!PlaybackPolicy.isWebAudio(url)) {
+                                                addError = context.getString(R.string.feed_add_failed)
+                                            } else if (store.addFeedUrl(url)) {
+                                                shows.value = shows.value + PodcastShow(
+                                                    id = url,
+                                                    title = url,
+                                                    feedUrl = url,
+                                                    builtIn = false,
+                                                )
+                                                newUrl = ""
+                                                adding = false
+                                                addError = null
+                                            } else {
+                                                // Either a duplicate or a URL that is already there.
+                                                addError = context.getString(R.string.feed_already)
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                                    ) { Text(context.getString(R.string.feed_add_confirm)) }
+                                    TextButton(onClick = { adding = false }) {
+                                        Text(
+                                            context.getString(R.string.feed_cancel),
+                                            color = Muted,
+                                            fontSize = 13.sp,
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-            shows.value.forEach { show ->
-                item {
-                    ShowCard(
-                        show = show,
-                        load = loads[show.id] ?: Load.IDLE,
-                        onOpen = {
-                            openId = show.id
-                            loads[show.id] = Load.LOADING
-                        },
-                        onRetry = { loads[show.id] = Load.LOADING },
-                        onRemove = if (show.builtIn) {
-                            null
-                        } else {
-                            {
-                                store.removeFeedUrl(show.feedUrl)
-                                shows.value = shows.value.filterNot { it.id == show.id }
-                                loads.remove(show.id)
-                            }
-                        },
-                    )
-                }
-            }
-        } else {
-            val show = shows.value.firstOrNull { it.id == openId }
-            if (show == null) {
-                // The show was removed while its screen was open. Back is the only way out, and it
-                // is always available.
-                item {
-                    TextButton(onClick = { openId = null }) {
-                        Text(context.getString(R.string.back), color = Muted, fontSize = 13.sp)
+                shows.value.forEach { show ->
+                    item {
+                        ShowCard(
+                            show = show,
+                            load = loads[show.id] ?: Load.IDLE,
+                            onOpen = {
+                                openId = show.id
+                                loads[show.id] = Load.LOADING
+                            },
+                            onRetry = { loads[show.id] = Load.LOADING },
+                            onRemove = if (show.builtIn) {
+                                null
+                            } else {
+                                {
+                                    store.removeFeedUrl(show.feedUrl)
+                                    shows.value = shows.value.filterNot { it.id == show.id }
+                                    loads.remove(show.id)
+                                }
+                            },
+                        )
                     }
                 }
             } else {
-                item {
-                    EpisodeCard(
-                        show = show,
-                        load = loads[show.id] ?: Load.IDLE,
-                        onBack = { openId = null },
-                        onRetry = { loads[show.id] = Load.LOADING },
-                        onPlay = { episode -> playEpisode(episode.audioUrl, episode.title) },
-                    )
+                val show = shows.value.firstOrNull { it.id == openId }
+                if (show == null) {
+                    // The show was removed while its screen was open. Back is the only way out, and it
+                    // is always available.
+                    item {
+                        TextButton(onClick = { openId = null }) {
+                            Text(context.getString(R.string.back), color = Muted, fontSize = 13.sp)
+                        }
+                    }
+                } else {
+                    item {
+                        EpisodeCard(
+                            show = show,
+                            load = loads[show.id] ?: Load.IDLE,
+                            onBack = { openId = null },
+                            onRetry = { loads[show.id] = Load.LOADING },
+                            onPlay = { episode -> playEpisode(episode.audioUrl, episode.title) },
+                        )
+                    }
                 }
             }
-        }
 
-        item { Spacer(Modifier.height(24.dp)) }
+            item { Spacer(Modifier.height(24.dp)) }
+        }
+        // Transport stays visible even after selecting an episode far down a long playlist.
+        NowPlayingCard(context, playerRevision)
     }
 
     // The fetch. Keyed on the load state of the open show, so it starts exactly once per attempt and
@@ -781,7 +784,7 @@ private fun NowPlayingCard(context: android.content.Context, revision: Int) {
     val state = remember(revision) { PodcastState.status }
     if (!PodcastState.isActive() && state != PodcastState.Status.FAILED) return
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBg),
     ) {
@@ -789,6 +792,7 @@ private fun NowPlayingCard(context: android.content.Context, revision: Int) {
             Text(
                 text = PodcastState.nowPlayingTitle(),
                 fontSize = 15.sp,
+                maxLines = 2,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
             )
@@ -817,12 +821,12 @@ private fun NowPlayingCard(context: android.content.Context, revision: Int) {
                 },
                 valueRange = 0f..duration.coerceAtLeast(1).toFloat(),
                 enabled = duration > 0 && state != PodcastState.Status.BUFFERING,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "இயக்க நேரத்தை மாற்று / Seek playback position" },
             )
             Text("${formatDuration((dragging?.toInt() ?: position) / 1000)} / ${formatDuration(duration / 1000)}", color = Muted, fontSize = 13.sp)
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton(onClick = { PodcastPlaybackService.seek(context, position - 15_000L) }, enabled = duration > 0) { Text("↶ 15") }
+                OutlinedButton(onClick = { PodcastPlaybackService.seek(context, position - 15_000L) }, modifier = Modifier.semantics { contentDescription = "பதினைந்து நொடிகள் பின்னோக்கி / Rewind 15 seconds" }, enabled = duration > 0) { Text("↶ 15") }
                 when (state) {
                     PodcastState.Status.PLAYING -> Button(
                         onClick = { PodcastPlaybackService.pause(context) },
@@ -834,7 +838,7 @@ private fun NowPlayingCard(context: android.content.Context, revision: Int) {
                     ) { Text(context.getString(R.string.play)) }
                     else -> Unit
                 }
-                OutlinedButton(onClick = { PodcastPlaybackService.seek(context, position + 15_000L) }, enabled = duration > 0) { Text("15 ↷") }
+                OutlinedButton(onClick = { PodcastPlaybackService.seek(context, position + 15_000L) }, modifier = Modifier.semantics { contentDescription = "பதினைந்து நொடிகள் முன்னோக்கி / Forward 15 seconds" }, enabled = duration > 0) { Text("15 ↷") }
             }
             Row {
                 if (PodcastState.isActive() || state == PodcastState.Status.FAILED) {
