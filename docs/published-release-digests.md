@@ -356,3 +356,11 @@ Metadata read from the published GitHub Releases API after each independent rele
 - [Tamil-Podcast-Player 1.3 / code 5](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.3): `Tamil-Podcast-Player-v1.3.apk`, 11,950,127 bytes, SHA-256 `15770ec6cfcf671b81cb886bceff7d2b9f3ea620d23f795145f7940b5075bb3e`, published `2026-10-27T08:20:11Z`.
 - [Elderly-Launcher 1.3 / code 4](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.3): `Elderly-Launcher-v1.3.apk`, 11,514,983 bytes, SHA-256 `33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745`, published `2026-10-27T08:24:39Z`.
 - [Vasanthi-AI 1.1.4 / code 7](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.4): `Vasanthi-AI-v1.1.4.apk`, 45,790,702 bytes, SHA-256 `b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e`, published `2026-10-27T08:29:15Z`.
+
+
+## Phone-tested 1.4 releases - 27 October 2026
+
+Public asset metadata below was read from the GitHub Releases API after publication, not from candidate-build-digests. Both workflows promoted the immutable owner-tested APKs from candidate run 40485186570/source 2dacaf567d0d884e3ad839ecad608c3f456067b3, checked unchanged compiled inputs and receipt/hash, then verified package, version, pinned signer and published SHA-256. The owner supplied version 1.4 Play Protect acceptance screens and reported All good. Offline screenshots directly cover the preceding candidate, with final 1.4 behavior covered by the overall report. This is not an independent security audit.
+
+- [Tamil-Podcast-Player 1.4 / code 6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.4): `Tamil-Podcast-Player-v1.4.apk`, 11,983,627 bytes, SHA-256 `0232ecd612b04686145abe39191ca42e01c318bf9e7ea741de1e6af09e13a5be`, published `2026-10-27T10:17:56Z`. [Publication run 40486908497](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40486908497).
+- [Elderly-Launcher 1.4 / code 5](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.4): `Elderly-Launcher-v1.4.apk`, 11,514,811 bytes, SHA-256 `7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232`, published `2026-10-27T10:21:49Z`. [Publication run 40487465425](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40487465425).

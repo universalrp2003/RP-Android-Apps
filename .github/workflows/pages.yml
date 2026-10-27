@@ -71,6 +71,8 @@ jobs:
               ("tamil-podcast-v1.3", "Tamil-Podcast-Player-v1.3.apk", 11950127, "15770ec6cfcf671b81cb886bceff7d2b9f3ea620d23f795145f7940b5075bb3e"),
               ("elderly-launcher-v1.3", "Elderly-Launcher-v1.3.apk", 11514983, "33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745"),
               ("vasanthi-ai-v1.1.4", "Vasanthi-AI-v1.1.4.apk", 45790702, "b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e"),
+              ("tamil-podcast-v1.4", "Tamil-Podcast-Player-v1.4.apk", 11983627, "0232ecd612b04686145abe39191ca42e01c318bf9e7ea741de1e6af09e13a5be"),
+              ("elderly-launcher-v1.4", "Elderly-Launcher-v1.4.apk", 11514811, "7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -149,8 +151,12 @@ jobs:
 
           test -s site/apks/Tamil-Podcast-Player-v1.3.apk
           test -s site/apks/Tamil-Podcast-Player-v1.3.zip
+          test -s site/apks/Tamil-Podcast-Player-v1.4.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.4.zip
           test -s site/apks/Elderly-Launcher-v1.3.apk
           test -s site/apks/Elderly-Launcher-v1.3.zip
+          test -s site/apks/Elderly-Launcher-v1.4.apk
+          test -s site/apks/Elderly-Launcher-v1.4.zip
           test -s site/apks/Vasanthi-AI-v1.1.4.apk
           test -s site/apks/Vasanthi-AI-v1.1.4.zip
 

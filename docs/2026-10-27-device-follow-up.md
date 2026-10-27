@@ -115,3 +115,8 @@ With the owner's approval, prepare version 1.4: podcast version code 6 and launc
 The owner supplied version metadata showing launcher 1.4/code 5 and podcast 1.4/code 6, Play Protect screens saying This app looks safe for both, and readable launcher screenshots, then reported **All good** after being asked to perform the final checks. The earlier offline demonstration remains the direct offline screenshot evidence; the final report is an overall owner attestation, not additional screenshots of every scenario.
 
 Publication uses immutable artifacts from successful run 40485186570, source 2dacaf567d0d884e3ad839ecad608c3f456067b3, recorded in releases/phone-tested-candidates.json. The release gates verify the pinned run and artifact IDs, unchanged compiled inputs, receipt source/package/version/size/hash, and the promoted APK's package, signer and capabilities. They fail rather than silently publish a fresh rebuild. Tests and release compilation still run, but their freshly built APK is replaced with the exact tested artifact before final verification/publication. Release tags explicitly target the publication commit. The earlier classification cause and public signing-trust concern are not declared resolved by the phone's scan result.
+
+
+## Published result
+
+Both version 1.4 promotion workflows passed and both releases are public. The detailed publication/digest record is in [published release digests](published-release-digests.md). Site, module READMEs and root download links now point to the actual published 1.4 assets. Historical unreleased/pending statements above describe the investigation timeline, not the final release status. No original phone screenshots were uploaded to the public repository.
