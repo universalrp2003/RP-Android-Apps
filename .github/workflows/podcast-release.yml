@@ -64,6 +64,11 @@ jobs:
       - name: Verify bilingual UI and release-note gates
         run: python3 tools/verify_apps_localization.py
 
+      - name: Verify published feeds and playable audio
+        run: |
+          python3 -m unittest discover -s tools/tests -p test_podcast_feeds.py
+          python3 tools/verify_podcast_feeds.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:

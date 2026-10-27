@@ -887,4 +887,28 @@ object AppGuides {
             ),
         ),
     )
+
+    val podcast = GuideContent(
+        "Choose a show, then an episode. Audio streams from the publisher; internet is needed.",
+        "ஊட்டத்தைத் தேர்ந்தெடுத்து ஒரு பகுதியை இயக்குங்கள். ஒலி வெளியீட்டாளரிடமிருந்து வருகிறது; இணையம் தேவை.",
+        listOf(
+            topic("Play and seek", "இயக்கமும் தேடலும்", "The player is above the show list. Pause, resume, drag the seek bar, or skip 15 seconds. Duration appears after the audio is prepared.", "இயக்கக் கட்டுப்பாடுகள் ஊட்டப் பட்டியலுக்கு மேலே உள்ளன. இடைநிறுத்தலாம், தொடரலாம், பட்டையை இழுத்துத் தேடலாம் அல்லது பதினைந்து நொடிகள் நகர்த்தலாம். ஒலி தயாரான பிறகு நீளம் தெரியும்."),
+            topic("Continue listening", "கேட்பதைத் தொடர", "Continue listening restores your last episode and saved position. Progress is saved every five seconds and on pause; after a sudden kill a few seconds may repeat.", "தொடர்ந்து கேள் பொத்தான் கடைசியாகக் கேட்ட பகுதியைச் சேமித்த இடத்திலிருந்து இயக்கும். ஐந்து நொடிகளுக்கு ஒருமுறையும் இடைநிறுத்தும்போதும் இடம் சேமிக்கப்படும். திடீரெனச் செயலி நின்றால் சில நொடிகள் மீண்டும் கேட்கலாம்."),
+            topic("Feeds and playlists", "ஊட்டங்களும் பகுதிகளும்", "Each show has its own episode list. Built-in feeds are public children's story feeds, not content owned or guaranteed by this app. Add a published RSS URL for another show. A host may be unavailable; retry later or use another show.", "ஒவ்வொரு ஊட்டத்திற்கும் தனிப் பகுதிப் பட்டியல் உண்டு. உள்ளமைந்தவை பொதுக் குழந்தைக் கதை ஊட்டங்கள்; உள்ளடக்கம் செயலிக்குச் சொந்தமானதல்ல. வெளியிடப்பட்ட ஊட்ட இணைப்பைச் சேர்க்கலாம். சேவையகம் கிடைக்காவிட்டால் பிறகு முயலுங்கள் அல்லது வேறு ஊட்டத்தைத் தேர்ந்தெடுங்கள்."),
+            topic("Permissions and notifications", "அனுமதிகளும் அறிவிப்புகளும்", "Android 13 and later ask for notifications when you first play. Denial does not block listening. Use app Settings to enable a denied notification permission. No microphone, contacts or storage permission is needed.", "புதிய ஆண்ட்ராய்டு பதிப்புகளில் முதல் இயக்கத்தின்போது அறிவிப்பு அனுமதி கேட்கப்படும். மறுத்தாலும் கேட்கலாம். மறுத்த அனுமதியைச் செயலி அமைப்புகளில் மாற்றலாம். ஒலிவாங்கி, தொடர்புகள், சேமிப்பு அனுமதி தேவையில்லை."),
+            topic("Back and updates", "பின்செல்லலும் புதுப்பிப்பும்", "Back returns from episodes to shows. About & update opens the verified updater, sister apps and project links. Installation always needs Android confirmation.", "பின்செல் பகுதிகளிலிருந்து ஊட்டங்களுக்கு அழைத்துச் செல்லும். இந்தச் செயலி மற்றும் புதுப்பிப்பு பொத்தானில் பிற செயலிகளின் இணைப்புகளும் சரிபார்க்கப்பட்ட புதுப்பிப்பும் உள்ளன. நிறுவ ஆண்ட்ராய்டின் ஒப்புதல் தேவை."),
+        ),
+    )
+
+    val launcher = GuideContent(
+        "A large-button home screen. Set it as your default home app with the dedicated button.",
+        "பெரிய பொத்தான்கள் கொண்ட முகப்புத் திரை. அதற்கான பொத்தானால் இதை இயல்புநிலை முகப்புத் திரையாகத் தேர்ந்தெடுங்கள்.",
+        listOf(
+            topic("Default home", "இயல்புநிலை முகப்புத் திரை", "Set default home opens Android's home-role chooser, or Home settings. Choose Elderly Launcher there. This is a system role, not a runtime permission. You can return here and try again after cancellation.", "முகப்புத் திரையாக அமை பொத்தான் ஆண்ட்ராய்டின் தேர்வைத் திறக்கும். அங்கே முதியவர் திரையைத் தேர்ந்தெடுங்கள். இது அமைப்பின் பங்கு; சாதாரண அனுமதி அல்ல. ரத்து செய்தாலும் மீண்டும் முயலலாம்."),
+            topic("Calls and contacts", "அழைப்புகளும் தொடர்புகளும்", "Adding a favourite requests contacts access, then opens the phone-number picker. Calling a favourite or confirming 108 requests phone access. If denied, the number opens in the dialler instead. Do not call 108 for testing.", "விருப்ப நபரைச் சேர்க்கும்போது தொடர்புகள் அனுமதி கேட்டு எண்ணைத் தேர்ந்தெடுக்கலாம். விருப்ப நபரை அழைக்கும்போதும் அவசர அழைப்பை உறுதிப்படுத்தும்போதும் அழைப்பு அனுமதி கேட்கப்படும். மறுத்தால் எண் அழைப்புத் திரையில் திறக்கும். சோதனைக்காக அவசர எண்ணை அழைக்காதீர்கள்."),
+            topic("Torch and battery", "விளக்கும் மின்கலமும்", "The torch needs camera permission on supported phones. Battery percentage and charging status come from Android, and update when they change. Unknown battery data is labelled unknown, not zero.", "ஆதரவு உள்ள தொலைபேசிகளில் விளக்கிற்கு கேமரா அனுமதி தேவை. மின்கல அளவும் மின்னேற்ற நிலையும் ஆண்ட்ராய்டிலிருந்து பெற்று மாறும்போது புதுப்பிக்கப்படும். தகவல் கிடைக்காவிட்டால் பூஜ்யம் என்று காட்டாது."),
+            topic("Back and permissions", "பின்செல்லலும் அனுமதிகளும்", "Back closes the app list or guide but never closes the home screen. Permissions are requested only when used. This launcher posts no notifications, so it does not ask for notification access. Denied permissions can be changed in Android app Settings.", "பின்செல் செயலிப் பட்டியலையோ வழிகாட்டியையோ மூடும்; முகப்புத் திரையை மூடாது. பயன்படுத்தும்போதுதான் அனுமதி கேட்கப்படும். அறிவிப்பு அனுப்பாததால் அறிவிப்பு அனுமதி கேட்காது. மறுத்த அனுமதிகளை ஆண்ட்ராய்டின் செயலி அமைப்புகளில் மாற்றலாம்."),
+            topic("About and updates", "செயலி விவரமும் புதுப்பிப்பும்", "About & update lists the other apps and official project links. The updater verifies the APK before Android asks you to install it. Updates are never silently installed.", "இந்தச் செயலி மற்றும் புதுப்பிப்பு பக்கத்தில் மற்ற செயலிகளும் அதிகாரப்பூர்வ இணைப்புகளும் உள்ளன. புதுப்பிப்பைச் சரிபார்த்த பிறகு நிறுவ ஆண்ட்ராய்டு கேட்கும். உங்களுக்குத் தெரியாமல் நிறுவாது."),
+        ),
+    )
 }

@@ -14,11 +14,22 @@ object PodcastState {
     var nowPlaying: String = ""
         private set
 
+    var positionMs: Int = 0
+        private set
+    var durationMs: Int = 0
+        private set
+
+    fun progress(position: Int, duration: Int) = synchronized(lock) {
+        positionMs = position.coerceAtLeast(0)
+        durationMs = duration.coerceAtLeast(0)
+        revision++
+    }
+
     var revision: Int = 0
         private set
 
     fun markBuffering(title: String = nowPlaying) = synchronized(lock) {
-        status = Status.BUFFERING; nowPlaying = title; revision++
+        status = Status.BUFFERING; nowPlaying = title; positionMs = 0; durationMs = 0; revision++
     }
 
     fun markPlaying(title: String = nowPlaying) = synchronized(lock) {
@@ -34,7 +45,7 @@ object PodcastState {
     }
 
     fun markFailed() = synchronized(lock) {
-        status = Status.FAILED; revision++
+        status = Status.FAILED; positionMs = 0; durationMs = 0; revision++
     }
 
     fun nowPlayingTitle(): String = nowPlaying

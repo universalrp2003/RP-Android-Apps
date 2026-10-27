@@ -17,18 +17,33 @@
     <uses-permission android:name="android.permission.CALL_PHONE" />
     <!-- Reading the contact the owner picks, to put a name and a number on a button. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- No notifications are posted by the launcher: do not request an unused permission. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
     <!--
       A launcher is the home screen, so it has to be the thing that answers the home button.
       CATEGORY_HOME is what makes that happen; CATEGORY_LAUNCHER would make it just another app.
     -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Launcher">
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/app_update_paths" />
+        </provider>
 
         <activity
             android:name=".MainActivity"

@@ -4,6 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Build
+import android.app.role.RoleManager
+import android.provider.Settings
+import androidx.activity.compose.BackHandler
+import com.universalrp.updates.AppGuides
+import com.universalrp.updates.GuideScreen
+import com.universalrp.updates.SuiteAbout
 import android.provider.ContactsContract
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -82,8 +89,9 @@ class MainActivity : ComponentActivity() {
 
     private val callPermission =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-            if (granted) {
-                pendingEmergencyNumber?.let { LauncherActions.placeEmergencyCall(this, it) }
+            pendingEmergencyNumber?.let { number ->
+                if (granted) LauncherActions.placeDirectCall(this, number)
+                else runCatching { startActivity(Intent(Intent.ACTION_DIAL, android.net.Uri.parse("tel:$number"))) }
             }
             pendingEmergencyNumber = null
         }
@@ -92,8 +100,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pendingEmergencyNumber = savedInstanceState?.getString("pending_call")
+        com.universalrp.updates.AppLanguageState.initialize(this)
         setContent {
-            MaterialTheme {
+            MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(primary = Accent, background = Bg, surface = CardBg)) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
                     LauncherScreen(
                         onEmergency = { number -> requestEmergencyCall(number) },
@@ -101,6 +111,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putString("pending_call", pendingEmergencyNumber)
+        super.onSaveInstanceState(outState)
     }
 
     /** The home button must never stack copies of this screen. */
@@ -113,7 +128,7 @@ class MainActivity : ComponentActivity() {
         val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) ==
             PackageManager.PERMISSION_GRANTED
         if (granted) {
-            LauncherActions.placeEmergencyCall(this, number)
+            LauncherActions.placeDirectCall(this, number)
         } else {
             pendingEmergencyNumber = number
             callPermission.launch(Manifest.permission.CALL_PHONE)
@@ -131,6 +146,25 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
     var confirmEmergency by remember { mutableStateOf(false) }
     var favourites by remember { mutableStateOf(Favourites.load(context)) }
     var addingFavourite by remember { mutableStateOf(false) }
+    var page by remember { mutableStateOf("") }
+    BackHandler {
+        when {
+            page.isNotEmpty() -> page = ""
+            confirmEmergency -> confirmEmergency = false
+            notice != null -> notice = null
+            addingFavourite -> addingFavourite = false
+            showAppList -> showAppList = false
+            else -> Unit // A home screen must not finish on Back.
+        }
+    }
+    if (page == "guide") {
+        GuideScreen(AppGuides.launcher, com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL, { page = "" })
+        return
+    }
+    if (page == "about") {
+        SuiteAbout("launcher", "Elderly-Launcher") { page = "" }
+        return
+    }
 
     // First run only: offer to become the home screen. A launcher that has to be found in Settings
     // is a launcher nobody sets, which is what the owner reported - they had to go to
@@ -177,17 +211,37 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
         addingFavourite = false
     }
 
-    // Offer the home screen once, after the first frame, so the screen is already drawn behind it.
+    fun chooseHome() {
+        val manager = if (Build.VERSION.SDK_INT >= 29) context.getSystemService(RoleManager::class.java) else null
+        val intent = if (Build.VERSION.SDK_INT >= 29 && manager != null &&
+            manager.isRoleAvailable(RoleManager.ROLE_HOME) && !manager.isRoleHeld(RoleManager.ROLE_HOME)) {
+            manager.createRequestRoleIntent(RoleManager.ROLE_HOME)
+        } else Intent(Settings.ACTION_HOME_SETTINGS)
+        runCatching { homePrompt.launch(intent) }.onFailure {
+            notice = "முகப்புத் திரையை அமைப்புகளில் தேர்ந்தெடுக்கவும். / Choose the home app in Settings."
+        }
+    }
     LaunchedEffect(askedForHome) {
         if (!askedForHome) {
             delay(600)
-            homePrompt.launch(
-                Intent(Intent.ACTION_MAIN)
-                    .addCategory(Intent.CATEGORY_HOME)
-                    .addCategory(Intent.CATEGORY_DEFAULT)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
+            chooseHome()
         }
+    }
+
+    val contactsPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            contactPicker.launch(Intent(Intent.ACTION_PICK).setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE))
+        } else {
+            addingFavourite = false
+            notice = "தொடர்பைச் சேர்க்க தொடர்புகள் அனுமதி தேவை. அமைப்புகளில் மாற்றலாம். / Contacts permission is needed to add a favourite; you can change it in Settings."
+        }
+    }
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            val (result, next) = LauncherActions.toggleTorch(context, torchOn)
+            if (result is LauncherActions.Result.Done) torchOn = next
+            else notice = "விளக்கை இயக்க முடியவில்லை. / Torch unavailable."
+        } else notice = "விளக்கிற்கு கேமரா அனுமதி தேவை. / Camera permission is needed for the torch."
     }
 
     // A launcher's screen is recreated constantly, so the app list is loaded once per composition
@@ -230,7 +284,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     color = Color.White,
                 )
                 Text(
-                    text = LocalContext.current.getString(R.string.battery),
+                    text = batteryText(),
                     fontSize = 16.sp,
                     color = Muted,
                 )
@@ -301,6 +355,11 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                                 height = 0,
                                 background = CardBg,
                                 onClick = {
+                                    if (button.action == BigButtons.Action.TORCH &&
+                                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                        cameraPermission.launch(Manifest.permission.CAMERA)
+                                        return@BigButton
+                                    }
                                     val result = handleAction(
                                         context = context,
                                         action = button.action,
@@ -318,13 +377,12 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                 }
             }
             item { FavouritesCard(favourites = favourites, onCall = { favourite ->
-                    Favourites.call(context, favourite)
+                    onEmergency(favourite.number)
                 }, onAdd = {
                     addingFavourite = true
-                    contactPicker.launch(
-                        Intent(Intent.ACTION_PICK)
-                            .setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE),
-                    )
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
+                        contactPicker.launch(Intent(Intent.ACTION_PICK).setType(ContactsContract.CommonDataKinds.Phone.CONTENT_TYPE))
+                    } else contactsPermission.launch(Manifest.permission.READ_CONTACTS)
                 }, onRemove = { number ->
                     Favourites.remove(context, number)
                     favourites = Favourites.load(context)
@@ -347,6 +405,15 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             }
         }
 
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                OutlinedButton(onClick = { chooseHome() }, modifier = Modifier.fillMaxWidth()) {
+                    Text("முகப்புத் திரையாக அமை / Set default home")
+                }
+                OutlinedButton(onClick = { page = "guide" }, modifier = Modifier.fillMaxWidth()) { Text("வழிகாட்டி / Guide") }
+                OutlinedButton(onClick = { page = "about" }, modifier = Modifier.fillMaxWidth()) { Text("இந்தச் செயலி / புதுப்பிப்பு / About & update") }
+            }
+        }
         item { Spacer(Modifier.height(20.dp)) }
     }
 
