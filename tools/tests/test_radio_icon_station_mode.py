@@ -20,6 +20,20 @@ class RadioIconStationModeTest(unittest.TestCase):
         self.assertLess(radio_screen.index(rows), radio_screen.index("LazyColumn("))
         self.assertIn("import androidx.compose.material3.TextButton", SCREEN)
 
+    def test_weather_places_are_inside_dialog_not_above_station_browser(self):
+        root = (ROOT / "radio/src/main/java/com/universalrp/tamilnadufm/ui/AppRoot.kt").read_text()
+        main_content, dialog = root.split("if (showWeatherDialog)", 1)
+        self.assertNotIn("WeatherMiniAlertBanner(", main_content)
+        self.assertNotIn('"Saved places"', main_content)
+        self.assertIn("placesContent = {", dialog)
+        self.assertIn("selectSavedPlace(rootContext, place)", dialog)
+        self.assertIn("removeSavedPlace(", dialog)
+
+    def test_station_toolbar_uses_compact_accessible_directory_action(self):
+        self.assertNotIn('IconChip(Icons.Filled.Language, "Live directory")', SCREEN)
+        self.assertIn('contentDescription = AppStrings.translate("Live directory")', SCREEN)
+        self.assertNotIn("typography.titleLarge", SCREEN.split("fun RadioScreen(", 1)[1].split("fun ", 1)[0])
+
     def test_grid_is_four_columns_and_station_tap_opens_confirmation_not_playback(self):
         self.assertIn("state.visible.chunked(4)", SCREEN)
         self.assertIn(".clickable { selectedIconStation = station }", SCREEN)

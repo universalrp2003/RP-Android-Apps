@@ -102,7 +102,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
             .fillMaxSize()
             .padding(horizontal = 14.dp),
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         item {
             Row(
@@ -115,17 +115,13 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         "Ramesh Radio",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = Saffron,
                         fontWeight = FontWeight.Bold,
                     )
-                    Text(
-                        "Tamil FM from Tamil Nadu and around the world — live.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+
                 }
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -182,7 +178,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         .background(SurfaceHigh)
                         .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
                         .clickable { searchOpen = true }
-                        .padding(horizontal = 12.dp, vertical = 11.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
@@ -302,10 +298,14 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
 
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionTitle(
+                Text(
                     if (state.query.isBlank()) "${state.visible.size} stations"
                     else "${state.visible.size} matches",
                     modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 IconButton(
                     onClick = { iconView = !iconView },
@@ -319,7 +319,13 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         tint = Saffron,
                     )
                 }
-                IconChip(Icons.Filled.Language, "Live directory") { vm.searchDirectory() }
+                IconButton(onClick = { vm.searchDirectory() }) {
+                    Icon(
+                        Icons.Filled.Language,
+                        contentDescription = AppStrings.translate("Live directory"),
+                        tint = Teal,
+                    )
+                }
             }
         }
 

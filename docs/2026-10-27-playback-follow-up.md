@@ -61,3 +61,10 @@ The public-release API audit verified all twelve existing stable tags and the SH
 - Moved row memoization into RadioScreen composition before LazyColumn and imported Material3 TextButton. Added a source regression check for both errors.
 - All 112 Python tests, app localization, continuous-playback and browser-update source checks pass. No local Gradle/Android SDK is available; Android compilation remains unverified until CI succeeds.
 - Candidate remains radio 1.28/code 28; no public release authorized or issued. Historical CI failure reports are retained, not represented as a new successful build. SMS Guard OEM behavior still requires device validation.
+
+## Compact radio home after user device review
+
+- User reports candidate 1.28 works on device; screenshots demonstrate four-column icons and the station-name Play/Cancel dialog. This is not validation of all devices or all playback paths.
+- Moved saved weather places (including selection/removal) from the permanent app header into the rain control dialog using an optional shared composable slot. The dialog already shows weather alert previews/status; background weather monitoring and voice alerts are unchanged.
+- Removed the permanent home weather banner, reduced the radio title/chip spacing, removed the redundant subtitle, and replaced the long directory pill with a labelled accessible globe action. Station count stays a single compact line so it no longer stacks into three lines beside the controls. System font scaling is preserved.
+- Candidate remains 1.28/code 28; public release markers are unchanged. This layout revision needs a new CI build and device review before publication.
