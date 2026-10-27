@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">போட்காஸ்ட் பிளேயர்</string>
+
+    <string name="tab_shows">நாட்காட்டிகள்</string>
+    <string name="tab_downloads">பதிவிறக்கியவை</string>
+
+    <string name="add_feed">நாட்காட்டி சேர்</string>
+    <string name="feed_url_hint">RSS இணைப்பு (https://...)</string>
+    <string name="feed_add_confirm">சேர்</string>
+    <string name="feed_cancel">ரத்து</string>
+    <string name="feed_added">நாட்காட்டி சேர்க்கப்பட்டது</string>
+    <string name="feed_add_failed">இந்த இணைப்பில் நாட்காட்டி இல்லை</string>
+
+    <string name="loading">ஏற்றுகிறது...</string>
+    <string name="empty_shows">இன்னும் நாட்காட்டி இல்லை. மேலே உள்ள பொத்தானைத் தட்டி சேர்க்கவும்.</string>
+    <string name="no_episodes">இந்த நாட்காட்டியில் எதுவும் இல்லை</string>
+    <string name="no_downloads">பதிவிறக்கம் எதுவும் இல்லை</string>
+
+    <string name="play">இயக்கு</string>
+    <string name="pause">இடைநிறுத்து</string>
+    <string name="stop">நிறுத்து</string>
+    <string name="retry">மீண்டும் முயற்சி</string>
+
+    <string name="speed">வேகம்</string>
+    <string name="seek_back">பின்னோக்கி</string>
+    <string name="seek_forward">முன்னோக்கி</string>
+
+    <string name="status_playing">இயக்கத்தில்</string>
+    <string name="status_paused">இடைநிறுத்தப்பட்டது</string>
+    <string name="status_stopped">நிறுத்தப்பட்டது</string>
+    <string name="status_buffering">இயக்கம் தயாராகிறது...</string>
+    <string name="status_failed">இயக்க முடியவில்லை. இணையத்தைப் பாருங்கள்.</string>
+
+    <string name="channel_name">இயக்கம்</string>
+    <string name="channel_desc">போட்காஸ்ட் இயக்கும் போனின் அறிவிப்பு.</string>
+    <string name="notification_title">போட்காஸ்ட் பிளேயர்</string>
+
+    <string name="what_it_does">என்ன செய்யும்</string>
+    <string name="what_it_does_body">தமிழ் நாட்காட்டிகளைக் கேட்கலாம். இணையம் இருந்தால் நேரலையில், இல்லையென்றால் பதிவிறக்கியதைக் கேட்கலாம். திரை அணைந்தாலும் இயக்கம் தொடரும்.</string>
+
+    <string name="builtin_shows">உள்ளேயே உள்ள நாட்காட்டிகள்</string>
+    <string name="your_shows">நீங்கள் சேர்த்த நாட்காட்டிகள்</string>
+
+    <string name="episode_count">%1$d பகுதிகள்</string>
+    <string name="size_mb">%1$s MB</string>
+</resources>

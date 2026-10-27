@@ -263,6 +263,11 @@ RELEASE_TAG_PREFIX = {
     "vocalremover": "rp-vocal-remover-studio",
     "oorarivippu": "oor-arivippu",
     "smsguard": "sms-guard",
+    "voicenotes": "voice-notes",
+    "expensetracker": "expense-tracker",
+    "vasanthi": "vasanthi-ai",
+    "podcast": "tamil-podcast",
+    "launcher": "elderly-launcher",
     "secretmessage": "secret-message",
 }
 
@@ -699,12 +704,17 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.8"',
-            'tagPrefix = "live-guard"', 'version = "2.72"',
+            'tagPrefix = "live-guard"', 'version = "2.73"',
             'tagPrefix = "ramesh-radio"', 'version = "1.26"',
             'tagPrefix = "pulseeq"', 'version = "1.9"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
+            'tagPrefix = "expense-tracker"', 'version = "1.1"',
+            'tagPrefix = "voice-notes"', 'version = "1.1"',
+            'tagPrefix = "vasanthi-ai"', 'version = "1.1.2"',
+            'tagPrefix = "tamil-podcast"', 'version = "1.0"',
+            'tagPrefix = "elderly-launcher"', 'version = "1.0"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
@@ -715,7 +725,7 @@ def verify_about_links() -> None:
         source = path.read_text(encoding="utf-8")
         if shared_links:
             if "com.universalrp.updates.SisterApps.releaseLinks()" not in source or "com.universalrp.updates.SisterApps.projectLinks()" not in source:
-                raise ValueError(f"{app} About does not render the shared seven-app release list and official project links")
+                raise ValueError(f"{app} About does not render the shared sister-app release list and official project links")
         else:
             urls = set(re.findall(r'https://github\.com/universalrp2003/InternetRadio/releases/tag/[^"\\]+', source))
             missing = EXPECTED_RELEASE_URLS - urls
@@ -784,6 +794,200 @@ def verify_kotlin_format_strings() -> int:
     return checked
 
 
+
+# Modules that publish a README next to their source. Each one must start with a markdown heading
+# that names its own app.
+MODULE_READMES = {
+    "cleaner": "Live Guard",
+    "radio": "Ramesh Radio",
+    "equalizer": "PulseEQ",
+    "vocalremover": "Vocal Remover",
+    "oorarivippu": "Oor Arivippu",
+    "smsguard": "SMS Guard",
+    "voicenotes": "Voice Notes",
+    "expensetracker": "Expense Tracker",
+    "vasanthi": "Vasanthi AI",
+    "podcast": "Tamil Podcast Player",
+    "launcher": "Elderly Launcher",
+}
+
+
+def verify_module_readmes() -> int:
+    """Every module README must still be that module's README.
+
+    Commit a1aaf7d meant to add a website entry and instead overwrote
+    expensetracker/README.md with the whole of .github/workflows/pages.yml. Nothing caught it: the
+    release-note gates read releases/, the sister-app pins read SisterApps.kt, and no check looked
+    at the module READMEs at all, so a file that had become a GitHub Actions workflow shipped in a
+    commit whose message said it had just recorded a digest.
+
+    A clobbered file is easy to recognise - a README starts with a markdown heading, and a workflow
+    starts with a YAML key - so check exactly that, and name the app in the first line so a file
+    swapped between two modules cannot pass either.
+    """
+    checked = 0
+    for module, app_name in sorted(MODULE_READMES.items()):
+        path = ROOT / module / "README.md"
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8").lstrip()
+        first = text.split("\n", 1)[0]
+        if not first.startswith("# "):
+            raise ValueError(
+                f"{module}/README.md does not start with a markdown heading (it starts with "
+                f"{first[:40]!r}), so it is not this module's README. Restore it from git."
+            )
+        if app_name.lower() not in first.lower():
+            raise ValueError(
+                f"{module}/README.md is titled {first[:60]!r}, which does not name {app_name}. "
+                f"A README belonging to another module has been written here."
+            )
+        checked += 1
+    return checked
+
+
+def verify_resource_comments() -> int:
+    """No XML comment in any module's values/ may contain a double hyphen.
+
+    A release once failed CI on exactly this. Its strings.xml used
+    `<!-- ---------------- the two controls -->` as a section divider, and AAPT rejects any
+    comment containing `--` with "The string \"--\" is not permitted within comments". The
+    message names a line and a column, but the line is the comment, so nothing about it points at
+    the divider, and a full Gradle round is spent to learn that a decorative line of hyphens is
+    illegal XML.
+
+    The gate reads every module's `res/values/*.xml` and looks at comment *bodies* only, because
+    `<!--` and `-->` themselves contain the pair and a naive search would fail on every file.
+    """
+    checked = 0
+    for module in sorted(RELEASE_TAG_PREFIX):
+        values = ROOT / module / "src" / "main" / "res" / "values"
+        if not values.is_dir():
+            continue
+        for path in sorted(values.glob("*.xml")):
+            text = path.read_text(encoding="utf-8")
+            for match in re.finditer(r"<!--(.*?)-->", text, re.S):
+                if "--" in match.group(1):
+                    line = text.count("\n", 0, match.start()) + 1
+                    raise ValueError(
+                        f"{path.relative_to(ROOT)}:{line} has an XML comment containing \"--\", "
+                        "which AAPT rejects. Use a plain sentence, or `=`, instead of a line of "
+                        "hyphens, as a section divider."
+                    )
+            checked += 1
+    return checked
+
+
+
+def verify_site_versions_match_downloads() -> int:
+    """Every version the website states must be the version it actually downloads.
+
+    The owner's complaint about this page was that it showed old information, and he was right in
+    three places that had nothing to do with any release: the Live Guard card offered 2.72 when
+    2.73 was current, the Ramesh Radio card offered 1.25 when 1.26 was current, and the JSON-LD
+    `softwareVersion` values lagged their own `downloadUrl` by a release or two.
+
+    The download link is the thing that matters - it is what a visitor clicks - so it is the source
+    of truth and every other version string is checked against it. That direction is deliberate: a
+    card whose badge says 2.73 but links to 2.72 is a broken download, while the reverse is only a
+    cosmetic mismatch, and only one of those can be caught by comparing to the link.
+    """
+    site = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+
+    # The JSON-LD block: softwareVersion and downloadUrl sit on adjacent lines in one entry.
+    entries = re.findall(
+        r'"softwareVersion": "([^"]+)",\s*\n\s*"downloadUrl": "[^"]*?/apks/[A-Za-z0-9._-]*?-v([0-9][0-9A-Za-z.]*)\.apk"',
+        site,
+    )
+    if not entries:
+        raise ValueError(
+            "site/index.html has no JSON-LD softwareVersion/downloadUrl pairs, so this gate would "
+            "check nothing."
+        )
+    mismatched = [
+        f"{stated} vs {linked}"
+        for stated, linked in entries
+        if stated != linked
+    ]
+    if mismatched:
+        raise ValueError(
+            "site/index.html states a version its own download link does not match: "
+            + ", ".join(mismatched)
+        )
+
+    # The download buttons, both in the latest-releases table and in the app cards: the asset name,
+    # the release tag it points at and the stated version must all name the same file.
+    buttons = re.findall(
+        r'data-apk="apks/([A-Za-z0-9._-]+)\.apk" data-name="[A-Za-z0-9._-]+\.apk" '
+        r'data-sha="[0-9a-f]{64}" data-status="[a-z][a-z-]*" '
+        r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1\.apk"',
+        site,
+    )
+    if not buttons:
+        raise ValueError(
+            "site/index.html has no verified download buttons, so this gate would check nothing."
+        )
+    broken = [
+        f"{asset} at {tag}"
+        for asset, tag in buttons
+        if not tag.endswith("-v" + asset_tag(asset))
+    ]
+    if broken:
+        raise ValueError(
+            "site/index.html has download buttons whose asset and release tag disagree: "
+            + ", ".join(broken)
+        )
+
+    # The latest-releases table must offer exactly one row per published app, and the version it
+    # prints must be the version its own button downloads. A table that lists nine of the ten apps,
+    # or that names a version the button does not serve, is the "old info" the owner reported.
+    rows = re.findall(
+        r'<td class="lver">v([0-9][0-9A-Za-z.]*)</td>\s*\n\s*'
+        r'<td class="lsize">[^<]*</td>\s*\n\s*'
+        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+)\.apk"',
+        site,
+    )
+    if not rows:
+        raise ValueError(
+            "site/index.html has no latest-releases table rows, so the table is missing or empty."
+        )
+    row_mismatch = [
+        f"row says {stated} but downloads {asset_tag(asset)}"
+        for stated, asset in rows
+        if stated != asset_tag(asset)
+    ]
+    if row_mismatch:
+        raise ValueError(
+            "site/index.html latest-releases table: " + ", ".join(row_mismatch)
+        )
+
+    # Derived from the shared sister-app directory rather than hard-coded, so adding an app there
+    # and forgetting the table is a failure rather than a silent gap.
+    sister_source = (ROOT / "shared" / "src" / "main" / "java" / "com" / "universalrp" / "updates" / "SisterApps.kt").read_text(encoding="utf-8")
+    expected_apps = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
+    if len(rows) != expected_apps:
+        raise ValueError(
+            f"site/index.html latest-releases table has {len(rows)} rows, but SisterApps.kt lists "
+            f"{expected_apps} apps. A missing row is an app a visitor cannot find from the top of "
+            "the page."
+        )
+
+    return len(entries) + len(buttons), expected_apps
+
+
+def asset_tag(asset: str) -> str:
+    """The version half of an asset name, with or without its extension.
+
+    `CleanSweep-v2.73.apk` -> `2.73`, and `CleanSweep-v2.73` -> `2.73`, because the JSON-LD block
+    carries the full filename while the download-button regex captures the name without it.
+    """
+    match = re.search(r"-v([0-9][0-9A-Za-z.]*)(?:\.apk)?$", asset)
+    if not match:
+        raise ValueError(f"cannot read a version out of the asset name {asset!r}")
+    return match.group(1)
+
+
+
 def main() -> int:
     try:
         keys = catalog_keys()
@@ -800,6 +1004,9 @@ def main() -> int:
         smsguard_catalog = verify_smsguard_bilingual_catalog()
         exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
+        module_readmes = verify_module_readmes()
+        resource_comments = verify_resource_comments()
+        site_versions, expected_apps = verify_site_versions_match_downloads()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -814,6 +1021,9 @@ def main() -> int:
     print(f"PASS: {smsguard_catalog} SMS Guard UI fields are assigned in both languages.")
     print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
+    print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
+    print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
+    print(f"PASS: every version the website states is the version its own download link serves ({site_versions} download links, all {expected_apps} apps in the latest-releases table).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

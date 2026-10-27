@@ -1,0 +1,86 @@
+package com.universalrp.vasanthi
+
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
+
+/**
+ * Tamil-first copy for Vasanthi AI.
+ *
+ * The user is deaf from birth and reads Tamil, so Tamil is the default and the only language the
+ * sound names are written in. English is there for the developer and for anyone helping set the
+ * app up, not as an equal alternative.
+ *
+ * This is deliberately a plain function rather than a @Composable: the floating window is built
+ * by a Service, which has no composition scope to borrow.
+ */
+fun tr(ta: String, en: String): String =
+    if (AppLanguageState.current == AppLanguage.TAMIL) ta else en
+
+/**
+ * A run of Latin letters, which is one English word the way the recogniser writes it.
+ *
+ * An apostrophe is allowed inside a word so "don't" stays one word rather than becoming "don" and
+ * a stray quote mark. Tamil letters are never matched, so a Tamil sentence is left completely
+ * alone - which is the point, because most of what the recogniser returns is Tamil with one
+ * English word in it rather than English.
+ */
+private val LATIN_RUN = Regex("[A-Za-z][A-Za-z'’]*")
+
+/** The distinct English words in a line, in the order they first appear. */
+fun latinWords(text: String): List<String> =
+    LATIN_RUN.findAll(text).map { it.value }.distinct().toList()
+
+/** Swaps each English word for its Tamil, leaving everything else exactly as it was. */
+fun substituteWords(text: String, translations: Map<String, String>): String =
+    LATIN_RUN.replace(text) { match -> translations[match.value] ?: match.value }
+
+/**
+ * A line naming why recognition is producing no text, when it is not.
+ *
+ * Returns an empty string when nothing is wrong, so callers can append it unconditionally. A
+ * missing Tamil pack, no internet and a microphone somebody else is holding each need a different
+ * fix, so they are named separately rather than folded into one apology.
+ */
+fun recognitionProblemNote(problem: RecognitionProblem): String {
+    val (ta, en) = when (problem) {
+        RecognitionProblem.NO_RECOGNISER -> Pair(
+            "\nஇந்தத் தொலைபேசியில் பேச்சு அறிதல் சேவை இல்லை.",
+            "\nThis phone has no speech recognition service.",
+        )
+        RecognitionProblem.NO_NETWORK -> Pair(
+            "\nஇணையம் இல்லை. இணைப்பைச் சரிபார்க்கவும்.",
+            "\nNo internet. Check the connection.",
+        )
+        RecognitionProblem.MIC_BUSY -> Pair(
+            "\nமைக் வேறு செயலியால் பயன்பாட்டில் உள்ளது.",
+            "\nThe microphone is in use by another app.",
+        )
+        RecognitionProblem.OTHER -> Pair(
+            "\nபேச்சு அறிதல் தொடங்க முடியவில்லை.",
+            "\nSpeech recognition could not start.",
+        )
+        RecognitionProblem.NONE -> return ""
+    }
+    return tr(ta, en)
+}
+
+/** A number formatted the way an Indian screen reads it: 1,23,456. */
+fun indianGrouping(value: Long): String {
+    val negative = value < 0
+    val digits = kotlin.math.abs(value).toString()
+    val grouped = when {
+        digits.length <= 3 -> digits
+        else -> {
+            val last3 = digits.substring(digits.length - 3)
+            var rest = digits.substring(0, digits.length - 3)
+            val parts = mutableListOf<String>()
+            while (rest.length > 2) {
+                parts.add(0, rest.substring(rest.length - 2))
+                rest = rest.substring(0, rest.length - 2)
+            }
+            if (rest.isNotEmpty()) parts.add(0, rest)
+            parts.joinToString(",") + "," + last3
+        }
+    }
+    return if (negative) "-$grouped" else grouped
+}

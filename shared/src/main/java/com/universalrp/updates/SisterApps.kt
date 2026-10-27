@@ -1,7 +1,7 @@
 package com.universalrp.updates
 
 /**
- * One list, all seven RP Ideas Android apps + official project links.
+ * One list, all twelve RP Ideas Android apps + official project links.
  *
  * Every app's About screen renders this shared directory so adding or bumping an app
  * keeps every app in sync automatically.
@@ -51,7 +51,7 @@ object SisterApps {
             name = "Live Guard",
             tamilName = "லைவ் கார்ட்",
             tagPrefix = "live-guard",
-            version = "2.72",
+            version = "2.73",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
         ),
@@ -100,6 +100,51 @@ object SisterApps {
             packageName = "com.rpideas.secretmessage",
             aboutLabel = "Secret Message — GitHub release",
         ),
+        SisterApp(
+            id = "expensetracker",
+            name = "Expense Tracker",
+            tamilName = "செலவு கண்காணிப்பு",
+            tagPrefix = "expense-tracker",
+            version = "1.1",
+            packageName = "com.universalrp.expensetracker",
+            aboutLabel = "Expense Tracker — GitHub release",
+        ),
+        SisterApp(
+            id = "voicenotes",
+            name = "Voice Notes",
+            tamilName = "குரல் குறிப்பு",
+            tagPrefix = "voice-notes",
+            version = "1.1",
+            packageName = "com.universalrp.voicenotes",
+            aboutLabel = "Voice Notes — GitHub release",
+        ),
+        SisterApp(
+            id = "vasanthi",
+            name = "Vasanthi AI",
+            tamilName = "வசந்தி AI",
+            tagPrefix = "vasanthi-ai",
+            version = "1.1.2",
+            packageName = "com.universalrp.vasanthi",
+            aboutLabel = "Vasanthi AI — GitHub release",
+        ),
+        SisterApp(
+            id = "podcast",
+            name = "Tamil Podcast Player",
+            tamilName = "தமிழ் போட்காஸ்ட் பிளேயர்",
+            tagPrefix = "tamil-podcast",
+            version = "1.0",
+            packageName = "com.universalrp.podcast",
+            aboutLabel = "Tamil Podcast Player — GitHub release",
+        ),
+        SisterApp(
+            id = "launcher",
+            name = "Elderly Launcher",
+            tamilName = "முதியவர் திரை",
+            tagPrefix = "elderly-launcher",
+            version = "1.0",
+            packageName = "com.universalrp.launcher",
+            aboutLabel = "Elderly Launcher — GitHub release",
+        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
@@ -109,7 +154,7 @@ object SisterApps {
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
     )
 
-    /** `label to url` for all seven RP Ideas Android apps. */
+    /** `label to url` for all twelve RP Ideas Android apps. */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 

@@ -1,0 +1,259 @@
+name: Voice Notes stable release
+
+# Voice Notes (குரல் குறிப்பு) - B1 of the roadmap: a standalone recorder-and-read-back app built on
+# the neural-voice pipeline Live Guard 2.71 proved.
+#
+# Publication runs only when a commit explicitly contains [publish-voicenotes]; an ordinary push
+# builds a candidate and stops there. That is deliberate: this app has never been installed on a
+# phone, so publishing it is a decision the owner makes with a marker, not something a build
+# reaches on its own.
+on:
+  push:
+    branches: [main, "arena/**"]
+    # Workflow-only edits are not a release candidate and must not start this workflow.
+    paths-ignore:
+      - ".github/workflows/voicenotes-release.yml"
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish the verified APK after the build (switch off to build a candidate only)"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: voicenotes-stable-release
+  cancel-in-progress: false
+
+jobs:
+  build-verify-publish:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-voicenotes]') }}
+    name: Test, sign, verify, and optionally publish Voice Notes
+    runs-on: ubuntu-latest
+    env:
+      PUBLISH_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-voicenotes]')) }}
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Verify bilingual UI and release-note gates
+        run: python3 tools/verify_apps_localization.py
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Run unit tests, then build the signed release APK
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace \
+            :voicenotes:testDebugUnitTest \
+            :voicenotes:assembleRelease 2>&1 | tee vn-build.log
+
+      # Lint is reported but never blocks here. Voice Notes is a brand-new module and lint has
+      # never been run against it, so its first report is a baseline to read, not a gate to pass -
+      # failing a release on findings nobody has triaged yet would hide the app from the owner for
+      # no gain. Once the report is clean this becomes a hard gate like the other modules.
+      - name: Report release lint findings (informational)
+        continue-on-error: true
+        shell: bash
+        run: |
+          ./gradlew --no-daemon :voicenotes:lintRelease 2>&1 | tee vn-lint.log || true
+          for r in voicenotes/build/reports/lint-results-release.txt; do
+            [ -f "$r" ] && { echo "### lint findings"; echo '```'; head -n 80 "$r"; echo '```'; }
+          done >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Surface Voice Notes build/lint summary on failure
+        if: failure()
+        shell: bash
+        run: |
+          {
+            echo "### Voice Notes failure summary"
+            echo '```'
+            grep -E "Error:|FAILURE:|What went wrong|^> " -A 4 vn-build.log | head -n 90 || true
+            echo '```'
+            for r in voicenotes/build/reports/lint-results-*.txt; do
+              [ -f "$r" ] && echo "### $r" && echo '```' && head -n 120 "$r" && echo '```'
+            done
+          } >> "$GITHUB_STEP_SUMMARY" || true
+
+      # The release note must say, in plain words, whether these exact bytes were installed on a
+      # phone. A note that omits the truth cannot be published at all.
+      - name: Check the release note states its device-test status
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' voicenotes/build.gradle.kts | head -n 1)"
+          notes="releases/voice-notes-v${version}.md"
+          test -s "$notes" || { echo "::error::Missing release note: $notes"; exit 1; }
+          if ! grep -Eiq 'not installed on a phone|no physical-device test|no device test|not phone-installed|no phone install|installed on a phone|verified on a phone' "$notes"; then
+            echo "::error::$notes must state honestly whether this exact build had a device test."
+            exit 1
+          fi
+          echo "OK: $notes states its device-test status."
+
+      - name: Verify package, version, stable signer, APK size, and SHA-256
+        id: apk
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Parsed from source rather than pinned: a hard-coded version here silently publishes the
+          # wrong tag the moment the app version is bumped.
+          expected_version="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' voicenotes/build.gradle.kts | head -n 1)"
+          expected_code="$(sed -n 's/^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*\([0-9][0-9]*\).*/\1/p' voicenotes/build.gradle.kts | head -n 1)"
+          [[ -n "$expected_version" && -n "$expected_code" ]] || { echo "::error::Failed to parse versionName/versionCode from voicenotes/build.gradle.kts"; exit 1; }
+          expected_package="com.universalrp.voicenotes"
+          # The one stable CI keystore every app in this repository is signed with.
+          expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+          tag="voice-notes-v${expected_version}"
+          asset="Voice-Notes-v${expected_version}.apk"
+
+          grep -Fq "versionName = \"${expected_version}\"" voicenotes/build.gradle.kts
+          grep -Fq "versionCode = ${expected_code}" voicenotes/build.gradle.kts
+          mapfile -t built_apks < <(find voicenotes/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print)
+          if [[ "${#built_apks[@]}" -ne 1 ]]; then
+            echo "::error::Expected one signed Voice Notes release APK, found ${#built_apks[@]}"
+            printf '%s\n' "${built_apks[@]}"
+            exit 1
+          fi
+
+          apk="${built_apks[0]}"
+          mkdir -p "$RUNNER_TEMP/voicenotes-release"
+          cp "$apk" "$RUNNER_TEMP/voicenotes-release/$asset"
+          apk="$RUNNER_TEMP/voicenotes-release/$asset"
+          test -s "$apk"
+          size="$(stat -c '%s' "$apk")"
+          if (( size < 1 || size > 134217728 )); then
+            echo "::error::APK size is outside the updater's allowed range: $size"
+            exit 1
+          fi
+
+          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          build_tools="$(find "$sdk_root/build-tools" -mindepth 1 -maxdepth 1 -type d -print | sort -V | tail -n 1)"
+          aapt="$build_tools/aapt"
+          apksigner="$build_tools/apksigner"
+          test -x "$aapt" && test -x "$apksigner"
+          "$aapt" dump badging "$apk" > "$RUNNER_TEMP/voicenotes-badging.txt"
+          grep -Fq "package: name='${expected_package}' versionCode='${expected_code}' versionName='${expected_version}'" "$RUNNER_TEMP/voicenotes-badging.txt"
+          if grep -q "application-debuggable" "$RUNNER_TEMP/voicenotes-badging.txt"; then
+            echo "::error::Release APK is marked debuggable."
+            exit 1
+          fi
+          if ! grep -Eiq "(^|[[:space:]])(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" "$RUNNER_TEMP/voicenotes-badging.txt"; then
+            echo "::error::Release APK minSdk is not API 26."
+            exit 1
+          fi
+          keytool -exportcert -keystore ci-keystore/release.p12 -storepass cleansweep-ci \
+            -alias cleansweep -file "$RUNNER_TEMP/project-certificate.der"
+          expected_cert="$(sha256sum "$RUNNER_TEMP/project-certificate.der" | cut -d ' ' -f 1)"
+          if [[ "$expected_cert" != "$expected_signer" ]]; then
+            echo "::error::Stable signing key differs from the updater's pinned certificate."
+            exit 1
+          fi
+          "$apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/voicenotes-signature.txt"
+          cat "$RUNNER_TEMP/voicenotes-signature.txt"
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' "$RUNNER_TEMP/voicenotes-signature.txt" | tr -d ' :\r' | tr 'A-F' 'a-f' | sort -u)"
+          if [[ -z "$signer" || "$signer" != "$expected_signer" ]]; then
+            echo "::error::Unexpected stable signing certificate: $signer"
+            exit 1
+          fi
+          sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
+          echo "$sha256  $apk"
+          echo "path=$apk" >> "$GITHUB_OUTPUT"
+          echo "asset=$asset" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$expected_version" >> "$GITHUB_OUTPUT"
+          echo "size=$size" >> "$GITHUB_OUTPUT"
+          echo "sha256=$sha256" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Verified Voice Notes candidate"
+            echo "- Version: $expected_version / code $expected_code"
+            echo "- Package: $expected_package"
+            echo "- Stable signer SHA-256: $signer"
+            echo "- APK: $asset ($size bytes)"
+            echo "- SHA-256: $sha256"
+            echo "- Publish requested: ${{ env.PUBLISH_REQUESTED }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload signed candidate artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: voicenotes-stable-candidate-${{ github.run_number }}
+          path: ${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 14
+
+      # A commit message that merely *talks about* the marker must not publish. This is not
+      # hypothetical: the commit that added this workflow described the marker in its own body,
+      # contains() matched the prose, and Voice Notes 1.0 was published by accident. So the marker
+      # is only honoured on the subject line, and anything else is a hard failure rather than a
+      # silent publish.
+      - name: Refuse to publish unless the marker is on the subject line
+        if: ${{ env.PUBLISH_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          subject="$(git log -1 --format=%s)"
+          if printf '%s' "$subject" | grep -qF '[publish-voicenotes]'; then
+            echo "OK: the marker is on the subject line, so this run publishes."
+          else
+            echo "::error::The publish marker appears only in the commit body, not the subject line."
+            echo "::error::Reword the commit so the marker is at the end of the subject, or drop it."
+            echo "::error::Nothing was published."
+            exit 1
+          fi
+
+      - name: Publish the release
+        if: ${{ env.PUBLISH_REQUESTED == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.apk.outputs.tag }}
+          ASSET: ${{ steps.apk.outputs.asset }}
+          APK_PATH: ${{ steps.apk.outputs.path }}
+          VERSION: ${{ steps.apk.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::No token can write this repository; no release was created."
+            exit 1
+          fi
+          GH_TOKEN="$GH_TOKEN" gh api "repos/${{ github.repository }}" --jq '.full_name'
+
+          # Never publish a stale candidate after a newer fix has been pushed.
+          existing="$(GH_TOKEN="$GH_TOKEN" gh release view "$TAG" --json tagName --jq '.tagName' 2>/dev/null || true)"
+          if [[ -n "$existing" ]]; then
+            echo "::error::$TAG is already public; bump the version in voicenotes/build.gradle.kts first. Nothing was published."
+            exit 1
+          fi
+
+          GH_TOKEN="$GH_TOKEN" gh release create "$TAG" \
+            --title "Voice Notes $VERSION" \
+            --notes-file "releases/${TAG}.md" \
+            "$APK_PATH#$ASSET"
+
+          # Confirm the published bytes are the verified ones, not a rebuild.
+          published_sha="$(GH_TOKEN="$GH_TOKEN" gh api "repos/${{ github.repository }}/releases/tags/$TAG" \
+            --jq '.assets[] | select(.name=="'"$ASSET"'") | .digest' | sed 's/^sha256://')"
+          if [[ "$published_sha" != "${{ steps.apk.outputs.sha256 }}" ]]; then
+            echo "::error::Published digest $published_sha does not match the verified candidate. Nothing is trusted."
+            exit 1
+          fi
+          {
+            echo "### Published Voice Notes $VERSION"
+            echo "- Tag: $TAG"
+            echo "- Asset: $ASSET"
+            echo "- SHA-256: $published_sha"
+          } >> "$GITHUB_STEP_SUMMARY"

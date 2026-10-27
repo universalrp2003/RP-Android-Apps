@@ -1144,6 +1144,10 @@ object Lang {
         "tap for details" to "விவரங்களுக்குத் தட்டுங்கள்",
         "Downloading…" to "பதிவிறக்குகிறது…",
         "Announcement volume" to "அறிவிப்பு ஒலி அளவு",
+        "Voice announcements" to "குரல் அறிவிப்புகள்",
+        "Voice announcements off" to "குரல் அறிவிப்புகள் அடைந்துவிட்டது",
+        "Voice announcements on. Tap to turn off" to "குரல் அறிவிப்புகள் இயக்கத்தில். அடைக்க தட்டுங்கள்",
+        "Voice announcements off. Tap to turn on" to "குரல் அறிவிப்புகள் அடைந்துவிட்டது. இயக்க தட்டுங்கள்",
         "Test / சோதனை" to "சோதனை",
         "Voice alerts are muted" to "குரல் எச்சரிக்கைகள் அமைதியாக உள்ளன",
         "Used for spoken alerts and answers" to "பேசும் எச்சரிக்கைகளுக்கும் பதில்களுக்கும் பயன்படும்",
@@ -1599,6 +1603,12 @@ object Lang {
         "Live Guard speaks with the Ultra-HD neural voice and nothing else — the phone's built-in robot voice has been removed. Only the words being spoken leave the phone, never a file, never a message. If the internet is disconnected, voice stops completely and the announcement waits for the network and is then spoken in HD." to "லைவ் கார்டு Ultra-HD நரம்பியல் குரலை மட்டுமே பயன்படுத்துகிறது — தொலைபேசியின் உள்ளமைந்த ரோபோ குரல் நீக்கப்பட்டது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன, கோப்போ செய்தியோ அல்ல. இணையம் இல்லாதபோது குரல் முழுவதுமாக நின்றுவிடும், அறிவிப்பு இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசப்படும்.",
         "The HD voice speaks Tamil and English in the app's language. If the HD voice cannot load yet the announcement is retried for a short while and then spoken — it is never switched to the phone's own voice. Voice state is shown in diagnostics; no API key is used." to "HD குரல் செயலியின் மொழியில் தமிழ் மற்றும் ஆங்கிலம் பேசும். HD குரல் இன்னும் ஏற்றப்படாவிட்டால் அறிவிப்பு சிறிது நேரம் முயற்சி செய்யப்பட்டு பின் பேசப்படும் — தொலைபேசியின் சொந்த குரலுக்கு மாற்றப்படாது. குரல் நிலை சிக்கல் தீர்வில் காட்டப்படும்; எந்த API விசையும் பயன்படுத்தப்படுவதில்லை.",
         "Live Guard has no built-in phone voice any more: the HD neural voice is the only voice it uses, so there is no system text-to-speech engine to open settings for. Silence while the internet is disconnected is expected — the announcement waits for the network." to "லைவ் கார்டுக்கு இனி தொலைபேசியின் உள்ளமைந்த குரல் இல்லை: HD நரம்பியல் குரல் மட்டுமே பயன்படுத்தப்படுகிறது, எனவே அமைப்புகளைத் திறக்க எந்த கணினி உரை-க்கு-பேச்சு இயந்திரமும் இல்லை. இணையம் இல்லாதபோது அமைதி இயல்பானது — அறிவிப்பு இணையத்திற்காகக் காத்திருக்கும்.",
+        // ------------------------------------------- one-time HD explainer (2.73)
+        "What changed with your voice" to "உங்கள் குரலில் என்ன மாறியது",
+        "Live Guard used to have a switch here that chose between the HD neural voice and the phone's own built-in voice. That switch is gone, and this is why." to "லைவ் கார்டுக்கு இங்கே ஒரு தேர்வு இருந்தது — HD நரம்பியல் குரளையோ, தொலைபேசியின் சொந்த குரளையோ தேர்வு செய்ய. அந்தத் தேர்வு இல்லை; காரணம் இதுவே.",
+        "The HD neural voice is now the only voice Live Guard has. It speaks Tamil and English properly, it never sounds like a robot, and only the words being spoken leave the phone — never a file, never a message. The phone's built-in voice was removed entirely, so there is nothing left to switch to." to "HD நரம்பியல் குரள் இப்போது லைவ் கார்டுக்கு உள்ள ஒரே குரள். தமிழ் மற்றும் ஆங்கிலம் சரியாகப் பேசும், ரோபோ போல் ஒலிக்காது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன — கோப்போ செய்தியோ அல்ல. தொலைபேசியின் உள்ளமைந்த குரள் முழுவதுமாக நீக்கப்பட்டது, எனவே மாற்ற வேறு எதுவும் இல்லை.",
+        "One thing to know: with no internet the voice stops completely instead of falling back to the robot voice. The announcement waits for the network and is then spoken in HD, so nothing is ever dropped — it is only later." to "தெரிந்திருக்க வேண்டிய ஒன்று: இணையம் இல்லாதபோது குரள் முழுவதுமாக நின்றுவிடும், ரோபோ குரளுக்கு மாறாது. அறிவிப்பு இணையத்திற்காகக் காத்திருந்து பின் HD குரளில் பேசப்படும் — எனவே எதுவும் விடப்படாது, பின்தங்கியே இருக்கும்.",
+        "Got it" to "புரிந்தது",
         "Blocked: silent place profile is active now" to "தடுக்கப்பட்டது: அமைதி இட விவரக்குறிப்பு இப்போது செயலில் உள்ளது",
         "Waiting: internet disconnected, HD voice will speak when it returns" to "காத்திருக்கிறது: இணையம் இல்லை, இணையம் திரும்பும்போது HD குரல் பேசும்",
         // ---------------------------------------------------- silent place (2.71)

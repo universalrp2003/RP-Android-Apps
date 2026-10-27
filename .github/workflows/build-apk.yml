@@ -255,6 +255,8 @@ jobs:
         run: |
           python3 tools/verify_cleaner_localization.py
           python3 tools/verify_apps_localization.py
+          # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
+          python3 tools/verify_vasanthi_sound_labels.py
           # v2.40 core: the retired notification reader must not exist in the manifest,
           # the production tree or the build scripts. Historical 2.39 sources stay in
           # docs/archived-notification-reader-2.39 and are never compiled.
@@ -271,7 +273,7 @@ jobs:
           # local-only preview: run its policy tests and build only its debug APK. It is
           # deliberately excluded from every release/bundle task below. Vocal Remover is
           # standalone and distributed by direct APK download, so it has no Play bundle.
-          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :radio:testDebugUnitTest :radio:testReleaseUnitTest :equalizer:testDebugUnitTest :equalizer:testReleaseUnitTest :vocalremover:testDebugUnitTest :vocalremover:testReleaseUnitTest :secretmessage:testDebugUnitTest assembleDebug :cleaner:assembleRelease :radio:assembleRelease :equalizer:assembleRelease :vocalremover:assembleRelease :cleaner:bundleRelease :radio:bundleRelease :equalizer:bundleRelease --no-daemon 2>&1 | tee build.log
+          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :radio:testDebugUnitTest :radio:testReleaseUnitTest :equalizer:testDebugUnitTest :equalizer:testReleaseUnitTest :vocalremover:testDebugUnitTest :vocalremover:testReleaseUnitTest :secretmessage:testDebugUnitTest :expensetracker:testDebugUnitTest :voicenotes:testDebugUnitTest :vasanthi:testDebugUnitTest :podcast:testDebugUnitTest :launcher:testDebugUnitTest assembleDebug :cleaner:assembleRelease :radio:assembleRelease :equalizer:assembleRelease :vocalremover:assembleRelease :expensetracker:assembleRelease :voicenotes:assembleRelease :vasanthi:assembleRelease :podcast:assembleRelease :launcher:assembleRelease :cleaner:bundleRelease :radio:bundleRelease :equalizer:bundleRelease --no-daemon 2>&1 | tee build.log
 
       - name: Verify required CleanSweep regression suites
         run: python3 tools/verify_cleaner_regressions.py
@@ -289,6 +291,10 @@ jobs:
             radio/build/test-results/test*UnitTest/*.xml
             vocalremover/build/test-results/test*UnitTest/*.xml
             secretmessage/product/build/test-results/testDebugUnitTest/*.xml
+            expensetracker/build/test-results/testDebugUnitTest/*.xml
+            vasanthi/build/test-results/testDebugUnitTest/*.xml
+            podcast/build/test-results/testDebugUnitTest/*.xml
+            launcher/build/test-results/testDebugUnitTest/*.xml
           if-no-files-found: warn
 
       - name: Verify built APKs
@@ -937,6 +943,9 @@ jobs:
           rename_apk radio     Ramesh-Radio    release ""
           rename_apk equalizer PulseEQ         release ""
           rename_apk vocalremover RP-Vocal-Remover-Studio release ""
+          rename_apk voicenotes Voice-Notes      release ""
+          rename_apk expensetracker Expense-Tracker release ""
+          rename_apk vasanthi    Vasanthi-AI      release ""
           rename_apk cleaner   CleanSweep      debug   "-debug"
           rename_apk radio     Ramesh-Radio    debug   "-debug"
           rename_apk equalizer PulseEQ         debug   "-debug"
@@ -999,6 +1008,25 @@ jobs:
             fi
           else
             echo "Publication run or non-candidate ref; digest record stays local to this run."
+          fi
+
+      # A commit message that merely *talks about* the publish marker must not publish anything.
+      # This is not hypothetical: a commit that added a release workflow described the marker in
+      # its own body, contains() matched the prose, and that app was published by accident. The
+      # marker is therefore only honoured on the subject line, and anything else fails closed.
+      - name: Refuse to publish unless the marker is on the subject line
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/') && contains(github.event.head_commit.message, '[publish]')
+        shell: bash
+        run: |
+          set -euo pipefail
+          subject="$(git log -1 --format=%s)"
+          if printf '%s' "$subject" | grep -qF '[publish]'; then
+            echo "OK: the publish marker is on the subject line, so this run publishes."
+          else
+            echo "::error::The publish marker appears only in the commit body, not the subject line."
+            echo "::error::Reword the commit so the marker is at the end of the subject, or drop it."
+            echo "::error::Nothing was published."
+            exit 1
           fi
 
       # Publishing: after all checks pass, publish one stable, version-specific APK release
@@ -1621,6 +1649,11 @@ jobs:
             else
               echo "_No Gradle build log: the failure happened before or after the build._"
             fi
+            # A failing unit test is the one failure this report used to be blind to: Gradle
+            # says only "there were failing tests" and names none of them, which turns a wrong
+            # assertion into guesswork. The JUnit XML is right there, so read it.
+            python3 tools/report_failing_tests.py || true
+
             if [ -f verify.log ]; then
               echo ""
               echo "## APK verification output"

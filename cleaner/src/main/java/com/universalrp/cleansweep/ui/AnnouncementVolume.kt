@@ -12,10 +12,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,8 +50,28 @@ fun AnnouncementVolumePanel(
 ) {
     val context = LocalContext.current
     var volume by remember { mutableFloatStateOf(Announcer.voiceVolume(context)) }
+    var enabled by remember { mutableStateOf(Announcer.enabled(context)) }
 
     Column(modifier.fillMaxWidth()) {
+        // The master switch, here as well as on the home screen's voice symbol. It stops every
+        // spoken announcement at once - including anything already being read out - so the owner
+        // never has to hunt for the control while something is talking.
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (enabled) tr("Voice announcements") else tr("Voice announcements off"),
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            Switch(
+                checked = enabled,
+                onCheckedChange = {
+                    enabled = it
+                    Announcer.setEnabled(context, it)
+                },
+                colors = SwitchDefaults.colors(checkedThumbColor = AccentCyan),
+            )
+        }
         if (showHeading) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -82,6 +105,7 @@ fun AnnouncementVolumePanel(
             TextButton(onClick = {
                 if (!Announcer.enabled(context)) {
                     Announcer.setEnabled(context, true)
+                    enabled = true
                 }
                 Announcer.setVoiceVolume(context, volume)
                 Announcer.speak(

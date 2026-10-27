@@ -5,6 +5,8 @@ package com.universalrp.updates
  *
  * Owner's wording, 19 October 2026: "all our 6 application have built in detailed tamil and
  * english guide ... like oor arivippu like click and expand show the info like text". So the
+ * guide now covers ten apps: the original six, plus Expense Tracker, Voice Notes and
+ * Vasanthi AI.
  * screen is a list of short topic titles; only the topic the user taps is open. Nothing is
  * longer than a few sentences, because a wall of text on a phone is never read.
  *
@@ -217,7 +219,7 @@ object AppGuides {
             topic(
                 "The other RP Ideas apps",
                 "மற்ற RP Ideas செயலிகள்",
-                "About lists all seven RP Ideas apps with their official release pages and website links, so you can " +
+                "About lists all ten RP Ideas apps with their official release pages and website links, so you can " +
                     "read what changed or download a fresh copy. Tapping an app that is installed on this phone opens " +
                     "it; tapping one that is not opens its release page.",
                 "About பகுதியில் ஏழு RP Ideas செயலிகளும் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்களுடன் உள்ளன; என்ன மாறியது " +
@@ -753,6 +755,135 @@ object AppGuides {
                 "உங்கள் குறுஞ்செய்திகள், OTP எண்கள் மற்றும் வரவு-செலவு விவரங்கள் உங்கள் போனிலேயே பாதுகாப்பாக இருக்கும் — " +
                     "எந்த மேகச் சேவையகத்திற்கும் அனுப்பப்படாது. புதுப்பிப்புகள் அளவு, SHA-256 மற்றும் கையொப்பத்தைச் " +
                     "சரிபார்த்த பிறகே Android நிறுவல் திரையைத் திறக்கும்.",
+            ),
+        ),
+    )
+    // ---------------------------------------------------------------------------------------
+    // Vasanthi AI (வசந்தி AI)
+    // ---------------------------------------------------------------------------------------
+    val vasanthi = GuideContent(
+        intro = "Vasanthi AI turns the sound around you into Tamil text. It names what it hears, " +
+            "writes down what somebody says, and keeps all of it so you can read it again. " +
+            "Tap any topic below to expand.",
+        introTa = "வசந்தி AI உங்கள் சுற்றியுள்ள ஒலியை தமிழ் எழுத்தாக காட்டுகிறது. கேட்கிறதைப் " +
+            "பெயர்படுத்துகிறது, யாரோ பேசினாரோ அதை எழுதிக் காட்டுகிறது, அனைத்தையும் " +
+            "சேமிக்கிறது. தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
+        topics = listOf(
+            topic(
+                "What Vasanthi AI does",
+                "வசந்தி AI என்ன செய்கிறது",
+                "It listens to the room and writes what it hears in Tamil. A sound gets a Tamil " +
+                    "name and a bar showing how sure the app is; the room gets a loudness bar and a " +
+                    "word; and what somebody says is written down as Tamil text, as it arrives.",
+                "அது அறையை கேட்கிறது, கேட்கியதை தமிழ் எழுத்தாக எழுதுகிறது. ஒலிக்கு ஒரு தமிழ் " +
+                    "பெயர் மற்றும் எவ்வளவு நம்பகத்திரும் கோடு காட்டுகிறது; அறைக்கு எதனை சத்தம் " +
+                    "மற்றும் ஒரு வார்த்தை காட்டுகிறது; யாரோ பேசினார்கல் அது தமிழ் எழுத்தாக " +
+                    "வருகிறது.",
+            ),
+            topic(
+                "The floating circle",
+                "மிதக்கும் வட்டு",
+                "A small circle floats over every app, so it is there while you are reading a " +
+                    "message or watching something. Drag it anywhere out of the way; tap it and the " +
+                    "panel opens. It stays over other apps because a service adds it to the window " +
+                    "manager, not a screen.",
+                "ஒரு சிறிய வட்டு எந்த செயலிட்டியும் மேலும் தோறும், உங்கள் ஒரு செய்தியை " +
+                    "படிக்கும்போது அங்கீட்டும் தெரியும். வேறு இடமைக்கு இழுத்து செல்லுங்கள்; " +
+                    "தட்டினால் படி திறக்கும். மற்ற செயலிக்கு மேலே இருக்கிறது, ஏனொரு திரையால் " +
+                    "அல்லது ஒரு சேவை சேர்த்துக் கொள்கிறது.",
+            ),
+            topic(
+                "The two switches",
+                "இரண்டு சுவிட்சுகள்",
+                "ஒலி names sounds and பேச்சு writes down speech. They are two switches because both " +
+                    "want the same microphone and only one of them can have it properly. பேச்சு is " +
+                    "on by default, because that is the one most people want. Turn ஒலி off and the " +
+                    "recogniser gets the microphone outright, which is both more accurate and " +
+                    "reaches further.",
+                "ஒலி ஒலிக்கு பெயர் சொல்லுகிறது, பேச்சு பேச்சை எழுதிக் காட்டுகிறது. " +
+                    "இரண்டுக்கும் இரண்டு சுவிட்சுகளாக இருக்கிறது, ஏனொரு மைக் தேவை ஒரு " +
+                    "மட்டுமே முழுவியாக வைக்க முடியாது. பேச்சு முன்னிருப்பாக உள்ளது, " +
+                    "அது பலர் விரும்பும். ஒலியை நிறுத்தியால் மைக் முழுவதாகக் கிடைக்கும், " +
+                    "அது துல்லியமாகவும் தொலைவிலேயே பேச்சையும் பிடிக்கும்.",
+            ),
+            topic(
+                "English becomes Tamil",
+                "ஆங்கிலம் தமிழாக வருகிறது",
+                "The recogniser is asked for Tamil and usually gives Tamil. When it does not - a " +
+                    "name, a word it knows only in English, or someone who actually spoke English - " +
+                    "those words are translated to Tamil on the phone before the line is written " +
+                    "down. The translation model is about thirty megabytes and downloads the first " +
+                    "time it is needed, so a phone that never hears English never downloads it.",
+                "அறிதலிடம் தமிழ் கேட்கப்படுகிறது, பொதுவாக தமிழ் கிடைக்கும். கிடாதது ஒரு " +
+                    "பெயர், ஆங்கிலத்தில் மட்டும் அறிந்த ஒரு வார்த்தை, அல்லது உண்மையாக ஆங்கிலம் " +
+                    "பேசிய ஒருவர் - அந்த வார்த்தைகள் எழுதப்படுக்கும் முன் தமிழாக " +
+                    "மாற்றப்படும். மாதிரி முப்பது மெகாபைட், தேவையான முறை " +
+                    "பதிவிறக்கப்படும்.",
+            ),
+            topic(
+                "The permanent notification",
+                "நிரந்தர அறிவிப்பு",
+                "The app keeps one notification for as long as it has been started, whether or not " +
+                    "it is listening. It carries தொடங்கு and நிறுத்து, so listening can be turned " +
+                    "on or off without opening the app, and மூடு closes it properly.",
+                "செயலி தொடங்கிய பிறகு ஒரு அறிவிப்பை எப்போதும் வைக்கிறது, கேட்கிறதா இல்லையா " +
+                    "என்பதைப் பொருட்படுத்தாமல். அதில் தொடங்கு மற்றும் நிறுத்து உள்ளன, " +
+                    "அதனால் செயலியைத் திறக்காமலே கேட்பதை ஆன் ஆஃப் செய்யலாம், மூடு " +
+                    "செயலியை முழுவதுமாக மூடும்.",
+            ),
+            topic(
+                "Saved history",
+                "சேமித்த விவரம்",
+                "Every line of speech and every named sound is kept, newest first, and can be read " +
+                    "again later. The list can be filtered to show only sounds or only speech, and " +
+                    "cleared in one tap. A sentence that repeats is dropped for twenty-five " +
+                    "seconds, so a television left on does not fill the list with the same line.",
+                "ஒவ்வொரு பேச்சு வரியும் ஒவ்வொரு ஒலிப் பெயரும் சேமிக்கப்படும், புதியது " +
+                    "முதலில், பின்னால் படிக்கலாம். ஒலி மட்டும் அல்லது பேச்சு மட்டும் என்று " +
+                    "வடிகட்டலாம், ஒரே தட்டில் அழிக்கலாம். திரும்பத் திரும்ப வரும் வாக்கியம் " +
+                    "இருபத்தைந்து நொடி வரை போடப்படாது, அதனால் ஓடும் டெலிவி அதே வரியை " +
+                    "நிரப்பாது.",
+            ),
+            topic(
+                "Who it is for",
+                "யாருக்கு இது பயன்படும்",
+                "Anyone who wants to see what is being said, or what is happening in the room, in " +
+                    "Tamil. That includes people who are deaf or hard of hearing, people who cannot " +
+                    "hear a television or a call clearly, and anyone who would rather read than " +
+                    "listen. It is an open app for everyone, not for one person.",
+                "எவருக்கும் என்ன சொல்கிறார்கள், அல்லது அறையில் என்ன நடக்கிறது என்பதைத் தமிழில் " +
+                    "பார்க்க வேண்டுமானாலும் இது பயன்படும். செவிடு அல்லது கேள்வி மெதுவானவர்கள், " +
+                    "டெலிவி அல்லது அழைப்பைத் தெளிவாகக் கேட்க முடியாதவர்கள், கேட்பதை விட " +
+                    "படிக்க விரும்புவோர் - அனைவருக்கும். இது அனைவருக்கும் ஒரு திறந்த செயலி, " +
+                    "ஒரே ஒரு நபருக்கு அல்ல.",
+            ),
+            topic(
+                "Privacy",
+                "தனியுரிமை",
+                "Sound naming runs entirely on the phone: YAMNet is inside the app and no audio " +
+                    "leaves it. Speech recognition uses Google's cloud recogniser, so the audio of " +
+                    "speech is sent over the internet - the app says so on its own screen. Nothing " +
+                    "is stored anywhere but on this phone, and there is no account, no tracking and " +
+                    "no advertising.",
+                "ஒலி அறிதல் முழுவதுமாகத் தொலைபேசியில் நடக்கிறது: YAMNet செயலிக்குள்ளேயே " +
+                    "உள்ளது, ஒலி வெளியே செல்வதில்லை. பேச்சு அறிதல் Google-இன் மேகச் சேவையை " +
+                    "பயன்படுத்துகிறது, அதனால் பேச்சின் ஒலி இணையம் வழியாகச் செல்கிறது - " +
+                    "செயலி தன் சொந்த திரையிலேயே அதைச் சொல்கிறது. இந்தத் தொலைபேசியைத் தவிர " +
+                    "எங்கும் சேமிக்கப்படுவதில்லை, கணக்கோ கண்காணிப்போ விளம்பரமோ இல்லை.",
+            ),
+            topic(
+                "What it cannot do",
+                "இது செய்யாதது",
+                "It cannot hear a phone call. Android does not allow any app to capture the other " +
+                    "side of a call, at the system level, and there is no permission to request. " +
+                    "Speech spoken to you in person is written down; a phone call is not. Speech " +
+                    "recognition is also imperfect - good for clear Tamil, weaker in noise and with " +
+                    "fast or dialect-heavy speech.",
+                "தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது. ஆண்ட்ராய்டு எந்தச் செயலிக்கும் " +
+                    "அதை அனுமதிக்காது, கோரக்கூடிய அனுமதியும் இல்லை. முகமுகமாகப் பேசுபவரின் " +
+                    "பேச்சு மட்டுமே எழுத்தாகும்; அழைப்பு அல்ல. பேச்சு அறிதல் முழுமையாகவும் " +
+                    "இல்லை - தெளிவான தமிழுக்கு நல்லது, சத்தத்திலும் விரைவான பேச்சிலும் " +
+                    "பலவீனம்.",
             ),
         ),
     )

@@ -51,6 +51,17 @@ jobs:
               ("pulseeq-v1.9", "PulseEQ-v1.9.apk", 12100805, "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced"),
               ("rp-vocal-remover-studio-v0.1.15", "RP-Vocal-Remover-Studio-v0.1.15.apk", 65032741, "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
+              ("expense-tracker-v1.0", "Expense-Tracker-v1.0.apk", 11547831, "6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7"),
+              ("expense-tracker-v1.1", "Expense-Tracker-v1.1.apk", 11564215, "dd39091be62fba2d725300ced0132ae04a4da5ff528ca0be73638845272ee3f9"),
+              ("voice-notes-v1.1", "Voice-Notes-v1.1.apk", 12047956, "171e924c68fdde29c8009f754287303b078a078c068a6a0d351ced76c2543f88"),
+              ("live-guard-v2.73", "CleanSweep-v2.73.apk", 14426215, "a5c5f0186a9843ca4761fb89b775b8401885283263d90ab9085397611310e05e"),
+              ("vasanthi-ai-v1.0", "Vasanthi-AI-v1.0.apk", 17355218, "c558b5a35875e1b12cb5e00b88cf2e4493505979437223f642ce78a9572511fa"),
+              ("vasanthi-ai-v1.0.1", "Vasanthi-AI-v1.0.1.apk", 17355222, "5477cfc46f3376207499ea239a8e5edefed0f68d07306cb2df47115ee2e05090"),
+              ("vasanthi-ai-v1.1", "Vasanthi-AI-v1.1.apk", 45771966, "4f9a8d1f3a62a684ac71f6b8cfdffefdc155933ce0861513b2ac2365cc7cd5b6"),
+              ("vasanthi-ai-v1.1.1", "Vasanthi-AI-v1.1.1.apk", 45773770, "90acaf684a4a36d95786266dba0b1fc1a05cba312163c1530ed89abb9d898e4c"),
+              ("vasanthi-ai-v1.1.2", "Vasanthi-AI-v1.1.2.apk", 45773770, "04f24d557b5971460b26fb6528554f02f27654c8cb9bac2c587908c6100f7c4f"),
+              ("tamil-podcast-v1.0", "Tamil-Podcast-Player-v1.0.apk", 11912659, "f84204f78219a4f8aed7648f9a0a2574de40cc1d22471d33bd19b7bc7f13d94b"),
+              ("elderly-launcher-v1.0", "Elderly-Launcher-v1.0.apk", 11473971, "9fdb5cc700cdf95fb8a113328f72e442098b9dbb5cb8217cf00ed9924be7f23b"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -85,6 +96,34 @@ jobs:
           test -s site/apks/Ramesh-Radio-v1.26.zip
           test -s site/apks/Oor-Arivippu-v1.1.9.apk
           test -s site/apks/Oor-Arivippu-v1.1.9.zip
+          test -s site/apks/Expense-Tracker-v1.0.apk
+          test -s site/apks/Expense-Tracker-v1.0.zip
+          test -s site/apks/Expense-Tracker-v1.1.apk
+          test -s site/apks/Expense-Tracker-v1.1.zip
+          test -s site/apks/Voice-Notes-v1.1.apk
+          test -s site/apks/Voice-Notes-v1.1.zip
+          test -s site/apks/CleanSweep-v2.73.apk
+          test -s site/apks/CleanSweep-v2.73.zip
+          test -s site/apks/Vasanthi-AI-v1.0.apk
+          test -s site/apks/Vasanthi-AI-v1.0.zip
+          test -s site/apks/Vasanthi-AI-v1.0.1.apk
+          test -s site/apks/Vasanthi-AI-v1.0.1.zip
+          test -s site/apks/Vasanthi-AI-v1.1.apk
+          test -s site/apks/Vasanthi-AI-v1.1.zip
+          test -s site/apks/Vasanthi-AI-v1.1.1.apk
+          test -s site/apks/Vasanthi-AI-v1.1.1.zip
+          test -s site/apks/Vasanthi-AI-v1.1.2.apk
+          test -s site/apks/Vasanthi-AI-v1.1.2.zip
+          test -s site/apks/Tamil-Podcast-Player-v1.0.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.0.zip
+          test -s site/apks/Elderly-Launcher-v1.0.apk
+          test -s site/apks/Elderly-Launcher-v1.0.zip
+          test -s site/apks/PulseEQ-v1.9.apk
+          test -s site/apks/PulseEQ-v1.9.zip
+          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.apk
+          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.zip
+          test -s site/apks/Secret-Message-v1.1.3.apk
+          test -s site/apks/Secret-Message-v1.1.3.zip
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

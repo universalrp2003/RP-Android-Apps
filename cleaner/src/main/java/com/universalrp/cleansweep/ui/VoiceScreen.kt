@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Thunderstorm
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -43,6 +44,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -295,6 +299,59 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             // for the network and is then spoken in HD.
             PanelCard(Modifier.fillMaxWidth()) {
               Column(Modifier.fillMaxWidth()) {
+                // A3: one-time explainer for the switch that 2.71 removed. Shown until the owner
+                // dismisses it, then never again.
+                var hdExplainerSeen by remember {
+                    androidx.compose.runtime.mutableStateOf(
+                        com.universalrp.cleansweep.voice.HdVoiceExplainer.seen(context)
+                    )
+                }
+                if (!hdExplainerSeen) {
+                    Surface(
+                        color = AccentViolet.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    ) {
+                        Column(Modifier.padding(14.dp)) {
+                            Text(
+                                tr("What changed with your voice"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                tr("Live Guard used to have a switch here that chose between the HD neural voice and the phone's own built-in voice. That switch is gone, and this is why."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                tr("The HD neural voice is now the only voice Live Guard has. It speaks Tamil and English properly, it never sounds like a robot, and only the words being spoken leave the phone — never a file, never a message. The phone's built-in voice was removed entirely, so there is nothing left to switch to."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                tr("One thing to know: with no internet the voice stops completely instead of falling back to the robot voice. The announcement waits for the network and is then spoken in HD, so nothing is ever dropped — it is only later."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.size(10.dp))
+                            Text(
+                                tr("Got it"),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                color = AccentViolet,
+                                modifier = Modifier.clickable {
+                                    com.universalrp.cleansweep.voice.HdVoiceExplainer.markSeen(context)
+                                    hdExplainerSeen = true
+                                },
+                            )
+                        }
+                    }
+                }
                 Text(
                     tr("HD voice only"),
                     style = MaterialTheme.typography.bodyMedium,
