@@ -114,9 +114,10 @@ class RssReaderTest {
 
     @Test
     fun pubDateBecomesEpochMillis() {
-        // 14 Oct 2025 06:30:00 UTC is 1760421000 seconds past the epoch.
+        // 14 Oct 2025 is day 20375 since the epoch; 20375 * 86400 = 1760400000, plus 06:30:00
+        // (23400s) = 1760423400 seconds, so 1760423400000 millis.
         val millis = RssReader.parseDate("Tue, 14 Oct 2025 06:30:00 GMT")
-        assertEquals(1_760_421_000_000L, millis)
+        assertEquals(1_760_423_400_000L, millis)
     }
 
     @Test
@@ -124,6 +125,24 @@ class RssReaderTest {
         // +0530 is five and a half hours ahead, so 12:00 +0530 is 06:30 UTC.
         val offset = RssReader.parseDate("Tue, 14 Oct 2025 12:00:00 +0530")
         assertEquals(RssReader.parseDate("Tue, 14 Oct 2025 06:30:00 GMT"), offset)
+    }
+
+    @Test
+    fun theOffsetIsReadInBothDirections() {
+        // -0500 is five hours behind UTC, so 01:30 -0500 is the same instant as 06:30 UTC.
+        val behind = RssReader.parseDate("Tue, 14 Oct 2025 01:30:00 -0500")
+        assertEquals(RssReader.parseDate("Tue, 14 Oct 2025 06:30:00 GMT"), behind)
+    }
+
+    @Test
+    fun anOffsetWithoutAColonIsStillRead() {
+        // "+0530" and "+05:30" both occur in real feeds.
+        assertEquals(330, RssReader.parseOffset("+0530"))
+        assertEquals(330, RssReader.parseOffset("+05:30"))
+        assertEquals(-300, RssReader.parseOffset("-0500"))
+        assertEquals(0, RssReader.parseOffset("GMT"))
+        assertEquals(0, RssReader.parseOffset(""))
+        assertEquals(0, RssReader.parseOffset("UTC"))
     }
 
     @Test

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">முதியவர் திரை</string>
+
+    <string name="big_phone">தொலைபேசி</string>
+    <string name="big_messages">செய்திகள்</string>
+    <string name="big_camera">கேமரா</string>
+    <string name="big_contacts">தொடர்புகள்</string>
+    <string name="big_torch">விளக்கு</string>
+    <string name="big_volume">ஒலி</string>
+    <string name="big_settings">அமைப்பு</string>
+    <string name="big_emergency">அவசரம்</string>
+
+    <string name="all_apps">எல்லா செயலிகள்</string>
+    <string name="open_app">திற</string>
+
+    <string name="battery">பேட்டரி</string>
+    <string name="battery_percent">%1$d%%</string>
+    <string name="battery_charging">மின் நிறுவல்</string>
+
+    <string name="emergency_call">அவசர அழைப்பு</string>
+    <string name="emergency_confirm">அழைக்க வேண்டுமா?</string>
+    <string name="emergency_yes">ஆம்</string>
+    <string name="emergency_no">இல்லை</string>
+    <string name="emergency_number">108</string>
+
+    <string name="torch_on">விளக்கு என்றது</string>
+    <string name="torch_off">விளக்கு அணைந்தது</string>
+    <string name="torch_unavailable">இந்தத் தொலைபேசியில் விளக்கு இல்லை</string>
+
+    <string name="volume_up">ஒலி அதிகரிப்பு</string>
+    <string name="volume_down">ஒலி குறைப்பு</string>
+
+    <string name="what_it_does">என்ன செய்யும்</string>
+    <string name="what_it_does_body">திரை முழுவதும் பெரிய பொத்தான்கள். ஒளி, ஒலி, பேட்டரி, அவசர அழைப்பு - எல்லாம் ஒரே திரையில், சிறிய எழுத்து இல்லாமல்.</string>
+
+    <string name="clock_time">%1$s</string>
+    <string name="no_apps_found">செயலி எதுவும் காணப்படவில்லை</string>
+    <string name="loading_apps">ஏற்றுகிறது...</string>
+</resources>

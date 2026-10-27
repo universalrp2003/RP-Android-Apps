@@ -127,6 +127,11 @@ object RssReader {
         val match = Regex(
             "(\\d{1,2})\\s+([A-Za-z]{3})\\s+(\\d{4})\\s+(\\d{2}):(\\d{2})(?::(\\d{2}))?",
         ).find(text) ?: return 0L
+        // The trailing offset. GMT and UTC are zero; a signed "+HHMM" or "-HHMM" is not, and a
+        // podcast published at 12:00 +0530 is the same instant as 06:30 UTC. Ignoring it puts
+        // every episode from a non-UTC publisher hours out of order, which is exactly the bug
+        // this clause fixes.
+        val offsetMinutes = parseOffset(text.substring(match.range.last + 1))
         val day = match.groupValues[1].toIntOrNull() ?: return 0L
         val month = MONTHS[match.groupValues[2].lowercase()] ?: return 0L
         val year = match.groupValues[3].toIntOrNull() ?: return 0L
@@ -142,7 +147,23 @@ object RssReader {
         val doy = (153 * (if (month > 2) month - 3 else month + 9) + 2) / 5 + day - 1
         val doe = yoe * 365 + yoe / 4 - yoe / 100 + doy
         val days = era * 146097 + doe - 719468
-        return days * 86_400L + hour * 3_600L + minute * 60L + second
+        val seconds = days * 86_400L + hour * 3_600L + minute * 60L + second -
+            offsetMinutes * 60L
+        // Millis, not seconds. Returning seconds made every episode look like it was published in
+        // 1970 and sorted first, which is a bug that only shows up once two episodes are compared.
+        return seconds * 1000L
+    }
+
+    /** "+0530" -> 330, "-0500" -> -300, "GMT"/"UTC"/absent -> 0. */
+    internal fun parseOffset(raw: String): Int {
+        val text = raw.trim().uppercase()
+        if (text.isEmpty()) return 0
+        if (text.startsWith("GMT") || text.startsWith("UTC") || text.startsWith("Z")) return 0
+        val match = Regex("([+-])(\\d{2}):?(\\d{2})").find(text) ?: return 0
+        val sign = if (match.groupValues[1] == "-") -1 else 1
+        val hours = match.groupValues[2].toIntOrNull() ?: return 0
+        val minutes = match.groupValues[3].toIntOrNull() ?: return 0
+        return sign * (hours * 60 + minutes)
     }
 
     private val MONTHS = mapOf(
