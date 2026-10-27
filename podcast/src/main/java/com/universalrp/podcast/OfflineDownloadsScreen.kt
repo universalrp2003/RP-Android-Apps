@@ -31,7 +31,7 @@ import java.util.Locale
 fun OfflineDownloadsScreen(
     downloads: PodcastDownloads,
     onBack: () -> Unit,
-    onPlay: (PodcastDownloads.Entry) -> Unit,
+    onPlay: (PodcastDownloads.Entry, List<PodcastDownloads.Entry>) -> Unit,
     onBeforeDelete: (PodcastDownloads.Entry) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -113,7 +113,7 @@ fun OfflineDownloadsScreen(
                     })
                     Text("${offlineSize(item.bytes)} / ${if (item.total > 0) offlineSize(item.total) else "?"}")
                     if (item.status == PodcastDownloads.Status.READY) {
-                        OutlinedButton(onClick = { onPlay(item.entry) }, enabled = !busy) { Text("இணையமின்றிக் கேள் / Play offline") }
+                        OutlinedButton(onClick = { onPlay(item.entry, rows.filter { it.status == PodcastDownloads.Status.READY }.map { it.entry }) }, enabled = !busy) { Text("இணையமின்றிக் கேள் / Play offline") }
                     }
                     if (item.status == PodcastDownloads.Status.FAILED) {
                         OutlinedButton(onClick = { operation { downloads.enqueue(item.entry.url, item.entry.title) } }, enabled = !busy) {

@@ -89,6 +89,8 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
                 override fun onSeekTo(pos: Long) { seekTo(pos) }
                 override fun onRewind() { seekTo(PodcastState.positionMs - 15_000L) }
                 override fun onFastForward() { seekTo(PodcastState.positionMs + 15_000L) }
+                override fun onSkipToNext() { stepQueue(1) }
+                override fun onSkipToPrevious() { stepQueue(-1) }
             })
             isActive = true
         }
@@ -98,10 +100,12 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
+            ACTION_NEXT -> { if (!stepQueue(1) && player == null) finishPlayback() }
+            ACTION_PREVIOUS -> { if (!stepQueue(-1) && player == null) finishPlayback() }
             ACTION_PAUSE -> { resumeAfterFocus = false; pause() }
             ACTION_RESUME -> {
                 if (prepared) { foreground(); resume() }
-                else if (player == null) store.bookmark()?.let { play(it.url, it.title, it.positionMs) } ?: finishPlayback()
+                else if (player == null) store.bookmark()?.let { play(it.url, it.title, it.positionMs, store.queueOfflineOnly) } ?: finishPlayback()
             }
             ACTION_SEEK -> seekTo(intent.getLongExtra(EXTRA_POSITION, 0))
             ACTION_STOP -> finishPlayback()
@@ -123,6 +127,7 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
         audioUrl = url
         title = episodeTitle.ifBlank { getString(R.string.app_name) }
         initialPosition = position.coerceAtLeast(0)
+        store.saveBookmark(audioUrl, title, initialPosition)
         PodcastState.markBuffering(title)
         foreground() // Meet the foreground-service deadline before network preparation/focus.
         val created = MediaPlayer()
@@ -156,8 +161,19 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
 
     override fun onCompletion(media: MediaPlayer) {
         if (media !== player) return
+        releasePlayer() // Do not overwrite the completed bookmark with the old final position.
         store.saveBookmark(audioUrl, title, 0)
-        finishPlayback(save = false)
+        if (!store.continuous || !stepQueue(1)) finishPlayback(save = false)
+    }
+
+    private fun stepQueue(direction: Int): Boolean {
+        val queue = store.queue()
+        val current = queue.indexOfFirst { it.url == audioUrl.ifBlank { store.bookmark()?.url.orEmpty() } }
+        if (current < 0) return false
+        val next = if (direction > 0) com.universalrp.updates.PlaybackOrder.next(queue.size, current) else current - 1
+        val entry = queue.getOrNull(next) ?: return false
+        play(entry.url, entry.title, 0, store.queueOfflineOnly)
+        return true
     }
 
     override fun onError(media: MediaPlayer, what: Int, extra: Int): Boolean {
@@ -255,7 +271,7 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
         }
         session.setPlaybackState(PlaybackState.Builder()
             .setActions(PlaybackState.ACTION_PLAY or PlaybackState.ACTION_PAUSE or PlaybackState.ACTION_STOP or
-                PlaybackState.ACTION_SEEK_TO or PlaybackState.ACTION_REWIND or PlaybackState.ACTION_FAST_FORWARD)
+                PlaybackState.ACTION_SEEK_TO or PlaybackState.ACTION_REWIND or PlaybackState.ACTION_FAST_FORWARD or PlaybackState.ACTION_SKIP_TO_NEXT or PlaybackState.ACTION_SKIP_TO_PREVIOUS)
             .setState(state, PodcastState.positionMs.toLong(), if (state == PlaybackState.STATE_PLAYING) 1f else 0f).build())
     }
 
@@ -299,6 +315,8 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
         const val ACTION_PAUSE = "com.universalrp.podcast.PAUSE"
         const val ACTION_RESUME = "com.universalrp.podcast.RESUME"
         const val ACTION_STOP = "com.universalrp.podcast.STOP"
+        const val ACTION_NEXT = "com.universalrp.podcast.NEXT"
+        const val ACTION_PREVIOUS = "com.universalrp.podcast.PREVIOUS"
         const val ACTION_SEEK = "com.universalrp.podcast.SEEK"
         const val EXTRA_URL = "url"
         const val EXTRA_TITLE = "title"
@@ -311,6 +329,8 @@ class PodcastPlaybackService : Service(), MediaPlayer.OnPreparedListener,
             ContextCompat.startForegroundService(context, Intent(context, PodcastPlaybackService::class.java)
                 .setAction(ACTION_PLAY).putExtra(EXTRA_URL, url).putExtra(EXTRA_TITLE, title).putExtra(EXTRA_POSITION, positionMs).putExtra(EXTRA_OFFLINE_ONLY, offlineOnly))
         }
+        fun next(context: Context) { command(context, ACTION_NEXT) }
+        fun previous(context: Context) { command(context, ACTION_PREVIOUS) }
         fun pause(context: Context) { command(context, ACTION_PAUSE) }
         fun resume(context: Context) {
             ContextCompat.startForegroundService(context, Intent(context, PodcastPlaybackService::class.java).setAction(ACTION_RESUME))

@@ -46,7 +46,7 @@ class PodcastFeedGateTest(unittest.TestCase):
             self.assertEqual(2, verify.call_count)
         self.assertIn('https://one.example/rss', output.getvalue())
         self.assertIn('::error::', output.getvalue())
-    def test_current_source_has_eleven_feeds(self):
-        self.assertEqual(11, len(feeds.feed_urls(feeds.SOURCE.read_text())))
+    def test_current_source_has_fourteen_feeds(self):
+        self.assertEqual(14, len(feeds.feed_urls(feeds.SOURCE.read_text())))
 
 if __name__ == '__main__': unittest.main()

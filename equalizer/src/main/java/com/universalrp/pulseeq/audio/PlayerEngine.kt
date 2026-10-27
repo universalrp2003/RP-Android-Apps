@@ -62,19 +62,74 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
     private var stopRequested = false
 
     private var pendingUri: Uri? = null
-
-    // -------------------------------------------------------------- public API
-
-    fun play(uri: Uri) {
+    private val queuePrefs = context.getSharedPreferences("player_queue", Context.MODE_PRIVATE)
+    @Volatile private var queue: List<Uri> = emptyList()
+    @Volatile private var queueIndex = 0
+    @Volatile var randomMode = queuePrefs.getBoolean("random", false)
+        private set
+    @Volatile var repeatMode = queuePrefs.getInt("repeat", 0).coerceIn(0, 2)
+        private set
+    val currentUri: Uri? get() = queue.getOrNull(queueIndex)
+    val queueSize: Int get() = queue.size
+    fun toggleRandom() { randomMode = !randomMode; queuePrefs.edit().putBoolean("random", randomMode).apply() }
+    fun cycleRepeat() { repeatMode = (repeatMode + 1) % 3; queuePrefs.edit().putInt("repeat", repeatMode).apply() }
+    fun playQueue(uris: List<Uri>, start: Int = 0) {
+        val selected = uris.distinct().filter { it.scheme in listOf("content", "file") }
+        if (selected.isEmpty()) return
         stop(notify = false)
-        pendingUri = uri
+        if (worker?.isAlive == true) { fail("Previous audio is stopping; please try again."); return }
+        queue = selected
+        queueIndex = start.coerceIn(0, queue.lastIndex)
+        persistQueue()
+        startWorker()
+    }
+    fun restoreQueue(): Boolean {
+        val restored = runCatching {
+            val array = org.json.JSONArray(queuePrefs.getString("uris", "[]"))
+            (0 until array.length().coerceAtMost(1000)).map { Uri.parse(array.getString(it)) }
+        }.getOrDefault(emptyList())
+        if (restored.isEmpty()) return false
+        playQueue(restored, queuePrefs.getInt("index", 0))
+        return true
+    }
+    fun nextTrack() {
+        val next = com.universalrp.updates.PlaybackOrder.next(queue.size, queueIndex, if (repeatMode == 1) 0 else repeatMode, randomMode)
+        if (next >= 0) playQueue(queue, next)
+    }
+    fun previousTrack() { if (queueIndex > 0) playQueue(queue, queueIndex - 1) }
+    private fun persistQueue() {
+        queuePrefs.edit().putString("uris", org.json.JSONArray(queue.map { it.toString() }).toString()).putInt("index", queueIndex).apply()
+    }
+    private fun startWorker() {
         stopRequested = false
         paused = false
         errorMessage = null
-        title = readTitle(uri)
-        eq.flush()
-        worker = Thread({ runPipeline(uri) }, "pulseeq-player").also { it.start() }
+        worker = Thread({
+            val played = mutableSetOf(queueIndex)
+            while (!stopRequested) {
+                val uri = currentUri ?: break
+                pendingUri = uri
+                title = readTitle(uri)
+                positionMs = 0L
+                durationMs = 0L
+                runPipeline(uri)
+                if (stopRequested || state != State.FINISHED) break
+                if (randomMode && repeatMode == 2 && played.size >= queue.size) {
+                    played.clear()
+                    played.add(queueIndex)
+                }
+                val next = com.universalrp.updates.PlaybackOrder.next(queue.size, queueIndex, repeatMode, randomMode, played)
+                if (next < 0) { onStateChanged?.invoke(state); break }
+                queueIndex = next
+                played.add(next)
+                persistQueue()
+            }
+        }, "pulseeq-player").also { it.start() }
     }
+
+    // -------------------------------------------------------------- public API
+
+    fun play(uri: Uri) { playQueue(listOf(uri)) }
 
     fun pause() {
         if (state != State.PLAYING) return
@@ -95,7 +150,7 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
         when (state) {
             State.PLAYING -> pause()
             State.PAUSED -> resume()
-            else -> pendingUri?.let { play(it) }
+            else -> if (queue.isNotEmpty()) playQueue(queue, queueIndex) else pendingUri?.let { play(it) }
         }
     }
 
@@ -104,9 +159,9 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
         paused = false
         synchronized(pauseLock) { pauseLock.notifyAll() }
         worker?.let { w ->
-            runCatching { w.join(1500) }
+            if (w !== Thread.currentThread()) runCatching { w.join(1500) }
         }
-        worker = null
+        worker = worker?.takeIf { it.isAlive }
         pendingUri = null
         eq.flush()
         state = State.IDLE
@@ -243,9 +298,13 @@ class PlayerEngine(private val context: Context, private val eq: EqEngine) {
                 }
             }
 
+            val drainDeadline = android.os.SystemClock.elapsedRealtime() + 5000L
+            while (!stopRequested && ((track?.playbackHeadPosition?.toLong() ?: framesWritten) and 0xffffffffL) < framesWritten && android.os.SystemClock.elapsedRealtime() < drainDeadline) {
+                Thread.sleep(10)
+            }
             if (!stopRequested) {
                 state = State.FINISHED
-                onStateChanged?.invoke(state)
+                // The worker decides whether to advance only after finally releases the old audio track.
             }
         } catch (t: Throwable) {
             Log.w(TAG, "Playback failed", t)

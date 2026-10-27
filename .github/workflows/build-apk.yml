@@ -255,6 +255,7 @@ jobs:
       - name: Check Cleaner source contracts and localization
         run: |
           python3 tools/verify_cleaner_localization.py
+          python3 tools/verify_continuous_playback.py
           python3 tools/verify_apps_localization.py
           # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
           python3 tools/verify_vasanthi_sound_labels.py

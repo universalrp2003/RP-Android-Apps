@@ -143,6 +143,17 @@ fun LocalScreen(vm: MainViewModel, state: UiState) {
                         IconButton(onClick = { vm.next() }) { Icon(Icons.Filled.SkipNext, AppStrings.translate("Next song"), tint = Saffron) }
                         IconButton(onClick = { vm.refreshMusicFolder() }) { Icon(Icons.Filled.Refresh, AppStrings.translate("Refresh folder"), tint = Saffron) }
                     }
+                    Text(AppStrings.translate("Continuous queue"), color = TextSecondary)
+                    androidx.compose.material3.TextButton(onClick = { vm.toggleLocalShuffle() }) {
+                        Text(if (state.localShuffle) AppStrings.translate("Random: on") else AppStrings.translate("Random: off"))
+                    }
+                    androidx.compose.material3.TextButton(onClick = { vm.cycleLocalRepeat() }) {
+                        Text(when (state.localRepeat) {
+                            1 -> AppStrings.translate("Repeat: one")
+                            2 -> AppStrings.translate("Repeat: all")
+                            else -> AppStrings.translate("Repeat: off")
+                        })
+                    }
                     if (state.playingLocalTitle != null) {
                         Text(
                             AppStrings.translate("Seek through this track"),

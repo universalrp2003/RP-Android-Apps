@@ -1,4 +1,4 @@
-# Vasanthi AI - வசந்தி AI / Tamil sound and speech window
+# Vasanthi AI - என்னைச் சுற்றி / Tamil sound and speech window
 
 **Current stable release:** 1.1.4 / code 7
 

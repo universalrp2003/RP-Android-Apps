@@ -159,6 +159,14 @@ object AppStrings {
     }
 
     private val TAMIL = mapOf(
+        "Select multiple audio documents for continuous playback. Cloud-provider files must be available offline. Random plays each selected track once per cycle; Repeat chooses off, one or all. Play restores the saved queue when access remains valid." to "பல ஒலிக் கோப்புகளைத் தேர்ந்தெடுத்துத் தொடர்ந்து கேட்கலாம். மேகச் சேவைக் கோப்புகள் இணையமின்றிக் கிடைக்க வேண்டும். சீரற்ற வரிசையில் ஒவ்வொரு பாடலும் ஒரு சுற்றில் ஒருமுறை இயங்கும். மீண்டும் இயக்குவதை நிறுத்தலாம்; ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். அணுகல் இருந்தால் சேமித்த வரிசை மீண்டும் திறக்கும்.",
+        "Continuous queue" to "தொடர்ந்து இயக்கம்",
+        "Random: on" to "சீரற்ற வரிசை: இயக்கம்",
+        "Random: off" to "சீரற்ற வரிசை: நிறுத்தம்",
+        "Repeat: one" to "மீண்டும்: ஒரு பாடல்",
+        "Repeat: all" to "மீண்டும்: அனைத்தும்",
+        "Repeat: off" to "மீண்டும்: நிறுத்தம்",
+        "Choose audio files" to "ஒலிக் கோப்புகளைத் தேர்ந்தெடு",
         // Shared language, navigation, update and About labels.
         "App language" to "பயன்பாட்டு மொழி",
         "Tamil" to "தமிழ்",

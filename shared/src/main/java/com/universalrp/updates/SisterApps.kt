@@ -21,6 +21,8 @@ data class SisterApp(
     val packageName: String,
     /** The About-screen label. */
     val aboutLabel: String,
+    /** Last public stable tag; development builds must not offer nonexistent release links. */
+    val publishedVersion: String = version,
 )
 
 object SisterApps {
@@ -60,7 +62,8 @@ object SisterApps {
             name = "Ramesh Radio",
             tamilName = "ரமேஷ் ரேடியோ",
             tagPrefix = "ramesh-radio",
-            version = "1.26",
+            version = "1.27",
+            publishedVersion = "1.26",
             packageName = "com.universalrp.tamilnadufm",
             aboutLabel = "Ramesh Radio — GitHub release",
         ),
@@ -69,7 +72,8 @@ object SisterApps {
             name = "PulseEQ",
             tamilName = "பல்ஸ்இக்யூ",
             tagPrefix = "pulseeq",
-            version = "1.9",
+            version = "1.10",
+            publishedVersion = "1.9",
             packageName = "com.universalrp.pulseeq",
             aboutLabel = "PulseEQ — GitHub release",
         ),
@@ -121,9 +125,10 @@ object SisterApps {
         SisterApp(
             id = "vasanthi",
             name = "Vasanthi AI",
-            tamilName = "வசந்தி AI",
+            tamilName = "என்னைச் சுற்றி",
             tagPrefix = "vasanthi-ai",
-            version = "1.1.4",
+            version = "1.1.5",
+            publishedVersion = "1.1.4",
             packageName = "com.universalrp.vasanthi",
             aboutLabel = "Vasanthi AI — GitHub release",
         ),
@@ -132,7 +137,8 @@ object SisterApps {
             name = "Tamil Podcast Player",
             tamilName = "கதை சொல்லி",
             tagPrefix = "tamil-podcast",
-            version = "1.4",
+            version = "1.5",
+            publishedVersion = "1.4",
             packageName = "com.universalrp.podcast",
             aboutLabel = "Tamil Podcast Player — GitHub release",
         ),
@@ -162,10 +168,10 @@ object SisterApps {
     fun releaseLinks(excludeId: String?): List<Pair<String, String>> =
         all.filter { it.id != excludeId }.map { it.aboutLabel to releaseUrl(it) }
 
-    fun releaseUrl(app: SisterApp): String = "$RELEASE_BASE/${app.tagPrefix}-v${app.version}"
+    fun releaseUrl(app: SisterApp): String = "$RELEASE_BASE/${app.tagPrefix}-v${app.publishedVersion}"
 
     /** The verified fallback used by the updater while the migration grace period runs. */
-    fun fallbackUrl(app: SisterApp): String = "$FALLBACK_BASE/${app.tagPrefix}-v${app.version}"
+    fun fallbackUrl(app: SisterApp): String = "$FALLBACK_BASE/${app.tagPrefix}-v${app.publishedVersion}"
 
     fun byId(id: String): SisterApp? = all.firstOrNull { it.id == id }
 }

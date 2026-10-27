@@ -26,9 +26,9 @@ class PlaybackPolicyTest {
         assertEquals("புதிய கதை", PodcastState.nowPlayingTitle())
         assertEquals(PodcastState.Status.BUFFERING, PodcastState.status)
     }
-    @Test fun elevenBuiltInsHaveUniqueUrlsAndTamilEnglishNames() {
+    @Test fun fourteenBuiltInsHaveUniqueUrlsAndTamilEnglishNames() {
         val shows = BuiltInShows.all()
-        assertEquals(11, shows.size)
+        assertEquals(14, shows.size)
         assertEquals(shows.size, shows.map { it.feedUrl }.toSet().size)
         shows.forEach {
             assertTrue(it.builtIn)
