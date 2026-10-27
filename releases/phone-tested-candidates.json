@@ -1,0 +1,16 @@
+{
+  "podcast": {
+    "version": "1.4",
+    "source": "2dacaf567d0d884e3ad839ecad608c3f456067b3",
+    "run": 40485186570,
+    "artifact": "podcast-candidate",
+    "artifact_id": 12725360157
+  },
+  "launcher": {
+    "version": "1.4",
+    "source": "2dacaf567d0d884e3ad839ecad608c3f456067b3",
+    "run": 40485186570,
+    "artifact": "launcher-candidate",
+    "artifact_id": 12724268538
+  }
+}

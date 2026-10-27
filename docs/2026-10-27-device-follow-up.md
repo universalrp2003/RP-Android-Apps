@@ -108,3 +108,10 @@ Owner-supplied SHA-256 strings transcribed from the file-manager screenshots:
 These are screenshot transcriptions, not independently computed hashes of files received from the phone, and have not been matched to a particular CI artifact. Originals remain private user attachments; no screenshot is copied into the public repository.
 
 With the owner's approval, prepare version 1.4: podcast version code 6 and launcher version code 5. These are unpublished rebuilds, with package/signing identity unchanged. Existing published download links, site versions and official published hashes remain at 1.3 until actual publication. The exact rebuilt 1.4 APKs still need their own final phone checks; do not transfer the candidate's Play Protect verdict to new bytes.
+
+
+## Final 1.4 phone confirmation and publication plan
+
+The owner supplied version metadata showing launcher 1.4/code 5 and podcast 1.4/code 6, Play Protect screens saying This app looks safe for both, and readable launcher screenshots, then reported **All good** after being asked to perform the final checks. The earlier offline demonstration remains the direct offline screenshot evidence; the final report is an overall owner attestation, not additional screenshots of every scenario.
+
+Publication uses immutable artifacts from successful run 40485186570, source 2dacaf567d0d884e3ad839ecad608c3f456067b3, recorded in releases/phone-tested-candidates.json. The release gates verify the pinned run and artifact IDs, unchanged compiled inputs, receipt source/package/version/size/hash, and the promoted APK's package, signer and capabilities. They fail rather than silently publish a fresh rebuild. Tests and release compilation still run, but their freshly built APK is replaced with the exact tested artifact before final verification/publication. Release tags explicitly target the publication commit. The earlier classification cause and public signing-trust concern are not declared resolved by the phone's scan result.
