@@ -34,8 +34,6 @@ object LauncherActions {
                 .asSequence()
                 .mapNotNull { resolve ->
                     val info = resolve.activityInfo?.applicationInfo ?: return@mapNotNull null
-                    // The launcher's own icon is not a button on its own screen.
-                    if (info.packageName == context.packageName) return@mapNotNull null
                     val label = runCatching { manager.getApplicationLabel(info).toString() }
                         .getOrNull()
                         ?: return@mapNotNull null
@@ -43,6 +41,9 @@ object LauncherActions {
                         label = label,
                         packageName = info.packageName,
                         isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+                        // The launcher's own icon is not skipped. It used to be, which meant the
+                        // app was missing from the one list a person looks at while using it.
+                        icon = runCatching { manager.getApplicationIcon(info) }.getOrNull(),
                     )
                 }
                 .distinctBy { it.packageName }
@@ -155,12 +156,25 @@ object LauncherActions {
         }
     }
 
+    /**
+     * Turns the volume up or down, the way the phone's own buttons do.
+     *
+     * `adjustVolume` rather than `adjustStreamVolume(STREAM_MUSIC, ...)`. The old version changed
+     * the media volume only, and media volume is inaudible when nothing is playing - so the button
+     * moved a number nobody could hear and read as "not working", which is what the owner reported.
+     * `adjustVolume` acts on whichever stream is relevant at the moment, which is the ring volume
+     * when the phone is idle and the media volume while something plays, exactly like the hardware
+     * buttons.
+     *
+     * FLAG_SHOW_UI puts the system's own slider on screen, so the press has a visible result even
+     * when the volume is already at its limit and the number cannot move.
+     */
     fun nudgeVolume(context: Context, up: Boolean): Result {
         val audio = context.getSystemService(AudioManager::class.java)
             ?: return Result.Failed(R.string.volume_up)
         return try {
             val direction = if (up) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER
-            audio.adjustStreamVolume(AudioManager.STREAM_MUSIC, direction, 0)
+            audio.adjustVolume(direction, AudioManager.FLAG_SHOW_UI)
             Result.Done
         } catch (error: Exception) {
             Result.Failed(R.string.volume_up)
@@ -212,9 +226,16 @@ object LauncherActions {
     }
 }
 
-/** One app on the phone, as the launcher's list shows it. */
+/**
+ * One app on the phone, as the launcher's list shows it.
+ *
+ * The icon is carried because a list of names is not a list of apps: every other launcher on the
+ * phone shows artwork beside each name, and a name-only list is what the owner saw and called
+ * "not showing".
+ */
 data class AppEntry(
     val label: String,
     val packageName: String,
     val isSystem: Boolean,
+    val icon: android.graphics.drawable.Drawable? = null,
 )

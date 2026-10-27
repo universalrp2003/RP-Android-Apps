@@ -81,6 +81,17 @@ class SpeechEngine(context: Context) {
     /** What each stream was set to before it was silenced, so it can be put back exactly. */
     private val savedVolumes = mutableMapOf<Int, Int>()
 
+    /**
+     * Where the saved volumes are kept between launches.
+     *
+     * They used to live only in memory, which meant that if the process died while the streams were
+     * silenced - the owner swiping the app away, or the system reclaiming it - nothing ever put them
+     * back, and the phone stayed muted with the notification volume at zero. That is exactly what
+     * was reported: the volume did not return after closing the app. Writing them down means the
+     * next launch can repair it even when the previous one never got to.
+     */
+    private val prefs = appContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
     val isAvailable: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(appContext)
 
@@ -110,6 +121,9 @@ class SpeechEngine(context: Context) {
             recognizer = SpeechRecognizer.createSpeechRecognizer(appContext)
             recognizer?.setRecognitionListener(Listener())
         }
+        // A previous process may have died while the streams were silenced. Put them back before
+        // silencing them again, or the volume the owner set would be lost for good.
+        restoreRecognitionBeeps()
         silenceRecognitionBeeps()
         onProblemChanged(RecognitionProblem.NONE)
     }
@@ -187,20 +201,35 @@ class SpeechEngine(context: Context) {
         runCatching {
             for (stream in BEEP_STREAMS) {
                 if (!savedVolumes.containsKey(stream)) {
-                    savedVolumes[stream] = manager.getStreamVolume(stream)
+                    val current = manager.getStreamVolume(stream)
+                    savedVolumes[stream] = current
+                    prefs.edit().putInt(KEY_PREFIX + stream, current).apply()
                 }
                 manager.setStreamVolume(stream, 0, 0)
             }
         }
     }
 
-    /** Puts every stream back exactly where it was. */
+    /**
+     * Puts every stream back exactly where it was, and forgets them.
+     *
+     * Called on stop and on release. Also called once when the engine starts, because a previous
+     * process may have been killed mid-silence and the phone left muted; that case is detected by
+     * a saved value still being on disk when nothing is in memory.
+     */
     private fun restoreRecognitionBeeps() {
         val manager = audioManager ?: return
         runCatching {
-            for ((stream, volume) in savedVolumes) {
+            val pending = savedVolumes.toMutableMap()
+            for (stream in BEEP_STREAMS) {
+                if (!pending.containsKey(stream) && prefs.contains(KEY_PREFIX + stream)) {
+                    pending[stream] = prefs.getInt(KEY_PREFIX + stream, 0)
+                }
+            }
+            for ((stream, volume) in pending) {
                 manager.setStreamVolume(stream, volume, 0)
             }
+            prefs.edit().clear().apply()
         }
         savedVolumes.clear()
     }
@@ -295,6 +324,10 @@ class SpeechEngine(context: Context) {
          * quietest, furthest-away speech this app exists to catch.
          */
         const val SILENCE_MS = 6_000L
+
+        /** SharedPreferences file and key prefix for the saved stream volumes. */
+        private const val PREFS = "vasanthi_speech_volumes"
+        private const val KEY_PREFIX = "stream_"
 
         /** Streams the recognition service has been seen to play its beeps on. */
         private val BEEP_STREAMS = intArrayOf(

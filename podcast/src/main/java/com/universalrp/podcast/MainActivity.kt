@@ -1,13 +1,17 @@
 package com.universalrp.podcast
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -38,9 +43,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +74,13 @@ import java.util.concurrent.TimeUnit
  * So: the load state lives per show in a map, every path through the fetch sets it exactly once,
  * and the screen the user is looking at is a single nullable field that any button can clear. There
  * is no state that a failed network call can leave stuck.
+ *
+ * The second release added two more things the owner found. A host that blocks a request answers
+ * with HTML, and HTML has a `<title>`, so the reader used to show "Attention Required! |
+ * Cloudflare" as the name of a podcast; the fetch now refuses a body that is not a feed and says so.
+ * And the screen was a wall of text with no artwork, which is not what a podcast player looks like;
+ * shows now carry their published cover art and episodes are laid out as a numbered playlist with
+ * durations, which is the shape every other player of this kind uses.
  */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -86,7 +103,15 @@ private fun PodcastScreen() {
     val context = LocalContext.current
     val store = remember { PodcastStore(context) }
 
-    val shows = remember { mutableStateOf(BuiltInShows.all()) }
+    // The built-ins, plus anything the owner added before. The URLs are kept on disk, so a feed
+    // added in one session is still there in the next; seeding from the built-ins alone lost them.
+    val shows = remember {
+        mutableStateOf(
+            BuiltInShows.all() + store.userFeedUrls().map { url ->
+                PodcastShow(id = url, title = url, feedUrl = url, builtIn = false)
+            },
+        )
+    }
     // Per show, so one dead feed cannot freeze the whole screen.
     val loads = remember { mutableStateMapOf<String, Load>() }
     var openId by remember { mutableStateOf<String?>(null) }
@@ -101,30 +126,6 @@ private fun PodcastScreen() {
         while (true) {
             playerRevision = PodcastState.revision
             delay(400)
-        }
-    }
-
-    /**
-     * Fetches one feed. Never throws: a network failure is a status the screen shows, not an
-     * exception that kills the coroutine and takes the screen's state with it.
-     */
-    suspend fun fetch(show: PodcastShow): PodcastShow = withContext(Dispatchers.IO) {
-        try {
-            val client = OkHttpClient.Builder()
-                .callTimeout(20, TimeUnit.SECONDS)
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .build()
-            val request = Request.Builder().url(show.feedUrl).build()
-            client.newCall(request).execute().use { response ->
-                val body = response.body?.string().orEmpty()
-                val title = RssReader.parseTitle(body)
-                val episodes = RssReader.parseEpisodes(body)
-                show.copy(title = title, episodes = episodes)
-            }
-        } catch (error: Exception) {
-            // An empty episode list is what the UI reads as "nothing came back", and the FAILED
-            // marker set by the caller is what makes it say so out loud.
-            show.copy(episodes = emptyList())
         }
     }
 
@@ -177,7 +178,7 @@ private fun PodcastScreen() {
                                     modifier = Modifier.padding(top = 6.dp),
                                 )
                             }
-                            Spacer(Modifier.height(10.dp))
+                            Spacer(Modifier.height(8.dp))
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Button(
                                     onClick = {
@@ -201,28 +202,31 @@ private fun PodcastScreen() {
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Accent),
                                 ) { Text(context.getString(R.string.feed_add_confirm)) }
-                                TextButton(onClick = {
-                                    adding = false
-                                    addError = null
-                                }) {
-                                    Text(context.getString(R.string.feed_cancel), color = Muted)
+                                TextButton(onClick = { adding = false }) {
+                                    Text(
+                                        context.getString(R.string.feed_cancel),
+                                        color = Muted,
+                                        fontSize = 13.sp,
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-            for (show in shows.value) {
-                item(key = "show-${show.id}") {
+            shows.value.forEach { show ->
+                item {
                     ShowCard(
                         show = show,
                         load = loads[show.id] ?: Load.IDLE,
                         onOpen = {
                             openId = show.id
-                            if (loads[show.id] == null) loads[show.id] = Load.LOADING
+                            loads[show.id] = Load.LOADING
                         },
                         onRetry = { loads[show.id] = Load.LOADING },
-                        onRemove = if (show.builtIn) null else {
+                        onRemove = if (show.builtIn) {
+                            null
+                        } else {
                             {
                                 store.removeFeedUrl(show.feedUrl)
                                 shows.value = shows.value.filterNot { it.id == show.id }
@@ -232,30 +236,24 @@ private fun PodcastScreen() {
                     )
                 }
             }
-            item {
-                Text(
-                    text = context.getString(R.string.feed_note),
-                    fontSize = 12.sp,
-                    color = Muted,
-                    modifier = Modifier.padding(vertical = 8.dp),
-                )
-            }
         } else {
             val show = shows.value.firstOrNull { it.id == openId }
             if (show == null) {
-                // The show was removed while open. Nothing to show, so go back.
-                openId = null
+                // The show was removed while its screen was open. Back is the only way out, and it
+                // is always available.
+                item {
+                    TextButton(onClick = { openId = null }) {
+                        Text(context.getString(R.string.back), color = Muted, fontSize = 13.sp)
+                    }
+                }
             } else {
-                item(key = "detail-${show.id}") {
+                item {
                     EpisodeCard(
                         show = show,
                         load = loads[show.id] ?: Load.IDLE,
                         onBack = { openId = null },
                         onRetry = { loads[show.id] = Load.LOADING },
-                        onPlay = { episode ->
-                            PodcastState.markBuffering(episode.title)
-                            PodcastPlaybackService.play(context, episode.audioUrl, episode.title)
-                        },
+                        onPlay = { episode -> PodcastPlaybackService.play(context, episode.audioUrl, episode.title) },
                     )
                 }
             }
@@ -273,9 +271,65 @@ private fun PodcastScreen() {
         val target = shows.value.firstOrNull { it.id == id } ?: return@LaunchedEffect
         val loaded = fetch(target)
         shows.value = shows.value.map { if (it.id == id) loaded else it }
-        loads[id] = if (loaded.episodes.isEmpty()) Load.FAILED else Load.OK
+        loads[id] = if (loaded.problem == null) Load.OK else Load.FAILED
     }
 }
+
+/**
+ * Fetches one feed. Never throws: a network failure is a status the screen shows, not an exception
+ * that kills the coroutine and takes the screen's state with it.
+ *
+ * Three separate things are checked, because they need three different words on screen. The call
+ * can fail (UNREACHABLE). The server can refuse it (UNREACHABLE). And the server can answer with
+ * something that is not a feed at all - a login page, a Cloudflare challenge - which used to be
+ * parsed as a show and named after the HTML title of the block page.
+ *
+ * A User-Agent is sent because several podcast hosts answer a request that carries none with a
+ * challenge page rather than with the feed.
+ */
+private suspend fun fetch(show: PodcastShow): PodcastShow = withContext(Dispatchers.IO) {
+    try {
+        val client = OkHttpClient.Builder()
+            .callTimeout(20, TimeUnit.SECONDS)
+            .connectTimeout(15, TimeUnit.SECONDS)
+            .build()
+        val request = Request.Builder()
+            .url(show.feedUrl)
+            .header("User-Agent", USER_AGENT)
+            .header("Accept", "application/rss+xml, application/xml, text/xml, */*")
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) {
+                return@withContext show.copy(episodes = emptyList(), problem = FeedProblem.UNREACHABLE)
+            }
+            val body = response.body?.string().orEmpty()
+            if (!RssReader.looksLikeFeed(body)) {
+                // The link works, but it is not a podcast feed. Retrying it will fail forever, so
+                // the screen must say that rather than "check your connection".
+                return@withContext show.copy(episodes = emptyList(), problem = FeedProblem.NOT_A_FEED)
+            }
+            show.copy(
+                title = RssReader.parseTitle(body),
+                episodes = RssReader.parseEpisodes(body),
+                imageUrl = RssReader.parseImage(body),
+                problem = null,
+            )
+        }
+    } catch (error: Exception) {
+        // An empty episode list is what the UI reads as "nothing came back", and the FAILED marker
+        // set by the caller is what makes it say so out loud.
+        show.copy(episodes = emptyList(), problem = FeedProblem.UNREACHABLE)
+    }
+}
+
+/**
+ * Identifies the app to podcast hosts.
+ *
+ * Buzzsprout - one of the hosts this app's built-in feeds live on - answers a request with no
+ * User-Agent with a Cloudflare challenge page instead of the feed, and that page's HTML title then
+ * appeared as the name of a podcast. Naming the client is the ordinary thing a feed reader does.
+ */
+private const val USER_AGENT = "RPAndroidPodcastPlayer/1.2 (+https://github.com/universalrp2003/RP-Android-Apps)"
 
 @Composable
 private fun Header() {
@@ -296,6 +350,59 @@ private fun Header() {
     }
 }
 
+/**
+ * Cover art, loaded from the feed's own image.
+ *
+ * No image library: OkHttp is already a dependency and this is one small bitmap. A show that
+ * publishes no artwork, or whose artwork will not load, gets its first letter on a tinted tile
+ * instead of an empty grey box, so the list still has something to look at.
+ */
+@Composable
+private fun CoverArt(imageUrl: String?, monogram: String, size: Dp) {
+    var bitmap by remember(imageUrl) { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(imageUrl) {
+        if (imageUrl.isNullOrBlank()) return@LaunchedEffect
+        bitmap = withContext(Dispatchers.IO) {
+            try {
+                val client = OkHttpClient.Builder()
+                    .callTimeout(15, TimeUnit.SECONDS)
+                    .build()
+                val request = Request.Builder().url(imageUrl).header("User-Agent", USER_AGENT).build()
+                client.newCall(request).execute().use { response ->
+                    val bytes = response.body?.bytes() ?: return@use null
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size)?.asImageBitmap()
+                }
+            } catch (error: Exception) {
+                null
+            }
+        }
+    }
+    val art = bitmap
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(RoundedCornerShape(12.dp))
+            .background(TileBg),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (art != null) {
+            Image(
+                bitmap = art,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.size(size),
+            )
+        } else {
+            Text(
+                text = monogram,
+                fontSize = (size.value * 0.42f).sp,
+                fontWeight = FontWeight.Bold,
+                color = Accent,
+            )
+        }
+    }
+}
+
 @Composable
 private fun ShowCard(
     show: PodcastShow,
@@ -310,58 +417,73 @@ private fun ShowCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardBg),
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = show.title,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
+        Row(modifier = Modifier.padding(14.dp)) {
+            CoverArt(
+                imageUrl = show.imageUrl,
+                monogram = show.title.trim().take(1),
+                size = 76.dp,
             )
-            Text(
-                text = if (show.builtIn) {
-                    context.getString(R.string.builtin_shows)
-                } else {
-                    context.getString(R.string.your_shows)
-                },
-                fontSize = 12.sp,
-                color = Accent,
-                modifier = Modifier.padding(top = 2.dp),
-            )
-            when (load) {
-                Load.OK -> Text(
-                    text = context.getString(R.string.episode_count, show.episodes.size),
+            Column(modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = show.title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+                Text(
+                    text = if (show.builtIn) {
+                        context.getString(R.string.builtin_shows)
+                    } else {
+                        context.getString(R.string.your_shows)
+                    },
                     fontSize = 12.sp,
-                    color = Muted,
+                    color = Accent,
                     modifier = Modifier.padding(top = 2.dp),
                 )
-                Load.FAILED -> Text(
-                    text = context.getString(R.string.feed_load_failed),
-                    fontSize = 12.sp,
-                    color = ErrorColor,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-                Load.LOADING -> Text(
-                    text = context.getString(R.string.loading),
-                    fontSize = 12.sp,
-                    color = Muted,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-                Load.IDLE -> Unit
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(
-                    onClick = onOpen,
-                    colors = ButtonDefaults.buttonColors(containerColor = Accent),
-                ) { Text(context.getString(R.string.open_show)) }
-                if (load == Load.FAILED) {
-                    TextButton(onClick = onRetry) {
-                        Text(context.getString(R.string.retry), color = Accent, fontSize = 13.sp)
+                when (load) {
+                    Load.OK -> Text(
+                        text = context.getString(R.string.episode_count, show.episodes.size),
+                        fontSize = 12.sp,
+                        color = Muted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                    Load.FAILED -> {
+                        val message =
+                            if (show.problem == FeedProblem.NOT_A_FEED) {
+                                context.getString(R.string.feed_add_failed)
+                            } else {
+                                context.getString(R.string.feed_load_failed)
+                            }
+                        Text(
+                            text = message,
+                            fontSize = 12.sp,
+                            color = ErrorColor,
+                            modifier = Modifier.padding(top = 2.dp),
+                        )
                     }
+                    Load.LOADING -> Text(
+                        text = context.getString(R.string.loading),
+                        fontSize = 12.sp,
+                        color = Muted,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                    Load.IDLE -> Unit
                 }
-                if (onRemove != null) {
-                    TextButton(onClick = onRemove) {
-                        Text(context.getString(R.string.remove), color = Muted, fontSize = 12.sp)
+                Spacer(Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onOpen,
+                        colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                    ) { Text(context.getString(R.string.open_show)) }
+                    if (load == Load.FAILED) {
+                        TextButton(onClick = onRetry) {
+                            Text(context.getString(R.string.retry), color = Accent, fontSize = 13.sp)
+                        }
+                    }
+                    if (onRemove != null) {
+                        TextButton(onClick = onRemove) {
+                            Text(context.getString(R.string.remove), color = Muted, fontSize = 12.sp)
+                        }
                     }
                 }
             }
@@ -384,12 +506,24 @@ private fun EpisodeCard(
         colors = CardDefaults.cardColors(containerColor = CardBg),
     ) {
         Column(modifier = Modifier.padding(14.dp)) {
-            Text(
-                text = show.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CoverArt(
+                    imageUrl = show.imageUrl,
+                    monogram = show.title.trim().take(1),
+                    size = 64.dp,
+                )
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    Text(
+                        text = show.title,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
+                    TextButton(onClick = onBack, modifier = Modifier.padding(top = 2.dp)) {
+                        Text(context.getString(R.string.back), color = Accent, fontSize = 13.sp)
+                    }
+                }
+            }
             when (load) {
                 Load.LOADING -> Row(
                     modifier = Modifier.padding(top = 12.dp),
@@ -409,12 +543,20 @@ private fun EpisodeCard(
                 }
                 Load.FAILED -> Column(modifier = Modifier.padding(top = 10.dp)) {
                     Text(
-                        text = context.getString(R.string.feed_load_failed),
+                        text = if (show.problem == FeedProblem.NOT_A_FEED) {
+                            context.getString(R.string.feed_add_failed)
+                        } else {
+                            context.getString(R.string.feed_load_failed)
+                        },
                         fontSize = 14.sp,
                         color = ErrorColor,
                     )
                     Text(
-                        text = context.getString(R.string.feed_load_failed_hint),
+                        text = if (show.problem == FeedProblem.NOT_A_FEED) {
+                            context.getString(R.string.feed_not_a_feed_hint)
+                        } else {
+                            context.getString(R.string.feed_load_failed_hint)
+                        },
                         fontSize = 12.sp,
                         color = Muted,
                         modifier = Modifier.padding(top = 4.dp),
@@ -439,22 +581,54 @@ private fun EpisodeCard(
                             modifier = Modifier.padding(top = 8.dp),
                         )
                     } else {
-                        show.episodes.forEach { episode ->
+                        // A numbered playlist, which is the shape every podcast player uses: the
+                        // position, the title, how long it is and when it arrived. The previous
+                        // layout was an unnumbered list of titles with a play link beside each,
+                        // which is what made it read as "not organised".
+                        Text(
+                            text = context.getString(R.string.episode_count, show.episodes.size),
+                            fontSize = 12.sp,
+                            color = Muted,
+                            modifier = Modifier.padding(top = 10.dp, bottom = 4.dp),
+                        )
+                        show.episodes.forEachIndexed { index, episode ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 10.dp),
+                                    .padding(top = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(30.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(TileBg),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(
+                                        text = "${index + 1}",
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Accent,
+                                    )
+                                }
+                                Column(modifier = Modifier.padding(start = 10.dp).weight(1f)) {
                                     Text(
                                         text = episode.title,
                                         fontSize = 14.sp,
                                         color = Color.White,
                                     )
                                     val length = formatDuration(episode.durationSeconds)
-                                    if (length.isNotEmpty()) {
-                                        Text(text = length, fontSize = 11.sp, color = Muted)
+                                    val date = formatPubDate(episode.publishedAt)
+                                    val meta = listOf(length, date).filter { it.isNotEmpty() }
+                                        .joinToString(" · ")
+                                    if (meta.isNotEmpty()) {
+                                        Text(
+                                            text = meta,
+                                            fontSize = 11.sp,
+                                            color = Muted,
+                                            modifier = Modifier.padding(top = 1.dp),
+                                        )
                                     }
                                 }
                                 TextButton(onClick = { onPlay(episode) }) {
@@ -475,6 +649,38 @@ private fun EpisodeCard(
             }
         }
     }
+}
+
+/** Tamil month names, short form, for the episode list. */
+private val TAMIL_MONTHS = listOf(
+    "ஜன", "பிப்", "மார்", "ஏப்", "மே", "ஜூன்",
+    "ஜூலை", "ஆக", "செப்", "அக்", "நவ", "டிச",
+)
+
+/**
+ * "27 அக் 2026", or empty when the feed published no date.
+ *
+ * Done by hand rather than with `SimpleDateFormat` so it needs no locale on the device and cannot
+ * be wrong about the timezone: the instant is read in the phone's own zone, which is the zone the
+ * person holding it is in.
+ */
+internal fun formatPubDate(millis: Long): String {
+    if (millis <= 0L) return ""
+    val zone = java.util.TimeZone.getDefault()
+    val shifted = millis + zone.getOffset(millis)
+    val days = Math.floorDiv(shifted, 86_400_000L).toInt()
+    // Civil date from days since the epoch, the inverse of the algorithm in RssReader.parseDate.
+    var z = days + 719468
+    val era = (if (z >= 0) z else z - 146096) / 146097
+    val doe = z - era * 146097
+    val yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365
+    val year = yoe + era * 400
+    val doy = doe - (365 * yoe + yoe / 4 - yoe / 100)
+    val mp = (5 * doy + 2) / 153
+    val day = doy - (153 * mp + 2) / 5 + 1
+    val month = if (mp < 10) mp + 3 else mp - 9
+    val finalYear = if (month <= 2) year + 1 else year
+    return "$day ${TAMIL_MONTHS[month - 1]} $finalYear"
 }
 
 @Composable
@@ -533,6 +739,7 @@ private fun NowPlayingCard(context: android.content.Context, revision: Int) {
 
 private val Bg = Color(0xFF0C0714)
 private val CardBg = Color(0xFF1A1226)
+private val TileBg = Color(0xFF2A1E3D)
 private val Accent = Color(0xFFB388FF)
 private val Muted = Color(0xFFB9AECB)
 private val ErrorColor = Color(0xFFFF8A80)

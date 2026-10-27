@@ -171,6 +171,111 @@ class RssReaderTest {
         assertTrue(a.endsWith(".mp3"))
     }
 
+    // ---------------------------------------------------------------- the episode date
+
+    /**
+     * The episode list shows when each episode arrived. The timezone is pinned so the expected
+     * string is the same on every machine this runs on.
+     */
+    @Test
+    fun theEpisodeDateIsFormattedInTamil() {
+        val original = java.util.TimeZone.getDefault()
+        try {
+            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("Asia/Kolkata"))
+            // 27 October 2026, 00:00 UTC.
+            val millis = 1793059200000L
+            assertEquals("27 அக் 2026", formatPubDate(millis))
+        } finally {
+            java.util.TimeZone.setDefault(original)
+        }
+    }
+
+    @Test
+    fun anEpisodeWithNoDateFormatsAsNothing() {
+        assertEquals("", formatPubDate(0L))
+    }
+
+    // ---------------------------------------------------------------- feed shape
+
+    /**
+     * A Cloudflare challenge page is HTML, and HTML has a title. Before the reader refused
+     * anything that was not a feed, the block page's title - "Attention Required! | Cloudflare" -
+     * was shown as the name of a podcast, which is how the owner found it.
+     */
+    @Test
+    fun aChallengePageIsNotAFeed() {
+        val block = """
+            <!DOCTYPE html>
+            <html><head><title>Attention Required! | Cloudflare</title></head>
+            <body>Sorry, you have been blocked</body></html>
+        """.trimIndent()
+        assertTrue(RssReader.looksLikeFeed(block).not())
+        assertEquals(0, RssReader.parseEpisodes(block).size)
+    }
+
+    @Test
+    fun aLoginPageIsNotAFeed() {
+        val page = """
+            <html><head><title>Sign in</title></head>
+            <body><form action="/login"></form></body></html>
+        """.trimIndent()
+        assertTrue(RssReader.looksLikeFeed(page).not())
+    }
+
+    @Test
+    fun aRealFeedIsAFeed() {
+        assertTrue(RssReader.looksLikeFeed(feed))
+    }
+
+    @Test
+    fun anAtomFeedIsAFeed() {
+        val atom = """
+            <?xml version="1.0" encoding="utf-8"?>
+            <feed xmlns="http://www.w3.org/2005/Atom">
+              <title>Atom show</title>
+              <entry><title>One</title><link href="https://example.com/a.mp3"/></entry>
+            </feed>
+        """.trimIndent()
+        assertTrue(RssReader.looksLikeFeed(atom))
+    }
+
+    // ---------------------------------------------------------------- cover art
+
+    @Test
+    fun coverArtIsReadFromTheItunesImageAttribute() {
+        val withArt = feed.replace(
+            "<title>\u0ba4\u0bae\u0bbf\u0bb4\u0bcd \u0b95\u0ba4\u0bc8\u0b95\u0bb3\u0bcd</title>",
+            "<title>\u0ba4\u0bae\u0bbf\u0bb4\u0bcd \u0b95\u0ba4\u0bc8\u0b95\u0bb3\u0bcd</title>" +
+                "<itunes:image href=\"https://example.com/art.jpg\"/>",
+        )
+        assertEquals("https://example.com/art.jpg", RssReader.parseImage(withArt))
+    }
+
+    @Test
+    fun coverArtFallsBackToTheRssImageBlock() {
+        val withArt = feed.replace(
+            "</channel>",
+            "<image><url>https://example.com/cover.png</url>" +
+                "<title>art</title><link>x</link></image></channel>",
+        )
+        assertEquals("https://example.com/cover.png", RssReader.parseImage(withArt))
+    }
+
+    @Test
+    fun aRelativeCoverArtUrlIsDroppedRatherThanGuessedAt() {
+        val withArt = feed.replace(
+            "</channel>",
+            "<image><url>/images/cover.png</url>" +
+                "<title>art</title><link>x</link></image></channel>",
+        )
+        assertNull(RssReader.parseImage(withArt))
+    }
+
+    @Test
+    fun aFeedWithNoArtworkHasNoCoverArt() {
+        assertNull(RssReader.parseImage(feed))
+    }
+
     @Test
     fun aVeryLongShowTitleIsTrimmed() {
         val long = "x".repeat(500)

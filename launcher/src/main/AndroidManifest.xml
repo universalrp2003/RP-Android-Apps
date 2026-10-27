@@ -38,9 +38,17 @@
             android:launchMode="singleTask"
             android:stateNotNeeded="true"
             android:label="@string/app_name">
+            <!--
+              Both categories, and both on purpose. HOME is what makes this the home screen.
+              LAUNCHER is what makes it appear in every app list on the phone - its own, and the
+              one in Settings where an app is uninstalled. Without it the app worked perfectly as
+              the home screen and was invisible everywhere else, which is what the owner found: he
+              could not find it to open it or to remove it.
+            -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

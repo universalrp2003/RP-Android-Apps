@@ -1,5 +1,19 @@
 package com.universalrp.podcast
 
+/**
+ * Why a feed could not be read, when it could not.
+ *
+ * The two are told apart because they need different words on screen. "Unreachable" is a network
+ * problem the owner can retry; "not a feed" means the link is not a podcast at all, and retrying it
+ * will fail forever. Before this distinction existed, a Cloudflare challenge page was parsed as if
+ * it were a feed and its HTML title - "Attention Required! | Cloudflare" - was shown as the name of
+ * a podcast, which is how the owner found it.
+ */
+enum class FeedProblem {
+    UNREACHABLE,
+    NOT_A_FEED,
+}
+
 /** One show the user follows. */
 data class PodcastShow(
     val id: String,
@@ -7,6 +21,10 @@ data class PodcastShow(
     val feedUrl: String,
     val builtIn: Boolean,
     val episodes: List<Episode> = emptyList(),
+    /** Cover art the feed publishes for itself, or null when it publishes none. */
+    val imageUrl: String? = null,
+    /** Set when the last fetch could not read this feed. */
+    val problem: FeedProblem? = null,
 )
 
 /** One playable item inside a show. */
@@ -30,9 +48,13 @@ data class Episode(
  * enclosure - so extracting those four things with string operations is both testable and honest
  * about how much of the format is actually used.
  *
- * What it deliberately does NOT do: handle CDATA, namespaces, entities beyond the five XML ones,
- * or Atom. A feed that needs any of those is a feed this app will show as empty rather than as
- * wrong, which is the failure that is easier to notice and to report.
+ * What it deliberately does NOT do: handle namespaces beyond `itunes`, or entities beyond the five
+ * XML ones. CDATA is unwrapped, because a podcast puts a description in it more often than not.
+ * `looksLikeFeed` accepts an `<rss>`, `<rdf>` or `<feed>` root, because a host that blocks a
+ * request answers with HTML and HTML has a `<title>` - and a parser that only looks for titles
+ * reads a block page as a show. Episodes themselves still come from `<item>`, so an Atom feed is
+ * recognised and then shown as empty rather than as wrong, which is the failure that is easier to
+ * notice and to report.
  */
 object RssReader {
 
@@ -76,6 +98,49 @@ object RssReader {
         } catch (error: Exception) {
             emptyList()
         }
+    }
+
+    /**
+     * The show's cover art.
+     *
+     * `itunes:image` is where a podcast puts it, and it is an attribute rather than an element, so
+     * it needs its own pattern. The RSS-level `<image><url>` form is the fallback for feeds that
+     * predate itunes. Both are absolute URLs in practice; a relative one is dropped rather than
+     * guessed at, for the same reason a relative enclosure is.
+     */
+    fun parseImage(xml: String): String? {
+        val itunes = Regex("<itunes:image\\b[^>]*\\bhref\\s*=\\s*\"([^\"]+)\"")
+            .find(xml)?.groupValues?.getOrNull(1)
+        if (itunes != null) {
+            val url = clean(itunes)
+            if (url.startsWith("http", ignoreCase = true)) return url
+        }
+        val block = Regex("<image\\b[^>]*>(.*?)</image>", RegexOption.DOT_MATCHES_ALL)
+            .find(xml)?.groupValues?.getOrNull(1) ?: return null
+        val url = Regex("<url\\b[^>]*>(.*?)</url>", RegexOption.DOT_MATCHES_ALL)
+            .find(block)?.groupValues?.getOrNull(1)?.let { clean(it) } ?: return null
+        return if (url.startsWith("http", ignoreCase = true)) url else null
+    }
+
+    /**
+     * True when the body looks like a podcast feed rather than like a web page.
+     *
+     * A host that blocks a request answers with HTML, and HTML has a `<title>`, so a parser that
+     * only looks for titles will happily read a block page as a show. This is the check that stops
+     * that: a real feed declares an `<rss>`, `<rdf>` or `<feed>` root and carries at least one
+     * entry, which is `<item>` in RSS and `<entry>` in Atom.
+     *
+     * An Atom feed therefore passes this check and then parses as empty, because episodes are read
+     * from `<item>` and an Atom feed has none. That is the honest outcome: the app says "this feed
+     * has no episodes" rather than inventing a show name out of a page title, which is the failure
+     * the owner actually reported. No Atom feed is built in, so nothing in this app reaches it.
+     */
+    fun looksLikeFeed(xml: String): Boolean {
+        val head = xml.take(2_000).lowercase()
+        val body = xml.lowercase()
+        val hasRoot = "<rss" in head || "<feed" in head || "<rdf" in head
+        val hasEntry = "<item" in body || "<entry" in body
+        return hasRoot && hasEntry
     }
 
     /** The show's own title, which is the first title outside any item. */

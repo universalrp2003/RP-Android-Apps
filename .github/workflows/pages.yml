@@ -65,6 +65,9 @@ jobs:
               ("tamil-podcast-v1.1.1", "Tamil-Podcast-Player-v1.1.1.apk", 11916067, "73d4acc9f3052fec1507e1511d825c8f76cc22e5348cde80771eb842a28b3ede"),
               ("elderly-launcher-v1.0", "Elderly-Launcher-v1.0.apk", 11473971, "9fdb5cc700cdf95fb8a113328f72e442098b9dbb5cb8217cf00ed9924be7f23b"),
               ("elderly-launcher-v1.1", "Elderly-Launcher-v1.1.apk", 11497795, "a395ca9be8e351e1f42982c2fa3cd5fcc8e368a8ec11c32eb4582b00ab555402"),
+              ("tamil-podcast-v1.2", "Tamil-Podcast-Player-v1.2.apk", 11916695, "d50ae13968e0b1d45d5ce9c286dc2447afa26d0d93246cfa08eeb0d3d1d01814"),
+              ("elderly-launcher-v1.2", "Elderly-Launcher-v1.2.apk", 11497823, "029b39e2d03f27aca299cde03650448db8b185dfac3003c4ea7ec4732f18dc09"),
+              ("vasanthi-ai-v1.1.3", "Vasanthi-AI-v1.1.3.apk", 45773770, "4dd6de04fc4ae121e487521202e7e64184225af5aa8274ae448e0794aeae5f65"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -133,6 +136,13 @@ jobs:
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.zip
           test -s site/apks/Secret-Message-v1.1.3.apk
           test -s site/apks/Secret-Message-v1.1.3.zip
+
+          test -s site/apks/Tamil-Podcast-Player-v1.2.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.2.zip
+          test -s site/apks/Elderly-Launcher-v1.2.apk
+          test -s site/apks/Elderly-Launcher-v1.2.zip
+          test -s site/apks/Vasanthi-AI-v1.1.3.apk
+          test -s site/apks/Vasanthi-AI-v1.1.3.zip
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3

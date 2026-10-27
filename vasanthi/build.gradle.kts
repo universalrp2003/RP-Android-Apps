@@ -26,8 +26,8 @@ android {
         applicationId = "com.universalrp.vasanthi"
         minSdk = 26
         targetSdk = 36
-        versionCode = 5
-        versionName = "1.1.2"
+        versionCode = 6
+        versionName = "1.1.3"
         vectorDrawables.useSupportLibrary = true
         // ARM only, the same restriction Vocal Remover already carries. The phone this app is for
         // is a 4 GB Samsung, which is always ARM; the x86 and x86_64 libraries exist for emulators
