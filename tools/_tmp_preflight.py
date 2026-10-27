@@ -212,6 +212,17 @@ for wf in sorted((ROOT / ".github" / "workflows").glob("*-release.yml")):
         if 'tag="%s-v${expected_version}"' % prefix not in text:
             bad("%s reads %s-v but publishes a different tag prefix" % (wf.name, prefix))
 
+# ---------------------------------------------------------------- 13. duplicate imports
+# A duplicated import is a hard compile error, and its message names no file, so it costs a cycle to
+# place. This is what a scripted insert into an existing import block produces.
+for f in all_kt:
+    imports = [l.strip() for l in f.read_text(encoding="utf-8").splitlines() if l.startswith("import ")]
+    for name in sorted({i for i in imports if imports.count(i) > 1}):
+        bad("%s imports %s more than once, which is a conflicting-import compile error" % (f.name, name))
+    first = f.read_text(encoding="utf-8").splitlines()[0]
+    if not first.startswith("package "):
+        bad("%s does not start with a package declaration" % f.name)
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))
