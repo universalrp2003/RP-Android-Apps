@@ -118,7 +118,7 @@ jobs:
         run: |
           set -euo pipefail
           version="$(sed -n 's/^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' launcher/build.gradle.kts | head -n 1)"
-          notes="releases/tamil-launcher-v${version}.md"
+          notes="releases/elderly-launcher-v${version}.md"
           test -s "$notes" || { echo "::error::Missing release note: $notes"; exit 1; }
           if ! grep -Eiq 'not installed on a phone|no physical-device test|no device test|not phone-installed|no phone install|installed on a phone|verified on a phone' "$notes"; then
             echo "::error::$notes must state honestly whether this exact build had a device test."
@@ -139,7 +139,7 @@ jobs:
           expected_package="com.universalrp.launcher"
           # The one stable CI keystore every app in this repository is signed with.
           expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
-          tag="tamil-launcher-v${expected_version}"
+          tag="elderly-launcher-v${expected_version}"
           asset="Elderly-Launcher-v${expected_version}.apk"
 
           grep -Fq "versionName = \"${expected_version}\"" launcher/build.gradle.kts

@@ -195,6 +195,23 @@ for f in all_kt:
         bad("%s passes the bare integer %s to .%s(), which takes a Dp - write %s.dp"
             % (f.name, match.group(2), match.group(1), match.group(2)))
 
+# ---------------------------------------------------------------- 12. release workflow agrees with the note
+# The workflow derives the note's path from the tag prefix it was generated with. A generator that
+# substitutes in the wrong order produces a tag prefix that matches no file, and the failure says
+# "Missing release note" about a path nobody wrote. So the path in the workflow is resolved here and
+# checked against the file that exists.
+import os
+for wf in sorted((ROOT / ".github" / "workflows").glob("*-release.yml")):
+    text = wf.read_text(encoding="utf-8")
+    for match in re.finditer(r'notes="releases/([a-z0-9.-]+)-v\$\{version\}\.md"', text):
+        prefix = match.group(1)
+        found = sorted((ROOT / "releases").glob("%s-v*.md" % prefix))
+        if not found:
+            bad("%s looks for releases/%s-v*.md, but no such note exists" % (wf.name, prefix))
+        # And the tag it publishes must be the same prefix.
+        if 'tag="%s-v${expected_version}"' % prefix not in text:
+            bad("%s reads %s-v but publishes a different tag prefix" % (wf.name, prefix))
+
 print("module: %s  version: %s" % (MODULE, version))
 print("kotlin sources: %d main, %d test" % (len(kt), len(kt_tests)))
 print("strings declared: %d  drawables: %d" % (len(declared_strings), len(drawables)))
