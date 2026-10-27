@@ -239,7 +239,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     )
                     TextButton(onClick = { showAppList = false }) {
                         Text(
-                            text = LocalContext.current.getString(R.string.big_phone),
+                            text = LocalContext.current.getString(R.string.back),
                             color = Accent,
                             fontSize = 16.sp,
                         )

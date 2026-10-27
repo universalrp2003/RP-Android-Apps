@@ -34,6 +34,7 @@
     <string name="set_as_home_title">இதை முகத் திரையாக்கு</string>
     <string name="set_as_home_body">இந்தத் திரையை தொலைபேசியின் முகத் திரையாக மாற்ற, அடுத்த திரையில் "முதியவர் திரை" என்பதைத் தேர்ந்தெடுக்கவும்.</string>
     <string name="set_as_home_go">அமைக்கச் செல்</string>
+    <string name="back">பின்செல்</string>
     <string name="set_as_home_later">பிறகு</string>
     <string name="favourites">முக்கிய நபர்கள்</string>
     <string name="favourites_empty">இன்னும் யாரும் இல்லை. கீழே உள்ள பொத்தானைத் தட்டி சேர்க்கவும்.</string>
