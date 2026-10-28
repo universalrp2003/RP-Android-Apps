@@ -56,7 +56,7 @@ object AppGuides {
     val liveGuard = GuideContent(
         intro = "Live Guard watches your own phone: battery, storage, memory, data and heat. " +
             "Nothing here reads another app's messages or notifications. Tap a topic to open it.",
-        introTa = "லைவ் கார்டு உங்கள் போனையே கவனிக்கிறது: பேட்டரி, சேமிப்பு, நினைவகம், தரவு, வெப்பம். " +
+        introTa = "கைபேசி காவலன் உங்கள் போனையே கவனிக்கிறது: பேட்டரி, சேமிப்பு, நினைவகம், தரவு, வெப்பம். " +
             "மற்ற செயலிகளின் செய்திகளையோ அறிவிப்புகளையோ இது படிக்காது. ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
             topic(
@@ -115,7 +115,7 @@ object AppGuides {
                 "மொபைல் → தரவு என்பதில் உங்கள் சிம் பார்க்கும் டவர்களைப் பட்டியலிடலாம்: பயன்பாட்டில் உள்ள செல், " +
                     "அதன் அண்டை செல்கள், PCI/TAC மற்றும் dBm உடன். அந்தப் பட்டியலை Android 'துல்லியமான' " +
                     "இருப்பிடம் உள்ள ஆப்களுக்கு மட்டுமே தரும் — தோராயமானது போதாது — சில நிறுவனங்கள் அதை " +
-                    "மறைக்கின்றன. அத்திரையிலேயே அனுமதி தாருங்கள்; திரை திறந்திருக்கும்போது மட்டுமே லைவ் கார்டு " +
+                    "மறைக்கின்றன. அத்திரையிலேயே அனுமதி தாருங்கள்; திரை திறந்திருக்கும்போது மட்டுமே கைபேசி காவலன் " +
                     "அதைப் படிக்கும், பின்னணியில் ஒருபோதும் படிக்காது, எதுவும் பதிவேற்றப்படுவதில்லை.",
             ),
             topic(
@@ -142,7 +142,7 @@ object AppGuides {
                     "that was active at that moment. Set a 5G plan as unlimited and only your 4G is counted. " +
                     "The Auto / On / Off buttons under the radio card decide whether the app identifies 4G and 5G " +
                     "at all; Off leaves one mobile total, as older versions did.",
-                "Android ஒரே மொபைல் கணக்கைத்தான் வைத்திருக்கிறது; எனவே லைவ் கார்டு அதை அளந்து, அந்த நேரத்தில் " +
+                "Android ஒரே மொபைல் கணக்கைத்தான் வைத்திருக்கிறது; எனவே கைபேசி காவலன் அதை அளந்து, அந்த நேரத்தில் " +
                     "இயங்கிய ரேடியோவின் கீழ் ஒவ்வொரு கூட்டத்தையும் சேர்க்கிறது. 5G திட்டம் வரம்பற்றது எனில் 4G மட்டும் " +
                     "கணக்கிடப்படும். ரேடியோ அட்டையின் கீழ் உள்ள Auto / On / Off 4G, 5G அடையாளத்தை முடக்கவும் இயக்கவும் உதவும்; " +
                     "Off எனில் பழைய பதிப்புகளைப் போல ஒரே மொபைல் மொத்தம்.",
@@ -169,7 +169,7 @@ object AppGuides {
                     "very heavy rain and cyclone warnings speak at any hour (still muted during live phone calls). " +
                     "If phone GPS is on, location is automatic; if GPS is off, search your PIN code or village name " +
                     "(such as 622301 or alangudi 622301) and pick your exact town once.",
-                "இயக்கும்போது, தினசரி சாதாரண வானிலை தொந்தரவு இல்லாமல் மழை மற்றும் புயல் முன்னறிவிப்பை லைவ் கார்டு " +
+                "இயக்கும்போது, தினசரி சாதாரண வானிலை தொந்தரவு இல்லாமல் மழை மற்றும் புயல் முன்னறிவிப்பை கைபேசி காவலன் " +
                     "கண்காணிக்கும். சாதாரண 30 நிமிட மழை முன்னறிவிப்பு அமைதி நேரத்தில் ஒலிக்காது; ஆனால் மிகக் கனமழை " +
                     "மற்றும் புயல் எச்சரிக்கைகள் இரவு-பகல் எப்போதும் ஒலிக்கும் (தொலைபேசி அழைப்பின்போது மட்டும் காத்திருக்கும்). " +
                     "GPS இயக்கத்தில் இருந்தால் இடம் தானாகத் தேர்ந்தெடுக்கப்படும்; GPS அணைந்திருந்தால் உங்கள் PIN எண் " +
@@ -205,7 +205,7 @@ object AppGuides {
                     "banners automatically once skies dry up or your town changes. When phone GPS is ON, live location " +
                     "is checked automatically; when GPS is OFF, your saved fallback PIN/village (e.g. 622301) is verified " +
                     "automatically in the background with both notification and voice alerts.",
-                "லைவ் கார்டு பின்னணியில் தானாகவே மழை மற்றும் புயல் நிலையைச் சரிபார்த்து, மழை நின்றவுடன் பழைய " +
+                "கைபேசி காவலன் பின்னணியில் தானாகவே மழை மற்றும் புயல் நிலையைச் சரிபார்த்து, மழை நின்றவுடன் பழைய " +
                     "அறிவிப்பைத் தானாகவே நீக்கும். போன் GPS இயக்கத்தில் இருந்தால் நேரடி இடமும், GPS அணைந்திருந்தால் " +
                     "நீங்கள் சேமித்த மாற்று ஊர்/PIN எண்ணும் (உதா: 622301) பின்னணியில் சரிபார்க்கப்பட்டு அறிவிப்பும் குரல் " +
                     "எச்சரிக்கையும் வழங்கப்படும்.",

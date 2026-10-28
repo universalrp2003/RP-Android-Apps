@@ -31,7 +31,7 @@ object Lang {
 
     /** Where the Tamil name of the app lives, so every screen can show it consistently. */
     private const val APP_NAME_EN = "Live Guard"
-    private const val APP_NAME_TA = "லைவ் கார்டு"
+    private const val APP_NAME_TA = "கைபேசி காவலன்"
 
     @Volatile
     var current: AppLang = AppLang.TA
@@ -90,9 +90,9 @@ object Lang {
 
     /** Shown in Settings and About. */
     val languageNote: String get() = if (isTamil) {
-        "பயன்பாட்டின் மொழி. தமிழ் தேர்ந்தெடுத்தால் பெயர் “லைவ் கார்டு” எனக் காட்டப்படும்."
+        "பயன்பாட்டின் மொழி. தமிழ் தேர்ந்தெடுத்தால் பெயர் “கைபேசி காவலன்” எனக் காட்டப்படும்."
     } else {
-        "App language. Tamil shows the app name as “லைவ் கார்டு”. The launcher label also follows the phone language."
+        "App language. Tamil shows the app name as “கைபேசி காவலன்”. The launcher label also follows the phone language."
     }
 
     /**
@@ -101,13 +101,13 @@ object Lang {
      */
     private val TAMIL: Map<String, String> = mapOf(
         "Announcement voice" to "அறிவிப்பு குரல்",
-        "Choose how the announcer sounds. Live Guard uses the Studio Ultra-HD neural voices and nothing else; with no internet it waits for the network and then speaks in HD." to "அறிவிப்பு குரல் எப்படி இருக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும். லைவ் கார்டு ஸ்டுடியோ அல்ட்ரா-HD நரம்பியல் குரல்களை மட்டுமே பயன்படுத்துகிறது; இணையம் இல்லாதபோது இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசும்.",
+        "Choose how the announcer sounds. Live Guard uses the Studio Ultra-HD neural voices and nothing else; with no internet it waits for the network and then speaks in HD." to "அறிவிப்பு குரல் எப்படி இருக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும். கைபேசி காவலன் ஸ்டுடியோ அல்ட்ரா-HD நரம்பியல் குரல்களை மட்டுமே பயன்படுத்துகிறது; இணையம் இல்லாதபோது இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசும்.",
         "🔀 Random male / female each time" to "🔀 ஒவ்வொரு முறையும் மாறிமாறி ஆண் / பெண் குரல்",
         "👨 Male voice only" to "👨 ஆண் குரல் மட்டும்",
         "👩 Female voice only" to "👩 பெண் குரல் மட்டும்",
         // ------------------------------------------------------------- app chrome
-        "Live Guard" to "லைவ் கார்டு",
-        "About Live Guard" to "லைவ் கார்டு பற்றி",
+        "Live Guard" to "கைபேசி காவலன்",
+        "About Live Guard" to "கைபேசி காவலன் பற்றி",
         "CleanSweep v2.16" to "சுத்தம் செய்பவர் v2.16",
         "CleanSweep v2.15" to "சுத்தம் செய்பவர் v2.15",
         "CleanSweep v2.14" to "சுத்தம் செய்பவர் v2.14",
@@ -410,13 +410,13 @@ object Lang {
         "Cleaning…" to "சுத்தம் செய்கிறது…",
 
         // -------------------------------------------------------------- assistant
-        "CleanSweep Assistant" to "லைவ் கார்டு உதவியாளர்",
+        "CleanSweep Assistant" to "கைபேசி காவலன் உதவியாளர்",
         "Detailed answers" to "விரிவான பதில்கள்",
         "Detailed assistant answers" to "விரிவான உதவியாளர் பதில்கள்",
         "Off = the on-device assistant replies in one short line" to
             "ஆஃப் = உதவியாளர் ஒரு சிறு வரியில் பதில் தரும்",
         "Ask about your storage…" to "உங்கள் சேமிப்பைப் பற்றிக் கேளுங்கள்…",
-        "CleanSweep AI" to "லைவ் கார்டு AI",
+        "CleanSweep AI" to "கைபேசி காவலன் AI",
         "Thinking on this device…" to "இந்த போனிலேயே யோசிக்கிறது…",
 
         // ----------------------------------------------------------- health screen
@@ -529,7 +529,7 @@ object Lang {
         "Nearby cell towers" to "அருகிலுள்ள செல் டவர்கள்",
         "Location permission shows the nearby cells" to "இருப்பிட அனுமதி அருகிலுள்ள செல்களைக் காட்டும்",
         "Live Guard never reads your location in the background: it is read only while this screen is open, and nothing leaves the phone." to
-            "லைவ் கார்டு பின்னணியில் உங்கள் இருப்பிடத்தை ஒருபோதும் படிக்காது: இந்தத் திரை திறந்திருக்கும்போது மட்டுமே படிக்கும், எதுவும் போனை விட்டு வெளியே செல்லாது.",
+            "கைபேசி காவலன் பின்னணியில் உங்கள் இருப்பிடத்தை ஒருபோதும் படிக்காது: இந்தத் திரை திறந்திருக்கும்போது மட்டுமே படிக்கும், எதுவும் போனை விட்டு வெளியே செல்லாது.",
         "Approximate is not enough for tower ids. Choose Precise in the app settings, then come back and rescan." to
             "தோராயமான இருப்பிடம் டவர் அடையாளங்களுக்குப் போதாது. ஆப் அமைப்புகளில் 'துல்லியமானது' தேர்ந்தெடுத்து, திரும்பி வந்து மீண்டும் படியுங்கள்.",
         "Allow location and rescan" to "இருப்பிடத்தை அனுமதித்து மீண்டும் படி",
@@ -629,7 +629,7 @@ object Lang {
         "Incomplete check" to "ஆய்வு முழுமையில்லை",
         "Permission review" to "அனுமதி ஆய்வு",
         "Review findings" to "கண்டறிந்தவற்றைப் பார்",
-        "Live Guard readings" to "லைவ் கார்டு அளவீடுகள்",
+        "Live Guard readings" to "கைபேசி காவலன் அளவீடுகள்",
         "Device not read yet" to "போன் தகவல் இன்னும் பெறப்படவில்லை",
         "Storage free" to "காலி சேமிப்பு",
         "RAM free" to "காலி RAM",
@@ -651,7 +651,7 @@ object Lang {
         "Share this report" to "இந்த அறிக்கையைப் பகிர்",
         "Only this preview is shared. No automatic upload or raw logs." to "இந்த முன்பார்வை மட்டும் பகிரப்படும். தானாக பதிவேற்றம் அல்லது முழு லாக் பகிர்வு இல்லை.",
         "Run self-test again" to "சுய சோதனையை மீண்டும் இயக்கு",
-        "Open Live Guard app settings" to "லைவ் கார்டு ஆப் அமைப்புகளைத் திற",
+        "Open Live Guard app settings" to "கைபேசி காவலன் ஆப் அமைப்புகளைத் திற",
         "Monitoring settings" to "கண்காணிப்பு அமைப்புகள்",
         "Reported / ready" to "தகவல் கிடைத்தது / தயார்",
         "Permission not granted" to "அனுமதி வழங்கப்படவில்லை",
@@ -814,7 +814,7 @@ object Lang {
         "Voice request was blocked. Check the master switch and delivery diagnostics." to "குரல் கோரிக்கை தடுக்கப்பட்டது. பொது சுவிட்ச் மற்றும் சோதனை விவரங்களைப் பாருங்கள்.",
         "Search Android Settings for Text-to-speech output and installed Tamil voice data." to "ஆண்ட்ராய்டு அமைப்புகளில் வாசகத்தைக் குரலாக்குதல் மற்றும் நிறுவிய தமிழ் குரல் தரவைத் தேடுங்கள்.",
         // Unreleased: matching app/monitor/assistant review and selected-voice wording.
-        "Live Guard assistant" to "லைவ் கார்டு உதவியாளர்",
+        "Live Guard assistant" to "கைபேசி காவலன் உதவியாளர்",
         "Ask Live Guard…" to "லைவ் கார்டிடம் கேளுங்கள்…",
         "Previous review" to "முந்தைய ஆய்வு",
         "Saved review only. Run a fresh check for current findings." to "இது சேமித்த முந்தைய ஆய்வு மட்டுமே. தற்போதைய தகவல்களுக்கு மீண்டும் சோதிக்கவும்.",
@@ -927,11 +927,11 @@ object Lang {
         "Mobile data usage excludes Wi-Fi and is not the carrier's official balance." to "மொபைல் தரவுப் பயன்பாட்டில் Wi-Fi சேராது; இது சேவை வழங்குநரின் அதிகாரப்பூர்வ இருப்பல்ல.",
         "Monitoring active. Open Live Guard for available phone readings." to "கண்காணிப்பு இயங்குகிறது. கிடைக்கும் போன் அளவீடுகளுக்கு லைவ் கார்டைத் திறக்கவும்.",
         "Battery-side charging power" to "பேட்டரியின் சார்ஜ் சக்தி",
-        "Live Guard monitor" to "லைவ் கார்டு கண்காணிப்பு",
+        "Live Guard monitor" to "கைபேசி காவலன் கண்காணிப்பு",
         "Battery reading unavailable. Monitoring is active; no value is guessed." to "பேட்டரி அளவீடு கிடைக்கவில்லை. கண்காணிப்பு இயங்குகிறது; மதிப்புகள் ஊகிக்கப்படாது.",
         "Wi-Fi network alerts" to "Wi-Fi நெட்வொர்க் எச்சரிக்கைகள்",
         "Alerts for newly observed Wi-Fi devices" to "புதிதாகக் காணப்படும் Wi-Fi சாதனங்களுக்கான எச்சரிக்கைகள்",
-        "Live Guard Wi-Fi alert" to "லைவ் கார்டு Wi-Fi எச்சரிக்கை",
+        "Live Guard Wi-Fi alert" to "கைபேசி காவலன் Wi-Fi எச்சரிக்கை",
         "Charging" to "சார்ஜ் ஆகிறது",
         "Discharging" to "பேட்டரி சக்தி பயன்படுத்தப்படுகிறது",
         "Not charging" to "சார்ஜ் ஆகவில்லை",
@@ -1025,10 +1025,10 @@ object Lang {
         "Wi-Fi Data by App" to "ஆப் வாரியான Wi-Fi தரவு",
         "No cellular data used by apps yet today." to "இன்று ஆப்களின் மொபைல் தரவுப் பயன்பாடு பதிவாகவில்லை.",
         "No Wi-Fi data used by apps yet today." to "இன்று ஆப்களின் Wi-Fi தரவுப் பயன்பாடு பதிவாகவில்லை.",
-        "Live Guard Permission Setup & Fix" to "லைவ் கார்டு அனுமதி அமைப்பு & வழிகாட்டல்",
+        "Live Guard Permission Setup & Fix" to "கைபேசி காவலன் அனுமதி அமைப்பு & வழிகாட்டல்",
         "Restricted settings may need manual approval" to "கட்டுப்படுத்தப்பட்ட அமைப்புகளுக்கு கைமுறை ஒப்புதல் தேவைப்படலாம்",
         "If a permission (Usage Access or Floating Overlay) appears greyed out or says “Restricted setting: For your security, this setting is unavailable”:" to "பயன்பாட்டு அணுகல் அல்லது மேலடுக்கு அனுமதி மங்கலாகத் தோன்றினால், அல்லது ‘பாதுகாப்பிற்காக இந்தக் கட்டுப்படுத்தப்பட்ட அமைப்பு கிடைக்கவில்லை’ என்று Android காட்டினால்:",
-        "Open Live Guard App Info" to "லைவ் கார்டு ஆப் தகவலைத் திற",
+        "Open Live Guard App Info" to "கைபேசி காவலன் ஆப் தகவலைத் திற",
         "App Permissions Hub (Turn ON / Turn OFF)" to "ஆப் அனுமதிகள் (இயக்கு / முடக்கு)",
         "Usage Access" to "பயன்பாட்டு அணுகல்",
         "Required for strictly separate Mobile Data vs Wi-Fi usage tracking per app" to "ஆப் வாரியாக மொபைல் தரவு மற்றும் Wi-Fi பயன்பாட்டைத் தனித்தனியாகப் பெறத் தேவை",
@@ -1097,7 +1097,7 @@ object Lang {
         "Long answers may be shortened to fit speech limits." to "நீண்ட பதில்கள் குரல் வாசிப்பு வரம்புக்காகச் சுருக்கப்படலாம்.",
         "Daily phone brief" to "தினசரி போன் அறிக்கை",
         "Daily local readings and permission review" to "தினசரி உள்ளூர் அளவீடுகள் மற்றும் அனுமதி ஆய்வு",
-        "Live Guard daily brief" to "லைவ் கார்டு தினசரி அறிக்கை",
+        "Live Guard daily brief" to "கைபேசி காவலன் தினசரி அறிக்கை",
         "Could not prepare the phone report. Retry or use the local action checklist." to "போன் அறிக்கையைத் தயாரிக்க முடியவில்லை. மீண்டும் முயலவும் அல்லது உள்ளூர் செயல் பட்டியலைப் பயன்படுத்தவும்.",
         "Requested model: %s" to "கோரிய மாடல்: %s",
         "Online provider selected: %s. A connection check is not proof a model answered. Replies show the responding service, requested model and elapsed time; a requested ID does not prove the underlying execution model." to "தேர்ந்தெடுத்த ஆன்லைன் சேவை: %s. இணைப்புச் சோதனை மட்டும் மாடல் பதிலளித்ததற்குச் சான்றல்ல. பதில் தந்த சேவை, கோரிய மாடல் மற்றும் எடுத்த நேரம் காட்டப்படும்; கோரிய அடையாளம் மட்டும் உண்மையில் இயங்கிய மாடலுக்குச் சான்றல்ல.",
@@ -1135,7 +1135,7 @@ object Lang {
         "Restore this setup reminder" to "இந்த அமைப்பு நினைவூட்டலை மீளமை",
         "Skip this setup reminder" to "இந்த அமைப்பு நினைவூட்டலைத் தவிர்",
         "How to add compact widgets" to "சிறிய விட்ஜெட்களைச் சேர்ப்பது எப்படி",
-        "Long-press the launcher, choose Widgets, then Live Guard Battery, Data or Phone. Each has a View selector. Launcher cell sizes vary. Last unplug is saved only when an actual power-disconnect event is observed; missed events stay unknown, not invented." to "முகப்புத் திரையை நீண்ட நேரம் அழுத்தி விட்ஜெட்களைத் தேர்ந்தெடுத்து லைவ் கார்டு பேட்டரி, தரவு அல்லது போன் விட்ஜெட்டைச் சேர்க்கவும். ஒவ்வொன்றிலும் காட்சி மாற்றம் உள்ளது. முகப்புத் திரையின் கட்ட அளவுகள் மாறலாம். உண்மையான சார்ஜர் நீக்க நிகழ்வு கவனிக்கப்பட்டால் மட்டுமே கடைசி நீக்க நேரம் சேமிக்கப்படும்; தவறிய நிகழ்வுகள் தெரியாதவையாகவே இருக்கும்.",
+        "Long-press the launcher, choose Widgets, then Live Guard Battery, Data or Phone. Each has a View selector. Launcher cell sizes vary. Last unplug is saved only when an actual power-disconnect event is observed; missed events stay unknown, not invented." to "முகப்புத் திரையை நீண்ட நேரம் அழுத்தி விட்ஜெட்களைத் தேர்ந்தெடுத்து கைபேசி காவலன் பேட்டரி, தரவு அல்லது போன் விட்ஜெட்டைச் சேர்க்கவும். ஒவ்வொன்றிலும் காட்சி மாற்றம் உள்ளது. முகப்புத் திரையின் கட்ட அளவுகள் மாறலாம். உண்மையான சார்ஜர் நீக்க நிகழ்வு கவனிக்கப்பட்டால் மட்டுமே கடைசி நீக்க நேரம் சேமிக்கப்படும்; தவறிய நிகழ்வுகள் தெரியாதவையாகவே இருக்கும்.",
         "Clear observed last unplug" to "கவனித்த கடைசி சார்ஜர் நீக்கத்தை அழி",
         "Observed last-unplug record cleared." to "கவனித்த கடைசி சார்ஜர் நீக்கப் பதிவு அழிக்கப்பட்டது.",
         "App updates" to "ஆப் புதுப்பிப்புகள்",
@@ -1151,11 +1151,11 @@ object Lang {
         "Test / சோதனை" to "சோதனை",
         "Voice alerts are muted" to "குரல் எச்சரிக்கைகள் அமைதியாக உள்ளன",
         "Used for spoken alerts and answers" to "பேசும் எச்சரிக்கைகளுக்கும் பதில்களுக்கும் பயன்படும்",
-        "Android's own media volume is separate; this only sets how loud Live Guard speaks." to "ஆண்ட்ராய்டின் மீடியா ஒலி அளவு தனி; இது லைவ் கார்டு பேசும் அளவை மட்டுமே அமைக்கிறது.",
+        "Android's own media volume is separate; this only sets how loud Live Guard speaks." to "ஆண்ட்ராய்டின் மீடியா ஒலி அளவு தனி; இது கைபேசி காவலன் பேசும் அளவை மட்டுமே அமைக்கிறது.",
         "Phone age" to "போனின் வயது",
-        "What Live Guard may do" to "லைவ் கார்டு எதைச் செய்யலாம்",
+        "What Live Guard may do" to "கைபேசி காவலன் எதைச் செய்யலாம்",
         "Answers on this phone" to "இந்த ஃபோனிலேயே பதில்கள்",
-        "Live Guard update available" to "லைவ் கார்டு புதுப்பிப்பு உள்ளது",
+        "Live Guard update available" to "கைபேசி காவலன் புதுப்பிப்பு உள்ளது",
         "Version %s is available (installed: %s)." to "பதிப்பு %s கிடைக்கிறது (நிறுவியது: %s).",
         "This stable APK is downloaded inside Live Guard and verified against its SHA-256, package, newer version and installed signing certificate." to "இந்த நிலையான APK லைவ் கார்டிற்குள் பதிவிறக்கப்பட்டு SHA-256, தொகுப்பு, புதிய பதிப்பு மற்றும் நிறுவிய கையொப்பச் சான்றிதழுடன் சரிபார்க்கப்படும்.",
         "Android requires per-app Install unknown apps access and shows its own confirmation. Play Protect remains enabled and is not bypassed." to "ஒவ்வொரு ஆப்பிற்கும் ‘தெரியாத ஆப்களை நிறுவு’ அணுகலை Android தேவைப்படுத்தி, தனியாக உறுதிப்படுத்தும். Play Protect இயக்கத்திலேயே இருக்கும்; தவிர்க்கப்படாது.",
@@ -1167,8 +1167,8 @@ object Lang {
         "Release source" to "வெளியீட்டு மூலம்",
         "Downloading %s of %s" to "%s / %s பதிவிறங்குகிறது",
         "Installed version: %s" to "நிறுவிய பதிப்பு: %s",
-        "Downloads only a stable published Live Guard APK from the official GitHub repository. SHA-256, package, higher version code and the installed signing certificate must match. No browser download or silent installation." to "அதிகாரப்பூர்வ GitHub சேமிப்பகத்திலிருந்து வெளியிடப்பட்ட நிலையான லைவ் கார்டு APK மட்டுமே பதிவிறங்கும். SHA-256, தொகுப்பு அடையாளம், உயர்ந்த பதிப்பு எண் மற்றும் நிறுவிய ஆப்பின் கையொப்பச் சான்றிதழ் பொருந்த வேண்டும். உலாவி பதிவிறக்கமோ மறைமுக நிறுவலோ இல்லை.",
-        "Android may require Install unknown apps permission for Live Guard. Enable it only if you trust this update; you can turn it off afterward. Android installer confirmation is required. Play Protect and any scanning decisions belong to Android and cannot be forced or bypassed." to "லைவ் கார்டுக்கு ‘தெரியாத ஆப்களை நிறுவு’ அனுமதியை Android கேட்கலாம். இந்தப் புதுப்பிப்பை நம்பினால் மட்டுமே இயக்கவும்; பிறகு முடக்கலாம். Android நிறுவியின் உறுதிப்படுத்தல் அவசியம். Play Protect மற்றும் சோதனை முடிவுகளை Android தீர்மானிக்கும்; அவற்றைக் கட்டாயப்படுத்தவோ தவிர்க்கவோ முடியாது.",
+        "Downloads only a stable published Live Guard APK from the official GitHub repository. SHA-256, package, higher version code and the installed signing certificate must match. No browser download or silent installation." to "அதிகாரப்பூர்வ GitHub சேமிப்பகத்திலிருந்து வெளியிடப்பட்ட நிலையான கைபேசி காவலன் APK மட்டுமே பதிவிறங்கும். SHA-256, தொகுப்பு அடையாளம், உயர்ந்த பதிப்பு எண் மற்றும் நிறுவிய ஆப்பின் கையொப்பச் சான்றிதழ் பொருந்த வேண்டும். உலாவி பதிவிறக்கமோ மறைமுக நிறுவலோ இல்லை.",
+        "Android may require Install unknown apps permission for Live Guard. Enable it only if you trust this update; you can turn it off afterward. Android installer confirmation is required. Play Protect and any scanning decisions belong to Android and cannot be forced or bypassed." to "கைபேசி காவலன்க்கு ‘தெரியாத ஆப்களை நிறுவு’ அனுமதியை Android கேட்கலாம். இந்தப் புதுப்பிப்பை நம்பினால் மட்டுமே இயக்கவும்; பிறகு முடக்கலாம். Android நிறுவியின் உறுதிப்படுத்தல் அவசியம். Play Protect மற்றும் சோதனை முடிவுகளை Android தீர்மானிக்கும்; அவற்றைக் கட்டாயப்படுத்தவோ தவிர்க்கவோ முடியாது.",
         "Daily update check on app launch" to "ஆப் திறக்கும்போது தினசரி புதுப்பிப்புச் சோதனை",
         "Last update check: %s" to "கடைசி புதுப்பிப்புச் சோதனை: %s",
         "Published version: %s" to "வெளியிட்ட பதிப்பு: %s",
@@ -1194,8 +1194,8 @@ object Lang {
         "Android installer could not open or verification no longer matches. Check install permission and update help." to "Android நிறுவியைத் திறக்க முடியவில்லை அல்லது சரிபார்ப்பு இனி பொருந்தவில்லை. நிறுவல் அனுமதியையும் புதுப்பிப்பு உதவியையும் பார்க்கவும்.",
         "Selected notification reading" to "தேர்ந்தெடுத்த அறிவிப்புகளை வாசித்தல்",
         "Off by default. Choose apps and optional sender names. Sender name only is the default; full message reading is a separate choice for each app. No app name, time or notification count is spoken." to "இயல்பாக முடக்கம். ஆப்களையும் விரும்பினால் அனுப்புநர் பெயர்களையும் தேர்ந்தெடுக்கவும். இயல்பாக அனுப்புநர் பெயர் மட்டுமே வாசிக்கப்படும்; முழுச் செய்தி வாசிப்பு ஒவ்வொரு ஆப்பிற்கும் தனித் தேர்வு. ஆப் பெயர், நேரம் அல்லது அறிவிப்பு எண்ணிக்கை வாசிக்கப்படாது.",
-        "Notification access lets Android deliver broad notification content to this service. Live Guard discards unselected apps before reading content. It does not read old notifications, upload or save messages, or request Contacts access. App-supplied sender names are not verified identities." to "அறிவிப்பு அணுகல் இந்தச் சேவைக்கு பரந்த அறிவிப்பு உள்ளடக்கத்தை Android வழங்க அனுமதிக்கும். தேர்ந்தெடுக்காத ஆப்களின் உள்ளடக்கத்தை வாசிக்கும் முன்பே லைவ் கார்டு புறக்கணிக்கும். பழைய அறிவிப்புகள் வாசிக்கப்படாது; செய்திகள் பதிவேற்றவோ சேமிக்கவோ செய்யப்படாது; தொடர்புகள் அனுமதி கேட்கப்படாது. ஆப் வழங்கும் அனுப்புநர் பெயர்கள் சரிபார்த்த அடையாளங்கள் அல்ல.",
-        "Notification reading uses only an installed non-network TTS voice in the Live Guard language and on-device Tamil/English translation. Unknown language or missing translation model means sender name only. No private message is sent to an AI or online speech service by Live Guard." to "அறிவிப்பு வாசிப்பு லைவ் கார்டின் மொழியில் நிறுவிய இணையமற்ற TTS குரலையும் போனிலேயே தமிழ்/ஆங்கில மொழிபெயர்ப்பையும் மட்டுமே பயன்படுத்தும். மொழி தெரியாவிட்டாலோ மொழிபெயர்ப்பு மாடல் இல்லாவிட்டாலோ அனுப்புநர் பெயர் மட்டுமே வாசிக்கப்படும். தனிப்பட்ட செய்தியை லைவ் கார்டு AI அல்லது ஆன்லைன் குரல் சேவைக்கு அனுப்பாது.",
+        "Notification access lets Android deliver broad notification content to this service. Live Guard discards unselected apps before reading content. It does not read old notifications, upload or save messages, or request Contacts access. App-supplied sender names are not verified identities." to "அறிவிப்பு அணுகல் இந்தச் சேவைக்கு பரந்த அறிவிப்பு உள்ளடக்கத்தை Android வழங்க அனுமதிக்கும். தேர்ந்தெடுக்காத ஆப்களின் உள்ளடக்கத்தை வாசிக்கும் முன்பே கைபேசி காவலன் புறக்கணிக்கும். பழைய அறிவிப்புகள் வாசிக்கப்படாது; செய்திகள் பதிவேற்றவோ சேமிக்கவோ செய்யப்படாது; தொடர்புகள் அனுமதி கேட்கப்படாது. ஆப் வழங்கும் அனுப்புநர் பெயர்கள் சரிபார்த்த அடையாளங்கள் அல்ல.",
+        "Notification reading uses only an installed non-network TTS voice in the Live Guard language and on-device Tamil/English translation. Unknown language or missing translation model means sender name only. No private message is sent to an AI or online speech service by Live Guard." to "அறிவிப்பு வாசிப்பு லைவ் கார்டின் மொழியில் நிறுவிய இணையமற்ற TTS குரலையும் போனிலேயே தமிழ்/ஆங்கில மொழிபெயர்ப்பையும் மட்டுமே பயன்படுத்தும். மொழி தெரியாவிட்டாலோ மொழிபெயர்ப்பு மாடல் இல்லாவிட்டாலோ அனுப்புநர் பெயர் மட்டுமே வாசிக்கப்படும். தனிப்பட்ட செய்தியை கைபேசி காவலன் AI அல்லது ஆன்லைன் குரல் சேவைக்கு அனுப்பாது.",
         "Your installed TTS engine implements its offline voice. Its own privacy policy still applies. Delivery depends on Android access, volume, quiet hours, the voice master switch and OEM background limits." to "நிறுவிய TTS இயந்திரமே அதன் இணையமற்ற குரலைச் செயல்படுத்தும்; அதன் தனியுரிமைக் கொள்கையும் பொருந்தும். செயல்பாடு Android அணுகல், ஒலி அளவு, அமைதி நேரம், மொத்தக் குரல் தேர்வு மற்றும் உற்பத்தியாளரின் பின்னணி வரம்புகளைப் பொறுத்தது.",
         "Enable selected notification reading" to "தேர்ந்தெடுத்த அறிவிப்பு வாசிப்பை இயக்கு",
         "Read only while screen is on and phone unlocked" to "திரை இயங்கியும் போன் திறந்தும் இருக்கும்போது மட்டும் வாசி",
@@ -1278,7 +1278,7 @@ object Lang {
         "Checks only official published releases. Download verification and Android installer confirmation are mandatory; Play Protect cannot be forced or bypassed." to "அதிகாரப்பூர்வ வெளியீடுகள் மட்டுமே சோதிக்கப்படும். பதிவிறக்கச் சரிபார்ப்பும் Android நிறுவி உறுதிப்படுத்தலும் அவசியம்; Play Protect-ஐக் கட்டாயப்படுத்தவோ தவிர்க்கவோ முடியாது.",
         "Optional feature setup reminders" to "விருப்ப வசதி அமைப்பு நினைவூட்டல்கள்",
         "%d selected or core features need setup. Off-by-choice features are not treated as failures." to "%d தேர்ந்தெடுத்த அல்லது அடிப்படை வசதிகளுக்கு அமைப்பு தேவை. விருப்பமாக முடக்கிய வசதிகள் பிழைகளாகக் கருதப்படாது.",
-        "Review Live Guard setup" to "லைவ் கார்டு அமைப்பைப் பரிசீலி",
+        "Review Live Guard setup" to "கைபேசி காவலன் அமைப்பைப் பரிசீலி",
         "Cache refresh failed. Previous readings have not been replaced." to "கேச் புதுப்பிப்பு தோல்வி. முந்தைய அளவீடுகள் மாற்றப்படவில்லை.",
         "Responding service: %s" to "பதிலளித்த சேவை: %s",
         "Selected service; not a completed response: %s" to "தேர்ந்தெடுத்த சேவை; பதில் முடிந்ததல்ல: %s",
@@ -1490,7 +1490,7 @@ object Lang {
         "Readings, temp junk, thumbnails, APKs, duplicates" to "அளவீடுகள், தற்காலிகக் குப்பை, சிறுபடங்கள், APK, நகல்கள்",
         "Battery, heat, signal, permission review" to "பேட்டரி, வெப்பம், சிக்னல், அனுமதி ஆய்வு",
         "Assistant & setup" to "உதவியாளர் மற்றும் அமைப்பு",
-        "Ask the assistant, review what Live Guard may do" to "உதவியாளரிடம் கேளுங்கள்; லைவ் கார்டு எதைச் செய்யலாம் எனப் பாருங்கள்",
+        "Ask the assistant, review what Live Guard may do" to "உதவியாளரிடம் கேளுங்கள்; கைபேசி காவலன் எதைச் செய்யலாம் எனப் பாருங்கள்",
         "Signal" to "சிக்னல்",
         "The short first page" to "சுருக்கமான முதல் பக்கம்",
         "The main action" to "முக்கியச் செயல்",
@@ -1601,13 +1601,13 @@ object Lang {
         "Stop reading" to "⏹ நிறுத்து",
         // ---------------------------------------------------- HD-only voice (2.71)
         "HD voice only" to "HD குரல் மட்டும்",
-        "Live Guard speaks with the Ultra-HD neural voice and nothing else — the phone's built-in robot voice has been removed. Only the words being spoken leave the phone, never a file, never a message. If the internet is disconnected, voice stops completely and the announcement waits for the network and is then spoken in HD." to "லைவ் கார்டு Ultra-HD நரம்பியல் குரலை மட்டுமே பயன்படுத்துகிறது — தொலைபேசியின் உள்ளமைந்த ரோபோ குரல் நீக்கப்பட்டது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன, கோப்போ செய்தியோ அல்ல. இணையம் இல்லாதபோது குரல் முழுவதுமாக நின்றுவிடும், அறிவிப்பு இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசப்படும்.",
+        "Live Guard speaks with the Ultra-HD neural voice and nothing else — the phone's built-in robot voice has been removed. Only the words being spoken leave the phone, never a file, never a message. If the internet is disconnected, voice stops completely and the announcement waits for the network and is then spoken in HD." to "கைபேசி காவலன் Ultra-HD நரம்பியல் குரலை மட்டுமே பயன்படுத்துகிறது — தொலைபேசியின் உள்ளமைந்த ரோபோ குரல் நீக்கப்பட்டது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன, கோப்போ செய்தியோ அல்ல. இணையம் இல்லாதபோது குரல் முழுவதுமாக நின்றுவிடும், அறிவிப்பு இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசப்படும்.",
         "The HD voice speaks Tamil and English in the app's language. If the HD voice cannot load yet the announcement is retried for a short while and then spoken — it is never switched to the phone's own voice. Voice state is shown in diagnostics; no API key is used." to "HD குரல் செயலியின் மொழியில் தமிழ் மற்றும் ஆங்கிலம் பேசும். HD குரல் இன்னும் ஏற்றப்படாவிட்டால் அறிவிப்பு சிறிது நேரம் முயற்சி செய்யப்பட்டு பின் பேசப்படும் — தொலைபேசியின் சொந்த குரலுக்கு மாற்றப்படாது. குரல் நிலை சிக்கல் தீர்வில் காட்டப்படும்; எந்த API விசையும் பயன்படுத்தப்படுவதில்லை.",
-        "Live Guard has no built-in phone voice any more: the HD neural voice is the only voice it uses, so there is no system text-to-speech engine to open settings for. Silence while the internet is disconnected is expected — the announcement waits for the network." to "லைவ் கார்டுக்கு இனி தொலைபேசியின் உள்ளமைந்த குரல் இல்லை: HD நரம்பியல் குரல் மட்டுமே பயன்படுத்தப்படுகிறது, எனவே அமைப்புகளைத் திறக்க எந்த கணினி உரை-க்கு-பேச்சு இயந்திரமும் இல்லை. இணையம் இல்லாதபோது அமைதி இயல்பானது — அறிவிப்பு இணையத்திற்காகக் காத்திருக்கும்.",
+        "Live Guard has no built-in phone voice any more: the HD neural voice is the only voice it uses, so there is no system text-to-speech engine to open settings for. Silence while the internet is disconnected is expected — the announcement waits for the network." to "கைபேசி காவலன்க்கு இனி தொலைபேசியின் உள்ளமைந்த குரல் இல்லை: HD நரம்பியல் குரல் மட்டுமே பயன்படுத்தப்படுகிறது, எனவே அமைப்புகளைத் திறக்க எந்த கணினி உரை-க்கு-பேச்சு இயந்திரமும் இல்லை. இணையம் இல்லாதபோது அமைதி இயல்பானது — அறிவிப்பு இணையத்திற்காகக் காத்திருக்கும்.",
         // ------------------------------------------- one-time HD explainer (2.73)
         "What changed with your voice" to "உங்கள் குரலில் என்ன மாறியது",
-        "Live Guard used to have a switch here that chose between the HD neural voice and the phone's own built-in voice. That switch is gone, and this is why." to "லைவ் கார்டுக்கு இங்கே ஒரு தேர்வு இருந்தது — HD நரம்பியல் குரளையோ, தொலைபேசியின் சொந்த குரளையோ தேர்வு செய்ய. அந்தத் தேர்வு இல்லை; காரணம் இதுவே.",
-        "The HD neural voice is now the only voice Live Guard has. It speaks Tamil and English properly, it never sounds like a robot, and only the words being spoken leave the phone — never a file, never a message. The phone's built-in voice was removed entirely, so there is nothing left to switch to." to "HD நரம்பியல் குரள் இப்போது லைவ் கார்டுக்கு உள்ள ஒரே குரள். தமிழ் மற்றும் ஆங்கிலம் சரியாகப் பேசும், ரோபோ போல் ஒலிக்காது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன — கோப்போ செய்தியோ அல்ல. தொலைபேசியின் உள்ளமைந்த குரள் முழுவதுமாக நீக்கப்பட்டது, எனவே மாற்ற வேறு எதுவும் இல்லை.",
+        "Live Guard used to have a switch here that chose between the HD neural voice and the phone's own built-in voice. That switch is gone, and this is why." to "கைபேசி காவலன்க்கு இங்கே ஒரு தேர்வு இருந்தது — HD நரம்பியல் குரளையோ, தொலைபேசியின் சொந்த குரளையோ தேர்வு செய்ய. அந்தத் தேர்வு இல்லை; காரணம் இதுவே.",
+        "The HD neural voice is now the only voice Live Guard has. It speaks Tamil and English properly, it never sounds like a robot, and only the words being spoken leave the phone — never a file, never a message. The phone's built-in voice was removed entirely, so there is nothing left to switch to." to "HD நரம்பியல் குரள் இப்போது கைபேசி காவலன்க்கு உள்ள ஒரே குரள். தமிழ் மற்றும் ஆங்கிலம் சரியாகப் பேசும், ரோபோ போல் ஒலிக்காது. பேசப்படும் வார்த்தைகள் மட்டுமே தொலைபேசியை விடுவிக்கப்படுகின்றன — கோப்போ செய்தியோ அல்ல. தொலைபேசியின் உள்ளமைந்த குரள் முழுவதுமாக நீக்கப்பட்டது, எனவே மாற்ற வேறு எதுவும் இல்லை.",
         "One thing to know: with no internet the voice stops completely instead of falling back to the robot voice. The announcement waits for the network and is then spoken in HD, so nothing is ever dropped — it is only later." to "தெரிந்திருக்க வேண்டிய ஒன்று: இணையம் இல்லாதபோது குரள் முழுவதுமாக நின்றுவிடும், ரோபோ குரளுக்கு மாறாது. அறிவிப்பு இணையத்திற்காகக் காத்திருந்து பின் HD குரளில் பேசப்படும் — எனவே எதுவும் விடப்படாது, பின்தங்கியே இருக்கும்.",
         "Got it" to "புரிந்தது",
         "Blocked: silent place profile is active now" to "தடுக்கப்பட்டது: அமைதி இட விவரக்குறிப்பு இப்போது செயலில் உள்ளது",

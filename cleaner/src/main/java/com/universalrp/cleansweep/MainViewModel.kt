@@ -2734,7 +2734,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 tamilInfoItems = emptyList(),
                 newsShown = emptySet(),
                 newsLoading = true,
-                message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “லைவ் கார்டு”" else "Language: English",
+                message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “கைபேசி காவலன்”" else "Language: English",
             )
         }
         loadTamilInfoStrip(force = false)
