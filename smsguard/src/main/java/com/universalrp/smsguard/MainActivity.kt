@@ -231,6 +231,19 @@ class MainActivity : ComponentActivity() {
                 } else {
                     "Verify your fingerprint, face, or phone screen lock"
                 }
+                // Android 8/9 cannot combine framework biometrics with device credentials.
+                // Use the secure phone credential screen so PIN-only phones are not stranded.
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    val keyguard = getSystemService(KeyguardManager::class.java)
+                    if (keyguard != null && keyguard.isDeviceSecure) {
+                        @Suppress("DEPRECATION")
+                        val credential = keyguard.createConfirmDeviceCredentialIntent(title, subtitle)
+                        if (credential != null) {
+                            deviceCredentialLauncher.launch(credential)
+                            return
+                        }
+                    }
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     val launched = runCatching {
                         val builder = BiometricPrompt.Builder(this@MainActivity)
