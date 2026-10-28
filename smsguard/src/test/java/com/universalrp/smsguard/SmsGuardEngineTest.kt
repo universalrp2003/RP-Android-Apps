@@ -925,6 +925,16 @@ class SmsGuardEngineTest {
         assertTrue("HD failover did not complete: ${diagnostics.joinToString(" | ")}", audio != null && audio.size > 1500)
         assertFalse(diagnostics.any { it == "HD_VOICE_ATTEMPT=ta-IN-ValluvarNeural" })
         assertTrue(diagnostics.any { it.startsWith("HD_VOICE_SELECTED=ta-") })
+        var selectedSharedVoice = ""
+        val sharedAudio = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeRawMp3(
+            text = "வணக்கம். உயர்தரக் குரல் தயாராக உள்ளது.",
+            voiceName = "ta-IN-ValluvarNeural", timeoutMs = 4200,
+            onVoiceSelected = { selectedSharedVoice = it },
+        )
+        println("SMS_LIVE_PROFILE SHARED_HD_RECOVERY bytes=${sharedAudio?.size ?: 0} selected=$selectedSharedVoice")
+        assertTrue("Shared HD engine did not recover within production deadline", sharedAudio != null && sharedAudio.size > 1500)
+        assertTrue(selectedSharedVoice.startsWith("ta-"))
+        assertNotEquals("ta-IN-ValluvarNeural", selectedSharedVoice)
     }
 
     // --- Bill / payment-due reminders ---

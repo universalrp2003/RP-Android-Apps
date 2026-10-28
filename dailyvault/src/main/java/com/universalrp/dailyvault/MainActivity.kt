@@ -81,7 +81,12 @@ class MainActivity: FragmentActivity() {
                         if (showHelp) item {
                             Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
                                 Text(bi("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
-                                com.universalrp.updates.SisterApps.projectLinks().forEach { (label,url) ->
+                                listOf(
+                                    bi("இணையதளம்", "Website") to "https://universalrp2003.github.io/RP-Android-Apps/",
+                                    bi("மூல நிரல் / GitHub", "Source / GitHub") to "https://github.com/universalrp2003/RP-Android-Apps",
+                                    bi("தமிழன் அங்காடி", "Tamilan Store") to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.5",
+                                    bi("வெளியீடுகள்", "Releases") to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.3",
+                                ).forEach { (label,url) ->
                                     TextButton(onClick={runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }}) { Text(label) }
                                 }
                                 Text(bi("தினக்கணக்கு · வழிகாட்டி", "DailyVault · Guide"),style=MaterialTheme.typography.titleMedium)
