@@ -375,3 +375,7 @@ Public assets verified through GitHub release metadata; both release workflows s
 | Voice Notes 1.2/code 3 | 12113492 | `c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0` | [40552415178](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40552415178) |
 
 Radio 1.28 publication is separately requested; no public radio digest is claimed here yet.
+
+## Ramesh Radio 1.28 publication verified
+
+[Run 40612310475](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40612310475) completed successfully. GitHub confirms stable public release `ramesh-radio-v1.28`, asset `Ramesh-Radio-v1.28.apk`, 15,158,504 bytes, SHA-256 `9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c`. Owner-tested candidate behavior is documented separately; installed and publication-rebuilt bytes are not hash-matched. Website download metadata and mirror pin are updated only after this public verification.

@@ -44,6 +44,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              ("ramesh-radio-v1.28", "Ramesh-Radio-v1.28.apk", 15158504, "9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c"),
               ("sms-guard-v1.1.9", "SMS-Guard-v1.1.9.apk", 12461665, "7e0f0aac34ced84c3ff608dea1baadb54e57400f63aa9c79e6b1c782142f7fc2"),
               ("voice-notes-v1.2", "Voice-Notes-v1.2.apk", 12113492, "c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0"),
               ("sms-guard-v1.1.8", "SMS-Guard-v1.1.8.apk", 12445281, "de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582"),
@@ -101,6 +102,8 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
+          test -s site/apks/Ramesh-Radio-v1.28.apk
+          test -s site/apks/Ramesh-Radio-v1.28.zip
           test -s site/apks/SMS-Guard-v1.1.9.apk
           test -s site/apks/Voice-Notes-v1.2.apk
           test -s site/apks/SMS-Guard-v1.1.8.apk
