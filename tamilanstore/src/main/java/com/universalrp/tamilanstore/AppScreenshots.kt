@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import org.json.JSONObject
 
-/** Only existing published website screenshots, not synthetic app screens or private attachments. */
+/** Real app screens from public galleries or owner-authorized uploads; never synthetic screens. */
 @Composable
 fun AppScreenshots(appId: String, tamil: Boolean) {
     val context=LocalContext.current

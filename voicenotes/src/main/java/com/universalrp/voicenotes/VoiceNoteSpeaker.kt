@@ -19,6 +19,9 @@ import java.io.File
  * network" - the same contract Live Guard uses.
  */
 class VoiceNoteSpeaker(private val cacheDir: File) {
+    @Volatile private var generation = 0
+    fun stop() { generation++ }
+
 
     /**
      * Speaks [text] in [voiceId] with [pitch], in order.
@@ -27,6 +30,7 @@ class VoiceNoteSpeaker(private val cacheDir: File) {
      * voice is unavailable rather than pretending the note was read.
      */
     suspend fun speak(text: String, voiceId: String, pitch: String): Boolean {
+        val requestGeneration = generation
         val chunks = NoteSpeech.chunk(text)
         if (chunks.isEmpty() || voiceId.isBlank()) return false
         for (chunk in chunks) {
@@ -36,7 +40,8 @@ class VoiceNoteSpeaker(private val cacheDir: File) {
                     voiceName = voiceId,
                     pitch = pitch,
                 ) ?: return@withContext false
-                playBlocking(bytes)
+                if (generation != requestGeneration) return@withContext false
+                playBlocking(bytes, requestGeneration)
             }
             if (!spoken) return false
         }
@@ -49,7 +54,7 @@ class VoiceNoteSpeaker(private val cacheDir: File) {
      * The bytes go to a file because MediaPlayer will not take a byte array directly. The file is
      * overwritten each time, so at most one temporary MP3 exists and it never grows.
      */
-    private fun playBlocking(bytes: ByteArray): Boolean {
+    private fun playBlocking(bytes: ByteArray, requestGeneration: Int): Boolean {
         val file = File(cacheDir, CACHE_NAME)
         return runCatching {
             file.writeBytes(bytes)
@@ -57,10 +62,11 @@ class VoiceNoteSpeaker(private val cacheDir: File) {
             try {
                 player.setDataSource(file.absolutePath)
                 player.prepare()
+                if (generation != requestGeneration) return false
                 player.start()
                 // Block until the clip ends, so chunks are spoken in order rather than over each
                 // other. A cancelled coroutine interrupts this wait.
-                while (player.isPlaying) {
+                while (generation == requestGeneration && player.isPlaying) {
                     Thread.sleep(50)
                 }
             } finally {

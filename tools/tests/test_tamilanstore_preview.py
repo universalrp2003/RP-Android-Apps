@@ -91,9 +91,12 @@ class PerAppSignerPinTest(unittest.TestCase):
 class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
     def test_real_gallery_counts_and_paths(self):
         index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
-        self.assertEqual(set(index),{'smsguard','liveguard','radio','oorarivippu','pulseeq','vocalremover'})
+        self.assertEqual({app: len(files) for app, files in index.items()},
+                         {'smsguard':5,'liveguard':13,'radio':8,'oorarivippu':5,'pulseeq':4,
+                          'vocalremover':5,'podcast':4,'expensetracker':3,'launcher':4,
+                          'vasanthi':5,'voicenotes':3,'secretmessage':5})
         for app,files in index.items():
-            self.assertIn(len(files),(4,5))
+            self.assertGreaterEqual(len(files),3)
             for name in files:
                 self.assertNotIn('/',name)
                 self.assertTrue((STORE/'src/main/assets/screenshots'/name).is_file())
@@ -110,3 +113,12 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         check=(STORE/'src/main/java/com/universalrp/tamilanstore/SelfUpdateCheck.kt').read_text()
         for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk','instanceFollowRedirects=false','readBytesLimited(2_000_000)']:
             self.assertIn(token,check)
+
+
+class StoreCompactSearchTest(unittest.TestCase):
+    def test_search_is_dialog_not_permanent_list_field(self):
+        ui=(STORE/'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
+        self.assertIn('if (showSearch)',ui)
+        self.assertIn('showSearch = true',ui)
+        self.assertIn('query = ""; showSearch = false',ui)
+        self.assertNotIn('item { OutlinedTextField',ui)

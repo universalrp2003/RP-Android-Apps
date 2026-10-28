@@ -7,6 +7,8 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -54,7 +56,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 import kotlinx.coroutines.launch
@@ -68,7 +72,42 @@ import kotlinx.coroutines.launch
  * The screen is deliberately small. Everything that could fail says so in Tamil: no microphone
  * permission, no speech recogniser on the phone, no internet for the neural voice.
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+    private var unlocked by mutableStateOf(false)
+    private var lockEnabled by mutableStateOf(false)
+    private var lockMessage by mutableStateOf("")
+    private val authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK or
+        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+    private fun authenticate(onSuccess: () -> Unit) {
+        val tamil = AppLanguageState.current == AppLanguage.TAMIL
+        if (BiometricManager.from(this).canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
+            lockMessage = if (tamil) "போன் திரைப் பூட்டு / கைரேகையை அமைத்து மீண்டும் முயற்சிக்கவும்." else "Set up phone screen lock / biometrics and retry."
+            return
+        }
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    lockMessage = ""; onSuccess()
+                }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    lockMessage = errString.toString()
+                }
+            })
+        prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
+            .setTitle(if (tamil) "குரல் குறிப்பைத் திற" else "Unlock Voice Notes")
+            .setAllowedAuthenticators(authenticators).build())
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (lockEnabled) {
+            unlocked = false
+            speaker.stop()
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
 
     private lateinit var store: NoteFileStore
     private lateinit var speaker: VoiceNoteSpeaker
@@ -78,11 +117,32 @@ class MainActivity : ComponentActivity() {
         AppLanguageState.initialize(this)
         store = NoteFileStore(this)
         speaker = VoiceNoteSpeaker(cacheDir)
+        lockEnabled = getSharedPreferences("voice-notes", MODE_PRIVATE).getBoolean("app_lock", false)
+        if (lockEnabled) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
 
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Background) {
-                    VoiceNotesScreen(
+                    if (lockEnabled && !unlocked) {
+                        Column(Modifier.padding(24.dp).statusBarsPadding()) {
+                            Text(if (AppLanguageState.current == AppLanguage.TAMIL) "குரல் குறிப்பு · பூட்டப்பட்டது" else "Voice Notes · Locked", color = TextPrimary)
+                            Button(onClick = { authenticate { unlocked = true } }) {
+                                Text(if (AppLanguageState.current == AppLanguage.TAMIL) "திற" else "Unlock")
+                            }
+                            Text(lockMessage, color = TextPrimary)
+                        }
+                    } else VoiceNotesScreen(
+                        lockEnabled = lockEnabled,
+                        lockMessage = lockMessage,
+                        onToggleLock = {
+                            authenticate {
+                                lockEnabled = !lockEnabled
+                                unlocked = true
+                                getSharedPreferences("voice-notes", MODE_PRIVATE).edit().putBoolean("app_lock", lockEnabled).apply()
+                                if (lockEnabled) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                                else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                            }
+                        },
                         store = store,
                         speaker = speaker,
                         onRequestMic = ::ensureMicPermission,
@@ -152,6 +212,9 @@ class NoteFileStore(context: android.content.Context) {
 
 @Composable
 fun VoiceNotesScreen(
+    lockEnabled: Boolean = false,
+    lockMessage: String = "",
+    onToggleLock: () -> Unit = {},
     store: NoteFileStore,
     speaker: VoiceNoteSpeaker,
     onRequestMic: (() -> Unit) -> Unit,
@@ -163,6 +226,7 @@ fun VoiceNotesScreen(
     var speakingId by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
+    var showHelp by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<VoiceNote?>(null) }
     var editText by remember { mutableStateOf("") }
     var pendingVoiceNote by remember { mutableStateOf<VoiceNote?>(null) }
@@ -323,6 +387,29 @@ fun VoiceNotesScreen(
                 },
             )
         }
+
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            TextButton(onClick = { showHelp = true }) { Text(tr("Help / About", "உதவி / பற்றி"), color = Accent) }
+            TextButton(onClick = onToggleLock) {
+                Text(if (lockEnabled) tr("App lock: ON", "செயலிப் பூட்டு: ஆன்") else tr("App lock: OFF", "செயலிப் பூட்டு: ஆஃப்"), color = Accent)
+            }
+        }
+        if (lockMessage.isNotBlank()) Text(lockMessage, color = Warn)
+        if (showHelp) AlertDialog(
+            onDismissRequest = { showHelp = false },
+            title = { Text(tr("Voice Notes · About / Guide", "குரல் குறிப்பு · பற்றி / வழிகாட்டி")) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(tr("Tap the microphone to dictate; use play for HD voice, edit to correct, and the bin to delete. Search filters your notes. Dictation uses your phone's recognition service. HD playback sends selected text to the online neural voice service; no robotic fallback. Notes stay in app storage; uninstalling deletes them.",
+                    "மைக் பொத்தானால் பேசிப் பதிவு செய்யுங்கள். கேட்க play, திருத்த பென்சில், நீக்க குப்பைத்தொட்டி. தேடல் குறிப்புகளை வடிகட்டும். பேச்சறிதல் போனின் சேவையைப் பயன்படுத்தும். HD வாசிப்புக்கு தேர்ந்தெடுத்த உரை இணையக் குரல் சேவைக்கு அனுப்பப்படும்; இயந்திரக் குரல் மாற்றுவழி இல்லை. குறிப்புகள் செயலியில் சேமிக்கப்படும்; செயலியை நீக்கினால் அழியும்."))
+                Text(tr("Optional app lock uses Android biometrics or phone credentials; it is a local access gate, not note-file encryption. Keep your phone credential available. It relocks when you leave the app.",
+                    "விருப்பப் பூட்டு Android கைரேகை அல்லது போன் திரைப் பூட்டைப் பயன்படுத்தும். இது அணுகல் பூட்டு; குறிப்புக் கோப்பு மறையாக்கம் அல்ல. போன் கடவுச்சொல்லை நினைவில் வைத்திருங்கள். வெளியே சென்றால் மீண்டும் பூட்டும்."))
+                TextButton(onClick = {
+                    runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse("https://universalrp2003.github.io/RP-Android-Apps/"))) }
+                }) { Text(tr("Our apps / Website", "நமது செயலிகள் / இணையதளம்")) }
+            } },
+            confirmButton = { TextButton(onClick = { showHelp = false }) { Text(tr("Close", "மூடு")) } }
+        )
 
         // ---------------------------------------------------------------- search
         OutlinedTextField(

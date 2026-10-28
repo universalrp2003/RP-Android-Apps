@@ -66,6 +66,7 @@ class MainActivity : ComponentActivity() {
             val ownVersion = remember { packageManager.getPackageInfo(packageName,0).versionName ?: "?" }
             var showAbout by rememberSaveable { mutableStateOf(false) }
             var query by rememberSaveable { mutableStateOf("") }
+            var showSearch by rememberSaveable { mutableStateOf(false) }
             var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
             var message by remember { mutableStateOf("") }
             var refresh by remember { mutableIntStateOf(0) }
@@ -78,6 +79,17 @@ class MainActivity : ComponentActivity() {
                 catch (_: Exception) { message = bi("இணைப்பைத் திறக்க முடியவில்லை", "Cannot open link") }
             }
             MaterialTheme(colorScheme = darkColorScheme(primary = Color(0xFF4CE0BC), background = Color(0xFF0B1721), surface = Color(0xFF142735))) {
+                if (showSearch) {
+                    AlertDialog(
+                        onDismissRequest = { showSearch = false },
+                        title = { Text(bi("செயலியைத் தேடு", "Search apps")) },
+                        text = { OutlinedTextField(query, { query = it },
+                            label = { Text(bi("செயலியின் பெயர்", "App name")) },
+                            singleLine = true, modifier = Modifier.fillMaxWidth()) },
+                        confirmButton = { TextButton(onClick = { showSearch = false }) { Text(bi("காட்டு", "Show results")) } },
+                        dismissButton = { TextButton(onClick = { query = ""; showSearch = false }) { Text(bi("அழி", "Clear")) } }
+                    )
+                }
                 Surface(Modifier.fillMaxSize()) {
                     LazyColumn(Modifier.safeDrawingPadding().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         item {
@@ -89,9 +101,9 @@ class MainActivity : ComponentActivity() {
                                 TextButton(onClick = { tamil = !tamil; getPreferences(0).edit().putBoolean("tamil", tamil).apply() }) { Text(if (tamil) "English" else "தமிழ்") }
                             }
                         }
-                        item { OutlinedTextField(query, { query = it }, label = { Text(bi("செயலியைத் தேடு", "Search apps")) }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
                         item {
                             Row(Modifier.horizontalScroll(rememberScrollState())) {
+                                TextButton(onClick = { showSearch = true }) { Text(bi("தேடு", "Search") + if (query.isBlank()) "" else " · $query") }
                                 TextButton(onClick = { showSelfUpdate = !showSelfUpdate }) { Text(bi("அங்காடி புதுப்பிப்பு", "Store update")) }
                                 TextButton(onClick = { open(Catalog.WEBSITE + "#request-app") }) { Text(bi("புதிய செயலி கோரிக்கை", "Request an app")) }
                                 TextButton(onClick = { refresh++; message = "" }) { Text(bi("சரிபார்", "Refresh")) }
