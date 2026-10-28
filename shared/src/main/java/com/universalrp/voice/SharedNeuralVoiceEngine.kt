@@ -49,8 +49,8 @@ data class CuratedNeuralVoiceProfile(
 
 /**
  * Shared Studio Ultra-HD Online Neural Voice synthesis & playback engine for RP Ideas apps:
- * - 10 curated Studio Ultra-HD voices (5 Male HD + 5 Female HD across all 4 official world Tamil
- *   studios ta-IN / ta-LK / ta-SG / ta-MY + 2026 flagship Multilingual & Expressive English studios)
+ * - 10 curated neural profiles (5 male + 5 female; regional Tamil models are shared across presets in
+ *   ta-IN / ta-LK / ta-SG / ta-MY, plus English neural models)
  * - Automatic Daily Male <-> Female voice rotation ON by default (Day 1 Male -> Day 2 Female ...)
  * - Local LRU MP3 disk cache for instant 0ms replay of repeated alerts & town announcements
  * - Fast bounded timeouts with distinct same-language HD alternatives; no new device-TTS fallback.

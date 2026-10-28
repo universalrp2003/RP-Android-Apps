@@ -213,10 +213,10 @@ object AppGuides {
             topic(
                 "The other RP Ideas apps",
                 "மற்ற RP Ideas செயலிகள்",
-                "About lists all ten RP Ideas apps with their official release pages and website links, so you can " +
+                "About lists our RP Ideas apps with their official release pages and website links, so you can " +
                     "read what changed or download a fresh copy. Tapping an app that is installed on this phone opens " +
                     "it; tapping one that is not opens its release page.",
-                "About பகுதியில் ஏழு RP Ideas செயலிகளும் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்களுடன் உள்ளன; என்ன மாறியது " +
+                "About பகுதியில் நமது செயலிகளின் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்கள் உள்ளன; என்ன மாறியது " +
                     "என்பதைப் படிக்கலாம் அல்லது புதிய நகலைப் பதிவிறக்கலாம். நிறுவிய செயலியைத் தொட்டால் உடனே திறக்கும்.",
             ),
         ),
