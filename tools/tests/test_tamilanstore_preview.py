@@ -20,7 +20,7 @@ class TamilanStorePreviewTest(unittest.TestCase):
         root = ET.parse(STORE / 'src/main/AndroidManifest.xml').getroot()
         ns = '{http://schemas.android.com/apk/res/android}'
         self.assertEqual({e.attrib[ns+'name'] for e in root.findall('uses-permission')}, {
-            'android.permission.INTERNET', 'android.permission.REQUEST_INSTALL_PACKAGES'})
+            'android.permission.INTERNET', 'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.POST_NOTIFICATIONS'})
         self.assertEqual(len(root.findall('queries/package')), 12)
         self.assertEqual(root.find('application/provider').attrib[ns+'exported'], 'false')
         paths = ET.parse(STORE / 'src/main/res/xml/apk_paths.xml').getroot()
@@ -36,7 +36,7 @@ class TamilanStorePreviewTest(unittest.TestCase):
     def test_verification_gates_and_no_silent_install(self):
         text = (STORE / 'src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text()
         for gate in ('total <= app.size', 'total == app.size', '== app.sha256',
-                     '== app.packageName', '== app.version', '== Catalog.SIGNER', 'newCode >= oldCode'):
+                     '== app.packageName', '== app.version', '== Catalog.signerFor(app.packageName)', 'newCode >= oldCode'):
             self.assertIn(gate, text)
         self.assertIn('ensureActive()', text)
         self.assertIn('instanceFollowRedirects = false', text)
@@ -64,3 +64,26 @@ class InstalledLifecycleContractTest(unittest.TestCase):
         self.assertIn('status != AppStatus.NOT_INSTALLED && status != AppStatus.UPDATE_AVAILABLE', model)
         self.assertIn('newCode >= oldCode', model)
         self.assertIn('InstalledStatus.resolve(this.installed(app), app.version)', model)
+
+class QuietNotificationsContractTest(unittest.TestCase):
+    def test_opt_in_silent_and_rate_limited_snapshot(self):
+        text = (STORE / 'src/main/java/com/universalrp/tamilanstore/UpdateNotifications.kt').read_text()
+        for check in ('getBoolean("enabled",false)', '24,TimeUnit.HOURS', 'now-last<TimeUnit.HOURS.toMillis(24)',
+                      'setSound(null,null)', 'setSilent(true)', 'updates.isEmpty()', 'AppStatus.UPDATE_AVAILABLE',
+                      'POST_NOTIFICATIONS', 'cancelUniqueWork'):
+            self.assertIn(check, text)
+        self.assertNotIn('https://', text)  # no claimed live network feed
+    def test_about_and_email_contact(self):
+        ui=(STORE/'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
+        self.assertIn('if (showAbout)',ui)
+        self.assertIn('mailto:universalrp2003@gmail.com',ui)
+        self.assertIn('Intent.ACTION_SENDTO',ui)
+
+class PerAppSignerPinTest(unittest.TestCase):
+    def test_secret_message_uses_its_established_certificate(self):
+        pin=(ROOT/'secretmessage/signing/certificate-sha256.txt').read_text().strip()
+        text=(STORE/'src/main/java/com/universalrp/tamilanstore/Catalog.kt').read_text()
+        self.assertIn(pin,text)
+        self.assertIn('packageName == "com.rpideas.secretmessage"',text)
+        for name in ('StoreModel.kt','StoreInventory.kt'):
+            self.assertIn('Catalog.signerFor(app.packageName)',(STORE/'src/main/java/com/universalrp/tamilanstore'/name).read_text())

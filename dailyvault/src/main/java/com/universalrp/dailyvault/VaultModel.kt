@@ -13,6 +13,19 @@ import java.io.File
 data class VaultState(val unlocked: Boolean=false,val entries: List<Entry> = emptyList(),val busy: Boolean=false,val status: String="")
 class VaultModel(app: Application): AndroidViewModel(app) {
     private val vault=AtomicFile(File(app.filesDir,"daily-vault.tdv"))
+    private val convenience=LocalUnlock(app)
+    val lockMode get()=convenience.mode
+    fun configureLock(mode: String) {
+        if(state.value.busy || !state.value.unlocked) return
+        val key=password ?: return
+        try { convenience.save(mode,key);_state.value=_state.value.copy(status="saved") }
+        catch(_:Exception) { _state.value=_state.value.copy(status="failed") }
+    }
+    fun localUnlock() {
+        if(state.value.busy || state.value.unlocked) return
+        try { val key=convenience.read();try { unlock(String(key),"") } finally { key.fill('\u0000') } }
+        catch(_:Exception) { _state.value=_state.value.copy(status="failed") }
+    }
     private var password: CharArray?=null
     private var epoch=0
     private val _state=MutableStateFlow(VaultState())
@@ -63,6 +76,7 @@ class VaultModel(app: Application): AndroidViewModel(app) {
             val entries=withContext(Dispatchers.IO) {
                 val bytes=getApplication<Application>().contentResolver.openInputStream(uri)?.use { readBounded(it) } ?: error("Input unavailable")
                 val decoded=decode(bytes,key) // authenticate and validate completely BEFORE replacing
+                convenience.clear() // fail closed to password mode after restore
                 write(decoded,key)
                 decoded
             }

@@ -14,8 +14,8 @@ android {
         applicationId = "com.universalrp.tamilanstore"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2-preview"
+        versionCode = 3
+        versionName = "0.3-preview"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
@@ -62,6 +62,7 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.3")
 
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")

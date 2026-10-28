@@ -6,6 +6,12 @@ import android.content.IntentFilter
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Build
+import android.Manifest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -27,6 +33,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        UpdateNotifications.setEnabled(this,granted);packageRevision++
+    }
     private var packageRevision by mutableIntStateOf(0)
     private val packageReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) { packageRevision++ }
@@ -50,6 +59,7 @@ class MainActivity : ComponentActivity() {
             val model: StoreModel = viewModel()
             val transfer by model.transfer.collectAsStateWithLifecycle()
             var tamil by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("tamil", true)) }
+            var showAbout by rememberSaveable { mutableStateOf(false) }
             var query by rememberSaveable { mutableStateOf("") }
             var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
             var message by remember { mutableStateOf("") }
@@ -66,22 +76,36 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     LazyColumn(Modifier.safeDrawingPadding().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         item {
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Row(Modifier.fillMaxWidth().paint(painterResource(R.drawable.tamil_landscape), sizeToIntrinsics = false, contentScale = ContentScale.FillBounds), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f).padding(top = 14.dp)) {
-                                    Text(bi("தமிழன்", "Tamilan"), style = MaterialTheme.typography.headlineMedium)
+                                    Text(bi("தமிழன்", "Tamilan"), style = MaterialTheme.typography.headlineSmall)
                                     Text(bi("செயலி அங்காடி · சோதனை", "App store · preview"), style = MaterialTheme.typography.labelMedium)
                                 }
                                 TextButton(onClick = { tamil = !tamil; getPreferences(0).edit().putBoolean("tamil", tamil).apply() }) { Text(if (tamil) "English" else "தமிழ்") }
                             }
                         }
-                        item { Text(bi("நமது 12 செயலிகள் மட்டும். கணக்கு அல்லது விளம்பரம் இல்லை. Google Play அல்லது F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Only our 12 apps. No account or ads. Not an official Google Play or F-Droid store.")) }
                         item { OutlinedTextField(query, { query = it }, label = { Text(bi("செயலியைத் தேடு", "Search apps")) }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
-                        item { Text(bi("நிறுவிய பதிப்பு சாதனத்திலேயே சரிபார்க்கப்படுகிறது; இணையத்திற்கு அனுப்பப்படாது. புதுப்பிப்பு குறிப்பு இந்தப் பட்டியலுடன் மட்டுமே ஒப்பிடுகிறது. நிறுவல் முடிந்து திரும்பியதும் நிலை புதுப்பிக்கப்படும்.", "Installed versions are checked locally, not uploaded. Update guidance compares only this catalog snapshot. Status refreshes when you return from installation."), style = MaterialTheme.typography.bodySmall) }
-                        item { Text(bi("பட்டியல்: 28 அக்டோபர் 2026. புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். பதிவிறக்கம் பயனர் தேர்வில் மட்டும்.", "Catalog snapshot: 28 October 2026. Check the website for newer releases. Downloads are user initiated."), style = MaterialTheme.typography.bodySmall) }
                         item {
-                            Row {
+                            Row(Modifier.horizontalScroll(rememberScrollState())) {
+                                TextButton(onClick = { refresh++; message = "" }) { Text(bi("சரிபார்", "Refresh")) }
+                                TextButton(onClick = { showAbout = !showAbout }) { Text(bi("உதவி / பற்றி", "Help / About")) }
+                                TextButton(onClick = {
+                                    try { startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:universalrp2003@gmail.com"))) }
+                                    catch (_: Exception) { message = "universalrp2003@gmail.com" }
+                                }) { Text(bi("தொடர்பு", "Contact")) }
+                            }
+                        }
+                        if (showAbout) item {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(bi("தமிழன் · சோதனை 0.3. நமது 12 செயலிகள். கணக்கு, விளம்பரம் இல்லை. Google Play / F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Tamilan · preview 0.3. Our 12 apps, no account or ads. Not an official Google Play / F-Droid store."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("பட்டியல்: 28 அக்டோபர் 2026. நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். சாதனத்தில் நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Catalog: 28 October 2026 snapshot. Installed versions compared locally only. Check the website for new releases; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
+                                TextButton(onClick = {
+                                    val enable = !UpdateNotifications.enabled(this@MainActivity)
+                                    if (enable && Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this@MainActivity,Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    else { UpdateNotifications.setEnabled(this@MainActivity,enable);packageRevision++ }
+                                }) { Text(if(UpdateNotifications.enabled(this@MainActivity)) bi("தினசரி அமைதியான அறிவிப்பு: இயங்குகிறது", "Daily silent alerts: on") else bi("தினசரி அமைதியான அறிவிப்பு: நிறுத்தம்", "Daily silent alerts: off")) }
+                                Text(bi("விருப்பப்பட்டால் மட்டும், 24 மணிநேரத்தில் அதிகபட்சம் ஒரு ஒலியில்லா அறிவிப்பு. இந்தப் பட்டியலில் உள்ள புதுப்பிப்புகளுக்கு மட்டும்; பின்னணி கட்டுப்பாடுகளால் தாமதமாகலாம்.", "Opt-in only: at most one silent notification per 24 hours for updates in this snapshot. Background restrictions may delay delivery."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = { open(Catalog.WEBSITE) }) { Text(bi("இணையதளம்", "Website")) }
-                                TextButton(onClick = { refresh++; message = "" }) { Text(bi("பதிப்புகளைச் சரிபார்", "Check installed")) }
                             }
                         }
                         if (message.isNotEmpty()) item { Text(message, color = MaterialTheme.colorScheme.primary) }
@@ -159,7 +183,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        item {
+                        if (showAbout) item {
                             Text(bi("பதிவிறக்கத்திற்கு இணையம் தேவை. கோப்பு அளவு, அடையாளம், செயலிப் பெயர், பதிப்பு மற்றும் கையொப்பம் நிறுவும் முன் சரிபார்க்கப்படும். இது முழுமையான பாதுகாப்புத் தணிக்கை அல்ல. நிறுவலை Android உறுதிப்படுத்தும்; தானாக நிறுவாது.", "Downloads require internet. Size, SHA-256, package, version and signer are checked before opening installation. This is not a security audit. Android asks for confirmation; no silent installs."), style = MaterialTheme.typography.bodySmall)
                             TextButton(onClick = { open("https://github.com/universalrp2003/RP-Android-Apps/blob/main/PRIVACY.md") }) { Text(bi("தனியுரிமை", "Privacy")) }
                             TextButton(onClick = { open(Catalog.WEBSITE + "#request-app") }) { Text(bi("உதவி / கோரிக்கை", "Help / requests")) }

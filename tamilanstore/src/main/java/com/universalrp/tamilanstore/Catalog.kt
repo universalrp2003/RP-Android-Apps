@@ -8,6 +8,9 @@ data class StoreApp(val id: String, val name: String, val tamilName: String, val
 
 object Catalog {
     const val SIGNER = "9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+    // Secret Message has its own long-standing release key, not the legacy batch key.
+    fun signerFor(packageName: String): String = if (packageName == "com.rpideas.secretmessage")
+        "58e370e417cf6f33234689acd5bf379474f5a8c55f79181d9e892a321bc04f08" else SIGNER
     const val WEBSITE = "https://universalrp2003.github.io/RP-Android-Apps/"
     fun parse(text: String): List<StoreApp> {
         val root = JSONObject(text)

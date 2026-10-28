@@ -3,7 +3,10 @@ package com.universalrp.dailyvault
 import android.net.Uri
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -23,12 +26,22 @@ import java.math.BigDecimal
 import java.time.*
 import java.time.format.DateTimeFormatter
 
-class MainActivity: ComponentActivity() {
+class MainActivity: FragmentActivity() {
     private val model: VaultModel by viewModels()
     private var restoreUri by mutableStateOf<Uri?>(null)
     private val export=registerForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { it?.let(model::export) }
     private val restore=registerForActivityResult(ActivityResultContracts.OpenDocument()) { restoreUri=it }
     private var clearSensitive: () -> Unit = {}
+    override fun onStart() { super.onStart();if(model.lockMode=="none") model.localUnlock() }
+    private fun deviceUnlock(onSuccess: () -> Unit) {
+        val allowed=BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        if(BiometricManager.from(this).canAuthenticate(allowed)!=BiometricManager.BIOMETRIC_SUCCESS) return
+        val prompt=BiometricPrompt(this,ContextCompat.getMainExecutor(this),object:BiometricPrompt.AuthenticationCallback() {
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) { onSuccess() }
+        })
+        prompt.authenticate(BiometricPrompt.PromptInfo.Builder().setTitle("தினக்கணக்கு / Daily Vault")
+            .setSubtitle("சாதனப் பூட்டு / Device authentication").setAllowedAuthenticators(allowed).build())
+    }
     override fun onStop() { clearSensitive();model.lock();super.onStop() }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,8 +59,11 @@ class MainActivity: ComponentActivity() {
             var deleting by remember { mutableStateOf<Entry?>(null) }
             var backupPassword by remember { mutableStateOf("") }
             var uiError by remember { mutableStateOf("") }
+            var showHelp by rememberSaveable { mutableStateOf(false) }
+            var showLockOptions by remember { mutableStateOf(false) }
+            var confirmNoLock by remember { mutableStateOf(false) }
             DisposableEffect(Unit) {
-                clearSensitive = { password="";confirm="";backupPassword="";draft=null;deleting=null;search="" }
+                clearSensitive = { password="";confirm="";backupPassword="";draft=null;deleting=null;search="";showLockOptions=false;confirmNoLock=false }
                 onDispose { clearSensitive = {} }
             }
             LaunchedEffect(state.unlocked) { if(!state.unlocked) { draft=null;deleting=null;search="";password="";confirm="";uiError="" } }
@@ -71,7 +87,8 @@ class MainActivity: ComponentActivity() {
                             else->bi("திறக்கப்பட்டது","Unlocked")
                         }) }
                         if(!state.unlocked) {
-                            item { Text(bi("இணையம் இல்லாத தனிப்பட்ட பதிவு. கடவுச்சொல் மறந்தால் மீட்பு இல்லை. புதிய போனுக்கு காப்புக் கோப்பும் அதன் கடவுச்சொல்லும் தேவை. செயலியை நீக்குமுன் காப்பெடுக்கவும்.","Offline private records. No password recovery. A new phone needs your backup file AND its password. Back up before uninstalling.")) }
+                            item { Text(bi("காப்புக்கான கடவுச்சொல் தேவை. மறந்தால் மீட்பு இல்லை.","Backup password required. No password recovery."),style=MaterialTheme.typography.bodySmall) }
+                            if(model.lockMode!="password") item { Button(onClick={if(model.lockMode=="device") deviceUnlock { model.localUnlock() } else model.localUnlock()},enabled=!state.busy) { Text(bi("சாதனத்தில் திற","Unlock locally")) } }
                             item { OutlinedTextField(password,{password=it.take(256)},label={Text(bi("கடவுச்சொல்","Password"))},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth(),singleLine=true) }
                             if(!model.exists()) item { OutlinedTextField(confirm,{confirm=it.take(256)},label={Text(bi("மீண்டும் கடவுச்சொல்","Confirm password"))},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth(),singleLine=true) }
                             item { Button(onClick={model.unlock(password,confirm);password="";confirm=""},enabled=!state.busy) { Text(if(model.exists())bi("திற","Unlock") else bi("புதிய பெட்டகம் உருவாக்கு","Create vault")) } }
@@ -81,7 +98,7 @@ class MainActivity: ComponentActivity() {
                                 val today=VaultCore.total(VaultCore.today(state.entries,now,zone))
                                 val month=VaultCore.total(state.entries.filter { YearMonth.from(Instant.ofEpochMilli(it.time).atZone(zone))==YearMonth.from(now) })
                                 Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp)) {
-                                    Text(bi("இன்று: ${money(today)}","Today: ${money(today)}"),style=MaterialTheme.typography.titleLarge)
+                                    Text(bi("இன்று: ${money(today)}","Today: ${money(today)}"),style=MaterialTheme.typography.titleMedium)
                                     Text(bi("இந்த மாதம்: ${money(month)}","This month: ${money(month)}"))
                                     Text(bi("எல்லாச் செலவுகள்: ${money(VaultCore.total(state.entries))}","All spending: ${money(VaultCore.total(state.entries))}"))
                                 } }
@@ -98,12 +115,33 @@ class MainActivity: ComponentActivity() {
                                 if(e.note.isNotBlank()) Text(e.note)
                                 Row { TextButton(onClick={draft=e},enabled=!state.busy) { Text(bi("திருத்து","Edit")) };TextButton(onClick={deleting=e},enabled=!state.busy) { Text(bi("நீக்கு","Delete")) } }
                             } } }
+                            item { TextButton(onClick={showLockOptions=true}) { Text(bi("பூட்டு அமைப்புகள்","Lock settings")) } }
                             item { TextButton(onClick={model.lock()}) { Text(bi("பூட்டு","Lock")) } }
                             item { Button(onClick={export.launch("daily-vault-${LocalDate.now()}.tdv")},enabled=!state.busy) { Text(bi("மறைகுறியாக்கப்பட்ட காப்பு","Export encrypted backup")) } }
                         }
                         item { OutlinedButton(onClick={restore.launch(arrayOf("*/*"))},enabled=!state.busy) { Text(bi("கோப்பிலிருந்து மீட்டெடு","Restore from file")) } }
-                        item { Text(bi("காப்பு தானாக உருவாகாது. பாதுகாப்பான இடத்தில் கோப்பைச் சேமித்து சோதிக்கவும். வேறு செயலிக்குச் சென்றால் பூட்டப்படும். திரைப் படம்/பதிவு தடுக்கப்படுகிறது. கடவுச்சொல்லை வேறு பாதுகாப்பான இடத்தில் வைத்திருங்கள்.","Backups are manual. Save and test a copy in a safe location. Locks when leaving the app; screen capture is blocked. Keep your password separately."),style=MaterialTheme.typography.bodySmall);Spacer(Modifier.height(20.dp)) }
+                        item {
+                            TextButton(onClick={showHelp=!showHelp}) { Text(bi("உதவி / செயலியைப் பற்றி", "Help / About")) }
+                            if(showHelp) Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                Text(bi("தினக்கணக்கு · சோதனை 0.2. இணையம் அல்லது விளம்பரம் இல்லை. காப்பு கைமுறை; புதிய போனில் மீட்க காப்புக் கோப்பும் கடவுச்சொல்லும் தேவை. மறந்தால் மீட்பு இல்லை.","Daily Vault · preview 0.2. Offline, no ads. Backups are manual; a new phone needs the backup file and password. No password recovery."),style=MaterialTheme.typography.bodySmall)
+                                Text(bi("பூட்டு வேண்டாம் என்றால் போனைப் பயன்படுத்துபவர் பதிவுகளைத் திறக்கலாம். சாதனப் பூட்டு ஒரு வசதி; காப்பின் கடவுச்சொல்லை மாற்றாது. பாதுகாப்பான இடத்தில் காப்பெடுத்து வேறு போனில் சோதிக்கவும்.","No-lock mode lets anyone using this phone open records. Device authentication is a convenience gate, not a new backup password. Save and test a backup on another phone."),style=MaterialTheme.typography.bodySmall)
+                                TextButton(onClick={try { startActivity(android.content.Intent(android.content.Intent.ACTION_SENDTO,Uri.parse("mailto:universalrp2003@gmail.com"))) } catch(_:Exception){} }) { Text("universalrp2003@gmail.com") }
+                            }
+                            Spacer(Modifier.height(16.dp))
+                        }
                     }
+                    if(showLockOptions) AlertDialog(onDismissRequest={showLockOptions=false},title={Text(bi("திறக்கும் முறை","Unlock method"))},text={Column {
+                        TextButton(onClick={model.configureLock("password");showLockOptions=false}) { Text(bi("ஒவ்வொரு முறையும் கடவுச்சொல்","Password each time")) }
+                        TextButton(onClick={
+                            val authenticators=BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                            if(BiometricManager.from(this@MainActivity).canAuthenticate(authenticators)==BiometricManager.BIOMETRIC_SUCCESS) {
+                                model.configureLock("device");showLockOptions=false
+                            }
+                        }) { Text(bi("சாதனப் பூட்டு / உயிரளவியல்","Screen lock / biometric")) }
+                        TextButton(onClick={showLockOptions=false;confirmNoLock=true}) { Text(bi("செயலிப் பூட்டு வேண்டாம்","No app lock")) }
+                        Text(bi("சாதனப் பூட்டு அமைக்கப்படாவிட்டால் முதலில் போன் அமைப்புகளில் அமைக்கவும். காப்பின் கடவுச்சொல் எப்போதும் தேவை.","Set up screen lock in phone settings first. Backup password remains required."),style=MaterialTheme.typography.bodySmall)
+                    }},confirmButton={TextButton(onClick={showLockOptions=false}){Text(bi("மூடு","Close"))}})
+                    if(confirmNoLock) AlertDialog(onDismissRequest={confirmNoLock=false},title={Text(bi("பூட்டு இல்லாமல் திறக்கவா?","Allow opening without app lock?"))},text={Text(bi("போனைப் பயன்படுத்துபவர் பதிவுகளைப் பார்க்கலாம். உள்ளூர் திறப்பு ரகசியம் சாதனத்தில் பாதுகாக்கப்படும்; காப்புக் கோப்பு கடவுச்சொல்லால் பாதுகாக்கப்படும்.","Anyone using this phone can view records. A device-local wrapped credential enables opening; exported backups still require the password."))},confirmButton={TextButton(onClick={model.configureLock("none");confirmNoLock=false}){Text(bi("அனுமதி","Allow"))}},dismissButton={TextButton(onClick={confirmNoLock=false}){Text(bi("ரத்து","Cancel"))}})
                     deleting?.let { e -> AlertDialog(onDismissRequest={deleting=null},title={Text(bi("பதிவை நீக்கவா?","Delete record?"))},text={Text(e.title)},confirmButton={TextButton(onClick={model.delete(e.id);deleting=null}) { Text(bi("நீக்கு","Delete")) }},dismissButton={TextButton(onClick={deleting=null}){Text(bi("ரத்து","Cancel"))}}) }
                     restoreUri?.let { uri -> AlertDialog(onDismissRequest={restoreUri=null;backupPassword=""},title={Text(bi("காப்பை மீட்டெடுக்கவா?","Restore backup?"))},text={Column {
                         Text(bi("தற்போதைய எல்லாப் பதிவுகளும் மாற்றப்படும்; ஒன்றிணைக்கப்படாது. பழைய பதிவுகள் தேவைப்பட்டால் முதலில் காப்பெடுக்கவும். காப்பின் கடவுச்சொல்லை உள்ளிடவும்.","REPLACES all current records; does not merge. Export current records first if needed. Enter the backup password."))

@@ -23,15 +23,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     private var job: Job? = null
     private val directory = File(application.cacheDir, "verified-apks").apply { mkdirs() }
     init { directory.listFiles()?.forEach { it.delete() } }
-    @Suppress("DEPRECATION")
-    fun installed(app: StoreApp): InstalledApp? = try {
-        val flags = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
-        val info = getApplication<Application>().packageManager.getPackageInfo(app.packageName, flags)
-        val signatures = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
-        val trusted = signatures?.size == 1 && hex(MessageDigest.getInstance("SHA-256").digest(signatures[0].toByteArray())) == Catalog.SIGNER
-        InstalledApp(info.versionName, trusted)
-    } catch (_: PackageManager.NameNotFoundException) { null }
-      catch (_: SecurityException) { InstalledApp(null, false) }
+    fun installed(app: StoreApp): InstalledApp? = StoreInventory.inspect(getApplication(), app)
     fun cancel() { job?.cancel() }
     fun download(app: StoreApp) {
         if (_transfer.value.busy) return
@@ -118,7 +110,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         check(info.applicationInfo?.minSdkVersion?.let { it <= Build.VERSION.SDK_INT } == true)
         val signatures = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
         check(signatures?.size == 1)
-        check(hex(MessageDigest.getInstance("SHA-256").digest(signatures!![0].toByteArray())) == Catalog.SIGNER)
+        check(hex(MessageDigest.getInstance("SHA-256").digest(signatures!![0].toByteArray())) == Catalog.signerFor(app.packageName))
         val installed = try { pm.getPackageInfo(app.packageName, flags) } catch (_: PackageManager.NameNotFoundException) { null }
         if (installed != null) {
             val status = InstalledStatus.resolve(this.installed(app), app.version)
@@ -129,7 +121,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
             check(newCode >= oldCode)
             val oldSignatures = if (Build.VERSION.SDK_INT >= 28) installed.signingInfo?.apkContentsSigners else installed.signatures
             check(oldSignatures?.size == 1)
-            check(hex(MessageDigest.getInstance("SHA-256").digest(oldSignatures!![0].toByteArray())) == Catalog.SIGNER)
+            check(hex(MessageDigest.getInstance("SHA-256").digest(oldSignatures!![0].toByteArray())) == Catalog.signerFor(app.packageName))
         }
     }
     private fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it.toInt() and 255) }
