@@ -25,7 +25,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: voicenotes-stable-release
+  group: voicenotes-stable-release-${{ contains(github.event.head_commit.message, '[candidate-voicenotes]') && github.sha || 'publish' }}
   cancel-in-progress: false
 
 jobs:

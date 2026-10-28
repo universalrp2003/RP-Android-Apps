@@ -1,6 +1,6 @@
 package com.universalrp.smsguard
 
-import com.universalrp.smsguard.service.NeuralRetryPolicy
+import com.universalrp.voice.NeuralRetryPolicy
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

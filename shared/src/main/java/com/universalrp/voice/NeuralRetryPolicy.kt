@@ -1,4 +1,4 @@
-package com.universalrp.smsguard.service
+package com.universalrp.voice
 
 /** Retry a transient peer internal error only, within the caller's original deadline. */
 object NeuralRetryPolicy {

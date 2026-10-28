@@ -531,14 +531,22 @@ object SharedNeuralVoiceEngine {
         pitch: String = "+0Hz",
         timeoutMs: Long = 4200L,
     ): ByteArray? {
+        val started = System.nanoTime()
+        val peerCode = java.util.concurrent.atomic.AtomicInteger(0)
         val firstAttempt = streamWebSocketOnce(
             text = text,
             voiceName = formatServerVoiceName(voiceName),
             rate = rate,
             pitch = pitch,
             timeoutMs = timeoutMs,
+            onPeerClosing = { peerCode.set(it) },
         )
-        return if (firstAttempt != null && firstAttempt.size >= 256) firstAttempt else null
+        if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
+        val remaining = NeuralRetryPolicy.remainingBudget(timeoutMs,
+            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), peerCode.get())
+        if (remaining == 0L) return null
+        return streamWebSocketOnce(text, formatServerVoiceName(voiceName), rate, pitch, remaining,
+            allowClockRetry = false)
     }
 
     private fun streamWebSocketOnce(
@@ -548,7 +556,9 @@ object SharedNeuralVoiceEngine {
         pitch: String,
         timeoutMs: Long,
         allowClockRetry: Boolean = true,
+        onPeerClosing: ((Int) -> Unit)? = null,
     ): ByteArray? {
+        val attemptStarted = System.nanoTime()
         val escaped = sanitizeSsmlText(text)
         if (escaped.isEmpty()) return null
 
@@ -637,13 +647,20 @@ object SharedNeuralVoiceEngine {
                     doneLatch.countDown()
                 }
 
+                override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    onPeerClosing?.invoke(code)
+                    runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
+                    doneLatch.countDown()
+                }
+
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                     doneLatch.countDown()
                 }
             },
         )
 
-        val finished = runCatching { doneLatch.await(timeoutMs, TimeUnit.MILLISECONDS) }.getOrDefault(false)
+        val waitBudget = (timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)).coerceAtLeast(0L)
+        val finished = runCatching { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }.getOrDefault(false)
         if (!finished) {
             runCatching { ws.cancel() }
         }
@@ -655,7 +672,9 @@ object SharedNeuralVoiceEngine {
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                return streamWebSocketOnce(text, voiceName, rate, pitch, timeoutMs, allowClockRetry = false)
+                val remaining = timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
+                if (remaining > 0) return streamWebSocketOnce(text, voiceName, rate, pitch, remaining,
+                    allowClockRetry = false, onPeerClosing = onPeerClosing)
             }
         }
 
