@@ -287,6 +287,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 14
           name: unit-test-reports
           path: |
             cleaner/build/test-results/test*UnitTest/*.xml
@@ -1700,6 +1701,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 14
           name: build-log
           # store-art.log matters when the failure is the artwork step, which runs before
           # Gradle and therefore leaves no build.log behind.
@@ -1712,6 +1714,7 @@ jobs:
       - name: Upload Google Play bundles (.aab)
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: store-bundles
           path: |
             cleaner/build/outputs/bundle/release/*.aab
@@ -1721,6 +1724,7 @@ jobs:
       - name: Upload CleanSweep APK
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: cleansweep-apk
           path: |
             cleaner/build/outputs/apk/*/*.apk
@@ -1729,18 +1733,21 @@ jobs:
       - name: Upload PulseEQ APK
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: pulseeq-apk
           path: equalizer/build/outputs/apk/*/*.apk
 
       - name: Upload Ramesh Radio APK
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: ramesh-radio-apk
           path: radio/build/outputs/apk/*/*.apk
 
       - name: Upload RP Vocal Remover Studio APKs
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: rp-vocal-remover-studio-apks
           path: |
             vocalremover/build/outputs/apk/release/*.apk
