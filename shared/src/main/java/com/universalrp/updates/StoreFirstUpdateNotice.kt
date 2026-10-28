@@ -15,7 +15,7 @@ import java.net.URL
 
 /** Pilot: explicit checks and optional daily app-opening checks. No background/system notifications. */
 @Composable
-fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
+fun StoreFirstUpdateNotice(appId: String, tamil: Boolean, showControls: Boolean = true) {
     val context = LocalContext.current
     val app = SisterApps.all.firstOrNull { it.id == appId && it.packageName == context.packageName } ?: return
     val prefs = remember(context, appId) { context.getSharedPreferences("store-update-$appId", android.content.Context.MODE_PRIVATE) }
@@ -79,7 +79,7 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
     }
     Column {
         Row {
-            TextButton(enabled = !checking, onClick = { checking = true; offered = null; message = ""; requested++ }) {
+            if (showControls) TextButton(enabled = !checking, onClick = { checking = true; offered = null; message = ""; requested++ }) {
                 Text(tr(if (checking) "Checking…" else "Check updates", if (checking) "சரிபார்க்கிறது…" else "புதுப்பிப்பைச் சரிபார்"))
             }
             offered?.let { version ->
@@ -93,6 +93,9 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
             title = { Text(tr("Update check", "புதுப்பிப்பு சரிபார்ப்பு")) },
             text = { Column {
                 Text(offered?.let { tr("Update available · $it", "புதுப்பிப்பு உள்ளது · $it") } ?: message)
+                TextButton(onClick = {
+                    if (!StoreUpdateRouter.openWebsite(context, appId)) message = tr("Cannot open browser", "உலாவியைத் திறக்க முடியவில்லை")
+                }) { Text(tr("Downloads in browser", "உலாவியில் பதிவிறக்கப் பக்கம்")) }
                 TextButton(onClick = {
                     reminders = !reminders
                     prefs.edit().putBoolean("daily_in_app", reminders).apply()

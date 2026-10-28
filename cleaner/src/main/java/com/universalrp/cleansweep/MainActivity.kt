@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
         // language before the first frame — see UiMode in theme/Theme.kt.
         com.universalrp.cleansweep.ui.theme.UiMode.setLanguage(Lang.current)
         // Sensitive permissions are explained and requested from reviewed setup, not silently on launch.
-        com.universalrp.cleansweep.updates.LiveGuardUpdates.checkOnLaunch(this)
         setContent {
             CleanSweepTheme {
                 val vm: MainViewModel = viewModel()

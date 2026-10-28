@@ -23,6 +23,7 @@
       Transactions are written to this app's private storage and read back from it.
     -->
 
+    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

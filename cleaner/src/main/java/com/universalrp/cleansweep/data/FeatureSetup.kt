@@ -3,7 +3,6 @@ package com.universalrp.cleansweep.data
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import com.universalrp.cleansweep.UiState
-import com.universalrp.cleansweep.updates.LiveGuardUpdates
 import com.universalrp.cleansweep.voice.Announcer
 import kotlinx.coroutines.flow.first
 
@@ -40,7 +39,7 @@ object FeatureDirectory {
             FeatureSetupPolicy.Feature("pill", "Floating status pill", FeatureSetupPolicy.status(state.statusPill, access = state.statusPillAllowed), "Optional overlay access is required. The floating pill keeps its existing charging-watts behavior."),
             FeatureSetupPolicy.Feature("ai", "Online assistant", FeatureSetupPolicy.status(state.assistantOnline, configured = state.aiConfig.ready), "Optional provider setup sends only your approved questions and allowed report facts. An API key or model name is not proof a model ran."),
             FeatureSetupPolicy.Feature("data", "Data plan and compact widgets", FeatureSetupPolicy.status(true, configured = state.dataPackInfo?.isUnlimited5g == true || onWifi(context) || DataUsageTracker.hasConfiguredPlan(context)), "Choose battery, data or phone widgets. Metered plans show available usage; Wi-Fi or user-set unlimited 5G shows useful phone details instead."),
-            FeatureSetupPolicy.Feature("update", "In-app APK updates", FeatureSetupPolicy.status(true, access = LiveGuardUpdates.state.value.release == null || LiveGuardUpdates.canInstall(context)), "Checks only official published releases. Download verification and Android installer confirmation are mandatory; Play Protect cannot be forced or bypassed."),
+            FeatureSetupPolicy.Feature("update", "Store / website updates", FeatureSetupPolicy.Status.READY, "Updates are checked without downloading APKs. Explicit user action opens our Store or website; a browser is always available as an alternative. Stop if a security warning appears."),
         )
         val skipped = FeatureSetupPrefs.skipped(context)
         return features.map { if (it.id in skipped && it.status != FeatureSetupPolicy.Status.READY) it.copy(status = FeatureSetupPolicy.Status.OFF_BY_CHOICE) else it }

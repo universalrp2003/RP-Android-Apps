@@ -85,8 +85,8 @@ def manifest_problems(manifest: ET.Element, label: str = "manifest") -> list[str
             problems.append(f"{label}: retired capability signature present: {signature}")
 
     permissions = {node.get(ANDROID + "name") for node in manifest.findall("uses-permission")}
-    # Own alerts and the verified updater must stay: this is a removal, not a purge.
-    for required in ("android.permission.POST_NOTIFICATIONS", "android.permission.REQUEST_INSTALL_PACKAGES"):
+    # Own alerts stay; app-local installation is retired by the Store-first migration.
+    for required in ("android.permission.POST_NOTIFICATIONS",):
         if required not in permissions:
             problems.append(f"{label}: required retained permission is missing: {required}")
     for retired in ("android.permission.READ_SMS", "android.permission.READ_CONTACTS", "android.permission.READ_CALL_LOG"):
@@ -102,14 +102,10 @@ def manifest_problems(manifest: ET.Element, label: str = "manifest") -> list[str
         if "notification" in name.lower() or "MessageReader" in name:
             problems.append(f"{label}: notification service declared: {name}")
 
-    # The source manifest uses the "${applicationId}.updates.files" placeholder; a real merged
-    # manifest has it substituted (com.universalrp.cleansweep.updates.files), so match the suffix.
-    providers = [node for node in application.findall("provider")
-                 if (node.get(ANDROID + "authorities") or "").endswith(".updates.files")]
-    if not providers:
-        problems.append(f"{label}: verified-update FileProvider is missing")
-    elif providers[0].get(ANDROID + "exported") != "false":
-        problems.append(f"{label}: verified-update FileProvider must not be exported")
+    if "android.permission.REQUEST_INSTALL_PACKAGES" in permissions:
+        problems.append(f"{label}: retired package-install permission returned")
+    if any((node.get(ANDROID + "authorities") or "").endswith(".updates.files") for node in application.findall("provider")):
+        problems.append(f"{label}: retired update FileProvider returned")
     return problems
 
 

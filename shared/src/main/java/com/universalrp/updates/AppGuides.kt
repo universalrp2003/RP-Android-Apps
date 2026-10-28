@@ -178,14 +178,8 @@ object AppGuides {
             topic(
                 "Updating Live Guard",
                 "லைவ் கார்டைப் புதுப்பித்தல்",
-                "Live Guard checks the official GitHub releases itself and offers only a newer stable version. " +
-                    "It checks the file size, SHA-256, package name, version and signing certificate before handing " +
-                    "the file to Android. Android still shows its own install screen, and you can cancel there. " +
-                    "The app never installs anything silently.",
-                "லைவ் கார்டு அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே " +
-                    "வழங்கும். கோப்பு அளவு, SHA-256, தொகுப்புப் பெயர், பதிப்பு, கையொப்பச் சான்றிதழ் ஆகியவற்றைச் " +
-                    "சரிபார்த்த பிறகே Android-க்கு அளிக்கும். நிறுவல் திரையை Android காட்டும்; அங்கே ரத்து செய்யலாம். " +
-                    "எதையும் அமைதியாக நிறுவாது.",
+                "Check updates to see newer official stable versions. Explicit user action opens Tamilan Store if available, otherwise the app download section on our website. Browser is always optional. This app never downloads or installs APKs. Daily in-app checks are opt-in, at most once per day; Later and Skip version are available. Stop if a security warning appears.",
+                "புதிய அதிகாரப்பூர்வ நிலையான பதிப்பைப் புதுப்பிப்புச் சரிபார்ப்பில் காணலாம். உங்கள் தேர்வில் தமிழன் அங்காடி அல்லது இணையதளத்தில் இந்தச் செயலியின் பதிவிறக்கப் பகுதி திறக்கும். உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். இந்தச் செயலி APK பதிவிறக்கவோ நிறுவவோ செய்யாது. விருப்பமான தினசரி சரிபார்ப்பு நாளுக்கு ஒருமுறை மட்டுமே; பிறகு மற்றும் பதிப்பைத் தவிர்க்கும் வசதிகள் உள்ளன. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
             topic(
                 "Smart news headlines reader & auto screen-off announcements",
@@ -324,14 +318,8 @@ object AppGuides {
             topic(
                 "Updating Ramesh Radio",
                 "ரமேஷ் ரேடியோவைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases and offers only a newer stable version, after " +
-                    "checking the file's size, SHA-256, package name, version and signing certificate. Android " +
-                    "shows its own install screen. If your phone blocks the update, it is usually the signer: " +
-                    "uninstall the older test build first, then install once.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைச் சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; கோப்பு அளவு, " +
-                    "SHA-256, தொகுப்புப் பெயர், பதிப்பு, கையொப்பச் சான்றிதழ் ஆகியவை சரிபார்க்கப்படும். நிறுவல் " +
-                    "திரையை Android காட்டும். போன் தடுத்தால் பெரும்பாலும் கையொப்பம் காரணம்: பழைய சோதனைப் பதிப்பை " +
-                    "முதலில் நீக்கி, பின்னர் ஒருமுறை நிறுவுங்கள்.",
+                "Check updates to see newer official stable versions. Explicit user action opens Tamilan Store if available, otherwise the app download section on our website. Browser is always optional. This app never downloads or installs APKs. Daily in-app checks are opt-in, at most once per day; Later and Skip version are available. Stop if a security warning appears.",
+                "புதிய அதிகாரப்பூர்வ நிலையான பதிப்பைப் புதுப்பிப்புச் சரிபார்ப்பில் காணலாம். உங்கள் தேர்வில் தமிழன் அங்காடி அல்லது இணையதளத்தில் இந்தச் செயலியின் பதிவிறக்கப் பகுதி திறக்கும். உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். இந்தச் செயலி APK பதிவிறக்கவோ நிறுவவோ செய்யாது. விருப்பமான தினசரி சரிபார்ப்பு நாளுக்கு ஒருமுறை மட்டுமே; பிறகு மற்றும் பதிப்பைத் தவிர்க்கும் வசதிகள் உள்ளன. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -405,8 +393,8 @@ object AppGuides {
             topic(
                 "Updating PulseEQ",
                 "பல்ஸ்இக்யூவைப் புதுப்பித்தல்",
-                "About opens the official releases in your external browser. PulseEQ no longer requests app network or APK-install permission and does not download update APKs or provide installer files. If Play Protect blocks a file, stop; do not disable protection or choose Install anyway. The cause of the 1.10 warning has not been established, and these changes are not security clearance.",
-                "அதிகாரப்பூர்வ வெளியீடுகள் வெளிப்புற உலாவியில் திறக்கும். இந்தச் செயலி இணைய அணுகல் அல்லது தொகுப்பு நிறுவல் அனுமதியைக் கேட்காது; புதுப்பிப்புக் கோப்பைப் பதிவிறக்கவோ நிறுவலுக்காக வழங்கவோ செய்யாது. பாதுகாப்புச் சோதனை தடுத்தால் நிறுத்துங்கள்; பாதுகாப்பை முடக்கவோ மீறி நிறுவவோ வேண்டாம். எச்சரிக்கையின் காரணம் உறுதியாகவில்லை; இந்த மாற்றங்கள் பாதுகாப்பு உறுதிப்படுத்தல் அல்ல.",
+                "About opens Tamilan Store or our website download section; browser is always optional. PulseEQ has no app network or APK-install permission and never downloads APK updates. No automatic online checks run in this offline app. Stop if a security warning appears.",
+                "செயலி விவரத்தில் தமிழன் அங்காடி அல்லது இணையதளப் பதிவிறக்கப் பகுதியைத் திறக்கலாம்; உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். பல்ஸ்இக்யூ இணைய அணுகல் அல்லது APK நிறுவல் அனுமதி கேட்காது; APK பதிவிறக்காது. இந்த இணையமற்ற செயலியில் தானியங்கி இணையச் சரிபார்ப்பு இயங்காது. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -502,12 +490,8 @@ object AppGuides {
             topic(
                 "Updating Vocal Remover",
                 "வோக்கல் ரிமூவரைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases itself and offers only a newer stable version, after " +
-                    "checking the file's size, SHA-256, package, version and signing certificate. Android shows " +
-                    "its own install screen.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; " +
-                    "கோப்பின் அளவு, SHA-256, தொகுப்பு, பதிப்பு, கையொப்பம் சரிபார்க்கப்படும். நிறுவல் திரையை " +
-                    "Android காட்டும்.",
+                "Check updates to see newer official stable versions. Explicit user action opens Tamilan Store if available, otherwise the app download section on our website. Browser is always optional. This app never downloads or installs APKs. Daily in-app checks are opt-in, at most once per day; Later and Skip version are available. Stop if a security warning appears.",
+                "புதிய அதிகாரப்பூர்வ நிலையான பதிப்பைப் புதுப்பிப்புச் சரிபார்ப்பில் காணலாம். உங்கள் தேர்வில் தமிழன் அங்காடி அல்லது இணையதளத்தில் இந்தச் செயலியின் பதிவிறக்கப் பகுதி திறக்கும். உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். இந்தச் செயலி APK பதிவிறக்கவோ நிறுவவோ செய்யாது. விருப்பமான தினசரி சரிபார்ப்பு நாளுக்கு ஒருமுறை மட்டுமே; பிறகு மற்றும் பதிப்பைத் தவிர்க்கும் வசதிகள் உள்ளன. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -628,12 +612,8 @@ object AppGuides {
             topic(
                 "Updating Oor Arivippu",
                 "ஊர் அறிவிப்பைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases itself and offers only a newer stable version after " +
-                    "checking size, SHA-256, package, version and signing certificate. Android shows its own " +
-                    "install screen.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; " +
-                    "அளவு, SHA-256, தொகுப்பு, பதிப்பு, கையொப்பம் சரிபார்க்கப்படும். நிறுவல் திரையை Android " +
-                    "காட்டும்.",
+                "Check updates to see newer official stable versions. Explicit user action opens Tamilan Store if available, otherwise the app download section on our website. Browser is always optional. This app never downloads or installs APKs. Daily in-app checks are opt-in, at most once per day; Later and Skip version are available. Stop if a security warning appears.",
+                "புதிய அதிகாரப்பூர்வ நிலையான பதிப்பைப் புதுப்பிப்புச் சரிபார்ப்பில் காணலாம். உங்கள் தேர்வில் தமிழன் அங்காடி அல்லது இணையதளத்தில் இந்தச் செயலியின் பதிவிறக்கப் பகுதி திறக்கும். உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். இந்தச் செயலி APK பதிவிறக்கவோ நிறுவவோ செய்யாது. விருப்பமான தினசரி சரிபார்ப்பு நாளுக்கு ஒருமுறை மட்டுமே; பிறகு மற்றும் பதிப்பைத் தவிர்க்கும் வசதிகள் உள்ளன. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -747,12 +727,8 @@ object AppGuides {
             topic(
                 "Verified Updates & Zero Message Upload Privacy",
                 "சரிபார்க்கப்பட்ட புதுப்பிப்பு & முழுத் தனியுரிமை",
-                "Your SMS messages, OTPs and finance numbers stay strictly on your phone — nothing is uploaded to any " +
-                    "cloud database. App updates check official GitHub Releases and verify APK size, SHA-256 and RP Ideas " +
-                    "signing certificate before opening Android's own install prompt.",
-                "உங்கள் குறுஞ்செய்திகள், OTP எண்கள் மற்றும் வரவு-செலவு விவரங்கள் உங்கள் போனிலேயே பாதுகாப்பாக இருக்கும் — " +
-                    "எந்த மேகச் சேவையகத்திற்கும் அனுப்பப்படாது. புதுப்பிப்புகள் அளவு, SHA-256 மற்றும் கையொப்பத்தைச் " +
-                    "சரிபார்த்த பிறகே Android நிறுவல் திரையைத் திறக்கும்.",
+                "Check updates to see newer official stable versions. Explicit user action opens Tamilan Store if available, otherwise the app download section on our website. Browser is always optional. This app never downloads or installs APKs. Daily in-app checks are opt-in, at most once per day; Later and Skip version are available. Stop if a security warning appears.",
+                "புதிய அதிகாரப்பூர்வ நிலையான பதிப்பைப் புதுப்பிப்புச் சரிபார்ப்பில் காணலாம். உங்கள் தேர்வில் தமிழன் அங்காடி அல்லது இணையதளத்தில் இந்தச் செயலியின் பதிவிறக்கப் பகுதி திறக்கும். உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். இந்தச் செயலி APK பதிவிறக்கவோ நிறுவவோ செய்யாது. விருப்பமான தினசரி சரிபார்ப்பு நாளுக்கு ஒருமுறை மட்டுமே; பிறகு மற்றும் பதிப்பைத் தவிர்க்கும் வசதிகள் உள்ளன. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )

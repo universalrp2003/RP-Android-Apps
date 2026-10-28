@@ -57,3 +57,7 @@ Workflow 40644533898 succeeded: 139 Python tests/localization, both release unit
 Owner installed Voice1.3/code4; update-check dialog now succeeds and shows no newer stable version, opt-in daily check off. Owner reports one functional bug: active voice cannot be stopped/switched. Fixed as1.3.1/code5 (sourcef1de08c), verified signed candidate run40667074846/artifact12806208921 and debug run40667074766; device validation remains pending. Tap same active square Stop to cancel during loading/playback; tap another note to replace. 145 Python tests passed; three JVM fake-backend cancellation cases also pass CI.
 
 Owner says SMS1.1.10 works; installation screenshot still explicitly shows harmful block. Later aggregate clean scan is not clearance of that install verdict. Withdraw recommended SMS candidate installation/publication pending detection classification. Do not bypass protection or recommend deleting SMS/finance data. Store/Expense holds remain. Exact warning details not expanded in supplied screenshot.
+
+## Voice1.3.2 owner acceptance — 28 October 2026, 15:37 IST
+
+Owner reports “Its working fine now all perfect.” Mark the reported Voice playback-control and new-note visibility bugs resolved on the owner's device with1.3.2/code6 candidate160 (run40668667451/source41f29c3/artifact12808020972). Screenshots show the distinct upgrade from1.3.1/code5 and “looks safe” installation verdict. Not independent installed-hash proof, all-device/security certification, publication or merge. Keep remaining SMS/Store/Expense security and suite-rollout gates open.
