@@ -302,6 +302,7 @@ object NeuralCloudVoiceEngine {
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    diagnostic?.invoke("OPEN HTTP=${response.code}")
                     val ts = jsUtcDateString()
                     val configMsg =
                         "X-Timestamp:$ts\r\n" +
@@ -364,7 +365,14 @@ object NeuralCloudVoiceEngine {
                     doneLatch.countDown()
                 }
 
+                override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    diagnostic?.invoke("PEER_CLOSING CODE=$code")
+                    webSocket.close(code, null)
+                    doneLatch.countDown()
+                }
+
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    diagnostic?.invoke("CLOSED CODE=$code")
                     doneLatch.countDown()
                 }
             },

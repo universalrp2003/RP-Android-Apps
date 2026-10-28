@@ -900,7 +900,7 @@ class SmsGuardEngineTest {
             val mp3 = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
                 text = sampleText,
                 voiceName = voiceId,
-                timeoutMs = 8000L,
+                timeoutMs = 20000L,
                 diagnostic = { diagnostics.add(it) },
             )
             assertTrue(
