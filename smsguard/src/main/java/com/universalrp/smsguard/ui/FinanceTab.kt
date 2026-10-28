@@ -245,15 +245,15 @@ fun FinanceTab(
                     } else {
                         Text(
                             if (prefs.tamil) {
-                                "தனி வரவு-செலவு கடவுச்சொல் இன்னும் அமைக்கப்படவில்லை. விரும்பினால் இப்போதே உருவாக்கலாம்:"
+                                "தனி வரவு-செலவு கடவுச்சொல் இல்லை. முதலில் கைரேகை / போன் பூட்டால் திறந்த பிறகு அமைக்கலாம்."
                             } else {
-                                "No custom Finance password set yet. Create one anytime below:"
+                                "No custom Finance password set. Unlock with phone credentials first, then create one."
                             },
                             color = palette.textMuted,
                             fontSize = 12.5.sp,
                         )
                         OutlinedButton(
-                            onClick = { showSetPinDialog = true },
+                            onClick = { if (prefs.financeLockEnabled && !financeUnlocked) onRequestBiometricUnlock() else showSetPinDialog = true },
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Text(
@@ -661,7 +661,7 @@ fun FinanceTab(
                         }
                     }
                     OutlinedButton(
-                        onClick = { showSetPinDialog = true },
+                        onClick = { if (prefs.financeLockEnabled && !financeUnlocked) onRequestBiometricUnlock() else showSetPinDialog = true },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(12.dp),
                     ) {

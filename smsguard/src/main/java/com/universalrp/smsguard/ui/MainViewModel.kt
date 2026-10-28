@@ -181,9 +181,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Never allow a settings switch to bypass the Finance authentication gate.
         if (!enabled && !_financeUnlockedInSession.value) return
         GuardSettingsStore.updateFinanceLockEnabled(getApplication(), enabled)
-        if (!enabled) {
-            _financeUnlockedInSession.value = true
-        }
+        // Re-enabling the lock must not retain an unlocked session from lock-OFF mode.
+        _financeUnlockedInSession.value = !enabled
     }
 
     fun setCustomFinancePin(rawPin: String) {

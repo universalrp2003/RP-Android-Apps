@@ -278,9 +278,9 @@ class MainActivity : ComponentActivity() {
                 pendingFinanceLockDisable = false
                 vm.postBanner(
                     if (prefs.tamil) {
-                        "போன் கைரேகை அமைக்கப்படவில்லை — கீழே வரவு-செலவு கடவுச்சொல் அமைத்துத் திறக்கவும்."
+                        "போன் திரைப் பூட்டை அமைத்து மீண்டும் முயலுங்கள். ஏற்கெனவே உள்ள வரவு-செலவு கடவுச்சொல்லால் கணக்கைப் பார்க்கலாம்."
                     } else {
-                        "No phone screen lock detected — set or enter a Finance password below."
+                        "Set up a phone screen lock and retry. An existing Finance password can still unlock the summary."
                     },
                 )
             }
