@@ -52,6 +52,15 @@ async def main():
     report = {'referencePackage': 'edge-tts', 'version': importlib.metadata.version('edge-tts'),
               'scope': 'CI synthetic monitoring only; not owner runtime or service recovery proof',
               'profiles': []}
+    # Advertised voice metadata is not audio availability. Preserve the distinction.
+    import edge_tts
+    try:
+        advertised = await asyncio.wait_for(edge_tts.list_voices(), timeout=20)
+        report['advertisedTamilIndia'] = [{'voice': v['ShortName'], 'gender': v['Gender']}
+                                          for v in advertised if v.get('Locale') == 'ta-IN']
+        print('::notice title=Reference advertised voices::' + json.dumps(report['advertisedTamilIndia']))
+    except Exception as error:
+        report['voiceMetadataErrorClass'] = type(error).__name__
     for voice, text in PROFILES:
         result = await sample(voice, text)
         report['profiles'].append(result)

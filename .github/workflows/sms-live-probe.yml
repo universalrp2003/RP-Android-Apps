@@ -49,6 +49,10 @@ jobs:
               print('::notice title=SMS test summary::' + ('LIVE ' if live else 'DETERMINISTIC ') +
                     'tests=' + root.get('tests', '?') + ' failures=' + root.get('failures', '?') +
                     ' errors=' + root.get('errors', '?') + ' skipped=' + root.get('skipped', '?'))
+              for output in root.findall('system-out'):
+                  for line in (output.text or '').splitlines():
+                      if line.startswith('SMS_LIVE_PROFILE '):
+                          print('::notice title=Kotlin live profile::' + line[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
               for case in root.findall('testcase'):
                   for failure in list(case.findall('failure')) + list(case.findall('error')):
                       text = (case.get('name', '') + ': ' + failure.get('message', ''))[:500]
