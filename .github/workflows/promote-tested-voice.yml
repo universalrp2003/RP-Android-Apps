@@ -85,7 +85,17 @@ jobs:
           assert notes.count('\n## தமிழ்\n') == 1
           pathlib.Path('/tmp/notes.md').write_text(notes.replace('\n## தமிழ்\n', receipt + '\n## தமிழ்\n'))
           PYNOTES
-          gh release create voice-notes-v1.3.2 "$apk" accepted-voice/Voice-Notes-v1.3.2.apk.sha256 --target 41f29c3f56fce9dd22fe1ec83f264863f7f107aa --title 'Voice Notes 1.3.2 — note visibility and playback fixes' --notes-file /tmp/notes.md
+          if gh release create voice-notes-v1.3.2 "$apk" accepted-voice/Voice-Notes-v1.3.2.apk.sha256 --target 41f29c3f56fce9dd22fe1ec83f264863f7f107aa --title 'Voice Notes 1.3.2 — note visibility and playback fixes' --notes-file /tmp/notes.md 2>/tmp/voice-publication-error; then
+            echo 'Created the exact-artifact Voice release.'
+          else
+            python3 - <<'PYERROR'
+          import pathlib, re
+          text = pathlib.Path('/tmp/voice-publication-error').read_text(errors='replace')[:1600]
+          text = re.sub(r'https?://\S+\?\S+', '[URL query omitted]', text)
+          print('::error title=Exact Voice publication blocked::' + text.replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+          PYERROR
+            exit 1
+          fi
           mkdir /tmp/published-voice
           gh release download voice-notes-v1.3.2 --pattern Voice-Notes-v1.3.2.apk --dir /tmp/published-voice
           test "$(sha256sum /tmp/published-voice/Voice-Notes-v1.3.2.apk | cut -d ' ' -f1)" = "$sha"
