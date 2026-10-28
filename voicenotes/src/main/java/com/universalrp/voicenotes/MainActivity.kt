@@ -225,7 +225,6 @@ fun VoiceNotesScreen(
     var listening by remember { mutableStateOf(false) }
     var speakingId by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf("") }
-    var searchQuery by remember { mutableStateOf("") }
     var showHelp by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<VoiceNote?>(null) }
     var editText by remember { mutableStateOf("") }
@@ -269,11 +268,6 @@ fun VoiceNotesScreen(
                 "HD குரல் வாசிக்க இணையம் தேவை. ரோபோ குரலுக்கு மாறாது.",
             )
         }
-    }
-
-    val visibleNotes = remember(notes, searchQuery) {
-        val query = searchQuery.trim()
-        if (query.isEmpty()) notes else notes.filter { it.text.contains(query, ignoreCase = true) }
     }
 
     val recognizer = remember {
@@ -359,7 +353,7 @@ fun VoiceNotesScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -399,8 +393,8 @@ fun VoiceNotesScreen(
             onDismissRequest = { showHelp = false },
             title = { Text(tr("Voice Notes · About / Guide", "குரல் குறிப்பு · பற்றி / வழிகாட்டி")) },
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text(tr("Tap the microphone to dictate; use play for HD voice, edit to correct, and the bin to delete. Search filters your notes. Dictation uses your phone's recognition service. HD playback sends selected text to the online neural voice service; no robotic fallback. Notes stay in app storage; uninstalling deletes them.",
-                    "மைக் பொத்தானால் பேசிப் பதிவு செய்யுங்கள். கேட்க play, திருத்த பென்சில், நீக்க குப்பைத்தொட்டி. தேடல் குறிப்புகளை வடிகட்டும். பேச்சறிதல் போனின் சேவையைப் பயன்படுத்தும். HD வாசிப்புக்கு தேர்ந்தெடுத்த உரை இணையக் குரல் சேவைக்கு அனுப்பப்படும்; இயந்திரக் குரல் மாற்றுவழி இல்லை. குறிப்புகள் செயலியில் சேமிக்கப்படும்; செயலியை நீக்கினால் அழியும்."))
+                Text(tr("Tap the microphone to dictate; use play for HD voice, edit to correct, and the bin to delete. Dictation uses your phone's recognition service. HD playback sends selected text to the online neural voice service; no robotic fallback. Notes stay in app storage; uninstalling deletes them.",
+                    "மைக் பொத்தானால் பேசிப் பதிவு செய்யுங்கள். கேட்க play, திருத்த பென்சில், நீக்க குப்பைத்தொட்டி. பேச்சறிதல் போனின் சேவையைப் பயன்படுத்தும். HD வாசிப்புக்கு தேர்ந்தெடுத்த உரை இணையக் குரல் சேவைக்கு அனுப்பப்படும்; இயந்திரக் குரல் மாற்றுவழி இல்லை. குறிப்புகள் செயலியில் சேமிக்கப்படும்; செயலியை நீக்கினால் அழியும்."))
                 Text(tr("Optional app lock uses Android biometrics or phone credentials; it is a local access gate, not note-file encryption. Keep your phone credential available. It relocks when you leave the app.",
                     "விருப்பப் பூட்டு Android கைரேகை அல்லது போன் திரைப் பூட்டைப் பயன்படுத்தும். இது அணுகல் பூட்டு; குறிப்புக் கோப்பு மறையாக்கம் அல்ல. போன் கடவுச்சொல்லை நினைவில் வைத்திருங்கள். வெளியே சென்றால் மீண்டும் பூட்டும்."))
                 TextButton(onClick = {
@@ -413,15 +407,6 @@ fun VoiceNotesScreen(
 
         com.universalrp.updates.StoreFirstUpdateNotice("voicenotes", tamil)
 
-        // ---------------------------------------------------------------- search
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            singleLine = true,
-            label = { Text(tr("Search notes", "குறிப்புகளைத் தேடுங்கள்")) },
-        )
-
         // ---------------------------------------------------------------- status line
         if (status.isNotEmpty()) {
             Text(
@@ -432,72 +417,11 @@ fun VoiceNotesScreen(
             )
         }
 
-        // ---------------------------------------------------------------- the notes
-        if (visibleNotes.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = tr(
-                        if (notes.isEmpty()) "No notes yet" else "No matching notes",
-                        if (notes.isEmpty()) "இன்னும் ஒரு குறிப்பும் இல்லை" else "பொருத்தமான குறிப்பு இல்லை",
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = tr(
-                        if (notes.isEmpty()) "Tap the microphone below and speak in Tamil. Notes are stored on this phone." else "Try a different search term.",
-                        if (notes.isEmpty()) "கீழே உள்ள மைக்கைத் தட்டி தமிழில் பேசுங்கள். குறிப்புகள் இந்தத் தொலைபேசியில் சேமிக்கப்படும்." else "வேறு சொல்லைத் தேடிப் பாருங்கள்.",
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 12.dp,
-                    vertical = 8.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(visibleNotes, key = { it.id }) { note ->
-                    NoteRow(
-                        note = note,
-                        tamil = tamil,
-                        speaking = speakingId == note.id,
-                        onSpeak = {
-                            if (showVoicePrivacy) {
-                                playNote(note)
-                            } else {
-                                pendingVoiceNote = note
-                            }
-                        },
-                        onEdit = {
-                            editingNote = note
-                            editText = note.text
-                        },
-                        onDelete = { persist(NoteStore.remove(notes, note.id)) },
-                    )
-                }
-            }
-        }
-
         // ---------------------------------------------------------------- microphone
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(8.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (listening) {
@@ -505,7 +429,7 @@ fun VoiceNotesScreen(
                     color = Accent,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(76.dp)
+                        .size(60.dp)
                         .clickable { recognizer?.stopListening() },
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -522,7 +446,7 @@ fun VoiceNotesScreen(
                     color = SurfaceHigh,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(76.dp)
+                        .size(60.dp)
                         .clickable {
                             if (recognizer == null) {
                                 status = tr(
@@ -560,6 +484,68 @@ fun VoiceNotesScreen(
                 }
             }
         }
+
+        // ---------------------------------------------------------------- the notes
+        if (notes.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = tr(
+                        "No notes yet",
+                        "இன்னும் ஒரு குறிப்பும் இல்லை",
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = tr(
+                        "Tap the microphone above to dictate. Notes are stored on this phone.",
+                        "மேலே உள்ள மைக்கைத் தட்டிப் பேசுங்கள். குறிப்புகள் இந்தத் தொலைபேசியில் சேமிக்கப்படும்.",
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 12.dp,
+                    vertical = 8.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(notes, key = { it.id }) { note ->
+                    NoteRow(
+                        note = note,
+                        tamil = tamil,
+                        speaking = speakingId == note.id,
+                        onSpeak = {
+                            if (showVoicePrivacy) {
+                                playNote(note)
+                            } else {
+                                pendingVoiceNote = note
+                            }
+                        },
+                        onEdit = {
+                            editingNote = note
+                            editText = note.text
+                        },
+                        onDelete = { persist(NoteStore.remove(notes, note.id)) },
+                    )
+                }
+            }
+        }
+
 
         Text(
             text = tr(

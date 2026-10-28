@@ -19,8 +19,11 @@ class VoiceNotesContractTest(unittest.TestCase):
         self.assertNotIn("android.speech.tts.TextToSpeech", MAIN)
         self.assertIn("SharedNeuralVoiceEngine.synthesizeRawMp3", SPEAKER)
 
-    def test_notes_can_be_searched_and_edited_without_changing_ids(self):
-        self.assertIn("notes.filter { it.text.contains(query, ignoreCase = true) }", MAIN)
+    def test_owner_requested_search_removed_but_edit_preserves_ids(self):
+        self.assertNotIn("searchQuery", MAIN)
+        self.assertNotIn('"Search notes"', MAIN)
+        self.assertIn("items(notes, key = { it.id })", MAIN)
+        self.assertLess(MAIN.index("// ---------------------------------------------------------------- microphone"), MAIN.index("// ---------------------------------------------------------------- the notes"))
         self.assertIn("NoteStore.update(notes, note.id, editText)", MAIN)
         self.assertIn("onEdit =", MAIN)
 
@@ -36,3 +39,13 @@ class VoiceNotesContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UpdateResultVisibilityTest(unittest.TestCase):
+    def test_check_reports_result_in_visible_dialog(self):
+        notice = (ROOT / "shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt").read_text()
+        self.assertIn("showResult = true", notice)
+        self.assertIn("if (showResult) AlertDialog(", notice)
+        self.assertIn("Update check unavailable; try later", notice)
+        self.assertIn("No newer stable version found", notice)
+        self.assertIn("Open Store / website", notice)

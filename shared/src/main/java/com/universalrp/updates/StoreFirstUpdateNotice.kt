@@ -2,6 +2,7 @@ package com.universalrp.updates
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -21,6 +22,7 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
     var checking by remember { mutableStateOf(false) }
     var offered by remember { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf("") }
+    var showResult by remember { mutableStateOf(false) }
     fun tr(en: String, ta: String) = if (tamil) ta else en
     LaunchedEffect(requested) {
         if (requested == 0) return@LaunchedEffect
@@ -61,11 +63,11 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
             message = if (offered == null) tr("No newer stable version found", "புதிய நிலையான பதிப்பு இல்லை") else ""
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { offered = null; message = tr("Update check unavailable; try later", "புதுப்பிப்பைச் சரிபார்க்க முடியவில்லை; பிறகு முயலுங்கள்") }
-        finally { checking = false }
+        finally { checking = false; showResult = true }
     }
     Column {
         Row {
-            TextButton(enabled = !checking, onClick = { requested++ }) {
+            TextButton(enabled = !checking, onClick = { checking = true; offered = null; message = ""; requested++ }) {
                 Text(tr(if (checking) "Checking…" else "Check updates", if (checking) "சரிபார்க்கிறது…" else "புதுப்பிப்பைச் சரிபார்"))
             }
             offered?.let { version ->
@@ -74,6 +76,19 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
                 }) { Text(tr("Update available · $version", "புதுப்பிப்பு உள்ளது · $version")) }
             }
         }
-        if (message.isNotBlank()) Text(message)
+        if (showResult) AlertDialog(
+            onDismissRequest = { showResult = false },
+            title = { Text(tr("Update check", "புதுப்பிப்பு சரிபார்ப்பு")) },
+            text = { Text(offered?.let { tr("Update available · $it", "புதுப்பிப்பு உள்ளது · $it") } ?: message) },
+            confirmButton = {
+                offered?.let {
+                    TextButton(onClick = {
+                        if (StoreUpdateRouter.open(context, appId)) showResult = false
+                        else { offered = null; message = tr("Cannot open Store or browser", "அங்காடி அல்லது உலாவியைத் திறக்க முடியவில்லை") }
+                    }) { Text(tr("Open Store / website", "அங்காடி / இணையதளம்")) }
+                } ?: TextButton(onClick = { showResult = false }) { Text(tr("Close", "மூடு")) }
+            },
+            dismissButton = { if (offered != null) TextButton(onClick = { showResult = false }) { Text(tr("Later", "பிறகு")) } }
+        )
     }
 }

@@ -39,3 +39,7 @@ Pending: CI/device verification of foundation, Pages live endpoint confirmation,
 - 142 Python tests passed. No new public application release or legacy installer removal at this checkpoint.
 
 NEXT: owner-device pilot verification (Store app-specific routing and website fallback), then background notification/skip-version policy and suite-wide migration. Existing Store 0.5/DailyVault 0.3 public releases remain available. These intermediate APKs retain the same version labels as the public base and are test artifacts only; final public rollout needs distinct version/code. Voice Notes and SMS Guard stable releases are not finished/published by this checkpoint.
+
+## Safety hold and latest UI feedback
+
+Owner's next screenshots show Play Protect “Harmful app blocked” for Store debug pilot and Expense Tracker. Do not infer false positive, DNS cause or resolution from “all working.” Suite rollout is paused pending exact detection text/hash/permission review; see play-protect-investigation.md. Do not recommend bypassing Play Protect. Voice Notes search field removed per owner, spacing reduced and update-check results moved into an explicit dialog. Source tests/localization passed; Android build pending. No claim of verified Store/browser fallback based solely on installation screenshots.
