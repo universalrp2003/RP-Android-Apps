@@ -1,0 +1,1 @@
+<resources><string name="app_name">தினக்கணக்கு சோதனை</string><style name="Theme.DailyVault" parent="android:style/Theme.Material.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">false</item></style></resources>

@@ -982,6 +982,12 @@ def verify_module_versions_match_sister_apps() -> int:
         pkg = re.search(r'namespace = "([^"]+)"', body)
         if not ver or not pkg:
             continue
+        if gradle.parent.name == "dailyvault":
+            if pkg.group(1) != "com.universalrp.dailyvault" or ver.group(1) != "0.1-preview":
+                raise ValueError("Daily vault preview identity/version changed; review publication gates")
+            if pkg.group(1) in by_package:
+                raise ValueError("Unpublished daily vault must not advertise a public release")
+            continue
         # Owner-approved isolated preview must not advertise a nonexistent public release.
         if gradle.parent.name == "tamilanstore":
             if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.1-preview":
