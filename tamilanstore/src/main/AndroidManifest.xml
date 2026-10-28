@@ -1,0 +1,26 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <queries>
+        <package android:name="com.universalrp.smsguard" />
+        <package android:name="com.universalrp.cleansweep" />
+        <package android:name="com.universalrp.tamilnadufm" />
+        <package android:name="com.universalrp.pulseeq" />
+        <package android:name="com.universalrp.vocalremover" />
+        <package android:name="com.oorarivippu.voiceannouncer" />
+        <package android:name="com.rpideas.secretmessage" />
+        <package android:name="com.universalrp.expensetracker" />
+        <package android:name="com.universalrp.voicenotes" />
+        <package android:name="com.universalrp.vasanthi" />
+        <package android:name="com.universalrp.podcast" />
+        <package android:name="com.universalrp.launcher" />
+    </queries>
+    <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="@string/app_name" android:icon="@drawable/ic_store" android:theme="@style/Theme.Tamilan">
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+        </activity>
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/apk_paths" />
+        </provider>
+    </application>
+</manifest>
