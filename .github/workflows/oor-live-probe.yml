@@ -1,0 +1,57 @@
+name: Oor live voice probe (monitoring only)
+# Dispatch may be unavailable to the integration. An explicit branch commit marker
+# permits a real external-service probe without publishing or weakening the assertion.
+on:
+  push:
+    branches: ["arena/6d87e1ec-rp-android-apps"]
+    paths: [".github/workflows/oor-live-probe.yml", "shared/src/main/java/com/universalrp/voice/SharedNeuralVoiceEngine.kt", "oorarivippu/src/test/java/com/oorarivippu/voiceannouncer/NeuralCloudVoiceEngineTest.kt"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[check-oor-live-voice]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Run actual Oor external synthesis assertion
+        env:
+          RP_RUN_LIVE_SPEECH_TEST: 'true'
+        run: gradle :oorarivippu:testDebugUnitTest --tests '*NeuralCloudVoiceEngineTest.livePlaceAnnouncementSynthesisWorksForTamilAndEnglishStudioVoices' --no-daemon --stacktrace
+      - name: Publish bounded test diagnostics as check annotations
+        if: always()
+        shell: python
+        run: |
+          import pathlib, xml.etree.ElementTree as ET
+          files = list(pathlib.Path('oorarivippu/build/test-results').rglob('TEST-*.xml'))
+          if not files:
+              print('::warning title=Oor probe::No JUnit XML produced; inspect build failure, not a voice-service verdict.')
+          for file in files:
+              root = ET.parse(file).getroot()
+              live = True
+              print('::notice title=Oor test summary::' + ('LIVE ' if live else 'DETERMINISTIC ') +
+                    'tests=' + root.get('tests', '?') + ' failures=' + root.get('failures', '?') +
+                    ' errors=' + root.get('errors', '?') + ' skipped=' + root.get('skipped', '?'))
+              for case in root.findall('testcase'):
+                  for failure in list(case.findall('failure')) + list(case.findall('error')):
+                      text = (case.get('name', '') + ': ' + failure.get('message', ''))[:500]
+                      text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+                      print('::error title=Oor test failure::' + text)
+      - name: Preserve live and deterministic results even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sms-live-probe-results
+          path: |
+            oorarivippu/build/test-results/
+            smsguard/build/reports/tests/
+          if-no-files-found: warn
+          retention-days: 14

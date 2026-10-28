@@ -173,7 +173,10 @@ class SeparationService : Service() {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
             foregroundStarted = false
         }
-        runCatching { NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification(paused)) }
+        if (android.os.Build.VERSION.SDK_INT < 33 || androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            runCatching { NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification(paused)) }
+        }
         stopSelf()
     }
 

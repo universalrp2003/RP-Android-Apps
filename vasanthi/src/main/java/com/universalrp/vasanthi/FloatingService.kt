@@ -671,6 +671,8 @@ class FloatingService : Service() {
         // The recogniser owns the microphone while it is listening. Opening here as well would
         // fail the very next attempt it makes.
         if (micWithRecognizer) return
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED) return
         val minBuffer = AudioRecord.getMinBufferSize(
             SoundClassifier.SAMPLE_RATE,
             AudioFormat.CHANNEL_IN_MONO,

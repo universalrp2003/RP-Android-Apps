@@ -84,6 +84,7 @@ data class UiState(
     val busy: Boolean = false,
 )
 
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private val ctx: Context = app.applicationContext

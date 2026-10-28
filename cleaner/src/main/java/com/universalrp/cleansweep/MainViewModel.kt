@@ -2288,33 +2288,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                         mutate { it.copy(aiDeviceResult = tr("Local scan complete. Review provider setup and network-sharing consent before AI identification.")) }
                         return@withTimeoutOrNull true
                     }
-            val listing = buildString {
-                // The network name is deliberately left out: it is the one detail the user
-                // asked never to show, and it is not needed to identify a device.
-                appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
-                appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
-                report.devices.forEach { device ->
-                    appendLine(
-                        "- ${device.ip}" +
-                            (if (device.isSelf) " (this phone)" else "") +
-                            (if (device.isGateway) " (router)" else "") +
-                            " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
-                            "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
-                            device.identity.type
+                    val listing = buildString {
+                        // The network name is deliberately left out: it is the one detail the user
+                        // asked never to show, and it is not needed to identify a device.
+                        appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
+                        appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
+                        report.devices.forEach { device ->
+                            appendLine(
+                                "- ${device.ip}" +
+                                    (if (device.isSelf) " (this phone)" else "") +
+                                    (if (device.isGateway) " (router)" else "") +
+                                    " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
+                                    "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
+                                    device.identity.type
+                            )
+                        }
+                    }
+                    val (result, fallbackNote, elapsedMs) = askWithFallback(
+                        systemPrompt = """
+                            You identify devices on a home Wi-Fi network from the evidence given.
+                            For each line say what the device probably is (phone, laptop, desktop, tablet,
+                            smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
+                            you are, and what else would confirm it. Never invent a brand the evidence does
+                            not support. Then add a short section on anything that looks unusual for a home
+                            network. Keep it under 300 words, bullet points, plain language.
+                        """.trimIndent() + "\n" + answerLanguageRule(),
+                        userPrompt = listing, config = config, allowSearch = false,
                     )
-                }
-            }
-            val (result, fallbackNote, elapsedMs) = askWithFallback(
-                systemPrompt = """
-                    You identify devices on a home Wi-Fi network from the evidence given.
-                    For each line say what the device probably is (phone, laptop, desktop, tablet,
-                    smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
-                    you are, and what else would confirm it. Never invent a brand the evidence does
-                    not support. Then add a short section on anything that looks unusual for a home
-                    network. Keep it under 300 words, bullet points, plain language.
-                """.trimIndent() + "\n" + answerLanguageRule(),
-                userPrompt = listing, config = config, allowSearch = false,
-            )
                     ensureActive(); if (mine != deviceAiRevision) return@withTimeoutOrNull false
                     mutate { it.copy(aiDeviceResult = if (result.ok) result.text + "\n\n— " + answerMeta(result, elapsedMs, fallbackNote)
                         else tr(AiFailurePolicy.message(result.error))) }
@@ -3119,33 +3119,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         deviceAiJob = viewModelScope.launch {
             try {
                 val completed = withTimeoutOrNull(90_000) {
-            val listing = buildString {
-                // The network name is deliberately left out: it is the one detail the user
-                // asked never to show, and it is not needed to identify a device.
-                appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
-                appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
-                report.devices.forEach { device ->
-                    appendLine(
-                        "- ${device.ip}" +
-                            (if (device.isSelf) " (this phone)" else "") +
-                            (if (device.isGateway) " (router)" else "") +
-                            " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
-                            "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
-                            device.identity.type
+                    val listing = buildString {
+                        // The network name is deliberately left out: it is the one detail the user
+                        // asked never to show, and it is not needed to identify a device.
+                        appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
+                        appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
+                        report.devices.forEach { device ->
+                            appendLine(
+                                "- ${device.ip}" +
+                                    (if (device.isSelf) " (this phone)" else "") +
+                                    (if (device.isGateway) " (router)" else "") +
+                                    " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
+                                    "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
+                                    device.identity.type
+                            )
+                        }
+                    }
+                    val (result, fallbackNote, elapsedMs) = askWithFallback(
+                        systemPrompt = """
+                            You identify devices on a home Wi-Fi network from the evidence given.
+                            For each line say what the device probably is (phone, laptop, desktop, tablet,
+                            smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
+                            you are, and what else would confirm it. Never invent a brand the evidence does
+                            not support. Then add a short section on anything that looks unusual for a home
+                            network. Keep it under 300 words, bullet points, plain language.
+                        """.trimIndent() + "\n" + answerLanguageRule(),
+                        userPrompt = listing, config = config, allowSearch = false,
                     )
-                }
-            }
-            val (result, fallbackNote, elapsedMs) = askWithFallback(
-                systemPrompt = """
-                    You identify devices on a home Wi-Fi network from the evidence given.
-                    For each line say what the device probably is (phone, laptop, desktop, tablet,
-                    smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
-                    you are, and what else would confirm it. Never invent a brand the evidence does
-                    not support. Then add a short section on anything that looks unusual for a home
-                    network. Keep it under 300 words, bullet points, plain language.
-                """.trimIndent() + "\n" + answerLanguageRule(),
-                userPrompt = listing, config = config, allowSearch = false,
-            )
                     ensureActive(); if (mine != deviceAiRevision) return@withTimeoutOrNull false
                     mutate { it.copy(aiDeviceResult = if (result.ok) result.text + "\n\n— " + answerMeta(result, elapsedMs, fallbackNote)
                         else tr(AiFailurePolicy.message(result.error))) }

@@ -22,7 +22,6 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify:
-    if: ${{ !contains(github.event.head_commit.message, '[read-handoff-reports]') }}
     strategy:
       fail-fast: false
       matrix:
@@ -45,13 +44,31 @@ jobs:
         run: |
           set -o pipefail
           gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:lintDebug :${{ matrix.module }}:assembleDebug --no-daemon --stacktrace 2>&1 | tee handoff-build.log
-      - name: Surface compiler diagnostics without unrestricted log downloads
+      - name: Surface compiler, unit and lint failures as bounded annotations
         if: failure()
+        shell: python
         run: |
-          grep -E '^e:|error:|Execution failed for task' handoff-build.log | head -30 | while read -r line; do
-            echo "::error title=${{ matrix.module }} build::$line"
-          done
-
+          import pathlib, xml.etree.ElementTree as ET
+          def report(text):
+              print('::error title=${{ matrix.module }} validation::' + text[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          log = pathlib.Path('handoff-build.log')
+          if log.exists():
+              for line in log.read_text(errors='replace').splitlines():
+                  if line.startswith('e:') or 'Execution failed for task' in line: report(line)
+          seen = set()
+          for file in pathlib.Path('${{ matrix.module }}/build').rglob('*.xml'):
+              if '/reports/' not in str(file) and '/test-results/' not in str(file): continue
+              try: root = ET.parse(file).getroot()
+              except ET.ParseError: continue
+              for issue in root.findall('issue'):
+                  if issue.get('severity') not in ('Error', 'Fatal'): continue
+                  location = issue.find('location')
+                  key = (issue.get('id'), str(location.attrib if location is not None else {}))
+                  if key in seen: continue
+                  seen.add(key)
+                  report(str(key) + ': ' + issue.get('message', ''))
+              for failure in root.findall('.//failure') + root.findall('.//error'):
+                  report(str(file) + ': ' + failure.get('message', ''))
       - name: Inspect actual merged APK for retired installer capability
         shell: bash
         run: |
@@ -75,41 +92,3 @@ jobs:
             ${{ matrix.module }}/build/reports/
             ${{ matrix.module }}/build/test-results/
           retention-days: 14
-
-  previous_reports:
-    strategy:
-      fail-fast: false
-      matrix:
-        module: [cleaner, radio, vocalremover, oorarivippu, vasanthi, expensetracker]
-    if: contains(github.event.head_commit.message, '[read-handoff-reports]')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          github-token: ${{ github.token }}
-          run-id: 40670992298
-          name: handoff-${{ matrix.module }}-reports
-          path: diagnostics
-      - name: Publish existing lint and unit failures as bounded annotations
-        shell: python
-        run: |
-          import pathlib, xml.etree.ElementTree as ET
-          count = 0
-          seen = set()
-          for file in pathlib.Path('diagnostics').rglob('*.xml'):
-              try: root = ET.parse(file).getroot()
-              except ET.ParseError: continue
-              for issue in root.findall('issue'):
-                  if issue.get('severity') not in ('Error', 'Fatal'): continue
-                  key = (issue.get('id'), issue.find('location').get('file') if issue.find('location') is not None else '')
-                  if key in seen: continue
-                  seen.add(key)
-                  location = issue.find('location')
-                  text = str(file) + ': ' + issue.get('id', '') + ': ' + issue.get('message', '') + ' LOCATION=' + str(location.attrib if location is not None else {})
-                  print('::error title=Recorded lint failure::' + text[:900].replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
-                  count += 1
-              for failure in root.findall('.//failure') + root.findall('.//error'):
-                  text = str(file) + ': ' + failure.get('message', '')
-                  print('::error title=Recorded unit failure::' + text[:900].replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
-                  count += 1
-          print('::notice title=Report diagnostics::Recorded failure count=' + str(count))

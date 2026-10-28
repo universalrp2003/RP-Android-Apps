@@ -265,6 +265,8 @@ object MobileNet {
 
         try {
             dataEnabled = tm.isDataEnabled
+        } catch (e: SecurityException) {
+            // Permission can be revoked between the availability check and this read.
         } catch (e: Exception) {
             // Not readable on every phone without extra permissions.
         }
