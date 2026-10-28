@@ -43,3 +43,11 @@ class HdVoicePolicyTest(unittest.TestCase):
         self.assertNotIn('vasanthi-ai-v1.2.4',site)
         self.assertIn("if (err.message === 'SHA-256 mismatch')",site)
         self.assertIn('Integrity failure must never become an unchecked direct download',site)
+
+    def test_optional_model_monitoring_is_direct_and_never_silently_passes_dns(self):
+        source = (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text()
+        self.assertIn('allowVoiceFallback = false',source)
+        self.assertNotIn('repeat(3)',source)
+        self.assertNotIn('if (!reachable) return',source)
+        reference = (ROOT/'tools/probe_edge_reference.py').read_text()
+        self.assertNotIn("('ta-IN-ValluvarNeural',",reference)

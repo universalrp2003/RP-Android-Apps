@@ -890,7 +890,7 @@ class SmsGuardEngineTest {
         assertTrue("Live probe DNS unavailable: synthesis was not executed; no successful audio claimed", reachable)
 
         val voicesToVerify = listOf(
-            "ta-IN-ValluvarNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",
+            "ta-MY-SuryaNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",
             "ta-IN-PallaviNeural" to "ஸ்டேட் பேங்க் ஆஃப் இந்தியா. ரூபாய் 500 வரவு.",
             "en-IN-PrabhatNeural" to "State Bank of India. Rupees 500 received.",
             "en-IN-NeerjaNeural" to "SMS Guard online voice protection active.",
