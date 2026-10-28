@@ -8,7 +8,7 @@
 - Store Google Play/F-Droid About wording removed in Tamil and English. Run 40659196161 passed unit/lint/build.
 - Website catalog generation passes against 12 public releases, but branch build success is not Pages deployment: deploy job is main-only. Main catalog integration remains pending.
 - SMS Finance candidate was owner-tested. Deterministic full gate passed previously; dedicated live external test is separate, and fresh real probe 40659911399 executed and failed: Valluvar synthesis returned null (1 live failure; deterministic suites passed). External service recovery remains unresolved.
-- Distinct signed public SMS/Voice versions, optional daily/version-suppressed reminders, suite installer removal and final public catalog/site synchronization remain unfinished.
+- Distinct signed candidates now verified: Voice Notes1.3/code4 (40661909175) and SMS Guard1.1.10/code16 (40662052275), not public/exact-byte device-tested. In-app opt-in daily/skip reminders implemented; system/background notifications, suite installer removal, website deployment and public release synchronization remain unfinished.
 - Play Protect blocked Store debug/Expense Tracker screenshots: no bypass, no claim of false positive; await exact detection text and blocked-byte identity. This blocks affected public rollout, not safe source work.
 - Preserve notes, financial data, signers and all old public assets.
 

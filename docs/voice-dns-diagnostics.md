@@ -14,3 +14,7 @@ Owner/friend checks:
 Future diagnostic UI should distinguish DNS lookup failure, timeout, TLS failure, HTTP rejection and no audio, without logging note/SMS text, URLs containing tokens or credentials. UnknownHostException alone does not prove intentional blocking by NextDNS. Do not silently substitute robotic output in apps with an HD-only contract. Never announce OTP codes.
 
 Status: endpoint source verified; actual NextDNS profile blocking and live synthesis not verified.
+
+## Fresh CI transport evidence
+
+Run40662034689 (28 October2026) completed DNS/TLS/WebSocket upgrade (HTTP101), then received peer close1011 with no audio, twice within the bounded retry policy. These specific attempts were not DNS-blocked or HTTP403. Do not generalize to the owner's NextDNS profile or all devices. SMS voice normalization now matches upstream canonical voice names; runtime default timeout unchanged. Live MP3 assertion still fails, so remote synthesis is not certified healthy.
