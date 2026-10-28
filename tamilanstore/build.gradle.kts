@@ -14,8 +14,8 @@ android {
         applicationId = "com.universalrp.tamilanstore"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.4-preview"
+        versionCode = 5
+        versionName = "0.5"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }

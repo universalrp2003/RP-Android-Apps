@@ -96,7 +96,7 @@ class MainActivity : ComponentActivity() {
                             Row(Modifier.fillMaxWidth().paint(painterResource(R.drawable.tamil_landscape), sizeToIntrinsics = false, contentScale = ContentScale.FillBounds), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column(Modifier.weight(1f).padding(top = 14.dp)) {
                                     Text(bi("தமிழன்", "Tamilan"), style = MaterialTheme.typography.headlineSmall)
-                                    Text(bi("செயலி அங்காடி · சோதனை", "App store · preview"), style = MaterialTheme.typography.labelMedium)
+                                    Text(bi("செயலி அங்காடி", "App store"), style = MaterialTheme.typography.labelMedium)
                                 }
                                 TextButton(onClick = { tamil = !tamil; getPreferences(0).edit().putBoolean("tamil", tamil).apply() }) { Text(if (tamil) "English" else "தமிழ்") }
                             }
@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
                             Card(Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(12.dp), verticalArrangement=Arrangement.spacedBy(6.dp)) {
                                     Text(bi("தமிழன் · நிறுவியது $ownVersion", "Tamilan · installed $ownVersion"),style=MaterialTheme.typography.titleSmall)
-                                    Text(bi("Preview APK இப்போது build பக்கத்தில் மட்டுமே. அதிகாரப்பூர்வ stable வெளியீடு இருந்தால் இங்கே பார்க்கலாம். தானாக நிறுவாது.", "Preview APKs currently come from build artifacts. Check below for a public stable release. No automatic installation."),style=MaterialTheme.typography.bodySmall)
+                                    Text(bi("அதிகாரப்பூர்வ புதிய வெளியீட்டை இங்கே சரிபார்க்கலாம். தானாக நிறுவாது.", "Check for a newer official release below. No automatic installation."),style=MaterialTheme.typography.bodySmall)
                                     TextButton(enabled=!checkingSelf,onClick={
                                         checkingSelf=true;selfRelease=null;selfMessage=""
                                         scope.launch {
@@ -143,7 +143,7 @@ class MainActivity : ComponentActivity() {
                         }
                         if (showAbout) item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(bi("தமிழன் · சோதனை 0.4. நமது 12 செயலிகள். கணக்கு, விளம்பரம் இல்லை. Google Play / F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Tamilan · preview 0.4. Our 12 apps, no account or ads. Not an official Google Play / F-Droid store."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("தமிழன் · 0.5. நமது 12 செயலிகள். கணக்கு, விளம்பரம் இல்லை. Google Play / F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Tamilan · 0.5. Our 12 apps, no account or ads. Not an official Google Play / F-Droid store."), style = MaterialTheme.typography.bodySmall)
                                 Text(bi("பட்டியல்: 28 அக்டோபர் 2026. நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். சாதனத்தில் நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Catalog: 28 October 2026 snapshot. Installed versions compared locally only. Check the website for new releases; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = {
                                     val enable = !UpdateNotifications.enabled(this@MainActivity)
