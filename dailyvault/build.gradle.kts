@@ -14,8 +14,8 @@ android {
         applicationId = "com.universalrp.dailyvault"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "0.4"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }

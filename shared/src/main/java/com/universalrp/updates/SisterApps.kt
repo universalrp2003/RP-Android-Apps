@@ -1,7 +1,7 @@
 package com.universalrp.updates
 
 /**
- * One list, all twelve RP Ideas Android apps + official project links.
+ * One list, all fourteen RP Ideas Android apps + official project links.
  *
  * Every app's About screen renders this shared directory so adding or bumping an app
  * keeps every app in sync automatically.
@@ -44,7 +44,7 @@ object SisterApps {
             name = "SMS Guard (குறுஞ்செய்தி காவலன்)",
             tamilName = "குறுஞ்செய்தி காவலன்",
             tagPrefix = "sms-guard",
-            version = "1.1.10",
+            version = "1.1.11",
             publishedVersion = "1.1.9",
             packageName = "com.universalrp.smsguard",
             aboutLabel = "SMS Guard (குறுஞ்செய்தி காவலன்) — GitHub release",
@@ -119,7 +119,7 @@ object SisterApps {
             name = "Voice Notes",
             tamilName = "குரல் குறிப்பு",
             tagPrefix = "voice-notes",
-            version = "1.3.2",
+            version = "1.3.3",
             publishedVersion = "1.2",
             packageName = "com.universalrp.voicenotes",
             aboutLabel = "Voice Notes — GitHub release",
@@ -153,16 +153,28 @@ object SisterApps {
             packageName = "com.universalrp.launcher",
             aboutLabel = "Elderly Launcher — GitHub release",
         ),
+        SisterApp(
+            id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
+            tagPrefix = "tamilan-store", version = "0.6", publishedVersion = "0.5",
+            packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
+        ),
+        SisterApp(
+            id = "dailyvault", name = "DailyVault", tamilName = "தினக்கணக்கு",
+            tagPrefix = "daily-vault", version = "0.4", publishedVersion = "0.3",
+            packageName = "com.universalrp.dailyvault", aboutLabel = "தினக்கணக்கு / DailyVault — GitHub release",
+        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.5",
+        "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.3",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
     )
 
-    /** `label to url` for all twelve RP Ideas Android apps. */
+    /** `label to url` for all fourteen RP Ideas Android apps. */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 

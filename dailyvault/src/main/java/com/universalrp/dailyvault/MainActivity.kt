@@ -80,6 +80,15 @@ class MainActivity: FragmentActivity() {
                         item { TextButton(onClick={showHelp=!showHelp}) { Text(bi("உதவி / வழிகாட்டி / பற்றி", "Help / Guide / About")) } }
                         if (showHelp) item {
                             Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                Text(bi("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
+                                listOf(
+                                    bi("இணையதளம்", "Website") to "https://universalrp2003.github.io/RP-Android-Apps/",
+                                    bi("மூல நிரல் / GitHub", "Source / GitHub") to "https://github.com/universalrp2003/RP-Android-Apps",
+                                    bi("தமிழன் அங்காடி", "Tamilan Store") to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.5",
+                                    bi("புதுப்பிப்பைப் பார்", "Check updates") to "https://universalrp2003.github.io/RP-Android-Apps/#st-dailyvault",
+                                ).forEach { (label,url) ->
+                                    TextButton(onClick={runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }}) { Text(label) }
+                                }
                                 Text(bi("தினக்கணக்கு · வழிகாட்டி", "DailyVault · Guide"),style=MaterialTheme.typography.titleMedium)
                                 Text(bi("பதிவு சேர் மூலம் செலவு அல்லது தனிக் குறிப்பை எழுதுங்கள். செலவுத் தொகைகள் தானாகக் கூட்டப்படும். தேதி, நேரம், வகை மற்றும் விவரங்களைச் சரிபார்த்து சேமிக்கவும். தேடல் மூலம் பழைய பதிவுகளைக் கண்டறியலாம்.", "Use Add record for spending or a private note. Spending amounts are totalled automatically. Check date, time, category and details before saving. Search finds saved records."))
                                 Text(bi("பூட்டு அமைப்புகளில் கடவுச்சொல், சாதனப் பூட்டு அல்லது பூட்டு வேண்டாம் என்பதைத் தேர்ந்தெடுக்கலாம். பூட்டு இல்லாமல் போனைப் பயன்படுத்துபவர் பதிவுகளைப் பார்க்கலாம்.", "Lock settings offers password, device authentication or no app lock. No-lock mode allows anyone using the phone to view records."))

@@ -40,3 +40,21 @@ class ReadOnlyFallbackTest(unittest.TestCase):
         notice = (ROOT/'shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt').read_text()
         self.assertIn('catch (unavailable: java.io.IOException)', notice)
         self.assertIn('OfficialReleaseVersion.latest(app)', notice)
+
+
+class CatalogEndpointCompatibilityTest(unittest.TestCase):
+    def test_old_store_keeps_twelve_entries_new_store_gets_dailyvault(self):
+        import tempfile
+        snapshot=json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            module.write_catalogs(snapshot,directory)
+            legacy=json.loads((Path(directory)/'catalog.json').read_text())
+            current=json.loads((Path(directory)/'catalog-v2.json').read_text())
+        self.assertEqual(12,len(legacy['apps']))
+        self.assertEqual(13,len(current['apps']))
+        self.assertNotIn('dailyvault',{a['id'] for a in legacy['apps']})
+        self.assertIn('dailyvault',{a['id'] for a in current['apps']})
+        self.assertEqual(legacy,json.loads((ROOT/'site/catalog.json').read_text()))
+        self.assertEqual(current,json.loads((ROOT/'site/catalog-v2.json').read_text()))
+        source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
+        self.assertIn('"catalog-v2.json"',source)

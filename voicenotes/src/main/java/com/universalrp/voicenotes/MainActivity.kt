@@ -430,6 +430,11 @@ fun VoiceNotesScreen(
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {
                 Text(tr("Tap the microphone to dictate; use play for HD voice, edit to correct, and the bin to delete. Dictation uses your phone's recognition service. HD playback sends selected text to the online neural voice service; no robotic fallback. Notes stay in app storage; uninstalling deletes them.",
                     "மைக் பொத்தானால் பேசிப் பதிவு செய்யுங்கள். கேட்க play, திருத்த பென்சில், நீக்க குப்பைத்தொட்டி. பேச்சறிதல் போனின் சேவையைப் பயன்படுத்தும். HD வாசிப்புக்கு தேர்ந்தெடுத்த உரை இணையக் குரல் சேவைக்கு அனுப்பப்படும்; இயந்திரக் குரல் மாற்றுவழி இல்லை. குறிப்புகள் செயலியில் சேமிக்கப்படும்; செயலியை நீக்கினால் அழியும்."))
+                Text(tr("Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.", "உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode."))
+                Text(tr("If a voice is unavailable, another HD voice in the same language is tried. Its region or gender may differ; your saved preference is unchanged.", "ஒரு குரல் கிடைக்காவிட்டால் அதே மொழியில் மற்றொரு உயர்தரக் குரல் முயற்சிக்கப்படும். அதன் வட்டாரமோ ஆண்/பெண் வகையோ மாறலாம்; உங்கள் விருப்பத் தேர்வு மாற்றப்படாது."))
+                com.universalrp.updates.SisterApps.projectLinks().forEach { (label,url) ->
+                    TextButton(onClick={runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,android.net.Uri.parse(url))) }}) { Text(label) }
+                }
                 Text(tr("Optional app lock uses Android biometrics or phone credentials; it is a local access gate, not note-file encryption. Keep your phone credential available. It relocks when you leave the app.",
                     "விருப்பப் பூட்டு Android கைரேகை அல்லது போன் திரைப் பூட்டைப் பயன்படுத்தும். இது அணுகல் பூட்டு; குறிப்புக் கோப்பு மறையாக்கம் அல்ல. போன் கடவுச்சொல்லை நினைவில் வைத்திருங்கள். வெளியே சென்றால் மீண்டும் பூட்டும்."))
                 TextButton(onClick = {

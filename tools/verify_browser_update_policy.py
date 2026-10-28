@@ -54,8 +54,8 @@ def verify_workflow(source):
 def verify_sources():
     verify_workflow((ROOT / '.github/workflows/build-apk.yml').read_text())
     suite = (ROOT / 'shared/src/main/java/com/universalrp/updates/SuiteAbout.kt').read_text()
-    if not re.search(r'if \(appId in setOf\("podcast", "launcher"\)\)\s*\{\s*BrowserReleaseUpdates\(prefix\)', suite):
-        raise ValueError('The two apps are not routed to browser-only releases')
+    if not re.search(r'if \(appId in setOf\("podcast", "launcher", "expensetracker"\)\)\s*\{\s*BrowserReleaseUpdates\(prefix\)', suite):
+        raise ValueError('The offline/browser-only apps are not routed to browser-only releases')
     for module in MODULES:
         verify_manifest((ROOT / module / 'src/main/AndroidManifest.xml').read_text())
         entry = 'src/main/java/com/universalrp/pulseeq/ui/AboutScreen.kt' if module == 'equalizer' else f'src/main/java/com/universalrp/{module}/MainActivity.kt'

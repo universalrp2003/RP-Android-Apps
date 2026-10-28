@@ -71,7 +71,9 @@ class MainActivity : ComponentActivity() {
         AppLanguageState.initialize(this)
 
         setContent {
-            MaterialTheme {
+            MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(
+                primary = Accent, background = Background, surface = Card, onSurface = TextPrimary, onBackground = TextPrimary,
+            )) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Background) {
                     ExpenseScreen(onRequestSms = ::ensureSmsPermission)
                 }
@@ -118,6 +120,7 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
     var transactions by remember { mutableStateOf(LedgerWriter.load(context)) }
     var month by remember { mutableStateOf(YearMonth.now(ZoneId.systemDefault())) }
     var scanning by remember { mutableStateOf(false) }
+    var showAbout by remember { mutableStateOf(false) }
     var hasPermission by remember {
         mutableStateOf(SmsInbox.hasPermission(context))
     }
@@ -179,6 +182,11 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
         TransactionStore.monthTotals(transactions, month)
     }
 
+    if (showAbout) {
+        com.universalrp.updates.SuiteAbout("expensetracker", "Expense-Tracker") { showAbout = false }
+        return
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -188,6 +196,9 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
             .statusBarsPadding()
             .navigationBarsPadding(),
     ) {
+        androidx.compose.material3.TextButton(onClick = { showAbout = true }) {
+            Text(tr("About / updates", "செயலி விவரம் / புதுப்பிப்பு"), color = Accent)
+        }
         // ------------------------------------------------------------------ header
         Row(
             modifier = Modifier
@@ -197,7 +208,7 @@ fun ExpenseScreen(onRequestSms: (() -> Unit) -> Unit) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = tr("செலவு கண்காணிப்பு", "Expense Tracker"),
+                    text = tr("Expense Tracker", "செலவு கண்காணிப்பு"),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,

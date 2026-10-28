@@ -38,6 +38,15 @@ def generate(snapshot, releases):
         apps.append(dict(app, version=version, url=asset['browser_download_url'], size=asset['size'], sha256=asset['digest'][7:], releaseUrl=f'https://github.com/{REPO}/releases/tag/{release["tag_name"]}'))
     return dict(snapshot, apps=apps)
 
+def write_catalogs(result, directory):
+    # Store0.5 requires exactly12 entries. Keep its endpoint compatible while0.6 adds DailyVault.
+    directory = Path(directory)
+    directory.joinpath('catalog-v2.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
+    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] != 'dailyvault'])
+    if len(legacy['apps']) != 12:
+        raise ValueError('Legacy Store endpoint must retain exactly12 approved suite entries')
+    directory.joinpath('catalog.json').write_text(json.dumps(legacy, ensure_ascii=False, indent=2)+'\n')
+
 def main():
     headers = {'Accept': 'application/vnd.github+json', 'User-Agent': 'RP-Store-Catalog'}
     if os.environ.get('GH_TOKEN'):
@@ -54,7 +63,7 @@ def main():
         raise ValueError('Release feed exceeded pagination limit')
     snapshot = json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
     result = generate(snapshot, releases)
-    (ROOT/'site/catalog.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
+    write_catalogs(result, ROOT/'site')
 
 if __name__ == '__main__':
     main()

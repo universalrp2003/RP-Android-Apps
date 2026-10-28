@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 PROFILES = [
-    ('ta-IN-ValluvarNeural', 'வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.'),
+    ('ta-MY-SuryaNeural', 'வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.'),
     ('ta-IN-PallaviNeural', 'வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.'),
     ('en-IN-PrabhatNeural', 'SMS Guard online voice protection active.'),
     ('en-IN-NeerjaNeural', 'SMS Guard online voice protection active.'),

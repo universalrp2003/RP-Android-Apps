@@ -72,6 +72,8 @@ fun GuideScreen(
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(bottom = 4.dp),
         )
+        Text(if (tamil) "உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas" else "Created by Rameshprathap R · RP Ideas", color = mutedColor)
+        Text(if (tamil) "மென்பொருள் உதவி: Arena.ai Agent Mode" else "Software assistance: Arena.ai Agent Mode", color = mutedColor)
         content.topics.forEach { topic ->
             val isOpen = openTitle == topic.title
             Column(

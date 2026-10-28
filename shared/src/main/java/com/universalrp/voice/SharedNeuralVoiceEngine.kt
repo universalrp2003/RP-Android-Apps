@@ -49,11 +49,11 @@ data class CuratedNeuralVoiceProfile(
 
 /**
  * Shared Studio Ultra-HD Online Neural Voice synthesis & playback engine for RP Ideas apps:
- * - 10 curated Studio Ultra-HD voices (5 Male HD + 5 Female HD across all 4 official world Tamil
- *   studios ta-IN / ta-LK / ta-SG / ta-MY + 2026 flagship Multilingual & Expressive English studios)
+ * - 10 curated neural profiles (5 male + 5 female; regional Tamil models are shared across presets in
+ *   ta-IN / ta-LK / ta-SG / ta-MY, plus English neural models)
  * - Automatic Daily Male <-> Female voice rotation ON by default (Day 1 Male -> Day 2 Female ...)
  * - Local LRU MP3 disk cache for instant 0ms replay of repeated alerts & town announcements
- * - Fast bounded timeouts so offline / no-signal travel immediately falls back to System TTS.
+ * - Fast bounded timeouts with distinct same-language HD alternatives; no new device-TTS fallback.
  */
 object SharedNeuralVoiceEngine {
 
@@ -62,9 +62,9 @@ object SharedNeuralVoiceEngine {
         CuratedNeuralVoiceProfile(
             id = "online_male_1",
             gender = NeuralVoiceGender.MALE,
-            titleEn = "👨 Male HD 1 · Valluvar / Prabhat (India Studio Ultra-HD)",
-            titleTa = "👨 ஆண் குரல் 1 · வள்ளுவர் / பிரபாத் (இந்திய Ultra-HD)",
-            tamilNeuralId = "ta-IN-ValluvarNeural",
+            titleEn = "👨 Male HD 1 · Surya / Prabhat (Tamil / English HD)",
+            titleTa = "👨 ஆண் குரல் 1 · சூர்யா / பிரபாத் (தமிழ் / ஆங்கில உயர்தரம்)",
+            tamilNeuralId = "ta-MY-SuryaNeural",
             englishNeuralId = "en-IN-PrabhatNeural",
         ),
         CuratedNeuralVoiceProfile(
@@ -94,9 +94,9 @@ object SharedNeuralVoiceEngine {
         CuratedNeuralVoiceProfile(
             id = "online_male_5",
             gender = NeuralVoiceGender.MALE,
-            titleEn = "👨 Male HD 5 · Valluvar Bass / William HD (Rich FM Studio)",
-            titleTa = "👨 ஆண் குரல் 5 · வள்ளுவர் பேஸ் / வில்லியம் (இனிய FM HD)",
-            tamilNeuralId = "ta-IN-ValluvarNeural",
+            titleEn = "👨 Male HD 5 · Anbu Bass / William HD (Rich FM Studio)",
+            titleTa = "👨 ஆண் குரல் 5 · அன்பு பேஸ் / வில்லியம் (இனிய FM HD)",
+            tamilNeuralId = "ta-SG-AnbuNeural",
             englishNeuralId = "en-AU-WilliamNeural",
             pitchTa = "-4Hz",
             pitchEn = "+0Hz",
@@ -105,10 +105,10 @@ object SharedNeuralVoiceEngine {
         CuratedNeuralVoiceProfile(
             id = "online_female_1",
             gender = NeuralVoiceGender.FEMALE,
-            titleEn = "👩 Female HD 1 · Pallavi / Neerja Expressive (India Ultra-HD)",
+            titleEn = "👩 Female HD 1 · Pallavi / Neerja (India Ultra-HD)",
             titleTa = "👩 பெண் குரல் 1 · பல்லவி / நீரஜா (இந்திய Ultra-HD)",
             tamilNeuralId = "ta-IN-PallaviNeural",
-            englishNeuralId = "en-IN-NeerjaExpressiveNeural",
+            englishNeuralId = "en-IN-NeerjaNeural",
         ),
         CuratedNeuralVoiceProfile(
             id = "online_female_2",
@@ -352,7 +352,7 @@ object SharedNeuralVoiceEngine {
 
     /**
      * Synthesizes a curated voice profile to cached 24kHz MP3, automatically falling back to
-     * primary India Neural voice if a regional edge model transiently hiccups.
+     * another HD voice in the same language within one total deadline.
      */
     fun synthesizeProfileToFileOrNull(
         cacheDir: File?,
@@ -366,32 +366,10 @@ object SharedNeuralVoiceEngine {
         val primaryPitch = if (useTamil) profile.pitchTa else profile.pitchEn
         val rate = rateFromPercent(ratePercent)
 
-        synthesizeToFileOrNull(
-            cacheDir = cacheDir,
-            text = text,
-            neuralVoiceName = primaryVoice,
-            rate = rate,
-            pitch = primaryPitch,
-            timeoutMs = timeoutMs,
-        )?.let { return it }
-
-        val fallbackVoice = when {
-            useTamil && profile.gender == NeuralVoiceGender.FEMALE -> "ta-IN-PallaviNeural"
-            useTamil -> "ta-IN-ValluvarNeural"
-            profile.gender == NeuralVoiceGender.FEMALE -> "en-IN-NeerjaNeural"
-            else -> "en-IN-PrabhatNeural"
-        }
-        if (fallbackVoice != primaryVoice) {
-            return synthesizeToFileOrNull(
-                cacheDir = cacheDir,
-                text = text,
-                neuralVoiceName = fallbackVoice,
-                rate = rate,
-                pitch = primaryPitch,
-                timeoutMs = 2800L,
-            )
-        }
-        return null
+        return synthesizeToFileOrNull(
+            cacheDir = cacheDir, text = text, neuralVoiceName = primaryVoice,
+            rate = rate, pitch = primaryPitch, timeoutMs = timeoutMs,
+        )
     }
 
     /**
@@ -409,7 +387,9 @@ object SharedNeuralVoiceEngine {
     ): File? {
         val voice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
         val pitch = if (useTamil) profile.pitchTa else profile.pitchEn
-        return cachedFileOrNull(cacheDir, text, voice, rateFromPercent(ratePercent), pitch)
+        return NeuralVoiceFailover.candidates(voice).firstNotNullOfOrNull { candidate ->
+            cachedFileOrNull(cacheDir, text, candidate, rateFromPercent(ratePercent), pitch)
+        }
     }
 
     private fun cachedFileOrNull(
@@ -438,30 +418,35 @@ object SharedNeuralVoiceEngine {
         val trimmed = text.trim().take(1200)
         if (trimmed.isEmpty()) return null
 
-        val cacheKey = sha256Hex("v2|$neuralVoiceName|$rate|$pitch|$trimmed")
+        var cacheKey = sha256Hex("v2|$neuralVoiceName|$rate|$pitch|$trimmed")
         val targetDir = cacheDir?.let { File(it, "rp_neural_hd_tts").apply { mkdirs() } }
-        val cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        var cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 256L) {
             return cachedFile
         }
 
+        var selectedVoice = neuralVoiceName
         val mp3Bytes = synthesizeRawMp3(
             text = trimmed,
             voiceName = neuralVoiceName,
             rate = rate,
             pitch = pitch,
             timeoutMs = timeoutMs,
+            onVoiceSelected = { selectedVoice = it },
         ) ?: return null
 
         if (mp3Bytes.size < 256) return null
+        cacheKey = sha256Hex("v2|$selectedVoice|$rate|$pitch|$trimmed")
+        cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        val outputFile = cachedFile
 
-        return if (targetDir != null && cachedFile != null) {
+        return if (targetDir != null && outputFile != null) {
             runCatching {
                 pruneCacheIfNeeded(targetDir)
                 val tmp = File(targetDir, "$cacheKey.tmp")
                 tmp.writeBytes(mp3Bytes)
-                tmp.renameTo(cachedFile)
-                if (cachedFile.exists() && cachedFile.length() > 256L) cachedFile else tmp
+                tmp.renameTo(outputFile)
+                if (outputFile.exists() && outputFile.length() > 256L) outputFile else tmp
             }.getOrNull()
         } else {
             val temp = File.createTempFile("rp_neural_hd_", ".mp3")
@@ -530,23 +515,13 @@ object SharedNeuralVoiceEngine {
         rate: String = "+0%",
         pitch: String = "+0Hz",
         timeoutMs: Long = 4200L,
+        allowVoiceFallback: Boolean = true,
+        onVoiceSelected: ((String) -> Unit)? = null,
     ): ByteArray? {
-        val started = System.nanoTime()
-        val peerCode = java.util.concurrent.atomic.AtomicInteger(0)
-        val firstAttempt = streamWebSocketOnce(
-            text = text,
-            voiceName = formatServerVoiceName(voiceName),
-            rate = rate,
-            pitch = pitch,
-            timeoutMs = timeoutMs,
-            onPeerClosing = { peerCode.set(it) },
-        )
-        if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
-        val remaining = NeuralRetryPolicy.remainingBudget(timeoutMs,
-            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), peerCode.get())
-        if (remaining == 0L) return null
-        return streamWebSocketOnce(text, formatServerVoiceName(voiceName), rate, pitch, remaining,
-            allowClockRetry = false)
+        return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
+            onSelected = onVoiceSelected ?: {}) { candidate, budget ->
+            streamWebSocketOnce(text, formatServerVoiceName(candidate), rate, pitch, budget)
+        }
     }
 
     private fun streamWebSocketOnce(
@@ -555,7 +530,6 @@ object SharedNeuralVoiceEngine {
         rate: String,
         pitch: String,
         timeoutMs: Long,
-        allowClockRetry: Boolean = true,
         onPeerClosing: ((Int) -> Unit)? = null,
     ): ByteArray? {
         val attemptStarted = System.nanoTime()
@@ -660,21 +634,20 @@ object SharedNeuralVoiceEngine {
         )
 
         val waitBudget = (timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)).coerceAtLeast(0L)
-        val finished = runCatching { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }.getOrDefault(false)
+        val finished = try { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }
+        catch (_: InterruptedException) { Thread.currentThread().interrupt(); false }
         if (!finished) {
             runCatching { ws.cancel() }
         }
 
         val serverDateHeader = saw403ServerDate.get()
-        if (allowClockRetry && serverDateHeader != null) {
+        if (serverDateHeader != null) {
             val parsedEpoch = runCatching {
                 ZonedDateTime.parse(serverDateHeader, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond().toDouble()
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                val remaining = timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
-                if (remaining > 0) return streamWebSocketOnce(text, voiceName, rate, pitch, remaining,
-                    allowClockRetry = false, onPeerClosing = onPeerClosing)
+                // The next DISTINCT HD voice uses the corrected clock. No same-voice retry.
             }
         }
 

@@ -44,6 +44,8 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              ("tamilan-store-v0.5", "Tamilan-Store-v0.5.apk", 16912504, "d5f41e7b5142507e8b42fb9d2c4e0e2d492eaf03581a53b3dabacf692daf4bc7"),
+              ("daily-vault-v0.3", "DailyVault-v0.3.apk", 12417577, "aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd"),
               ("ramesh-radio-v1.28", "Ramesh-Radio-v1.28.apk", 15158504, "9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c"),
               ("sms-guard-v1.1.9", "SMS-Guard-v1.1.9.apk", 12461665, "7e0f0aac34ced84c3ff608dea1baadb54e57400f63aa9c79e6b1c782142f7fc2"),
               ("voice-notes-v1.2", "Voice-Notes-v1.2.apk", 12113492, "c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0"),

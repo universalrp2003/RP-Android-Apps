@@ -133,6 +133,17 @@
       "size": 11514811,
       "sha256": "7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232",
       "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.4"
+    },
+    {
+      "id": "dailyvault",
+      "name": "DailyVault",
+      "tamilName": "தினக்கணக்கு",
+      "packageName": "com.universalrp.dailyvault",
+      "version": "0.3",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.3/DailyVault-v0.3.apk",
+      "size": 12417577,
+      "sha256": "aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.3"
     }
   ]
 }

@@ -16,8 +16,8 @@ android {
         applicationId = "com.universalrp.smsguard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.1.10"
+        versionCode = 17
+        versionName = "1.1.11"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -90,8 +90,10 @@ dependencies {
 // Keep external-service availability separate from deterministic regression tests.
 // The live assertion is unchanged and still fails its dedicated task when synthesis fails.
 val liveSmsVoiceMethod = "com.universalrp.smsguard.SmsGuardEngineTest.liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable"
+val hdFailoverMethod = "com.universalrp.smsguard.SmsGuardEngineTest.liveHdVoiceFailoverSynthesizesWithinProductionDeadline"
 tasks.withType<Test>().configureEach {
     if (name != "testLiveSmsVoice") filter { excludeTestsMatching(liveSmsVoiceMethod) }
+    if (name != "testHdVoiceFailover") filter { excludeTestsMatching(hdFailoverMethod) }
 }
 tasks.register<Test>("testLiveSmsVoice") {
     group = "verification"
@@ -99,6 +101,16 @@ tasks.register<Test>("testLiveSmsVoice") {
     dependsOn("testReleaseUnitTest")
     filter { includeTestsMatching(liveSmsVoiceMethod) }
     // Lazy providers are resolved before Gradle's NO-SOURCE check (doFirst is too late).
+    testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
+    classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
+}
+
+// Live application-level recovery is separate from the intentionally strict direct-voice probe.
+tasks.register<Test>("testHdVoiceFailover") {
+    group = "verification"
+    description = "Real HD alternatives within the unchanged production deadline; no publication."
+    dependsOn("testReleaseUnitTest")
+    filter { includeTestsMatching(hdFailoverMethod) }
     testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
     classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
 }

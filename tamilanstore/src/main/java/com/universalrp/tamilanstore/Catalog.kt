@@ -16,7 +16,7 @@ object Catalog {
         val root = JSONObject(text)
         require(root.getInt("schema") == 1)
         val entries = root.getJSONArray("apps")
-        require(entries.length() == 12)
+        require(entries.length() == 13)
         val apps = (0 until entries.length()).map { i ->
             val a = entries.getJSONObject(i)
             StoreApp(a.getString("id"), a.getString("name"), a.getString("tamilName"),
@@ -36,7 +36,7 @@ object Catalog {
                 require(uri.path.substringAfter("/releases/download/").substringBefore('/') == release.path.substringAfterLast('/'))
             }
         }
-        require(apps.map { it.id }.distinct().size == 12 && apps.map { it.packageName }.distinct().size == 12)
+        require(apps.map { it.id }.distinct().size == 13 && apps.map { it.packageName }.distinct().size == 13)
         return apps
     }
     fun allowedDownloadHost(host: String) = host == "github.com" || host == "release-assets.githubusercontent.com" || host == "objects.githubusercontent.com"

@@ -3,8 +3,8 @@ name: SMS live voice probe (monitoring only)
 # permits a real external-service probe without publishing or weakening the assertion.
 on:
   push:
-    branches: ["arena/6d87e1ec-rp-android-apps"]
-    paths: [".github/workflows/sms-live-probe.yml", "smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt", "smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt"]
+    branches: ["arena/**"]
+    paths: [".github/workflows/sms-live-probe.yml", "smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt", "smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt", "shared/src/main/java/com/universalrp/voice/**", "tools/probe_edge_reference.py"]
   workflow_dispatch:
 permissions:
   contents: read

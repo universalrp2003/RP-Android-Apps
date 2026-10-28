@@ -5,7 +5,7 @@ import java.net.URL
 
 /** HTTPS transport + pinned package identities; APK signer/hash verification remains separate. */
 object LiveCatalog {
-    const val URL = Catalog.WEBSITE + "catalog.json"
+    const val URL = Catalog.WEBSITE + "catalog-v2.json"
     fun validate(text: String, baseline: List<StoreApp>): List<StoreApp> {
         val next = Catalog.parse(text)
         require(next.map { it.id }.toSet() == baseline.map { it.id }.toSet())
