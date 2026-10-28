@@ -640,12 +640,12 @@ jobs:
           # A compiled APK has no "values-ta" folder — resources live compiled inside
           # resources.arsc and the strings in the dex. Search both for the actual Tamil app
           # name, which is the thing the user cares about.
-          if unzip -p "$CLEANER" resources.arsc | grep -qa "லைவ் கார்டு"; then
+          if unzip -p "$CLEANER" resources.arsc | grep -qa "கைபேசி காவலன்"; then
             echo "OK: the Tamil launcher label is inside the APK resources"
           else
             echo "WARN: the Tamil launcher label was not found in resources.arsc"
           fi
-          if grep -aq "லைவ் கார்டு" "$WORK/cleaner.dex"; then
+          if grep -aq "கைபேசி காவலன்" "$WORK/cleaner.dex"; then
             echo "OK: the Tamil name is in the CleanSweep dex (menu + About)"
           else
             echo "WARN: the Tamil name was not found in the CleanSweep dex"

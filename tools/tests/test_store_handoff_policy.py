@@ -51,3 +51,10 @@ class StoreHandoffPolicyTest(unittest.TestCase):
         self.assertIn('queryIntentActivities(discovery, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)', router)
         self.assertIn('if (linksSupported && matchesPublishedStore(context)', router)
         self.assertIn('return openWebsite(context, appId)', router)
+
+    def test_cleaner_tamil_launcher_and_widget_labels_use_owner_name(self):
+        import xml.etree.ElementTree as ET
+        labels = ET.parse(policy.ROOT/'cleaner/src/main/res/values-ta/strings.xml').getroot()
+        for item in labels.findall('string'):
+            if item.get('name') == 'app_name' or item.get('name', '').startswith('widget_') and item.get('name', '').endswith('_label'):
+                self.assertTrue((item.text or '').startswith('கைபேசி காவலன்'), item.get('name'))
