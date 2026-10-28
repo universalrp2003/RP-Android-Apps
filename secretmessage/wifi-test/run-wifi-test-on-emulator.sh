@@ -260,10 +260,16 @@ wait_for text "1. Start a chat with a new phone" equals 15
 wait_for text "தமிழ்"
 "$ADB" shell input keyevent 4
 sleep 1
-# About lists the links first and the verified updater last (the helper only scrolls down).
+# About retains official links and offers metadata-only updates; no in-app installer.
 scroll_until text "Source code — InternetRadio"
-scroll_until text "Verified GitHub APK updates"
-scroll_until text "Check for updates"
+scroll_until text "Check updates"
+tap text "Check updates"
+# Both a successful metadata check and an offline check must leave browser choice available.
+wait_for text "Update check" equals 45
+wait_for text "Downloads in browser"
+wait_for text "Daily check on app open: Off"
+"$ADB" shell input keyevent 4
+sleep 1
 "$ADB" shell input keyevent 4
 sleep 1
 wait_for text "Start a chat"
@@ -273,4 +279,4 @@ app_alive || fail "The app exited during the smoke test"
 if "$ADB" logcat -d -b crash 2>/dev/null | grep -q "$PACKAGE"; then
   fail "The crash buffer contains an entry for $PACKAGE"
 fi
-echo "PASS: $PACKAGE launched on API 35, showed its start screen in Tamil and switched to English, showed the not-reviewed note, hosted a chat through the deployed Internet relay (connected over TLS) and on the same Wi-Fi, stopped waiting on request each time, created its Keystore-wrapped identity, loaded the MLS engine (secretmessage-wifi-chat/1), opened settings with ready mode, this phone, the guide and About with the verified updater, and did not crash."
+echo "PASS: $PACKAGE launched on API 35, showed its start screen in Tamil and switched to English, showed the not-reviewed note, hosted a chat through the deployed Internet relay (connected over TLS) and on the same Wi-Fi, stopped waiting on request each time, created its Keystore-wrapped identity, loaded the MLS engine (secretmessage-wifi-chat/1), opened settings with ready mode, this phone, the guide and About with metadata-only updates, browser choice and daily checks off by default, and did not crash."
