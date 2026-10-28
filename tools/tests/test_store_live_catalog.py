@@ -27,3 +27,16 @@ class CatalogGenerationTest(unittest.TestCase):
         self.assertNotIn('ignoreFailures = true',gradle)
         flow=(ROOT/'.github/workflows/live-voice-check.yml').read_text()
         self.assertIn(':smsguard:testLiveSmsVoice',flow)
+
+class ReadOnlyFallbackTest(unittest.TestCase):
+    def test_fallback_is_bounded_canonical_and_not_an_installer(self):
+        source = (ROOT/'shared/src/main/java/com/universalrp/updates/OfficialReleaseVersion.kt').read_text()
+        for gate in ['MAX_RELEASE_PAGES', 'instanceFollowRedirects = false', '4 * 1024 * 1024',
+                     'isOfficialReleasePage', 'isOfficialAsset', 'sha256:[a-f0-9]{64}',
+                     'No validated public release metadata', 'Release pagination limit reached']:
+            self.assertIn(gate, source)
+        self.assertNotIn('startActivity', source)
+        self.assertNotIn('FileProvider', source)
+        notice = (ROOT/'shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt').read_text()
+        self.assertIn('catch (unavailable: java.io.IOException)', notice)
+        self.assertIn('OfficialReleaseVersion.latest(app)', notice)

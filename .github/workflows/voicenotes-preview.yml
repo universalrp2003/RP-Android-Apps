@@ -4,6 +4,7 @@ on:
     branches: [main, "arena/**"]
     paths:
       - "voicenotes/**"
+      - "shared/**"
       - ".github/workflows/voicenotes-preview.yml"
   workflow_dispatch:
 permissions:

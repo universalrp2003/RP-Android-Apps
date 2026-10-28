@@ -28,12 +28,12 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
         if (requested == 0) return@LaunchedEffect
         checking = true
         try {
-            val version = withContext(Dispatchers.IO) {
+            val version = try { withContext(Dispatchers.IO) {
                 val connection = URL(SisterApps.OFFICIAL_WEBSITE_URL + "catalog.json").openConnection() as HttpURLConnection
                 connection.instanceFollowRedirects = false
                 connection.connectTimeout = 15000; connection.readTimeout = 15000
                 try {
-                    check(connection.responseCode == 200)
+                    if (connection.responseCode != 200) throw java.io.IOException("Catalog HTTP ${connection.responseCode}")
                     val text = connection.inputStream.use { input ->
                         val output = java.io.ByteArrayOutputStream()
                         val bytes = ByteArray(8192)
@@ -56,6 +56,11 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
                     check(entry.getString("releaseUrl") == "${SisterApps.GITHUB_REPO_URL}/releases/tag/${app.tagPrefix}-v$version")
                     version
                 } finally { connection.disconnect() }
+            }
+            } catch (unavailable: java.io.IOException) {
+                // Missing deployment/offline feed: read only canonical public release metadata.
+                // Schema/identity violations do NOT fall back to a less strict source.
+                OfficialReleaseVersion.latest(app)
             }
             @Suppress("DEPRECATION")
             val installed = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
