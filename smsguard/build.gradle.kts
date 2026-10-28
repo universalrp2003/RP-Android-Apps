@@ -98,9 +98,7 @@ tasks.register<Test>("testLiveSmsVoice") {
     description = "External neural voice availability probe; not a deterministic release test."
     dependsOn("testReleaseUnitTest")
     filter { includeTestsMatching(liveSmsVoiceMethod) }
-    doFirst {
-        val releaseTests = tasks.named<Test>("testReleaseUnitTest").get()
-        testClassesDirs = releaseTests.testClassesDirs
-        classpath = releaseTests.classpath
-    }
+    // Lazy providers are resolved before Gradle's NO-SOURCE check (doFirst is too late).
+    testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
+    classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
 }
