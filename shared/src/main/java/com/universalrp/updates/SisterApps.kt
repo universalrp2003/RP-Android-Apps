@@ -51,7 +51,7 @@ object SisterApps {
         SisterApp(
             id = "liveguard",
             name = "Live Guard",
-            tamilName = "லைவ் கார்ட்",
+            tamilName = "கைபேசி காவலன்",
             tagPrefix = "live-guard",
             version = "2.73",
             packageName = "com.universalrp.cleansweep",

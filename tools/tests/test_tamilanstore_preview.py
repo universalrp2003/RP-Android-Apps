@@ -87,3 +87,26 @@ class PerAppSignerPinTest(unittest.TestCase):
         self.assertIn('packageName == "com.rpideas.secretmessage"',text)
         for name in ('StoreModel.kt','StoreInventory.kt'):
             self.assertIn('Catalog.signerFor(app.packageName)',(STORE/'src/main/java/com/universalrp/tamilanstore'/name).read_text())
+
+class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
+    def test_real_gallery_counts_and_paths(self):
+        index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
+        self.assertEqual(set(index),{'smsguard','liveguard','radio','oorarivippu','pulseeq','vocalremover'})
+        for app,files in index.items():
+            self.assertIn(len(files),(4,5))
+            for name in files:
+                self.assertNotIn('/',name)
+                self.assertTrue((STORE/'src/main/assets/screenshots'/name).is_file())
+        gallery=(STORE/'src/main/java/com/universalrp/tamilanstore/AppScreenshots.kt').read_text()
+        self.assertIn('Screenshots pending',gallery)
+        self.assertIn('Earlier app screens',gallery)
+        self.assertIn('AlertDialog(',gallery)
+    def test_name_request_and_own_release_discovery(self):
+        catalog=json.loads((STORE/'src/main/assets/catalog.json').read_text())
+        self.assertEqual(next(a for a in catalog['apps'] if a['id']=='liveguard')['tamilName'],'கைபேசி காவலன்')
+        ui=(STORE/'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
+        self.assertIn('open(Catalog.WEBSITE + "#request-app")',ui)
+        self.assertIn('SelfUpdateCheck.latestRelease()',ui)
+        check=(STORE/'src/main/java/com/universalrp/tamilanstore/SelfUpdateCheck.kt').read_text()
+        for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk','instanceFollowRedirects=false','readBytesLimited(2_000_000)']:
+            self.assertIn(token,check)

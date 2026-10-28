@@ -59,6 +59,11 @@ class MainActivity : ComponentActivity() {
             val model: StoreModel = viewModel()
             val transfer by model.transfer.collectAsStateWithLifecycle()
             var tamil by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("tamil", true)) }
+            var showSelfUpdate by rememberSaveable { mutableStateOf(false) }
+            var checkingSelf by remember { mutableStateOf(false) }
+            var selfMessage by remember { mutableStateOf("") }
+            var selfRelease by remember { mutableStateOf<String?>(null) }
+            val ownVersion = remember { packageManager.getPackageInfo(packageName,0).versionName ?: "?" }
             var showAbout by rememberSaveable { mutableStateOf(false) }
             var query by rememberSaveable { mutableStateOf("") }
             var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
@@ -87,6 +92,8 @@ class MainActivity : ComponentActivity() {
                         item { OutlinedTextField(query, { query = it }, label = { Text(bi("செயலியைத் தேடு", "Search apps")) }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
                         item {
                             Row(Modifier.horizontalScroll(rememberScrollState())) {
+                                TextButton(onClick = { showSelfUpdate = !showSelfUpdate }) { Text(bi("அங்காடி புதுப்பிப்பு", "Store update")) }
+                                TextButton(onClick = { open(Catalog.WEBSITE + "#request-app") }) { Text(bi("புதிய செயலி கோரிக்கை", "Request an app")) }
                                 TextButton(onClick = { refresh++; message = "" }) { Text(bi("சரிபார்", "Refresh")) }
                                 TextButton(onClick = { showAbout = !showAbout }) { Text(bi("உதவி / பற்றி", "Help / About")) }
                                 TextButton(onClick = {
@@ -95,9 +102,36 @@ class MainActivity : ComponentActivity() {
                                 }) { Text(bi("தொடர்பு", "Contact")) }
                             }
                         }
+                        if (showSelfUpdate) item {
+                            Card(Modifier.fillMaxWidth()) {
+                                Column(Modifier.padding(12.dp), verticalArrangement=Arrangement.spacedBy(6.dp)) {
+                                    Text(bi("தமிழன் · நிறுவியது $ownVersion", "Tamilan · installed $ownVersion"),style=MaterialTheme.typography.titleSmall)
+                                    Text(bi("Preview APK இப்போது build பக்கத்தில் மட்டுமே. அதிகாரப்பூர்வ stable வெளியீடு இருந்தால் இங்கே பார்க்கலாம். தானாக நிறுவாது.", "Preview APKs currently come from build artifacts. Check below for a public stable release. No automatic installation."),style=MaterialTheme.typography.bodySmall)
+                                    TextButton(enabled=!checkingSelf,onClick={
+                                        checkingSelf=true;selfRelease=null;selfMessage=""
+                                        scope.launch {
+                                            try {
+                                                val release=SelfUpdateCheck.latestRelease()
+                                                if(release==null) selfMessage=bi("பொது stable அங்காடி வெளியீடு இன்னும் இல்லை.", "No public stable store release found.")
+                                                else {
+                                                    val status=InstalledStatus.resolve(InstalledApp(ownVersion.substringBefore('-'),true),release.first)
+                                                    if(status==AppStatus.UPDATE_AVAILABLE) {
+                                                        selfMessage=bi("வெளியான பதிப்பு: ${release.first}. வெளியீட்டுப் பக்கத்தில் சரிபார்த்துப் பதிவிறக்கவும்.", "Published version: ${release.first}. Review and download on the release page.")
+                                                        selfRelease=release.second
+                                                    } else selfMessage=bi("உங்களிடம் உள்ள பதிப்பைவிட புதிய stable பதிப்பு காணப்படவில்லை. Preview மற்றும் stable கோப்புகள் வேறுபடலாம்.", "No higher stable version found. Preview and stable builds may differ.")
+                                                }
+                                            } catch(_:Exception) { selfMessage=bi("சரிபார்க்க முடியவில்லை. இணையம் அல்லது சேவை வரம்பு காரணமாக இருக்கலாம்; பின்னர் முயலவும்.", "Could not check; network or service limits may apply. Try later.") }
+                                            finally { checkingSelf=false }
+                                        }
+                                    }) { Text(if(checkingSelf)bi("சரிபார்க்கிறது…", "Checking…") else bi("அங்காடி வெளியீட்டைச் சரிபார்", "Check store release")) }
+                                    if(selfMessage.isNotBlank()) Text(selfMessage,style=MaterialTheme.typography.bodySmall)
+                                    selfRelease?.let { releaseUrl -> TextButton(onClick={open(releaseUrl)}) { Text(bi("அதிகாரப்பூர்வ புதுப்பிப்பு பக்கம்", "Official update page")) } }
+                                }
+                            }
+                        }
                         if (showAbout) item {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(bi("தமிழன் · சோதனை 0.3. நமது 12 செயலிகள். கணக்கு, விளம்பரம் இல்லை. Google Play / F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Tamilan · preview 0.3. Our 12 apps, no account or ads. Not an official Google Play / F-Droid store."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("தமிழன் · சோதனை 0.4. நமது 12 செயலிகள். கணக்கு, விளம்பரம் இல்லை. Google Play / F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Tamilan · preview 0.4. Our 12 apps, no account or ads. Not an official Google Play / F-Droid store."), style = MaterialTheme.typography.bodySmall)
                                 Text(bi("பட்டியல்: 28 அக்டோபர் 2026. நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். சாதனத்தில் நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Catalog: 28 October 2026 snapshot. Installed versions compared locally only. Check the website for new releases; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = {
                                     val enable = !UpdateNotifications.enabled(this@MainActivity)
@@ -140,6 +174,7 @@ class MainActivity : ComponentActivity() {
                                         AppStatus.UNKNOWN_VERSION -> bi("நிறுவிய பதிப்பு ${installed?.version ?: "?"} · தானாக ஒப்பிட முடியவில்லை; விவரத்தைப் பார்க்கவும்.", "Installed ${installed?.version ?: "?"} · cannot compare automatically; see details.")
                                         AppStatus.SIGNER_MISMATCH -> bi("நிறுவிய செயலியின் கையொப்பம் பொருந்தவில்லை. இந்த அங்காடி மூலம் மாற்ற முடியாது; தரவைப் பாதுகாக்க செயலியை நீக்க வேண்டாம்.", "Installed signer differs. Store updates blocked; do not uninstall and lose data.")
                                     }, style = MaterialTheme.typography.bodySmall)
+                                    AppScreenshots(app.id, tamil)
                                     if (active && transfer.busy) {
                                         LinearProgressIndicator(progress = { (transfer.bytes.toFloat() / app.size).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
                                         Text("${transfer.bytes / 1024} / ${app.size / 1024} KB")

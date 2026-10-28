@@ -40,7 +40,7 @@ jobs:
           for path in paths:
               if not path.exists(): continue
               for line in path.read_text(errors="replace").splitlines():
-                  if re.search(r"(^e: |error:|Error:|What went wrong|Execution failed|^> |FAILURE:)", line):
+                  if re.search(r"(^e: |error:|Error:|What went wrong|Execution failed|FAILURE:|requires|Dependency |Minimum supported)", line):
                       found.append(line[:1500])
           for line in found[:35]:
               text = line.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
