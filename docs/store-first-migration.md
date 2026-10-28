@@ -28,3 +28,14 @@ Pending: CI/device verification of foundation, Pages live endpoint confirmation,
 - Voice Notes pilot adds an explicit Check updates action and in-app Update available notice, routing to the Store or per-app website anchor. No APK download/installer added. System/background reminders and suite rollout remain pending; do not describe this pilot as finished notification migration.
 - SMS Guard live neural synthesis assertion is unchanged, moved to dedicated testLiveSmsVoice task with real failure reporting. Deterministic release tests exclude that exact external-service method only. Scheduled live monitoring uploads the live results separately and marks probe failure visibly. This fixes release-test categorization, NOT the external speech service outage; owner previously confirmed incoming SMS voice on the device.
 - Existing published versions are unchanged during foundation/pilot review. New public versions, app-local installer removal and final release/catalog synchronization remain gated on CI and device review.
+
+## Verified foundation/pilot CI checkpoint
+
+- Store foundation: run 40647956504, source fdb2aa5ef50cbf3cccdbcb2346dd853ac70b4d57, success (debug unit tests/lint/build; includes live-feed validation tests).
+- DailyVault visible Guide: run 40647956491, same source, success (debug tests/lint/build).
+- Voice Notes Store-first pilot: run 40648114993, source dea25de231f284e196dfe26e9559901577bbd277, success (debug tests/lint/build).
+- SMS Guard deterministic release regression gate: run 40648183451, source bad323dcbf02c6c5b523a725cd4831447d79b087, success (release unit tests/lint/build, signer/package checks). APK 12461665 bytes, SHA-256 c08ff58bdfe85a84c9b210f61a206bec5174e17da961067f094e12d5319a9d9b. External voice monitoring remains separate, not newly verified healthy.
+- Pages run 40648178396 succeeded, including live catalog generation. Endpoint behavior on the actual device is still pending; deployment status is not direct runtime verification.
+- 142 Python tests passed. No new public application release or legacy installer removal at this checkpoint.
+
+NEXT: owner-device pilot verification (Store app-specific routing and website fallback), then background notification/skip-version policy and suite-wide migration. Existing Store 0.5/DailyVault 0.3 public releases remain available. These intermediate APKs retain the same version labels as the public base and are test artifacts only; final public rollout needs distinct version/code. Voice Notes and SMS Guard stable releases are not finished/published by this checkpoint.
