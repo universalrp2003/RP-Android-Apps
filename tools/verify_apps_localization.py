@@ -711,7 +711,7 @@ def verify_about_links() -> None:
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.1"',
-            'tagPrefix = "voice-notes"', 'version = "1.3"',
+            'tagPrefix = "voice-notes"', 'version = "1.3.1"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.5"',
             'tagPrefix = "tamil-podcast"', 'version = "1.6"',
             'tagPrefix = "elderly-launcher"', 'version = "1.4"',

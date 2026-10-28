@@ -53,3 +53,15 @@ class UpdateResultVisibilityTest(unittest.TestCase):
         self.assertIn("Update check unavailable; try later", notice)
         self.assertIn("No newer stable version found", notice)
         self.assertIn("Open Store / website", notice)
+
+class PlaybackControlSourceTest(unittest.TestCase):
+    def test_active_button_stops_and_other_note_replaces_request(self):
+        self.assertIn('if (speaking) Icons.Filled.Stop else Icons.Filled.PlayArrow', MAIN)
+        self.assertIn('Stop playback', MAIN)
+        self.assertIn('val wasPlaying = speakingId == note.id', MAIN)
+        self.assertIn('playbackJob?.cancel()', MAIN)
+        self.assertIn('request == playbackRequest', MAIN)
+        self.assertNotIn('if (speakingId != null) return', MAIN)
+        self.assertIn('runInterruptible(Dispatchers.IO)', SPEAKER)
+        self.assertIn('playbackMutex.withLock', SPEAKER)
+        self.assertIn('generation.get() != requestGeneration', SPEAKER)

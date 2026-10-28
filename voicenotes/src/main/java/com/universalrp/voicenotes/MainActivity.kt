@@ -224,6 +224,8 @@ fun VoiceNotesScreen(
     var notes by remember { mutableStateOf(store.load()) }
     var listening by remember { mutableStateOf(false) }
     var speakingId by remember { mutableStateOf<String?>(null) }
+    var playbackJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var playbackRequest by remember { mutableStateOf(0L) }
     var status by remember { mutableStateOf("") }
     var showHelp by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<VoiceNote?>(null) }
@@ -246,11 +248,22 @@ fun VoiceNotesScreen(
         )
     }
 
+    fun stopPlayback() {
+        playbackRequest++
+        speaker.stop()
+        playbackJob?.cancel()
+        playbackJob = null
+        speakingId = null
+    }
+
     fun playNote(note: VoiceNote) {
-        if (speakingId != null) return // Never overlap neural-voice requests or play a robot fallback.
+        val wasPlaying = speakingId == note.id
+        stopPlayback()
+        if (wasPlaying) { status = ""; return }
+        val request = playbackRequest
         speakingId = note.id
         status = ""
-        scope.launch {
+        playbackJob = scope.launch {
             val ok = try {
                 val profile = NoteSpeech.profileFor(text = note.text, preferTamil = tamil)
                 val voiceId = profile?.let { NoteSpeech.neuralIdFor(it, note.text) }
@@ -261,9 +274,10 @@ fun VoiceNotesScreen(
             } catch (_: Exception) {
                 false
             } finally {
-                speakingId = null
+                // A cancelled/slow previous request must not clear the new note's Stop button.
+                if (request == playbackRequest) { speakingId = null; playbackJob = null }
             }
-            if (!ok) status = tr(
+            if (request == playbackRequest && !ok) status = tr(
                 "HD voice needs internet. No robotic voice fallback is used.",
                 "HD குரல் வாசிக்க இணையம் தேவை. ரோபோ குரலுக்கு மாறாது.",
             )
@@ -282,8 +296,17 @@ fun VoiceNotesScreen(
 
     // Release the recogniser when the screen goes away: it holds the microphone and an audio
     // resource, and leaking it means the mic stays hot after the owner has left.
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose { recognizer?.destroy() }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner, speaker) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) stopPlayback()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            stopPlayback()
+            recognizer?.destroy()
+        }
     }
 
     // The listener is recreated per composition; it captures only the current state it needs.
@@ -540,7 +563,7 @@ fun VoiceNotesScreen(
                             editingNote = note
                             editText = note.text
                         },
-                        onDelete = { persist(NoteStore.remove(notes, note.id)) },
+                        onDelete = { if (speakingId == note.id) stopPlayback(); persist(NoteStore.remove(notes, note.id)) },
                     )
                 }
             }
@@ -642,20 +665,14 @@ private fun NoteRow(
                     .clickable { onSpeak() },
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    if (speaking) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF2A1200),
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    } else {
-                        Icon(
-                            Icons.Filled.PlayArrow,
-                            contentDescription = if (tamil) "கேளுங்கள்" else "Play",
-                            tint = Accent,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
+                    Icon(
+                        if (speaking) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                        contentDescription = if (speaking) {
+                            if (tamil) "வாசிப்பை நிறுத்து" else "Stop playback"
+                        } else if (tamil) "கேளுங்கள்" else "Play",
+                        tint = if (speaking) Color(0xFF2A1200) else Accent,
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
             }
             Spacer(Modifier.width(12.dp))
