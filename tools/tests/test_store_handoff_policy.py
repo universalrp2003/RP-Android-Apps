@@ -33,6 +33,9 @@ class StoreHandoffPolicyTest(unittest.TestCase):
         self.assertIn('System.getenv("RP_RUN_LIVE_SPEECH_TEST") == "true"', probe)
         self.assertNotIn('if (!reachable) return', probe)
         self.assertIn('no successful audio claimed', probe)
+        sms = (policy.ROOT/'smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt').read_text()
+        self.assertNotIn('if (!reachable) return', sms)
+        self.assertIn('no successful audio claimed', sms)
 
     def test_known_certificate_alone_cannot_authorize_store_handoff(self):
         router = (policy.ROOT/'shared/src/main/java/com/universalrp/updates/StoreUpdateRouter.kt').read_text()

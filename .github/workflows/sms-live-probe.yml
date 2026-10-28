@@ -24,6 +24,17 @@ jobs:
           gradle-version: '8.14.3'
       - name: Run actual SMS external synthesis assertion
         run: gradle :smsguard:testLiveSmsVoice --no-daemon --stacktrace
+      - name: Set up independent upstream reference (same CI runner, no production fallback)
+        if: always()
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned independent reference client
+        if: always()
+        run: python -m pip install --disable-pip-version-check --no-input 'edge-tts==7.3.1'
+      - name: Compare real upstream audio for four synthetic profiles
+        if: always()
+        run: python tools/probe_edge_reference.py
       - name: Publish bounded test diagnostics as check annotations
         if: always()
         shell: python
@@ -51,5 +62,6 @@ jobs:
           path: |
             smsguard/build/test-results/
             smsguard/build/reports/tests/
+            edge-reference-report.json
           if-no-files-found: warn
           retention-days: 14

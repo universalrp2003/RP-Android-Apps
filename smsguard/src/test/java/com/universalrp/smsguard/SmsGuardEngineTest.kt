@@ -887,7 +887,7 @@ class SmsGuardEngineTest {
             java.net.InetAddress.getByName("speech.platform.bing.com")
             true
         }.getOrDefault(false)
-        if (!reachable) return // Offline sandbox environment safely skips live network check
+        assertTrue("Live probe DNS unavailable: synthesis was not executed; no successful audio claimed", reachable)
 
         val voicesToVerify = listOf(
             "ta-IN-ValluvarNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",

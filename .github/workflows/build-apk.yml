@@ -37,6 +37,12 @@ on:
       - "docs/secret-message-security-design.md"
       - "tools/tests/test_secretmessage_preview_contract.py"
       - ".github/workflows/build-apk.yml"
+      # Monitoring-only workflows/scripts cannot alter any APK bytes or app versions.
+      - ".github/workflows/sms-live-probe.yml"
+      - ".github/workflows/oor-live-probe.yml"
+      - ".github/workflows/promote-tested-voice.yml"
+      - ".github/workflows/secret-handoff-ui-check.yml"
+      - "tools/probe_edge_reference.py"
       - ".github/workflows/pages.yml"
       - ".github/workflows/oorarivippu-release.yml"
       - ".github/workflows/oorarivippu-test-apk.yml"
