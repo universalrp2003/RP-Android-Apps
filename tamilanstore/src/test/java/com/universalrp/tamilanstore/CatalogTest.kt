@@ -6,9 +6,9 @@ import java.io.File
 
 class CatalogTest {
     private fun catalog() = File("src/main/assets/catalog.json").readText()
-    @Test fun twelveOfficialApps() {
+    @Test fun thirteenOfficialApps() {
         val apps = Catalog.parse(catalog())
-        assertEquals(12, apps.size)
+        assertEquals(13, apps.size)
         assertTrue(apps.all { it.url.startsWith("https://github.com/universalrp2003/RP-Android-Apps/releases/download/") })
     }
     @Test fun foreignDownloadRejected() {

@@ -985,15 +985,15 @@ def verify_module_versions_match_sister_apps() -> int:
         if gradle.parent.name == "dailyvault":
             if pkg.group(1) != "com.universalrp.dailyvault" or ver.group(1) != "0.4":
                 raise ValueError("Daily vault preview identity/version changed; review publication gates")
-            if pkg.group(1) in by_package:
-                raise ValueError("Unpublished daily vault must not advertise a public release")
+            if by_package.get(pkg.group(1)) != ver.group(1):
+                raise ValueError("DailyVault directory candidate version differs from source")
             continue
         # Owner-approved isolated preview must not advertise a nonexistent public release.
         if gradle.parent.name == "tamilanstore":
             if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.6":
                 raise ValueError("Tamilan preview identity/version changed; review publication gates")
-            if pkg.group(1) in by_package:
-                raise ValueError("Unpublished Tamilan preview must not appear in published SisterApps")
+            if by_package.get(pkg.group(1)) != ver.group(1):
+                raise ValueError("Tamilan directory candidate version differs from source")
             continue
         checked += 1
         if pkg.group(1) not in by_package:

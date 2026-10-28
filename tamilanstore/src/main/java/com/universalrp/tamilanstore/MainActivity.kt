@@ -170,7 +170,7 @@ class MainActivity : ComponentActivity() {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(bi("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
                                 TextButton(onClick = { open("https://github.com/universalrp2003/RP-Android-Apps") }) { Text(bi("மூல நிரல் / GitHub", "Source / GitHub")) }
-                                Text(bi("தமிழன் · 0.6. நமது 12 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.6. Our 12 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("தமிழன் · 0.6. நமது 13 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.6. Our 13 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
                                 Text(bi("பட்டியல்: 28 அக்டோபர் 2026. நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். சாதனத்தில் நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Catalog: 28 October 2026 snapshot. Installed versions compared locally only. Check the website for new releases; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = {
                                     val enable = !UpdateNotifications.enabled(this@MainActivity)

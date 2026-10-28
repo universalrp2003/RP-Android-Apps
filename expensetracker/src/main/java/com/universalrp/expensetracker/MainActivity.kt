@@ -71,7 +71,9 @@ class MainActivity : ComponentActivity() {
         AppLanguageState.initialize(this)
 
         setContent {
-            MaterialTheme {
+            MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(
+                primary = Accent, background = Background, surface = Card, onSurface = TextPrimary, onBackground = TextPrimary,
+            )) {
                 Surface(modifier = Modifier.fillMaxSize(), color = Background) {
                     ExpenseScreen(onRequestSms = ::ensureSmsPermission)
                 }

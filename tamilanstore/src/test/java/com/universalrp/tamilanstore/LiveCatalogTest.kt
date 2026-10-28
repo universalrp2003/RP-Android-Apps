@@ -11,7 +11,7 @@ class LiveCatalogTest {
         val root = JSONObject(raw()); edit(root.getJSONArray("apps").getJSONObject(0)); return root.toString()
     }
     @Test fun acceptsUnchangedSnapshot() {
-        assertEquals(12, LiveCatalog.validate(raw(), Catalog.parse(raw())).size)
+        assertEquals(13, LiveCatalog.validate(raw(), Catalog.parse(raw())).size)
     }
     @Test fun rejectsIdentityRollbackAndSameVersionMutation() {
         val baseline = Catalog.parse(raw())

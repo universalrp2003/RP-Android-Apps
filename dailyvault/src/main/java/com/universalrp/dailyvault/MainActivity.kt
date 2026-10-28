@@ -85,7 +85,7 @@ class MainActivity: FragmentActivity() {
                                     bi("இணையதளம்", "Website") to "https://universalrp2003.github.io/RP-Android-Apps/",
                                     bi("மூல நிரல் / GitHub", "Source / GitHub") to "https://github.com/universalrp2003/RP-Android-Apps",
                                     bi("தமிழன் அங்காடி", "Tamilan Store") to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.5",
-                                    bi("வெளியீடுகள்", "Releases") to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.3",
+                                    bi("புதுப்பிப்பைப் பார்", "Check updates") to "https://universalrp2003.github.io/RP-Android-Apps/#st-dailyvault",
                                 ).forEach { (label,url) ->
                                     TextButton(onClick={runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }}) { Text(label) }
                                 }

@@ -35,3 +35,11 @@ class HdVoicePolicyTest(unittest.TestCase):
         self.assertNotIn('android.permission.REQUEST_INSTALL_PACKAGES', permissions)
         suite = (ROOT / 'shared/src/main/java/com/universalrp/updates/SuiteAbout.kt').read_text()
         self.assertIn('setOf("podcast", "launcher", "expensetracker")', suite)
+
+    def test_published_store_daily_links_and_website_integrity_failure_stop(self):
+        site = (ROOT/'site/index.html').read_text()
+        for anchor in ['st-tamilanstore','st-dailyvault']:
+            self.assertIn('id="'+anchor+'"',site)
+        self.assertNotIn('vasanthi-ai-v1.2.4',site)
+        self.assertIn("if (err.message === 'SHA-256 mismatch')",site)
+        self.assertIn('Integrity failure must never become an unchecked direct download',site)
