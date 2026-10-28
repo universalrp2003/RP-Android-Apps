@@ -934,7 +934,7 @@ class SmsGuardEngineTest {
         println("SMS_LIVE_PROFILE SHARED_HD_RECOVERY bytes=${sharedAudio?.size ?: 0} selected=$selectedSharedVoice")
         assertTrue("Shared HD engine did not recover within production deadline", sharedAudio != null && sharedAudio.size > 1500)
         assertTrue(selectedSharedVoice.startsWith("ta-"))
-        assertNotEquals("ta-IN-ValluvarNeural", selectedSharedVoice)
+        assertFalse(selectedSharedVoice == "ta-IN-ValluvarNeural")
     }
 
     // --- Bill / payment-due reminders ---
