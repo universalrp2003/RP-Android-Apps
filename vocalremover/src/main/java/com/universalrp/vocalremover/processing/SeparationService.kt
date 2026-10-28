@@ -173,10 +173,7 @@ class SeparationService : Service() {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_DETACH)
             foregroundStarted = false
         }
-        if (android.os.Build.VERSION.SDK_INT < 33 || androidx.core.content.ContextCompat.checkSelfPermission(
-                this, android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            runCatching { NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification(paused)) }
-        }
+        postNotification(paused)
         stopSelf()
     }
 
@@ -603,7 +600,7 @@ class SeparationService : Service() {
         }
         val failedJob = SeparationJobStore.current(this) ?: initial
         syncQueueItemWithJob(failedJob)
-        runCatching { NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification(failedJob)) }
+        postNotification(failedJob)
     }
 
     private suspend fun runJob(initial: SeparationJob) {
@@ -1308,6 +1305,13 @@ class SeparationService : Service() {
             ensureForeground(job)
             return
         }
+        postNotification(job)
+    }
+
+    private fun postNotification(job: SeparationJob) {
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return
+        // Permission may still be revoked after the check. Failure must not interrupt job persistence.
         runCatching { NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildNotification(job)) }
     }
 
