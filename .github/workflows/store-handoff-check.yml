@@ -16,11 +16,13 @@ on:
       - ".github/workflows/store-handoff-check.yml"
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: handoff-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   verify:
+    if: ${{ !contains(github.event.head_commit.message, '[read-handoff-reports]') }}
     strategy:
       fail-fast: false
       matrix:
@@ -39,7 +41,17 @@ jobs:
       - name: Reject local installers and validate Store trust gates
         run: python3 tools/verify_store_handoff_policy.py
       - name: Deterministic tests, lint and build (no public release)
-        run: gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:lintDebug :${{ matrix.module }}:assembleDebug --no-daemon --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:lintDebug :${{ matrix.module }}:assembleDebug --no-daemon --stacktrace 2>&1 | tee handoff-build.log
+      - name: Surface compiler diagnostics without unrestricted log downloads
+        if: failure()
+        run: |
+          grep -E '^e:|error:|Execution failed for task' handoff-build.log | head -30 | while read -r line; do
+            echo "::error title=${{ matrix.module }} build::$line"
+          done
+
       - name: Inspect actual merged APK for retired installer capability
         shell: bash
         run: |
@@ -63,3 +75,32 @@ jobs:
             ${{ matrix.module }}/build/reports/
             ${{ matrix.module }}/build/test-results/
           retention-days: 14
+
+  previous_reports:
+    if: contains(github.event.head_commit.message, '[read-handoff-reports]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40670992298
+          pattern: handoff-*-reports
+          path: diagnostics
+      - name: Publish existing lint and unit failures as bounded annotations
+        shell: python
+        run: |
+          import pathlib, xml.etree.ElementTree as ET
+          count = 0
+          for file in pathlib.Path('diagnostics').rglob('*.xml'):
+              try: root = ET.parse(file).getroot()
+              except ET.ParseError: continue
+              for issue in root.findall('issue'):
+                  if issue.get('severity') not in ('Error', 'Fatal'): continue
+                  text = str(file) + ': ' + issue.get('id', '') + ': ' + issue.get('message', '')
+                  print('::error title=Recorded lint failure::' + text[:900].replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
+                  count += 1
+              for failure in root.findall('.//failure') + root.findall('.//error'):
+                  text = str(file) + ': ' + failure.get('message', '')
+                  print('::error title=Recorded unit failure::' + text[:900].replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
+                  count += 1
+          print('::notice title=Report diagnostics::Recorded failure count=' + str(count))
