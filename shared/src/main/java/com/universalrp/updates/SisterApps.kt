@@ -119,7 +119,7 @@ object SisterApps {
             name = "Voice Notes",
             tamilName = "குரல் குறிப்பு",
             tagPrefix = "voice-notes",
-            version = "1.3.1",
+            version = "1.3.2",
             publishedVersion = "1.2",
             packageName = "com.universalrp.voicenotes",
             aboutLabel = "Voice Notes — GitHub release",

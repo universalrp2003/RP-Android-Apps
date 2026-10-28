@@ -65,3 +65,13 @@ class PlaybackControlSourceTest(unittest.TestCase):
         self.assertIn('runInterruptible(Dispatchers.IO)', SPEAKER)
         self.assertIn('playbackMutex.withLock', SPEAKER)
         self.assertIn('generation.get() != requestGeneration', SPEAKER)
+
+class NewNoteVisibilityTest(unittest.TestCase):
+    def test_prepend_reveals_new_note_without_edit_delete_scroll_jumps(self):
+        self.assertIn('val notesListState = rememberLazyListState()', MAIN)
+        self.assertIn('state = notesListState', MAIN)
+        self.assertIn('LaunchedEffect(newlyAddedNoteId)', MAIN)
+        self.assertIn('notesListState.scrollToItem(0)', MAIN)
+        self.assertIn('notes.firstOrNull()?.id == added', MAIN)
+        self.assertEqual(1, MAIN.count('newlyAddedNoteId = note.id'))
+        self.assertIn('persist(NoteStore.add(notes, note))\n                newlyAddedNoteId = note.id', MAIN)

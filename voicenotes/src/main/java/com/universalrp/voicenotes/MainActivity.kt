@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -222,6 +223,16 @@ fun VoiceNotesScreen(
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     var notes by remember { mutableStateOf(store.load()) }
+    val notesListState = rememberLazyListState()
+    var newlyAddedNoteId by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.LaunchedEffect(newlyAddedNoteId) {
+        // Stable item keys preserve the previous scroll anchor when prepending a row.
+        // Reveal only a newly dictated note; edits/deletes must not jump the reader.
+        val added = newlyAddedNoteId
+        if (added != null && notes.firstOrNull()?.id == added) {
+            notesListState.scrollToItem(0)
+        }
+    }
     var listening by remember { mutableStateOf(false) }
     var speakingId by remember { mutableStateOf<String?>(null) }
     var playbackJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
@@ -352,6 +363,7 @@ fun VoiceNotesScreen(
                     createdAtEpochMs = System.currentTimeMillis(),
                 )
                 persist(NoteStore.add(notes, note))
+                newlyAddedNoteId = note.id
                 status = ""
             }
 
@@ -538,6 +550,7 @@ fun VoiceNotesScreen(
             }
         } else {
             LazyColumn(
+                state = notesListState,
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
