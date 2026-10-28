@@ -16,3 +16,5 @@ Owner also supplied NextDNS logs: speech.platform.bing.com appears without the r
 ## Voice Notes feedback
 
 Owner says all working but update check says nothing; existing inline result used default Text color within the custom dark screen. Results now use an explicit AlertDialog for success/no-update/error and immediate checking state. Search box removed at owner's request, microphone moved above the notes and padding reduced. HD-only playback/privacy disclosure and biometric gate preserved. Android preview run 40651513745 passed unit tests/lint/assemble (source 4b7156d); device result visibility is still to be checked.
+
+Source-only review checkpoint: Store declares INTERNET, REQUEST_INSTALL_PACKAGES and POST_NOTIFICATIONS; Expense Tracker declares READ_SMS/RECEIVE_SMS and no INTERNET in its source manifest. No ad SDK signature was found in the reviewed Gradle/source search. This is not a merged-APK/dependency audit, does not establish the blocked APK's identity, and does not explain or clear Play Protect's verdict. Removing permissions solely to evade a verdict is not a fix.
