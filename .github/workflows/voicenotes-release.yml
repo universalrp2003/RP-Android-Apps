@@ -232,6 +232,7 @@ jobs:
             exit 1
           fi
 
+          python3 tools/verify_release_signing_policy.py --legacy-main
           GH_TOKEN="$GH_TOKEN" gh release create "$TAG" \
             --title "Voice Notes $VERSION" \
             --notes-file "releases/${TAG}.md" \

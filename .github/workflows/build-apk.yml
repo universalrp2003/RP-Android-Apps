@@ -1032,6 +1032,7 @@ jobs:
           MIRROR_EXISTING: ${{ inputs.mirror_existing }}
         run: |
           set -euo pipefail
+          python3 tools/verify_release_signing_policy.py --legacy-main
           exec > >(tee -a "$RUNNER_TEMP/release-publication.log") 2>&1
           if [[ -n "${REQUESTED_TAG:-}" ]]; then BATCH_TAG="$REQUESTED_TAG"
           elif [[ "$GITHUB_REF" == refs/tags/* ]]; then BATCH_TAG="$GITHUB_REF_NAME"

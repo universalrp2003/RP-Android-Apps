@@ -69,6 +69,7 @@ jobs:
               echo "::error::Release already exists; refusing to replace assets: $tag"
               exit 1
             fi
+            python3 tools/verify_release_signing_policy.py --legacy-main
             gh release create "$tag" "release-assets/$label-v$version.apk" "release-assets/$label-v$version.sha256" --target "$GITHUB_SHA" --title "$label $version" --notes-file "releases/$tag.md" --latest=false
             gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" --jq '.assets[] | [.name,.size,.digest] | @tsv'
           done

@@ -25,6 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           git log -1 --format=%s | grep -Fq '[promote-tested-voice]'
+          python3 tools/verify_release_signing_policy.py --legacy-main
           gh api repos/$GH_REPO/actions/runs/40668667451 > /tmp/run.json
           gh api repos/$GH_REPO/actions/artifacts/12808020972 > /tmp/artifact.json
           python3 - <<'PY'

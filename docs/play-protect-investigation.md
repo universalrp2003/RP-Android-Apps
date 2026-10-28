@@ -26,3 +26,10 @@ Owner reports SMS Guard1.1.10/code16 works, but its installation screenshot expl
 Voice Notes1.3/code4 screenshot shows “looks safe,” distinct upgrade from1.2/code3, and functioning localized no-newer-stable update dialog. Owner reports playback cannot be stopped/switched; no claim of complete functional acceptance. Playback-control fix under test as1.3.1/code5, preserving notes/HD-only/privacy and adding deterministic stop/cancellation/late-result tests.
 
 Owner says expanded SMS install warning provides no classification, only “Install anyway.” No further classification evidence is available from this dialog; do not repeatedly ask for it or encourage bypass. Functional acceptance and later clean aggregate scan remain separate evidence. Any developer appeal/review should use the known candidate hash/package and honestly state that classification was not disclosed.
+
+
+## Confirmed signing-custody finding (independent of warning classification)
+
+A public main CI private-key container and public unlock reference were verified without exporting the key. Certificate-only identity checking is insufficient for that exposed identity. See [signing-key exposure and data-preserving remediation hold](signing-key-exposure-2026-10-28.md). Main-identity publication is explicitly held; Store handoff additionally checks the exact canonical public Store APK bytes and otherwise uses browser. This does NOT identify or clear the Play Protect classification. Do not silently rotate keys, remove apps/data, bypass warnings, or treat deleting a tracked key file as remediation.
+
+Owner has since accepted Voice1.3.2's new-note placement and Stop/switch behavior. That acceptance remains valid for the distributed candidate's observed behavior, not private key custody or universal security certification. Exact-artifact publication was denied HTTP403 and is now also held for signing review. No new public Voice1.3.2 asset was created.

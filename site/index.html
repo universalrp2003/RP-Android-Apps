@@ -1588,6 +1588,11 @@
         </form>
       </section>
 
+      <details class="trust release-status" id="signing-limitation">
+        <summary>கையொப்ப வரம்பு / Signing limitation — new APK releases paused</summary>
+        <div class="body"><p>The legacy CI signing material is public. A matching certificate alone is not proof of first-party origin. Use only canonical official download links and matching file hashes; these are not security clearance. New main-key APK releases are paused pending a data-preserving signing review. Do not bypass device warnings or uninstall working apps. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/signing-key-exposure-2026-10-28.md">Finding, mitigations and limits</a>.</p><p class="ta">பழைய பொதுக் கையொப்பத்தின் தனிச்சாவிப் பொருள் பொதுவெளியில் உள்ளது. கையொப்பம் பொருந்துவது மட்டும் முதல் தரப்பு மூலத்தை உறுதிப்படுத்தாது. அதிகாரப்பூர்வ இணைப்புகளையும் கோப்பின் கணிதச் சுருக்கத்தையும் சரிபார்க்கவும். புதிய வெளியீடுகள் தரவைப் பாதுகாக்கும் கையொப்ப ஆய்வுக்காக நிறுத்தப்பட்டுள்ளன. பாதுகாப்பு எச்சரிக்கையைத் தவிர்க்கவோ இயங்கும் செயலிகளை நீக்கவோ வேண்டாம்.</p></div>
+      </details>
+
       <!-- Secondary evidence stays available without crowding downloads. -->
       <details class="trust release-status">
         <summary>வெளியீட்டுச் சோதனை விவரங்கள் / Release test details</summary>
@@ -1655,7 +1660,7 @@
             merged.set(chunks[i], offset);
             offset += chunks[i].length;
           }
-          if (box) box.textContent = 'Verifying SHA-256 signature in browser...';
+          if (box) box.textContent = 'Verifying SHA-256 file hash in browser...';
           var hashBuf = await crypto.subtle.digest('SHA-256', merged.buffer);
           var actualSha = Array.from(new Uint8Array(hashBuf)).map(function (b) {
             return b.toString(16).padStart(2, '0');

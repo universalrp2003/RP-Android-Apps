@@ -267,11 +267,13 @@ jobs:
             echo "::error::$TAG is already published; refusing to overwrite it."
             exit 1
           fi
+          python3 tools/verify_release_signing_policy.py --legacy-main
           GH_TOKEN="$TARGET_TOKEN" gh release create "$TAG" --repo "$TARGET_REPO" \
             --target "$destination_branch" --draft --title "$title" --notes-file "$notes"
           GH_TOKEN="$TARGET_TOKEN" gh release upload "$TAG" "$APK" --repo "$TARGET_REPO"
 
           if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
+            python3 tools/verify_release_signing_policy.py --legacy-main
             GH_TOKEN="$SOURCE_TOKEN" gh release create "$TAG" --repo "$SOURCE_REPO" \
               --target "$GITHUB_SHA" --draft --title "$title" --notes-file "$notes"
             GH_TOKEN="$SOURCE_TOKEN" gh release upload "$TAG" "$APK" --repo "$SOURCE_REPO"

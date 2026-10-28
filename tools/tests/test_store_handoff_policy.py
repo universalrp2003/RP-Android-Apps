@@ -33,3 +33,15 @@ class StoreHandoffPolicyTest(unittest.TestCase):
         self.assertIn('System.getenv("RP_RUN_LIVE_SPEECH_TEST") == "true"', probe)
         self.assertNotIn('if (!reachable) return', probe)
         self.assertIn('no successful audio claimed', probe)
+
+    def test_known_certificate_alone_cannot_authorize_store_handoff(self):
+        router = (policy.ROOT/'shared/src/main/java/com/universalrp/updates/StoreUpdateRouter.kt').read_text()
+        self.assertIn('if (matchesPublishedStore(context)', router)
+        self.assertIn('apk.length() != STORE_BYTES', router)
+        self.assertIn('digest.digest().joinToString', router)
+        self.assertIn('== STORE_APK_SHA256', router)
+        self.assertIn('d5f41e7b5142507e8b42fb9d2c4e0e2d492eaf03581a53b3dabacf692daf4bc7', router)
+
+    def test_secret_generated_handoff_changes_trigger_isolated_build(self):
+        ci = (policy.ROOT/'.github/workflows/secret-message-wifi-test.yml').read_text()
+        self.assertEqual(2, ci.count('"shared/src/main/java/com/universalrp/updates/**"'))

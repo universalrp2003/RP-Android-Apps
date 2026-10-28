@@ -34,7 +34,7 @@ def verify_sources():
         if gate not in store:
             raise ValueError('Store APK verification gate missing: '+gate)
     router = (ROOT/'shared/src/main/java/com/universalrp/updates/StoreUpdateRouter.kt').read_text()
-    for gate in ['trustedStore(context)', 'setOf(SIGNER)', 'openWebsite', '#st-']:
+    for gate in ['matchesPublishedStore(context)', 'setOf(SIGNER)', 'apk.length() != STORE_BYTES', '== STORE_APK_SHA256', 'openWebsite', '#st-']:
         if gate not in router: raise ValueError('Store route guard missing: '+gate)
 
 if __name__ == '__main__':
