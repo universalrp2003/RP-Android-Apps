@@ -43,3 +43,5 @@ NEXT: owner-device pilot verification (Store app-specific routing and website fa
 ## Safety hold and latest UI feedback
 
 Owner's next screenshots show Play Protect “Harmful app blocked” for Store debug pilot and Expense Tracker. Do not infer false positive, DNS cause or resolution from “all working.” Suite rollout is paused pending exact detection text/hash/permission review; see play-protect-investigation.md. Do not recommend bypassing Play Protect. Voice Notes search field removed per owner, spacing reduced and update-check results moved into an explicit dialog. Source tests/localization passed; Android build pending. No claim of verified Store/browser fallback based solely on installation screenshots.
+
+Voice Notes UI follow-up verified: run 40651513745, source 4b7156d, succeeded debug unit tests/lint/assemble; artifact 12800026324 (voice-notes-preview), reports 12800156198. 143 Python source tests and localization checks passed. Test-only intermediate build, existing version label unchanged; not a new public release or device validation. Play Protect investigation remains open.

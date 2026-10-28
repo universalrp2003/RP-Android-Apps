@@ -15,4 +15,4 @@ Owner also supplied NextDNS logs: speech.platform.bing.com appears without the r
 
 ## Voice Notes feedback
 
-Owner says all working but update check says nothing; existing inline result used default Text color within the custom dark screen. Results now use an explicit AlertDialog for success/no-update/error and immediate checking state. Search box removed at owner's request, microphone moved above the notes and padding reduced. HD-only playback/privacy disclosure and biometric gate preserved. New Android preview verification pending.
+Owner says all working but update check says nothing; existing inline result used default Text color within the custom dark screen. Results now use an explicit AlertDialog for success/no-update/error and immediate checking state. Search box removed at owner's request, microphone moved above the notes and padding reduced. HD-only playback/privacy disclosure and biometric gate preserved. Android preview run 40651513745 passed unit tests/lint/assemble (source 4b7156d); device result visibility is still to be checked.
