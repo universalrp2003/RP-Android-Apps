@@ -8,9 +8,9 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
-| [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.8 / code 14](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8) | [`SMS-Guard-v1.1.8.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.8/SMS-Guard-v1.1.8.apk) |
+| [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.9 / code 15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.9) | [`SMS-Guard-v1.1.9.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.9/SMS-Guard-v1.1.9.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.73 / code 78](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.73) | [`CleanSweep-v2.73.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.73/CleanSweep-v2.73.apk) |
-| [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.1 / code 2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.1) | [`Voice-Notes-v1.1.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.1/Voice-Notes-v1.1.apk) |
+| [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.2 / code 3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.2) | [`Voice-Notes-v1.2.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.2/Voice-Notes-v1.2.apk) |
 | [**Expense Tracker (செலவு கண்காணிப்பு)**](expensetracker/README.md) · 8.0+ (API 26) | [1.1 / code 2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.1) | [`Expense-Tracker-v1.1.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.1/Expense-Tracker-v1.1.apk) |
 | [**Ramesh Radio (ரமேஷ் ரேடியோ)**](radio/README.md) · 8.0+ (API 26) | [1.26 / code 26](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.26) | [`Ramesh-Radio-v1.26.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.26/Ramesh-Radio-v1.26.apk) |
 | [**PulseEQ**](equalizer/README.md) · 8.0+ (API 26) | [1.9 / code 10](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9) | [`PulseEQ-v1.9.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.9/PulseEQ-v1.9.apk) |
@@ -142,3 +142,7 @@ There are twelve published RP Ideas Android applications in this repository: nin
 - [`CHANGELOG.md`](CHANGELOG.md) — release history and current scope.
 - [`docs/published-release-digests.md`](docs/published-release-digests.md) — verified public APK hashes.
 - [`store/README.md`](store/README.md) — store-art and metadata inventory.
+
+## Latest three-app help
+
+[தமிழ் / English help, website and other app links](docs/three-app-help.md). SMS Guard 1.1.9 and Voice Notes 1.2 are public and owner-reported working on one phone. Radio 1.28 publication requested; stable download links remain unchanged until verified public.

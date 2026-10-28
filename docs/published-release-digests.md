@@ -364,3 +364,14 @@ Public asset metadata below was read from the GitHub Releases API after publicat
 
 - [Tamil-Podcast-Player 1.4 / code 6](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.4): `Tamil-Podcast-Player-v1.4.apk`, 11,983,627 bytes, SHA-256 `0232ecd612b04686145abe39191ca42e01c318bf9e7ea741de1e6af09e13a5be`, published `2026-10-27T10:17:56Z`. [Publication run 40486908497](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40486908497).
 - [Elderly-Launcher 1.4 / code 5](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.4): `Elderly-Launcher-v1.4.apk`, 11,514,811 bytes, SHA-256 `7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232`, published `2026-10-27T10:21:49Z`. [Publication run 40487465425](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40487465425).
+
+## SMS Guard and Voice Notes — 28 October 2026 owner review
+
+Public assets verified through GitHub release metadata; both release workflows succeeded. Owner reports both work on their phone. Screenshots show version/update metadata, SMS OTP sender-only controls and Voice Notes editing, not a hash-matched installation or exhaustive behavior test. Redmi/MIUI inbox refresh remains unvalidated on the friend's device.
+
+| App | Public APK bytes | GitHub SHA-256 | Workflow |
+| --- | ---: | --- | --- |
+| SMS Guard 1.1.9/code 15 | 12461665 | `7e0f0aac34ced84c3ff608dea1baadb54e57400f63aa9c79e6b1c782142f7fc2` | [40552415159](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40552415159) |
+| Voice Notes 1.2/code 3 | 12113492 | `c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0` | [40552415178](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40552415178) |
+
+Radio 1.28 publication is separately requested; no public radio digest is claimed here yet.

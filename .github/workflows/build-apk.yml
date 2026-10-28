@@ -1320,6 +1320,13 @@ jobs:
           LIVE_GUARD_BEING_PUBLISHED=false
           for i in "${!ALL_TAGS[@]}"; do
             tag="${ALL_TAGS[$i]}"
+            # Owner-scoped radio publication must not ship pending PulseEQ changes.
+            if git log -1 --format=%s | grep -qF '[publish-radio]'; then
+              if [[ "$tag" != "$RADIO_TAG" ]]; then
+                echo "SKIP: $tag is outside the radio-only publication request."
+                continue
+              fi
+            fi
             if [[ "${MIRROR_EXISTING:-false}" == "true" ]]; then
               RELEASE_TAGS+=("$tag"); RELEASE_APKS+=("${ALL_APKS[$i]}"); RELEASE_NOTES+=("${ALL_NOTES[$i]}"); RELEASE_TITLES+=("${ALL_TITLES[$i]}")
               [[ "$tag" == "$LIVE_GUARD_TAG" ]] && LIVE_GUARD_BEING_PUBLISHED=true

@@ -1,6 +1,7 @@
 # SMS Guard (குறுஞ்செய்தி காவலன்)
 
-**Package:** `com.universalrp.smsguard` · **Current Stable Release:** [`v1.1.8` (`versionCode = 14`)](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8) (`12,445,281` bytes · SHA-256 `de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582`, [run 40208094170](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40208094170)) — the monthly-spend card's Tamil, repaired after the owner's 1.1.7 screenshots — a one-line layout fix to the monthly-spend card and an honest correction to what the note claimed. The published 1.1.6 bytes are unchanged and still available. · **Minimum Android:** Android 8.0+ (API 26)
+**Package:** `com.universalrp.smsguard` · **Current Stable Release:** [1.1.9 / code 15](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.9) · Android 8.0+ · 12,461,665 bytes · SHA-256 `7e0f0aac34ced84c3ff608dea1baadb54e57400f63aa9c79e6b1c782142f7fc2` · [verified release workflow](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40552415159)
+
 
 Full-featured open-source **Tamil (`தமிழ்`) & English** Android Default SMS app, cyber phishing shield, smart voice announcer (instant screen-ON auto-stop, global `⏹ Stop / நிறுத்து` button across every window, newest-messages-at-top thread/history sorting, and default-ON full readout for Government, `TNEPDS` Ration Shop, `TNSEDU` School Education Exam Results, Utilities, and non-OTP senders), and spoof-proof Bank / Card / UPI / FASTag finance tracker.
 
@@ -29,3 +30,9 @@ Full-featured open-source **Tamil (`தமிழ்`) & English** Android Defaul
 ```sh
 ./gradlew :smsguard:testReleaseUnitTest :smsguard:lintRelease :smsguard:assembleRelease
 ```
+
+## Device review — 28 October 2026
+
+Owner installed 1.1.9/code 15 and reports it works; screenshots show OTP sender-only controls. Friend’s Redmi/MIUI refresh problem remains unconfirmed. Screenshots are not hash-matched.
+
+[தமிழ் / English help and other applications](../docs/three-app-help.md) · [Official website](https://universalrp2003.github.io/RP-Android-Apps/)

@@ -1,6 +1,6 @@
 # Voice Notes — குரல் குறிப்பு / Tamil voice notes
 
-**Current stable release:** 1.1 / code 2
+**Current stable release:** 1.2 / code 3
 
 **Package:** `com.universalrp.voicenotes`
 
@@ -22,13 +22,13 @@ Microphone, for dictation; internet, for HD neural playback. **No location, no c
 
 ## Download the stable release
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Voice-Notes-v1.1.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.1/Voice-Notes-v1.1.apk) (`12,047,956` bytes · SHA-256 `171e924c68fdde29c8009f754287303b078a078c068a6a0d351ced76c2543f88`) · [release notes](../releases/voice-notes-v1.1.md) · [all 8 RP Ideas apps](../README.md)
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Voice-Notes-v1.2.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.2/Voice-Notes-v1.2.apk) (`12,113,492` bytes · SHA-256 `c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0`) · [release notes](../releases/voice-notes-v1.2.md) · [all 8 RP Ideas apps](../README.md)
 
 > The APK is signed with the same CI keystore as the other RP Ideas apps, so it installs without an "unknown developer" warning.
 
 ## Device test status
 
-The 1.0 build was installed on a phone and its screenshots found the layout defect 1.1 repairs — the title and footer drawn under the system bars. The exact 1.1 bytes have **not** been installed on a phone. See [the release note](../releases/voice-notes-v1.1.md) for what is and is not verified.
+The 1.0 build was installed on a phone and its screenshots found the layout defect 1.1 repairs — the title and footer drawn under the system bars. The exact 1.1 bytes have **not** been installed on a phone. See [the release note](../releases/voice-notes-v1.2.md) for what is and is not verified.
 
 ## Build and test
 
@@ -37,3 +37,9 @@ The 1.0 build was installed on a phone and its screenshots found the layout defe
 ```
 
 The note store's round-trip and the speech decisions — which voice reads which note, and how a long note is chunked — are covered by unit tests. The dictation flow, the neural playback and the Tamil wording on a real screen are not.
+
+## Device review — 28 October 2026
+
+Owner reports version 1.2 works on their phone; screenshots show note editing. Not hash-matched and not a test of every voice/error path.
+
+[தமிழ் / English help and other applications](../docs/three-app-help.md) · [Official website](https://universalrp2003.github.io/RP-Android-Apps/)
