@@ -77,6 +77,10 @@ jobs:
           retention-days: 14
 
   previous_reports:
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [cleaner, radio, vocalremover, oorarivippu, vasanthi, expensetracker]
     if: contains(github.event.head_commit.message, '[read-handoff-reports]')
     runs-on: ubuntu-latest
     steps:
@@ -84,19 +88,24 @@ jobs:
         with:
           github-token: ${{ github.token }}
           run-id: 40670992298
-          pattern: handoff-*-reports
+          name: handoff-${{ matrix.module }}-reports
           path: diagnostics
       - name: Publish existing lint and unit failures as bounded annotations
         shell: python
         run: |
           import pathlib, xml.etree.ElementTree as ET
           count = 0
+          seen = set()
           for file in pathlib.Path('diagnostics').rglob('*.xml'):
               try: root = ET.parse(file).getroot()
               except ET.ParseError: continue
               for issue in root.findall('issue'):
                   if issue.get('severity') not in ('Error', 'Fatal'): continue
-                  text = str(file) + ': ' + issue.get('id', '') + ': ' + issue.get('message', '')
+                  key = (issue.get('id'), issue.find('location').get('file') if issue.find('location') is not None else '')
+                  if key in seen: continue
+                  seen.add(key)
+                  location = issue.find('location')
+                  text = str(file) + ': ' + issue.get('id', '') + ': ' + issue.get('message', '') + ' LOCATION=' + str(location.attrib if location is not None else {})
                   print('::error title=Recorded lint failure::' + text[:900].replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
                   count += 1
               for failure in root.findall('.//failure') + root.findall('.//error'):
