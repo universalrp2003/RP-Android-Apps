@@ -1,5 +1,19 @@
 # Owner follow-up checklist — 28 October 2026
 
+## Current status (supersedes dated historical instructions below)
+
+- Owner reversed the old self-updater retention instruction: Store-first/browser fallback migration is authorized, with pilot verification before suite rollout. Never require Store.
+- Store 0.5 and DailyVault 0.3 are already public; do not republish those versions. DailyVault prominent bilingual Guide and optional lock are implemented.
+- Voice Notes search removed, microphone moved above notes, explicit update-result dialog implemented and owner screenshot confirms rendering. Read-only GitHub metadata fallback added for unavailable website feed; run 40659196019 passed unit/lint/build. Device check of that new fallback remains pending.
+- Store Google Play/F-Droid About wording removed in Tamil and English. Run 40659196161 passed unit/lint/build.
+- Website catalog generation passes against 12 public releases, but branch build success is not Pages deployment: deploy job is main-only. Main catalog integration remains pending.
+- SMS Finance candidate was owner-tested. Deterministic full gate passed previously; dedicated live external test is separate, and a fresh real probe is running (40659611059). Do not call external service healthy before inspecting results.
+- Distinct signed public SMS/Voice versions, optional daily/version-suppressed reminders, suite installer removal and final public catalog/site synchronization remain unfinished.
+- Play Protect blocked Store debug/Expense Tracker screenshots: no bypass, no claim of false positive; await exact detection text and blocked-byte identity. This blocks affected public rollout, not safe source work.
+- Preserve notes, financial data, signers and all old public assets.
+
+## Historical checklist and evidence
+
 - Tamilan Store: compact Search button/dialog; owner galleries for all twelve apps; tap to enlarge; Live Guard Tamil name கைபேசி காவலன்; Store stable-release discovery/browser handoff; request-app and Contact actions.
 - Keep existing apps' self-download/update behavior unchanged. Store/DailyVault previews are not authorized public releases.
 - Preserve Secret Message/DailyVault screenshot blocking. Gallery copies redact Secret Message invite/token and device identity; partially mask personal names in Expense Tracker and Launcher.

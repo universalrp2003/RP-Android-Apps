@@ -24,6 +24,25 @@ jobs:
           gradle-version: '8.14.3'
       - name: Run actual SMS external synthesis assertion
         run: gradle :smsguard:testLiveSmsVoice --no-daemon --stacktrace
+      - name: Publish bounded test diagnostics as check annotations
+        if: always()
+        shell: python
+        run: |
+          import pathlib, xml.etree.ElementTree as ET
+          files = list(pathlib.Path('smsguard/build/test-results').rglob('TEST-*.xml'))
+          if not files:
+              print('::warning title=SMS probe::No JUnit XML produced; inspect build failure, not a voice-service verdict.')
+          for file in files:
+              root = ET.parse(file).getroot()
+              live = 'testLiveSmsVoice' in str(file)
+              print('::notice title=SMS test summary::' + ('LIVE ' if live else 'DETERMINISTIC ') +
+                    'tests=' + root.get('tests', '?') + ' failures=' + root.get('failures', '?') +
+                    ' errors=' + root.get('errors', '?') + ' skipped=' + root.get('skipped', '?'))
+              for case in root.findall('testcase'):
+                  for failure in list(case.findall('failure')) + list(case.findall('error')):
+                      text = (case.get('name', '') + ': ' + failure.get('message', ''))[:500]
+                      text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+                      print('::error title=SMS test failure::' + text)
       - name: Preserve live and deterministic results even on failure
         if: always()
         uses: actions/upload-artifact@v4
