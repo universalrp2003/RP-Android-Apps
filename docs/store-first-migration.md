@@ -22,3 +22,9 @@ Status: planning and foundation implementation in progress. No claim of finished
 - Existing twelve-app catalog scope, bundled notification worker and old self-download functions remain until the pilot is verified. No suite-migration publication performed by these changes.
 
 Pending: CI/device verification of foundation, Pages live endpoint confirmation, pilot notification/update caller, remaining app-specific migrations, SMS Guard live integration test diagnosis, Voice Notes/SMS new release versions and publication.
+
+## Pilot and release-test separation
+
+- Voice Notes pilot adds an explicit Check updates action and in-app Update available notice, routing to the Store or per-app website anchor. No APK download/installer added. System/background reminders and suite rollout remain pending; do not describe this pilot as finished notification migration.
+- SMS Guard live neural synthesis assertion is unchanged, moved to dedicated testLiveSmsVoice task with real failure reporting. Deterministic release tests exclude that exact external-service method only. Scheduled live monitoring uploads the live results separately and marks probe failure visibly. This fixes release-test categorization, NOT the external speech service outage; owner previously confirmed incoming SMS voice on the device.
+- Existing published versions are unchanged during foundation/pilot review. New public versions, app-local installer removal and final release/catalog synchronization remain gated on CI and device review.

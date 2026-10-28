@@ -411,6 +411,8 @@ fun VoiceNotesScreen(
             confirmButton = { TextButton(onClick = { showHelp = false }) { Text(tr("Close", "மூடு")) } }
         )
 
+        com.universalrp.updates.StoreFirstUpdateNotice("voicenotes", tamil)
+
         // ---------------------------------------------------------------- search
         OutlinedTextField(
             value = searchQuery,
