@@ -23,3 +23,11 @@ The preview is intentionally not in the twelve published-app directory or websit
 ## Build
 
 `gradle :tamilanstore:testDebugUnitTest :tamilanstore:lintDebug :tamilanstore:assembleDebug`
+
+## Preview 0.2 — installed-state follow-up
+
+Owner screenshots show preview 0.1 running in Tamil/English, download progress and an Android installer prompt. They do not independently establish completed installation of every app. The unknown-source warning is a sensitive-permission disclosure, not an APK malware verdict; do not bypass Play Protect or recommend uninstalling a newer candidate just to test the store.
+
+0.2/code 2 refreshes local installed versions on return to the foreground and package added/replaced/removed broadcasts. Installed apps get Open (or Android app info if no launch activity). Current/newer versions are not offered another Install/Download action. Older numeric versions get Update with installed/offered version details; unrecognized preview labels are not guessed into update prompts. Signer mismatches block store updates and warn against uninstall/data loss. The model also blocks downloads of same/newer/unknown versions, and archive versionCode/signer checks remain mandatory. All/Installed/Updates filters compare only the bundled catalog snapshot, NOT a live Google Play-like remote feed.
+
+The screenshot's Vasanthi 1.1.5 and Podcast 1.6 are newer than the public catalog entries 1.1.4/1.4, so this preview intentionally offers Open, not a downgrade. Existing applications' self-update mechanisms remain unchanged. Android/device validation of this new revision is pending the preview workflow and owner review; cancellation is not treated as an install success.

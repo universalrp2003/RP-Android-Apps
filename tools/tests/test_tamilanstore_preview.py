@@ -47,3 +47,20 @@ class TamilanStorePreviewTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class InstalledLifecycleContractTest(unittest.TestCase):
+    def test_auto_refresh_and_open_take_precedence(self):
+        ui = (STORE / 'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
+        for action in ('ACTION_PACKAGE_ADDED', 'ACTION_PACKAGE_REPLACED', 'ACTION_PACKAGE_REMOVED'):
+            self.assertIn(action, ui)
+        self.assertIn('override fun onResume()', ui)
+        self.assertIn('getLaunchIntentForPackage(app.packageName)', ui)
+        self.assertIn('AppStatus.UPDATE_AVAILABLE', ui)
+        self.assertIn('AppStatus.NEWER_INSTALLED', ui)
+        self.assertIn('FilterChip(', ui)
+        self.assertIn('status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE', ui)
+    def test_model_rejects_downloading_current_or_newer(self):
+        model = (STORE / 'src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text()
+        self.assertIn('status != AppStatus.NOT_INSTALLED && status != AppStatus.UPDATE_AVAILABLE', model)
+        self.assertIn('newCode >= oldCode', model)
+        self.assertIn('InstalledStatus.resolve(this.installed(app), app.version)', model)

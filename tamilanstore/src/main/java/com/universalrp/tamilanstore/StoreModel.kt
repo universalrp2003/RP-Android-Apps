@@ -23,12 +23,20 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     private var job: Job? = null
     private val directory = File(application.cacheDir, "verified-apks").apply { mkdirs() }
     init { directory.listFiles()?.forEach { it.delete() } }
-    fun installed(app: StoreApp): String? = try {
-        getApplication<Application>().packageManager.getPackageInfo(app.packageName, 0).versionName
+    @Suppress("DEPRECATION")
+    fun installed(app: StoreApp): InstalledApp? = try {
+        val flags = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
+        val info = getApplication<Application>().packageManager.getPackageInfo(app.packageName, flags)
+        val signatures = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
+        val trusted = signatures?.size == 1 && hex(MessageDigest.getInstance("SHA-256").digest(signatures[0].toByteArray())) == Catalog.SIGNER
+        InstalledApp(info.versionName, trusted)
     } catch (_: PackageManager.NameNotFoundException) { null }
+      catch (_: SecurityException) { InstalledApp(null, false) }
     fun cancel() { job?.cancel() }
     fun download(app: StoreApp) {
         if (_transfer.value.busy) return
+        val status = InstalledStatus.resolve(installed(app), app.version)
+        if (status != AppStatus.NOT_INSTALLED && status != AppStatus.UPDATE_AVAILABLE) return
         _transfer.value = Transfer(app.id, busy = true)
         job = viewModelScope.launch {
             try {
@@ -113,6 +121,9 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         check(hex(MessageDigest.getInstance("SHA-256").digest(signatures!![0].toByteArray())) == Catalog.SIGNER)
         val installed = try { pm.getPackageInfo(app.packageName, flags) } catch (_: PackageManager.NameNotFoundException) { null }
         if (installed != null) {
+            val status = InstalledStatus.resolve(this.installed(app), app.version)
+            check(status == AppStatus.UPDATE_AVAILABLE || status == AppStatus.CURRENT)
+
             val oldCode = if (Build.VERSION.SDK_INT >= 28) installed.longVersionCode else installed.versionCode.toLong()
             val newCode = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
             check(newCode >= oldCode)

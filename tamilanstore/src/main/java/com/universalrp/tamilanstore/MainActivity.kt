@@ -1,5 +1,8 @@
 package com.universalrp.tamilanstore
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -7,6 +10,8 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
@@ -16,11 +21,29 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private var packageRevision by mutableIntStateOf(0)
+    private val packageReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) { packageRevision++ }
+    }
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+        }
+        ContextCompat.registerReceiver(this, packageReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+    }
+    override fun onResume() { super.onResume(); packageRevision++ }
+    override fun onStop() { unregisterReceiver(packageReceiver); super.onStop() }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -28,9 +51,12 @@ class MainActivity : ComponentActivity() {
             val transfer by model.transfer.collectAsStateWithLifecycle()
             var tamil by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("tamil", true)) }
             var query by rememberSaveable { mutableStateOf("") }
+            var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
             var message by remember { mutableStateOf("") }
             var refresh by remember { mutableIntStateOf(0) }
             val scope = rememberCoroutineScope()
+            val installedApps = remember(refresh, packageRevision) { model.apps.associate { it.id to model.installed(it) } }
+            val updateCount = model.apps.count { InstalledStatus.resolve(installedApps[it.id], it.version) == AppStatus.UPDATE_AVAILABLE }
             fun bi(ta: String, en: String) = if (tamil) ta else en
             fun open(url: String) {
                 try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
@@ -50,6 +76,7 @@ class MainActivity : ComponentActivity() {
                         }
                         item { Text(bi("நமது 12 செயலிகள் மட்டும். கணக்கு அல்லது விளம்பரம் இல்லை. Google Play அல்லது F-Droid அதிகாரப்பூர்வ அங்காடி அல்ல.", "Only our 12 apps. No account or ads. Not an official Google Play or F-Droid store.")) }
                         item { OutlinedTextField(query, { query = it }, label = { Text(bi("செயலியைத் தேடு", "Search apps")) }, singleLine = true, modifier = Modifier.fillMaxWidth()) }
+                        item { Text(bi("நிறுவிய பதிப்பு சாதனத்திலேயே சரிபார்க்கப்படுகிறது; இணையத்திற்கு அனுப்பப்படாது. புதுப்பிப்பு குறிப்பு இந்தப் பட்டியலுடன் மட்டுமே ஒப்பிடுகிறது. நிறுவல் முடிந்து திரும்பியதும் நிலை புதுப்பிக்கப்படும்.", "Installed versions are checked locally, not uploaded. Update guidance compares only this catalog snapshot. Status refreshes when you return from installation."), style = MaterialTheme.typography.bodySmall) }
                         item { Text(bi("பட்டியல்: 28 அக்டோபர் 2026. புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். பதிவிறக்கம் பயனர் தேர்வில் மட்டும்.", "Catalog snapshot: 28 October 2026. Check the website for newer releases. Downloads are user initiated."), style = MaterialTheme.typography.bodySmall) }
                         item {
                             Row {
@@ -58,19 +85,36 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         if (message.isNotEmpty()) item { Text(message, color = MaterialTheme.colorScheme.primary) }
-                        val visible = model.apps.filter { query.isBlank() || "${it.name} ${it.tamilName}".contains(query.trim(), ignoreCase = true) }
+                        item {
+                            Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                listOf(bi("அனைத்தும்", "All"), bi("நிறுவியவை", "Installed"), bi("புதுப்பிப்புகள் ($updateCount)", "Updates ($updateCount)")).forEachIndexed { index, label ->
+                                    FilterChip(selected = selectedFilter == index, onClick = { selectedFilter = index }, label = { Text(label) })
+                                }
+                            }
+                        }
+                        val visible = model.apps.filter { app ->
+                            when (selectedFilter) {
+                                1 -> installedApps[app.id] != null
+                                2 -> InstalledStatus.resolve(installedApps[app.id], app.version) == AppStatus.UPDATE_AVAILABLE
+                                else -> true
+                            }
+                        }.filter { query.isBlank() || "${it.name} ${it.tamilName}".contains(query.trim(), ignoreCase = true) }
                         if (visible.isEmpty()) item { Text(bi("செயலி கிடைக்கவில்லை", "No apps found")) }
                         items(visible, key = { it.id }) { app ->
-                            val installed = remember(app.id, refresh) { model.installed(app) }
+                            val installed = installedApps[app.id]
+                            val status = InstalledStatus.resolve(installed, app.version)
                             val active = transfer.appId == app.id
                             Card(Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(if (tamil) app.tamilName else app.name, style = MaterialTheme.typography.titleMedium)
                                     Text("${app.version} · ${"%.1f".format(app.size / 1_000_000.0)} MB", style = MaterialTheme.typography.bodySmall)
-                                    Text(when {
-                                        installed == null -> bi("நிறுவப்படவில்லை", "Not installed")
-                                        installed == app.version -> bi("பட்டியலில் உள்ள பதிப்பு நிறுவப்பட்டுள்ளது", "Catalog version installed")
-                                        else -> bi("நிறுவிய பதிப்பு: $installed · வெளியீட்டை ஒப்பிடுங்கள்", "Installed: $installed · compare release")
+                                    Text(when (status) {
+                                        AppStatus.NOT_INSTALLED -> bi("நிறுவப்படவில்லை", "Not installed")
+                                        AppStatus.CURRENT -> bi("பட்டியல் பதிப்பு நிறுவப்பட்டுள்ளது · ${installed?.version ?: "?"}", "Catalog version installed · ${installed?.version ?: "?"}")
+                                        AppStatus.UPDATE_AVAILABLE -> bi("புதுப்பிப்பு உள்ளது · நிறுவியது ${installed?.version ?: "?"} → ${app.version}", "Update available · installed ${installed?.version ?: "?"} → ${app.version}")
+                                        AppStatus.NEWER_INSTALLED -> bi("புதிய பதிப்பு ${installed?.version ?: "?"} ஏற்கெனவே உள்ளது. பழைய பதிப்பிற்கு மாற்ற வேண்டாம்.", "Newer version ${installed?.version ?: "?"} installed. Do not downgrade.")
+                                        AppStatus.UNKNOWN_VERSION -> bi("நிறுவிய பதிப்பு ${installed?.version ?: "?"} · தானாக ஒப்பிட முடியவில்லை; விவரத்தைப் பார்க்கவும்.", "Installed ${installed?.version ?: "?"} · cannot compare automatically; see details.")
+                                        AppStatus.SIGNER_MISMATCH -> bi("நிறுவிய செயலியின் கையொப்பம் பொருந்தவில்லை. இந்த அங்காடி மூலம் மாற்ற முடியாது; தரவைப் பாதுகாக்க செயலியை நீக்க வேண்டாம்.", "Installed signer differs. Store updates blocked; do not uninstall and lose data.")
                                     }, style = MaterialTheme.typography.bodySmall)
                                     if (active && transfer.busy) {
                                         LinearProgressIndicator(progress = { (transfer.bytes.toFloat() / app.size).coerceIn(0f, 1f) }, modifier = Modifier.fillMaxWidth())
@@ -78,8 +122,20 @@ class MainActivity : ComponentActivity() {
                                         TextButton(onClick = { model.cancel() }) { Text(bi("ரத்து செய்", "Cancel")) }
                                     } else {
                                         if (active && transfer.failed) Text(bi("பதிவிறக்கம் அல்லது சரிபார்ப்பு தோல்வி. நிறுவப்படவில்லை; மீண்டும் முயலலாம்.", "Download or verification failed. Nothing installed; retry is available."))
-                                        Row {
-                                            if (active && transfer.verified) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            if (installed != null) {
+                                                Button(onClick = {
+                                                    try {
+                                                        val launch = packageManager.getLaunchIntentForPackage(app.packageName)
+                                                        if (launch != null) startActivity(launch)
+                                                        else {
+                                                            message = bi("திறக்கும் திரை கிடைக்கவில்லை; செயலித் தகவல் திறக்கப்படுகிறது.", "No launch screen; opening app info.")
+                                                            startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${app.packageName}")))
+                                                        }
+                                                    } catch (_: Exception) { message = bi("செயலியைத் திறக்க முடியவில்லை", "Cannot open app") }
+                                                }) { Text(bi("திற", "Open")) }
+                                            }
+                                            if ((status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE) && active && transfer.verified) {
                                                 Button(onClick = {
                                                     scope.launch {
                                                         try {
@@ -94,8 +150,8 @@ class MainActivity : ComponentActivity() {
                                                         } catch (_: Exception) { message = bi("நிறுவலைத் திறக்க முடியவில்லை. மீண்டும் பதிவிறக்கி முயலவும்.", "Cannot start installation. Download again and retry.") }
                                                     }
                                                 }) { Text(bi("நிறுவு", "Install")) }
-                                            } else {
-                                                Button(onClick = { message = ""; model.download(app) }, enabled = !transfer.busy) { Text(bi("பதிவிறக்கு", "Download")) }
+                                            } else if (status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE) {
+                                                Button(onClick = { message = ""; model.download(app) }, enabled = !transfer.busy) { Text(if (status == AppStatus.UPDATE_AVAILABLE) bi("புதுப்பி", "Update") else bi("பதிவிறக்கு", "Download")) }
                                             }
                                             TextButton(onClick = { open(app.releaseUrl) }) { Text(bi("விவரம்", "Details")) }
                                         }
