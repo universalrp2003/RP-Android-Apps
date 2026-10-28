@@ -209,12 +209,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            var pendingFinanceLockDisable by remember { mutableStateOf(false) }
+            fun finishFinanceAuthentication() {
+                vm.unlockFinanceSession()
+                if (pendingFinanceLockDisable) {
+                    vm.setFinanceLockEnabled(false)
+                    pendingFinanceLockDisable = false
+                }
+            }
             val deviceCredentialLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult(),
             ) { res ->
-                if (res.resultCode == RESULT_OK) {
-                    vm.unlockFinanceSession()
-                }
+                if (res.resultCode == RESULT_OK) finishFinanceAuthentication()
+                pendingFinanceLockDisable = false
             }
 
             fun requestFinanceBiometricUnlock() {
@@ -242,14 +249,17 @@ class MainActivity : ComponentActivity() {
                             builder.setNegativeButton(
                                 if (prefs.tamil) "கடவுச்சொல் உள்ளிடு" else "Use Password",
                                 mainExecutor,
-                            ) { _, _ -> }
+                            ) { _, _ -> pendingFinanceLockDisable = false }
                         }
                         builder.build().authenticate(
                             CancellationSignal(),
                             mainExecutor,
                             object : BiometricPrompt.AuthenticationCallback() {
                                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-                                    vm.unlockFinanceSession()
+                                    finishFinanceAuthentication()
+                                }
+                                override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                                    pendingFinanceLockDisable = false
                                 }
                             },
                         )
@@ -265,6 +275,7 @@ class MainActivity : ComponentActivity() {
                         return
                     }
                 }
+                pendingFinanceLockDisable = false
                 vm.postBanner(
                     if (prefs.tamil) {
                         "போன் கைரேகை அமைக்கப்படவில்லை — கீழே வரவு-செலவு கடவுச்சொல் அமைத்துத் திறக்கவும்."
@@ -631,6 +642,13 @@ class MainActivity : ComponentActivity() {
                                     )
                                     MainTab.CONTROLS -> ControlsTab(
                                         vm = vm,
+                                        onFinanceLockChange = { enabled ->
+                                            if (enabled) vm.setFinanceLockEnabled(true)
+                                            else {
+                                                pendingFinanceLockDisable = true
+                                                requestFinanceBiometricUnlock()
+                                            }
+                                        },
                                         prefs = prefs,
                                         palette = palette,
                                         ui = ui,

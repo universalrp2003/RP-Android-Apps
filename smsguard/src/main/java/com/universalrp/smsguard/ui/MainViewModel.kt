@@ -178,6 +178,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setFinanceLockEnabled(enabled: Boolean) {
+        // Never allow a settings switch to bypass the Finance authentication gate.
+        if (!enabled && !_financeUnlockedInSession.value) return
         GuardSettingsStore.updateFinanceLockEnabled(getApplication(), enabled)
         if (!enabled) {
             _financeUnlockedInSession.value = true
@@ -185,6 +187,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setCustomFinancePin(rawPin: String) {
+        // Creating/replacing/clearing a password is security-sensitive, including first setup.
+        if (prefsFlow.value.financeLockEnabled && !_financeUnlockedInSession.value) {
+            _statusBanner.value = if (prefsFlow.value.tamil) "முதலில் கைரேகை / போன் பூட்டு மூலம் திறக்கவும்" else "Unlock with phone credentials before changing the Finance password"
+            return
+        }
         val ctx = getApplication<Application>()
         GuardSettingsStore.setCustomFinancePin(ctx, rawPin)
         val tamil = prefsFlow.value.tamil
