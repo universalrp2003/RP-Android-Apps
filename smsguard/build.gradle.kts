@@ -86,3 +86,21 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 }
+
+// Keep external-service availability separate from deterministic regression tests.
+// The live assertion is unchanged and still fails its dedicated task when synthesis fails.
+val liveSmsVoiceMethod = "com.universalrp.smsguard.SmsGuardEngineTest.liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable"
+tasks.withType<Test>().configureEach {
+    if (name != "testLiveSmsVoice") filter { excludeTestsMatching(liveSmsVoiceMethod) }
+}
+tasks.register<Test>("testLiveSmsVoice") {
+    group = "verification"
+    description = "External neural voice availability probe; not a deterministic release test."
+    dependsOn("testReleaseUnitTest")
+    filter { includeTestsMatching(liveSmsVoiceMethod) }
+    doFirst {
+        val releaseTests = tasks.named<Test>("testReleaseUnitTest").get()
+        testClassesDirs = releaseTests.testClassesDirs
+        classpath = releaseTests.classpath
+    }
+}
