@@ -256,20 +256,22 @@ object NeuralCloudVoiceEngine {
         timeoutMs: Long = 4000L,
         diagnostic: ((String) -> Unit)? = null,
     ): ByteArray? {
+        // Match the official Edge request form, as the shared HD engine already does.
+        val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(voiceName)
         val started = System.nanoTime()
         val peerCode = java.util.concurrent.atomic.AtomicInteger(0)
         val report: (String) -> Unit = { event ->
             if (event == "PEER_CLOSING CODE=1011") peerCode.set(1011)
             diagnostic?.invoke(event)
         }
-        val firstAttempt = streamWebSocketOnce(text, voiceName, rate, timeoutMs, diagnostic = report)
+        val firstAttempt = streamWebSocketOnce(text, serverVoice, rate, timeoutMs, diagnostic = report)
         if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
         val elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
         val remaining = NeuralRetryPolicy.remainingBudget(timeoutMs, elapsed, peerCode.get())
         if (remaining == 0L) return null
         diagnostic?.invoke("TRANSIENT_SERVER_RETRY")
         // One fresh attempt only, same HD endpoint/voice; never retry policy/auth failures.
-        return streamWebSocketOnce(text, voiceName, rate, remaining, allowClockRetry = false, diagnostic = diagnostic)
+        return streamWebSocketOnce(text, serverVoice, rate, remaining, allowClockRetry = false, diagnostic = diagnostic)
     }
 
     private fun streamWebSocketOnce(
