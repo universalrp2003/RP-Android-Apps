@@ -1,6 +1,6 @@
 # Voice Notes 1.3.2 — note visibility and playback fixes
 
-The owner installed the distributed signed 1.3.2/code6 candidate and reports that the new-note position and playback controls work correctly. This is one-device acceptance, not universal compatibility, an independently measured device-installed hash, or security certification. Keep existing notes; do not uninstall.
+The owner reports that the distributed signed 1.3.2/code6 candidate was installed on a phone and that the new-note position and playback controls work correctly. This is one-device acceptance, not universal compatibility, an independently measured device-installed hash, or security certification. Keep existing notes; do not uninstall.
 
 - Newly dictated notes are revealed at the top of the notes list below the microphone. Editing/deleting existing notes does not trigger this automatic jump; normal scrolling remains available.
 - Stop/switch cancellation fixes from 1.3.1 remain, along with HD-only voice, privacy consent, the optional device lock, About/Guide and opt-in daily in-app update checks. External voice-service availability is not guaranteed.

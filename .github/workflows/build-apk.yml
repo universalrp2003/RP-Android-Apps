@@ -254,19 +254,22 @@ jobs:
 
       - name: Check Cleaner source contracts and localization
         run: |
-          python3 tools/verify_cleaner_localization.py
-          python3 tools/verify_continuous_playback.py
-          python3 tools/verify_apps_localization.py
-          # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
-          python3 tools/verify_vasanthi_sound_labels.py
-          # v2.40 core: the retired notification reader must not exist in the manifest,
-          # the production tree or the build scripts. Historical 2.39 sources stay in
-          # docs/archived-notification-reader-2.39 and are never compiled.
-          python3 tools/verify_cleaner_core_manifest.py
-          # 2.42: every tools test runs here, including the permission-delta gate that now
-          # decides when a release needs a recorded device install.
-          python3 -m unittest discover -s tools/tests -p 'test_*.py' -v
-          python3 tools/verify_cleaner_next_update_source.py
+          set -o pipefail
+          {
+            python3 tools/verify_cleaner_localization.py
+            python3 tools/verify_continuous_playback.py
+            python3 tools/verify_apps_localization.py
+            # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
+            python3 tools/verify_vasanthi_sound_labels.py
+            # v2.40 core: the retired notification reader must not exist in the manifest,
+            # the production tree or the build scripts. Historical 2.39 sources stay in
+            # docs/archived-notification-reader-2.39 and are never compiled.
+            python3 tools/verify_cleaner_core_manifest.py
+            # 2.42: every tools test runs here, including the permission-delta gate that now
+            # decides when a release needs a recorded device install.
+            python3 -m unittest discover -s tools/tests -p 'test_*.py' -v
+            python3 tools/verify_cleaner_next_update_source.py
+          } 2>&1 | tee source-check.log
 
       - name: Build the APKs
         run: |
@@ -1602,6 +1605,11 @@ jobs:
           if [ -f verify.log ]; then
             grep '^FAIL:' verify.log | head -8 | while IFS= read -r line; do
               echo "::error title=APK verification::$line"
+            done
+          fi
+          if [ -f source-check.log ]; then
+            grep '^FAIL:' source-check.log | head -8 | while IFS= read -r line; do
+              echo "::error title=Source validation::$line"
             done
           fi
           echo "::error::Build failed - the reason is in this run's summary above."
