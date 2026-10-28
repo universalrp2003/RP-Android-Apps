@@ -13,11 +13,13 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** Pilot: user-triggered in-app notice only. No background/system notifications yet. */
+/** Pilot: explicit checks and optional daily app-opening checks. No background/system notifications. */
 @Composable
 fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
     val context = LocalContext.current
     val app = SisterApps.all.firstOrNull { it.id == appId && it.packageName == context.packageName } ?: return
+    val prefs = remember(context, appId) { context.getSharedPreferences("store-update-$appId", android.content.Context.MODE_PRIVATE) }
+    var reminders by remember { mutableStateOf(prefs.getBoolean("daily_in_app", false)) }
     var requested by remember { mutableIntStateOf(0) }
     var checking by remember { mutableStateOf(false) }
     var offered by remember { mutableStateOf<String?>(null) }
@@ -25,7 +27,11 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
     var showResult by remember { mutableStateOf(false) }
     fun tr(en: String, ta: String) = if (tamil) ta else en
     LaunchedEffect(requested) {
-        if (requested == 0) return@LaunchedEffect
+        val manual = requested > 0
+        val now = System.currentTimeMillis()
+        if (!manual && !UpdateReminderPolicy.shouldCheck(reminders, now, prefs.getLong("last_attempt", 0L))) return@LaunchedEffect
+        // Count attempts, not just successful checks, to avoid repeated offline noise/network use.
+        prefs.edit().putLong("last_attempt", now).apply()
         checking = true
         try {
             val version = try { withContext(Dispatchers.IO) {
@@ -64,11 +70,12 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
             }
             @Suppress("DEPRECATION")
             val installed = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "?"
-            offered = version.takeIf { AppUpdates.newer(it, installed) }
+            val candidate = version.takeIf { AppUpdates.newer(it, installed) }
+            offered = candidate.takeIf { UpdateReminderPolicy.shouldOffer(it, prefs.getString("skipped_version", null), manual) }
             message = if (offered == null) tr("No newer stable version found", "புதிய நிலையான பதிப்பு இல்லை") else ""
         } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { offered = null; message = tr("Update check unavailable; try later", "புதுப்பிப்பைச் சரிபார்க்க முடியவில்லை; பிறகு முயலுங்கள்") }
-        finally { checking = false; showResult = true }
+        finally { checking = false; showResult = manual }
     }
     Column {
         Row {
@@ -77,14 +84,23 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
             }
             offered?.let { version ->
                 TextButton(onClick = {
-                    if (!StoreUpdateRouter.open(context, appId)) message = tr("Cannot open Store or browser", "அங்காடி அல்லது உலாவியைத் திறக்க முடியவில்லை")
+                    if (!StoreUpdateRouter.open(context, appId)) { offered = null; showResult = true; message = tr("Cannot open Store or browser", "அங்காடி அல்லது உலாவியைத் திறக்க முடியவில்லை") }
                 }) { Text(tr("Update available · $version", "புதுப்பிப்பு உள்ளது · $version")) }
             }
         }
         if (showResult) AlertDialog(
             onDismissRequest = { showResult = false },
             title = { Text(tr("Update check", "புதுப்பிப்பு சரிபார்ப்பு")) },
-            text = { Text(offered?.let { tr("Update available · $it", "புதுப்பிப்பு உள்ளது · $it") } ?: message) },
+            text = { Column {
+                Text(offered?.let { tr("Update available · $it", "புதுப்பிப்பு உள்ளது · $it") } ?: message)
+                TextButton(onClick = {
+                    reminders = !reminders
+                    prefs.edit().putBoolean("daily_in_app", reminders).apply()
+                }) { Text(tr(
+                    "Daily check on app open: ${if (reminders) "On" else "Off"}",
+                    "செயலியைத் திறக்கும்போது தினசரி சரிபார்ப்பு: ${if (reminders) "இயக்கம்" else "நிறுத்தம்"}"
+                )) }
+            } },
             confirmButton = {
                 offered?.let {
                     TextButton(onClick = {
@@ -93,7 +109,13 @@ fun StoreFirstUpdateNotice(appId: String, tamil: Boolean) {
                     }) { Text(tr("Open Store / website", "அங்காடி / இணையதளம்")) }
                 } ?: TextButton(onClick = { showResult = false }) { Text(tr("Close", "மூடு")) }
             },
-            dismissButton = { if (offered != null) TextButton(onClick = { showResult = false }) { Text(tr("Later", "பிறகு")) } }
+            dismissButton = { if (offered != null) Row {
+                TextButton(onClick = { showResult = false }) { Text(tr("Later", "பிறகு")) }
+                TextButton(onClick = {
+                    prefs.edit().putString("skipped_version", offered).apply()
+                    offered = null; showResult = false
+                }) { Text(tr("Skip version", "இந்தப் பதிப்பைத் தவிர்")) }
+            } }
         )
     }
 }

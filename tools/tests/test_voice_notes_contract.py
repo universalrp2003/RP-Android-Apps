@@ -44,7 +44,11 @@ if __name__ == "__main__":
 class UpdateResultVisibilityTest(unittest.TestCase):
     def test_check_reports_result_in_visible_dialog(self):
         notice = (ROOT / "shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt").read_text()
-        self.assertIn("showResult = true", notice)
+        self.assertIn("showResult = manual", notice)
+        self.assertIn("val manual = requested > 0", notice)
+        self.assertIn('getBoolean("daily_in_app", false)', notice)
+        self.assertIn("UpdateReminderPolicy.shouldCheck", notice)
+        self.assertIn("Skip version", notice)
         self.assertIn("if (showResult) AlertDialog(", notice)
         self.assertIn("Update check unavailable; try later", notice)
         self.assertIn("No newer stable version found", notice)
