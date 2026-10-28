@@ -237,6 +237,7 @@ object AppGuides {
         introTa = "ரமேஷ் ரேடியோ இணையத்திலிருந்து தமிழ் FM நிலையங்களையும் உங்கள் சொந்த ஒலிக் கோப்புகளையும் " +
             "இயக்கும். ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
+            topic("Local continuous, random and repeat", "உள்ளூர் தொடர்ச்சி, சீரற்ற வரிசை, மீண்டும் இயக்கம்", "Choose a folder for a local queue. Continuous is on by default; turn it off to pause after the current track. Random uses the player shuffle order; Repeat is off, one or all. These settings are remembered for local files, not live radio stations.", "உள்ளூர் பாடல் வரிசைக்குக் கோப்புறையைத் தேர்ந்தெடுக்கவும். இயல்பாகத் தொடர்ச்சி இயக்கத்தில் இருக்கும்; அதை நிறுத்தினால் தற்போதைய பாடலுடன் இடைநிறுத்தப்படும். சீரற்ற வரிசை, ஒரு பாடலை மீண்டும் இயக்குதல், அனைத்தையும் மீண்டும் இயக்குதல் ஆகியவை உள்ளன. இவை உள்ளூர் கோப்புகளுக்கான சேமித்த அமைப்புகள்; நேரடி வானொலிக்கானவை அல்ல."),
             topic(
                 "Playing a live station",
                 "நேரடி நிலையம் இயக்குதல்",
@@ -344,6 +345,7 @@ object AppGuides {
         introTa = "பல்ஸ்இக்யூ தனக்குள் இயக்கும் ஒலியின் தன்மையை மாற்றும்; சில போன்களில் கணினி ஒலியையும் " +
             "சரிசெய்யும். ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
+            topic("Continuous local playlist", "உள்ளூர் பாடல்களைத் தொடர்ந்து கேட்க", "Choose audio files supports multiple selection. Tracks play through the existing DSP in the selected order; Random visits each track once per cycle. Continuous off stops after the current track. Repeat is off, one or all while Continuous is on. Previous/Next change track. The queue and modes are saved; document access must still be valid and cloud files must be available offline.", "ஒலிக் கோப்புகளைத் தேர்ந்தெடு பொத்தானில் பல கோப்புகளைத் தேர்ந்தெடுக்கலாம். அவை ஒலி அமைப்புகள் வழியாகத் தொடர்ந்து இயங்கும். சீரற்ற வரிசையில் ஒரு சுற்றில் ஒவ்வொரு பாடலும் ஒருமுறை இயங்கும். தொடர்ச்சியை நிறுத்தினால் தற்போதைய பாடலுடன் நிற்கும். தொடர்ச்சி இயக்கத்தில் இருக்கும்போது ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். வரிசையும் அமைப்புகளும் சேமிக்கப்படும். கோப்பு அணுகல் செல்லுபடியாகவும் கோப்புகள் இணையமின்றிக் கிடைக்கவும் வேண்டும்."),
             topic(
                 "Choosing a file and playing it",
                 "கோப்பைத் தேர்ந்தெடுத்து இயக்குதல்",
@@ -403,12 +405,8 @@ object AppGuides {
             topic(
                 "Updating PulseEQ",
                 "பல்ஸ்இக்யூவைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases itself and offers only a newer stable version after " +
-                    "checking size, SHA-256, package, version and signing certificate. Android shows its own " +
-                    "install screen and you can cancel there.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; " +
-                    "அளவு, SHA-256, தொகுப்பு, பதிப்பு, கையொப்பம் சரிபார்க்கப்படும். நிறுவல் திரையை Android " +
-                    "காட்டும்; அங்கே ரத்து செய்யலாம்.",
+                "About opens the official releases in your external browser. PulseEQ no longer requests app network or APK-install permission and does not download update APKs or provide installer files. If Play Protect blocks a file, stop; do not disable protection or choose Install anyway. The cause of the 1.10 warning has not been established, and these changes are not security clearance.",
+                "அதிகாரப்பூர்வ வெளியீடுகள் வெளிப்புற உலாவியில் திறக்கும். இந்தச் செயலி இணைய அணுகல் அல்லது தொகுப்பு நிறுவல் அனுமதியைக் கேட்காது; புதுப்பிப்புக் கோப்பைப் பதிவிறக்கவோ நிறுவலுக்காக வழங்கவோ செய்யாது. பாதுகாப்புச் சோதனை தடுத்தால் நிறுத்துங்கள்; பாதுகாப்பை முடக்கவோ மீறி நிறுவவோ வேண்டாம். எச்சரிக்கையின் காரணம் உறுதியாகவில்லை; இந்த மாற்றங்கள் பாதுகாப்பு உறுதிப்படுத்தல் அல்ல.",
             ),
         ),
     )
@@ -759,19 +757,19 @@ object AppGuides {
         ),
     )
     // ---------------------------------------------------------------------------------------
-    // Vasanthi AI (வசந்தி AI)
+    // Vasanthi AI (என்னைச் சுற்றி)
     // ---------------------------------------------------------------------------------------
     val vasanthi = GuideContent(
         intro = "Vasanthi AI turns the sound around you into Tamil text. It names what it hears, " +
             "writes down what somebody says, and keeps all of it so you can read it again. " +
             "Tap any topic below to expand.",
-        introTa = "வசந்தி AI உங்கள் சுற்றியுள்ள ஒலியை தமிழ் எழுத்தாக காட்டுகிறது. கேட்கிறதைப் " +
+        introTa = "என்னைச் சுற்றி உங்கள் சுற்றியுள்ள ஒலியை தமிழ் எழுத்தாக காட்டுகிறது. கேட்கிறதைப் " +
             "பெயர்படுத்துகிறது, யாரோ பேசினாரோ அதை எழுதிக் காட்டுகிறது, அனைத்தையும் " +
             "சேமிக்கிறது. தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
             topic(
                 "What Vasanthi AI does",
-                "வசந்தி AI என்ன செய்கிறது",
+                "என்னைச் சுற்றி என்ன செய்கிறது",
                 "It listens to the room and writes what it hears in Tamil. A sound gets a Tamil " +
                     "name and a bar showing how sure the app is; the room gets a loudness bar and a " +
                     "word; and what somebody says is written down as Tamil text, as it arrives.",
@@ -892,9 +890,10 @@ object AppGuides {
         "Choose a category, show and episode. Stream from the publisher or download first and play offline from Downloads.",
         "பிரிவையும் நிகழ்ச்சியையும் தேர்ந்தெடுத்துப் பகுதியை இயக்குங்கள். இணையத்தில் கேட்கலாம்; அல்லது முதலில் பதிவிறக்கிப் பதிவிறக்கங்கள் பகுதியில் இணையமின்றிக் கேட்கலாம்.",
         listOf(
+            topic("Continuous stories", "தொடர்ந்து கதைகளைக் கேட்க", "Playing a show queues its episodes in feed order. Continuous is on by default; toggle it in the player. Previous and Next select neighbouring episodes. At the end the queue stops. Play offline queues only completed downloads and never falls back to the network for a missing file.", "ஒரு நிகழ்ச்சியை இயக்கினால் அதன் பகுதிகள் ஊட்ட வரிசையில் தொடரும். இயல்பாகத் தொடர்ச்சி இயக்கத்தில் இருக்கும்; இயக்கக் கட்டுப்பாட்டில் மாற்றலாம். முந்தைய, அடுத்த பகுதியைத் தேர்ந்தெடுக்கலாம். கடைசிப் பகுதியுடன் வரிசை முடியும். இணையமின்றி இயக்கும்போது முழுமையாகப் பதிவிறக்கியவை மட்டுமே தொடரும்; கோப்பு இல்லாவிட்டால் இணைய ஒலிக்கு மாறாது."),
             topic("Play and seek", "இயக்கமும் தேடலும்", "The player stays at the bottom while you browse shows and episodes. Pause, resume, drag the seek bar, or skip 15 seconds. Duration appears after the audio is prepared.", "ஊட்டங்களையும் பகுதிகளையும் பார்க்கும்போதும் இயக்கக் கட்டுப்பாடுகள் திரையின் கீழே இருக்கும். இடைநிறுத்தலாம், தொடரலாம், பட்டையை இழுத்துத் தேடலாம் அல்லது பதினைந்து நொடிகள் நகர்த்தலாம். ஒலி தயாரான பிறகு நீளம் தெரியும்."),
             topic("Continue listening", "கேட்பதைத் தொடர", "Continue listening restores your last episode and saved position. Progress is saved every five seconds and on pause; after a sudden kill a few seconds may repeat.", "தொடர்ந்து கேள் பொத்தான் கடைசியாகக் கேட்ட பகுதியைச் சேமித்த இடத்திலிருந்து இயக்கும். ஐந்து நொடிகளுக்கு ஒருமுறையும் இடைநிறுத்தும்போதும் இடம் சேமிக்கப்படும். திடீரெனச் செயலி நின்றால் சில நொடிகள் மீண்டும் கேட்கலாம்."),
-            topic("Feeds and playlists", "ஊட்டங்களும் பகுதிகளும்", "Browse news, history, literature, science, learning or children's stories. This is a curated list, not every Tamil podcast on the web. Shows belong to their publishers; not every episode is for children. Add another published RSS URL if needed.", "செய்திகள், வரலாறு, இலக்கியம், அறிவியல், கற்றல், சிறுவர் கதைகள் என்று பிரிவுகளாகப் பார்க்கலாம். இது தேர்ந்தெடுத்த பட்டியல்; இணையத்திலுள்ள அனைத்து நிகழ்ச்சிகளும் அல்ல. உள்ளடக்கம் வெளியீட்டாளருடையது; அனைத்துப் பகுதிகளும் சிறுவர்களுக்கானவை அல்ல. வேறு வெளியிடப்பட்ட ஊட்ட இணைப்பையும் சேர்க்கலாம்."),
+            topic("Feeds and playlists", "ஊட்டங்களும் பகுதிகளும்", "Browse news, history, literature, science, learning, children's stories, love stories, short stories, science fiction, crime, horror and mystery/thrillers. Crime/horror can include violence and adult themes; publisher claims are not independently verified facts. This is a curated list, not every Tamil podcast on the web. Shows belong to their publishers; not every episode is for children. Add another published RSS URL if needed.", "செய்திகள், வரலாறு, இலக்கியம், அறிவியல், கற்றல், சிறுவர் கதைகள், காதல் கதைகள், சிறுகதைகள், அறிவியல் புனைகதைகள், குற்றச் சம்பவங்கள், திகில், மர்மத் திரில்லர் என்று பிரிவுகளாகப் பார்க்கலாம். குற்றம் மற்றும் திகில் பகுதிகளில் வன்முறையும் பெரியவர்களுக்கான உள்ளடக்கமும் இருக்கலாம். வெளியீட்டாளரின் கூற்றுகளை நாங்கள் தனியாக உறுதிசெய்யவில்லை. இது தேர்ந்தெடுத்த பட்டியல்; இணையத்திலுள்ள அனைத்து நிகழ்ச்சிகளும் அல்ல. உள்ளடக்கம் வெளியீட்டாளருடையது; அனைத்துப் பகுதிகளும் சிறுவர்களுக்கானவை அல்ல. வேறு வெளியிடப்பட்ட ஊட்ட இணைப்பையும் சேர்க்கலாம்."),
             topic("Download and play offline", "பதிவிறக்கமும் இணையமின்றிக் கேட்பதும்", "Tap Download beside an episode, then open Downloads. Wi-Fi only is on by default for new transfers; changes require removing and restarting an existing transfer. System downloads can continue when the app closes. Only complete recognised audio files have Play offline, which never falls back to streaming. See file sizes, retry failures, cancel or delete downloads there. Files are removed on uninstall; do not download content you are not entitled to keep.", "பகுதிக்கு அருகிலுள்ள பதிவிறக்கு பொத்தானைத் தொட்டுப் பதிவிறக்கங்கள் பக்கத்தைத் திறக்கவும். புதிய பதிவிறக்கங்களுக்கு இயல்பாக வைஃபை மட்டும் தேர்ந்தெடுக்கப்பட்டுள்ளது. மாற்றிய பிறகு பழைய பதிவிறக்கத்தை நீக்கி மீண்டும் தொடங்க வேண்டும். செயலியை மூடியும் பதிவிறக்கம் தொடரலாம். முழுமையான ஒலிக் கோப்பை மட்டுமே இணையமின்றிக் கேட்க முடியும்; அது இணைய ஒலியாக மாறாது. அளவைப் பார்க்கலாம்; மீண்டும் முயலலாம்; ரத்து செய்யலாம்; நீக்கலாம். செயலியை அகற்றினால் கோப்புகளும் நீங்கும். உங்களுக்கு உரிமையுள்ள உள்ளடக்கத்தை மட்டும் சேமிக்கவும்."),
             topic("Permissions and notifications", "அனுமதிகளும் அறிவிப்புகளும்", "Android 13 and later ask for notifications when you first play. Denial does not block listening. Use app Settings to enable a denied notification permission. No microphone, contacts or storage permission is needed.", "புதிய ஆண்ட்ராய்டு பதிப்புகளில் முதல் இயக்கத்தின்போது அறிவிப்பு அனுமதி கேட்கப்படும். மறுத்தாலும் கேட்கலாம். மறுத்த அனுமதியைச் செயலி அமைப்புகளில் மாற்றலாம். ஒலிவாங்கி, தொடர்புகள், சேமிப்பு அனுமதி தேவையில்லை."),
             topic("Back and updates", "பின்செல்லலும் புதுப்பிப்பும்", "Back returns to the previous page. About & update opens official releases in your browser, sister apps and project links. This app no longer requests package-install access. Stop if Play Protect warns; the reported classification is still under review.", "பின்செல் முந்தைய பக்கத்திற்குத் திரும்பும். இந்தச் செயலி மற்றும் புதுப்பிப்பு பக்கத்தில் அதிகாரப்பூர்வ வெளியீடுகள் உலாவியில் திறக்கும்; பிற செயலிகளின் இணைப்புகளும் உள்ளன. தொகுப்புகளை நிறுவும் அனுமதியை இந்தச் செயலி இனி கேட்காது. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்; அதன் காரணம் இன்னும் உறுதியாகவில்லை."),

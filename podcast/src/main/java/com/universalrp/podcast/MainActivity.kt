@@ -155,16 +155,20 @@ private fun PodcastScreen() {
         if (pendingUrl.isNotBlank()) PodcastPlaybackService.play(context, pendingUrl, pendingTitle, pendingPosition, pendingOffline)
         pendingUrl = ""
     }
-    fun playEpisode(url: String, title: String, position: Int = 0, offlineOnly: Boolean = false) {
+    fun playEpisode(url: String, title: String, position: Int = 0, offlineOnly: Boolean = false,
+                    queue: List<PodcastStore.QueueEntry>? = null) {
+        if (queue != null) store.saveQueue(queue, offlineOnly)
+        else if (store.queue().none { it.url == url }) store.saveQueue(listOf(PodcastStore.QueueEntry(url, title)), offlineOnly)
+        val useOffline = offlineOnly || (queue == null && store.queueOfflineOnly)
         val prefs = context.getSharedPreferences("podcast_permissions", android.content.Context.MODE_PRIVATE)
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED && !prefs.getBoolean("asked", false)) {
             pendingUrl = url
             pendingTitle = title
             pendingPosition = position
-            pendingOffline = offlineOnly
+            pendingOffline = useOffline
             prefs.edit().putBoolean("asked", true).apply()
             notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        } else PodcastPlaybackService.play(context, url, title, position, offlineOnly)
+        } else PodcastPlaybackService.play(context, url, title, position, useOffline)
     }
     BackHandler(enabled = page.isNotEmpty() || openId != null || adding) {
         when {
@@ -196,7 +200,8 @@ private fun PodcastScreen() {
             OfflineDownloadsScreen(
                 downloads = downloads,
                 onBack = { page = "" },
-                onPlay = { entry -> playEpisode(entry.url, entry.title, offlineOnly = true) },
+                onPlay = { entry, queue -> playEpisode(entry.url, entry.title, offlineOnly = true,
+                    queue = queue.map { PodcastStore.QueueEntry(it.url, it.title) }) },
                 onBeforeDelete = { entry ->
                     if (store.lastPlayed() == entry.url && PodcastState.isActive()) PodcastPlaybackService.stop(context)
                 },
@@ -394,7 +399,8 @@ private fun PodcastScreen() {
                             load = loads[show.id] ?: Load.IDLE,
                             onBack = { openId = null },
                             onRetry = { loads[show.id] = Load.LOADING },
-                            onPlay = { episode -> playEpisode(episode.audioUrl, episode.title) },
+                            onPlay = { episode -> playEpisode(episode.audioUrl, episode.title,
+                                queue = show.episodes.map { PodcastStore.QueueEntry(it.audioUrl, it.title) }) },
                             onDownload = { episode ->
                                 downloadScope.launch {
                                     val result = runCatching { withContext(Dispatchers.IO) { downloads.enqueue(episode.audioUrl, episode.title) } }
@@ -856,6 +862,8 @@ internal fun formatPubDate(millis: Long): String {
 private fun NowPlayingCard(context: android.content.Context, revision: Int) {
     // Re-reading the state when the revision changes is what makes this card recompose as
     // playback moves between buffering, playing, paused and failed.
+    val store = remember(context) { PodcastStore(context) }
+    var continuous by remember { mutableStateOf(store.continuous) }
     val state = remember(revision) { PodcastState.status }
     if (!PodcastState.isActive() && state != PodcastState.Status.FAILED) return
     Card(
@@ -884,6 +892,13 @@ private fun NowPlayingCard(context: android.content.Context, revision: Int) {
                 color = Muted,
                 modifier = Modifier.padding(top = 2.dp),
             )
+            TextButton(onClick = { continuous = !continuous; store.continuous = continuous }) {
+                Text(if (continuous) "தொடர்ந்து கேள்: இயக்கம் / Continuous: on" else "தொடர்ந்து கேள்: நிறுத்தம் / Continuous: off", color = Muted)
+            }
+            Row {
+                TextButton(onClick = { PodcastPlaybackService.previous(context) }) { Text("முந்தைய பகுதி / Previous", color = Muted) }
+                TextButton(onClick = { PodcastPlaybackService.next(context) }) { Text("அடுத்த பகுதி / Next", color = Muted) }
+            }
             val duration = PodcastState.durationMs
             val position = PodcastState.positionMs.coerceIn(0, duration.coerceAtLeast(0))
             var dragging by remember { mutableStateOf<Float?>(null) }

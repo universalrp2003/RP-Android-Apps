@@ -17,8 +17,8 @@ android {
         applicationId = "com.universalrp.podcast"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.4"
+        versionCode = 8
+        versionName = "1.6"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }

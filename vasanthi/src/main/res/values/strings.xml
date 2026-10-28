@@ -2,11 +2,11 @@
 <resources>
     <!-- The app is named after the owner's sister. Tamil first, as everywhere else in this
          repository: the label a user reads is the Tamil one. -->
-    <string name="app_name">வசந்தி AI</string>
+    <string name="app_name">என்னைச் சுற்றி</string>
 
     <!-- The floating window. These strings are resources rather than Compose copy because the
          overlay is built from plain views by a Service, which has no composition scope. -->
-    <string name="bubble_content_description">வசந்தி AI திரையைத் திறக்க</string>
+    <string name="bubble_content_description">என்னைச் சுற்றி திரையைத் திறக்க</string>
     <string name="open_full_screen">முழுத் திரை</string>
     <string name="close_panel">மூடு</string>
     <string name="what_is_happening_now">இப்போது நடப்பது</string>
@@ -19,15 +19,15 @@
 
     <!-- The ongoing notification. Android requires one while the microphone is open, so it says
          plainly that the microphone is open rather than pretending to be something else. -->
-    <string name="notification_channel_name">வசந்தி AI கேட்பு</string>
+    <string name="notification_channel_name">என்னைச் சுற்றி கேட்பு</string>
     <string name="notification_channel_description">மிதக்கும் திரையில் குரல் அறிதல் மற்றும் ஒலி அறிதல்.</string>
-    <string name="notification_title">வசந்தி AI கேட்கிறது</string>
+    <string name="notification_title">என்னைச் சுற்றி கேட்கிறது</string>
     <string name="notification_text">ஒலியைத் தமிழ் எழுத்தாகக் காட்டுகிறது. நிறுத்த இங்கே தட்டுங்கள்.</string>
 
     <!-- The same notification, paused. The owner asked for a permanent notification so he can
          turn listening on without searching for the app, which means it has to stay when the
          microphone is closed and say how to start it again. -->
-    <string name="notification_paused_title">வசந்தி AI நிறுத்தப்பட்டுள்ளது</string>
+    <string name="notification_paused_title">என்னைச் சுற்றி நிறுத்தப்பட்டுள்ளது</string>
     <string name="notification_paused_text">தொடங்க இங்கே தட்டுங்கள்.</string>
     <string name="notification_action_start">தொடங்கு</string>
     <string name="notification_action_close">மூடு</string>

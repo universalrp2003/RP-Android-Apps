@@ -1,8 +1,10 @@
 # Ramesh Radio
 
-Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, zero surprise Location prompts (100% accurate rain alerts via saved PIN/Village with optional user-initiated Mobile Tower town detection and clear privacy disclosure), and active-listening rain alerts that always announce exact place details. Its latest published release is **1.23 / code 23**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
+> Stable 1.28/code 28: owner-reviewed compact icon grid, Play/Cancel confirmation, compact header and weather places inside the rain dialog. Publication rebuild is not hash-matched to the installed candidate. [Help](../docs/three-app-help.md).
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.26.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.26/Ramesh-Radio-v1.26.apk) (`15,092,964` bytes · SHA-256 `238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13`) · [release notes](../releases/ramesh-radio-v1.26.md) · earlier releases remain available on the RP-Android-Apps release list
+Ramesh Radio is a Tamil-first radio and local-audio player with an in-app English option, zero surprise Location prompts (100% accurate rain alerts via saved PIN/Village with optional user-initiated Mobile Tower town detection and clear privacy disclosure), and active-listening rain alerts that always announce exact place details. Its latest published release is **1.28 / code 28**, package `com.universalrp.tamilnadufm`, minimum Android 8.0 (API 26).
+
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [Download Ramesh-Radio-v1.28.apk from RP-Android-Apps](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.28/Ramesh-Radio-v1.28.apk) (`15,158,504` bytes · SHA-256 `9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c`) · [release notes](../releases/ramesh-radio-v1.28.md) · earlier releases remain available on the RP-Android-Apps release list
 - Build, unit/regression and APK checks passed in [publication run 40183935239](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40183935239). Published asset size and SHA-256 are in [`../docs/published-release-digests.md`](../docs/published-release-digests.md).
 - [Privacy policy](../PRIVACY.md)
 
@@ -23,3 +25,5 @@ Radio streams require internet access and may be supplied by third-party station
 ```
 
 The release workflow also creates an Android App Bundle for store delivery. It verifies application identity, version, manifest, signing certificate and release asset digest.
+
+[தமிழ் / English help and other applications](../docs/three-app-help.md) · [Official website](https://universalrp2003.github.io/RP-Android-Apps/)

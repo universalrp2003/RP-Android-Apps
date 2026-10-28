@@ -205,3 +205,12 @@ No release process disables Play Protect or bypasses Android's installer. Users 
 ## Store metadata
 
 The active store-art pipeline covers CleanSweep, Ramesh Radio and PulseEQ. F-Droid metadata is present for those three modules; it is preparation, not a claim that F-Droid has accepted or published them. RP Vocal Remover Studio and Oor Arivippu ship through their GitHub Releases only. See [`store/README.md`](store/README.md).
+
+
+## Owner-approved three-app follow-up — 28 October 2026
+
+SMS Guard 1.1.9/code 15 and Voice Notes 1.2/code 3 are already public; their assets are not replaced. Public metadata size/digests and workflow links are recorded in `docs/published-release-digests.md`. The owner reports both work on their phone, with screenshots; the friend's Redmi/MIUI issue remains unconfirmed. Website mirrors pin the new digests while keeping older downloads.
+
+Radio 1.28/code 28 is authorized for public release after owner review of the compact layout. Use a subject containing both `[publish]` and `[publish-radio]`: the latter restricts the legacy release selection to Radio only so pending PulseEQ changes are NOT accidentally shipped. All existing build, signature, permission, and release verification gates remain enabled. A rebuilt radio APK is not hash-matched to the owner's installed candidate; record its verified public digest after the workflow finishes before updating stable website downloads. Do not trigger SMS Guard/Voice Notes release markers again for these already-public versions.
+
+[Three-app bilingual help, website and sister-app links](docs/three-app-help.md).

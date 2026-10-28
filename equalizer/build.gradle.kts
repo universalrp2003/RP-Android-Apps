@@ -17,8 +17,8 @@ android {
         applicationId = "com.universalrp.pulseeq"
         minSdk = 26
         targetSdk = 36
-        versionCode = 10
-        versionName = "1.9"
+        versionCode = 12
+        versionName = "1.11"
     }
 
     signingConfigs {

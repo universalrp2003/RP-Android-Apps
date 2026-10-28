@@ -57,6 +57,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -98,6 +99,7 @@ import com.universalrp.smsguard.engine.SpoofClassification
 import com.universalrp.smsguard.engine.TxDirection
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -112,6 +114,8 @@ fun MessagesTab(
     isDefaultSms: Boolean,
     hasReadSms: Boolean,
     hasMoreMessages: Boolean = false,
+    isLoading: Boolean = false,
+    loadedMessageCount: Int = 0,
     sims: List<SimCardInfo>,
     onRequestDefaultSms: () -> Unit,
     onOpenAppInfoRestricted: () -> Unit,
@@ -122,6 +126,18 @@ fun MessagesTab(
         vm.filterThreads(threads, filter, searchQuery)
     }
     var searchExpanded by remember { mutableStateOf(searchQuery.isNotBlank()) }
+    var loadingSeconds by remember { mutableIntStateOf(0) }
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            loadingSeconds = 0
+        } else {
+            loadingSeconds = 0
+            while (true) {
+                delay(1_000)
+                loadingSeconds++
+            }
+        }
+    }
     val searchFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(searchExpanded) {
@@ -140,6 +156,26 @@ fun MessagesTab(
             contentPadding = PaddingValues(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 84.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            if (isLoading) {
+                item(key = "inbox-load-progress") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Text(
+                            text = if (prefs.tamil) {
+                                "சேமித்த செய்திகளை ஏற்றுகிறது… $loadedMessageCount காட்டப்படுகிறது · ${loadingSeconds} விநாடிகள்"
+                            } else {
+                                "Loading saved messages… $loadedMessageCount shown · ${loadingSeconds}s"
+                            },
+                            color = palette.textMuted,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            }
+
             // 1. Setup helper card until Default SMS Role is granted
             if (!isDefaultSms) {
                 item {

@@ -153,7 +153,7 @@ private fun VasanthiScreen() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = "வசந்தி AI",
+                    text = "என்னைச் சுற்றி",
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary,

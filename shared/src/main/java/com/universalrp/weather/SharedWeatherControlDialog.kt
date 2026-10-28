@@ -82,6 +82,7 @@ fun SharedWeatherControlDialog(
     onSaveTomorrowKey: (String) -> Unit,
     onReadGuideAloud: (String) -> Unit,
     onStopVoice: () -> Unit,
+    placesContent: @Composable () -> Unit = {},
 ) {
     var query by rememberSaveable { mutableStateOf("") }
     var keyExpanded by rememberSaveable { mutableStateOf(false) }
@@ -202,6 +203,7 @@ fun SharedWeatherControlDialog(
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
+                placesContent()
                 // Live preview of the mini floating animation right inside the dialog too!
                 if (state.previewSeverity != null || state.severity != WeatherSeverity.CLEAR_OR_NORMAL) {
                     WeatherMiniAlertBanner(

@@ -27,14 +27,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -57,8 +62,8 @@ import kotlinx.coroutines.launch
 /**
  * B1 - குரல் குறிப்பு / Voice Notes.
  *
- * One screen, one job: tap the microphone, speak a note in Tamil, hear it read back, keep it. The
- * notes live in this app's private storage and nowhere else - no account, no cloud, no upload.
+ * Dictated text is stored in private app storage. HD playback sends only the selected text to the
+ * neural voice service; that network transfer is disclosed before the first playback.
  *
  * The screen is deliberately small. Everything that could fail says so in Tamil: no microphone
  * permission, no speech recogniser on the phone, no internet for the neural voice.
@@ -122,15 +127,27 @@ private val TextPrimary = Color(0xFFF4EEF9)
 private val TextSecondary = Color(0xFFA99CBE)
 private val Warn = Color(0xFFFFB65C)
 
-/** Where the notes live: one file, in this app's private storage, never uploaded. */
+/** Notes live in this app's private storage; only text explicitly played via HD voice is sent. */
 class NoteFileStore(context: android.content.Context) {
     private val file = java.io.File(context.filesDir, "voice-notes.json")
+    private val pendingFile = java.io.File(context.filesDir, "voice-notes.json.tmp")
 
     fun load(): List<VoiceNote> = NoteStore.decode(runCatching { file.readText() }.getOrNull())
 
-    fun save(notes: List<VoiceNote>) {
-        runCatching { file.writeText(NoteStore.encode(NoteStore.normalise(notes))) }
-    }
+    /** Atomic replacement avoids truncating the last good note file if writing is interrupted. */
+    fun save(notes: List<VoiceNote>): Boolean = runCatching {
+        java.io.FileOutputStream(pendingFile).use { output ->
+            output.write(NoteStore.encode(NoteStore.normalise(notes)).toByteArray(Charsets.UTF_8))
+            output.fd.sync()
+        }
+        java.nio.file.Files.move(
+            pendingFile.toPath(),
+            file.toPath(),
+            java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+            java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+        )
+        true
+    }.getOrDefault(false)
 }
 
 @Composable
@@ -140,19 +157,59 @@ fun VoiceNotesScreen(
     onRequestMic: (() -> Unit) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var notes by remember { mutableStateOf(store.load()) }
     var listening by remember { mutableStateOf(false) }
     var speakingId by remember { mutableStateOf<String?>(null) }
     var status by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    var editingNote by remember { mutableStateOf<VoiceNote?>(null) }
+    var editText by remember { mutableStateOf("") }
+    var pendingVoiceNote by remember { mutableStateOf<VoiceNote?>(null) }
+    var showVoicePrivacy by remember {
+        mutableStateOf(context.getSharedPreferences("voice-notes", android.content.Context.MODE_PRIVATE)
+            .getBoolean("hd_voice_disclosure_acknowledged", false))
+    }
 
     val tamil = AppLanguageState.current == AppLanguage.TAMIL
-    val context = androidx.compose.ui.platform.LocalContext.current
 
     fun tr(en: String, ta: String) = if (tamil) ta else en
 
     fun persist(next: List<VoiceNote>) {
         notes = next
-        store.save(next)
+        status = if (store.save(next)) "" else tr(
+            "Could not save the note. Check available storage and try again.",
+            "சேமிக்க முடியவில்லை. இடம் உள்ளதா எனச் சரிபார்த்து மீண்டும் முயலுங்கள்.",
+        )
+    }
+
+    fun playNote(note: VoiceNote) {
+        if (speakingId != null) return // Never overlap neural-voice requests or play a robot fallback.
+        speakingId = note.id
+        status = ""
+        scope.launch {
+            val ok = try {
+                val profile = NoteSpeech.profileFor(text = note.text, preferTamil = tamil)
+                val voiceId = profile?.let { NoteSpeech.neuralIdFor(it, note.text) }
+                val pitch = profile?.let { NoteSpeech.pitchFor(it, note.text) } ?: "+0Hz"
+                voiceId != null && speaker.speak(note.text, voiceId, pitch)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                false
+            } finally {
+                speakingId = null
+            }
+            if (!ok) status = tr(
+                "HD voice needs internet. No robotic voice fallback is used.",
+                "HD குரல் வாசிக்க இணையம் தேவை. ரோபோ குரலுக்கு மாறாது.",
+            )
+        }
+    }
+
+    val visibleNotes = remember(notes, searchQuery) {
+        val query = searchQuery.trim()
+        if (query.isEmpty()) notes else notes.filter { it.text.contains(query, ignoreCase = true) }
     }
 
     val recognizer = remember {
@@ -243,15 +300,15 @@ fun VoiceNotesScreen(
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = tr("குரல் குறிப்பு", "Voice Notes"),
+                    text = tr("Voice Notes", "குரல் குறிப்பு"),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = TextPrimary,
                 )
                 Text(
                     text = tr(
-                        "பேசுங்கள், திரும்ப கேளுங்கள், தொலைபேசியிலேயே சேமிக்கவும்",
                         "Dictate a note, hear it back, keep it on the phone",
+                        "பேசுங்கள், திரும்ப கேளுங்கள், தொலைபேசியிலேயே சேமிக்கவும்",
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
@@ -267,6 +324,15 @@ fun VoiceNotesScreen(
             )
         }
 
+        // ---------------------------------------------------------------- search
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+            singleLine = true,
+            label = { Text(tr("Search notes", "குறிப்புகளைத் தேடுங்கள்")) },
+        )
+
         // ---------------------------------------------------------------- status line
         if (status.isNotEmpty()) {
             Text(
@@ -278,7 +344,7 @@ fun VoiceNotesScreen(
         }
 
         // ---------------------------------------------------------------- the notes
-        if (notes.isEmpty()) {
+        if (visibleNotes.isEmpty()) {
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -289,8 +355,8 @@ fun VoiceNotesScreen(
             ) {
                 Text(
                     text = tr(
-                        "இன்னும் ஒரு குறிப்பும் இல்லை",
-                        "No notes yet",
+                        if (notes.isEmpty()) "No notes yet" else "No matching notes",
+                        if (notes.isEmpty()) "இன்னும் ஒரு குறிப்பும் இல்லை" else "பொருத்தமான குறிப்பு இல்லை",
                     ),
                     style = MaterialTheme.typography.titleMedium,
                     color = TextPrimary,
@@ -298,8 +364,8 @@ fun VoiceNotesScreen(
                 Spacer(Modifier.height(8.dp))
                 Text(
                     text = tr(
-                        "கீழே உள்ள மைக் பொத்தானை தட்டி தமிழில் பேசுங்கள். உங்கள் குறிப்புகள் இந்தத் தொலைபேசியிலேயே இருக்கும் — எந்த கிளavinுடனும் பங்கிடப்படுவதில்லை.",
-                        "Tap the microphone below and speak in Tamil. Your notes stay on this phone and are never shared with any cloud.",
+                        if (notes.isEmpty()) "Tap the microphone below and speak in Tamil. Notes are stored on this phone." else "Try a different search term.",
+                        if (notes.isEmpty()) "கீழே உள்ள மைக்கைத் தட்டி தமிழில் பேசுங்கள். குறிப்புகள் இந்தத் தொலைபேசியில் சேமிக்கப்படும்." else "வேறு சொல்லைத் தேடிப் பாருங்கள்.",
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
@@ -316,35 +382,21 @@ fun VoiceNotesScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                items(notes, key = { it.id }) { note ->
+                items(visibleNotes, key = { it.id }) { note ->
                     NoteRow(
                         note = note,
                         tamil = tamil,
                         speaking = speakingId == note.id,
                         onSpeak = {
-                            if (speakingId == note.id) {
-                                speakingId = null
-                                return@NoteRow
+                            if (showVoicePrivacy) {
+                                playNote(note)
+                            } else {
+                                pendingVoiceNote = note
                             }
-                            speakingId = note.id
-                            status = ""
-                            scope.launch {
-                                val profile = NoteSpeech.profileFor(
-                                    text = note.text,
-                                    preferTamil = tamil,
-                                )
-                                val voiceId = profile?.let { NoteSpeech.neuralIdFor(it, note.text) }
-                                val pitch = profile?.let { NoteSpeech.pitchFor(it, note.text) } ?: "+0Hz"
-                                val ok = voiceId != null &&
-                                    speaker.speak(note.text, voiceId, pitch)
-                                speakingId = null
-                                if (!ok) {
-                                    status = tr(
-                                        "இணையம் இல்லை; குரள் திரும்பும்போது பேசும்.",
-                                        "No internet right now; the voice will speak when it returns.",
-                                    )
-                                }
-                            }
+                        },
+                        onEdit = {
+                            editingNote = note
+                            editText = note.text
                         },
                         onDelete = { persist(NoteStore.remove(notes, note.id)) },
                     )
@@ -422,16 +474,70 @@ fun VoiceNotesScreen(
 
         Text(
             text = tr(
-                "HD நரம்பியல் குரள் · கிளவ் இல்லை · கணக்கு இல்லை",
-                "HD neural voice · no cloud · no account",
+                "HD playback sends the selected note text to an online voice service. No account is required.",
+                "HD குரல் வாசிப்புக்கு தேர்ந்தெடுத்த குறிப்பு உரை இணையச் சேவைக்கு அனுப்பப்படும். கணக்கு தேவையில்லை.",
             ),
             style = MaterialTheme.typography.labelSmall,
             color = TextSecondary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
+        Text(
+            text = tr(
+                "Dictation uses this device's speech-recognition service; audio handling depends on that provider.",
+                "குரல்-எழுத்தாக்கம் இந்தச் சாதனத்தின் பேச்சு அறிதல் சேவையைப் பயன்படுத்தும்; அதன் தரவு கையாளுதல் வழங்குநரைப் பொறுத்தது.",
+            ),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondary,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 10.dp),
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        )
+
+        if (pendingVoiceNote != null) {
+            AlertDialog(
+                onDismissRequest = { pendingVoiceNote = null },
+                title = { Text(tr("HD voice playback", "HD குரல் வாசிப்பு")) },
+                text = { Text(tr(
+                    "Only this note's text will be sent to an online service to create HD speech. Continue?",
+                    "இந்தக் குறிப்பின் உரை மட்டும் HD குரல் உருவாக்க இணையச் சேவைக்கு அனுப்பப்படும். தொடரவா?",
+                )) },
+                confirmButton = {
+                    Button(onClick = {
+                        showVoicePrivacy = true
+                        context.getSharedPreferences("voice-notes", android.content.Context.MODE_PRIVATE)
+                            .edit().putBoolean("hd_voice_disclosure_acknowledged", true).apply()
+                        val note = pendingVoiceNote
+                        pendingVoiceNote = null
+                        if (note != null) playNote(note)
+                    }) { Text(tr("Continue", "தொடரவும்")) }
+                },
+                dismissButton = { TextButton(onClick = { pendingVoiceNote = null }) { Text(tr("Not now", "இப்போது வேண்டாம்")) } },
+            )
+        }
+
+        if (editingNote != null) {
+            AlertDialog(
+                onDismissRequest = { editingNote = null },
+                title = { Text(tr("Edit note", "குறிப்பைத் திருத்து")) },
+                text = {
+                    OutlinedTextField(
+                        value = editText,
+                        onValueChange = { if (it.length <= NoteStore.MAX_NOTE_CHARS) editText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        minLines = 3,
+                        maxLines = 8,
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        val note = editingNote
+                        if (note != null) persist(NoteStore.update(notes, note.id, editText))
+                        editingNote = null
+                    }) { Text(tr("Save", "சேமி")) }
+                },
+                dismissButton = { TextButton(onClick = { editingNote = null }) { Text(tr("Cancel", "ரத்து")) } },
+            )
+        }
     }
 }
 
@@ -441,6 +547,7 @@ private fun NoteRow(
     tamil: Boolean,
     speaking: Boolean,
     onSpeak: () -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Surface(
@@ -484,6 +591,13 @@ private fun NoteRow(
                 modifier = Modifier.weight(1f),
             )
             Spacer(Modifier.width(8.dp))
+            Icon(
+                Icons.Filled.Edit,
+                contentDescription = if (tamil) "திருத்து" else "Edit",
+                tint = TextSecondary,
+                modifier = Modifier.size(22.dp).clickable { onEdit() },
+            )
+            Spacer(Modifier.width(12.dp))
             Icon(
                 Icons.Filled.Delete,
                 contentDescription = if (tamil) "அழி" else "Delete",

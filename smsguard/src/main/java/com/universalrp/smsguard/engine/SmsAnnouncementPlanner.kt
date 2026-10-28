@@ -10,13 +10,14 @@ data class AnnouncementSettingsSnapshot(
     val shortEveryMessageEnabled: Boolean = false,
     val mutePromoVoice: Boolean = true,
     val muteServiceInfoVoice: Boolean = true,
+    val announceOtpSenderOnly: Boolean = false,
 )
 
 /**
  * Pure decision & script planner for SMS Guard voice announcements.
  *
  * Ironclad Rules:
- *  1. OTP messages NEVER speak aloud under ANY setting.
+ *  1. OTP codes and message bodies are NEVER spoken. Optional OTP sender-only announcements contain no code.
  *  2. Fake payment messages from personal numbers (+91...) ALWAYS warn clearly that NO money came from a bank.
  *  3. Dangerous scam links ALWAYS warn clearly NOT to touch the link.
  *  4. Offline / unverified links ALWAYS state honestly that verification is pending until internet returns.
@@ -44,9 +45,19 @@ object SmsAnnouncementPlanner {
         finance: FinanceParseResult,
         settings: AnnouncementSettingsSnapshot,
     ): String? {
-        // RULE 1: NEVER read OTP messages aloud!
-        if (!settings.voiceEnabled || otp.isOtp) {
-            return null
+        // OTP bodies/codes remain silent under every setting. An explicit opt-in can announce
+        // only the sender identity; this function deliberately never receives/extracts the code.
+        if (!settings.voiceEnabled) return null
+        if (otp.isOtp) {
+            if (!settings.announceOtpSenderOnly) return null
+            val name = if (settings.tamil) sender.spokenNameTa else sender.spokenNameEn
+            val safeName = name.filterNot { it.isISOControl() }.trim().take(80)
+            if (safeName.isBlank()) return null
+            return if (settings.tamil) {
+                "$safeName இடமிருந்து OTP குறுஞ்செய்தி வந்துள்ளது. ரகசியக் குறியீடு குரலில் சொல்லப்படாது."
+            } else {
+                "OTP message from $safeName arrived. The code will not be read aloud."
+            }
         }
 
         val hasUnsafeLink = links.any { it.verdict == LinkVerdict.UNSAFE }

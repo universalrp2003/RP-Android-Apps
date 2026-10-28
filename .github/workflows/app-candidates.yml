@@ -4,6 +4,11 @@ on:
   push:
     branches: [main, "arena/**"]
     paths:
+      - "radio/**"
+      - "equalizer/**"
+      - "tools/verify_continuous_playback.py"
+      - "tools/write_candidate_receipt.py"
+      - "tools/tests/test_continuous_playback.py"
       - "launcher/**"
       - "podcast/**"
       - "vasanthi/**"
@@ -31,18 +36,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [launcher, podcast, vasanthi]
+        module: [launcher, podcast, vasanthi, radio, equalizer]
     steps:
       - uses: actions/checkout@v4
       - name: Source gates
         run: |
+          python3 tools/verify_continuous_playback.py
+          python3 -m unittest discover -s tools/tests -p test_continuous_playback.py
           python3 tools/verify_apps_localization.py
           python3 tools/verify_vasanthi_sound_labels.py
           python3 tools/verify_launcher_contrast.py
           python3 tools/verify_browser_update_policy.py
           python3 -m unittest discover -s tools/tests -p test_browser_update_policy.py
           python3 -m unittest discover -s tools/tests -p test_launcher_contrast.py
-          python3 tools/_tmp_preflight.py ${{ matrix.module }}
+          case "${{ matrix.module }}" in
+            launcher|podcast|vasanthi) python3 tools/_tmp_preflight.py ${{ matrix.module }} ;;
+            radio|equalizer) echo "Legacy module: real Gradle tests and APK inspection below" ;;
+          esac
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -57,7 +67,7 @@ jobs:
           set -o pipefail
           gradle :${{ matrix.module }}:testDebugUnitTest :${{ matrix.module }}:assembleRelease --no-daemon --stacktrace 2>&1 | tee candidate-build.log
       - name: Inspect actual browser-only APK capabilities
-        if: matrix.module == 'launcher' || matrix.module == 'podcast'
+        if: matrix.module == 'launcher' || matrix.module == 'podcast' || matrix.module == 'equalizer'
         shell: bash
         env:
           MODULE: ${{ matrix.module }}
@@ -69,6 +79,8 @@ jobs:
             exit 1
           fi
           python3 tools/verify_browser_update_policy.py --apk "${apks[0]}"
+      - name: Inspect actual candidate identity and write source receipt
+        run: python3 tools/write_candidate_receipt.py ${{ matrix.module }}
       - name: Verify real podcast feeds and audio
         if: matrix.module == 'podcast'
         shell: bash

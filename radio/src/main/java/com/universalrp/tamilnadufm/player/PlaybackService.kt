@@ -69,6 +69,11 @@ class PlaybackService : MediaSessionService() {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             mediaItem?.let {
+                val local = it.mediaId.startsWith("content:") || it.mediaId.startsWith("file:")
+                val prefs = getSharedPreferences("local_playback_modes", MODE_PRIVATE)
+                player?.pauseAtEndOfMediaItems = local && !prefs.getBoolean("continuous", true)
+                player?.shuffleModeEnabled = local && prefs.getBoolean("shuffle", false)
+                player?.repeatMode = if (local) prefs.getInt("repeat", Player.REPEAT_MODE_OFF).coerceIn(0, 2) else Player.REPEAT_MODE_OFF
                 getSharedPreferences("last_session", MODE_PRIVATE).edit()
                     .putString("uri", it.mediaId).putString("title", it.mediaMetadata.title?.toString()).apply()
             }

@@ -1,4 +1,6 @@
-# Vasanthi AI - வசந்தி AI / Tamil sound and speech window
+# Vasanthi AI - என்னைச் சுற்றி / Tamil sound and speech window
+
+> Unreleased candidate 1.1.5: continuous playback / naming follow-up. The owner approved the original candidate from run 40495158373 on a phone; subsequent rebuilds are not that tested file. Public stable links below are intentionally unchanged. [Changes and phone-test checklist](../docs/2026-10-27-playback-follow-up.md).
 
 **Current stable release:** 1.1.4 / code 7
 

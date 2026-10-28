@@ -159,6 +159,18 @@ object AppStrings {
     }
 
     private val TAMIL = mapOf(
+        "It plays local files — streaming is not supported. Updates open in your external browser. For YouTube, Spotify and other apps, use Background/Settings: the system-wide effect or cooperating-player sessions." to "இது உள்ளூர் கோப்புகளை இயக்கும்; இணைய இசை இயக்கம் இல்லை. புதுப்பிப்புகள் வெளிப்புற உலாவியில் திறக்கும். பிற இசைச் செயலிகளுக்கு பின்னணி அமைப்புகளில் கணினி அளவிலான ஒலி விளைவையோ ஒத்துழைக்கும் இயக்கிகளின் ஒலி அமர்வுகளையோ பயன்படுத்தலாம்.",
+        "Audio processing stays on your phone. Updates open in your browser; this app does not download or install APKs." to "ஒலி செயலாக்கம் உங்கள் போனிலேயே நடைபெறும். புதுப்பிப்புகள் உலாவியில் திறக்கும்; இந்தச் செயலி புதுப்பிப்புக் கோப்பைப் பதிவிறக்கவோ நிறுவவோ செய்யாது.",
+        "Continuous: on" to "தொடர்ந்து இயக்கம்: இயக்கம்",
+        "Continuous: off" to "தொடர்ந்து இயக்கம்: நிறுத்தம்",
+        "Select multiple audio documents for continuous playback. Cloud-provider files must be available offline. Random plays each selected track once per cycle; Repeat chooses off, one or all. Play restores the saved queue when access remains valid." to "பல ஒலிக் கோப்புகளைத் தேர்ந்தெடுத்துத் தொடர்ந்து கேட்கலாம். மேகச் சேவைக் கோப்புகள் இணையமின்றிக் கிடைக்க வேண்டும். சீரற்ற வரிசையில் ஒவ்வொரு பாடலும் ஒரு சுற்றில் ஒருமுறை இயங்கும். மீண்டும் இயக்குவதை நிறுத்தலாம்; ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். அணுகல் இருந்தால் சேமித்த வரிசை மீண்டும் திறக்கும்.",
+        "Continuous queue" to "தொடர்ந்து இயக்கம்",
+        "Random: on" to "சீரற்ற வரிசை: இயக்கம்",
+        "Random: off" to "சீரற்ற வரிசை: நிறுத்தம்",
+        "Repeat: one" to "மீண்டும்: ஒரு பாடல்",
+        "Repeat: all" to "மீண்டும்: அனைத்தும்",
+        "Repeat: off" to "மீண்டும்: நிறுத்தம்",
+        "Choose audio files" to "ஒலிக் கோப்புகளைத் தேர்ந்தெடு",
         // Shared language, navigation, update and About labels.
         "App language" to "பயன்பாட்டு மொழி",
         "Tamil" to "தமிழ்",
@@ -239,6 +251,8 @@ object AppStrings {
         "More ▾" to "மேலும் ▾",
         "Less ▴" to "குறைவு ▴",
         "How this list is sorted" to "இந்தப் பட்டியல் எப்படி வரிசைப்படுத்தப்பட்டது",
+        "Switch to icon view" to "சின்னக் காட்சிக்கு மாறு",
+        "Switch to list view" to "பட்டியல் காட்சிக்கு மாறு",
         "Local" to "பாடல்கள்",
         "More" to "மேலும்",
         "Local audio" to "என் பாடல்கள்",

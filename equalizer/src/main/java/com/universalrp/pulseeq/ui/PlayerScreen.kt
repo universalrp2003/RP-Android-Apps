@@ -42,9 +42,9 @@ import com.universalrp.updates.AppStrings
 @Composable
 fun PlayerScreen(state: EqUiState, vm: EqViewModel) {
     val picker = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri != null) vm.playFile(uri)
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isNotEmpty()) vm.playFiles(uris)
     }
 
     LazyColumn(
@@ -157,6 +157,21 @@ fun PlayerScreen(state: EqUiState, vm: EqViewModel) {
                             Icon(Icons.Outlined.Stop, contentDescription = AppStrings.translate("Stop"))
                         }
                     }
+                    androidx.compose.material3.TextButton(onClick = { vm.previousTrack() }) { Text(AppStrings.translate("Previous song")) }
+                    androidx.compose.material3.TextButton(onClick = { vm.nextTrack() }) { Text(AppStrings.translate("Next song")) }
+                    androidx.compose.material3.TextButton(onClick = { vm.toggleContinuous() }) {
+                        Text(AppStrings.translate(if (state.continuous) "Continuous: on" else "Continuous: off") + " · ${state.queueSize}")
+                    }
+                    androidx.compose.material3.TextButton(onClick = { vm.toggleRandom() }) {
+                        Text(if (state.randomMode) AppStrings.translate("Random: on") else AppStrings.translate("Random: off"))
+                    }
+                    androidx.compose.material3.TextButton(onClick = { vm.cycleRepeat() }) {
+                        Text(when (state.repeatMode) {
+                            1 -> AppStrings.translate("Repeat: one")
+                            2 -> AppStrings.translate("Repeat: all")
+                            else -> AppStrings.translate("Repeat: off")
+                        })
+                    }
                     Spacer(Modifier.height(8.dp))
                     Button(
                         onClick = { picker.launch(arrayOf("audio/*")) },
@@ -168,12 +183,12 @@ fun PlayerScreen(state: EqUiState, vm: EqViewModel) {
                     ) {
                         Icon(Icons.Outlined.FolderOpen, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
-                        Text("Choose audio file")
+                        Text(AppStrings.translate("Choose audio files"))
                     }
                     Spacer(Modifier.height(6.dp))
                     Text(
-                        "The picker only shows audio files already on your phone. If the last file is " +
-                            "still available, “Play / pause” resumes it without asking again.",
+                        "Select multiple audio documents for continuous playback. Cloud-provider files must be available offline. " +
+                            "Random plays each selected track once per cycle; Repeat chooses off, one or all. Play restores the saved queue when access remains valid.",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                         textAlign = TextAlign.Start,
@@ -192,9 +207,8 @@ fun PlayerScreen(state: EqUiState, vm: EqViewModel) {
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "It plays local files — streaming is not supported. Internet access is only for update checks, not " +
-                            "online music. For YouTube, Spotify and other apps, use the Background/Settings " +
-                            "options: the system-wide effect or the cooperating-player sessions.",
+                        "It plays local files — streaming is not supported. Updates open in your external browser. " +
+                            "For YouTube, Spotify and other apps, use Background/Settings: the system-wide effect or cooperating-player sessions.",
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )

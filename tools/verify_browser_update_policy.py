@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check the two reviewed apps' source and, in CI, actual merged APK capabilities."""
+"""Check the reviewed browser-update apps' source and, in CI, actual merged APK capabilities."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID = '{http://schemas.android.com/apk/res/android}'
-MODULES = ('launcher', 'podcast')
+MODULES = ('launcher', 'podcast', 'equalizer')
 FORBIDDEN = {'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.INSTALL_PACKAGES'}
 
 
@@ -34,16 +34,36 @@ def verify_apk_permissions(output):
         raise ValueError('Merged APK still requests package-install capability')
 
 
+def verify_entry(module, source):
+    if not source.strip():
+        raise ValueError('Empty browser entry; refusing to verify nothing')
+    if 'AppUpdates.Control(' in source:
+        raise ValueError(f'{module} bypasses the browser-only About page')
+    if module == 'equalizer' and 'com.universalrp.updates.BrowserReleaseUpdates("PulseEQ")' not in source:
+        raise ValueError('PulseEQ About is not routed to the browser')
+
+
+def verify_workflow(source):
+    command = 'python3 tools/verify_browser_update_policy.py --apk "$EQ"'
+    if source.count(command) != 1:
+        raise ValueError('Broad workflow must inspect exactly one actual PulseEQ APK')
+    if 'PulseEQ update checker requires INTERNET' in source:
+        raise ValueError('Broad workflow still enforces the retired network updater')
+
+
 def verify_sources():
+    verify_workflow((ROOT / '.github/workflows/build-apk.yml').read_text())
     suite = (ROOT / 'shared/src/main/java/com/universalrp/updates/SuiteAbout.kt').read_text()
     if not re.search(r'if \(appId in setOf\("podcast", "launcher"\)\)\s*\{\s*BrowserReleaseUpdates\(prefix\)', suite):
         raise ValueError('The two apps are not routed to browser-only releases')
     for module in MODULES:
         verify_manifest((ROOT / module / 'src/main/AndroidManifest.xml').read_text())
-        main = (ROOT / module / f'src/main/java/com/universalrp/{module}/MainActivity.kt').read_text()
-        if 'AppUpdates.Control(' in main:
-            raise ValueError(f'{module} bypasses the browser-only About page')
-    print('PASS: launcher and podcast use browser releases without package-install permissions/providers')
+        entry = 'src/main/java/com/universalrp/pulseeq/ui/AboutScreen.kt' if module == 'equalizer' else f'src/main/java/com/universalrp/{module}/MainActivity.kt'
+        main = (ROOT / module / entry).read_text()
+        verify_entry(module, main)
+        if module == 'equalizer' and 'android.permission.INTERNET' in (ROOT / module / 'src/main/AndroidManifest.xml').read_text():
+            raise ValueError('PulseEQ source retains unnecessary application network access')
+    print('PASS: launcher, podcast and PulseEQ use browser releases without package-install permissions/providers')
 
 
 def verify_apk_identity(badging, gradle):
@@ -76,6 +96,8 @@ def verify_apk(apk):
     if module not in MODULES:
         raise ValueError('Unexpected module for browser-only APK inspection')
     badging = subprocess.check_output([str(aapt), 'dump', 'badging', str(apk)], text=True)
+    if module == 'equalizer' and "name='android.permission.INTERNET'" in result:
+        raise ValueError('PulseEQ APK unexpectedly retains application network access')
     identity = verify_apk_identity(badging, (ROOT / module / 'build.gradle.kts').read_text())
     digest = hashlib.sha256()
     with apk.open('rb') as stream:

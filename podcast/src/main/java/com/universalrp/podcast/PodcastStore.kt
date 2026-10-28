@@ -60,6 +60,26 @@ class PodcastStore(context: Context) {
         preferences.edit().putString(KEY_LAST, audioUrl).apply()
     }
 
+    data class QueueEntry(val url: String, val title: String)
+
+    var continuous: Boolean
+        get() = preferences.getBoolean("continuous", true)
+        set(value) { preferences.edit().putBoolean("continuous", value).apply() }
+    val queueOfflineOnly: Boolean get() = preferences.getBoolean("queue_offline", false)
+    fun saveQueue(entries: List<QueueEntry>, offlineOnly: Boolean) {
+        val array = JSONArray()
+        entries.filter { PlaybackPolicy.isWebAudio(it.url) }.distinctBy { it.url }.take(1000).forEach {
+            array.put(JSONObject().put("url", it.url).put("title", it.title))
+        }
+        preferences.edit().putString("play_queue", array.toString()).putBoolean("queue_offline", offlineOnly).apply()
+    }
+    fun queue(): List<QueueEntry> = runCatching {
+        val array = JSONArray(preferences.getString("play_queue", "[]"))
+        (0 until array.length().coerceAtMost(1000)).map { array.getJSONObject(it) }
+            .map { QueueEntry(it.getString("url"), it.getString("title")) }
+            .filter { PlaybackPolicy.isWebAudio(it.url) }.distinctBy { it.url }
+    }.getOrDefault(emptyList())
+
     data class Bookmark(val url: String, val title: String, val positionMs: Int)
 
     fun bookmark(): Bookmark? {

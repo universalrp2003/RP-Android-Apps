@@ -41,3 +41,11 @@ Candidate run `40479496687` compiled the podcast, passed all fifty JVM tests and
 ## Final live candidate result
 
 [Run 40480048906](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40480048906), source `5eeafc96e26f6c493dcf0f789da0b079820967a4`, passed all eleven included RSS feeds and first-audio-prefix smoke checks. All three candidate app build/test jobs passed, including the podcast. The BBC source above remains excluded. This does not establish whole-episode playback, episode-level suitability, worldwide availability or offline behavior on a phone.
+
+## Crime, horror and mystery expansion
+
+The proposed 1.6 catalogue adds PAT Me!!! (`20b2a208`), Thriller Tamizha (`65ed06d8`) and Deep Talks (`219c0a60`) from discovered public RSS addresses. Exact URLs, publisher attribution, mature-theme cautions and rights limitations are in the [device/catalogue follow-up](2026-10-27-pulseeq-device-review.md). This is seventeen sources, not a claim to index every public Tamil story. Only a passing new CI live RSS/audio-prefix check establishes current reachability; a directory listing alone does not. No adaptation or redistribution licence is inferred.
+
+The new candidate run [40500082478](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40500082478) passed all seventeen live RSS/HTTPS audio-prefix checks at source `eba93da7c24ba37275f3d964f5b7f3b370ec8fdd`. This confirms sampled reachability, not full listening, rights clearance or age suitability.
+
+Latest replacement candidate [40501281341](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40501281341) also passed all seventeen checks at source `759fc224da036cea498ee6be376dd424e6b7bd1d`; [full broad run 40501281336](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40501281336) passed after replacing the retired PulseEQ INTERNET requirement with no-network/no-installer APK policy.

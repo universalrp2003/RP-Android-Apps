@@ -255,6 +255,7 @@ jobs:
       - name: Check Cleaner source contracts and localization
         run: |
           python3 tools/verify_cleaner_localization.py
+          python3 tools/verify_continuous_playback.py
           python3 tools/verify_apps_localization.py
           # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
           python3 tools/verify_vasanthi_sound_labels.py
@@ -743,22 +744,13 @@ jobs:
           done
 
           echo "=== PulseEQ checks ==="
+          python3 tools/verify_browser_update_policy.py --apk "$EQ"
           if [ -n "$MERGED_EQ" ]; then
-            if ! grep -q "android.permission.INTERNET" "$MERGED_EQ"; then
-              echo "FAIL: PulseEQ update checker requires INTERNET"
-              grep -n "uses-permission" "$MERGED_EQ" || true
+            if grep -Eq 'android\.permission\.(INTERNET|REQUEST_INSTALL_PACKAGES|INSTALL_PACKAGES)|\.updates\.files' "$MERGED_EQ"; then
+              echo "FAIL: PulseEQ merged manifest reintroduces app network/install/update-provider capability"
               exit 1
             fi
-            echo "OK: PulseEQ has INTERNET for optional release checks; audio remains local"
-            echo "Permissions in the merged manifest:"
-            grep -o "android.permission.[A-Z_]*" "$MERGED_EQ" | sort -u || true
-          else
-            echo "WARN: merged manifest not found; falling back to aapt2 output"
-            if ! grep -q "android.permission.INTERNET" "$WORK/eq-perms-aapt.txt"; then
-              echo "FAIL: PulseEQ update checker requires INTERNET"
-              exit 1
-            fi
-            echo "OK: update-check INTERNET permission in aapt2 dump"
+            echo "OK: PulseEQ merged manifest has no app network/install/update-provider capability"
           fi
 
           if [ -n "$MERGED_EQ" ] && grep -q "EqService" "$MERGED_EQ"; then
@@ -1328,6 +1320,13 @@ jobs:
           LIVE_GUARD_BEING_PUBLISHED=false
           for i in "${!ALL_TAGS[@]}"; do
             tag="${ALL_TAGS[$i]}"
+            # Owner-scoped radio publication must not ship pending PulseEQ changes.
+            if git log -1 --format=%s | grep -qF '[publish-radio]'; then
+              if [[ "$tag" != "$RADIO_TAG" ]]; then
+                echo "SKIP: $tag is outside the radio-only publication request."
+                continue
+              fi
+            fi
             if [[ "${MIRROR_EXISTING:-false}" == "true" ]]; then
               RELEASE_TAGS+=("$tag"); RELEASE_APKS+=("${ALL_APKS[$i]}"); RELEASE_NOTES+=("${ALL_NOTES[$i]}"); RELEASE_TITLES+=("${ALL_TITLES[$i]}")
               [[ "$tag" == "$LIVE_GUARD_TAG" ]] && LIVE_GUARD_BEING_PUBLISHED=true

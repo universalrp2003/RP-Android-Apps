@@ -1,8 +1,8 @@
 // Voice Notes (குரல் குறிப்பு) - dictate a note in Tamil, hear it back, keep it on the phone.
 //
 // B1 of the roadmap: a standalone recorder-and-read-back app built on the neural-voice pipeline
-// that Live Guard 2.71 proved. No cloud, no account, no upload - the notes file lives in this
-// app's private storage and nowhere else.
+// that Live Guard 2.71 proved. Notes stay in private app storage; selected text is sent only when
+// the owner explicitly requests HD neural playback. No account is required.
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -22,8 +22,8 @@ android {
         applicationId = "com.universalrp.voicenotes"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
     }
 
     signingConfigs {

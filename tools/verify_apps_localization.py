@@ -703,17 +703,17 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.8"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.9"',
             'tagPrefix = "live-guard"', 'version = "2.73"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.26"',
-            'tagPrefix = "pulseeq"', 'version = "1.9"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.28"',
+            'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.1"',
-            'tagPrefix = "voice-notes"', 'version = "1.1"',
-            'tagPrefix = "vasanthi-ai"', 'version = "1.1.4"',
-            'tagPrefix = "tamil-podcast"', 'version = "1.4"',
+            'tagPrefix = "voice-notes"', 'version = "1.2"',
+            'tagPrefix = "vasanthi-ai"', 'version = "1.1.5"',
+            'tagPrefix = "tamil-podcast"', 'version = "1.6"',
             'tagPrefix = "elderly-launcher"', 'version = "1.4"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )

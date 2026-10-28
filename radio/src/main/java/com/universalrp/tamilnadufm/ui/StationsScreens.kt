@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +41,7 @@ import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
@@ -45,8 +49,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
@@ -76,6 +82,8 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // v1.15 — fourteen category chips pushed the list down. The six that matter open first;
     // the genre/archive chips sit behind "More", which is the owner's "important items first".
     var chipsExpanded by rememberSaveable { mutableStateOf(false) }
+    var iconView by rememberSaveable { mutableStateOf(false) }
+    var selectedIconStation by remember { mutableStateOf<RadioStation?>(null) }
     var showGuide by rememberSaveable { mutableStateOf(false) }
     if (showGuide) {
         BackHandler { showGuide = false }
@@ -87,12 +95,14 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         )
         return
     }
+    // Cache rows in composition, not in the non-composable LazyListScope builder.
+    val iconRows = remember(state.visible) { state.visible.chunked(4) }
     LazyColumn(
         Modifier
             .fillMaxSize()
             .padding(horizontal = 14.dp),
         state = listState,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         item {
             Row(
@@ -105,17 +115,13 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                 Column(Modifier.weight(1f)) {
                     Text(
                         "Ramesh Radio",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = Saffron,
                         fontWeight = FontWeight.Bold,
                     )
-                    Text(
-                        "Tamil FM from Tamil Nadu and around the world — live.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+
                 }
                 Surface(
                     shape = RoundedCornerShape(12.dp),
@@ -172,7 +178,7 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                         .background(SurfaceHigh)
                         .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
                         .clickable { searchOpen = true }
-                        .padding(horizontal = 12.dp, vertical = 11.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(18.dp))
@@ -292,12 +298,34 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
 
         item {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SectionTitle(
+                Text(
                     if (state.query.isBlank()) "${state.visible.size} stations"
                     else "${state.visible.size} matches",
                     modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                IconChip(Icons.Filled.Language, "Live directory") { vm.searchDirectory() }
+                IconButton(
+                    onClick = { iconView = !iconView },
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        imageVector = if (iconView) Icons.Filled.ViewList else Icons.Filled.GridView,
+                        contentDescription = AppStrings.translate(
+                            if (iconView) "Switch to list view" else "Switch to icon view",
+                        ),
+                        tint = Saffron,
+                    )
+                }
+                IconButton(onClick = { vm.searchDirectory() }) {
+                    Icon(
+                        Icons.Filled.Language,
+                        contentDescription = AppStrings.translate("Live directory"),
+                        tint = Teal,
+                    )
+                }
             }
         }
 
@@ -361,20 +389,69 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
             }
         }
 
-        items(state.visible, key = { it.url }) { station ->
-            StationRow(
-                station = station,
-                playing = state.nowPlaying?.url == station.url,
-                favourite = state.favourites.contains(station.url.lowercase()),
-                onPlay = { vm.play(station) },
-                onFavourite = { vm.toggleFavourite(station) },
-                onShare = { vm.shareStation(station) },
-                onSave = { vm.saveDirectoryStation(station) },
-                onDelete = { vm.removeStation(station) },
-            )
+        if (iconView) {
+            items(iconRows, key = { row -> row.first().url }) { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    row.forEach { station ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SurfaceC)
+                                .border(1.dp, OutlineC, RoundedCornerShape(14.dp))
+                                .clickable { selectedIconStation = station },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            // Compact mode intentionally shows only the station's artwork or
+                            // monogram. Tapping opens a name-and-play confirmation; it never
+                            // starts a stream from an accidental icon touch.
+                            StationLogo(station, 52.dp)
+                        }
+                    }
+                    repeat(4 - row.size) {
+                        Spacer(Modifier.weight(1f).aspectRatio(1f))
+                    }
+                }
+            }
+        } else {
+            items(state.visible, key = { it.url }) { station ->
+                StationRow(
+                    station = station,
+                    playing = state.nowPlaying?.url == station.url,
+                    favourite = state.favourites.contains(station.url.lowercase()),
+                    onPlay = { vm.play(station) },
+                    onFavourite = { vm.toggleFavourite(station) },
+                    onShare = { vm.shareStation(station) },
+                    onSave = { vm.saveDirectoryStation(station) },
+                    onDelete = { vm.removeStation(station) },
+                )
+            }
         }
 
         item { Spacer(Modifier.height(16.dp)) }
+    }
+
+    selectedIconStation?.let { station ->
+        AlertDialog(
+            onDismissRequest = { selectedIconStation = null },
+            title = { Text(station.name, color = TextPrimary) },
+            text = { Text(station.subtitle.ifBlank { "Live stream" }, color = TextSecondary) },
+            confirmButton = {
+                TextButton(onClick = {
+                    selectedIconStation = null
+                    vm.play(station)
+                }) { Text(AppStrings.translate("Play"), color = Saffron) }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedIconStation = null }) {
+                    Text(AppStrings.translate("Cancel"), color = TextSecondary)
+                }
+            },
+        )
     }
 }
 

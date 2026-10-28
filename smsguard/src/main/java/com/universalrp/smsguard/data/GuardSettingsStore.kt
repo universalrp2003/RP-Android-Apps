@@ -53,6 +53,7 @@ data class GuardPrefs(
     val internetEnabled: Boolean = true,
     val voiceEnabled: Boolean = true,
     val senderOnlyVoiceEnabled: Boolean = false,
+    val announceOtpSenderOnly: Boolean = false,
     val readFullNormalSmsEnabled: Boolean = true,
     val shortEveryMessageEnabled: Boolean = false, // Default OFF per owner specification
     val financeEnabled: Boolean = true,
@@ -157,6 +158,7 @@ object GuardSettingsStore {
             internetEnabled = p.getBoolean("internet_enabled", true),
             voiceEnabled = p.getBoolean("voice_enabled", true),
             senderOnlyVoiceEnabled = p.getBoolean("sender_only_voice", false),
+            announceOtpSenderOnly = p.getBoolean("announce_otp_sender_only", false),
             readFullNormalSmsEnabled = p.getBoolean("read_full_normal_sms", true),
             shortEveryMessageEnabled = p.getBoolean("short_every_msg_v2", false),
             financeEnabled = p.getBoolean("finance_enabled", true),
@@ -206,6 +208,11 @@ object GuardSettingsStore {
 
     fun updateSenderOnlyVoice(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean("sender_only_voice", enabled).apply()
+        reload(context)
+    }
+
+    fun updateAnnounceOtpSenderOnly(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("announce_otp_sender_only", enabled).apply()
         reload(context)
     }
 

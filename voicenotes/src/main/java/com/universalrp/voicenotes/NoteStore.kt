@@ -18,8 +18,9 @@ data class VoiceNote(
 /**
  * B1 - the on-device note store's pure logic.
  *
- * The whole app promise is "no cloud, no account": notes live in one file inside the app's private
- * storage and nowhere else. That makes the encode/decode round-trip the part that matters most,
+ * Dictated notes are stored in one file inside the app's private storage. HD playback is a separate,
+ * explicit network action that sends the selected text to the neural voice service; no account is
+ * involved. That makes the encode/decode round-trip the part that matters most,
  * because a note that encodes but does not decode is a note the owner dictated and then lost, and
  * nothing on screen would say so.
  *
