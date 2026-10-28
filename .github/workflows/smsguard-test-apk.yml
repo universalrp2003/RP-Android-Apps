@@ -185,7 +185,7 @@ jobs:
       - name: Upload signed SMS Guard Test APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SMS-Guard-v1.1.0-test-apk
+          name: SMS-Guard-signed-candidate
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
           retention-days: 30

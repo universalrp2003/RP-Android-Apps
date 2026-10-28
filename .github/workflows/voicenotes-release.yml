@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   build-verify-publish:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-voicenotes]') }}
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-voicenotes]') || contains(github.event.head_commit.message, '[candidate-voicenotes]') }}
     name: Test, sign, verify, and optionally publish Voice Notes
     runs-on: ubuntu-latest
     env:
@@ -62,18 +62,11 @@ jobs:
             :voicenotes:testDebugUnitTest \
             :voicenotes:assembleRelease 2>&1 | tee vn-build.log
 
-      # Lint is reported but never blocks here. Voice Notes is a brand-new module and lint has
-      # never been run against it, so its first report is a baseline to read, not a gate to pass -
-      # failing a release on findings nobody has triaged yet would hide the app from the owner for
-      # no gain. Once the report is clean this becomes a hard gate like the other modules.
-      - name: Report release lint findings (informational)
-        continue-on-error: true
+      - name: Require clean release lint
         shell: bash
         run: |
-          ./gradlew --no-daemon :voicenotes:lintRelease 2>&1 | tee vn-lint.log || true
-          for r in voicenotes/build/reports/lint-results-release.txt; do
-            [ -f "$r" ] && { echo "### lint findings"; echo '```'; head -n 80 "$r"; echo '```'; }
-          done >> "$GITHUB_STEP_SUMMARY" || true
+          set -o pipefail
+          ./gradlew --no-daemon :voicenotes:lintRelease 2>&1 | tee vn-lint.log
 
       - name: Surface Voice Notes build/lint summary on failure
         if: failure()

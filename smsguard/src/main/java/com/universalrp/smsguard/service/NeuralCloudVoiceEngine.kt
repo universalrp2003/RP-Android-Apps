@@ -367,7 +367,7 @@ object NeuralCloudVoiceEngine {
 
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                     diagnostic?.invoke("PEER_CLOSING CODE=$code")
-                    webSocket.close(code, null)
+                    runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
                     doneLatch.countDown()
                 }
 
