@@ -4,7 +4,7 @@ name: SMS live voice probe (monitoring only)
 on:
   push:
     branches: ["arena/6d87e1ec-rp-android-apps"]
-    paths: [".github/workflows/sms-live-probe.yml"]
+    paths: [".github/workflows/sms-live-probe.yml", "smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt", "smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt"]
   workflow_dispatch:
 permissions:
   contents: read

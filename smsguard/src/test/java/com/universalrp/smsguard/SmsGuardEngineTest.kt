@@ -896,13 +896,15 @@ class SmsGuardEngineTest {
             "en-IN-NeerjaNeural" to "SMS Guard online voice protection active.",
         )
         for ((voiceId, sampleText) in voicesToVerify) {
+            val diagnostics = java.util.concurrent.CopyOnWriteArrayList<String>()
             val mp3 = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
                 text = sampleText,
                 voiceName = voiceId,
                 timeoutMs = 8000L,
+                diagnostic = { diagnostics.add(it) },
             )
             assertTrue(
-                "Expected valid streaming MP3 audio (>1500 bytes) from $voiceId, got ${mp3?.size}",
+                "Expected valid streaming MP3 audio (>1500 bytes) from $voiceId, got ${mp3?.size}; diagnostics=${diagnostics.joinToString(" | ")}",
                 mp3 != null && mp3.size > 1500,
             )
         }

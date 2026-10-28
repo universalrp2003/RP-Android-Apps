@@ -253,8 +253,9 @@ object NeuralCloudVoiceEngine {
         voiceName: String,
         rate: String = "+0%",
         timeoutMs: Long = 4000L,
+        diagnostic: ((String) -> Unit)? = null,
     ): ByteArray? {
-        val firstAttempt = streamWebSocketOnce(text, voiceName, rate, timeoutMs)
+        val firstAttempt = streamWebSocketOnce(text, voiceName, rate, timeoutMs, diagnostic = diagnostic)
         if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
         return null
     }
@@ -265,6 +266,7 @@ object NeuralCloudVoiceEngine {
         rate: String,
         timeoutMs: Long,
         allowClockRetry: Boolean = true,
+        diagnostic: ((String) -> Unit)? = null,
     ): ByteArray? {
         val escaped = sanitizeSsmlText(text)
         if (escaped.isEmpty()) return null
@@ -348,6 +350,14 @@ object NeuralCloudVoiceEngine {
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    // Categories only: never disclose text, URL/query tokens, headers or exception messages.
+                    val category = when (t) {
+                        is java.net.UnknownHostException -> "DNS_FAILURE"
+                        is javax.net.ssl.SSLException -> "TLS_FAILURE"
+                        is java.net.SocketTimeoutException -> "SOCKET_TIMEOUT"
+                        else -> "WEBSOCKET_FAILURE"
+                    }
+                    diagnostic?.invoke("$category HTTP=${response?.code ?: 0}")
                     if (response?.code == 403) {
                         saw403ServerDate.set(response.header("Date"))
                     }
@@ -362,6 +372,7 @@ object NeuralCloudVoiceEngine {
 
         val finished = runCatching { doneLatch.await(timeoutMs, TimeUnit.MILLISECONDS) }.getOrDefault(false)
         if (!finished) {
+            diagnostic?.invoke("DEADLINE_EXCEEDED")
             runCatching { ws.cancel() }
         }
 
@@ -373,11 +384,12 @@ object NeuralCloudVoiceEngine {
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                return streamWebSocketOnce(text, voiceName, rate, timeoutMs, allowClockRetry = false)
+                return streamWebSocketOnce(text, voiceName, rate, timeoutMs, allowClockRetry = false, diagnostic = diagnostic)
             }
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
+        diagnostic?.invoke("COMPLETE=${completedCleanly.get()} BYTES=${out.size}")
         return if (completedCleanly.get() && out.size >= 256) out else null
     }
 
