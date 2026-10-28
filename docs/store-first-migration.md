@@ -132,3 +132,14 @@ Cached-APK Secret smoke40674215068 failed before the app start screen because Pi
 Public Store0.5/source31cc3c5 has no tamilan app deep-link intent filter or incoming app-selection handler. An explicit component launch alone would open its generic home screen and falsely imply app-specific handoff. Router now requires a declared matching handler in addition to the published-byte identity gate; legacy0.5 and unrecognized builds use the correct website app section. A new capable/private-signing-reviewed Store release is still required before end-to-end Store-side deep-link acceptance can be claimed. This does not force an install or add networking to offline apps.
 
 Source d317659 gates now all PASS: nine-module40675849580; five-browser/candidate40675849598; broad signed/debug/release/DEX and regression suite40675849575; Secret23unit tests/four-ABI native/signing/reduced merged-permission/API35 real relay/local-host/identity/settings/update-dialog smoke40675849600. No public release was requested/performed. The final declared-handler correction is a further small code change and needs its own compilation gates.
+
+
+## Final verified source checkpoint — 28 October 2026
+
+- Local161Python tests, localization, Cleaner manifest/source/playback contracts, YAML and changed-shell checks PASS.
+- Final strict nine-module unit/lint/build/actual merged-APK capability matrix40680202509/source463faf5 SUCCESS.
+- Broad signed/debug/release APK/minSDK/DEX/regression gates40679527615/sourcee7ea5c1 SUCCESS; publication step skipped. APK-input code is unchanged by the subsequent live-probe/test-only commit.
+- Browser/candidate five-job matrix40678487296/sourcedd3302f SUCCESS; isolated Secret40678487225/sourcedd3302f SUCCESS including23tests, four native ABIs, signed identity, reduced permission allowlist and actual API35 relay/local-host/identity/settings/metadata/browser-choice/defaultOFF smoke. No Secret/generated-source input changed afterward.
+- Corrected Tamil launcher/widgets/runtime/guides to கைபேசி காவலன். Existing public label/asset bytes are not rewritten.
+- [Matched-client profile probe40680202248](sms-live-voice-diagnosis-2026-10-28.md) establishes the outstanding CI problem is Valluvar-specific among the four tested profiles: three other profiles succeed in the actual Kotlin client and the reference. All-four assertion still FAILS, honestly; no production engine/preference/deadline/HD-only/OTP behavior changed.
+- No new public APK assets. Publication remains held for confirmed main-key exposure, independently of GitHub403 and unresolved harmful-install warnings. Source/website main integration is a separate action; no deployment success is implied by branch build success.

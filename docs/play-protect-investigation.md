@@ -6,14 +6,14 @@ Owner supplied screenshots now show “Harmful app blocked” for Tamilan Store 
 
 - Do not ask users to disable Play Protect, press Install anyway, uninstall working apps, rename/repackage APKs or otherwise evade the warning.
 - Pause Store-first suite rollout/publication pending investigation. Withdraw the flagged Store debug pilot as a recommended install. Existing public Store 0.5 is a different release binary; no conclusion about its current Play Protect verdict is established here.
-- Ask owner to expand “More details” on the warning and share only the exact detection/reason text. Do not request sensitive phone/DNS logs or credentials.
+- Owner already expanded “More details”; it disclosed no classification, only an install override. Do not ask again or request sensitive phone/DNS logs/credentials.
 - Establish the exact blocked APK source, hash, version, signer and merged-manifest permission delta. Compare with the CI artifact and previously published release. A same versionName/code does not establish identical bytes.
 - Review live-catalog routing/download/installer behavior and Expense Tracker SMS access. Do not label these permissions the cause without detection evidence.
 - If evidence supports a false positive, use Google's official developer appeal process with the exact package/hash and explanation; do not promise approval or that signing alone clears a verdict.
 
 Owner also supplied NextDNS logs: speech.platform.bing.com appears without the red blocked marker visible on nearby ad-domain rows. Entry details and the exact test time are not expanded, so this suggests no visible DNS block for that entry, not proof of successful TLS/WebSocket/audio, all-profile compatibility or a Play Protect cause. Do not copy raw profile IDs/history into the repository or public galleries.
 
-## Voice Notes feedback
+## Historical Voice Notes feedback (superseded by accepted1.3.2 below)
 
 Owner says all working but update check says nothing; existing inline result used default Text color within the custom dark screen. Results now use an explicit AlertDialog for success/no-update/error and immediate checking state. Search box removed at owner's request, microphone moved above the notes and padding reduced. HD-only playback/privacy disclosure and biometric gate preserved. Android preview run 40651513745 passed unit tests/lint/assemble (source 4b7156d); device result visibility is still to be checked.
 
@@ -33,3 +33,6 @@ Owner says expanded SMS install warning provides no classification, only “Inst
 A public main CI private-key container and public unlock reference were verified without exporting the key. Certificate-only identity checking is insufficient for that exposed identity. See [signing-key exposure and data-preserving remediation hold](signing-key-exposure-2026-10-28.md). Main-identity publication is explicitly held; Store handoff additionally checks the exact canonical public Store APK bytes and otherwise uses browser. This does NOT identify or clear the Play Protect classification. Do not silently rotate keys, remove apps/data, bypass warnings, or treat deleting a tracked key file as remediation.
 
 Owner has since accepted Voice1.3.2's new-note placement and Stop/switch behavior. That acceptance remains valid for the distributed candidate's observed behavior, not private key custody or universal security certification. Exact-artifact publication was denied HTTP403 and is now also held for signing review. No new public Voice1.3.2 asset was created.
+
+
+Latest matched-runner voice diagnosis: [40680202248 profile differential](sms-live-voice-diagnosis-2026-10-28.md) shows actual Kotlin audio succeeds for Pallavi/Prabhat/Neerja while Valluvar fails in both Kotlin and the independent upstream client. That is not malware clearance, worldwide service recovery, or a claim that owner runtime is broken. Main-identity new publications remain explicitly held.
