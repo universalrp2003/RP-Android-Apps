@@ -55,7 +55,14 @@ object StoreUpdateRouter {
         val storeIntent = Intent(Intent.ACTION_VIEW, Uri.parse("tamilan://app/$appId"))
             .setComponent(ComponentName(STORE, "$STORE.MainActivity"))
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        if (matchesPublishedStore(context) && runCatching { context.startActivity(storeIntent) }.isSuccess) return true
+        // An older official Store can launch its home screen but cannot select an app.
+        // Require a declared matching deep-link handler as well as exact published bytes.
+        val linksSupported = runCatching {
+            val discovery = Intent(Intent.ACTION_VIEW, Uri.parse("tamilan://app/$appId")).setPackage(STORE)
+            context.packageManager.queryIntentActivities(discovery, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                .any { result -> result.activityInfo?.let { it.packageName == STORE && it.name == "$STORE.MainActivity" } == true }
+        }.getOrDefault(false)
+        if (linksSupported && matchesPublishedStore(context) && runCatching { context.startActivity(storeIntent) }.isSuccess) return true
         return openWebsite(context, appId)
     }
 

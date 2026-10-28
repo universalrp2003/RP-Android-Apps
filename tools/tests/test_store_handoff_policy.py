@@ -36,7 +36,7 @@ class StoreHandoffPolicyTest(unittest.TestCase):
 
     def test_known_certificate_alone_cannot_authorize_store_handoff(self):
         router = (policy.ROOT/'shared/src/main/java/com/universalrp/updates/StoreUpdateRouter.kt').read_text()
-        self.assertIn('if (matchesPublishedStore(context)', router)
+        self.assertIn('if (linksSupported && matchesPublishedStore(context)', router)
         self.assertIn('apk.length() != STORE_BYTES', router)
         self.assertIn('digest.digest().joinToString', router)
         self.assertIn('== STORE_APK_SHA256', router)
@@ -45,3 +45,9 @@ class StoreHandoffPolicyTest(unittest.TestCase):
     def test_secret_generated_handoff_changes_trigger_isolated_build(self):
         ci = (policy.ROOT/'.github/workflows/secret-message-wifi-test.yml').read_text()
         self.assertEqual(2, ci.count('"shared/src/main/java/com/universalrp/updates/**"'))
+
+    def test_legacy_store_without_app_deep_link_cannot_claim_app_specific_handoff(self):
+        router = (policy.ROOT/'shared/src/main/java/com/universalrp/updates/StoreUpdateRouter.kt').read_text()
+        self.assertIn('queryIntentActivities(discovery, android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)', router)
+        self.assertIn('if (linksSupported && matchesPublishedStore(context)', router)
+        self.assertIn('return openWebsite(context, appId)', router)

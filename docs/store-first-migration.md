@@ -125,3 +125,10 @@ Nine-module run40673435605/source052a55a PASSED real debug unit tests, lint and 
 The public tracked main private-key container/unlock reference was confirmed without exporting private material. [Signing-custody finding and publication hold](signing-key-exposure-2026-10-28.md) now applies independently of GitHub403 and Play Protect. Explicit main-identity publication guards preserve build-only checks and existing assets. The installed Store must also match the exact public0.5 APK size/hash; unknown APKs use the browser. No key rotation/deletion or installed-data change attempted. Secret's generated shared-source changes now trigger its isolated build in both push and PR lanes.
 
 Cached-APK Secret smoke40674215068 failed before the app start screen because Pixel Launcher displayed its own ANR dialog. No Secret crash was established; replacement update-dialog assertions were not reached, so no success claimed. The normal native/emulator lane is still required; do not hide application ANRs or disable screenshot protection to make a test green.
+
+
+### Store compatibility correction
+
+Public Store0.5/source31cc3c5 has no tamilan app deep-link intent filter or incoming app-selection handler. An explicit component launch alone would open its generic home screen and falsely imply app-specific handoff. Router now requires a declared matching handler in addition to the published-byte identity gate; legacy0.5 and unrecognized builds use the correct website app section. A new capable/private-signing-reviewed Store release is still required before end-to-end Store-side deep-link acceptance can be claimed. This does not force an install or add networking to offline apps.
+
+Source d317659 gates now all PASS: nine-module40675849580; five-browser/candidate40675849598; broad signed/debug/release/DEX and regression suite40675849575; Secret23unit tests/four-ABI native/signing/reduced merged-permission/API35 real relay/local-host/identity/settings/update-dialog smoke40675849600. No public release was requested/performed. The final declared-handler correction is a further small code change and needs its own compilation gates.
