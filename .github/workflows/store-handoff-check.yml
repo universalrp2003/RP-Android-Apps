@@ -1,9 +1,10 @@
 name: Store handoff migration checks (no publication)
 on:
   push:
-    branches: ["arena/6d87e1ec-rp-android-apps"]
+    branches: ["arena/**"]
     paths:
       - "shared/src/main/java/com/universalrp/updates/**"
+      - "shared/src/main/java/com/universalrp/voice/**"
       - "cleaner/**"
       - "radio/**"
       - "vocalremover/**"

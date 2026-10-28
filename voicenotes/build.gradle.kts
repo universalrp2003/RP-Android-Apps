@@ -22,8 +22,8 @@ android {
         applicationId = "com.universalrp.voicenotes"
         minSdk = 26
         targetSdk = 36
-        versionCode = 6
-        versionName = "1.3.2"
+        versionCode = 7
+        versionName = "1.3.3"
     }
 
     signingConfigs {

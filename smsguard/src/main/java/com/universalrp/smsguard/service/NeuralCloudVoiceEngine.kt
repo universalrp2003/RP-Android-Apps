@@ -1,6 +1,6 @@
 package com.universalrp.smsguard.service
 
-import com.universalrp.voice.NeuralRetryPolicy
+import com.universalrp.voice.NeuralVoiceFailover
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -54,9 +54,9 @@ object NeuralCloudVoiceEngine {
         CuratedOnlineVoiceProfile(
             id = "online_male_1",
             gender = VoiceGender.MALE,
-            titleEn = "👨 Male HD 1 · Valluvar / Prabhat (India Studio)",
-            titleTa = "👨 ஆண் குரல் 1 · வள்ளுவர் / பிரபாத் (இந்திய HD)",
-            tamilNeuralId = "ta-IN-ValluvarNeural",
+            titleEn = "👨 Male HD 1 · Surya / Prabhat (HD Studio)",
+            titleTa = "👨 ஆண் குரல் 1 · சூர்யா / பிரபாத் (உயர்தரக் குரல்)",
+            tamilNeuralId = "ta-MY-SuryaNeural",
             englishNeuralId = "en-IN-PrabhatNeural",
         ),
         CuratedOnlineVoiceProfile(
@@ -200,7 +200,7 @@ object NeuralCloudVoiceEngine {
 
     /**
      * Synthesizes natural 24kHz 48kbps MP3 speech audio from cloud neural voice, with optional disk caching.
-     * Returns null swiftly on any network issue so the caller immediately falls back to on-device system TTS.
+     * Returns null swiftly on any network issue so the caller can report HD unavailability without a robotic substitute.
      */
     fun synthesizeToFileOrNull(
         cacheDir: File?,
@@ -212,29 +212,34 @@ object NeuralCloudVoiceEngine {
         val trimmed = text.trim().take(1200)
         if (trimmed.isEmpty()) return null
 
-        val cacheKey = sha256Hex("v1|$neuralVoiceName|$speechRateMode|$trimmed")
+        var cacheKey = sha256Hex("v1|$neuralVoiceName|$speechRateMode|$trimmed")
         val targetDir = cacheDir?.let { File(it, "smsguard_neural_tts").apply { mkdirs() } }
-        val cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        var cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 256L) {
             return cachedFile
         }
 
+        var selectedVoice = neuralVoiceName
         val mp3Bytes = synthesizeRawMp3(
             text = trimmed,
             voiceName = neuralVoiceName,
             rate = ratePercentString(speechRateMode),
             timeoutMs = timeoutMs,
+            onVoiceSelected = { selectedVoice = it },
         ) ?: return null
 
         if (mp3Bytes.size < 256) return null
+        cacheKey = sha256Hex("v1|$selectedVoice|$speechRateMode|$trimmed")
+        cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        val outputFile = cachedFile
 
-        return if (targetDir != null && cachedFile != null) {
+        return if (targetDir != null && outputFile != null) {
             runCatching {
                 pruneCacheIfNeeded(targetDir)
                 val tmp = File(targetDir, "$cacheKey.tmp")
                 tmp.writeBytes(mp3Bytes)
-                tmp.renameTo(cachedFile)
-                if (cachedFile.exists() && cachedFile.length() > 256L) cachedFile else tmp
+                tmp.renameTo(outputFile)
+                if (outputFile.exists() && outputFile.length() > 256L) outputFile else tmp
             }.getOrNull()
         } else {
             val temp = File.createTempFile("smsguard_tts_", ".mp3")
@@ -255,23 +260,19 @@ object NeuralCloudVoiceEngine {
         rate: String = "+0%",
         timeoutMs: Long = 4000L,
         diagnostic: ((String) -> Unit)? = null,
+        allowVoiceFallback: Boolean = true,
+        onVoiceSelected: ((String) -> Unit)? = null,
     ): ByteArray? {
-        // Match the official Edge request form, as the shared HD engine already does.
-        val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(voiceName)
-        val started = System.nanoTime()
-        val peerCode = java.util.concurrent.atomic.AtomicInteger(0)
-        val report: (String) -> Unit = { event ->
-            if (event == "PEER_CLOSING CODE=1011") peerCode.set(1011)
-            diagnostic?.invoke(event)
+        return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
+            onSelected = { selected ->
+                diagnostic?.invoke("HD_VOICE_SELECTED=$selected")
+                onVoiceSelected?.invoke(selected)
+            }) { candidate, budget ->
+            diagnostic?.invoke("HD_VOICE_ATTEMPT=$candidate")
+            val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(candidate)
+            streamWebSocketOnce(text, serverVoice, rate, budget,
+                diagnostic = diagnostic)
         }
-        val firstAttempt = streamWebSocketOnce(text, serverVoice, rate, timeoutMs, diagnostic = report)
-        if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
-        val elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
-        val remaining = NeuralRetryPolicy.remainingBudget(timeoutMs, elapsed, peerCode.get())
-        if (remaining == 0L) return null
-        diagnostic?.invoke("TRANSIENT_SERVER_RETRY")
-        // One fresh attempt only, same HD endpoint/voice; never retry policy/auth failures.
-        return streamWebSocketOnce(text, serverVoice, rate, remaining, allowClockRetry = false, diagnostic = diagnostic)
     }
 
     private fun streamWebSocketOnce(
@@ -279,7 +280,6 @@ object NeuralCloudVoiceEngine {
         voiceName: String,
         rate: String,
         timeoutMs: Long,
-        allowClockRetry: Boolean = true,
         diagnostic: ((String) -> Unit)? = null,
     ): ByteArray? {
         val attemptStarted = System.nanoTime()
@@ -394,7 +394,8 @@ object NeuralCloudVoiceEngine {
         )
 
         val waitBudget = (timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)).coerceAtLeast(0L)
-        val finished = runCatching { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }.getOrDefault(false)
+        val finished = try { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }
+        catch (_: InterruptedException) { Thread.currentThread().interrupt(); false }
         if (!finished) {
             diagnostic?.invoke("DEADLINE_EXCEEDED")
             runCatching { ws.cancel() }
@@ -402,14 +403,13 @@ object NeuralCloudVoiceEngine {
 
         // Automatic clock-skew self-healing if user's phone clock is slightly off!
         val serverDateHeader = saw403ServerDate.get()
-        if (allowClockRetry && serverDateHeader != null) {
+        if (serverDateHeader != null) {
             val parsedEpoch = runCatching {
                 ZonedDateTime.parse(serverDateHeader, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond().toDouble()
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                val remaining = timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
-                if (remaining > 0) return streamWebSocketOnce(text, voiceName, rate, remaining, allowClockRetry = false, diagnostic = diagnostic)
+                // The next DISTINCT HD voice uses the corrected clock. No same-voice retry.
             }
         }
 

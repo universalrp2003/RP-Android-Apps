@@ -44,7 +44,7 @@ object SisterApps {
             name = "SMS Guard (குறுஞ்செய்தி காவலன்)",
             tamilName = "குறுஞ்செய்தி காவலன்",
             tagPrefix = "sms-guard",
-            version = "1.1.10",
+            version = "1.1.11",
             publishedVersion = "1.1.9",
             packageName = "com.universalrp.smsguard",
             aboutLabel = "SMS Guard (குறுஞ்செய்தி காவலன்) — GitHub release",
@@ -119,7 +119,7 @@ object SisterApps {
             name = "Voice Notes",
             tamilName = "குரல் குறிப்பு",
             tagPrefix = "voice-notes",
-            version = "1.3.2",
+            version = "1.3.3",
             publishedVersion = "1.2",
             packageName = "com.universalrp.voicenotes",
             aboutLabel = "Voice Notes — GitHub release",
@@ -157,6 +157,8 @@ object SisterApps {
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.5",
+        "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.3",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,

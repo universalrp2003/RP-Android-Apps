@@ -1,0 +1,21 @@
+# Owner-authorized HD recovery and About follow-up
+
+28 October 2026, branch arena/5b3f10e0-rp-android-apps. The owner now explicitly authorizes another available HD voice (including a different gender/region), rather than repeating a failed voice. This supersedes the earlier decision not to change voice selection during the diagnostic-only work.
+
+## Implemented source
+
+- Shared voice policy used by both the shared suite engine (including Voice Notes/Oor/Live Guard) and SMS's separate transport. At most three distinct same-language neural models share the original total deadline. No same-model transport/clock retry. A403 clock correction applies to the next distinct voice. Interrupted waits preserve interruption and do not start another voice.
+- Valluvar is removed from selectable/runtime curated profiles; saved profile IDs stay valid and now select another Tamil neural model. Existing Surya/Anbu/Kumar and Pallavi/Kani/Venba/Saranya regional models remain available; this is not a claim that the service has introduced new Tamil models. India Neerja uses the previously successful actual neural ID rather than the Expressive variant.
+- Prefer another voice of the same gender where possible; a Tamil male selection can finally recover through Pallavi. Gender/region can differ, but base language does not. Saved preferences are not changed. No new Android/device TTS fallback. Existing privacy consent and sender-only/OTP protections stay untouched.
+- Audio caches are stored under the ACTUAL successful voice, never the unavailable requested model. Offline shared profile lookup can find a previously cached alternative without network access. Existing caches/user recordings are not deleted.
+- The strict individual-model monitoring method explicitly disables recovery, so alternate audio cannot falsely certify a failed selected model. A SEPARATE real-network recovery test requests the legacy unavailable profile with the production4200ms total budget. Ten deterministic Kotlin tests cover distinct attempts, language boundary, canonical IDs, disabled profile mapping, deadline allocation/expiry, partial responses, direct monitoring and interruption.
+- Shared expandable Guide screens now identify Rameshprathap R / RP Ideas and Arena.ai Agent Mode software assistance. Missing custom credits added to Store, DailyVault, Voice Notes and Vasanthi. Expense gains a real About/update screen using browser-only updates, preserving its lack of INTERNET/install permission. Existing Cleaner, Radio, PulseEQ, Vocal Remover, Oor, SMS, launcher/podcast SuiteAbout and Secret About credits remain intact.
+- Official project links now include the EXISTING published Tamilan0.5/DailyVault0.3 downloads, website and GitHub. Candidate versions: Store0.6/code6, DailyVault0.4/code4, SMS1.1.11/code17, Voice1.3.3/code7. Old public tags and accepted Voice1.3.2 bytes are not replaced or relabelled. Other voice-app releases still need per-app version review when the signing gate is resolved.
+
+## Validation and release boundary
+
+Local source/Python checks are not Android compilation, audible playback or phone acceptance. New Kotlin/integration tests must actually run in CI before claiming recovery works. `hd-voice-failover.yml` is build/test only with14-day report retention. Existing nine-module unit/lint/merged-APK checks now cover shared voice edits and active Arena branches. Preview APK retention remains30days.
+
+Earlier PR53 source/site integration IS complete: main54d5955a943f8d085526788609aba26b3f72f008; actual production Pages40682415356 SUCCESS. This is not deployment of this NEW follow-up. Public site: https://universalrp2003.github.io/RP-Android-Apps/ .
+
+New APK publication remains blocked by the confirmed publicly unlockable legacy signing identity. Do not disable the gate, generate private keys into the repository, blindly re-sign existing apps, uninstall or reset owner data. Need owner-controlled private key custody plus package-specific Android8/8.1 and9+ signing/backup continuity verification. Historical GitHub403 and harmful-install classification are separate issues, not resolved by HD failover. No screenshot-blocking/crypto/backup safeguards are weakened.
