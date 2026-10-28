@@ -30,7 +30,6 @@
         <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Explicit verified in-app APK update only; Android permission and installer confirmation remain required. -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Wi-Fi details + "who is on my network". Location is requested at runtime and is
@@ -82,6 +81,7 @@
       stored by CleanSweep: the recogniser returns text, which is exactly like typing it.
     -->
     <queries>
+        <package android:name="com.universalrp.tamilanstore" />
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <intent><action android:name="com.android.settings.TTS_SETTINGS" /></intent>
         <intent>
@@ -173,10 +173,6 @@
             2.39 reader sources are archived under docs/archived-notification-reader-2.39
             and are NOT part of any Android source set.
         -->
-        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.updates.files"
-            android:exported="false" android:grantUriPermissions="true">
-            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/liveguard_update_paths" />
-        </provider>
         <!-- Compact battery, data and phone launcher choices. Floating pill is unchanged. -->
         <!-- Home-screen widget: battery, storage, the last daily brief, Clean and Read aloud. -->
         <receiver

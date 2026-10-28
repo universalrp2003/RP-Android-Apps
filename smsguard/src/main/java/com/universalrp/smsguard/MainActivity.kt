@@ -209,12 +209,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            var pendingFinanceLockDisable by remember { mutableStateOf(false) }
+            fun finishFinanceAuthentication() {
+                vm.unlockFinanceSession()
+                if (pendingFinanceLockDisable) {
+                    vm.setFinanceLockEnabled(false)
+                    pendingFinanceLockDisable = false
+                }
+            }
             val deviceCredentialLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult(),
             ) { res ->
-                if (res.resultCode == RESULT_OK) {
-                    vm.unlockFinanceSession()
-                }
+                if (res.resultCode == RESULT_OK) finishFinanceAuthentication()
+                pendingFinanceLockDisable = false
             }
 
             fun requestFinanceBiometricUnlock() {
@@ -223,6 +230,19 @@ class MainActivity : ComponentActivity() {
                     "கைரேகை அல்லது போன் திரை பூட்டைப் பயன்படுத்தவும்"
                 } else {
                     "Verify your fingerprint, face, or phone screen lock"
+                }
+                // Android 8/9 cannot combine framework biometrics with device credentials.
+                // Use the secure phone credential screen so PIN-only phones are not stranded.
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    val keyguard = getSystemService(KeyguardManager::class.java)
+                    if (keyguard != null && keyguard.isDeviceSecure) {
+                        @Suppress("DEPRECATION")
+                        val credential = keyguard.createConfirmDeviceCredentialIntent(title, subtitle)
+                        if (credential != null) {
+                            deviceCredentialLauncher.launch(credential)
+                            return
+                        }
+                    }
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     val launched = runCatching {
@@ -242,14 +262,17 @@ class MainActivity : ComponentActivity() {
                             builder.setNegativeButton(
                                 if (prefs.tamil) "கடவுச்சொல் உள்ளிடு" else "Use Password",
                                 mainExecutor,
-                            ) { _, _ -> }
+                            ) { _, _ -> pendingFinanceLockDisable = false }
                         }
                         builder.build().authenticate(
                             CancellationSignal(),
                             mainExecutor,
                             object : BiometricPrompt.AuthenticationCallback() {
                                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-                                    vm.unlockFinanceSession()
+                                    finishFinanceAuthentication()
+                                }
+                                override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                                    pendingFinanceLockDisable = false
                                 }
                             },
                         )
@@ -265,11 +288,12 @@ class MainActivity : ComponentActivity() {
                         return
                     }
                 }
+                pendingFinanceLockDisable = false
                 vm.postBanner(
                     if (prefs.tamil) {
-                        "போன் கைரேகை அமைக்கப்படவில்லை — கீழே வரவு-செலவு கடவுச்சொல் அமைத்துத் திறக்கவும்."
+                        "போன் திரைப் பூட்டை அமைத்து மீண்டும் முயலுங்கள். ஏற்கெனவே உள்ள வரவு-செலவு கடவுச்சொல்லால் கணக்கைப் பார்க்கலாம்."
                     } else {
-                        "No phone screen lock detected — set or enter a Finance password below."
+                        "Set up a phone screen lock and retry. An existing Finance password can still unlock the summary."
                     },
                 )
             }
@@ -631,6 +655,13 @@ class MainActivity : ComponentActivity() {
                                     )
                                     MainTab.CONTROLS -> ControlsTab(
                                         vm = vm,
+                                        onFinanceLockChange = { enabled ->
+                                            if (enabled) vm.setFinanceLockEnabled(true)
+                                            else {
+                                                pendingFinanceLockDisable = true
+                                                requestFinanceBiometricUnlock()
+                                            }
+                                        },
                                         prefs = prefs,
                                         palette = palette,
                                         ui = ui,

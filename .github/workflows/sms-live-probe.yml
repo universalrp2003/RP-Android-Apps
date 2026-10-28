@@ -1,0 +1,71 @@
+name: SMS live voice probe (monitoring only)
+# Dispatch may be unavailable to the integration. An explicit branch commit marker
+# permits a real external-service probe without publishing or weakening the assertion.
+on:
+  push:
+    branches: ["arena/6d87e1ec-rp-android-apps"]
+    paths: [".github/workflows/sms-live-probe.yml", "smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt", "smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[check-live-voice]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Run actual SMS external synthesis assertion
+        run: gradle :smsguard:testLiveSmsVoice --no-daemon --stacktrace
+      - name: Set up independent upstream reference (same CI runner, no production fallback)
+        if: always()
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned independent reference client
+        if: always()
+        run: python -m pip install --disable-pip-version-check --no-input 'edge-tts==7.3.1'
+      - name: Compare real upstream audio for four synthetic profiles
+        if: always()
+        run: python tools/probe_edge_reference.py
+      - name: Publish bounded test diagnostics as check annotations
+        if: always()
+        shell: python
+        run: |
+          import pathlib, xml.etree.ElementTree as ET
+          files = list(pathlib.Path('smsguard/build/test-results').rglob('TEST-*.xml'))
+          if not files:
+              print('::warning title=SMS probe::No JUnit XML produced; inspect build failure, not a voice-service verdict.')
+          for file in files:
+              root = ET.parse(file).getroot()
+              live = 'testLiveSmsVoice' in str(file)
+              print('::notice title=SMS test summary::' + ('LIVE ' if live else 'DETERMINISTIC ') +
+                    'tests=' + root.get('tests', '?') + ' failures=' + root.get('failures', '?') +
+                    ' errors=' + root.get('errors', '?') + ' skipped=' + root.get('skipped', '?'))
+              for output in root.findall('system-out'):
+                  for line in (output.text or '').splitlines():
+                      if line.startswith('SMS_LIVE_PROFILE '):
+                          print('::notice title=Kotlin live profile::' + line[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              for case in root.findall('testcase'):
+                  for failure in list(case.findall('failure')) + list(case.findall('error')):
+                      text = (case.get('name', '') + ': ' + failure.get('message', ''))[:500]
+                      text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+                      print('::error title=SMS test failure::' + text)
+      - name: Preserve live and deterministic results even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sms-live-probe-results
+          path: |
+            smsguard/build/test-results/
+            smsguard/build/reports/tests/
+            edge-reference-report.json
+          if-no-files-found: warn
+          retention-days: 14

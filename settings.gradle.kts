@@ -26,3 +26,9 @@ include(":expensetracker")
 include(":vasanthi")
 include(":podcast")
 include(":launcher")
+
+// Isolated, owner-approved store preview; never part of existing releases.
+include(":tamilanstore")
+
+// Private manual daily-spend and information vault; isolated preview.
+include(":dailyvault")

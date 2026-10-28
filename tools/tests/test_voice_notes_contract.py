@@ -19,8 +19,11 @@ class VoiceNotesContractTest(unittest.TestCase):
         self.assertNotIn("android.speech.tts.TextToSpeech", MAIN)
         self.assertIn("SharedNeuralVoiceEngine.synthesizeRawMp3", SPEAKER)
 
-    def test_notes_can_be_searched_and_edited_without_changing_ids(self):
-        self.assertIn("notes.filter { it.text.contains(query, ignoreCase = true) }", MAIN)
+    def test_owner_requested_search_removed_but_edit_preserves_ids(self):
+        self.assertNotIn("searchQuery", MAIN)
+        self.assertNotIn('"Search notes"', MAIN)
+        self.assertIn("items(notes, key = { it.id })", MAIN)
+        self.assertLess(MAIN.index("// ---------------------------------------------------------------- microphone"), MAIN.index("// ---------------------------------------------------------------- the notes"))
         self.assertIn("NoteStore.update(notes, note.id, editText)", MAIN)
         self.assertIn("onEdit =", MAIN)
 
@@ -36,3 +39,39 @@ class VoiceNotesContractTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UpdateResultVisibilityTest(unittest.TestCase):
+    def test_check_reports_result_in_visible_dialog(self):
+        notice = (ROOT / "shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt").read_text()
+        self.assertIn("showResult = manual", notice)
+        self.assertIn("val manual = requested > 0", notice)
+        self.assertIn('getBoolean("daily_in_app", false)', notice)
+        self.assertIn("UpdateReminderPolicy.shouldCheck", notice)
+        self.assertIn("Skip version", notice)
+        self.assertIn("if (showResult) AlertDialog(", notice)
+        self.assertIn("Update check unavailable; try later", notice)
+        self.assertIn("No newer stable version found", notice)
+        self.assertIn("Open Store / website", notice)
+
+class PlaybackControlSourceTest(unittest.TestCase):
+    def test_active_button_stops_and_other_note_replaces_request(self):
+        self.assertIn('if (speaking) Icons.Filled.Stop else Icons.Filled.PlayArrow', MAIN)
+        self.assertIn('Stop playback', MAIN)
+        self.assertIn('val wasPlaying = speakingId == note.id', MAIN)
+        self.assertIn('playbackJob?.cancel()', MAIN)
+        self.assertIn('request == playbackRequest', MAIN)
+        self.assertNotIn('if (speakingId != null) return', MAIN)
+        self.assertIn('runInterruptible(Dispatchers.IO)', SPEAKER)
+        self.assertIn('playbackMutex.withLock', SPEAKER)
+        self.assertIn('generation.get() != requestGeneration', SPEAKER)
+
+class NewNoteVisibilityTest(unittest.TestCase):
+    def test_prepend_reveals_new_note_without_edit_delete_scroll_jumps(self):
+        self.assertIn('val notesListState = rememberLazyListState()', MAIN)
+        self.assertIn('state = notesListState', MAIN)
+        self.assertIn('LaunchedEffect(newlyAddedNoteId)', MAIN)
+        self.assertIn('notesListState.scrollToItem(0)', MAIN)
+        self.assertIn('notes.firstOrNull()?.id == added', MAIN)
+        self.assertEqual(1, MAIN.count('newlyAddedNoteId = note.id'))
+        self.assertIn('persist(NoteStore.add(notes, note))\n                newlyAddedNoteId = note.id', MAIN)

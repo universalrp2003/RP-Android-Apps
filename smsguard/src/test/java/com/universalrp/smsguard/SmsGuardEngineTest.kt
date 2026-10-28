@@ -887,7 +887,7 @@ class SmsGuardEngineTest {
             java.net.InetAddress.getByName("speech.platform.bing.com")
             true
         }.getOrDefault(false)
-        if (!reachable) return // Offline sandbox environment safely skips live network check
+        assertTrue("Live probe DNS unavailable: synthesis was not executed; no successful audio claimed", reachable)
 
         val voicesToVerify = listOf(
             "ta-IN-ValluvarNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",
@@ -895,17 +895,21 @@ class SmsGuardEngineTest {
             "en-IN-PrabhatNeural" to "State Bank of India. Rupees 500 received.",
             "en-IN-NeerjaNeural" to "SMS Guard online voice protection active.",
         )
+        val failedProfiles = mutableListOf<String>()
         for ((voiceId, sampleText) in voicesToVerify) {
+            val diagnostics = java.util.concurrent.CopyOnWriteArrayList<String>()
             val mp3 = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
                 text = sampleText,
                 voiceName = voiceId,
-                timeoutMs = 8000L,
+                timeoutMs = 20000L,
+                diagnostic = { diagnostics.add(it) },
             )
-            assertTrue(
-                "Expected valid streaming MP3 audio (>1500 bytes) from $voiceId, got ${mp3?.size}",
-                mp3 != null && mp3.size > 1500,
-            )
+            val result = "$voiceId bytes=${mp3?.size ?: 0} diagnostics=${diagnostics.joinToString(" | ")}"
+            println("SMS_LIVE_PROFILE $result")
+            if (mp3 == null || mp3.size <= 1500) failedProfiles.add(result)
         }
+        // Attempt every required profile, but retain failure if ANY required voice fails.
+        assertTrue("Required live profiles failed: ${failedProfiles.joinToString(" ; ")}", failedProfiles.isEmpty())
     }
 
     // --- Bill / payment-due reminders ---

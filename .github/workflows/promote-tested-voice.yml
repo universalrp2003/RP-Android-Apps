@@ -1,0 +1,117 @@
+name: Promote owner-accepted Voice 1.3.2 bytes (no rebuild)
+on:
+  push:
+    branches: ["arena/6d87e1ec-rp-android-apps"]
+    paths:
+      - ".github/workflows/promote-tested-voice.yml"
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: promote-tested-voice-1-3-2
+  cancel-in-progress: false
+jobs:
+  promote:
+    if: contains(github.event.head_commit.message, '[promote-tested-voice]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require explicit subject and immutable successful source receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git log -1 --format=%s | grep -Fq '[promote-tested-voice]'
+          python3 tools/verify_release_signing_policy.py --legacy-main
+          gh api repos/$GH_REPO/actions/runs/40668667451 > /tmp/run.json
+          gh api repos/$GH_REPO/actions/artifacts/12808020972 > /tmp/artifact.json
+          python3 - <<'PY'
+          import json
+          run = json.load(open('/tmp/run.json'))
+          artifact = json.load(open('/tmp/artifact.json'))
+          source = '41f29c3f56fce9dd22fe1ec83f264863f7f107aa'
+          assert run['head_sha'] == source and run['conclusion'] == 'success'
+          assert run['path'] == '.github/workflows/voicenotes-release.yml'
+          assert artifact['id'] == 12808020972 and not artifact['expired']
+          assert artifact['name'] == 'voicenotes-stable-candidate-160'
+          assert artifact['workflow_run']['id'] == 40668667451
+          assert artifact['workflow_run']['head_sha'] == source
+          PY
+          # Fail closed on API errors as well as on an existing release. Do not clobber assets.
+          gh api --paginate "repos/$GH_REPO/releases?per_page=100" --jq '.[].tag_name' > /tmp/tags
+          if grep -Fxq 'voice-notes-v1.3.2' /tmp/tags; then
+            echo '::error::Voice 1.3.2 already exists; no overwrite or rebuild permitted.'; exit 1
+          fi
+          gh api --paginate "repos/$GH_REPO/tags?per_page=100" --jq '.[] | select(.name=="voice-notes-v1.3.2") | .commit.sha' > /tmp/tag-target
+          if [ -s /tmp/tag-target ]; then
+            test "$(cat /tmp/tag-target)" = 41f29c3f56fce9dd22fe1ec83f264863f7f107aa
+          fi
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 40668667451
+          artifact-ids: '12808020972'
+          merge-multiple: true
+          path: accepted-voice
+      - name: Verify the unchanged accepted APK and publish only this app
+        shell: bash
+        run: |
+          set -euo pipefail
+          trap 'status=$?; echo "::error title=Accepted Voice verification::Stopped at shell line $LINENO (exit $status); no rebuild permitted."; exit "$status"' ERR
+          mapfile -t apks < <(find accepted-voice -type f -name '*.apk')
+          test "${#apks[@]}" -eq 1
+          apk="${apks[0]}"
+          test "$(basename "$apk")" = Voice-Notes-v1.3.2.apk
+          tools="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" dump badging "$apk" > /tmp/badging
+          grep -Fq "package: name='com.universalrp.voicenotes' versionCode='6' versionName='1.3.2'" /tmp/badging
+          head -1 /tmp/badging | while IFS= read -r line; do echo "::notice title=Accepted APK identity::$line"; done
+          grep -Ei 'sdkVersion|minSdkVersion' /tmp/badging | while IFS= read -r line; do echo "::notice title=Accepted APK SDK::$line"; done
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/badging
+          if grep -q 'application-debuggable' /tmp/badging; then exit 1; fi
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/signature
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/signature | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55
+          bytes="$(stat -c %s "$apk")"
+          test "$bytes" -gt 0 && test "$bytes" -le 134217728
+          sha="$(sha256sum "$apk" | cut -d ' ' -f1)"
+          printf '%s  Voice-Notes-v1.3.2.apk\n' "$sha" > accepted-voice/Voice-Notes-v1.3.2.apk.sha256
+          EXPECTED_SHA="$sha" EXPECTED_BYTES="$bytes" python3 - <<'PYNOTES'
+          import os, pathlib
+          notes = pathlib.Path('releases/voice-notes-v1.3.2.md').read_text()
+          receipt = ('\n## Exact release receipt\n\nSource: `41f29c3f56fce9dd22fe1ec83f264863f7f107aa`; signed run40668667451; immutable artifact12808020972. No rebuild.\n\nAPK: ' + os.environ['EXPECTED_BYTES'] + ' bytes; SHA-256 `' + os.environ['EXPECTED_SHA'] + '`. Device-installed hash not independently measured.\n')
+          assert notes.count('\n## தமிழ்\n') == 1
+          pathlib.Path('/tmp/notes.md').write_text(notes.replace('\n## தமிழ்\n', receipt + '\n## தமிழ்\n'))
+          PYNOTES
+          if gh release create voice-notes-v1.3.2 "$apk" accepted-voice/Voice-Notes-v1.3.2.apk.sha256 --target 41f29c3f56fce9dd22fe1ec83f264863f7f107aa --title 'Voice Notes 1.3.2 — note visibility and playback fixes' --notes-file /tmp/notes.md 2>/tmp/voice-publication-error; then
+            echo 'Created the exact-artifact Voice release.'
+          else
+            python3 - <<'PYERROR'
+          import pathlib, re
+          text = pathlib.Path('/tmp/voice-publication-error').read_text(errors='replace')[:1600]
+          text = re.sub(r'https?://\S+\?\S+', '[URL query omitted]', text)
+          print('::error title=Exact Voice publication blocked::' + text.replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+          PYERROR
+            exit 1
+          fi
+          mkdir /tmp/published-voice
+          gh release download voice-notes-v1.3.2 --pattern Voice-Notes-v1.3.2.apk --dir /tmp/published-voice
+          test "$(sha256sum /tmp/published-voice/Voice-Notes-v1.3.2.apk | cut -d ' ' -f1)" = "$sha"
+          test "$(stat -c %s /tmp/published-voice/Voice-Notes-v1.3.2.apk)" = "$bytes"
+          gh api repos/$GH_REPO/releases/tags/voice-notes-v1.3.2 > /tmp/release.json
+          EXPECTED_SHA="$sha" EXPECTED_BYTES="$bytes" python3 - <<'PY'
+          import json, os
+          release = json.load(open('/tmp/release.json'))
+          assert not release['draft'] and not release['prerelease']
+          assets = [a for a in release['assets'] if a['name'] == 'Voice-Notes-v1.3.2.apk']
+          assert len(assets) == 1
+          asset = assets[0]
+          assert asset['size'] == int(os.environ['EXPECTED_BYTES'])
+          assert asset['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+          assert asset['browser_download_url'] == 'https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.2/Voice-Notes-v1.3.2.apk'
+          print('::notice title=Verified public Voice release::bytes=' + str(asset['size']) + ' sha256=' + os.environ['EXPECTED_SHA'])
+          PY
+          echo "Published unchanged accepted Voice1.3.2/code6; $bytes bytes; SHA-256 $sha" >> "$GITHUB_STEP_SUMMARY"

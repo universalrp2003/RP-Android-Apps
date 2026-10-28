@@ -16,8 +16,8 @@ android {
         applicationId = "com.universalrp.smsguard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.1.9"
+        versionCode = 16
+        versionName = "1.1.10"
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -85,4 +85,20 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+}
+
+// Keep external-service availability separate from deterministic regression tests.
+// The live assertion is unchanged and still fails its dedicated task when synthesis fails.
+val liveSmsVoiceMethod = "com.universalrp.smsguard.SmsGuardEngineTest.liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable"
+tasks.withType<Test>().configureEach {
+    if (name != "testLiveSmsVoice") filter { excludeTestsMatching(liveSmsVoiceMethod) }
+}
+tasks.register<Test>("testLiveSmsVoice") {
+    group = "verification"
+    description = "External neural voice availability probe; not a deterministic release test."
+    dependsOn("testReleaseUnitTest")
+    filter { includeTestsMatching(liveSmsVoiceMethod) }
+    // Lazy providers are resolved before Gradle's NO-SOURCE check (doFirst is too late).
+    testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
+    classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
 }

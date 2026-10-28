@@ -37,6 +37,12 @@ on:
       - "docs/secret-message-security-design.md"
       - "tools/tests/test_secretmessage_preview_contract.py"
       - ".github/workflows/build-apk.yml"
+      # Monitoring-only workflows/scripts cannot alter any APK bytes or app versions.
+      - ".github/workflows/sms-live-probe.yml"
+      - ".github/workflows/oor-live-probe.yml"
+      - ".github/workflows/promote-tested-voice.yml"
+      - ".github/workflows/secret-handoff-ui-check.yml"
+      - "tools/probe_edge_reference.py"
       - ".github/workflows/pages.yml"
       - ".github/workflows/oorarivippu-release.yml"
       - ".github/workflows/oorarivippu-test-apk.yml"
@@ -254,19 +260,22 @@ jobs:
 
       - name: Check Cleaner source contracts and localization
         run: |
-          python3 tools/verify_cleaner_localization.py
-          python3 tools/verify_continuous_playback.py
-          python3 tools/verify_apps_localization.py
-          # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
-          python3 tools/verify_vasanthi_sound_labels.py
-          # v2.40 core: the retired notification reader must not exist in the manifest,
-          # the production tree or the build scripts. Historical 2.39 sources stay in
-          # docs/archived-notification-reader-2.39 and are never compiled.
-          python3 tools/verify_cleaner_core_manifest.py
-          # 2.42: every tools test runs here, including the permission-delta gate that now
-          # decides when a release needs a recorded device install.
-          python3 -m unittest discover -s tools/tests -p 'test_*.py' -v
-          python3 tools/verify_cleaner_next_update_source.py
+          set -o pipefail
+          {
+            python3 tools/verify_cleaner_localization.py
+            python3 tools/verify_continuous_playback.py
+            python3 tools/verify_apps_localization.py
+            # Vasanthi AI: the Tamil sound vocabulary must stay keyed to the model that ships.
+            python3 tools/verify_vasanthi_sound_labels.py
+            # v2.40 core: the retired notification reader must not exist in the manifest,
+            # the production tree or the build scripts. Historical 2.39 sources stay in
+            # docs/archived-notification-reader-2.39 and are never compiled.
+            python3 tools/verify_cleaner_core_manifest.py
+            # 2.42: every tools test runs here, including the permission-delta gate that now
+            # decides when a release needs a recorded device install.
+            python3 -m unittest discover -s tools/tests -p 'test_*.py' -v
+            python3 tools/verify_cleaner_next_update_source.py
+          } 2>&1 | tee source-check.log
 
       - name: Build the APKs
         run: |
@@ -287,6 +296,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 14
           name: unit-test-reports
           path: |
             cleaner/build/test-results/test*UnitTest/*.xml
@@ -505,27 +515,19 @@ jobs:
             echo "(aapt2 not found; using the Gradle intermediates instead)"
           fi
 
-          # Actual delivered universal APK must fit the in-app updater, not just a fake test size.
-          UPDATE_CAP_MB=$(sed -nE 's/.*MAX_APK_BYTES = ([0-9]+)L \* 1024 \* 1024.*/\1/p' cleaner/src/main/java/com/universalrp/cleansweep/updates/UpdatePolicy.kt)
-          test -n "$UPDATE_CAP_MB"
+          # Keep a bounded delivery budget and compatibility with already-installed legacy
+          # clients. This is CI sizing only: no app-local APK downloader/installer remains.
+          DELIVERY_CAP_MB=128
           ACTUAL_BYTES=$(stat -c '%s' "$CLEANER_REL")
-          if [ "$ACTUAL_BYTES" -gt "$((UPDATE_CAP_MB * 1024 * 1024))" ]; then
-            echo "FAIL: release APK exceeds the in-app updater limit"; exit 1
-          fi
-          echo "OK: actual CleanSweep APK $ACTUAL_BYTES bytes fits updater cap ${UPDATE_CAP_MB}MiB"
-          # The immediate successor must also be downloadable by existing2.39 clients.
-          if [ "$ACTUAL_BYTES" -gt "$((50 * 1024 * 1024))" ]; then
-            echo "FAIL:2.40 delivery must fit2.39's50MiB updater cap"; exit 1
-          fi
-          echo "OK: actual2.40 APK also fits the previous2.39 client's50MiB cap"
-          SHARED_UPDATE_CAP_MB=$(sed -nE 's/.*MAX_APK_BYTES = ([0-9]+)L \* 1024 \* 1024.*/\1/p' shared/src/main/java/com/universalrp/updates/AppUpdates.kt)
-          test -n "$SHARED_UPDATE_CAP_MB"
-          for app_asset in "Ramesh Radio|$RADIO_REL" "PulseEQ|$EQ_REL" "RP VOCAL REMOVER STUDIO|$VOCAL_REMOVER_REL"; do
+          test "$ACTUAL_BYTES" -le "$((50 * 1024 * 1024))" || {
+            echo "FAIL: CleanSweep delivery exceeds the previous 2.39 client's 50MiB cap"; exit 1;
+          }
+          for app_asset in "Live Guard|$CLEANER_REL" "Ramesh Radio|$RADIO_REL" "PulseEQ|$EQ_REL" "RP VOCAL REMOVER STUDIO|$VOCAL_REMOVER_REL"; do
             app_label="${app_asset%%|*}"; apk="${app_asset##*|}"; bytes=$(stat -c '%s' "$apk")
-            if [ "$bytes" -gt "$((SHARED_UPDATE_CAP_MB * 1024 * 1024))" ]; then
-              echo "FAIL: $app_label APK is larger than its verified-updater cap"; exit 1
+            if [ "$bytes" -gt "$((DELIVERY_CAP_MB * 1024 * 1024))" ]; then
+              echo "FAIL: $app_label APK exceeds the delivery size budget"; exit 1
             fi
-            echo "OK: $app_label APK is $bytes bytes, within the updater cap ${SHARED_UPDATE_CAP_MB}MiB"
+            echo "OK: $app_label APK is $bytes bytes, within delivery budget ${DELIVERY_CAP_MB}MiB"
           done
 
           # The manifests are read from Gradle's plain-text merged manifests —
@@ -644,12 +646,12 @@ jobs:
           # A compiled APK has no "values-ta" folder — resources live compiled inside
           # resources.arsc and the strings in the dex. Search both for the actual Tamil app
           # name, which is the thing the user cares about.
-          if unzip -p "$CLEANER" resources.arsc | grep -qa "லைவ் கார்டு"; then
+          if unzip -p "$CLEANER" resources.arsc | grep -qa "கைபேசி காவலன்"; then
             echo "OK: the Tamil launcher label is inside the APK resources"
           else
             echo "WARN: the Tamil launcher label was not found in resources.arsc"
           fi
-          if grep -aq "லைவ் கார்டு" "$WORK/cleaner.dex"; then
+          if grep -aq "கைபேசி காவலன்" "$WORK/cleaner.dex"; then
             echo "OK: the Tamil name is in the CleanSweep dex (menu + About)"
           else
             echo "WARN: the Tamil name was not found in the CleanSweep dex"
@@ -683,7 +685,7 @@ jobs:
                         inSilentPlace silentPlaceSlots NO_INTERNET SILENT_PLACE \
                         SilentPlaceSlot toggleSilentPlaceDay VoiceNotifier \
                         isoDayOfWeek ALL_DAYS SILENT_PLACE_DAY_LABELS \
-                        CorePrivacyMigration LiveGuardUpdates VerifiedApkDownload UpdatePolicy \
+                        CorePrivacyMigration StoreFirstUpdateNotice StoreUpdateRouter UpdatePolicy \
                         LastUnplugRepo CompactWidgetPolicy CleanSweepDataWidget CleanSweepPhoneWidget \
                         LocalReadGate cancelAiReport cancelDeviceIdentification \
                         ChargingHonestyPolicy ThermalWarningPolicy AiOutputBudgetPolicy; do
@@ -854,6 +856,9 @@ jobs:
             exit 1
           fi
 
+          if grep -q 'android.permission.REQUEST_INSTALL_PACKAGES' "$MERGED_VOCAL"; then
+            echo "FAIL: retired Vocal APK installer capability returned"; exit 1
+          fi
           echo "=== RP VOCAL REMOVER STUDIO checks (debug and signed release) ==="
           if [ -z "$MERGED_VOCAL" ]; then
             echo "FAIL: could not find the merged manifest for :vocalremover"; exit 1
@@ -861,7 +866,7 @@ jobs:
           for permission in android.permission.INTERNET android.permission.FOREGROUND_SERVICE \
                             android.permission.FOREGROUND_SERVICE_DATA_SYNC \
                             android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING \
-                            android.permission.WAKE_LOCK android.permission.REQUEST_INSTALL_PACKAGES; do
+                            android.permission.WAKE_LOCK; do
             if grep -q "$permission" "$MERGED_VOCAL"; then
               echo "OK: Vocal Remover declares $permission"
             else
@@ -869,9 +874,9 @@ jobs:
             fi
           done
           grep -q 'com.universalrp.vocalremover.processing.SeparationService' "$MERGED_VOCAL" || { echo "FAIL: on-device processing foreground service is not declared"; exit 1; }
-          grep -q 'androidx.core.content.FileProvider' "$MERGED_VOCAL" || { echo "FAIL: verified APK hand-off FileProvider is not declared"; exit 1; }
-          grep -q 'android:exported="false"' "$MERGED_VOCAL" || { echo "FAIL: verified APK provider must not be exported"; exit 1; }
-          grep -q 'app_update_paths' "$MERGED_VOCAL" || { echo "FAIL: private verified-update cache paths are not declared"; exit 1; }
+          if grep -Eq 'app_update_paths|\.updates\.files' "$MERGED_VOCAL"; then
+            echo "FAIL: retired Vocal APK provider returned"; exit 1
+          fi
           for dex in "$WORK/vocal-remover-debug.dex" "$WORK/vocal-remover-release.dex"; do
             for symbol in ProcessingQueue ProcessingPolicy ChunkedSeparationProcessor \
                           WavPlaybackController ModelRepository DeviceMonitor SeparationService \
@@ -883,7 +888,7 @@ jobs:
               fi
             done
           done
-          echo "OK: Vocal Remover ships standalone signed bytes, local-processing runtime, and verified updater"
+          echo "OK: Vocal Remover ships standalone signed bytes, local-processing runtime, and Store/browser handoff"
 
           # Store listing inventory. Warnings only: F-Droid shows a listing without
           # screenshots, it simply looks bare, and a missing icon is a polish problem, not a
@@ -1033,6 +1038,7 @@ jobs:
           MIRROR_EXISTING: ${{ inputs.mirror_existing }}
         run: |
           set -euo pipefail
+          python3 tools/verify_release_signing_policy.py --legacy-main
           exec > >(tee -a "$RUNNER_TEMP/release-publication.log") 2>&1
           if [[ -n "${REQUESTED_TAG:-}" ]]; then BATCH_TAG="$REQUESTED_TAG"
           elif [[ "$GITHUB_REF" == refs/tags/* ]]; then BATCH_TAG="$GITHUB_REF_NAME"
@@ -1603,6 +1609,16 @@ jobs:
               echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          if [ -f verify.log ]; then
+            grep '^FAIL:' verify.log | head -8 | while IFS= read -r line; do
+              echo "::error title=APK verification::$line"
+            done
+          fi
+          if [ -f source-check.log ]; then
+            grep '^FAIL:' source-check.log | head -8 | while IFS= read -r line; do
+              echo "::error title=Source validation::$line"
+            done
+          fi
           echo "::error::Build failed - the reason is in this run's summary above."
 
       # Commits whatever failed into ci-build-failure.md, so the reason is
@@ -1700,6 +1716,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 14
           name: build-log
           # store-art.log matters when the failure is the artwork step, which runs before
           # Gradle and therefore leaves no build.log behind.
@@ -1712,6 +1729,7 @@ jobs:
       - name: Upload Google Play bundles (.aab)
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: store-bundles
           path: |
             cleaner/build/outputs/bundle/release/*.aab
@@ -1721,6 +1739,7 @@ jobs:
       - name: Upload CleanSweep APK
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: cleansweep-apk
           path: |
             cleaner/build/outputs/apk/*/*.apk
@@ -1729,18 +1748,21 @@ jobs:
       - name: Upload PulseEQ APK
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: pulseeq-apk
           path: equalizer/build/outputs/apk/*/*.apk
 
       - name: Upload Ramesh Radio APK
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: ramesh-radio-apk
           path: radio/build/outputs/apk/*/*.apk
 
       - name: Upload RP Vocal Remover Studio APKs
         uses: actions/upload-artifact@v4
         with:
+          retention-days: 30
           name: rp-vocal-remover-studio-apks
           path: |
             vocalremover/build/outputs/apk/release/*.apk

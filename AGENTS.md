@@ -2,8 +2,8 @@
 
 ## Active project scope
 
-- Maintain five active Android products: `cleaner` (Live Guard / CleanSweep), `radio` (Ramesh Radio), `equalizer` (PulseEQ), `vocalremover` (RP Vocal Remover Studio), and `oorarivippu` (Oor Arivippu / Place Announcer). Oor Arivippu is owner-approved for its first stable release as a separate product and release workflow; do not add it to the existing four-app batch without revising that workflow's tag/version protections.
-- The isolated `secretmessage` preview remains a non-shipping local-only development target, not an active released app or secure messenger. Integrate only approved WhisperPad product modules after verifying their real boundaries; preserve MLS, signing and release requirements. Do not claim secure messaging or equate preview expiry with recipient-view expiry.
+- Maintain the twelve published products: `cleaner` (Live Guard), `radio`, `equalizer` (PulseEQ), `vocalremover`, `oorarivippu`, `smsguard`, `voicenotes`, `expensetracker`, `vasanthi`, `podcast`, `launcher`, and the separately released `secretmessage/wifi-test` product. The four legacy batch modules remain cleaner/radio/equalizer/vocalremover; standalone products keep their own release workflows. Only publish owner-authorized changed apps; do not combine all twelve into one release batch.
+- The isolated `secretmessage/product` preview remains a non-shipping local-only development target, distinct from the published `secretmessage/wifi-test` app. The following dated preview/test notes are historical constraints, not a claim that the released app is still unpublished. Integrate only approved WhisperPad product modules after verifying their real boundaries; preserve MLS, signing and release requirements. Do not claim secure messaging or equate preview expiry with recipient-view expiry.
 - WhisperPad is the owner's product/UI specification for Secret Message, not a separate app. The owner's Drive document *New WhisperPad P2P Android Agent Blueprint (MLS-Compatible Edition)* is the current version.
   - 0.2.0-preview integrated its input deck, synthesized tones, RAM-only timers, optional BiometricPrompt app lock and permission-removal rules behind `SecretMessageMlsTransport`.
   - On 16 October 2026 the owner tested 0.2.0-preview on two phones (each on its own) and reported that it works as expected, then asked for a drawing pad about half the screen tall. 0.2.1-preview adds it; keep that size and make sure the pad controls stay on-screen. The owner then tested 0.2.1-preview and reported liking the larger pad.
@@ -121,6 +121,12 @@
 - Respect opt-in monitoring/history, saved OFF settings and the current compact Battery/Data/Phone launcher-widget choices. Do not silently enable persistent monitoring, permissions or deletion.
 - Home news is for the phone's local day with real publication timestamps; do not synthesize “today” headlines or repeat read items automatically. Keep security review separate from news.
 - AI/web requests must be bounded, cancellable and user-controlled, with explicit disclosure of what leaves the phone. Do not invent current prices, live-web success, audible speech or OEM background guarantees. Keep the confirmed voice behavior: alternate the two selected/previewed voices between answers, read each answer once, and never infer gender from Android voice metadata.
+
+## Maintenance and deployment
+
+- Website branch workflow build success is not deployment success: Pages deploys only from `main`. Confirm the deploy job and deployment source before saying changes are live.
+- Archive resolved CI failure excerpts under `docs/archive/ci/`, preserving source/run context. Do not delete release digests, device evidence, signing material or active preflight scripts as scratch files.
+- Explicit artifact retention is required for new uploads: 30 days for APKs/candidates, 14 days for transient reports/logs. Existing shorter policies may remain; release assets are not CI artifacts. Keep required candidate bytes/evidence before any deletion or expiry.
 
 ## Audio apps
 

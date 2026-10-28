@@ -7,6 +7,8 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -54,7 +57,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
-import androidx.activity.ComponentActivity
+import androidx.fragment.app.FragmentActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 import kotlinx.coroutines.launch
@@ -68,7 +73,42 @@ import kotlinx.coroutines.launch
  * The screen is deliberately small. Everything that could fail says so in Tamil: no microphone
  * permission, no speech recogniser on the phone, no internet for the neural voice.
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+    private var unlocked by mutableStateOf(false)
+    private var lockEnabled by mutableStateOf(false)
+    private var lockMessage by mutableStateOf("")
+    private val authenticators = BiometricManager.Authenticators.BIOMETRIC_WEAK or
+        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+    private fun authenticate(onSuccess: () -> Unit) {
+        val tamil = AppLanguageState.current == AppLanguage.TAMIL
+        if (BiometricManager.from(this).canAuthenticate(authenticators) != BiometricManager.BIOMETRIC_SUCCESS) {
+            lockMessage = if (tamil) "போன் திரைப் பூட்டு / கைரேகையை அமைத்து மீண்டும் முயற்சிக்கவும்." else "Set up phone screen lock / biometrics and retry."
+            return
+        }
+        val prompt = BiometricPrompt(this, ContextCompat.getMainExecutor(this),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    lockMessage = ""; onSuccess()
+                }
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    lockMessage = errString.toString()
+                }
+            })
+        prompt.authenticate(BiometricPrompt.PromptInfo.Builder()
+            .setTitle(if (tamil) "குரல் குறிப்பைத் திற" else "Unlock Voice Notes")
+            .setAllowedAuthenticators(authenticators).build())
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (lockEnabled) {
+            unlocked = false
+            speaker.stop()
+            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
+
 
     private lateinit var store: NoteFileStore
     private lateinit var speaker: VoiceNoteSpeaker
@@ -78,11 +118,32 @@ class MainActivity : ComponentActivity() {
         AppLanguageState.initialize(this)
         store = NoteFileStore(this)
         speaker = VoiceNoteSpeaker(cacheDir)
+        lockEnabled = getSharedPreferences("voice-notes", MODE_PRIVATE).getBoolean("app_lock", false)
+        if (lockEnabled) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
 
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Background) {
-                    VoiceNotesScreen(
+                    if (lockEnabled && !unlocked) {
+                        Column(Modifier.padding(24.dp).statusBarsPadding()) {
+                            Text(if (AppLanguageState.current == AppLanguage.TAMIL) "குரல் குறிப்பு · பூட்டப்பட்டது" else "Voice Notes · Locked", color = TextPrimary)
+                            Button(onClick = { authenticate { unlocked = true } }) {
+                                Text(if (AppLanguageState.current == AppLanguage.TAMIL) "திற" else "Unlock")
+                            }
+                            Text(lockMessage, color = TextPrimary)
+                        }
+                    } else VoiceNotesScreen(
+                        lockEnabled = lockEnabled,
+                        lockMessage = lockMessage,
+                        onToggleLock = {
+                            authenticate {
+                                lockEnabled = !lockEnabled
+                                unlocked = true
+                                getSharedPreferences("voice-notes", MODE_PRIVATE).edit().putBoolean("app_lock", lockEnabled).apply()
+                                if (lockEnabled) window.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                                else window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+                            }
+                        },
                         store = store,
                         speaker = speaker,
                         onRequestMic = ::ensureMicPermission,
@@ -152,6 +213,9 @@ class NoteFileStore(context: android.content.Context) {
 
 @Composable
 fun VoiceNotesScreen(
+    lockEnabled: Boolean = false,
+    lockMessage: String = "",
+    onToggleLock: () -> Unit = {},
     store: NoteFileStore,
     speaker: VoiceNoteSpeaker,
     onRequestMic: (() -> Unit) -> Unit,
@@ -159,10 +223,22 @@ fun VoiceNotesScreen(
     val scope = rememberCoroutineScope()
     val context = androidx.compose.ui.platform.LocalContext.current
     var notes by remember { mutableStateOf(store.load()) }
+    val notesListState = rememberLazyListState()
+    var newlyAddedNoteId by remember { mutableStateOf<String?>(null) }
+    androidx.compose.runtime.LaunchedEffect(newlyAddedNoteId) {
+        // Stable item keys preserve the previous scroll anchor when prepending a row.
+        // Reveal only a newly dictated note; edits/deletes must not jump the reader.
+        val added = newlyAddedNoteId
+        if (added != null && notes.firstOrNull()?.id == added) {
+            notesListState.scrollToItem(0)
+        }
+    }
     var listening by remember { mutableStateOf(false) }
     var speakingId by remember { mutableStateOf<String?>(null) }
+    var playbackJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+    var playbackRequest by remember { mutableStateOf(0L) }
     var status by remember { mutableStateOf("") }
-    var searchQuery by remember { mutableStateOf("") }
+    var showHelp by remember { mutableStateOf(false) }
     var editingNote by remember { mutableStateOf<VoiceNote?>(null) }
     var editText by remember { mutableStateOf("") }
     var pendingVoiceNote by remember { mutableStateOf<VoiceNote?>(null) }
@@ -183,11 +259,22 @@ fun VoiceNotesScreen(
         )
     }
 
+    fun stopPlayback() {
+        playbackRequest++
+        speaker.stop()
+        playbackJob?.cancel()
+        playbackJob = null
+        speakingId = null
+    }
+
     fun playNote(note: VoiceNote) {
-        if (speakingId != null) return // Never overlap neural-voice requests or play a robot fallback.
+        val wasPlaying = speakingId == note.id
+        stopPlayback()
+        if (wasPlaying) { status = ""; return }
+        val request = playbackRequest
         speakingId = note.id
         status = ""
-        scope.launch {
+        playbackJob = scope.launch {
             val ok = try {
                 val profile = NoteSpeech.profileFor(text = note.text, preferTamil = tamil)
                 val voiceId = profile?.let { NoteSpeech.neuralIdFor(it, note.text) }
@@ -198,18 +285,14 @@ fun VoiceNotesScreen(
             } catch (_: Exception) {
                 false
             } finally {
-                speakingId = null
+                // A cancelled/slow previous request must not clear the new note's Stop button.
+                if (request == playbackRequest) { speakingId = null; playbackJob = null }
             }
-            if (!ok) status = tr(
+            if (request == playbackRequest && !ok) status = tr(
                 "HD voice needs internet. No robotic voice fallback is used.",
                 "HD குரல் வாசிக்க இணையம் தேவை. ரோபோ குரலுக்கு மாறாது.",
             )
         }
-    }
-
-    val visibleNotes = remember(notes, searchQuery) {
-        val query = searchQuery.trim()
-        if (query.isEmpty()) notes else notes.filter { it.text.contains(query, ignoreCase = true) }
     }
 
     val recognizer = remember {
@@ -224,8 +307,17 @@ fun VoiceNotesScreen(
 
     // Release the recogniser when the screen goes away: it holds the microphone and an audio
     // resource, and leaking it means the mic stays hot after the owner has left.
-    androidx.compose.runtime.DisposableEffect(Unit) {
-        onDispose { recognizer?.destroy() }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner, speaker) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_STOP) stopPlayback()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            stopPlayback()
+            recognizer?.destroy()
+        }
     }
 
     // The listener is recreated per composition; it captures only the current state it needs.
@@ -271,6 +363,7 @@ fun VoiceNotesScreen(
                     createdAtEpochMs = System.currentTimeMillis(),
                 )
                 persist(NoteStore.add(notes, note))
+                newlyAddedNoteId = note.id
                 status = ""
             }
 
@@ -295,7 +388,7 @@ fun VoiceNotesScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -324,14 +417,30 @@ fun VoiceNotesScreen(
             )
         }
 
-        // ---------------------------------------------------------------- search
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-            singleLine = true,
-            label = { Text(tr("Search notes", "குறிப்புகளைத் தேடுங்கள்")) },
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            TextButton(onClick = { showHelp = true }) { Text(tr("Help / About", "உதவி / பற்றி"), color = Accent) }
+            TextButton(onClick = onToggleLock) {
+                Text(if (lockEnabled) tr("App lock: ON", "செயலிப் பூட்டு: ஆன்") else tr("App lock: OFF", "செயலிப் பூட்டு: ஆஃப்"), color = Accent)
+            }
+        }
+        if (lockMessage.isNotBlank()) Text(lockMessage, color = Warn)
+        if (showHelp) AlertDialog(
+            onDismissRequest = { showHelp = false },
+            title = { Text(tr("Voice Notes · About / Guide", "குரல் குறிப்பு · பற்றி / வழிகாட்டி")) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text(tr("Tap the microphone to dictate; use play for HD voice, edit to correct, and the bin to delete. Dictation uses your phone's recognition service. HD playback sends selected text to the online neural voice service; no robotic fallback. Notes stay in app storage; uninstalling deletes them.",
+                    "மைக் பொத்தானால் பேசிப் பதிவு செய்யுங்கள். கேட்க play, திருத்த பென்சில், நீக்க குப்பைத்தொட்டி. பேச்சறிதல் போனின் சேவையைப் பயன்படுத்தும். HD வாசிப்புக்கு தேர்ந்தெடுத்த உரை இணையக் குரல் சேவைக்கு அனுப்பப்படும்; இயந்திரக் குரல் மாற்றுவழி இல்லை. குறிப்புகள் செயலியில் சேமிக்கப்படும்; செயலியை நீக்கினால் அழியும்."))
+                Text(tr("Optional app lock uses Android biometrics or phone credentials; it is a local access gate, not note-file encryption. Keep your phone credential available. It relocks when you leave the app.",
+                    "விருப்பப் பூட்டு Android கைரேகை அல்லது போன் திரைப் பூட்டைப் பயன்படுத்தும். இது அணுகல் பூட்டு; குறிப்புக் கோப்பு மறையாக்கம் அல்ல. போன் கடவுச்சொல்லை நினைவில் வைத்திருங்கள். வெளியே சென்றால் மீண்டும் பூட்டும்."))
+                TextButton(onClick = {
+                    runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW,
+                        android.net.Uri.parse("https://universalrp2003.github.io/RP-Android-Apps/"))) }
+                }) { Text(tr("Our apps / Website", "நமது செயலிகள் / இணையதளம்")) }
+            } },
+            confirmButton = { TextButton(onClick = { showHelp = false }) { Text(tr("Close", "மூடு")) } }
         )
+
+        com.universalrp.updates.StoreFirstUpdateNotice("voicenotes", tamil)
 
         // ---------------------------------------------------------------- status line
         if (status.isNotEmpty()) {
@@ -343,72 +452,11 @@ fun VoiceNotesScreen(
             )
         }
 
-        // ---------------------------------------------------------------- the notes
-        if (visibleNotes.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = tr(
-                        if (notes.isEmpty()) "No notes yet" else "No matching notes",
-                        if (notes.isEmpty()) "இன்னும் ஒரு குறிப்பும் இல்லை" else "பொருத்தமான குறிப்பு இல்லை",
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = TextPrimary,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = tr(
-                        if (notes.isEmpty()) "Tap the microphone below and speak in Tamil. Notes are stored on this phone." else "Try a different search term.",
-                        if (notes.isEmpty()) "கீழே உள்ள மைக்கைத் தட்டி தமிழில் பேசுங்கள். குறிப்புகள் இந்தத் தொலைபேசியில் சேமிக்கப்படும்." else "வேறு சொல்லைத் தேடிப் பாருங்கள்.",
-                    ),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TextSecondary,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(
-                    horizontal = 12.dp,
-                    vertical = 8.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(visibleNotes, key = { it.id }) { note ->
-                    NoteRow(
-                        note = note,
-                        tamil = tamil,
-                        speaking = speakingId == note.id,
-                        onSpeak = {
-                            if (showVoicePrivacy) {
-                                playNote(note)
-                            } else {
-                                pendingVoiceNote = note
-                            }
-                        },
-                        onEdit = {
-                            editingNote = note
-                            editText = note.text
-                        },
-                        onDelete = { persist(NoteStore.remove(notes, note.id)) },
-                    )
-                }
-            }
-        }
-
         // ---------------------------------------------------------------- microphone
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(24.dp),
+                .padding(8.dp),
             contentAlignment = Alignment.Center,
         ) {
             if (listening) {
@@ -416,7 +464,7 @@ fun VoiceNotesScreen(
                     color = Accent,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(76.dp)
+                        .size(60.dp)
                         .clickable { recognizer?.stopListening() },
                 ) {
                     Box(contentAlignment = Alignment.Center) {
@@ -433,7 +481,7 @@ fun VoiceNotesScreen(
                     color = SurfaceHigh,
                     shape = CircleShape,
                     modifier = Modifier
-                        .size(76.dp)
+                        .size(60.dp)
                         .clickable {
                             if (recognizer == null) {
                                 status = tr(
@@ -471,6 +519,69 @@ fun VoiceNotesScreen(
                 }
             }
         }
+
+        // ---------------------------------------------------------------- the notes
+        if (notes.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = tr(
+                        "No notes yet",
+                        "இன்னும் ஒரு குறிப்பும் இல்லை",
+                    ),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimary,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = tr(
+                        "Tap the microphone above to dictate. Notes are stored on this phone.",
+                        "மேலே உள்ள மைக்கைத் தட்டிப் பேசுங்கள். குறிப்புகள் இந்தத் தொலைபேசியில் சேமிக்கப்படும்.",
+                    ),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+            }
+        } else {
+            LazyColumn(
+                state = notesListState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 12.dp,
+                    vertical = 8.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                items(notes, key = { it.id }) { note ->
+                    NoteRow(
+                        note = note,
+                        tamil = tamil,
+                        speaking = speakingId == note.id,
+                        onSpeak = {
+                            if (showVoicePrivacy) {
+                                playNote(note)
+                            } else {
+                                pendingVoiceNote = note
+                            }
+                        },
+                        onEdit = {
+                            editingNote = note
+                            editText = note.text
+                        },
+                        onDelete = { if (speakingId == note.id) stopPlayback(); persist(NoteStore.remove(notes, note.id)) },
+                    )
+                }
+            }
+        }
+
 
         Text(
             text = tr(
@@ -567,20 +678,14 @@ private fun NoteRow(
                     .clickable { onSpeak() },
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    if (speaking) {
-                        CircularProgressIndicator(
-                            color = Color(0xFF2A1200),
-                            strokeWidth = 2.dp,
-                            modifier = Modifier.size(20.dp),
-                        )
-                    } else {
-                        Icon(
-                            Icons.Filled.PlayArrow,
-                            contentDescription = if (tamil) "கேளுங்கள்" else "Play",
-                            tint = Accent,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
+                    Icon(
+                        if (speaking) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                        contentDescription = if (speaking) {
+                            if (tamil) "வாசிப்பை நிறுத்து" else "Stop playback"
+                        } else if (tamil) "கேளுங்கள்" else "Play",
+                        tint = if (speaking) Color(0xFF2A1200) else Accent,
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
             }
             Spacer(Modifier.width(12.dp))

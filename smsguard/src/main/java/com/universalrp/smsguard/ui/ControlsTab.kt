@@ -55,6 +55,7 @@ import java.time.LocalDate
 @Composable
 fun ControlsTab(
     vm: MainViewModel,
+    onFinanceLockChange: (Boolean) -> Unit,
     prefs: GuardPrefs,
     palette: GuardPalette,
     ui: GuardUiStrings,
@@ -184,7 +185,7 @@ fun ControlsTab(
                     },
                     checked = prefs.financeLockEnabled,
                     palette = palette,
-                    onCheckedChange = { vm.setFinanceLockEnabled(it) },
+                    onCheckedChange = onFinanceLockChange,
                 )
                 Text("🔐 ${ui.otpSilentBadge}", color = palette.safeGreen, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }

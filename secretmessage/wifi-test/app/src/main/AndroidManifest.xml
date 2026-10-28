@@ -14,8 +14,7 @@
         the network changes; RECEIVE_BOOT_COMPLETED starts it again after a restart; WAKE_LOCK keeps
         the CPU awake for a few seconds while the keep-alive alarm reconnects;
         REQUEST_IGNORE_BATTERY_OPTIMIZATIONS shows Android's battery question only when the person
-        taps "Allow background use" in Settings. REQUEST_INSTALL_PACKAGES lets the verified updater
-        in About hand a checked APK to Android's installer, which still asks the person.
+        taps "Allow background use" in Settings. Updates are handed off to Store/browser; no APK installer permission.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
@@ -28,7 +27,6 @@
     <uses-permission
         android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"
         tools:ignore="BatteryLife" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Never gain these through a library. -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
     <uses-permission
@@ -50,6 +48,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" tools:node="remove" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" tools:node="remove" />
 
+    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
     <application
         android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
@@ -94,14 +93,5 @@
             android:name="com.rpideas.secretmessage.wifitest.KeepAliveReceiver"
             android:exported="false" />
         <!-- Verified update APKs are shared with Android's installer from the app's cache only. -->
-        <provider
-            android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.updates.files"
-            android:exported="false"
-            android:grantUriPermissions="true">
-            <meta-data
-                android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/app_update_paths" />
-        </provider>
     </application>
 </manifest>

@@ -21,6 +21,7 @@ import com.universalrp.tamilnadufm.widget.RadioWidgetProvider
  * audio session, which is why the 10-band EQ applies to both the online stations
  * and the local files the app plays.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class PlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null

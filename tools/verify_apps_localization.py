@@ -703,7 +703,7 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.9"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.10"',
             'tagPrefix = "live-guard"', 'version = "2.73"',
             'tagPrefix = "ramesh-radio"', 'version = "1.28"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
@@ -711,7 +711,7 @@ def verify_about_links() -> None:
             'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.1"',
-            'tagPrefix = "voice-notes"', 'version = "1.2"',
+            'tagPrefix = "voice-notes"', 'version = "1.3.2"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.5"',
             'tagPrefix = "tamil-podcast"', 'version = "1.6"',
             'tagPrefix = "elderly-launcher"', 'version = "1.4"',
@@ -981,6 +981,19 @@ def verify_module_versions_match_sister_apps() -> int:
         ver = re.search(r'versionName = "([^"]+)"', body)
         pkg = re.search(r'namespace = "([^"]+)"', body)
         if not ver or not pkg:
+            continue
+        if gradle.parent.name == "dailyvault":
+            if pkg.group(1) != "com.universalrp.dailyvault" or ver.group(1) != "0.3":
+                raise ValueError("Daily vault preview identity/version changed; review publication gates")
+            if pkg.group(1) in by_package:
+                raise ValueError("Unpublished daily vault must not advertise a public release")
+            continue
+        # Owner-approved isolated preview must not advertise a nonexistent public release.
+        if gradle.parent.name == "tamilanstore":
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.5":
+                raise ValueError("Tamilan preview identity/version changed; review publication gates")
+            if pkg.group(1) in by_package:
+                raise ValueError("Unpublished Tamilan preview must not appear in published SisterApps")
             continue
         checked += 1
         if pkg.group(1) not in by_package:

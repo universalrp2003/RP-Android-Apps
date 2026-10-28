@@ -230,6 +230,8 @@ class RadioWatchService : Service() {
         val tm = telephonyForData() ?: return false
         val type = try {
             tm.dataNetworkType
+        } catch (e: SecurityException) {
+            TelephonyManager.NETWORK_TYPE_UNKNOWN
         } catch (e: Exception) {
             TelephonyManager.NETWORK_TYPE_UNKNOWN
         }
@@ -285,7 +287,7 @@ class RadioWatchService : Service() {
             }
             telephonyCallback = cb
             runCatching { tm.registerTelephonyCallback(mainExecutor, cb) }
-        } else {
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             @Suppress("DEPRECATION")
             val listener = object : PhoneStateListener() {
                 @Deprecated("Deprecated in Java")

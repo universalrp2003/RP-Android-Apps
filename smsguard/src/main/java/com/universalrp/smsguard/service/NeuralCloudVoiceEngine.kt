@@ -1,5 +1,6 @@
 package com.universalrp.smsguard.service
 
+import com.universalrp.voice.NeuralRetryPolicy
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -253,10 +254,24 @@ object NeuralCloudVoiceEngine {
         voiceName: String,
         rate: String = "+0%",
         timeoutMs: Long = 4000L,
+        diagnostic: ((String) -> Unit)? = null,
     ): ByteArray? {
-        val firstAttempt = streamWebSocketOnce(text, voiceName, rate, timeoutMs)
+        // Match the official Edge request form, as the shared HD engine already does.
+        val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(voiceName)
+        val started = System.nanoTime()
+        val peerCode = java.util.concurrent.atomic.AtomicInteger(0)
+        val report: (String) -> Unit = { event ->
+            if (event == "PEER_CLOSING CODE=1011") peerCode.set(1011)
+            diagnostic?.invoke(event)
+        }
+        val firstAttempt = streamWebSocketOnce(text, serverVoice, rate, timeoutMs, diagnostic = report)
         if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
-        return null
+        val elapsed = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started)
+        val remaining = NeuralRetryPolicy.remainingBudget(timeoutMs, elapsed, peerCode.get())
+        if (remaining == 0L) return null
+        diagnostic?.invoke("TRANSIENT_SERVER_RETRY")
+        // One fresh attempt only, same HD endpoint/voice; never retry policy/auth failures.
+        return streamWebSocketOnce(text, serverVoice, rate, remaining, allowClockRetry = false, diagnostic = diagnostic)
     }
 
     private fun streamWebSocketOnce(
@@ -265,7 +280,9 @@ object NeuralCloudVoiceEngine {
         rate: String,
         timeoutMs: Long,
         allowClockRetry: Boolean = true,
+        diagnostic: ((String) -> Unit)? = null,
     ): ByteArray? {
+        val attemptStarted = System.nanoTime()
         val escaped = sanitizeSsmlText(text)
         if (escaped.isEmpty()) return null
 
@@ -300,6 +317,7 @@ object NeuralCloudVoiceEngine {
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    diagnostic?.invoke("OPEN HTTP=${response.code}")
                     val ts = jsUtcDateString()
                     val configMsg =
                         "X-Timestamp:$ts\r\n" +
@@ -348,20 +366,37 @@ object NeuralCloudVoiceEngine {
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    // Categories only: never disclose text, URL/query tokens, headers or exception messages.
+                    val category = when (t) {
+                        is java.net.UnknownHostException -> "DNS_FAILURE"
+                        is javax.net.ssl.SSLException -> "TLS_FAILURE"
+                        is java.net.SocketTimeoutException -> "SOCKET_TIMEOUT"
+                        else -> "WEBSOCKET_FAILURE"
+                    }
+                    diagnostic?.invoke("$category HTTP=${response?.code ?: 0}")
                     if (response?.code == 403) {
                         saw403ServerDate.set(response.header("Date"))
                     }
                     doneLatch.countDown()
                 }
 
+                override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    diagnostic?.invoke("PEER_CLOSING CODE=$code")
+                    runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
+                    doneLatch.countDown()
+                }
+
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    diagnostic?.invoke("CLOSED CODE=$code")
                     doneLatch.countDown()
                 }
             },
         )
 
-        val finished = runCatching { doneLatch.await(timeoutMs, TimeUnit.MILLISECONDS) }.getOrDefault(false)
+        val waitBudget = (timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)).coerceAtLeast(0L)
+        val finished = runCatching { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }.getOrDefault(false)
         if (!finished) {
+            diagnostic?.invoke("DEADLINE_EXCEEDED")
             runCatching { ws.cancel() }
         }
 
@@ -373,11 +408,13 @@ object NeuralCloudVoiceEngine {
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                return streamWebSocketOnce(text, voiceName, rate, timeoutMs, allowClockRetry = false)
+                val remaining = timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
+                if (remaining > 0) return streamWebSocketOnce(text, voiceName, rate, remaining, allowClockRetry = false, diagnostic = diagnostic)
             }
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
+        diagnostic?.invoke("COMPLETE=${completedCleanly.get()} BYTES=${out.size}")
         return if (completedCleanly.get() && out.size >= 256) out else null
     }
 

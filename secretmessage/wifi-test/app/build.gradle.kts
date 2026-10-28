@@ -14,6 +14,15 @@ plugins {
 
 val productDir = rootDir.resolve("../product")
 
+// Share only the audited read-only update handoff sources; never compile voice/other apps.
+val generateStoreHandoff by tasks.registering(Copy::class) {
+    from(rootDir.resolve("../../shared/src/main/java/com/universalrp/updates"))
+    include("AppUpdates.kt", "AppLanguage.kt", "SisterApps.kt", "StoreFirstUpdateNotice.kt",
+        "StoreUpdateRouter.kt", "OfficialReleaseVersion.kt", "UpdateReminderPolicy.kt", "ReleaseRepositorySources.kt")
+    into(layout.buildDirectory.dir("generated/store-handoff/com/universalrp/updates"))
+}
+
+
 android {
     // The product sources generate BuildConfig in this namespace; the application ID keeps this
     // test build separate from the offline preview, so both can be installed side by side.
@@ -34,7 +43,7 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDirs("src/main/java", productDir.resolve("src/main/java"))
+            java.srcDirs("src/main/java", productDir.resolve("src/main/java"), layout.buildDirectory.dir("generated/store-handoff"))
             res.srcDirs("src/main/res", productDir.resolve("src/main/res"))
         }
     }
@@ -101,3 +110,5 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
 }
+
+tasks.named("preBuild").configure { dependsOn(generateStoreHandoff) }

@@ -21,7 +21,7 @@ object AssistantEvidencePolicy {
         // Only supplied public configuration labels; never include URL, key, arbitrary config or inferred provider identity.
         val name = provider.take(100); val id = model.take(150)
         return if (tamil) buildString {
-            append("இது லைவ் கார்டு உதவியாளர். ")
+            append("இது கைபேசி காவலன் உதவியாளர். ")
             if (!online) append("இப்போது உள்ளூர்/ஆஃப்லைன் முறையில் உள்ளது. ")
             append("தேர்ந்தெடுத்த ஆன்லைன் சேவை: $name")
             if (id.isNotBlank()) append("; மாடல்: $id")

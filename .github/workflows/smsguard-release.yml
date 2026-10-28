@@ -156,6 +156,7 @@ jobs:
           print(f"::notice::asset={asset} bytes={size} sha256={sha256} blob_sha={blob_sha}")
           PY
 
+          python3 tools/verify_release_signing_policy.py --legacy-main
           gh release create "$tag" "$apk" \
             --repo universalrp2003/RP-Android-Apps \
             --title "SMS Guard (குறுஞ்செய்தி காவலன்) v${version}" \

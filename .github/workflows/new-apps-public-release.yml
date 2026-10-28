@@ -1,0 +1,75 @@
+name: Publish Tamilan Store and DailyVault
+on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - ".github/workflows/new-apps-public-release.yml"
+permissions:
+  contents: write
+concurrency:
+  group: first-party-new-apps-public-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: contains(github.event.head_commit.message, '[publish-new-apps]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Source tests and localization
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+      - name: Test, lint and build both signed releases
+        run: |
+          gradle :tamilanstore:testReleaseUnitTest :tamilanstore:lintRelease :tamilanstore:assembleRelease :dailyvault:testReleaseUnitTest :dailyvault:lintRelease :dailyvault:assembleRelease --no-daemon --stacktrace
+      - name: Verify both packages and pinned release signer before any publication
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          mkdir -p release-assets
+          for spec in 'tamilanstore 0.5 5 Tamilan-Store' 'dailyvault 0.3 3 DailyVault'; do
+            read -r module version code label <<< "$spec"
+            mapfile -t apks < <(find "$module/build/outputs/apk/release" -maxdepth 1 -name '*.apk' -type f)
+            test "${#apks[@]}" -eq 1
+            apk="release-assets/$label-v$version.apk"
+            cp "${apks[0]}" "$apk"
+            "$tools/aapt" dump badging "$apk" > /tmp/badging
+            grep -Fq "package: name='com.universalrp.$module' versionCode='$code' versionName='$version'" /tmp/badging
+            if grep -q application-debuggable /tmp/badging; then exit 1; fi
+            "$tools/apksigner" verify --print-certs "$apk" > /tmp/signer
+            signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+            test "$signer" = 9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55
+            (cd release-assets && sha256sum "$label-v$version.apk" > "$label-v$version.sha256")
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: new-apps-verified-release-apks
+          retention-days: 30
+          path: release-assets/
+          if-no-files-found: error
+      - name: Publish owner-authorized releases without replacing existing assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for spec in 'tamilan-store 0.5 Tamilan-Store' 'daily-vault 0.3 DailyVault'; do
+            read -r slug version label <<< "$spec"
+            tag="$slug-v$version"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "::error::Release already exists; refusing to replace assets: $tag"
+              exit 1
+            fi
+            python3 tools/verify_release_signing_policy.py --legacy-main
+            gh release create "$tag" "release-assets/$label-v$version.apk" "release-assets/$label-v$version.sha256" --target "$GITHUB_SHA" --title "$label $version" --notes-file "releases/$tag.md" --latest=false
+            gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" --jq '.assets[] | [.name,.size,.digest] | @tsv'
+          done

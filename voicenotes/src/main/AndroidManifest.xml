@@ -7,6 +7,7 @@
 
     <!-- Dictation: the phone's own speech recogniser, in Tamil. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <!--
       Deliberately absent, and this is the app's promise:
@@ -16,6 +17,7 @@
       Notes are written to this app's private storage and never leave the phone.
     -->
 
+    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
