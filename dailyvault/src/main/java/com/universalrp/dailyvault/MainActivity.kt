@@ -77,6 +77,16 @@ class MainActivity: FragmentActivity() {
                             }
                             TextButton(onClick={tamil=!tamil;getPreferences(0).edit().putBoolean("tamil",tamil).apply()}) { Text(if(tamil)"English" else "தமிழ்") }
                         } }
+                        item { TextButton(onClick={showHelp=!showHelp}) { Text(bi("உதவி / வழிகாட்டி / பற்றி", "Help / Guide / About")) } }
+                        if (showHelp) item {
+                            Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                Text(bi("தினக்கணக்கு · வழிகாட்டி", "DailyVault · Guide"),style=MaterialTheme.typography.titleMedium)
+                                Text(bi("பதிவு சேர் மூலம் செலவு அல்லது தனிக் குறிப்பை எழுதுங்கள். செலவுத் தொகைகள் தானாகக் கூட்டப்படும். தேதி, நேரம், வகை மற்றும் விவரங்களைச் சரிபார்த்து சேமிக்கவும். தேடல் மூலம் பழைய பதிவுகளைக் கண்டறியலாம்.", "Use Add record for spending or a private note. Spending amounts are totalled automatically. Check date, time, category and details before saving. Search finds saved records."))
+                                Text(bi("பூட்டு அமைப்புகளில் கடவுச்சொல், சாதனப் பூட்டு அல்லது பூட்டு வேண்டாம் என்பதைத் தேர்ந்தெடுக்கலாம். பூட்டு இல்லாமல் போனைப் பயன்படுத்துபவர் பதிவுகளைப் பார்க்கலாம்.", "Lock settings offers password, device authentication or no app lock. No-lock mode allows anyone using the phone to view records."))
+                                Text(bi("காப்பு கைமுறை. மறையாக்கக் காப்பைக் கோப்பாக வெளியே சேமிக்கவும்; புதிய போனில் அந்தக் கோப்பும் கடவுச்சொல்லும் தேவை. மீட்டெடுப்பு தற்போதைய பதிவுகளை மாற்றும்; முதலில் காப்பெடுக்கவும். கடவுச்சொல் மறந்தால் மீட்பு இல்லை. இணையம், விளம்பரம் இல்லை.", "Backups are manual. Export an encrypted file outside the app; another phone needs that file and its password. Restore replaces current records, so export first. No password recovery. Offline, no ads."))
+                                TextButton(onClick={showHelp=false}) { Text(bi("மூடு", "Close")) }
+                            }
+                        }
                         if(state.busy) item { LinearProgressIndicator(Modifier.fillMaxWidth());Text(bi("செயலாக்கம் நடைபெறுகிறது…","Working…")) }
                         if(state.status.isNotEmpty()) item { Text(when(state.status) {
                             "failed"->bi("முடிக்க முடியவில்லை. கடவுச்சொல், கோப்பு அல்லது சேமிப்பிடத்தைச் சரிபார்க்கவும். பழைய விவரங்கள் மாற்றப்படவில்லை எனக் கருதாமல் மீண்டும் திறந்து சரிபார்க்கவும்.","Could not complete. Check password, file or storage. Reopen to verify saved state.")
@@ -123,7 +133,7 @@ class MainActivity: FragmentActivity() {
                         item {
                             TextButton(onClick={showHelp=!showHelp}) { Text(bi("உதவி / செயலியைப் பற்றி", "Help / About")) }
                             if(showHelp) Column(verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                                Text(bi("தினக்கணக்கு · சோதனை 0.2. இணையம் அல்லது விளம்பரம் இல்லை. காப்பு கைமுறை; புதிய போனில் மீட்க காப்புக் கோப்பும் கடவுச்சொல்லும் தேவை. மறந்தால் மீட்பு இல்லை.","Daily Vault · preview 0.2. Offline, no ads. Backups are manual; a new phone needs the backup file and password. No password recovery."),style=MaterialTheme.typography.bodySmall)
+                                Text(bi("தினக்கணக்கு. இணையம் அல்லது விளம்பரம் இல்லை. காப்பு கைமுறை; புதிய போனில் மீட்க காப்புக் கோப்பும் கடவுச்சொல்லும் தேவை. மறந்தால் மீட்பு இல்லை.","Daily Vault. Offline, no ads. Backups are manual; a new phone needs the backup file and password. No password recovery."),style=MaterialTheme.typography.bodySmall)
                                 Text(bi("பூட்டு வேண்டாம் என்றால் போனைப் பயன்படுத்துபவர் பதிவுகளைத் திறக்கலாம். சாதனப் பூட்டு ஒரு வசதி; காப்பின் கடவுச்சொல்லை மாற்றாது. பாதுகாப்பான இடத்தில் காப்பெடுத்து வேறு போனில் சோதிக்கவும்.","No-lock mode lets anyone using this phone open records. Device authentication is a convenience gate, not a new backup password. Save and test a backup on another phone."),style=MaterialTheme.typography.bodySmall)
                                 TextButton(onClick={try { startActivity(android.content.Intent(android.content.Intent.ACTION_SENDTO,Uri.parse("mailto:universalrp2003@gmail.com"))) } catch(_:Exception){} }) { Text("universalrp2003@gmail.com") }
                             }

@@ -33,6 +33,20 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
+    private var requestedApp by mutableStateOf<String?>(null)
+    private fun readAppLink(intent: Intent?) {
+        val uri = intent?.data ?: return
+        if (uri.scheme == "tamilan" && uri.host == "app" && uri.query == null && uri.fragment == null && uri.pathSegments.size == 1) {
+            val id = uri.lastPathSegment
+            if (id != null && id.matches(Regex("[a-z][a-z0-9]*"))) requestedApp = id
+        }
+    }
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        readAppLink(intent)
+    }
+
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         UpdateNotifications.setEnabled(this,granted);packageRevision++
     }
@@ -55,6 +69,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        readAppLink(intent)
         setContent {
             val model: StoreModel = viewModel()
             val transfer by model.transfer.collectAsStateWithLifecycle()
@@ -68,10 +83,16 @@ class MainActivity : ComponentActivity() {
             var query by rememberSaveable { mutableStateOf("") }
             var showSearch by rememberSaveable { mutableStateOf(false) }
             var selectedFilter by rememberSaveable { mutableIntStateOf(0) }
+            LaunchedEffect(requestedApp) {
+                model.apps.firstOrNull { it.id == requestedApp }?.let { app ->
+                    query = app.name
+                    selectedFilter = 0
+                }
+            }
             var message by remember { mutableStateOf("") }
             var refresh by remember { mutableIntStateOf(0) }
             val scope = rememberCoroutineScope()
-            val installedApps = remember(refresh, packageRevision) { model.apps.associate { it.id to model.installed(it) } }
+            val installedApps = remember(refresh, packageRevision, model.apps) { model.apps.associate { it.id to model.installed(it) } }
             val updateCount = model.apps.count { InstalledStatus.resolve(installedApps[it.id], it.version) == AppStatus.UPDATE_AVAILABLE }
             fun bi(ta: String, en: String) = if (tamil) ta else en
             fun open(url: String) {
@@ -106,13 +127,17 @@ class MainActivity : ComponentActivity() {
                                 TextButton(onClick = { showSearch = true }) { Text(bi("தேடு", "Search") + if (query.isBlank()) "" else " · $query") }
                                 TextButton(onClick = { showSelfUpdate = !showSelfUpdate }) { Text(bi("அங்காடி புதுப்பிப்பு", "Store update")) }
                                 TextButton(onClick = { open(Catalog.WEBSITE + "#request-app") }) { Text(bi("புதிய செயலி கோரிக்கை", "Request an app")) }
-                                TextButton(onClick = { refresh++; message = "" }) { Text(bi("சரிபார்", "Refresh")) }
+                                TextButton(onClick = { refresh++; message = ""; model.refreshCatalog() }) { Text(bi("சரிபார்", "Refresh")) }
                                 TextButton(onClick = { showAbout = !showAbout }) { Text(bi("உதவி / பற்றி", "Help / About")) }
                                 TextButton(onClick = {
                                     try { startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:universalrp2003@gmail.com"))) }
                                     catch (_: Exception) { message = "universalrp2003@gmail.com" }
                                 }) { Text(bi("தொடர்பு", "Contact")) }
                             }
+                        }
+                        if (model.catalogMessage.isNotBlank()) item {
+                            Text(if (model.catalogMessage == "live") bi("நேரலைப் பட்டியல் சரிபார்க்கப்பட்டது", "Live catalog checked")
+                                else bi("நேரலைச் சரிபார்ப்பு முடியவில்லை · சேமித்த பட்டியல்", "Live check unavailable · using saved catalog"), style = MaterialTheme.typography.labelSmall)
                         }
                         if (showSelfUpdate) item {
                             Card(Modifier.fillMaxWidth()) {

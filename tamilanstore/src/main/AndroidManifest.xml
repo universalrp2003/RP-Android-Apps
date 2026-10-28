@@ -17,8 +17,14 @@
         <package android:name="com.universalrp.launcher" />
     </queries>
     <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="@string/app_name" android:icon="@drawable/ic_store" android:theme="@style/Theme.Tamilan">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /></intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="tamilan" android:host="app" />
+            </intent-filter>
         </activity>
         <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/apk_paths" />

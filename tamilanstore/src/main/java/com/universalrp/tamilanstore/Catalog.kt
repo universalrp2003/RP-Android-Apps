@@ -23,12 +23,17 @@ object Catalog {
                 a.getString("packageName"), a.getString("version"), a.getString("url"),
                 a.getLong("size"), a.getString("sha256"), a.getString("releaseUrl")).also {
                 val uri = URI(it.url)
-                require(uri.scheme == "https" && uri.host == "github.com" && uri.rawQuery == null && uri.fragment == null)
+                require(uri.scheme == "https" && uri.host == "github.com" && uri.port == -1 && uri.rawUserInfo == null && uri.rawQuery == null && uri.fragment == null)
                 require(uri.path.startsWith("/universalrp2003/RP-Android-Apps/releases/download/") && uri.path.endsWith(".apk"))
                 require(it.sha256.matches(Regex("[a-f0-9]{64}")))
                 require(it.size in 1..200_000_000L)
                 require(it.packageName.matches(Regex("[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z][a-zA-Z0-9_]*)+")))
-                require(it.releaseUrl.startsWith("https://github.com/universalrp2003/RP-Android-Apps/releases/tag/"))
+                require(it.id.matches(Regex("[a-z][a-z0-9]*")))
+                require(it.version.matches(Regex("[0-9]+(?:\\.[0-9]+){1,3}")))
+                val release = URI(it.releaseUrl)
+                require(release.scheme == "https" && release.host == "github.com" && release.port == -1 && release.rawUserInfo == null && release.rawQuery == null && release.rawFragment == null)
+                require(release.path.matches(Regex("/universalrp2003/RP-Android-Apps/releases/tag/[a-z0-9-]+-v[0-9]+(?:\\.[0-9]+){1,3}")))
+                require(uri.path.substringAfter("/releases/download/").substringBefore('/') == release.path.substringAfterLast('/'))
             }
         }
         require(apps.map { it.id }.distinct().size == 12 && apps.map { it.packageName }.distinct().size == 12)

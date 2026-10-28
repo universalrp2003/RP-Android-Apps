@@ -1,5 +1,8 @@
 package com.universalrp.tamilanstore
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
@@ -17,7 +20,36 @@ data class Transfer(val appId: String = "", val bytes: Long = 0, val busy: Boole
     val verified: Boolean = false, val failed: Boolean = false)
 
 class StoreModel(application: Application) : AndroidViewModel(application) {
-    val apps = Catalog.parse(application.assets.open("catalog.json").bufferedReader().use { it.readText() })
+    private val bundled = Catalog.parse(application.assets.open("catalog.json").bufferedReader().use { it.readText() })
+    private val catalogFile = File(application.filesDir, "catalog-last-good.json")
+    var apps by mutableStateOf(runCatching { LiveCatalog.validate(catalogFile.readText(), bundled) }.getOrDefault(bundled))
+        private set
+    var catalogMessage by mutableStateOf("")
+        private set
+    private var refreshing = false
+    fun refreshCatalog() {
+        if (refreshing || _transfer.value.busy) return
+        refreshing = true
+        viewModelScope.launch {
+            try {
+                val (text, next) = withContext(Dispatchers.IO) {
+                    val text = LiveCatalog.fetch()
+                    text to LiveCatalog.validate(text, apps)
+                }
+                withContext(Dispatchers.IO) {
+                    val pending = File(catalogFile.path + ".tmp")
+                    try {
+                        pending.writeText(text)
+                        check(pending.renameTo(catalogFile))
+                    } finally { pending.delete() }
+                }
+                apps = next
+                catalogMessage = "live"
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { catalogMessage = "offline" }
+            finally { refreshing = false }
+        }
+    }
     private val _transfer = MutableStateFlow(Transfer())
     val transfer = _transfer.asStateFlow()
     private var job: Job? = null

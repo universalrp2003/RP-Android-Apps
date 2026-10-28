@@ -167,6 +167,11 @@ jobs:
           test -s site/apks/Vasanthi-AI-v1.1.4.apk
           test -s site/apks/Vasanthi-AI-v1.1.4.zip
 
+      - name: Build live official Store catalog from public release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/build_store_catalog.py
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
