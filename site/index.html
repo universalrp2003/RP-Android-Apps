@@ -570,6 +570,13 @@
       width: 100%; height: auto; border-radius: 10px;
       border: 1px solid var(--surface-border); display: block; background: rgba(0,0,0,0.3);
     }
+    .request-box { margin: 28px 0; padding: 22px; border: 1px solid var(--surface-border); border-radius: 18px; background: #10212d; }
+    .request-box h2 { margin-top: 0; font-size: 1.25rem; }
+    .request-box label { display: block; margin: 14px 0 6px; font-weight: 600; }
+    .request-box input, .request-box textarea { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #567080; border-radius: 10px; background: #081720; color: #eef5fa; font: inherit; }
+    .request-box textarea { min-height: 130px; resize: vertical; }
+    .request-box .btn { cursor: pointer; font: inherit; white-space: normal; }
+    .request-box a:focus-visible, .request-box button:focus-visible, .request-box input:focus-visible, .request-box textarea:focus-visible { outline: 3px solid #25d5e6; outline-offset: 3px; }
   </style>
 </head>
 <body>
@@ -1564,6 +1571,23 @@
       <div class="note">
         <strong>Security disclosure:</strong> Secret Message is published openly with full architecture notes (<a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/secret-message-security-design.md" style="color:var(--accent)">secret-message-security-design.md</a>), and has not undergone an independent third-party cryptography audit; do not rely on it where physical safety depends on secrecy.
       </div>
+      <section class="request-box" id="request-app" aria-labelledby="request-title">
+        <h2 id="request-title">புதிய செயலி / வசதி கோரிக்கை · Request an app or feature</h2>
+        <p>உங்களுக்கு வேண்டிய செயலி அல்லது மாற்றத்தை எழுதுங்கள். GitHub-இல் கோரிக்கையைப் பதிவு செய்தால், அதே இடத்தில் உரிமையாளர் பதிலளிக்கலாம்.</p>
+        <p>Opens a GitHub Issue draft. Sign in to GitHub, review it, then submit. This website does not save or send the form itself. You can follow replies on your issue; delivery dates are not guaranteed.</p>
+        <p id="request-privacy">கோரிக்கையும் பதில்களும் பொதுவாகத் தெரியும். கடவுச்சொல், ஒருமுறை கடவுச்சொல், தொலைபேசி எண், தனிப்பட்ட செய்தி அல்லது வங்கித் தகவல் சேர்க்க வேண்டாம்.<br>Requests and replies are public. Do not include passwords, OTPs, phone numbers, private messages or banking details.</p>
+        <form id="app-request-form" action="https://github.com/universalrp2003/RP-Android-Apps/issues/new" method="get" aria-describedby="request-privacy">
+          <label for="request-subject">தலைப்பு / App or feature name</label>
+          <input id="request-subject" name="title" required maxlength="100" placeholder="என்ன செயலி அல்லது வசதி வேண்டும்?">
+          <label for="request-description">விவரம் / What should it do?</label>
+          <textarea id="request-description" name="body" required maxlength="2000" placeholder="தேவை, மொழி, சாதன விவரம் (விருப்பம்) / Need, language, device (optional)"></textarea>
+          <div class="hero-links">
+            <button class="btn btn-primary" type="submit">GitHub-இல் தொடரவும் / Continue on GitHub</button>
+            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/issues">கோரிக்கைகள் &amp; பதில்கள் / Requests &amp; replies</a>
+          </div>
+        </form>
+      </section>
+
       <!-- Secondary evidence stays available without crowding downloads. -->
       <details class="trust release-status">
         <summary>வெளியீட்டுச் சோதனை விவரங்கள் / Release test details</summary>
