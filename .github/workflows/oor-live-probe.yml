@@ -45,13 +45,13 @@ jobs:
                       text = (case.get('name', '') + ': ' + failure.get('message', ''))[:500]
                       text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
                       print('::error title=Oor test failure::' + text)
-      - name: Preserve live and deterministic results even on failure
+      - name: Preserve actual live results even on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sms-live-probe-results
+          name: oor-live-probe-results
           path: |
             oorarivippu/build/test-results/
-            smsguard/build/reports/tests/
+            oorarivippu/build/reports/tests/
           if-no-files-found: warn
           retention-days: 14

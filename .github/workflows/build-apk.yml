@@ -506,27 +506,19 @@ jobs:
             echo "(aapt2 not found; using the Gradle intermediates instead)"
           fi
 
-          # Actual delivered universal APK must fit the in-app updater, not just a fake test size.
-          UPDATE_CAP_MB=$(sed -nE 's/.*MAX_APK_BYTES = ([0-9]+)L \* 1024 \* 1024.*/\1/p' cleaner/src/main/java/com/universalrp/cleansweep/updates/UpdatePolicy.kt)
-          test -n "$UPDATE_CAP_MB"
+          # Keep a bounded delivery budget and compatibility with already-installed legacy
+          # clients. This is CI sizing only: no app-local APK downloader/installer remains.
+          DELIVERY_CAP_MB=128
           ACTUAL_BYTES=$(stat -c '%s' "$CLEANER_REL")
-          if [ "$ACTUAL_BYTES" -gt "$((UPDATE_CAP_MB * 1024 * 1024))" ]; then
-            echo "FAIL: release APK exceeds the in-app updater limit"; exit 1
-          fi
-          echo "OK: actual CleanSweep APK $ACTUAL_BYTES bytes fits updater cap ${UPDATE_CAP_MB}MiB"
-          # The immediate successor must also be downloadable by existing2.39 clients.
-          if [ "$ACTUAL_BYTES" -gt "$((50 * 1024 * 1024))" ]; then
-            echo "FAIL:2.40 delivery must fit2.39's50MiB updater cap"; exit 1
-          fi
-          echo "OK: actual2.40 APK also fits the previous2.39 client's50MiB cap"
-          SHARED_UPDATE_CAP_MB=$(sed -nE 's/.*MAX_APK_BYTES = ([0-9]+)L \* 1024 \* 1024.*/\1/p' shared/src/main/java/com/universalrp/updates/AppUpdates.kt)
-          test -n "$SHARED_UPDATE_CAP_MB"
-          for app_asset in "Ramesh Radio|$RADIO_REL" "PulseEQ|$EQ_REL" "RP VOCAL REMOVER STUDIO|$VOCAL_REMOVER_REL"; do
+          test "$ACTUAL_BYTES" -le "$((50 * 1024 * 1024))" || {
+            echo "FAIL: CleanSweep delivery exceeds the previous 2.39 client's 50MiB cap"; exit 1;
+          }
+          for app_asset in "Live Guard|$CLEANER_REL" "Ramesh Radio|$RADIO_REL" "PulseEQ|$EQ_REL" "RP VOCAL REMOVER STUDIO|$VOCAL_REMOVER_REL"; do
             app_label="${app_asset%%|*}"; apk="${app_asset##*|}"; bytes=$(stat -c '%s' "$apk")
-            if [ "$bytes" -gt "$((SHARED_UPDATE_CAP_MB * 1024 * 1024))" ]; then
-              echo "FAIL: $app_label APK is larger than its verified-updater cap"; exit 1
+            if [ "$bytes" -gt "$((DELIVERY_CAP_MB * 1024 * 1024))" ]; then
+              echo "FAIL: $app_label APK exceeds the delivery size budget"; exit 1
             fi
-            echo "OK: $app_label APK is $bytes bytes, within the updater cap ${SHARED_UPDATE_CAP_MB}MiB"
+            echo "OK: $app_label APK is $bytes bytes, within delivery budget ${DELIVERY_CAP_MB}MiB"
           done
 
           # The manifests are read from Gradle's plain-text merged manifests —
@@ -873,9 +865,9 @@ jobs:
             fi
           done
           grep -q 'com.universalrp.vocalremover.processing.SeparationService' "$MERGED_VOCAL" || { echo "FAIL: on-device processing foreground service is not declared"; exit 1; }
-          grep -q 'androidx.core.content.FileProvider' "$MERGED_VOCAL" || { echo "FAIL: verified APK hand-off FileProvider is not declared"; exit 1; }
-          grep -q 'android:exported="false"' "$MERGED_VOCAL" || { echo "FAIL: verified APK provider must not be exported"; exit 1; }
-          grep -q 'app_update_paths' "$MERGED_VOCAL" || { echo "FAIL: private verified-update cache paths are not declared"; exit 1; }
+          if grep -Eq 'app_update_paths|\.updates\.files' "$MERGED_VOCAL"; then
+            echo "FAIL: retired Vocal APK provider returned"; exit 1
+          fi
           for dex in "$WORK/vocal-remover-debug.dex" "$WORK/vocal-remover-release.dex"; do
             for symbol in ProcessingQueue ProcessingPolicy ChunkedSeparationProcessor \
                           WavPlaybackController ModelRepository DeviceMonitor SeparationService \
@@ -887,7 +879,7 @@ jobs:
               fi
             done
           done
-          echo "OK: Vocal Remover ships standalone signed bytes, local-processing runtime, and verified updater"
+          echo "OK: Vocal Remover ships standalone signed bytes, local-processing runtime, and Store/browser handoff"
 
           # Store listing inventory. Warnings only: F-Droid shows a listing without
           # screenshots, it simply looks bare, and a missing icon is a polish problem, not a
@@ -1607,6 +1599,11 @@ jobs:
               echo '```'
             fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          if [ -f verify.log ]; then
+            grep '^FAIL:' verify.log | head -8 | while IFS= read -r line; do
+              echo "::error title=APK verification::$line"
+            done
+          fi
           echo "::error::Build failed - the reason is in this run's summary above."
 
       # Commits whatever failed into ci-build-failure.md, so the reason is

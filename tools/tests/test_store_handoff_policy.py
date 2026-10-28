@@ -23,3 +23,13 @@ class StoreHandoffPolicyTest(unittest.TestCase):
         site = (policy.ROOT/'site/index.html').read_text()
         for app in feed['apps']:
             self.assertIn('id="st-' + aliases.get(app['id'], app['id']) + '"', site)
+
+    def test_secret_native_gate_does_not_require_retired_install_permission(self):
+        build = (policy.ROOT/'secretmessage/wifi-test/build-wifi-test.sh').read_text()
+        self.assertNotIn('    android.permission.REQUEST_INSTALL_PACKAGES', build)
+
+    def test_oor_deterministic_gate_is_not_an_external_service_claim(self):
+        probe = (policy.ROOT/'oorarivippu/src/test/java/com/oorarivippu/voiceannouncer/NeuralCloudVoiceEngineTest.kt').read_text()
+        self.assertIn('System.getenv("RP_RUN_LIVE_SPEECH_TEST") == "true"', probe)
+        self.assertNotIn('if (!reachable) return', probe)
+        self.assertIn('no successful audio claimed', probe)

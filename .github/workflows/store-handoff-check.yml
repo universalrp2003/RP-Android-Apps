@@ -12,6 +12,7 @@ on:
       - "vasanthi/**"
       - "expensetracker/**"
       - "dailyvault/**"
+      - "voicenotes/**"
       - "tools/verify_store_handoff_policy.py"
       - ".github/workflows/store-handoff-check.yml"
 permissions:
@@ -25,7 +26,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [cleaner, radio, vocalremover, oorarivippu, smsguard, vasanthi, expensetracker, dailyvault]
+        module: [cleaner, radio, vocalremover, oorarivippu, smsguard, vasanthi, expensetracker, dailyvault, voicenotes]
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
