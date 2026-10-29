@@ -61,6 +61,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('Voice-Notes-v1.3.3.apk', '71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35'),
             ('CleanSweep-v2.74.apk', 'c7b45a11e6a41ca5850e1edf3fa6e37388009e563975fcb30b03f50d74f794fa'),
             ('Ramesh-Radio-v1.29.apk', '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d'),
+            ('PulseEQ-v1.11.apk', 'bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a'),
         ):
             with self.subTest(asset=release[0]):
                 self.assertIn(release[0], evidence)

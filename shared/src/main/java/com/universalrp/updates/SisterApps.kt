@@ -75,7 +75,7 @@ object SisterApps {
             tamilName = "பல்ஸ்இக்யூ",
             tagPrefix = "pulseeq",
             version = "1.11",
-            publishedVersion = "1.9",
+            publishedVersion = "1.11",
             packageName = "com.universalrp.pulseeq",
             aboutLabel = "PulseEQ — GitHub release",
         ),

@@ -24,6 +24,8 @@ Live Guard 2.74 / code 79 (`CleanSweep-v2.74.apk`) was published by [Build APK r
 
 Ramesh Radio 1.29 / code 29 (`Ramesh-Radio-v1.29.apk`) was published by [Build APK run 40866988270](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40866988270) at `universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.29`. GitHub reports **15,141,600 bytes** and SHA-256 `11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d`, matching the workflow's package, signer and asset verification.
 
+PulseEQ 1.11 / code 12 (`PulseEQ-v1.11.apk`) was published by [Build APK run 40868591421](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40868591421) at `universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.11`. GitHub reports **12,165,793 bytes** and SHA-256 `bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a`, matching the workflow's package, signer and asset verification.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
