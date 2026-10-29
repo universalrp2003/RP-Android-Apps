@@ -12,6 +12,8 @@ Tamil Podcast Player 1.6 / code 8 (`Tamil-Podcast-Player-v1.6.apk`) was publishe
 
 DailyVault 0.4 / code 4 (`DailyVault-v0.4.apk`) was published by [run 40858134703](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40858134703) at `universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4`. GitHub reports **12,532,289 bytes** and SHA-256 `39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1`, matching the selected-app workflow's APK verification. The release also includes a `.sha256` sidecar asset.
 
+Tamilan Store 0.6 / code 6 (`Tamilan-Store-v0.6.apk`) was published by [run 40859576371](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40859576371) at `universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.6`. GitHub reports **16,929,204 bytes** and SHA-256 `7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f`, matching the selected-app workflow's APK verification. The release also includes a `.sha256` sidecar asset; Tamilan Store updater logic remains unchanged.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
