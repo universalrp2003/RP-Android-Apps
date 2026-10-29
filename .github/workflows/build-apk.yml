@@ -688,7 +688,7 @@ jobs:
                         inSilentPlace silentPlaceSlots NO_INTERNET SILENT_PLACE \
                         SilentPlaceSlot toggleSilentPlaceDay VoiceNotifier \
                         isoDayOfWeek ALL_DAYS SILENT_PLACE_DAY_LABELS \
-                        CorePrivacyMigration StoreFirstUpdateNotice StoreUpdateRouter UpdatePolicy \
+                        CorePrivacyMigration DailyWebsiteUpdateNotice UpdateReminderPolicy StoreUpdateRouter \
                         LastUnplugRepo CompactWidgetPolicy CleanSweepDataWidget CleanSweepPhoneWidget \
                         LocalReadGate cancelAiReport cancelDeviceIdentification \
                         ChargingHonestyPolicy ThermalWarningPolicy AiOutputBudgetPolicy; do

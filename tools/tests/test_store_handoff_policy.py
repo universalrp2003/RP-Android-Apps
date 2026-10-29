@@ -40,6 +40,12 @@ class WebsiteUpdatePolicyTest(unittest.TestCase):
         self.assertIn('https://universalrp2003.github.io/RP-Android-Apps/', sister_apps)
         self.assertIn('SisterApps.OFFICIAL_WEBSITE_URL', router)
 
+    def test_cleaner_apk_verifier_tracks_the_current_update_notice(self):
+        workflow = (policy.ROOT / '.github/workflows/build-apk.yml').read_text()
+        self.assertIn('DailyWebsiteUpdateNotice', workflow)
+        self.assertIn('UpdateReminderPolicy', workflow)
+        self.assertNotIn('StoreFirstUpdateNotice', workflow)
+
     def test_no_app_installer_permissions_or_update_providers(self):
         for module in policy.MODULES:
             policy.verify_manifest((policy.ROOT / module / 'src/main/AndroidManifest.xml').read_text())
