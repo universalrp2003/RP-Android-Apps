@@ -29,6 +29,18 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertIn('Requests and replies are public', self.source)
         self.assertIn('does not save or send the form itself', self.source)
 
+    def test_social_metadata_covers_all_apps_and_favicon_exists(self):
+        tags = {a.get('name', a.get('property')): a for tag, a in self.parser.elements if tag == 'meta'}
+        description = tags['twitter:description']['content']
+        keywords = tags['keywords']['content']
+        for app_name in ('DailyVault', 'Tamilan Store'):
+            self.assertIn(app_name, description)
+            self.assertIn(app_name, keywords)
+        for tamil_name in ('கைபேசி காவலன்', 'தமிழன் வானொலி', 'இசை மட்டும் வேண்டும்'):
+            self.assertIn(tamil_name, description)
+        favicon = next(a for tag, a in self.parser.elements if tag == 'link' and a.get('rel') == 'icon')
+        self.assertTrue((ROOT / 'site' / favicon['href']).is_file())
+
     def test_evidence_is_collapsed_after_app_cards(self):
         details = next(a for tag, a in self.parser.elements if tag == 'details' and a.get('class') == 'trust release-status')
         self.assertNotIn('open', details)
