@@ -18,6 +18,8 @@ Expense Tracker 1.2 / code 3 (`Expense-Tracker-v1.2.apk`) was published by [run 
 
 Elderly Launcher 1.5 / code 6 (`Elderly-Launcher-v1.5.apk`) was published by [run 40862085273](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40862085273) at `universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5`. GitHub reports **11,498,427 bytes** and SHA-256 `c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39`, matching the standalone workflow's APK verification.
 
+Voice Notes 1.3.3 / code 7 (`Voice-Notes-v1.3.3.apk`) was published by [run 40863878094](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40863878094) at `universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3`. GitHub reports **13,135,195 bytes** and SHA-256 `71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35`, matching the standalone workflow's APK verification.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
