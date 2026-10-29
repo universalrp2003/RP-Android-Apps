@@ -16,6 +16,22 @@ class TamilanStorePreviewTest(unittest.TestCase):
             self.assertTrue(app['url'].startswith('https://github.com/universalrp2003/RP-Android-Apps/releases/download/'))
             self.assertGreater(app['size'], 0)
 
+    def test_every_catalog_tag_matches_its_declared_version(self):
+        from urllib.parse import urlparse
+        for path in (STORE / 'src/main/assets/catalog.json', ROOT / 'site/catalog.json', ROOT / 'site/catalog-v2.json'):
+            apps = json.loads(path.read_text())['apps']
+            for app in apps:
+                download_tag = urlparse(app['url']).path.split('/')[5]
+                release_tag = urlparse(app['releaseUrl']).path.rsplit('/', 1)[-1]
+                self.assertEqual(release_tag, download_tag, app['id'])
+                self.assertTrue(release_tag.endswith('-v' + app['version']), app['id'])
+
+    def test_preview_build_does_not_use_legacy_release_signing_config(self):
+        build = (STORE / 'build.gradle.kts').read_text()
+        self.assertNotRegex(build, r'debug\s*\{[^}]*signingConfig\s*=')
+        self.assertIn('release {', build)
+        self.assertIn('if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")', build)
+
     def test_permissions_and_provider_are_scoped(self):
         root = ET.parse(STORE / 'src/main/AndroidManifest.xml').getroot()
         ns = '{http://schemas.android.com/apk/res/android}'
