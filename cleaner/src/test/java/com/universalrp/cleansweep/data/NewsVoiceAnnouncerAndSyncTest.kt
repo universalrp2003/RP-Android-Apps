@@ -62,8 +62,8 @@ class NewsVoiceAnnouncerAndSyncTest {
     }
 
     @Test
-    fun unannouncedBatchCapsAtFiveNeverRepeatsAndStaysSilentWhenCaughtUp() {
-        val items = (1..8).map { i ->
+    fun unannouncedBatchCapsAtEightNeverRepeatsAndStaysSilentWhenCaughtUp() {
+        val items = (1..12).map { i ->
             NewsHeadline(
                 category = "India",
                 title = "Major infrastructure project number $i inaugurated in Tamil Nadu today",
@@ -72,15 +72,15 @@ class NewsVoiceAnnouncerAndSyncTest {
                 link = "https://example.com/news/$i",
             )
         }
-        val firstBatch = NewsSpeechSanitizer.selectUnannouncedBatch(items, emptySet(), expectTamil = false, maxCount = 5)
-        assertEquals(5, firstBatch.size)
+        val firstBatch = NewsSpeechSanitizer.selectUnannouncedBatch(items, emptySet(), expectTamil = false)
+        assertEquals(8, firstBatch.size)
 
         val spokenKeys = firstBatch.map { it.key }.toSet()
-        val secondBatch = NewsSpeechSanitizer.selectUnannouncedBatch(items, spokenKeys, expectTamil = false, maxCount = 5)
-        assertEquals("Only the remaining 3 unannounced headlines should be selected", 3, secondBatch.size)
+        val secondBatch = NewsSpeechSanitizer.selectUnannouncedBatch(items, spokenKeys, expectTamil = false)
+        assertEquals("Only the remaining 4 unannounced headlines should be selected", 4, secondBatch.size)
 
         val allSpoken = spokenKeys + secondBatch.map { it.key }
-        val thirdBatch = NewsSpeechSanitizer.selectUnannouncedBatch(items, allSpoken, expectTamil = false, maxCount = 5)
+        val thirdBatch = NewsSpeechSanitizer.selectUnannouncedBatch(items, allSpoken, expectTamil = false)
         assertTrue("Once all today's headlines were announced, batch MUST be empty (100% silent)", thirdBatch.isEmpty())
     }
 
@@ -98,7 +98,8 @@ class NewsVoiceAnnouncerAndSyncTest {
         assertEquals(60, NewsSpeechSanitizer.normalizeIntervalMinutes(60))
         assertEquals(120, NewsSpeechSanitizer.normalizeIntervalMinutes(120))
         assertEquals(180, NewsSpeechSanitizer.normalizeIntervalMinutes(180))
-        assertEquals(180, NewsSpeechSanitizer.DEFAULT_INTERVAL_MINUTES)
-        assertEquals(180, NewsSpeechSanitizer.normalizeIntervalMinutes(999))
+        assertEquals(120, NewsSpeechSanitizer.DEFAULT_INTERVAL_MINUTES)
+        assertEquals(120, NewsSpeechSanitizer.normalizeIntervalMinutes(999))
+        assertEquals(8, NewsSpeechSanitizer.DEFAULT_MAX_SPOKEN_HEADLINES)
     }
 }

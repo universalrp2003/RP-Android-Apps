@@ -255,7 +255,7 @@ object Assistant {
             q.matchesAny("protect", "exclude", "skip folder", "settings", "option", "hidden folder") ->
                 AssistantMessage(
                     false,
-                    "In Settings you can:\n\n• Add protected folders (type e.g. “WhatsApp” or “DCIM/Camera”) — they are never scanned or suggested\n• Scan hidden folders (off by default, slightly slower, finds more junk)\n• Tune duplicate minimum size, large-file threshold, old-download age and sound effects\n\nProtected folders are the safest way to say “never touch this”.",
+                    "In Settings you can:\n\n• Add protected folders (type e.g. “WhatsApp” or “DCIM/Camera”) — they are never scanned or suggested\n• Scan hidden folders (on by default, slightly slower, finds more junk)\n• Tune duplicate minimum size, large-file threshold, old-download age and sound effects\n\nProtected folders are the safest way to say “never touch this”.",
                     actionLabel = "Open settings",
                     action = AssistantAction.OPEN_SETTINGS,
                 )

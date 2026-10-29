@@ -18,7 +18,7 @@ on:
       publish:
         description: "Publish the verified APK after the build (switch off to build a candidate only)"
         required: false
-        default: true
+        default: false
         type: boolean
 
 permissions:
@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   build-verify-publish:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-voicenotes]') || contains(github.event.head_commit.message, '[candidate-voicenotes]') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     name: Test, sign, verify, and optionally publish Voice Notes
     runs-on: ubuntu-latest
     env:

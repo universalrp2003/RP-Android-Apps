@@ -14,7 +14,7 @@ on:
       publish:
         description: "Publish the verified SMS Guard APK after owner phone sign-off"
         required: false
-        default: true
+        default: false
         type: boolean
 
 permissions:
@@ -26,7 +26,7 @@ concurrency:
 
 jobs:
   build-verify-publish:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-smsguard]') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     name: Test, sign, verify, and publish SMS Guard
     runs-on: ubuntu-latest
     env:
@@ -82,8 +82,9 @@ jobs:
             exit 1
           fi
 
-      - name: Verify signed APK, publish GitHub Release & confirm live asset SHA-256
+      - name: Verify signed APK and publish only when explicitly requested
         env:
+          PUBLISH_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-smsguard]')) }}
           GH_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN || github.token }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
@@ -127,6 +128,11 @@ jobs:
           fi
 
           sha256="$(sha256sum "$apk" | cut -d ' ' -f 1)"
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          if [[ "$PUBLISH_REQUESTED" != "true" ]]; then
+            echo "CANDIDATE VERIFIED ONLY: $asset ($size bytes, sha256:$sha256); no release requested."
+            exit 0
+          fi
 
           python3 - "$apk" "$RUNNER_TEMP/notes.md" "$version" "$expected_code" "$expected_package" "$asset" "$size" "$sha256" <<'PY'
           import base64, json, os, sys, urllib.request
@@ -164,7 +170,6 @@ jobs:
           print(f"::notice::asset={asset} bytes={size} sha256={sha256} blob_sha={blob_sha}")
           PY
 
-          python3 tools/verify_release_signing_policy.py --fresh-install
           gh release create "$tag" "$apk" \
             --repo universalrp2003/RP-Android-Apps \
             --title "SMS Guard (குறுஞ்செய்தி காவலன்) v${version}" \

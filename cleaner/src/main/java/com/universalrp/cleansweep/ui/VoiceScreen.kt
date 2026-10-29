@@ -169,7 +169,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                             )
                             Text(
-                                tr("Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
+                                tr("Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )

@@ -1,16 +1,18 @@
-# Owner follow-up checklist — 28 October 2026
+# Owner follow-up checklist — 28 October 2026 (historical checklist)
 
+> **Latest status (29 October 2026, supersedes the dated signing holds below):** PR #57 merged the owner-selected fresh-install signing migration. The private key is outside Git, and Actions verifies the pinned replacement certificate. All 13 authorized replacement-key releases are published and digest-verified: SMS Guard 1.1.11 (40843672129), Vasanthi AI 1.1.5 (40846720080), Oor Arivippu 1.1.10 (40854800838), Tamil Podcast Player 1.6 (40856359350), DailyVault 0.4 (40858134703), Tamilan Store 0.6 (40859576371), Expense Tracker 1.2 (40861057750), Elderly Launcher 1.5 (40862085273), Voice Notes 1.3.3 (40863878094), Live Guard 2.74 (40865365438), Ramesh Radio 1.29 (40866988270), PulseEQ 1.11 (40868591421), and RP Vocal Remover Studio 0.1.16 (40870213211). Elderly Launcher 1.5 is the only release with validated phone-tested candidate provenance; do not describe the other exact APKs as phone-tested. Website links and verified asset-mirror inventory are updated in this branch; deployment awaits `main`. Existing installs of migrated apps must be uninstalled before installing replacements, and local data may be erased. Keep the bilingual warning visible alongside links. Do not claim Play Protect clearance. Current operating instructions: [`fresh-install-signing-migration.md`](fresh-install-signing-migration.md).
+>
 > **Current update-flow direction (29 October 2026):** All non-Store apps now use once-daily foreground metadata checks and in-app notices, then hand off to the official website/browser. They do not self-download or install update APKs. PulseEQ, DailyVault and Expense Tracker have update-only Internet access; Tamilan Store remains separate. This supersedes earlier checklist items below that describe optional/disabled checks or unchanged self-updaters.
 
 
-## Active owner-authorized follow-up — 28 October 2026
+## Historical owner-authorized follow-up — 28 October 2026 (superseded by the 29 October migration decision)
 
 - PR53 source/site integration IS complete (main54d5955a; production Pages40682415356 SUCCESS); the older checkpoint below predates that integration.
 - Owner now authorizes distinct same-language HD alternatives instead of repeating failed Valluvar. Both actual transports recovered to Pallavi23328bytes in live run40686360024; ten deterministic failover tests passed. New suite About/project links and Store0.6/Daily0.4/SMS1.1.11/Voice1.3.3 source are tracked on arena/5b3f10e0-rp-android-apps, PR54, NOT new public APKs or accepted phone builds.
 - Website14-product directory and backwards-compatible Store catalogs are prepared, not yet a production deployment of this follow-up. See [implementation, direct evidence and remaining gates](hd-voice-recovery-and-about-2026-10-28.md).
 - The confirmed exposed-signing-identity hold remains. GitHub secrets metadata403 prevents confirming private production custody through this integration; do not infer absence or request keys/passwords in chat. No silent rotation/uninstall/data reset. Per-package older-Android continuity, security-warning classification and actual product galleries remain open; this is not an all-work-finished claim.
 
-## Current status (supersedes all dated historical instructions below)
+## Historical status snapshot — 28 October 2026 (superseded by the latest status at the top)
 
 - **Signing hold:** main CI private signing material/unlock reference is public, independently confirmed without exporting the key. Main-identity publication/mirroring now explicitly stops; removing a tracked file cannot clear the known-fingerprint hold. No key rotation, app/data deletion or old asset replacement. Data-preserving Android-version-specific signing review required: [finding and plan](signing-key-exposure-2026-10-28.md).
 - **Voice1.3.2/code6 owner acceptance remains complete** for Stop/switch/new-note visibility on the owner's device: run40668667451/artifact12808020972/source41f29c3. No independent installed-hash/universal/security certification. Exact old-artifact publication was denied GitHub403 and is now additionally held for signing review. Do not relabel later same-version rebuilds as that accepted candidate.

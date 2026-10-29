@@ -1,4 +1,4 @@
-# GitHub Actions workflow: builds the four legacy-batch apps and compiles the isolated Secret Message preview (debug/test only). Oor Arivippu has a separate release workflow.
+# GitHub Actions workflow: builds four maintained apps as candidates and publishes at most one selected app; also compiles the isolated Secret Message preview (debug/test only). Oor Arivippu has a separate release workflow.
 # - Live Guard / CleanSweep (:cleaner)
 # - Ramesh Radio (:radio)
 # - PulseEQ (:equalizer)
@@ -8,8 +8,8 @@ name: Build APK
 on:
   push:
     branches: [ main, "arena/**" ]
-    # A dated workspace tag requests a verified batch publication; the resulting APKs
-    # receive separate, version-specific release tags for each of the four requested apps.
+    # Ordinary pushes build candidate APKs. Stable publication requires one selected app
+    # through dispatch or one unique app-specific commit marker.
     tags: [ "v*" ]
     # Oor Arivippu has a separate test/release flow, and the non-shipping Secret Message preview and
     # MLS feasibility lanes have their own test-only workflows; skip their files and workflow-only edits.
@@ -23,10 +23,8 @@ on:
       - "**/README.md"
       # Documentation-only files. Editing these cannot change any APK's bytes, so a
       # docs-only commit has nothing to build and nothing to publish.
-      # INVARIANT: never add a version-bearing path here. Publishing always bumps a
-      # `versionCode` in <module>/build.gradle.kts (cleaner / radio / equalizer /
-      # vocalremover), which is never one of these paths, so a real publish — branch
-      # `[publish]` marker, `workflow_dispatch`, or a `v*` tag — always still fires.
+      # INVARIANT: never add a version-bearing path here. Candidate builds always follow
+      # a version bump in one of the four maintained module build.gradle.kts files.
       - "CHANGELOG.md"
       - "PUBLISHING.md"
       - "docs/published-release-digests.md"
@@ -60,20 +58,22 @@ on:
       - ".github/workflows/secret-message-signing-key.yml"
   workflow_dispatch:
     inputs:
-      # v2.49: a manual run PUBLISHES unless you deliberately switch publish off. Typing a value
-      # on a phone was the last repeated failure: three successful runs in a row built everything
-      # and published nothing because one box was left blank.
+      app:
+        description: 'Select exactly one app for this candidate or release run'
+        required: true
+        type: choice
+        options:
+          - cleaner
+          - radio
+          - equalizer
+          - vocalremover
       publish:
-        description: 'Publish the verified APKs after the build (switch off for a build-only run)'
+        description: 'Publish only the selected app after all gates pass (off for candidate-only verification)'
         required: false
-        default: true
+        default: false
         type: boolean
-      release_tag:
-        description: 'Optional batch label; leave blank to use today''s date'
-        required: false
-        type: string
       mirror_existing:
-        description: 'Mirror the current public InternetRadio APK releases to RP-Android-Apps without changing the old releases (requires the destination write secret)'
+        description: 'Mirror only the selected app’s existing public InternetRadio APK to RP-Android-Apps without changing old releases'
         required: false
         default: false
         type: boolean
@@ -956,7 +956,7 @@ jobs:
       # candidate branches; a published release carries GitHub's own asset digests.
       - name: Record candidate APK digests
         env:
-          RELEASE_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish]')) }}
+          RELEASE_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[publish-liveguard]') || contains(github.event.head_commit.message, '[publish-radio]') || contains(github.event.head_commit.message, '[publish-pulseeq]') || contains(github.event.head_commit.message, '[publish-vocalremover]'))) }}
         run: |
           set -e
           RECORD=docs/candidate-build-digests.md
@@ -1008,43 +1008,31 @@ jobs:
             echo "Publication run or non-candidate ref; digest record stays local to this run."
           fi
 
-      # A commit message that merely *talks about* the publish marker must not publish anything.
-      # This is not hypothetical: a commit that added a release workflow described the marker in
-      # its own body, contains() matched the prose, and that app was published by accident. The
-      # marker is therefore only honoured on the subject line, and anything else fails closed.
-      - name: Refuse to publish unless the marker is on the subject line
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/') && contains(github.event.head_commit.message, '[publish]')
-        shell: bash
-        run: |
-          set -euo pipefail
-          subject="$(git log -1 --format=%s)"
-          if printf '%s' "$subject" | grep -qF '[publish]'; then
-            echo "OK: the publish marker is on the subject line, so this run publishes."
-          else
-            echo "::error::The publish marker appears only in the commit body, not the subject line."
-            echo "::error::Reword the commit so the marker is at the end of the subject, or drop it."
-            echo "::error::Nothing was published."
-            exit 1
-          fi
-
-      # Publishing: after all checks pass, publish one stable, version-specific APK release
-      # for each app, or mirror the exact existing bridge APKs without altering old releases.
-      - name: Publish or mirror verified releases for four apps
-        if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/arena/') && contains(github.event.head_commit.message, '[publish]'))
+      # Publishing is one-app only: either an explicit manual dispatch or one app-specific marker push.
+      - name: Publish or mirror the one selected app
+        if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[publish-liveguard]') || contains(github.event.head_commit.message, '[publish-radio]') || contains(github.event.head_commit.message, '[publish-pulseeq]') || contains(github.event.head_commit.message, '[publish-vocalremover]'))) }}
         env:
           GH_TOKEN: ${{ github.token }}
           RP_ANDROID_APPS_RELEASE_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
-          REQUESTED_TAG: ${{ inputs.release_tag }}
+          APP_TO_PUBLISH: ${{ inputs.app }}
           MIRROR_EXISTING: ${{ inputs.mirror_existing }}
         run: |
           set -euo pipefail
           python3 tools/verify_release_signing_policy.py --fresh-install
           exec > >(tee -a "$RUNNER_TEMP/release-publication.log") 2>&1
-          if [[ -n "${REQUESTED_TAG:-}" ]]; then BATCH_TAG="$REQUESTED_TAG"
-          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then BATCH_TAG="$GITHUB_REF_NAME"
-          else BATCH_TAG="v$(date -u +%Y.%m.%d)"; fi
-          [[ "$BATCH_TAG" =~ ^v[0-9]{4}\.[0-9]{2}\.[0-9]{2}(-[0-9]+)?$ ]] || { echo "Invalid release batch tag"; exit 1; }
-
+          if [[ -z "${APP_TO_PUBLISH:-}" && "$GITHUB_EVENT_NAME" == "push" ]]; then
+            subject="$(git log -1 --format=%s)"
+            selected=()
+            [[ "$subject" == *"[publish-liveguard]"* ]] && selected+=(cleaner)
+            [[ "$subject" == *"[publish-radio]"* ]] && selected+=(radio)
+            [[ "$subject" == *"[publish-pulseeq]"* ]] && selected+=(equalizer)
+            [[ "$subject" == *"[publish-vocalremover]"* ]] && selected+=(vocalremover)
+            if [[ "${#selected[@]}" -ne 1 ]]; then
+              echo "::error::The commit subject must contain exactly one app-specific publish marker; refusing publication."
+              exit 1
+            fi
+            APP_TO_PUBLISH="${selected[0]}"
+          fi
           # Preserve the old endpoint for installed clients and publish the same verified APK
           # bytes to the new-first destination. Destination access and its scoped write secret are
           # checked before any draft is created; fail closed rather than publish old-source only.
@@ -1178,16 +1166,13 @@ jobs:
           CLEANER_CODE=$(sed -nE 's/^[[:space:]]*versionCode = ([0-9]+).*/\1/p' cleaner/build.gradle.kts)
           # This is a separate step from "Verify built APKs", so its tools are not inherited.
           AAPT2=$(ls "${ANDROID_HOME:-/usr/local/lib/android/sdk}"/build-tools/*/aapt2 2>/dev/null | tail -1 || true)
-          # 2.51 follow-up: this gate exists to stop a NEW Live Guard release that adds a
-          # dangerous permission. It must not run when Live Guard is already public and only
-          # another app is being published - that failure stranded Ramesh Radio 1.14, because
-          # releases/latest-tag.txt already pointed at live-guard-v2.51, so the gate compared
-          # the release against itself, could not read a previous manifest and failed closed.
+          # The permission/device-evidence gate belongs only to a selected Live Guard release.
+          # Never let its previous-release metadata block an unrelated app's publication.
           LIVE_GUARD_ALREADY_PUBLIC=$(gh release view "$LIVE_GUARD_TAG" --json isDraft --jq '.isDraft' 2>/dev/null || true)
           if [[ "$LIVE_GUARD_ALREADY_PUBLIC" == "false" ]]; then
             echo "SKIP: $LIVE_GUARD_TAG is already public; the permission/device-evidence gate applies only when Live Guard itself is being published."
           fi
-          if [ "${CLEANER_CODE:-0}" -gt 44 ] && [[ "${MIRROR_EXISTING:-false}" != "true" ]] && [[ "$LIVE_GUARD_ALREADY_PUBLIC" != "false" ]]; then
+          if [[ "$APP_TO_PUBLISH" == "cleaner" ]] && [ "${CLEANER_CODE:-0}" -gt 44 ] && [[ "${MIRROR_EXISTING:-false}" != "true" ]] && [[ "$LIVE_GUARD_ALREADY_PUBLIC" != "false" ]]; then
             EVIDENCE="docs/live-guard-${CLEANER_VERSION}-device-evidence.md"
             # --- 2.42: does THIS release need a recorded device install? --------------
             if [ -z "$AAPT2" ]; then
@@ -1319,6 +1304,13 @@ jobs:
           ALL_APKS=("$CLEANER_REL" "$RADIO_REL" "$EQ_REL" "$VOCAL_REL")
           ALL_NOTES=("$LIVE_NOTES" "$RADIO_NOTES" "$EQ_NOTES" "$VOCAL_NOTES")
           ALL_TITLES=("Live Guard $CLEANER_VERSION" "Ramesh Radio $RADIO_VERSION" "PulseEQ $EQ_VERSION" "RP VOCAL REMOVER STUDIO $VOCAL_VERSION")
+          case "${APP_TO_PUBLISH:-}" in
+            cleaner) SELECTED_TAG="$LIVE_GUARD_TAG" ;;
+            radio) SELECTED_TAG="$RADIO_TAG" ;;
+            equalizer) SELECTED_TAG="$EQ_TAG" ;;
+            vocalremover) SELECTED_TAG="$VOCAL_TAG" ;;
+            *) echo "::error::Select exactly one supported app; nothing was published."; exit 1 ;;
+          esac
           RELEASE_TAGS=()
           RELEASE_APKS=()
           RELEASE_NOTES=()
@@ -1326,12 +1318,9 @@ jobs:
           LIVE_GUARD_BEING_PUBLISHED=false
           for i in "${!ALL_TAGS[@]}"; do
             tag="${ALL_TAGS[$i]}"
-            # Owner-scoped radio publication must not ship pending PulseEQ changes.
-            if git log -1 --format=%s | grep -qF '[publish-radio]'; then
-              if [[ "$tag" != "$RADIO_TAG" ]]; then
-                echo "SKIP: $tag is outside the radio-only publication request."
-                continue
-              fi
+            if [[ "$tag" != "$SELECTED_TAG" ]]; then
+              echo "SKIP: $tag is not the one selected app ($APP_TO_PUBLISH)."
+              continue
             fi
             if [[ "${MIRROR_EXISTING:-false}" == "true" ]]; then
               RELEASE_TAGS+=("$tag"); RELEASE_APKS+=("${ALL_APKS[$i]}"); RELEASE_NOTES+=("${ALL_NOTES[$i]}"); RELEASE_TITLES+=("${ALL_TITLES[$i]}")
@@ -1354,7 +1343,7 @@ jobs:
             echo "Nothing to publish: every bundled version is already public. Bump a version only for the app that changed."
             exit 0
           fi
-          echo "Publishing ${#RELEASE_TAGS[@]} app(s): ${RELEASE_TAGS[*]}"
+          echo "Publishing exactly one selected app: ${RELEASE_TAGS[*]}"
           for i in "${!RELEASE_TAGS[@]}"; do
             test -f "${RELEASE_NOTES[$i]}" || { echo "Missing release notes: ${RELEASE_NOTES[$i]}"; exit 1; }
           done
@@ -1393,8 +1382,8 @@ jobs:
             fi
           done
 
-          # (The four parallel arrays were filtered above; nothing is rebuilt here, so an
-          # unchanged app can never be dragged into someone else's update.)
+          # The arrays are filtered to exactly one selected app; unrelated apps cannot be
+          # dragged into this publication, even when their versions are also unpublished.
           if [[ "${MIRROR_EXISTING:-false}" != "true" ]]; then
             for i in "${!RELEASE_TAGS[@]}"; do
               release_tag="${RELEASE_TAGS[$i]}"

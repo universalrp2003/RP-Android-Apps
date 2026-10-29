@@ -11,9 +11,9 @@ import java.util.Locale
  */
 object NewsSpeechSanitizer {
 
-    const val DEFAULT_MAX_SPOKEN_HEADLINES = 5
+    const val DEFAULT_MAX_SPOKEN_HEADLINES = 8
     val VALID_INTERVAL_MINUTES = listOf(30, 60, 120, 180)
-    const val DEFAULT_INTERVAL_MINUTES = 180
+    const val DEFAULT_INTERVAL_MINUTES = 120
 
     private val LEADING_NOISE_REGEX = Regex(
         "^(?:\\s*(?:\\[[^\\]]{1,24}]|\\([^)]{1,20}\\))\\s*|" +

@@ -260,16 +260,15 @@ wait_for text "1. Start a chat with a new phone" equals 15
 wait_for text "தமிழ்"
 "$ADB" shell input keyevent 4
 sleep 1
-# About retains official links and offers metadata-only updates; no in-app installer.
+# About explains the read-only release-metadata check and offers the official website in a browser;
+# the app never downloads or installs APKs. Keep the smoke test aligned with the current UI.
 scroll_until text "Source code — InternetRadio"
-scroll_until text "Check updates"
-tap text "Check updates"
-# Both a successful metadata check and an offline check must leave browser choice available.
-wait_for text "Update check" equals 45
-wait_for text "Downloads in browser"
-wait_for text "Daily check on app open: Off"
-"$ADB" shell input keyevent 4
-sleep 1
+scroll_until text "A read-only check fetches public release metadata" contains
+wait_for text "The official website opens in your browser." contains
+wait_for text "This app never downloads or installs APKs." contains
+scroll_until text "Open official website"
+scroll_until text "Do not bypass an Android security warning." contains
+# About remains part of the settings screen; a single Back press returns to the chat screen.
 "$ADB" shell input keyevent 4
 sleep 1
 wait_for text "Start a chat"
@@ -279,4 +278,4 @@ app_alive || fail "The app exited during the smoke test"
 if "$ADB" logcat -d -b crash 2>/dev/null | grep -q "$PACKAGE"; then
   fail "The crash buffer contains an entry for $PACKAGE"
 fi
-echo "PASS: $PACKAGE launched on API 35, showed its start screen in Tamil and switched to English, showed the not-reviewed note, hosted a chat through the deployed Internet relay (connected over TLS) and on the same Wi-Fi, stopped waiting on request each time, created its Keystore-wrapped identity, loaded the MLS engine (secretmessage-wifi-chat/1), opened settings with ready mode, this phone, the guide and About with metadata-only updates, browser choice and daily checks off by default, and did not crash."
+echo "PASS: $PACKAGE launched on API 35, showed its start screen in Tamil and switched to English, showed the not-reviewed note, hosted a chat through the deployed Internet relay (connected over TLS) and on the same Wi-Fi, stopped waiting on request each time, created its Keystore-wrapped identity, loaded the MLS engine (secretmessage-wifi-chat/1), opened settings with ready mode, this phone, the guide and About with a read-only release-metadata explanation and an official website browser link that does not download or install APKs, and did not crash."

@@ -21,13 +21,9 @@ class MonitorDefaultsPolicyTest {
         assertTrue(MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM)
     }
 
-    /**
-     * The floating pill needs "Display over other apps", and that access is never granted
-     * automatically, so defaulting it ON would promise a reading the phone has not allowed.
-     */
-    @Test fun theOverlayPillStaysOptIn() {
-        assertFalse(MonitorDefaultsPolicy.STATUS_PILL)
-        assertNotEquals(MonitorDefaultsPolicy.STATUS_PILL, MonitorDefaultsPolicy.CHARGE_CARD)
+    /** The app preference matches the reference screenshot; overlay access remains OS-controlled. */
+    @Test fun statusPillPreferenceDefaultsOnWithoutGrantingOverlayAccess() {
+        assertTrue(MonitorDefaultsPolicy.STATUS_PILL)
     }
 
     @Test fun dailyRiskWatchAndOnlineSummariesAreOptInAndLegacyMigrationIsOneTime() {

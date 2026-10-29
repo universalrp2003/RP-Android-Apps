@@ -100,13 +100,13 @@ class SettingsRepo(context: Context) {
 
     val scanSettings: Flow<ScanSettings> = store.data.map { p ->
         ScanSettings(
-            includeHidden = p[Keys.INCLUDE_HIDDEN] ?: false,
+            includeHidden = p[Keys.INCLUDE_HIDDEN] ?: true,
             dupMinBytes = (p[Keys.DUP_MIN_KB] ?: 100).toLong() * 1024L,
             largeThresholdBytes = (p[Keys.LARGE_MB] ?: 200).toLong() * 1024L * 1024L,
             oldDownloadDays = p[Keys.OLD_DAYS] ?: 30,
-            apkOnlyInstalled = p[Keys.APK_INSTALLED_ONLY] ?: false,
+            apkOnlyInstalled = p[Keys.APK_INSTALLED_ONLY] ?: true,
             excludedPrefixes = (p[Keys.EXCLUDED] ?: emptySet()).mapNotNull { normalize(it) }.toSet(),
-            defaultSelected = (p[Keys.DEFAULT_SELECTED] ?: emptySet())
+            defaultSelected = (p[Keys.DEFAULT_SELECTED] ?: ScanSettings.DEFAULT_SELECTED.map { it.name }.toSet())
                 .mapNotNull { name -> JunkKind.entries.firstOrNull { it.name == name } }
                 .toSet(),
         )
@@ -124,8 +124,8 @@ class SettingsRepo(context: Context) {
         }
     }
 
-    /** Small "charging watts" pill drawn in the empty part of the status bar (off by default). */
-    val statusPill: Flow<Boolean> = store.data.map { p -> p[Keys.STATUS_PILL] ?: false }
+    /** Optional "charging watts" pill drawn in the empty part of the status bar (on by default; Android overlay access is still user-granted). */
+    val statusPill: Flow<Boolean> = store.data.map { p -> p[Keys.STATUS_PILL] ?: MonitorDefaultsPolicy.STATUS_PILL }
 
     suspend fun setStatusPill(value: Boolean) =
         store.edit { it[Keys.STATUS_PILL] = value }

@@ -102,6 +102,8 @@ enum class Screen {
     HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP, MY_PLAN,
     /** 2.53 — the user guide itself; the menu's "Guide" row used to open FEATURE_SETUP by mistake. */
     GUIDE,
+    /** Dedicated, OS-backed explanations and controls for every declared permission. */
+    PERMISSIONS,
     /** 2.57 — 30-min rain head-start + severe heavy rain & cyclone voice alert screen. */
     WEATHER
 }
@@ -197,8 +199,8 @@ data class UiState(
     // 2.42: the ongoing status-bar charging meter defaults ON (opt-out). MonitorDefaultsPolicy
     // is the single owner of that default, shared with the DataStore flow and the prefs mirror.
     val chargeMonitor: Boolean = MonitorDefaultsPolicy.CHARGE_CARD,
-    // Status-bar watt reading: CleanSweep draws it itself (needs "Display over other apps")
-    val statusPill: Boolean = false,
+    // Screenshot-matching default ON; drawing still waits for the user's Android overlay grant.
+    val statusPill: Boolean = MonitorDefaultsPolicy.STATUS_PILL,
     val statusPillAllowed: Boolean = false,
     /** Independent, optional button that opens Android's native media-volume panel. */
     val floatingVolumeButton: Boolean = false,
@@ -398,7 +400,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // saved theme here too; MainActivity applies it before the first composition.
         val resolvedTheme = com.universalrp.cleansweep.ui.theme.ThemeStore.currentId(ctx)
         com.universalrp.cleansweep.ui.theme.Palette.apply(resolvedTheme)
-        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnThreeHours(ctx)
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnTwoHours(ctx)
         mutate { it.copy(lang = resolvedLang,
             themeId = resolvedTheme,
             voiceOn = Announcer.enabled(ctx),
@@ -871,6 +873,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             Screen.AI_REPORT -> Screen.HEALTH
             Screen.AI_SETTINGS -> Screen.SETTINGS
             Screen.VOICE -> Screen.SETTINGS
+            Screen.PERMISSIONS -> Screen.SETTINGS
             Screen.MOBILE -> Screen.HOME
             Screen.MY_PLAN -> Screen.MOBILE
             else -> Screen.HOME

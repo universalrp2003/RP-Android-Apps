@@ -27,7 +27,7 @@
     {
       "id": "radio",
       "name": "Ramesh Radio",
-      "tamilName": "ரமேஷ் ரேடியோ",
+      "tamilName": "தமிழன் வானொலி",
       "packageName": "com.universalrp.tamilnadufm",
       "version": "1.28",
       "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.28/Ramesh-Radio-v1.28.apk",
@@ -49,7 +49,7 @@
     {
       "id": "vocalremover",
       "name": "RP Vocal Remover Studio",
-      "tamilName": "வோக்கல் ரிமூவர் ஸ்டுடியோ",
+      "tamilName": "இசை மட்டும் வேண்டும்",
       "packageName": "com.universalrp.vocalremover",
       "version": "0.1.15",
       "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.15/RP-Vocal-Remover-Studio-v0.1.15.apk",

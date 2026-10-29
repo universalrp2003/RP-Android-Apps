@@ -359,8 +359,8 @@ object Announcer {
         prefs(context).edit().putString(KEY_VOICE_GENDER_MODE, mode.name).apply()
     }
 
-    /** Louder voice alerts: boost alert speech volume (off by default). */
-    fun louderVoice(context: Context): Boolean = prefs(context).getBoolean(KEY_LOUDER, false)
+    /** Loudness preference; new installs use the screenshot's 100% voice-announcement level. */
+    fun louderVoice(context: Context): Boolean = prefs(context).getBoolean(KEY_LOUDER, true)
 
     /**
      * The level used for the next utterance. A stored slider value wins; otherwise the old
@@ -371,7 +371,7 @@ object Announcer {
         val p = prefs(context)
         return if (p.contains(KEY_VOLUME)) {
             p.getFloat(KEY_VOLUME, 1f).coerceIn(0f, 1f)
-        } else if (p.getBoolean(KEY_LOUDER, false)) 1f else 0.9f
+        } else if (p.getBoolean(KEY_LOUDER, true)) 1f else 0.9f
     }
 
     fun setVoiceVolume(context: Context, value: Float) {
@@ -396,8 +396,9 @@ object Announcer {
         }
         val key = event.key ?: return true
         val default = when (event) {
-            // A phone that hops between radios must not narrate it until asked.
-            Event.RADIO_CHANGE, Event.NETWORK_CHANGE, Event.WEATHER_ALERT -> false
+            // Announce Wi-Fi/mobile-data changes and weather alerts by default, but keep
+            // noisy 4G/5G radio hand-offs opt-in (the reference settings show that switch OFF).
+            Event.RADIO_CHANGE -> false
             else -> true
         }
         return prefs(context).getBoolean(key, default)

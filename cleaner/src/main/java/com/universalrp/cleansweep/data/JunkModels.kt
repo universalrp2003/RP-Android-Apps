@@ -22,12 +22,12 @@ enum class JunkKind(
     DUPLICATES(
         "Duplicate files",
         "Identical files found more than once — the newest copy is always kept",
-        true
+        false
     ),
     APK_FILES(
         "APK installer files",
         "Downloaded installer packages that are no longer needed",
-        true
+        false
     ),
     EMPTY_FOLDERS(
         "Empty folders",
@@ -100,16 +100,25 @@ data class ScanProgress(
 
 /** User-tunable scan options (persisted via DataStore). */
 data class ScanSettings(
-    val includeHidden: Boolean = false,
+    val includeHidden: Boolean = true,
     val dupMinBytes: Long = 100L * 1024L,
     val largeThresholdBytes: Long = 200L * 1024L * 1024L,
     val oldDownloadDays: Int = 30,
-    val apkOnlyInstalled: Boolean = false,
+    val apkOnlyInstalled: Boolean = true,
     val excludedPrefixes: Set<String> = emptySet(),
     /**
-     * Categories the user wants ticked the moment a scan finishes. Empty by default:
-     * CleanSweep selects nothing for you, you tick what goes — the switches in
-     * Settings → "Preselect after a scan" are how you opt into a shortcut.
+     * Categories the user wants preselected when results appear. The first-run safe preset
+     * follows the owner’s screenshots; review-only categories stay off, and every selection
+     * remains visible and changeable before the user chooses to clean.
      */
-    val defaultSelected: Set<JunkKind> = emptySet(),
-)
+    val defaultSelected: Set<JunkKind> = DEFAULT_SELECTED,
+) {
+    companion object {
+        /** Safe first-run preselection shown in the owner’s reference settings screenshots. */
+        val DEFAULT_SELECTED: Set<JunkKind> = setOf(
+            JunkKind.RESIDUAL,
+            JunkKind.THUMBNAILS,
+            JunkKind.EMPTY_FOLDERS,
+        )
+    }
+}

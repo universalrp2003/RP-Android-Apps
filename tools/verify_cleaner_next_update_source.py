@@ -69,7 +69,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 78', 'versionName = "2.73"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 79', 'versionName = "2.74"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -139,8 +139,9 @@ def main():
     # Fixes 3-5: one owner of the default-on monitors and security scope, plus a real re-arm.
     defaults = source('data/MonitorDefaultsPolicy.kt')
     require('CHARGE_CARD = true' in defaults and 'PERSISTENT_MONITOR = true' in defaults and
-            'MALWARE_INCLUDE_SYSTEM = true' in defaults and 'STATUS_PILL = false' in defaults,
-            'Monitor defaults are not the 2.42 owner decision (the overlay pill must stay opt-in)')
+            'MALWARE_INCLUDE_SYSTEM = true' in defaults and 'STATUS_PILL = true' in defaults
+            and 'Android still requires the user to grant' in defaults,
+            'Monitor defaults are not screenshot-aligned or imply an automatic Android overlay grant')
     require('fun rearmAfterUpdateOrBoot' in defaults and 'fun healthWatchWanted' in defaults,
             'Monitor re-arm / health-watch policy missing')
     require('DAILY_SECURITY_WATCH = false' in defaults and 'dailyScanMigrationNeeded' in defaults and
