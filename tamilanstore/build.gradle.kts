@@ -33,9 +33,7 @@ android {
     }
 
     buildTypes {
-        debug {
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
-        }
+        // Keep preview/debug APKs on Android's generated debug key; never distribute them as release-signed builds.
         release {
             isMinifyEnabled = false
             if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")

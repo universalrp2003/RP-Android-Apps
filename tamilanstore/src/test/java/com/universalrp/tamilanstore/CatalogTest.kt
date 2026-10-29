@@ -20,6 +20,11 @@ class CatalogTest {
             try { Catalog.parse(bad); fail("invalid catalog accepted") } catch (_: IllegalArgumentException) { }
         }
     }
+    @Test fun releaseTagVersionMustMatchDeclaredVersion() {
+        val mismatched = catalog().replaceFirst("\"version\": \"1.1.9\"", "\"version\": \"1.1.10\"")
+        try { Catalog.parse(mismatched); fail("catalog version did not match release tag") }
+        catch (_: IllegalArgumentException) { }
+    }
     @Test fun redirectHostsAreBounded() {
         assertFalse(Catalog.allowedDownloadHost("evil.github.com"))
         assertFalse(Catalog.allowedDownloadHost("github.com.evil.example"))

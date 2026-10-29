@@ -16,24 +16,46 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.14.3'
       - name: Test and compile preview
-        run: gradle :tamilanstore:testDebugUnitTest :tamilanstore:lintDebug :tamilanstore:assembleDebug --no-daemon --stacktrace
-      - uses: actions/upload-artifact@v4
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :tamilanstore:testDebugUnitTest :tamilanstore:lintDebug :tamilanstore:assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/tamilan-store-preview.log"
+      - name: Surface bounded Gradle diagnostics
+        if: failure()
+        env:
+          LOG_PATH: ${{ runner.temp }}/tamilan-store-preview.log
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          path = pathlib.Path(os.environ['LOG_PATH'])
+          lines = path.read_text(errors='replace').splitlines() if path.exists() else []
+          markers = ('e:', 'Execution failed for task', 'FAILURE: Build failed', ' FAILED', 'error:')
+          selected = [line for line in lines if any(marker in line for marker in markers)]
+          if not selected:
+              selected = lines[-30:]
+          for line in selected[-40:]:
+              text = line[-800:]
+              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error title=Tamilan Store preview::' + text)
+          PY
+      - uses: actions/upload-artifact@v7
         with:
           name: tamilan-store-preview
           path: tamilanstore/build/outputs/apk/debug/*.apk
           retention-days: 30
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: tamilan-store-test-reports
           path: tamilanstore/build/reports/
           retention-days: 14
+          if-no-files-found: ignore

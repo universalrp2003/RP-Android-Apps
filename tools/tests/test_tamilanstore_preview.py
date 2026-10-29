@@ -16,6 +16,22 @@ class TamilanStorePreviewTest(unittest.TestCase):
             self.assertTrue(app['url'].startswith('https://github.com/universalrp2003/RP-Android-Apps/releases/download/'))
             self.assertGreater(app['size'], 0)
 
+    def test_every_catalog_tag_matches_its_declared_version(self):
+        from urllib.parse import urlparse
+        for path in (STORE / 'src/main/assets/catalog.json', ROOT / 'site/catalog.json', ROOT / 'site/catalog-v2.json'):
+            apps = json.loads(path.read_text())['apps']
+            for app in apps:
+                download_tag = urlparse(app['url']).path.split('/')[5]
+                release_tag = urlparse(app['releaseUrl']).path.rsplit('/', 1)[-1]
+                self.assertEqual(release_tag, download_tag, app['id'])
+                self.assertTrue(release_tag.endswith('-v' + app['version']), app['id'])
+
+    def test_preview_build_does_not_use_legacy_release_signing_config(self):
+        build = (STORE / 'build.gradle.kts').read_text()
+        self.assertNotRegex(build, r'debug\s*\{[^}]*signingConfig\s*=')
+        self.assertIn('release {', build)
+        self.assertIn('if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")', build)
+
     def test_permissions_and_provider_are_scoped(self):
         root = ET.parse(STORE / 'src/main/AndroidManifest.xml').getroot()
         ns = '{http://schemas.android.com/apk/res/android}'
@@ -27,10 +43,26 @@ class TamilanStorePreviewTest(unittest.TestCase):
         paths = ET.parse(STORE / 'src/main/res/xml/apk_paths.xml').getroot()
         self.assertEqual(paths[0].attrib['path'], 'verified-apks/')
 
+    def test_store_only_changes_skip_unrelated_legacy_release_build(self):
+        text = (ROOT / '.github/workflows/build-apk.yml').read_text()
+        ignored = text.split('paths-ignore:', 1)[1].split('workflow_dispatch:', 1)[0]
+        self.assertIn('"tamilanstore/**"', ignored)
+        self.assertIn('"tools/tests/test_tamilanstore_preview.py"', ignored)
+        self.assertIn('".github/workflows/tamilanstore-preview.yml"', ignored)
+
+    def test_preview_uses_node24_compatible_github_actions(self):
+        text = (ROOT / '.github/workflows/tamilanstore-preview.yml').read_text()
+        for action in ('actions/checkout@v7', 'actions/setup-java@v6',
+                       'gradle/actions/setup-gradle@v6', 'actions/upload-artifact@v7'):
+            self.assertIn(action, text)
+        self.assertNotRegex(text, r'actions/(?:checkout|setup-java|upload-artifact)@v4')
+
     def test_preview_workflow_cannot_publish(self):
         text = (ROOT / '.github/workflows/tamilanstore-preview.yml').read_text()
         self.assertIn('contents: read', text)
         self.assertIn(':tamilanstore:testDebugUnitTest', text)
+        self.assertIn('Surface bounded Gradle diagnostics', text)
+        self.assertIn('::error title=Tamilan Store preview::', text)
         self.assertNotIn('gh release', text)
         self.assertNotIn('contents: write', text)
 
@@ -112,7 +144,10 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         self.assertIn('open(Catalog.WEBSITE + "#request-app")',ui)
         self.assertIn('SelfUpdateCheck.latestRelease()',ui)
         check=(STORE/'src/main/java/com/universalrp/tamilanstore/SelfUpdateCheck.kt').read_text()
-        for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk','instanceFollowRedirects=false','readBytesLimited(2_000_000)']:
+        for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk',
+                      'instanceFollowRedirects = false','readBytesLimited(2_000_000)',
+                      'for (page in 1..MAX_RELEASE_PAGES)', 'if (releases.length() < PAGE_SIZE)',
+                      'error("Release pagination limit reached")']:
             self.assertIn(token,check)
 
 

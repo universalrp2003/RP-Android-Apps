@@ -33,7 +33,9 @@ object Catalog {
                 val release = URI(it.releaseUrl)
                 require(release.scheme == "https" && release.host == "github.com" && release.port == -1 && release.rawUserInfo == null && release.rawQuery == null && release.rawFragment == null)
                 require(release.path.matches(Regex("/universalrp2003/RP-Android-Apps/releases/tag/[a-z0-9-]+-v[0-9]+(?:\\.[0-9]+){1,3}")))
-                require(uri.path.substringAfter("/releases/download/").substringBefore('/') == release.path.substringAfterLast('/'))
+                val releaseTag = release.path.substringAfterLast('/')
+                require(releaseTag.endsWith("-v${it.version}"))
+                require(uri.path.substringAfter("/releases/download/").substringBefore('/') == releaseTag)
             }
         }
         require(apps.map { it.id }.distinct().size == 13 && apps.map { it.packageName }.distinct().size == 13)
