@@ -39,6 +39,7 @@ on:
       - "tools/tests/test_secretmessage_preview_contract.py"
       - "tools/tests/test_tamilanstore_preview.py"
       - ".github/workflows/build-apk.yml"
+      - ".github/workflows/tamilanstore-preview.yml"
       # Monitoring-only workflows/scripts cannot alter any APK bytes or app versions.
       - ".github/workflows/sms-live-probe.yml"
       - ".github/workflows/oor-live-probe.yml"

@@ -48,6 +48,14 @@ class TamilanStorePreviewTest(unittest.TestCase):
         ignored = text.split('paths-ignore:', 1)[1].split('workflow_dispatch:', 1)[0]
         self.assertIn('"tamilanstore/**"', ignored)
         self.assertIn('"tools/tests/test_tamilanstore_preview.py"', ignored)
+        self.assertIn('".github/workflows/tamilanstore-preview.yml"', ignored)
+
+    def test_preview_uses_node24_compatible_github_actions(self):
+        text = (ROOT / '.github/workflows/tamilanstore-preview.yml').read_text()
+        for action in ('actions/checkout@v7', 'actions/setup-java@v6',
+                       'gradle/actions/setup-gradle@v6', 'actions/upload-artifact@v7'):
+            self.assertIn(action, text)
+        self.assertNotRegex(text, r'actions/(?:checkout|setup-java|upload-artifact)@v4')
 
     def test_preview_workflow_cannot_publish(self):
         text = (ROOT / '.github/workflows/tamilanstore-preview.yml').read_text()
