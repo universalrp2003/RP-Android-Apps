@@ -279,7 +279,7 @@ object Assistant {
                 if (ctx.hasAllFilesAccess)
                     AssistantMessage(false, "File access is granted, so I can see and clean junk across your shared storage. If you ever revoke it in Android Settings, scanning switches off until you re-grant it.")
                 else
-                    AssistantMessage(false, "Android only lets an app scan your photos, downloads and other folders if you grant “All files access” — it is the switch that makes junk cleaning possible.\n\nGrant it and everything stays on this phone; there is no internet permission to worry about.", actionLabel = "Grant file access", action = AssistantAction.SCAN)
+                    AssistantMessage(false, "Android only lets an app scan your photos, downloads and other folders if you grant “All files access” — it is the switch that makes junk cleaning possible.\n\nGranting file access does not upload files. Separately, a daily update check reads public release metadata only; file contents are not included.", actionLabel = "Grant file access", action = AssistantAction.SCAN)
 
             q.matchesAny("usage access", "usage permission", "app cache permission") ->
                 if (ctx.usageAccess)

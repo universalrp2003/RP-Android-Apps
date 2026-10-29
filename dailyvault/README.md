@@ -2,7 +2,7 @@
 
 Separate from the published SMS-based Expense Tracker. Tamil-first manual spending and private information/history: fees, groceries, gas refill or bike service entries. No data from the owner's screenshots is included in source, examples or backups.
 
-Implemented: automatic current timestamp with editable date/time, exact integer-paise expense totals (today/month/all), separate non-financial notes/history, search, category text, edit and confirmed delete. No SMS or network permission. Password-encrypted private atomic storage; leaving the foreground locks and clears sensitive UI fields. FLAG_SECURE blocks screenshots/recording (not a guarantee against a compromised phone or external camera).
+Implemented: automatic current timestamp with editable date/time, exact integer-paise expense totals (today/month/all), separate non-financial notes/history, search, category text, edit and confirmed delete. No SMS permission. Internet is used only for a once-per-day public release-metadata check when the app is opened; no ledger, note, backup or password data is uploaded. The official site/GitHub may receive ordinary request metadata such as the device IP address. Password-encrypted private atomic storage; leaving the foreground locks and clears sensitive UI fields. FLAG_SECURE blocks screenshots/recording (not a guarantee against a compromised phone or external camera).
 
 Portable backups use a bounded versioned AES-256-GCM envelope with a random 16-byte salt, 12-byte nonce, authenticated header and PBKDF2-HMAC-SHA256 (210,000 iterations). Password 10–256 characters, no recovery. SAF export/import needs no broad storage permission. Restore authenticates and validates the entire file before atomic REPLACEMENT, never silent merge. Backup password becomes the active password. Wrong passwords/corrupt backups must not overwrite current records. Backup and password are BOTH needed after reinstall or on a new phone; no device-only Keystore key blocks portability.
 
@@ -10,7 +10,7 @@ Backups are manual; Android automatic app backup is disabled. Storage/provider f
 
 Pending: Android compile/lint/tests, physical-device create/save/lock/export/restore tests (including another phone), low-storage/atomic recovery, large-history performance, accessibility and security review. Password changes, CSV import, reminders, biometric unlock, automatic backup and complex expression parsing are NOT implemented. A draft editor closes after Save; a write failure is reported, so verify entries and retry rather than assuming persistence.
 
-Preview only: version 0.1-preview, no publication marker, no stable catalog listing. Existing twelve apps' self-download/update functions are unchanged. Use `gradle :dailyvault:testDebugUnitTest :dailyvault:lintDebug :dailyvault:assembleDebug`. Preview workflow uploads test artifacts only.
+Preview only: version 0.1-preview, no publication marker, no stable catalog listing. The other non-Store apps use once-daily foreground release-metadata checks and open the official website in the browser; they no longer download or install update APKs themselves. Tamilan Store's own installer flow is separate and unchanged. Use `gradle :dailyvault:testDebugUnitTest :dailyvault:lintDebug :dailyvault:assembleDebug`. Preview workflow uploads test artifacts only.
 
 ## Preview 0.2 — optional app-opening lock
 

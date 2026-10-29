@@ -17,8 +17,7 @@
       Notes are written to this app's private storage and never leave the phone.
     -->
 
-    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
-    <application
+        <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"

@@ -60,9 +60,8 @@ import java.time.ZoneId
  * B2 - செலவு கண்காணிப்பு / Expense Tracker.
  *
  * Reads the owner's bank and UPI SMS, keeps only what survived the anti-spoof parser, and shows the
- * month as categories. There is no INTERNET permission in this app at all, so the ledger cannot
- * leave the phone even by accident - that is the whole privacy posture and the reason the app exists
- * separately from SMS Guard.
+ * month as categories. INTERNET is used only by the read-only daily release-metadata check; it
+ * sends no SMS or ledger content. Transaction processing and storage remain on-device.
  */
 class MainActivity : ComponentActivity() {
 
@@ -74,6 +73,7 @@ class MainActivity : ComponentActivity() {
             MaterialTheme(colorScheme = androidx.compose.material3.darkColorScheme(
                 primary = Accent, background = Background, surface = Card, onSurface = TextPrimary, onBackground = TextPrimary,
             )) {
+                com.universalrp.updates.AppUpdates.Control("Expense-Tracker", automatic = true)
                 Surface(modifier = Modifier.fillMaxSize(), color = Background) {
                     ExpenseScreen(onRequestSms = ::ensureSmsPermission)
                 }

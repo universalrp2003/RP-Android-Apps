@@ -4,27 +4,24 @@
     <!--
       B2 - the whole permission surface of this app.
 
-      RECEIVE_SMS and READ_SMS, and nothing else. There is deliberately NO android.permission.INTERNET
-      declaration anywhere in this file, which is not an oversight: it is the app's promise. An expense
-      tracker that cannot open a socket cannot leak a ledger, and the Android permission screen will
-      say so out loud - "No internet access" - the moment the owner looks.
-
-      That is also why there is no voice here. The HD neural voice is a network call, and this app
-      does not make network calls.
+      SMS and Internet access are narrowly separated: SMS messages and the local ledger are never
+      uploaded. INTERNET is used only for a once-per-day public release metadata check when the app
+      opens. The check sends no SMS, transaction, balance, or ledger content. The website/GitHub may
+      receive ordinary request metadata such as the device IP address. This app does not download or
+      install APKs; updates open in the user's browser.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
 
     <!--
       Deliberately absent:
-        - no INTERNET / ACCESS_NETWORK_STATE. The ledger never leaves the phone.
-        - no location, no contacts, no storage, no camera, no phone state.
-        - no account, no analytics, no advertising id.
+        - no ACCESS_NETWORK_STATE, location, contacts, storage, camera or phone-state access.
+        - no account, analytics or advertising id.
       Transactions are written to this app's private storage and read back from it.
     -->
 
-    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
-    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+        <uses-feature android:name="android.hardware.telephony" android:required="false" />
 
     <application
         android:allowBackup="false"

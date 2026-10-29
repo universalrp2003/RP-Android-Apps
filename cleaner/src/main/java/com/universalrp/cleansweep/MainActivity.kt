@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
         // Sensitive permissions are explained and requested from reviewed setup, not silently on launch.
         setContent {
             CleanSweepTheme {
+                com.universalrp.updates.AppUpdates.Control("CleanSweep", automatic = true, tamil = Lang.isTamil)
                 val vm: MainViewModel = viewModel()
 
                 // The widget's "Clean" button opens the app on the scanner (Android does not

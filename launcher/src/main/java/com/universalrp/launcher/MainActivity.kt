@@ -116,6 +116,7 @@ class MainActivity : ComponentActivity() {
                 error = EmergencyBg,
                 onError = Color.White,
             )) {
+                com.universalrp.updates.AppUpdates.Control("Elderly-Launcher", automatic = true)
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
                     LauncherScreen(
                         onEmergency = { number -> requestEmergencyCall(number) },

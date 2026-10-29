@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-/** Shared, real release links and verified updater. No automatic installation. */
+/** Shared About screen with official website release links; update APKs stay in the browser/Android flow. */
 @Composable
 fun SuiteAbout(appId: String, prefix: String, onBack: () -> Unit) {
     val context = LocalContext.current
@@ -34,11 +34,7 @@ fun SuiteAbout(appId: String, prefix: String, onBack: () -> Unit) {
         Text(suiteText("உருவாக்கம்: ரமேஷ்பிரதாப் - RP Ideas", "RP Ideas - Rameshprathap R"))
         Text(suiteText("இலவசம். விளம்பரங்களோ கண்காணிப்போ இல்லை.", "Free, no ads or tracking."))
         Text(suiteText("புதுப்பிப்பை நிறுவ உங்கள் ஒப்புதல் தேவை.", "Updates require your confirmation."))
-        if (appId in setOf("podcast", "launcher", "expensetracker")) {
-            BrowserReleaseUpdates(prefix)
-        } else {
-            AppUpdates.Control(prefix = prefix)
-        }
+        BrowserReleaseUpdates(prefix)
         Text(suiteText("மற்ற செயலிகள்", "Other apps"), style = MaterialTheme.typography.titleMedium)
         (SisterApps.releaseLinks(appId) + SisterApps.projectLinks()).forEach { (label, url) ->
             TextButton(onClick = {

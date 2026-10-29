@@ -37,9 +37,11 @@ class ReadOnlyFallbackTest(unittest.TestCase):
             self.assertIn(gate, source)
         self.assertNotIn('startActivity', source)
         self.assertNotIn('FileProvider', source)
-        notice = (ROOT/'shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt').read_text()
+        notice = (ROOT/'shared/src/main/java/com/universalrp/updates/DailyWebsiteUpdateNotice.kt').read_text()
+        self.assertIn('catalog-v2.json', notice)
         self.assertIn('catch (unavailable: java.io.IOException)', notice)
         self.assertIn('OfficialReleaseVersion.latest(app)', notice)
+        self.assertIn('openWebsite(context, appId)', notice)
 
 
 class CatalogEndpointCompatibilityTest(unittest.TestCase):

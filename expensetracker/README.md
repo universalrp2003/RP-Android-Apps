@@ -11,14 +11,14 @@ Expense Tracker reads the owner's bank and UPI SMS and shows the month as catego
 ## What it does
 
 - Reads bank and UPI SMS, keeps only what survived the anti-spoof parser, and shows the month as categories with each one's share of the total.
-- **No internet permission at all.** There is no `android.permission.INTERNET` in the manifest, so the ledger cannot leave the phone even by accident, and Android's own permission screen says "No internet access". That is also why there is no voice here: the HD neural voice is a network call and this app makes no network calls.
+- **Update-only network access.** On app open, at most once per day, the app fetches public release metadata so it can show an update notice. It sends no SMS, transaction, balance or ledger contents. The official website/GitHub may receive ordinary request metadata such as the device IP address. Updates open in the browser; the app does not download or install APKs. The app has no neural-voice feature.
 - The parser refuses a personal mobile number claiming "Rs.5000 credited", a promotional loan offer, an OTP-shaped message, and an outgoing NEFT settlement confirmation. Refusals are counted and shown, so you can see how much was thrown away rather than trusting a tracker that silently drops rows.
 - Money is formatted the way a bank statement reads it: Indian digit grouping, `₹1,23,456`, paise rounded once at the boundary.
 - Month-over-month navigation, income/spend/net totals, and a delete for a row you disagree with.
 
 ## Permissions
 
-`READ_SMS` and `RECEIVE_SMS`. **No internet, no location, no contacts, no storage, no camera, no phone state, no account, no advertising id.**
+`READ_SMS`, `RECEIVE_SMS`, and `INTERNET` (only for the daily foreground release-metadata check). No location, contacts, broad storage, camera, phone state, account, analytics, or advertising ID. SMS and ledger content remain local.
 
 ## Download the stable release
 

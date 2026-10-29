@@ -1,10 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <!--
-        Secret Message. INTERNET is needed for the direct TCP connection between two phones on the
-        same Wi-Fi (private IPv4 addresses only) and for the TLS WebSocket to the owner's relay
-        (RelayLink.RELAY_URL), the only server the app contacts; the relay forwards only the MLS
-        session's bytes. The connectedDevice foreground service keeps the connection while a person briefly switches
+        Secret Message. INTERNET is needed for direct TCP between two phones on the same Wi-Fi
+        (private IPv4 addresses only), the TLS WebSocket to the owner's relay (which forwards only
+        MLS session bytes), the doorbell, and the read-only daily release-metadata check. That check
+        sends no chat or app content; the website/GitHub may receive ordinary request metadata such
+        as the device IP. Update actions open the official website in the browser; this app never
+        downloads or installs update APKs. The connectedDevice foreground service keeps the connection while a person briefly switches
         apps (owner decision, 17 October 2026); its notification never shows names or messages.
         Android 14+ requires CHANGE_NETWORK_STATE for that service type; the app changes no network
         settings. POST_NOTIFICATIONS lets the service's notification appear (Android 13+).
@@ -48,8 +50,7 @@
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" tools:node="remove" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" tools:node="remove" />
 
-    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
-    <application
+        <application
         android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"

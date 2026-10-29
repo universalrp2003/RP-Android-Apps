@@ -50,7 +50,8 @@ def main():
     require('CorePrivacyMigration.run' in source('MainViewModel.kt') and 'CorePrivacyMigrationPolicy' in source('data/CorePrivacyMigration.kt'), 'Core privacy cleanup not wired')
     from verify_store_handoff_policy import verify_sources as verify_handoff
     verify_handoff()
-    require('StoreFirstUpdateNotice' in source('ui/LiveGuardUpdateCard.kt'), 'Store-first updater not wired')
+    require('BrowserReleaseUpdates("CleanSweep", tamil = Lang.isTamil)' in source('ui/LiveGuardUpdateCard.kt'), 'Official website About link not wired')
+    require('AppUpdates.Control("CleanSweep", automatic = true, tamil = Lang.isTamil)' in source('MainActivity.kt'), 'Daily foreground update check not wired')
     require('LastUnplugRepo.observe' in source('data/InsightsStore.kt') and 'explicitDisconnect' in source('data/LastUnplug.kt'), 'Genuine unplug owner missing')
     require('val selected: Boolean = false' in source('data/AppCacheRepo.kt'), 'Cache rows auto-selected')
     require('val includeSystemApps: Boolean = MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM' in source('MainViewModel.kt') and
@@ -202,7 +203,7 @@ def main():
             'The dedicated live-voice task is missing or gates the build')
     require(not (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text().count('@Test') == 0,
             'The live-network suite disappeared instead of being excluded')
-    require(sum(expected.values()) == 439 and len(expected) == 49, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 425 and len(expected) == 48, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)

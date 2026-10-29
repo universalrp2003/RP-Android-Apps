@@ -342,8 +342,6 @@ fun HomeScreen(
                 item(key = "setup") { SetupCard(vm) }
             }
 
-            item(key = "published_update") { LiveGuardUpdateCard(compact = true) }
-
             // 2.52 — the first screen now answers three questions and nothing else: what the
             // phone has, the one action that frees space, and the plan. Everything else is
             // grouped into tap-to-open sections below, so the page is short until asked.

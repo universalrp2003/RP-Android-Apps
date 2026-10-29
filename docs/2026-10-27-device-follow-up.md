@@ -1,5 +1,7 @@
 # Device feedback follow-up — 27 October 2026
 
+> **Update-flow status superseded (29 October 2026):** The earlier browser-only apps described below now also run once-daily foreground release-metadata checks and display in-app notices. All non-Store update actions open the official website for browser download and Android's normal user-confirmed install flow. Tamilan Store behavior is separate.
+
 ## நிலை / Status
 
 இந்தக் கிளையில் முகப்புத் திரையின் நிறங்கள், உண்மையான பதிவிறக்கப் பகுதி, பிரிவுவாரியான நிகழ்ச்சிப் பட்டியல் ஆகியவை மாற்றப்பட்டுள்ளன. இவை இன்னும் வெளியிடப்படவில்லை. பாதுகாப்பு எச்சரிக்கையின் காரணம் உறுதியாகவில்லை; எச்சரிக்கையைத் தவிர்த்து நிறுவ வேண்டாம்.

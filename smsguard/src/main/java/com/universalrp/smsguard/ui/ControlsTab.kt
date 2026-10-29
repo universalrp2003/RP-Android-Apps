@@ -670,7 +670,7 @@ fun AboutSmsGuardScreen(
         // Official Verified GitHub Updater Control
         item {
             SectionCard(palette = palette) {
-                AppUpdates.Control("SMS-Guard")
+                com.universalrp.updates.BrowserReleaseUpdates("SMS-Guard")
             }
         }
 

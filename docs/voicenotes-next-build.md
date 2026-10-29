@@ -1,3 +1,5 @@
+> **Update-flow status superseded (29 October 2026):** Voice Notes now uses the shared once-daily foreground metadata check and official website/browser handoff. The older self-download/update requirements below are historical and no longer apply.
+
 # Voice Notes — owner-requested next-build follow-up
 
 Requested 28 October 2026 alongside the owner screenshot upload:

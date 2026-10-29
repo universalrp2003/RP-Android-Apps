@@ -123,6 +123,7 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             MaterialTheme {
+                com.universalrp.updates.AppUpdates.Control("Voice-Notes", automatic = true)
                 Surface(modifier = Modifier.fillMaxSize(), color = Background) {
                     if (lockEnabled && !unlocked) {
                         Column(Modifier.padding(24.dp).statusBarsPadding()) {
@@ -444,8 +445,6 @@ fun VoiceNotesScreen(
             } },
             confirmButton = { TextButton(onClick = { showHelp = false }) { Text(tr("Close", "மூடு")) } }
         )
-
-        com.universalrp.updates.StoreFirstUpdateNotice("voicenotes", tamil)
 
         // ---------------------------------------------------------------- status line
         if (status.isNotEmpty()) {

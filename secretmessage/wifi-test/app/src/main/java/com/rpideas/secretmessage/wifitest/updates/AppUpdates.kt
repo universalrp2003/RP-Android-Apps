@@ -9,7 +9,7 @@ object AppUpdates {
 
     @Composable
     fun Control(prefix: String, automatic: Boolean = false) {
-        if (prefix != "Secret-Message") return
-        com.universalrp.updates.StoreFirstUpdateNotice("secretmessage", Tr.tamil, showControls = !automatic)
+        if (prefix != "Secret-Message" || !automatic) return
+        com.universalrp.updates.DailyWebsiteUpdateNotice("secretmessage", Tr.tamil)
     }
 }

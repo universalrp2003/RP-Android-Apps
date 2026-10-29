@@ -16,10 +16,10 @@ import com.universalrp.smsguard.engine.SenderIdentityEngine
  * rows to the shared parser and hands back what came out. Every decision - is this real, is it a
  * spend, what category - lives in the pure code and is tested there.
  *
- * Two things it deliberately does not do. It never uploads, and the app declares no INTERNET
- * permission so it could not. And it never asks for the SMS body of anything older than the
- * window it is scanning, because a ledger does not need a decade of messages to answer "what did I
- * spend this month".
+ * It never uploads SMS or parsed transaction content. The app's separate release-metadata check
+ * does not receive inbox rows or ledger data. It never asks for the SMS body of anything older than
+ * the window it is scanning, because a ledger does not need a decade of messages to answer "what did
+ * I spend this month".
  */
 object SmsInbox {
 

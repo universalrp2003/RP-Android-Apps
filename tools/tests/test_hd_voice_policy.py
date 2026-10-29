@@ -26,15 +26,16 @@ class HdVoicePolicyTest(unittest.TestCase):
         self.assertIn('if (name != "testHdVoiceFailover") filter { excludeTestsMatching(hdFailoverMethod) }', build)
         self.assertIn('includeTestsMatching(hdFailoverMethod)', build)
 
-    def test_expense_about_keeps_its_offline_permission_boundary(self):
+    def test_expense_update_check_does_not_transmit_financial_data_or_install_apks(self):
         main = (ROOT / 'expensetracker/src/main/java/com/universalrp/expensetracker/MainActivity.kt').read_text()
-        self.assertIn('SuiteAbout("expensetracker", "Expense-Tracker")', main)
+        self.assertIn('AppUpdates.Control("Expense-Tracker", automatic = true)', main)
         manifest = (ROOT / 'expensetracker/src/main/AndroidManifest.xml').read_text()
         permissions = {p.get('{http://schemas.android.com/apk/res/android}name') for p in ET.fromstring(manifest).findall('uses-permission')}
-        self.assertNotIn('android.permission.INTERNET', permissions)
+        self.assertIn('android.permission.INTERNET', permissions)
         self.assertNotIn('android.permission.REQUEST_INSTALL_PACKAGES', permissions)
-        suite = (ROOT / 'shared/src/main/java/com/universalrp/updates/SuiteAbout.kt').read_text()
-        self.assertIn('setOf("podcast", "launcher", "expensetracker")', suite)
+        notice = (ROOT / 'shared/src/main/java/com/universalrp/updates/DailyWebsiteUpdateNotice.kt').read_text()
+        self.assertIn('catalog-v2.json', notice)
+        self.assertNotIn('sms', notice.lower())
 
     def test_published_store_daily_links_and_website_integrity_failure_stop(self):
         site = (ROOT/'site/index.html').read_text()

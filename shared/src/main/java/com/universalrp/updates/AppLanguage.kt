@@ -67,7 +67,7 @@ fun AppLanguageToggle() {
 }
 
 /**
- * Static interface copy used by the shared-app Compose Text adapters and updater UI.
+ * Static interface copy used by shared-app Compose Text adapters and update notices.
  * Missing entries intentionally remain readable English rather than becoming blank or guessed.
  */
 object AppStrings {
@@ -88,10 +88,6 @@ object AppStrings {
             ?.let { return "இந்த ஒலியை இயக்க முடியவில்லை: ${it.groupValues[1]}" }
         Regex("^Could not play the saved audio\\.$").matchEntire(text)
             ?.let { return "சேமித்த ஒலியை இயக்க முடியவில்லை." }
-        Regex("^No newer published release was found for this app\\. Installed: (.+)\\.$").matchEntire(text)
-            ?.let { return "இந்தப் பயன்பாட்டிற்கான புதிய வெளியீடு கிடைக்கவில்லை. நிறுவிய பதிப்பு: ${it.groupValues[1]}." }
-        Regex("^Update available · (.+) \\(installed: (.+)\\)\\.$").matchEntire(text)
-            ?.let { return "புதுப்பிப்பு உள்ளது · ${it.groupValues[1]} (நிறுவியது: ${it.groupValues[2]})." }
         Regex("^(\\d+) min$").matchEntire(text)?.let { return "${it.groupValues[1]} நிமிடம்" }
         Regex("^(\\d+) min left$").matchEntire(text)?.let { return "${it.groupValues[1]} நிமிடம் மீதம்" }
         Regex("^(\\d+) songs found$").matchEntire(text)?.let { return "${it.groupValues[1]} பாடல்கள் கண்டறியப்பட்டன" }
@@ -160,7 +156,7 @@ object AppStrings {
 
     private val TAMIL = mapOf(
         "It plays local files — streaming is not supported. Updates open in your external browser. For YouTube, Spotify and other apps, use Background/Settings: the system-wide effect or cooperating-player sessions." to "இது உள்ளூர் கோப்புகளை இயக்கும்; இணைய இசை இயக்கம் இல்லை. புதுப்பிப்புகள் வெளிப்புற உலாவியில் திறக்கும். பிற இசைச் செயலிகளுக்கு பின்னணி அமைப்புகளில் கணினி அளவிலான ஒலி விளைவையோ ஒத்துழைக்கும் இயக்கிகளின் ஒலி அமர்வுகளையோ பயன்படுத்தலாம்.",
-        "Audio processing stays on your phone. Updates open in your browser; this app does not download or install APKs." to "ஒலி செயலாக்கம் உங்கள் போனிலேயே நடைபெறும். புதுப்பிப்புகள் உலாவியில் திறக்கும்; இந்தச் செயலி புதுப்பிப்புக் கோப்பைப் பதிவிறக்கவோ நிறுவவோ செய்யாது.",
+        "Audio processing stays on your phone. Selected audio is not uploaded." to "ஒலி செயலாக்கம் உங்கள் போனிலேயே நடைபெறும். தேர்ந்தெடுத்த ஒலி பதிவேற்றப்படாது.",
         "Continuous: on" to "தொடர்ந்து இயக்கம்: இயக்கம்",
         "Continuous: off" to "தொடர்ந்து இயக்கம்: நிறுத்தம்",
         "Select multiple audio documents for continuous playback. Cloud-provider files must be available offline. Random plays each selected track once per cycle; Repeat chooses off, one or all. Play restores the saved queue when access remains valid." to "பல ஒலிக் கோப்புகளைத் தேர்ந்தெடுத்துத் தொடர்ந்து கேட்கலாம். மேகச் சேவைக் கோப்புகள் இணையமின்றிக் கிடைக்க வேண்டும். சீரற்ற வரிசையில் ஒவ்வொரு பாடலும் ஒரு சுற்றில் ஒருமுறை இயங்கும். மீண்டும் இயக்குவதை நிறுத்தலாம்; ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். அணுகல் இருந்தால் சேமித்த வரிசை மீண்டும் திறக்கும்.",
@@ -189,17 +185,11 @@ object AppStrings {
         "Project development" to "திட்ட உருவாக்கம்",
         "AI software assistance" to "AI மென்பொருள் உதவி",
         "App updates" to "பயன்பாட்டு புதுப்பிப்புகள்",
-        "Verified GitHub APK updates" to "சரிபார்க்கப்பட்ட GitHub APK புதுப்பிப்புகள்",
-        "Checks RP-Android-Apps first; InternetRadio remains as a grace-period fallback." to "முதலில் RP-Android-Apps சரிபார்க்கப்படும்; இடைக்காலத்தில் InternetRadio மாற்று சேமிப்பகமாகத் தொடரும்.",
         "Release source" to "வெளியீட்டு மூலம்",
         "Verified streams stay first; the all-stations list prioritizes Tamil, and Radio Browser votes sort each group." to "சரிபார்க்கப்பட்ட ஒளிபரப்புகள் முதலில்; அனைத்து நிலையப் பட்டியலில் தமிழ் முன்னுரிமை பெறும், ஒவ்வொரு குழுவிலும் Radio Browser வாக்குகள் வரிசைப்படுத்தும்.",
         "This raises the radio app's audio-session gain by up to 10 dB. Android's device volume limit still applies; lower the boost if you hear distortion." to "இது ரேடியோ ஒலியின் அமர்வு அளவை அதிகபட்சம் 10 dB வரை உயர்த்தும். Android சாதனத்தின் ஒலி வரம்பு தொடரும்; ஒலி சிதைந்தால் Boost-ஐக் குறைக்கவும்.",
-        "Check for updates" to "புதுப்பிப்புகளைச் சரிபார்",
         "Checking…" to "சரிபார்க்கிறது…",
         "Update available" to "புதுப்பிப்பு உள்ளது",
-        "Download and verify APK" to "APK-ஐப் பதிவிறக்கி சரிபார்",
-        "Install with Android confirmation" to "Android உறுதிப்படுத்தலுடன் நிறுவு",
-        "Allow installation for this app" to "இந்தப் பயன்பாட்டிற்கு நிறுவலை அனுமதி",
         "Later" to "பிறகு",
         "Close" to "மூடு",
         "Cancel" to "ரத்து செய்",
@@ -207,10 +197,6 @@ object AppStrings {
         "Retry" to "மீண்டும் முயற்சி செய்",
         "OK" to "சரி",
         "What’s new" to "புதியவை",
-        "Daily check on app launch: On" to "பயன்பாட்டைத் திறக்கும்போது தினசரி சரிபார்ப்பு: இயக்கத்தில்",
-        "Daily check on app launch: Off" to "பயன்பாட்டைத் திறக்கும்போது தினசரி சரிபார்ப்பு: முடக்கத்தில்",
-        "Daily update check on app launch" to "பயன்பாட்டைத் திறக்கும்போது தினசரி புதுப்பிப்பு சரிபார்ப்பு",
-        "Check for updates on app launch" to "பயன்பாட்டைத் திறக்கும்போது புதுப்பிப்புகளைச் சரிபார்",
         "App releases" to "பயன்பாட்டு வெளியீடுகள்",
         "Other RP Ideas Android Apps" to "எமது பிற RP Ideas செயலிகள்",
         "Project development & credits" to "திட்ட உருவாக்கம் & பங்களிப்பு",
@@ -224,27 +210,12 @@ object AppStrings {
         "Project development: Ramesh prathap .R · universalrp2003@gmail.com" to "திட்ட உருவாக்கம்: Ramesh prathap .R · universalrp2003@gmail.com",
         "● Ready" to "● தயார்",
         "AI software-assistance contributor: Arena.ai Agent Mode" to "AI மென்பொருள் உதவிப் பங்களிப்பாளர்: Arena.ai Agent Mode", 
-        "No newer published release was found for this app." to "இந்தப் பயன்பாட்டிற்கான புதிய வெளியீடு எதுவும் கிடைக்கவில்லை.",
-        "Stable releases are checked against the app package, version, SHA-256 and installed signing certificate. Downloads stay in the app; Android shows its installer and confirmation." to "நிலையான வெளியீடுகள் பயன்பாட்டுத் தொகுப்பு, பதிப்பு, SHA-256 மற்றும் நிறுவிய கையொப்பச் சான்றிதழுடன் ஒப்பிடப்படும். பதிவிறக்கம் பயன்பாட்டிற்குள் இருக்கும்; நிறுவியையும் உறுதிப்படுத்தலையும் Android காட்டும்.",
-        "Downloading and verifying APK…" to "APK-ஐப் பதிவிறக்கி சரிபார்க்கிறது…",
-        "SHA-256, package name, newer version and signing certificate are checked before Android opens the installer." to "Android நிறுவியைத் திறப்பதற்கு முன் SHA-256, தொகுப்புப் பெயர், புதிய பதிப்பு மற்றும் கையொப்பச் சான்றிதழ் சரிபார்க்கப்படும்.",
-        "Android requires Install unknown apps permission for this app and its own confirmation for each install. Play Protect is not bypassed." to "இந்தப் பயன்பாட்டிற்கு ‘தெரியாத பயன்பாடுகளை நிறுவு’ அனுமதியும் ஒவ்வொரு நிறுவலுக்கும் Android உறுதிப்படுத்தலும் தேவை. Play Protect தவிர்க்கப்படாது.",
-        "Installed: %s · APK: %s MiB" to "நிறுவிய பதிப்பு: %s · APK: %s MiB",
-        "Version %s · %s MiB" to "பதிப்பு %s · %s MiB",
-        "Could not check for updates. Check your connection and try again." to "புதுப்பிப்புகளைச் சரிபார்க்க முடியவில்லை. இணைய இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
-        "The downloaded APK is verified. Android will show its installer and confirmation; this app cannot install silently or bypass Play Protect." to "பதிவிறக்கப்பட்ட APK சரிபார்க்கப்பட்டது. Android நிறுவி மற்றும் உறுதிப்படுத்தலைக் காட்டும்; இந்தப் பயன்பாடு அமைதியாக நிறுவவோ Play Protect-ஐத் தவிர்க்கவோ முடியாது.",
-        "Android needs per-app Install unknown apps access before the installer can open. Grant it in Settings only if you trust this update." to "நிறுவி திறப்பதற்கு முன் Android-இல் இந்தப் பயன்பாட்டிற்கான ‘தெரியாத பயன்பாடுகளை நிறுவு’ அனுமதி தேவை. இந்தப் புதுப்பிப்பை நம்பினால் மட்டுமே அமைப்புகளில் அனுமதி அளிக்கவும்.",
-        "Android installer opened. Confirm installation there; Android and Play Protect control the result." to "Android நிறுவி திறக்கப்பட்டது. அங்கே நிறுவலை உறுதிப்படுத்தவும்; முடிவை Android மற்றும் Play Protect தீர்மானிக்கும்.",
-        "The update could not be verified, so it will not be installed." to "புதுப்பிப்பைச் சரிபார்க்க முடியவில்லை; எனவே அது நிறுவப்படாது.",
 
         // Ramesh Radio navigation and local audio.
         "Radio" to "வானொலி",
         "News" to "செய்திகள்",
         // v1.14: "உள்ளூர் ஒலி" read as a local radio station. This tab plays the songs
         // already on the phone, so it says songs, not "local".
-        "How updates are verified" to "புதுப்பிப்புகள் எப்படிச் சரிபார்க்கப்படுகின்றன",
-        "Downloads stay in the app; Android shows its installer and confirmation." to "பதிவிறக்கம் இந்தப் பயன்பாட்டுக்குள்ளேயே இருக்கும்; நிறுவி மற்றும் உறுதிப்படுத்தலை Android காட்டும்.",
-        "Stable releases are checked against the app package, version, SHA-256 and installed signing certificate." to "நிலையான வெளியீடுகள் பயன்பாட்டுத் தொகுப்பு, பதிப்பு, SHA-256 மற்றும் நிறுவிய கையொப்பச் சான்றிதழுடன் ஒப்பிடப்படும்.",
         "Search stations, city or language" to "நிலையம், நகரம் அல்லது மொழியைத் தேடுங்கள்",
         "Try another category or clear the search box. The live directory has far more stations than the shipped list, including town and city stations." to "வேறு வகையைத் தேர்ந்தெடுக்கவும் அல்லது தேடலை அழிக்கவும். நேரடி அடைவில் ஊர் மற்றும் நகர நிலையங்கள் உட்பட மிக அதிக நிலையங்கள் உள்ளன.",
         "Today" to "இன்று",

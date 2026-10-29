@@ -28,6 +28,7 @@ import com.universalrp.pulseeq.EqViewModel
 import com.universalrp.updates.AppLanguage
 import com.universalrp.updates.AppLanguageState
 import com.universalrp.updates.AppLanguageToggle
+import com.universalrp.updates.AppStrings
 
 @Composable
 fun AboutScreen(vm: EqViewModel) {
@@ -95,7 +96,7 @@ fun AboutScreen(vm: EqViewModel) {
                 Text("App language", Modifier.weight(1f), color = TextSecondary)
                 AppLanguageToggle()
             }
-            Text("Audio processing stays on your phone. Updates open in your browser; this app does not download or install APKs.", color = TextSecondary)
+            Text(AppStrings.translate("Audio processing stays on your phone. Selected audio is not uploaded."), color = TextSecondary)
             com.universalrp.updates.BrowserReleaseUpdates("PulseEQ")
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {

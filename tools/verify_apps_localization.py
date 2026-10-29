@@ -751,7 +751,7 @@ def verify_about_links() -> None:
         "universalrp2003@gmail.com",
         "Arena.ai Agent Mode",
         "Project development",
-        'AppUpdates.Control("Oor-Arivippu")',
+        'BrowserReleaseUpdates("Oor-Arivippu")',
         'AppUpdates.Control("Oor-Arivippu", automatic = true)',
     ):
         if required not in oor_about_text:

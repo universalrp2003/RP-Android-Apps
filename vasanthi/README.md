@@ -63,4 +63,4 @@ python3 tools/verify_vasanthi_sound_labels.py
 
 Version 1.1.3 persists saved audio-stream volumes so the next launch can restore them after process death. It has no independently verified physical-device test; see the current release notes for limitations.
 
-Version 1.1.4 adds verified update controls to About and system-Back handling to the shared guide. No physical-device test of this exact build was performed in this session.
+Version 1.1.4 includes an About link to official releases. The current working tree adds a daily foreground metadata notice that opens the official website; the app does not download or install update APKs. No physical-device test of this exact build was performed in this session.

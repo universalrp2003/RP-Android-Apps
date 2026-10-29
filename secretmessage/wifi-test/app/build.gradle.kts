@@ -17,8 +17,8 @@ val productDir = rootDir.resolve("../product")
 // Share only the audited read-only update handoff sources; never compile voice/other apps.
 val generateStoreHandoff by tasks.registering(Copy::class) {
     from(rootDir.resolve("../../shared/src/main/java/com/universalrp/updates"))
-    include("AppUpdates.kt", "AppLanguage.kt", "SisterApps.kt", "StoreFirstUpdateNotice.kt",
-        "StoreUpdateRouter.kt", "OfficialReleaseVersion.kt", "UpdateReminderPolicy.kt", "ReleaseRepositorySources.kt")
+    include("AppUpdates.kt", "AppLanguage.kt", "SisterApps.kt", "DailyWebsiteUpdateNotice.kt",
+        "BrowserReleaseUpdates.kt", "StoreUpdateRouter.kt", "OfficialReleaseVersion.kt", "UpdateReminderPolicy.kt", "ReleaseRepositorySources.kt")
     into(layout.buildDirectory.dir("generated/store-handoff/com/universalrp/updates"))
 }
 

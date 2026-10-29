@@ -14,8 +14,7 @@
 
     <!-- Updates open official releases in the browser; no package-install capability. -->
 
-    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
-    <application
+        <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"

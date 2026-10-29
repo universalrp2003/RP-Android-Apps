@@ -8,13 +8,10 @@ plugins {
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
 
 android {
-    // shared/ is a plain source tree, not a Gradle module, so each app picks up the packages it
-    // needs by path. This app declares no INTERNET permission, so it takes only the two packages
-    // that make no network call: the anti-spoof finance parser, and the bilingual UI/update
-    // plumbing. The voice and weather engines in shared/ speak over a web socket and would drag
-    // okhttp into an app that cannot open a socket - dead weight in the APK, and a dependency that
-    // contradicts the app's whole promise. Nothing is deleted: the seven apps that do hold the
-    // permission still compile all of shared/.
+    // shared/ is a plain source tree, not a Gradle module, so this app includes only the finance
+    // parser and update/UI packages it needs. INTERNET is used only by the once-daily foreground
+    // public release-metadata check; SMS and ledger content are not uploaded. Keep unrelated voice,
+    // weather and network engines out of this app's source set.
     sourceSets.getByName("main").java.srcDir(
         rootProject.file("shared/src/main/java/com/universalrp/smsguard/engine"),
     )

@@ -4,9 +4,8 @@
     <!--
       To list the phone's installed apps, a launcher must be able to see them. On Android 11+ that
       needs the QUERY_ALL_PACKAGES permission, which Google Play restricts to launchers - which is
-      exactly what this is. It is declared rather than worked around with <queries>
-        <package android:name="com.universalrp.tamilanstore" />, because a
-      launcher that can only see the apps it was told about in advance is not a launcher.
+      exactly what this is. Installed-app visibility is required for the launcher to list the apps
+      the owner chooses to place on its home screen.
     -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission"

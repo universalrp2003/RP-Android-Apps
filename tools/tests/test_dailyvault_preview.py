@@ -4,9 +4,15 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 BASE = ROOT / 'dailyvault/src/main/java/com/universalrp/dailyvault'
 class DailyVaultPreviewTest(unittest.TestCase):
-    def test_no_network_or_sensitive_permissions(self):
+    def test_only_metadata_update_network_is_added_no_sensitive_permissions(self):
         root = ET.parse(ROOT / 'dailyvault/src/main/AndroidManifest.xml').getroot()
-        self.assertEqual([e.attrib['{http://schemas.android.com/apk/res/android}name'] for e in root.findall('uses-permission')], ['android.permission.USE_BIOMETRIC'])
+        permissions = {e.attrib['{http://schemas.android.com/apk/res/android}name'] for e in root.findall('uses-permission')}
+        self.assertEqual(permissions, {'android.permission.INTERNET', 'android.permission.USE_BIOMETRIC'})
+        main = (BASE / 'MainActivity.kt').read_text()
+        self.assertIn('DailyWebsiteUpdateNotice("dailyvault", tamil)', main)
+        notice = (ROOT / 'shared/src/main/java/com/universalrp/updates/DailyWebsiteUpdateNotice.kt').read_text()
+        self.assertIn('does not download or install APKs', notice)
+        self.assertIn('catalog-v2.json', notice)
         ns='{http://schemas.android.com/apk/res/android}'
         self.assertEqual(root.find('application').attrib[ns+'allowBackup'], 'false')
     def test_portable_authenticated_encryption(self):

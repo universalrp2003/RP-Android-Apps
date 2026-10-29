@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
         VasanthiState.attach(this)
         setContent {
             MaterialTheme(colorScheme = VasanthiColours) {
+                com.universalrp.updates.AppUpdates.Control("Vasanthi-AI", automatic = true)
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     VasanthiScreen()
                 }
@@ -442,7 +443,7 @@ private fun VasanthiScreen() {
                         Text(tr("வழிகாட்டி", "Guide"), fontSize = 13.sp)
                     }
                     Text(tr("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
-                    AppUpdates.Control(prefix = "Vasanthi-AI")
+                    com.universalrp.updates.BrowserReleaseUpdates(prefix = "Vasanthi-AI")
                     Spacer(Modifier.height(10.dp))
                     Text(
                         text = tr("இது செய்யாதது", "What it does not do"),

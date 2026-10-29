@@ -55,6 +55,7 @@ internal fun WifiTestApp(
     onSettingsClosed: () -> Unit,
 ) {
     val connection by session.connection.collectAsStateWithLifecycle()
+    AppUpdates.Control("Secret-Message", automatic = true)
     val contacts by contactBook.contacts.collectAsStateWithLifecycle()
     val ring by Rings.pending.collectAsStateWithLifecycle()
     val doorbell by Doorbell.link.collectAsStateWithLifecycle()
@@ -193,12 +194,6 @@ internal fun WifiTestApp(
                             onOpenSettings = { showSettings = true },
                             onOpenGuide = { showGuide = true },
                         )
-                        // As in Oor Arivippu: a verified update found at launch is offered once. The
-                        // check runs on the first start screen of this app start only.
-                        if (connection is ConnectionState.Idle && LaunchUpdateCheck.pending) {
-                            AppUpdates.Control("Secret-Message", automatic = true)
-                            DisposableEffect(Unit) { onDispose { LaunchUpdateCheck.pending = false } }
-                        }
                     }
                 }
                 // A remembered phone is calling: ask on top of the start screen or Settings, also
@@ -219,9 +214,3 @@ internal fun WifiTestApp(
 }
 
 private const val PRESENCE_REFRESH_MILLIS = 45_000L
-
-/** The launch update check runs until the first start screen of this app start goes away. */
-private object LaunchUpdateCheck {
-    @Volatile
-    var pending = true
-}

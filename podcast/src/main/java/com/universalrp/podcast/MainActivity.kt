@@ -108,6 +108,7 @@ class MainActivity : ComponentActivity() {
         com.universalrp.updates.AppLanguageState.initialize(this)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(primary = Accent, onPrimary = Bg, background = Bg, onBackground = Color.White, surface = CardBg, onSurface = Color.White, onSurfaceVariant = Muted)) {
+                com.universalrp.updates.AppUpdates.Control("Tamil-Podcast-Player", automatic = true)
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
                     PodcastScreen()
                 }

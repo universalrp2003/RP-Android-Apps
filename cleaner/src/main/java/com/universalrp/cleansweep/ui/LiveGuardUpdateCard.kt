@@ -2,15 +2,10 @@ package com.universalrp.cleansweep.ui
 
 import androidx.compose.runtime.Composable
 import com.universalrp.cleansweep.data.Lang
-import com.universalrp.updates.StoreFirstUpdateNotice
+import com.universalrp.updates.BrowserReleaseUpdates
 
-/** Preserve existing Home/About call sites without any local APK installer. */
+/** Explicit About-page handoff to the official website; no in-app APK handling. */
 @Composable
 fun LiveGuardUpdateCard(compact: Boolean = false) {
-    StoreFirstUpdateNotice("liveguard", Lang.isTamil)
-}
-
-@Composable
-fun LiveGuardUpdatePrompt() {
-    StoreFirstUpdateNotice("liveguard", Lang.isTamil, showControls = false)
+    BrowserReleaseUpdates("CleanSweep", tamil = Lang.isTamil)
 }

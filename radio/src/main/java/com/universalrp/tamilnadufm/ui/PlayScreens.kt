@@ -939,7 +939,7 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         item {
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                    com.universalrp.updates.AppUpdates.Control("Ramesh-Radio")
+                    com.universalrp.updates.BrowserReleaseUpdates("Ramesh-Radio")
                 }
             }
         }

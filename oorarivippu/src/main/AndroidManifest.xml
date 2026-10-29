@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- The updater may hand a verified APK to Android's installer; installation is never silent. -->
+    <!-- Internet is also used by the shared metadata-only update check; updates open in the browser. -->
 
     <!-- Tracking is started by the user from the visible activity and continues
          as a location foreground service with an ongoing notification. -->
@@ -18,7 +18,6 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
-        <package android:name="com.universalrp.tamilanstore" />
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>
