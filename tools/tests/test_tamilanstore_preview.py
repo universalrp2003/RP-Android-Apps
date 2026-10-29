@@ -61,6 +61,8 @@ class TamilanStorePreviewTest(unittest.TestCase):
         text = (ROOT / '.github/workflows/tamilanstore-preview.yml').read_text()
         self.assertIn('contents: read', text)
         self.assertIn(':tamilanstore:testDebugUnitTest', text)
+        self.assertIn('Surface bounded Gradle diagnostics', text)
+        self.assertIn('::error title=Tamilan Store preview::', text)
         self.assertNotIn('gh release', text)
         self.assertNotIn('contents: write', text)
 

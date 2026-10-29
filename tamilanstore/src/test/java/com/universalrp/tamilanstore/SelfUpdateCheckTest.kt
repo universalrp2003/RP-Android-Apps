@@ -26,7 +26,9 @@ class SelfUpdateCheckTest {
             .put(release("tamilan-store-v0.10"))
             .put(release("tamilan-store-v0.99", draft = true))
 
-        val candidates = firstPage.parseStoreCandidates() + secondPage.parseStoreCandidates()
+        val candidates = with(SelfUpdateCheck) {
+            firstPage.parseStoreCandidates() + secondPage.parseStoreCandidates()
+        }
         assertEquals("0.10", SelfUpdateCheck.newest(candidates)?.first)
         assertEquals(
             "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.10",
@@ -41,7 +43,8 @@ class SelfUpdateCheckTest {
             .put(release("tamilan-store-v7.0", assetName = "Tamilan-Store-v6.9.apk"))
             .put(release("tamilan-store-v6.0"))
 
-        assertEquals(listOf("6.0"), page.parseStoreCandidates().map { it.first })
+        val candidates = with(SelfUpdateCheck) { page.parseStoreCandidates() }
+        assertEquals(listOf("6.0"), candidates.map { it.first })
     }
 
     @Test fun versionOrderingIsNumericAndIgnoresOverflowingTags() {
