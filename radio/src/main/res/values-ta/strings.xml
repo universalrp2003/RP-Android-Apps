@@ -1,5 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">தமிழன் வானொலி</string>
+    <string name="notification_channel_name">இப்போது ஒலிக்கிறது</string>
+    <string name="notification_channel_description">பின்னணியில் ஒலிக்கும் நிலையைக் காட்டும்</string>
     <string name="widget_description">தமிழன் வானொலி: ஒலிக்கும் நிலையைக் காணவும் முகப்புத் திரையிலிருந்து கட்டுப்படுத்தவும்</string>
+    <string name="widget_play_pause">இயக்கு அல்லது இடைநிறுத்து</string>
+    <string name="widget_next">அடுத்த நிலையம்</string>
+    <string name="widget_previous">முந்தைய நிலையம்</string>
+    <string name="widget_tap_to_play">கேட்க இயக்கு என்பதைத் தொடவும்</string>
+    <string name="widget_status_playing">ஒலிக்கிறது • செயலியைத் திறக்கத் தொடவும்</string>
+    <string name="widget_status_paused">இடைநிறுத்தப்பட்டது • தொடர இயக்கு என்பதைத் தொடவும்</string>
+    <string name="widget_status_idle">செயலியில் நிலையத்தைத் தேர்ந்தெடுக்கவும்</string>
 </resources>
