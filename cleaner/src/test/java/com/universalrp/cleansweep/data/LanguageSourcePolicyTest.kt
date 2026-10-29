@@ -43,19 +43,10 @@ class LanguageSourcePolicyTest {
         assertFalse(LanguageSourcePolicy.requiresRebuild(AppLang.EN, AppLang.EN))
     }
 
-    /**
-     * The owner reported "Verified in-app download; Android confirms installation." as a
-     * *missing* Tamil pair. It is not missing — it has been in the catalog since the update
-     * card shipped. That line stayed English in the Tamil UI because the card observes no
-     * state, so Compose skipped it on a toggle and it kept text composed against the old
-     * authority. Asserting the pair exists keeps the real diagnosis on the record and stops a
-     * duplicate key (which would fail the localization gate) from being "added" again.
-     */
-    @Test fun theCardsReportedAsEnglishAlreadyHaveTamilPairs() {
+    /** Live UI labels must keep their Tamil pairs; retired updater copy is intentionally absent. */
+    @Test fun liveLabelsHaveTamilPairs() {
         val keys = Lang.translatedKeys()
         for (key in listOf(
-            "Verified in-app download; Android confirms installation.",
-            "App updates",
             "Reviewed feature setup",
             "Live Guard readings",
             "Estimated phone age",
