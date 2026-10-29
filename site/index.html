@@ -351,6 +351,17 @@
     .btn-primary { background: var(--accent); color: var(--accent-dark); }
     .btn-zip { background: var(--zip-bg); color: var(--zip-dark); }
     .btn-outline { border: 1px solid var(--surface-border); background: var(--surface); color: var(--accent); }
+    .migration-notice {
+      background: rgba(251, 191, 36, 0.11);
+      border: 1px solid rgba(251, 191, 36, 0.55);
+      border-left: 5px solid var(--amber);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin: 0 0 22px;
+    }
+    .migration-notice h2 { color: var(--amber); font-size: 1.08rem; margin-bottom: 8px; }
+    .migration-notice p + p { margin-top: 9px; }
+    .migration-notice a { color: var(--accent); }
     .latest {
       background: var(--surface);
       border: 1px solid var(--surface-border);
@@ -596,7 +607,12 @@
     </header>
 
     <main>
-
+      <section class="migration-notice" aria-labelledby="migration-warning-title" role="note">
+        <h2 id="migration-warning-title">கையொப்ப மாற்ற எச்சரிக்கை / Fresh-install signing change</h2>
+        <p><strong>Do not uninstall your working apps yet.</strong> For apps in this signing migration (Secret Message is excluded), replacement-key APKs will not update copies installed with the old key. When a replacement version is listed here, first download it from this official website and export or back up anything important. Then uninstall the old app and install the replacement through Android. Uninstalling may erase local data. If Play Protect shows a warning, stop—do not bypass it.</p>
+        <p class="ta"><strong>இப்போது இயங்கும் செயலிகளை நீக்க வேண்டாம்.</strong> இந்தக் கையொப்ப மாற்றத்தில் உள்ள செயலிகளுக்கு (Secret Message தவிர), புதிய திறவுகோலுடன் வரும் APK பழைய கையொப்பச் செயலியை மேம்படுத்தாது. புதிய பதிப்பு இங்கே வெளியான பிறகு, முதலில் இந்த அதிகாரப்பூர்வ இணையதளத்திலிருந்து பதிவிறக்கி, முக்கியத் தகவல்களை ஏற்றுமதி அல்லது காப்புப்பிரதி எடுக்கவும். பின்னர் பழைய செயலியை நீக்கி, Android வழியாக புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம்.</p>
+        <p><a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">Migration details and release status</a>.</p>
+      </section>
 
       <section class="latest" aria-label="Latest releases">
         <h2>🆕 Latest release of every app · ஒவ்வொரு செயலியின் சமீபத்திய வெளியீடு</h2>
@@ -706,8 +722,8 @@
           <div class="card-top">
             <div class="card-header"><h2>தமிழன் · Tamilan Store</h2><span class="ver">v0.5 · Android8.0+</span></div>
             <p class="tagline">Our optional first-party app store. No account or ads. Downloads are checked before Android asks for installation.</p><p class="ta-note">நமது செயலிகளுக்கான விருப்ப அங்காடி. கணக்கும் விளம்பரமும் இல்லை. சரிபார்த்த பின்னர் நிறுவ ஆண்ட்ராய்டு ஒப்புதல் கேட்கும்.</p>
-            <p>Existing public version; owner-reported phone acceptance is not security certification. Newer prepared builds remain unpublished pending signing review.</p>
-            <p class="ta-note">இது ஏற்கெனவே வெளியான பதிப்பு. புதிய சோதனைப் பதிப்புகள் கையொப்ப ஆய்வு முடியும் வரை வெளியிடப்படவில்லை.</p>
+            <p>This is the existing public APK. Replacement-key releases are being prepared; do not uninstall until a new version is listed and important data is backed up.</p>
+            <p class="ta-note">இது ஏற்கெனவே வெளியான APK. புதிய கையொப்பப் பதிப்பு தயாராகிறது; புதிய பதிப்பு இங்கே வரும் வரை நீக்க வேண்டாம். முக்கியத் தரவை முதலில் காப்புப்பிரதி எடுக்கவும்.</p>
             <p>Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
             <details class="trust"><summary>File integrity / கோப்பு அடையாளம்</summary><div class="body"><p>SHA-256: d5f41e7b5142507e8b42fb9d2c4e0e2d492eaf03581a53b3dabacf692daf4bc7</p><p>File integrity is not security clearance. Do not bypass device warnings or uninstall working apps.</p></div></details>
             <div class="dl-status" id="st-tamilanstore"></div>
@@ -718,8 +734,8 @@
           <div class="card-top">
             <div class="card-header"><h2>தினக்கணக்கு · DailyVault</h2><span class="ver">v0.3 · Android8.0+</span></div>
             <p class="tagline">On-device spending and private notes with totals, optional app lock, and password-required encrypted portable backups. Internet is used only for release metadata when opened.</p><p class="ta-note">செலவுகளும் தனிக் குறிப்புகளும் போனிலேயே இருக்கும். திறக்கும்போது பதிப்பு விவரம் மட்டும் சரிபார்க்கப்படும்; மொத்தம், விருப்பப் பூட்டு, கடவுச்சொல் மறையாக்கக் காப்பு உள்ளன.</p>
-            <p>Existing public version; owner-reported phone acceptance is not security certification. Newer prepared builds remain unpublished pending signing review.</p>
-            <p class="ta-note">இது ஏற்கெனவே வெளியான பதிப்பு. புதிய சோதனைப் பதிப்புகள் கையொப்ப ஆய்வு முடியும் வரை வெளியிடப்படவில்லை.</p>
+            <p>This is the existing public APK. Replacement-key releases are being prepared; do not uninstall until a new version is listed and important data is backed up.</p>
+            <p class="ta-note">இது ஏற்கெனவே வெளியான APK. புதிய கையொப்பப் பதிப்பு தயாராகிறது; புதிய பதிப்பு இங்கே வரும் வரை நீக்க வேண்டாம். முக்கியத் தரவை முதலில் காப்புப்பிரதி எடுக்கவும்.</p>
             <p>Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
             <details class="trust"><summary>File integrity / கோப்பு அடையாளம்</summary><div class="body"><p>SHA-256: aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd</p><p>File integrity is not security clearance. Do not bypass device warnings or uninstall working apps.</p></div></details>
             <div class="dl-status" id="st-dailyvault"></div>
@@ -1627,8 +1643,8 @@
       </section>
 
       <details class="trust release-status" id="signing-limitation">
-        <summary>கையொப்ப வரம்பு / Signing limitation — new APK releases paused</summary>
-        <div class="body"><p>The legacy CI signing material is public. A matching certificate alone is not proof of first-party origin. Use only canonical official download links and matching file hashes; these are not security clearance. New main-key APK releases are paused pending a data-preserving signing review. Do not bypass device warnings or uninstall working apps. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/signing-key-exposure-2026-10-28.md">Finding, mitigations and limits</a>.</p><p class="ta">பழைய பொதுக் கையொப்பத்தின் தனிச்சாவிப் பொருள் பொதுவெளியில் உள்ளது. கையொப்பம் பொருந்துவது மட்டும் முதல் தரப்பு மூலத்தை உறுதிப்படுத்தாது. அதிகாரப்பூர்வ இணைப்புகளையும் கோப்பின் கணிதச் சுருக்கத்தையும் சரிபார்க்கவும். புதிய வெளியீடுகள் தரவைப் பாதுகாக்கும் கையொப்ப ஆய்வுக்காக நிறுத்தப்பட்டுள்ளன. பாதுகாப்பு எச்சரிக்கையைத் தவிர்க்கவோ இயங்கும் செயலிகளை நீக்கவோ வேண்டாம்.</p></div>
+        <summary>புதிய கையொப்ப மாற்றம் / Fresh-install signing migration</summary>
+        <div class="body"><p>The legacy signing key was exposed, so new releases use a separate, privately backed-up key. Its certificate fingerprint is pinned and verified in CI; that is not Play Protect clearance. Existing installations cannot update across the signing change. Download the new APK from this official website first, back up/export anything important, then uninstall the old app and install the new one through Android. Uninstalling may erase local data. Stop if Play Protect warns; never bypass it. Tamilan Store updater behavior is unchanged. Secret Message keeps its separate signing identity and is not part of this migration. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">Migration details and verification</a>.</p><p class="ta">பழைய கையொப்பத் திறவுகோல் பொதுவெளியில் இருந்ததால், புதிய வெளியீடுகள் தனியாகக் காப்புப்பிரதி செய்யப்பட்ட திறவுகோலில் கையொப்பமிடப்படுகின்றன. அதன் சான்றிதழ் கைரேகை CI-யில் சரிபார்க்கப்படுகிறது; இது Play Protect ஒப்புதல் அல்ல. பழைய நிறுவல்களைப் புதிய கையொப்பத்தில் நேரடியாகப் புதுப்பிக்க முடியாது. முதலில் இந்த அதிகாரப்பூர்வ இணையதளத்திலிருந்து APK-ஐப் பதிவிறக்கி, முக்கியத் தகவலை ஏற்றுமதி அல்லது காப்புப்பிரதி செய்து, பின்னர் பழைய செயலியை நீக்கி Android வழியாகப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம். தமிழன் அங்காடியின் புதுப்பிப்பு நடத்தை மாற்றப்படவில்லை. Secret Message தனிக் கையொப்பத்தைத் தொடர்கிறது; இந்த மாற்றத்தில் இல்லை. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">மாற்றம் மற்றும் சரிபார்ப்பு விவரங்கள்</a>.</p></div>
       </details>
 
       <!-- Secondary evidence stays available without crowding downloads. -->

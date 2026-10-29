@@ -1,8 +1,14 @@
 # Build and release guide — RP Ideas
 
-This guide covers all seven **RP Ideas** Android apps hosted at [`universalrp2003/RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps) and [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/): the four batch modules (`cleaner` / Live Guard, `radio` / Ramesh Radio, `equalizer` / PulseEQ, `vocalremover` / RP Vocal Remover Studio) plus the three standalone workflow apps (`smsguard` / SMS Guard, `oorarivippu` / Oor Arivippu, and `secretmessage/wifi-test` / Secret Message). GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
+This guide covers the thirteen **non-Store** RP Ideas products plus the separate Tamilan Store hosted at [`universalrp2003/RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps) and the official website [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/). The four legacy modules are `cleaner` / Live Guard, `radio` / Ramesh Radio, `equalizer` / PulseEQ, and `vocalremover` / RP Vocal Remover Studio. Other Android apps keep their own release workflows. Secret Message retains its separate signing identity. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
-## Publishing a single app (from 20 October 2026)
+## Fresh-install signing migration — owner decision, 29 October 2026
+
+The exposed legacy signing key is retired. New eligible main-key APKs must use the pinned owner-backed replacement through the secret-backed CI helper; never restore or publish with the old key. The owner selected a fresh-install migration: Android will not update old-key installations with replacement-key APKs, and uninstalling may erase local data. Keep the bilingual official-site warning visible before new APK links go live, and put the uninstall/data-loss warning in each release note. Tell users to download the official replacement first, export/back up important data, uninstall the old app, then install using Android; stop if Play Protect warns. Do not claim Play Protect clearance.
+
+PR #57 merged and the main signed build/candidate checks passed, but no replacement-key production APK has been published yet. Each app still needs its own version/tag collision check and passing workflow gates. Never overwrite a public same-version asset. Keep Tamilan Store updater code unchanged; Secret Message is outside this signer rotation. Operating details and fingerprint are in [`docs/fresh-install-signing-migration.md`](docs/fresh-install-signing-migration.md).
+
+## Publishing one app at a time (current procedure, 29 October 2026)
 
 ### The Live Guard permission gate applies only to Live Guard publishes
 
@@ -12,28 +18,29 @@ a publish of Ramesh Radio 1.14 compared Live Guard against its own latest tag, c
 previous manifest, failed closed and published nothing. Do not answer a failure like that by
 removing the gate or weakening the fail-closed comparison — scope it to the app being published.
 
-The four apps no longer have to move together. The publish step lists the four current versions,
-skips any whose release tag is already public, and publishes only the rest — so a Live Guard fix
-does **not** create an update notice on PulseEQ or Vocal Remover. Consequences:
+Each release dispatch selects exactly one app. The four-app `Build APK` workflow still runs its
+full candidate build and regression suite, but its publication step filters to the selected module;
+Live Guard's permission/device-evidence gate runs only when Live Guard is selected. The Tamilan
+Store/DailyVault workflow also accepts one app per dispatch, and every other app has its own
+standalone workflow. For all workflows, `publish` defaults to **false**; first run candidate-only,
+then dispatch the same app with publication enabled only after its own checks pass.
 
-- Bump `versionName` / `versionCode` **only** in the module you changed, and add
-  `releases/<tag>.md` for that app only.
-- If every bundled version is already public the step prints *"Nothing to publish"* and succeeds
-  instead of failing the run.
-- A published version is still never overwritten: changing an app's bytes without raising its
-  version leaves it skipped, which is the intended safe behaviour.
-- `releases/latest-tag.txt` is only rewritten when Live Guard itself was published, because it is
-  the baseline for the next permission delta.
+- Bump `versionName` / `versionCode` only for the app that changed and add that app's
+  `releases/<tag>.md` note.
+- Check that app's release tag does not exist before publication; never replace an existing
+  same-version release or asset.
+- `releases/latest-tag.txt` advances only when Live Guard itself is published; it is the baseline
+  for the next permission delta.
 
 ## What triggers the Build APK and website workflows
 
 Both `Build APK` (`.github/workflows/build-apk.yml`) and `Deploy Official Website to GitHub Pages` (`.github/workflows/pages.yml`) ignore the same documentation-only paths, so a commit that touches only `README.md`, `CHANGELOG.md`, `PUBLISHING.md`, `docs/published-release-digests.md` or a `releases/*.md` release note produces **no build run and no site redeploy** — there is nothing to build, nothing to publish and nothing to redeploy. Editing one of those files and seeing no run is the expected behaviour, not a broken pipeline.
 
-Publishing is unaffected. A real publish always bumps a `versionCode` in `<module>/build.gradle.kts` (`cleaner`, `radio`, `equalizer`, `vocalremover`), which is never one of the ignored paths, so the build still runs for app source, gradle files and tests, and for all three publish triggers: a `[publish]` marker in the head commit message on an `arena/**` branch, `workflow_dispatch` with publish/mirror enabled, or a `v*` tag push. A new release also changes a gradle file, so the site redeploys and mirrors the new APK.
+Publication is an explicit manual workflow dispatch, not a push-marker or tag-triggered batch. `Build APK` requires a single app choice and defaults to candidate-only mode; the Tamilan Store/DailyVault workflow likewise requires one app choice. Standalone app workflows must also be dispatched for the selected app with `publish=false` for candidate verification, then `publish=true` only after readiness gates pass. A new release changes the relevant Gradle version file; the official Pages mirror is refreshed only after the public release asset's tag, size and SHA-256 have been verified and the site change is on `main`.
 
 `releases/latest-tag.txt` is deliberately **not** ignored: the Live Guard permission-delta gate reads it as the previous-release baseline, so changing it still triggers a run. `site/**` is of course never ignored — it is the site's own content.
 
-## Latest publication — SMS Guard 1.1.7 / code 13 (25 October 2026)
+## Historical publication — SMS Guard 1.1.7 / code 13 (25 October 2026)
 
 | App | Gradle module | Version / code | Tag | Asset |
 | --- | --- | --- | --- | --- |
@@ -49,7 +56,7 @@ the owner's phone). The figures, the month clamp, the projection rule and OTP si
 `0` new permissions over `1.1.6`. The exact candidate bytes were **not installed on a phone**
 before publication, so no device test is claimed for them.
 
-## Latest publication — Voice overhaul follow-ups: Live Guard 2.72, Ramesh Radio 1.25, SMS Guard 1.1.6 and Oor Arivippu 1.1.9 (25 October 2026)
+## Historical publication — Voice overhaul follow-ups: Live Guard 2.72, Ramesh Radio 1.25, SMS Guard 1.1.6 and Oor Arivippu 1.1.9 (25 October 2026)
 
 | App | Gradle module | Version / code | Release tag | APK |
 |---|---|---:|---|---|
@@ -187,10 +194,10 @@ Local commands (JDK 17, Android SDK and NDK required):
 
 1. Update the relevant module's `versionName` and `versionCode`; do not reuse a release version for changed APK bytes.
 2. Update that app's notes in `releases/` and `CHANGELOG.md`, and refresh its current-version link in the root `README.md` table. State plainly whether those exact APK bytes were installed on a phone; never turn a CI pass into a device-test claim.
-3. Push the verified changes to the authorized branch. For a normal batch publication, the workflow's branch trigger requires `[publish]` in the commit message. The 14 October release batch used this push path (run [38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254)); the workflow creates the four version-specific app release tags from the Gradle versions. A manual batch tag such as `v2026.10.14` is only a workflow input, not an additional app-release tag.
-4. The workflow fails closed unless `universalrp2003/RP-Android-Apps` is public, initialized, unarchived and reachable. Before publishing, configure the source repository Actions secret `RP_ANDROID_APPS_RELEASE_TOKEN` with `contents:write` access limited to `RP-Android-Apps`; never paste the credential into chat. If it is absent or invalid, the release step fails before creating any draft, so installed clients do not receive a bridge release before the new source is seeded.
-5. **One-time bridge seeding (completed):** the earlier bridge releases were already mirrored by publication run [38521705254](https://github.com/universalrp2003/InternetRadio/actions/runs/38521705254). Do not rerun `mirror_existing=true` for tags that now exist; the workflow intentionally refuses to overwrite a target tag. For a future migration-only mirror, verify that the target tags are new and run the workflow's mirror path only with owner authorization.
-6. Wait for all build, regression, permission, package, signer and asset checks to pass. The workflow stages the four releases as drafts, verifies size and SHA-256 on every configured destination, promotes only after draft checks, and verifies public URLs and asset digests again.
+3. Push the verified source to the authorized branch, then dispatch the workflow for exactly one app. For `Build APK`, choose `cleaner`, `radio`, `equalizer` or `vocalremover`; for Tamilan Store/DailyVault, choose one of those two. Keep `publish=false` for candidate verification. Only after that app's checks pass, dispatch again with the same app and `publish=true`. Do not use old `[publish]` batch commit markers.
+4. The same-repository workflows publish with their `contents: write` workflow permission; no personal token is needed. If the workflow lacks permission or cannot reach the public repository, it must fail before making the release public. Never paste credentials into chat.
+5. One-time bridge seeding is complete. Do not rerun migration mirroring for tags that already exist; the workflows intentionally refuse to overwrite a target tag.
+6. Wait for all source, test, lint, permission, package, version, signer, note and asset checks for the selected app. Promotion occurs only after that app's draft/candidate checks pass; the workflow then verifies the public URL and SHA-256 digest.
 7. Confirm each release is stable (not a draft or prerelease) and its canonical page contains the expected APK. Record the public asset's API-reported size and SHA-256 in [`docs/published-release-digests.md`](docs/published-release-digests.md), and update the root README's current-version table and latest-publication summary. The release workflow does not automatically rewrite the README; until this documentation change is merged into `main`, the GitHub repository homepage will continue to show its previous README.
 8. Submit the release documentation to `main` through a pull request after its checks pass, then verify the repository homepage displays the updated version table. A README update on a development branch alone does not complete this step.
 
@@ -211,6 +218,6 @@ The active store-art pipeline covers CleanSweep, Ramesh Radio and PulseEQ. F-Dro
 
 SMS Guard 1.1.9/code 15 and Voice Notes 1.2/code 3 are already public; their assets are not replaced. Public metadata size/digests and workflow links are recorded in `docs/published-release-digests.md`. The owner reports both work on their phone, with screenshots; the friend's Redmi/MIUI issue remains unconfirmed. Website mirrors pin the new digests while keeping older downloads.
 
-Radio 1.28/code 28 is authorized for public release after owner review of the compact layout. Use a subject containing both `[publish]` and `[publish-radio]`: the latter restricts the legacy release selection to Radio only so pending PulseEQ changes are NOT accidentally shipped. All existing build, signature, permission, and release verification gates remain enabled. A rebuilt radio APK is not hash-matched to the owner's installed candidate; record its verified public digest after the workflow finishes before updating stable website downloads. Do not trigger SMS Guard/Voice Notes release markers again for these already-public versions.
+The historical owner review applied to Ramesh Radio 1.28, not the replacement-key 1.29 bytes. For the current 1.29 migration release, use the one-app `radio` dispatch; the candidate note explicitly says the new-key APK was not installed on a phone. The public 1.28 asset remains untouched until a distinct 1.29 release passes its own checks. SMS Guard and Voice Notes likewise require their own one-app release workflows; never use legacy multi-app commit markers.
 
 [Three-app bilingual help, website and sister-app links](docs/three-app-help.md).

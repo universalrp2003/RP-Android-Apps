@@ -1,16 +1,18 @@
-# Owner follow-up checklist — 28 October 2026
+# Owner follow-up checklist — 28 October 2026 (historical checklist)
 
+> **Latest status (29 October 2026, supersedes the dated signing holds below):** PR #57 merged the owner-selected fresh-install signing migration. The private key is outside Git, Actions verifies the pinned replacement certificate, and main Build APK run 40838819041 plus signed-candidate runs 40838818972 and 40838819054 passed. No replacement-key production APK has been published yet. Existing installs must be uninstalled before installing a replacement and local data may be erased; the official website must display the bilingual warning before new APK links go live. Do not claim Play Protect clearance. Current operating instructions: [`fresh-install-signing-migration.md`](fresh-install-signing-migration.md).
+>
 > **Current update-flow direction (29 October 2026):** All non-Store apps now use once-daily foreground metadata checks and in-app notices, then hand off to the official website/browser. They do not self-download or install update APKs. PulseEQ, DailyVault and Expense Tracker have update-only Internet access; Tamilan Store remains separate. This supersedes earlier checklist items below that describe optional/disabled checks or unchanged self-updaters.
 
 
-## Active owner-authorized follow-up — 28 October 2026
+## Historical owner-authorized follow-up — 28 October 2026 (superseded by the 29 October migration decision)
 
 - PR53 source/site integration IS complete (main54d5955a; production Pages40682415356 SUCCESS); the older checkpoint below predates that integration.
 - Owner now authorizes distinct same-language HD alternatives instead of repeating failed Valluvar. Both actual transports recovered to Pallavi23328bytes in live run40686360024; ten deterministic failover tests passed. New suite About/project links and Store0.6/Daily0.4/SMS1.1.11/Voice1.3.3 source are tracked on arena/5b3f10e0-rp-android-apps, PR54, NOT new public APKs or accepted phone builds.
 - Website14-product directory and backwards-compatible Store catalogs are prepared, not yet a production deployment of this follow-up. See [implementation, direct evidence and remaining gates](hd-voice-recovery-and-about-2026-10-28.md).
 - The confirmed exposed-signing-identity hold remains. GitHub secrets metadata403 prevents confirming private production custody through this integration; do not infer absence or request keys/passwords in chat. No silent rotation/uninstall/data reset. Per-package older-Android continuity, security-warning classification and actual product galleries remain open; this is not an all-work-finished claim.
 
-## Current status (supersedes all dated historical instructions below)
+## Historical status snapshot — 28 October 2026 (superseded by the latest status at the top)
 
 - **Signing hold:** main CI private signing material/unlock reference is public, independently confirmed without exporting the key. Main-identity publication/mirroring now explicitly stops; removing a tracked file cannot clear the known-fingerprint hold. No key rotation, app/data deletion or old asset replacement. Data-preserving Android-version-specific signing review required: [finding and plan](signing-key-exposure-2026-10-28.md).
 - **Voice1.3.2/code6 owner acceptance remains complete** for Stop/switch/new-note visibility on the owner's device: run40668667451/artifact12808020972/source41f29c3. No independent installed-hash/universal/security certification. Exact old-artifact publication was denied GitHub403 and is now additionally held for signing review. Do not relabel later same-version rebuilds as that accepted candidate.

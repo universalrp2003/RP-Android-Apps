@@ -1,4 +1,4 @@
-# Legacy signing-key exposure — confirmed, 28 October 2026
+# Legacy signing-key exposure — confirmed 28 October 2026 (historical finding; current remediation below)
 
 ## Finding and scope
 
@@ -8,7 +8,7 @@ Treat this identity as exposed, including after deleting the current file or cha
 
 This confirmed finding concerns the main CI identity used by the legacy apps, Store, DailyVault and Voice. Secret Message uses the separate `58e370…bc04f08` identity and its own password secret; that is not evidence of general security clearance, nor a claim that this main-key audit examined its private-key custody.
 
-## Immediate safeguards implemented
+## Safeguards at the time of finding — superseded 29 October 2026
 
 - Main-identity publication/mirroring workflows now stop at an explicit known-exposed-identity gate. Build-only/unit/lint/merged-APK checks remain available. The exact old Voice1.3.2 promotion is held too, even if the GitHub403 permission issue is later addressed.
 - The hold is tied to the known fingerprint, not whether a keystore still exists at HEAD. Removing the file alone cannot silently clear the hold.
@@ -31,3 +31,11 @@ GitHub release creation also returned HTTP403 (runs40673435557/40673761435). Res
 பொதுவான களஞ்சியத்தில் தற்போதைய பொதுக் கையொப்பத்தின் தனிச்சாவிக் கோப்பும் அதைத் திறக்கும் குறிப்பும் இருப்பது உறுதியாகியுள்ளது. தனிச்சாவியை வெளியே எடுக்கவோ காட்டவோ மாற்றவோ இல்லை. கையொப்பம் பொருந்துவது மட்டும் இனி முதல் தரப்பு மூலத்தை உறுதிப்படுத்தாது. இது பாதுகாப்பு எச்சரிக்கையின் காரணம் என்பதற்கான சான்று அல்ல.
 
 புதிய பொதுச் செயலிக் கோப்பு வெளியீடுகள் நிறுத்தப்பட்டுள்ளன. நிறுவிய செயலிகள் மற்றும் தரவுகள் மாற்றப்படவில்லை. தெரிந்த பொதுவெளி அங்காடிக் கோப்பின் கணிதச் சுருக்கமும் பொருந்தினால் மட்டுமே அதற்கு இணைப்பு திறக்கும்; இல்லையெனில் அதிகாரப்பூர்வ இணையப் பக்கம் திறக்கும். பாதுகாப்பு எச்சரிக்கையைத் தவிர்க்கவோ செயலிகளை நீக்கவோ வேண்டாம். பழைய கைபேசிகளிலும் தரவு இழப்பில்லாமல் தொடரக்கூடிய கையொப்ப மாற்றத் திட்டத்தைச் சரிபார்த்த பின்னரே புதிய வெளியீடு செய்ய வேண்டும்.
+
+## Owner decision and remediation status — 29 October 2026
+
+The owner chose a **fresh-install migration** rather than keeping the exposed signer or attempting to promise Android update continuity. A replacement PKCS#12 signer was generated, its encrypted recovery backup is in the owner's private Google Drive, and the private values are stored in repository Actions secrets. The public checkout has no private key; CI materializes the signer ephemerally and verifies SHA-256 fingerprint `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d` before it can sign. The implementation was merged in [PR #57](https://github.com/universalrp2003/RP-Android-Apps/pull/57).
+
+Main-branch CI now passes a full candidate build and signature verification ([run 40838819041](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40838819041)); candidate workflows for SMS Guard and launcher/podcast/Vasanthi/PulseEQ passed too. This verifies CI setup, not device installation, update continuity, Play Protect or Google's review. No new-key production APK has been published yet.
+
+The owner accepts the fresh-install impact: a differently signed APK cannot update the old installation. Users must first obtain the official replacement APK, export or back up anything important, uninstall the old app, and install the replacement through Android. Uninstalling may erase local data. The official website must show that bilingual warning before replacement APK links go live. Do not direct users to uninstall early, overwrite old tags/assets, bypass device warnings, or claim that this migration clears a Play Protect classification. Tamilan Store's updater implementation remains unchanged; Secret Message's separate signer is outside this rotation. See [`fresh-install-signing-migration.md`](fresh-install-signing-migration.md) for current operating instructions.

@@ -39,7 +39,7 @@ on:
       publish:
         description: "Publish the verified APK after the build (switch off to build a candidate only)"
         required: false
-        default: true
+        default: false
         type: boolean
 
 permissions:

@@ -704,17 +704,17 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.11"',
-            'tagPrefix = "live-guard"', 'version = "2.73"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.28"',
+            'tagPrefix = "live-guard"', 'version = "2.74"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.29"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
-            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
+            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.10"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
-            'tagPrefix = "expense-tracker"', 'version = "1.1"',
+            'tagPrefix = "expense-tracker"', 'version = "1.2"',
             'tagPrefix = "voice-notes"', 'version = "1.3.3"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.5"',
             'tagPrefix = "tamil-podcast"', 'version = "1.6"',
-            'tagPrefix = "elderly-launcher"', 'version = "1.4"',
+            'tagPrefix = "elderly-launcher"', 'version = "1.5"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]

@@ -1,11 +1,19 @@
-# DailyVault 0.4 — prepared, not published
+# DailyVault 0.4 — fresh-install signing migration
 
-Distinct candidate version; not installed on a phone. New publication remains blocked by confirmed exposed legacy signing material; a reviewed private-custody/data-preserving migration is required. No existing release asset is replaced.
+**Version:** 0.4 · **versionCode:** 4 · **Package:** unchanged.
 
-About/Guide credits identify Rameshprathap R / RP Ideas and software assistance from Arena.ai Agent Mode, with official website/GitHub/Store links. Voice-enabled apps try distinct same-language neural voices within one total deadline; legacy Valluvar selection maps to another HD voice. Region or gender can differ during recovery; saved preferences are not rewritten. No new device TTS fallback. Owner-accepted Voice1.3.2 remains separate historical evidence, not acceptance of this candidate.
+This release carries the prepared DailyVault 0.4 app source: on-device spending records and private notes, summaries, optional app lock, and encrypted portable backups. Network access is limited to read-only release metadata checks. The Android signing identity changes because the former key was exposed.
+
+**Install warning:** Android cannot update an old-key installation with this APK. Before installing, export or back up anything important, download this official APK, uninstall the old DailyVault, and install the replacement through Android. Uninstalling may erase local data. Do not uninstall before obtaining the APK. Stop if Play Protect warns; do not bypass it.
+
+This exact replacement-key APK was not installed on a phone. CI verification is not a device test, Play Protect clearance or an independent security review. The previous 0.3 release and asset remain unchanged.
 
 ## தமிழ்
 
-இது தயாரிக்கப்பட்ட தனித்த சோதனைப் பதிப்பு; பொதுவெளியில் இன்னும் வெளியிடப்படவில்லை. வெளிப்பட்ட பழைய கையொப்பத் தனிச்சாவிக்குப் பதிலான பாதுகாப்பான நடைமுறையும் தரவு இழப்பில்லாத மாற்றமும் சரிபார்க்கப்பட வேண்டும். பழைய வெளியீட்டுக் கோப்புகள் மாற்றப்படவில்லை.
+**பதிப்பு:** 0.4 · **versionCode:** 4 · **செயலி அடையாளம்:** மாற்றமில்லை.
 
-உதவி மற்றும் செயலி விவரத்தில் உருவாக்குநரும் மென்பொருள் உதவிப் பங்களிப்பும் அதிகாரப்பூர்வ இணைப்புகளும் உள்ளன. இணையக் குரல் உள்ள செயலிகளில் ஒரு குரல் கிடைக்காவிட்டால் அதே மொழியில் வேறொரு உயர்தரக் குரல் ஒரே கால வரம்புக்குள் முயற்சிக்கப்படும். குரலின் வட்டாரமோ ஆண் பெண் வகையோ மாறலாம்; சேமித்த விருப்பம் மாற்றப்படாது. புதிய சாதன இயந்திரக் குரல் மாற்றுவழி சேர்க்கப்படவில்லை. பழைய ஏற்றுக்கொள்ளப்பட்ட பதிப்பின் சோதனை முடிவு இந்தப் புதிய பதிப்பிற்கான ஒப்புதல் அல்ல.
+இந்தப் பதிப்பில் சாதனத்திலேயே இருக்கும் செலவுப் பதிவுகள் மற்றும் தனிக் குறிப்புகள், சுருக்கங்கள், விருப்பச் செயலிப் பூட்டு, மறையாக்கப்பட்ட காப்புப்பிரதி ஆகியவை உள்ளன. இணையம் திறக்கும்போது பதிப்பு விவரத்தை வாசிக்க மட்டுமே பயன்படுத்தப்படும். பழைய திறவுகோல் வெளிப்பட்டதால் Android கையொப்பம் மாற்றப்பட்டுள்ளது.
+
+**நிறுவும் எச்சரிக்கை:** பழைய கையொப்பத்தில் நிறுவிய செயலியை இந்த APK நேரடியாகப் புதுப்பிக்காது. முக்கியத் தகவலை ஏற்றுமதி அல்லது காப்புப்பிரதி செய்து, இந்த அதிகாரப்பூர்வ APK-ஐப் பதிவிறக்கி, பழைய DailyVault-ஐ நீக்கி Android வழியாகப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். APK கிடைக்கும் முன் நீக்க வேண்டாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம்.
+
+இந்தப் புதிய கையொப்ப APK கைபேசியில் நிறுவிச் சோதிக்கப்படவில்லை. CI சரிபார்ப்பு கைபேசி சோதனையோ, Play Protect ஒப்புதலோ, தனித்த பாதுகாப்பு ஆய்வோ அல்ல. பழைய 0.3 வெளியீடும் கோப்பும் மாற்றப்படவில்லை.
