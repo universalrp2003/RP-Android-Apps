@@ -15,6 +15,7 @@ on:
     # MLS feasibility lanes have their own test-only workflows; skip their files and workflow-only edits.
     paths-ignore:
       - "oorarivippu/**"
+      - "tamilanstore/**"
       - "smsguard/**"
       - "secretmessage/**"
       - "site/**"
@@ -36,6 +37,7 @@ on:
       - "docs/next-update-backlog.md"
       - "docs/secret-message-security-design.md"
       - "tools/tests/test_secretmessage_preview_contract.py"
+      - "tools/tests/test_tamilanstore_preview.py"
       - ".github/workflows/build-apk.yml"
       # Monitoring-only workflows/scripts cannot alter any APK bytes or app versions.
       - ".github/workflows/sms-live-probe.yml"

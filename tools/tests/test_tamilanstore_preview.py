@@ -43,6 +43,12 @@ class TamilanStorePreviewTest(unittest.TestCase):
         paths = ET.parse(STORE / 'src/main/res/xml/apk_paths.xml').getroot()
         self.assertEqual(paths[0].attrib['path'], 'verified-apks/')
 
+    def test_store_only_changes_skip_unrelated_legacy_release_build(self):
+        text = (ROOT / '.github/workflows/build-apk.yml').read_text()
+        ignored = text.split('paths-ignore:', 1)[1].split('workflow_dispatch:', 1)[0]
+        self.assertIn('"tamilanstore/**"', ignored)
+        self.assertIn('"tools/tests/test_tamilanstore_preview.py"', ignored)
+
     def test_preview_workflow_cannot_publish(self):
         text = (ROOT / '.github/workflows/tamilanstore-preview.yml').read_text()
         self.assertIn('contents: read', text)
