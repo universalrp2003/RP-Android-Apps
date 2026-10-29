@@ -53,7 +53,7 @@ concurrency:
 
 jobs:
   build-verify-publish:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-launcher]') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     name: Test, sign, verify, and optionally publish Elderly Launcher
     runs-on: ubuntu-latest
     env:

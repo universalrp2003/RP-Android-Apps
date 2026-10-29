@@ -52,7 +52,7 @@ concurrency:
 
 jobs:
   build-verify-publish:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-podcast]') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     name: Test, sign, verify, and optionally publish Tamil Podcast Player
     runs-on: ubuntu-latest
     env:

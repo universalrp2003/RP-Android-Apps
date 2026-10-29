@@ -21,7 +21,7 @@ data class SisterApp(
     val packageName: String,
     /** The About-screen label. */
     val aboutLabel: String,
-    /** Last public stable tag; development builds must not offer nonexistent release links. */
+    /** Last public stable tag; advance only after its release asset is live and digest-verified. */
     val publishedVersion: String = version,
 )
 

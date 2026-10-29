@@ -1,5 +1,14 @@
 name: Publish Tamilan Store or DailyVault
 on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - ".github/workflows/new-apps-public-release.yml"
+      - "tamilanstore/**"
+      - "dailyvault/**"
+      - "shared/src/main/java/com/universalrp/updates/**"
+      - "releases/tamilan-store-v0.6.md"
+      - "releases/daily-vault-v0.4.md"
   workflow_dispatch:
     inputs:
       app:
@@ -21,9 +30,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [tamilanstore, dailyvault]
+    name: Verify ${{ matrix.app }} candidate (publish only by explicit selection)
     runs-on: ubuntu-latest
     env:
-      APP: ${{ inputs.app }}
+      APP: ${{ matrix.app }}
+      PUBLISH_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish && inputs.app == matrix.app) || (github.event_name == 'push' && ((matrix.app == 'tamilanstore' && contains(github.event.head_commit.message, '[publish-tamilanstore]') && !contains(github.event.head_commit.message, '[publish-dailyvault]')) || (matrix.app == 'dailyvault' && contains(github.event.head_commit.message, '[publish-dailyvault]') && !contains(github.event.head_commit.message, '[publish-tamilanstore]')))) }}
       RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 35
     steps:
@@ -106,13 +121,13 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ inputs.app }}-verified-release-apk
+          name: ${{ matrix.app }}-verified-release-apk
           retention-days: 30
           path: release-assets/
           if-no-files-found: error
 
       - name: Publish selected app without replacing an existing release or asset
-        if: ${{ inputs.publish }}
+        if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           MODULE: ${{ steps.target.outputs.module }}
@@ -122,6 +137,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            subject="$(git log -1 --format=%s)"
+            if [[ "$APP" == "tamilanstore" ]]; then marker='[publish-tamilanstore]'; other='[publish-dailyvault]';
+            else marker='[publish-dailyvault]'; other='[publish-tamilanstore]'; fi
+            if [[ "$subject" != *"$marker"* || "$subject" == *"$other"* ]]; then
+              echo "::error::The commit subject must select exactly one app-specific release marker."
+              exit 1
+            fi
+          fi
           tag="$SLUG-v$VERSION"
           test -s "releases/$tag.md" || { echo "::error::Missing release notes: releases/$tag.md"; exit 1; }
           if gh release view "$tag" >/dev/null 2>&1 || gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then

@@ -55,7 +55,10 @@ class FreshInstallMigrationTest(unittest.TestCase):
         self.assertIn('- dailyvault', workflow)
         self.assertIn("echo 'version=0.6'", workflow)
         self.assertIn("echo 'version=0.4'", workflow)
-        self.assertIn('if: ${{ inputs.publish }}', workflow)
+        self.assertIn('app: [tamilanstore, dailyvault]', workflow)
+        self.assertIn("if: ${{ env.PUBLISH_REQUESTED == 'true' }}", workflow)
+        self.assertIn('[publish-tamilanstore]', workflow)
+        self.assertIn('[publish-dailyvault]', workflow)
         self.assertIn('published_digest', workflow)
         self.assertIn('RP_RELEASE_KEYSTORE_BASE64', workflow)
         self.assertNotIn('specs=("tamilan-store 0.6', workflow)
@@ -66,12 +69,15 @@ class FreshInstallMigrationTest(unittest.TestCase):
         self.assertIn('default: false', workflow)
         self.assertIn('APP_TO_PUBLISH: ${{ inputs.app }}', workflow)
         self.assertIn('Publishing exactly one selected app', workflow)
-        self.assertIn('if: ${{ github.event_name == \'workflow_dispatch\' && (inputs.publish || inputs.mirror_existing) }}', workflow)
+        self.assertIn("github.event_name == 'push' && (contains", workflow)
+        self.assertIn('The commit subject must contain exactly one app-specific publish marker', workflow)
         self.assertIn('cleaner) SELECTED_TAG=', workflow)
         self.assertIn('radio) SELECTED_TAG=', workflow)
         self.assertIn('equalizer) SELECTED_TAG=', workflow)
         self.assertIn('vocalremover) SELECTED_TAG=', workflow)
         self.assertIn('if [[ "$APP_TO_PUBLISH" == "cleaner" ]] && [', workflow)
+        for marker in ('[publish-liveguard]', '[publish-radio]', '[publish-pulseeq]', '[publish-vocalremover]'):
+            self.assertIn(marker, workflow)
 
     def test_every_standalone_release_workflow_defaults_to_candidate_only(self):
         names = (
@@ -84,6 +90,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             self.assertIn('workflow_dispatch:', workflow, name)
             self.assertIn('publish:', workflow, name)
             self.assertIn('default: false', workflow, name)
+            self.assertIn("github.event_name == 'push'", workflow, name)
 
 
 if __name__ == '__main__':

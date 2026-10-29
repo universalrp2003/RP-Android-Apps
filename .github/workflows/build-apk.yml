@@ -1,4 +1,4 @@
-# GitHub Actions workflow: builds four maintained apps as candidates, with publication limited to one selected app per dispatch; also compiles the isolated Secret Message preview (debug/test only). Oor Arivippu has a separate release workflow.
+# GitHub Actions workflow: builds four maintained apps as candidates and publishes at most one selected app; also compiles the isolated Secret Message preview (debug/test only). Oor Arivippu has a separate release workflow.
 # - Live Guard / CleanSweep (:cleaner)
 # - Ramesh Radio (:radio)
 # - PulseEQ (:equalizer)
@@ -8,8 +8,8 @@ name: Build APK
 on:
   push:
     branches: [ main, "arena/**" ]
-    # Pushes build candidate APKs. Stable publication is a separate manual dispatch that
-    # requires one selected app and defaults to candidate-only mode.
+    # Ordinary pushes build candidate APKs. Stable publication requires one selected app
+    # through dispatch or one unique app-specific commit marker.
     tags: [ "v*" ]
     # Oor Arivippu has a separate test/release flow, and the non-shipping Secret Message preview and
     # MLS feasibility lanes have their own test-only workflows; skip their files and workflow-only edits.
@@ -956,7 +956,7 @@ jobs:
       # candidate branches; a published release carries GitHub's own asset digests.
       - name: Record candidate APK digests
         env:
-          RELEASE_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing) }}
+          RELEASE_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[publish-liveguard]') || contains(github.event.head_commit.message, '[publish-radio]') || contains(github.event.head_commit.message, '[publish-pulseeq]') || contains(github.event.head_commit.message, '[publish-vocalremover]'))) }}
         run: |
           set -e
           RECORD=docs/candidate-build-digests.md
@@ -1008,9 +1008,9 @@ jobs:
             echo "Publication run or non-candidate ref; digest record stays local to this run."
           fi
 
-      # Publishing is an explicit, one-app manual dispatch after all candidate checks pass.
+      # Publishing is one-app only: either an explicit manual dispatch or one app-specific marker push.
       - name: Publish or mirror the one selected app
-        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing) }}
+        if: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[publish-liveguard]') || contains(github.event.head_commit.message, '[publish-radio]') || contains(github.event.head_commit.message, '[publish-pulseeq]') || contains(github.event.head_commit.message, '[publish-vocalremover]'))) }}
         env:
           GH_TOKEN: ${{ github.token }}
           RP_ANDROID_APPS_RELEASE_TOKEN: ${{ secrets.RP_ANDROID_APPS_RELEASE_TOKEN }}
@@ -1020,6 +1020,19 @@ jobs:
           set -euo pipefail
           python3 tools/verify_release_signing_policy.py --fresh-install
           exec > >(tee -a "$RUNNER_TEMP/release-publication.log") 2>&1
+          if [[ -z "${APP_TO_PUBLISH:-}" && "$GITHUB_EVENT_NAME" == "push" ]]; then
+            subject="$(git log -1 --format=%s)"
+            selected=()
+            [[ "$subject" == *"[publish-liveguard]"* ]] && selected+=(cleaner)
+            [[ "$subject" == *"[publish-radio]"* ]] && selected+=(radio)
+            [[ "$subject" == *"[publish-pulseeq]"* ]] && selected+=(equalizer)
+            [[ "$subject" == *"[publish-vocalremover]"* ]] && selected+=(vocalremover)
+            if [[ "${#selected[@]}" -ne 1 ]]; then
+              echo "::error::The commit subject must contain exactly one app-specific publish marker; refusing publication."
+              exit 1
+            fi
+            APP_TO_PUBLISH="${selected[0]}"
+          fi
           # Preserve the old endpoint for installed clients and publish the same verified APK
           # bytes to the new-first destination. Destination access and its scoped write secret are
           # checked before any draft is created; fail closed rather than publish old-source only.
