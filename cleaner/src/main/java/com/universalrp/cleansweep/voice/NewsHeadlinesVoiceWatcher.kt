@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 /**
  * Smart non-irritating News Headlines Voice Announcer (`Live Guard v2.64`):
  *
- *  - Controlled explicitly by user switch (`OFF / ON`) + selectable interval (`30m / 1h / 2h / 3h`, default `1h`).
+ *  - Controlled explicitly by user switch (`OFF / ON`) + selectable interval (`30m / 1h / 2h / 3h`, default `2h`).
  *  - Automatic background announcements fire ONLY when ALL 6 safety conditions hold:
  *      1. Master Voice ON + News Voice ON
  *      2. Outside Night Quiet Window (`10 PM – 6 AM`) AND outside user's Quiet Hours
@@ -52,16 +52,20 @@ object NewsHeadlinesVoiceWatcher {
         context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     /**
-     * Ensures News Headlines Voice Announcer is ON by default at `3h` (`180` minutes) out of the box
-     * (including one-time upgrade activation from `v2.64` -> `v2.65`, while preserving user edits thereafter).
+     * Enables the news announcer once for the screenshot-matching first-run default. A saved
+     * interval always wins, so an update never overwrites a user's 30m/1h/2h/3h choice.
      */
-    fun ensureDefaultOnThreeHours(context: Context) {
+    fun ensureDefaultOnTwoHours(context: Context) {
         val app = context.applicationContext
         val p = prefs(app)
         if (!p.getBoolean(KEY_V265_DEFAULT_3H_APPLIED, false)) {
+            val savedInterval = p.getInt(
+                KEY_INTERVAL_MIN,
+                NewsSpeechSanitizer.DEFAULT_INTERVAL_MINUTES,
+            )
             p.edit()
                 .putBoolean(KEY_V265_DEFAULT_3H_APPLIED, true)
-                .putInt(KEY_INTERVAL_MIN, NewsSpeechSanitizer.DEFAULT_INTERVAL_MINUTES)
+                .putInt(KEY_INTERVAL_MIN, NewsSpeechSanitizer.normalizeIntervalMinutes(savedInterval))
                 .apply()
             Announcer.setAllows(app, Announcer.Event.NEWS_HEADLINES, true)
         }
@@ -247,7 +251,7 @@ object NewsHeadlinesVoiceWatcher {
     /**
      * Manual user-requested news bulletin readout ("Read Today's News" button):
      * prefers fresh unannounced clean headlines first, and if all were already heard today,
-     * reads the latest 5 clean headlines of today immediately!
+     * reads the latest 8 clean headlines of today immediately!
      */
     suspend fun readTodaysHeadlinesManually(context: Context): Int {
         val app = context.applicationContext

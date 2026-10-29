@@ -324,8 +324,8 @@ class ScanEngine(private val context: Context) {
             completedAt = System.currentTimeMillis(),
             duplicateScanCapped = duplicateScanCapped,
         )
-        // CleanSweep ticks nothing on its own: a fresh scan is a list for you to choose from.
-        // Settings → "Preselect after a scan" is the opt-in shortcut, per category.
+        // Only the categories chosen in Settings are preselected; every result remains visible
+        // for review, and the separate Clean action still requires the user's confirmation.
         report.categories.forEach { category ->
             val preset = category.kind in cfg.defaultSelected
             category.files.forEach { file -> file.selected = preset }

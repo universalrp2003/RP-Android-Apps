@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Security
 import androidx.compose.material.icons.outlined.VolumeOff
 import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material3.Button
@@ -149,7 +150,7 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                tr("Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
+                                tr("Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )
@@ -521,9 +522,8 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                 )
             }
 
-            // "In quick cleaning do exactly what I select… after scan don't select anything,
-            // user must select and clean — and give an option to choose defaults."
-            // CleanSweep now ticks nothing by itself; these switches are the optional shortcut.
+            // First-run cleanup categories match the reference screenshots. Prechecks stay
+            // reviewable; deletion still requires a separate explicit Clean action.
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
                     Text(tr("Preselect after a scan"),
@@ -531,8 +531,7 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        "Everything is unticked after a scan, so you always choose what goes. " +
-                            "Switch on the categories you are happy to have ticked for you.",
+                        tr("Selected categories are prechecked after a scan for you to review. Nothing is cleaned until you tap Clean."),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
@@ -649,7 +648,20 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                 }
             }
 
-            PermissionHubCard(vm)
+            PanelCard(Modifier.fillMaxWidth().clickable { vm.navigate(Screen.PERMISSIONS) }) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(Icons.Outlined.Security, contentDescription = null, tint = AccentCyan)
+                    Spacer(Modifier.width(12.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(tr("Permissions & access"), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        Text(tr("See what each permission does and manage Android grants"), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                    }
+                    Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = TextSecondary)
+                }
+            }
 
             PanelCard(Modifier.fillMaxWidth()) {
                 SettingSwitch(

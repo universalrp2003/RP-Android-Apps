@@ -65,9 +65,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <!--
-      The "watt reading beside the clock" the user asked for: Android offers no API for a
-      third-party status-bar item, so CleanSweep draws one tiny, touch-through overlay in
-      the empty part of the status bar. Off by default; needs "Display over other apps".
+      The optional "watt reading beside the clock": Android offers no API for a third-party
+      status-bar item, so Live Guard draws one tiny, touch-through overlay in the empty part
+      of the status bar. Enabled in first-run settings; drawing waits for Android's explicit
+      "Display over other apps" grant.
     -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 

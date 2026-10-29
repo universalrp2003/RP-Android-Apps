@@ -35,9 +35,11 @@ fun FeatureSetupHomeCard(state: UiState, vm: MainViewModel) {
             Text(tr("Reviewed feature setup"), style = MaterialTheme.typography.titleSmall)
             Text(tr(if (!FeatureSetupPrefs.reviewed(context)) "Review optional functions before enabling them. Saved OFF choices are respected."
                 else "Your reviewed choices are saved. Optional OFF functions are not failures."), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            Text(tr("See each Android permission, why Live Guard needs it, and its current grant status."), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             if (pending > 0) Text(tr("%d features need setup or Android access", pending), style = MaterialTheme.typography.labelSmall)
-            Row {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = { vm.navigate(Screen.FEATURE_SETUP) }) { Text(tr("Review feature setup")) }
+                TextButton(onClick = { vm.navigate(Screen.PERMISSIONS) }) { Text(tr("Permissions & access")) }
             }
         }
     }

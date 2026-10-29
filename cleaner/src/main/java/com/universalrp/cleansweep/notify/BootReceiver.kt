@@ -22,7 +22,7 @@ class BootReceiver : BroadcastReceiver() {
         // Apply one-time defaults/migrations before restoring workers after boot or update.
         Announcer.ensureHdVoiceDefaults262(app)
         Announcer.ensureDailyScanDefaultOff(app)
-        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnThreeHours(app)
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnTwoHours(app)
         FloatingVolumeControl.sync(
             app,
             app.getSharedPreferences(FloatingVolumeControl.PREFS, Context.MODE_PRIVATE)
