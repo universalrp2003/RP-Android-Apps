@@ -91,9 +91,12 @@ class FreshInstallMigrationTest(unittest.TestCase):
             self.assertIn('publish:', workflow, name)
             self.assertIn('default: false', workflow, name)
             self.assertIn("github.event_name == 'push'", workflow, name)
-        sms = (ROOT / '.github/workflows/smsguard-release.yml').read_text()
-        self.assertIn('CANDIDATE VERIFIED ONLY:', sms)
-        self.assertLess(sms.index('if [[ "$PUBLISH_REQUESTED" != "true" ]]'), sms.index('gh release create'))
+            self.assertIn('PUBLISH_REQUESTED:', workflow, name)
+            if name == 'smsguard-release.yml':
+                self.assertIn('CANDIDATE VERIFIED ONLY:', workflow)
+                self.assertLess(workflow.index('if [[ "$PUBLISH_REQUESTED" != "true" ]]'), workflow.index('gh release create'))
+            else:
+                self.assertIn("if: ${{ env.PUBLISH_REQUESTED == 'true' }}", workflow, name)
 
 
 if __name__ == '__main__':
