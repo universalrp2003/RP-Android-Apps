@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import subprocess
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -24,7 +25,11 @@ class MaintenanceContractTest(unittest.TestCase):
 
     def test_required_preflight_and_release_key_is_not_in_checkout(self):
         self.assertTrue((ROOT / 'tools/_tmp_preflight.py').is_file())
-        self.assertFalse((ROOT / 'ci-keystore/release.p12').exists())
+        tracked = subprocess.run(
+            ['git', 'ls-files', '--error-unmatch', 'ci-keystore/release.p12'],
+            cwd=ROOT, capture_output=True, text=True,
+        )
+        self.assertNotEqual(tracked.returncode, 0, tracked.stdout)
         self.assertIn('ci-keystore/', (ROOT / '.gitignore').read_text())
         self.assertTrue((ROOT / 'tools/prepare_release_signing.py').is_file())
 
