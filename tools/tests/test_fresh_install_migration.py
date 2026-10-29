@@ -60,6 +60,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('Elderly-Launcher-v1.5.apk', 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39'),
             ('Voice-Notes-v1.3.3.apk', '71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35'),
             ('CleanSweep-v2.74.apk', 'c7b45a11e6a41ca5850e1edf3fa6e37388009e563975fcb30b03f50d74f794fa'),
+            ('Ramesh-Radio-v1.29.apk', '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d'),
         ):
             with self.subTest(asset=release[0]):
                 self.assertIn(release[0], evidence)
