@@ -59,6 +59,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('Expense-Tracker-v1.2.apk', '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
             ('Elderly-Launcher-v1.5.apk', 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39'),
             ('Voice-Notes-v1.3.3.apk', '71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35'),
+            ('CleanSweep-v2.74.apk', 'c7b45a11e6a41ca5850e1edf3fa6e37388009e563975fcb30b03f50d74f794fa'),
         ):
             with self.subTest(asset=release[0]):
                 self.assertIn(release[0], evidence)

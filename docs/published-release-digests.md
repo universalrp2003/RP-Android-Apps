@@ -20,6 +20,8 @@ Elderly Launcher 1.5 / code 6 (`Elderly-Launcher-v1.5.apk`) was published by [ru
 
 Voice Notes 1.3.3 / code 7 (`Voice-Notes-v1.3.3.apk`) was published by [run 40863878094](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40863878094) at `universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3`. GitHub reports **13,135,195 bytes** and SHA-256 `71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35`, matching the standalone workflow's APK verification.
 
+Live Guard 2.74 / code 79 (`CleanSweep-v2.74.apk`) was published by [Build APK run 40865365438](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40865365438) at `universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.74`. GitHub reports **14,432,883 bytes** and SHA-256 `c7b45a11e6a41ca5850e1edf3fa6e37388009e563975fcb30b03f50d74f794fa`, matching the workflow's package, signer and asset verification.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
