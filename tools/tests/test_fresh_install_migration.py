@@ -56,6 +56,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('Tamil-Podcast-Player-v1.6.apk', 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
             ('DailyVault-v0.4.apk', '39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1'),
             ('Tamilan-Store-v0.6.apk', '7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f'),
+            ('Expense-Tracker-v1.2.apk', '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
         ):
             with self.subTest(asset=release[0]):
                 self.assertIn(release[0], evidence)

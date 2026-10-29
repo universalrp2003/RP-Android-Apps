@@ -114,7 +114,7 @@ object SisterApps {
             tamilName = "செலவு கண்காணிப்பு",
             tagPrefix = "expense-tracker",
             version = "1.2",
-            publishedVersion = "1.1",
+            publishedVersion = "1.2",
             packageName = "com.universalrp.expensetracker",
             aboutLabel = "Expense Tracker — GitHub release",
         ),
