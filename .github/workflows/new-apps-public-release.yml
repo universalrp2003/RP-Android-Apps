@@ -13,9 +13,17 @@ jobs:
   publish:
     if: contains(github.event.head_commit.message, '[publish-new-apps]')
     runs-on: ubuntu-latest
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
+
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -47,7 +55,7 @@ jobs:
             if grep -q application-debuggable /tmp/badging; then exit 1; fi
             "$tools/apksigner" verify --print-certs "$apk" > /tmp/signer
             signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
-            test "$signer" = 9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55
+            test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
             (cd release-assets && sha256sum "$label-v$version.apk" > "$label-v$version.sha256")
           done
       - uses: actions/upload-artifact@v4
@@ -69,7 +77,7 @@ jobs:
               echo "::error::Release already exists; refusing to replace assets: $tag"
               exit 1
             fi
-            python3 tools/verify_release_signing_policy.py --legacy-main
+            python3 tools/verify_release_signing_policy.py --fresh-install
             gh release create "$tag" "release-assets/$label-v$version.apk" "release-assets/$label-v$version.sha256" --target "$GITHUB_SHA" --title "$label $version" --notes-file "releases/$tag.md" --latest=false
             gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" --jq '.assets[] | [.name,.size,.digest] | @tsv'
           done

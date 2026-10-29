@@ -88,6 +88,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     steps:
       - name: Download project code
         uses: actions/checkout@v4
@@ -222,20 +224,11 @@ jobs:
           done
           echo "could not push the licence; the build continues without it."
 
-      - name: Ensure stable signing keystore
-        run: |
-          if [ ! -f ci-keystore/release.p12 ]; then
-            mkdir -p ci-keystore
-            keytool -genkeypair -keystore ci-keystore/release.p12 -storetype pkcs12 \
-              -storepass cleansweep-ci -keypass cleansweep-ci -alias cleansweep \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -dname "CN=CleanSweep CI, OU=Dev, O=universalrp2003, C=IN"
-            git config user.name "ci-bot"
-            git config user.email "ci-bot@users.noreply.github.com"
-            git add ci-keystore/release.p12
-            git commit -m "CI: add stable signing keystore (same signature for every build)"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
 
       - name: Make the store icons
         run: |
@@ -453,10 +446,10 @@ jobs:
               echo "FAIL: apksigner is required to verify every release APK"
               exit 1
             fi
-            keytool -exportcert -keystore ci-keystore/release.p12 -storepass cleansweep-ci \
+            keytool -exportcert -keystore ci-keystore/release.p12 -storepass:env RP_RELEASE_KEYSTORE_PASSWORD \
               -alias cleansweep -file "$WORK/project-certificate.der"
             EXPECTED_CERT=$(sha256sum "$WORK/project-certificate.der" | cut -d' ' -f1)
-            if [ "$EXPECTED_CERT" != "9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55" ]; then
+            if [ "$EXPECTED_CERT" != "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d" ]; then
               echo "FAIL: stable signing identity differs from previously published releases"; exit 1
             fi
             for rel in "$CLEANER_REL" "$RADIO_REL" "$EQ_REL" "$VOCAL_REMOVER_REL"; do
@@ -1045,7 +1038,7 @@ jobs:
           MIRROR_EXISTING: ${{ inputs.mirror_existing }}
         run: |
           set -euo pipefail
-          python3 tools/verify_release_signing_policy.py --legacy-main
+          python3 tools/verify_release_signing_policy.py --fresh-install
           exec > >(tee -a "$RUNNER_TEMP/release-publication.log") 2>&1
           if [[ -n "${REQUESTED_TAG:-}" ]]; then BATCH_TAG="$REQUESTED_TAG"
           elif [[ "$GITHUB_REF" == refs/tags/* ]]; then BATCH_TAG="$GITHUB_REF_NAME"

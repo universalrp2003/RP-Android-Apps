@@ -5,6 +5,7 @@ plugins {
 }
 
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
     sourceSets.getByName("main").java.srcDir(
@@ -24,12 +25,12 @@ android {
     }
 
     signingConfigs {
-        if (stableKeystore.exists()) {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
             create("stable") {
                 storeFile = stableKeystore
-                storePassword = "cleansweep-ci"
+                storePassword = releaseStorePassword
                 keyAlias = "cleansweep"
-                keyPassword = "cleansweep-ci"
+                keyPassword = releaseStorePassword
                 storeType = "PKCS12"
             }
         }
@@ -37,11 +38,11 @@ android {
 
     buildTypes {
         debug {
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
         release {
             isMinifyEnabled = false
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

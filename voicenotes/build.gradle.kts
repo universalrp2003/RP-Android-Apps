@@ -11,6 +11,7 @@ plugins {
 
 // Same stable CI keystore as the other modules, so every APK keeps one signature.
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
     // The shared neural-voice engine, curated voices and the bilingual UI strings live here.
@@ -27,12 +28,12 @@ android {
     }
 
     signingConfigs {
-        if (stableKeystore.exists()) {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
             create("stable") {
                 storeFile = stableKeystore
-                storePassword = "cleansweep-ci"
+                storePassword = releaseStorePassword
                 keyAlias = "cleansweep"
-                keyPassword = "cleansweep-ci"
+                keyPassword = releaseStorePassword
                 storeType = "PKCS12"
             }
         }
@@ -41,10 +42,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
         debug {
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
     }
 

@@ -288,6 +288,9 @@ val sherpaRuntime = tasks.register<DownloadSherpaRuntime>("downloadSherpaRuntime
     runtimeDirectory.set(layout.buildDirectory.dir("generated/sherpa-jni"))
 }
 
+val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
+
 android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
     namespace = "com.universalrp.vocalremover"
@@ -307,13 +310,12 @@ android {
     sourceSets.getByName("main").jniLibs.srcDir(layout.buildDirectory.dir("generated/sherpa-jni"))
 
     signingConfigs {
-        val stableKeystore = rootProject.file("ci-keystore/release.p12")
-        if (stableKeystore.exists()) {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
             create("stable") {
                 storeFile = stableKeystore
-                storePassword = "cleansweep-ci"
+                storePassword = releaseStorePassword
                 keyAlias = "cleansweep"
-                keyPassword = "cleansweep-ci"
+                keyPassword = releaseStorePassword
                 storeType = "PKCS12"
             }
         }
@@ -322,12 +324,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            val stableKeystore = rootProject.file("ci-keystore/release.p12")
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
         debug {
-            val stableKeystore = rootProject.file("ci-keystore/release.p12")
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
     }
 

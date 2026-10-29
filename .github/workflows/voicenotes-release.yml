@@ -35,10 +35,17 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PUBLISH_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-voicenotes]')) }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 45
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
 
       - name: Verify bilingual UI and release-note gates
         run: python3 tools/verify_apps_localization.py
@@ -109,7 +116,7 @@ jobs:
           [[ -n "$expected_version" && -n "$expected_code" ]] || { echo "::error::Failed to parse versionName/versionCode from voicenotes/build.gradle.kts"; exit 1; }
           expected_package="com.universalrp.voicenotes"
           # The one stable CI keystore every app in this repository is signed with.
-          expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+          expected_signer="7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
           tag="voice-notes-v${expected_version}"
           asset="Voice-Notes-v${expected_version}.apk"
 
@@ -148,7 +155,7 @@ jobs:
             echo "::error::Release APK minSdk is not API 26."
             exit 1
           fi
-          keytool -exportcert -keystore ci-keystore/release.p12 -storepass cleansweep-ci \
+          keytool -exportcert -keystore ci-keystore/release.p12 -storepass:env RP_RELEASE_KEYSTORE_PASSWORD \
             -alias cleansweep -file "$RUNNER_TEMP/project-certificate.der"
           expected_cert="$(sha256sum "$RUNNER_TEMP/project-certificate.der" | cut -d ' ' -f 1)"
           if [[ "$expected_cert" != "$expected_signer" ]]; then
@@ -232,7 +239,7 @@ jobs:
             exit 1
           fi
 
-          python3 tools/verify_release_signing_policy.py --legacy-main
+          python3 tools/verify_release_signing_policy.py --fresh-install
           GH_TOKEN="$GH_TOKEN" gh release create "$TAG" \
             --title "Voice Notes $VERSION" \
             --notes-file "releases/${TAG}.md" \
