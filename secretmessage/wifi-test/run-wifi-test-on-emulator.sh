@@ -268,8 +268,7 @@ wait_for text "The official website opens in your browser." contains
 wait_for text "This app never downloads or installs APKs." contains
 scroll_until text "Open official website"
 scroll_until text "Do not bypass an Android security warning." contains
-"$ADB" shell input keyevent 4
-sleep 1
+# About remains part of the settings screen; a single Back press returns to the chat screen.
 "$ADB" shell input keyevent 4
 sleep 1
 wait_for text "Start a chat"
