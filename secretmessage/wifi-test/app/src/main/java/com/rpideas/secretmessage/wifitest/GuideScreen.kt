@@ -119,7 +119,7 @@ private val ENGLISH_GUIDE = listOf(
         "option avoids the Internet relay but does not make an untrusted Wi-Fi network safe. This app has not been " +
         "independently security-reviewed.",
     "7. Updates" to
-        "Check updates in About. Explicit user action opens Tamilan Store or the app download section on our website. Browser is always optional. This app never downloads or installs APKs. Daily in-app checks are opt-in; Later and Skip version are available. Stop if a security warning appears.",
+        "A read-only check reads public stable-release metadata at most once per day when the app opens or resumes. If a newer stable version is found, an in-app notice opens the official website in your browser. Download there and follow Android's normal confirmation. This app never downloads or installs APKs. Checks depend on app use, connectivity and available metadata; they are not guaranteed. Stop if a security warning appears.",
 )
 
 private val TAMIL_GUIDE = listOf(
@@ -170,5 +170,5 @@ private val TAMIL_GUIDE = listOf(
         "தவிர்க்கும்; ஆனால் நம்பகமற்ற Wi-Fi-ஐப் பாதுகாப்பானதாக்காது. இந்தச் செயலி சுயாதீனப் பாதுகாப்பு மதிப்பாய்வு " +
         "செய்யப்படவில்லை.",
     "7. புதுப்பிப்புகள்" to
-        "செயலி விவரத்தில் புதுப்பிப்பைச் சரிபார்க்கலாம். உங்கள் தேர்வில் தமிழன் அங்காடி அல்லது இணையதளப் பதிவிறக்கப் பகுதி திறக்கும்; உலாவியை எப்போதும் தேர்ந்தெடுக்கலாம். இந்தச் செயலி APK பதிவிறக்கவோ நிறுவவோ செய்யாது. தினசரி சரிபார்ப்பு விருப்பமானது; பிறகு மற்றும் பதிப்பைத் தவிர்க்கும் வசதிகள் உள்ளன. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
+        "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது நாளுக்கு ஒருமுறை பொதுப் பதிப்பு விவரங்கள் மட்டும் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் அறிவிப்பு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறக்கும். அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. செயலியைத் திறப்பது, இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைச் சரிபார்ப்பு பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
 )

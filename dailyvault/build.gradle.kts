@@ -7,6 +7,7 @@ plugins {
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
 
 android {
+    sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java/com/universalrp/updates"))
     namespace = "com.universalrp.dailyvault"
     compileSdk = 36
 

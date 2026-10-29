@@ -35,7 +35,6 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.PermissionReviewSummaryTest": 8,
     "com.universalrp.cleansweep.data.LocalizedTextTest": 4,
     "com.universalrp.cleansweep.voice.AnswerVoicePolicyTest": 12,
-    "com.universalrp.cleansweep.updates.UpdatePolicyTest": 14,
     # The reader itself is gone from production (2.40 core removal). Its historical pure
     # policy now lives in the TEST source set, so these 12 cases still run.
     "com.universalrp.cleansweep.notifications.NotificationReadingPolicyTest": 12,

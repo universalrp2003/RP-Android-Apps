@@ -1,5 +1,8 @@
 # Owner follow-up checklist — 28 October 2026
 
+> **Current update-flow direction (29 October 2026):** All non-Store apps now use once-daily foreground metadata checks and in-app notices, then hand off to the official website/browser. They do not self-download or install update APKs. PulseEQ, DailyVault and Expense Tracker have update-only Internet access; Tamilan Store remains separate. This supersedes earlier checklist items below that describe optional/disabled checks or unchanged self-updaters.
+
+
 ## Active owner-authorized follow-up — 28 October 2026
 
 - PR53 source/site integration IS complete (main54d5955a; production Pages40682415356 SUCCESS); the older checkpoint below predates that integration.

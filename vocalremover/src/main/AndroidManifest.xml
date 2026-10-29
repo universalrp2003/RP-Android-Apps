@@ -10,8 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- GitHub-release APK updates require Android's per-app sideload permission and confirmation. -->
 
-    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
-    <application
+        <application
         android:allowBackup="false"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules"

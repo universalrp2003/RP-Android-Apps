@@ -41,18 +41,23 @@ if __name__ == "__main__":
     unittest.main()
 
 
-class UpdateResultVisibilityTest(unittest.TestCase):
-    def test_check_reports_result_in_visible_dialog(self):
-        notice = (ROOT / "shared/src/main/java/com/universalrp/updates/StoreFirstUpdateNotice.kt").read_text()
-        self.assertIn("showResult = manual", notice)
-        self.assertIn("val manual = requested > 0", notice)
-        self.assertIn('getBoolean("daily_in_app", false)', notice)
-        self.assertIn("UpdateReminderPolicy.shouldCheck", notice)
-        self.assertIn("Skip version", notice)
-        self.assertIn("if (showResult) AlertDialog(", notice)
-        self.assertIn("Update check unavailable; try later", notice)
-        self.assertIn("No newer stable version found", notice)
-        self.assertIn("Open Store / website", notice)
+class DailyWebsiteUpdateNoticeTest(unittest.TestCase):
+    def test_check_runs_once_per_day_on_open_or_resume_and_only_opens_site(self):
+        notice = (ROOT / "shared/src/main/java/com/universalrp/updates/DailyWebsiteUpdateNotice.kt").read_text()
+        self.assertIn("UpdateReminderPolicy.shouldCheck(enabled = true", notice)
+        self.assertIn("Lifecycle.Event.ON_RESUME", notice)
+        self.assertIn("LaunchedEffect(lifecycleOwner)", notice)
+        self.assertIn("snapshotFlow { resumeToken }.collect", notice)
+        self.assertNotIn("LaunchedEffect(resumeToken)", notice)
+        self.assertIn("catalog-v2.json", notice)
+        self.assertIn('requestMethod = "GET"', notice)
+        self.assertIn("doOutput = false", notice)
+        self.assertIn("updateVersion = latest", notice)
+        self.assertIn("StoreUpdateRouter.openWebsite(context, appId)", notice)
+        self.assertIn("does not download or install APKs", notice)
+        self.assertNotIn("REQUEST_INSTALL_PACKAGES", notice)
+        self.assertNotIn("ACTION_INSTALL_PACKAGE", notice)
+        self.assertNotIn("WorkManager", notice)
 
 class PlaybackControlSourceTest(unittest.TestCase):
     def test_active_button_stops_and_other_note_replaces_request(self):

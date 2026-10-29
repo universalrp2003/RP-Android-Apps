@@ -1360,7 +1360,7 @@ private fun OorSettingsFullDialog(
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
-                        AppUpdates.Control("Oor-Arivippu")
+                        com.universalrp.updates.BrowserReleaseUpdates("Oor-Arivippu")
                     }
                 }
             }

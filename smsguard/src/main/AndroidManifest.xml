@@ -17,7 +17,7 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
-    <!-- Link safety verification (strictly gated by in-app Internet ON/OFF switch) & verified updater -->
+    <!-- Optional link-safety services and read-only daily release-metadata check; update APKs open in the browser. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -26,7 +26,6 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <queries>
-        <package android:name="com.universalrp.tamilanstore" />
         <intent>
             <action android:name="android.intent.action.TTS_SERVICE" />
         </intent>

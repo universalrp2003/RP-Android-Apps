@@ -46,8 +46,8 @@ data class Transaction(
 /**
  * B2 - the on-device ledger.
  *
- * One JSON file in this app's private storage. No cloud, no account, and - because the app declares
- * no INTERNET permission at all - no possible path out of the phone.
+ * One JSON file in this app's private storage. No cloud or account. The separate release check
+ * fetches public metadata only; this ledger is never included in its requests.
  *
  * The encode/decode pair is the part worth testing hardest: a transaction that encodes but does not
  * decode is money the owner spent and then lost, with nothing on screen to say so. That is the same

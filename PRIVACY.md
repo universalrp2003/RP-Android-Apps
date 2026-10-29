@@ -1,14 +1,18 @@
 # Privacy policy — RP Ideas Android apps
 
-**Last updated: 23 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
+**Last updated: 29 October 2026** · **Developer: Ramesh prathap .R — universalrp2003@gmail.com**
 
-This policy covers all seven actively published RP Ideas Android apps and their builds: **SMS Guard (குறுஞ்செய்தி காவலன்) 1.1.3**, **Live Guard (CleanSweep) 2.65**, **Ramesh Radio 1.23**, **PulseEQ 1.9**, **RP Vocal Remover Studio 0.1.15**, **Oor Arivippu (ஊர் அறிவிப்பு) 1.1.7**, and **Secret Message (இரகசிய செய்தி) 1.1.3**. Older app versions and unreleased builds may behave differently.
+This policy covers RP Ideas Android apps distributed through the official website and their online features. App versions and feature availability vary; older app versions and unreleased builds may behave differently.
 
 ## The short version
 
 The developer does not operate an app backend, account system, advertising network, analytics or crash-reporting service. The developer does not receive or see data on your phone. Each app stores its own settings and local content on the device. When you choose an online feature, your phone connects directly to the relevant provider; that provider receives the request and ordinary connection data such as your IP address under its own privacy policy.
 
-**RP Vocal Remover Studio processes selected audio on-device. It has no selected-audio upload path and does not use an external audio-processing service.** Its model may be downloaded from GitHub and verified before use.
+**RP Vocal Remover Studio processes selected audio on-device. It has no selected-audio upload path and does not use an external audio-processing service.** Its model may be downloaded from GitHub and verified before use. Non-Store app update checks do not transmit audio or other app content.
+
+## Daily website update notices
+
+Non-Store apps use a minimal Internet connection to check public release metadata at most once per rolling 24 hours when the app is opened or resumed. A notice appears only when a newer stable version is found. Checks require the app to be used, connectivity, and available valid release metadata; they are not guaranteed to run or succeed. The check reads public metadata from the official website and, when needed, GitHub release metadata. It does not send SMS, transaction or ledger entries, selected audio, messages, locations, backups, passwords, or other app content. The website/GitHub provider may receive ordinary request metadata such as the device IP address and user-agent under its own privacy policy. Tapping Update opens the relevant official website section in the browser. The user downloads there and proceeds through Android's normal user-confirmed installation flow; non-Store apps do not download or install update APKs themselves. Tamilan Store's own update and installation behavior is separate and unchanged.
 
 ## App-by-app data use
 
@@ -30,8 +34,18 @@ The developer does not operate an app backend, account system, advertising netwo
 ### PulseEQ
 
 - Local audio playback and equalization are processed on-device. Selected audio is not uploaded by the app.
-- The optional GitHub release check contacts GitHub and sends ordinary request metadata; it does not send audio.
+- A once-daily foreground release check reads public metadata from the official website (with GitHub release metadata as a fallback). It sends no audio; the provider may receive ordinary request metadata such as the device IP address. A newer version opens the official website in the browser; PulseEQ does not download or install APKs.
 - Whether effects apply outside PulseEQ depends on Android audio sessions and the device/ROM. System-wide processing is not guaranteed.
+
+### Daily Vault
+
+- **Local data:** Manual spending records, notes, the encrypted vault and exported backup contents remain on the device or at the user-selected backup destination. The app does not upload ledger, note, password or backup data.
+- **Update metadata:** INTERNET is used only for the once-daily foreground public release-metadata check described above. No SMS permission is requested. The official website/GitHub may receive ordinary request metadata such as the device IP address. Update actions open the official website in the browser; the app does not download or install APKs.
+
+### Expense Tracker
+
+- **Local financial data:** Bank and UPI SMS are read and parsed on-device; transaction, balance and ledger contents are not sent to the developer or included in update checks. SMS access is used for the expense-tracking feature.
+- **Update metadata:** INTERNET is used only for the once-daily foreground public release-metadata check described above. The official website/GitHub may receive ordinary request metadata such as the device IP address. Update actions open the official website in the browser; the app does not download or install APKs.
 
 ### Oor Arivippu (Place Announcer)
 
@@ -39,7 +53,7 @@ The developer does not operate an app backend, account system, advertising netwo
 - **Geocoder lookups:** The app passes coordinates to Android's Geocoder to resolve place names and passes a user-entered place name to the Geocoder when setting a destination. Depending on the Android/OEM Geocoder implementation, a system or provider service may perform the lookup online and receive relevant coordinates or search text under that provider's privacy policy. This behavior is outside the app developer's control and can vary by device. If validated internet is unavailable, Oor Arivippu pauses new place/district/highway and destination announcements; GPS tracking can continue.
 - **Voice output:** Spoken place and destination alerts use the Android Text-to-Speech engine selected on the phone. The user can choose from up to four Tamil or English voices exposed by that engine, including voices Android marks as network-dependent. If a network voice is selected, its TTS provider may receive the text being spoken; handling is controlled by that provider. The app does not operate a speech server.
 - **Offline reminders:** The user may choose Off, 5, 10, 15 or 30 minutes (15-minute default) for reminders while tracking without internet. The reminder says that internet is unavailable and that place/destination speech is paused. It uses a locally available on-device TTS voice or a short local beep; the app does not use an online voice service for the reminder.
-- **Local data and permissions:** Preferences, the selected destination name/coordinates and a bounded announcement history are stored in app-private storage. The app requests foreground location, notifications as required by Android, internet/network state, and optionally background location. Its updater may hand a verified APK to Android's installer; Android controls the per-app install permission and confirmation. Oor Arivippu does not request microphone, contacts, phone or call-log permissions.
+- **Local data and permissions:** Preferences, the selected destination name/coordinates and a bounded announcement history are stored in app-private storage. The app requests foreground location, notifications as required by Android, internet/network state, and optionally background location. Release notices open the official website in the browser; the app does not download or install update APKs. Oor Arivippu does not request microphone, contacts, phone or call-log permissions.
 - **Rain & cyclone alerts (Live Guard, Ramesh Radio, and Oor Arivippu):** When enabled, the app sends only the selected coordinates (live location in Live Guard / Oor Arivippu, connected mobile cell-tower approximate location `ACCESS_COARSE_LOCATION` when permitted in Ramesh Radio, or a user-saved PIN/village fallback when Location is off) directly over HTTPS to Tomorrow.io's keyless `/v4/timelines` 1-minute radar endpoint by default (or authenticated with an optional personal API key encrypted locally using Android Keystore), with automatic fallback to MET Norway (`api.met.no`), Open-Meteo, and GDACS public cyclone feeds if rate-limited. Optional 6-digit Indian PIN lookups query the public India Post postal directory and Open-Meteo geocoding. Ramesh Radio checks forecasts strictly while its window is open or radio audio is actively playing, Oor Arivippu strictly while its announcer is active or window is open, and Live Guard supports optional 24×7 background alerts. No location or weather history is sent to the developer.
 
 ### RP Vocal Remover Studio
@@ -58,7 +72,7 @@ The developer does not operate an app backend, account system, advertising netwo
 
 ## Release checks and APK installation
 
-The apps may contact GitHub to check for stable updates or download a user-requested update/model. These requests expose normal GitHub connection metadata, including the device's IP address. No selected audio is included. Before opening Android's installer, an app verifies the release asset and package identity. Installation is not silent: Android may require the per-app **Install unknown apps** permission and always shows its own confirmation. The apps do not bypass Play Protect or change this Android permission for you.
+Non-Store apps check public stable-release metadata at most once per rolling 24 hours when opened or resumed. Checks depend on app use, connectivity and available release metadata and are not guaranteed to succeed. The checks do not include app content; the website/GitHub provider may receive ordinary request metadata such as the device IP address. When a newer stable release is found, the notice opens the relevant official website section in the browser. The user downloads the APK there and follows Android's normal user-confirmed installation flow. The app itself does not download or install update APKs. Tamilan Store's own update/install behavior is separate and unchanged. These apps do not bypass Play Protect or Android's signature checks.
 
 ## Data retention and deletion
 

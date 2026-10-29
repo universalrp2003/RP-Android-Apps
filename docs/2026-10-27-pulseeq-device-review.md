@@ -1,5 +1,7 @@
 # PulseEQ block and Tamil story catalogue follow-up
 
+> **Update-flow status superseded (29 October 2026):** This is a historical review of the earlier PulseEQ-only browser migration. The current branch adds once-daily foreground metadata checks and in-app notices for every non-Store app, using website/browser handoff only. PulseEQ, DailyVault and Expense Tracker use the explicitly approved minimal Internet permission for those checks; no non-Store app downloads or installs APK updates itself.
+
 ## Owner phone report
 
 The owner supplied private screenshots and said: Only pulseeq not installed others are perfect.

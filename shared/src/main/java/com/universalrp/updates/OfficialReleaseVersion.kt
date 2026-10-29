@@ -22,8 +22,13 @@ object OfficialReleaseVersion {
         "voicenotes" to "Voice-Notes",
         "vasanthi" to "Vasanthi-AI",
         "podcast" to "Tamil-Podcast-Player",
-        "launcher" to "Elderly-Launcher"
+        "launcher" to "Elderly-Launcher",
+        "dailyvault" to "DailyVault",
     )
+
+    fun expectedAssetName(appId: String, version: String): String =
+        "${checkNotNull(assetPrefixes[appId]) { "Unknown release asset prefix: $appId" }}-v$version.apk"
+
     suspend fun latest(app: SisterApp): String = withContext(Dispatchers.IO) {
         val source = ReleaseRepositorySources.ordered.first()
         var newest: String? = null
@@ -31,6 +36,8 @@ object OfficialReleaseVersion {
             coroutineContext.ensureActive()
             val connection = URL(source.releasesPage(page)).openConnection() as HttpURLConnection
             connection.instanceFollowRedirects = false
+            connection.requestMethod = "GET"
+            connection.doOutput = false
             connection.connectTimeout = 15000
             connection.readTimeout = 15000
             connection.setRequestProperty("Accept", "application/vnd.github+json")
@@ -59,7 +66,7 @@ object OfficialReleaseVersion {
                     .matchEntire(tag)?.groupValues?.get(1) ?: continue
                 if (!ReleaseRepositorySources.isOfficialReleasePage(release.optString("html_url"), source, tag)) continue
                 val assets = release.optJSONArray("assets") ?: continue
-                val expectedName = checkNotNull(assetPrefixes[app.id]) + "-v$version.apk"
+                val expectedName = expectedAssetName(app.id, version)
                 val valid = (0 until assets.length()).any { index ->
                     val asset = assets.getJSONObject(index)
                     asset.optString("state") == "uploaded" && asset.optString("name") == expectedName &&

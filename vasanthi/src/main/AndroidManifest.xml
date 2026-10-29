@@ -24,8 +24,7 @@
         android:name="android.hardware.microphone"
         android:required="true" />
 
-    <queries><package android:name="com.universalrp.tamilanstore" /></queries>
-    <application
+        <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"

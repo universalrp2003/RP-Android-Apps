@@ -29,7 +29,7 @@
     <!-- AI analysis (optional, only used when you tap Analyse with your own key). -->
         <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Explicit verified in-app APK update only; Android permission and installer confirmation remain required. -->
+    <!-- INTERNET supports selected online features and the shared read-only daily release-metadata check; app updates open in the browser. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <!-- Wi-Fi details + "who is on my network". Location is requested at runtime and is
@@ -81,7 +81,6 @@
       stored by CleanSweep: the recogniser returns text, which is exactly like typing it.
     -->
     <queries>
-        <package android:name="com.universalrp.tamilanstore" />
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <intent><action android:name="com.android.settings.TTS_SETTINGS" /></intent>
         <intent>
