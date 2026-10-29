@@ -30,7 +30,7 @@ class TamilanStorePreviewTest(unittest.TestCase):
         build = (STORE / 'build.gradle.kts').read_text()
         self.assertNotRegex(build, r'debug\s*\{[^}]*signingConfig\s*=')
         self.assertIn('release {', build)
-        self.assertIn('if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")', build)
+        self.assertIn('if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")', build)
 
     def test_permissions_and_provider_are_scoped(self):
         root = ET.parse(STORE / 'src/main/AndroidManifest.xml').getroot()

@@ -1,0 +1,17 @@
+name: Prepare private release signer
+inputs:
+  keystore-base64:
+    description: Base64-encoded owner-managed PKCS#12 keystore
+    required: true
+  keystore-password:
+    description: PKCS#12 password
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Decode and verify private signer
+      shell: bash
+      env:
+        RP_RELEASE_KEYSTORE_BASE64: ${{ inputs.keystore-base64 }}
+        RP_RELEASE_KEYSTORE_PASSWORD: ${{ inputs.keystore-password }}
+      run: python3 tools/prepare_release_signing.py

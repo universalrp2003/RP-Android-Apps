@@ -25,7 +25,7 @@ jobs:
         run: |
           set -euo pipefail
           git log -1 --format=%s | grep -Fq '[promote-tested-voice]'
-          python3 tools/verify_release_signing_policy.py --legacy-main
+          python3 tools/verify_release_signing_policy.py --fresh-install
           gh api repos/$GH_REPO/actions/runs/40668667451 > /tmp/run.json
           gh api repos/$GH_REPO/actions/artifacts/12808020972 > /tmp/artifact.json
           python3 - <<'PY'
@@ -74,7 +74,7 @@ jobs:
           if grep -q 'application-debuggable' /tmp/badging; then exit 1; fi
           "$tools/apksigner" verify --print-certs "$apk" > /tmp/signature
           signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/signature | tr -d ' :\r' | tr A-F a-f | sort -u)"
-          test "$signer" = 9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
           bytes="$(stat -c %s "$apk")"
           test "$bytes" -gt 0 && test "$bytes" -le 134217728
           sha="$(sha256sum "$apk" | cut -d ' ' -f1)"

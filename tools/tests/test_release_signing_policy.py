@@ -10,7 +10,7 @@ spec.loader.exec_module(policy)
 
 class ReleaseSigningPolicyTest(unittest.TestCase):
     def test_exposed_identity_is_rejected_independently_of_current_file_presence(self):
-        with self.assertRaisesRegex(ValueError, 'Removing the file does not fix exposure'):
+        with self.assertRaisesRegex(ValueError, 'legacy signing private-key container'):
             policy.verify_signer(policy.LEGACY_MAIN)
 
     def test_format_changes_cannot_clear_the_hold(self):
@@ -21,10 +21,17 @@ class ReleaseSigningPolicyTest(unittest.TestCase):
         for value in ['', 'unknown', '00'*31, 'g'*64]:
             with self.assertRaises(ValueError): policy.verify_signer(value)
 
-    def test_all_main_publishers_keep_explicit_hold_and_secret_stays_separate(self):
+    def test_only_the_pinned_owner_backed_fresh_install_signer_passes(self):
+        self.assertEqual(policy.FRESH_INSTALL_SIGNER, policy.verify_fresh_install_signer(policy.FRESH_INSTALL_SIGNER))
+        with self.assertRaisesRegex(ValueError, 'differs from the owner-backed'):
+            policy.verify_fresh_install_signer('a' * 64)
+        with self.assertRaises(ValueError):
+            policy.verify_fresh_install_signer(policy.LEGACY_MAIN)
+
+    def test_all_main_publishers_gate_on_fresh_install_signer_and_secret_stays_separate(self):
         for path in (ROOT/'.github/workflows').glob('*.yml'):
             source = path.read_text()
             if 'gh release create' not in source or path.name == 'secret-message-wifi-test.yml': continue
-            self.assertIn('python3 tools/verify_release_signing_policy.py --legacy-main', source, str(path))
+            self.assertIn('python3 tools/verify_release_signing_policy.py --fresh-install', source, str(path))
         secret = (ROOT/'.github/workflows/secret-message-wifi-test.yml').read_text()
-        self.assertNotIn('verify_release_signing_policy.py --legacy-main', secret)
+        self.assertNotIn('verify_release_signing_policy.py --fresh-install', secret)

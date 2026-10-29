@@ -41,10 +41,18 @@ jobs:
   build-signed-test-apk:
     name: Test, lint, sign & verify SMS Guard Test APK (no public release)
     runs-on: ubuntu-latest
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 35
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
 
       - name: Run repository static & bilingual localization gates
         run: |
@@ -102,7 +110,7 @@ jobs:
             exit 1
           fi
           expected_package="com.universalrp.smsguard"
-          expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+          expected_signer="7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
           asset="SMS-Guard-v${expected_version}.apk"
 
           mapfile -t built_apks < <(find smsguard/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print)
