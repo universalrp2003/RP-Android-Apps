@@ -11,57 +11,6 @@
 
 ## APK verification output
 ```
-OK: the home-screen widget layout is inside the APK
-OK: DeviceHealthReader is in the CleanSweep APK
-OK: BatteryReader is in the CleanSweep APK
-OK: CpuReader is in the CleanSweep APK
-OK: AppInventoryLoader is in the CleanSweep APK
-OK: SecurityScanner is in the CleanSweep APK
-OK: NetworkScanner is in the CleanSweep APK
-OK: AiClient is in the CleanSweep APK
-OK: AiReport is in the CleanSweep APK
-OK: identifyDevice is in the CleanSweep APK
-OK: ChargeMonitorService is in the CleanSweep APK
-OK: batteryTimeLabel is in the CleanSweep APK
-OK: StatusPill is in the CleanSweep APK
-OK: goBack is in the CleanSweep APK
-OK: defaultSelected is in the CleanSweep APK
-OK: useAnotherFreeAi is in the CleanSweep APK
-OK: ping is in the CleanSweep APK
-OK: AiText is in the CleanSweep APK
-OK: MobileNet is in the CleanSweep APK
-OK: SpeedMeter is in the CleanSweep APK
-OK: UsageStats is in the CleanSweep APK
-OK: MobileScreen is in the CleanSweep APK
-OK: ReadingMovePad is in the CleanSweep APK
-OK: moveBy is in the CleanSweep APK
-OK: applySaved is in the CleanSweep APK
-OK: savedFor is in the CleanSweep APK
-OK: setDraggable is in the CleanSweep APK
-OK: togglePillDrag is in the CleanSweep APK
-OK: setSpeedSizeMb is in the CleanSweep APK
-OK: speedSizeMb is in the CleanSweep APK
-OK: Announcer is in the CleanSweep APK
-OK: HealthWatchWorker is in the CleanSweep APK
-OK: VoiceScreen is in the CleanSweep APK
-OK: speakAnswer is in the CleanSweep APK
-OK: runDailyBriefNow is in the CleanSweep APK
-OK: setVoiceEvent is in the CleanSweep APK
-OK: setQuietHours is in the CleanSweep APK
-OK: speakNow is in the CleanSweep APK
-OK: offlineFallback is in the CleanSweep APK
-OK: stopVoice is in the CleanSweep APK
-OK: setSilentPlaceSlot is in the CleanSweep APK
-OK: SystemEventWatcher is in the CleanSweep APK
-OK: CleanSweepWidget is in the CleanSweep APK
-OK: answerLanguage is in the CleanSweep APK
-OK: setAnswerLanguage is in the CleanSweep APK
-OK: setUnplugStartHour is in the CleanSweep APK
-OK: ChargerWatchWorker is in the CleanSweep APK
-OK: ChargeNotifier is in the CleanSweep APK
-OK: canSearchWeb is in the CleanSweep APK
-OK: setOnlineVoice is in the CleanSweep APK
-OK: openScanner is in the CleanSweep APK
 OK: CrashLog is in the CleanSweep APK
 OK: StatusPillContent is in the CleanSweep APK
 OK: showNetworkMeter is in the CleanSweep APK
@@ -90,7 +39,58 @@ OK: isoDayOfWeek is in the CleanSweep APK
 OK: ALL_DAYS is in the CleanSweep APK
 OK: SILENT_PLACE_DAY_LABELS is in the CleanSweep APK
 OK: CorePrivacyMigration is in the CleanSweep APK
-FAIL: StoreFirstUpdateNotice is missing from the CleanSweep APK
+OK: DailyWebsiteUpdateNotice is in the CleanSweep APK
+OK: UpdateReminderPolicy is in the CleanSweep APK
+OK: StoreUpdateRouter is in the CleanSweep APK
+OK: LastUnplugRepo is in the CleanSweep APK
+OK: CompactWidgetPolicy is in the CleanSweep APK
+OK: CleanSweepDataWidget is in the CleanSweep APK
+OK: CleanSweepPhoneWidget is in the CleanSweep APK
+OK: LocalReadGate is in the CleanSweep APK
+OK: cancelAiReport is in the CleanSweep APK
+OK: cancelDeviceIdentification is in the CleanSweep APK
+OK: ChargingHonestyPolicy is in the CleanSweep APK
+OK: ThermalWarningPolicy is in the CleanSweep APK
+OK: AiOutputBudgetPolicy is in the CleanSweep APK
+=== removed LM Arena rating feature gate (debug DEX) ===
+OK: ArenaRatingPolicy is absent from the CleanSweep APK
+OK: ArenaRatings is absent from the CleanSweep APK
+OK: ArenaRatingCard is absent from the CleanSweep APK
+=== v2.40 retired notification-reader gate (debug AND release) ===
+OK: MessageReaderService is absent from both shipped APK variants
+OK: LocalMessageTranslator is absent from both shipped APK variants
+OK: NotificationReaderPrefs is absent from both shipped APK variants
+OK: NotificationReaderScreen is absent from both shipped APK variants
+OK: NotificationReadingPolicy is absent from both shipped APK variants
+OK: NotificationReaderConfig is absent from both shipped APK variants
+PASS: cleaner/build/intermediates/merged_manifests/debug/processDebugManifest/AndroidManifest.xml declares no notification-listener, SMS, Contacts, call-log, Accessibility or device-admin capability.
+PASS: no retired reader class inside 2 compiled DEX file(s): cleaner-release.dex, cleaner.dex.
+Source/static checks only: not Play Protect approval, not a device installation test and not Google review.
+OK: merged CleanSweep manifest and both DEX blobs declare no retired capability
+=== v2.41 honest-charging / heat-warning / AI-budget gate (debug AND release) ===
+OK: batterySideWatts is in the CleanSweep DEBUG APK
+OK: batterySideWatts is in the CleanSweep RELEASE APK
+OK: screenNote is in the CleanSweep DEBUG APK
+OK: screenNote is in the CleanSweep RELEASE APK
+OK: shouldAnnounce is in the CleanSweep DEBUG APK
+OK: shouldAnnounce is in the CleanSweep RELEASE APK
+OK: effectiveOutputTokens is in the CleanSweep DEBUG APK
+OK: effectiveOutputTokens is in the CleanSweep RELEASE APK
+OK: checkModel is in the CleanSweep DEBUG APK
+OK: checkModel is in the CleanSweep RELEASE APK
+=== PulseEQ checks ===
+PASS: launcher, podcast and PulseEQ use foreground update checks and browser downloads without installer capabilities
+applicationId: com.universalrp.pulseeq
+versionName: 1.11
+versionCode: 12
+Source: 5eeaf0d898432546d1ee5749a29e270b37acafab
+File: equalizer-debug.apk
+Bytes: 17752628
+SHA-256: e42f169ec8528178e32a102a4eb8235f7c3d0296f7288941d628f94af428c47f
+Candidate only; not a published release or a Play Protect assessment.
+
+PASS: actual APK equalizer-debug.apk has no package-install permission or update APK provider
+FAIL: PulseEQ merged manifest reintroduces app network/install/update-provider capability
 ```
 
 ## Store artwork step
