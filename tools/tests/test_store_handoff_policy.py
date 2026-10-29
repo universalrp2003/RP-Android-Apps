@@ -46,6 +46,13 @@ class WebsiteUpdatePolicyTest(unittest.TestCase):
         self.assertIn('UpdateReminderPolicy', workflow)
         self.assertNotIn('StoreFirstUpdateNotice', workflow)
 
+    def test_pulseeq_allows_metadata_network_but_not_install_capability(self):
+        workflow = (policy.ROOT / '.github/workflows/build-apk.yml').read_text()
+        section = workflow.split('=== PulseEQ checks ===', 1)[1].split('=== Ramesh Radio checks ===', 1)[0]
+        self.assertIn('android\\.permission\\.(REQUEST_INSTALL_PACKAGES|INSTALL_PACKAGES)', section)
+        self.assertIn('read-only daily update check', section)
+        self.assertNotIn('android\\.permission\\.(INTERNET|', section)
+
     def test_no_app_installer_permissions_or_update_providers(self):
         for module in policy.MODULES:
             policy.verify_manifest((policy.ROOT / module / 'src/main/AndroidManifest.xml').read_text())

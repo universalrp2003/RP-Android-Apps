@@ -751,11 +751,15 @@ jobs:
           echo "=== PulseEQ checks ==="
           python3 tools/verify_browser_update_policy.py --apk "$EQ"
           if [ -n "$MERGED_EQ" ]; then
-            if grep -Eq 'android\.permission\.(INTERNET|REQUEST_INSTALL_PACKAGES|INSTALL_PACKAGES)|\.updates\.files' "$MERGED_EQ"; then
-              echo "FAIL: PulseEQ merged manifest reintroduces app network/install/update-provider capability"
+            if grep -Eq 'android\.permission\.(REQUEST_INSTALL_PACKAGES|INSTALL_PACKAGES)|\.updates\.files' "$MERGED_EQ"; then
+              echo "FAIL: PulseEQ merged manifest reintroduces package-install/update-provider capability"
               exit 1
             fi
-            echo "OK: PulseEQ merged manifest has no app network/install/update-provider capability"
+            if ! grep -q "android.permission.INTERNET" "$MERGED_EQ"; then
+              echo "FAIL: PulseEQ lacks the network permission required for its read-only daily update check"
+              exit 1
+            fi
+            echo "OK: PulseEQ has read-only update-check network access and no package-install/update-provider capability"
           fi
 
           if [ -n "$MERGED_EQ" ] && grep -q "EqService" "$MERGED_EQ"; then
