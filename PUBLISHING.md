@@ -2,11 +2,35 @@
 
 This guide covers the thirteen **non-Store** RP Ideas products plus the separate Tamilan Store hosted at [`universalrp2003/RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps) and the official website [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/). The four legacy modules are `cleaner` / Live Guard, `radio` / Ramesh Radio, `equalizer` / PulseEQ, and `vocalremover` / RP Vocal Remover Studio. Other Android apps keep their own release workflows. Secret Message retains its separate signing identity. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
+## Owner-approved localized display names (29 October 2026)
+
+- **Live Guard** — Tamil display/store name: **கைபேசி காவலன்**. Keep the English name **Live Guard**; the old marketing title `CleanSweep` is not the display name.
+- **Ramesh Radio** — Tamil display name: **தமிழன் வானொலி**.
+- **RP Vocal Remover Studio** — Tamil display name: **இசை மட்டும் வேண்டும்**.
+
+These are localized display and catalog names. This naming change alone does not create new Android package IDs, change signing identities, or publish a release; preserve the internal APK filenames, release tags, and Tamilan Store updater behavior unless separately authorized.
+
 ## Fresh-install signing migration — owner decision, 29 October 2026
 
-The exposed legacy signing key is retired. New eligible main-key APKs must use the pinned owner-backed replacement through the secret-backed CI helper; never restore or publish with the old key. The owner selected a fresh-install migration: Android will not update old-key installations with replacement-key APKs, and uninstalling may erase local data. Keep the bilingual official-site warning visible before new APK links go live, and put the uninstall/data-loss warning in each release note. Tell users to download the official replacement first, export/back up important data, uninstall the old app, then install using Android; stop if Play Protect warns. Do not claim Play Protect clearance.
+The exposed legacy signing key is retired. New eligible main-key APKs must use the pinned owner-backed replacement through the secret-backed CI helper; never restore or publish with the old key. The owner selected a fresh-install migration: Android will not update old-key installations with replacement-key APKs, and uninstalling may erase local data. Keep the bilingual official-site warning visible alongside new APK links, and put the uninstall/data-loss warning in each release note. Tell users to download the official replacement first, export/back up important data, uninstall the old app, then install using Android; stop if Play Protect warns. Do not claim Play Protect clearance.
 
-PR #57 merged and the main signed build/candidate checks passed. SMS Guard 1.1.11 (run [40843672129](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40843672129)), Vasanthi AI 1.1.5 (run [40846720080](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40846720080)), Oor Arivippu 1.1.10 (run [40854800838](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40854800838)), Tamil Podcast Player 1.6 (run [40856359350](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40856359350)), DailyVault 0.4 (run [40858134703](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40858134703)) Tamilan Store 0.6 (run [40859576371](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40859576371)) Expense Tracker 1.2 (run [40861057750](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40861057750)) Elderly Launcher 1.5 (run [40862085273](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40862085273)) Voice Notes 1.3.3 (run [40863878094](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40863878094)) Live Guard 2.74 (run [40865365438](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40865365438)) Ramesh Radio 1.29 (run [40866988270](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40866988270)) and PulseEQ 1.11 (run [40868591421](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40868591421)) are published with verified SHA-256 digests in RP-Android-Apps. None of the exact APKs was phone-tested; the Pages mirror remains unchanged pending the site inventory update. Other replacement-key releases remain pending their per-app gates. Never overwrite a public same-version asset. Keep Tamilan Store updater code unchanged; Secret Message is outside this signer rotation. Operating details and fingerprint are in [`docs/fresh-install-signing-migration.md`](docs/fresh-install-signing-migration.md).
+PR #57 merged and the main signed build/candidate checks passed. All 13 authorized replacement-key releases below are published and digest-verified in RP-Android-Apps:
+
+- SMS Guard 1.1.11 — [run 40843672129](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40843672129)
+- Vasanthi AI 1.1.5 — [run 40846720080](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40846720080)
+- Oor Arivippu 1.1.10 — [run 40854800838](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40854800838)
+- Tamil Podcast Player 1.6 — [run 40856359350](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40856359350)
+- DailyVault 0.4 — [run 40858134703](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40858134703)
+- Tamilan Store 0.6 — [run 40859576371](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40859576371)
+- Expense Tracker 1.2 — [run 40861057750](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40861057750)
+- Elderly Launcher 1.5 — [run 40862085273](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40862085273)
+- Voice Notes 1.3.3 — [run 40863878094](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40863878094)
+- Live Guard 2.74 — [run 40865365438](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40865365438)
+- Ramesh Radio 1.29 — [run 40866988270](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40866988270)
+- PulseEQ 1.11 — [run 40868591421](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40868591421)
+- RP Vocal Remover Studio 0.1.16 — [run 40870213211](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40870213211)
+
+Elderly Launcher 1.5 is the only release with validated phone-tested candidate provenance; do not describe the other exact replacement APKs as phone-tested. The website links and mirror inventory are updated in this branch, but deployment still requires the change to reach `main`. Never overwrite a public same-version asset. Keep Tamilan Store updater code unchanged; Secret Message is outside this signer rotation. Operating details and fingerprint are in [`docs/fresh-install-signing-migration.md`](docs/fresh-install-signing-migration.md).
 
 ## Publishing one app at a time (current procedure, 29 October 2026)
 

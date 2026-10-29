@@ -62,12 +62,12 @@ object SisterApps {
         SisterApp(
             id = "radio",
             name = "Ramesh Radio",
-            tamilName = "ரமேஷ் ரேடியோ",
+            tamilName = "தமிழன் வானொலி",
             tagPrefix = "ramesh-radio",
             version = "1.29",
             publishedVersion = "1.29",
             packageName = "com.universalrp.tamilnadufm",
-            aboutLabel = "Ramesh Radio — GitHub release",
+            aboutLabel = "Ramesh Radio (தமிழன் வானொலி) — GitHub release",
         ),
         SisterApp(
             id = "pulseeq",
@@ -82,12 +82,12 @@ object SisterApps {
         SisterApp(
             id = "vocalremover",
             name = "RP Vocal Remover Studio",
-            tamilName = "வோக்கல் ரிமூவர் ஸ்டுடியோ",
+            tamilName = "இசை மட்டும் வேண்டும்",
             tagPrefix = "rp-vocal-remover-studio",
             version = "0.1.16",
-            publishedVersion = "0.1.15",
+            publishedVersion = "0.1.16",
             packageName = "com.universalrp.vocalremover",
-            aboutLabel = "RP VOCAL REMOVER STUDIO — GitHub release",
+            aboutLabel = "RP Vocal Remover Studio (இசை மட்டும் வேண்டும்) — GitHub release",
         ),
         SisterApp(
             id = "oorarivippu",

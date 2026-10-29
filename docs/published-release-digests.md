@@ -26,7 +26,9 @@ Ramesh Radio 1.29 / code 29 (`Ramesh-Radio-v1.29.apk`) was published by [Build A
 
 PulseEQ 1.11 / code 12 (`PulseEQ-v1.11.apk`) was published by [Build APK run 40868591421](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40868591421) at `universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.11`. GitHub reports **12,165,793 bytes** and SHA-256 `bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a`, matching the workflow's package, signer and asset verification.
 
-None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
+RP Vocal Remover Studio 0.1.16 / code 17 (`RP-Vocal-Remover-Studio-v0.1.16.apk`) was published by [Build APK run 40870213211](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40870213211) at `universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.16`. GitHub reports **65,163,821 bytes** and SHA-256 `6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e`, matching the workflow's package, signer and asset verification.
+
+Elderly Launcher 1.5 is the only release with validated phone-tested candidate provenance; do not describe the other exact replacement APKs as phone-tested. The website links and Pages mirror inventory are updated in this branch; deployment still requires the change to reach `main`. No Play Protect clearance is claimed. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
 
