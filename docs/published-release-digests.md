@@ -16,6 +16,8 @@ Tamilan Store 0.6 / code 6 (`Tamilan-Store-v0.6.apk`) was published by [run 4085
 
 Expense Tracker 1.2 / code 3 (`Expense-Tracker-v1.2.apk`) was published by [run 40861057750](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40861057750) at `universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2`. GitHub reports **11,564,299 bytes** and SHA-256 `286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108`, matching the standalone workflow's APK verification.
 
+Elderly Launcher 1.5 / code 6 (`Elderly-Launcher-v1.5.apk`) was published by [run 40862085273](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40862085273) at `universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5`. GitHub reports **11,498,427 bytes** and SHA-256 `c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39`, matching the standalone workflow's APK verification.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
