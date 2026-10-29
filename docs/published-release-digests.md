@@ -10,6 +10,8 @@ Oor Arivippu 1.1.10 / code 15 (`Oor-Arivippu-v1.1.10.apk`) was published by [run
 
 Tamil Podcast Player 1.6 / code 8 (`Tamil-Podcast-Player-v1.6.apk`) was published by [run 40856359350](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40856359350) at `universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.6`. GitHub reports **11,967,239 bytes** and SHA-256 `f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec`, matching the standalone workflow's APK verification.
 
+DailyVault 0.4 / code 4 (`DailyVault-v0.4.apk`) was published by [run 40858134703](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40858134703) at `universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4`. GitHub reports **12,532,289 bytes** and SHA-256 `39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1`, matching the selected-app workflow's APK verification. The release also includes a `.sha256` sidecar asset.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
