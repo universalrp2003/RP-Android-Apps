@@ -10,7 +10,7 @@ object AppUpdates {
         "RP-Vocal-Remover-Studio" to "vocalremover", "Oor-Arivippu" to "oorarivippu",
         "SMS-Guard" to "smsguard", "Voice-Notes" to "voicenotes", "Expense-Tracker" to "expensetracker",
         "Tamil-Podcast-Player" to "podcast", "Elderly-Launcher" to "launcher", "Vasanthi-AI" to "vasanthi",
-        "DailyVault" to "dailyvault",
+        "DailyVault" to "dailyvault", "Secret-Message" to "secretmessage",
     )
 
     fun appId(prefix: String): String? = ids[prefix]

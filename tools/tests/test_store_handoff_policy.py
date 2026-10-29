@@ -81,6 +81,12 @@ class WebsiteUpdatePolicyTest(unittest.TestCase):
             for forbidden in ('ACTION_INSTALL_PACKAGE', 'FileProvider', 'launchInstaller', 'canRequestPackageInstalls'):
                 self.assertNotIn(forbidden, source)
 
+    def test_secret_message_manual_browser_update_link_maps_to_its_app(self):
+        updates = (policy.ROOT / 'shared/src/main/java/com/universalrp/updates/AppUpdates.kt').read_text()
+        self.assertIn('"Secret-Message" to "secretmessage"', updates)
+        browser_link = (policy.ROOT / 'shared/src/main/java/com/universalrp/updates/BrowserReleaseUpdates.kt').read_text()
+        self.assertIn('StoreUpdateRouter.openWebsite(context, appId)', browser_link)
+
     def test_secret_wifi_published_client_gets_the_shared_notice_source(self):
         build = (policy.ROOT / 'secretmessage/wifi-test/app/build.gradle.kts').read_text()
         self.assertIn('DailyWebsiteUpdateNotice.kt', build)
