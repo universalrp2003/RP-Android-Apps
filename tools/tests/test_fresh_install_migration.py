@@ -47,6 +47,16 @@ class FreshInstallMigrationTest(unittest.TestCase):
             self.assertRegex(note.lower(), r'uninstall|fresh.install|கையொப்ப')
             self.assertRegex(note.lower(), r'local data|uninstalling may erase|தரவு அழிய|தரவு.*அழிய')
 
+    def test_verified_replacement_release_digests_are_recorded(self):
+        evidence = (ROOT / 'docs/published-release-digests.md').read_text()
+        for release in (
+            ('SMS-Guard-v1.1.11.apk', '9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604'),
+            ('Vasanthi-AI-v1.1.5.apk', '4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6'),
+        ):
+            with self.subTest(asset=release[0]):
+                self.assertIn(release[0], evidence)
+                self.assertIn(release[1], evidence)
+
     def test_store_and_vault_workflow_runs_one_candidate_or_release_at_a_time(self):
         workflow = (ROOT / '.github/workflows/new-apps-public-release.yml').read_text()
         self.assertIn('required: true', workflow)

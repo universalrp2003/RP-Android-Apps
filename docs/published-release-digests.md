@@ -1,8 +1,12 @@
 # Verified published Android APK digests
 
-## Latest verified APK — SMS Guard 1.1.11 (29 October 2026)
+## Verified replacement-key APKs — 29 October 2026
 
-SMS Guard 1.1.11 / code 17 (`SMS-Guard-v1.1.11.apk`) was published by [run 40843672129](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40843672129) at `universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.11`. GitHub reports **12,444,613 bytes** and SHA-256 `9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604`, matching the workflow's local-APK digest check. The replacement-key APK was **not installed on a phone**; no Play Protect clearance is claimed. The existing website mirror and public APK links are still unchanged pending the separate site publication update. The older SMS Guard releases and assets remain intact.
+SMS Guard 1.1.11 / code 17 (`SMS-Guard-v1.1.11.apk`) was published by [run 40843672129](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40843672129) at `universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.11`. GitHub reports **12,444,613 bytes** and SHA-256 `9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604`, matching the workflow's local-APK digest check.
+
+Vasanthi AI 1.1.5 / code 8 (`Vasanthi-AI-v1.1.5.apk`) was published by [run 40846720080](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40846720080) at `universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.5`. GitHub reports **45,777,962 bytes** and SHA-256 `4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6`, matching the standalone workflow's APK verification.
+
+Neither exact replacement-key APK was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
 
