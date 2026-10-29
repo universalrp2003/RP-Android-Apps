@@ -142,7 +142,10 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         self.assertIn('open(Catalog.WEBSITE + "#request-app")',ui)
         self.assertIn('SelfUpdateCheck.latestRelease()',ui)
         check=(STORE/'src/main/java/com/universalrp/tamilanstore/SelfUpdateCheck.kt').read_text()
-        for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk','instanceFollowRedirects=false','readBytesLimited(2_000_000)']:
+        for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk',
+                      'instanceFollowRedirects = false','readBytesLimited(2_000_000)',
+                      'for (page in 1..MAX_RELEASE_PAGES)', 'if (releases.length() < PAGE_SIZE)',
+                      'error("Release pagination limit reached")']:
             self.assertIn(token,check)
 
 
