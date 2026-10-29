@@ -52,6 +52,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
         for release in (
             ('SMS-Guard-v1.1.11.apk', '9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604'),
             ('Vasanthi-AI-v1.1.5.apk', '4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6'),
+            ('Oor-Arivippu-v1.1.10.apk', '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa'),
         ):
             with self.subTest(asset=release[0]):
                 self.assertIn(release[0], evidence)

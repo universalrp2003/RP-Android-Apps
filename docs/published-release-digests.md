@@ -6,7 +6,9 @@ SMS Guard 1.1.11 / code 17 (`SMS-Guard-v1.1.11.apk`) was published by [run 40843
 
 Vasanthi AI 1.1.5 / code 8 (`Vasanthi-AI-v1.1.5.apk`) was published by [run 40846720080](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40846720080) at `universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.5`. GitHub reports **45,777,962 bytes** and SHA-256 `4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6`, matching the standalone workflow's APK verification.
 
-Neither exact replacement-key APK was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
+Oor Arivippu 1.1.10 / code 15 (`Oor-Arivippu-v1.1.10.apk`) was published by [run 40854800838](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40854800838) at `universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10`. GitHub reports **12,842,800 bytes** and SHA-256 `7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa`, matching the Oor workflow's local and public-asset checks. The workflow published to RP-Android-Apps only; the source fallback repository was not writable by the configured token and was not changed.
+
+None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.
 
