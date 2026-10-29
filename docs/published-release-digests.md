@@ -8,6 +8,8 @@ Vasanthi AI 1.1.5 / code 8 (`Vasanthi-AI-v1.1.5.apk`) was published by [run 4084
 
 Oor Arivippu 1.1.10 / code 15 (`Oor-Arivippu-v1.1.10.apk`) was published by [run 40854800838](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40854800838) at `universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10`. GitHub reports **12,842,800 bytes** and SHA-256 `7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa`, matching the Oor workflow's local and public-asset checks. The workflow published to RP-Android-Apps only; the source fallback repository was not writable by the configured token and was not changed.
 
+Tamil Podcast Player 1.6 / code 8 (`Tamil-Podcast-Player-v1.6.apk`) was published by [run 40856359350](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40856359350) at `universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.6`. GitHub reports **11,967,239 bytes** and SHA-256 `f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec`, matching the standalone workflow's APK verification.
+
 None of these exact replacement-key APKs was installed on a phone; no Play Protect clearance is claimed. The website mirror and public APK links have not yet been updated. The older releases and assets remain intact.
 
 The four-app legacy stable batch was built, verified and published by GitHub Actions run **38521705254**, from source commit `838122db61ef7c177977f04595af0f4a1452bb8a`. That workflow checked package, version, minimum SDK, signing certificate, local SHA-256 and release-asset metadata before promoting the four APKs to `universalrp2003/RP-Android-Apps` and `universalrp2003/InternetRadio`; Oor Arivippu was intentionally outside that batch.

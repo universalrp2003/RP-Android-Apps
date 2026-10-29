@@ -144,7 +144,7 @@ object SisterApps {
             tamilName = "கதை சொல்லி",
             tagPrefix = "tamil-podcast",
             version = "1.6",
-            publishedVersion = "1.4",
+            publishedVersion = "1.6",
             packageName = "com.universalrp.podcast",
             aboutLabel = "Tamil Podcast Player — GitHub release",
         ),
