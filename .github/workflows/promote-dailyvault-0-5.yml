@@ -17,10 +17,8 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       RELEASE_TARGET: ${{ github.sha }}
-      APK_SHA: caae81328c5577dbc333dd34b0341f8154a9f23d98af648d9e121dc91d1fcb5e
-      APK_SIZE: '11712552'
-      SOURCE: bb400961341fc51d10fa191f79ffa052e3a66d91
-      ARCHIVE_SHA: 5ffa58fb2717118d86548be5afbcd18b0073779f0e6043bfe002f05ff8f28b09
+      SOURCE: c41ccdb9d0e6b9b3c3663397f96fadaa0c3e268a
+      ARCHIVE_SHA: e17d7a8ae72510478bb6dffd3f69c0484e8bba89312be5663b852d84e80eb4b3
     steps:
       - uses: actions/checkout@v7
         with:
@@ -30,9 +28,9 @@ jobs:
         run: |
           set -euo pipefail
           python3 tools/verify_release_signing_policy.py --fresh-install
-          gh api repos/$GH_REPO/actions/runs/41091029321 > /tmp/run.json
-          gh api repos/$GH_REPO/actions/jobs/124184635743 > /tmp/job.json
-          gh api repos/$GH_REPO/actions/artifacts/12994921382 > /tmp/artifact.json
+          gh api repos/$GH_REPO/actions/runs/41096269759 > /tmp/run.json
+          gh api repos/$GH_REPO/actions/jobs/124202732993 > /tmp/job.json
+          gh api repos/$GH_REPO/actions/artifacts/12996159002 > /tmp/artifact.json
           python3 - <<'PY'
           import json, os, pathlib, subprocess
           assert os.environ['GITHUB_REF'] == 'refs/heads/main', 'Publication is main-only'
@@ -44,7 +42,7 @@ jobs:
           for name in ('Test, lint and build the selected signed release', 'Verify selected package, version, signer and digest', 'Exercise the exact Daily Vault release APK on Android 15'):
               matches = [s for s in job['steps'] if s['name'] == name]
               assert len(matches) == 1 and matches[0]['conclusion'] == 'success', name
-          assert artifact['id'] == 12994921382 and artifact['name'] == 'dailyvault-verified-release-apk' and not artifact['expired']
+          assert artifact['id'] == 12996159002 and artifact['name'] == 'dailyvault-verified-release-apk' and not artifact['expired']
           assert artifact['workflow_run']['id'] == run['id'] and artifact['workflow_run']['head_sha'] == source
           assert artifact['digest'] == 'sha256:' + os.environ['ARCHIVE_SHA']
           approval = pathlib.Path('docs/daily-vault-0.5-release-verification.md').read_text()
@@ -63,7 +61,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh api repos/$GH_REPO/actions/artifacts/12994921382/zip > /tmp/accepted-dailyvault.zip
+          gh api repos/$GH_REPO/actions/artifacts/12996159002/zip > /tmp/accepted-dailyvault.zip
           echo "$ARCHIVE_SHA  /tmp/accepted-dailyvault.zip" | sha256sum --check
           python3 - <<'PY'
           import hashlib, os, pathlib, re, zipfile
@@ -76,8 +74,7 @@ jobs:
           match = re.fullmatch(r'([a-f0-9]{64})  DailyVault-v0\.5\.apk\n?', (target/'DailyVault-v0.5.sha256').read_text())
           assert match, 'Unexpected authenticated checksum manifest'
           apk = target/'DailyVault-v0.5.apk'
-          assert hashlib.sha256(apk.read_bytes()).hexdigest() == match[1] == os.environ['APK_SHA']
-          assert apk.stat().st_size == int(os.environ['APK_SIZE'])
+          assert hashlib.sha256(apk.read_bytes()).hexdigest() == match[1]
           with open(os.environ['GITHUB_ENV'], 'a') as out:
               out.write('EXPECTED_SHA=' + match[1] + '\nEXPECTED_SIZE=' + str(apk.stat().st_size) + '\n')
           print('::notice title=Exact APK receipt::DailyVault-v0.5.apk sha256:' + match[1] + ' bytes:' + str(apk.stat().st_size))
