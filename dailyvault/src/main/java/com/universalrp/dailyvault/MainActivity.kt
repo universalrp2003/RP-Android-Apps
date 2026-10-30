@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
+import androidx.core.view.WindowCompat
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -95,6 +96,13 @@ class MainActivity : FragmentActivity() {
                 date.year == today.year && date.month == today.month
             } }
             val dark = isSystemInDarkTheme()
+            SideEffect {
+                // Compat handles API26; the corresponding theme attribute requires API27.
+                WindowCompat.getInsetsController(window, window.decorView).apply {
+                    isAppearanceLightStatusBars = !dark
+                    isAppearanceLightNavigationBars = !dark
+                }
+            }
             val colors = if (dark) darkColorScheme(
                 primary = Color(0xFF79DFC0), onPrimary = Color(0xFF00382B),
                 primaryContainer = Color(0xFF064C3C), onPrimaryContainer = Color(0xFFB3F5DB),
