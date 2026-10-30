@@ -26,7 +26,19 @@ def nodes():
     adb('shell', 'uiautomator', 'dump', '/sdcard/dailyvault-ui.xml')
     text = adb('shell', 'cat', '/sdcard/dailyvault-ui.xml')
     (OUT / 'last-ui.xml').write_text(text)
-    return list(ET.fromstring(text).iter('node'))
+    result = list(ET.fromstring(text).iter('node'))
+    labels = [n.get('text', '') for n in result]
+    if any("isn't responding" in t and ('Daily Vault' in t or 'தினக்கணக்கு' in t) for t in labels):
+        raise AssertionError('Daily Vault ANR: ' + repr(labels))
+    if any("Pixel Launcher isn't responding" in t for t in labels):
+        # API35's emulator launcher can ANR during boot; never dismiss an app ANR.
+        close = next(n for n in result if n.get('text') == 'Close app')
+        adb('shell', 'input', 'tap', *point(close))
+        print('::warning title=Emulator launcher::Dismissed a Pixel Launcher boot ANR (not Daily Vault).', flush=True)
+        time.sleep(2)
+        launch()
+        return nodes()
+    return result
 
 def wait_text(text, timeout=35, scroll=False):
     end = time.monotonic() + timeout
@@ -37,6 +49,8 @@ def wait_text(text, timeout=35, scroll=False):
             if scroll:
                 width, height = map(int, re.findall(r'(\d+)x(\d+)', adb('shell', 'wm', 'size'))[-1])
                 adb('shell', 'input', 'swipe', str(width//2), str(height*3//4), str(width//2), str(height//3), '300')
+        except AssertionError:
+            raise
         except Exception:
             pass
         time.sleep(.5)
@@ -64,7 +78,11 @@ def field(index, value, clear=False):
     time.sleep(.4)
 
 def keyboard_back():
-    adb('shell', 'input', 'keyevent', '4'); time.sleep(.4)
+    # Do not dismiss the editor if a hardware-keyboard emulator did not show an IME.
+    ime = adb('shell', 'dumpsys', 'input_method')
+    if re.search(r'(mInputShown|mIsInputViewShown|isInputViewShown)=true', ime):
+        adb('shell', 'input', 'keyevent', '4')
+    time.sleep(.4)
 
 def shot(name):
     path = OUT / (name + '.png')
@@ -80,6 +98,9 @@ def private_hash():
 def main():
     apk = sys.argv[1]
     adb('install', '-r', apk)
+    adb('shell', 'settings', 'put', 'secure', 'show_ime_with_hard_keyboard', '1')
+    adb('shell', 'wm', 'dismiss-keyguard')
+    adb('shell', 'am', 'force-stop', 'com.google.android.apps.nexuslauncher')
     launch(); english(); wait_text('A fresh start'); shot('01-fresh-overview-en')
     tap('Add spending'); wait_text('Spending record')
     field(0, '123.45'); field(1, 'Smoke groceries'); keyboard_back(); tap('Save')
