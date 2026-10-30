@@ -87,7 +87,7 @@ jobs:
               ("expense-tracker-v1.2", "Expense-Tracker-v1.2.apk", 11564299, "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108"),
               ("elderly-launcher-v1.5", "Elderly-Launcher-v1.5.apk", 11498427, "c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39"),
               ("voice-notes-v1.3.3", "Voice-Notes-v1.3.3.apk", 13135195, "71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35"),
-              ("live-guard-v2.74", "CleanSweep-v2.74.apk", 14432883, "c7b45a11e6a41ca5850e1edf3fa6e37388009e563975fcb30b03f50d74f794fa"),
+              ("live-guard-v2.75", "CleanSweep-v2.75.apk", 14448087, "2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf"),
               ("ramesh-radio-v1.29", "Ramesh-Radio-v1.29.apk", 15141600, "11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d"),
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
@@ -179,8 +179,8 @@ jobs:
           test -s site/apks/Elderly-Launcher-v1.5.zip
           test -s site/apks/Voice-Notes-v1.3.3.apk
           test -s site/apks/Voice-Notes-v1.3.3.zip
-          test -s site/apks/CleanSweep-v2.74.apk
-          test -s site/apks/CleanSweep-v2.74.zip
+          test -s site/apks/CleanSweep-v2.75.apk
+          test -s site/apks/CleanSweep-v2.75.zip
           test -s site/apks/Ramesh-Radio-v1.29.apk
           test -s site/apks/Ramesh-Radio-v1.29.zip
           test -s site/apks/PulseEQ-v1.11.apk

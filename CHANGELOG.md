@@ -2,6 +2,14 @@
 
 This file indexes all seven published **RP Ideas** Android applications at [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/): six actively maintained utilities (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / ரமேஷ் ரேடியோ**, **PulseEQ**, **RP Vocal Remover Studio**, and **Oor Arivippu / ஊர் அறிவிப்பு**) plus the separately published **Secret Message / இரகசிய செய்தி** app, which has not been independently security-reviewed. App-specific details, installation notes and verified APK digests are linked below. Historical GitHub Releases, tags and assets remain available even when no longer represented in the active source tree.
 
+## Published — Live Guard 2.75 / code 80 (30 October 2026)
+
+Published by [Build APK run 40980222254](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40980222254): [`CleanSweep-v2.75.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.75/CleanSweep-v2.75.apk), 14,448,087 bytes, SHA-256 `2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf`. Full bilingual notes: [`releases/live-guard-v2.75.md`](releases/live-guard-v2.75.md).
+
+The release adds a dedicated, explanatory Permissions screen with live Android grant status and direct request/settings routes; aligns first-install scan defaults and descriptions with the app's actual scope; and expands spoken news briefs to eight headlines every two hours by default. The free assistant remains usable without an API key. The built-permission comparison passed without requiring a device-evidence record. The exact APK was **not installed on a phone**; CI success is not Play Protect clearance.
+
+The APK uses the same replacement signing identity as 2.74 and can update 2.74 in place. Installations signed with the exposed pre-2.74 key still require the warned fresh-install path; uninstalling may erase local data. Users must obtain the official replacement first, back up/export important data, then use Android's normal installer flow. Stop if Play Protect warns; do not bypass it.
+
 ## Published — Ramesh Radio 1.26 (25 October 2026)
 
 **Ramesh Radio 1.26 / code 26** was published from the `arena` branch by [Build APK run 40212579939](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40212579939) (`Ramesh-Radio-v1.26.apk`, `15,092,964` bytes, SHA-256 `238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13`), from source commit `a5eec30`. The list logic was audited and found correct; what this release fixes is that the list was invisible until the second place and that its write was not durable. `0` new permissions over `1.25`.

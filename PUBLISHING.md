@@ -25,7 +25,7 @@ PR #57 merged and the main signed build/candidate checks passed. All 13 authoriz
 - Expense Tracker 1.2 — [run 40861057750](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40861057750)
 - Elderly Launcher 1.5 — [run 40862085273](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40862085273)
 - Voice Notes 1.3.3 — [run 40863878094](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40863878094)
-- Live Guard 2.74 — [run 40865365438](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40865365438)
+- Live Guard 2.75 — [run 40980222254](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40980222254)
 - Ramesh Radio 1.29 — [run 40866988270](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40866988270)
 - PulseEQ 1.11 — [run 40868591421](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40868591421)
 - RP Vocal Remover Studio 0.1.16 — [run 40870213211](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40870213211)

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-28",
+  "updated": "2026-10-30",
   "apps": [
     {
       "id": "smsguard",
@@ -18,11 +18,11 @@
       "name": "Live Guard",
       "tamilName": "கைபேசி காவலன்",
       "packageName": "com.universalrp.cleansweep",
-      "version": "2.73",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.73/CleanSweep-v2.73.apk",
-      "size": 14426215,
-      "sha256": "a5c5f0186a9843ca4761fb89b775b8401885283263d90ab9085397611310e05e",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.73"
+      "version": "2.75",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.75/CleanSweep-v2.75.apk",
+      "size": 14448087,
+      "sha256": "2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.75"
     },
     {
       "id": "radio",
