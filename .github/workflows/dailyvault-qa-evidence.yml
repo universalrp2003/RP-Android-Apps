@@ -17,16 +17,55 @@ jobs:
           run-id: 41089305476
           name: dailyvault-release-emulator-evidence
           path: evidence
-      - name: Surface synthetic UI evidence through bounded annotations
+      - name: Prepare bounded synthetic evidence
         shell: python
         run: |
-          import base64, pathlib
-          path = pathlib.Path('evidence/failure.png')
-          data = base64.b64encode(path.read_bytes()).decode()
+          import base64, json, pathlib, xml.etree.ElementTree as ET
+          data = base64.b64encode(pathlib.Path('evidence/failure.png').read_bytes()).decode()
           chunks = [data[i:i+3800] for i in range(0, len(data), 3800)]
-          for i, chunk in enumerate(chunks):
-              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunk}')
-          import json, xml.etree.ElementTree as ET
+          pathlib.Path('chunks.json').write_text(json.dumps(chunks))
           root = ET.parse('evidence/last-ui.xml')
           items = [{k:n.get(k) for k in ('text','content-desc','bounds','clickable')} for n in root.iter('node') if n.get('clickable') == 'true' or n.get('content-desc')]
           print('::notice title=DVQA controls::' + json.dumps(items, ensure_ascii=False))
+      - name: Synthetic PNG parts 1 through 8
+        shell: python
+        run: |
+          import json, pathlib
+          chunks = json.loads(pathlib.Path('chunks.json').read_text())
+          for i in range(0, min(8, len(chunks))):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunks[i]}')
+      - name: Synthetic PNG parts 9 through 16
+        shell: python
+        run: |
+          import json, pathlib
+          chunks = json.loads(pathlib.Path('chunks.json').read_text())
+          for i in range(8, min(16, len(chunks))):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunks[i]}')
+      - name: Synthetic PNG parts 17 through 24
+        shell: python
+        run: |
+          import json, pathlib
+          chunks = json.loads(pathlib.Path('chunks.json').read_text())
+          for i in range(16, min(24, len(chunks))):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunks[i]}')
+      - name: Synthetic PNG parts 25 through 32
+        shell: python
+        run: |
+          import json, pathlib
+          chunks = json.loads(pathlib.Path('chunks.json').read_text())
+          for i in range(24, min(32, len(chunks))):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunks[i]}')
+      - name: Synthetic PNG parts 33 through 40
+        shell: python
+        run: |
+          import json, pathlib
+          chunks = json.loads(pathlib.Path('chunks.json').read_text())
+          for i in range(32, min(40, len(chunks))):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunks[i]}')
+      - name: Synthetic PNG parts 41 through 48
+        shell: python
+        run: |
+          import json, pathlib
+          chunks = json.loads(pathlib.Path('chunks.json').read_text())
+          for i in range(40, min(48, len(chunks))):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunks[i]}')
