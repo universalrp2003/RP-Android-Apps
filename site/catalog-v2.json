@@ -139,11 +139,11 @@
       "name": "DailyVault",
       "tamilName": "தினக்கணக்கு",
       "packageName": "com.universalrp.dailyvault",
-      "version": "0.4",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.4/DailyVault-v0.4.apk",
-      "size": 12532289,
-      "sha256": "39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4"
+      "version": "0.5",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk",
+      "size": 11712552,
+      "sha256": "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5"
     }
   ]
 }

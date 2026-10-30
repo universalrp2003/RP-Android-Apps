@@ -103,8 +103,8 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual({tag for _, tag in table}, ld_tags)
         self.assertEqual({tag for _, tag in cards}, ld_tags)
         self.assertIn('Tamilan-Store-v0.6.apk', ld_assets)
-        self.assertIn('DailyVault-v0.4.apk', ld_assets)
-        optional_tags = {'tamilan-store-v0.6', 'daily-vault-v0.4'}
+        self.assertIn('DailyVault-v0.5.apk', ld_assets)
+        optional_tags = {'tamilan-store-v0.6', 'daily-vault-v0.5'}
         self.assertTrue(optional_tags.issubset(ld_tags))
         self.assertEqual(len(optional_tags), 2)
         self.assertEqual(len(ld_tags - optional_tags), 12)
@@ -158,7 +158,7 @@ class WebsiteRequestsTest(unittest.TestCase):
     def test_parity_gate_rejects_missing_apps_duplicates_and_stale_metadata(self):
         missing_json_ld = self.source.replace('"position": 14,', '"position": 13,')
         self.assert_site_rejected(missing_json_ld)
-        duplicate_card = self.source.replace('data-apk="apks/DailyVault-v0.4.apk"',
+        duplicate_card = self.source.replace('data-apk="apks/DailyVault-v0.5.apk"',
                                              'data-apk="apks/Tamilan-Store-v0.6.apk"', 1)
         self.assert_site_rejected(duplicate_card)
         stale_sha = self.source.replace(
