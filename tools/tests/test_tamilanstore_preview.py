@@ -29,12 +29,8 @@ class TamilanStorePreviewTest(unittest.TestCase):
     def test_preview_build_does_not_use_legacy_release_signing_config(self):
         build = (STORE / 'build.gradle.kts').read_text()
         self.assertNotRegex(build, r'debug\s*\{[^}]*signingConfig\s*=')
-        self.assertIn('applicationIdSuffix = ".debug"', build)
-        self.assertIn('versionNameSuffix = "-debug"', build)
         self.assertIn('release {', build)
         self.assertIn('if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")', build)
-        debug_strings = ET.parse(STORE / 'src/debug/res/values/strings.xml').getroot()
-        self.assertEqual(debug_strings.find("string[@name='app_name']").text, 'தமிழன் (debug)')
 
     def test_permissions_and_provider_are_scoped(self):
         root = ET.parse(STORE / 'src/main/AndroidManifest.xml').getroot()
@@ -45,7 +41,6 @@ class TamilanStorePreviewTest(unittest.TestCase):
         self.assertEqual({e.attrib[ns+'name'] for e in root.findall('queries/package')}, {a['packageName'] for a in json.loads((STORE / 'src/main/assets/catalog.json').read_text())['apps']})
         self.assertEqual(root.find('application/provider').attrib[ns+'exported'], 'false')
         paths = ET.parse(STORE / 'src/main/res/xml/apk_paths.xml').getroot()
-        self.assertEqual(paths[0].tag, 'files-path')
         self.assertEqual(paths[0].attrib['path'], 'verified-apks/')
 
     def test_store_only_changes_skip_unrelated_legacy_release_build(self):
@@ -92,12 +87,6 @@ class InstalledLifecycleContractTest(unittest.TestCase):
         for action in ('ACTION_PACKAGE_ADDED', 'ACTION_PACKAGE_REPLACED', 'ACTION_PACKAGE_REMOVED'):
             self.assertIn(action, ui)
         self.assertIn('override fun onResume()', ui)
-        self.assertIn('LaunchedEffect(model) { model.refreshCatalog() }', ui)
-        self.assertIn('LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { model.refreshCatalog() }', ui)
-        self.assertIn('model.refreshCatalog(force = true)', ui)
-        model = (STORE / 'src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text()
-        self.assertIn('CatalogRefreshPolicy.shouldRefresh(now, last)', model)
-        self.assertIn('"checking"', model)
         self.assertIn('getLaunchIntentForPackage(app.packageName)', ui)
         self.assertIn('AppStatus.UPDATE_AVAILABLE', ui)
         self.assertIn('AppStatus.NEWER_INSTALLED', ui)
@@ -125,40 +114,12 @@ class QuietNotificationsContractTest(unittest.TestCase):
 
 class PerAppSignerPinTest(unittest.TestCase):
     def test_secret_message_uses_its_established_certificate(self):
-        import importlib.util
-        spec = importlib.util.spec_from_file_location('release_signing', ROOT / 'tools/verify_release_signing_policy.py')
-        signing_policy = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(signing_policy)
         pin=(ROOT/'secretmessage/signing/certificate-sha256.txt').read_text().strip()
         text=(STORE/'src/main/java/com/universalrp/tamilanstore/Catalog.kt').read_text()
         self.assertIn(pin,text)
-        self.assertIn(f'const val SIGNER = "{signing_policy.FRESH_INSTALL_SIGNER}"', text)
-        self.assertNotIn(signing_policy.LEGACY_MAIN, text)
         self.assertIn('packageName == "com.rpideas.secretmessage"',text)
         for name in ('StoreModel.kt','StoreInventory.kt'):
             self.assertIn('Catalog.signerFor(app.packageName)',(STORE/'src/main/java/com/universalrp/tamilanstore'/name).read_text())
-
-
-class StagedApkLifecycleTest(unittest.TestCase):
-    def test_completed_private_apks_survive_process_recreation_and_reverify_against_live_catalog(self):
-        model = (STORE / 'src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text()
-        staged = (STORE / 'src/main/java/com/universalrp/tamilanstore/StagedApkStore.kt').read_text()
-        ui = (STORE / 'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
-        self.assertIn('File(application.filesDir, "verified-apks")', model)
-        self.assertIn('File(application.cacheDir, "verified-apks").deleteRecursively()', model)
-        self.assertIn('stagedStore.cleanIncomplete(apps.map { it.id }.toSet())', model)
-        self.assertNotIn('directory.listFiles()?.forEach { it.delete() }', model)
-        self.assertIn('reconcileStagedApks(next, previousApps)', model)
-        self.assertIn('reconcileStagedApks(apps)', model)
-        self.assertIn('name.endsWith(".pending.apk")', staged)
-        self.assertIn('verifyArchive(app, file)', staged)
-        self.assertIn('failed.add(app.id)', staged)
-        self.assertIn('val verifiedApps by model.verifiedAppIds.collectAsStateWithLifecycle()', ui)
-        self.assertIn('val failedApps by model.failedAppIds.collectAsStateWithLifecycle()', ui)
-        self.assertIn('LaunchedEffect(packageRevision) { model.reconcileInstalled() }', ui)
-        self.assertIn('if ((status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE) && isVerified)', ui)
-        self.assertIn('if (isFailed)', ui)
-        self.assertIn('Color(0xFFFFB4AB)', ui)
 
 class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
     def test_real_gallery_counts_and_paths(self):

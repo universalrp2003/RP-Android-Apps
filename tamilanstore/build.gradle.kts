@@ -35,11 +35,6 @@ android {
 
     buildTypes {
         // Keep preview/debug APKs on Android's generated debug key; never distribute them as release-signed builds.
-        // Distinct debug applicationId allows side-by-side functional testing next to an installed release; never use variants to probe or evade Play Protect.
-        debug {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
-        }
         release {
             isMinifyEnabled = false
             if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")

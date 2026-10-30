@@ -7,11 +7,11 @@
       "name": "SMS Guard (குறுஞ்செய்தி காவலன்)",
       "tamilName": "குறுஞ்செய்தி காவலன்",
       "packageName": "com.universalrp.smsguard",
-      "version": "1.1.11",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.11/SMS-Guard-v1.1.11.apk",
-      "size": 12444613,
-      "sha256": "9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.11"
+      "version": "1.1.9",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.9/SMS-Guard-v1.1.9.apk",
+      "size": 12461665,
+      "sha256": "7e0f0aac34ced84c3ff608dea1baadb54e57400f63aa9c79e6b1c782142f7fc2",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.9"
     },
     {
       "id": "liveguard",
@@ -29,44 +29,44 @@
       "name": "Ramesh Radio",
       "tamilName": "தமிழன் வானொலி",
       "packageName": "com.universalrp.tamilnadufm",
-      "version": "1.29",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk",
-      "size": 15141600,
-      "sha256": "11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.29"
+      "version": "1.28",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.28/Ramesh-Radio-v1.28.apk",
+      "size": 15158504,
+      "sha256": "9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.28"
     },
     {
       "id": "pulseeq",
       "name": "PulseEQ",
       "tamilName": "பல்ஸ்இக்யூ",
       "packageName": "com.universalrp.pulseeq",
-      "version": "1.11",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk",
-      "size": 12165793,
-      "sha256": "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.11"
+      "version": "1.9",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.9/PulseEQ-v1.9.apk",
+      "size": 12100805,
+      "sha256": "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9"
     },
     {
       "id": "vocalremover",
       "name": "RP Vocal Remover Studio",
       "tamilName": "இசை மட்டும் வேண்டும்",
       "packageName": "com.universalrp.vocalremover",
-      "version": "0.1.16",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk",
-      "size": 65163821,
-      "sha256": "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.16"
+      "version": "0.1.15",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.15/RP-Vocal-Remover-Studio-v0.1.15.apk",
+      "size": 65032741,
+      "sha256": "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15"
     },
     {
       "id": "oorarivippu",
       "name": "Oor Arivippu",
       "tamilName": "ஊர் அறிவிப்பு",
       "packageName": "com.oorarivippu.voiceannouncer",
-      "version": "1.1.10",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk",
-      "size": 12842800,
-      "sha256": "7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10"
+      "version": "1.1.9",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.9/Oor-Arivippu-v1.1.9.apk",
+      "size": 12794316,
+      "sha256": "6915d597faa0ca9c0665bab695863d02fa04f56675796babcd9ce6446e286679",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9"
     },
     {
       "id": "secretmessage",
@@ -84,66 +84,66 @@
       "name": "Expense Tracker",
       "tamilName": "செலவு கண்காணிப்பு",
       "packageName": "com.universalrp.expensetracker",
-      "version": "1.2",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk",
-      "size": 11564299,
-      "sha256": "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2"
+      "version": "1.1",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.1/Expense-Tracker-v1.1.apk",
+      "size": 11564215,
+      "sha256": "dd39091be62fba2d725300ced0132ae04a4da5ff528ca0be73638845272ee3f9",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.1"
     },
     {
       "id": "voicenotes",
       "name": "Voice Notes",
       "tamilName": "குரல் குறிப்பு",
       "packageName": "com.universalrp.voicenotes",
-      "version": "1.3.3",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk",
-      "size": 13135195,
-      "sha256": "71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3"
+      "version": "1.2",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.2/Voice-Notes-v1.2.apk",
+      "size": 12113492,
+      "sha256": "c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.2"
     },
     {
       "id": "vasanthi",
       "name": "Vasanthi AI",
       "tamilName": "என்னைச் சுற்றி",
       "packageName": "com.universalrp.vasanthi",
-      "version": "1.1.5",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk",
-      "size": 45777962,
-      "sha256": "4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.5"
+      "version": "1.1.4",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.4/Vasanthi-AI-v1.1.4.apk",
+      "size": 45790702,
+      "sha256": "b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.4"
     },
     {
       "id": "podcast",
       "name": "Tamil Podcast Player",
       "tamilName": "கதை சொல்லி",
       "packageName": "com.universalrp.podcast",
-      "version": "1.6",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk",
-      "size": 11967239,
-      "sha256": "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.6"
+      "version": "1.4",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.4/Tamil-Podcast-Player-v1.4.apk",
+      "size": 11983627,
+      "sha256": "0232ecd612b04686145abe39191ca42e01c318bf9e7ea741de1e6af09e13a5be",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.4"
     },
     {
       "id": "launcher",
       "name": "Elderly Launcher",
       "tamilName": "முதியவர் திரை",
       "packageName": "com.universalrp.launcher",
-      "version": "1.5",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk",
-      "size": 11498427,
-      "sha256": "c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5"
+      "version": "1.4",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.4/Elderly-Launcher-v1.4.apk",
+      "size": 11514811,
+      "sha256": "7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.4"
     },
     {
       "id": "dailyvault",
       "name": "DailyVault",
       "tamilName": "தினக்கணக்கு",
       "packageName": "com.universalrp.dailyvault",
-      "version": "0.4",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.4/DailyVault-v0.4.apk",
-      "size": 12532289,
-      "sha256": "39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4"
+      "version": "0.3",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.3/DailyVault-v0.3.apk",
+      "size": 12417577,
+      "sha256": "aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.3"
     }
   ]
 }
