@@ -1109,45 +1109,103 @@ def verify_site_versions_match_downloads() -> int:
             f"{expected_apps} apps."
         )
 
-    table_sizes = dict(re.findall(
+    # Count parity alone can hide a duplicated app and a missing app. Compare the
+    # actual release identities and asset names across all three public lists.
+    sister_entries = re.findall(r"SisterApp\((.*?)\n\s*\),", sister_source, re.S)
+    expected_tags = set()
+    for entry in sister_entries:
+        tag_prefix = re.search(r'tagPrefix\s*=\s*"([^"]+)"', entry)
+        version = re.search(r'publishedVersion\s*=\s*"([^"]+)"', entry)
+        if not version:
+            version = re.search(r'\bversion\s*=\s*"([^"]+)"', entry)
+        if not tag_prefix or not version:
+            raise ValueError("SisterApps.kt entry lacks a public release tag/version.")
+        expected_tags.add(f"{tag_prefix.group(1)}-v{version.group(1)}")
+    if len(sister_entries) != expected_apps or len(expected_tags) != expected_apps:
+        raise ValueError("SisterApps.kt does not contain one unique public release per app.")
+
+    ld_blocks = [json.loads(block) for block in re.findall(
+        r'<script type="application/ld\+json">(.*?)</script>', site, re.S
+    )]
+    item_lists = [data["mainEntity"] for data in ld_blocks
+                  if data.get("mainEntity", {}).get("@type") == "ItemList"]
+    if len(item_lists) != 1:
+        raise ValueError("site/index.html must have exactly one JSON-LD ItemList.")
+    items = item_lists[0]["itemListElement"]
+    if [item["position"] for item in items] != list(range(1, expected_apps + 1)):
+        raise ValueError("JSON-LD ItemList positions must cover every app exactly once.")
+    ld_assets, ld_tags = set(), set()
+    for item in items:
+        app = item["item"]
+        asset = app["downloadUrl"].rsplit("/", 1)[-1]
+        tag = app["url"].rsplit("/", 1)[-1]
+        ld_assets.add(asset)
+        ld_tags.add(tag)
+        if app["softwareVersion"] != asset_tag(asset.removesuffix(".apk")) or not tag.endswith("-v" + app["softwareVersion"]):
+            raise ValueError(f"JSON-LD version/download mismatch for {asset}.")
+    if len(ld_assets) != expected_apps or len(ld_tags) != expected_apps or ld_tags != expected_tags:
+        raise ValueError("JSON-LD ItemList does not match the unique public releases in SisterApps.kt.")
+
+    table_downloads = re.findall(
         r'<td class="lsize">([0-9]+\.[0-9]+ MB)</td>\s*\n\s*'
-        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+\.apk)"',
+        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+\.apk)" '
+        r'data-name="[A-Za-z0-9._-]+\.apk" data-sha="([0-9a-f]{64})"[^>]* '
+        r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\2"',
         site,
-    ))
+    )
+    if len(table_downloads) != expected_apps:
+        raise ValueError("Latest Releases table lacks a size, SHA-256 and release link for every app.")
+    table_sizes = {asset: size for size, asset, _, _ in table_downloads}
+    table_shas = {asset: sha for _, asset, sha, _ in table_downloads}
+    table_assets = set(table_sizes)
+    table_tags = {tag for _, _, _, tag in table_downloads}
+    if len(table_assets) != expected_apps or table_assets != ld_assets or table_tags != expected_tags:
+        raise ValueError("Latest Releases table and JSON-LD do not list the same unique app releases.")
+
     cards = site.split('<article class="card">')[1:]
     if len(cards) != expected_apps:
         raise ValueError(
             f"site/index.html has {len(cards)} app cards, but SisterApps.kt lists {expected_apps} apps."
         )
+    card_assets, card_tags = set(), set()
     for card in cards:
-        btn = re.search(r'data-apk="apks/([A-Za-z0-9._-]+\.apk)"[^>]*data-sha="([0-9a-f]{64})"', card)
+        btn = re.search(
+            r'data-apk="apks/([A-Za-z0-9._-]+\.apk)"[^>]*data-sha="([0-9a-f]{64})"[^>]* '
+            r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1"',
+            card,
+        )
         if not btn:
-            raise ValueError("site/index.html has an app card without a verified APK button.")
-        asset_name, btn_sha = btn.groups()
+            raise ValueError("site/index.html has an app card without a verified APK release link.")
+        asset_name, btn_sha, release_tag = btn.groups()
+        card_assets.add(asset_name)
+        card_tags.add(release_tag)
         printed_shas = re.findall(r"SHA-256:\s*([0-9a-f]{64})", card)
-        if not printed_shas or any(s != btn_sha for s in printed_shas):
+        if not printed_shas or any(s != btn_sha for s in printed_shas) or table_shas[asset_name] != btn_sha:
             raise ValueError(
                 f"site/index.html card for {asset_name} prints SHA-256 {printed_shas} "
-                f"that disagrees with button data-sha {btn_sha}."
+                f"that disagrees with card/table data-sha {btn_sha}/{table_shas[asset_name]}."
             )
+        badge = re.search(r'<span class="ver">v([0-9][0-9A-Za-z.]*)\s*·', card)
+        if not badge or badge.group(1) != asset_tag(asset_name.removesuffix(".apk")):
+            raise ValueError(f"site/index.html card version badge disagrees with {asset_name}.")
         mini_size = re.search(r'<div class="mini">([0-9]+\.[0-9]+ MB)\b', card)
-        expected_size = table_sizes.get(asset_name)
-        if mini_size and expected_size and mini_size.group(1) != expected_size:
+        if mini_size and mini_size.group(1) != table_sizes[asset_name]:
             raise ValueError(
                 f"site/index.html card for {asset_name} prints {mini_size.group(1)} "
-                f"while the latest-releases table says {expected_size}."
+                f"while the latest-releases table says {table_sizes[asset_name]}."
             )
+    if len(card_assets) != expected_apps or card_assets != table_assets or card_tags != expected_tags:
+        raise ValueError("App cards, Latest Releases table and JSON-LD do not list the same unique releases.")
 
-    suite_counts = (
-        [int(n) for n in re.findall(r"\ball (\d+) RP Ideas apps\b", site)]
-        + [int(n) for n in re.findall(r"அனைத்து (\d+) RP Ideas செயலிகள்", site)]
-        + [int(n) for n in re.findall(r"\b(\d+)-app\b", site)]
-    )
-    stale_counts = [n for n in suite_counts if n != expected_apps]
-    if not suite_counts or stale_counts:
-        raise ValueError(
-            f"site/index.html suite counts {suite_counts} disagree with SisterApps.kt ({expected_apps})."
-        )
+    english_counts = [int(n) for n in re.findall(r"\ball (\d+) RP Ideas apps\b", site)]
+    tamil_counts = [int(n) for n in re.findall(r"அனைத்து (\d+) RP Ideas செயலிகள்", site)]
+    hyphen_counts = [int(n) for n in re.findall(r"\b(\d+)-app\b", site)]
+    if english_counts != [expected_apps, expected_apps] or tamil_counts != [expected_apps, expected_apps]:
+        raise ValueError("Both PulseEQ/Vocal Remover cards must use the current English and Tamil suite counts.")
+    if not hyphen_counts or any(n != expected_apps for n in hyphen_counts):
+        raise ValueError(f"site/index.html suite counts {hyphen_counts} disagree with SisterApps.kt ({expected_apps}).")
+    if f"{expected_apps} apps ({expected_apps - 1} non-Store + optional Tamilan Store)" not in site:
+        raise ValueError("Website header does not state the current total/non-Store app counts.")
 
     if re.search(r"https://github\.com/universalrp2003/RP-Android-Apps/(?:blob|tree)/arena/", site):
         raise ValueError("site/index.html links to a temporary arena/* branch instead of main.")
