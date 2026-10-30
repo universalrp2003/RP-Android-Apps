@@ -68,7 +68,7 @@ jobs:
           tools="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           "$tools/aapt2" dump badging "$apk" > /tmp/candidate-badging
           grep -Fq "package: name='com.universalrp.cleansweep' versionCode='84' versionName='2.79'" /tmp/candidate-badging
-          grep -Fxq "sdkVersion:'26'" /tmp/candidate-badging
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/candidate-badging
           if grep -q application-debuggable /tmp/candidate-badging; then exit 1; fi
           "$tools/apksigner" verify --print-certs "$apk" > /tmp/candidate-signer
           signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/candidate-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
@@ -103,3 +103,20 @@ jobs:
           test "$(sha256sum /tmp/published-liveguard/CleanSweep-v2.79.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
           gh api repos/$GH_REPO/releases/tags/live-guard-v2.79 --jq '[.draft,.prerelease] | @tsv' | grep -Fx $'false\tfalse'
           echo 'Exact approved Live Guard 2.79 APK published and re-downloaded for verification; no rebuild. Existing backup-repository assets remain unchanged.'
+      - name: Surface bounded public verification diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          for name in ('candidate-badging', 'candidate-signer', 'permission-delta'):
+              path = pathlib.Path('/tmp') / name
+              if not path.exists():
+                  print('::error title=Promotion checkpoint::No ' + name + ' was produced; stopped before this checkpoint.')
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              if name == 'candidate-badging':
+                  lines = [line for line in lines if line.startswith('package:') or any(key in line for key in ('sdkVersion','minSdkVersion','targetSdkVersion','application-debuggable'))]
+              for line in lines[:12]:
+                  escaped = line[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+                  print('::error title=' + name + '::' + escaped)
+          PY
