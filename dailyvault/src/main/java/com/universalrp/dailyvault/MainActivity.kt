@@ -26,6 +26,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -139,10 +141,12 @@ class MainActivity : FragmentActivity() {
                         }
                     },
                     floatingActionButton = {
+                        val addLabel = if (page == 1 && notes) bi("குறிப்பு சேர்", "Add note") else bi("செலவு சேர்", "Add spending")
                         if (state.unlocked && page != 2) ExtendedFloatingActionButton(
+                            modifier = Modifier.semantics { contentDescription = addLabel },
                             onClick = { draft = Entry(title = "", category = if (page == 1 && notes) "Note" else "General", paise = if (page == 1 && notes) null else 0, note = "") },
                             icon = { Icon(Icons.Outlined.Add, null) },
-                            text = { Text(if (page == 1 && notes) bi("குறிப்பு சேர்", "Add note") else bi("செலவு சேர்", "Add spending")) },
+                            text = { Text(addLabel) },
                             expanded = true,
                         )
                     },
