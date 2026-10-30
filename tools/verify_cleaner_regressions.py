@@ -68,6 +68,8 @@ EXPECTED = {
     "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 5,
     # 2.76: eight-headline bulletins must survive the shared HD text cap as ordered parts.
     "com.universalrp.cleansweep.data.NewsBulletinHdPipelineTest": 9,
+    # 2.77: prepare every news part before playback; bounded patient synthesis budgets.
+    "com.universalrp.cleansweep.voice.NewsVoicePreparationPolicyTest": 7,
 }
 
 

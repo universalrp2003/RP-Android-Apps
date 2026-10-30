@@ -288,6 +288,8 @@ fun HomeScreen(
                 onSpeak = { text -> vm.speakTamilText(text) },
                 onReadTopNews = { vm.readTodaysNewsNow() },
                 onStopSpeaking = { vm.stopSpeakingNow() },
+                newsVoiceBusy = state.newsVoiceBusy,
+                voiceSpeaking = state.voiceSpeaking,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -626,6 +628,8 @@ fun TamilInfoStrip(
     onRefresh: () -> Unit, onSpeak: (String) -> Unit,
     onReadTopNews: () -> Unit = {},
     onStopSpeaking: () -> Unit = {},
+    newsVoiceBusy: Boolean = false,
+    voiceSpeaking: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var currentKey by remember { mutableStateOf<String?>(null) }
@@ -663,9 +667,17 @@ fun TamilInfoStrip(
                 ) {
                     Button(
                         onClick = onReadTopNews,
+                        enabled = !newsVoiceBusy,
                         colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
                     ) {
-                        Text(tr("Read today's news"), maxLines = 1, softWrap = false)
+                        Text(
+                            tr(when {
+                                newsVoiceBusy && voiceSpeaking -> "Reading news…"
+                                newsVoiceBusy -> "Preparing news audio…"
+                                else -> "Read today's news"
+                            }),
+                            maxLines = 1, softWrap = false,
+                        )
                     }
                     androidx.compose.material3.OutlinedButton(onClick = onStopSpeaking) {
                         Text(tr("Stop reading"), maxLines = 1, softWrap = false)
@@ -695,7 +707,7 @@ fun TamilInfoStrip(
             // Owner requested headlines only: no publisher/category ribbon and no static security-tip filler.
             Text(headline?.title ?: tr(empty), style = MaterialTheme.typography.bodySmall, color = TextPrimary,
                 maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            IconButton(onClick = onReadTopNews) {
+            IconButton(onClick = onReadTopNews, enabled = !newsVoiceBusy) {
                 Icon(Icons.Outlined.VolumeUp,
                     contentDescription = tr("Read today's news"), tint = AccentCyan,
                     modifier = Modifier.size(18.dp))

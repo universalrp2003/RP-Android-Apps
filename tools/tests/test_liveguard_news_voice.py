@@ -15,13 +15,15 @@ class LiveGuardNewsVoiceTest(unittest.TestCase):
         self.assertIn('DEFAULT_MAX_SPOKEN_HEADLINES = 8', sanitizer)
         self.assertIn('listOf(30, 60, 120, 180)', sanitizer)
         self.assertIn('fun splitForHd(', sanitizer)
-        self.assertIn('MAX_HD_SYNTHESIS_CHARS = 420', sanitizer)
+        self.assertIn('MAX_HD_SYNTHESIS_CHARS = 240', sanitizer)
 
     def test_announcer_plays_news_as_ordered_hd_parts(self):
         announcer = src('voice/Announcer.kt')
         self.assertIn('NewsSpeechSanitizer.splitForHd(request.text)', announcer)
         self.assertIn('request.partIndex < request.parts.lastIndex', announcer)
         self.assertIn('request.text = request.parts[request.partIndex]', announcer)
+        self.assertIn('preparedNewsParts', announcer)
+        self.assertIn('prepareAllNewsParts(', announcer)
         self.assertIn('fun speakNewsNow(', announcer)
         self.assertIn('exclusive = manual', announcer)
 
@@ -47,11 +49,27 @@ class LiveGuardNewsVoiceTest(unittest.TestCase):
         self.assertIn('Text(tr("Read aloud"))', home)
         self.assertIn('Announcer.speakNewsNow(ctx, cleaned, Lang.languageIn(ctx))', vm)
 
+    def test_news_is_not_rewritten_or_summarized_by_ai(self):
+        watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
+        self.assertNotIn('composeAiNewsBulletin', watcher)
+        self.assertNotIn('AiClient.ask', watcher)
+        self.assertIn('NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)', watcher)
+        self.assertIn('NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)', watcher)
+
+    def test_preparation_policy_bounds_news_without_starving_alternatives(self):
+        policy = src('voice/NewsVoicePreparationPolicy.kt')
+        self.assertIn('PREPARE_TIMEOUT_MS = 240_000L', policy)
+        self.assertIn('PART_TIMEOUT_MS = 30_000L', policy)
+        self.assertIn('VOICE_ATTEMPT_TIMEOUT_MS = 12_000L', policy)
+        self.assertIn('fun allPartsPrepared(', policy)
+
     def test_viewmodel_reports_voice_failure_and_stop_cancels_read(self):
         vm = src('MainViewModel.kt')
         self.assertIn('count < 0', vm)
         self.assertIn('newsReadingJob?.cancel()', vm)
         self.assertIn('newsVoiceBusy', vm)
+        stop_voice = vm.split('fun stopVoice() {', 1)[1].split('fun setDailyScanOn', 1)[0]
+        self.assertIn('newsReadingJob?.cancel()', stop_voice)
 
 
 if __name__ == '__main__':

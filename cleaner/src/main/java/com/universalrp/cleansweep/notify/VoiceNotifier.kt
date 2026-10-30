@@ -70,24 +70,22 @@ object VoiceNotifier {
                 .setContentTitle(
                     Lang.forContext(
                         context,
-                        "Live Guard voice is waiting for the internet",
+                        "Live Guard HD voice could not finish",
                     ),
                 )
                 .setContentText(
                     Lang.forContext(
                         context,
-                        "The HD voice could not be reached. Nothing was spoken, and nothing was " +
-                            "switched to another voice. Announcements will play when the network " +
-                            "returns.",
+                        "The last HD announcement could not finish. No phone voice was used. " +
+                            "Unread news will be retried.",
                     ),
                 )
                 .setStyle(
                     NotificationCompat.BigTextStyle().bigText(
                         Lang.forContext(
                             context,
-                            "The HD voice could not be reached. Nothing was spoken, and nothing " +
-                                "was switched to another voice. Announcements will play when the " +
-                                "network returns.",
+                            "The last HD announcement could not finish. No phone voice was used. " +
+                                "Unread news will be retried.",
                         ),
                     ),
                 )

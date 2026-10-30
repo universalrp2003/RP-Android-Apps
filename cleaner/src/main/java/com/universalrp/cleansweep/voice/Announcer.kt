@@ -202,6 +202,7 @@ object Announcer {
     private val randomFemaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     // Offline system-TTS rotation within the chosen gender (RANDOM mode fallback path).
     @Volatile private var activeMediaPlayer: android.media.MediaPlayer? = null
+    @Volatile private var active: Request? = null
     @Volatile private var tamilVoice = false
 
     /**
@@ -221,23 +222,28 @@ object Announcer {
         val exclusive: Boolean = false) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
-        var language = wanted ?: AppLang.TA
-        var text = ""
-        var network = false
-        var started = false
+        @Volatile var language = wanted ?: AppLang.TA
+        @Volatile var text = ""
+        @Volatile var network = false
+        @Volatile var started = false
         // 2.76 — long news is one logical request played as several short HD clips, so the
         // shared engine's per-request text cap cannot silently truncate the eighth headline.
-        var parts: List<String> = emptyList()
-        var partIndex = 0
+        @Volatile var parts: List<String> = emptyList()
+        @Volatile var partIndex = 0
+        // 2.77 — news is fully prepared before playback. These are local HD MP3 files, not
+        // promises that a later network request will succeed between headlines.
+        @Volatile var preparedNewsParts: List<java.io.File> = emptyList()
+        @Volatile var worker: java.util.concurrent.Future<*>? = null
         // 2.71 — how many times the HD-only path has tried and failed to produce a clip. There is
         // no system voice to fall back to, so this bounds the wait instead of looping forever.
-        var hdAttempts = 0
+        @Volatile var hdAttempts = 0
         // Resolved once per announcement so RANDOM advances the voice exactly one step, even if
         // an HD attempt fails and the same sentence is retried on the HD voice.
-        var studioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null
+        @Volatile var studioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null
     }
     private val pending = ArrayDeque<Request>() // Only touched on main.
-    private var active: Request? = null
+    // Bumped when a manual read/Stop invalidates delayed retries from an older queue era.
+    private var queueEpoch = 0L
     private val runtimeState = kotlinx.coroutines.flow.MutableStateFlow(VoiceDeliveryStatus())
     private val automaticState = kotlinx.coroutines.flow.MutableStateFlow(VoiceDeliveryStatus())
     val runtime: kotlinx.coroutines.flow.StateFlow<VoiceDeliveryStatus> = runtimeState
@@ -281,9 +287,11 @@ object Announcer {
                 main.post {
                     val ctx = prefsContext ?: internetWatching ?: return@post
                     if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) return@post
+                    // A fully prepared bulletin is local audio; a Wi-Fi/mobile handoff must
+                    // not cut it off. Unprepared synthesis still cannot continue offline.
+                    if (active?.preparedNewsParts?.isNotEmpty() == true) return@post
                     speakingState.value = false
                     runCatching { activeMediaPlayer?.stop() }
-                    pending.forEach { it.done?.complete(false) }; pending.clear()
                     if (active != null) finish(VoiceDeliveryPolicy.Stage.NO_INTERNET, false, pump = false)
                 }
             }
@@ -710,14 +718,15 @@ object Announcer {
      * 2.76: a manual read is exclusive. It cancels stale queued announcements first, so a
      * failed HD attempt can never be followed by an unrelated battery/network alert that
      * makes the owner think the news button read the wrong thing. Automatic news keeps the
-     * normal queue. The bulletin itself is split into short HD-safe parts by [drain].
+     * normal queue. The bulletin itself is split into short HD-safe parts by [drain], and
+     * every part is prepared before the first playback callback.
      */
     suspend fun speakNewsBulletinAndWait(
         context: Context,
         text: String,
         language: AppLang,
         onStarted: (() -> Unit)? = null,
-        timeoutMs: Long = 300_000L,
+        timeoutMs: Long = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
         manual: Boolean = false,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
@@ -801,6 +810,8 @@ object Announcer {
             if (request.exclusive) {
                 // A manual news read must not be followed by an unrelated queued alert if HD
                 // fails. Cancel the active clip and drop stale pending requests first.
+                queueEpoch++
+                active?.worker?.cancel(true)
                 runCatching { activeMediaPlayer?.stop() }
                 if (active != null) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
                 pending.forEach {
@@ -911,6 +922,9 @@ object Announcer {
                 request.partIndex = 0
             }
             if (request.parts.isEmpty()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
+            if (request.preparedNewsParts.isNotEmpty() && request.preparedNewsParts.size != request.parts.size) {
+                finish(VoiceDeliveryPolicy.Stage.ENGINE_ERROR, false); return
+            }
             request.text = request.parts[request.partIndex.coerceIn(0, request.parts.lastIndex)]
         }
         request.network = true
@@ -920,104 +934,181 @@ object Announcer {
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
         val profile = request.resolveProfile(context)
         val useTamil = request.language == AppLang.TA
-        val online = com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
         val requestId = request.id
-        neuralExecutor.execute {
-            if (active?.id != requestId) return@execute
-            // Online: synthesise (0ms cache hit, else network — HD start delay is fine, we wait).
-            // Offline: replay an already-cached HD clip only; a clip we never cached cannot be
-            // produced at all, so the request is retried below instead of using any system voice.
-            val mp3 = if (online) {
-                com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
-                    cacheDir = context.cacheDir,
-                    text = request.text,
-                    profile = profile,
-                    useTamil = useTamil,
-                    ratePercent = 98,
-                    timeoutMs = 8000L,
-                )
-            } else {
-                com.universalrp.voice.SharedNeuralVoiceEngine.cachedProfileFileOrNull(
-                    cacheDir = context.cacheDir,
-                    text = request.text,
-                    profile = profile,
-                    useTamil = useTamil,
-                )
-            }
-            if (mp3 != null && active?.id == requestId && !com.universalrp.updates.CallGuard.inCall(context)) {
-                val attrs = android.media.AudioAttributes.Builder()
-                    .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
-                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
-                    .build()
-                val played = com.universalrp.voice.SharedNeuralVoiceEngine.playMp3FileBlocking(
-                    file = mp3,
-                    volumeScalar = voiceVolume(context),
-                    audioAttributes = attrs,
-                    onStarted = {
+        request.worker = neuralExecutor.submit<Unit> {
+            // Clear a stale interrupt from a cancelled predecessor on this single worker.
+            Thread.interrupted()
+            try {
+                if (active?.id != requestId) return@submit
+                if (request.event == Event.NEWS_HEADLINES && request.preparedNewsParts.isEmpty()) {
+                    main.post {
+                        if (active?.id == requestId) record(context, request, VoiceDeliveryPolicy.Stage.INITIALIZING)
+                    }
+                    if (!prepareAllNewsParts(context, request, profile, useTamil)) {
                         main.post {
-                            if (active?.id == requestId) {
-                                tamilVoice = true
-                                speakingState.value = true
-                                noteHdAvailable(context)
-                                record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
-                                if (!request.started) {
-                                    request.started = true
-                                    runCatching { request.onStarted?.invoke() }
+                            if (active?.id != requestId) return@post
+                            speakingState.value = false
+                            val stage = if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context))
+                                VoiceDeliveryPolicy.Stage.ENGINE_ERROR else VoiceDeliveryPolicy.Stage.NO_INTERNET
+                            active = null
+                            record(context, request, stage)
+                            noteHdUnavailable(context)
+                            request.done?.complete(false)
+                            drain(context)
+                        }
+                        return@submit
+                    }
+                }
+                if (active?.id != requestId) return@submit
+                val online = com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
+                val mp3 = when {
+                    request.event == Event.NEWS_HEADLINES && request.preparedNewsParts.isNotEmpty() ->
+                        request.preparedNewsParts[request.partIndex.coerceIn(0, request.preparedNewsParts.lastIndex)]
+                    online -> com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
+                        cacheDir = context.cacheDir,
+                        text = request.text,
+                        profile = profile,
+                        useTamil = useTamil,
+                        ratePercent = 98,
+                        timeoutMs = 8000L,
+                    )
+                    else -> com.universalrp.voice.SharedNeuralVoiceEngine.cachedProfileFileOrNull(
+                        cacheDir = context.cacheDir,
+                        text = request.text,
+                        profile = profile,
+                        useTamil = useTamil,
+                    )
+                }
+                if (mp3 != null && active?.id == requestId && !com.universalrp.updates.CallGuard.inCall(context)) {
+                    val attrs = android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                    val played = com.universalrp.voice.SharedNeuralVoiceEngine.playMp3FileBlocking(
+                        file = mp3,
+                        volumeScalar = voiceVolume(context),
+                        audioAttributes = attrs,
+                        onStarted = {
+                            main.post {
+                                if (active?.id == requestId) {
+                                    tamilVoice = true
+                                    speakingState.value = true
+                                    noteHdAvailable(context)
+                                    record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
+                                    if (!request.started) {
+                                        request.started = true
+                                        runCatching { request.onStarted?.invoke() }
+                                    }
                                 }
                             }
+                        },
+                        shouldStop = {
+                            active?.id != requestId || Thread.currentThread().isInterrupted ||
+                                com.universalrp.updates.CallGuard.inCall(context)
+                        },
+                        activePlayerSink = { player -> if (player != null) activeMediaPlayer = player },
+                        releasePlayerSink = { player ->
+                            // An old worker must never clear a newer request's player.
+                            if (activeMediaPlayer === player) activeMediaPlayer = null
+                        },
+                        maxDurationMs = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L,
+                    )
+                    if (played) {
+                        main.post {
+                            if (active?.id != requestId) return@post
+                            if (request.event == Event.NEWS_HEADLINES && request.partIndex < request.parts.lastIndex) {
+                                request.partIndex++
+                                request.text = request.parts[request.partIndex]
+                                request.hdAttempts = 0
+                                startStudioOnlineUtterance(context, request)
+                            } else {
+                                finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true)
+                            }
                         }
-                    },
-                    shouldStop = {
-                        active?.id != requestId || com.universalrp.updates.CallGuard.inCall(context)
-                    },
-                    activePlayerSink = { player -> activeMediaPlayer = player },
-                    maxDurationMs = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L,
-                )
-                if (played) {
-                    main.post {
-                        if (active?.id != requestId) return@post
-                        // A news bulletin is one logical request made of several short HD clips.
-                        // Advance to the next part instead of finishing, so the whole bulletin
-                        // plays back-to-back and the caller only learns "success" at the end.
-                        if (request.event == Event.NEWS_HEADLINES && request.partIndex < request.parts.lastIndex) {
-                            request.partIndex++
-                            request.text = request.parts[request.partIndex]
-                            request.hdAttempts = 0
-                            startStudioOnlineUtterance(context, request)
-                        } else {
-                            finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true)
-                        }
+                        return@submit
                     }
-                    return@execute
+                    if (active?.id != requestId || Thread.currentThread().isInterrupted || com.universalrp.updates.CallGuard.inCall(context)) {
+                        main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                        return@submit
+                    }
                 }
-                if (active?.id != requestId || com.universalrp.updates.CallGuard.inCall(context)) {
-                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
-                    return@execute
-                }
-            }
-            // 2.71 — there is NO system-voice fallback any more. If the HD clip could not be
-            // produced (still loading, a slow network, or a synthesis failure) the request goes
-            // back to the front of the queue and is retried after a short pause: it waits for the
-            // HD voice to load and then announces. [hdAttempts] bounds the wait so a permanently
-            // unreachable service cannot spin forever.
-            main.post {
-                if (active?.id != requestId) return@post
-                active = null
-                request.hdAttempts++
-                if (request.hdAttempts >= MAX_HD_ATTEMPTS) {
+                main.post {
+                    if (active?.id != requestId) return@post
+                    // A retry is not playback. Never leave the red Stop chip on while waiting.
+                    speakingState.value = false
+                    active = null
+                    request.hdAttempts++
+                    if (request.event == Event.NEWS_HEADLINES || request.hdAttempts >= MAX_HD_ATTEMPTS) {
+                        record(context, request, VoiceDeliveryPolicy.Stage.ENGINE_ERROR)
+                        noteHdUnavailable(context)
+                        request.done?.complete(false)
+                        drain(context)
+                        return@post
+                    }
+                    pending.addFirst(request)
                     record(context, request, VoiceDeliveryPolicy.Stage.NO_INTERNET)
                     noteHdUnavailable(context)
-                    request.done?.complete(false)
-                    drain(context)
-                    return@post
+                    watchInternet(context)
+                    val epoch = queueEpoch
+                    main.postDelayed({
+                        if (epoch == queueEpoch && active == null && pending.firstOrNull()?.id == request.id) drain(context)
+                    }, HD_RETRY_DELAY_MS)
                 }
-                pending.addFirst(request)
-                record(context, request, VoiceDeliveryPolicy.Stage.NO_INTERNET)
-                noteHdUnavailable(context)
-                watchInternet(context)
-                main.postDelayed({ if (active == null) drain(context) }, HD_RETRY_DELAY_MS)
+            } finally {
+                Thread.interrupted()
             }
         }
+    }
+
+    /** Worker-only. Prepares EVERY news part before any sound; a prefix is never played. */
+    private fun prepareAllNewsParts(
+        context: Context,
+        request: Request,
+        profile: com.universalrp.voice.CuratedNeuralVoiceProfile,
+        useTamil: Boolean,
+    ): Boolean {
+        val engine = com.universalrp.voice.SharedNeuralVoiceEngine
+        val deadline = System.nanoTime() + NewsVoicePreparationPolicy.PREPARE_TIMEOUT_MS * 1_000_000L
+        val files = ArrayList<java.io.File>(request.parts.size)
+        for (part in request.parts) {
+            var file: java.io.File? = null
+            var attempts = 0
+            while (file == null) {
+                if (active?.id != request.id || Thread.currentThread().isInterrupted) return false
+                val remaining = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())
+                if (!NewsVoicePreparationPolicy.canAttempt(attempts, remaining)) return false
+                attempts++
+                val budget = NewsVoicePreparationPolicy.partBudget(remaining)
+                file = engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil)
+                if (file == null) file = if (engine.hasInternet(context)) {
+                    engine.synthesizeProfileToFileOrNull(
+                        cacheDir = context.cacheDir,
+                        text = part,
+                        profile = profile,
+                        useTamil = useTamil,
+                        ratePercent = 98,
+                        timeoutMs = budget,
+                        attemptTimeoutMs = NewsVoicePreparationPolicy.VOICE_ATTEMPT_TIMEOUT_MS,
+                    )
+                } else {
+                    engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil)
+                }
+                if (file == null) {
+                    val left = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())
+                    if (!NewsVoicePreparationPolicy.canAttempt(attempts, left)) return false
+                    try {
+                        Thread.sleep(NewsVoicePreparationPolicy.retryDelayMs(left))
+                    } catch (_: InterruptedException) {
+                        Thread.currentThread().interrupt()
+                        return false
+                    }
+                }
+            }
+            files.add(file)
+        }
+        if (!NewsVoicePreparationPolicy.allPartsPrepared(files.size, request.parts.size)) return false
+        request.preparedNewsParts = files.toList()
+        return active?.id == request.id && !Thread.currentThread().isInterrupted
     }
 
     private fun finish(stage: VoiceDeliveryPolicy.Stage, success: Boolean, pump: Boolean = true) {
@@ -1069,6 +1160,8 @@ object Announcer {
 
     private fun cancelRequest(id: String, stage: VoiceDeliveryPolicy.Stage) {
         if (active?.id == id) {
+            queueEpoch++
+            active?.worker?.cancel(true)
             runCatching { activeMediaPlayer?.stop() }
             finish(stage, false)
         }
@@ -1078,6 +1171,8 @@ object Announcer {
     }
 
     fun stop() { main.post {
+        queueEpoch++
+        active?.worker?.cancel(true)
         runCatching { activeMediaPlayer?.stop() }
         prefsContext?.let { noteHdAvailable(it) }
         speakingState.value = false
@@ -1086,6 +1181,8 @@ object Announcer {
     } }
 
     fun shutdown() { main.post {
+        queueEpoch++
+        active?.worker?.cancel(true)
         runCatching { activeMediaPlayer?.stop() }
         prefsContext?.let { noteHdAvailable(it) }
         pending.forEach { it.done?.complete(false) }; pending.clear()

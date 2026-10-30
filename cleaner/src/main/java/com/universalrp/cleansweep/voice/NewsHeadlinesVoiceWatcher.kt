@@ -160,55 +160,6 @@ object NewsHeadlinesVoiceWatcher {
     /**
      * Automatic background entry point (called both on periodic WorkManager tick and 15s after Screen OFF).
      */
-    /**
-     * Optional AI rewrite of [batch] into a short, professional spoken bulletin, using the
-     * SAME provider/key as the assistant. Returns null — so the caller uses the on-device
-     * sanitized bulletin — whenever no AI is configured, the request fails or times out, or
-     * the reply is unusable. News is never blocked on the AI.
-     */
-    private suspend fun composeAiNewsBulletin(context: Context, batch: List<NewsHeadline>, tamil: Boolean): String? {
-        if (batch.isEmpty()) return null
-        val config = try {
-            com.universalrp.cleansweep.ai.AiSettings.autoComplete(
-                com.universalrp.cleansweep.ai.AiSettings.load(context),
-            )
-        } catch (error: Exception) {
-            return null
-        }
-        if (!config.ready) return null
-        val items = batch.joinToString("\n") { "- ${it.title}" }
-        val system: String
-        val user: String
-        if (tamil) {
-            system = "நீங்கள் ஒரு தொழில்முறை தமிழ் செய்தி வானுஓட்டியாளர். கொடுக்கப்பட்ட தலைப்புகளை சுருக்கமான, " +
-                "தொழில்முறை, முழுமையான வாக்கியங்களாக மாற்றி ஒரு பேசத் தகுந்த செய்தி சுருக்கமாக எழுதுங்கள். " +
-                "தெளிவான, முழுமையான, முக்கியமானவை மட்டும் சேர்க்கவும்; முழுமையில்லாத அல்லது சிறியவை தவிர்க்கவும். " +
-                "எண்கள் அல்லது பட்டியல் குறியீடுகள் சேர்க்க வேண்டாம். சுமார் 120 சொற்களுக்குள் இருக்க வேண்டும்."
-            user = "இந்தத் தலைப்புகளை ஒரு பேசத் தகுந்த செய்தி சுருக்கமாக மாற்றுங்கள்:\n$items"
-        } else {
-            system = "You are a professional news announcer. Rewrite the supplied headlines into a short, natural, " +
-                "spoken news bulletin using complete sentences. Include only clear, complete, newsworthy items; " +
-                "drop anything incomplete, trivial or not newsworthy. Do not number or bullet them. " +
-                "Keep it under about 120 words."
-            user = "Rewrite these headlines into a spoken news bulletin:\n$items"
-        }
-        val result = try {
-            com.universalrp.cleansweep.ai.AiClient.ask(
-                config,
-                system,
-                user,
-                allowSearch = false,
-                budget = com.universalrp.cleansweep.ai.RequestBudget(com.universalrp.cleansweep.ai.AiRequestPolicy.Use.REPORT),
-            )
-        } catch (cancelled: kotlinx.coroutines.CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            return null
-        }
-        if (!result.ok) return null
-        return NewsSpeechSanitizer.cleanAiBulletin(result.text).ifBlank { null }
-    }
-
     suspend fun maybeAutoAnnounceInBackground(context: Context): Boolean {
         val app = context.applicationContext
         if (!Announcer.enabled(app) || !isEnabled(app)) return false
@@ -232,8 +183,9 @@ object NewsHeadlinesVoiceWatcher {
         )
         if (freshBatch.isEmpty()) return false
 
-        val newsScript = composeAiNewsBulletin(app, freshBatch, tamil)
-            ?: NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
+        // Speak the cleaned headlines themselves. An AI rewrite can drop items or exceed the
+        // HD text cap, and the owner asked for the full eight-headline bulletin, not a summary.
+        val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
         if (script.isBlank()) return false
 
@@ -241,7 +193,7 @@ object NewsHeadlinesVoiceWatcher {
             context = app,
             text = script,
             language = lang,
-            timeoutMs = 480_000L,
+            timeoutMs = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
         )
         // Only a completed bulletin consumes the day's headlines. A failed or interrupted HD
         // read must leave them unannounced so the next interval/screen-off tick can retry.
@@ -277,15 +229,14 @@ object NewsHeadlinesVoiceWatcher {
             )
         }
         if (batch.isEmpty()) return 0
-        val newsScript = composeAiNewsBulletin(app, batch, tamil)
-            ?: NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
+        val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
         if (script.isBlank()) return 0
         val spoken = Announcer.speakNewsBulletinAndWait(
             context = app,
             text = script,
             language = lang,
-            timeoutMs = 480_000L,
+            timeoutMs = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
             manual = true,
         )
         if (!spoken) return -1

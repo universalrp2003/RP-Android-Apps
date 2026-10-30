@@ -25,6 +25,7 @@ object NeuralVoiceFailover {
         allowFallback: Boolean = true,
         clockMs: () -> Long = { System.nanoTime() / 1_000_000L },
         onSelected: (String) -> Unit = {},
+        attemptTimeoutMs: Long = 0L,
         attempt: (String, Long) -> ByteArray?,
     ): ByteArray? {
         if (timeoutMs <= 0 || Thread.currentThread().isInterrupted) return null
@@ -34,7 +35,11 @@ object NeuralVoiceFailover {
             if (Thread.currentThread().isInterrupted) return null
             val remaining = timeoutMs - (clockMs() - started).coerceAtLeast(0)
             if (remaining <= 0) return null
-            val budget = remaining / (voices.size - index)
+            // Default: equal shares of one deadline. Patient callers (news preparation) may
+            // cap each voice instead, so the first slow model cannot consume the whole budget
+            // before alternatives are tried, while the total deadline still bounds the call.
+            val budget = if (attemptTimeoutMs > 0L) minOf(remaining, attemptTimeoutMs)
+                         else remaining / (voices.size - index)
             if (budget <= 0) return null
             val bytes = attempt(voice, budget)
             if (Thread.currentThread().isInterrupted) return null

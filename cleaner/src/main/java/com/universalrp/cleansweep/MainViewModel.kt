@@ -1674,8 +1674,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      * next request.
      */
     fun stopVoice() {
+        newsReadingJob?.cancel()
+        newsReadingJob = null
         Announcer.stop()
-        mutate { it.copy(voiceSpeaking = false) }
+        mutate { it.copy(voiceSpeaking = false, newsVoiceBusy = false) }
     }
 
     fun setDailyScanOn(on: Boolean) {
@@ -3276,9 +3278,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     count < 0 -> mutate {
                         it.copy(
                             message = if (Lang.isTamil) {
-                                "செய்தி குரலை இப்போது முடிக்க முடியவில்லை. இணையம் / HD குரல் சேவையைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும். செய்திகள் படித்ததாகக் குறிக்கப்படவில்லை."
+                                "HD குரல் சேவை முழு செய்தித் தொகுப்பையும் தயாரிக்க முடியவில்லை. செய்திகள் படித்ததாகக் குறிக்கப்படவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
                             } else {
-                                "The news voice could not finish. Check the internet / HD voice service and try again. The headlines were not marked as read."
+                                "The HD voice service could not prepare the full bulletin. The headlines were not marked as read. Please try again later."
                             },
                         )
                     }
@@ -3302,7 +3304,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         newsReadingJob?.cancel()
         newsReadingJob = null
         Announcer.stop()
-        mutate { it.copy(newsVoiceBusy = false) }
+        mutate { it.copy(newsVoiceBusy = false, voiceSpeaking = false) }
     }
 
     // ---------------------------------------------------- Wi-Fi Verified Devices & Auto-Scan

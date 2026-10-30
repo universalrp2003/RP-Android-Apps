@@ -1628,6 +1628,7 @@ object Lang {
         "Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "போன் திரை அணைந்திருக்கும்போது மட்டும் புதிய 8 செய்திகளை வாசிக்கும் (6 AM – 10 PM).",
         "Read today's news" to "இன்றைய செய்தி படி",
         "Reading news…" to "செய்திகள் படிக்கப்படுகின்றன…",
+        "Preparing news audio…" to "செய்தி ஒலி தயாராகிறது…",
         "Stop reading" to "⏹ நிறுத்து",
         // ---------------------------------------------------- HD-only voice (2.71)
         "HD voice only" to "HD குரல் மட்டும்",
@@ -1667,10 +1668,10 @@ object Lang {
         "This slot stops them today; another slot starts them tomorrow." to "இந்த நேரம் இன்று நாலில் மாட்டுமே அமைதித்திலை முடித்தும்; மறுநாள் மதியாலை மற்றொரு நேரம் அவறொதை தோடங்கும்.",
         // HD-voice-unavailable notification (2.72)
         "Live Guard voice" to "லைவ் கார்ட் குரல்",
-        "Live Guard voice is waiting for the internet" to "லைவ் கார்ட் குரல் இணையத்திற்கு காத்திருக்கிறது",
-        "The HD voice could not be reached. Nothing was spoken, and nothing was switched to another voice. Announcements will play when the network returns." to "HD குரலை ஐதிய முடியவில்லை. எதுவும் பேசப்படவில்லை, மறொரு குரலுக்கும் மாற்றபடவும் இல்லை. இணகம் திரும்பும்போது அறிப்பிடைகள் பேசப்பறும்.",
+        "Live Guard HD voice could not finish" to "லைவ் கார்ட் HD குரலை முடிக்க முடியவில்லை",
+        "The last HD announcement could not finish. No phone voice was used. Unread news will be retried." to "கடைசி HD அறிவிப்பை முடிக்க முடியவில்லை. தொலைபேசி குரல் பயன்படுத்தப்படவில்லை. படிக்காத செய்திகள் மீண்டும் முயற்சிக்கப்படும்.",
         "Shown only while the HD voice cannot be reached and announcements are waiting" to "HD குரலை ஐதிய முடியாததால், அறிப்பிடைகள் காத்திருக்கும்போது மட்டுமே காட்டியது",
-        "HD voice is waiting for the internet; announcements are paused, not dropped." to "HD குரல் இணையத்திற்கு காத்திருக்கிறது; அறிப்பிடைகள் இடைநிறுத்தப்பட்டுளன, நீக்கப்படவில்லை.",
+        "The last HD voice request could not finish; unread news is kept for retry. No phone voice was substituted." to "கடைசி HD குரல் கோரிக்கையை முடிக்க முடியவில்லை; படிக்காத செய்திகள் மீண்டும் முயற்சிக்கப்படும். தொலைபேசி குரல் மாற்றாகப் பயன்படுத்தப்படவில்லை.",
         "Waiting for HD voice; nothing was switched to the phone voice." to "HD குரலுக்கு காத்திருக்கிறது; தொலைபேசியின் குரலுக்கு மாற்றபடவில்லை.",
         // ---------------------------------------------------- global stop button (2.71)
         "Stop speaking" to "பேசுவதை நிறுத்து",
