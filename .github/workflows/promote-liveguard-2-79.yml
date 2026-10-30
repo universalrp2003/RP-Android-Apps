@@ -42,11 +42,22 @@ jobs:
           forbidden = [p for p in paths if p.startswith(('cleaner/','shared/','gradle/','ci-keystore/')) or p in {'build.gradle.kts','settings.gradle.kts','gradle.properties'}]
           assert not forbidden, 'Compiled inputs changed: ' + repr(forbidden)
           PY
-          # API failure is not evidence that a release/tag is absent. Never clobber assets.
-          gh api --paginate repos/$GH_REPO/releases?per_page=100 --jq '.[].tag_name' > /tmp/release-tags
-          if grep -Fxq live-guard-v2.79 /tmp/release-tags; then
-            echo '::error::2.79 already exists; no overwrite permitted.'; exit 1
-          fi
+          # Resume only this exact immutable draft/public receipt; never upload over existing assets.
+          gh api --paginate repos/$GH_REPO/releases?per_page=100 --jq '.[] | select(.tag_name=="live-guard-v2.79")' > /tmp/existing-release
+          python3 - <<'PYEXISTING'
+          import json, os, pathlib
+          text = pathlib.Path('/tmp/existing-release').read_text().strip()
+          state = 'absent'
+          if text:
+              release = json.loads(text)
+              assert release['id'] == 428979540 and release['target_commitish'] == os.environ['SOURCE']
+              assert not release['prerelease']
+              assets = [a for a in release['assets'] if a['name'] == 'CleanSweep-v2.79.apk']
+              assert len(assets) == 1 and assets[0]['size'] == 14479951 and assets[0]['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+              state = 'draft' if release['draft'] else 'public'
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('EXISTING_RELEASE_STATE=' + state + '\n')
+          PYEXISTING
           gh api --paginate repos/$GH_REPO/tags?per_page=100 --jq '.[] | select(.name=="live-guard-v2.79") | .commit.sha' > /tmp/tag-target
           if [ -s /tmp/tag-target ]; then test "$(cat /tmp/tag-target)" = "$SOURCE"; fi
       - uses: actions/download-artifact@v4
@@ -80,28 +91,39 @@ jobs:
           python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
           grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
           printf '%s  CleanSweep-v2.79.apk\n' "$EXPECTED_SHA" > accepted-liveguard/CleanSweep-v2.79.sha256
-          gh release create live-guard-v2.79 --draft "$apk" accepted-liveguard/CleanSweep-v2.79.sha256 --target "$SOURCE" --title 'Live Guard 2.79 — balanced Tamil news and checked specialist translation' --notes-file releases/live-guard-v2.79.md
+          if [ "$EXISTING_RELEASE_STATE" = absent ]; then
+            gh release create live-guard-v2.79 --draft "$apk" accepted-liveguard/CleanSweep-v2.79.sha256 --target "$SOURCE" --title 'Live Guard 2.79 — balanced Tamil news and checked specialist translation' --notes-file releases/live-guard-v2.79.md
+          fi
           python3 - <<'PYVERIFY'
           import json, os, subprocess, time
           for attempt in range(12):
               releases = json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/releases?per_page=100"], text=True))
               matches = [r for r in releases if r['tag_name'] == 'live-guard-v2.79']
-              assert len(matches) == 1 and matches[0]['draft'] and not matches[0]['prerelease']
+              assert len(matches) == 1 and not matches[0]['prerelease']
               assets = [a for a in matches[0]['assets'] if a['name'] == 'CleanSweep-v2.79.apk']
               if len(assets) == 1 and assets[0].get('digest') == 'sha256:' + os.environ['EXPECTED_SHA']:
                   assert assets[0]['size'] == 14479951
-                  assert assets[0]['browser_download_url'] == f"https://github.com/{os.environ['GH_REPO']}/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk"
+                  url = assets[0]['browser_download_url']
+                  assert url.startswith(f"https://github.com/{os.environ['GH_REPO']}/releases/download/") and url.endswith('/CleanSweep-v2.79.apk')
                   break
               time.sleep(2)
           else:
               raise SystemExit('Draft asset receipt did not verify; nothing made public.')
           PYVERIFY
-          gh release edit live-guard-v2.79 --draft=false
+          if [ "$EXISTING_RELEASE_STATE" != public ]; then gh release edit live-guard-v2.79 --draft=false; fi
           mkdir /tmp/published-liveguard
           gh release download live-guard-v2.79 --pattern CleanSweep-v2.79.apk --dir /tmp/published-liveguard
           test "$(stat -c %s /tmp/published-liveguard/CleanSweep-v2.79.apk)" = 14479951
           test "$(sha256sum /tmp/published-liveguard/CleanSweep-v2.79.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
-          gh api repos/$GH_REPO/releases/tags/live-guard-v2.79 --jq '[.draft,.prerelease] | @tsv' | grep -Fx $'false\tfalse'
+          gh api repos/$GH_REPO/releases/tags/live-guard-v2.79 > /tmp/public-release.json
+          python3 - <<'PYPUBLIC'
+          import json, os
+          release = json.load(open('/tmp/public-release.json'))
+          assert not release['draft'] and not release['prerelease']
+          asset = next(a for a in release['assets'] if a['name'] == 'CleanSweep-v2.79.apk')
+          assert asset['size'] == 14479951 and asset['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+          assert asset['browser_download_url'] == f"https://github.com/{os.environ['GH_REPO']}/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk"
+          PYPUBLIC
           echo 'Exact approved Live Guard 2.79 APK published and re-downloaded for verification; no rebuild. Existing backup-repository assets remain unchanged.'
       - name: Surface bounded public verification diagnostics
         if: failure()
