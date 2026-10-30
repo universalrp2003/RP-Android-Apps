@@ -18,7 +18,7 @@ concurrency:
 jobs:
   preview:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
@@ -33,6 +33,52 @@ jobs:
         run: |
           set -o pipefail
           gradle :tamilanstore:testDebugUnitTest :tamilanstore:lintDebug :tamilanstore:assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/tamilan-store-preview.log"
+      - name: Prepare immutable public APK fixtures and instrumentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/store-fixtures" tamilanstore/src/androidTest/assets
+          for version in 0.3 0.4 0.5; do
+            curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+              "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v$version/DailyVault-v$version.apk" \
+              -o "$RUNNER_TEMP/store-fixtures/DailyVault-v$version.apk"
+          done
+          python3 - <<'PYFIXTURE'
+          import hashlib, os, pathlib
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'store-fixtures'
+          pins = {
+            '0.3': (12417577, 'aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd'),
+            '0.4': (12532289, '39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1'),
+            '0.5': (11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
+          }
+          for version, (size, digest) in pins.items():
+              data = (root / f'DailyVault-v{version}.apk').read_bytes()
+              assert len(data) == size and hashlib.sha256(data).hexdigest() == digest, version
+          PYFIXTURE
+          cp "$RUNNER_TEMP/store-fixtures/DailyVault-v0.5.apk" tamilanstore/src/androidTest/assets/
+          gradle :tamilanstore:assembleDebugAndroidTest --no-daemon --stacktrace
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Verify real archives and Android installer handoff on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          cores: 2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash tamilanstore/tools/emulator-install-smoke.sh
+      - name: Upload bounded emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tamilan-store-emulator-evidence
+          path: ${{ runner.temp }}/store-emulator-evidence/
+          retention-days: 14
+          if-no-files-found: ignore
       - name: Surface bounded Gradle diagnostics
         if: failure()
         env:

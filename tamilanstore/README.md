@@ -78,3 +78,9 @@ Voice Notes: three owner-supplied 28 October 10:37 screenshots added: English no
 Compact search follow-up: the permanent full-width search field is replaced by a Search action in the horizontal toolbar. It opens a single-line search dialog; Show results closes it while keeping the filter, Clear removes it, and dismissal retains the query. Existing name/Tamil-name matching is unchanged. Android/device verification pending.
 
 Secret Message: five owner-supplied camera photos (WA0019–WA0023) added: home, invite waiting, timer/tones, About/app lock and device/guide. Invite URL/token and device identity are covered with opaque redaction in gallery copies before bundling. Originals remain only in temporary uploads; no screenshot protection changed. Photos are owner-device examples, not independent security verification.
+
+## 0.7 candidate — 31 October 2026 owner download/update report
+
+The owner reports Daily Vault 0.5 opens and works on their phone, but Store downloads fail before installation and an existing 0.3 cannot be updated. Screenshots show an initial Android Update offer, not completed 0.3 → 0.5 installation or preservation of previous records. No installed signer/hash was supplied.
+
+Confirmed source defect: Store 0.6 retained the retired 9e30… certificate while immutable current APKs and CI pin 7366…. Candidate 0.7 corrects that pin (Secret Message unchanged), keeps installed-signer/downgrade protection, reports separate failure stages and explains the explicit Install action. This does not make legacy-key apps update-compatible and must not be “fixed” by trusting both keys or uninstalling data-bearing apps. Existing public assets/catalog pointers stay unchanged pending verified publication. See `releases/tamilan-store-v0.7.md`.

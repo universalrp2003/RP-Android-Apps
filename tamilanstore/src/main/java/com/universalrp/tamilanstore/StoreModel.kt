@@ -17,7 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class Transfer(val appId: String = "", val bytes: Long = 0, val busy: Boolean = false,
-    val verified: Boolean = false, val failed: Boolean = false)
+    val verified: Boolean = false, val failed: Boolean = false,
+    val failure: TransferFailure? = null)
 
 class StoreModel(application: Application) : AndroidViewModel(application) {
     private val bundled = Catalog.parse(application.assets.open("catalog.json").bufferedReader().use { it.readText() })
@@ -63,24 +64,28 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         if (status != AppStatus.NOT_INSTALLED && status != AppStatus.UPDATE_AVAILABLE) return
         _transfer.value = Transfer(app.id, busy = true)
         job = viewModelScope.launch {
+            var failureStage = TransferFailure.DOWNLOAD
             try {
                 withContext(Dispatchers.IO) {
                     directory.listFiles()?.forEach { it.delete() }
                     val part = File(directory, "${app.id}.pending.apk")
                     try {
                         fetch(app, part)
+                        failureStage = TransferFailure.APK
                         verify(app, part)
                         currentCoroutineContext().ensureActive()
-                        check(part.renameTo(File(directory, "${app.id}.apk")))
+                        failureStage = TransferFailure.STORAGE
+                        verifyGate(part.renameTo(File(directory, "${app.id}.apk")), TransferFailure.STORAGE)
                     } finally { part.delete() }
                 }
                 _transfer.value = Transfer(app.id, bytes = app.size, verified = true)
             } catch (e: CancellationException) {
                 _transfer.value = Transfer(app.id)
                 throw e
-            } catch (_: Exception) {
+            } catch (error: Exception) {
                 File(directory, "${app.id}.apk").delete()
-                _transfer.value = Transfer(app.id, failed = true)
+                _transfer.value = Transfer(app.id, failed = true,
+                    failure = (error as? TransferVerificationException)?.reason ?: failureStage)
             }
         }
     }
@@ -103,7 +108,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
                     next = URL(next, connection.getHeaderField("Location") ?: error("Missing redirect"))
                 } else {
                     check(code == 200)
-                    if (connection.contentLengthLong >= 0) check(connection.contentLengthLong == app.size)
+                    if (connection.contentLengthLong >= 0) verifyGate(connection.contentLengthLong == app.size, TransferFailure.SIZE)
                     connection.inputStream.use { input ->
                         destination.outputStream().use { output ->
                             val buffer = ByteArray(64 * 1024)
@@ -113,11 +118,11 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
                                 val count = input.read(buffer)
                                 if (count < 0) break
                                 total += count
-                                check(total <= app.size)
+                                verifyGate(total <= app.size, TransferFailure.SIZE)
                                 output.write(buffer, 0, count)
                                 _transfer.value = Transfer(app.id, total, busy = true)
                             }
-                            check(total == app.size)
+                            verifyGate(total == app.size, TransferFailure.SIZE)
                         }
                     }
                     return
@@ -127,33 +132,34 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         error("Too many redirects")
     }
     @Suppress("DEPRECATION")
-    private fun verify(app: StoreApp, file: File) {
-        check(file.length() == app.size)
+    internal fun verify(app: StoreApp, file: File) {
+        verifyGate(file.length() == app.size, TransferFailure.SIZE)
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { input ->
             val buffer = ByteArray(64 * 1024)
             while (true) { val count = input.read(buffer); if (count < 0) break; digest.update(buffer, 0, count) }
         }
-        check(hex(digest.digest()) == app.sha256)
+        verifyGate(hex(digest.digest()) == app.sha256, TransferFailure.HASH)
         val pm = getApplication<Application>().packageManager
         val flags = if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES
-        val info = pm.getPackageArchiveInfo(file.absolutePath, flags) ?: error("Invalid APK")
-        check(info.packageName == app.packageName && info.versionName == app.version)
-        check(info.applicationInfo?.minSdkVersion?.let { it <= Build.VERSION.SDK_INT } == true)
+        val info = pm.getPackageArchiveInfo(file.absolutePath, flags) ?: throw TransferVerificationException(TransferFailure.APK)
+        verifyGate(info.packageName == app.packageName && info.versionName == app.version, TransferFailure.IDENTITY)
+        verifyGate(info.applicationInfo?.minSdkVersion?.let { it <= Build.VERSION.SDK_INT } == true, TransferFailure.SDK)
         val signatures = if (Build.VERSION.SDK_INT >= 28) info.signingInfo?.apkContentsSigners else info.signatures
-        check(signatures?.size == 1)
-        check(hex(MessageDigest.getInstance("SHA-256").digest(signatures!![0].toByteArray())) == Catalog.signerFor(app.packageName))
+        verifyGate(signatures?.size == 1, TransferFailure.SIGNER)
+        verifyGate(hex(MessageDigest.getInstance("SHA-256").digest(signatures!![0].toByteArray())) == Catalog.signerFor(app.packageName), TransferFailure.SIGNER)
         val installed = try { pm.getPackageInfo(app.packageName, flags) } catch (_: PackageManager.NameNotFoundException) { null }
         if (installed != null) {
             val status = InstalledStatus.resolve(this.installed(app), app.version)
-            check(status == AppStatus.UPDATE_AVAILABLE || status == AppStatus.CURRENT)
+            verifyGate(status != AppStatus.SIGNER_MISMATCH, TransferFailure.INSTALLED_SIGNER)
+            verifyGate(status == AppStatus.UPDATE_AVAILABLE || status == AppStatus.CURRENT, TransferFailure.DOWNGRADE)
 
             val oldCode = if (Build.VERSION.SDK_INT >= 28) installed.longVersionCode else installed.versionCode.toLong()
             val newCode = if (Build.VERSION.SDK_INT >= 28) info.longVersionCode else info.versionCode.toLong()
-            check(newCode >= oldCode)
+            verifyGate(newCode >= oldCode, TransferFailure.DOWNGRADE)
             val oldSignatures = if (Build.VERSION.SDK_INT >= 28) installed.signingInfo?.apkContentsSigners else installed.signatures
-            check(oldSignatures?.size == 1)
-            check(hex(MessageDigest.getInstance("SHA-256").digest(oldSignatures!![0].toByteArray())) == Catalog.signerFor(app.packageName))
+            verifyGate(oldSignatures?.size == 1, TransferFailure.INSTALLED_SIGNER)
+            verifyGate(hex(MessageDigest.getInstance("SHA-256").digest(oldSignatures!![0].toByteArray())) == Catalog.signerFor(app.packageName), TransferFailure.INSTALLED_SIGNER)
         }
     }
     private fun hex(bytes: ByteArray) = bytes.joinToString("") { "%02x".format(it.toInt() and 255) }

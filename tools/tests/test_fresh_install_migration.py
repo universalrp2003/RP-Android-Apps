@@ -85,7 +85,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
             'launcher': ('1.5', '6', 'elderly-launcher-v1.5'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
-            'tamilanstore': ('0.6', '6', 'tamilan-store-v0.6'),
+            'tamilanstore': ('0.7', '7', 'tamilan-store-v0.7'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():
@@ -130,7 +130,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
         self.assertIn('default: false', workflow)
         self.assertIn('- tamilanstore', workflow)
         self.assertIn('- dailyvault', workflow)
-        self.assertIn("echo 'version=0.6'", workflow)
+        self.assertIn("echo 'version=0.7'", workflow)
         self.assertIn("echo 'version=0.5'", workflow)
         self.assertIn('app: [tamilanstore, dailyvault]', workflow)
         self.assertIn("if: ${{ env.PUBLISH_REQUESTED == 'true' }}", workflow)

@@ -7,7 +7,7 @@ on:
       - "tamilanstore/**"
       - "dailyvault/**"
       - "shared/src/main/java/com/universalrp/updates/**"
-      - "releases/tamilan-store-v0.6.md"
+      - "releases/tamilan-store-v0.7.md"
       - "releases/daily-vault-v0.5.md"
   workflow_dispatch:
     inputs:
@@ -52,8 +52,8 @@ jobs:
           case "$APP" in
             tamilanstore)
               echo 'module=tamilanstore' >> "$GITHUB_OUTPUT"
-              echo 'version=0.6' >> "$GITHUB_OUTPUT"
-              echo 'code=6' >> "$GITHUB_OUTPUT"
+              echo 'version=0.7' >> "$GITHUB_OUTPUT"
+              echo 'code=7' >> "$GITHUB_OUTPUT"
               echo 'slug=tamilan-store' >> "$GITHUB_OUTPUT"
               echo 'label=Tamilan-Store' >> "$GITHUB_OUTPUT"
               ;;
