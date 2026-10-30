@@ -1,0 +1,62 @@
+name: Website usability checks (no deployment)
+
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "site/**"
+      - "tools/website-tests/**"
+      - "tools/tests/test_website*.py"
+      - "tools/update_website_release_dates.py"
+      - ".github/workflows/website-usability.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "tools/website-tests/**"
+      - "tools/tests/test_website*.py"
+      - "tools/update_website_release_dates.py"
+      - ".github/workflows/website-usability.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  website:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tools/website-tests/package-lock.json
+      - name: Check static contracts and recorded publication dates
+        run: |
+          python3 -m unittest discover -s tools/tests -p 'test_website*.py' -v
+          python3 tools/update_website_release_dates.py
+          node --check site/site-controls.js
+      - name: Install development-only test dependencies
+        working-directory: tools/website-tests
+        run: |
+          npm ci --ignore-scripts
+          npx playwright install-deps chromium
+      - name: Browser, keyboard, mobile, checksum and accessibility checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 8000 --bind 0.0.0.0 --directory site > "$RUNNER_TEMP/website-server.log" 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID"' EXIT
+          python3 - <<'PY'
+          import time, urllib.request
+          for attempt in range(50):
+              try:
+                  urllib.request.urlopen('http://127.0.0.1:8000/', timeout=1).close()
+                  break
+              except OSError:
+                  time.sleep(0.1)
+          else:
+              raise SystemExit('Website server did not start')
+          PY
+          node tools/website-tests/usability.mjs
