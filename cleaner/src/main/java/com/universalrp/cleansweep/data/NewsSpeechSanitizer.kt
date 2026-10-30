@@ -141,6 +141,8 @@ object NewsSpeechSanitizer {
             if (next == text) return@repeat
             text = next
         }
+        // Reject programme titles and real cutoffs BEFORE punctuation removal can hide them.
+        if (BalancedNewsPolicy.isJunk(text)) return ""
         // Strip dangling punctuation / orphan truncation markers at the very end
         text = text.replace(Regex("(?:\\.{2,}|…+|[-–—|:•]+)\\s*$"), "").replace(Regex("\\s+"), " ").trim()
         return text.take(400)
@@ -152,6 +154,7 @@ object NewsSpeechSanitizer {
     fun isCompleteSpeakableHeadline(cleanedTitle: String, expectTamil: Boolean): Boolean {
         val t = cleanedTitle.trim()
         if (t.length < 18 || t.length > 360) return false
+        if (BalancedNewsPolicy.isJunk(t)) return false
         if (t.lowercase(Locale.ROOT) in PURE_STUB_TITLES) return false
         val hasTamil = t.any { it.code in 0x0B80..0x0BFF }
         if (expectTamil && !hasTamil) return false
@@ -201,7 +204,7 @@ object NewsSpeechSanitizer {
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
         val cleaned = headlines
-            .map { cleanHeadline(it.title, it.source).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .map { it.spokenText.ifBlank { cleanHeadline(it.title, it.source) }.trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
             .filter { it.isNotBlank() }
         if (cleaned.isEmpty()) return ""
         val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "

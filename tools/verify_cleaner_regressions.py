@@ -6,6 +6,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    "com.universalrp.cleansweep.data.BalancedNewsPolicyTest": 22,
+    "com.universalrp.cleansweep.voice.NewsBulletinEditorTest": 12,
     "com.universalrp.cleansweep.notify.StatusPillContentTest": 7,
     "com.universalrp.cleansweep.data.SecuritySettingsRoutesTest": 14,
     "com.universalrp.cleansweep.ai.SecurityAiPromptTest": 9,

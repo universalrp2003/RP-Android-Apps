@@ -3287,9 +3287,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     count == 0 -> mutate {
                         it.copy(
                             message = if (Lang.isTamil) {
-                                "இன்றைய செய்தித் தலைப்புகள் இன்னும் கிடைக்கவில்லை — புதுப்பித்து முயற்சிக்கவும்."
+                                "இன்றைய புதிய, தெளிவான செய்திகள் தற்போது இல்லை. ஏற்கனவே படித்த அல்லது பழைய செய்திகள் மீண்டும் படிக்கப்படாது."
                             } else {
-                                "No clean headlines from today are ready yet — tap refresh and try again."
+                                "No new, clean headlines from today are available. Already-read or old stories will not be replayed."
                             },
                         )
                     }

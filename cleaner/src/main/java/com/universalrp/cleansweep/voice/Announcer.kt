@@ -219,7 +219,8 @@ object Announcer {
         val overrideStudioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
         val answerSlot: Int? = null,
         /** A manual news read owns the queue: stale unrelated requests must not play instead. */
-        val exclusive: Boolean = false) {
+        val exclusive: Boolean = false,
+        val newsDayScope: String? = null) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
         @Volatile var language = wanted ?: AppLang.TA
@@ -744,6 +745,7 @@ object Announcer {
             onStarted = onStarted,
             requestKey = "news_bulletin:${System.nanoTime()}",
             exclusive = manual,
+            newsDayScope = currentNewsDayScope(),
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -931,6 +933,14 @@ object Announcer {
         startStudioOnlineUtterance(context, request)
     }
 
+    private fun currentNewsDayScope(): String {
+        val zone = java.time.ZoneId.systemDefault()
+        return zone.id + "|" + java.time.Instant.now().atZone(zone).toLocalDate()
+    }
+
+    private fun newsExpired(request: Request): Boolean =
+        request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()
+
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
         val profile = request.resolveProfile(context)
         val useTamil = request.language == AppLang.TA
@@ -948,6 +958,10 @@ object Announcer {
                         main.post {
                             if (active?.id != requestId) return@post
                             speakingState.value = false
+                            if (newsExpired(request)) {
+                                finish(VoiceDeliveryPolicy.Stage.CANCELLED, false)
+                                return@post
+                            }
                             val stage = if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context))
                                 VoiceDeliveryPolicy.Stage.ENGINE_ERROR else VoiceDeliveryPolicy.Stage.NO_INTERNET
                             active = null
@@ -960,6 +974,10 @@ object Announcer {
                     }
                 }
                 if (active?.id != requestId) return@submit
+                if (newsExpired(request)) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                    return@submit
+                }
                 val online = com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
                 val mp3 = when {
                     request.event == Event.NEWS_HEADLINES && request.preparedNewsParts.isNotEmpty() ->
@@ -1003,7 +1021,7 @@ object Announcer {
                             }
                         },
                         shouldStop = {
-                            active?.id != requestId || Thread.currentThread().isInterrupted ||
+                            active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) ||
                                 com.universalrp.updates.CallGuard.inCall(context)
                         },
                         activePlayerSink = { player -> if (player != null) activeMediaPlayer = player },
@@ -1027,7 +1045,7 @@ object Announcer {
                         }
                         return@submit
                     }
-                    if (active?.id != requestId || Thread.currentThread().isInterrupted || com.universalrp.updates.CallGuard.inCall(context)) {
+                    if (active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) || com.universalrp.updates.CallGuard.inCall(context)) {
                         main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
                         return@submit
                     }
@@ -1074,7 +1092,7 @@ object Announcer {
             var file: java.io.File? = null
             var attempts = 0
             while (file == null) {
-                if (active?.id != request.id || Thread.currentThread().isInterrupted) return false
+                if (active?.id != request.id || Thread.currentThread().isInterrupted || newsExpired(request)) return false
                 val remaining = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())
                 if (!NewsVoicePreparationPolicy.canAttempt(attempts, remaining)) return false
                 attempts++
@@ -1108,7 +1126,7 @@ object Announcer {
         }
         if (!NewsVoicePreparationPolicy.allPartsPrepared(files.size, request.parts.size)) return false
         request.preparedNewsParts = files.toList()
-        return active?.id == request.id && !Thread.currentThread().isInterrupted
+        return active?.id == request.id && !Thread.currentThread().isInterrupted && !newsExpired(request)
     }
 
     private fun finish(stage: VoiceDeliveryPolicy.Stage, success: Boolean, pump: Boolean = true) {

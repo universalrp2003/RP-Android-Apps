@@ -14,7 +14,7 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 
 /** Real published headlines only. Fetch time, static tips and missing dates are NOT publication dates. */
-data class NewsHeadline(val category: String, val title: String, val source: String, val publishedAtMs: Long, val link: String) {
+data class NewsHeadline(val category: String, val title: String, val source: String, val publishedAtMs: Long, val link: String, val description: String = "", val spokenText: String = "") {
     val key: String get() = NewsPolicy.titleKey(title)
 }
 
@@ -34,14 +34,14 @@ object NewsPolicy {
             isToday(item.publishedAtMs, nowMs, zone) && item.title.length in 10..500 &&
                 item.title.any { it.code in 0x0B80..0x0BFF } && key.isNotBlank() && url != null &&
                 key !in titles && url !in links && titles.add(key) && links.add(url)
-        }.take(MAX_ITEMS)
+        }.let { BalancedNewsPolicy.reserveCategories(it, MAX_ITEMS) }
     }
 
     fun todayForLanguage(items: List<NewsHeadline>, nowMs: Long, zone: ZoneId, tamil: Boolean): List<NewsHeadline> {
         if (tamil) {
             return today(items, nowMs, zone).mapNotNull { item ->
                 val cleaned = NewsSpeechSanitizer.cleanHeadline(item.title, item.source)
-                if (cleaned.length >= 12) item.copy(title = cleaned) else null
+                if (NewsSpeechSanitizer.isCompleteSpeakableHeadline(cleaned, true)) item.copy(title = cleaned) else null
             }
         }
         val titles = hashSetOf<String>()
@@ -53,7 +53,7 @@ object NewsPolicy {
             val validLatin = cleaned.any { it in 'A'..'Z' || it in 'a'..'z' } &&
                 cleaned.none { it.code in 0x0B80..0x0BFF }
             if (isToday(item.publishedAtMs, nowMs, zone) &&
-                cleaned.length in 14..500 &&
+                NewsSpeechSanitizer.isCompleteSpeakableHeadline(cleaned, false) &&
                 validLatin &&
                 key.isNotBlank() &&
                 url != null &&
@@ -66,7 +66,7 @@ object NewsPolicy {
             } else {
                 null
             }
-        }.take(MAX_ITEMS)
+        }.let { BalancedNewsPolicy.reserveCategories(it, MAX_ITEMS) }
     }
 
     fun nextUnseen(items: List<NewsHeadline>, shown: Set<String>): NewsHeadline? = items.firstOrNull { it.key !in shown }
@@ -160,7 +160,14 @@ object NewsPolicy {
         return null // No "today" substitution, and no yearless/local-time guess.
     }
 
-    /** Bounded RSS/Atom parser; reject DTDs and resolve no external entities. No article body is fetched. */
+    private fun feedDescription(raw: String): String {
+        val text = decodeEntities(raw.replace(Regex("<[^>]*>"), " ")).replace(Regex("\\s+"), " ").trim()
+        if (text.length <= 360) return text
+        // Do not cut a long publisher description mid-sentence and call that a complete story.
+        return text.split(Regex("(?<=[.!?])\\s+")).firstOrNull { it.length in 18..360 }.orEmpty()
+    }
+
+    /** Bounded RSS/Atom parser; no article scraping. Keep only publisher-provided feed descriptions. */
     fun parseFeed(raw: String, category: String, publisher: String): List<NewsHeadline> {
         if (raw.length > MAX_FEED_CHARS || raw.contains("<!DOCTYPE", ignoreCase = true) || raw.contains("<!ENTITY", ignoreCase = true)) return emptyList()
         return runCatching {
@@ -185,11 +192,14 @@ object NewsPolicy {
                 fun text(name: String) = children(name).firstOrNull()?.textContent.orEmpty().trim()
                 val date = publicationTime(text("pubDate").ifBlank { text("published").ifBlank { text("date") } }) ?: continue
                 val source = text("source").ifBlank { publisher }.take(100)
+                if (publisher.startsWith("Google News") || publisher in setOf("Cyber Fraud India", "இணைய மோசடி செய்திகள்")) {
+                    if (!BalancedNewsPolicy.trustedAggregatedPublisher(source)) continue
+                }
                 val title = cleanTitle(text("title"), source)
                 val linkNode = children("link").firstOrNull { it.getAttribute("rel") in setOf("", "alternate") }
                 val link = linkNode?.getAttribute("href")?.takeIf { it.isNotBlank() } ?: linkNode?.textContent.orEmpty().trim()
                 val safeLink = canonicalLink(link) ?: continue
-                if (title.isNotBlank()) result.add(NewsHeadline(category, title, source, date, safeLink))
+                if (title.isNotBlank()) result.add(NewsHeadline(category, title, source, date, safeLink, feedDescription(text("description").ifBlank { text("summary") })))
             }
             result
         }.getOrDefault(emptyList())

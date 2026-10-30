@@ -49,12 +49,37 @@ class LiveGuardNewsVoiceTest(unittest.TestCase):
         self.assertIn('Text(tr("Read aloud"))', home)
         self.assertIn('Announcer.speakNewsNow(ctx, cleaned, Lang.languageIn(ctx))', vm)
 
-    def test_news_is_not_rewritten_or_summarized_by_ai(self):
+    def test_news_uses_safe_extractive_editor_not_generated_summary(self):
         watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
         self.assertNotIn('composeAiNewsBulletin', watcher)
-        self.assertNotIn('AiClient.ask', watcher)
+        self.assertIn('NewsBulletinEditor.edit(context, selected, tamil)', watcher)
+        editor = src('voice/NewsBulletinEditor.kt')
+        self.assertIn('allowSearch = false', editor)
+        self.assertIn('options[sentence]', editor)
+        self.assertIn('TIMEOUT_MS = 12_000L', editor)
         self.assertIn('NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)', watcher)
         self.assertIn('NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)', watcher)
+
+    def test_both_paths_share_balancing_and_manual_does_not_recycle(self):
+        watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
+        self.assertEqual(watcher.count('prepareBalancedBatch(app, snapshot.items, tamil)'), 2)
+        self.assertNotIn('alreadyAnnouncedKeys = emptySet()', watcher)
+        self.assertIn('KEY_ROTATION', watcher)
+        self.assertIn('KEY_RECENT_EVENTS', watcher)
+
+    def test_freshness_is_checked_after_editor_and_during_audio(self):
+        watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
+        self.assertIn('NewsPolicy.isToday(it.publishedAtMs, readyAt', watcher)
+        announcer = src('voice/Announcer.kt')
+        self.assertIn('newsExpired(request)', announcer)
+        self.assertIn('newsDayScope = currentNewsDayScope()', announcer)
+
+    def test_specialists_are_interleaved_and_descriptions_are_cached(self):
+        repo = src('data/TamilInfoStripRepo.kt')
+        self.assertIn('specialistFeeds(tamil)', repo)
+        self.assertIn('listOfNotNull(general.getOrNull(index), specialist.getOrNull(index))', repo)
+        self.assertIn('put("description", item.description)', repo)
+        self.assertIn('when:1d', repo)
 
     def test_preparation_policy_bounds_news_without_starving_alternatives(self):
         policy = src('voice/NewsVoicePreparationPolicy.kt')
