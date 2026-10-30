@@ -216,13 +216,19 @@ object Announcer {
         val manual: Boolean, val done: kotlinx.coroutines.CompletableDeferred<Boolean>? = null, val onStarted: (() -> Unit)? = null,
         val requestKey: String? = null, val preferredVoice: String? = null, val bypassQuietHours: Boolean = false,
         val overrideStudioProfile: com.universalrp.voice.CuratedNeuralVoiceProfile? = null,
-        val answerSlot: Int? = null) {
+        val answerSlot: Int? = null,
+        /** A manual news read owns the queue: stale unrelated requests must not play instead. */
+        val exclusive: Boolean = false) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
         var language = wanted ?: AppLang.TA
         var text = ""
         var network = false
         var started = false
+        // 2.76 — long news is one logical request played as several short HD clips, so the
+        // shared engine's per-request text cap cannot silently truncate the eighth headline.
+        var parts: List<String> = emptyList()
+        var partIndex = 0
         // 2.71 — how many times the HD-only path has tried and failed to produce a clip. There is
         // no system voice to fall back to, so this bounds the wait instead of looping forever.
         var hdAttempts = 0
@@ -597,6 +603,27 @@ object Announcer {
             if (wanted == AppLang.TA) text else null, wanted, Event.TEST, true))
     }
 
+    /**
+     * 2.76 — a tapped news headline / "Read aloud" action. Unlike the generic test voice it
+     * owns the queue, uses the news HD part pipeline, and cannot be followed by an unrelated
+     * stale alert when the neural service is unreachable.
+     */
+    fun speakNewsNow(context: Context, text: String, language: AppLang? = null): Boolean {
+        val wanted = language ?: Lang.languageIn(context)
+        return submit(
+            context,
+            Request(
+                english = if (wanted == AppLang.EN) text else null,
+                tamil = if (wanted == AppLang.TA) text else null,
+                wanted = wanted,
+                event = Event.NEWS_HEADLINES,
+                manual = true,
+                exclusive = true,
+                requestKey = "news_manual:${System.nanoTime()}",
+            ),
+        )
+    }
+
     /** Previews a curated Studio Ultra-HD voice profile immediately. */
     fun previewOnlineVoice(context: Context, profile: com.universalrp.voice.CuratedNeuralVoiceProfile): Boolean {
         val wanted = Lang.languageIn(context)
@@ -677,23 +704,37 @@ object Announcer {
         }
     }
 
+    /**
+     * Speaks one complete news bulletin and waits for the LAST HD part to finish.
+     *
+     * 2.76: a manual read is exclusive. It cancels stale queued announcements first, so a
+     * failed HD attempt can never be followed by an unrelated battery/network alert that
+     * makes the owner think the news button read the wrong thing. Automatic news keeps the
+     * normal queue. The bulletin itself is split into short HD-safe parts by [drain].
+     */
     suspend fun speakNewsBulletinAndWait(
         context: Context,
         text: String,
         language: AppLang,
         onStarted: (() -> Unit)? = null,
-        timeoutMs: Long = 90_000L,
+        timeoutMs: Long = 300_000L,
+        manual: Boolean = false,
     ): Boolean {
+        // A tapped read must not leave the owner staring at a busy button for the whole
+        // timeout when Android already reports no internet. Automatic news can still wait
+        // for the WorkManager/network callback path.
+        if (manual && !com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)) return false
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(
             english = if (language == AppLang.EN) text else null,
             tamil = if (language == AppLang.TA) text else null,
             wanted = language,
             event = Event.NEWS_HEADLINES,
-            manual = false,
+            manual = manual,
             done = done,
             onStarted = onStarted,
             requestKey = "news_bulletin:${System.nanoTime()}",
+            exclusive = manual,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -757,6 +798,17 @@ object Announcer {
         if (request.english.isNullOrBlank() && request.tamil.isNullOrBlank()) return false
         main.post {
             prefsContext = ctx
+            if (request.exclusive) {
+                // A manual news read must not be followed by an unrelated queued alert if HD
+                // fails. Cancel the active clip and drop stale pending requests first.
+                runCatching { activeMediaPlayer?.stop() }
+                if (active != null) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
+                pending.forEach {
+                    record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED)
+                    it.done?.complete(false)
+                }
+                pending.clear()
+            }
             val duplicate = active?.key == request.key || pending.any { it.key == request.key } ||
                 (request.event == Event.ANSWER && !request.manual && request.key in automaticAnswerIds)
             if (duplicate) { record(ctx, request, VoiceDeliveryPolicy.Stage.DUPLICATE); request.done?.complete(false); return@post }
@@ -853,6 +905,14 @@ object Announcer {
         request.language = if (useTamil) AppLang.TA else AppLang.EN
         request.text = plain(if (useTamil) request.tamil.orEmpty() else request.english.orEmpty())
         if (request.text.isBlank()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
+        if (request.event == Event.NEWS_HEADLINES) {
+            if (request.parts.isEmpty()) {
+                request.parts = com.universalrp.cleansweep.data.NewsSpeechSanitizer.splitForHd(request.text)
+                request.partIndex = 0
+            }
+            if (request.parts.isEmpty()) { finish(VoiceDeliveryPolicy.Stage.LANGUAGE_MISSING, false); return }
+            request.text = request.parts[request.partIndex.coerceIn(0, request.parts.lastIndex)]
+        }
         request.network = true
         startStudioOnlineUtterance(context, request)
     }
@@ -914,7 +974,20 @@ object Announcer {
                     maxDurationMs = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L,
                 )
                 if (played) {
-                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true) }
+                    main.post {
+                        if (active?.id != requestId) return@post
+                        // A news bulletin is one logical request made of several short HD clips.
+                        // Advance to the next part instead of finishing, so the whole bulletin
+                        // plays back-to-back and the caller only learns "success" at the end.
+                        if (request.event == Event.NEWS_HEADLINES && request.partIndex < request.parts.lastIndex) {
+                            request.partIndex++
+                            request.text = request.parts[request.partIndex]
+                            request.hdAttempts = 0
+                            startStudioOnlineUtterance(context, request)
+                        } else {
+                            finish(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, true)
+                        }
+                    }
                     return@execute
                 }
                 if (active?.id != requestId || com.universalrp.updates.CallGuard.inCall(context)) {

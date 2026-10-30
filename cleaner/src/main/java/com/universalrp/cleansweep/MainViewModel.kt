@@ -311,6 +311,7 @@ data class UiState(
     val tamilInfoPaused: Boolean = false,
     val newsVoiceEnabled: Boolean = true,
     val newsVoiceIntervalMin: Int = 180,
+    val newsVoiceBusy: Boolean = false,
     val autoWifiScanOnOpen: Boolean = true,
     val bgWifiScanEnabled: Boolean = false,
     val verifiedWifiMacs: Set<String> = emptySet(),
@@ -358,6 +359,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var securityJob: Job? = null
     private var securityRevision = 0L
     private var newsJob: Job? = null
+    private var newsReadingJob: Job? = null
     private var homeReadingJob: Job? = null
     private var phoneAgeCalculatedOn: String? = null
     private var healthReadingJob: Job? = null
@@ -3249,7 +3251,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun speakTamilText(text: String) {
         val cleaned = com.universalrp.cleansweep.data.NewsSpeechSanitizer.cleanHeadline(text)
         if (cleaned.isNotBlank()) {
-            Announcer.speakNow(ctx, cleaned, Lang.languageIn(ctx))
+            Announcer.speakNewsNow(ctx, cleaned, Lang.languageIn(ctx))
         }
     }
 
@@ -3265,24 +3267,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun readTodaysNewsNow() {
-        viewModelScope.launch {
-            val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
-            if (count <= 0) {
-                mutate {
-                    it.copy(
-                        message = if (Lang.isTamil) {
-                            "இன்றைய செய்தித் தலைப்புகள் இன்னும் கிடைக்கவில்லை — புதுப்பித்து முயற்சிக்கவும்."
-                        } else {
-                            "No clean headlines from today are ready yet — tap refresh and try again."
-                        },
-                    )
+        if (newsReadingJob?.isActive == true) return
+        newsReadingJob = viewModelScope.launch {
+            mutate { it.copy(newsVoiceBusy = true) }
+            try {
+                val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
+                when {
+                    count < 0 -> mutate {
+                        it.copy(
+                            message = if (Lang.isTamil) {
+                                "செய்தி குரலை இப்போது முடிக்க முடியவில்லை. இணையம் / HD குரல் சேவையைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும். செய்திகள் படித்ததாகக் குறிக்கப்படவில்லை."
+                            } else {
+                                "The news voice could not finish. Check the internet / HD voice service and try again. The headlines were not marked as read."
+                            },
+                        )
+                    }
+                    count == 0 -> mutate {
+                        it.copy(
+                            message = if (Lang.isTamil) {
+                                "இன்றைய செய்தித் தலைப்புகள் இன்னும் கிடைக்கவில்லை — புதுப்பித்து முயற்சிக்கவும்."
+                            } else {
+                                "No clean headlines from today are ready yet — tap refresh and try again."
+                            },
+                        )
+                    }
                 }
+            } finally {
+                mutate { it.copy(newsVoiceBusy = false) }
             }
         }
     }
 
     fun stopSpeakingNow() {
+        newsReadingJob?.cancel()
+        newsReadingJob = null
         Announcer.stop()
+        mutate { it.copy(newsVoiceBusy = false) }
     }
 
     // ---------------------------------------------------- Wi-Fi Verified Devices & Auto-Scan

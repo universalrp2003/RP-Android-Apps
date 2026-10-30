@@ -66,6 +66,8 @@ EXPECTED = {
     "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 7,
     "com.universalrp.cleansweep.weather.WeatherUpgradeAndBannerTest": 3,
     "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 5,
+    # 2.76: eight-headline bulletins must survive the shared HD text cap as ordered parts.
+    "com.universalrp.cleansweep.data.NewsBulletinHdPipelineTest": 9,
 }
 
 

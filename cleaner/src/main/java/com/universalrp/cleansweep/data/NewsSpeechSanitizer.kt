@@ -15,6 +15,64 @@ object NewsSpeechSanitizer {
     val VALID_INTERVAL_MINUTES = listOf(30, 60, 120, 180)
     const val DEFAULT_INTERVAL_MINUTES = 120
 
+    /**
+     * The shared HD engine synthesises at most 1200 characters per request and shares one
+     * short deadline across up to three neural voices. A whole eight-headline bulletin can
+     * exceed that cap and time out even on a healthy network, which looked like "voice is
+     * waiting for the internet". News is therefore spoken in small sequential parts. 420 is
+     * the same listenable size already used for long assistant answers, and leaves ample
+     * headroom under the engine cap for Tamil graphemes and the intro/weather lead.
+     */
+    const val MAX_HD_SYNTHESIS_CHARS = 420
+
+    /**
+     * Splits [text] into non-empty parts of at most [maxChars] characters, preferring sentence
+     * ends and then word boundaries. No headline text is dropped: the parts are played in order
+     * as one bulletin. This is pure so the exact chunking can be regression-tested on the JVM.
+     */
+    fun splitForHd(text: String, maxChars: Int = MAX_HD_SYNTHESIS_CHARS): List<String> {
+        require(maxChars > 0) { "maxChars must be positive" }
+        val normalized = text.replace(Regex("\\s+"), " ").trim()
+        if (normalized.isEmpty()) return emptyList()
+        if (normalized.length <= maxChars) return listOf(normalized)
+
+        val parts = ArrayList<String>()
+        val current = StringBuilder()
+        fun flush() {
+            if (current.isNotEmpty()) {
+                parts.add(current.toString())
+                current.setLength(0)
+            }
+        }
+
+        val sentences = normalized.split(Regex("(?<=[.!?])\\s+")).filter { it.isNotBlank() }
+        for (sentence in sentences) {
+            if (sentence.length <= maxChars) {
+                if (current.isNotEmpty() && current.length + 1 + sentence.length > maxChars) flush()
+                if (current.isNotEmpty()) current.append(' ')
+                current.append(sentence)
+                continue
+            }
+            // A single sentence longer than the cap: flush what we have, then cut on words.
+            flush()
+            var remaining = sentence
+            while (remaining.length > maxChars) {
+                var cut = remaining.lastIndexOf(' ', maxChars)
+                if (cut <= 0) {
+                    cut = maxChars
+                    // Do not cut a surrogate pair in half.
+                    if (cut < remaining.length && Character.isHighSurrogate(remaining[cut - 1])) cut--
+                }
+                val piece = remaining.substring(0, cut).trim()
+                if (piece.isNotEmpty()) parts.add(piece)
+                remaining = remaining.substring(cut).trim()
+            }
+            if (remaining.isNotEmpty()) current.append(remaining)
+        }
+        flush()
+        return parts
+    }
+
     private val LEADING_NOISE_REGEX = Regex(
         "^(?:\\s*(?:\\[[^\\]]{1,24}]|\\([^)]{1,20}\\))\\s*|" +
             "\\s*(?:big\\s+breaking|breaking\\s+news|breaking|flash\\s+news|flash|just\\s+in|live\\s+updates|live\\s+blog|live|watch\\s+video|watch|video|photos?|photo\\s+gallery|exclusive|viral\\s+video|viral|" +

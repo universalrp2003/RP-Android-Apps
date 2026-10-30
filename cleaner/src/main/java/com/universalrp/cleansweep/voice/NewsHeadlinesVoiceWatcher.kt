@@ -237,27 +237,31 @@ object NewsHeadlinesVoiceWatcher {
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
         if (script.isBlank()) return false
 
-        return Announcer.speakNewsBulletinAndWait(
+        val spoken = Announcer.speakNewsBulletinAndWait(
             context = app,
             text = script,
             language = lang,
-            onStarted = {
-                markHeadlinesAnnounced(app, freshBatch, tamil = tamil)
-            },
-            timeoutMs = 90_000L,
+            timeoutMs = 480_000L,
         )
+        // Only a completed bulletin consumes the day's headlines. A failed or interrupted HD
+        // read must leave them unannounced so the next interval/screen-off tick can retry.
+        if (spoken) markHeadlinesAnnounced(app, freshBatch, tamil = tamil)
+        return spoken
     }
 
     /**
-     * Manual user-requested news bulletin readout ("Read Today's News" button):
-     * prefers fresh unannounced clean headlines first, and if all were already heard today,
-     * reads the latest 8 clean headlines of today immediately!
+     * Manual user-requested news bulletin readout ("Read Today's News" button).
+     *
+     * Returns the number of headlines actually spoken, `0` when no clean headline from today
+     * is available, and `-1` when headlines exist but the HD voice could not finish the read.
+     * A failed/interrupted read never marks the batch announced, so the button and the next
+     * interval tick can retry it instead of silently consuming the day's news.
      */
     suspend fun readTodaysHeadlinesManually(context: Context): Int {
         val app = context.applicationContext
         val lang = Lang.languageIn(app)
         val tamil = lang == AppLang.TA
-        val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
+        val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = true, tamil = tamil)
         var batch = NewsSpeechSanitizer.selectUnannouncedBatch(
             items = snapshot.items,
             alreadyAnnouncedKeys = announcedKeysToday(app, tamil),
@@ -276,8 +280,16 @@ object NewsHeadlinesVoiceWatcher {
         val newsScript = composeAiNewsBulletin(app, batch, tamil)
             ?: NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
+        if (script.isBlank()) return 0
+        val spoken = Announcer.speakNewsBulletinAndWait(
+            context = app,
+            text = script,
+            language = lang,
+            timeoutMs = 480_000L,
+            manual = true,
+        )
+        if (!spoken) return -1
         markHeadlinesAnnounced(app, batch, tamil = tamil)
-        Announcer.speakNow(context = app, text = script, language = lang)
         return batch.size
     }
 

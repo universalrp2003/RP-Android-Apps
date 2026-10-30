@@ -198,8 +198,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         VoiceChip(
-                            label = tr("Read today's news"),
+                            label = tr(if (state.newsVoiceBusy) "Reading news…" else "Read today's news"),
                             icon = Icons.Outlined.PlayArrow,
+                            enabled = !state.newsVoiceBusy,
                             onClick = { vm.readTodaysNewsNow() },
                         )
                         androidx.compose.material3.OutlinedButton(onClick = { vm.stopSpeakingNow() }) {
@@ -865,8 +866,9 @@ private fun VoiceChip(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
-    TextButton(onClick = onClick) {
+    TextButton(onClick = onClick, enabled = enabled) {
         Icon(icon, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
         Spacer(Modifier.size(6.dp))
         Text(label, color = AccentCyan, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)

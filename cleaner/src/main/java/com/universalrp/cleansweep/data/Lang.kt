@@ -1627,6 +1627,7 @@ object Lang {
         "News headlines voice announcer" to "செய்தி குரல் அறிவிப்பு",
         "Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "போன் திரை அணைந்திருக்கும்போது மட்டும் புதிய 8 செய்திகளை வாசிக்கும் (6 AM – 10 PM).",
         "Read today's news" to "இன்றைய செய்தி படி",
+        "Reading news…" to "செய்திகள் படிக்கப்படுகின்றன…",
         "Stop reading" to "⏹ நிறுத்து",
         // ---------------------------------------------------- HD-only voice (2.71)
         "HD voice only" to "HD குரல் மட்டும்",
