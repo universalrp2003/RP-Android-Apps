@@ -23,8 +23,10 @@ jobs:
           import base64, pathlib
           path = pathlib.Path('evidence/failure.png')
           data = base64.b64encode(path.read_bytes()).decode()
-          chunks = [data[i:i+40000] for i in range(0, len(data), 40000)]
+          chunks = [data[i:i+3800] for i in range(0, len(data), 3800)]
           for i, chunk in enumerate(chunks):
               print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunk}')
-          xml = pathlib.Path('evidence/last-ui.xml').read_text()
-          print('::notice title=DVQA XML::' + xml[:50000].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          import json, xml.etree.ElementTree as ET
+          root = ET.parse('evidence/last-ui.xml')
+          items = [{k:n.get(k) for k in ('text','content-desc','bounds','clickable')} for n in root.iter('node') if n.get('clickable') == 'true' or n.get('content-desc')]
+          print('::notice title=DVQA controls::' + json.dumps(items, ensure_ascii=False))
