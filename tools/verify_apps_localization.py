@@ -1113,15 +1113,19 @@ def verify_site_versions_match_downloads() -> int:
     # actual release identities and asset names across all three public lists.
     sister_entries = re.findall(r"SisterApp\((.*?)\n\s*\),", sister_source, re.S)
     expected_tags = set()
+    sister_id_tags = {}
     for entry in sister_entries:
+        app_id = re.search(r'\bid\s*=\s*"([^"]+)"', entry)
         tag_prefix = re.search(r'tagPrefix\s*=\s*"([^"]+)"', entry)
         version = re.search(r'publishedVersion\s*=\s*"([^"]+)"', entry)
         if not version:
             version = re.search(r'\bversion\s*=\s*"([^"]+)"', entry)
-        if not tag_prefix or not version:
-            raise ValueError("SisterApps.kt entry lacks a public release tag/version.")
-        expected_tags.add(f"{tag_prefix.group(1)}-v{version.group(1)}")
-    if len(sister_entries) != expected_apps or len(expected_tags) != expected_apps:
+        if not app_id or not tag_prefix or not version:
+            raise ValueError("SisterApps.kt entry lacks an id or public release tag/version.")
+        tag = f"{tag_prefix.group(1)}-v{version.group(1)}"
+        expected_tags.add(tag)
+        sister_id_tags[app_id.group(1)] = tag
+    if len(sister_entries) != expected_apps or len(expected_tags) != expected_apps or len(sister_id_tags) != expected_apps:
         raise ValueError("SisterApps.kt does not contain one unique public release per app.")
 
     ld_blocks = [json.loads(block) for block in re.findall(
@@ -1204,8 +1208,28 @@ def verify_site_versions_match_downloads() -> int:
         raise ValueError("Both PulseEQ/Vocal Remover cards must use the current English and Tamil suite counts.")
     if not hyphen_counts or any(n != expected_apps for n in hyphen_counts):
         raise ValueError(f"site/index.html suite counts {hyphen_counts} disagree with SisterApps.kt ({expected_apps}).")
-    if f"{expected_apps} apps ({expected_apps - 1} non-Store + optional Tamilan Store)" not in site:
-        raise ValueError("Website header does not state the current total/non-Store app counts.")
+    # Website presentation groups DailyVault with the optional Tamilan Store companion.
+    # This is separate from the updater policy: DailyVault still uses browser-only updates.
+    optional_ids = ("tamilanstore", "dailyvault")
+    if not set(optional_ids).issubset(sister_id_tags):
+        raise ValueError("SisterApps.kt does not identify the website's optional companions.")
+    optional_count = len(optional_ids)
+    non_store_count = expected_apps - optional_count
+    optional_tags = {sister_id_tags[app_id] for app_id in optional_ids}
+    if len(table_tags & optional_tags) != optional_count or len(table_tags - optional_tags) != non_store_count:
+        raise ValueError("Latest Releases table does not match the website's non-Store/optional grouping.")
+    expected_badge = (
+        f"{expected_apps} apps ({non_store_count} non-Store + {optional_count} optional: "
+        "Tamilan Store &amp; DailyVault)"
+    )
+    expected_intro = (
+        f"({non_store_count} non-Store apps + {optional_count} optional: "
+        "Tamilan Store and DailyVault)"
+    )
+    if expected_badge not in site:
+        raise ValueError("Website header must state the current total/non-Store/optional counts and name both Tamilan Store and DailyVault.")
+    if expected_intro not in site:
+        raise ValueError("Website intro must match the header grouping and name both optional companions.")
 
     if re.search(r"https://github\.com/universalrp2003/RP-Android-Apps/(?:blob|tree)/arena/", site):
         raise ValueError("site/index.html links to a temporary arena/* branch instead of main.")

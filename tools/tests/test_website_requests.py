@@ -58,11 +58,15 @@ class WebsiteRequestsTest(unittest.TestCase):
         import re
         sister_source = (ROOT / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
         expected_total = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
-        expected_non_store = expected_total - 1
+        expected_optional = 2
+        expected_non_store = expected_total - expected_optional
         self.assertEqual(expected_total, 14)
+        self.assertEqual(expected_non_store, 12)
 
-        self.assertIn(f'{expected_total} apps ({expected_non_store} non-Store + optional Tamilan Store)', self.source)
-        self.assertIn(f'Fourteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + optional Tamilan Store)', self.source)
+        self.assertIn(f'{expected_total} apps ({expected_non_store} non-Store + {expected_optional} optional: Tamilan Store &amp; DailyVault)', self.source)
+        self.assertIn(f'Fourteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store and DailyVault)', self.source)
+        self.assertNotIn('13 non-Store + optional Tamilan Store', self.source)
+        self.assertNotIn('13 non-Store apps + optional Tamilan Store', self.source)
 
         en_counts = [int(n) for n in re.findall(r'\ball (\d+) RP Ideas apps\b', self.source)]
         ta_counts = [int(n) for n in re.findall(r'அனைத்து (\d+) RP Ideas செயலிகள்', self.source)]
@@ -100,6 +104,10 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual({tag for _, tag in cards}, ld_tags)
         self.assertIn('Tamilan-Store-v0.6.apk', ld_assets)
         self.assertIn('DailyVault-v0.4.apk', ld_assets)
+        optional_tags = {'tamilan-store-v0.6', 'daily-vault-v0.4'}
+        self.assertTrue(optional_tags.issubset(ld_tags))
+        self.assertEqual(len(optional_tags), 2)
+        self.assertEqual(len(ld_tags - optional_tags), 12)
         self.assertEqual(localization.verify_site_versions_match_downloads(), (42, 14))
 
     def assert_site_rejected(self, source):
@@ -164,6 +172,21 @@ class WebsiteRequestsTest(unittest.TestCase):
         stale_tamil_count = self.source.replace('அனைத்து 14 RP Ideas செயலிகள்',
                                                 'அனைத்து 7 RP Ideas செயலிகள்', 1)
         self.assert_site_rejected(stale_tamil_count)
+        stale_header = self.source.replace(
+            '14 apps (12 non-Store + 2 optional: Tamilan Store &amp; DailyVault)',
+            '14 apps (13 non-Store + optional Tamilan Store)',
+        )
+        self.assert_site_rejected(stale_header)
+        stale_intro = self.source.replace(
+            '(12 non-Store apps + 2 optional: Tamilan Store and DailyVault)',
+            '(13 non-Store apps + optional Tamilan Store)',
+        )
+        self.assert_site_rejected(stale_intro)
+        missing_optional_name = self.source.replace(
+            '2 optional: Tamilan Store &amp; DailyVault',
+            '2 optional: Tamilan Store',
+        )
+        self.assert_site_rejected(missing_optional_name)
         temporary_link = self.source.replace(
             'blob/main/docs/2026-10-27-pulseeq-device-review.md',
             'blob/arena/example/docs/2026-10-27-pulseeq-device-review.md',
