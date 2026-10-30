@@ -9,6 +9,7 @@ Publication authorized: yes — the owner requested the redesign, password-free 
 - Immutable artifact: `12994921382`, `dailyvault-verified-release-apk`.
 - Artifact archive SHA-256: `5ffa58fb2717118d86548be5afbcd18b0073779f0e6043bfe002f05ff8f28b09`.
 - The pinned archive contains exactly `DailyVault-v0.5.apk` and its SHA-256 manifest. Promotion checks the archive hash, the contained APK hash, package/version/minimum SDK, non-debuggable status, owner-backed signer and compatibility with public 0.4 before publication. It does **not** rebuild.
+- APK SHA-256, read from the authenticated pinned archive: `caae81328c5577dbc333dd34b0341f8154a9f23d98af648d9e121dc91d1fcb5e`; size **11,712,552 bytes**.
 - Package `com.universalrp.dailyvault`, version `0.5`, code `5`, minimum SDK `26`.
 - Expected signer SHA-256: `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`.
 

@@ -99,7 +99,15 @@ jobs:
           "$tools/aapt2" dump badging /tmp/previous-dailyvault/DailyVault-v0.4.apk > /tmp/previous-badging
           python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
           grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
-          gh release create daily-vault-v0.5 --draft "$apk" /tmp/accepted-dailyvault/DailyVault-v0.5.sha256 --target "$SOURCE" --title 'Daily Vault 0.5 — redesigned, direct opening and encrypted backups' --notes-file releases/daily-vault-v0.5.md --latest=false
+          echo '::notice title=Publication preflight::Package, version, minimum SDK, non-debuggable status, both signing identities and no-new-dangerous-permission checks passed.'
+          if ! gh release create daily-vault-v0.5 --draft "$apk" /tmp/accepted-dailyvault/DailyVault-v0.5.sha256 --target "$SOURCE" --title 'Daily Vault 0.5 — redesigned, direct opening and encrypted backups' --notes-file releases/daily-vault-v0.5.md --latest=false 2>/tmp/create-release-error; then
+            python3 - <<'PYERROR'
+          import pathlib
+          text = pathlib.Path('/tmp/create-release-error').read_text(errors='replace')
+          print('::error title=Draft creation response::' + text[:1600].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          PYERROR
+            exit 1
+          fi
       - name: Verify draft digest before publication; re-download and verify the public bytes
         shell: bash
         run: |
