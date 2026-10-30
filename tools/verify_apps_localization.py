@@ -1103,6 +1103,54 @@ def verify_site_versions_match_downloads() -> int:
             f"{expected_apps} apps. A missing row is an app a visitor cannot find from the top of "
             "the page."
         )
+    if len(entries) != expected_apps:
+        raise ValueError(
+            f"site/index.html JSON-LD ItemList has {len(entries)} entries, but SisterApps.kt lists "
+            f"{expected_apps} apps."
+        )
+
+    table_sizes = dict(re.findall(
+        r'<td class="lsize">([0-9]+\.[0-9]+ MB)</td>\s*\n\s*'
+        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+\.apk)"',
+        site,
+    ))
+    cards = site.split('<article class="card">')[1:]
+    if len(cards) != expected_apps:
+        raise ValueError(
+            f"site/index.html has {len(cards)} app cards, but SisterApps.kt lists {expected_apps} apps."
+        )
+    for card in cards:
+        btn = re.search(r'data-apk="apks/([A-Za-z0-9._-]+\.apk)"[^>]*data-sha="([0-9a-f]{64})"', card)
+        if not btn:
+            raise ValueError("site/index.html has an app card without a verified APK button.")
+        asset_name, btn_sha = btn.groups()
+        printed_shas = re.findall(r"SHA-256:\s*([0-9a-f]{64})", card)
+        if not printed_shas or any(s != btn_sha for s in printed_shas):
+            raise ValueError(
+                f"site/index.html card for {asset_name} prints SHA-256 {printed_shas} "
+                f"that disagrees with button data-sha {btn_sha}."
+            )
+        mini_size = re.search(r'<div class="mini">([0-9]+\.[0-9]+ MB)\b', card)
+        expected_size = table_sizes.get(asset_name)
+        if mini_size and expected_size and mini_size.group(1) != expected_size:
+            raise ValueError(
+                f"site/index.html card for {asset_name} prints {mini_size.group(1)} "
+                f"while the latest-releases table says {expected_size}."
+            )
+
+    suite_counts = (
+        [int(n) for n in re.findall(r"\ball (\d+) RP Ideas apps\b", site)]
+        + [int(n) for n in re.findall(r"அனைத்து (\d+) RP Ideas செயலிகள்", site)]
+        + [int(n) for n in re.findall(r"\b(\d+)-app\b", site)]
+    )
+    stale_counts = [n for n in suite_counts if n != expected_apps]
+    if not suite_counts or stale_counts:
+        raise ValueError(
+            f"site/index.html suite counts {suite_counts} disagree with SisterApps.kt ({expected_apps})."
+        )
+
+    if re.search(r"https://github\.com/universalrp2003/RP-Android-Apps/(?:blob|tree)/arena/", site):
+        raise ValueError("site/index.html links to a temporary arena/* branch instead of main.")
 
     return len(entries) + len(buttons), expected_apps
 

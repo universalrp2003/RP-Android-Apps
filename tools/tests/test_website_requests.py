@@ -47,5 +47,25 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertGreater(self.source.index('class="trust release-status"'), self.source.index('id="request-app"'))
         self.assertGreater(self.source.index('id="request-app"'), self.source.index('<!-- Voice Notes -->'))
 
+    def test_suite_counts_hashes_and_sizes_match_across_header_table_and_cards(self):
+        import re
+        sister_source = (ROOT / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
+        expected_total = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
+        expected_non_store = expected_total - 1
+        self.assertEqual(expected_total, 14)
+
+        self.assertIn(f'{expected_total} apps ({expected_non_store} non-Store + optional Tamilan Store)', self.source)
+        self.assertIn(f'Fourteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + optional Tamilan Store)', self.source)
+
+        en_counts = [int(n) for n in re.findall(r'\ball (\d+) RP Ideas apps\b', self.source)]
+        ta_counts = [int(n) for n in re.findall(r'அனைத்து (\d+) RP Ideas செயலிகள்', self.source)]
+        hyphen_counts = [int(n) for n in re.findall(r'\b(\d+)-app\b', self.source)]
+        self.assertEqual(en_counts, [expected_total, expected_total])
+        self.assertEqual(ta_counts, [expected_total, expected_total])
+        self.assertTrue(all(n == expected_total for n in hyphen_counts), hyphen_counts)
+        self.assertNotIn('blob/arena/', self.source)
+        self.assertNotIn('Android8.0+', self.source)
+
+
 if __name__ == '__main__':
     unittest.main()
