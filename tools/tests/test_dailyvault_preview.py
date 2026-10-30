@@ -31,9 +31,13 @@ class DailyVaultPreviewTest(unittest.TestCase):
     def test_restore_validates_before_replacing_with_local_key(self):
         source = (BASE / 'VaultModel.kt').read_text()
         restore = source.split('fun restore(', 1)[1].split('private fun obtainLocalKey', 1)[0]
-        self.assertLess(restore.index('decode(bytes, key)'), restore.index('obtainLocalKey()'))
+        self.assertLess(restore.index('decode(bytes, key)'), restore.index('val deviceKey'))
         self.assertLess(restore.index('decode(bytes, key)'), restore.index('write(decoded, deviceKey)'))
         self.assertNotIn('convenience.clear()', restore)
+        self.assertNotIn('obtainLocalKey()', restore)
+        self.assertLess(restore.index('write(decoded, deviceKey)'), restore.index('convenience.save("none", deviceKey)'))
+        self.assertIn('key.copyOf()', restore)
+        self.assertIn('restored_recovery_needed', restore)
         self.assertIn('AtomicFile', source)
         self.assertIn('vault.failWrite(out)', source)
         self.assertIn('output.size() + n <= VaultCrypto.MAX_FILE', source)

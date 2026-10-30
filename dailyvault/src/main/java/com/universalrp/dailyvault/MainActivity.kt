@@ -164,6 +164,7 @@ class MainActivity : FragmentActivity() {
                                     "saved" -> bi("பதிவு சேமிக்கப்பட்டது", "Record saved")
                                     "exported" -> bi("காப்புக் கோப்பு எழுதப்பட்டது. மீட்டெடுத்துச் சோதித்து, பாதுகாப்பாக வைத்திருங்கள்.", "Backup file written. Test a restore and keep it somewhere safe.")
                                     "restored" -> bi("காப்பிலிருந்து பதிவுகள் மீட்டெடுக்கப்பட்டன", "Records restored from backup")
+                                    "restored_recovery_needed" -> bi("பதிவுகள் மீட்டெடுக்கப்பட்டன; சாதனச் சாவியைச் சேமிக்க முடியவில்லை. காப்பையும் அதன் கடவுச்சொல்லையும் வைத்திருங்கள். அடுத்த முறை அந்தக் கடவுச்சொல்லால் ஒருமுறை மீட்க வேண்டியிருக்கலாம்.", "Records restored, but automatic opening could not be set up. Keep the backup and its password; that password may be needed once to finish recovery next time.")
                                     "recovered" -> bi("பழைய பதிவுகள் மீட்கப்பட்டன. இனி திறக்கக் கடவுச்சொல் வேண்டாம்.", "Previous records recovered. No password needed to open next time.")
                                     "restore_failed" -> bi("மீட்பு முடியவில்லை. கடவுச்சொல் அல்லது கோப்பைச் சரிபார்க்கவும். தற்போதைய பதிவுகள் மாற்றப்படவில்லை.", "Restore failed. Check the password and file. Current records were not replaced.")
                                     "export_failed" -> bi("காப்பெடுக்க முடியவில்லை. புதிய கோப்பு முழுமையற்றதாக இருக்கலாம்; பழைய காப்பை வைத்திருந்து மீண்டும் முயலவும்.", "Backup failed. The new file may be incomplete; keep your previous backup and retry.")
@@ -176,7 +177,7 @@ class MainActivity : FragmentActivity() {
                             if (!state.unlocked) {
                                 if (state.needsRecovery) item {
                                     Panel(bi("பழைய பதிவுகளை மீட்டெடுக்கவும்", "Recover previous records")) {
-                                        Text(bi("பழைய கடவுச்சொல் பூட்டு அல்லது சாதனச் சாவி சிக்கல் காரணமாகக் கோப்பைத் திறக்க முடியவில்லை. எதுவும் அழிக்கப்படவில்லை. பழைய கடவுச்சொல்லை ஒருமுறை பயன்படுத்தவும் அல்லது காப்பை மீட்டெடுக்கவும்.", "An older password-only vault or unavailable device key could not be opened. Nothing was erased. Recover once with the previous password, or restore an encrypted backup."))
+                                        Text(bi("பழைய கடவுச்சொல் பூட்டு அல்லது சாதனச் சாவி சிக்கல் காரணமாகக் கோப்பைத் திறக்க முடியவில்லை. எதுவும் அழிக்கப்படவில்லை. பழைய கோப்பின் கடவுச்சொல்லை ஒருமுறை பயன்படுத்தவும். சாதனச் சாவி சேமிப்பு தோல்வியெனில் கடைசியாக மீட்ட காப்பின் கடவுச்சொல்லைப் பயன்படுத்தவும். அல்லது காப்பை மீட்டெடுக்கவும்.", "An older password-only vault or unavailable device key could not be opened. Nothing was erased. Recover once with the previous vault password (or the last restored backup password if automatic opening failed), or restore an encrypted backup."))
                                         Button(onClick = { recovery = true }, enabled = !state.busy) { Text(bi("பழைய கோப்பை மீட்டெடு", "Recover old vault")) }
                                         OutlinedButton(onClick = { restore.launch(arrayOf("*/*")) }, enabled = !state.busy) { Text(bi("காப்பிலிருந்து மீட்டெடு", "Restore a backup")) }
                                     }

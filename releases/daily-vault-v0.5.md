@@ -25,3 +25,7 @@ Package `com.universalrp.dailyvault`, version 0.5 / code 5, minimum Android 8 / 
 Use an **in-place update** from the same-key release. Do not uninstall or clear data. If an older key-mismatched build refuses the update, stop and export/test a backup before considering the documented signing migration. Uninstalling may erase local data. Old0.4 release assets remain unchanged.
 
 The owner supplied earlier UI photos and authorized this redesign/build/publication, not a phone test of0.5. CI/JVM/emulator evidence is recorded separately; no physical-device, installed-hash, OEM behavior or Play Protect clearance is inferred from it. No new dangerous permission is requested.
+
+### Restore storage-failure safety
+
+A failed local file write must leave both the previous encrypted records and their credential wrapper unchanged. When a previously unavailable wrapper must be recreated, it is saved only after the atomic file commit. If credential storage then fails, the committed restored records remain recoverable using the known backup password, and the app explicitly warns that one-time recovery may be needed. It never commits data under an unstored random key in that recovery path.

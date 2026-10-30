@@ -155,7 +155,48 @@ def main():
     shot('06-restored-overview')
     tap('Records'); tap('Notes / history'); wait_text('Legacy reminder'); shot('07-restored-notes')
     tap('Backup'); tap('தமிழ்'); shot('08-backup-tamil')
-    (OUT / 'PASS.txt').write_text('PASS: exact signed release APK; fresh no-login opening; expense/note saves; process restart; Tamil; screenshot capture; 1.3 font capture; legacy one-time recovery; wrong-password file preservation; password-protected export; independent-password restore. Emulator only, synthetic data; not physical-device/Play Protect certification.\n')
+    english(); tap('Overview'); tap('Add spending')
+    field(0, '2.00'); field(1, 'Storage fault record'); keyboard_back(); tap('Save')
+    wait_text('Storage fault record', scroll=True)
+    # Force a device-credential read failure, then two independent storage faults.
+    # Only this emulator's synthetic app directory is modified; never owner data.
+    adb('shell', 'am', 'force-stop', PACKAGE)
+    prefs = target + '/shared_prefs/local-unlock.xml'
+    corrupt = OUT / 'synthetic-corrupt-prefs.xml'
+    corrupt.write_text('<?xml version="1.0" encoding="utf-8"?><map><string name="mode">none</string><string name="wrapped">YQ==</string></map>')
+    adb('push', str(corrupt), prefs); corrupt.unlink()
+    adb('shell', 'chmod', '600', prefs); adb('shell', 'chown', uid + ':' + uid, prefs)
+    adb('shell', 'restorecon', prefs)
+    launch(); english(); wait_text('Recover previous records')
+    tap('Restore a backup'); tap(Path(backup).name); wait_text('Restore a backup')
+    field(0, 'IndependentBackup987'); keyboard_back()
+    checkbox = next(n for n in nodes() if n.get('class') == 'android.widget.CheckBox')
+    adb('shell', 'input', 'tap', *point(checkbox))
+    before = private_hash()
+    prefs_before = adb('shell', 'sha256sum', prefs).split()[0]
+    adb('shell', 'chmod', '500', target + '/files')
+    tap('Replace and restore'); wait_text('Check the password or file')
+    assert private_hash() == before, 'Failed local write replaced existing records'
+    assert adb('shell', 'sha256sum', prefs).split()[0] == prefs_before, 'Failed local write replaced the old credential wrapper'
+    shot('09-failed-local-write-preserves-records-and-wrapper')
+    adb('shell', 'chmod', '700', target + '/files')
+    # Now commit the file but deny credential persistence. The data must remain
+    # recoverable with the known backup password, never an unstored random key.
+    adb('shell', 'chmod', '500', target + '/shared_prefs')
+    tap('Replace and restore'); wait_text('automatic opening could not be set up')
+    committed = private_hash()
+    assert committed != before
+    adb('shell', 'chmod', '700', target + '/shared_prefs')
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english()
+    wait_text('Recover previous records'); tap('Recover old vault')
+    field(0, 'IndependentBackup987'); keyboard_back(); tap('Recover')
+    wait_text('Legacy groceries', scroll=True); wait_text('Legacy reminder', scroll=True)
+    assert private_hash() == committed, 'Credential recovery rewrote the committed file'
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english()
+    wait_text('Legacy groceries', scroll=True)
+    assert not any(n.get('class') == 'android.widget.EditText' for n in nodes())
+    shot('10-automatic-opening-after-storage-fault-recovery')
+    (OUT / 'PASS.txt').write_text('PASS: exact signed release APK; fresh no-login opening; expense/note saves; process restart; Tamil; screenshot capture; 1.3 font capture; legacy one-time recovery; wrong-password file preservation; password-protected export; independent-password restore; failed local writes preserve both records and credential wrapper; failed wrapper persistence remains recoverable with backup password; automatic opening after recovery. Emulator only, synthetic data; not physical-device/Play Protect certification.\n')
     # Do not retain the synthetic backup/password as user-facing report artifacts.
     (OUT / 'synthetic-backup.tdv').unlink(missing_ok=True)
     print((OUT / 'PASS.txt').read_text())

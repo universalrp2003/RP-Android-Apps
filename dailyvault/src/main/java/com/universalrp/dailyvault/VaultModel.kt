@@ -119,12 +119,23 @@ class VaultModel(app: Application) : AndroidViewModel(app) {
                 val bytes = getApplication<Application>().contentResolver.openInputStream(uri)?.use(::readBounded)
                     ?: error("Input unavailable")
                 val decoded = try { decode(bytes, key) } finally { bytes.fill(0) }
-                val deviceKey = localKey?.copyOf() ?: obtainLocalKey()
-                try { write(decoded, deviceKey); decoded to deviceKey.copyOf() }
-                finally { deviceKey.fill('\u0000') }
+                var needsWrapper = false
+                val deviceKey = localKey?.copyOf() ?: try { convenience.read() } catch (_: Exception) {
+                    // Never replace an existing wrapper before the atomic file commit.
+                    // The authenticated backup password is a recoverable fallback if
+                    // device-key storage also fails after the file commit.
+                    needsWrapper = true
+                    key.copyOf()
+                }
+                try {
+                    write(decoded, deviceKey)
+                    val automaticOpening = !needsWrapper || runCatching { convenience.save("none", deviceKey) }.isSuccess
+                    Triple(decoded, deviceKey.copyOf(), automaticOpening)
+                } finally { deviceKey.fill('\u0000') }
             }
             localKey?.fill('\u0000'); localKey = result.second
-            _state.value = VaultState(unlocked = true, entries = result.first, status = "restored")
+            _state.value = VaultState(unlocked = true, entries = result.first,
+                status = if (result.third) "restored" else "restored_recovery_needed")
             onSuccess()
         }.invokeOnCompletion { key.fill('\u0000') }
     }
