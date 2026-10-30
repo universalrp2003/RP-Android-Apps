@@ -5,17 +5,14 @@ on:
     branches:
       - main
       - "arena/**"
-    # Documentation-only files cannot change the deployed site: this workflow reads only
-    # site/** plus the published release assets it mirrors. A docs-only commit therefore
-    # has nothing to redeploy. Keep this list in step with build-apk.yml.
-    paths-ignore:
-      - "README.md"
-      - "CHANGELOG.md"
-      - "PUBLISHING.md"
-      - "docs/published-release-digests.md"
-      - "docs/live-guard-2.42-device-evidence.md"
-      # Release NOTES only — releases/latest-tag.txt is not a site input.
-      - "releases/*.md"
+    # Package only actual site inputs. APK/source/docs-only pushes otherwise create
+    # another ~1.46 GB Pages artifact without changing the website. Publication must
+    # still update the pinned site/workflow receipts; dispatch remains available.
+    paths:
+      - "site/**"
+      - "tools/build_store_catalog.py"
+      - "tamilanstore/src/main/assets/catalog.json"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,9 +27,16 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Check website and catalog contracts before packaging
+        run: |
+          python3 -m unittest discover -s tools/tests -p 'test_website*.py' -v
+          python3 -m unittest discover -s tools/tests -p 'test_store_live_catalog.py' -v
+          python3 -m unittest discover -s tools/tests -p 'test_fresh_install_migration.py' -v
 
       - name: Fetch official signed APKs, verify SHA-256, and build .apk + .zip CDN mirrors
         env:
@@ -217,13 +221,15 @@ jobs:
         run: python3 tools/build_store_catalog.py
 
       - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./site
+          retention-days: 1
 
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build
+    timeout-minutes: 15
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -231,4 +237,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
