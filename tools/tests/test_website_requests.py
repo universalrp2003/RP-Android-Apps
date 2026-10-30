@@ -114,6 +114,40 @@ class WebsiteRequestsTest(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     localization.verify_site_versions_match_downloads()
 
+    def test_owner_promise_ticker_is_prominent_bilingual_and_pausable(self):
+        tickers = [a for tag, a in self.parser.elements if tag == 'section' and 'data-trust-ticker' in a]
+        self.assertEqual(len(tickers), 2)
+        first = self.source.index('<section class="trust-ticker" data-trust-ticker')
+        badge = self.source.index('<span class="badge">')
+        hero = self.source.index('<section class="trust-ticker trust-ticker--hero"')
+        migration = self.source.index('<section class="migration-notice"')
+        self.assertLess(first, badge)
+        self.assertLess(hero, migration)
+        self.assertGreater(hero, self.source.index('>View GitHub Repository</a>'))
+
+        english = (
+            '100% open source — every line is public on GitHub for anyone to audit.',
+            'No ads · no tracking · no analytics · no account — ever.',
+        )
+        for text in english:
+            self.assertGreaterEqual(self.source.count(text), 4)
+        self.assertGreaterEqual(self.source.count('lang="ta"'), 4)
+        self.assertIn('100% திறந்த மூலம்', self.source)
+        self.assertIn('விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை', self.source)
+
+        pause_buttons = [a for tag, a in self.parser.elements if tag == 'button' and 'data-trust-pause' in a]
+        self.assertEqual(len(pause_buttons), 2)
+        for attrs in pause_buttons:
+            self.assertEqual(attrs.get('type'), 'button')
+            self.assertEqual(attrs.get('aria-pressed'), 'false')
+        self.assertIn('prefers-reduced-motion: reduce', self.source)
+        self.assertIn('.trust-ticker.is-paused .trust-ticker__track', self.source)
+        self.assertIn("ticker.classList.toggle('is-paused')", self.source)
+        self.assertIn('.trust-promise--source { color: #ffd166; }', self.source)
+        self.assertIn('.trust-promise--privacy { color: #86efac; }', self.source)
+        self.assertIn('.trust-promise--ta { color: #f5d0fe;', self.source)
+        self.assertNotIn('<marquee', self.source)
+
     def test_parity_gate_rejects_missing_apps_duplicates_and_stale_metadata(self):
         missing_json_ld = self.source.replace('"position": 14,', '"position": 13,')
         self.assert_site_rejected(missing_json_ld)

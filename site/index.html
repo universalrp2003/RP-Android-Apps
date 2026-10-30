@@ -627,11 +627,118 @@
     .request-box textarea { min-height: 130px; resize: vertical; }
     .request-box .btn { cursor: pointer; font: inherit; white-space: normal; }
     .request-box a:focus-visible, .request-box button:focus-visible, .request-box input:focus-visible, .request-box textarea:focus-visible { outline: 3px solid #25d5e6; outline-offset: 3px; }
+
+    /* Owner promise ticker: impossible to miss, but still readable and pausable. */
+    .trust-ticker {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border: 2px solid #ffd166;
+      border-radius: 16px;
+      background: linear-gradient(100deg, #241238 0%, #10233a 48%, #0b2b22 100%);
+      box-shadow: 0 0 0 4px rgba(255, 209, 102, 0.12), 0 12px 30px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+    }
+    .trust-ticker--hero { margin: 18px 0 0; }
+    .trust-ticker__label {
+      flex: 0 0 auto;
+      align-self: center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #ffd166;
+      color: #241238;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .trust-ticker__viewport { flex: 1 1 auto; overflow: hidden; align-self: center; }
+    .trust-ticker__track {
+      display: flex;
+      width: max-content;
+      animation: trust-promise-scroll 32s linear infinite;
+    }
+    .trust-ticker__group {
+      display: flex;
+      align-items: center;
+      gap: 2.5rem;
+      padding-right: 2.5rem;
+      white-space: nowrap;
+      font-size: clamp(0.95rem, 2.7vw, 1.12rem);
+      font-weight: 750;
+      line-height: 1.45;
+    }
+    .trust-promise--source { color: #ffd166; }
+    .trust-promise--privacy { color: #86efac; }
+    .trust-promise--ta { color: #f5d0fe; font-weight: 650; }
+    .trust-ticker__pause {
+      flex: 0 0 auto;
+      align-self: center;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px 12px;
+      border: 2px solid #ffd166;
+      border-radius: 999px;
+      background: #241238;
+      color: #ffd166;
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .trust-ticker__pause:focus-visible { outline: 3px solid #86efac; outline-offset: 3px; }
+    .trust-ticker:hover .trust-ticker__track,
+    .trust-ticker:focus-within .trust-ticker__track { animation-play-state: paused; }
+    .trust-ticker.is-paused .trust-ticker__track {
+      animation: none;
+      transform: none;
+      width: auto;
+      flex-wrap: wrap;
+    }
+    .trust-ticker.is-paused .trust-ticker__group { white-space: normal; flex-wrap: wrap; gap: 0.75rem 1.5rem; padding-right: 0; }
+    .trust-ticker.is-paused .trust-ticker__group[aria-hidden="true"] { display: none; }
+    @keyframes trust-promise-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .trust-ticker__track { animation: none; transform: none; width: auto; flex-wrap: wrap; }
+      .trust-ticker__group { white-space: normal; flex-wrap: wrap; gap: 0.75rem 1.5rem; padding-right: 0; }
+      .trust-ticker__group[aria-hidden="true"] { display: none; }
+      .trust-ticker__pause { display: none; }
+    }
+    @media (max-width: 620px) {
+      .trust-ticker { flex-wrap: wrap; }
+      .trust-ticker__label { order: 1; }
+      .trust-ticker__pause { order: 2; margin-left: auto; }
+      .trust-ticker__viewport { order: 3; flex-basis: 100%; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
+      <section class="trust-ticker" data-trust-ticker aria-label="Our promise to every visitor">
+        <span class="trust-ticker__label">Our promise</span>
+        <div class="trust-ticker__viewport">
+          <div class="trust-ticker__track">
+            <div class="trust-ticker__group">
+              <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
+              <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
+              <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
+            </div>
+            <div class="trust-ticker__group" aria-hidden="true">
+              <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
+              <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
+              <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="trust-ticker__pause" data-trust-pause aria-pressed="false">⏸ Pause</button>
+      </section>
       <span class="badge">Open-Source Android Suite · 14 apps (13 non-Store + optional Tamilan Store) · Tamil &amp; English</span>
       <h1>RP-Android-Apps — Official Tamil &amp; English Android Apps</h1>
       <p class="subtitle">
@@ -644,6 +751,25 @@
         <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/PRIVACY.md">Privacy Policy</a>
       </div>
     </header>
+
+    <section class="trust-ticker trust-ticker--hero" data-trust-ticker aria-label="Our promise before you download">
+      <span class="trust-ticker__label">Read first</span>
+      <div class="trust-ticker__viewport">
+        <div class="trust-ticker__track">
+          <div class="trust-ticker__group">
+            <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
+            <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
+            <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
+          </div>
+          <div class="trust-ticker__group" aria-hidden="true">
+            <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
+            <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
+            <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="trust-ticker__pause" data-trust-pause aria-pressed="false">⏸ Pause</button>
+    </section>
 
     <main>
       <section class="migration-notice" aria-labelledby="migration-warning-title" role="note">
@@ -1705,6 +1831,17 @@
   </div>
 
   <script>
+    // Promise ticker: pause switches from motion to a fully wrapped, readable notice.
+    document.querySelectorAll('[data-trust-ticker]').forEach(function (ticker) {
+      var button = ticker.querySelector('[data-trust-pause]');
+      if (!button) return;
+      button.addEventListener('click', function () {
+        var paused = ticker.classList.toggle('is-paused');
+        button.setAttribute('aria-pressed', paused ? 'true' : 'false');
+        button.textContent = paused ? '▶ Resume' : '⏸ Pause';
+      });
+    });
+
     // Force gallery screenshots to load the moment the dropdown is opened.
     document.querySelectorAll('details.gallery').forEach(function (d) {
       d.addEventListener('toggle', function () {
