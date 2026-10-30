@@ -1,9 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Internet is only for the daily public release-metadata check on app open. Vault records and backups stay local and are never uploaded. -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="@string/app_name" android:icon="@drawable/ic_vault" android:theme="@style/Theme.DailyVault">
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true" android:windowSoftInputMode="adjustResize">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
     </application>
