@@ -1,0 +1,154 @@
+name: Promote verified Daily Vault 0.5 (no rebuild)
+on:
+  push:
+    branches: ["arena/bb783762-rp-android-apps"]
+    paths: [".github/workflows/promote-dailyvault-0-5.yml"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: promote-verified-dailyvault-0-5
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE: bb400961341fc51d10fa191f79ffa052e3a66d91
+      ARCHIVE_SHA: 5ffa58fb2717118d86548be5afbcd18b0073779f0e6043bfe002f05ff8f28b09
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify successful exact-release gates, immutable provenance and publication scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          gh api repos/$GH_REPO/actions/runs/41091029321 > /tmp/run.json
+          gh api repos/$GH_REPO/actions/jobs/124184635743 > /tmp/job.json
+          gh api repos/$GH_REPO/actions/artifacts/12994921382 > /tmp/artifact.json
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          source = os.environ['SOURCE']
+          run = json.load(open('/tmp/run.json')); job = json.load(open('/tmp/job.json')); artifact = json.load(open('/tmp/artifact.json'))
+          assert (run['head_sha'], run['conclusion'], run['status'], run['path']) == (source, 'success', 'completed', '.github/workflows/new-apps-public-release.yml')
+          assert run['head_branch'] == 'arena/bb783762-rp-android-apps'
+          assert job['run_id'] == run['id'] and job['conclusion'] == 'success'
+          for name in ('Test, lint and build the selected signed release', 'Verify selected package, version, signer and digest', 'Exercise the exact Daily Vault release APK on Android 15'):
+              matches = [s for s in job['steps'] if s['name'] == name]
+              assert len(matches) == 1 and matches[0]['conclusion'] == 'success', name
+          assert artifact['id'] == 12994921382 and artifact['name'] == 'dailyvault-verified-release-apk' and not artifact['expired']
+          assert artifact['workflow_run']['id'] == run['id'] and artifact['workflow_run']['head_sha'] == source
+          assert artifact['digest'] == 'sha256:' + os.environ['ARCHIVE_SHA']
+          approval = pathlib.Path('docs/daily-vault-0.5-release-verification.md').read_text()
+          assert 'Publication authorized: yes' in approval and source in approval and os.environ['ARCHIVE_SHA'] in approval
+          subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'], check=True)
+          paths = subprocess.check_output(['git','diff','--name-only',source,'HEAD'], text=True).splitlines()
+          forbidden = [p for p in paths if p.startswith(('dailyvault/','shared/','gradle/','ci-keystore/')) or p in {'build.gradle.kts','settings.gradle.kts','gradle.properties','gradlew','gradlew.bat'}]
+          assert not forbidden, 'Compiled inputs changed: ' + repr(forbidden)
+          PY
+          # API errors fail closed; an existing draft, release or tag is never replaced.
+          gh api --paginate repos/$GH_REPO/releases?per_page=100 --jq '.[] | select(.tag_name=="daily-vault-v0.5")' > /tmp/existing-release
+          gh api --paginate repos/$GH_REPO/tags?per_page=100 --jq '.[] | select(.name=="daily-vault-v0.5")' > /tmp/existing-tag
+          test ! -s /tmp/existing-release
+          test ! -s /tmp/existing-tag
+      - name: Download and hash the pinned archive; extract only its authenticated APK and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/$GH_REPO/actions/artifacts/12994921382/zip > /tmp/accepted-dailyvault.zip
+          echo "$ARCHIVE_SHA  /tmp/accepted-dailyvault.zip" | sha256sum --check
+          python3 - <<'PY'
+          import hashlib, os, pathlib, re, zipfile
+          target = pathlib.Path('/tmp/accepted-dailyvault'); target.mkdir()
+          with zipfile.ZipFile('/tmp/accepted-dailyvault.zip') as archive:
+              assert sorted(archive.namelist()) == ['DailyVault-v0.5.apk', 'DailyVault-v0.5.sha256']
+              for name in archive.namelist():
+                  assert 0 < archive.getinfo(name).file_size < 64 * 1024 * 1024
+                  (target/name).write_bytes(archive.read(name))
+          match = re.fullmatch(r'([a-f0-9]{64})  DailyVault-v0\.5\.apk\n?', (target/'DailyVault-v0.5.sha256').read_text())
+          assert match, 'Unexpected authenticated checksum manifest'
+          apk = target/'DailyVault-v0.5.apk'
+          assert hashlib.sha256(apk.read_bytes()).hexdigest() == match[1]
+          with open(os.environ['GITHUB_ENV'], 'a') as out:
+              out.write('EXPECTED_SHA=' + match[1] + '\nEXPECTED_SIZE=' + str(apk.stat().st_size) + '\n')
+          print('::notice title=Exact APK receipt::DailyVault-v0.5.apk sha256:' + match[1] + ' bytes:' + str(apk.stat().st_size))
+          PY
+      - name: Verify package, compatible signing and permission delta before creating a draft
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=/tmp/accepted-dailyvault/DailyVault-v0.5.apk
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt2" dump badging "$apk" > /tmp/candidate-badging
+          grep -Fq "package: name='com.universalrp.dailyvault' versionCode='5' versionName='0.5'" /tmp/candidate-badging
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/candidate-badging
+          if grep -q application-debuggable /tmp/candidate-badging; then exit 1; fi
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/candidate-signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/candidate-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          mkdir /tmp/previous-dailyvault
+          gh release download daily-vault-v0.4 --pattern DailyVault-v0.4.apk --dir /tmp/previous-dailyvault
+          echo '39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1  /tmp/previous-dailyvault/DailyVault-v0.4.apk' | sha256sum --check
+          "$tools/apksigner" verify --print-certs /tmp/previous-dailyvault/DailyVault-v0.4.apk > /tmp/previous-signer
+          previous="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/previous-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$previous" = "$signer"
+          "$tools/aapt2" dump badging /tmp/previous-dailyvault/DailyVault-v0.4.apk > /tmp/previous-badging
+          python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
+          grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
+          gh release create daily-vault-v0.5 --draft "$apk" /tmp/accepted-dailyvault/DailyVault-v0.5.sha256 --target "$SOURCE" --title 'Daily Vault 0.5 — redesigned, direct opening and encrypted backups' --notes-file releases/daily-vault-v0.5.md --latest=false
+      - name: Verify draft digest before publication; re-download and verify the public bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, time
+          for attempt in range(12):
+              releases = json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/releases?per_page=100"], text=True))
+              matches = [r for r in releases if r['tag_name'] == 'daily-vault-v0.5']
+              assert len(matches) == 1
+              release = matches[0]
+              assert release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['SOURCE']
+              assets = [a for a in release['assets'] if a['name'] == 'DailyVault-v0.5.apk']
+              if len(assets) == 1 and assets[0].get('digest') == 'sha256:' + os.environ['EXPECTED_SHA']:
+                  assert assets[0]['size'] == int(os.environ['EXPECTED_SIZE'])
+                  assert sorted(a['name'] for a in release['assets']) == ['DailyVault-v0.5.apk','DailyVault-v0.5.sha256']
+                  break
+              time.sleep(2)
+          else:
+              raise SystemExit('Draft digest did not verify; nothing made public.')
+          PY
+          gh release edit daily-vault-v0.5 --draft=false --latest=false
+          mkdir /tmp/published-dailyvault
+          gh release download daily-vault-v0.5 --pattern 'DailyVault-v0.5.*' --dir /tmp/published-dailyvault
+          (cd /tmp/published-dailyvault && sha256sum --check DailyVault-v0.5.sha256)
+          test "$(sha256sum /tmp/published-dailyvault/DailyVault-v0.5.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
+          cmp /tmp/accepted-dailyvault/DailyVault-v0.5.sha256 /tmp/published-dailyvault/DailyVault-v0.5.sha256
+          gh api repos/$GH_REPO/releases/tags/daily-vault-v0.5 > /tmp/public-release.json
+          python3 - <<'PY'
+          import json, os
+          release = json.load(open('/tmp/public-release.json'))
+          assert not release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['SOURCE']
+          asset = next(a for a in release['assets'] if a['name'] == 'DailyVault-v0.5.apk')
+          assert asset['size'] == int(os.environ['EXPECTED_SIZE']) and asset['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+          assert asset['browser_download_url'] == f"https://github.com/{os.environ['GH_REPO']}/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk"
+          print('::notice title=Published exact tested APK::' + asset['browser_download_url'] + ' sha256:' + os.environ['EXPECTED_SHA'])
+          PY
+      - name: Surface bounded failure diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import pathlib
+          for name in ('candidate-badging','candidate-signer','permission-delta'):
+              path = pathlib.Path('/tmp')/name
+              if not path.exists():
+                  print('::error title=Promotion checkpoint::Stopped before ' + name)
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              if name == 'candidate-badging':
+                  lines = [s for s in lines if s.startswith('package:') or any(k in s for k in ('sdkVersion','minSdkVersion','targetSdkVersion','application-debuggable'))]
+              for line in lines[:10]:
+                  print('::error title=' + name + '::' + line[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
