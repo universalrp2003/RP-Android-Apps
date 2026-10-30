@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.File
@@ -27,9 +28,17 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     var catalogMessage by mutableStateOf("")
         private set
     private var refreshing = false
-    fun refreshCatalog() {
+    private var lastAutomaticRefreshElapsed: Long? = null
+
+    /** Refresh on launch/resume, but avoid repeated requests while the user switches apps. */
+    fun refreshCatalog(force: Boolean = false) {
         if (refreshing || _transfer.value.busy) return
+        val now = SystemClock.elapsedRealtime()
+        val last = lastAutomaticRefreshElapsed
+        if (!force && !CatalogRefreshPolicy.shouldRefresh(now, last)) return
+        lastAutomaticRefreshElapsed = now
         refreshing = true
+        catalogMessage = "checking"
         viewModelScope.launch {
             try {
                 val (text, next) = withContext(Dispatchers.IO) {

@@ -87,6 +87,12 @@ class InstalledLifecycleContractTest(unittest.TestCase):
         for action in ('ACTION_PACKAGE_ADDED', 'ACTION_PACKAGE_REPLACED', 'ACTION_PACKAGE_REMOVED'):
             self.assertIn(action, ui)
         self.assertIn('override fun onResume()', ui)
+        self.assertIn('LaunchedEffect(model) { model.refreshCatalog() }', ui)
+        self.assertIn('LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { model.refreshCatalog() }', ui)
+        self.assertIn('model.refreshCatalog(force = true)', ui)
+        model = (STORE / 'src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text()
+        self.assertIn('CatalogRefreshPolicy.shouldRefresh(now, last)', model)
+        self.assertIn('"checking"', model)
         self.assertIn('getLaunchIntentForPackage(app.packageName)', ui)
         self.assertIn('AppStatus.UPDATE_AVAILABLE', ui)
         self.assertIn('AppStatus.NEWER_INSTALLED', ui)
