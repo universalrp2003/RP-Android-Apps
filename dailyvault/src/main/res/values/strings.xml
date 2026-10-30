@@ -1,1 +1,9 @@
-<resources><string name="app_name">தினக்கணக்கு</string><style name="Theme.DailyVault" parent="android:style/Theme.Material.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:windowLightStatusBar">false</item></style></resources>
+<resources>
+    <string name="app_name">தினக்கணக்கு</string>
+    <style name="Theme.DailyVault" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#F5F7FA</item>
+        <item name="android:navigationBarColor">#F5F7FA</item>
+    </style>
+</resources>

@@ -165,7 +165,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "dailyvault", name = "DailyVault", tamilName = "தினக்கணக்கு",
-            tagPrefix = "daily-vault", version = "0.4", publishedVersion = "0.4",
+            tagPrefix = "daily-vault", version = "0.5", publishedVersion = "0.4",
             packageName = "com.universalrp.dailyvault", aboutLabel = "தினக்கணக்கு / DailyVault — GitHub release",
         ),
     )

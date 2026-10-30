@@ -42,6 +42,13 @@ Non-Store apps use a minimal Internet connection to check public release metadat
 - **Local data:** Manual spending records, notes, the encrypted vault and exported backup contents remain on the device or at the user-selected backup destination. The app does not upload ledger, note, password or backup data.
 - **Update metadata:** INTERNET is used only for the once-daily foreground public release-metadata check described above. No SMS permission is requested. The official website/GitHub may receive ordinary request metadata such as the device IP address. Update actions open the official website in the browser; the app does not download or install APKs.
 
+### Daily Vault / தினக்கணக்கு (0.5)
+
+- Manual spending and notes stay in app-private, atomically written encrypted storage. No SMS, contacts, microphone, location, advertising SDK or app-opening biometric permission. An Android-Keystore-wrapped local credential enables automatic opening without a login password. Device-key/app-data loss can make local records unreadable; a separate exported backup is needed for recovery.
+- There is no app-opening authentication gate in0.5, by owner choice. Screenshots, recordings and recent-app previews are permitted. Anyone using the unlocked phone can view/capture records. Use the phone's screen lock. An old password-only file may require its previous password once to recover existing records, without silently erasing them.
+- Export explicitly asks for a backup password and confirmation. The portable TDV-v1 backup uses AES-GCM and PBKDF2-HMAC-SHA256 independently of the device-local credential. Restore requires that file's password and explicit acknowledgement that current records will be replaced, not merged. The whole archive is authenticated/validated before replacement. No forgotten-password recovery; keep the file and password separately and test restore. Export provider failures may leave incomplete files. Automatic Android backup is disabled; clearing app data/uninstalling may erase records.
+- INTERNET is only for the existing daily foreground public release-metadata check. Records, notes, passwords and backup contents are never included. The official site/GitHub may receive normal connection metadata such as IP. Update actions open the external browser; Daily Vault does not download/install APKs. User-selected backup files go to the Android document provider chosen by the user; a cloud document provider handles that encrypted file under its own policy.
+
 ### Expense Tracker
 
 - **Local financial data:** Bank and UPI SMS are read and parsed on-device; transaction, balance and ledger contents are not sent to the developer or included in update checks. SMS access is used for the expense-tracking feature.

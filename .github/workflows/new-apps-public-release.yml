@@ -8,7 +8,7 @@ on:
       - "dailyvault/**"
       - "shared/src/main/java/com/universalrp/updates/**"
       - "releases/tamilan-store-v0.6.md"
-      - "releases/daily-vault-v0.4.md"
+      - "releases/daily-vault-v0.5.md"
   workflow_dispatch:
     inputs:
       app:
@@ -59,8 +59,8 @@ jobs:
               ;;
             dailyvault)
               echo 'module=dailyvault' >> "$GITHUB_OUTPUT"
-              echo 'version=0.4' >> "$GITHUB_OUTPUT"
-              echo 'code=4' >> "$GITHUB_OUTPUT"
+              echo 'version=0.5' >> "$GITHUB_OUTPUT"
+              echo 'code=5' >> "$GITHUB_OUTPUT"
               echo 'slug=daily-vault' >> "$GITHUB_OUTPUT"
               echo 'label=DailyVault' >> "$GITHUB_OUTPUT"
               ;;
@@ -118,6 +118,31 @@ jobs:
           test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
           (cd release-assets && sha256sum "$LABEL-v$VERSION.apk" > "$LABEL-v$VERSION.sha256")
           cat "release-assets/$LABEL-v$VERSION.sha256"
+
+      - name: Enable emulator acceleration for Daily Vault release checks
+        if: matrix.app == 'dailyvault'
+        run: sudo chmod a+rw /dev/kvm
+
+      - name: Exercise the exact Daily Vault release APK on Android 15
+        if: matrix.app == 'dailyvault'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: python3 dailyvault/tools/emulator-smoke.py release-assets/DailyVault-v0.5.apk
+
+      - name: Upload Daily Vault emulator evidence (synthetic data only)
+        if: always() && matrix.app == 'dailyvault'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dailyvault-release-emulator-evidence
+          path: dailyvault-emulator-results/
+          retention-days: 14
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
         with:

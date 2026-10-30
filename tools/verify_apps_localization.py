@@ -983,8 +983,8 @@ def verify_module_versions_match_sister_apps() -> int:
         if not ver or not pkg:
             continue
         if gradle.parent.name == "dailyvault":
-            if pkg.group(1) != "com.universalrp.dailyvault" or ver.group(1) != "0.4":
-                raise ValueError("Daily vault preview identity/version changed; review publication gates")
+            if pkg.group(1) != "com.universalrp.dailyvault" or ver.group(1) != "0.5":
+                raise ValueError("Daily Vault 0.5 identity/version changed; review publication gates")
             if by_package.get(pkg.group(1)) != ver.group(1):
                 raise ValueError("DailyVault directory candidate version differs from source")
             continue
