@@ -37,3 +37,7 @@ Use **Update**, preserving package/signing compatibility and records; never advi
 Opening is intentionally not authenticated. Anyone using the unlocked phone can view/capture records. Backup encryption does not protect an already-open app. Network access is only the disclosed read-only update-metadata check, not vault-content transmission.
 
 Public site/catalog metadata stays on 0.4 until 0.5's public asset and re-downloaded bytes verify. Store 0.6 and all other public APKs remain unchanged. Existing tags/assets are never replaced.
+
+## Public-byte verification completed
+
+Promotion [41100372958](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41100372958) published release `429318029` on `2026-10-30T17:37:40Z`. Public APK SHA-256 `8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55`, size **11,712,552 bytes**. The public APK and manifest were re-downloaded and verified. GitHub’s workflow summary and GraphQL check confirm promotion SUCCESS, including the final exact-APK receipt; the REST status endpoint lagged behind. Tag target/main publication commit: `a3512abca9add95d3ffb7ff93fc2ff87371ddcf4`; source compiled inputs matched the pinned candidate. This follow-up promotes only website/catalog/public-version metadata. Public0.4 and Store0.6 assets remain unchanged.

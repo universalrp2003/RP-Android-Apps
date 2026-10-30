@@ -1,5 +1,13 @@
 # Verified published Android APK digests
 
+## Daily Vault 0.5 — redesigned, direct opening and encrypted backups
+
+Published by [promotion run 41100372958](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41100372958), release `429318029`, at `https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5`. `DailyVault-v0.5.apk` is **11,712,552 bytes**, SHA-256 `8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55`. Its `.sha256` sidecar is public too. The workflow checked the pinned archive/APK and draft digest before publication, then re-downloaded the public APK/manifest and verified their bytes. The workflow summary/GraphQL check confirms SUCCESS; REST run reporting lagged.
+
+No rebuild: source `c41ccdb9d0e6b9b3c3663397f96fadaa0c3e268a`, successful signed/emulator run `41096269759`, immutable artifact `12996159002`, archive SHA-256 `e17d7a8ae72510478bb6dffd3f69c0484e8bba89312be5663b852d84e80eb4b3`. The tag targets main commit `a3512abca9add95d3ffb7ff93fc2ff87371ddcf4`; the promotion rejects any changed Daily Vault/shared/Gradle compiled inputs relative to the candidate. Signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d` matches immutable public 0.4. Built permission comparison added **no dangerous permission**.
+
+215 Python source tests, localization, 14 release JVM tests, release lint/build/identity/signing checks and the exact-release Android15 synthetic expense/note/restart/legacy/backup/wrong-password/independent-password restore flow passed. Screenshots and font-scale1.3 capture passed. Injected file-write failure preserved both records and the credential wrapper; injected wrapper-persistence failure remained recoverable with the known backup password, followed by password-free restart. These do **not** establish physical-phone/OEM/PlayProtect clearance or a security audit. Opening is intentionally unauthenticated; unlocked-phone/capture exposure is disclosed. Preserve existing installs/records; never uninstall or clear data to bypass a signer conflict. All older release assets, Store0.6 and other apps remain unchanged.
+
 ## Verified replacement-key APKs — 29 October 2026
 
 SMS Guard 1.1.11 / code 17 (`SMS-Guard-v1.1.11.apk`) was published by [run 40843672129](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40843672129) at `universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.11`. GitHub reports **12,444,613 bytes** and SHA-256 `9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604`, matching the workflow's local-APK digest check.
