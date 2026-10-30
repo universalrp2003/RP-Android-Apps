@@ -14,7 +14,7 @@ import org.w3c.dom.Element
 import org.xml.sax.InputSource
 
 /** Real published headlines only. Fetch time, static tips and missing dates are NOT publication dates. */
-data class NewsHeadline(val category: String, val title: String, val source: String, val publishedAtMs: Long, val link: String, val description: String = "", val spokenText: String = "") {
+data class NewsHeadline(val category: String, val title: String, val source: String, val publishedAtMs: Long, val link: String, val description: String = "", val spokenText: String = "", val translated: Boolean = false) {
     val key: String get() = NewsPolicy.titleKey(title)
 }
 

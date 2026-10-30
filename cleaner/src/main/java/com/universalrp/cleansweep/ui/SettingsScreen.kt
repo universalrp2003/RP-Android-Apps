@@ -195,6 +195,7 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                             Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                         }
                     }
+                    NewsBulletinStatus()
                 }
             }
 

@@ -1628,6 +1628,11 @@ object Lang {
         "Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "போன் திரை அணைந்திருக்கும்போது மட்டும் புதிய 8 செய்திகளை வாசிக்கும் (6 AM – 10 PM).",
         "Read today's news" to "இன்றைய செய்தி படி",
         "Reading news…" to "செய்திகள் படிக்கப்படுகின்றன…",
+        "News AI uses public headlines with your configured provider. Tamil is preferred; checked English-to-Tamil specialist translations may take up to 60 seconds. Failed checks leave a category empty." to "அமைக்கப்பட்ட செயற்கை நுண்ணறிவுச் சேவைக்கு பொதுச் செய்தித் தலைப்புகள் மட்டுமே அனுப்பப்படும். தமிழ்ச் செய்திகளுக்கு முன்னுரிமை. சரிபார்க்கப்பட்ட ஆங்கிலச் சிறப்புச் செய்திகளைத் தமிழாக்க அதிகபட்சம் அறுபது வினாடிகள் ஆகலாம். சரிபார்ப்பு தோல்வியுற்றால் அந்தப் பிரிவு காலியாக இருக்கும்.",
+        "Last prepared selection — not playback confirmation" to "கடைசியாகத் தயாரித்த செய்தித் தேர்வு — ஒலி படிக்கப்பட்டதற்கான உறுதி அல்ல",
+        "Category details and sources" to "பிரிவு விவரங்களும் செய்தி ஆதாரங்களும்",
+        "Translated from English" to "ஆங்கிலத்திலிருந்து மொழிபெயர்க்கப்பட்டது",
+        "Original source" to "மூலச் செய்தி ஆதாரம்",
         "Preparing news audio…" to "செய்தி ஒலி தயாராகிறது…",
         "Stop reading" to "⏹ நிறுத்து",
         // ---------------------------------------------------- HD-only voice (2.71)

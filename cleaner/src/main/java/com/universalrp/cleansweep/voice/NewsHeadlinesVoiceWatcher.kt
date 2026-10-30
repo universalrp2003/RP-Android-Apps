@@ -140,7 +140,7 @@ object NewsHeadlinesVoiceWatcher {
             .distinct()
             .takeLast(NewsPolicy.MAX_ITEMS * 2)
             .toSet()
-        val history = (recentEvents(context, nowMs) + headlines.map { it.title to nowMs }).takeLast(240)
+        val history = (recentEvents(context, nowMs) + headlines.flatMap { item -> listOf(item.title to nowMs) + if (item.spokenText.isNotBlank()) listOf(item.spokenText to nowMs) else emptyList() }).takeLast(240)
         val encoded = JSONArray().apply {
             history.forEach { (title, time) -> put(JSONObject().put("title", title).put("time", time)) }
         }.toString()
@@ -170,14 +170,10 @@ object NewsHeadlinesVoiceWatcher {
 
     private suspend fun prepareBalancedBatch(context: Context, items: List<NewsHeadline>, tamil: Boolean): List<NewsHeadline> {
         val now = System.currentTimeMillis()
-        val selected = BalancedNewsPolicy.select(
-            items, announcedKeysToday(context, tamil, now), recentEvents(context, now).map { it.first },
-            tamil, now, ZoneId.systemDefault(), prefs(context).getInt(KEY_ROTATION, 0),
-        )
-        val edited = NewsBulletinEditor.edit(context, selected, tamil)
-        // Recheck after AI networking, including midnight/time-zone changes. Never resurrect yesterday's batch.
+        val prepared = NewsBulletinPipeline.prepare(context, items, tamil,
+            announcedKeysToday(context, tamil, now), recentEvents(context, now).map { it.first }, prefs(context).getInt(KEY_ROTATION, 0))
         val readyAt = System.currentTimeMillis()
-        return edited.filter { NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
+        return prepared.filter { NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
     }
 
     private fun isDeviceQuietAndScreenOff(context: Context): Boolean {

@@ -52,11 +52,12 @@ class LiveGuardNewsVoiceTest(unittest.TestCase):
     def test_news_uses_safe_extractive_editor_not_generated_summary(self):
         watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
         self.assertNotIn('composeAiNewsBulletin', watcher)
-        self.assertIn('NewsBulletinEditor.edit(context, selected, tamil)', watcher)
+        pipeline = src('voice/NewsBulletinPipeline.kt')
+        self.assertIn('NewsBulletinEditor.edit(context, nativePool, tamil, budget)', pipeline)
         editor = src('voice/NewsBulletinEditor.kt')
         self.assertIn('allowSearch = false', editor)
         self.assertIn('options[sentence]', editor)
-        self.assertIn('TIMEOUT_MS = 12_000L', editor)
+        self.assertIn('TIMEOUT_MS = 15_000L', editor)
         self.assertIn('NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)', watcher)
         self.assertIn('NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)', watcher)
 
@@ -80,6 +81,17 @@ class LiveGuardNewsVoiceTest(unittest.TestCase):
         self.assertIn('listOfNotNull(general.getOrNull(index), specialist.getOrNull(index))', repo)
         self.assertIn('put("description", item.description)', repo)
         self.assertIn('when:1d', repo)
+
+    def test_translation_is_source_bound_reviewed_and_shares_one_deadline(self):
+        pipeline = src('voice/NewsBulletinPipeline.kt')
+        translator = src('voice/NewsTranslator.kt')
+        self.assertIn('withTimeoutOrNull(AiRequestPolicy.Use.NEWS.budgetMs)', pipeline)
+        self.assertIn('perCategoryMultiplier = 3', pipeline)
+        self.assertIn('getEnglishSpecialistsForTranslation', pipeline)
+        self.assertIn('NewsTranslationPolicy.restore', translator)
+        self.assertIn('approved(verdict.text, checked.keys)', translator)
+        self.assertIn('translated = true', translator)
+        self.assertIn('news', src('ui/NewsBulletinStatus.kt').lower())
 
     def test_preparation_policy_bounds_news_without_starving_alternatives(self):
         policy = src('voice/NewsVoicePreparationPolicy.kt')

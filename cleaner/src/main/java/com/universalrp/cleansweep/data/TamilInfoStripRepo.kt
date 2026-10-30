@@ -117,6 +117,13 @@ object TamilInfoStripRepo {
         )
     }
 
+    suspend fun getEnglishSpecialistsForTranslation(context: Context): List<NewsHeadline> = withContext(Dispatchers.IO) {
+        currentCoroutineContext().ensureActive()
+        val feeds = specialistFeeds(false)
+        val fetched = fetchFeeds(feeds).flatMap { it.items }
+        NewsPolicy.todayForLanguage(fetched, System.currentTimeMillis(), ZoneId.systemDefault(), tamil = false)
+    }
+
     private fun localScope(now: Long, zone: ZoneId) = zone.id + "|" + java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
 
     @Synchronized fun shownToday(context: Context): Set<String> =

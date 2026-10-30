@@ -15,9 +15,9 @@ object BalancedNewsPolicy {
             "சிறப்பு தள்ளுபடி|வாங்கிடுங்க|வாங்குங்கள்|நம்ப முடியாத|you won't believe|click here",
         RegexOption.IGNORE_CASE,
     )
-    private val science = listOf("science", "scientist", "research", "discovery", "invention", "isro", "nasa", "space", "satellite", "அறிவியல்", "விஞ்ஞான", "ஆராய்ச்சி", "ஆய்வு", "கண்டுபிடி", "விண்வெளி", "இஸ்ரோ", "நாசா", "செயற்கைக்கோள்")
-    private val cyber = listOf("phishing", "malware", "ransomware", "cyber", "security update", "security flaw", "otp", "சைபர்", "இணைய மோசடி", "ஆன்லைன் மோசடி", "யுபிஐ", "யு.பி.ஐ", "டிஜிட்டல் கைது", "digital arrest", "upi", "sms", "android security", "mobile scam", "online scam", "phone scam", "தீம்பொருள்", "பாதுகாப்பு புதுப்பிப்பு", "குறுஞ்செய்தி", "இணைய பாதுகாப்பு")
-    private val environment = listOf("climate", "biodiversity", "wildlife", "conservation", "pollution", "environment", "forest", "flood", "cyclone", "காலநிலை", "சுற்றுச்சூழல்", "பல்லுயிர்", "வனவிலங்கு", "மாசு", "நீர்நிலை", "வெள்ளம்", "புயல்", "மழை")
+    private val science = listOf("science", "scientist", "research", "discovery", "invention", "isro", "nasa", "space", "satellite", "astronomers", "scientific", "innovation", "discovered", "கண்டறி", "ஆராய்ச்சியாளர்", "அறிவியல்", "விஞ்ஞான", "ஆராய்ச்சி", "ஆய்வு", "கண்டுபிடி", "விண்வெளி", "இஸ்ரோ", "நாசா", "செயற்கைக்கோள்")
+    private val cyber = listOf("phishing", "malware", "ransomware", "cyber", "security update", "security flaw", "privacy", "data breach", "sms scam", "தனியுரிமை", "தரவு கசிவு", "வங்கி மோசடி", "otp", "சைபர்", "இணைய மோசடி", "ஆன்லைன் மோசடி", "யுபிஐ", "யு.பி.ஐ", "டிஜிட்டல் கைது", "digital arrest", "upi", "sms", "android security", "mobile scam", "online scam", "phone scam", "தீம்பொருள்", "பாதுகாப்பு புதுப்பிப்பு", "குறுஞ்செய்தி", "இணைய பாதுகாப்பு")
+    private val environment = listOf("climate", "biodiversity", "wildlife", "conservation", "pollution", "environment", "forest", "flood", "water", "habitat", "ecology", "வனம்", "காடு", "காடுகள்", "நீர்", "cyclone", "காலநிலை", "சுற்றுச்சூழல்", "பல்லுயிர்", "வனவிலங்கு", "மாசு", "நீர்நிலை", "வெள்ளம்", "புயல்", "மழை")
     private val state = listOf("tamil nadu", "tamilnadu", "chennai", "pudukkottai", "tiruchi", "madurai", "coimbatore", "தமிழக", "தமிழ்நா", "சென்னை", "புதுக்கோட்டை", "திருச்சி", "மதுரை", "கோவை")
     private val india = listOf("india", "delhi", "supreme court", "parliament", "rbi", "இந்திய", "டெல்லி", "உச்சநீதிமன்ற", "உச்ச நீதிமன்ற", "நாடாளுமன்ற", "ரிசர்வ் வங்கி")
     private val world = listOf("united nations", "united states", "ukraine", "russia", "china", "japan", "sri lanka", "pakistan", "europe", "gaza", "israel", "அமெரிக்க", "ஐநா", "ஐ.நா", "உக்ரைன்", "ரஷ்ய", "சீனா", "ஜப்பான்", "இலங்கை", "பாகிஸ்தான்", "ஐரோப்ப", "காசா", "இஸ்ரேல்")
@@ -43,7 +43,7 @@ object BalancedNewsPolicy {
 
     /** Mixed feeds are never assigned WORLD/INDIA just because of their publisher. */
     fun category(item: NewsHeadline): Category? {
-        val text = item.title.lowercase(Locale.ROOT)
+        val text = (item.title + " " + item.description).lowercase(Locale.ROOT)
         val feed = item.category.lowercase(Locale.ROOT)
         // A specialist feed is still checked for actual topic evidence; gadget ads aren't discoveries.
         if (has(text, cyber)) return Category.CYBER
@@ -87,12 +87,14 @@ object BalancedNewsPolicy {
 
     fun select(
         items: List<NewsHeadline>, announced: Set<String>, recentTitles: List<String>, tamil: Boolean,
-        nowMs: Long, zone: ZoneId, rotation: Int,
+        nowMs: Long, zone: ZoneId, rotation: Int, perCategoryMultiplier: Int = 1,
     ): List<NewsHeadline> {
+        require(perCategoryMultiplier in 1..3)
         val valid = items.map { it.copy(title = NewsSpeechSanitizer.cleanHeadline(it.title, it.source)) }
             .filter { NewsPolicy.isToday(it.publishedAtMs, nowMs, zone) &&
                 NewsPolicy.canonicalLink(it.link) != null &&
-                NewsSpeechSanitizer.isCompleteSpeakableHeadline(it.title, tamil) &&
+                NewsSpeechSanitizer.isCompleteSpeakableHeadline(if (it.translated) it.spokenText else it.title, tamil) &&
+                (!it.translated || tamil) &&
                 it.key !in announced && recentTitles.none { old -> sameEvent(old, it.title) } }
         val picked = ArrayList<NewsHeadline>(8)
         val publishers = mutableMapOf<String, Int>()
@@ -102,8 +104,9 @@ object BalancedNewsPolicy {
             val ordered = candidates.sortedWith(compareByDescending<NewsHeadline> { subtopicScore(it, rotation) }
                 .thenBy { publishers[it.source] ?: 0 }.thenByDescending { it.publishedAtMs })
             for (item in ordered) {
-                if (picked.count { category(it) == bucket } >= bucket.quota) break
-                if (picked.any { sameEvent(it.title, item.title) || NewsPolicy.canonicalLink(it.link) == NewsPolicy.canonicalLink(item.link) }) continue
+                if (picked.count { category(it) == bucket } >= bucket.quota * perCategoryMultiplier) break
+                if (picked.any { sameEvent(it.title, item.title) ||
+                    (it.spokenText.isNotBlank() && item.spokenText.isNotBlank() && sameEvent(it.spokenText, item.spokenText)) || NewsPolicy.canonicalLink(it.link) == NewsPolicy.canonicalLink(item.link) }) continue
                 picked.add(item)
                 publishers[item.source] = (publishers[item.source] ?: 0) + 1
             }

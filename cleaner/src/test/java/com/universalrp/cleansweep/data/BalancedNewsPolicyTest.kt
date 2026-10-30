@@ -123,4 +123,30 @@ class BalancedNewsPolicyTest {
         assertEquals("NASA launched a satellite to study distant stars.", NewsPolicy.parseFeed(xml, "Science", "NASA").single().description)
         assertTrue(NewsPolicy.parseFeed(xml.replace("NASA launches new satellite to study stars", "Fresh story from an unknown publisher"), "Science", "Google News Tamil").isEmpty())
     }
+    @Test fun candidatePoolHasReplacementsBeforeEditing() {
+        val candidates = (1..12).map { item("Chennai opens public service centre number $it for residents") }
+        val pool = BalancedNewsPolicy.select(candidates, emptySet(), emptyList(), false, now, zone, 0, perCategoryMultiplier = 3)
+        assertEquals(9, pool.size)
+        assertEquals(3, select(pool.drop(3)).size)
+    }
+    @Test fun validatedTamilTranslationKeepsOriginalSourceIdentity() {
+        val original = mixed()[5]
+        val translated = original.copy(spokenText = "புதிய செயற்கைக்கோள் விண்ணில் இன்று செலுத்தப்பட்டது", translated = true)
+        val selected = BalancedNewsPolicy.select(listOf(translated), emptySet(), emptyList(), true, now, zone, 0)
+        assertEquals(original.key, selected.single().key)
+        assertEquals(original.link, selected.single().link)
+    }
+    @Test fun unvalidatedEnglishCannotEnterTamilThroughFallback() {
+        assertTrue(BalancedNewsPolicy.select(listOf(mixed()[5].copy(translated = true)), emptySet(), emptyList(), true, now, zone, 0).isEmpty())
+    }
+    @Test fun descriptionCanSupplyCategoryEvidenceMissingFromTitle() {
+        val story = item("New material improves efficiency in laboratory trials").copy(description = "Researchers report a scientific discovery in a preliminary study.")
+        assertEquals(BalancedNewsPolicy.Category.SCIENCE, BalancedNewsPolicy.category(story))
+    }
+    @Test fun invalidCandidateExpansionIsRejected() {
+        var rejected = false
+        try { BalancedNewsPolicy.select(mixed(), emptySet(), emptyList(), false, now, zone, 0, perCategoryMultiplier = 20) } catch (_: IllegalArgumentException) { rejected = true }
+        assertTrue(rejected)
+    }
+
 }
