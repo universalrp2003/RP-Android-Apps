@@ -1,0 +1,30 @@
+name: Inspect synthetic Daily Vault emulator evidence
+on:
+  push:
+    branches: ["arena/bb783762-rp-android-apps"]
+    paths: [".github/workflows/dailyvault-qa-evidence.yml"]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41089305476
+          name: dailyvault-release-emulator-evidence
+          path: evidence
+      - name: Surface synthetic UI evidence through bounded annotations
+        shell: python
+        run: |
+          import base64, pathlib
+          path = pathlib.Path('evidence/failure.png')
+          data = base64.b64encode(path.read_bytes()).decode()
+          chunks = [data[i:i+40000] for i in range(0, len(data), 40000)]
+          for i, chunk in enumerate(chunks):
+              print(f'::notice title=DVQA PNG {i+1} of {len(chunks)}::{chunk}')
+          xml = pathlib.Path('evidence/last-ui.xml').read_text()
+          print('::notice title=DVQA XML::' + xml[:50000].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
