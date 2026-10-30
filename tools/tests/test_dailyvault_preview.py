@@ -70,7 +70,7 @@ class DailyVaultPreviewTest(unittest.TestCase):
     def test_accessible_redesign_and_explicit_screenshot_disclosure(self):
         ui = (BASE / 'MainActivity.kt').read_text()
         for token in ['NavigationBarItem(', 'SegmentedButton(', 'DatePickerDialog', 'TimePickerDialog', 'BuildConfig.VERSION_NAME',
-                      'isSystemInDarkTheme()', 'Save failed. Your draft is still here.', 'Screenshots, recordings',
+                      'isSystemInDarkTheme()', 'LaunchedEffect(page, notes) { listState.scrollToItem(0) }', 'Save failed. Your draft is still here.', 'Screenshots, recordings',
                       'categoryLabel(', 'clearPasswords()', 'repeatOnLifecycle(Lifecycle.State.STARTED)']:
             self.assertIn(token, ui)
         self.assertNotIn('preview 0.2', ui)

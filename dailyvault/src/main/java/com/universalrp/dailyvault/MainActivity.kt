@@ -11,6 +11,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -69,6 +70,8 @@ class MainActivity : FragmentActivity() {
             var tamil by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("tamil", true)) }
             var page by rememberSaveable { mutableIntStateOf(0) }
             var notes by rememberSaveable { mutableStateOf(false) }
+            val listState = rememberLazyListState()
+            LaunchedEffect(page, notes) { listState.scrollToItem(0) }
             var search by rememberSaveable { mutableStateOf("") }
             var draft by remember { mutableStateOf<Entry?>(null) }
             var deleting by remember { mutableStateOf<Entry?>(null) }
@@ -139,6 +142,7 @@ class MainActivity : FragmentActivity() {
                     Box(Modifier.padding(insets).fillMaxSize(), contentAlignment = Alignment.TopCenter) {
                         LazyColumn(
                             Modifier.widthIn(max = 840.dp).fillMaxSize(),
+                            state = listState,
                             contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 104.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
