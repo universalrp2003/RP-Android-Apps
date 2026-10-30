@@ -28,12 +28,15 @@ def nodes():
     (OUT / 'last-ui.xml').write_text(text)
     return list(ET.fromstring(text).iter('node'))
 
-def wait_text(text, timeout=35):
+def wait_text(text, timeout=35, scroll=False):
     end = time.monotonic() + timeout
     while time.monotonic() < end:
         try:
             ns = nodes()
             if any(text.casefold() in (n.get('text', '') + n.get('content-desc', '')).casefold() for n in ns): return ns
+            if scroll:
+                width, height = map(int, re.findall(r'(\d+)x(\d+)', adb('shell', 'wm', 'size'))[-1])
+                adb('shell', 'input', 'swipe', str(width//2), str(height*3//4), str(width//2), str(height//3), '300')
         except Exception:
             pass
         time.sleep(.5)
@@ -80,11 +83,11 @@ def main():
     launch(); english(); wait_text('A fresh start'); shot('01-fresh-overview-en')
     tap('Add spending'); wait_text('Spending record')
     field(0, '123.45'); field(1, 'Smoke groceries'); keyboard_back(); tap('Save')
-    wait_text('Record saved'); wait_text('Smoke groceries'); shot('02-overview-with-spending')
+    wait_text('Record saved'); wait_text('Smoke groceries', scroll=True); shot('02-overview-with-spending')
     tap('Records'); tap('Notes / history'); tap('Add note')
     field(0, 'Smoke note'); keyboard_back(); tap('Save')
     wait_text('Smoke note')
-    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english(); tap('Overview'); wait_text('Smoke groceries'); wait_text('Smoke note')
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english(); tap('Overview'); wait_text('Smoke groceries', scroll=True); wait_text('Smoke note', scroll=True)
     # No app-opening password should appear after a process restart.
     assert not any(n.get('class') == 'android.widget.EditText' for n in nodes())
     tap('தமிழ்'); wait_text('தினக்கணக்கு'); shot('03-tamil-overview')
@@ -104,9 +107,9 @@ def main():
     field(0, 'WrongPassword123'); keyboard_back(); tap('Recover'); wait_text('Check the password or file')
     assert private_hash() == original, 'Wrong recovery password changed the old vault'
     field(0, 'LegacyBackupTest123', clear=True); keyboard_back(); tap('Recover')
-    wait_text('Legacy groceries'); wait_text('Legacy reminder')
+    wait_text('Legacy groceries', scroll=True); wait_text('Legacy reminder', scroll=True)
     assert private_hash() == original, 'Legacy recovery should preserve authenticated file bytes'
-    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english(); wait_text('Legacy groceries')
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english(); wait_text('Legacy groceries', scroll=True)
     tap('Backup'); shot('05-backup-screen')
     tap('Export encrypted backup'); tap('Save')
     wait_text('Choose a backup password')
@@ -117,7 +120,7 @@ def main():
     backup = paths[-1]; adb('pull', backup, str(OUT / 'synthetic-backup.tdv'))
     content = (OUT / 'synthetic-backup.tdv').read_bytes()
     assert content[:4] == b'TDV\x01' and b'Legacy groceries' not in content
-    tap('Overview'); tap('Add spending'); field(0, '1.00'); field(1, 'Temporary record'); keyboard_back(); tap('Save'); wait_text('Temporary record')
+    tap('Overview'); tap('Add spending'); field(0, '1.00'); field(1, 'Temporary record'); keyboard_back(); tap('Save'); wait_text('Temporary record', scroll=True)
     tap('Backup'); tap('Restore from file'); tap(Path(backup).name)
     wait_text('Restore a backup')
     field(0, 'WrongPassword123'); keyboard_back()
@@ -126,7 +129,7 @@ def main():
     before = private_hash(); tap('Replace and restore'); wait_text('Check the password or file')
     assert private_hash() == before, 'Wrong backup password replaced current records'
     field(0, 'IndependentBackup987', clear=True); keyboard_back(); tap('Replace and restore')
-    wait_text('Records restored from backup'); wait_text('Legacy groceries')
+    wait_text('Records restored from backup'); wait_text('Legacy groceries', scroll=True)
     assert not any('Temporary record' in n.get('text', '') for n in nodes())
     shot('06-restored-overview')
     tap('Records'); tap('Notes / history'); wait_text('Legacy reminder'); shot('07-restored-notes')
@@ -138,7 +141,13 @@ def main():
 
 if __name__ == '__main__':
     try: main()
-    except Exception:
+    except Exception as error:
+        message = str(error).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        print('::error title=Daily Vault emulator check::' + type(error).__name__ + ': ' + message, flush=True)
+        try:
+            visible = [n.get('text', '') for n in nodes() if n.get('text')]
+            print('::error title=Visible synthetic test UI::' + repr(visible)[:1800].replace('%', '%25').replace('\n', '%0A'), flush=True)
+        except Exception: pass
         try: shot('failure')
         except Exception: pass
         subprocess.run(['adb', 'logcat', '-d', '-t', '400'], stdout=(OUT / 'emulator-log.txt').open('w'), timeout=30)
