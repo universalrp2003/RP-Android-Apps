@@ -2,6 +2,8 @@
 
 Fixes the Store's stale legacy certificate pin. Current replacement-key APKs use certificate SHA-256 `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`; Secret Message retains its separate established certificate. Hash, size, package/version, SDK, installed signer and downgrade checks still fail closed. Never accept both keys to bypass Android update compatibility.
 
+The bundled offline fallback now contains the already-published current 13-app receipts, rather than pointing downloads at the retired-key snapshot. Public feed/website pointers are not advanced.
+
 Failures distinguish download interruption, size/checksum, archive metadata, APK signer and installed-signer incompatibility. A verified file explicitly tells the user to tap Install for Android confirmation. No silent installs or Play Protect bypass.
 
 Update compatible Store installations normally. Do not uninstall or clear app data to address a signing mismatch: local data could be lost. A legacy-key Daily Vault 0.3 cannot be updated directly by a replacement-key APK without signing continuity. Preserve that installation and its records while investigating/exporting a backup; do not assume the installer’s initial Update button proves compatibility or successful installation.

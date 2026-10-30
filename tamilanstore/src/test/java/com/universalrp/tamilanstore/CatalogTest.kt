@@ -40,7 +40,9 @@ class CatalogTest {
         }
     }
     @Test fun releaseTagVersionMustMatchDeclaredVersion() {
-        val mismatched = catalog().replaceFirst("\"version\": \"1.1.9\"", "\"version\": \"1.1.10\"")
+        val root = org.json.JSONObject(catalog())
+        root.getJSONArray("apps").getJSONObject(0).put("version", "99.99")
+        val mismatched = root.toString()
         try { Catalog.parse(mismatched); fail("catalog version did not match release tag") }
         catch (_: IllegalArgumentException) { }
     }

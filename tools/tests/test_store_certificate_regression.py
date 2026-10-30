@@ -1,4 +1,5 @@
 import re
+import json
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,11 @@ class StoreCertificateRegression(unittest.TestCase):
         pin = re.search(r'EXPECTED_SIGNER = "([a-f0-9]{64})"', prepare).group(1)
         self.assertIn(f'const val SIGNER = "{pin}"', catalog)
         self.assertNotIn('9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55', catalog)
+
+    def test_bundled_fallback_uses_verified_current_release_receipts(self):
+        bundled = json.loads((ROOT/"tamilanstore/src/main/assets/catalog.json").read_text())
+        published = json.loads((ROOT/"site/catalog-v2.json").read_text())
+        self.assertEqual(published, bundled)
 
     def test_candidate_does_not_advertise_unpublished_store(self):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
