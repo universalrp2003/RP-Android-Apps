@@ -3,6 +3,7 @@ package com.universalrp.tamilanstore
 import android.app.Application
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -41,6 +42,8 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     var catalogMessage by mutableStateOf("")
         private set
     private var refreshing = false
+    private var lastAutomaticRefreshElapsed: Long? = null
+
     private val _transfer = MutableStateFlow(Transfer())
     val transfer = _transfer.asStateFlow()
     private val _verifiedAppIds = MutableStateFlow<Set<String>>(emptySet())
@@ -61,14 +64,23 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun refreshCatalog() {
+    /** Refresh on launch/resume, but avoid repeated requests while the user switches apps. */
+    fun refreshCatalog(force: Boolean = false) {
         if (refreshing || _transfer.value.busy) {
             if (!_transfer.value.busy) {
                 viewModelScope.launch { reconcileStagedApks(apps) }
             }
             return
         }
+        val now = SystemClock.elapsedRealtime()
+        val last = lastAutomaticRefreshElapsed
+        if (!force && !CatalogRefreshPolicy.shouldRefresh(now, last)) {
+            viewModelScope.launch { reconcileStagedApks(apps) }
+            return
+        }
+        lastAutomaticRefreshElapsed = now
         refreshing = true
+        catalogMessage = "checking"
         viewModelScope.launch {
             val previousApps = apps
             try {
