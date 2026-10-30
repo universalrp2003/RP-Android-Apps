@@ -56,7 +56,31 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         self.assertEqual(13,len(current['apps']))
         self.assertNotIn('dailyvault',{a['id'] for a in legacy['apps']})
         self.assertIn('dailyvault',{a['id'] for a in current['apps']})
-        self.assertEqual(legacy,json.loads((ROOT/'site/catalog.json').read_text()))
-        self.assertEqual(current,json.loads((ROOT/'site/catalog-v2.json').read_text()))
+        # Served feeds advance from public releases without changing the APK's bundled fallback.
+        served_current=json.loads((ROOT/'site/catalog-v2.json').read_text())
+        served_legacy=json.loads((ROOT/'site/catalog.json').read_text())
+        self.assertEqual(12,len(served_legacy['apps']))
+        self.assertEqual(13,len(served_current['apps']))
+        self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id']!='dailyvault']))
+        self.assertEqual({a['id'] for a in snapshot['apps']},{a['id'] for a in served_current['apps']})
+        bundled={a['id']:a for a in snapshot['apps']}
+        for app in served_current['apps']:
+            before=bundled[app['id']]
+            for key in ('id','name','tamilName','packageName'):
+                self.assertEqual(before[key],app[key])
+            numeric=lambda v:tuple(map(int,v.split('.')))+(0,)*(4-len(v.split('.')))
+            self.assertGreaterEqual(numeric(app['version']),numeric(before['version']))
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         self.assertIn('"catalog-v2.json"',source)
+
+    def test_served_catalog_uses_exact_website_and_mirror_receipts(self):
+        current=json.loads((ROOT/'site/catalog-v2.json').read_text())
+        site=(ROOT/'site/index.html').read_text()
+        pages=(ROOT/'.github/workflows/pages.yml').read_text()
+        for app in current['apps']:
+            asset=app['url'].split('/')[-1]
+            tag=app['releaseUrl'].split('/')[-1]
+            self.assertRegex(app['sha256'],r'^[a-f0-9]{64}$')
+            self.assertEqual(app['url'],f'https://github.com/universalrp2003/RP-Android-Apps/releases/download/{tag}/{asset}')
+            self.assertIn(f'data-name="{asset}" data-sha="{app["sha256"]}"',site)
+            self.assertIn(f'("{tag}", "{asset}", {app["size"]}, "{app["sha256"]}")',pages)

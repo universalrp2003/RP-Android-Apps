@@ -1,0 +1,7 @@
+# Resolved Live Guard 2.79 promotion diagnostics — 30 October 2026
+
+- Run41051686884/source69df358 stopped before creating a release because its SDK report check required the old `sdkVersion` spelling; current aapt2 emits `minSdkVersion:'26'`. Match both standard report labels without changing the required SDK value.
+- Run41051848433/sourcee5aeec1 passed immutable-artifact, APK identity/signature and permission checks (no added dangerous permissions) and created private draft428979540 with the correct APK digest. It stopped before publication because GitHub draft assets use temporary `untagged-…` download URLs. A draft URL is not the final stable release URL.
+- Run41052024326/source56940d4 revalidated provenance/compiled inputs and all APK/permission gates, resumed only that exact immutable draft without replacing/uploading over assets, checked its digest/size before publishing, then checked the canonical public URL and re-downloaded bytes. SUCCESS. Public release2.79 at2026-10-30T11:59:51Z, APK SHA-256`95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac`.
+
+No APK rebuild was promoted; no existing release asset was replaced. Run logs could not be fetched through Arena's restricted log-download endpoint, so bounded public APK/permission diagnostics were surfaced in Actions annotations. No credentials were logged. These pipeline corrections are not device/translation/security certification.

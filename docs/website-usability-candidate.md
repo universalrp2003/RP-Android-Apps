@@ -1,6 +1,6 @@
-# Website usability candidate — not deployed
+# Website usability release preparation
 
-This change preserves the 14 published apps (12 non-Store + 2 optional: Tamilan Store and DailyVault), public Live Guard 2.75, immutable release filenames, bytes and SHA-256 values. It does not promote any newer app or held Store candidate.
+This change preserves the 14 published apps (12 non-Store + 2 optional: Tamilan Store and DailyVault), the verified public Live Guard 2.79 APK, immutable release filenames, bytes and SHA-256 values. Live Guard 2.79 was promoted separately from the immutable approved candidate. Tamilan Store 0.6 was already public; its module has no pending delta against main and no new Store APK is released.
 
 ## Changes
 
@@ -32,7 +32,7 @@ The helper refuses draft/missing releases, invalid UTC timestamps, mismatched re
 
 ## Validation
 
-Local results at preparation: 210 Python tests passed across `tools/tests`; app localization and public-release parity checks passed; 12 browser checks passed. Browser coverage includes 320/390/768/1280px, 200% root text size, keyboard focus/jumps, no-JavaScript catalogue access, paired language safety guidance, clipboard success/denial, synthetic matching/mismatching downloads, reduced motion and axe WCAG-tagged checks in all three language views, including expanded evidence. These are automated browser checks, not a full accessibility certification or physical Android phone test.
+Local results at preparation: 211 Python tests passed across `tools/tests`; app localization and public-release parity checks passed; 12 browser checks passed. Browser coverage includes 320/390/768/1280px, 200% root text size, keyboard focus/jumps, no-JavaScript catalogue access, paired language safety guidance, clipboard success/denial, synthetic matching/mismatching downloads, reduced motion and axe WCAG-tagged checks in all three language views, including expanded evidence. These are automated browser checks, not a full accessibility certification or physical Android phone test.
 
 Reproduce with development-only dependencies (never needed by the deployed site):
 
@@ -47,8 +47,12 @@ node tools/website-tests/usability.mjs
 
 `RP_SITE_URL` and `RP_TEST_MODULES` can point at a different local server or development dependency directory. Tests prohibit real APK downloads/external requests and use synthetic bytes for checksum branches. The new read-only website CI workflow does not deploy or publish apps.
 
-## Publication boundary
+## Owner-approved publication boundary (30 October 2026)
 
-The current Arena branch contains unpublished Live Guard and held Store work. Opening a pull request from this branch into main would include those changes, violating the owner's website-only requirement. Do not open or merge that mixed PR, reset this branch, change its name, or publish the held code.
+The owner explicitly selected full current-branch merge and release completion, superseding the earlier website-only PR restriction. Review the complete branch diff, require green CI, then merge the active Arena branch into main. Do not create or switch to another branch, and do not replace public APK files.
 
-The website-only commit is prepared separately so it can be applied in a separate clean main-based session, reviewed through a website-only PR and merged only after CI. Existing Pages configuration is unchanged and deploys only from main. This document does not claim a PR, merge or live deployment has happened.
+Live Guard 2.79 is public from immutable promotion run41052024326/source8bd7cf9 (14,479,951 bytes; SHA-256`95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac`). The website download, JSON-LD, version table, shared public-version metadata and live catalogs now reference these verified bytes. Historic APK/ZIP mirrors are preserved. The Store catalog compatibility test now distinguishes the app's intentionally older bundled fallback from the served feed, checks monotonic versions/identity, and pins live-feed entries to the website/Pages receipts.
+
+The three newly supplied owner screenshots are included in Live Guard's gallery after cropping out phone status/navigation bars. The visible testing disclosure distinguishes owner UI acceptance from installed-hash matching, audible playback and Play Protect clearance.
+
+This is a predeployment preparation record: a successful branch Pages build is not deployment. Verify the merged-main Pages deploy job and live HTML/catalog values before reporting that the website is live.

@@ -5,6 +5,10 @@ on:
     paths:
       - "tamilanstore/**"
       - ".github/workflows/tamilanstore-preview.yml"
+  pull_request:
+    paths:
+      - "tamilanstore/**"
+      - ".github/workflows/tamilanstore-preview.yml"
   workflow_dispatch:
 permissions:
   contents: read

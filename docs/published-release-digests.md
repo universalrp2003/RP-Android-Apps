@@ -411,3 +411,15 @@ Radio 1.28 publication is separately requested; no public radio digest is claime
 ## Ramesh Radio 1.28 publication verified
 
 [Run 40612310475](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/40612310475) completed successfully. GitHub confirms stable public release `ramesh-radio-v1.28`, asset `Ramesh-Radio-v1.28.apk`, 15,158,504 bytes, SHA-256 `9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c`. Owner-tested candidate behavior is documented separately; installed and publication-rebuilt bytes are not hash-matched. Website download metadata and mirror pin are updated only after this public verification.
+
+## Live Guard 2.79 — 30 October 2026
+
+Published by [immutable promotion run41052024326](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41052024326) from successful candidate run41049481796/artifact12974397087/source`8bd7cf95393cd4f33e21aa005ed650a4c32a921d`, without rebuilding the APK. [Public release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.79), published at2026-10-30T11:59:51Z.
+
+| File | Bytes | SHA-256 |
+| --- | --- | --- |
+| `CleanSweep-v2.79.apk` | 14,479,951 | `95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac` |
+
+Version2.79/code84; package`com.universalrp.cleansweep`; minimum API26; pinned replacement signer verified. Both candidate JVM variants passed all510 required regressions. Promotion rechecked artifact/run/source, unchanged compiled inputs, exact size/hash, package/version/non-debuggable state, signer and built-permission delta against public2.75; no dangerous permissions were added. GitHub draft asset digest was checked before publication, the canonical URL checked after publication, and public bytes re-downloaded and hash-checked in CI. No APK was downloaded into the Arena workspace.
+
+Owner-reported acceptance and three UI screenshots are recorded in [the acceptance receipt](live-guard-2.79-owner-acceptance.md). The installed APK hash was not independently measured; no universal device/Play Protect/translation-fidelity claim. Same-key users update normally without uninstalling. Existing release assets and the legacy backup repository remain unchanged.

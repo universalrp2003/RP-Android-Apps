@@ -2,7 +2,6 @@
   "source": "GitHub Releases published_at (UTC)",
   "releases": {
     "sms-guard-v1.1.11": "2026-10-29T08:41:54Z",
-    "live-guard-v2.75": "2026-10-30T00:34:04Z",
     "ramesh-radio-v1.29": "2026-10-29T11:49:08Z",
     "oor-arivippu-v1.1.10": "2026-10-29T10:08:22Z",
     "pulseeq-v1.11": "2026-10-29T12:01:26Z",
@@ -14,6 +13,7 @@
     "elderly-launcher-v1.5": "2026-10-29T11:04:13Z",
     "vasanthi-ai-v1.1.5": "2026-10-29T09:07:16Z",
     "tamilan-store-v0.6": "2026-10-29T10:43:52Z",
-    "daily-vault-v0.4": "2026-10-29T10:33:47Z"
+    "daily-vault-v0.4": "2026-10-29T10:33:47Z",
+    "live-guard-v2.79": "2026-10-30T11:59:51Z"
   }
 }

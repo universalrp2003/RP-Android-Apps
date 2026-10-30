@@ -125,6 +125,8 @@
 
 ## Maintenance and deployment
 
+- **30 October 2026 owner release approval:** The owner accepted the Live Guard 2.79 candidate UI and supplied three screenshots, then explicitly authorized the current branch merge and release completion (including Store if applicable), superseding the earlier website-only PR/held-source merge restriction. Live Guard 2.79 was promoted without a rebuild from run41049481796/artifact12974397087/source8bd7cf9 by run41052024326; SHA-256 `95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac`. The installed hash is not independently matched and the screenshots are not playback or Play Protect proof. Tamilan Store0.6 was already public and its module has no delta against main; do not invent another Store release or replace its public assets. Website/current catalogs must reference the verified2.79 asset while preserving historic files and compatibility endpoints. Main merge and actual Pages deployment still require their own green CI/status checks.
+
 - Website branch workflow build success is not deployment success: Pages deploys only from `main`. Confirm the deploy job and deployment source before saying changes are live.
 - Archive resolved CI failure excerpts under `docs/archive/ci/`, preserving source/run context. Do not delete release digests, device evidence, signing material or active preflight scripts as scratch files.
 - Explicit artifact retention is required for new uploads: 30 days for APKs/candidates, 14 days for transient reports/logs. Existing shorter policies may remain; release assets are not CI artifacts. Keep required candidate bytes/evidence before any deletion or expiry.
