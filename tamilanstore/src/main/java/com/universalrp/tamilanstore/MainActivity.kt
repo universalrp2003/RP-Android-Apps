@@ -28,6 +28,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -73,6 +75,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val model: StoreModel = viewModel()
             val transfer by model.transfer.collectAsStateWithLifecycle()
+            val verifiedApps by model.verifiedAppIds.collectAsStateWithLifecycle()
+            val failedApps by model.failedAppIds.collectAsStateWithLifecycle()
+            LaunchedEffect(model) { model.refreshCatalog() }
+            LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { model.refreshCatalog() }
+            LaunchedEffect(packageRevision) { model.reconcileInstalled() }
             var tamil by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("tamil", true)) }
             var showSelfUpdate by rememberSaveable { mutableStateOf(false) }
             var checkingSelf by remember { mutableStateOf(false) }
@@ -89,7 +96,9 @@ class MainActivity : ComponentActivity() {
                     selectedFilter = 0
                 }
             }
-            var message by remember { mutableStateOf("") }
+            var message by rememberSaveable { mutableStateOf("") }
+            var cardNoticeAppId by rememberSaveable { mutableStateOf("") }
+            var cardNotice by rememberSaveable { mutableStateOf("") }
             var refresh by remember { mutableIntStateOf(0) }
             val scope = rememberCoroutineScope()
             val installedApps = remember(refresh, packageRevision, model.apps) { model.apps.associate { it.id to model.installed(it) } }
@@ -127,7 +136,7 @@ class MainActivity : ComponentActivity() {
                                 TextButton(onClick = { showSearch = true }) { Text(bi("தேடு", "Search") + if (query.isBlank()) "" else " · $query") }
                                 TextButton(onClick = { showSelfUpdate = !showSelfUpdate }) { Text(bi("அங்காடி புதுப்பிப்பு", "Store update")) }
                                 TextButton(onClick = { open(Catalog.WEBSITE + "#request-app") }) { Text(bi("புதிய செயலி கோரிக்கை", "Request an app")) }
-                                TextButton(onClick = { refresh++; message = ""; model.refreshCatalog() }) { Text(bi("சரிபார்", "Refresh")) }
+                                TextButton(onClick = { refresh++; message = ""; model.refreshCatalog(force = true) }) { Text(bi("சரிபார்", "Refresh")) }
                                 TextButton(onClick = { showAbout = !showAbout }) { Text(bi("உதவி / பற்றி", "Help / About")) }
                                 TextButton(onClick = {
                                     try { startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:universalrp2003@gmail.com"))) }
@@ -136,8 +145,11 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         if (model.catalogMessage.isNotBlank()) item {
-                            Text(if (model.catalogMessage == "live") bi("நேரலைப் பட்டியல் சரிபார்க்கப்பட்டது", "Live catalog checked")
-                                else bi("நேரலைச் சரிபார்ப்பு முடியவில்லை · சேமித்த பட்டியல்", "Live check unavailable · using saved catalog"), style = MaterialTheme.typography.labelSmall)
+                            Text(when (model.catalogMessage) {
+                                "checking" -> bi("புதிய பட்டியல் சரிபார்க்கப்படுகிறது…", "Checking for catalog updates…")
+                                "live" -> bi("நேரலைப் பட்டியல் சரிபார்க்கப்பட்டது", "Live catalog checked")
+                                else -> bi("நேரலைச் சரிபார்ப்பு முடியவில்லை · சேமித்த பட்டியல்", "Live check unavailable · using saved catalog")
+                            }, style = MaterialTheme.typography.labelSmall)
                         }
                         if (showSelfUpdate) item {
                             Card(Modifier.fillMaxWidth()) {
@@ -171,7 +183,7 @@ class MainActivity : ComponentActivity() {
                                 Text(bi("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
                                 TextButton(onClick = { open("https://github.com/universalrp2003/RP-Android-Apps") }) { Text(bi("மூல நிரல் / GitHub", "Source / GitHub")) }
                                 Text(bi("தமிழன் · 0.6. நமது 13 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.6. Our 13 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
-                                Text(bi("பட்டியல்: 28 அக்டோபர் 2026. நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். சாதனத்தில் நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Catalog: 28 October 2026 snapshot. Installed versions compared locally only. Check the website for new releases; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("பட்டியல் செயலி திறக்கும்போதும் மீண்டும் முன்வரும்போதும் தானாகப் புதுப்பிக்கப்படும்; இணையம் இல்லையெனில் கடைசியாகச் சேமித்த பட்டியல் பயன்படுத்தப்படும். நிறுவிய செயலியின் நிலையும் திரும்பும்போது புதுப்பிக்கும்.", "The catalog refreshes automatically when the app opens or resumes; if offline, the last saved catalog is used. Installed-app status also refreshes on return."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = {
                                     val enable = !UpdateNotifications.enabled(this@MainActivity)
                                     if (enable && Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this@MainActivity,Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -201,6 +213,8 @@ class MainActivity : ComponentActivity() {
                             val installed = installedApps[app.id]
                             val status = InstalledStatus.resolve(installed, app.version)
                             val active = transfer.appId == app.id
+                            val isVerified = app.id in verifiedApps || (active && transfer.verified)
+                            val isFailed = app.id in failedApps || (active && transfer.failed)
                             Card(Modifier.fillMaxWidth()) {
                                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(if (tamil) app.tamilName else app.name, style = MaterialTheme.typography.titleMedium)
@@ -219,7 +233,16 @@ class MainActivity : ComponentActivity() {
                                         Text("${transfer.bytes / 1024} / ${app.size / 1024} KB")
                                         TextButton(onClick = { model.cancel() }) { Text(bi("ரத்து செய்", "Cancel")) }
                                     } else {
-                                        if (active && transfer.failed) Text(bi("பதிவிறக்கம் அல்லது சரிபார்ப்பு தோல்வி. நிறுவப்படவில்லை; மீண்டும் முயலலாம்.", "Download or verification failed. Nothing installed; retry is available."))
+                                        if (isFailed) {
+                                            Text(
+                                                bi("பதிவிறக்கம் அல்லது சரிபார்ப்பு தோல்வி. நிறுவப்படவில்லை; மீண்டும் முயலலாம்.", "Download or verification failed. Nothing installed; retry is available."),
+                                                color = Color(0xFFFFB4AB),
+                                                style = MaterialTheme.typography.bodySmall
+                                            )
+                                        }
+                                        if (cardNoticeAppId == app.id && cardNotice.isNotEmpty() && (status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE)) {
+                                            Text(cardNotice, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                                        }
                                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             if (installed != null) {
                                                 Button(onClick = {
@@ -233,23 +256,41 @@ class MainActivity : ComponentActivity() {
                                                     } catch (_: Exception) { message = bi("செயலியைத் திறக்க முடியவில்லை", "Cannot open app") }
                                                 }) { Text(bi("திற", "Open")) }
                                             }
-                                            if ((status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE) && active && transfer.verified) {
+                                            if ((status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE) && isVerified) {
                                                 Button(onClick = {
                                                     scope.launch {
                                                         try {
                                                             val file = model.verifiedFile(app)
                                                             if (!packageManager.canRequestPackageInstalls()) {
-                                                                startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
-                                                                message = bi("அனுமதித்தால் திரும்பி வந்து நிறுவு அழுத்தவும். பாதுகாப்புச் சோதனையை அணைக்க வேண்டாம்.", "If you allow this source, return and tap Install. Never disable Play Protect.")
+                                                                val notice = bi("அனுமதித்தால் திரும்பி வந்து நிறுவு அழுத்தவும். பாதுகாப்புச் சோதனையை அணைக்க வேண்டாம்.", "If you allow this source, return and tap Install. Never disable Play Protect.")
+                                                                message = notice
+                                                                cardNoticeAppId = app.id
+                                                                cardNotice = notice
+                                                                try {
+                                                                    startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
+                                                                } catch (_: Exception) {
+                                                                    startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES))
+                                                                }
                                                             } else {
+                                                                cardNoticeAppId = ""
+                                                                cardNotice = ""
                                                                 val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
                                                                 startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
                                                             }
-                                                        } catch (_: Exception) { message = bi("நிறுவலைத் திறக்க முடியவில்லை. மீண்டும் பதிவிறக்கி முயலவும்.", "Cannot start installation. Download again and retry.") }
+                                                        } catch (_: Exception) {
+                                                            val err = bi("நிறுவலைத் திறக்க முடியவில்லை. மீண்டும் பதிவிறக்கி முயலவும்.", "Cannot start installation. Download again and retry.")
+                                                            message = err
+                                                            cardNoticeAppId = app.id
+                                                            cardNotice = err
+                                                        }
                                                     }
                                                 }) { Text(bi("நிறுவு", "Install")) }
                                             } else if (status == AppStatus.NOT_INSTALLED || status == AppStatus.UPDATE_AVAILABLE) {
-                                                Button(onClick = { message = ""; model.download(app) }, enabled = !transfer.busy) { Text(if (status == AppStatus.UPDATE_AVAILABLE) bi("புதுப்பி", "Update") else bi("பதிவிறக்கு", "Download")) }
+                                                Button(onClick = {
+                                                    message = ""
+                                                    if (cardNoticeAppId == app.id) { cardNoticeAppId = ""; cardNotice = "" }
+                                                    model.download(app)
+                                                }, enabled = !transfer.busy) { Text(if (status == AppStatus.UPDATE_AVAILABLE) bi("புதுப்பி", "Update") else bi("பதிவிறக்கு", "Download")) }
                                             }
                                             TextButton(onClick = { open(app.releaseUrl) }) { Text(bi("விவரம்", "Details")) }
                                         }
