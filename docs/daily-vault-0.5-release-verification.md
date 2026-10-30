@@ -30,3 +30,9 @@ Use **Update**, keeping package/signing compatibility and records; never advise 
 Opening is intentionally not authenticated. Anyone with access to the unlocked phone can view/capture records. Backup encryption does not protect an already-open app. Network access is only the disclosed read-only update-metadata check, not vault-content transmission.
 
 Public site/catalog metadata stays on 0.4 until 0.5's public asset digest and re-downloaded bytes verify. The post-publication receipt will record the APK digest/size and promotion run. Store 0.6 and all other public APKs remain unchanged.
+
+## Publication sequencing
+
+The branch promotion attempts (41092998853 and 41093305813) verified the pinned archive, APK digest/size, compatible old/new signatures and no newly dangerous permissions, but GitHub refused draft creation with HTTP 403. No 0.5 draft or public release was created by those attempts.
+
+Publication therefore runs only after green PR CI and merge to **main**, using the normal contents-write Actions token without adding token scopes or changing credentials. The new tag targets that main publication commit; the workflow first proves that **all Daily Vault/shared/Gradle compiled inputs are unchanged from the tested candidate source above**. This preserves the exact tested APK while avoiding a release ref targeting a different workflow snapshot. The source APK provenance remains the pinned candidate run, not a rebuild at the publication commit. The main workflow independently checks the tag target after publication. Public website/catalog promotion follows public-byte verification in a separate change.

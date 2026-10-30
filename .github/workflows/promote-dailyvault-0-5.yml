@@ -1,7 +1,7 @@
-name: Promote verified Daily Vault 0.5 (no rebuild)
+name: Publish verified Daily Vault 0.5 from main (no rebuild)
 on:
   push:
-    branches: ["arena/bb783762-rp-android-apps"]
+    branches: ["main"]
     paths: [".github/workflows/promote-dailyvault-0-5.yml"]
 permissions:
   contents: write
@@ -16,6 +16,9 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
+      RELEASE_TARGET: ${{ github.sha }}
+      APK_SHA: caae81328c5577dbc333dd34b0341f8154a9f23d98af648d9e121dc91d1fcb5e
+      APK_SIZE: '11712552'
       SOURCE: bb400961341fc51d10fa191f79ffa052e3a66d91
       ARCHIVE_SHA: 5ffa58fb2717118d86548be5afbcd18b0073779f0e6043bfe002f05ff8f28b09
     steps:
@@ -32,6 +35,7 @@ jobs:
           gh api repos/$GH_REPO/actions/artifacts/12994921382 > /tmp/artifact.json
           python3 - <<'PY'
           import json, os, pathlib, subprocess
+          assert os.environ['GITHUB_REF'] == 'refs/heads/main', 'Publication is main-only'
           source = os.environ['SOURCE']
           run = json.load(open('/tmp/run.json')); job = json.load(open('/tmp/job.json')); artifact = json.load(open('/tmp/artifact.json'))
           assert (run['head_sha'], run['conclusion'], run['status'], run['path']) == (source, 'success', 'completed', '.github/workflows/new-apps-public-release.yml')
@@ -72,7 +76,8 @@ jobs:
           match = re.fullmatch(r'([a-f0-9]{64})  DailyVault-v0\.5\.apk\n?', (target/'DailyVault-v0.5.sha256').read_text())
           assert match, 'Unexpected authenticated checksum manifest'
           apk = target/'DailyVault-v0.5.apk'
-          assert hashlib.sha256(apk.read_bytes()).hexdigest() == match[1]
+          assert hashlib.sha256(apk.read_bytes()).hexdigest() == match[1] == os.environ['APK_SHA']
+          assert apk.stat().st_size == int(os.environ['APK_SIZE'])
           with open(os.environ['GITHUB_ENV'], 'a') as out:
               out.write('EXPECTED_SHA=' + match[1] + '\nEXPECTED_SIZE=' + str(apk.stat().st_size) + '\n')
           print('::notice title=Exact APK receipt::DailyVault-v0.5.apk sha256:' + match[1] + ' bytes:' + str(apk.stat().st_size))
@@ -100,7 +105,7 @@ jobs:
           python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
           grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
           echo '::notice title=Publication preflight::Package, version, minimum SDK, non-debuggable status, both signing identities and no-new-dangerous-permission checks passed.'
-          if ! gh release create daily-vault-v0.5 --draft "$apk" /tmp/accepted-dailyvault/DailyVault-v0.5.sha256 --target "$SOURCE" --title 'Daily Vault 0.5 — redesigned, direct opening and encrypted backups' --notes-file releases/daily-vault-v0.5.md --latest=false 2>/tmp/create-release-error; then
+          if ! gh release create daily-vault-v0.5 --draft "$apk" /tmp/accepted-dailyvault/DailyVault-v0.5.sha256 --target "$RELEASE_TARGET" --title 'Daily Vault 0.5 — redesigned, direct opening and encrypted backups' --notes-file releases/daily-vault-v0.5.md --latest=false 2>/tmp/create-release-error; then
             python3 - <<'PYERROR'
           import pathlib
           text = pathlib.Path('/tmp/create-release-error').read_text(errors='replace')
@@ -119,7 +124,7 @@ jobs:
               matches = [r for r in releases if r['tag_name'] == 'daily-vault-v0.5']
               assert len(matches) == 1
               release = matches[0]
-              assert release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['SOURCE']
+              assert release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['RELEASE_TARGET']
               assets = [a for a in release['assets'] if a['name'] == 'DailyVault-v0.5.apk']
               if len(assets) == 1 and assets[0].get('digest') == 'sha256:' + os.environ['EXPECTED_SHA']:
                   assert assets[0]['size'] == int(os.environ['EXPECTED_SIZE'])
@@ -130,6 +135,7 @@ jobs:
               raise SystemExit('Draft digest did not verify; nothing made public.')
           PY
           gh release edit daily-vault-v0.5 --draft=false --latest=false
+          test "$(gh api repos/$GH_REPO/git/ref/tags/daily-vault-v0.5 --jq '.object.sha')" = "$RELEASE_TARGET"
           mkdir /tmp/published-dailyvault
           gh release download daily-vault-v0.5 --pattern 'DailyVault-v0.5.*' --dir /tmp/published-dailyvault
           (cd /tmp/published-dailyvault && sha256sum --check DailyVault-v0.5.sha256)
@@ -139,7 +145,7 @@ jobs:
           python3 - <<'PY'
           import json, os
           release = json.load(open('/tmp/public-release.json'))
-          assert not release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['SOURCE']
+          assert not release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['RELEASE_TARGET']
           asset = next(a for a in release['assets'] if a['name'] == 'DailyVault-v0.5.apk')
           assert asset['size'] == int(os.environ['EXPECTED_SIZE']) and asset['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
           assert asset['browser_download_url'] == f"https://github.com/{os.environ['GH_REPO']}/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk"
