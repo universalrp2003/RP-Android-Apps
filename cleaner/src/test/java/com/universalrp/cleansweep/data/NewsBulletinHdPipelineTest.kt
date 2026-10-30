@@ -16,7 +16,7 @@ class NewsBulletinHdPipelineTest {
         val title = if (tamil) {
             "தமிழ்நாடு செய்தி $i: பொதுமக்கள் நலனுக்காக புதிய திட்டம் இன்று தொடங்கப்பட்டது என்று அரசு அறிவித்துள்ளது மேலும் விவரங்கள் வெளியிடப்பட்டுள்ளன"
         } else {
-            "Tamil Nadu news item $i: government announces a new public welfare programme today and publishes further details for residents across the state"
+            "Tamil Nadu news item $i: government announces a new public welfare programme today and publishes further details for residents across the state, including eligibility rules, application dates, district help centres and the official contact number for public enquiries"
         }
         return NewsHeadline("Tamil Nadu", title, "Test Feed", 1_700_000_000_000L + i, "https://example.com/$i")
     }
