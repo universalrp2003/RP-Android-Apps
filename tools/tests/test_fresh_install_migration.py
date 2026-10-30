@@ -28,7 +28,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
             ('elderly-launcher-v1.5', 'Elderly-Launcher-v1.5.apk', '1.5', 11498427, 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39'),
             ('voice-notes-v1.3.3', 'Voice-Notes-v1.3.3.apk', '1.3.3', 13135195, '71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35'),
-            ('live-guard-v2.75', 'CleanSweep-v2.75.apk', '2.75', 14448087, '2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf'),
+            ('live-guard-v2.79', 'CleanSweep-v2.79.apk', '2.79', 14479951, '95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac'),
             ('ramesh-radio-v1.29', 'Ramesh-Radio-v1.29.apk', '1.29', 15141600, '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d'),
             ('pulseeq-v1.11', 'PulseEQ-v1.11.apk', '1.11', 12165793, 'bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a'),
             ('rp-vocal-remover-studio-v0.1.16', 'RP-Vocal-Remover-Studio-v0.1.16.apk', '0.1.16', 65163821, '6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e'),
@@ -73,7 +73,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
 
     def test_replacement_releases_have_unique_version_codes_and_migration_notes(self):
         modules = {
-            'cleaner': ('2.75', '80', 'live-guard-v2.75'),
+            'cleaner': ('2.79', '84', 'live-guard-v2.79'),
             'radio': ('1.29', '29', 'ramesh-radio-v1.29'),
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),

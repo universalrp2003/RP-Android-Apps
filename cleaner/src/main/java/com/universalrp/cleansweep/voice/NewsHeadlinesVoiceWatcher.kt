@@ -10,6 +10,7 @@ import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import com.universalrp.cleansweep.data.BalancedNewsPolicy
 import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.NewsHeadline
@@ -18,6 +19,8 @@ import com.universalrp.cleansweep.data.NewsSpeechSanitizer
 import com.universalrp.cleansweep.data.TamilInfoStripRepo
 import com.universalrp.cleansweep.data.WeatherAlertStore
 import com.universalrp.updates.CallGuard
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.Instant
 import java.time.ZoneId
 import java.util.concurrent.TimeUnit
@@ -137,11 +140,40 @@ object NewsHeadlinesVoiceWatcher {
             .distinct()
             .takeLast(NewsPolicy.MAX_ITEMS * 2)
             .toSet()
+        val history = (recentEvents(context, nowMs) + headlines.flatMap { item -> listOf(item.title to nowMs) + if (item.spokenText.isNotBlank()) listOf(item.spokenText to nowMs) else emptyList() }).takeLast(240)
+        val encoded = JSONArray().apply {
+            history.forEach { (title, time) -> put(JSONObject().put("title", title).put("time", time)) }
+        }.toString()
+        val rotation = p.getInt(KEY_ROTATION, 0)
         p.edit()
+            .putString(KEY_RECENT_EVENTS, encoded)
+            .putInt(KEY_ROTATION, if (rotation == Int.MAX_VALUE) 0 else rotation + 1)
             .putString(dayKey, scope)
             .putStringSet(setKey, updated)
             .putLong(KEY_LAST_AUTO_SPOKEN_MS, nowMs)
             .apply()
+    }
+
+    private const val KEY_RECENT_EVENTS = "news_recent_events_v1"
+    private const val KEY_ROTATION = "news_successful_bulletins_v1"
+    private const val HISTORY_MS = 7 * 24 * 60 * 60_000L
+
+    private fun recentEvents(context: Context, nowMs: Long): List<Pair<String, Long>> = runCatching {
+        val rows = JSONArray(prefs(context).getString(KEY_RECENT_EVENTS, "[]"))
+        (0 until minOf(rows.length(), 240)).mapNotNull { index ->
+            val row = rows.optJSONObject(index) ?: return@mapNotNull null
+            val time = row.optLong("time")
+            val title = row.optString("title")
+            if (title.isNotBlank() && time <= nowMs && nowMs - time < HISTORY_MS) title to time else null
+        }
+    }.getOrDefault(emptyList())
+
+    private suspend fun prepareBalancedBatch(context: Context, items: List<NewsHeadline>, tamil: Boolean): List<NewsHeadline> {
+        val now = System.currentTimeMillis()
+        val prepared = NewsBulletinPipeline.prepare(context, items, tamil,
+            announcedKeysToday(context, tamil, now), recentEvents(context, now).map { it.first }, prefs(context).getInt(KEY_ROTATION, 0))
+        val readyAt = System.currentTimeMillis()
+        return prepared.filter { NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
     }
 
     private fun isDeviceQuietAndScreenOff(context: Context): Boolean {
@@ -160,55 +192,6 @@ object NewsHeadlinesVoiceWatcher {
     /**
      * Automatic background entry point (called both on periodic WorkManager tick and 15s after Screen OFF).
      */
-    /**
-     * Optional AI rewrite of [batch] into a short, professional spoken bulletin, using the
-     * SAME provider/key as the assistant. Returns null — so the caller uses the on-device
-     * sanitized bulletin — whenever no AI is configured, the request fails or times out, or
-     * the reply is unusable. News is never blocked on the AI.
-     */
-    private suspend fun composeAiNewsBulletin(context: Context, batch: List<NewsHeadline>, tamil: Boolean): String? {
-        if (batch.isEmpty()) return null
-        val config = try {
-            com.universalrp.cleansweep.ai.AiSettings.autoComplete(
-                com.universalrp.cleansweep.ai.AiSettings.load(context),
-            )
-        } catch (error: Exception) {
-            return null
-        }
-        if (!config.ready) return null
-        val items = batch.joinToString("\n") { "- ${it.title}" }
-        val system: String
-        val user: String
-        if (tamil) {
-            system = "நீங்கள் ஒரு தொழில்முறை தமிழ் செய்தி வானுஓட்டியாளர். கொடுக்கப்பட்ட தலைப்புகளை சுருக்கமான, " +
-                "தொழில்முறை, முழுமையான வாக்கியங்களாக மாற்றி ஒரு பேசத் தகுந்த செய்தி சுருக்கமாக எழுதுங்கள். " +
-                "தெளிவான, முழுமையான, முக்கியமானவை மட்டும் சேர்க்கவும்; முழுமையில்லாத அல்லது சிறியவை தவிர்க்கவும். " +
-                "எண்கள் அல்லது பட்டியல் குறியீடுகள் சேர்க்க வேண்டாம். சுமார் 120 சொற்களுக்குள் இருக்க வேண்டும்."
-            user = "இந்தத் தலைப்புகளை ஒரு பேசத் தகுந்த செய்தி சுருக்கமாக மாற்றுங்கள்:\n$items"
-        } else {
-            system = "You are a professional news announcer. Rewrite the supplied headlines into a short, natural, " +
-                "spoken news bulletin using complete sentences. Include only clear, complete, newsworthy items; " +
-                "drop anything incomplete, trivial or not newsworthy. Do not number or bullet them. " +
-                "Keep it under about 120 words."
-            user = "Rewrite these headlines into a spoken news bulletin:\n$items"
-        }
-        val result = try {
-            com.universalrp.cleansweep.ai.AiClient.ask(
-                config,
-                system,
-                user,
-                allowSearch = false,
-                budget = com.universalrp.cleansweep.ai.RequestBudget(com.universalrp.cleansweep.ai.AiRequestPolicy.Use.REPORT),
-            )
-        } catch (cancelled: kotlinx.coroutines.CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            return null
-        }
-        if (!result.ok) return null
-        return NewsSpeechSanitizer.cleanAiBulletin(result.text).ifBlank { null }
-    }
-
     suspend fun maybeAutoAnnounceInBackground(context: Context): Boolean {
         val app = context.applicationContext
         if (!Announcer.enabled(app) || !isEnabled(app)) return false
@@ -224,60 +207,53 @@ object NewsHeadlinesVoiceWatcher {
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
         if (!isDeviceQuietAndScreenOff(app)) return false
 
-        val freshBatch = NewsSpeechSanitizer.selectUnannouncedBatch(
-            items = snapshot.items,
-            alreadyAnnouncedKeys = announcedKeysToday(app, tamil),
-            expectTamil = tamil,
-            maxCount = NewsSpeechSanitizer.DEFAULT_MAX_SPOKEN_HEADLINES,
-        )
-        if (freshBatch.isEmpty()) return false
+        val freshBatch = prepareBalancedBatch(app, snapshot.items, tamil)
+        if (freshBatch.isEmpty() || !isDeviceQuietAndScreenOff(app)) return false
 
-        val newsScript = composeAiNewsBulletin(app, freshBatch, tamil)
-            ?: NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
+        val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
         if (script.isBlank()) return false
 
-        return Announcer.speakNewsBulletinAndWait(
+        val spoken = Announcer.speakNewsBulletinAndWait(
             context = app,
             text = script,
             language = lang,
-            onStarted = {
-                markHeadlinesAnnounced(app, freshBatch, tamil = tamil)
-            },
-            timeoutMs = 90_000L,
+            timeoutMs = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
         )
+        // Only a completed bulletin consumes the day's headlines. A failed or interrupted HD
+        // read must leave them unannounced so the next interval/screen-off tick can retry.
+        if (spoken) markHeadlinesAnnounced(app, freshBatch, tamil = tamil)
+        return spoken
     }
 
     /**
-     * Manual user-requested news bulletin readout ("Read Today's News" button):
-     * prefers fresh unannounced clean headlines first, and if all were already heard today,
-     * reads the latest 8 clean headlines of today immediately!
+     * Manual user-requested news bulletin readout ("Read Today's News" button).
+     *
+     * Returns the number of headlines actually spoken, `0` when no clean headline from today
+     * is available, and `-1` when headlines exist but the HD voice could not finish the read.
+     * A failed/interrupted read never marks the batch announced, so the button and the next
+     * interval tick can retry it instead of silently consuming the day's news.
      */
     suspend fun readTodaysHeadlinesManually(context: Context): Int {
         val app = context.applicationContext
         val lang = Lang.languageIn(app)
         val tamil = lang == AppLang.TA
-        val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
-        var batch = NewsSpeechSanitizer.selectUnannouncedBatch(
-            items = snapshot.items,
-            alreadyAnnouncedKeys = announcedKeysToday(app, tamil),
-            expectTamil = tamil,
-            maxCount = NewsSpeechSanitizer.DEFAULT_MAX_SPOKEN_HEADLINES,
-        )
-        if (batch.isEmpty()) {
-            batch = NewsSpeechSanitizer.selectUnannouncedBatch(
-                items = snapshot.items,
-                alreadyAnnouncedKeys = emptySet(),
-                expectTamil = tamil,
-                maxCount = NewsSpeechSanitizer.DEFAULT_MAX_SPOKEN_HEADLINES,
-            )
-        }
+        val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = true, tamil = tamil)
+        val batch = prepareBalancedBatch(app, snapshot.items, tamil)
+        // A repeated manual tap is not permission to replay already-read or recycled stories.
         if (batch.isEmpty()) return 0
-        val newsScript = composeAiNewsBulletin(app, batch, tamil)
-            ?: NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
+        val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(batch, tamil = tamil)
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
+        if (script.isBlank()) return 0
+        val spoken = Announcer.speakNewsBulletinAndWait(
+            context = app,
+            text = script,
+            language = lang,
+            timeoutMs = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
+            manual = true,
+        )
+        if (!spoken) return -1
         markHeadlinesAnnounced(app, batch, tamil = tamil)
-        Announcer.speakNow(context = app, text = script, language = lang)
         return batch.size
     }
 

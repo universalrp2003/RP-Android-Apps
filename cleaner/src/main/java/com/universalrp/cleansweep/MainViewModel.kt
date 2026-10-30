@@ -311,6 +311,7 @@ data class UiState(
     val tamilInfoPaused: Boolean = false,
     val newsVoiceEnabled: Boolean = true,
     val newsVoiceIntervalMin: Int = 180,
+    val newsVoiceBusy: Boolean = false,
     val autoWifiScanOnOpen: Boolean = true,
     val bgWifiScanEnabled: Boolean = false,
     val verifiedWifiMacs: Set<String> = emptySet(),
@@ -358,6 +359,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var securityJob: Job? = null
     private var securityRevision = 0L
     private var newsJob: Job? = null
+    private var newsReadingJob: Job? = null
     private var homeReadingJob: Job? = null
     private var phoneAgeCalculatedOn: String? = null
     private var healthReadingJob: Job? = null
@@ -1672,8 +1674,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      * next request.
      */
     fun stopVoice() {
+        newsReadingJob?.cancel()
+        newsReadingJob = null
         Announcer.stop()
-        mutate { it.copy(voiceSpeaking = false) }
+        mutate { it.copy(voiceSpeaking = false, newsVoiceBusy = false) }
     }
 
     fun setDailyScanOn(on: Boolean) {
@@ -3249,7 +3253,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun speakTamilText(text: String) {
         val cleaned = com.universalrp.cleansweep.data.NewsSpeechSanitizer.cleanHeadline(text)
         if (cleaned.isNotBlank()) {
-            Announcer.speakNow(ctx, cleaned, Lang.languageIn(ctx))
+            Announcer.speakNewsNow(ctx, cleaned, Lang.languageIn(ctx))
         }
     }
 
@@ -3265,24 +3269,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun readTodaysNewsNow() {
-        viewModelScope.launch {
-            val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
-            if (count <= 0) {
-                mutate {
-                    it.copy(
-                        message = if (Lang.isTamil) {
-                            "இன்றைய செய்தித் தலைப்புகள் இன்னும் கிடைக்கவில்லை — புதுப்பித்து முயற்சிக்கவும்."
-                        } else {
-                            "No clean headlines from today are ready yet — tap refresh and try again."
-                        },
-                    )
+        if (newsReadingJob?.isActive == true) return
+        newsReadingJob = viewModelScope.launch {
+            mutate { it.copy(newsVoiceBusy = true) }
+            try {
+                val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
+                when {
+                    count < 0 -> mutate {
+                        it.copy(
+                            message = if (Lang.isTamil) {
+                                "HD குரல் சேவை முழு செய்தித் தொகுப்பையும் தயாரிக்க முடியவில்லை. செய்திகள் படித்ததாகக் குறிக்கப்படவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
+                            } else {
+                                "The HD voice service could not prepare the full bulletin. The headlines were not marked as read. Please try again later."
+                            },
+                        )
+                    }
+                    count == 0 -> mutate {
+                        it.copy(
+                            message = if (Lang.isTamil) {
+                                "இன்றைய புதிய, தெளிவான செய்திகள் தற்போது இல்லை. ஏற்கனவே படித்த அல்லது பழைய செய்திகள் மீண்டும் படிக்கப்படாது."
+                            } else {
+                                "No new, clean headlines from today are available. Already-read or old stories will not be replayed."
+                            },
+                        )
+                    }
                 }
+            } finally {
+                mutate { it.copy(newsVoiceBusy = false) }
             }
         }
     }
 
     fun stopSpeakingNow() {
+        newsReadingJob?.cancel()
+        newsReadingJob = null
         Announcer.stop()
+        mutate { it.copy(newsVoiceBusy = false, voiceSpeaking = false) }
     }
 
     // ---------------------------------------------------- Wi-Fi Verified Devices & Auto-Scan

@@ -6,6 +6,10 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    "com.universalrp.cleansweep.data.NewsTranslationPolicyTest": 22,
+    "com.universalrp.cleansweep.voice.NewsTranslatorTest": 8,
+    "com.universalrp.cleansweep.data.BalancedNewsPolicyTest": 27,
+    "com.universalrp.cleansweep.voice.NewsBulletinEditorTest": 12,
     "com.universalrp.cleansweep.notify.StatusPillContentTest": 7,
     "com.universalrp.cleansweep.data.SecuritySettingsRoutesTest": 14,
     "com.universalrp.cleansweep.ai.SecurityAiPromptTest": 9,
@@ -66,6 +70,10 @@ EXPECTED = {
     "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 7,
     "com.universalrp.cleansweep.weather.WeatherUpgradeAndBannerTest": 3,
     "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 5,
+    # 2.76: eight-headline bulletins must survive the shared HD text cap as ordered parts.
+    "com.universalrp.cleansweep.data.NewsBulletinHdPipelineTest": 9,
+    # 2.77: prepare every news part before playback; bounded patient synthesis budgets.
+    "com.universalrp.cleansweep.voice.NewsVoicePreparationPolicyTest": 7,
 }
 
 

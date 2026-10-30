@@ -14,7 +14,6 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
@@ -321,6 +320,17 @@ object SharedNeuralVoiceEngine {
             .build()
     }
 
+    // Long-form preparation gets a patient read timeout and frequent pings. Short alerts keep
+    // the original fast client, so this does not make battery/security prompts wait longer.
+    private val patientWsClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(5, TimeUnit.SECONDS)
+            .pingInterval(5, TimeUnit.SECONDS)
+            .build()
+    }
+
     private val JS_UTC_FORMATTER: DateTimeFormatter =
         DateTimeFormatter.ofPattern("EEE MMM dd yyyy HH:mm:ss 'GMT+0000 (Coordinated Universal Time)'", Locale.US)
 
@@ -361,6 +371,7 @@ object SharedNeuralVoiceEngine {
         useTamil: Boolean,
         ratePercent: Int = 98,
         timeoutMs: Long = 3800L,
+        attemptTimeoutMs: Long = 0L,
     ): File? {
         val primaryVoice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
         val primaryPitch = if (useTamil) profile.pitchTa else profile.pitchEn
@@ -369,6 +380,7 @@ object SharedNeuralVoiceEngine {
         return synthesizeToFileOrNull(
             cacheDir = cacheDir, text = text, neuralVoiceName = primaryVoice,
             rate = rate, pitch = primaryPitch, timeoutMs = timeoutMs,
+            attemptTimeoutMs = attemptTimeoutMs,
         )
     }
 
@@ -414,6 +426,7 @@ object SharedNeuralVoiceEngine {
         rate: String = "+0%",
         pitch: String = "+0Hz",
         timeoutMs: Long = 3800L,
+        attemptTimeoutMs: Long = 0L,
     ): File? {
         val trimmed = text.trim().take(1200)
         if (trimmed.isEmpty()) return null
@@ -433,6 +446,7 @@ object SharedNeuralVoiceEngine {
             pitch = pitch,
             timeoutMs = timeoutMs,
             onVoiceSelected = { selectedVoice = it },
+            attemptTimeoutMs = attemptTimeoutMs,
         ) ?: return null
 
         if (mp3Bytes.size < 256) return null
@@ -464,6 +478,7 @@ object SharedNeuralVoiceEngine {
         shouldStop: () -> Boolean = { false },
         activePlayerSink: ((MediaPlayer?) -> Unit)? = null,
         maxDurationMs: Long = 60_000L,
+        releasePlayerSink: ((MediaPlayer) -> Unit)? = null,
     ): Boolean {
         val done = CountDownLatch(1)
         val mp = MediaPlayer()
@@ -471,9 +486,9 @@ object SharedNeuralVoiceEngine {
         try {
             activePlayerSink?.invoke(mp)
             mp.setAudioAttributes(audioAttributes)
-            FileInputStream(file).use { fis ->
-                mp.setDataSource(fis.fd)
-            }
+            // Keep the data source valid through prepare(); a closed FileInputStream fd is
+            // not a safe MediaPlayer source on every Android implementation.
+            mp.setDataSource(file.absolutePath)
             val clampedVol = volumeScalar.coerceIn(0f, 1f)
             mp.setVolume(clampedVol, clampedVol)
             mp.setOnCompletionListener {
@@ -497,9 +512,10 @@ object SharedNeuralVoiceEngine {
         } catch (_: Throwable) {
             return false
         } finally {
-            activePlayerSink?.invoke(null)
             runCatching { mp.stop() }
             runCatching { mp.release() }
+            if (releasePlayerSink != null) releasePlayerSink.invoke(mp)
+            else activePlayerSink?.invoke(null)
         }
     }
 
@@ -517,9 +533,10 @@ object SharedNeuralVoiceEngine {
         timeoutMs: Long = 4200L,
         allowVoiceFallback: Boolean = true,
         onVoiceSelected: ((String) -> Unit)? = null,
+        attemptTimeoutMs: Long = 0L,
     ): ByteArray? {
         return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
-            onSelected = onVoiceSelected ?: {}) { candidate, budget ->
+            onSelected = onVoiceSelected ?: {}, attemptTimeoutMs = attemptTimeoutMs) { candidate, budget ->
             streamWebSocketOnce(text, formatServerVoiceName(candidate), rate, pitch, budget)
         }
     }
@@ -563,7 +580,8 @@ object SharedNeuralVoiceEngine {
         val saw403ServerDate = AtomicReference<String?>(null)
         val completedCleanly = AtomicBoolean(false)
 
-        val ws = wsClient.newWebSocket(
+        val client = if (timeoutMs >= 10_000L) patientWsClient else wsClient
+        val ws = client.newWebSocket(
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {

@@ -124,27 +124,26 @@ class WebsiteRequestsTest(unittest.TestCase):
 
     def test_owner_promise_ticker_is_prominent_bilingual_and_pausable(self):
         tickers = [a for tag, a in self.parser.elements if tag == 'section' and 'data-trust-ticker' in a]
-        self.assertEqual(len(tickers), 2)
+        self.assertEqual(len(tickers), 1)
         first = self.source.index('<section class="trust-ticker" data-trust-ticker')
         badge = self.source.index('<span class="badge">')
-        hero = self.source.index('<section class="trust-ticker trust-ticker--hero"')
         migration = self.source.index('<section class="migration-notice"')
         self.assertLess(first, badge)
-        self.assertLess(hero, migration)
-        self.assertGreater(hero, self.source.index('>View GitHub Repository</a>'))
+        self.assertLess(first, migration)
+        self.assertNotIn('class="trust-ticker trust-ticker--hero"', self.source)
 
         english = (
             '100% open source — every line is public on GitHub for anyone to audit.',
-            'No ads · no tracking · no analytics · no account — ever.',
+            'No ads · no tracking · no analytics · no accounts — ever.',
         )
         for text in english:
-            self.assertGreaterEqual(self.source.count(text), 4)
+            self.assertGreaterEqual(self.source.count(text), 2)
         self.assertGreaterEqual(self.source.count('lang="ta"'), 4)
         self.assertIn('100% திறந்த மூலம்', self.source)
-        self.assertIn('விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை', self.source)
+        self.assertIn('விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பயன்பாட்டுப் பகுப்பாய்வு இல்லை · பயனர் கணக்கு தேவையில்லை', self.source)
 
         pause_buttons = [a for tag, a in self.parser.elements if tag == 'button' and 'data-trust-pause' in a]
-        self.assertEqual(len(pause_buttons), 2)
+        self.assertEqual(len(pause_buttons), 1)
         for attrs in pause_buttons:
             self.assertEqual(attrs.get('type'), 'button')
             self.assertEqual(attrs.get('aria-pressed'), 'false')
@@ -163,7 +162,7 @@ class WebsiteRequestsTest(unittest.TestCase):
                                              'data-apk="apks/Tamilan-Store-v0.6.apk"', 1)
         self.assert_site_rejected(duplicate_card)
         stale_sha = self.source.replace(
-            'SHA-256: 2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf',
+            'SHA-256: 95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac',
             'SHA-256: ' + '0' * 64,
         )
         self.assert_site_rejected(stale_sha)

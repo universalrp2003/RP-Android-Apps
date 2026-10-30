@@ -18,6 +18,11 @@
   <meta property="og:description" content="Official signed APK and ZIP downloads for fourteen free open-source Tamil and English Android apps by Rameshprathap R. Latest replacement releases are listed below with SHA-256 verification; back up important data before uninstalling an old-key install." />
   <meta property="og:url" content="https://universalrp2003.github.io/RP-Android-Apps/" />
 
+  <meta property="og:image" content="https://universalrp2003.github.io/RP-Android-Apps/images/social-preview.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="RP Android Apps — 14 open-source Tamil and English apps by RP Ideas" />
+  <meta name="twitter:image" content="https://universalrp2003.github.io/RP-Android-Apps/images/social-preview.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="RP-Android-Apps (@universalrp2003) — All 14 Tamil &amp; English Android Apps" />
   <meta name="twitter:description" content="14 free Tamil &amp; English Android apps, including Tamilan Store and DailyVault. Signed APK/ZIP downloads with SHA-256 checks. Live Guard (கைபேசி காவலன்), Ramesh Radio (தமிழன் வானொலி), RP Vocal Remover Studio (இசை மட்டும் வேண்டும்)." />
@@ -74,9 +79,9 @@
           "name": "Live Guard (கைபேசி காவலன்)",
           "operatingSystem": "Android 8.0+",
           "applicationCategory": "UtilitiesApplication",
-          "softwareVersion": "2.75",
-          "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/CleanSweep-v2.75.apk",
-          "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.75",
+          "softwareVersion": "2.79",
+          "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/CleanSweep-v2.79.apk",
+          "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.79",
           "description": "All-in-one Tamil phone guardian: speaks news, rain & battery alerts, cleans junk and checks security — even with the screen off. Screen-off news voice announcer, rain & cyclone alerts, battery/data guard, junk cleanup, security check and AI assistant.",
           "offers": {
             "@type": "Offer",
@@ -318,6 +323,7 @@
 }
   </script>
 
+  <script defer src="site-controls.js"></script>
   <style>
     :root {
       --bg: #071019;
@@ -445,7 +451,7 @@
     .latest .ldl { text-align: right; white-space: nowrap; }
     .latest .ldl .btn { font-size: 0.78rem; padding: 6px 12px; }
     @media (max-width: 620px) {
-      .latest th:nth-child(3), .latest td:nth-child(3) { display: none; }
+      .latest .ldate, .latest .lsize { display: none; }
     }
     .grid {
       display: grid;
@@ -717,6 +723,7 @@
       .trust-ticker__viewport { order: 3; flex-basis: 100%; }
     }
   </style>
+  <link rel="stylesheet" href="site-controls.css" />
 </head>
 <body>
   <div class="container">
@@ -727,13 +734,13 @@
           <div class="trust-ticker__track">
             <div class="trust-ticker__group">
               <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
-              <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
-              <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
+              <span class="trust-promise--privacy">No ads · no tracking · no analytics · no accounts — ever.</span>
+              <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும் வகையில் பொதுவெளியில் உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பயன்பாட்டுப் பகுப்பாய்வு இல்லை · பயனர் கணக்கு தேவையில்லை.</span>
             </div>
             <div class="trust-ticker__group" aria-hidden="true">
               <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
-              <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
-              <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
+              <span class="trust-promise--privacy">No ads · no tracking · no analytics · no accounts — ever.</span>
+              <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும் வகையில் பொதுவெளியில் உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பயன்பாட்டுப் பகுப்பாய்வு இல்லை · பயனர் கணக்கு தேவையில்லை.</span>
             </div>
           </div>
         </div>
@@ -742,7 +749,7 @@
       <span class="badge">Open-Source Android Suite · 14 apps (12 non-Store + 2 optional: Tamilan Store &amp; DailyVault) · Tamil &amp; English</span>
       <h1>RP-Android-Apps — Official Tamil &amp; English Android Apps</h1>
       <p class="subtitle">
-        Fourteen lightweight, privacy-respecting Android apps (12 non-Store apps + 2 optional: Tamilan Store and DailyVault) by <strong>Rameshprathap R (<code>@universalrp2003</code>)</strong> — bilingual <strong>தமிழ்</strong> &amp; <strong>English</strong>, daily metadata-only in-app update notices, official website/browser downloads, and published <code>.APK</code> + <code>.ZIP</code> links.
+        Fourteen lightweight, privacy-respecting Android apps (12 non-Store apps + 2 optional: Tamilan Store and DailyVault) by <strong>Rameshprathap R (<code>@universalrp2003</code>)</strong> — bilingual <strong>தமிழ்</strong> &amp; <strong>English</strong>, daily version-only update checks, official website/browser downloads, and published <code>.APK</code> + <code>.ZIP</code> links.
       </p>
       <div class="hero-links">
         <a class="btn btn-primary" href="https://github.com/universalrp2003/RP-Android-Apps">View GitHub Repository</a>
@@ -752,132 +759,150 @@
       </div>
     </header>
 
-    <section class="trust-ticker trust-ticker--hero" data-trust-ticker aria-label="Our promise before you download">
-      <span class="trust-ticker__label">Read first</span>
-      <div class="trust-ticker__viewport">
-        <div class="trust-ticker__track">
-          <div class="trust-ticker__group">
-            <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
-            <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
-            <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
-          </div>
-          <div class="trust-ticker__group" aria-hidden="true">
-            <span class="trust-promise--source">100% open source — every line is public on GitHub for anyone to audit.</span>
-            <span class="trust-promise--privacy">No ads · no tracking · no analytics · no account — ever.</span>
-            <span class="trust-promise--ta" lang="ta">100% திறந்த மூலம் — ஒவ்வொரு வரியும் GitHub-இல் யார் வேண்டுமானாலும் சரிபார்க்கும்படி பொதுவாக உள்ளது. விளம்பரம் இல்லை · கண்காணிப்பு இல்லை · பகுப்பாய்வு இல்லை · கணக்கு இல்லை — என்றும்.</span>
-          </div>
-        </div>
-      </div>
-      <button type="button" class="trust-ticker__pause" data-trust-pause aria-pressed="false">⏸ Pause</button>
-    </section>
-
     <main>
       <section class="migration-notice" aria-labelledby="migration-warning-title" role="note">
         <h2 id="migration-warning-title">கையொப்ப மாற்ற எச்சரிக்கை / Fresh-install signing change</h2>
-        <p><strong>Replacement-key APKs are now available below.</strong> For apps in this signing migration (Secret Message is excluded), these APKs cannot update copies installed with the old key. Download the replacement from this official website first and export or back up important data. Then uninstall the old app and install the new one through Android. Uninstalling may erase local data. If Play Protect shows a warning, stop—do not bypass it.</p>
-        <p class="ta"><strong>புதிய கையொப்ப APK-கள் கீழே கிடைக்கின்றன.</strong> இந்த மாற்றத்திலுள்ள செயலிகளில் (Secret Message தவிர), புதிய APK பழைய கையொப்ப நிறுவலைப் புதுப்பிக்காது. முதலில் இந்த அதிகாரப்பூர்வ இணையதளத்திலிருந்து பதிவிறக்கி, முக்கியத் தகவல்களை ஏற்றுமதி அல்லது காப்புப்பிரதி எடுக்கவும். பின்னர் பழைய செயலியை நீக்கி, Android வழியாகப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம்.</p>
-        <p><a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">Migration details and release status</a>.</p>
+        <p data-content-lang="en"><strong>Replacement-key APKs are now available below.</strong> Only installations signed with the former key need migration (Secret Message is excluded). If your installed version already uses the new key, update normally—do not uninstall it. New-key APKs cannot update an old-key installation. Download the replacement from this official website first and export or back up important data. Then uninstall the old app and install the new one through Android. Uninstalling may erase local data. If Play Protect shows a warning, stop—do not bypass it.</p>
+        <p class="ta" data-content-lang="ta" lang="ta"><strong>புதிய கையொப்ப APK-கள் கீழே கிடைக்கின்றன.</strong> பழைய கையொப்பத்தில் நிறுவிய செயலிகளுக்கு மட்டுமே இந்த மாற்றம் தேவை (Secret Message தவிர). ஏற்கனவே புதிய கையொப்பப் பதிப்பு இருந்தால் வழக்கம்போல் புதுப்பிக்கவும்; நீக்க வேண்டாம். புதிய APK பழைய கையொப்ப நிறுவலைப் புதுப்பிக்காது. முதலில் இந்த அதிகாரப்பூர்வ இணையதளத்திலிருந்து பதிவிறக்கி, முக்கியத் தகவல்களை ஏற்றுமதி அல்லது காப்புப்பிரதி எடுக்கவும். பின்னர் பழைய செயலியை நீக்கி, Android வழியாகப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம்.</p>
+        <p data-content-lang="en"><a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">Migration details and release status</a>.</p>
       </section>
+
+      <nav class="site-tools js-only" aria-label="App browsing controls">
+        <div class="tool-row">
+          <label for="site-language">Language · மொழி</label>
+          <select id="site-language"><option value="both">தமிழ் + English</option><option value="ta">தமிழ்</option><option value="en">English</option></select>
+          <label for="jump-app">Jump to app · செயலியைத் தேர்ந்தெடுக்கவும்</label>
+          <select id="jump-app"><option value="">Choose an app · செயலி தேர்வு</option></select>
+          <a href="#install-help">Install help · நிறுவ உதவி</a>
+        </div>
+        <div class="filter-row" role="group" aria-label="App categories">
+          <button type="button" data-category-filter="all" aria-pressed="true">All · அனைத்தும் <span data-filter-count="all">14</span></button>
+          <button type="button" data-category-filter="security" aria-pressed="false">Security · பாதுகாப்பு <span data-filter-count="security">3</span></button>
+          <button type="button" data-category-filter="media" aria-pressed="false">Audio &amp; media · ஒலி <span data-filter-count="media">4</span></button>
+          <button type="button" data-category-filter="productivity" aria-pressed="false">Finance &amp; notes · கணக்கு <span data-filter-count="productivity">3</span></button>
+          <button type="button" data-category-filter="utility" aria-pressed="false">Utilities &amp; store · பயன்பாடுகள் <span data-filter-count="utility">4</span></button>
+        </div>
+        <p data-content-lang="en">Language controls paired summaries and safety guidance. App names stay bilingual; linked technical evidence keeps its original language.</p>
+        <p data-content-lang="ta" lang="ta">மொழித் தேர்வு இருமொழிச் சுருக்கங்களுக்கும் பாதுகாப்பு வழிகாட்டலுக்கும் பொருந்தும். செயலிப் பெயர்கள் இருமொழியிலும் இருக்கும்; இணைத்த தொழில்நுட்ப ஆதாரங்கள் மூல மொழியில் இருக்கும்.</p>
+        <p id="filter-status" role="status" aria-live="polite"></p>
+      </nav>
 
       <section class="latest" aria-label="Latest releases">
         <h2>🆕 Latest release of every app · ஒவ்வொரு செயலியின் சமீபத்திய வெளியீடு</h2>
         <p class="sub">ஒவ்வொரு செயலியின் நிலையான பதிப்பைப் பதிவிறக்குங்கள். / Download the latest stable releases.</p>
+        <div class="release-table" role="region" tabindex="0" aria-label="Published app releases · வெளியிட்ட பதிப்புகள்">
         <table>
           <thead>
             <tr>
               <th>Application</th>
+              <th class="ldate">Released (UTC)</th>
               <th>Version</th>
-              <th>Size</th>
+              <th class="lsize">Size</th>
               <th class="ldl">Download</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="lname">🛡️ SMS Guard <span class="ta-name">(குறுஞ்செய்தி காவலன்)</span></td>
+              <td class="lname"><a href="#app-sms-guard">🛡️ SMS Guard <span class="ta-name">(குறுஞ்செய்தி காவலன்)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T08:41:54Z" data-release-tag="sms-guard-v1.1.11">29 Oct 2026</time></td>
               <td class="lver">v1.1.11</td>
               <td class="lsize">12.4 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.11.apk" data-name="SMS-Guard-v1.1.11.apk" data-sha="9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.11/SMS-Guard-v1.1.11.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.11.apk" data-name="SMS-Guard-v1.1.11.apk" data-sha="9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.11/SMS-Guard-v1.1.11.apk" aria-label="Download APK · SMS-Guard-v1.1.11.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🛡️ Live Guard <span class="ta-name">(கைபேசி காவலன்)</span></td>
-              <td class="lver">v2.75</td>
-              <td class="lsize">14.4 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/CleanSweep-v2.75.apk" data-name="CleanSweep-v2.75.apk" data-sha="2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.75/CleanSweep-v2.75.apk">⚡ APK</a></td>
+              <td class="lname"><a href="#app-live-guard">🛡️ Live Guard <span class="ta-name">(கைபேசி காவலன்)</span> <small class="filename-alias">(APK: CleanSweep)</small></a></td>
+              <td class="ldate"><time datetime="2026-10-30T11:59:51Z" data-release-tag="live-guard-v2.79">30 Oct 2026</time></td>
+              <td class="lver">v2.79</td>
+              <td class="lsize">14.5 MB</td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/CleanSweep-v2.79.apk" data-name="CleanSweep-v2.79.apk" data-sha="95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk" aria-label="Download APK · CleanSweep-v2.79.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">📻 Ramesh Radio <span class="ta-name">(தமிழன் வானொலி)</span></td>
+              <td class="lname"><a href="#app-ramesh-radio">📻 Ramesh Radio <span class="ta-name">(தமிழன் வானொலி)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T11:49:08Z" data-release-tag="ramesh-radio-v1.29">29 Oct 2026</time></td>
               <td class="lver">v1.29</td>
               <td class="lsize">15.1 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.29.apk" data-name="Ramesh-Radio-v1.29.apk" data-sha="11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.29.apk" data-name="Ramesh-Radio-v1.29.apk" data-sha="11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk" aria-label="Download APK · Ramesh-Radio-v1.29.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">📍 Oor Arivippu <span class="ta-name">(ஊர் அறிவிப்பு)</span></td>
+              <td class="lname"><a href="#app-oor-arivippu">📍 Oor Arivippu <span class="ta-name">(ஊர் அறிவிப்பு)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T10:08:22Z" data-release-tag="oor-arivippu-v1.1.10">29 Oct 2026</time></td>
               <td class="lver">v1.1.10</td>
               <td class="lsize">12.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk" aria-label="Download APK · Oor-Arivippu-v1.1.10.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🎧 PulseEQ</td>
+              <td class="lname"><a href="#app-pulseeq">🎧 PulseEQ <span class="ta-name">(ஒலி சமநிலையாக்கி)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T12:01:26Z" data-release-tag="pulseeq-v1.11">29 Oct 2026</time></td>
               <td class="lver">v1.11</td>
               <td class="lsize">12.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🎤 RP Vocal Remover Studio <span class="ta-name">(இசை மட்டும் வேண்டும்)</span></td>
+              <td class="lname"><a href="#app-rp-vocal-remover-studio">🎤 RP Vocal Remover Studio <span class="ta-name">(இசை மட்டும் வேண்டும்)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T12:11:23Z" data-release-tag="rp-vocal-remover-studio-v0.1.16">29 Oct 2026</time></td>
               <td class="lver">v0.1.16</td>
               <td class="lsize">65.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🔐 Secret Message <span class="ta-name">(இரகசிய செய்தி)</span></td>
+              <td class="lname"><a href="#app-secret-message">🔐 Secret Message <span class="ta-name">(இரகசிய செய்தி)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-22T16:42:52Z" data-release-tag="secret-message-v1.1.3">22 Oct 2026</time></td>
               <td class="lver">v1.1.3</td>
               <td class="lsize">29.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">💰 Expense Tracker <span class="ta-name">(செலவு கண்காணிப்பு)</span></td>
+              <td class="lname"><a href="#app-expense-tracker">💰 Expense Tracker <span class="ta-name">(செலவு கண்காணிப்பு)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T10:55:43Z" data-release-tag="expense-tracker-v1.2">29 Oct 2026</time></td>
               <td class="lver">v1.2</td>
               <td class="lsize">11.6 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🎙️ Voice Notes <span class="ta-name">(குரல் குறிப்பு)</span></td>
+              <td class="lname"><a href="#app-voice-notes">🎙️ Voice Notes <span class="ta-name">(குரல் குறிப்பு)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T11:18:31Z" data-release-tag="voice-notes-v1.3.3">29 Oct 2026</time></td>
               <td class="lver">v1.3.3</td>
               <td class="lsize">13.1 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk" aria-label="Download APK · Voice-Notes-v1.3.3.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🎧 Tamil Podcast Player <span class="ta-name">(கதை சொல்லி)</span></td>
+              <td class="lname"><a href="#app-tamil-podcast">🎧 Tamil Podcast Player <span class="ta-name">(கதை சொல்லி)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T10:20:33Z" data-release-tag="tamil-podcast-v1.6">29 Oct 2026</time></td>
               <td class="lver">v1.6</td>
               <td class="lsize">12.0 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">📱 Elderly Launcher <span class="ta-name">(முதியவர் திரை)</span></td>
+              <td class="lname"><a href="#app-elderly-launcher">📱 Elderly Launcher <span class="ta-name">(முதியவர் திரை)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T11:04:13Z" data-release-tag="elderly-launcher-v1.5">29 Oct 2026</time></td>
               <td class="lver">v1.5</td>
               <td class="lsize">11.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk" aria-label="Download APK · Elderly-Launcher-v1.5.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">🔊 Vasanthi AI <span class="ta-name">(என்னைச் சுற்றி)</span></td>
+              <td class="lname"><a href="#app-vasanthi-ai">🔊 Vasanthi AI <span class="ta-name">(என்னைச் சுற்றி)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T09:07:16Z" data-release-tag="vasanthi-ai-v1.1.5">29 Oct 2026</time></td>
               <td class="lver">v1.1.5</td>
               <td class="lsize">45.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">⚡ APK</a></td>
             </tr>
             <tr>
-              <td class="lname">Tamilan Store <span class="ta-name">(தமிழன்)</span></td>
+              <td class="lname"><a href="#app-tamilan-store">Tamilan Store <span class="ta-name">(தமிழன்)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T10:43:52Z" data-release-tag="tamilan-store-v0.6">29 Oct 2026</time></td>
               <td class="lver">v0.6</td>
               <td class="lsize">16.9 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamilan-Store-v0.6.apk" data-name="Tamilan-Store-v0.6.apk" data-sha="7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f" data-status="st-tamilanstore" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.6/Tamilan-Store-v0.6.apk">APK · v0.6</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamilan-Store-v0.6.apk" data-name="Tamilan-Store-v0.6.apk" data-sha="7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f" data-status="st-tamilanstore" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.6/Tamilan-Store-v0.6.apk" aria-label="Download APK · Tamilan-Store-v0.6.apk">APK · v0.6</a></td>
             </tr>
             <tr>
-              <td class="lname">DailyVault <span class="ta-name">(தினக்கணக்கு)</span></td>
+              <td class="lname"><a href="#app-daily-vault">DailyVault <span class="ta-name">(தினக்கணக்கு)</span></a></td>
+              <td class="ldate"><time datetime="2026-10-29T10:33:47Z" data-release-tag="daily-vault-v0.4">29 Oct 2026</time></td>
               <td class="lver">v0.4</td>
               <td class="lsize">12.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/DailyVault-v0.4.apk" data-name="DailyVault-v0.4.apk" data-sha="39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1" data-status="st-dailyvault" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.4/DailyVault-v0.4.apk">APK · v0.4</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/DailyVault-v0.4.apk" data-name="DailyVault-v0.4.apk" data-sha="39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1" data-status="st-dailyvault" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.4/DailyVault-v0.4.apk" aria-label="Download APK · DailyVault-v0.4.apk">APK · v0.4</a></td>
             </tr>
           </tbody>
         </table>
+        </div>
         <div class="dl-status" id="st-latest"></div>
       </section>
 
@@ -885,37 +910,40 @@
 
         <article class="card">
           <div class="card-top">
-            <div class="card-header"><h2>தமிழன் · Tamilan Store</h2><span class="ver">v0.6 · Android 8.0+</span></div>
-            <p class="tagline">Our optional first-party app store. No account or ads. Downloads are checked before Android asks for installation.</p><p class="ta-note">நமது செயலிகளுக்கான விருப்ப அங்காடி. கணக்கும் விளம்பரமும் இல்லை. சரிபார்த்த பின்னர் நிறுவ ஆண்ட்ராய்டு ஒப்புதல் கேட்கும்.</p>
-            <p>The replacement-key APK is now available below. Existing old-key installs cannot update to it. Download it first and back up or export important data before uninstalling; uninstalling may erase local data.</p>
-            <p class="ta-note">புதிய கையொப்ப APK கீழே கிடைக்கிறது. பழைய நிறுவலை இது புதுப்பிக்காது. முதலில் பதிவிறக்கி முக்கியத் தரவை ஏற்றுமதி அல்லது காப்புப்பிரதி செய்து, பின்னர் பழைய செயலியை நீக்கிப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம்.</p>
-            <p>Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
-            <details class="trust"><summary>File integrity / கோப்பு அடையாளம்</summary><div class="body"><p>SHA-256: 7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f</p><p>File integrity is not security clearance. Do not bypass device warnings or uninstall working apps.</p></div></details>
+            <div class="card-header"><h2 id="app-tamilan-store" tabindex="-1">தமிழன் · Tamilan Store</h2><span class="ver">v0.6 · Android 8.0+</span></div>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.6">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Our optional first-party app store. No account and no ads. Downloads are verified before Android prompts you to install.</p><p class="ta-note" data-content-lang="ta" lang="ta">விரும்பினால் பயன்படுத்தக்கூடிய நமது செயலி அங்காடி. பயனர் கணக்கு தேவையில்லை; விளம்பரமும் இல்லை. சரிபார்த்த பின்னர் நிறுவ ஆண்ட்ராய்டு ஒப்புதல் கேட்கும்.</p>
+            <p data-content-lang="en">Old signing key only: <a href="#migration-warning-title">read migration instructions before changing an existing install</a>. Same-key installs can update normally.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">பழைய கையொப்ப நிறுவல் இருந்தால் <a href="#migration-warning-title">முதலில் மாற்ற வழிமுறைகளைப் படிக்கவும்</a>. அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p>
+            <p data-content-lang="en">Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
+            <details class="trust"><summary>File checksum / கோப்பு சரிபார்ப்பு</summary><div class="body"><p>SHA-256: 7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f</p><p data-content-lang="en">A matching checksum confirms the file matches the published hash; it does not prove the app is safe. Do not bypass device warnings or uninstall working apps.</p><p data-content-lang="ta" lang="ta">சரிபார்ப்பு மதிப்பு பொருந்துவது கோப்பின் அடையாளத்தை மட்டுமே காட்டும்; செயலி பாதுகாப்பானது என்பதற்கான சான்றல்ல. பாதுகாப்பு எச்சரிக்கையை மீறவோ செயல்படும் செயலியை நீக்கவோ வேண்டாம்.</p></div></details>
             <div class="dl-status" id="st-tamilanstore"></div>
           </div>
-          <div class="hero-links"><a class="btn btn-zip" download="Tamilan-Store-v0.6.zip" href="apks/Tamilan-Store-v0.6.zip">ZIP</a><a class="btn btn-primary" data-apk="apks/Tamilan-Store-v0.6.apk" data-name="Tamilan-Store-v0.6.apk" data-sha="7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f" data-status="st-tamilanstore" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.6/Tamilan-Store-v0.6.apk">APK · v0.6</a><a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.6">Release notes</a></div>
+          <div class="hero-links"><a class="btn btn-zip" download="Tamilan-Store-v0.6.zip" href="apks/Tamilan-Store-v0.6.zip">ZIP</a><a class="btn btn-primary" data-apk="apks/Tamilan-Store-v0.6.apk" data-name="Tamilan-Store-v0.6.apk" data-sha="7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f" data-status="st-tamilanstore" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.6/Tamilan-Store-v0.6.apk" aria-label="Download APK · Tamilan-Store-v0.6.apk">APK · v0.6</a><a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.6">Release notes</a></div>
         </article>
         <article class="card">
           <div class="card-top">
-            <div class="card-header"><h2>தினக்கணக்கு · DailyVault</h2><span class="ver">v0.4 · Android 8.0+</span></div>
-            <p class="tagline">On-device spending and private notes with totals, optional app lock, and password-required encrypted portable backups. Internet is used only for release metadata when opened.</p><p class="ta-note">செலவுகளும் தனிக் குறிப்புகளும் போனிலேயே இருக்கும். திறக்கும்போது பதிப்பு விவரம் மட்டும் சரிபார்க்கப்படும்; மொத்தம், விருப்பப் பூட்டு, கடவுச்சொல் மறையாக்கக் காப்பு உள்ளன.</p>
-            <p>The replacement-key APK is now available below. Existing old-key installs cannot update to it. Download it first and back up or export important data before uninstalling; uninstalling may erase local data.</p>
-            <p class="ta-note">புதிய கையொப்ப APK கீழே கிடைக்கிறது. பழைய நிறுவலை இது புதுப்பிக்காது. முதலில் பதிவிறக்கி முக்கியத் தரவை ஏற்றுமதி அல்லது காப்புப்பிரதி செய்து, பின்னர் பழைய செயலியை நீக்கிப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம்.</p>
-            <p>Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
-            <details class="trust"><summary>File integrity / கோப்பு அடையாளம்</summary><div class="body"><p>SHA-256: 39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1</p><p>File integrity is not security clearance. Do not bypass device warnings or uninstall working apps.</p></div></details>
+            <div class="card-header"><h2 id="app-daily-vault" tabindex="-1">தினக்கணக்கு · DailyVault</h2><span class="ver">v0.4 · Android 8.0+</span></div>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">On-device spending and private notes with totals, optional app lock, and password-required encrypted portable backups. Internet is used only for release metadata when opened.</p><p class="ta-note" data-content-lang="ta" lang="ta">செலவுகளும் தனிக் குறிப்புகளும் போனிலேயே இருக்கும். திறக்கும்போது பதிப்பு விவரம் மட்டும் சரிபார்க்கப்படும்; மொத்தம், விருப்பப் பூட்டு, கடவுச்சொல் மறையாக்கக் காப்பு உள்ளன.</p>
+            <p data-content-lang="en">Old signing key only: <a href="#migration-warning-title">read migration instructions before changing an existing install</a>. Same-key installs can update normally.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">பழைய கையொப்ப நிறுவல் இருந்தால் <a href="#migration-warning-title">முதலில் மாற்ற வழிமுறைகளைப் படிக்கவும்</a>. அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p>
+            <p data-content-lang="en">Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
+            <details class="trust"><summary>File checksum / கோப்பு சரிபார்ப்பு</summary><div class="body"><p>SHA-256: 39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1</p><p data-content-lang="en">A matching checksum confirms the file matches the published hash; it does not prove the app is safe. Do not bypass device warnings or uninstall working apps.</p><p data-content-lang="ta" lang="ta">சரிபார்ப்பு மதிப்பு பொருந்துவது கோப்பின் அடையாளத்தை மட்டுமே காட்டும்; செயலி பாதுகாப்பானது என்பதற்கான சான்றல்ல. பாதுகாப்பு எச்சரிக்கையை மீறவோ செயல்படும் செயலியை நீக்கவோ வேண்டாம்.</p></div></details>
             <div class="dl-status" id="st-dailyvault"></div>
           </div>
-          <div class="hero-links"><a class="btn btn-zip" download="DailyVault-v0.4.zip" href="apks/DailyVault-v0.4.zip">ZIP</a><a class="btn btn-primary" data-apk="apks/DailyVault-v0.4.apk" data-name="DailyVault-v0.4.apk" data-sha="39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1" data-status="st-dailyvault" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.4/DailyVault-v0.4.apk">APK · v0.4</a><a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4">Release notes</a></div>
+          <div class="hero-links"><a class="btn btn-zip" download="DailyVault-v0.4.zip" href="apks/DailyVault-v0.4.zip">ZIP</a><a class="btn btn-primary" data-apk="apks/DailyVault-v0.4.apk" data-name="DailyVault-v0.4.apk" data-sha="39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1" data-status="st-dailyvault" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.4/DailyVault-v0.4.apk" aria-label="Download APK · DailyVault-v0.4.apk">APK · v0.4</a><a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.4">Release notes</a></div>
         </article>
 
         <!-- SMS Guard -->
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">🛡️</span>SMS Guard <span class="ta-name">(குறுஞ்செய்தி காவலன்)</span></h2>
+              <h2 id="app-sms-guard" tabindex="-1"><span class="emoji">🛡️</span>SMS Guard <span class="ta-name">(குறுஞ்செய்தி காவலன்)</span></h2>
               <span class="ver">v1.1.11 · Android 8.0+</span>
             </div>
-            <p class="tagline">Reads every SMS aloud in Tamil or English and blocks scam &amp; phishing links — <strong>while never speaking your OTP or bank numbers.</strong></p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.11">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Reads every SMS aloud in Tamil or English and blocks scam &amp; phishing links — <strong>while never speaking your OTP or bank numbers.</strong></p>
             <div class="opts">
               <span class="opt">📖 Reads SMS aloud</span>
               <span class="opt">🛡️ Scam-link shield</span>
@@ -924,7 +952,7 @@
               <span class="opt">🧾 Bills &amp; reminders</span>
               <span class="opt">🔔 Govt &amp; exam readout</span>
             </div>
-            <p class="ta-note">SMS-ஐ தமிழ்/ஆங்கிலத்தில் சத்தமாக படித்து, போலி இணைப்புகளைத் தடுக்கும்; OTP &amp; வங்கி எண்கள் ஒருபோதும் சொல்லப்படாது; பில் நினைவூட்டலுடன்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">SMS-ஐ தமிழ்/ஆங்கிலத்தில் சத்தமாக படித்து, போலி இணைப்புகளைத் தடுக்கும்; OTP &amp; வங்கி எண்கள் ஒருபோதும் சொல்லப்படாது; பில் நினைவூட்டலுடன்.</p>
             <figure class="shot has-img">
               <img loading="lazy" src="images/sms-guard.jpg" alt="SMS Guard — Messages inbox with Shield, Finance, Bills & Controls tabs">
             </figure>
@@ -965,7 +993,7 @@
                   <li><strong>Never speaks OTP codes</strong> — your accounts stay safe even in a crowded place.</li>
                   <li><strong>Bills tab</strong> auto-captures bill SMS and reminds you before the due date; biometric-locked ledger.</li>
                 </ul>
-                <p class="ta">ஒரு தொடுதலிலேயே மோசடி / ஃபிஷிங் SMS-ஐத் தடுக்கும்; வங்கி, அரசு / ரேஷன், தேர்வு SMS-ஐ திறக்காமலே சத்தமாக படிக்கும்; OTP-ஐ ஒருபோதும் படிக்காது.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">ஒரு தொடுதலிலேயே மோசடி / ஃபிஷிங் SMS-ஐத் தடுக்கும்; வங்கி, அரசு / ரேஷன், தேர்வு SMS-ஐ திறக்காமலே சத்தமாக படிக்கும்; OTP-ஐ ஒருபோதும் படிக்காது.</p>
               </div>
             </details>
             <details class="trust">
@@ -973,26 +1001,26 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Daily release notices open the official website in your browser. The app does not download or install APKs.</li>
                   <li>Your SMS is read <strong>on your phone only</strong> — nothing is uploaded anywhere.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; SMS உங்கள் போனிலேயே இருக்கும், எங்கும் அனுப்பப்படாது.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; SMS உங்கள் போனிலேயே இருக்கும், எங்கும் அனுப்பப்படாது.</p>
                 <div class="sha">SHA-256: 9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>The monthly-spend card's Tamil now reads as Tamil.</strong> The card had said "6 மீதம் நாடகள்" - நாடகள் means dramas, not days - and "உறியாக்க செலவுகள்", which is not a Tamil phrase. Five such strings are repaired, and the two summary counters that were left in English on a Tamil screen are translated.</li>
                   <li>The "vs last month" sentence is no longer cut off the edge of the card, and every rupee amount still sits on one line as 1.1.7 arranged.</li>
-                  <li>The two app subtitles were swapped - Tamil mode named the app "SMS Guard" and English mode named it in Tamil. Both are the right way round.</li>
+                  <li>The two app subtitles were swapped - Tamil mode named the app "SMS Guard" and English mode named it in Tamil. The subtitles now match the selected language.</li>
                   <li>Bilingual card, same style as the rest of the Finance tab. OTP silence is unchanged.</li>
                 </ul>
-                <p class="ta">நிதித் தாவலில் புதிய <strong>மாதாந்திர செலவு அட்டை</strong> — இந்த மாதம் மற்றும் கடந்த மாதம் ஒப்பீடு, ரூபாயிலும் சதவீதத்திலும் மாற்றம், நாள் வரியான சராசரி, மாத இறுதியில் எதிர்பார்க்கும் செலவு, மீதமுள்ள நாட்கள், எளிய மொழியில் உள்ள பிரவணம். மாதம் கடந்த நாள் நள்ளிரவில் அல்ல, நாள் இறுதியில் முடுகிறது. OTP ஒலிக்கப்படாதது உறுதி.</p>
-                <p class="note"><strong>Not phone-tested:</strong> this exact build was not installed on a phone before publication and no device result is claimed for it. Every CI unit, lint, regression, signature and release-asset check passed. The 1.1.7 build before it was installed on 25 October 2026, and its screenshots are what found every defect this release repairs. Installing it asks Google Play Protect to scan it first, because it reads SMS and comes from outside Play; the owner tapped "Install anyway" and it installed.</p>
-                <p class="ta">இந்த துல்லியமான கோப்பு வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை; சாதன சோதனை எதுவும் உரையாற்றப்படவில்லை. CI சோதனைகள் அனைத்தும் வெற்றி. இதற்கு முன் இருந்த 1.1.7 கோப்பு 25 அக்டோபர் 2026-ல் ஃபோனில் நிறுவப்பட்டது; அதன் படங்களிலேயே இந்த வெளியீடு சரி செய்யும் தவறுகள் கண்டறியப்பட்டன.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">நிதித் தாவலில் புதிய <strong>மாதாந்திர செலவு அட்டை</strong> — இந்த மாதம் மற்றும் கடந்த மாதம் ஒப்பீடு, ரூபாயிலும் சதவீதத்திலும் மாற்றம், நாள் வரியான சராசரி, மாத இறுதியில் எதிர்பார்க்கும் செலவு, மீதமுள்ள நாட்கள், எளிய மொழியில் உள்ள பிரவணம். மாதம் கடந்த நாள் நள்ளிரவில் அல்ல, நாள் இறுதியில் முடுகிறது. OTP ஒலிக்கப்படாதது உறுதி.</p>
+                <p class="note" data-content-lang="en"><strong>Not phone-tested:</strong> this exact build was not installed on a phone before publication and no device result is claimed for it. Every CI unit, lint, regression, signature and release-asset check passed. The 1.1.7 build before it was installed on 25 October 2026, and its screenshots are what found every defect this release repairs. Android may ask Play Protect to scan apps distributed outside Google Play. Stop if a security warning appears; do not bypass it.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">இந்த துல்லியமான கோப்பு வெளியிடுவதற்கு முன் ஃபோனில் நிறுவப்படவில்லை; சாதன சோதனை எதுவும் உரையாற்றப்படவில்லை. CI சோதனைகள் அனைத்தும் வெற்றி. இதற்கு முன் இருந்த 1.1.7 கோப்பு 25 அக்டோபர் 2026-ல் ஃபோனில் நிறுவப்பட்டது; அதன் படங்களிலேயே இந்த வெளியீடு சரி செய்யும் தவறுகள் கண்டறியப்பட்டன.</p>
               </div>
             </details>
             <div class="mini">12.4 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1000,7 +1028,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="SMS-Guard-v1.1.11.zip" href="apks/SMS-Guard-v1.1.11.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.11.apk" data-name="SMS-Guard-v1.1.11.apk" data-sha="9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604" data-status="st-smsguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.11/SMS-Guard-v1.1.11.apk">⚡ Direct APK (v1.1.11)</a>
+            <a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.11.apk" data-name="SMS-Guard-v1.1.11.apk" data-sha="9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604" data-status="st-smsguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.11/SMS-Guard-v1.1.11.apk" aria-label="Download APK · SMS-Guard-v1.1.11.apk">⚡ Direct APK (v1.1.11)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.11">Release Notes</a>
           </div>
         </article>
@@ -1009,10 +1037,11 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">📢</span>Live Guard <span class="ta-name">(கைபேசி காவலன்)</span></h2>
-              <span class="ver">v2.75 · Android 8.0+</span>
+              <h2 id="app-live-guard" tabindex="-1"><span class="emoji">📢</span>Live Guard <span class="ta-name">(கைபேசி காவலன்)</span></h2>
+              <span class="ver">v2.79 · Android 8.0+</span>
             </div>
-            <p class="tagline">Your phone's all-in-one Tamil guardian — <strong>speaks news, rain &amp; battery alerts, cleans junk and checks security</strong>, even with the screen off.</p>
+            <div class="release-brief"><p data-content-lang="en">Balanced Tamil news with checked English-to-Tamil specialist fallback, category explanations and source links. Up to eight eligible stories; empty categories are not filled with old news or unchecked translations.</p><p data-content-lang="ta" lang="ta">தமிழ்ச் செய்திகளுக்கு முன்னுரிமை; சிறப்புப் பிரிவுகளில் சரிபார்த்த ஆங்கிலச் செய்தித் தமிழாக்கம், காலியான பிரிவுகளுக்குக் காரணம், ஆதார இணைப்புகள். அதிகபட்சம் எட்டு தகுதியான செய்திகள்; பழைய செய்தியோ சரிபார்க்காத மொழிபெயர்ப்போ காலியிடத்தை நிரப்பாது.</p><p class="testing-status"><span data-content-lang="en">Owner accepted candidate UI · installed APK hash not independently matched. Screenshots do not prove playback or Play Protect clearance.</span><span data-content-lang="ta" lang="ta">உரிமையாளர் திரை வடிவத்தை ஏற்றார் · நிறுவிய கோப்பின் அடையாளம் தனியாக அளவிடப்படவில்லை. படங்கள் ஒலிப்பையோ பாதுகாப்பு ஒப்புதலையோ நிரூபிப்பதல்ல.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.79">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Your phone's all-in-one Tamil guardian — <strong>speaks news, rain &amp; battery alerts, cleans junk and checks security</strong>, even with the screen off.</p>
             <div class="opts">
               <span class="opt">🔊 Screen-off news voice</span>
               <span class="opt">🌧️ Rain &amp; cyclone alerts</span>
@@ -1021,13 +1050,17 @@
               <span class="opt">🛡️ Security check</span>
               <span class="opt">🤖 AI assistant</span>
             </div>
-            <p class="ta-note">திரை அணைந்தாலும் செய்தி, மழை &amp; புயல் எச்சரிக்கை, பேட்டரி / டேட்டா காவல், குப்பை அழித்தல், பாதுகாப்பு சோதனை, AI உதவியாளர் — எல்லாம் ஒரே ஆப்பில்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">திரை அணைந்தாலும் செய்தி, மழை &amp; புயல் எச்சரிக்கை, பேட்டரி / டேட்டா காவல், குப்பை அழித்தல், பாதுகாப்பு சோதனை, AI உதவியாளர் — எல்லாம் ஒரே ஆப்பில்.</p>
             <figure class="shot has-img">
               <img loading="lazy" src="images/live-guard.jpg" alt="Live Guard home screen — storage, battery, RAM, ping and one-tap clean">
             </figure>
             <details class="gallery">
-              <summary>📸 View 14 more screenshots · மேலும் 14 படங்கள்</summary>
+              <summary>📸 View 17 more screenshots · மேலும் 17 படங்கள்</summary>
               <div class="gal-grid">
+                <img loading="lazy" width="720" height="1480" src="images/live-guard/2.79-news-overview.jpg" alt="Owner-provided Live Guard 2.79 news selection overview; selection is not proof of playback">
+                <img loading="lazy" width="720" height="1480" src="images/live-guard/2.79-category-sources.jpg" alt="Owner-provided category counts and reasons; this selection has science and cyber-safety items with other categories empty">
+                <img loading="lazy" width="720" height="1480" src="images/live-guard/2.79-translations.jpg" alt="Owner-provided translated headlines, original English titles and news source links">
+
                 <img loading="lazy" src="images/live-guard/1.jpg" alt="Navigation menu">
                 <img loading="lazy" src="images/live-guard/2.jpg" alt="Weather &amp; rain alerts">
                 <img loading="lazy" src="images/live-guard/3.jpg" alt="Voice &amp; daily watch">
@@ -1067,7 +1100,7 @@
                   <li>Junk cleanup, battery / data guard, WiFi-scan AI and a helpful assistant in one light app.</li>
                   <li>Speaks only what you choose, silent 10&nbsp;PM–6&nbsp;AM, and never repeats the same news.</li>
                 </ul>
-                <p class="ta">திரை அணைந்திருக்கும்போதே இயல்பான HD குரலில் செய்தியைக் கேட்கலாம்; ஊர் + மாவட்ட மழை &amp; புயல் எச்சரிக்கை 2-மணி முன்னறிவிப்புடன்; குப்பை அழித்தல், பேட்டரி / டேட்டா பாதுகாப்பு, AI உதவியாளர் — ஒரே இலகுவான ஆப்பில்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">திரை அணைந்திருக்கும்போதே இயல்பான HD குரலில் செய்தியைக் கேட்கலாம்; ஊர் + மாவட்ட மழை &amp; புயல் எச்சரிக்கை 2-மணி முன்னறிவிப்புடன்; குப்பை அழித்தல், பேட்டரி / டேட்டா பாதுகாப்பு, AI உதவியாளர் — ஒரே இலகுவான ஆப்பில்.</p>
               </div>
             </details>
             <details class="trust">
@@ -1075,35 +1108,35 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Core Live Guard does <strong>not</strong> read other apps' notifications or messages — no notification-listener, SMS, Contacts, call-log, Accessibility or device-admin permission.</li>
                   <li>HD voice is optional &amp; online-only; offline it uses your phone's built-in voice and uploads nothing personal.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; மற்ற ஆப்களின் அறிவிப்பு / செய்திகளை வாசிக்காது; HD குரல் விருப்பமானது, தனிப்பட்ட தகவல் எதுவும் அனுப்பப்படாது.</p>
-                <div class="sha">SHA-256: 2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf</div>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; மற்ற ஆப்களின் அறிவிப்பு / செய்திகளை வாசிக்காது; HD குரல் விருப்பமானது, தனிப்பட்ட தகவல் எதுவும் அனுப்பப்படாது.</p>
+                <div class="sha">SHA-256: 95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>Silent place now names its days.</strong> Each start&rarr;stop slot can be limited to particular weekdays, so &quot;Mon&ndash;Fri 9 AM&ndash;6 PM, Sat 10 AM&ndash;2 PM&quot; is two slots instead of five repeated ones.</li>
                   <li><strong>A sustained HD-voice outage is visible</strong> instead of looking like plain silence: the voice screen says the HD voice is being waited for and keeps retrying. There is no quieter fallback voice and no silent drop.</li>
                   <li><strong>A slot that names no days is impossible</strong> — removing the last day is refused, and the card no longer claims voice is paused when no slot covers today.</li>
-                  <li>The dead system text-to-speech code that 2.71 made unreachable has been removed from the announcer.</li>
+                  <li>Removed unused speech code; announcements continue to use the HD voice service.</li>
                 </ul>
-                <p class="ta">அமைதி இடச் slots இனி குறிப்பிட்ட நாட்களுக்கு மட்டுமே — &quot;திங்கள்&ndash;வெள்ளி 9&ndash;6, சனி 10&ndash;2&quot; ஐந்து slots-க்கு பதிலாக இரண்டு slots. HD குரல் நீண்ட நேரம் கிடைக்கவில்லை என்றால் பேசாமல் அமைதியாக இருப்பதற்கு பதிலாக அது தெரியும், மீண்டும் முயற்சிக்கும். மென்மையான மாற்று குரல் இல்லை, ஒலியின்றி அமைதியாகவும் இல்லை.</p>
-                <p class="note"><strong>Phone-tested 25 October 2026:</strong> installed with Play Protect on, which reported &quot;This app looks safe&quot;. The silent-place day chips were seen on screen with all seven days selected and the slot reading 9:00 AM - 6:00 PM. Still to check on a phone: the HD-outage notice after a real outage, and the chips on a narrow screen with a scattered day selection.</p>
-                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): Play Protect ON நிலையில் நிறுவப்பட்டது, &quot;இந்த செயலி பாதுகாப்பானது&quot; என்று தெரிவித்தது. அமைதி இட நாள் chip-கள் ஏழு நாட்களும் தேர்வு செய்யப்பட்ட நிலையில் திரையில் காட்டப்படுகின்றன. இன்னும் சோதிக்க வேண்டியவை: உண்மையான HD செயலிழப்புக்குப் பிறகு அறிவிப்பு, மற்றும் சிதறிய நாள் தேர்வுடன் குறுகிய திரையில் chip-கள்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">அமைதி இடச் slots இனி குறிப்பிட்ட நாட்களுக்கு மட்டுமே — &quot;திங்கள்&ndash;வெள்ளி 9&ndash;6, சனி 10&ndash;2&quot; ஐந்து slots-க்கு பதிலாக இரண்டு slots. HD குரல் நீண்ட நேரம் கிடைக்கவில்லை என்றால் பேசாமல் அமைதியாக இருப்பதற்கு பதிலாக அது தெரியும், மீண்டும் முயற்சிக்கும். மென்மையான மாற்று குரல் இல்லை, ஒலியின்றி அமைதியாகவும் இல்லை.</p>
+                <p class="note" data-content-lang="en"><strong>Phone-tested 25 October 2026:</strong> installed with Play Protect on, which reported &quot;This app looks safe&quot;. The silent-place day chips were seen on screen with all seven days selected and the slot reading 9:00 AM - 6:00 PM. Still to check on a phone: the HD-outage notice after a real outage, and the chips on a narrow screen with a scattered day selection.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): Play Protect ON நிலையில் நிறுவப்பட்டது, &quot;இந்த செயலி பாதுகாப்பானது&quot; என்று தெரிவித்தது. அமைதி இட நாள் chip-கள் ஏழு நாட்களும் தேர்வு செய்யப்பட்ட நிலையில் திரையில் காட்டப்படுகின்றன. இன்னும் சோதிக்க வேண்டியவை: உண்மையான HD செயலிழப்புக்குப் பிறகு அறிவிப்பு, மற்றும் சிதறிய நாள் தேர்வுடன் குறுகிய திரையில் chip-கள்.</p>
               </div>
             </details>
-            <div class="mini">14.4 MB · <strong>SHA-256 verified ✓</strong></div>
+            <div class="mini">14.5 MB · <strong>SHA-256 verified ✓</strong></div>
             <div class="dl-status" id="st-liveguard"></div>
           </div>
           <div class="hero-links">
-            <a class="btn btn-zip" download="CleanSweep-v2.75.zip" href="apks/CleanSweep-v2.75.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/CleanSweep-v2.75.apk" data-name="CleanSweep-v2.75.apk" data-sha="2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf" data-status="st-liveguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.75/CleanSweep-v2.75.apk">⚡ Direct APK (v2.75)</a>
-            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.75">Release Notes</a>
+            <a class="btn btn-zip" download="CleanSweep-v2.79.zip" href="apks/CleanSweep-v2.79.zip">📦 Download .ZIP</a>
+            <a class="btn btn-primary" data-apk="apks/CleanSweep-v2.79.apk" data-name="CleanSweep-v2.79.apk" data-sha="95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac" data-status="st-liveguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk" aria-label="Download APK · CleanSweep-v2.79.apk">⚡ Direct APK (v2.79)</a>
+            <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.79">Release Notes</a>
           </div>
         </article>
 
@@ -1111,10 +1144,11 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">📻</span>Ramesh Radio <span class="ta-name">(தமிழன் வானொலி)</span></h2>
+              <h2 id="app-ramesh-radio" tabindex="-1"><span class="emoji">📻</span>Ramesh Radio <span class="ta-name">(தமிழன் வானொலி)</span></h2>
               <span class="ver">v1.29 · Android 8.0+</span>
             </div>
-            <p class="tagline">Live Tamil &amp; world FM radio plus your own songs with sound tools — and <strong>village rain alerts with zero surprise location prompts.</strong></p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.29">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Live Tamil &amp; world FM radio plus your own songs with sound tools — and <strong>village rain alerts with zero surprise location prompts.</strong></p>
             <div class="opts">
               <span class="opt">📻 Live Tamil &amp; world FM</span>
               <span class="opt">🎵 Local songs + EQ</span>
@@ -1122,7 +1156,7 @@
               <span class="opt">🌧️ Village rain alerts</span>
               <span class="opt">😴 Sleep timer</span>
             </div>
-            <p class="ta-note">தமிழ் &amp; உலக இணைய FM, உங்கள் பாடல்கள் + சௌண்ட் கருவிகள்; திடீர் Location அனுமதி இல்லை (PIN/ஊருள் 100% இயங்கும்); ஊர் மழை &amp; புயல் குரல் எச்சரிக்கை.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">தமிழ் &amp; உலக இணைய FM, உங்கள் பாடல்கள் + சௌண்ட் கருவிகள்; திடீர் Location அனுமதி இல்லை (PIN/ஊருள் 100% இயங்கும்); ஊர் மழை &amp; புயல் குரல் எச்சரிக்கை.</p>
             <figure class="shot has-img">
               <img loading="lazy" src="images/ramesh-radio.jpg" alt="Ramesh Radio — Tamil FM stations home screen">
             </figure>
@@ -1159,7 +1193,7 @@
                   <li>Active-only <strong>rain &amp; storm voice alerts</strong> that speak the exact place.</li>
                   <li>Sleep timer, seeking &amp; sound tools for a great listening experience.</li>
                 </ul>
-                <p class="ta">தமிழ்நாடு FM நிலையங்கள் + உலக radio ஒரே தொடுதலில்; சேமித்த PIN / ஊருள் 100% வேலை செய்யும், திடீர் Location அனுமதி இல்லை; இயக்கத்திலேயே மழை / புயல் எச்சரிக்கை.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">தமிழ்நாடு FM நிலையங்கள் + உலக radio ஒரே தொடுதலில்; சேமித்த PIN / ஊருள் 100% வேலை செய்யும், திடீர் Location அனுமதி இல்லை; இயக்கத்திலேயே மழை / புயல் எச்சரிக்கை.</p>
               </div>
             </details>
             <details class="trust">
@@ -1167,26 +1201,26 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Optional Mobile-Tower detection is <strong>user-clicked only</strong> — no background location.</li>
                   <li>No personal data is uploaded.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; Mobile-Tower கண்டறிதல் பயனர் தொடும்போதே; பின்னணி Location இல்லை.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; Mobile-Tower கண்டறிதல் பயனர் தொடும்போதே; பின்னணி Location இல்லை.</p>
                 <div class="sha">SHA-256: 11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>The saved-places row is now labelled.</strong> &ldquo;Saved places&rdquo; sits above the chips, so the list is something you read rather than something you have to guess at.</li>
                   <li><strong>The row shows from the very first place you save.</strong> It used to stay hidden until you had two, which left no way to tell a list that was growing from a single place that kept changing.</li>
-                  <li><strong>Your places are written to storage straight away.</strong> The write used to be queued for later, so Android could stop the app before it reached the phone and every place except the newest one would be gone on the next open.</li>
+                  <li><strong>Your places are written to storage straight away.</strong> The write used to be queued for later, so Android could stop the app before it reached storage, leaving only the newest place when the app was next opened.</li>
                   <li><strong>Newest place first, always.</strong> The list is trimmed from the end, so the place that falls off when you save your thirteenth is the one you saved longest ago &mdash; never the one you just picked.</li>
                   <li>Up to 12 places, deduped by coordinates, one tap to switch, the &times; forgets a place and promotes the next one.</li>
                 </ul>
-                <p class="ta">சேமித்த உர்கள் வரிசை இப்போது தலைப்புடன் காட்டப்படும். முதல் உர்கை சேமித்தற்கும் பின்னும் வரைசை காட்டப்படும். உங்கள் உர்கள் இப்போது நேரடியாக எழுதுகின்றன. புதிய உர் எத்திர்பார்த்த இருக்கும், 12-ம் உர்கை வரை, ஒரு தட்டுதல் இயக்க உர் மாறும்.</p>
-                <p class="ta">மழை &amp; புயல் குரல் எச்சரிக்கைகளுக்கு ஒன்றுக்கு மேற்பட்ட ஊர்களைச் சேமிக்கலாம் — வானிலை பட்டியின் கீழ் chips வரிசையாகத் தெரியும். ஒரு தட்டுதலால் இயக்க ஊர் மாறும், புதிய ஊருக்கு எச்சரிக்கை மீண்டும் சோதித்து பேசும். &times; அழுத்தியால் ஊர் அழிகிறது; இயக்க ஊரை அழித்தால் அடுத்த ஊர் தானாக எடுக்கப்படும். தேடலில் தேர்வு செய்த ஒவ்வொரு ஊரும் தானாகச் சேமிக்கப்படும். 12 ஊர்கள் வரை.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">சேமித்த ஊர்கள் தலைப்புடன் வரிசையாகக் காட்டப்படும்; முதல் ஊரைச் சேமித்ததிலிருந்தே இந்த வரிசை தெரியும். ஊர்கள் உடனடியாகச் சேமிக்கப்படுவதால் செயலியை மீண்டும் திறக்கும்போது மறையாது. அதிகபட்சம் 12 ஊர்களைச் சேமிக்கலாம்; ஒரு தொடுதலில் செயலிலுள்ள ஊரை மாற்றலாம்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">மழை &amp; புயல் குரல் எச்சரிக்கைகளுக்கு ஒன்றுக்கு மேற்பட்ட ஊர்களைச் சேமிக்கலாம் — வானிலை பட்டியின் கீழ் chips வரிசையாகத் தெரியும். ஒரு தட்டுதலால் இயக்க ஊர் மாறும், புதிய ஊருக்கு எச்சரிக்கை மீண்டும் சோதித்து பேசும். &times; அழுத்தியால் ஊர் அழிகிறது; இயக்க ஊரை அழித்தால் அடுத்த ஊர் தானாக எடுக்கப்படும். தேடலில் தேர்வு செய்த ஒவ்வொரு ஊரும் தானாகச் சேமிக்கப்படும். 12 ஊர்கள் வரை.</p>
                 <p class="note"><strong>Owner phone review:</strong> The owner installed the compact 1.28 candidate and confirmed the layout and icon confirmation work. The publication rebuild is not hash-matched to those installed bytes; this is not a guarantee for every device. Radio 1.28 passed its build and publication checks. <span class="ta">உரிமையாளர் தனது சாதனத்தில் சோதித்து உறுதிப்படுத்தினார். அனைத்துச் சாதனங்களுக்கும் உத்தரவாதம் அல்ல.</span></p>
               </div>
             </details>
@@ -1195,7 +1229,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Ramesh-Radio-v1.29.zip" href="apks/Ramesh-Radio-v1.29.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.29.apk" data-name="Ramesh-Radio-v1.29.apk" data-sha="11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d" data-status="st-radio" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk">⚡ Direct APK (v1.29)</a>
+            <a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.29.apk" data-name="Ramesh-Radio-v1.29.apk" data-sha="11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d" data-status="st-radio" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk" aria-label="Download APK · Ramesh-Radio-v1.29.apk">⚡ Direct APK (v1.29)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.29">Release Notes</a>
           </div>
         </article>
@@ -1204,10 +1238,11 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">📍</span>Oor Arivippu <span class="ta-name">(ஊர் அறிவிப்பு)</span></h2>
+              <h2 id="app-oor-arivippu" tabindex="-1"><span class="emoji">📍</span>Oor Arivippu <span class="ta-name">(ஊர் அறிவிப்பு)</span></h2>
               <span class="ver">v1.1.10 · Android 8.0+</span>
             </div>
-            <p class="tagline">Announces your <strong>village/town, distance travelled and destination</strong> in Tamil or English while you travel.</p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Announces your <strong>village/town, distance travelled and destination</strong> in Tamil or English while you travel.</p>
             <div class="opts">
               <span class="opt">📍 Village/town announcer</span>
               <span class="opt">📏 Live distance (km)</span>
@@ -1215,7 +1250,7 @@
               <span class="opt">🌧️ Active-only rain banner</span>
               <span class="opt">🗣️ Auto HD voices</span>
             </div>
-            <p class="ta-note">பயணத்தில் உங்கள் ஊர்/நகரம், பயணித்த தூரம் (km), சேருமிடத்தை தமிழ்/ஆங்கிலத்தில் சொல்லும்; மழை இருந்தால் மட்டும் எச்சரிக்கை; தானியங்கி HD ஆண்/பெண் குரல்கள்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">பயணத்தில் உங்கள் ஊர்/நகரம், பயணித்த தூரம் (km), சேருமிடத்தை தமிழ்/ஆங்கிலத்தில் சொல்லும்; மழை இருந்தால் மட்டும் எச்சரிக்கை; தானியங்கி HD ஆண்/பெண் குரல்கள்.</p>
             <figure class="shot has-img">
               <img loading="lazy" src="images/oor-arivippu.jpg" alt="Oor Arivippu — village/town voice announcer home">
             </figure>
@@ -1250,7 +1285,7 @@
                   <li>Automatic HD <strong>male / female voices</strong>; active-only rain announcements.</li>
                   <li>Clear, easy-to-read local alerts in Tamil &amp; English.</li>
                 </ul>
-                <p class="ta">உங்கள் ஊர் / நகரத்திற்குத் தேவையான அறிவிப்புகள் மட்டும் — சுருக்கமான முகப்பு; தானியங்கி HD ஆண் / பெண் குரல்; இயக்கத்திலேயே மழை அறிவிப்பு.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">உங்கள் ஊர் / நகரத்திற்குத் தேவையான அறிவிப்புகள் மட்டும் — சுருக்கமான முகப்பு; தானியங்கி HD ஆண் / பெண் குரல்; இயக்கத்திலேயே மழை அறிவிப்பு.</p>
               </div>
             </details>
             <details class="trust">
@@ -1258,15 +1293,15 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Everything runs on-device; no personal data leaves your phone.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; எல்லாம் போனிலேயே இயங்கும், தனிப்பட்ட தகவல் வெளியே போகாது.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; எல்லாம் போனிலேயே இயங்கும், தனிப்பட்ட தகவல் வெளியே போகாது.</p>
                 <div class="sha">SHA-256: 7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>The announcement list now says what actually happened.</strong> Each entry records whether the voice was spoken, held for a phone call, dropped for no internet, dropped because GPS was off, dropped because no voice was usable, or not spoken at all.</li>
@@ -1275,9 +1310,9 @@
                   <li><strong>The empty state is honest now</strong>: if a trip announced nothing and the list is empty, the voice was not delivered.</li>
                   <li>Voice previews are deliberately excluded — testing the voice is not a tracked announcement.</li>
                 </ul>
-                <p class="ta">அறிவிப்பு பட்டியல் இயங்கியது என்ன ஆனது என்பதை பதிவு செய்கிறது — பேசப்பட்டது, அழைப்புக்காகக் காத்திருந்தது, இணையம் இல்லை, GPS அணைந்திருந்தது, குரல் கிடைக்கவில்லை, பேசப்படவில்லை. பட்டியலுக்கு மேலே &quot;M அறிவிப்புகளில் N பேசப்பட்டது&quot; என்ற சுருக்கம் மற்றும் பயணத்தில் உள்ள ஊர்களின் எண்ணிக்கை. செயலி மூடினாலும் பட்டியல் அழியாது. பயணத்தில் எதுவும் அறிவிக்கப்படவில்லை என்றால் பட்டியல் காலியாக இருக்கும் — குரல் வழங்கப்படவில்லை என்பது இதன் பொருள்.</p>
-                <p class="note"><strong>Phone-tested 25 October 2026:</strong> installed with Play Protect on, which reported &quot;This app looks safe&quot;. The About screen reads 1.1.9 and the new empty state is live on screen. Still to check on a phone: the six outcomes on a real trip, the summary line, and the list surviving the app being killed.</p>
-                <p class="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): Play Protect ON நிலையில் நிறுவப்பட்டது, &quot;இந்த செயலி பாதுகாப்பானது&quot; என்று தெரிவித்தது. About திரையில் 1.1.9 எனத் தெரியும், புதிய காலி நிலை செய்தியும் திரையில் உள்ளது. இன்னும் சோதிக்க வேண்டியவை: உண்மையான பயணத்தில் ஆறு வகை முடிவுகள், சுருக்க வரி, மற்றும் செயலி கொல்லப்பட்டாலும் பட்டியல் தங்குவது.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">அறிவிப்பு பட்டியல் இயங்கியது என்ன ஆனது என்பதை பதிவு செய்கிறது — பேசப்பட்டது, அழைப்புக்காகக் காத்திருந்தது, இணையம் இல்லை, GPS அணைந்திருந்தது, குரல் கிடைக்கவில்லை, பேசப்படவில்லை. பட்டியலுக்கு மேலே &quot;M அறிவிப்புகளில் N பேசப்பட்டது&quot; என்ற சுருக்கம் மற்றும் பயணத்தில் உள்ள ஊர்களின் எண்ணிக்கை. செயலி மூடினாலும் பட்டியல் அழியாது. பயணத்தில் எதுவும் அறிவிக்கப்படவில்லை என்றால் பட்டியல் காலியாக இருக்கும் — குரல் வழங்கப்படவில்லை என்பது இதன் பொருள்.</p>
+                <p class="note" data-content-lang="en"><strong>Phone-tested 25 October 2026:</strong> installed with Play Protect on, which reported &quot;This app looks safe&quot;. The About screen reads 1.1.9 and the new empty state is live on screen. Still to check on a phone: the six outcomes on a real trip, the summary line, and the list surviving the app being killed.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">ஃபோனில் நிறுவப்பட்டு சோதிக்கப்பட்டது (25 அக்டோபர் 2026): Play Protect ON நிலையில் நிறுவப்பட்டது, &quot;இந்த செயலி பாதுகாப்பானது&quot; என்று தெரிவித்தது. About திரையில் 1.1.9 எனத் தெரியும், புதிய காலி நிலை செய்தியும் திரையில் உள்ளது. இன்னும் சோதிக்க வேண்டியவை: உண்மையான பயணத்தில் ஆறு வகை முடிவுகள், சுருக்க வரி, மற்றும் செயலி கொல்லப்பட்டாலும் பட்டியல் தங்குவது.</p>
               </div>
             </details>
             <div class="mini">12.8 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1285,7 +1320,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Oor-Arivippu-v1.1.10.zip" href="apks/Oor-Arivippu-v1.1.10.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-oor" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk">⚡ Direct APK (v1.1.10)</a>
+            <a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-oor" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk" aria-label="Download APK · Oor-Arivippu-v1.1.10.apk">⚡ Direct APK (v1.1.10)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10">Release Notes</a>
           </div>
         </article>
@@ -1294,10 +1329,11 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">🎚️</span>PulseEQ</h2>
+              <h2 id="app-pulseeq" tabindex="-1"><span class="emoji">🎚️</span>PulseEQ</h2>
               <span class="ver">v1.11 · Android 8.0+</span>
             </div>
-            <p class="tagline">A clean equalizer, bass boost and loudness tool with saved presets to <strong>make your music sound exactly how you like.</strong></p>
+            <div class="release-brief"><p data-content-lang="en">Updates now open in your browser; in-app update downloading and installer access were removed. This does not establish that the earlier Play Protect warning is resolved.</p><p data-content-lang="ta" lang="ta">புதுப்பிப்புகள் இப்போது உலாவியில் திறக்கும்; செயலிக்குள் புதுப்பிப்பைப் பதிவிறக்கும் வசதியும் நிறுவல் அணுகலும் நீக்கப்பட்டுள்ளன. இதனால் முந்தைய பாதுகாப்பு எச்சரிக்கை தீர்ந்ததாக உறுதி இல்லை.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.11">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">A clean equalizer, bass boost and loudness tool with saved presets to <strong>make your music sound exactly how you like.</strong></p>
             <p class="note">சோதனைப் பதிப்பு பாதுகாப்புச் சோதனையால் தடுக்கப்பட்டது. எச்சரிக்கை வந்தால் நிறுத்துங்கள். / Candidate 1.10 was blocked by Play Protect; no security clearance is claimed. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/2026-10-27-pulseeq-device-review.md">Details</a></p>
             <div class="opts">
               <span class="opt">🎚️ Equalizer + presets</span>
@@ -1305,7 +1341,7 @@
               <span class="opt">🎵 Playback + spectrum</span>
               <span class="opt">🌐 Tamil &amp; English</span>
             </div>
-            <p class="ta-note">தெளிவான Equalizer, Bass Boost, ஒலி மேம்படுத்தி மற்றும் preset — உங்கள் இசையை விருப்பமாக மாற்றுங்கள்; விளம்பரமில்லா தமிழ் &amp; ஆங்கில இடைமுகம்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">தெளிவான Equalizer, Bass Boost, ஒலி மேம்படுத்தி மற்றும் preset — உங்கள் இசையை விருப்பமாக மாற்றுங்கள்; விளம்பரமில்லா தமிழ் &amp; ஆங்கில இடைமுகம்.</p>
             <figure class="shot has-img">
               <img loading="lazy" src="images/pulseeq.jpg" alt="PulseEQ — 20-band equalizer home">
             </figure>
@@ -1338,7 +1374,7 @@
                   <li>Make your music sound exactly how you like — loud, clear and full.</li>
                   <li>Bilingual About for the whole 14-app suite.</li>
                 </ul>
-                <p class="ta">ஒவ்வொரு பாணிக்கும் ஏற்ற preset-ஓடு ஸ்டுடியோ தரமான equalizer, bass &amp; treble; உங்கள் இசையை விருப்பமாக செய்யுங்கள்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">ஒவ்வொரு பாணிக்கும் ஏற்ற preset-ஓடு ஸ்டுடியோ தரமான equalizer, bass &amp; treble; உங்கள் இசையை விருப்பமாக செய்யுங்கள்.</p>
               </div>
             </details>
             <details class="trust">
@@ -1346,21 +1382,21 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Audio is processed <strong>on-device</strong>; selected audio is not uploaded.</li>
                   <li>Internet is used only for once-daily public release-metadata checks when opened. The website/GitHub may receive ordinary request metadata such as the device IP address.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; ஒலி போனிலேயே செயலாக்கப்படும்; தேர்ந்தெடுத்த ஒலி அனுப்பப்படாது.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; ஒலி போனிலேயே செயலாக்கப்படும்; தேர்ந்தெடுத்த ஒலி அனுப்பப்படாது.</p>
                 <div class="sha">SHA-256: bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>Upgraded bilingual About screen:</strong> one-tap links to the RP-Android-Apps official website, the GitHub repository and the legacy mirror, plus all 14 RP Ideas apps (Tamil &amp; English).</li>
                 </ul>
-                <p class="ta">அனைத்து 14 RP Ideas செயலிகள் மற்றும் RP-Android-Apps அதிகாரப்பூர்வ இணையதள இணைப்புகள் தமிழ் &amp; ஆங்கிலத்தில் சேர்க்கப்பட்டன.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">அனைத்து 14 RP Ideas செயலிகள் மற்றும் RP-Android-Apps அதிகாரப்பூர்வ இணையதள இணைப்புகள் தமிழ் &amp; ஆங்கிலத்தில் சேர்க்கப்பட்டன.</p>
               </div>
             </details>
             <div class="mini">12.2 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1368,7 +1404,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="PulseEQ-v1.11.zip" href="apks/PulseEQ-v1.11.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-pulseeq" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk">⚡ Direct APK (v1.11)</a>
+            <a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-pulseeq" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">⚡ Direct APK (v1.11)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.11">Release Notes</a>
           </div>
         </article>
@@ -1377,17 +1413,18 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">🎤</span>RP Vocal Remover Studio <span class="ta-name">(இசை மட்டும் வேண்டும்)</span></h2>
+              <h2 id="app-rp-vocal-remover-studio" tabindex="-1"><span class="emoji">🎤</span>RP Vocal Remover Studio <span class="ta-name">(இசை மட்டும் வேண்டும்)</span></h2>
               <span class="ver">v0.1.16 · Android 10+</span>
             </div>
-            <p class="tagline">Removes vocals from any song to make karaoke — <strong>100% offline on your phone</strong>, with WAV + MP3 export.</p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.16">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Removes vocals from any song to make karaoke — <strong>100% offline on your phone</strong>, with WAV + MP3 export.</p>
             <div class="opts">
               <span class="opt">🎤 Remove vocals → karaoke</span>
               <span class="opt">📴 100% offline</span>
               <span class="opt">💾 WAV + MP3 export</span>
               <span class="opt">⏯️ Pause / resume</span>
             </div>
-            <p class="ta-note">எந்தப் பாடலிலிருந்தும் பாடகர் குரலை நீக்கி karaoke உருவாக்கலாம்; இணையம் இன்றி உங்கள் போனிலேயே; WAV &amp; MP3 ஆக சேமிக்கலாம்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">எந்தப் பாடலிலிருந்தும் பாடகர் குரலை நீக்கி karaoke உருவாக்கலாம்; இணையம் இன்றி உங்கள் போனிலேயே; WAV &amp; MP3 ஆக சேமிக்கலாம்.</p>
             <figure class="shot has-img">
               <img loading="lazy" src="images/vocal-remover.jpg" alt="RP Vocal Remover Studio — vocal remover home">
             </figure>
@@ -1421,7 +1458,7 @@
                   <li>Works <strong>offline</strong>; clean bilingual interface.</li>
                   <li>Save the result and share it however you like.</li>
                 </ul>
-                <p class="ta">உங்கள் போனில் உள்ள எந்தப் பாடலிலிருந்தும் பாடகர் குரலை நீக்கி karaoke உருவாக்கலாம்; ஆஃப்லைனில் வேலை செய்யும்; முடிவைச் சேமித்து பங்கிடலாம்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">உங்கள் போனில் உள்ள எந்தப் பாடலிலிருந்தும் பாடகர் குரலை நீக்கி karaoke உருவாக்கலாம்; ஆஃப்லைனில் வேலை செய்யும்; முடிவைச் சேமித்து பங்கிடலாம்.</p>
               </div>
             </details>
             <details class="trust">
@@ -1429,20 +1466,20 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Audio is processed <strong>on-device</strong>; your files never leave the phone.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; ஒலி கோப்புகள் போனிலேயே செயலாக்கப்படும், வெளியே போகாது.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; ஒலி கோப்புகள் போனிலேயே செயலாக்கப்படும், வெளியே போகாது.</p>
                 <div class="sha">SHA-256: 6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>Upgraded bilingual About dialog</strong> with one-tap links to the RP-Android-Apps official website, the GitHub repository and the legacy mirror, plus all 14 RP Ideas apps (Tamil &amp; English).</li>
                 </ul>
-                <p class="ta">அனைத்து 14 RP Ideas செயலிகள் மற்றும் RP-Android-Apps அதிகாரப்பூர்வ இணையதள இணைப்புகள் தமிழ் &amp; ஆங்கிலத்தில் சேர்க்கப்பட்டன.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">அனைத்து 14 RP Ideas செயலிகள் மற்றும் RP-Android-Apps அதிகாரப்பூர்வ இணையதள இணைப்புகள் தமிழ் &amp; ஆங்கிலத்தில் சேர்க்கப்பட்டன.</p>
               </div>
             </details>
             <div class="mini">65.2 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1450,7 +1487,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="RP-Vocal-Remover-Studio-v0.1.16.zip" href="apks/RP-Vocal-Remover-Studio-v0.1.16.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-vocal" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk">⚡ Direct APK (v0.1.16)</a>
+            <a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-vocal" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">⚡ Direct APK (v0.1.16)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.16">Release Notes</a>
           </div>
         </article>
@@ -1459,17 +1496,18 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">🔐</span>Secret Message <span class="ta-name">(இரகசிய செய்தி)</span></h2>
+              <h2 id="app-secret-message" tabindex="-1"><span class="emoji">🔐</span>Secret Message <span class="ta-name">(இரகசிய செய்தி)</span></h2>
               <span class="ver">v1.1.3 · Android 8.0+</span>
             </div>
-            <p class="tagline">Two-phone MLS-encrypted chat — <strong>text, drawings, voice notes &amp; photos</strong>. Compare safety codes before chatting.</p>
+            <div class="release-brief"><p data-content-lang="en">See the release notes for changes and exact-build testing evidence. Secret Message keeps its separate signing identity; it is not part of the other apps’ signing migration.</p><p data-content-lang="ta" lang="ta">மாற்றங்களுக்கும் இந்தக் கோப்பின் சோதனை ஆதாரத்திற்கும் வெளியீட்டுக் குறிப்புகளைப் பார்க்கவும். இரகசிய செய்தி தனிக் கையொப்பத்தைத் தொடர்கிறது; மற்ற செயலிகளின் கையொப்ப மாற்றத்தில் இல்லை.</p><p class="testing-status"><span data-content-lang="en">Exact-build testing: see release evidence.</span><span data-content-lang="ta" lang="ta">இந்தக் கோப்பின் சோதனை நிலை: வெளியீட்டு ஆதாரத்தைப் பார்க்கவும்.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Two-phone MLS-encrypted chat — <strong>text, drawings, voice notes &amp; photos</strong>. Compare safety codes before chatting.</p>
             <div class="opts">
               <span class="opt">🔐 MLS-encrypted chat</span>
               <span class="opt">✏️ Text, drawings, voice</span>
               <span class="opt">⏱️ Timed messages</span>
               <span class="opt">🌐 Internet or same-network chat</span>
             </div>
-            <p class="ta-note">மறையாக்கப்பட்ட உரை, ஓவியம், குரல், படங்களைப் பகிரலாம். இணைய அரட்டைக்கு இணைய இணைப்பும் உள்ளூர் அரட்டைக்கு ஒரே வைஃபை வலையமைப்பும் தேவை. தனித்த பாதுகாப்பு ஆய்வு செய்யப்படவில்லை.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">மறையாக்கப்பட்ட உரை, ஓவியம், குரல், படங்களைப் பகிரலாம். இணைய அரட்டைக்கு இணைய இணைப்பும் உள்ளூர் அரட்டைக்கு ஒரே வைஃபை வலையமைப்பும் தேவை. தனித்த பாதுகாப்பு ஆய்வு செய்யப்படவில்லை.</p>
             <figure class="shot">
               <img src="images/secret-message-card.jpg" alt="Secret Message — concept illustration of two-phone chat (not a real screenshot)" onload="this.parentElement.classList.add('has-img')">
               <span class="concept-badge">🎨 Concept illustration · கருத்துரு படம்</span>
@@ -1495,7 +1533,7 @@
                   <li>Timed messages are cleared from the chat; this is not a guarantee against screenshots or copying.</li>
                   <li>Internet chat uses an encrypted relay; local chat needs both phones on the same network. It is not a fully offline messenger.</li>
                 </ul>
-                <p class="ta">மற்றவருடன் பாதுகாப்புக் குறியீட்டை ஒப்பிட்டுப் பயன்படுத்துங்கள். நேரம் முடிந்ததும் செய்திகள் அரட்டையில் நீக்கப்படும்; திரைப் படம் எடுப்பதையோ நகல் எடுப்பதையோ இது தடுக்காது. இணைய இணைப்பு அல்லது ஒரே வைஃபை வலையமைப்பு தேவை.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">மற்றவருடன் பாதுகாப்புக் குறியீட்டை ஒப்பிட்டுப் பயன்படுத்துங்கள். நேரம் முடிந்ததும் செய்திகள் அரட்டையில் நீக்கப்படும்; திரைப் படம் எடுப்பதையோ நகல் எடுப்பதையோ இது தடுக்காது. இணைய இணைப்பு அல்லது ஒரே வைஃபை வலையமைப்பு தேவை.</p>
               </div>
             </details>
             <details class="trust">
@@ -1503,21 +1541,21 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Internet chat sends encrypted message traffic through a relay, which can observe connection metadata. Compare the safety code with the other person. <strong>Not independently security-reviewed.</strong></li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; இணைய அரட்டையில் மறையாக்கப்பட்ட செய்தி இடைநிலைச் சேவையகம் வழியாக அனுப்பப்படும்; இணைப்பு விவரங்கள் அதற்குத் தெரியலாம். மற்றவருடன் பாதுகாப்புக் குறியீட்டை ஒப்பிடுங்கள். தனித்த பாதுகாப்பு ஆய்வு செய்யப்படவில்லை.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; இணைய அரட்டையில் மறையாக்கப்பட்ட செய்தி இடைநிலைச் சேவையகம் வழியாக அனுப்பப்படும்; இணைப்பு விவரங்கள் அதற்குத் தெரியலாம். மற்றவருடன் பாதுகாப்புக் குறியீட்டை ஒப்பிடுங்கள். தனித்த பாதுகாப்பு ஆய்வு செய்யப்படவில்லை.</p>
                 <div class="sha">SHA-256: 2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li>Current published build <strong>1.1.3</strong> — a two-phone MLS encrypted messenger with text, drawings, voice notes and photo sharing.</li>
                   <li><strong>Honest status:</strong> experimental and <em>not</em> independently cryptography-audited — do not rely on it where physical safety depends on secrecy.</li>
                 </ul>
-                <p class="ta">இரண்டு போன்களுக்கு இடையே MLS மறையாக்கச் செய்தி, ஓவியம், குரல் மற்றும் படப் பகிர்வு (சோதனை நிலை; சுயாதீன பாதுகாப்பு மதிப்பாய்வு இல்லை).</p>
+                <p class="ta" data-content-lang="ta" lang="ta">இரண்டு போன்களுக்கு இடையே MLS மறையாக்கச் செய்தி, ஓவியம், குரல் மற்றும் படப் பகிர்வு (சோதனை நிலை; சுயாதீன பாதுகாப்பு மதிப்பாய்வு இல்லை).</p>
               </div>
             </details>
             <div class="mini">29.5 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1525,7 +1563,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Secret-Message-v1.1.3.zip" href="apks/Secret-Message-v1.1.3.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-secret" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk">⚡ Direct APK (v1.1.3)</a>
+            <a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-secret" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">⚡ Direct APK (v1.1.3)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3">Release Notes</a>
           </div>
         </article>
@@ -1535,10 +1573,11 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">💰</span>Expense Tracker <span class="ta-name">(செலவு கண்காணிப்பு)</span></h2>
+              <h2 id="app-expense-tracker" tabindex="-1"><span class="emoji">💰</span>Expense Tracker <span class="ta-name">(செலவு கண்காணிப்பு)</span></h2>
               <span class="ver">v1.2 · Android 8.0+</span>
             </div>
-            <p class="tagline">Reads your bank &amp; UPI SMS and shows the month as categories. Internet is used only for the daily foreground release-metadata check; SMS and ledger contents stay local.</p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Reads your bank &amp; UPI SMS and shows the month as categories. Internet is used only for the daily foreground release-metadata check; SMS and ledger contents stay local.</p>
             <div class="opts">
               <span class="opt">🏦 Bank &amp; UPI SMS</span>
               <span class="opt">📊 Category shares</span>
@@ -1547,7 +1586,7 @@
               <span class="opt">₹1,23,456 Indian grouping</span>
               <span class="opt">📅 Month over month</span>
             </div>
-            <p class="ta-note">வங்கி &amp; UPI SMS-ஐ படித்து மாதத்தை வகைகளாகக் காட்டும்; பதிப்பு விவரச் சரிபார்ப்பைத் தவிர SMS/செலவுத் தரவு அனுப்பப்படாது; போலிச் செலவுத் தரவை நிராகரிக்கும்; ₹1,23,456 இந்திய முறையில் காட்டும்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">வங்கி &amp; UPI SMS-ஐ படித்து மாதத்தை வகைகளாகக் காட்டும்; பதிப்பு விவரச் சரிபார்ப்பைத் தவிர SMS/செலவுத் தரவு அனுப்பப்படாது; போலிச் செலவுத் தரவை நிராகரிக்கும்; ₹1,23,456 இந்திய முறையில் காட்டும்.</p>
             <figure class="shot">
               <img src="images/expense-tracker-card.jpg" alt="Expense Tracker — concept illustration of a category ledger with a rupee symbol and Tamil script (not a real screenshot)" onload="this.parentElement.classList.add('has-img')">
               <span class="concept-badge">🎨 Concept illustration · கருத்துரு படம்</span>
@@ -1573,7 +1612,7 @@
                   <li>Your SMS and ledger contents are not sent; the network check reads public release metadata only.</li>
                   <li>You can see how many rows were refused, instead of trusting a tracker that quietly hides them.</li>
                 </ul>
-                <p class="ta">SMS Guard பதிலளிக்காத கேள்விக்கு இது பதிலளிக்கிறது: "எவ்வளவு கழித்தது" அல்ல, "எதற்கு செலவழிந்தது". பணம் போனை விட்டு வெளியேறுவதற்கு அனுமதி இல்லை; நிராகரிக்கப்பட்ட வரிசைகள் எத்தனை என்பது காட்டப்படும்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">SMS Guard பதிலளிக்காத கேள்விக்கு இது பதிலளிக்கிறது: "எவ்வளவு கழித்தது" அல்ல, "எதற்கு செலவழிந்தது". பணம் போனை விட்டு வெளியேறுவதற்கு அனுமதி இல்லை; நிராகரிக்கப்பட்ட வரிசைகள் எத்தனை என்பது காட்டப்படும்.</p>
               </div>
             </details>
             <details class="trust">
@@ -1585,20 +1624,20 @@
                   <li>Daily release notices open the official website in your browser. The app does not download or install APKs.</li>
                   <li>SMS is read <strong>on your phone only</strong>; SMS and ledger contents are not sent. The separate update check reads public release metadata only.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரம், கண்காணிப்பு, பகுப்பாய்வு இல்லை. பதிப்பு விவரம் மட்டும் இணையத்தில் சரிபார்க்கப்படும்; SMS உங்கள் போனிலேயே இருக்கும்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரம், கண்காணிப்பு, பகுப்பாய்வு இல்லை. பதிப்பு விவரம் மட்டும் இணையத்தில் சரிபார்க்கப்படும்; SMS உங்கள் போனிலேயே இருக்கும்.</p>
                 <div class="sha">SHA-256: 286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>The initial scan now actually runs on a fresh install.</strong> A permission granted while the app was already open did not reload the inbox, so a newly-installed app showed ₹0 and 0 transactions. An explicit scan now runs the moment the permission is granted, and the empty state reports how many messages were examined.</li>
                   <li><strong>The SMS body now reaches the parser.</strong> The sender was being identified and the body thrown away, so a transaction was categorised from the sender alone.</li>
                 </ul>
-                <p class="ta">புதிய நிறுவலில் முதல் ஸ்கேன் இயங்கும்; அனுமதி கிடைத்ததும் தரவு மீண்டும் படிக்கப்படும். SMS உரையும் பாகுபாடு அறிதலுக்குச் செல்கிறது. காலி நிலையில் எத்தனை செய்திகள் படிக்கப்பட்டன என்பது காட்டப்படும்.</p>
-                <p class="note"><strong>Phone-tested 26 October 2026:</strong> installed on the owner's phone and confirmed working — ₹10,376 spent in October, ₹330 income, ₹10,046 net, 10 transactions, on SMS already received before the app was installed.</p>
-                <p class="ta">உரிமையாளரின் போனில் நிறுவப்பட்டு வேலை செய்வது உறுதி செய்யப்பட்டது: அக்டோபர் ₹10,376 செலவு, ₹330 வருவாய், ₹10,046 நிகரம், 10 பரிவர்த்தனைகள்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">புதிய நிறுவலில் முதல் ஸ்கேன் இயங்கும்; அனுமதி கிடைத்ததும் தரவு மீண்டும் படிக்கப்படும். SMS உரையும் பாகுபாடு அறிதலுக்குச் செல்கிறது. காலி நிலையில் எத்தனை செய்திகள் படிக்கப்பட்டன என்பது காட்டப்படும்.</p>
+                <p class="note" data-content-lang="en"><strong>Phone-tested 26 October 2026:</strong> installed on the owner's phone and confirmed working — ₹10,376 spent in October, ₹330 income, ₹10,046 net, 10 transactions, on SMS already received before the app was installed.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">உரிமையாளரின் போனில் நிறுவப்பட்டு வேலை செய்வது உறுதி செய்யப்பட்டது: அக்டோபர் ₹10,376 செலவு, ₹330 வருவாய், ₹10,046 நிகரம், 10 பரிவர்த்தனைகள்.</p>
               </div>
             </details>
             <div class="mini">11.6 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1606,7 +1645,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Expense-Tracker-v1.2.zip" href="apks/Expense-Tracker-v1.2.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-expense" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk">⚡ Direct APK (v1.2)</a>
+            <a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-expense" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">⚡ Direct APK (v1.2)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2">Release Notes</a>
           </div>
         </article>
@@ -1615,10 +1654,11 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">🎙️</span>Voice Notes <span class="ta-name">(குரல் குறிப்புகள்)</span></h2>
+              <h2 id="app-voice-notes" tabindex="-1"><span class="emoji">🎙️</span>Voice Notes <span class="ta-name">(குரல் குறிப்புகள்)</span></h2>
               <span class="ver">v1.3.3 · Android 8.0+</span>
             </div>
-            <p class="tagline">Dictate a note in Tamil, hear it read back in the HD neural voice, and keep it — <strong>no account; notes stored privately on your phone.</strong> Selected text is sent to the online neural voice service only after playback consent.</p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Dictate a note in Tamil, hear it read back in the HD neural voice, and keep it — <strong>no account; notes stored privately on your phone.</strong> Selected text is sent to the online neural voice service only after playback consent.</p>
             <div class="opts">
               <span class="opt">🎙️ Tamil dictation</span>
               <span class="opt">🔊 HD neural voice</span>
@@ -1627,7 +1667,7 @@
               <span class="opt">💾 On this phone only</span>
               <span class="opt">🗑️ One-tap delete</span>
             </div>
-            <p class="ta-note">தமிழில் ஒரு குறிப்பைப் பேசுங்கள், HD நியூரல் குரலில் கேட்கலாம், போனிலேயே சேமிக்கலாம்; கணக்கோ மேகமோ இல்லை; இணையம் இல்லாவிட்டால் காத்திருக்கும், ரோபோ குரல் அல்ல.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">தமிழில் ஒரு குறிப்பைப் பேசுங்கள், HD நியூரல் குரலில் கேட்கலாம், போனிலேயே சேமிக்கலாம்; கணக்கோ மேகமோ இல்லை; இணையம் இல்லாவிட்டால் காத்திருக்கும், ரோபோ குரல் அல்ல.</p>
             <figure class="shot">
               <img src="images/voice-notes-card.jpg" alt="Voice Notes — concept illustration of a microphone and a Tamil voice-note waveform (not a real screenshot)" onload="this.parentElement.classList.add('has-img')">
               <span class="concept-badge">🎨 Concept illustration · கருத்துரு படம்</span>
@@ -1653,7 +1693,7 @@
                   <li>Hear your own note back in a natural HD voice, not a robot.</li>
                   <li>Nothing is uploaded, so there is nothing to leak.</li>
                 </ul>
-                <p class="ta">தமிழில் பேசி குறிப்பு எழுதலாம்; சொந்த குறிப்பை இயற்கையான HD குரலில் கேட்கலாம்; எதுவும் அனுப்பப்படாது, வெளியாகவே வழி இல்லை.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">தமிழில் பேசி குறிப்பு எழுதலாம்; சொந்த குறிப்பை இயற்கையான HD குரலில் கேட்கலாம்; எதுவும் அனுப்பப்படாது, வெளியாகவே வழி இல்லை.</p>
               </div>
             </details>
             <details class="trust">
@@ -1661,22 +1701,22 @@
               <div class="body">
                 <ul>
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
-                  <li><strong>No ads · no tracking · no analytics · no account</strong> — ever.</li>
+                  <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li><strong>No location, contacts, SMS, storage or camera permission.</strong> Microphone, for dictation, and internet, for the voice.</li>
                   <li>Daily release notices open the official website in your browser. The app does not download or install APKs.</li>
                 </ul>
-                <p class="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; இருப்பிடம், தொடர்புகள், SMS, சேமிப்பு, கேமரா அனுமதிகள் இல்லை. குரல் பதிவுக்கு மைக், குரலுக்கு இணையம்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; இருப்பிடம், தொடர்புகள், SMS, சேமிப்பு, கேமரா அனுமதிகள் இல்லை. குரல் பதிவுக்கு மைக், குரலுக்கு இணையம்.</p>
                 <div class="sha">SHA-256: 71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35</div>
               </div>
             </details>
             <details class="news">
-              <summary><span class="feat-icon">🆕</span> What's new · இந்த வெளியீட்டில் புதிதாக என்ன</summary>
+              <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
                   <li><strong>The layout no longer overflows a small screen.</strong> The owner reported "its not fit correct on screen" — the long-dictation button pushed the note list off the bottom. The list now sits in its own scrolling area.</li>
                   <li>Notes are read in the HD neural voice chosen by the note's script, with long notes split at sentence boundaries and spoken in order.</li>
                 </ul>
-                <p class="ta">சிறிய திரையில் தளவமைப்பு நீங்காது; நீண்ட பதிவு பொத்தான் குறிப்புப் பட்டியலைத் தள்ளிவிட்டது. பட்டியல் இப்போது தனி உருட்டும் பகுதியில்.</p>
+                <p class="ta" data-content-lang="ta" lang="ta">சிறிய திரையில் தளவமைப்பு நீங்காது; நீண்ட பதிவு பொத்தான் குறிப்புப் பட்டியலைத் தள்ளிவிட்டது. பட்டியல் இப்போது தனி உருட்டும் பகுதியில்.</p>
               </div>
             </details>
             <div class="mini">13.1 MB · <strong>SHA-256 verified ✓</strong></div>
@@ -1684,7 +1724,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Voice-Notes-v1.3.3.zip" href="apks/Voice-Notes-v1.3.3.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-voice" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk">⚡ Direct APK (v1.3.3)</a>
+            <a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-voice" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk" aria-label="Download APK · Voice-Notes-v1.3.3.apk">⚡ Direct APK (v1.3.3)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3">Release Notes</a>
           </div>
         </article>
@@ -1693,33 +1733,34 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">👂</span>Vasanthi AI <span class="ta-name">(என்னைச் சுற்றி)</span></h2>
+              <h2 id="app-vasanthi-ai" tabindex="-1"><span class="emoji">👂</span>Vasanthi AI <span class="ta-name">(என்னைச் சுற்றி)</span></h2>
               <span class="ver">v1.1.5 · Android 8.0+</span>
             </div>
-            <p class="tagline">Tamil speech and surrounding sounds, with built-in help and daily release-metadata notices that open the official website.</p>
-            <p class="ta-note">சுற்றியுள்ள ஒலிகளையும் பேசுவதையும் தமிழில் படிக்க உதவும் செயலி. வழிகாட்டியும் பிற செயலிகளின் இணைப்புகளும் உள்ளன.</p>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.5">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
+            <p class="tagline" data-content-lang="en">Tamil speech and surrounding sounds, with built-in help and daily release-metadata notices that open the official website.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">சுற்றியுள்ள ஒலிகளையும் பேசுவதையும் தமிழில் படிக்க உதவும் செயலி. வழிகாட்டியும் பிற செயலிகளின் இணைப்புகளும் உள்ளன.</p>
             <details class="feat">
               <summary><span class="feat-icon">⚙️</span> Features · வசதிகள்</summary>
               <div class="body"><ul><li><strong>Speech and sound are separate.</strong> Choose speech recognition or sound naming; both compete for the microphone. Sound naming is off by default.</li>
 <li><strong>Readable history.</strong> Recognised speech and named sounds are retained locally so they can be read again.</li>
 <li><strong>Volume recovery.</strong> Saved stream volumes from 1.1.3 are restored on the next launch after process death; this is not immediate restoration while the app is stopped.</li>
 <li><strong>Guide navigation.</strong> System Back returns from the Tamil/English guide to the main screen, with safe-area spacing for system bars.</li>
-<li><strong>Verified updates.</strong> About now includes the shared package/digest/signer-checked updater beside sister-app and official project links. Android must confirm installation.</li></ul><p class="ta">பேச்சையும் சுற்றியுள்ள ஒலிகளையும் தனித்தனியாக இயக்கலாம். படித்ததை மீண்டும் பார்க்க வரலாறு உள்ளது. வழிகாட்டியிலிருந்து பின்செல் முதன்மைத் திரைக்குத் திரும்பும். செயலி விவரத்தில் சரிபார்க்கப்பட்ட புதுப்பிப்பு உள்ளது; நிறுவ உங்கள் ஒப்புதல் தேவை.</p></div>
+<li><strong>Verified updates.</strong> About now includes the shared package/digest/signer-checked updater beside sister-app and official project links. Android must confirm installation.</li></ul><p class="ta" data-content-lang="ta" lang="ta">பேச்சையும் சுற்றியுள்ள ஒலிகளையும் தனித்தனியாக இயக்கலாம். படித்ததை மீண்டும் பார்க்க வரலாறு உள்ளது. வழிகாட்டியிலிருந்து பின்செல் முதன்மைத் திரைக்குத் திரும்பும். செயலி விவரத்தில் சரிபார்க்கப்பட்ட புதுப்பிப்பு உள்ளது; நிறுவ உங்கள் ஒப்புதல் தேவை.</p></div>
             </details>
             <details class="trust">
               <summary><span class="feat-icon">🔒</span> Privacy &amp; permissions · பாதுகாப்பும் அனுமதிகளும்</summary>
-              <div class="body"><p>No ads or analytics. History stays on the device. Google speech recognition uses the network; optional translation models are downloaded as needed. A daily foreground release-metadata check opens the official website in the browser; this app does not download or install APKs. Microphone and overlay access are needed for listening/floating text.</p><div class="sha">SHA-256: 4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6</div></div>
+              <div class="body"><p data-content-lang="en">No ads or analytics. History stays on the device. Google speech recognition uses the network; optional translation models are downloaded as needed. A daily foreground release-metadata check opens the official website in the browser; this app does not download or install APKs. Microphone and overlay access are needed for listening/floating text.</p><div class="sha">SHA-256: 4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6</div></div>
             </details>
             <details class="news">
               <summary><span class="feat-icon">🆕</span> Release &amp; testing limits · வெளியீடும் சோதனை நிலையும்</summary>
-              <div class="body"><p><strong>Version 1.1.4.</strong> No physical-device test of 1.1.4. This release improves help/update wiring; it does not claim to fix all manufacturer-specific speech or audio-volume behaviour. It cannot capture the audio of a phone call.</p><p class="ta">இந்தப் பதிப்பு தொலைபேசியில் நிறுவிச் சோதிக்கப்படவில்லை. வழிகாட்டியும் புதுப்பிப்பு வசதியும் மேம்படுத்தப்பட்டுள்ளன. எல்லாத் தொலைபேசிகளின் ஒலிச் சிக்கல்களும் தீர்ந்ததாகக் கூறவில்லை. தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது.</p></div>
+              <div class="body"><p data-content-lang="en"><strong>Version 1.1.4.</strong> No physical-device test of 1.1.4. This release improves help/update wiring; it does not claim to fix all manufacturer-specific speech or audio-volume behaviour. It cannot capture the audio of a phone call.</p><p class="ta" data-content-lang="ta" lang="ta">இந்தப் பதிப்பு தொலைபேசியில் நிறுவிச் சோதிக்கப்படவில்லை. வழிகாட்டியும் புதுப்பிப்பு வசதியும் மேம்படுத்தப்பட்டுள்ளன. எல்லாத் தொலைபேசிகளின் ஒலிச் சிக்கல்களும் தீர்ந்ததாகக் கூறவில்லை. தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது.</p></div>
             </details>
             <div class="mini">45.8 MB · <strong>SHA-256 verified ✓</strong></div>
             <div class="dl-status" id="st-vasanthi"></div>
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Vasanthi-AI-v1.1.5.zip" href="apks/Vasanthi-AI-v1.1.5.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-vasanthi" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk">⚡ Direct APK (v1.1.5)</a>
+            <a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-vasanthi" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">⚡ Direct APK (v1.1.5)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.5">Release Notes</a>
           </div>
         </article>
@@ -1727,30 +1768,31 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">🎧</span>Tamil Podcast Player <span class="ta-name">(கதை சொல்லி)</span></h2>
+              <h2 id="app-tamil-podcast" tabindex="-1"><span class="emoji">🎧</span>Tamil Podcast Player <span class="ta-name">(கதை சொல்லி)</span></h2>
               <span class="ver">v1.6 · Android 8.0+</span>
             </div>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.6">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
             <p class="note"><strong>உரிமையாளரால் சாதனத்தில் சோதிக்கப்பட்டது.</strong><br>Version 1.4: owner-confirmed phone checks, with Play Protect reporting This app looks safe. Stop if any future warning appears.</p>
-            <p class="tagline">A Tamil-first story player with persistent transport controls and saved-position resume.</p>
-            <p class="ta-note">கதைகளைத் தேர்ந்தெடுத்துக் கேளுங்கள். இயக்கக் கட்டுப்பாடுகள் திரையின் கீழே எப்போதும் இருக்கும்.</p>
+            <p class="tagline" data-content-lang="en">A Tamil-first story player with persistent transport controls and saved-position resume.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">கதைகளைத் தேர்ந்தெடுத்துக் கேளுங்கள். இயக்கக் கட்டுப்பாடுகள் திரையின் கீழே எப்போதும் இருக்கும்.</p>
             <details class="feat">
               <summary>⚙️ Features · வசதிகள்</summary>
-              <div class="body"><ul><li><strong>Real offline downloads.</strong> Download beside an episode; use Downloads for progress, stored sizes, Wi-Fi-only settings, retry, cancellation and deletion. Play offline requires a complete local file and never falls back to streaming.</li><li><strong>Eleven sources, six categories.</strong> News/world, history, literature, science/space, learning and children’s stories, with category filters, show search and episode search. A curated catalogue, not every Tamil podcast on the web.</li><li><strong>Persistent player.</strong> Play/pause, seek, elapsed time, duration, fifteen-second skips and saved-position resume, with media-session controls and audio-focus handling.</li><li><strong>Browser updates.</strong> No package-install permission or update APK provider. About opens official release pages in the browser; the app does not download or install APK updates.</li></ul><p class="ta">பகுதிகளைப் பதிவிறக்கிப் பதிவிறக்கங்கள் பக்கத்தில் இணையமின்றிக் கேட்கலாம். இயல்பாக வைஃபை மட்டும் பயன்படுத்தப்படும். அளவு, முன்னேற்றம், மீண்டும் முயற்சி, ரத்து செய்தல், நீக்குதல் உள்ளன. ஆறு பிரிவுகளில் பதினொரு ஊட்டங்களையும் நிகழ்ச்சித் தேடலையும் பயன்படுத்தலாம். இயக்கம், இடைநிறுத்தம், நேரம், இழுத்துத் தேடல், தொடர்ந்து கேட்பது ஆகியவை உள்ளன.</p></div>
+              <div class="body"><ul><li><strong>Real offline downloads.</strong> Download beside an episode; use Downloads for progress, stored sizes, Wi-Fi-only settings, retry, cancellation and deletion. Play offline requires a complete local file and never falls back to streaming.</li><li><strong>Eleven sources, six categories.</strong> News/world, history, literature, science/space, learning and children’s stories, with category filters, show search and episode search. A curated catalogue, not every Tamil podcast on the web.</li><li><strong>Persistent player.</strong> Play/pause, seek, elapsed time, duration, fifteen-second skips and saved-position resume, with media-session controls and audio-focus handling.</li><li><strong>Browser updates.</strong> No package-install permission or update APK provider. About opens official release pages in the browser; the app does not download or install APK updates.</li></ul><p class="ta" data-content-lang="ta" lang="ta">பகுதிகளைப் பதிவிறக்கிப் பதிவிறக்கங்கள் பக்கத்தில் இணையமின்றிக் கேட்கலாம். இயல்பாக வைஃபை மட்டும் பயன்படுத்தப்படும். அளவு, முன்னேற்றம், மீண்டும் முயற்சி, ரத்து செய்தல், நீக்குதல் உள்ளன. ஆறு பிரிவுகளில் பதினொரு ஊட்டங்களையும் நிகழ்ச்சித் தேடலையும் பயன்படுத்தலாம். இயக்கம், இடைநிறுத்தம், நேரம், இழுத்துத் தேடல், தொடர்ந்து கேட்பது ஆகியவை உள்ளன.</p></div>
             </details>
             <details class="trust">
               <summary>🔒 Privacy &amp; permissions · பாதுகாப்பும் அனுமதிகளும்</summary>
-              <div class="body"><p>No account, ads, app analytics, microphone, contacts or shared-storage permission. Publisher feeds, audio and artwork use the network. Downloads use app-specific storage and are excluded from standard Android backups; uninstalling removes them. Notifications are requested on first playback on Android 13+, but denial does not block listening. Podcast publishers may receive network request metadata.</p><div class="sha">SHA-256: f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec</div></div>
+              <div class="body"><p data-content-lang="en">No account, ads, app analytics, microphone, contacts or shared-storage permission. Publisher feeds, audio and artwork use the network. Downloads use app-specific storage and are excluded from standard Android backups; uninstalling removes them. Notifications are requested on first playback on Android 13+, but denial does not block listening. Podcast publishers may receive network request metadata.</p><div class="sha">SHA-256: f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec</div></div>
             </details>
             <details class="news">
               <summary>🆕 Release &amp; testing limits · வெளியீடும் சோதனை நிலையும்</summary>
-              <div class="body"><p><strong>Version 1.4.</strong> The owner installed the version 1.4 candidates and supplied Play Protect screens saying This app looks safe, then confirmed All good. These releases promote the same immutable candidate APKs from run 40485186570, not new binaries. This is owner phone evidence, not an independent security audit or a guarantee about future scans. Stop if any security warning appears.</p><p>The owner demonstrated one completed 4.94 MB episode playing with airplane mode enabled, Wi-Fi off and mobile data unavailable in the preceding candidate, then confirmed the final 1.4 checks. CI checked all eleven feeds and sampled audio prefixes, not every full episode or content suitability. Relaunch, missing-file handling and deletion/storage recovery are not individually established by the screenshots. Publisher rights and availability can change.</p><p class="ta">புதிய பதிப்புகளை உரிமையாளர் தொலைபேசியில் நிறுவினார். பாதுகாப்புச் சோதனை ஏற்றுக்கொண்ட படங்களை அளித்து அனைத்தும் நன்றாக இருப்பதாக உறுதிப்படுத்தினார். சோதித்த அதே கோப்புகளே வெளியிடப்பட்டுள்ளன. இது தனிப்பட்ட சாதனச் சோதனை; அனைத்துச் சாதனங்களுக்கும் எதிர்காலச் சோதனைகளுக்கும் உத்தரவாதம் அல்ல. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.</p></div>
+              <div class="body"><p data-content-lang="en"><strong>Version 1.4.</strong> The owner installed the version 1.4 candidates and supplied Play Protect screens saying This app looks safe, then confirmed All good. These releases promote the same immutable candidate APKs from run 40485186570, not new binaries. This is owner phone evidence, not an independent security audit or a guarantee about future scans. Stop if any security warning appears.</p><p data-content-lang="en">The owner demonstrated one completed 4.94 MB episode playing with airplane mode enabled, Wi-Fi off and mobile data unavailable in the preceding candidate, then confirmed the final 1.4 checks. CI checked all eleven feeds and sampled audio prefixes, not every full episode or content suitability. Relaunch, missing-file handling and deletion/storage recovery are not individually established by the screenshots. Publisher rights and availability can change.</p><p class="ta" data-content-lang="ta" lang="ta">புதிய பதிப்புகளை உரிமையாளர் தொலைபேசியில் நிறுவினார். பாதுகாப்புச் சோதனை ஏற்றுக்கொண்ட படங்களை அளித்து அனைத்தும் நன்றாக இருப்பதாக உறுதிப்படுத்தினார். சோதித்த அதே கோப்புகளே வெளியிடப்பட்டுள்ளன. இது தனிப்பட்ட சாதனச் சோதனை; அனைத்துச் சாதனங்களுக்கும் எதிர்காலச் சோதனைகளுக்கும் உத்தரவாதம் அல்ல. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.</p></div>
             </details>
             <div class="mini">12.0 MB · <strong>SHA-256 file integrity ✓</strong></div>
             <div class="dl-status" id="st-podcast"></div>
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Tamil-Podcast-Player-v1.6.zip" href="apks/Tamil-Podcast-Player-v1.6.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-podcast" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk">⚡ Direct APK (v1.6)</a>
+            <a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-podcast" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">⚡ Direct APK (v1.6)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.6">Release Notes</a>
           </div>
         </article>
@@ -1758,30 +1800,31 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header">
-              <h2><span class="emoji">📱</span>Elderly Launcher <span class="ta-name">(முதியவர் திரை)</span></h2>
+              <h2 id="app-elderly-launcher" tabindex="-1"><span class="emoji">📱</span>Elderly Launcher <span class="ta-name">(முதியவர் திரை)</span></h2>
               <span class="ver">v1.5 · Android 8.0+</span>
             </div>
+            <div class="release-brief"><p data-content-lang="en">New signing identity with existing app behaviour retained. Old-key installations need the migration instructions; same-key installations can update normally.</p><p data-content-lang="ta" lang="ta">தற்போதைய செயலி நடத்தையைத் தொடர்ந்து புதிய கையொப்பம் பயன்படுத்தப்படுகிறது. பழைய கையொப்ப நிறுவலுக்கு மாற்ற வழிமுறைகள் பொருந்தும்; அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p><p class="testing-status"><span data-content-lang="en">Automated checks only · this exact APK was not phone-tested before publication.</span><span data-content-lang="ta" lang="ta">தானியங்கிச் சோதனைகள் மட்டும் · வெளியிடும் முன் இந்தக் கோப்பு தொலைபேசியில் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
             <p class="note"><strong>உரிமையாளரால் சாதனத்தில் சோதிக்கப்பட்டது.</strong><br>Version 1.4: owner-confirmed phone checks, with Play Protect reporting This app looks safe. Stop if any future warning appears.</p>
-            <p class="tagline">Large, predictable home-screen buttons, favourite calls and a live battery reading.</p>
-            <p class="ta-note">பெரிய பொத்தான்கள் கொண்ட முகப்புத் திரை. விருப்ப நபர்களை அழைக்கலாம்; மின்கல அளவும் மின்னேற்ற நிலையும் தெரியும்.</p>
+            <p class="tagline" data-content-lang="en">Large, predictable home-screen buttons, favourite calls and a live battery reading.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">பெரிய பொத்தான்கள் கொண்ட முகப்புத் திரை. விருப்ப நபர்களை அழைக்கலாம்; மின்கல அளவும் மின்னேற்ற நிலையும் தெரியும்.</p>
             <details class="feat">
               <summary>⚙️ Features · வசதிகள்</summary>
-              <div class="body"><ul><li><strong>Readable controls.</strong> Explicit high-contrast foregrounds for app rows, large buttons, favourites and emergency confirmation, including disabled states; palette regression checks require at least 4.5:1.</li><li><strong>Default home and battery.</strong> A dedicated default-home chooser, live battery percentage/charging information and Back navigation that returns to home without closing it.</li><li><strong>Contextual permissions.</strong> Contacts when adding a favourite, phone access when calling, and camera access for the torch. No unused notification permission. Never call an emergency number for testing.</li><li><strong>Browser updates.</strong> No package-install permission or update APK provider. About opens official release pages in the browser; the launcher does not download or install APK updates.</li></ul><p class="ta">பெரிய பொத்தான்கள், முக்கிய நபர்கள், அவசர அழைப்பு உறுதிப்படுத்தல் ஆகியவற்றில் தெளிவான எழுத்துகள் உள்ளன. முகப்புத் திரைத் தேர்வு, மின்கல விவரம், பின்செல்லல், தேவைக்கேற்ற அனுமதிகள் உள்ளன. புதுப்பிப்புகள் உலாவியில் திறக்கும். சோதனைக்காக அவசர எண்ணை அழைக்க வேண்டாம்.</p></div>
+              <div class="body"><ul><li><strong>Readable controls.</strong> Explicit high-contrast foregrounds for app rows, large buttons, favourites and emergency confirmation, including disabled states; palette regression checks require at least 4.5:1.</li><li><strong>Default home and battery.</strong> A dedicated default-home chooser, live battery percentage/charging information and Back navigation that returns to home without closing it.</li><li><strong>Contextual permissions.</strong> Contacts when adding a favourite, phone access when calling, and camera access for the torch. No unused notification permission. Never call an emergency number for testing.</li><li><strong>Browser updates.</strong> No package-install permission or update APK provider. About opens official release pages in the browser; the launcher does not download or install APK updates.</li></ul><p class="ta" data-content-lang="ta" lang="ta">பெரிய பொத்தான்கள், முக்கிய நபர்கள், அவசர அழைப்பு உறுதிப்படுத்தல் ஆகியவற்றில் தெளிவான எழுத்துகள் உள்ளன. முகப்புத் திரைத் தேர்வு, மின்கல விவரம், பின்செல்லல், தேவைக்கேற்ற அனுமதிகள் உள்ளன. புதுப்பிப்புகள் உலாவியில் திறக்கும். சோதனைக்காக அவசர எண்ணை அழைக்க வேண்டாம்.</p></div>
             </details>
             <details class="trust">
               <summary>🔒 Privacy &amp; permissions · பாதுகாப்பும் அனுமதிகளும்</summary>
-              <div class="body"><p>No account, ads or app analytics. Contacts/favourites stay on the phone. The launcher posts no notifications. Calls, contacts and torch use contextual Android permissions. Project and release links open in the browser; there is no package-install permission.</p><div class="sha">SHA-256: c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39</div></div>
+              <div class="body"><p data-content-lang="en">No account, ads or app analytics. Contacts/favourites stay on the phone. The launcher posts no notifications. Calls, contacts and torch use contextual Android permissions. Project and release links open in the browser; there is no package-install permission.</p><div class="sha">SHA-256: c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39</div></div>
             </details>
             <details class="news">
               <summary>🆕 Release &amp; testing limits · வெளியீடும் சோதனை நிலையும்</summary>
-              <div class="body"><p><strong>Version 1.4.</strong> The owner installed the version 1.4 candidates and supplied Play Protect screens saying This app looks safe, then confirmed All good. These releases promote the same immutable candidate APKs from run 40485186570, not new binaries. This is owner phone evidence, not an independent security audit or a guarantee about future scans. Stop if any security warning appears.</p><p>Owner screenshots show readable controls and the default-home chooser. The chooser alone does not establish role completion. All OEM permission flows, torch behavior, larger font settings and every screen are not individually verified by the supplied screenshots.</p><p class="ta">புதிய பதிப்புகளை உரிமையாளர் தொலைபேசியில் நிறுவினார். பாதுகாப்புச் சோதனை ஏற்றுக்கொண்ட படங்களை அளித்து அனைத்தும் நன்றாக இருப்பதாக உறுதிப்படுத்தினார். சோதித்த அதே கோப்புகளே வெளியிடப்பட்டுள்ளன. இது தனிப்பட்ட சாதனச் சோதனை; அனைத்துச் சாதனங்களுக்கும் எதிர்காலச் சோதனைகளுக்கும் உத்தரவாதம் அல்ல. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.</p></div>
+              <div class="body"><p data-content-lang="en"><strong>Version 1.4.</strong> The owner installed the version 1.4 candidates and supplied Play Protect screens saying This app looks safe, then confirmed All good. These releases promote the same immutable candidate APKs from run 40485186570, not new binaries. This is owner phone evidence, not an independent security audit or a guarantee about future scans. Stop if any security warning appears.</p><p data-content-lang="en">Owner screenshots show readable controls and the default-home chooser. The chooser alone does not establish role completion. All OEM permission flows, torch behavior, larger font settings and every screen are not individually verified by the supplied screenshots.</p><p class="ta" data-content-lang="ta" lang="ta">புதிய பதிப்புகளை உரிமையாளர் தொலைபேசியில் நிறுவினார். பாதுகாப்புச் சோதனை ஏற்றுக்கொண்ட படங்களை அளித்து அனைத்தும் நன்றாக இருப்பதாக உறுதிப்படுத்தினார். சோதித்த அதே கோப்புகளே வெளியிடப்பட்டுள்ளன. இது தனிப்பட்ட சாதனச் சோதனை; அனைத்துச் சாதனங்களுக்கும் எதிர்காலச் சோதனைகளுக்கும் உத்தரவாதம் அல்ல. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.</p></div>
             </details>
             <div class="mini">11.5 MB · <strong>SHA-256 file integrity ✓</strong></div>
             <div class="dl-status" id="st-launcher"></div>
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Elderly-Launcher-v1.5.zip" href="apks/Elderly-Launcher-v1.5.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-launcher" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk">⚡ Direct APK (v1.5)</a>
+            <a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-launcher" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk" aria-label="Download APK · Elderly-Launcher-v1.5.apk">⚡ Direct APK (v1.5)</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5">Release Notes</a>
           </div>
         </article>
@@ -1790,10 +1833,20 @@
       <div class="note">
         <strong>Security disclosure:</strong> Secret Message is published openly with full architecture notes (<a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/secret-message-security-design.md" style="color:var(--accent)">secret-message-security-design.md</a>), and has not undergone an independent third-party cryptography audit; do not rely on it where physical safety depends on secrecy.
       </div>
+      <section id="install-help" class="install-help" aria-labelledby="install-title">
+        <h2 id="install-title">Install help &amp; FAQ · நிறுவ உதவியும் கேள்விகளும்</h2>
+        <p data-content-lang="en">Download the named APK from this official site and open it using Android’s installer. Android may ask you to allow installation from your browser or file manager. If Play Protect reports a warning, stop—do not bypass it.</p>
+        <p data-content-lang="ta" lang="ta">இந்த அதிகாரப்பூர்வத் தளத்திலிருந்து குறிப்பிட்ட கோப்பைப் பதிவிறக்கி ஆண்ட்ராய்டு நிறுவியில் திறக்கவும். உலாவி அல்லது கோப்பு மேலாளரிலிருந்து நிறுவ அனுமதி கேட்கப்படலாம். பாதுகாப்புச் சோதனை எச்சரித்தால் நிறுத்துங்கள்; எச்சரிக்கையை மீற வேண்டாம்.</p>
+        <details><summary>Must I uninstall? · நீக்க வேண்டுமா?</summary><p data-content-lang="en">No, not for an ordinary same-key update. Only old-key installations affected by the signing transition need migration. Download the replacement first and back up/export important data before uninstalling. Uninstalling may erase local data. Secret Message is excluded. <a href="#migration-warning-title">Read the signing notice</a>.</p><p data-content-lang="ta" lang="ta">அதே கையொப்பப் புதுப்பிப்புக்கு நீக்க வேண்டாம். கையொப்ப மாற்றத்தால் பாதிக்கப்பட்ட பழைய நிறுவலுக்கு மட்டுமே மாற்றம் தேவை. முதலில் புதிய கோப்பைப் பதிவிறக்கி முக்கியத் தரவைக் காப்புப்பிரதி எடுத்த பிறகே நீக்கவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். இரகசிய செய்தி இந்த மாற்றத்தில் இல்லை.</p></details>
+        <details><summary>What does SHA-256 prove? · சரிபார்ப்பு எதற்கு?</summary><p data-content-lang="en">A matching checksum shows that the downloaded file matches the published hash. It is not an independent security audit, Play Protect approval or proof that the app is safe. Copying a hash does not verify a downloaded file.</p><p data-content-lang="ta" lang="ta">கோப்பின் சரிபார்ப்பு மதிப்பு வெளியிட்ட மதிப்புடன் பொருந்துகிறதா என்பதையே இது காட்டும். இது தனிப் பாதுகாப்பு ஆய்வோ பாதுகாப்பு ஒப்புதலோ அல்ல. மதிப்பை நகலெடுப்பது மட்டும் கோப்பைச் சரிபார்க்காது.</p></details>
+        <details><summary>Why did Live Guard download as CleanSweep? · கோப்பின் பெயர் ஏன் வேறு?</summary><p data-content-lang="en">Live Guard retains the established CleanSweep APK filename. The download links, package and published checksums identify the same app; existing release files have not been renamed.</p><p data-content-lang="ta" lang="ta">கைபேசி காவலன் செயலியின் பழைய கோப்புப் பெயர் தொடர்கிறது. இணைப்பும் செயலி அடையாளமும் சரிபார்ப்பு மதிப்பும் அதே செயலியையே குறிக்கின்றன. ஏற்கனவே வெளியிட்ட கோப்புகள் பெயர் மாற்றப்படவில்லை.</p></details>
+        <details><summary>Where can I ask for help? · உதவி எங்கே?</summary><p data-content-lang="en">Use the <a href="#request-app">public GitHub request form</a>. Never post passwords, OTPs, private messages or banking details.</p><p data-content-lang="ta" lang="ta"><a href="#request-app">பொதுக் கோரிக்கைப் படிவத்தைப்</a> பயன்படுத்தவும். கடவுச்சொல், ஒருமுறை கடவுச்சொல், தனிப்பட்ட செய்தி, வங்கித் தகவல் பகிர வேண்டாம்.</p></details>
+      </section>
+
       <section class="request-box" id="request-app" aria-labelledby="request-title">
         <h2 id="request-title">புதிய செயலி / வசதி கோரிக்கை · Request an app or feature</h2>
-        <p>உங்களுக்கு வேண்டிய செயலி அல்லது மாற்றத்தை எழுதுங்கள். GitHub-இல் கோரிக்கையைப் பதிவு செய்தால், அதே இடத்தில் உரிமையாளர் பதிலளிக்கலாம்.</p>
-        <p>Opens a GitHub Issue draft. Sign in to GitHub, review it, then submit. This website does not save or send the form itself. You can follow replies on your issue; delivery dates are not guaranteed.</p>
+        <p data-content-lang="ta" lang="ta">உங்களுக்கு வேண்டிய செயலி அல்லது மாற்றத்தை எழுதுங்கள். GitHub-இல் கோரிக்கையைப் பதிவு செய்தால், அதே இடத்தில் உரிமையாளர் பதிலளிக்கலாம்.</p>
+        <p data-content-lang="en">Opens a GitHub Issue draft. Sign in to GitHub, review it, then submit. This website does not save or send the form itself. You can follow replies on your issue; delivery dates are not guaranteed.</p>
         <p id="request-privacy">கோரிக்கையும் பதில்களும் பொதுவாகத் தெரியும். கடவுச்சொல், ஒருமுறை கடவுச்சொல், தொலைபேசி எண், தனிப்பட்ட செய்தி அல்லது வங்கித் தகவல் சேர்க்க வேண்டாம்.<br>Requests and replies are public. Do not include passwords, OTPs, phone numbers, private messages or banking details.</p>
         <form id="app-request-form" action="https://github.com/universalrp2003/RP-Android-Apps/issues/new" method="get" aria-describedby="request-privacy">
           <label for="request-subject">தலைப்பு / App or feature name</label>
@@ -1809,13 +1862,13 @@
 
       <details class="trust release-status" id="signing-limitation">
         <summary>புதிய கையொப்ப மாற்றம் / Fresh-install signing migration</summary>
-        <div class="body"><p>The legacy signing key was exposed, so new releases use a separate, privately backed-up key. Its certificate fingerprint is pinned and verified in CI; that is not Play Protect clearance. Existing installations cannot update across the signing change. Download the new APK from this official website first, back up/export anything important, then uninstall the old app and install the new one through Android. Uninstalling may erase local data. Stop if Play Protect warns; never bypass it. Tamilan Store updater behavior is unchanged. Secret Message keeps its separate signing identity and is not part of this migration. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">Migration details and verification</a>.</p><p class="ta">பழைய கையொப்பத் திறவுகோல் பொதுவெளியில் இருந்ததால், புதிய வெளியீடுகள் தனியாகக் காப்புப்பிரதி செய்யப்பட்ட திறவுகோலில் கையொப்பமிடப்படுகின்றன. அதன் சான்றிதழ் கைரேகை CI-யில் சரிபார்க்கப்படுகிறது; இது Play Protect ஒப்புதல் அல்ல. பழைய நிறுவல்களைப் புதிய கையொப்பத்தில் நேரடியாகப் புதுப்பிக்க முடியாது. முதலில் இந்த அதிகாரப்பூர்வ இணையதளத்திலிருந்து APK-ஐப் பதிவிறக்கி, முக்கியத் தகவலை ஏற்றுமதி அல்லது காப்புப்பிரதி செய்து, பின்னர் பழைய செயலியை நீக்கி Android வழியாகப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம். தமிழன் அங்காடியின் புதுப்பிப்பு நடத்தை மாற்றப்படவில்லை. Secret Message தனிக் கையொப்பத்தைத் தொடர்கிறது; இந்த மாற்றத்தில் இல்லை. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">மாற்றம் மற்றும் சரிபார்ப்பு விவரங்கள்</a>.</p></div>
+        <div class="body"><p data-content-lang="en">The legacy signing key was exposed, so new releases use a separate, privately backed-up key. Its certificate fingerprint is pinned and verified in CI; that is not Play Protect clearance. Only old-key installations cannot update across the signing change; an installation already using the replacement key can update normally without uninstalling. Download the new APK from this official website first, back up/export anything important, then uninstall the old app and install the new one through Android. Uninstalling may erase local data. Stop if Play Protect warns; never bypass it. Tamilan Store updater behavior is unchanged. Secret Message keeps its separate signing identity and is not part of this migration. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">Migration details and verification</a>.</p><p class="ta" data-content-lang="ta" lang="ta">பழைய கையொப்பத் திறவுகோல் பொதுவெளியில் இருந்ததால், புதிய வெளியீடுகள் தனியாகக் காப்புப்பிரதி செய்யப்பட்ட திறவுகோலில் கையொப்பமிடப்படுகின்றன. அதன் சான்றிதழ் கைரேகை CI-யில் சரிபார்க்கப்படுகிறது; இது Play Protect ஒப்புதல் அல்ல. பழைய கையொப்ப நிறுவல்களைப் புதிய கையொப்பத்தில் நேரடியாகப் புதுப்பிக்க முடியாது. ஏற்கனவே புதிய கையொப்பம் இருந்தால் வழக்கம்போல் புதுப்பிக்கலாம்; நீக்க வேண்டாம். முதலில் இந்த அதிகாரப்பூர்வ இணையதளத்திலிருந்து APK-ஐப் பதிவிறக்கி, முக்கியத் தகவலை ஏற்றுமதி அல்லது காப்புப்பிரதி செய்து, பின்னர் பழைய செயலியை நீக்கி Android வழியாகப் புதியதை நிறுவவும். நீக்கினால் உள்ளூர் தரவு அழியலாம். Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதைத் தவிர்க்க வேண்டாம். தமிழன் அங்காடியின் புதுப்பிப்பு நடத்தை மாற்றப்படவில்லை. Secret Message தனிக் கையொப்பத்தைத் தொடர்கிறது; இந்த மாற்றத்தில் இல்லை. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/fresh-install-signing-migration.md">மாற்றம் மற்றும் சரிபார்ப்பு விவரங்கள்</a>.</p></div>
       </details>
 
       <!-- Secondary evidence stays available without crowding downloads. -->
       <details class="trust release-status">
         <summary>வெளியீட்டுச் சோதனை விவரங்கள் / Release test details</summary>
-        <div class="body"><p>கதை சொல்லி மற்றும் முதியவர் திரை 1.4: உரிமையாளரால் சாதனத்தில் சோதிக்கப்பட்டவை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.</p><p>Owner-tested 1.4 releases. File hashes verify integrity, not security clearance. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/2026-10-27-device-follow-up.md">Evidence and limitations</a>.</p></div>
+        <div class="body"><p data-content-lang="ta" lang="ta">கதை சொல்லி மற்றும் முதியவர் திரை 1.4: உரிமையாளரால் சாதனத்தில் சோதிக்கப்பட்டவை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.</p><p data-content-lang="en">Owner-tested 1.4 releases. File hashes verify integrity, not security clearance. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/2026-10-27-device-follow-up.md">Evidence and limitations</a>.</p></div>
       </details>
     </main>
 
@@ -1908,7 +1961,7 @@
           a.remove();
           setTimeout(function () { URL.revokeObjectURL(objUrl); }, 60000);
           if (box) {
-            box.innerHTML = '✅ SHA-256 Verified &amp; Ready! Saving <strong>' + fileName + '</strong>. (If your phone still blocks raw <code>.apk</code> saving, tap the green <strong>📦 Download .ZIP</strong> button!)';
+            box.innerHTML = 'Published SHA-256 matched (not security approval). கோப்பு மதிப்பு பொருந்தியது; இது பாதுகாப்பு ஒப்புதல் அல்ல. Saving <strong>' + fileName + '</strong>. (If your phone still blocks raw <code>.apk</code> saving, tap the green <strong>📦 Download .ZIP</strong> button!)';
           }
         } catch (err) {
           if (err.message === 'SHA-256 mismatch') {

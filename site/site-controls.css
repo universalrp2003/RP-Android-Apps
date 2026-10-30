@@ -1,0 +1,54 @@
+/* Progressive controls: the complete bilingual catalogue remains readable without JS. */
+[hidden] { display: none !important; }
+.js-only { display: none; }
+.has-js .js-only { display: block; }
+html[data-site-language="ta"] [data-content-lang="en"],
+html[data-site-language="en"] [data-content-lang="ta"] { display: none; }
+html { scroll-padding-top: 24px; }
+:focus-visible { outline: 3px solid #fbbf24; outline-offset: 4px; }
+h2[id], #install-help { scroll-margin-top: 24px; }
+.site-tools, .install-help { border: 1px solid #33516d; border-radius: 16px; padding: 18px; margin-bottom: 22px; background: #0e1b29; }
+.site-tools a, .install-help a, .release-brief a, .latest .lname a { color: #67e8f9; }
+.tool-row, .filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.tool-row { margin-bottom: 16px; }
+.tool-row label { color: #c7dae9; font-size: .85rem; }
+.tool-row select { max-width: 100%; min-height: 44px; border-radius: 8px; border: 1px solid #41627e; background: #071019; color: #eef6fc; padding: 8px; font: inherit; }
+.filter-row button, .copy-sha { border: 1px solid #41627e; border-radius: 24px; background: #11263a; color: #eef6fc; padding: 10px 14px; min-height: 44px; font: inherit; font-size: .82rem; cursor: pointer; }
+.filter-row button[aria-pressed="true"] { background: #29d3e8; color: #062229; border-color: #29d3e8; }
+.filter-row [data-filter-count] { display: inline-block; min-width: 1.5em; font-weight: 700; }
+#filter-status { color: #b2c7d9; margin-top: 12px; font-size: .85rem; }
+.release-brief { border-left: 3px solid #29d3e8; padding: 10px 12px; margin: 12px 0; background: #102334; font-size: .85rem; }
+.release-brief p + p { margin-top: 8px; }
+.release-brief .testing-status { color: #fcd778; font-size: .8rem; }
+.release-brief .testing-status span + span::before { content: " · "; }
+html[data-site-language="ta"] .testing-status span + span::before { content: ""; }
+.release-brief a { display: inline-block; margin-top: 10px; }
+.latest .ldate { font-size: .72rem; color: #b2c7d9; white-space: nowrap; }
+.filename-alias { color: #b2c7d9; font-weight: normal; }
+.copy-sha { margin: 10px 8px 0 0; }
+.copy-feedback { display: block; margin-top: 8px; color: #d6e4ee; }
+.manual-hash { display: block; width: 100%; padding: 10px; color: #eef6fc; background: #071019; overflow-wrap: anywhere; }
+.install-help h2 { font-size: 1.2rem; margin-bottom: 12px; }
+.install-help p { margin: 10px 0; }
+.install-help details { border-top: 1px solid #33516d; padding: 14px 0; }
+.install-help summary { cursor: pointer; min-height: 44px; padding: 8px 0; color: #c4f4fb; }
+/* Keep descriptive controls usable without sideways page scrolling. */
+@media (max-width: 620px) {
+  .latest .ldate, .latest .lsize { display: none; }
+  .latest { padding: 14px 12px; }
+  .latest .lname { overflow-wrap: anywhere; }
+  .latest .ldl .btn { white-space: normal; max-width: 90px; min-height: 44px; }
+  .tool-row { align-items: stretch; }
+  .tool-row label, .tool-row select { width: 100%; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .site-tools, .install-help { padding: 14px; }
+  .filter-row { gap: 8px; }
+}
+
+.card-header { flex-wrap: wrap; }
+.card-header h2 { min-width: 0; overflow-wrap: anywhere; }
+.trust .body { overflow-wrap: anywhere; }
+
+.release-table { overflow-x: auto; }
+.card a:not(.btn) { color: #67e8f9; }
+details .body { overflow-wrap: anywhere; }

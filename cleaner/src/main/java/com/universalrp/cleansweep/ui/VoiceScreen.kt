@@ -197,15 +197,22 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        val newsLabel = tr(when {
+                            state.newsVoiceBusy && state.voiceSpeaking -> "Reading news…"
+                            state.newsVoiceBusy -> "Preparing news audio…"
+                            else -> "Read today's news"
+                        })
                         VoiceChip(
-                            label = tr("Read today's news"),
+                            label = newsLabel,
                             icon = Icons.Outlined.PlayArrow,
+                            enabled = !state.newsVoiceBusy,
                             onClick = { vm.readTodaysNewsNow() },
                         )
                         androidx.compose.material3.OutlinedButton(onClick = { vm.stopSpeakingNow() }) {
                             Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                         }
                     }
+                    NewsBulletinStatus()
                 }
             }
 
@@ -373,13 +380,18 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 // here too. The notification card only appears after 30 seconds of outage,
                 // but this screen should not need the owner to wait for it.
                 val hdWaiting =
-                    automatic.stage == com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET ||
-                        delivery.stage == com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET
+                    automatic.stage in setOf(
+                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET,
+                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.ENGINE_ERROR,
+                    ) || delivery.stage in setOf(
+                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET,
+                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.ENGINE_ERROR,
+                    )
                 if (hdWaiting) {
                     Text(
                         "\u23F3 " + tr(
-                            "HD voice is waiting for the internet; announcements are paused, " +
-                                "not dropped."
+                            "The last HD voice request could not finish; unread news is kept " +
+                                "for retry. No phone voice was substituted."
                         ),
                         style = MaterialTheme.typography.labelSmall,
                         color = WarnAmber,
@@ -865,8 +877,9 @@ private fun VoiceChip(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
-    TextButton(onClick = onClick) {
+    TextButton(onClick = onClick, enabled = enabled) {
         Icon(icon, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
         Spacer(Modifier.size(6.dp))
         Text(label, color = AccentCyan, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)

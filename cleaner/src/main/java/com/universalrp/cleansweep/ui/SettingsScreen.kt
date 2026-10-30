@@ -179,16 +179,23 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        val label = tr(when {
+                            state.newsVoiceBusy && state.voiceSpeaking -> "Reading news…"
+                            state.newsVoiceBusy -> "Preparing news audio…"
+                            else -> "Read today's news"
+                        })
                         Button(
                             onClick = { vm.readTodaysNewsNow() },
+                            enabled = !state.newsVoiceBusy,
                             colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
                         ) {
-                            Text(tr("Read today's news"), maxLines = 1, softWrap = false)
+                            Text(label, maxLines = 1, softWrap = false)
                         }
                         androidx.compose.material3.OutlinedButton(onClick = { vm.stopSpeakingNow() }) {
                             Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                         }
                     }
+                    NewsBulletinStatus()
                 }
             }
 

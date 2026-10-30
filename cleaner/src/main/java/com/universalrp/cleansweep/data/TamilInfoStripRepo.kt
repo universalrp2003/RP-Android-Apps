@@ -51,9 +51,9 @@ object TamilInfoStripRepo {
         // National / India News
         Triple("இந்தியா", "News18 இந்தியா", "https://tamil.news18.com/commonfeeds/v1/tam/rss/national.xml"),
         Triple("இந்தியா", "தினமணி இந்தியா", "https://www.dinamani.com/%E0%AE%87%E0%AE%A8%E0%AF%8D%E0%AE%A4%E0%AE%BF%E0%AE%AF%E0%AE%BE/rssxml"),
-        Triple("இந்தியா", "புதிய தலைமுறை", "https://www.puthiyathalaimurai.com/rss.xml"),
+        Triple("செய்திகள்", "புதிய தலைமுறை", "https://www.puthiyathalaimurai.com/rss.xml"),
         // International News
-        Triple("சர்வதேசம்", "BBC Tamil", "https://feeds.bbci.co.uk/tamil/rss.xml"),
+        Triple("செய்திகள்", "BBC Tamil", "https://feeds.bbci.co.uk/tamil/rss.xml"),
         Triple("சர்வதேசம்", "Oneindia சர்வதேசம்", "https://tamil.oneindia.com/rss/feeds/tamil-international-fb.xml"),
         // General & Trending
         Triple("செய்திகள்", "Oneindia Tamil", "https://tamil.oneindia.com/rss/feeds/tamil-news-fb.xml"),
@@ -66,7 +66,7 @@ object TamilInfoStripRepo {
         Triple("Tamil Nadu", "New Indian Express TN", "https://www.newindianexpress.com/api/v1/collections/tamil-nadu.rss"),
         // India News (English)
         Triple("India", "The Hindu India", "https://www.thehindu.com/news/national/feeder/default.rss"),
-        Triple("India", "NDTV Top Stories", "https://feeds.feedburner.com/ndtvnews-top-stories"),
+        Triple("Top News", "NDTV Top Stories", "https://feeds.feedburner.com/ndtvnews-top-stories"),
         Triple("India", "Indian Express India", "https://indianexpress.com/section/india/feed/"),
         // World & Top Headlines (English)
         Triple("World", "BBC World News", "https://feeds.bbci.co.uk/news/world/rss.xml"),
@@ -95,6 +95,33 @@ object TamilInfoStripRepo {
                 "https://news.google.com/rss/search?q=" + android.net.Uri.encode("cyber fraud India") + "&hl=en-IN&gl=IN&ceid=IN:en",
             ),
         )
+    }
+
+    private fun specialistFeeds(tamil: Boolean): List<Triple<String, String, String>> {
+        if (!tamil) return listOf(
+            Triple("Science", "NASA", "https://www.nasa.gov/news-release/feed/"),
+            Triple("Cyber", "CISA", "https://www.cisa.gov/cybersecurity-advisories/alerts.xml"),
+            Triple("Environment", "Mongabay India", "https://india.mongabay.com/feed/"),
+            Triple("Science", "The Hindu Science", "https://www.thehindu.com/sci-tech/science/feeder/default.rss"),
+            Triple("Cyber", "BleepingComputer", "https://www.bleepingcomputer.com/feed/"),
+            Triple("Environment", "BBC Science & Environment", "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"),
+        )
+        fun search(category: String, query: String) = Triple(category, "Google News Tamil",
+            "https://news.google.com/rss/search?q=" + android.net.Uri.encode(query + " when:1d") + "&hl=ta&gl=IN&ceid=IN:ta")
+        return listOf(
+            search("Science", "அறிவியல் கண்டுபிடிப்பு OR விண்வெளி OR இஸ்ரோ"),
+            search("Cyber", "இணைய மோசடி OR குறுஞ்செய்தி மோசடி OR ஆண்ட்ராய்டு பாதுகாப்பு"),
+            search("Environment", "காலநிலை OR சுற்றுச்சூழல் OR பல்லுயிர் OR நீர்நிலை"),
+            Triple("Science", "Oneindia Tamil Technology", "https://tamil.oneindia.com/rss/feeds/tamil-technology-fb.xml"),
+            Triple("Science", "Tamil Gizbot Science", "https://tamil.gizbot.com/rss/feeds/tamil-scitech-fb.xml"),
+        )
+    }
+
+    suspend fun getEnglishSpecialistsForTranslation(context: Context): List<NewsHeadline> = withContext(Dispatchers.IO) {
+        currentCoroutineContext().ensureActive()
+        val feeds = specialistFeeds(false)
+        val fetched = fetchFeeds(feeds).flatMap { it.items }
+        NewsPolicy.todayForLanguage(fetched, System.currentTimeMillis(), ZoneId.systemDefault(), tamil = false)
     }
 
     private fun localScope(now: Long, zone: ZoneId) = zone.id + "|" + java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
@@ -140,7 +167,12 @@ object TamilInfoStripRepo {
         val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
         val caps = runCatching { connectivity?.activeNetwork?.let { connectivity.getNetworkCapabilities(it) } }.getOrNull()
         val internet = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-        val feeds = if (tamil) TAMIL_RSS_FEEDS + cyberFraudFeeds(tamil = true) else ENGLISH_RSS_FEEDS + cyberFraudFeeds(tamil = false)
+        val general = if (tamil) TAMIL_RSS_FEEDS else ENGLISH_RSS_FEEDS
+        // Interleave specialist and general sources so a slow first category cannot starve the others.
+        val specialist = specialistFeeds(tamil)
+        val feeds = (0 until maxOf(general.size, specialist.size)).flatMap { index ->
+            listOfNotNull(general.getOrNull(index), specialist.getOrNull(index))
+        } + cyberFraudFeeds(tamil)
         val fetched = if (internet) fetchFeeds(feeds) else emptyList()
         currentCoroutineContext().ensureActive()
         // Re-evaluate date AND timezone after networking, including midnight/time-zone changes during a fetch.
@@ -171,8 +203,8 @@ object TamilInfoStripRepo {
 
     private data class FeedResult(val success: Boolean, val items: List<NewsHeadline>)
     private suspend fun fetchFeeds(feeds: List<Triple<String, String, String>>): List<FeedResult> = coroutineScope {
-        val limit = Semaphore(3)
-        val deadline = System.nanoTime() + 10_000_000_000L // shared budget, not ten independent long waits.
+        val limit = Semaphore(4)
+        val deadline = System.nanoTime() + 18_000_000_000L // one bounded budget for the expanded, interleaved source pool.
         feeds.map { (category, publisher, url) -> async(Dispatchers.IO) {
             limit.withPermit {
                 currentCoroutineContext().ensureActive()
@@ -213,14 +245,14 @@ object TamilInfoStripRepo {
         (0 until minOf(array.length(), NewsPolicy.MAX_ITEMS)).mapNotNull { index ->
             val item = array.optJSONObject(index) ?: return@mapNotNull null
             val time = item.optLong("published", 0L)
-            if (time <= 0) null else NewsHeadline(item.optString("cat"), item.optString("title"), item.optString("src"), time, item.optString("link"))
+            if (time <= 0) null else NewsHeadline(item.optString("cat"), item.optString("title"), item.optString("src"), time, item.optString("link"), item.optString("description"))
         }
     }.getOrDefault(emptyList())
 
     private fun encode(items: List<NewsHeadline>): String = JSONArray().apply {
         items.take(NewsPolicy.MAX_ITEMS).forEach { item -> put(JSONObject().apply {
             put("cat", item.category); put("title", item.title); put("src", item.source)
-            put("published", item.publishedAtMs); put("link", item.link)
+            put("published", item.publishedAtMs); put("link", item.link); put("description", item.description)
         }) }
     }.toString()
 }

@@ -15,6 +15,64 @@ object NewsSpeechSanitizer {
     val VALID_INTERVAL_MINUTES = listOf(30, 60, 120, 180)
     const val DEFAULT_INTERVAL_MINUTES = 120
 
+    /**
+     * The shared HD engine synthesises at most 1200 characters per request and shares one
+     * short deadline across up to three neural voices. A whole eight-headline bulletin can
+     * exceed that cap and time out even on a healthy network, which looked like "voice is
+     * waiting for the internet". News is therefore prepared and spoken in small sequential
+     * parts. 240 keeps each synthesis request short enough for a patient per-voice budget,
+     * while still leaving ample headroom under the engine cap for Tamil graphemes.
+     */
+    const val MAX_HD_SYNTHESIS_CHARS = 240
+
+    /**
+     * Splits [text] into non-empty parts of at most [maxChars] characters, preferring sentence
+     * ends and then word boundaries. No headline text is dropped: the parts are played in order
+     * as one bulletin. This is pure so the exact chunking can be regression-tested on the JVM.
+     */
+    fun splitForHd(text: String, maxChars: Int = MAX_HD_SYNTHESIS_CHARS): List<String> {
+        require(maxChars > 0) { "maxChars must be positive" }
+        val normalized = text.replace(Regex("\\s+"), " ").trim()
+        if (normalized.isEmpty()) return emptyList()
+        if (normalized.length <= maxChars) return listOf(normalized)
+
+        val parts = ArrayList<String>()
+        val current = StringBuilder()
+        fun flush() {
+            if (current.isNotEmpty()) {
+                parts.add(current.toString())
+                current.setLength(0)
+            }
+        }
+
+        val sentences = normalized.split(Regex("(?<=[.!?])\\s+")).filter { it.isNotBlank() }
+        for (sentence in sentences) {
+            if (sentence.length <= maxChars) {
+                if (current.isNotEmpty() && current.length + 1 + sentence.length > maxChars) flush()
+                if (current.isNotEmpty()) current.append(' ')
+                current.append(sentence)
+                continue
+            }
+            // A single sentence longer than the cap: flush what we have, then cut on words.
+            flush()
+            var remaining = sentence
+            while (remaining.length > maxChars) {
+                var cut = remaining.lastIndexOf(' ', maxChars)
+                if (cut <= 0) {
+                    cut = maxChars
+                    // Do not cut a surrogate pair in half.
+                    if (cut < remaining.length && Character.isHighSurrogate(remaining[cut - 1])) cut--
+                }
+                val piece = remaining.substring(0, cut).trim()
+                if (piece.isNotEmpty()) parts.add(piece)
+                remaining = remaining.substring(cut).trim()
+            }
+            if (remaining.isNotEmpty()) current.append(remaining)
+        }
+        flush()
+        return parts
+    }
+
     private val LEADING_NOISE_REGEX = Regex(
         "^(?:\\s*(?:\\[[^\\]]{1,24}]|\\([^)]{1,20}\\))\\s*|" +
             "\\s*(?:big\\s+breaking|breaking\\s+news|breaking|flash\\s+news|flash|just\\s+in|live\\s+updates|live\\s+blog|live|watch\\s+video|watch|video|photos?|photo\\s+gallery|exclusive|viral\\s+video|viral|" +
@@ -83,6 +141,8 @@ object NewsSpeechSanitizer {
             if (next == text) return@repeat
             text = next
         }
+        // Reject programme titles and real cutoffs BEFORE punctuation removal can hide them.
+        if (BalancedNewsPolicy.isJunk(text)) return ""
         // Strip dangling punctuation / orphan truncation markers at the very end
         text = text.replace(Regex("(?:\\.{2,}|…+|[-–—|:•]+)\\s*$"), "").replace(Regex("\\s+"), " ").trim()
         return text.take(400)
@@ -94,6 +154,7 @@ object NewsSpeechSanitizer {
     fun isCompleteSpeakableHeadline(cleanedTitle: String, expectTamil: Boolean): Boolean {
         val t = cleanedTitle.trim()
         if (t.length < 18 || t.length > 360) return false
+        if (BalancedNewsPolicy.isJunk(t)) return false
         if (t.lowercase(Locale.ROOT) in PURE_STUB_TITLES) return false
         val hasTamil = t.any { it.code in 0x0B80..0x0BFF }
         if (expectTamil && !hasTamil) return false
@@ -143,37 +204,11 @@ object NewsSpeechSanitizer {
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
         val cleaned = headlines
-            .map { cleanHeadline(it.title, it.source).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .map { it.spokenText.ifBlank { cleanHeadline(it.title, it.source) }.trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
             .filter { it.isNotBlank() }
         if (cleaned.isEmpty()) return ""
         val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "
         return intro + cleaned.joinToString(". ") + "."
-    }
-
-    /**
-     * Turns an AI-written bulletin into speech-safe text: drops markdown emphasis/headings,
-     * list bullets and numbering, collapses newlines, keeps whole sentences and caps the
-     * spoken length. Returns "" when nothing usable remains, so the caller can fall back to
-     * the on-device sanitized bulletin.
-     */
-    fun cleanAiBulletin(raw: String): String {
-        if (raw.isBlank()) return ""
-        var text = raw
-            .replace("**", "").replace("__", "").replace("`", "")
-            .replace(Regex("(?m)^\\s*#{1,6}\\s*"), "")
-            .replace(Regex("(?m)^\\s*(?:[-*•–—>]+|\\d+[.)])\\s+"), "")
-            .replace(Regex("[\\r\\n]+"), " ")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-        if (text.isBlank()) return ""
-        val sentences = text.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.length >= 8 }
-        var joined = (if (sentences.isNotEmpty()) sentences.joinToString(" ") else text).trim()
-        if (joined.length > 700) {
-            val cut = joined.take(700)
-            val lastStop = maxOf(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'))
-            joined = if (lastStop > 200) cut.substring(0, lastStop + 1) else "${cut.trimEnd()}."
-        }
-        return joined
     }
 
     /**

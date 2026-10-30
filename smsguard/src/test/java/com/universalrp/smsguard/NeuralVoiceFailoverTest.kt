@@ -78,6 +78,31 @@ class NeuralVoiceFailoverTest {
             assertEquals(1, calls)
         } finally { Thread.interrupted() }
     }
+    @Test fun perAttemptCapGivesEachVoiceItsOwnBudgetInsideOneDeadline() {
+        var now = 0L
+        val budgets = mutableListOf<Long>()
+        val result = NeuralVoiceFailover.synthesize("ta-MY-SuryaNeural", 30_000,
+            attemptTimeoutMs = 12_000, clockMs = { now }) { _, budget ->
+            budgets.add(budget)
+            now += budget
+            null
+        }
+        assertNull(result)
+        assertEquals(listOf(12_000L, 12_000L, 6_000L), budgets)
+        assertEquals(30_000L, now)
+    }
+    @Test fun perAttemptCapStillStopsWhenTotalDeadlineExpires() {
+        var now = 0L
+        var calls = 0
+        NeuralVoiceFailover.synthesize("en-IN-PrabhatNeural", 5_000,
+            attemptTimeoutMs = 12_000, clockMs = { now }) { _, budget ->
+            calls++
+            assertTrue(budget <= 5_000)
+            now += 5_000
+            null
+        }
+        assertEquals(1, calls)
+    }
     @Test fun unknownLanguageIsNeverReplacedByEnglish() {
         assertEquals(listOf("fr-FR-DeniseNeural"), NeuralVoiceFailover.candidates("fr-FR-DeniseNeural"))
     }
