@@ -61,6 +61,9 @@ def main(apk):
     adb('shell', f'cat > {DATA}/files/cleansweep_settings.preferences_pb', input=encoded)
     shell('chown', '-R', f'{uid}:{uid}', f'{DATA}/files')
     shell('restorecon', '-RF', f'{DATA}/files')
+    # Unplug while the freshly installed app is still stopped; do not send a power
+    # broadcast after proving its process dead, which could itself restart the app.
+    shell('dumpsys', 'battery', 'unplug')
     now = int(shell('date', '+%s')) * 1000
     # The real 30-minute preference is kept. Only its persisted last-success time is seeded.
     # Due in 90 seconds: enough time to background, kill the process and enter forced Doze.
@@ -88,12 +91,13 @@ def main(apk):
         if not adb('shell', f'pidof {PKG} || true'): break
         time.sleep(2)
     assert not adb('shell', f'pidof {PKG} || true'), 'Process must be gone before the alarm fires'
-    shell('dumpsys', 'battery', 'unplug')
     print(shell('dumpsys', 'deviceidle', 'force-idle'))
     idle = shell('dumpsys', 'deviceidle')
     (OUT/'idle-before.txt').write_text(idle)
     assert 'mState=IDLE' in idle, 'Must actually enter deep Doze'
     assert 'mWakefulness=Asleep' in shell('dumpsys', 'power'), 'Screen must be off'
+    assert not adb('shell', f'pidof {PKG} || true'), 'No other broadcast/job may restart the app before the alarm'
+    assert int(shell('date', '+%s')) * 1000 < due, 'Fixture setup must finish before the seeded deadline'
     deadline = time.monotonic() + 130
     observed = None
     while time.monotonic() < deadline:
