@@ -1,0 +1,181 @@
+name: Publish verified Tamilan Store 0.7 from main (no rebuild)
+on:
+  push:
+    branches: ["main"]
+    paths: [".github/workflows/promote-tamilan-store-0-7.yml"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: promote-verified-tamilan-store-0-7
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RELEASE_TARGET: ${{ github.sha }}
+      SOURCE: 710cf71e3bfa2aaea8f841db944db04ad46d9043
+      ARCHIVE_SHA: 0915caff33ffe1847dcd086635ea957af6006b1084e0e7bbd31b94fae025625e
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify successful exact-release gates, immutable provenance and publication scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          gh api repos/$GH_REPO/actions/runs/41147678511 > /tmp/run.json
+          gh api repos/$GH_REPO/actions/jobs/124376508008 > /tmp/job.json
+          gh api repos/$GH_REPO/actions/artifacts/13021219269 > /tmp/artifact.json
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          assert os.environ['GITHUB_REF'] == 'refs/heads/main', 'Publication is main-only'
+          source = os.environ['SOURCE']
+          run = json.load(open('/tmp/run.json')); job = json.load(open('/tmp/job.json')); artifact = json.load(open('/tmp/artifact.json'))
+          assert (run['head_sha'], run['conclusion'], run['status'], run['path']) == (source, 'success', 'completed', '.github/workflows/new-apps-public-release.yml')
+          assert run['head_branch'] == 'arena/2c283664-rp-android-apps'
+          assert job['run_id'] == run['id'] and job['conclusion'] == 'success'
+          for name in ('Test, lint and build the selected signed release', 'Verify selected package, version, signer and digest', 'Source tests and localization'):
+              matches = [s for s in job['steps'] if s['name'] == name]
+              assert len(matches) == 1 and matches[0]['conclusion'] == 'success', name
+          assert artifact['id'] == 13021219269 and artifact['name'] == 'tamilanstore-verified-release-apk' and not artifact['expired']
+          assert artifact['workflow_run']['id'] == run['id'] and artifact['workflow_run']['head_sha'] == source
+          assert artifact['digest'] == 'sha256:' + os.environ['ARCHIVE_SHA']
+          approval = pathlib.Path('docs/tamilan-store-0.7-verification.md').read_text()
+          assert 'Publication authorized: yes' in approval and source in approval and os.environ['ARCHIVE_SHA'] in approval
+          subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'], check=True)
+          paths = subprocess.check_output(['git','diff','--name-only',source,'HEAD'], text=True).splitlines()
+          forbidden = [p for p in paths if p.startswith(('tamilanstore/','shared/','gradle/','ci-keystore/')) or p in {'build.gradle.kts','settings.gradle.kts','gradle.properties','gradlew','gradlew.bat'}]
+          assert not forbidden, 'Compiled inputs changed: ' + repr(forbidden)
+          PY
+          gh api repos/$GH_REPO/actions/runs/41147678510 > /tmp/preview.json
+          python3 - <<'PYPREVIEW'
+          import json, os
+          run=json.load(open('/tmp/preview.json'))
+          assert run['head_sha']==os.environ['SOURCE'] and run['status']=='completed' and run['conclusion']=='success'
+          assert run['path']=='.github/workflows/tamilanstore-preview.yml'
+          PYPREVIEW
+          # API errors fail closed; an existing draft, release or tag is never replaced.
+          gh api --paginate repos/$GH_REPO/releases?per_page=100 --jq '.[] | select(.tag_name=="tamilan-store-v0.7")' > /tmp/existing-release
+          gh api --paginate repos/$GH_REPO/tags?per_page=100 --jq '.[] | select(.name=="tamilan-store-v0.7")' > /tmp/existing-tag
+          test ! -s /tmp/existing-release
+          test ! -s /tmp/existing-tag
+      - name: Download and hash the pinned archive; extract only its authenticated APK and manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/$GH_REPO/actions/artifacts/13021219269/zip > /tmp/accepted-store.zip
+          echo "$ARCHIVE_SHA  /tmp/accepted-store.zip" | sha256sum --check
+          python3 - <<'PY'
+          import hashlib, os, pathlib, re, zipfile
+          target = pathlib.Path('/tmp/accepted-store'); target.mkdir()
+          with zipfile.ZipFile('/tmp/accepted-store.zip') as archive:
+              assert sorted(archive.namelist()) == ['Tamilan-Store-v0.7.apk', 'Tamilan-Store-v0.7.sha256']
+              for name in archive.namelist():
+                  assert 0 < archive.getinfo(name).file_size < 64 * 1024 * 1024
+                  (target/name).write_bytes(archive.read(name))
+          match = re.fullmatch(r'([a-f0-9]{64})  Tamilan-Store-v0\.7\.apk\n?', (target/'Tamilan-Store-v0.7.sha256').read_text())
+          assert match, 'Unexpected authenticated checksum manifest'
+          apk = target/'Tamilan-Store-v0.7.apk'
+          assert hashlib.sha256(apk.read_bytes()).hexdigest() == match[1]
+          with open(os.environ['GITHUB_ENV'], 'a') as out:
+              out.write('EXPECTED_SHA=' + match[1] + '\nEXPECTED_SIZE=' + str(apk.stat().st_size) + '\n')
+          print('::notice title=Exact APK receipt::Tamilan-Store-v0.7.apk sha256:' + match[1] + ' bytes:' + str(apk.stat().st_size))
+          PY
+      - name: Verify package, compatible signing and permission delta before creating a draft
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=/tmp/accepted-store/Tamilan-Store-v0.7.apk
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt2" dump badging "$apk" > /tmp/candidate-badging
+          grep -Fq "package: name='com.universalrp.tamilanstore' versionCode='7' versionName='0.7'" /tmp/candidate-badging
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/candidate-badging
+          if grep -q application-debuggable /tmp/candidate-badging; then exit 1; fi
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/candidate-signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/candidate-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          mkdir /tmp/previous-store
+          gh release download tamilan-store-v0.6 --pattern Tamilan-Store-v0.6.apk --dir /tmp/previous-store
+          echo '7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f  /tmp/previous-store/Tamilan-Store-v0.6.apk' | sha256sum --check
+          "$tools/apksigner" verify --print-certs /tmp/previous-store/Tamilan-Store-v0.6.apk > /tmp/previous-signer
+          previous="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/previous-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$previous" = "$signer"
+          "$tools/aapt2" dump badging /tmp/previous-store/Tamilan-Store-v0.6.apk > /tmp/previous-badging
+          python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
+          grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
+          python3 - <<'PYPERMISSIONS'
+          from pathlib import Path
+          from tools.verify_release_permission_delta import parse_badging
+          current = parse_badging(Path('/tmp/candidate-badging').read_text())
+          previous = parse_badging(Path('/tmp/previous-badging').read_text())
+          assert current and previous, 'Both permission inventories must be readable'
+          assert not current - previous, 'Permission expansion: ' + repr(sorted(current - previous))
+          print('::notice title=Full permission delta::No added permissions of any protection level.')
+          PYPERMISSIONS
+          echo '::notice title=Publication preflight::Package, version, minimum SDK, non-debuggable status, both signing identities and no-new-dangerous-permission checks passed.'
+          if ! gh release create tamilan-store-v0.7 --draft "$apk" /tmp/accepted-store/Tamilan-Store-v0.7.sha256 --target "$RELEASE_TARGET" --title 'Tamilan Store 0.7 — verified downloads and Android installer handoff' --notes-file releases/tamilan-store-v0.7.md --latest=false 2>/tmp/create-release-error; then
+            python3 - <<'PYERROR'
+          import pathlib
+          text = pathlib.Path('/tmp/create-release-error').read_text(errors='replace')
+          print('::error title=Draft creation response::' + text[:1600].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          PYERROR
+            exit 1
+          fi
+      - name: Verify draft digest before publication; re-download and verify the public bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, time
+          for attempt in range(12):
+              releases = json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/releases?per_page=100"], text=True))
+              matches = [r for r in releases if r['tag_name'] == 'tamilan-store-v0.7']
+              assert len(matches) == 1
+              release = matches[0]
+              assert release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['RELEASE_TARGET']
+              assets = [a for a in release['assets'] if a['name'] == 'Tamilan-Store-v0.7.apk']
+              if len(assets) == 1 and assets[0].get('digest') == 'sha256:' + os.environ['EXPECTED_SHA']:
+                  assert assets[0]['size'] == int(os.environ['EXPECTED_SIZE'])
+                  assert sorted(a['name'] for a in release['assets']) == ['Tamilan-Store-v0.7.apk','Tamilan-Store-v0.7.sha256']
+                  break
+              time.sleep(2)
+          else:
+              raise SystemExit('Draft digest did not verify; nothing made public.')
+          PY
+          gh release edit tamilan-store-v0.7 --draft=false --latest=false
+          test "$(gh api repos/$GH_REPO/git/ref/tags/tamilan-store-v0.7 --jq '.object.sha')" = "$RELEASE_TARGET"
+          mkdir /tmp/published-store
+          gh release download tamilan-store-v0.7 --pattern 'Tamilan-Store-v0.7.*' --dir /tmp/published-store
+          (cd /tmp/published-store && sha256sum --check Tamilan-Store-v0.7.sha256)
+          test "$(sha256sum /tmp/published-store/Tamilan-Store-v0.7.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
+          cmp /tmp/accepted-store/Tamilan-Store-v0.7.sha256 /tmp/published-store/Tamilan-Store-v0.7.sha256
+          gh api repos/$GH_REPO/releases/tags/tamilan-store-v0.7 > /tmp/public-release.json
+          python3 - <<'PY'
+          import json, os
+          release = json.load(open('/tmp/public-release.json'))
+          assert not release['draft'] and not release['prerelease'] and release['target_commitish'] == os.environ['RELEASE_TARGET']
+          asset = next(a for a in release['assets'] if a['name'] == 'Tamilan-Store-v0.7.apk')
+          assert asset['size'] == int(os.environ['EXPECTED_SIZE']) and asset['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+          assert asset['browser_download_url'] == f"https://github.com/{os.environ['GH_REPO']}/releases/download/tamilan-store-v0.7/Tamilan-Store-v0.7.apk"
+          print('::notice title=Published exact tested APK::' + asset['browser_download_url'] + ' sha256:' + os.environ['EXPECTED_SHA'])
+          PY
+      - name: Surface bounded failure diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import pathlib
+          for name in ('candidate-badging','candidate-signer','permission-delta'):
+              path = pathlib.Path('/tmp')/name
+              if not path.exists():
+                  print('::error title=Promotion checkpoint::Stopped before ' + name)
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              if name == 'candidate-badging':
+                  lines = [s for s in lines if s.startswith('package:') or any(k in s for k in ('sdkVersion','minSdkVersion','targetSdkVersion','application-debuggable'))]
+              for line in lines[:10]:
+                  print('::error title=' + name + '::' + line[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))

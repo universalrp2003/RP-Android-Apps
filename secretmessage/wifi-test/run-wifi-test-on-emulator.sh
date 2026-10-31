@@ -152,12 +152,24 @@ visible_text() {
   grep -o 'text="[^"]*"' "$UI_XML" 2>/dev/null | head -n 50 | tr '\n' ' '
 }
 
+LAUNCHER_RECOVERY_USED=false
 wait_for() {
   local attribute="$1" value="$2" mode="${3:-equals}" seconds="${4:-20}" waited=0
   while (( waited < seconds )); do
     app_alive || fail "The app process is not running while waiting for: $value"
     if dump_ui && find_node "$attribute" "$value" "$mode" >/dev/null; then
       return 0
+    fi
+    # A fresh hosted emulator can leave Pixel Launcher's own startup ANR over the
+    # healthy target app. Recover ONLY that system launcher, once, only at startup
+    # on a GitHub emulator. Target-app crashes/ANRs and every UI assertion still fail.
+    if [[ "$STEP" == "start screen in Tamil, then English" && "$LAUNCHER_RECOVERY_USED" == false
+          && "${CI:-}" == true && "${GITHUB_ACTIONS:-}" == true ]] &&
+       [[ "$("$ADB" get-serialno)" == emulator-* ]] &&
+       grep -Fq "Pixel Launcher isn't responding" "$UI_XML"; then
+      LAUNCHER_RECOVERY_USED=true
+      "$ADB" shell am force-stop com.google.android.apps.nexuslauncher
+      echo '::notice title=Emulator startup recovery::Closed the system Pixel Launcher ANR; target app remains running and startup assertions are retried.'
     fi
     sleep 1
     waited=$((waited + 1))

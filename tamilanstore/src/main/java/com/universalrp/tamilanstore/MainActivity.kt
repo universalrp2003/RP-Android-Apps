@@ -26,7 +26,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -170,8 +169,8 @@ class MainActivity : ComponentActivity() {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(bi("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
                                 TextButton(onClick = { open("https://github.com/universalrp2003/RP-Android-Apps") }) { Text(bi("மூல நிரல் / GitHub", "Source / GitHub")) }
-                                Text(bi("தமிழன் · 0.6. நமது 13 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.6. Our 13 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
-                                Text(bi("பட்டியல்: 28 அக்டோபர் 2026. நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். புதிய வெளியீடுகளுக்கு இணையதளத்தைப் பார்க்கவும். சாதனத்தில் நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Catalog: 28 October 2026 snapshot. Installed versions compared locally only. Check the website for new releases; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("தமிழன் · 0.7. நமது 13 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.7. Our 13 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("சேர்க்கப்பட்ட பட்டியல்: 30 அக்டோபர் 2026. இணையம் இருந்தால் வெளியீட்டுப் பட்டியல் புதுப்பிக்கப்படும். நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Bundled catalog: 30 October 2026. Public release metadata refreshes when online. Installed versions are compared locally; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = {
                                     val enable = !UpdateNotifications.enabled(this@MainActivity)
                                     if (enable && Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this@MainActivity,Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -219,7 +218,8 @@ class MainActivity : ComponentActivity() {
                                         Text("${transfer.bytes / 1024} / ${app.size / 1024} KB")
                                         TextButton(onClick = { model.cancel() }) { Text(bi("ரத்து செய்", "Cancel")) }
                                     } else {
-                                        if (active && transfer.failed) Text(bi("பதிவிறக்கம் அல்லது சரிபார்ப்பு தோல்வி. நிறுவப்படவில்லை; மீண்டும் முயலலாம்.", "Download or verification failed. Nothing installed; retry is available."))
+                                        if (active && transfer.failed) Text((transfer.failure ?: TransferFailure.DOWNLOAD).message(tamil))
+                                        if (active && transfer.verified) Text(bi("கோப்பு சரிபார்க்கப்பட்டது. Android உறுதிப்படுத்தலைத் திறக்க நிறுவு அழுத்தவும்.", "File verified. Tap Install to open Android’s confirmation."))
                                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             if (installed != null) {
                                                 Button(onClick = {
@@ -242,8 +242,7 @@ class MainActivity : ComponentActivity() {
                                                                 startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
                                                                 message = bi("அனுமதித்தால் திரும்பி வந்து நிறுவு அழுத்தவும். பாதுகாப்புச் சோதனையை அணைக்க வேண்டாம்.", "If you allow this source, return and tap Install. Never disable Play Protect.")
                                                             } else {
-                                                                val uri = FileProvider.getUriForFile(this@MainActivity, "$packageName.files", file)
-                                                                startActivity(Intent(Intent.ACTION_VIEW).setDataAndType(uri, "application/vnd.android.package-archive").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+                                                                startActivity(InstallerHandoff.intent(this@MainActivity, file))
                                                             }
                                                         } catch (_: Exception) { message = bi("நிறுவலைத் திறக்க முடியவில்லை. மீண்டும் பதிவிறக்கி முயலவும்.", "Cannot start installation. Download again and retry.") }
                                                     }
