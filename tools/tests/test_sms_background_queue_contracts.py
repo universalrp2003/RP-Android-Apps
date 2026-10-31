@@ -35,13 +35,19 @@ class SmsBackgroundContracts(unittest.TestCase):
         self.assertIn("PendingLinkCheckWorker.schedule(appCtx)", callback)
         self.assertNotIn("drainPendingQueueNow(appCtx", callback)
 
-    def test_default_role_is_not_offered_with_placeholder_mms(self):
+    def test_sms_only_default_is_explicitly_acknowledged_before_android_chooser(self):
         source = (BASE / "MainActivity.kt").read_text()
         setup = source.split("fun requestDefaultSmsRole()", 1)[1].split("fun requestCompanionSmsPermissions()", 1)[0]
-        self.assertNotIn("roleLauncher.launch", setup)
-        self.assertIn("MMS reception is implemented", setup)
-        self.assertIn("companion mode", setup)
+        self.assertIn("DefaultSmsSetupPolicy.next(", setup)
+        self.assertIn("settings.smsOnlyDefaultAcknowledged", setup)
+        self.assertLess(setup.index("Step.DISCLOSE_MMS_LIMIT"), setup.index("roleLauncher.launch(request)"))
+        self.assertIn("createRequestRoleIntent(RoleManager.ROLE_SMS)", setup)
+        self.assertIn("ACTION_CHANGE_DEFAULT", setup)
+        self.assertIn("SmsOnlyDefaultDisclosure", setup)
         self.assertIn("fun switchBackToPreviousSmsApp()", source)
+        callback = source.split("val roleLauncher =", 1)[1].split("val sendPermissionNeeded", 1)[0]
+        self.assertNotIn("startActivity(", callback)
+        self.assertNotIn("roleLauncher.launch", callback)
 
     def test_regular_work_does_not_expand_into_unused_foreground_capabilities(self):
         import xml.etree.ElementTree as ET

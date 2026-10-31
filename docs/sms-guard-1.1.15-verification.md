@@ -6,6 +6,17 @@ The owner explicitly authorized building and publishing the latest bug fixes for
 
 No Play Protect bypass, package/signing change, data reset, Google appeal or VirusTotal/sample upload is part of this work. Same-key installed records/update path must be preserved. Oor's held travel-test candidate and accepted Radio1.31 are unchanged.
 
+## Post-publication owner result — 31 October 2026, 21:17–21:18 IST
+
+The owner now reports **“Google not blocking now”** and supplies two screenshots:
+
+- Play Protect at21:17 explicitly says **“This app looks safe”**, names SMS Guard and offers **“You can continue to install it”**. The file list behind the dialog shows `SMS-Guard-v1.1.15.apk` (12.82MB).
+- The21:18 screenshot shows SMS Guard running with its Messages interface. Together with the owner's report, this supports a successful scan/install-and-open observation on this phone, superseding the earlier assumption of an ongoing block on this device.
+
+The screenshot does not expose the installed package version/code or a measured APK SHA-256. Do not claim independent installed-byte matching, universal Google approval, or a guarantee that other phones/future scans will agree. No natural incoming-SMS, announcement quality, cloud-consent, offline-voice or MMS behavior is established by these screenshots. Do not reproduce the Messages screenshot in public documentation: it contains personal SMS/financial information; only this non-sensitive observation is recorded.
+
+The large **“Play Protect status: unresolved”** card is static1.1.15 release-time wording, not a live Play Protect query. It does not mean that Google is still blocking this phone. A future UI wording correction should describe historical warnings and device-dependent scan results, not hard-code either “blocked” or “Google approved.” This owner update alone does not request another build/republication or authorize replacing the published bytes. All artifact identities below remain unchanged.
+
 ## Published exact artifact
 
 **Publication complete:** [publisher41214912314](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41214912314), job124577329021, SUCCESS. [Release430017209](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.15), APK asset695734163/checksum695734161, public `2026-10-31T15:27:31Z` (20:57:31 IST). The published APK is the exact candidate below, with no rebuild or previous asset overwrite. CI re-downloaded the draft APK by numeric asset ID and checked its size/hash before publishing; final public metadata matches the same ID/digest.
@@ -33,7 +44,7 @@ Website/Store-feed metadata is updated only after that successful publication, r
 - Local repository suite: **251 Python tests passed**; bilingual/source localization, signing policy and whitespace checks passed.
 - First implementation source `1081d183525ef613cfd755fb58e0b9a1c3ba0a70`: [SMS release gate 41214167012](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41214167012) passed native release JVM tests, release lint, signed assembly and verification, **without publication**. This is an intermediate result, not the final selected artifact: subsequent disclosure/heuristic hardening needs its own candidate gate.
 - Final selected candidate and completed publication identities/results are above; no installation clearance is inferred.
-- No exact new-build phone installation/natural-SMS/cloud-consent UI test, real-phone offline voice behavior, or Google installation clearance has been established. Heuristic tests use synthetic data, not the owner's private SMS.
+- At publication, no new-build phone installation result was available. The subsequent owner scan/install-and-open evidence is recorded above; installed bytes are not independently hash-matched. Natural-SMS/cloud-consent/offline-voice verification and universal Google clearance remain unestablished. Heuristic tests use synthetic data, not the owner's private SMS.
 
 ### Promotion gate correction
 

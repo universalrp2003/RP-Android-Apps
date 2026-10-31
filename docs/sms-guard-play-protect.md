@@ -1,8 +1,14 @@
 # SMS Guard: installation warning, privacy and source audit
 
-Updated 31 October 2026. The owner has authorized a new bug-fix release for family/friends **despite the unresolved installation block**. This is not Google approval or proof that the app is safe.
+Updated 31 October 2026. The owner authorized the bug-fix release despite earlier installation blocks. **Post-publication update,21:17–21:18 IST:** the owner now reports “Google not blocking now”; Play Protect says **“This app looks safe”** for SMS Guard with `SMS-Guard-v1.1.15.apk` visible in the file list, followed by a screenshot of the running app. This is a successful scan/install-and-open observation on this phone, not universal Google approval or proof of safety. Installed APK bytes were not independently hash-matched. See the [verification receipt](sms-guard-1.1.15-verification.md#post-publication-owner-result--31-october-2026-21172118-ist).
 
-## What was observed
+The in-app “Play Protect status: unresolved” card is static release-time text, not a live Google status check; it can remain visible after a successful scan. A future wording update should reflect historical warnings/device-dependent results without claiming every installation is blocked or Google-approved.
+
+## 1.1.16 follow-up: owner-selected SMS-only default mode
+
+The owner subsequently requested removal of the obsolete banner and a working default-SMS chooser, then explicitly chose **SMS-only default mode with a warning**, rather than full MMS implementation. In1.1.16, one-time Tamil/English acknowledgement precedes Android's native role request. MMS pictures/videos/MMS-based group messages are unsupported and may be missed when Android routes them solely to the default app; switching apps later may not recover them. A content-free warning/count for incoming MMS notices is not download/recovery support. Keep a full messaging app as default if MMS is needed. Cancellation does not force-open Settings. The Messages status banner is removed; Controls/About keep limitations and audit access. See [1.1.16 notes](../releases/sms-guard-v1.1.16.md) and [verification receipt](sms-guard-1.1.16-verification.md) for actual build/publication status.
+
+## Earlier block evidence (before the successful owner result)
 
 The supplied Play Protect dialogs say:
 
@@ -14,7 +20,7 @@ Separate installer screenshots show older versions 1.1.8/code14 and 1.1.9/code15
 
 [Google's warning guide](https://developers.google.com/android/play-protect/warning-dev-guidance) describes this wording as its internet-sideload/sensitive-permission fraud protection. SMS Guard declares `READ_SMS` and `RECEIVE_SMS`, which support inbox reading and incoming announcements and are among the relevant permissions. This is distinct from a separate “Harmful app blocked” classification. The precise backend decision is not known. Google does **not** universally block every SMS application, and reading aloud is not an established universal cause.
 
-**Installation may remain blocked in 1.1.15. Keep Play Protect enabled and respect the block.** No override, alternate-source evasion, package disguise or signing-key change is recommended. No Google clearance, malware-free guarantee, successful exact-APK phone installation or successful natural-SMS test is claimed. Automated tests cannot establish these. No APK has been submitted to Google or VirusTotal as part of this release work.
+**Other devices or future scans may differ. Keep Play Protect enabled and respect any block.** No override, alternate-source evasion, package disguise or signing-key change is recommended. No universal Google clearance, malware-free guarantee, independently hash-matched installed APK or successful natural-SMS test is claimed. Automated tests cannot establish these. No APK has been submitted to Google or VirusTotal as part of this release work.
 
 ## What 1.1.15 changes—and what it cannot fix
 

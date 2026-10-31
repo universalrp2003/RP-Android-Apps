@@ -330,6 +330,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _statusBanner.value = null
     }
 
+    fun dismissUnsupportedMmsNotice() {
+        GuardSettingsStore.clearUnsupportedMmsNotice(getApplication())
+    }
+
     fun postBanner(text: String) {
         _statusBanner.value = text
     }

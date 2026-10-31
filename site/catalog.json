@@ -7,11 +7,11 @@
       "name": "SMS Guard (குறுஞ்செய்தி காவலன்)",
       "tamilName": "குறுஞ்செய்தி காவலன்",
       "packageName": "com.universalrp.smsguard",
-      "version": "1.1.15",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.15/SMS-Guard-v1.1.15.apk",
+      "version": "1.1.16",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk",
       "size": 12824500,
-      "sha256": "ca6f4e80a7e417c2f86d25ec7f496f120f6f9f0d44525a2b8af04b5bbf4ee01e",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.15"
+      "sha256": "db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.16"
     },
     {
       "id": "liveguard",
