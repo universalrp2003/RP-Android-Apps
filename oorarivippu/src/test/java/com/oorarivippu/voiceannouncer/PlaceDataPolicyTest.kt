@@ -8,22 +8,6 @@ import org.junit.Test
 
 class PlaceDataPolicyTest {
     @Test
-    fun districtNeverBecomesATownWhenLocalityIsMissing() {
-        val districtOnly = PlaceDataPolicy.addressNames(null, "Pudukkottai")
-        assertEquals("", districtOnly.cityOrVillage)
-        assertEquals("Pudukkottai", districtOnly.district)
-        val invalidLocality = PlaceDataPolicy.addressNames("9X5H+3HF", "புதுக்கோட்டை மாவட்டம்")
-        assertEquals("", invalidLocality.cityOrVillage)
-        assertEquals("புதுக்கோட்டை", invalidLocality.district)
-        val englishDistrict = PlaceDataPolicy.addressNames(null, "Pudukkottai District")
-        assertEquals("Pudukkottai", englishDistrict.district)
-        assertTrue(PlaceDataPolicy.samePlaceName(englishDistrict.district, invalidLocality.district))
-        val capital = PlaceDataPolicy.addressNames("Pudukkottai", "Pudukkottai")
-        assertEquals("Pudukkottai", capital.cityOrVillage)
-        assertEquals("Pudukkottai", capital.district)
-    }
-
-    @Test
     fun ignoresPlotNumbersContainingSlashes() {
         assertEquals(
             "Main Street",

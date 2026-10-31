@@ -525,9 +525,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (announceAloud && prefs.voiceEnabled) {
                 val speech = when (res.verdict) {
                     LinkVerdict.SAFE -> if (prefs.tamil) {
-                        "${res.displayDomain} சோதனையில் அச்சுறுத்தல் தெரியவில்லை. இது பாதுகாப்பு உத்தரவாதம் அல்ல."
+                        "பச்சை டிக் பாதுகாப்பு உறுதி! ${res.displayDomain} இணைப்பு பாதுகாப்பானது, திறக்கலாம்."
                     } else {
-                        "No threat detected in checks for ${res.displayDomain}. This is not a safety guarantee."
+                        "Green tick verified! ${res.displayDomain} is safe to open."
                     }
                     LinkVerdict.UNSAFE -> if (prefs.tamil) {
                         "ஆபத்து எச்சரிக்கை! ${res.displayDomain} போலியான ஆபத்தான இணைப்பு — தயவுசெய்து தொடாதீர்கள்!"
@@ -893,7 +893,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     BillFilter.ALL -> true
                     BillFilter.UNPAID -> !b.isPaid
                     BillFilter.PAID -> b.isPaid
-                    BillFilter.DUE_SOON -> !b.isPaid && !BillReminderEngine.needsReview(b) && BillReminderEngine.isUrgent(b.dueDate, today)
+                    BillFilter.DUE_SOON -> !b.isPaid && BillReminderEngine.isUrgent(b.dueDate, today)
                 }
             }
             .sortedWith(

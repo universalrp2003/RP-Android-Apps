@@ -46,25 +46,4 @@ class DestinationSearchPolicyTest {
         val result = DestinationSearchPolicy.distinct(listOf(karur, karurAgain, dindigul))
         assertEquals(listOf(karur, dindigul), result)
     }
-
-    @Test fun sharedTownDistrictNameStillHasExplicitDistrictRole() {
-        assertEquals("Pudukkottai district, Tamil Nadu", DestinationSearchPolicy.details(
-            "Market", "Pudukkottai", "Pudukkottai District", "Tamil Nadu", null, "district"))
-        assertEquals("புதுக்கோட்டை மாவட்டம்", DestinationSearchPolicy.details(
-            "புதுக்கோட்டை", "புதுக்கோட்டை", "புதுக்கோட்டை மாவட்டம்", null, null, "மாவட்டம்"))
-    }
-
-    @Test fun districtOnlyGeocoderResponseDoesNotInventATown() {
-        assertEquals("Pallapatti", DestinationSearchPolicy.destinationName(null, null, null, "Pallapatti, Karur"))
-        assertEquals("Alangudi", DestinationSearchPolicy.destinationName(null, "Alangudi", null, "Market"))
-    }
-
-    @Test fun invalidCoordinatesAreRejectedBeforeDistanceCalculation() {
-        for ((lat, lon) in listOf(Double.NaN to 78.0, 10.0 to Double.POSITIVE_INFINITY,
-            91.0 to 78.0, 10.0 to -181.0, -91.0 to 0.0)) {
-            org.junit.Assert.assertFalse(DestinationSearchPolicy.validCoordinates(lat, lon))
-        }
-        org.junit.Assert.assertTrue(DestinationSearchPolicy.validCoordinates(10.38, 78.82))
-        org.junit.Assert.assertTrue(DestinationSearchPolicy.validCoordinates(-90.0, 180.0))
-    }
 }

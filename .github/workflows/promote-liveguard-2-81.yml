@@ -2,12 +2,12 @@ name: Promote approved Live Guard 2.81 candidate (no rebuild)
 on:
   push:
     branches: ["arena/e42be75c-rp-android-apps"]
-    paths: [".github/workflows/promote-liveguard-2-79.yml"]
+    paths: [".github/workflows/promote-liveguard-2-81.yml"]
 permissions:
   contents: write
   actions: read
 concurrency:
-  group: promote-approved-liveguard-2-79
+  group: promote-approved-liveguard-2-81
   cancel-in-progress: false
 jobs:
   promote:
