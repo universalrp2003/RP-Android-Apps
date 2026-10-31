@@ -262,7 +262,16 @@ class SmsGuardEngineTest {
             tamil = false,
         )
         assertNotNull(reconnectVoice)
-        assertTrue(reconnectVoice!!.contains("safe to open"))
+        assertTrue(reconnectVoice!!.contains("no threat detected"))
+        assertTrue(reconnectVoice.contains("not a safety guarantee"))
+        assertFalse(reconnectVoice.contains("safe to open"))
+        val tamilVoice = SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
+            postSender.spokenNameEn, postSender.spokenNameTa, listOf(afterReconnect), tamil = true)
+        assertNotNull(tamilVoice)
+        assertTrue(tamilVoice!!.contains("பாதுகாப்பு உத்தரவாதம் அல்ல"))
+        assertFalse(tamilVoice.contains("திறக்கலாம்"))
+        assertNull(SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
+            postSender.spokenNameEn, postSender.spokenNameTa, listOf(whileOffline), tamil = false))
     }
 
     @Test
