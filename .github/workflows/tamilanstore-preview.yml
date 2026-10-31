@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   preview:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
@@ -70,7 +70,9 @@ jobs:
           cores: 2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: bash tamilanstore/tools/emulator-install-smoke.sh
+          script: >-
+            bash -o pipefail -c 'bash tamilanstore/tools/emulator-install-smoke.sh
+            2>&1 | tee "$RUNNER_TEMP/store-emulator-console.log"'
       - name: Upload bounded emulator evidence
         if: always()
         uses: actions/upload-artifact@v7
@@ -79,6 +81,20 @@ jobs:
           path: ${{ runner.temp }}/store-emulator-evidence/
           retention-days: 14
           if-no-files-found: ignore
+      - name: Surface bounded emulator diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import os, pathlib
+          root = pathlib.Path(os.environ['RUNNER_TEMP'])
+          paths = [root/'store-emulator-console.log', *sorted((root/'store-emulator-evidence').glob('*.txt'))]
+          if not any(p.exists() for p in paths):
+              print('::error title=Emulator checkpoint::No harness output: failure occurred before the guarded archive/install phases produced evidence; no native test pass is claimed.')
+          for path in paths:
+              if path.exists():
+                  for line in path.read_text(errors='replace').splitlines()[-24:]:
+                      text = (path.name + ': ' + line[-700:]).replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+                      print('::error title=Emulator checkpoint::' + text)
       - name: Surface bounded Gradle diagnostics
         if: failure()
         env:
