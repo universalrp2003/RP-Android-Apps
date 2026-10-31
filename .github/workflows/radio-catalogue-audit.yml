@@ -28,6 +28,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: radio-catalogue-audit
+          retention-days: 14
           path: ${{ runner.temp }}/radio-audit/
       - name: Expose small report receipts through GitHub blobs (no branch or release write)
         env:

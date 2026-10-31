@@ -210,24 +210,8 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // தமிழ் first: it is the default selection, so the app opens on Tamil.
-                val primary = listOf(
-                    Category.TAMIL,
-                    Category.TAMIL_FM,
-                    Category.TAMIL_NEWS,
-                    Category.TOWNS,
-                    Category.FAVOURITES,
-                    Category.RECENT,
-                )
-                val more = listOf(
-                    Category.TAMIL_ILAYARAJA,
-                    Category.TAMIL_MSV,
-                    Category.TAMIL_AR_RAHMAN,
-                    Category.TAMIL_80S_90S,
-                    Category.TAMIL_DEVOTIONAL,
-                    Category.ALL,
-                    Category.ENGLISH,
-                    Category.CUSTOM,
-                )
+                val primary = state.categoryOrder.take(6)
+                val more = state.categoryOrder.drop(6)
                 primary.forEach { id ->
                     Chip(
                         label = Category.label(id),
@@ -561,6 +545,10 @@ fun StationRow(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+                if (com.universalrp.tamilnadufm.data.RadioStreamPolicy.heldForReview(station.url)) {
+                    Text(if (AppLanguageState.current == AppLanguage.TAMIL) "வழங்குநர் ஒலிபரப்பு பரிசீலனையில்" else "Provider stream held for review",
+                        color = Warn, style = MaterialTheme.typography.labelSmall)
+                }
                 Spacer(Modifier.height(3.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (!station.verified) {
@@ -648,13 +636,9 @@ fun NewsScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
                 Modifier.horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                val chips = listOf(
-                    Category.ALL_NEWS,
-                    Category.TAMIL_NEWS,
-                    Category.WORLD_NEWS,
-                    Category.INDIA_NEWS,
-                    Category.ENGLISH,
-                )
+                val newsCategories = setOf(Category.ALL_NEWS, Category.TAMIL_NEWS,
+                    Category.WORLD_NEWS, Category.INDIA_NEWS, Category.ENGLISH)
+                val chips = state.categoryOrder.filter { it in newsCategories }
                 chips.forEach { id ->
                     Chip(
                         label = Category.label(id),

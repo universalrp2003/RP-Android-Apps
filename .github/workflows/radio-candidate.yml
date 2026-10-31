@@ -1,0 +1,85 @@
+name: Ramesh Radio signed candidate (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths: ["radio/**", ".github/workflows/radio-candidate.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: radio-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Source, localization and regressions
+        run: |
+          python3 -m unittest discover -s tools/tests
+          python3 tools/verify_apps_localization.py
+      - name: Both JVM variants, release lint and signed APK
+        run: gradle :radio:testDebugUnitTest :radio:testReleaseUnitTest :radio:lintRelease :radio:assembleRelease --no-daemon --stacktrace
+      - name: Verify immutable phone-test artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          apk=radio/build/outputs/apk/release/radio-release.apk
+          "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/radio-badging.txt"
+          grep -Fq "package: name='com.universalrp.tamilnadufm' versionCode='30' versionName='1.30'" "$RUNNER_TEMP/radio-badging.txt"
+          ! grep -q application-debuggable "$RUNNER_TEMP/radio-badging.txt"
+          "$tools/apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/radio-signature.txt"
+          grep -Fq '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$RUNNER_TEMP/radio-signature.txt"
+          cp "$apk" "$RUNNER_TEMP/Ramesh-Radio-v1.30.apk"
+          python3 - <<'PY'
+          import base64,hashlib,json,os,pathlib,subprocess
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'Ramesh-Radio-v1.30.apk';data=p.read_bytes()
+          payload=json.dumps({'encoding':'base64','content':base64.b64encode(data).decode()})
+          r=subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'],input=payload,text=True,capture_output=True,check=True)
+          print('::notice title=Radio candidate receipt::bytes='+str(len(data))+' sha256='+hashlib.sha256(data).hexdigest()+' blob='+json.loads(r.stdout)['sha'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ramesh-Radio-1.30-signed-candidate
+          path: ${{ runner.temp }}/Ramesh-Radio-v1.30.apk
+          retention-days: 30
+      - name: Bounded real failures
+        if: failure()
+        shell: python
+        run: |
+          import pathlib,xml.etree.ElementTree as ET
+          for file in pathlib.Path('radio/build/test-results').rglob('TEST-*.xml'):
+              root=ET.parse(file).getroot()
+              for case in root.findall('testcase'):
+                  for f in case.findall('failure')+case.findall('error'):
+                      print('::error title=Radio regression::'+(case.get('name','')+': '+f.get('message','')+' '+(f.text or '')[:450]).replace('%','%25').replace('\n','%0A'))
+          for file in pathlib.Path('radio/build/reports').glob('lint-results-*.txt'):
+              for line in file.read_text().splitlines():
+                  if ': Error:' in line:print('::error title=Radio lint::'+line[:700])
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: radio-candidate-test-reports
+          path: |
+            radio/build/test-results/
+            radio/build/reports/lint-results-*.txt
+          retention-days: 14

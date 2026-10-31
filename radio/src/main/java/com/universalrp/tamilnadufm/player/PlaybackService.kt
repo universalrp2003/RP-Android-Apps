@@ -108,8 +108,16 @@ class PlaybackService : MediaSessionService() {
         }
         val http = androidx.media3.datasource.DefaultHttpDataSource.Factory()
             .setConnectTimeoutMs(12000).setReadTimeoutMs(12000).setAllowCrossProtocolRedirects(true)
-        val sources = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(
-            androidx.media3.datasource.DefaultDataSource.Factory(this, http))
+        val guarded = androidx.media3.datasource.ResolvingDataSource.Factory(
+            androidx.media3.datasource.DefaultDataSource.Factory(this, http),
+            androidx.media3.datasource.ResolvingDataSource.Resolver { spec ->
+                if (!com.universalrp.tamilnadufm.data.RadioStreamPolicy.canPlay(spec.uri.toString())) {
+                    throw java.io.IOException("Provider stream held for content review; choose another station")
+                }
+                spec
+            },
+        )
+        val sources = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(guarded)
         val exo = ExoPlayer.Builder(this, renderers)
             .setMediaSourceFactory(sources)
             .setAudioAttributes(
@@ -208,7 +216,7 @@ class PlaybackService : MediaSessionService() {
             playQueueAt(player, urls, queue.second, at)
             return
         }
-        if (url == null) return
+        if (url == null || !com.universalrp.tamilnadufm.data.RadioStreamPolicy.canPlay(url)) return
         val name = prefs.getString("last_name", null) ?: "Ramesh Radio"
         val favicon = prefs.getString("last_favicon", null)
         player.setMediaItem(
