@@ -43,6 +43,8 @@ class NewsTimingContracts(unittest.TestCase):
         self.assertIn('override fun onCapabilitiesChanged', source)
         self.assertIn('NET_CAPABILITY_VALIDATED', source)
         self.assertIn('NewsTimingPolicy.HANDOFF_GRACE_MS', source)
+        self.assertIn('awaitNewsInternet(context, request, deadline)', source)
+        self.assertIn('minOf(preparationDeadline', source)
         self.assertIn('NewsTimingPolicy.failureStart', source)
         self.assertIn('active?.preparedNewsParts?.isNotEmpty() == true', source)
     def test_safety_is_rechecked_after_long_preparation_and_during_audio(self):

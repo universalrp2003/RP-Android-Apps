@@ -23,7 +23,7 @@ def prefs(name):
 def seed(name, values):
     root = ET.Element('map')
     for key, value in values.items():
-        tag = 'boolean' if isinstance(value, bool) else 'long' if isinstance(value, int) else 'string'
+        tag = 'boolean' if isinstance(value, bool) else 'int' if key == 'news_voice_interval_minutes' else 'long' if isinstance(value, int) else 'string'
         e = ET.SubElement(root, tag, name=key)
         if tag == 'string': e.text = value
         else: e.set('value', str(value).lower())
@@ -32,12 +32,29 @@ def main(apk):
     assert os.environ.get('CI') == 'true' and os.environ.get('GITHUB_ACTIONS') == 'true', 'CI emulator only'
     assert adb('get-serialno').startswith('emulator-')
     assert shell('getprop', 'ro.kernel.qemu') == '1'
-    adb('root'); adb('wait-for-device')
+    for attempt in range(3):
+        try:
+            adb('root'); adb('wait-for-device')
+            if shell('id', '-u') == '0': break
+        except subprocess.SubprocessError:
+            if attempt == 2: raise
+        time.sleep(2)
     assert shell('id', '-u') == '0', 'Release APK prefs require rooted test emulator'
     print(adb('install', '-r', apk))
     uid = shell('stat', '-c', '%u', DATA)
     assert uid.isdigit() and int(uid) >= 10000
-    shell('mkdir', '-p', f'{DATA}/shared_prefs')
+    shell('mkdir', '-p', f'{DATA}/shared_prefs', f'{DATA}/files')
+    # SettingsRepo's DataStore is authoritative; a plain-prefs mirror alone would be
+    # overwritten by its default-ON monitor flows during first launch. Encode only the
+    # two bool entries using androidx PreferencesProto's documented map/Value schema.
+    encoded = b''
+    for key in ('charge_monitor', 'persistent_monitor'):
+        key = key.encode()
+        entry = bytes([10, len(key)]) + key + bytes([18, 2, 8, 0])
+        encoded += bytes([10, len(entry)]) + entry
+    adb('shell', f'cat > {DATA}/files/cleansweep_settings.preferences_pb', input=encoded)
+    shell('chown', '-R', f'{uid}:{uid}', f'{DATA}/files')
+    shell('restorecon', '-RF', f'{DATA}/files')
     now = int(shell('date', '+%s')) * 1000
     # The real 30-minute preference is kept. Only its persisted last-success time is seeded.
     # Due in 90 seconds: enough time to background, kill the process and enter forced Doze.

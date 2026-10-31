@@ -1629,6 +1629,8 @@ object Lang {
         "Read today's news" to "இன்றைய செய்தி படி",
         "Reading news…" to "செய்திகள் படிக்கப்படுகின்றன…",
         "News AI uses public headlines with your configured provider. Tamil is preferred; checked English-to-Tamil specialist translations may take up to 60 seconds. Failed checks leave a category empty." to "அமைக்கப்பட்ட செயற்கை நுண்ணறிவுச் சேவைக்கு பொதுச் செய்தித் தலைப்புகள் மட்டுமே அனுப்பப்படும். தமிழ்ச் செய்திகளுக்கு முன்னுரிமை. சரிபார்க்கப்பட்ட ஆங்கிலச் சிறப்புச் செய்திகளைத் தமிழாக்க அதிகபட்சம் அறுபது வினாடிகள் ஆகலாம். சரிபார்ப்பு தோல்வியுற்றால் அந்தப் பிரிவு காலியாக இருக்கும்.",
+        "News sources unavailable; retry scheduled" to "செய்தி ஆதாரங்கள் கிடைக்கவில்லை; மறுமுயற்சி திட்டமிடப்பட்டது",
+        "Reading the fully prepared HD bulletin" to "முழுமையாகத் தயாரித்த உயர் தரச் செய்தித் தொகுப்பு படிக்கப்படுகிறது",
         "Automatic news timing" to "தானியங்கிச் செய்தி நேரம்",
         "Next news check" to "அடுத்த செய்திச் சரிபார்ப்பு",
         "Last news check" to "கடைசிச் செய்திச் சரிபார்ப்பு",

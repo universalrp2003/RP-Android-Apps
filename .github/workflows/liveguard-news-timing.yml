@@ -48,6 +48,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          trap 'echo "::error title=Candidate APK gate::Command failed at line $LINENO: $BASH_COMMAND"' ERR
           APK=cleaner/build/outputs/apk/release/cleaner-release.apk
           TOOLS=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -1)
           "$TOOLS" dump badging "$APK" > "$RUNNER_TEMP/news-candidate-badging.txt"
@@ -58,7 +59,11 @@ jobs:
           grep -Fx 'EVIDENCE-REQUIRED: no' "$RUNNER_TEMP/news-permission-delta.txt"
           python3 - <<'PY'
           from pathlib import Path
-          import hashlib, json, os, re, sys
+          import hashlib, json, os, re, sys, traceback
+          def diagnose(kind, error, tb):
+              detail = ''.join(traceback.format_exception(kind, error, tb))[-1800:]
+              print('::error title=Candidate APK gate::' + detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          sys.excepthook = diagnose
           sys.path.insert(0, 'tools')
           from verify_release_signing_policy import verify_fresh_install_signer
           p = Path('cleaner/build/outputs/apk/release/cleaner-release.apk')
@@ -113,8 +118,13 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
-          import xml.etree.ElementTree as ET
+          import os, xml.etree.ElementTree as ET
           def err(s): print('::error title=Live Guard timing::' + s[:1200].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          for name in ('news-candidate-badging.txt', 'news-candidate-signer.txt', 'news-permission-delta.txt'):
+              report = Path(os.environ['RUNNER_TEMP'], name)
+              if report.exists():
+                  for line in report.read_text(errors='replace').splitlines():
+                      if line.startswith(('package:', 'sdkVersion:', 'ADDED-', 'EVIDENCE-', 'REASON:', 'Signer #1 certificate SHA-256')): err(line)
           p = Path('news-timing-build.log')
           if p.exists():
               for line in p.read_text(errors='replace').splitlines():

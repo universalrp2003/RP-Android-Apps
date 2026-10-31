@@ -1031,6 +1031,7 @@ object Announcer {
                                     speakingState.value = true
                                     noteHdAvailable(context)
                                     record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
+                                    if (request.event == Event.NEWS_HEADLINES && !request.manual) NewsAutoSchedule.result(context, "playing")
                                     if (!request.started) {
                                         request.started = true
                                         runCatching { request.onStarted?.invoke() }
@@ -1100,6 +1101,17 @@ object Announcer {
         }
     }
 
+    /** A handoff must not consume both HD attempts while the replacement network validates. */
+    private fun awaitNewsInternet(context: Context, request: Request, preparationDeadline: Long): Boolean {
+        val graceEnd = minOf(preparationDeadline, System.nanoTime() + NewsTimingPolicy.HANDOFF_GRACE_MS * 1_000_000L)
+        while (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)) {
+            if (active?.id != request.id || newsExpired(request) || Thread.currentThread().isInterrupted || System.nanoTime() >= graceEnd) return false
+            try { Thread.sleep(100L) }
+            catch (_: InterruptedException) { Thread.currentThread().interrupt(); return false }
+        }
+        return true
+    }
+
     /** Worker-only. Prepares EVERY news part before any sound; a prefix is never played. */
     private fun prepareAllNewsParts(
         context: Context,
@@ -1117,9 +1129,11 @@ object Announcer {
                 if (active?.id != request.id || Thread.currentThread().isInterrupted || newsExpired(request)) return false
                 val remaining = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())
                 if (!NewsVoicePreparationPolicy.canAttempt(attempts, remaining)) return false
-                attempts++
-                val budget = NewsVoicePreparationPolicy.partBudget(remaining)
                 file = engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil)
+                if (file == null && !awaitNewsInternet(context, request, deadline)) return false
+                attempts++
+                val budget = NewsVoicePreparationPolicy.partBudget(NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime()))
+                if (budget <= 0) return false
                 if (file == null) file = if (engine.hasInternet(context)) {
                     engine.synthesizeProfileToFileOrNull(
                         cacheDir = context.cacheDir,

@@ -186,8 +186,6 @@ object NewsHeadlinesVoiceWatcher {
         return null
     }
 
-    private fun isDeviceQuietAndScreenOff(context: Context): Boolean = automaticBlockReason(context) == null
-
     /**
      * Automatic background entry point (called both on periodic WorkManager tick and 15s after Screen OFF).
      */
@@ -204,6 +202,8 @@ object NewsHeadlinesVoiceWatcher {
         val tamil = lang == AppLang.TA
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
         automaticBlockReason(app)?.let { return blocked(it) }
+        if (snapshot.items.isEmpty() && snapshot.outcome == TamilInfoStripRepo.Outcome.FEEDS_UNAVAILABLE) return blocked("feeds_unavailable")
+        if (snapshot.items.isEmpty() && snapshot.outcome == TamilInfoStripRepo.Outcome.OFFLINE) return blocked("offline")
         NewsAutoSchedule.result(app, "selecting")
 
         val freshBatch = prepareBalancedBatch(app, snapshot.items, tamil)

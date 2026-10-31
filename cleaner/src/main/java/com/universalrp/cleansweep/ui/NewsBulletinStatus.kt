@@ -71,6 +71,8 @@ private fun NewsScheduleStatus() {
         "quiet" -> tr("Silent during quiet hours or silent places")
         "interval" -> tr("Selected interval has not elapsed")
         "offline" -> tr("Waiting for validated internet")
+        "feeds_unavailable" -> tr("News sources unavailable; retry scheduled")
+        "playing" -> tr("Reading the fully prepared HD bulletin")
         "no_new_items" -> tr("No new eligible news; not marked as read")
         "fetching" -> tr("Fetching today's news")
         "selecting" -> tr("Selecting and checking source stories")
@@ -81,6 +83,7 @@ private fun NewsScheduleStatus() {
     }
     if (status.lastCheck > 0) Text(tr("Last news check") + ": " + time(status.lastCheck) + " — " + result,
         style = MaterialTheme.typography.bodySmall)
+    else Text(result, style = MaterialTheme.typography.bodySmall)
     Text(tr("The interval runs from completed playback. Screen-on, calls, other media, quiet hours and no fresh news remain silent. Missed reads retry without consuming headlines."),
         style = MaterialTheme.typography.labelSmall, color = TextSecondary)
     if (!status.precise) {
