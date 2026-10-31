@@ -18,6 +18,10 @@ Native release JVM tests, lint, signed assembly, package/code22/nondebuggable/si
 
 Selected-source SMS stable verification41219130630 and HD/shared voice41219130682 also succeeded. Local253 Python tests, bilingual/source checks, script syntax and whitespace checks passed.
 
-Pending: independent promotion-time signer/actual permission comparison, publication and website/Store integration. These outcomes must be filled from actual successful runs, not inferred from this document. No new1.1.16 APK is claimed phone-tested or Google-cleared. An emulator is not a carrier/OEM/Play Protect test.
+[Exact-byte publisher41219792154](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41219792154), job124591780045 **succeeded**. It independently verified pinned run/source/artifact archive, signed APK/hash and pinned synthetic emulator evidence; built manifest code22/min26/nondebuggable and established signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`; actual permission comparison against hash-pinned1.1.15 found **no new dangerous permissions**. Manifest/permission source is unchanged. No rebuild or overwrite. Draft assets were re-downloaded and SHA-checked, then final canonical public metadata matched.
+
+Public release **430049093**, APK **695875803**, checksum **695875811**, published **2026-10-31T16:28:10Z**. [Download1.1.16](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk). Public API digest/size independently matched after publication.1.1.15 assets remain unchanged.
+
+Website, both feeds, Store embedded catalog and Pages mirrors now select this exact version/hash; historical mirror retained. Other app records remain byte-for-byte unchanged. CI-before-merge and main Pages/live verification remain the final integration gates. No new1.1.16 APK is claimed phone-tested or Google-cleared. An emulator is not a carrier/OEM/Play Protect test.
 
 See [release notes](../releases/sms-guard-v1.1.16.md), [privacy](../PRIVACY.md) and [earlier warning plus owner scan result](sms-guard-play-protect.md).
