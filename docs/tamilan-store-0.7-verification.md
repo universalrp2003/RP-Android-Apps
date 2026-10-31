@@ -1,6 +1,6 @@
 # Tamilan Store 0.7 candidate verification — 31 October 2026
 
-**Not published.** Public Store remains 0.6. Daily Vault remains immutable public 0.5. No website/public feed was advanced, no existing asset replaced and no owner app was uninstalled or cleared.
+**Publication authorized: yes — 31 October 2026.** Owner reports the signed Store0.7 candidate working and provides installer/inventory screenshots, then explicitly authorizes publishing Store and Vault and grouping Vault as the normal thirteenth non-Store app. The installed APK hash is not independently matched. Publication is pending this main-only exact-artifact promotion; public Store remains0.6 until verified. Daily Vault remains immutable public 0.5. No website/public feed was advanced, no existing asset replaced and no owner app was uninstalled or cleared.
 
 ## Report and confirmed defect
 
@@ -44,3 +44,7 @@ Candidate 0.7/code7 corrects that pin, refreshes the bundled fallback to already
 No physical-phone/OEM validation of Store0.7, exact-signed-Store release emulator test, full Store UI/network download-to-completed-install proof, Play Protect clearance, security audit or successful owner 0.3 data migration is claimed. The phone's actual installed0.3 signer and manual-update outcome still need clarification.
 
 Do not uninstall or clear Daily Vault to resolve a signing conflict. Existing usable records must stay accessible. Investigate the installed identity and a safe backup/recovery plan before any migration; never ask the owner to upload private records or passwords. Publication of a new Store release requires owner approval and its own immutable promotion/public-download verification. Keep public Store0.6 and DailyVault0.5 pointers unchanged until then.
+
+## Owner phone report / authorization
+
+Owner reports Store working correctly after obtaining the signed0.7 candidate. Screens show the file manager offering0.6→0.7, Android installing Elderly Launcher1.5, then Store detecting Launcher1.5 and DailyVault0.5 installed with Open actions. This supports installer handoff and status refresh on that phone, not all-app/OEM/PlayProtect certification or a hash-matched DailyVault migration. Owner says no one has an existing Daily Vault installation requiring migration; retain all data/signing safety gates anyway. DailyVault0.5 is already public and must not be republished/replaced. Only Store0.7 is a new APK publication. Website grouping changes to13 regular non-Store apps plus separate Store follow verified publication.
