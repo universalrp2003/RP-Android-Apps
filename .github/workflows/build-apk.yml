@@ -80,6 +80,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 concurrency:
   group: build-apk
@@ -956,6 +957,7 @@ jobs:
       # candidate branches; a published release carries GitHub's own asset digests.
       - name: Record candidate APK digests
         env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && (inputs.publish || inputs.mirror_existing)) || (github.event_name == 'push' && (contains(github.event.head_commit.message, '[publish-liveguard]') || contains(github.event.head_commit.message, '[publish-radio]') || contains(github.event.head_commit.message, '[publish-pulseeq]') || contains(github.event.head_commit.message, '[publish-vocalremover]'))) }}
         run: |
           set -e
@@ -987,6 +989,14 @@ jobs:
           sed -n '1,20p' "$RECORD"
           { echo '```'; cat "$RECORD"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           if [[ "$GITHUB_REF" == refs/heads/arena/* && "$RELEASE_REQUESTED" != "true" ]]; then
+            # Keep an open PR's checked head immutable. Receipts already exist in this
+            # run's summary/log and APK sidecars; a bot push would invalidate checks.
+            OPEN_PRS=$(gh api --method GET "repos/$GITHUB_REPOSITORY/pulls" \
+              -f state=open -f "head=$GITHUB_REPOSITORY_OWNER:$GITHUB_REF_NAME" --jq 'length')
+            if [[ "$OPEN_PRS" != 0 ]]; then
+              echo '::notice title=Candidate receipt::Open PR: keeping digest evidence in the workflow summary/artifacts without changing its checked head.'
+              exit 0
+            fi
             git config user.name "ci-bot"
             git config user.email "ci-bot@users.noreply.github.com"
             git add -f "$RECORD"

@@ -159,21 +159,21 @@ object SisterApps {
             aboutLabel = "Elderly Launcher — GitHub release",
         ),
         SisterApp(
-            id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.7", publishedVersion = "0.6",
-            packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
-        ),
-        SisterApp(
             id = "dailyvault", name = "DailyVault", tamilName = "தினக்கணக்கு",
             tagPrefix = "daily-vault", version = "0.5", publishedVersion = "0.5",
             packageName = "com.universalrp.dailyvault", aboutLabel = "தினக்கணக்கு / DailyVault — GitHub release",
+        ),
+        SisterApp(
+            id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
+            tagPrefix = "tamilan-store", version = "0.7", publishedVersion = "0.7",
+            packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
-        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.5",
-        "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.3",
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.7",
+        "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.5",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,

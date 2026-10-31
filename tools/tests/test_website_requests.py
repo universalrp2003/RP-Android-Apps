@@ -58,13 +58,13 @@ class WebsiteRequestsTest(unittest.TestCase):
         import re
         sister_source = (ROOT / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
         expected_total = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
-        expected_optional = 2
+        expected_optional = 1
         expected_non_store = expected_total - expected_optional
         self.assertEqual(expected_total, 14)
-        self.assertEqual(expected_non_store, 12)
+        self.assertEqual(expected_non_store, 13)
 
-        self.assertIn(f'{expected_total} apps ({expected_non_store} non-Store + {expected_optional} optional: Tamilan Store &amp; DailyVault)', self.source)
-        self.assertIn(f'Fourteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store and DailyVault)', self.source)
+        self.assertIn(f'{expected_total} apps ({expected_non_store} non-Store + {expected_optional} optional: Tamilan Store)', self.source)
+        self.assertIn(f'Fourteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store)', self.source)
         self.assertNotIn('13 non-Store + optional Tamilan Store', self.source)
         self.assertNotIn('13 non-Store apps + optional Tamilan Store', self.source)
 
@@ -102,12 +102,12 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual({asset for asset, _ in cards}, ld_assets)
         self.assertEqual({tag for _, tag in table}, ld_tags)
         self.assertEqual({tag for _, tag in cards}, ld_tags)
-        self.assertIn('Tamilan-Store-v0.6.apk', ld_assets)
+        self.assertIn('Tamilan-Store-v0.7.apk', ld_assets)
         self.assertIn('DailyVault-v0.5.apk', ld_assets)
-        optional_tags = {'tamilan-store-v0.6', 'daily-vault-v0.5'}
+        optional_tags = {'tamilan-store-v0.7'}
         self.assertTrue(optional_tags.issubset(ld_tags))
-        self.assertEqual(len(optional_tags), 2)
-        self.assertEqual(len(ld_tags - optional_tags), 12)
+        self.assertEqual(len(optional_tags), 1)
+        self.assertEqual(len(ld_tags - optional_tags), 13)
         self.assertEqual(localization.verify_site_versions_match_downloads(), (42, 14))
 
     def assert_site_rejected(self, source):
@@ -159,7 +159,7 @@ class WebsiteRequestsTest(unittest.TestCase):
         missing_json_ld = self.source.replace('"position": 14,', '"position": 13,')
         self.assert_site_rejected(missing_json_ld)
         duplicate_card = self.source.replace('data-apk="apks/DailyVault-v0.5.apk"',
-                                             'data-apk="apks/Tamilan-Store-v0.6.apk"', 1)
+                                             'data-apk="apks/Tamilan-Store-v0.7.apk"', 1)
         self.assert_site_rejected(duplicate_card)
         stale_sha = self.source.replace(
             'SHA-256: 95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac',
@@ -172,18 +172,18 @@ class WebsiteRequestsTest(unittest.TestCase):
                                                 'அனைத்து 7 RP Ideas செயலிகள்', 1)
         self.assert_site_rejected(stale_tamil_count)
         stale_header = self.source.replace(
+            '14 apps (13 non-Store + 1 optional: Tamilan Store)',
             '14 apps (12 non-Store + 2 optional: Tamilan Store &amp; DailyVault)',
-            '14 apps (13 non-Store + optional Tamilan Store)',
         )
         self.assert_site_rejected(stale_header)
         stale_intro = self.source.replace(
+            '(13 non-Store apps + 1 optional: Tamilan Store)',
             '(12 non-Store apps + 2 optional: Tamilan Store and DailyVault)',
-            '(13 non-Store apps + optional Tamilan Store)',
         )
         self.assert_site_rejected(stale_intro)
         missing_optional_name = self.source.replace(
-            '2 optional: Tamilan Store &amp; DailyVault',
-            '2 optional: Tamilan Store',
+            '1 optional: Tamilan Store',
+            '1 optional: DailyVault',
         )
         self.assert_site_rejected(missing_optional_name)
         temporary_link = self.source.replace(

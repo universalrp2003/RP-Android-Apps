@@ -1,3 +1,13 @@
+# தமிழன் / Tamilan Store 0.7
+
+**Published:** [exact verified Store0.7 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.7/Tamilan-Store-v0.7.apk). [Publication receipt and test limits](../docs/tamilan-store-0.7-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
+
+Store is separate from the **13 regular non-Store apps**, including DailyVault0.5. Its13-app bundled fallback and release-metadata refresh list the same verified public apps. No account, ads or automatic installation. The corrected current-release signer pin and typed download/verification errors retain size/hash/package/version/minimum-SDK/signer/downgrade gates. The user selects Install; Android makes the final confirmation. Installed same-key apps can update without uninstalling or clearing their data.
+
+Android15 probes passed fresh Install and same-key Update confirmation and rejected legacy cross-key updates; probes cancelled the confirmations. The owner reports Store working on a phone and authorizes publication, but the phone APK hash is not independently matched. No universal device compatibility, Play Protect clearance or independent security audit is claimed. Never bypass device warnings or erase records to bypass a signer mismatch.
+
+## Historical preview notes (not the current publication status)
+
 # தமிழன் — Tamilan Android application store (preview)
 
 Owner-approved isolated first-party store for the twelve RP apps. Not Google Play, not an official F-Droid client or repository. No public release, store listing or device compatibility certification is claimed.

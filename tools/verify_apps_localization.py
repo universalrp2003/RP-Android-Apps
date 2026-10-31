@@ -923,7 +923,11 @@ def verify_readme_app_table() -> int:
             "README.md lists %s more than once in its release table. A duplicated row tells the "
             "reader two different current versions for one app." % ", ".join(duplicates)
         )
-    expected = len(RELEASE_TAG_PREFIX)
+    # The legacy module-release gates above cover twelve core apps. DailyVault is now
+    # the normal thirteenth non-Store app; Store has its own separate download section.
+    if "DailyVault (தினக்கணக்கு)" not in names or any("Tamilan Store" in n for n in names):
+        raise ValueError("README must list DailyVault among regular apps, with Store separate.")
+    expected = len(RELEASE_TAG_PREFIX) + 1
     if len(names) != expected:
         raise ValueError(
             "README.md release table has %d rows but %d apps have published releases. A missing row "
@@ -1208,9 +1212,9 @@ def verify_site_versions_match_downloads() -> int:
         raise ValueError("Both PulseEQ/Vocal Remover cards must use the current English and Tamil suite counts.")
     if not hyphen_counts or any(n != expected_apps for n in hyphen_counts):
         raise ValueError(f"site/index.html suite counts {hyphen_counts} disagree with SisterApps.kt ({expected_apps}).")
-    # Website presentation groups DailyVault with the optional Tamilan Store companion.
-    # This is separate from the updater policy: DailyVault still uses browser-only updates.
-    optional_ids = ("tamilanstore", "dailyvault")
+    # Owner-authorized grouping: thirteen normal non-Store apps (including DailyVault)
+    # and the separate optional Store. DailyVault retains browser-only updates.
+    optional_ids = ("tamilanstore",)
     if not set(optional_ids).issubset(sister_id_tags):
         raise ValueError("SisterApps.kt does not identify the website's optional companions.")
     optional_count = len(optional_ids)
@@ -1220,16 +1224,26 @@ def verify_site_versions_match_downloads() -> int:
         raise ValueError("Latest Releases table does not match the website's non-Store/optional grouping.")
     expected_badge = (
         f"{expected_apps} apps ({non_store_count} non-Store + {optional_count} optional: "
-        "Tamilan Store &amp; DailyVault)"
+        "Tamilan Store)"
     )
     expected_intro = (
         f"({non_store_count} non-Store apps + {optional_count} optional: "
-        "Tamilan Store and DailyVault)"
+        "Tamilan Store)"
     )
     if expected_badge not in site:
-        raise ValueError("Website header must state the current total/non-Store/optional counts and name both Tamilan Store and DailyVault.")
+        raise ValueError("Website header must state the current total/non-Store/optional counts and name the optional Tamilan Store.")
     if expected_intro not in site:
-        raise ValueError("Website intro must match the header grouping and name both optional companions.")
+        raise ValueError("Website intro must match the header grouping and keep DailyVault among regular apps.")
+
+    regular = re.search(r'<section class="grid" aria-label="13 regular Android applications">(.*?)</section>', site, re.S)
+    optional = re.search(r'<section class="grid" aria-label="Optional Tamilan Store">(.*?)</section>', site, re.S)
+    if not regular or not optional:
+        raise ValueError("Website must separate the thirteen regular app cards from optional Store.")
+    ids = re.findall(r'<h2 id="(app-[^"]+)"', regular[1])
+    if len(ids) != 13 or ids[-1] != "app-daily-vault" or "app-tamilan-store" in ids:
+        raise ValueError("DailyVault must be the thirteenth regular non-Store app card.")
+    if re.findall(r'<h2 id="(app-[^"]+)"', optional[1]) != ["app-tamilan-store"]:
+        raise ValueError("Only Tamilan Store belongs in the separate optional section.")
 
     if re.search(r"https://github\.com/universalrp2003/RP-Android-Apps/(?:blob|tree)/arena/", site):
         raise ValueError("site/index.html links to a temporary arena/* branch instead of main.")
