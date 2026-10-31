@@ -1329,26 +1329,16 @@ private fun OorSettingsFullDialog(
                             onClick = { openExternalLink(context, "https://github.com/universalrp2003/RP-Android-Apps") },
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("🔗 " + ui.downloadRepositoryLabel) }
-                        TextButton(
-                            onClick = { openExternalLink(context, "https://github.com/universalrp2003/InternetRadio") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("🔗 " + ui.sourceRepositoryLabel) }
                         Divider(color = Color(0xFFE2E8F0))
                         Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        val releaseLinks = listOf(
-                            ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
-                            ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
-                            ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.26",
-                            ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
-                            ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
-                            ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9",
-                            ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3"
-                        )
-                        releaseLinks.forEach { (label, url) ->
+                        // Shared published-version directory: no frozen count or retired release tags.
+                        com.universalrp.updates.SisterApps.all.forEach { app ->
                             TextButton(
-                                onClick = { openExternalLink(context, url) },
+                                onClick = { openExternalLink(context, com.universalrp.updates.SisterApps.releaseUrl(app)) },
                                 modifier = Modifier.fillMaxWidth()
-                            ) { Text("🔗 " + label) }
+                            ) {
+                                Text("🔗 " + (if (oorIsTamil) app.tamilName else app.name) + " · " + app.publishedVersion)
+                            }
                         }
                         Divider(color = Color(0xFFE2E8F0))
                         TextButton(

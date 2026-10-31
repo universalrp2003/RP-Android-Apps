@@ -893,7 +893,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     BillFilter.ALL -> true
                     BillFilter.UNPAID -> !b.isPaid
                     BillFilter.PAID -> b.isPaid
-                    BillFilter.DUE_SOON -> !b.isPaid && BillReminderEngine.isUrgent(b.dueDate, today)
+                    BillFilter.DUE_SOON -> !b.isPaid && !BillReminderEngine.needsReview(b) && BillReminderEngine.isUrgent(b.dueDate, today)
                 }
             }
             .sortedWith(

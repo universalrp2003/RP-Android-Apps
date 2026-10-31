@@ -699,21 +699,14 @@ fun AboutSmsGuardScreen(
                 ) { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
-                LinkRow(
-                    if (tamil) "முந்தைய மாற்று களஞ்சியம் (InternetRadio)" else "Legacy Mirror Repository",
-                    "https://github.com/universalrp2003/InternetRadio",
-                    palette,
-                ) { url ->
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                }
             }
         }
 
-        // Shared Sister Apps list (all 7 RP Ideas apps)
+        // Shared published-app directory; do not freeze the suite size in a label.
         item {
             SectionCard(palette = palette) {
                 Text(
-                    if (tamil) "எமது RP Ideas செயலிகள் (7)" else "Our RP Ideas Android Apps (7)",
+                    if (tamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas Android Apps",
                     fontWeight = FontWeight.Bold,
                     color = palette.accent,
                 )

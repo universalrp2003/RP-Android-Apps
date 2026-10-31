@@ -8,6 +8,26 @@ import org.junit.Test
 class BilingualStringsTest {
 
     @Test
+    fun districtOnlyAndStartupContextsAlwaysSayDistrictInTheChosenLanguage() {
+        assertEquals("Pudukkottai district.", BilingualStrings.buildInitialPlaceAnnouncement(
+            "en", "", "", false, "Pudukkottai District"
+        ))
+        assertEquals("புதுக்கோட்டை மாவட்டம்.", BilingualStrings.buildInitialPlaceAnnouncement(
+            "ta", "", "", false, "புதுக்கோட்டை மாவட்டம்"
+        ))
+        assertEquals("Alangudi. Pudukkottai district.", BilingualStrings.buildInitialPlaceAnnouncement(
+            "en", "Alangudi", "", false, "Pudukkottai"
+        ))
+        assertEquals("ஆலங்குடி, சந்தைப்பேட்டை. புதுக்கோட்டை மாவட்டம்.", BilingualStrings.buildInitialPlaceAnnouncement(
+            "ta", "ஆலங்குடி", "சந்தைப்பேட்டை", true, "புதுக்கோட்டை"
+        ))
+        assertEquals("It is 12:00 PM. Your current location is Pudukkottai district.",
+            BilingualStrings.buildWhereAmIAnnouncement("en", "", "", "12:00 PM", "Pudukkottai"))
+        assertEquals("மணி 12:00 PM. தற்போதைய இடம் புதுக்கோட்டை மாவட்டம்.",
+            BilingualStrings.buildWhereAmIAnnouncement("ta", "", "", "12:00 PM", "புதுக்கோட்டை"))
+    }
+
+    @Test
     fun unknownAppLanguageUsesTamil() {
         assertEquals(BilingualStrings.TAMIL.appTitle, BilingualStrings.forLang("ta").appTitle)
         assertEquals(BilingualStrings.TAMIL.appTitle, BilingualStrings.forLang("unknown").appTitle)
