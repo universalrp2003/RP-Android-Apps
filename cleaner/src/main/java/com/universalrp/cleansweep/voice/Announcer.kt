@@ -210,6 +210,8 @@ object Announcer {
      * written on the main thread, alongside the rest of the queue bookkeeping.
      */
     private var hdUnavailableSince = 0L
+    private var lastHdFailureAt = 0L
+    private var validatedNetwork: android.net.Network? = null
     private var voiceUnavailableNotified = false
     private var prefsContext: Context? = null
     private val automaticAnswerIds = linkedSetOf<String>()
@@ -220,7 +222,9 @@ object Announcer {
         val answerSlot: Int? = null,
         /** A manual news read owns the queue: stale unrelated requests must not play instead. */
         val exclusive: Boolean = false,
-        val newsDayScope: String? = null) {
+        val newsDayScope: String? = null,
+        val newsParts: List<String> = emptyList(),
+        val onPartCompleted: ((Int) -> Unit)? = null) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
         @Volatile var language = wanted ?: AppLang.TA
@@ -229,7 +233,7 @@ object Announcer {
         @Volatile var started = false
         // 2.76 — long news is one logical request played as several short HD clips, so the
         // shared engine's per-request text cap cannot silently truncate the eighth headline.
-        @Volatile var parts: List<String> = emptyList()
+        @Volatile var parts: List<String> = newsParts.toList()
         @Volatile var partIndex = 0
         // 2.77 — news is fully prepared before playback. These are local HD MP3 files, not
         // promises that a later network request will succeed between headlines.
@@ -281,20 +285,30 @@ object Announcer {
                     if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) drain(ctx)
                 }
             }
-            // 2.71 — "if internet disconnected stop all voice functions". HD is the only voice, so
-            // losing the network means there is nothing left to speak with: cut the announcement
-            // that is playing and drop the queue rather than let a half-loaded clip run on.
-            override fun onLost(network: android.net.Network) {
+            override fun onCapabilitiesChanged(network: android.net.Network, caps: android.net.NetworkCapabilities) {
+                if (!caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)) return
                 main.post {
                     val ctx = prefsContext ?: internetWatching ?: return@post
-                    if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) return@post
-                    // A fully prepared bulletin is local audio; a Wi-Fi/mobile handoff must
-                    // not cut it off. Unprepared synthesis still cannot continue offline.
-                    if (active?.preparedNewsParts?.isNotEmpty() == true) return@post
+                    if (validatedNetwork != network) {
+                        validatedNetwork = network
+                        // A new transport is a new attempt, NOT proof that the HD endpoint works.
+                        resetHdOutage(ctx)
+                        NewsAutoSchedule.requestDueCheck(ctx)
+                    }
+                    drain(ctx)
+                }
+            }
+            override fun onLost(network: android.net.Network) {
+                main.postDelayed({
+                    val ctx = prefsContext ?: internetWatching ?: return@postDelayed
+                    if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) return@postDelayed
+                    resetHdOutage(ctx) // Connectivity loss is not a sustained HD-provider outage.
+                    if (active?.preparedNewsParts?.isNotEmpty() == true) return@postDelayed
                     speakingState.value = false
                     runCatching { activeMediaPlayer?.stop() }
+                    active?.worker?.cancel(true)
                     if (active != null) finish(VoiceDeliveryPolicy.Stage.NO_INTERNET, false, pump = false)
-                }
+                }, NewsTimingPolicy.HANDOFF_GRACE_MS)
             }
         }
         internetCallback = callback
@@ -401,6 +415,7 @@ object Announcer {
         ensureHdVoiceDefaults262(context)
         prefs(context).edit().putBoolean(KEY_ON, on).apply()
         if (!on) stop()
+        NewsHeadlinesVoiceWatcher.syncSchedule(context)
     }
 
     /** Per-event switch. Everything defaults to on; quiet hours do the rest. */
@@ -729,6 +744,8 @@ object Announcer {
         onStarted: (() -> Unit)? = null,
         timeoutMs: Long = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
         manual: Boolean = false,
+        newsParts: List<String> = emptyList(),
+        onPartCompleted: ((Int) -> Unit)? = null,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
         // timeout when Android already reports no internet. Automatic news can still wait
@@ -746,6 +763,8 @@ object Announcer {
             requestKey = "news_bulletin:${System.nanoTime()}",
             exclusive = manual,
             newsDayScope = currentNewsDayScope(),
+            newsParts = newsParts,
+            onPartCompleted = onPartCompleted,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -809,6 +828,7 @@ object Announcer {
         if (request.english.isNullOrBlank() && request.tamil.isNullOrBlank()) return false
         main.post {
             prefsContext = ctx
+            watchInternet(ctx)
             if (request.exclusive) {
                 // A manual news read must not be followed by an unrelated queued alert if HD
                 // fails. Cancel the active clip and drop stale pending requests first.
@@ -997,6 +1017,16 @@ object Announcer {
                         useTamil = useTamil,
                     )
                 }
+                if (com.universalrp.updates.CallGuard.inCall(context)) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS, false) }
+                    return@submit
+                }
+                if (request.event == Event.NEWS_HEADLINES && !request.manual &&
+                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context,
+                        checkMedia = NewsPlaybackPlan.checkOtherMedia(request.started)) != null) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                    return@submit
+                }
                 if (mp3 != null && active?.id == requestId && !com.universalrp.updates.CallGuard.inCall(context)) {
                     val attrs = android.media.AudioAttributes.Builder()
                         .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
@@ -1013,6 +1043,7 @@ object Announcer {
                                     speakingState.value = true
                                     noteHdAvailable(context)
                                     record(context, request, VoiceDeliveryPolicy.Stage.PLAYING)
+                                    if (request.event == Event.NEWS_HEADLINES && !request.manual) NewsAutoSchedule.result(context, "playing")
                                     if (!request.started) {
                                         request.started = true
                                         runCatching { request.onStarted?.invoke() }
@@ -1022,6 +1053,8 @@ object Announcer {
                         },
                         shouldStop = {
                             active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) ||
+                                (request.event == Event.NEWS_HEADLINES && !request.manual &&
+                                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context, checkMedia = false) != null) ||
                                 com.universalrp.updates.CallGuard.inCall(context)
                         },
                         activePlayerSink = { player -> if (player != null) activeMediaPlayer = player },
@@ -1032,6 +1065,9 @@ object Announcer {
                         maxDurationMs = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L,
                     )
                     if (played) {
+                        // Persist completed story boundaries before queuing the next clip. Never on start,
+                        // preparation, timeout, or an interrupted clip; these remain unread.
+                        if (request.event == Event.NEWS_HEADLINES) request.onPartCompleted?.invoke(request.partIndex)
                         main.post {
                             if (active?.id != requestId) return@post
                             if (request.event == Event.NEWS_HEADLINES && request.partIndex < request.parts.lastIndex) {
@@ -1045,8 +1081,13 @@ object Announcer {
                         }
                         return@submit
                     }
-                    if (active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) || com.universalrp.updates.CallGuard.inCall(context)) {
-                        main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                    if (active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) ||
+                                (request.event == Event.NEWS_HEADLINES && !request.manual &&
+                                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context, checkMedia = false) != null) || com.universalrp.updates.CallGuard.inCall(context)) {
+                        main.post {
+                            if (active?.id == requestId) finish(if (com.universalrp.updates.CallGuard.inCall(context))
+                                VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS else VoiceDeliveryPolicy.Stage.CANCELLED, false)
+                        }
                         return@submit
                     }
                 }
@@ -1078,6 +1119,17 @@ object Announcer {
         }
     }
 
+    /** A handoff must not consume both HD attempts while the replacement network validates. */
+    private fun awaitNewsInternet(context: Context, request: Request, preparationDeadline: Long): Boolean {
+        val graceEnd = minOf(preparationDeadline, System.nanoTime() + NewsTimingPolicy.HANDOFF_GRACE_MS * 1_000_000L)
+        while (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)) {
+            if (active?.id != request.id || newsExpired(request) || Thread.currentThread().isInterrupted || System.nanoTime() >= graceEnd) return false
+            try { Thread.sleep(100L) }
+            catch (_: InterruptedException) { Thread.currentThread().interrupt(); return false }
+        }
+        return true
+    }
+
     /** Worker-only. Prepares EVERY news part before any sound; a prefix is never played. */
     private fun prepareAllNewsParts(
         context: Context,
@@ -1095,9 +1147,11 @@ object Announcer {
                 if (active?.id != request.id || Thread.currentThread().isInterrupted || newsExpired(request)) return false
                 val remaining = NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime())
                 if (!NewsVoicePreparationPolicy.canAttempt(attempts, remaining)) return false
-                attempts++
-                val budget = NewsVoicePreparationPolicy.partBudget(remaining)
                 file = engine.cachedProfileFileOrNull(context.cacheDir, part, profile, useTamil)
+                if (file == null && !awaitNewsInternet(context, request, deadline)) return false
+                attempts++
+                val budget = NewsVoicePreparationPolicy.partBudget(NewsVoicePreparationPolicy.remainingMs(deadline, System.nanoTime()))
+                if (budget <= 0) return false
                 if (file == null) file = if (engine.hasInternet(context)) {
                     engine.synthesizeProfileToFileOrNull(
                         cacheDir = context.cacheDir,
@@ -1151,8 +1205,11 @@ object Announcer {
      */
     private fun noteHdUnavailable(context: Context) {
         if (!enabled(context)) return
+        if (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)) { resetHdOutage(context); return }
         val now = System.currentTimeMillis()
-        if (hdUnavailableSince == 0L) hdUnavailableSince = now
+        if (lastHdFailureAt > 0 && (now < lastHdFailureAt || now - lastHdFailureAt > NewsTimingPolicy.MAX_FAILURE_GAP_MS)) resetHdOutage(context)
+        hdUnavailableSince = NewsTimingPolicy.failureStart(hdUnavailableSince, lastHdFailureAt, now)
+        lastHdFailureAt = now
         if (voiceUnavailableNotified) return
         if (now - hdUnavailableSince < VOICE_UNAVAILABLE_NOTICE_MS) return
         voiceUnavailableNotified = true
@@ -1165,9 +1222,12 @@ object Announcer {
      * An HD clip actually started playing, so the voice is fine again: reset the clock and
      * cancel the card, whether or not it was ever posted.
      */
-    private fun noteHdAvailable(context: Context) {
+    private fun noteHdAvailable(context: Context) = resetHdOutage(context)
+
+    private fun resetHdOutage(context: Context) {
         val wasNotified = voiceUnavailableNotified
         hdUnavailableSince = 0L
+        lastHdFailureAt = 0L
         voiceUnavailableNotified = false
         if (wasNotified) {
             runCatching {

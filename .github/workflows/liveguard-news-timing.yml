@@ -1,0 +1,142 @@
+name: Live Guard sleeping news candidate (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - "cleaner/**"
+      - "tools/check_liveguard_sleep_wakeup.py"
+      - "tools/verify_cleaner_regressions.py"
+      - ".github/workflows/liveguard-news-timing.yml"
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: liveguard-news-timing-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - name: Source checks
+        run: |
+          python3 tools/verify_cleaner_localization.py
+          python3 tools/verify_cleaner_core_manifest.py
+          python3 tools/verify_cleaner_next_update_source.py
+          python3 -m unittest discover -s tools/tests -p 'test_liveguard_news*.py' -v
+      - name: Execute JVM and Android-simulation tests, lint and signed release build
+        run: |
+          set -o pipefail
+          gradle :cleaner:testDebugUnitTest :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease --no-daemon --stacktrace 2>&1 | tee news-timing-build.log
+          python3 tools/verify_cleaner_regressions.py
+      - name: Verify actual APK identity, pinned signer and built permission delta
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          trap 'echo "::error title=Candidate APK gate::Command failed at line $LINENO: $BASH_COMMAND"' ERR
+          APK=cleaner/build/outputs/apk/release/cleaner-release.apk
+          TOOLS=$(find "$ANDROID_HOME/build-tools" -name aapt | sort -V | tail -1)
+          "$TOOLS" dump badging "$APK" > "$RUNNER_TEMP/news-candidate-badging.txt"
+          "$(dirname "$TOOLS")/apksigner" verify --verbose --print-certs "$APK" > "$RUNNER_TEMP/news-candidate-signer.txt"
+          gh release download live-guard-v2.79 --repo "$GITHUB_REPOSITORY" --pattern CleanSweep-v2.79.apk --dir "$RUNNER_TEMP/previous-news"
+          "$TOOLS" dump badging "$RUNNER_TEMP/previous-news/CleanSweep-v2.79.apk" > "$RUNNER_TEMP/news-previous-badging.txt"
+          python3 tools/verify_release_permission_delta.py --candidate-badging "$RUNNER_TEMP/news-candidate-badging.txt" --previous-badging "$RUNNER_TEMP/news-previous-badging.txt" | tee "$RUNNER_TEMP/news-permission-delta.txt"
+          grep -Fx 'EVIDENCE-REQUIRED: no' "$RUNNER_TEMP/news-permission-delta.txt"
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json, os, re, sys, traceback
+          def diagnose(kind, error, tb):
+              detail = ''.join(traceback.format_exception(kind, error, tb))[-1800:]
+              print('::error title=Candidate APK gate::' + detail.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          sys.excepthook = diagnose
+          sys.path.insert(0, 'tools')
+          from verify_release_signing_policy import verify_fresh_install_signer
+          p = Path('cleaner/build/outputs/apk/release/cleaner-release.apk')
+          signer = Path(os.environ['RUNNER_TEMP'], 'news-candidate-signer.txt').read_text()
+          certs = re.findall(r'certificate SHA-256 digest:\s*([0-9a-f:]+)', signer, re.I)
+          assert certs, 'apksigner returned no certificate SHA-256 digest; refusing to guess'
+          verified = {verify_fresh_install_signer(cert) for cert in certs}
+          assert len(verified) == 1, 'APK carries unexpected distinct signing certificates'
+          cert = verified.pop()
+          badging = Path(os.environ['RUNNER_TEMP'], 'news-candidate-badging.txt').read_text()
+          assert "name='com.universalrp.cleansweep'" in badging and "versionCode='86'" in badging and "versionName='2.81'" in badging
+          assert "sdkVersion:'26'" in badging
+          previous = Path(os.environ['RUNNER_TEMP'], 'previous-news/CleanSweep-v2.79.apk')
+          assert hashlib.sha256(previous.read_bytes()).hexdigest() == '95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac'
+          receipt = dict(source=os.environ['GITHUB_SHA'], version='2.81', code=86, bytes=p.stat().st_size, sha256=hashlib.sha256(p.read_bytes()).hexdigest(), signer=cert, publication=False, physicalPhoneTest=False)
+          (p.parent/'candidate-info.json').write_text(json.dumps(receipt, indent=2))
+          print(json.dumps(receipt, indent=2))
+          print('::notice title=Signed news candidate::' + json.dumps(receipt))
+          PY
+      - name: Retain exact signed candidate (not a release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: liveguard-2.81-news-timing-candidate
+          path: |
+            cleaner/build/outputs/apk/release/*.apk
+            cleaner/build/outputs/apk/release/candidate-info.json
+          retention-days: 30
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exact signed release alarm restarts dead process in screen-off forced Doze
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          cores: 2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: python3 tools/check_liveguard_sleep_wakeup.py cleaner/build/outputs/apk/release/cleaner-release.apk
+      - name: Upload actual results, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: liveguard-news-timing-evidence
+          path: |
+            news-timing-build.log
+            cleaner/build/test-results/
+            cleaner/build/reports/lint-results-*.xml
+            ${{ runner.temp }}/news-*.txt
+            ${{ runner.temp }}/news-wakeup-evidence/
+          retention-days: 14
+      - name: Surface bounded failures
+        if: failure()
+        shell: python
+        run: |
+          from pathlib import Path
+          import os, xml.etree.ElementTree as ET
+          def err(s): print('::error title=Live Guard timing::' + s[:1200].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          for name in ('news-candidate-badging.txt', 'news-candidate-signer.txt', 'news-permission-delta.txt'):
+              report = Path(os.environ['RUNNER_TEMP'], name)
+              if report.exists():
+                  for line in report.read_text(errors='replace').splitlines():
+                      if line.startswith(('package:', 'sdkVersion:', 'ADDED-', 'EVIDENCE-', 'REASON:')) or 'SHA-256' in line: err(line)
+          p = Path('news-timing-build.log')
+          if p.exists():
+              for line in p.read_text(errors='replace').splitlines():
+                  if line.startswith('e:') or 'Execution failed for task' in line: err(line)
+          for file in Path('cleaner/build').rglob('*.xml'):
+              if '/reports/' not in str(file) and '/test-results/' not in str(file): continue
+              try: root = ET.parse(file).getroot()
+              except ET.ParseError: continue
+              for e in root.findall('.//failure') + root.findall('.//error'): err(e.get('message','') + ' ' + (e.text or '')[:700])
+              for issue in root.findall('issue'):
+                  if issue.get('severity') in ('Error', 'Fatal'): err(str(issue.attrib))

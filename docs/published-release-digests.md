@@ -437,3 +437,15 @@ Published by [immutable promotion run41052024326](https://github.com/universalrp
 Version2.79/code84; package`com.universalrp.cleansweep`; minimum API26; pinned replacement signer verified. Both candidate JVM variants passed all510 required regressions. Promotion rechecked artifact/run/source, unchanged compiled inputs, exact size/hash, package/version/non-debuggable state, signer and built-permission delta against public2.75; no dangerous permissions were added. GitHub draft asset digest was checked before publication, the canonical URL checked after publication, and public bytes re-downloaded and hash-checked in CI. No APK was downloaded into the Arena workspace.
 
 Owner-reported acceptance and three UI screenshots are recorded in [the acceptance receipt](live-guard-2.79-owner-acceptance.md). The installed APK hash was not independently measured; no universal device/Play Protect/translation-fidelity claim. Same-key users update normally without uninstalling. Existing release assets and the legacy backup repository remain unchanged.
+
+## Live Guard 2.81 — 31 October 2026
+
+Owner-authorized [exact-artifact promotion41186750835](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41186750835) succeeded. Public release429825220, published2026-10-31T08:59:10Z; source08c339448a3bc2a286b1340c217eb256c6abdac8, approved signed run41181427941/artifact13035561625. No rebuild.
+
+| Asset | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `CleanSweep-v2.81.apk` (asset694885172) |14,500,707| `c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805` |
+
+Packagecom.universalrp.cleansweep; code86; min26/target36; owner-backed signer7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d. Both candidate JVM variants passed548 required regressions. Publisher rechecked provenance, exact bytes/hash/package/version/non-debuggable state/signer and built permission delta against hash-pinned public2.79; seven dangerous permissions unchanged. Optional precise-alarm special access is new relative to2.79, not a new dangerous permission or a universal timing/network/audio guarantee. Draft digest/canonical URL checked before publication; public bytes re-downloaded/hash-checked in CI. No APK stored in the Arena repository.
+
+Owner phone acceptance and publication authorization: [receipt](live-guard-2.81-owner-acceptance.md). Owner reports successful playback, screenshots show14:22 completion→14:52 next check with30m selected; no independently measured installed-phone hash, continuous unplugged trace, universal OEM/all-interval or Google clearance claim. Earlier CI wake failure remains recorded. In-place same-key update; no data reset. SMS/Oor remain unpublished/deferred at commitc96dd9e9; all older release assets unchanged.
