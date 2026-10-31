@@ -71,7 +71,17 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: >-
-            bash -o pipefail -c 'bash tamilanstore/tools/emulator-install-smoke.sh
+            bash -o pipefail -c '
+            set -eu;
+            [[ "$CI" == true && "$GITHUB_ACTIONS" == true ]];
+            [[ "$(adb get-serialno)" == emulator-* ]];
+            [[ "$(adb shell getprop ro.kernel.qemu | tr -d "\r")" == 1 ]];
+            for attempt in 1 2 3 4 5; do
+            if timeout 20 adb root; then timeout 30 adb wait-for-device;
+            if [[ "$(adb shell id -u | tr -d "\r")" == 0 ]]; then break; fi; fi;
+            timeout 30 adb wait-for-device; sleep 2; done;
+            [[ "$(adb shell id -u | tr -d "\r")" == 0 ]];
+            bash tamilanstore/tools/emulator-install-smoke.sh
             2>&1 | tee "$RUNNER_TEMP/store-emulator-console.log"'
       - name: Upload bounded emulator evidence
         if: always()

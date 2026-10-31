@@ -48,3 +48,7 @@ Do not uninstall or clear Daily Vault to resolve a signing conflict. Existing us
 ## Owner phone report / authorization
 
 Owner reports Store working correctly after obtaining the signed0.7 candidate. Screens show the file manager offering0.6→0.7, Android installing Elderly Launcher1.5, then Store detecting Launcher1.5 and DailyVault0.5 installed with Open actions. This supports installer handoff and status refresh on that phone, not all-app/OEM/PlayProtect certification or a hash-matched DailyVault migration. Owner says no one has an existing Daily Vault installation requiring migration; retain all data/signing safety gates anyway. DailyVault0.5 is already public and must not be republished/replaced. Only Store0.7 is a new APK publication. Website grouping changes to13 regular non-Store apps plus separate Store follow verified publication.
+
+## Publication-PR emulator setup follow-up
+
+A later preview attempt on the unchanged compiled source failed at `adb root` with `adb: unable to connect for root: closed`, before archive/install test phases produced evidence. No native pass is claimed for that attempt. The preview workflow pins Ubuntu24.04 and adds bounded, emulator-only adbd recovery plus root-state verification before invoking the unchanged guarded smoke script. These workflow/diagnostic changes do not alter the pinned signed APK. Publication remains gated on successful relevant PR checks.
