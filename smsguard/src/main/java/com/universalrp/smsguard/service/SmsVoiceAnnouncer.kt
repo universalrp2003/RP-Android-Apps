@@ -252,8 +252,8 @@ object SmsVoiceAnnouncer {
     }
 
     /**
-     * 1. High-Quality Online Neural Voice FIRST (with automatic daily Male <-> Female alternation)
-     * 2. Instant automatic fallback to Installed System TTS whenever there is no internet or offline!
+     * HD neural voice requires current explicit consent and Internet access.
+     * Otherwise only a non-network installed voice is permitted; no voice means silence.
      */
     private fun speakSingleBlocking(
         context: Context,

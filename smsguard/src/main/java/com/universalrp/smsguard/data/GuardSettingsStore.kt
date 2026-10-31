@@ -237,6 +237,8 @@ object GuardSettingsStore {
     }
 
     fun updateCloudSpeechConsent(context: Context, enabled: Boolean) {
+        // Publish revocation before potentially slow disk/cache work; transport reads this flow.
+        _state.value = ensureLoaded(context).copy(cloudSpeechConsent = enabled, cloudSpeechChoiceMade = true)
         prefs(context).edit().putBoolean("cloud_speech_consent_v1", enabled)
             .putBoolean("cloud_speech_choice_v1", true).commit()
         if (!enabled) context.cacheDir.resolve("smsguard_neural_tts_v2").deleteRecursively()

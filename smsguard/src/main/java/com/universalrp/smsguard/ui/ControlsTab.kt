@@ -509,9 +509,9 @@ fun ControlsTab(
 
                 Text(
                     text = if (prefs.tamil) {
-                        "🎙️ மேலே உள்ள 'தமிழ் | ENG' பொத்தானுக்கு ஏற்ப தானாக உயர்தர HD ஆண் ↔ பெண் குரலில் (இணையம் இல்லாதபோது போன் சிஸ்டம் ஆண் ↔ பெண் குரலில்) பேசும்."
+                        "🎙️ HD ஆண் ↔ பெண் குரலுக்கு மேகக் குரல் ஒப்புதலும் இணையமும் தேவை. இல்லையெனில் உள்ளூர் குரல்; அது இல்லாவிட்டால் குரல் இல்லை."
                     } else {
-                        "🎙️ Automatically speaks in HD Male ↔ Female voice matching your top 'தமிழ் | ENG' toggle (with automatic Male ↔ Female System Voice fallback when offline)."
+                        "🎙️ HD Male ↔ Female rotation needs cloud consent and Internet. Otherwise an installed non-network voice is used; if unavailable, no speech."
                     },
                     fontSize = 11.5.sp,
                     lineHeight = 16.sp,
@@ -678,9 +678,9 @@ fun AboutSmsGuardScreen(
             )
             Text(
                 if (tamil) {
-                    "சைபர் மோசடி இணைப்பு பாதுகாப்பு, TRAI அனுப்புநர் சோதனை, குரல் அறிவிப்பு மற்றும் ஏமாற்ற முடியாத வரவு-செலவு கணக்கு."
+                    "சந்தேக இணைப்புச் சோதனை, அனுப்புநர் ஆய்வு, விருப்பக் குரல் அறிவிப்பு மற்றும் விதிமுறை சார்ந்த வரவு-செலவு கணக்கு."
                 } else {
-                    "Cyber phishing link scanner, TRAI DLT sender verification, smart voice summaries and spoof-proof finance tracking."
+                    "Suspicious-link checks, sender-header analysis, optional voice summaries and heuristic finance tracking."
                 },
                 color = palette.textMuted,
                 fontSize = 13.sp,

@@ -16,15 +16,20 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun CloudSpeechDisclosure(tamil: Boolean, onChoice: (Boolean) -> Unit, onDismiss: () -> Unit) {
+    val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (tamil) "இணைய உயர்தரக் குரல்: உங்கள் தேர்வு" else "Online HD voice: your choice") },
         text = {
+            Column(Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState())) {
             Text(
-                if (tamil) "உயர்தரக் குரலுக்கு வாசிக்கப்படும் உரை Microsoft speech.platform.bing.com சேவைக்கு அனுப்பப்படும். அனுப்புநர் பெயர், சாதாரண செய்தி உரை மற்றும் பரிவர்த்தனைத் தொகை இதில் இருக்கலாம். இணையக் குரலைத் தேர்ந்தெடுத்தால் பின்னணி SMS அறிவிப்புகளுக்கும் இது பொருந்தும். ரகசியக் குறியீடுகளைத் தடுக்கவும் கணக்கு எண்களை மறைக்கவும் முயல்கிறோம்; எல்லா ரகசியங்களையும் கண்டறிவதற்கு உத்தரவாதம் இல்லை. சமீபத்திய ஒலிகள் போனில் தற்காலிகமாகச் சேமிக்கப்படும்.\n\nமறுத்தால் போனில் உள்ள இணையமில்லா குரல் மட்டும் பயன்படுத்தப்படும். அது இல்லையெனில் குரல் ஒலிக்காது; செய்திகளைத் திரையில் பார்க்கலாம். அனுமதியை Controls பகுதியில் எப்போது வேண்டுமானாலும் திரும்பப் பெறலாம். ஏற்கெனவே அனுப்பிய உரையைத் திரும்பப் பெற முடியாது."
-                else "HD voice sends the text being spoken to Microsoft speech.platform.bing.com. This may include sender names, ordinary message text and transaction amounts, including background SMS announcements. We try to suppress secret-bearing text and mask account numbers; detection is not a guarantee. Recent audio is cached on this phone.\n\nIf you decline, only an installed non-network system voice is used. If none is available there is no speech; messages remain visible. You can withdraw consent in Controls. Withdrawing cannot recall text already sent.",
-                modifier = Modifier.heightIn(max = 320.dp).verticalScroll(rememberScrollState()),
+                if (tamil) "உயர்தரக் குரலுக்கு வாசிக்கப்படும் உரை Microsoft speech.platform.bing.com சேவைக்கு அனுப்பப்படும். இணைய சிஸ்டம் குரல் பயன்படுத்தினால் அதன் சேவை வழங்குநருக்கும் உரை செல்லலாம். அனுப்புநர் பெயர், சாதாரண செய்தி உரை மற்றும் பரிவர்த்தனைத் தொகை இதில் இருக்கலாம். இணையக் குரலைத் தேர்ந்தெடுத்தால் பின்னணி SMS அறிவிப்புகளுக்கும் இது பொருந்தும். ரகசியக் குறியீடுகளைத் தடுக்கவும் கணக்கு எண்களை மறைக்கவும் முயல்கிறோம்; எல்லா ரகசியங்களையும் கண்டறிவதற்கு உத்தரவாதம் இல்லை. சமீபத்திய ஒலிகள் போனில் தற்காலிகமாகச் சேமிக்கப்படும்.\n\nமறுத்தால் போனில் உள்ள இணையமில்லா குரல் மட்டும் பயன்படுத்தப்படும். அது இல்லையெனில் குரல் ஒலிக்காது; செய்திகளைத் திரையில் பார்க்கலாம். அனுமதியை Controls பகுதியில் எப்போது வேண்டுமானாலும் திரும்பப் பெறலாம். ஏற்கெனவே அனுப்பிய உரையைத் திரும்பப் பெற முடியாது."
+                else "HD voice sends the text being spoken to Microsoft speech.platform.bing.com. A network-backed system voice may instead send text to its own TTS provider. This may include sender names, ordinary message text and transaction amounts, including background SMS announcements. We try to suppress secret-bearing text and mask account numbers; detection is not a guarantee. Recent audio is cached on this phone.\n\nIf you decline, only an installed non-network system voice is used. If none is available there is no speech; messages remain visible. You can withdraw consent in Controls. Withdrawing cannot recall text already sent.",
             )
+            TextButton(onClick = {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://privacy.microsoft.com/privacystatement")))
+            }) { Text(if (tamil) "Microsoft தனியுரிமைக் கொள்கை" else "Microsoft privacy statement") }
+            }
         },
         confirmButton = { TextButton(onClick = { onChoice(true) }, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(if (tamil) "உரையை அனுப்பி HD குரலை அனுமதி" else "Allow text sharing for HD voice")
