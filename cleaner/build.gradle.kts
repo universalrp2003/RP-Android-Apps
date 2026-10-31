@@ -19,8 +19,8 @@ android {
         applicationId = "com.universalrp.cleansweep"
         minSdk = 26
         targetSdk = 36
-        versionCode = 84
-        versionName = "2.79"
+        versionCode = 85
+        versionName = "2.80"
     }
 
     signingConfigs {
@@ -50,6 +50,8 @@ android {
     packaging {
         jniLibs { useLegacyPackaging = true }
     }
+
+    testOptions { unitTests.isIncludeAndroidResources = true }
 
     buildFeatures {
         compose = true
@@ -103,6 +105,8 @@ tasks.register<Test>("testLiveStudioVoice") {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.work:work-testing:2.10.0")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

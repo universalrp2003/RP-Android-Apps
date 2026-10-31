@@ -210,6 +210,8 @@ object Announcer {
      * written on the main thread, alongside the rest of the queue bookkeeping.
      */
     private var hdUnavailableSince = 0L
+    private var lastHdFailureAt = 0L
+    private var validatedNetwork: android.net.Network? = null
     private var voiceUnavailableNotified = false
     private var prefsContext: Context? = null
     private val automaticAnswerIds = linkedSetOf<String>()
@@ -281,20 +283,30 @@ object Announcer {
                     if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) drain(ctx)
                 }
             }
-            // 2.71 — "if internet disconnected stop all voice functions". HD is the only voice, so
-            // losing the network means there is nothing left to speak with: cut the announcement
-            // that is playing and drop the queue rather than let a half-loaded clip run on.
-            override fun onLost(network: android.net.Network) {
+            override fun onCapabilitiesChanged(network: android.net.Network, caps: android.net.NetworkCapabilities) {
+                if (!caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)) return
                 main.post {
                     val ctx = prefsContext ?: internetWatching ?: return@post
-                    if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) return@post
-                    // A fully prepared bulletin is local audio; a Wi-Fi/mobile handoff must
-                    // not cut it off. Unprepared synthesis still cannot continue offline.
-                    if (active?.preparedNewsParts?.isNotEmpty() == true) return@post
+                    if (validatedNetwork != network) {
+                        validatedNetwork = network
+                        // A new transport is a new attempt, NOT proof that the HD endpoint works.
+                        resetHdOutage(ctx)
+                        NewsAutoSchedule.requestDueCheck(ctx)
+                    }
+                    drain(ctx)
+                }
+            }
+            override fun onLost(network: android.net.Network) {
+                main.postDelayed({
+                    val ctx = prefsContext ?: internetWatching ?: return@postDelayed
+                    if (com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(ctx)) return@postDelayed
+                    resetHdOutage(ctx) // Connectivity loss is not a sustained HD-provider outage.
+                    if (active?.preparedNewsParts?.isNotEmpty() == true) return@postDelayed
                     speakingState.value = false
                     runCatching { activeMediaPlayer?.stop() }
+                    active?.worker?.cancel(true)
                     if (active != null) finish(VoiceDeliveryPolicy.Stage.NO_INTERNET, false, pump = false)
-                }
+                }, NewsTimingPolicy.HANDOFF_GRACE_MS)
             }
         }
         internetCallback = callback
@@ -401,6 +413,7 @@ object Announcer {
         ensureHdVoiceDefaults262(context)
         prefs(context).edit().putBoolean(KEY_ON, on).apply()
         if (!on) stop()
+        NewsHeadlinesVoiceWatcher.syncSchedule(context)
     }
 
     /** Per-event switch. Everything defaults to on; quiet hours do the rest. */
@@ -997,6 +1010,11 @@ object Announcer {
                         useTamil = useTamil,
                     )
                 }
+                if (request.event == Event.NEWS_HEADLINES && !request.manual &&
+                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context) != null) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                    return@submit
+                }
                 if (mp3 != null && active?.id == requestId && !com.universalrp.updates.CallGuard.inCall(context)) {
                     val attrs = android.media.AudioAttributes.Builder()
                         .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
@@ -1022,6 +1040,8 @@ object Announcer {
                         },
                         shouldStop = {
                             active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) ||
+                                (request.event == Event.NEWS_HEADLINES && !request.manual &&
+                                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context, checkMedia = false) != null) ||
                                 com.universalrp.updates.CallGuard.inCall(context)
                         },
                         activePlayerSink = { player -> if (player != null) activeMediaPlayer = player },
@@ -1045,7 +1065,9 @@ object Announcer {
                         }
                         return@submit
                     }
-                    if (active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) || com.universalrp.updates.CallGuard.inCall(context)) {
+                    if (active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) ||
+                                (request.event == Event.NEWS_HEADLINES && !request.manual &&
+                                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context, checkMedia = false) != null) || com.universalrp.updates.CallGuard.inCall(context)) {
                         main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
                         return@submit
                     }
@@ -1151,8 +1173,11 @@ object Announcer {
      */
     private fun noteHdUnavailable(context: Context) {
         if (!enabled(context)) return
+        if (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)) { resetHdOutage(context); return }
         val now = System.currentTimeMillis()
-        if (hdUnavailableSince == 0L) hdUnavailableSince = now
+        if (lastHdFailureAt > 0 && (now < lastHdFailureAt || now - lastHdFailureAt > NewsTimingPolicy.MAX_FAILURE_GAP_MS)) resetHdOutage(context)
+        hdUnavailableSince = NewsTimingPolicy.failureStart(hdUnavailableSince, lastHdFailureAt, now)
+        lastHdFailureAt = now
         if (voiceUnavailableNotified) return
         if (now - hdUnavailableSince < VOICE_UNAVAILABLE_NOTICE_MS) return
         voiceUnavailableNotified = true
@@ -1165,9 +1190,12 @@ object Announcer {
      * An HD clip actually started playing, so the voice is fine again: reset the clock and
      * cancel the card, whether or not it was ever posted.
      */
-    private fun noteHdAvailable(context: Context) {
+    private fun noteHdAvailable(context: Context) = resetHdOutage(context)
+
+    private fun resetHdOutage(context: Context) {
         val wasNotified = voiceUnavailableNotified
         hdUnavailableSince = 0L
+        lastHdFailureAt = 0L
         voiceUnavailableNotified = false
         if (wasNotified) {
             runCatching {

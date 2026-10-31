@@ -19,7 +19,6 @@ object AutomaticAlerts {
     private var connectivity: ConnectivityManager? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var batteryJob: Job? = null
-    private var screenOffNewsJob: Job? = null
     private val observerState = kotlinx.coroutines.flow.MutableStateFlow(VoiceObserverStatus())
     val observers: kotlinx.coroutines.flow.StateFlow<VoiceObserverStatus> = observerState
     private val powerReceiver = SystemEventWatcher()
@@ -40,11 +39,7 @@ object AutomaticAlerts {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != Intent.ACTION_SCREEN_OFF) return
             val app = context?.applicationContext ?: return
-            screenOffNewsJob?.cancel()
-            screenOffNewsJob = scope.launch {
-                delay(15_000L)
-                com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.maybeAutoAnnounceInBackground(app)
-            }
+            com.universalrp.cleansweep.voice.NewsAutoSchedule.requestDueCheck(app, delayMs = 15_000L)
         }
     }
 
@@ -70,7 +65,6 @@ object AutomaticAlerts {
         if (owners.isNotEmpty() || !registered) { observerState.value = observerState.value.copy(owners = owners.size); return@post }
         registered = false; generation++
         main.removeCallbacks(networkRefresh)
-        screenOffNewsJob?.cancel(); screenOffNewsJob = null
         runCatching { connectivity?.unregisterNetworkCallback(callback) }
         runCatching { context?.unregisterReceiver(batteryReceiver) }
         runCatching { context?.unregisterReceiver(powerReceiver) }

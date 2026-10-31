@@ -3,10 +3,8 @@ package com.universalrp.cleansweep.voice
 import android.content.Context
 import android.media.AudioManager
 import android.os.PowerManager
-import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -94,20 +92,21 @@ object NewsHeadlinesVoiceWatcher {
         syncSchedule(context)
     }
 
+    fun lastSuccessful(context: Context): Long = prefs(context).getLong(KEY_LAST_AUTO_SPOKEN_MS, 0L)
+
+    fun dueAt(context: Context, now: Long = System.currentTimeMillis()): Long =
+        NewsTimingPolicy.dueAt(lastSuccessful(context), intervalMinutes(context), now)
+
     fun syncSchedule(context: Context) {
         val app = context.applicationContext
         val wm = WorkManager.getInstance(app)
-        if (!isEnabled(app)) {
+        NewsAutoSchedule.sync(app)
+        if (!isEnabled(app) || !Announcer.enabled(app)) {
             wm.cancelUniqueWork(UNIQUE_WORK)
             return
         }
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-        val req = PeriodicWorkRequestBuilder<NewsHeadlinesVoiceWorker>(
-            intervalMinutes(app).toLong().coerceAtLeast(15L),
-            TimeUnit.MINUTES,
-        ).setConstraints(constraints).build()
+        // Recovery only. The selected interval is enforced by the completed-playback deadline.
+        val req = PeriodicWorkRequestBuilder<NewsHeadlinesVoiceWorker>(15, TimeUnit.MINUTES).build()
         wm.enqueueUniquePeriodicWork(UNIQUE_WORK, ExistingPeriodicWorkPolicy.UPDATE, req)
     }
 
@@ -176,43 +175,45 @@ object NewsHeadlinesVoiceWatcher {
         return prepared.filter { NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
     }
 
-    private fun isDeviceQuietAndScreenOff(context: Context): Boolean {
+    fun automaticBlockReason(context: Context, checkMedia: Boolean = true): String? {
         val app = context.applicationContext
-        val pm = app.getSystemService(PowerManager::class.java)
-        if (pm?.isInteractive == true) return false
-        if (CallGuard.inCall(app)) return false
-        val am = app.getSystemService(AudioManager::class.java)
-        if (am?.isMusicActive == true) return false
+        if (!Announcer.enabled(app) || !isEnabled(app)) return "disabled"
+        if (app.getSystemService(PowerManager::class.java)?.isInteractive == true) return "screen_on"
+        if (CallGuard.inCall(app)) return "call"
+        if (checkMedia && app.getSystemService(AudioManager::class.java)?.isMusicActive == true) return "media"
         val localHour = Instant.now().atZone(ZoneId.systemDefault()).hour
-        if (NewsSpeechSanitizer.isNightNewsQuietHour(localHour)) return false
-        if (Announcer.inQuietHours(app)) return false
-        return true
+        if (NewsSpeechSanitizer.isNightNewsQuietHour(localHour) || Announcer.inQuietHours(app) || Announcer.inSilentPlace(app)) return "quiet"
+        return null
     }
+
+    private fun isDeviceQuietAndScreenOff(context: Context): Boolean = automaticBlockReason(context) == null
 
     /**
      * Automatic background entry point (called both on periodic WorkManager tick and 15s after Screen OFF).
      */
     suspend fun maybeAutoAnnounceInBackground(context: Context): Boolean {
         val app = context.applicationContext
-        if (!Announcer.enabled(app) || !isEnabled(app)) return false
-        if (!isDeviceQuietAndScreenOff(app)) return false
-
+        fun blocked(reason: String): Boolean { NewsAutoSchedule.result(app, reason); return false }
+        automaticBlockReason(app)?.let { return blocked(it) }
         val now = System.currentTimeMillis()
-        val lastSpoken = prefs(app).getLong(KEY_LAST_AUTO_SPOKEN_MS, 0L)
-        val minGapMs = intervalMinutes(app) * 60_000L
-        if (now >= lastSpoken && now - lastSpoken < minGapMs) return false
+        if (dueAt(app, now) > now) return blocked("interval")
+        if (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(app)) return blocked("offline")
+        NewsAutoSchedule.result(app, "fetching")
 
         val lang = Lang.languageIn(app)
         val tamil = lang == AppLang.TA
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
-        if (!isDeviceQuietAndScreenOff(app)) return false
+        automaticBlockReason(app)?.let { return blocked(it) }
+        NewsAutoSchedule.result(app, "selecting")
 
         val freshBatch = prepareBalancedBatch(app, snapshot.items, tamil)
-        if (freshBatch.isEmpty() || !isDeviceQuietAndScreenOff(app)) return false
+        if (freshBatch.isEmpty()) return blocked("no_new_items")
+        automaticBlockReason(app)?.let { return blocked(it) }
 
         val newsScript = NewsSpeechSanitizer.buildBulletinSpeech(freshBatch, tamil = tamil)
         val script = prependWeatherSafetyLead(app, newsScript, tamil)
-        if (script.isBlank()) return false
+        if (script.isBlank()) return blocked("no_new_items")
+        NewsAutoSchedule.result(app, "preparing")
 
         val spoken = Announcer.speakNewsBulletinAndWait(
             context = app,
@@ -223,6 +224,7 @@ object NewsHeadlinesVoiceWatcher {
         // Only a completed bulletin consumes the day's headlines. A failed or interrupted HD
         // read must leave them unannounced so the next interval/screen-off tick can retry.
         if (spoken) markHeadlinesAnnounced(app, freshBatch, tamil = tamil)
+        NewsAutoSchedule.result(app, if (spoken) "completed" else "retry")
         return spoken
     }
 
@@ -279,7 +281,7 @@ class NewsHeadlinesVoiceWorker(
         val ctx = applicationContext
         Lang.set(Lang.languageIn(ctx))
         return try {
-            NewsHeadlinesVoiceWatcher.maybeAutoAnnounceInBackground(ctx)
+            NewsAutoSchedule.requestDueCheck(ctx)
             Result.success()
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
