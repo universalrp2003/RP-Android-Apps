@@ -74,18 +74,18 @@ jobs:
           assert len(verified) == 1, 'APK carries unexpected distinct signing certificates'
           cert = verified.pop()
           badging = Path(os.environ['RUNNER_TEMP'], 'news-candidate-badging.txt').read_text()
-          assert "name='com.universalrp.cleansweep'" in badging and "versionCode='85'" in badging and "versionName='2.80'" in badging
+          assert "name='com.universalrp.cleansweep'" in badging and "versionCode='86'" in badging and "versionName='2.81'" in badging
           assert "sdkVersion:'26'" in badging
           previous = Path(os.environ['RUNNER_TEMP'], 'previous-news/CleanSweep-v2.79.apk')
           assert hashlib.sha256(previous.read_bytes()).hexdigest() == '95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac'
-          receipt = dict(source=os.environ['GITHUB_SHA'], version='2.80', code=85, bytes=p.stat().st_size, sha256=hashlib.sha256(p.read_bytes()).hexdigest(), signer=cert, publication=False, physicalPhoneTest=False)
+          receipt = dict(source=os.environ['GITHUB_SHA'], version='2.81', code=86, bytes=p.stat().st_size, sha256=hashlib.sha256(p.read_bytes()).hexdigest(), signer=cert, publication=False, physicalPhoneTest=False)
           (p.parent/'candidate-info.json').write_text(json.dumps(receipt, indent=2))
           print(json.dumps(receipt, indent=2))
           PY
       - name: Retain exact signed candidate (not a release)
         uses: actions/upload-artifact@v4
         with:
-          name: liveguard-2.80-news-timing-candidate
+          name: liveguard-2.81-news-timing-candidate
           path: |
             cleaner/build/outputs/apk/release/*.apk
             cleaner/build/outputs/apk/release/candidate-info.json

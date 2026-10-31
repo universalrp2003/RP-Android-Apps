@@ -78,6 +78,7 @@ private fun NewsScheduleStatus() {
         "fetching" -> tr("Fetching today's news")
         "selecting" -> tr("Selecting and checking source stories")
         "preparing" -> tr("Preparing all HD clips before playback")
+        "partial" -> tr("Bulletin interrupted; selected interval respected before retry")
         "retry" -> tr("Read not completed; retry scheduled")
         "restricted" -> tr("Android restricted background start; retry scheduled")
         else -> tr("Waiting for scheduled check")
@@ -85,7 +86,10 @@ private fun NewsScheduleStatus() {
     if (status.lastCheck > 0) Text(tr("Last news check") + ": " + time(status.lastCheck) + " — " + result,
         style = MaterialTheme.typography.bodySmall)
     else Text(result, style = MaterialTheme.typography.bodySmall)
-    Text(tr("The interval runs from completed playback. Screen-on, calls, other media, quiet hours and no fresh news remain silent. Missed reads retry without consuming headlines."),
+    Text(tr("Completed stories today") + ": " + status.completedStories, style = MaterialTheme.typography.bodySmall)
+    if (status.lastCompleted > 0) Text(tr("Last fully completed bulletin") + ": " + time(status.lastCompleted), style = MaterialTheme.typography.bodySmall)
+    if (status.lastAudible > 0) Text(tr("Last audio activity") + ": " + time(status.lastAudible), style = MaterialTheme.typography.bodySmall)
+    Text(tr("Full bulletins use the completion time. Interrupted audio also waits your selected interval before automatic retry. Only fully completed stories are remembered; silent preparation failures may retry sooner."),
         style = MaterialTheme.typography.labelSmall, color = TextSecondary)
     if (!status.precise) {
         Text(tr("Precise timing is not allowed. Android may delay the wake-up until you allow Alarms & reminders."), style = MaterialTheme.typography.bodySmall)

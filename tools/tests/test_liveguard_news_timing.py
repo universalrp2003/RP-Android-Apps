@@ -49,7 +49,7 @@ class NewsTimingContracts(unittest.TestCase):
         self.assertIn('active?.preparedNewsParts?.isNotEmpty() == true', source)
     def test_safety_is_rechecked_after_long_preparation_and_during_audio(self):
         source = src('voice/Announcer.kt')
-        self.assertIn('NewsHeadlinesVoiceWatcher.automaticBlockReason(context) != null', source)
+        self.assertIn('checkMedia = NewsPlaybackPlan.checkOtherMedia(request.started)', source)
         self.assertIn('automaticBlockReason(context, checkMedia = false)', source)
         self.assertIn('!request.manual', source)
     def test_timing_evidence_is_separate_from_selection(self):

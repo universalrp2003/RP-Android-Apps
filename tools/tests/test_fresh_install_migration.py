@@ -73,7 +73,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
 
     def test_replacement_releases_have_unique_version_codes_and_migration_notes(self):
         modules = {
-            'cleaner': ('2.80', '85', 'live-guard-v2.80'),
+            'cleaner': ('2.81', '86', 'live-guard-v2.81'),
             'radio': ('1.29', '29', 'ramesh-radio-v1.29'),
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),

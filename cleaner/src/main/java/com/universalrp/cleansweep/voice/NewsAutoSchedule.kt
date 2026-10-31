@@ -30,14 +30,15 @@ object NewsAutoSchedule {
     private const val WORK = "liveguard_news_due_check"
     private const val ACTION = "com.universalrp.cleansweep.NEWS_DUE"
     private val lock = Mutex()
-    data class Status(val lastCheck: Long = 0, val nextCheck: Long = 0, val result: String = "not_checked", val precise: Boolean = false)
+    data class Status(val lastCheck: Long = 0, val nextCheck: Long = 0, val result: String = "not_checked", val precise: Boolean = false,
+        val lastCompleted: Long = 0, val lastAudible: Long = 0, val completedStories: Int = 0)
     private val mutableStatus = MutableStateFlow(Status())
     val status = mutableStatus.asStateFlow()
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun precise(c: Context): Boolean = Build.VERSION.SDK_INT < 31 || c.getSystemService(AlarmManager::class.java).canScheduleExactAlarms()
     private fun intent(c: Context) = PendingIntent.getBroadcast(c, 280,
         Intent(c, NewsWakeReceiver::class.java).setAction(ACTION), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-    fun sync(c: Context) {
+    fun sync(c: Context, intervalChanged: Boolean = false) {
         val app = c.applicationContext
         val alarms = app.getSystemService(AlarmManager::class.java)
         if (!Announcer.enabled(app) || !NewsHeadlinesVoiceWatcher.isEnabled(app)) {
@@ -50,15 +51,19 @@ object NewsAutoSchedule {
         val now = System.currentTimeMillis()
         val saved = prefs(app).getLong(NEXT, 0)
         // Reopening the Activity must never postpone a persisted deadline. A shortened interval wins.
-        val next = NewsTimingPolicy.syncDeadline(saved, NewsHeadlinesVoiceWatcher.lastSuccessful(app), NewsHeadlinesVoiceWatcher.intervalMinutes(app), now)
+        val next = NewsTimingPolicy.syncDeadline(saved, NewsHeadlinesVoiceWatcher.activityAnchor(app, now), NewsHeadlinesVoiceWatcher.intervalMinutes(app), now, intervalChanged)
         arm(app, next)
     }
     fun recovery(c: Context) = arm(c, System.currentTimeMillis() + NewsTimingPolicy.RETRY_MS)
 
     private fun publish(c: Context) {
         val p = prefs(c)
-        mutableStatus.value = Status(p.getLong(LAST, 0), p.getLong(NEXT, 0), p.getString(RESULT, "not_checked")!!, precise(c))
+        mutableStatus.value = Status(p.getLong(LAST, 0), p.getLong(NEXT, 0), p.getString(RESULT, "not_checked")!!, precise(c),
+            NewsHeadlinesVoiceWatcher.lastSuccessful(c), NewsHeadlinesVoiceWatcher.lastAudible(c),
+            NewsHeadlinesVoiceWatcher.announcedKeysToday(c, Lang.languageIn(c) == com.universalrp.cleansweep.data.AppLang.TA).size)
     }
+    fun playbackProgress(c: Context) = publish(c)
+
     private fun arm(c: Context, at: Long) {
         prefs(c).edit().putLong(NEXT, at).apply()
         val alarms = c.getSystemService(AlarmManager::class.java)
@@ -104,7 +109,7 @@ object NewsAutoSchedule {
             if (p.getString(RESULT, "") == "checking") p.edit().putString(RESULT, "retry").apply()
             if (Announcer.enabled(c) && NewsHeadlinesVoiceWatcher.isEnabled(c)) {
                 val now = System.currentTimeMillis()
-                var next = NewsTimingPolicy.nextCheck(NewsHeadlinesVoiceWatcher.lastSuccessful(c), NewsHeadlinesVoiceWatcher.intervalMinutes(c), now)
+                var next = NewsTimingPolicy.nextCheck(NewsHeadlinesVoiceWatcher.activityAnchor(c, now), NewsHeadlinesVoiceWatcher.intervalMinutes(c), now)
                 val local = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault())
                 if (local.hour >= 22 || local.hour < 6) next = maxOf(next,
                     local.toLocalDate().plusDays(if (local.hour >= 22) 1 else 0).atTime(6, 0).atZone(local.zone).toInstant().toEpochMilli())

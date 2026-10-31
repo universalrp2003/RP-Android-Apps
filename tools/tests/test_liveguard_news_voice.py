@@ -34,13 +34,31 @@ class LiveGuardNewsVoiceTest(unittest.TestCase):
         self.assertIn('pending.clear()', announcer)
         self.assertIn('manual = true', watcher)
         self.assertIn('if (!spoken) return -1', watcher)
-        self.assertIn('markHeadlinesAnnounced(app, batch, tamil = tamil)', watcher)
-        self.assertLess(watcher.index('if (!spoken) return -1'), watcher.index('markHeadlinesAnnounced(app, batch, tamil = tamil)'))
+        self.assertIn('if (spoken) markHeadlinesAnnounced(app, batch, tamil)', watcher)
+        self.assertIn('playBatch(app, batch, lang, manual = true)', watcher)
 
     def test_automatic_news_marks_announced_only_after_success(self):
         watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
-        self.assertIn('if (spoken) markHeadlinesAnnounced(app, freshBatch, tamil = tamil)', watcher)
-        self.assertNotIn('onStarted = {', watcher)
+        self.assertIn('val spoken = playBatch(app, freshBatch, lang)', watcher)
+        self.assertIn('if (spoken) markHeadlinesAnnounced(app, batch, tamil)', watcher)
+        self.assertIn('onStarted = { recordAudibleActivity(app) }', watcher)
+        self.assertIn('completeBulletin = false', watcher)
+        # A start only throttles retries; it must never consume a headline or claim completion.
+        activity = watcher.split('internal fun recordAudibleActivity(', 1)[1].split('fun syncSchedule(', 1)[0]
+        self.assertNotIn('markHeadlinesAnnounced', activity)
+        self.assertNotIn('KEY_LAST_AUTO_SPOKEN_MS', activity)
+
+    def test_story_checkpoint_is_after_completed_clip_not_preparation_or_start(self):
+        source = src('voice/Announcer.kt')
+        callback = 'request.onPartCompleted?.invoke(request.partIndex)'
+        played = source.index('if (played) {')
+        self.assertGreater(source.index(callback), played)
+        self.assertLess(source.index(callback), source.index('request.partIndex++', played))
+        self.assertNotIn(callback, source[:played])
+        watcher = src('voice/NewsHeadlinesVoiceWatcher.kt')
+        self.assertIn('plan.getOrNull(part)?.completedHeadline', watcher)
+        self.assertIn('completeBulletin = false', watcher)
+        self.assertIn('editor.commit()', watcher)
 
     def test_headline_read_aloud_passes_title_not_label(self):
         home = src('ui/HomeScreen.kt')

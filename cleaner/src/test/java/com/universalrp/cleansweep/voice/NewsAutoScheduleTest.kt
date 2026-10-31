@@ -108,4 +108,42 @@ class NewsAutoScheduleTest {
         NewsAutoSchedule.sync(app)
         assertEquals(completed + 60 * 60_000L, NewsAutoSchedule.status.value.nextCheck)
     }
+    @Test fun completedStoryCheckpointIsDurableWithoutClaimingACompletedBulletin() {
+        val now = System.currentTimeMillis()
+        val first = com.universalrp.cleansweep.data.NewsHeadline("state", "A fully completed source story", "Source", now, "https://example.com/first")
+        val second = first.copy(title = "An unread second source story", link = "https://example.com/second")
+        NewsHeadlinesVoiceWatcher.markHeadlinesAnnounced(app, listOf(first), true, now, completeBulletin = false)
+        assertTrue(NewsHeadlinesVoiceWatcher.announcedKeysToday(app, true, now).contains(first.key))
+        assertFalse(NewsHeadlinesVoiceWatcher.announcedKeysToday(app, true, now).contains(second.key))
+        assertEquals(0L, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
+        val persisted = app.getSharedPreferences("cleansweep_news_voice", Context.MODE_PRIVATE)
+        assertTrue(persisted.getStringSet("news_spoken_keys_ta", emptySet())!!.contains(first.key))
+    }
+    @Test fun audibleFailureReschedulesAtSelectedIntervalButConsumesNoStory() {
+        val now = System.currentTimeMillis()
+        for (minutes in listOf(30, 60, 120, 180)) {
+            NewsHeadlinesVoiceWatcher.recordAudibleActivity(app, now)
+            NewsHeadlinesVoiceWatcher.setIntervalMinutes(app, minutes)
+            assertEquals(now + minutes * 60_000L, NewsAutoSchedule.status.value.nextCheck)
+        }
+        assertEquals(0L, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
+        assertTrue(NewsHeadlinesVoiceWatcher.announcedKeysToday(app, true).isEmpty())
+    }
+    @Test fun laterFullCompletionAdvancesClockWithoutLosingEarlierStoryCheckpoint() {
+        val now = System.currentTimeMillis()
+        val item = com.universalrp.cleansweep.data.NewsHeadline("state", "A fully completed source story", "Source", now, "https://example.com/news")
+        NewsHeadlinesVoiceWatcher.recordAudibleActivity(app, now - 1_000L)
+        NewsHeadlinesVoiceWatcher.markHeadlinesAnnounced(app, listOf(item), true, now, completeBulletin = false)
+        NewsHeadlinesVoiceWatcher.markHeadlinesAnnounced(app, listOf(item), true, now, completeBulletin = true)
+        assertEquals(now, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
+        assertEquals(now + NewsHeadlinesVoiceWatcher.intervalMinutes(app) * 60_000L, NewsHeadlinesVoiceWatcher.dueAt(app, now))
+        assertEquals(setOf(item.key), NewsHeadlinesVoiceWatcher.announcedKeysToday(app, true, now))
+    }
+    @Test fun settingsReopenKeepsFutureRetryWhenNoAudioWasPlayed() {
+        val saved = System.currentTimeMillis() + 600_000L
+        app.getSharedPreferences("liveguard_news_schedule", Context.MODE_PRIVATE).edit().putLong("next_check", saved).commit()
+        NewsAutoSchedule.sync(app)
+        assertEquals(saved, NewsAutoSchedule.status.value.nextCheck)
+    }
+
 }

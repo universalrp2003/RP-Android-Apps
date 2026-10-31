@@ -222,7 +222,9 @@ object Announcer {
         val answerSlot: Int? = null,
         /** A manual news read owns the queue: stale unrelated requests must not play instead. */
         val exclusive: Boolean = false,
-        val newsDayScope: String? = null) {
+        val newsDayScope: String? = null,
+        val newsParts: List<String> = emptyList(),
+        val onPartCompleted: ((Int) -> Unit)? = null) {
         val id = java.util.UUID.randomUUID().toString()
         val key = requestKey ?: (event.name + ":" + (tamil ?: english).orEmpty())
         @Volatile var language = wanted ?: AppLang.TA
@@ -231,7 +233,7 @@ object Announcer {
         @Volatile var started = false
         // 2.76 — long news is one logical request played as several short HD clips, so the
         // shared engine's per-request text cap cannot silently truncate the eighth headline.
-        @Volatile var parts: List<String> = emptyList()
+        @Volatile var parts: List<String> = newsParts.toList()
         @Volatile var partIndex = 0
         // 2.77 — news is fully prepared before playback. These are local HD MP3 files, not
         // promises that a later network request will succeed between headlines.
@@ -742,6 +744,8 @@ object Announcer {
         onStarted: (() -> Unit)? = null,
         timeoutMs: Long = NewsVoicePreparationPolicy.BULLETIN_TIMEOUT_MS,
         manual: Boolean = false,
+        newsParts: List<String> = emptyList(),
+        onPartCompleted: ((Int) -> Unit)? = null,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
         // timeout when Android already reports no internet. Automatic news can still wait
@@ -759,6 +763,8 @@ object Announcer {
             requestKey = "news_bulletin:${System.nanoTime()}",
             exclusive = manual,
             newsDayScope = currentNewsDayScope(),
+            newsParts = newsParts,
+            onPartCompleted = onPartCompleted,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -1016,7 +1022,8 @@ object Announcer {
                     return@submit
                 }
                 if (request.event == Event.NEWS_HEADLINES && !request.manual &&
-                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context) != null) {
+                    NewsHeadlinesVoiceWatcher.automaticBlockReason(context,
+                        checkMedia = NewsPlaybackPlan.checkOtherMedia(request.started)) != null) {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
                     return@submit
                 }
@@ -1058,6 +1065,9 @@ object Announcer {
                         maxDurationMs = if (request.event == Event.ANSWER || request.event == Event.NEWS_HEADLINES) 150_000L else 45_000L,
                     )
                     if (played) {
+                        // Persist completed story boundaries before queuing the next clip. Never on start,
+                        // preparation, timeout, or an interrupted clip; these remain unread.
+                        if (request.event == Event.NEWS_HEADLINES) request.onPartCompleted?.invoke(request.partIndex)
                         main.post {
                             if (active?.id != requestId) return@post
                             if (request.event == Event.NEWS_HEADLINES && request.partIndex < request.parts.lastIndex) {

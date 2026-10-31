@@ -43,4 +43,24 @@ class NewsTimingPolicyTest {
         assertEquals(now, NewsTimingPolicy.failureStart(0, 0, now))
         assertEquals(now, NewsTimingPolicy.failureStart(now + 10_000L, now + 10_000L, now))
     }
+    @Test fun interruptedAudibleAttemptUsesEachSelectedIntervalWithoutClaimingSuccess() {
+        for (minutes in listOf(30, 60, 120, 180)) {
+            val anchor = NewsTimingPolicy.activityAnchor(0, now, now)
+            assertEquals(now + minutes * 60_000L, NewsTimingPolicy.nextCheck(anchor, minutes, now))
+        }
+    }
+    @Test fun fullCompletionRemainsTheAnchorAfterAnAudibleAttempt() {
+        assertEquals(now, NewsTimingPolicy.activityAnchor(now, now - 120_000L, now))
+        assertEquals(now, NewsTimingPolicy.activityAnchor(now - 120_000L, now, now))
+    }
+    @Test fun reopeningAnOverdueRetryDoesNotPullItForward() {
+        val saved = now + 9 * 60_000L
+        assertEquals(saved, NewsTimingPolicy.syncDeadline(saved, 0, 30, now))
+        assertEquals(saved, NewsTimingPolicy.syncDeadline(saved, now - 60 * 60_000L, 30, now))
+    }
+    @Test fun anExplicitIntervalChangeMayBringAnOverdueRetryForward() {
+        assertEquals(now + 1_000L, NewsTimingPolicy.syncDeadline(now + 9 * 60_000L,
+            now - 60 * 60_000L, 30, now, intervalChanged = true))
+    }
+
 }

@@ -100,6 +100,12 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Bulletin interrupted; selected interval respected before retry" to "வாசிப்பு இடைநிறுத்தப்பட்டது; மீண்டும் முயல தேர்ந்தெடுத்த இடைவெளி பின்பற்றப்படும்",
+        "Completed stories today" to "இன்று முழுமையாக வாசித்த செய்திகள்",
+        "Last fully completed bulletin" to "கடைசியாக முழுமையாக முடித்த செய்தித் தொகுப்பு",
+        "Last audio activity" to "கடைசியாக ஒலித்த நேரம்",
+        "Full bulletins use the completion time. Interrupted audio also waits your selected interval before automatic retry. Only fully completed stories are remembered; silent preparation failures may retry sooner." to "முழுத் தொகுப்பு முடிந்த நேரத்திலிருந்து இடைவெளி கணக்கிடப்படும். ஒலி இடைநிறுத்தப்பட்டாலும் அடுத்த தானியங்கி முயற்சிக்குத் தேர்ந்தெடுத்த இடைவெளி பின்பற்றப்படும். முழுமையாக வாசித்த செய்திகள் மட்டுமே நினைவில் வைக்கப்படும்; ஒலியே வராத தயாரிப்புத் தோல்விகள் முன்னதாக மீண்டும் முயற்சிக்கலாம்.",
+
         "Announcement voice" to "அறிவிப்பு குரல்",
         "Choose how the announcer sounds. Live Guard uses the Studio Ultra-HD neural voices and nothing else; with no internet it waits for the network and then speaks in HD." to "அறிவிப்பு குரல் எப்படி இருக்க வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும். கைபேசி காவலன் ஸ்டுடியோ அல்ட்ரா-HD நரம்பியல் குரல்களை மட்டுமே பயன்படுத்துகிறது; இணையம் இல்லாதபோது இணையத்திற்காகக் காத்திருந்து பின் HD குரலில் பேசும்.",
         "🔀 Random male / female each time" to "🔀 ஒவ்வொரு முறையும் மாறிமாறி ஆண் / பெண் குரல்",
@@ -1625,7 +1631,7 @@ object Lang {
         "🔄 Daily Auto Male ↔ Female Rotation (Recommended)" to "🔄 தினசரி ஆண் ↔ பெண் தானியங்கி மாற்றம் (பரிந்துரை)",
         "Playing Studio Ultra-HD voice sample: %s" to "ஸ்டுடியோ Ultra-HD குரல் ஒலிக்கிறது: %s",
         "News headlines voice announcer" to "செய்தி குரல் அறிவிப்பு",
-        "Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "போன் திரை அணைந்திருக்கும்போது மட்டும் புதிய 8 செய்திகளை வாசிக்கும் (6 AM – 10 PM).",
+        "Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines." to "திரை அணைந்து, அழைப்பு அல்லது பிற ஒலி இல்லாதபோது அதிகபட்சம் 8 புதிய செய்திகளை வாசிக்கும் (6 AM – 10 PM). முழுமையாக வாசித்த செய்திகளை மீண்டும் வாசிக்காது.",
         "Read today's news" to "இன்றைய செய்தி படி",
         "Reading news…" to "செய்திகள் படிக்கப்படுகின்றன…",
         "News AI uses public headlines with your configured provider. Tamil is preferred; checked English-to-Tamil specialist translations may take up to 60 seconds. Failed checks leave a category empty." to "அமைக்கப்பட்ட செயற்கை நுண்ணறிவுச் சேவைக்கு பொதுச் செய்தித் தலைப்புகள் மட்டுமே அனுப்பப்படும். தமிழ்ச் செய்திகளுக்கு முன்னுரிமை. சரிபார்க்கப்பட்ட ஆங்கிலச் சிறப்புச் செய்திகளைத் தமிழாக்க அதிகபட்சம் அறுபது வினாடிகள் ஆகலாம். சரிபார்ப்பு தோல்வியுற்றால் அந்தப் பிரிவு காலியாக இருக்கும்.",
