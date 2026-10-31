@@ -8,12 +8,17 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+import traceback
 import xml.etree.ElementTree as ET
 
 PKG = 'com.universalrp.cleansweep'
 DATA = f'/data/user/0/{PKG}'
 OUT = Path(os.environ['RUNNER_TEMP']) / 'news-wakeup-evidence'
 OUT.mkdir(exist_ok=True)
+def report_failure(kind, error, tb):
+    detail = ''.join(traceback.format_exception(kind, error, tb))[-1800:]
+    print('::error title=Sleeping news emulator::' + detail.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+sys.excepthook = report_failure
 def adb(*args, input=None):
     return subprocess.check_output(['adb', *args], input=input, timeout=40).decode(errors='replace').strip()
 def shell(*args): return adb('shell', *args)
@@ -74,8 +79,13 @@ def main(apk):
     assert int(scheduled['next_check']) == due, scheduled
     shell('input', 'keyevent', 'KEYCODE_HOME')
     shell('input', 'keyevent', 'KEYCODE_SLEEP')
-    shell('am', 'kill', PKG)  # NOT force-stop: force-stop legitimately cancels all app alarms/jobs.
-    assert not shell('pidof', PKG), 'Process must be gone before the alarm fires'
+    # Startup workers can briefly bind JobService. Wait only for quiescence; never
+    # force-stop (that legitimately cancels alarms). pidof exits 1 when successfully dead.
+    for _ in range(15):
+        shell('am', 'kill', PKG)
+        if not adb('shell', f'pidof {PKG} || true'): break
+        time.sleep(2)
+    assert not adb('shell', f'pidof {PKG} || true'), 'Process must be gone before the alarm fires'
     shell('dumpsys', 'battery', 'unplug')
     print(shell('dumpsys', 'deviceidle', 'force-idle'))
     idle = shell('dumpsys', 'deviceidle')
