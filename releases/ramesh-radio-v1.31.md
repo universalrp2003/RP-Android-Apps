@@ -2,7 +2,7 @@
 
 ## English
 
-This new candidate has not been tested on the owner's phone. The owner reports that a few stations played successfully in the previous 1.30 candidate; that is not whole-catalogue listening or acceptance of this new gesture.
+This new candidate is not installed on a phone; no device test of 1.31 is claimed. The owner reports that a few stations played successfully in the previous 1.30 candidate; that is not whole-catalogue listening or acceptance of this new gesture.
 
 - Press and hold a category tab (Tamil FM, Tamil News, Cities & FM, Favourites, etc.), then drag it left/right and release at the highlighted destination. Hold near an edge to scroll farther while dragging. All 17 categories now share one horizontally scrollable strip, without a separate More/Less gate. Ordinary swipes still scroll; ordinary taps still select.
 - The complete drop saves the order automatically using the existing stable-ID preference. Cancelling/leaving the gesture does not save a partial move. Reordering does not change the selected category or restart audio. The News subset uses the same saved order, preserving all other categories.
