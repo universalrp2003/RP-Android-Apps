@@ -1,5 +1,11 @@
 # Verified published Android APK digests
 
+## Tamilan Store 0.7 — exact tested candidate published
+
+Published by [main promotion run 41156733738](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41156733738), release `429650592`, target `aae7c9d5987b9e9f5a7965f5c5a342080c9a5e3a` at `https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.7` (2026-10-31T01:44:06Z). `Tamilan-Store-v0.7.apk`: **16,929,208 bytes**, SHA-256 `b6618ea5e101c23ce4aada39b28820e9840bd1eede03140ff2582255fe4fd8fe`. The main-only workflow authenticated artifact13021219269 / source710cf71 / archive0915caff33ffe1847dcd086635ea957af6006b1084e0e7bbd31b94fae025625e, checked package/code/minSDK/non-debuggable status, current signer7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d against public0.6, and found no added permissions of any protection level. It verified the draft API digest, then re-downloaded the public APK and unchanged checksum manifest and verified both. **No rebuild, tag replacement or old-asset overwrite.**
+
+The owner reports Store working on a phone and authorizes publication. The phone hash is not independently matched. Native probes confirm Install/Update prompts but cancel them; they do not claim all-device compatibility, Play Protect clearance or a security audit. DailyVault0.5 remains the same immutable8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55 APK, now presented as the normal thirteenth non-Store app; Store is separate (14 total). Do not uninstall or clear records to bypass signing errors.
+
 ## Daily Vault 0.5 — redesigned, direct opening and encrypted backups
 
 Published by [promotion run 41100372958](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41100372958), release `429318029`, at `https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5`. `DailyVault-v0.5.apk` is **11,712,552 bytes**, SHA-256 `8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55`. Its `.sha256` sidecar is public too. The workflow checked the pinned archive/APK and draft digest before publication, then re-downloaded the public APK/manifest and verified their bytes. The workflow summary/GraphQL check confirms SUCCESS; REST run reporting lagged.

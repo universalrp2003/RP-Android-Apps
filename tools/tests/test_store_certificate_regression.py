@@ -18,11 +18,12 @@ class StoreCertificateRegression(unittest.TestCase):
         published = json.loads((ROOT/"site/catalog-v2.json").read_text())
         self.assertEqual(published, bundled)
 
-    def test_candidate_does_not_advertise_unpublished_store(self):
+    def test_published_store_matches_the_exact_verified_release(self):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.7", publishedVersion = "0.6"', text)
-        self.assertIn('tamilan-store-v0.6/Tamilan-Store-v0.6.apk', (ROOT/'site/index.html').read_text())
-        self.assertNotIn('tamilan-store-v0.7/Tamilan-Store-v0.7.apk', (ROOT/'site/index.html').read_text())
+        self.assertIn('tagPrefix = "tamilan-store", version = "0.7", publishedVersion = "0.7"', text)
+        site = (ROOT/'site/index.html').read_text()
+        self.assertIn('tamilan-store-v0.7/Tamilan-Store-v0.7.apk', site)
+        self.assertIn('b6618ea5e101c23ce4aada39b28820e9840bd1eede03140ff2582255fe4fd8fe', site)
 
     def test_installer_handoff_keeps_uri_read_only_and_failures_typed(self):
         source = ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore'
