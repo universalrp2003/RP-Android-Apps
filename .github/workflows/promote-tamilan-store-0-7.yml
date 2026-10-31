@@ -108,6 +108,15 @@ jobs:
           "$tools/aapt2" dump badging /tmp/previous-store/Tamilan-Store-v0.6.apk > /tmp/previous-badging
           python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
           grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
+          python3 - <<'PYPERMISSIONS'
+          from pathlib import Path
+          from tools.verify_release_permission_delta import parse_badging
+          current = parse_badging(Path('/tmp/candidate-badging').read_text())
+          previous = parse_badging(Path('/tmp/previous-badging').read_text())
+          assert current and previous, 'Both permission inventories must be readable'
+          assert not current - previous, 'Permission expansion: ' + repr(sorted(current - previous))
+          print('::notice title=Full permission delta::No added permissions of any protection level.')
+          PYPERMISSIONS
           echo '::notice title=Publication preflight::Package, version, minimum SDK, non-debuggable status, both signing identities and no-new-dangerous-permission checks passed.'
           if ! gh release create tamilan-store-v0.7 --draft "$apk" /tmp/accepted-store/Tamilan-Store-v0.7.sha256 --target "$RELEASE_TARGET" --title 'Tamilan Store 0.7 — verified downloads and Android installer handoff' --notes-file releases/tamilan-store-v0.7.md --latest=false 2>/tmp/create-release-error; then
             python3 - <<'PYERROR'
