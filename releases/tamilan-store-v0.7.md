@@ -2,7 +2,7 @@
 
 Fixes the Store's stale legacy certificate pin. Current replacement-key APKs use certificate SHA-256 `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`; Secret Message retains its separate established certificate. Hash, size, package/version, SDK, installed signer and downgrade checks still fail closed. Never accept both keys to bypass Android update compatibility.
 
-The bundled offline fallback now contains the already-published current 13-app receipts, rather than pointing downloads at the retired-key snapshot. Public feed/website pointers are not advanced.
+The bundled offline fallback now contains the already-published current 13-app receipts, rather than pointing downloads at the retired-key snapshot. Public Store pointers advance only after exact-artifact publication is verified; DailyVault0.5 bytes remain unchanged.
 
 Failures distinguish download interruption, size/checksum, archive metadata, APK signer and installed-signer incompatibility. A verified file explicitly tells the user to tap Install for Android confirmation. No silent installs or Play Protect bypass.
 
