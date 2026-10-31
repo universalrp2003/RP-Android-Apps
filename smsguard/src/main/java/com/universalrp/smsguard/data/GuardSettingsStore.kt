@@ -3,7 +3,6 @@ package com.universalrp.smsguard.data
 import android.content.Context
 import com.universalrp.smsguard.engine.BillCategory
 import com.universalrp.smsguard.engine.BillReminder
-import com.universalrp.smsguard.engine.LinkScanCachePolicy
 import com.universalrp.smsguard.engine.LinkScanResult
 import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.UserAccountProfile
@@ -485,18 +484,17 @@ object GuardSettingsStore {
         }.getOrDefault(emptyList())
     }
 
-    // --- Verdict cache: version/age-bound positives; pending rescans invalidate prior positives. ---
+    // --- Scanned Link Verdict Cache (ONLY final SAFE / UNSAFE verdicts — NEVER transient offline states!) ---
 
     @Synchronized
     fun cacheLinkResults(context: Context, results: List<LinkScanResult>) {
-        if (results.isEmpty()) return
+        val finalVerdicts = results.filter {
+            it.verdict == LinkVerdict.SAFE || it.verdict == LinkVerdict.UNSAFE
+        }
+        if (finalVerdicts.isEmpty()) return
         val existing = getCachedLinkResultsMap(context).toMutableMap()
-        for (r in results) {
-            if (r.verdict == LinkVerdict.SAFE || r.verdict == LinkVerdict.UNSAFE) {
-                existing[r.originalUrl] = r
-            } else if (LinkScanCachePolicy.invalidateSafe(existing[r.originalUrl]?.verdict, r.verdict)) {
-                existing.remove(r.originalUrl) // Metadata only; never remove SMS/settings/bills.
-            }
+        for (r in finalVerdicts) {
+            existing[r.originalUrl] = r
         }
         val trimmed = existing.values.sortedByDescending { it.checkedAtMs }.take(400)
         val arr = JSONArray()
@@ -508,7 +506,6 @@ object GuardSettingsStore {
                     .put("finalUrl", item.finalUrl)
                     .put("displayDomain", item.displayDomain)
                     .put("verdict", item.verdict.name)
-                    .put("policyRevision", LinkScanCachePolicy.REVISION)
                     .put("reasonEn", item.reasonEn)
                     .put("reasonTa", item.reasonTa)
                     .put("checkedAtMs", item.checkedAtMs),
@@ -525,8 +522,7 @@ object GuardSettingsStore {
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     val verdict = runCatching { LinkVerdict.valueOf(o.getString("verdict")) }.getOrNull()
-                    if (verdict != null && LinkScanCachePolicy.reusable(verdict,
-                            o.optInt("policyRevision", 0), o.optLong("checkedAtMs", 0L), System.currentTimeMillis())) {
+                    if (verdict == LinkVerdict.SAFE || verdict == LinkVerdict.UNSAFE) {
                         val item = LinkScanResult(
                             originalUrl = o.getString("originalUrl"),
                             normalizedUrl = o.optString("normalizedUrl"),
@@ -625,16 +621,6 @@ object GuardSettingsStore {
         reload(context)
     }
 
-    @Synchronized
-    fun advancePendingLinkCheck(
-        context: Context, entry: QueuedSmsLinkCheck, completedUrls: Set<String>, attemptedUrls: Set<String>,
-    ) {
-        writePendingQueue(context, PendingLinkQueuePolicy.advance(
-            getPendingQueue(context), entry, completedUrls, attemptedUrls,
-        ))
-        reload(context)
-    }
-
     fun getPendingQueue(context: Context): List<QueuedSmsLinkCheck> {
         val raw = prefs(context).getString("pending_links_queue_v1", null) ?: return emptyList()
         return runCatching {
@@ -676,8 +662,7 @@ object GuardSettingsStore {
                     .put("queuedAtMs", item.queuedAtMs),
             )
         }
-        // Durable before the broadcast finishes; never persist a full SMS body here.
-        check(prefs(context).edit().putString("pending_links_queue_v1", arr.toString()).commit())
+        prefs(context).edit().putString("pending_links_queue_v1", arr.toString()).apply()
     }
 
     // --- Bill / payment-due reminders storage ---

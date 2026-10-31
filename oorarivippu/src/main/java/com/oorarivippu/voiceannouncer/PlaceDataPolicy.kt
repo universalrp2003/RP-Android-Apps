@@ -77,17 +77,8 @@ internal object PlaceDataPolicy {
 
     fun cleanCityOrVillage(candidates: Iterable<String?>): String =
         candidates.firstNotNullOfOrNull { candidate ->
-            cleanPlaceName(candidate)?.takeUnless { isRegionName(it) || districtSuffix.containsMatchIn(it) }
+            cleanPlaceName(candidate)?.takeUnless(::isRegionName)
         }.orEmpty()
-
-    data class AddressNames(val cityOrVillage: String, val district: String)
-
-    /** District and town are different roles, even when both are called Pudukkottai. */
-    fun addressNames(locality: String?, subAdminArea: String?): AddressNames = AddressNames(
-        cityOrVillage = cleanCityOrVillage(listOf(locality)),
-        district = cleanPlaceName(subAdminArea)?.takeUnless(::isRegionName)
-            ?.let(::withoutDistrictSuffix).orEmpty(),
-    )
 
     fun cleanSubArea(candidates: Iterable<String?>, cityOrVillage: String): String =
         candidates.firstNotNullOfOrNull { candidate ->

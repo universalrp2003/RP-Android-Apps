@@ -299,12 +299,21 @@ class MainActivity : ComponentActivity() {
             }
 
             fun requestDefaultSmsRole() {
-                // Do not offer an incomplete default messaging role: MMS is not implemented.
-                vm.postBanner(if (prefs.tamil) {
-                    "MMS பெறுதல் இன்னும் இல்லை. உங்கள் முழுமையான செய்திச் செயலியை இயல்புநிலையாக வைத்திருங்கள்; துணைப் பயன்முறையைப் பயன்படுத்துங்கள்."
-                } else {
-                    "Default SMS setup is unavailable until MMS reception is implemented. Keep your full messaging app as default and use companion mode."
-                })
+                GuardSettingsStore.savePreviousDefaultSmsPackage(
+                    this@MainActivity,
+                    SmsRepository.currentSystemDefaultSmsPackage(this@MainActivity),
+                )
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val rm = getSystemService(RoleManager::class.java)
+                    if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS) && !rm.isRoleHeld(RoleManager.ROLE_SMS)) {
+                        roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_SMS))
+                        return
+                    }
+                }
+                val legacyIntent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
+                    putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
+                }
+                roleLauncher.launch(legacyIntent)
             }
 
             fun requestCompanionSmsPermissions() {

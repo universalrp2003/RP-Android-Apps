@@ -19,7 +19,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Validated-network recovery schedules durable, bounded background checks. */
+/**
+ * Watches real validated network recovery (`ConnectivityManager.NetworkCallback`) AND manual
+ * Internet-ON switches, immediately re-verifying all offline queued SMS links and speaking
+ * the real verified Green-Tick / Red-Danger details aloud!
+ */
 object NetworkReconnectMonitor {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -39,7 +43,7 @@ object NetworkReconnectMonitor {
                     if (hasValidated) {
                         scope.launch {
                             delay(800L)
-                            PendingLinkCheckWorker.schedule(appCtx)
+                            drainPendingQueueNow(appCtx, announceVoice = true)
                         }
                     }
                 }
@@ -47,67 +51,64 @@ object NetworkReconnectMonitor {
         }
     }
 
-    /** At most three remote URL attempts per pass, including UI-triggered drains. */
-    suspend fun drainPendingQueueNow(
-        context: Context, announceVoice: Boolean = true, shouldStop: () -> Boolean = { false },
-    ): Int {
+    /**
+     * Verifies all pending offline SMS links when internet is back and speaks the real verdict.
+     * Returns count of resolved link items.
+     */
+    suspend fun drainPendingQueueNow(context: Context, announceVoice: Boolean = true): Int {
         val appCtx = context.applicationContext
-        if (!GuardSettingsStore.ensureLoaded(appCtx).internetEnabled || !SmsRepository.hasValidatedInternet(appCtx)) return 0
+        val prefs = GuardSettingsStore.ensureLoaded(appCtx)
+        if (!prefs.internetEnabled || !SmsRepository.hasValidatedInternet(appCtx)) {
+            return 0
+        }
         if (!draining.compareAndSet(false, true)) return 0
+
         return try {
-            var attempts = 0
+            val queue = GuardSettingsStore.getPendingQueue(appCtx)
+            if (queue.isEmpty()) return 0
+
+            val apiKey = GuardSettingsStore.getSafeBrowsingApiKey(appCtx)
+            val completedIds = LinkedHashSet<Long>()
             var resolvedCount = 0
-            val cached = GuardSettingsStore.getCachedLinkResultsMap(appCtx)
-            for (item in GuardSettingsStore.getPendingQueue(appCtx)) {
-                if (shouldStop() || attempts >= 3) break
-                val prefs = GuardSettingsStore.ensureLoaded(appCtx)
-                if (!prefs.internetEnabled) break
+
+            for (item in queue) {
                 val sender = SenderIdentityEngine.identify(item.rawAddress)
-                val mute = GuardSettingsStore.senderMuteFor(appCtx, sender.normalizedAddress)
-                if (mute?.blocked == true) {
-                    GuardSettingsStore.advancePendingLinkCheck(appCtx, item, item.urls.toSet(), emptySet())
-                    continue // No request or speech for a sender blocked after the SMS arrived.
-                }
                 val verified = ArrayList<LinkScanResult>()
-                val attempted = LinkedHashSet<String>()
                 for (url in item.urls) {
-                    if (shouldStop() || !GuardSettingsStore.ensureLoaded(appCtx).internetEnabled) break
-                    val previous = cached[url]
-                    if (previous != null) {
-                        verified.add(previous)
-                        continue
-                    }
-                    if (attempts >= 3) break
-                    attempts++
-                    attempted.add(url)
-                    verified.add(LinkSecurityScanner.scanSingleUrl(
-                        rawUrl = url, sender = sender, internetAllowed = true,
-                        hasValidatedNetwork = SmsRepository.hasValidatedInternet(appCtx),
-                        safeBrowsingApiKey = GuardSettingsStore.getSafeBrowsingApiKey(appCtx),
-                    ))
+                    val res = LinkSecurityScanner.scanSingleUrl(
+                        rawUrl = url,
+                        sender = sender,
+                        internetAllowed = true,
+                        hasValidatedNetwork = true,
+                        safeBrowsingApiKey = apiKey,
+                    )
+                    verified.add(res)
                 }
                 GuardSettingsStore.cacheLinkResults(appCtx, verified)
-                val completed = verified.filter { it.verdict == LinkVerdict.SAFE || it.verdict == LinkVerdict.UNSAFE }
-                GuardSettingsStore.advancePendingLinkCheck(appCtx, item, completed.map { it.originalUrl }.toSet(), attempted)
-                resolvedCount += completed.size
-                // Speak each completed URL separately; a mixed batch must not name a safe URL as the threat.
-                val freshPrefs = GuardSettingsStore.ensureLoaded(appCtx)
-                val freshMute = GuardSettingsStore.senderMuteFor(appCtx, sender.normalizedAddress)
-                if (freshMute?.blocked != true) {
-                    completed.firstOrNull { it.verdict == LinkVerdict.UNSAFE }?.let {
-                        IncomingSmsProcessor.notifyDeferredThreat(appCtx, sender.normalizedAddress, it.displayDomain, freshPrefs.tamil)
-                    }
+
+                val allResolved = verified.all {
+                    it.verdict == LinkVerdict.SAFE || it.verdict == LinkVerdict.UNSAFE
                 }
-                if (announceVoice && freshPrefs.voiceEnabled && freshMute?.muteVoice != true && freshMute?.blocked != true &&
-                    !SleepScheduleManager.isSleepingNow(freshPrefs)) {
-                    for (result in completed) {
+                if (allResolved) {
+                    completedIds.add(item.messageId)
+                    resolvedCount += verified.size
+                    if (announceVoice && prefs.voiceEnabled) {
                         SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
-                            item.senderNameEn, item.senderNameTa, listOf(result), freshPrefs.tamil,
-                        )?.let { SmsVoiceAnnouncer.speak(appCtx, it, flushExisting = false) }
+                            senderNameEn = item.senderNameEn,
+                            senderNameTa = item.senderNameTa,
+                            results = verified,
+                            tamil = prefs.tamil,
+                        )?.let { script ->
+                            SmsVoiceAnnouncer.speak(appCtx, script, flushExisting = false)
+                        }
                     }
                 }
             }
-            SmsEvents.notifyChanged()
+
+            if (completedIds.isNotEmpty()) {
+                GuardSettingsStore.removePendingLinkChecks(appCtx, completedIds)
+                SmsEvents.notifyChanged()
+            }
             resolvedCount
         } finally {
             draining.set(false)

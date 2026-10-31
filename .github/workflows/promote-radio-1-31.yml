@@ -1,0 +1,130 @@
+name: Promote owner-approved Radio 1.31 (exact APK, no rebuild)
+on:
+  push:
+    branches: ["arena/9e83fc74-rp-android-apps"]
+    paths: [".github/workflows/promote-radio-1-31.yml"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: promote-owner-approved-radio-1-31
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE: 691d176cc00adb59702e53bbae3e99bfc2663ec5
+      EXPECTED_SHA: fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22
+      ARCHIVE_SHA: 347be4eadcc9e24635b470bb8660ba8f0c130edca0c0fc03c93175df79a5098d
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify owner authorization, successful source gates and unchanged Radio code
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools/tests
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          python3 - <<'PY'
+          import json,os,pathlib,subprocess
+          def api(path): return json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/'+path],text=True))
+          source=os.environ['SOURCE']
+          approval=pathlib.Path('docs/radio-1.31-owner-acceptance.md').read_text()
+          for value in (source,os.environ['EXPECTED_SHA'],os.environ['ARCHIVE_SHA'],'Publication authorized: yes'):
+              assert value in approval
+          run=api('actions/runs/41205378161');job=api('actions/jobs/124549323422');artifact=api('actions/artifacts/13044417700')
+          assert (run['head_sha'],run['status'],run['conclusion'],run['path'])==(source,'completed','success','.github/workflows/radio-candidate.yml')
+          assert job['run_id']==41205378161 and job['conclusion']=='success'
+          for name in ('Source, localization and regressions','Both JVM variants, release lint and signed APK','Verify immutable phone-test artifact'):
+              steps=[s for s in job['steps'] if s['name']==name]
+              assert len(steps)==1 and steps[0]['conclusion']=='success',name
+          assert artifact['id']==13044417700 and artifact['name']=='Ramesh-Radio-1.31-signed-candidate' and not artifact['expired']
+          assert artifact['workflow_run']['id']==41205378161 and artifact['workflow_run']['head_sha']==source
+          assert artifact['digest']=='sha256:'+os.environ['ARCHIVE_SHA']
+          full=api('actions/runs/41205378185')
+          assert full['head_sha']==source and full['conclusion']=='success'
+          subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'],check=True)
+          paths=subprocess.check_output(['git','diff','--name-only',source,'HEAD'],text=True).splitlines()
+          shared='shared/src/main/java/com/universalrp/updates/SisterApps.kt'
+          forbidden=[p for p in paths if p.startswith(('radio/','gradle/','ci-keystore/')) or (p.startswith('shared/') and p!=shared) or p in ('build.gradle.kts','settings.gradle.kts','gradle.properties','gradlew','gradlew.bat')]
+          assert not forbidden,forbidden
+          # Only directory metadata may differ: restore deferred app versions; publish Radio metadata.
+          before=subprocess.check_output(['git','show',source+':'+shared],text=True)
+          expected=before.replace('version = "1.1.14"','version = "1.1.11"').replace('version = "1.1.13"','version = "1.1.10"')
+          actual=pathlib.Path(shared).read_text()
+          assert actual in (expected,expected.replace('publishedVersion = "1.29"','publishedVersion = "1.31"'))
+          # Never replace a tag or any draft/public release. API failures fail closed.
+          for endpoint,key in (('releases?per_page=100','tag_name'),('tags?per_page=100','name')):
+              values=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp','repos/'+os.environ['GH_REPO']+'/'+endpoint],text=True))
+              assert not any(v[key]=='ramesh-radio-v1.31' for page in values for v in page)
+          PY
+      - name: Download and verify the pinned immutable archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/$GH_REPO/actions/artifacts/13044417700/zip > /tmp/accepted-radio.zip
+          echo "$ARCHIVE_SHA  /tmp/accepted-radio.zip" | sha256sum --check
+          python3 - <<'PY'
+          import hashlib,os,pathlib,zipfile
+          with zipfile.ZipFile('/tmp/accepted-radio.zip') as z:
+              assert z.namelist()==['Ramesh-Radio-v1.31.apk']
+              data=z.read('Ramesh-Radio-v1.31.apk')
+          assert len(data)==15179972 and hashlib.sha256(data).hexdigest()==os.environ['EXPECTED_SHA']
+          pathlib.Path('/tmp/Ramesh-Radio-v1.31.apk').write_bytes(data)
+          PY
+      - name: Verify APK identity, signer, permission delta; promote and re-download exact bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=/tmp/Ramesh-Radio-v1.31.apk
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt2" dump badging "$apk" > /tmp/radio-badging
+          grep -Fq "package: name='com.universalrp.tamilnadufm' versionCode='31' versionName='1.31'" /tmp/radio-badging
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/radio-badging
+          ! grep -q application-debuggable /tmp/radio-badging
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/radio-signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/radio-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          mkdir /tmp/previous-radio
+          gh release download ramesh-radio-v1.29 --pattern Ramesh-Radio-v1.29.apk --dir /tmp/previous-radio
+          echo '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d  /tmp/previous-radio/Ramesh-Radio-v1.29.apk' | sha256sum --check
+          "$tools/aapt2" dump badging /tmp/previous-radio/Ramesh-Radio-v1.29.apk > /tmp/previous-badging
+          "$tools/apksigner" verify --print-certs /tmp/previous-radio/Ramesh-Radio-v1.29.apk > /tmp/previous-radio-signer
+          grep -Fq "$signer" /tmp/previous-radio-signer
+          python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/radio-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
+          grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
+          printf '%s  Ramesh-Radio-v1.31.apk\n' "$EXPECTED_SHA" > /tmp/Ramesh-Radio-v1.31.sha256
+          gh release create ramesh-radio-v1.31 --draft "$apk" /tmp/Ramesh-Radio-v1.31.sha256 --target "$SOURCE" --title 'Ramesh Radio 1.31 — drag category tabs and reviewed station catalogue' --notes-file releases/ramesh-radio-v1.31.md
+          python3 - <<'PY'
+          import json,os,subprocess
+          r=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases/tags/ramesh-radio-v1.31'],text=True))
+          a=[a for a in r['assets'] if a['name']=='Ramesh-Radio-v1.31.apk']
+          assert r['draft'] and len(a)==1 and a[0]['size']==15179972 and a[0]['digest']=='sha256:'+os.environ['EXPECTED_SHA']
+          PY
+          mkdir /tmp/radio-redownload
+          gh release download ramesh-radio-v1.31 --pattern Ramesh-Radio-v1.31.apk --dir /tmp/radio-redownload
+          echo "$EXPECTED_SHA  /tmp/radio-redownload/Ramesh-Radio-v1.31.apk" | sha256sum --check
+          gh release edit ramesh-radio-v1.31 --draft=false --latest=false
+          python3 - <<'PY'
+          import json,os,subprocess
+          r=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases/tags/ramesh-radio-v1.31'],text=True))
+          a=[a for a in r['assets'] if a['name']=='Ramesh-Radio-v1.31.apk']
+          assert not r['draft'] and not r['prerelease'] and len(a)==1
+          assert a[0]['size']==15179972 and a[0]['digest']=='sha256:'+os.environ['EXPECTED_SHA']
+          print('::notice title=Radio public receipt::release='+str(r['id'])+' asset='+str(a[0]['id'])+' sha256='+os.environ['EXPECTED_SHA'])
+          PY
+      - name: Bounded verification diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import pathlib
+          for name in ('radio-badging','radio-signer','permission-delta'):
+              p=pathlib.Path('/tmp')/name
+              if p.exists():
+                  for line in p.read_text(errors='replace').splitlines()[:12]:
+                      print('::error title='+name+'::'+line[:700].replace('%','%25').replace('\n','%0A'))

@@ -366,9 +366,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 AppPreferences.state.value.isInternetAvailable != true
             ) return@launch
 
-            val city = resolved?.cityOrVillage ?: AppPreferences.state.value.currentCityOrVillage
-            val district = resolved?.district ?: AppPreferences.state.value.currentDistrict
-            if (city.isBlank() && district.isBlank()) return@launch
+            val city = resolved?.cityOrVillage?.takeIf { it.isNotBlank() }
+                ?: AppPreferences.state.value.currentCityOrVillage
+            if (city.isBlank()) return@launch
             val subArea = resolved?.subArea ?: AppPreferences.state.value.currentSubArea
             val locale = if (current.voiceLanguage == "en") Locale("en", "IN") else Locale("ta", "IN")
             val timeText = java.text.SimpleDateFormat("h:mm a", locale).format(java.util.Date())
@@ -376,8 +376,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 current.voiceLanguage,
                 city,
                 subArea,
-                timeText,
-                district = district
+                timeText
             )
             val alternateLanguage = if (current.voiceLanguage == "en") "ta" else "en"
             val alternate = BilingualStrings.buildWhereAmIAnnouncement(
@@ -387,16 +386,13 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 java.text.SimpleDateFormat(
                     "h:mm a",
                     if (alternateLanguage == "en") Locale("en", "IN") else Locale("ta", "IN")
-                ).format(java.util.Date()),
-                district = district
+                ).format(java.util.Date())
             )
             speakAnnouncement(
                 text = primary,
                 voiceLang = current.voiceLanguage,
                 alternateLanguageText = alternate,
-                logTitle = city.ifBlank {
-                    BilingualStrings.buildDistrictAnnouncement(current.voiceLanguage, district).removeSuffix(".")
-                }
+                logTitle = "Current place: $city"
             )
         }
     }
@@ -736,7 +732,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     district = resolved.district
                 )
                 updateForegroundNotification()
-                if (cityOrVillage.isBlank() && resolved.district.isBlank()) return@launch
+                if (cityOrVillage.isBlank()) return@launch
 
                 val isFirstStartAnnouncement =
                     !hasMadeInitialStartAnnouncement && current.announceImmediatelyOnStart
@@ -757,13 +753,13 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
 
                 val firstPlaceFix = !hasEstablishedPlaceBaseline
                 if (firstPlaceFix) {
+                    lastAnnouncedDistrict = resolved.district
                     lastAnnouncedHighwayLandmark = resolved.highwayLandmark.orEmpty()
                     hasEstablishedPlaceBaseline = true
                 }
 
                 val nowElapsedMs = SystemClock.elapsedRealtime()
-                val differsFromLastCity = cityOrVillage.isNotBlank() &&
-                    !PlaceDataPolicy.samePlaceName(cityOrVillage, lastAnnouncedCity)
+                val differsFromLastCity = !PlaceDataPolicy.samePlaceName(cityOrVillage, lastAnnouncedCity)
                 // Near a town border the geocoder can alternate between two neighbouring towns:
                 // a town announced in the last few minutes is not announced again.
                 val backInRecentCity = differsFromLastCity &&
@@ -773,11 +769,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     lastAnnouncedSubArea = subArea
                 }
                 val isNewCityOrVillage = differsFromLastCity && !backInRecentCity
-                val isNewSubAreaInSameCity = cityOrVillage.isNotBlank() && !isNewCityOrVillage &&
+                val isNewSubAreaInSameCity = !isNewCityOrVillage &&
                     subArea.isNotBlank() &&
                     !PlaceDataPolicy.samePlaceName(subArea, cityOrVillage) &&
                     !PlaceDataPolicy.samePlaceName(subArea, lastAnnouncedSubArea)
-                val districtChanged = resolved.district.isNotBlank() &&
+                val districtChanged = !firstPlaceFix &&
+                    resolved.district.isNotBlank() &&
                     !PlaceDataPolicy.samePlaceName(resolved.district, lastAnnouncedDistrict)
                 val landmark = resolved.highwayLandmark.orEmpty()
                 val landmarkChanged = !firstPlaceFix &&
@@ -788,7 +785,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 val alternateLanguage = if (current.voiceLanguage == "en") "ta" else "en"
                 val primaryParts = mutableListOf<String>()
                 val alternateParts = mutableListOf<String>()
-                val logTitles = mutableListOf<String>()
+                var logTitle = cityOrVillage
 
                 if (isNewCityOrVillage) {
                     primaryParts += BilingualStrings.buildSpokenAnnouncement(
@@ -808,7 +805,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     lastAnnouncedCity = cityOrVillage
                     lastAnnouncedSubArea = subArea
                     recentCities.remember(cityOrVillage, nowElapsedMs)
-                    logTitles += if (subArea.isNotBlank() &&
+                    logTitle = if (subArea.isNotBlank() &&
                         !PlaceDataPolicy.samePlaceName(subArea, cityOrVillage)
                     ) "$cityOrVillage ($subArea)" else cityOrVillage
                 } else if (isNewSubAreaInSameCity && current.announceSameCitySubArea) {
@@ -827,7 +824,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                         includeSubArea = true
                     )
                     lastAnnouncedSubArea = subArea
-                    logTitles += "$subArea, $cityOrVillage"
+                    logTitle = "$subArea, $cityOrVillage"
                 }
 
                 if (districtChanged) {
@@ -840,9 +837,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                         resolved.district
                     )
                     lastAnnouncedDistrict = resolved.district
-                    logTitles += BilingualStrings.buildDistrictAnnouncement(
-                        current.voiceLanguage, resolved.district
-                    ).removeSuffix(".")
+                    logTitle = "${resolved.district} district"
                 }
                 if (landmarkChanged) {
                     primaryParts += BilingualStrings.buildHighwayLandmarkAnnouncement(
@@ -854,7 +849,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                         landmark
                     )
                     lastAnnouncedHighwayLandmark = landmark
-                    logTitles += landmark
+                    logTitle = landmark
                 }
 
                 if (primaryParts.isNotEmpty()) {
@@ -866,7 +861,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                         text = primary,
                         voiceLang = current.voiceLanguage,
                         alternateLanguageText = alternate,
-                        logTitle = logTitles.joinToString(" · ")
+                        logTitle = logTitle
                     )
                 }
             } finally {
@@ -940,12 +935,20 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         district: String,
         highwayLandmark: String
     ) {
-        val primary = BilingualStrings.buildInitialPlaceAnnouncement(
-            voiceLanguage, cityOrVillage, subArea, includeSubArea, district
+        val primary = BilingualStrings.buildSpokenAnnouncement(
+            voiceLang = voiceLanguage,
+            isNewCityOrVillage = true,
+            cityOrVillage = cityOrVillage,
+            subArea = subArea,
+            includeSubArea = includeSubArea
         )
         val alternateLanguage = if (voiceLanguage == "en") "ta" else "en"
-        val alternate = BilingualStrings.buildInitialPlaceAnnouncement(
-            alternateLanguage, cityOrVillage, subArea, includeSubArea, district
+        val alternate = BilingualStrings.buildSpokenAnnouncement(
+            voiceLang = alternateLanguage,
+            isNewCityOrVillage = true,
+            cityOrVillage = cityOrVillage,
+            subArea = subArea,
+            includeSubArea = includeSubArea
         )
         lastAnnouncedCity = cityOrVillage
         lastAnnouncedSubArea = subArea
@@ -955,17 +958,14 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         hasEstablishedPlaceBaseline = true
         hasMadeInitialStartAnnouncement = true
         travelDetector.markPlaceAnnounced(location)
-        val displayTitle = if (cityOrVillage.isNotBlank() && subArea.isNotBlank() &&
+        val displayTitle = if (subArea.isNotBlank() &&
             !PlaceDataPolicy.samePlaceName(subArea, cityOrVillage)
         ) "$cityOrVillage ($subArea)" else cityOrVillage
-        val districtTitle = district.takeIf { it.isNotBlank() }?.let {
-            BilingualStrings.buildDistrictAnnouncement(voiceLanguage, it).removeSuffix(".")
-        }.orEmpty()
         speakAnnouncement(
             text = primary,
             voiceLang = voiceLanguage,
             alternateLanguageText = alternate,
-            logTitle = listOf(displayTitle, districtTitle).filter(String::isNotBlank).joinToString(" · ")
+            logTitle = displayTitle
         )
     }
 
@@ -1033,10 +1033,10 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         address ?: return null
 
         // Extract Village / Town / City name reliably across rural and urban India
-        // subAdminArea is a district, never a fallback town. Preserve both roles when the
-        // district and its capital share a name; otherwise a district is spoken as a town.
-        val names = PlaceDataPolicy.addressNames(address.locality, address.subAdminArea)
-        val cityOrVillage = names.cityOrVillage
+        val cityOrVillage = PlaceDataPolicy.cleanCityOrVillage(
+            // The state (adminArea) is never announced as a town.
+            listOf(address.locality, address.subAdminArea)
+        )
 
         // Prefer a geocoder's named feature (e.g. a hospital or bus stand) to its road field.
         // Plus Codes and long route/address chains are filtered before they can be announced.
@@ -1044,7 +1044,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             candidates = listOf(address.featureName, address.subLocality, address.thoroughfare),
             cityOrVillage = cityOrVillage
         )
-        val district = names.district
+        val district = PlaceDataPolicy.cleanPlaceName(address.subAdminArea)
+            ?.takeUnless { PlaceDataPolicy.samePlaceName(it, cityOrVillage) }
+            .orEmpty()
         val highwayLandmark = PlaceDataPolicy.highwayLandmark(
             listOf(address.thoroughfare, address.featureName, address.subLocality)
         )

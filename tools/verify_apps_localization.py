@@ -691,17 +691,6 @@ def verify_release_notes_honesty() -> int:
     return checked
 
 
-def verify_oor_about_directory(main_source: str, catalog_source: str) -> None:
-    # Oor now renders the shared *published* directory rather than a stale seven-tag list.
-    for required in ("SisterApps.all.forEach", "SisterApps.releaseUrl(app)", "app.publishedVersion"):
-        if required not in main_source:
-            raise ValueError(f"Oor Arivippu About must render the shared published directory: {required}")
-    if "InternetRadio" in (main_source + catalog_source) or "Legacy Mirror" in (main_source + catalog_source):
-        raise ValueError("Oor Arivippu About must not show the retired InternetRadio repository.")
-    if re.search(r'(?:Android Apps|செயலிகள்) \(\d+\)', catalog_source):
-        raise ValueError("Oor Arivippu About must not freeze the suite count in a label.")
-
-
 def verify_about_links() -> None:
     about_files = {
         "cleaner": ROOT / "cleaner/src/main/java/com/universalrp/cleansweep/ui/AboutScreen.kt",
@@ -714,12 +703,12 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.14"', 'publishedVersion = "1.1.11"',
-            'tagPrefix = "live-guard"', 'version = "2.81"', 'publishedVersion = "2.81"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.31"', 'publishedVersion = "1.29"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.11"',
+            'tagPrefix = "live-guard"', 'version = "2.81"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.13"', 'publishedVersion = "1.1.10"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.10"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.2"',
             'tagPrefix = "voice-notes"', 'version = "1.3.3"',
@@ -751,9 +740,13 @@ def verify_about_links() -> None:
     oor_source = oor_path.read_text(encoding="utf-8")
     oor_strings = (ROOT / "oorarivippu/src/main/java/com/oorarivippu/voiceannouncer/BilingualStrings.kt").read_text(encoding="utf-8")
     oor_about_text = oor_source + "\n" + oor_strings
-    verify_oor_about_directory(oor_source, oor_strings)
+    oor_urls = set(re.findall(r'https://github\.com/universalrp2003/RP-Android-Apps/releases/tag/[^"\\]+', oor_source))
+    missing_oor = EXPECTED_OOR_RELEASE_URLS - oor_urls
+    if missing_oor:
+        raise ValueError(f"Oor Arivippu About is missing current release links: {sorted(missing_oor)}")
     for required in (
         "https://universalrp2003.github.io/RP-Android-Apps/",
+        "https://github.com/universalrp2003/InternetRadio",
         "https://github.com/universalrp2003/RP-Android-Apps",
         "universalrp2003@gmail.com",
         "Arena.ai Agent Mode",

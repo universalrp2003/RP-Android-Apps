@@ -198,9 +198,9 @@ object BilingualStrings {
         contributorsTitle = "பங்களிப்பாளர்கள்",
         projectDevelopmentCredit = "திட்ட உருவாக்கம்: Ramesh prathap .R · universalrp2003@gmail.com",
         aiAssistanceCredit = "AI மென்பொருள் உதவிப் பங்களிப்பு: Arena.ai Agent Mode",
-        sourceRepositoryLabel = "திட்ட மூலக் குறியீடு — RP-Android-Apps",
+        sourceRepositoryLabel = "முந்தைய மாற்று களஞ்சியம் — InternetRadio",
         downloadRepositoryLabel = "RP-Android-Apps GitHub களஞ்சியம்",
-        otherAppsTitle = "எமது RP Ideas செயலிகள்",
+        otherAppsTitle = "எமது RP Ideas செயலிகள் (7)",
         officialWebsiteLabel = "RP-Android-Apps அதிகாரப்பூர்வ இணையதளம்",
         smsGuardReleaseLabel = "குறுஞ்செய்தி காவலன் (SMS Guard)",
         liveGuardReleaseLabel = "Live Guard (CleanSweep)",
@@ -324,9 +324,9 @@ object BilingualStrings {
         contributorsTitle = "Contributors",
         projectDevelopmentCredit = "Project development: Ramesh prathap .R · universalrp2003@gmail.com",
         aiAssistanceCredit = "AI software assistance: Arena.ai Agent Mode",
-        sourceRepositoryLabel = "Project source — RP-Android-Apps",
+        sourceRepositoryLabel = "Legacy Mirror Repository — InternetRadio",
         downloadRepositoryLabel = "RP-Android-Apps GitHub Repository",
-        otherAppsTitle = "Our RP Ideas Android Apps",
+        otherAppsTitle = "Our RP Ideas Android Apps (7)",
         officialWebsiteLabel = "RP-Android-Apps Official Website",
         smsGuardReleaseLabel = "SMS Guard (குறுஞ்செய்தி காவலன்)",
         liveGuardReleaseLabel = "Live Guard (CleanSweep)",
@@ -415,16 +415,6 @@ object BilingualStrings {
         }
     }
 
-    /** An initial fix is current-location context, not proof of crossing a district border. */
-    fun buildInitialPlaceAnnouncement(
-        voiceLang: String, cityOrVillage: String, subArea: String?, includeSubArea: Boolean, district: String
-    ): String = buildList {
-        if (cityOrVillage.isNotBlank()) add(buildSpokenAnnouncement(
-            voiceLang, true, cityOrVillage, subArea, includeSubArea
-        ))
-        if (district.isNotBlank()) add(buildDistrictAnnouncement(voiceLang, district))
-    }.joinToString(" ")
-
     fun buildDestinationAnnouncement(
         voiceLang: String,
         destinationName: String,
@@ -461,12 +451,9 @@ object BilingualStrings {
         voiceLang: String,
         cityOrVillage: String,
         subArea: String,
-        timeText: String,
-        district: String = ""
+        timeText: String
     ): String {
-        val place = if (cityOrVillage.isBlank() && district.isNotBlank()) {
-            buildDistrictAnnouncement(voiceLang, district).removeSuffix(".")
-        } else if (subArea.isBlank() || PlaceDataPolicy.samePlaceName(subArea, cityOrVillage)) {
+        val place = if (subArea.isBlank() || PlaceDataPolicy.samePlaceName(subArea, cityOrVillage)) {
             cityOrVillage
         } else {
             "$subArea, $cityOrVillage"

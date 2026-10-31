@@ -521,10 +521,9 @@ fun ControlsTab(
                 Text(
                     if (isDefaultSms) ui.defaultSmsActiveBadge else ui.setupBannerTitle,
                     fontWeight = FontWeight.Bold,
-                    color = palette.warnAmber,
+                    color = if (isDefaultSms) palette.safeGreen else palette.warnAmber,
                     fontSize = 14.5.sp,
                 )
-                Text(ui.setupBannerBody, color = palette.textMuted, fontSize = 12.5.sp)
                 if (isDefaultSms) {
                     OutlinedButton(onClick = onSwitchBackDefaultSms, modifier = Modifier.fillMaxWidth()) {
                         Text(ui.switchBackSmsBtn)
@@ -700,14 +699,21 @@ fun AboutSmsGuardScreen(
                 ) { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
+                LinkRow(
+                    if (tamil) "முந்தைய மாற்று களஞ்சியம் (InternetRadio)" else "Legacy Mirror Repository",
+                    "https://github.com/universalrp2003/InternetRadio",
+                    palette,
+                ) { url ->
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                }
             }
         }
 
-        // Shared published-app directory; do not freeze the suite size in a label.
+        // Shared Sister Apps list (all 7 RP Ideas apps)
         item {
             SectionCard(palette = palette) {
                 Text(
-                    if (tamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas Android Apps",
+                    if (tamil) "எமது RP Ideas செயலிகள் (7)" else "Our RP Ideas Android Apps (7)",
                     fontWeight = FontWeight.Bold,
                     color = palette.accent,
                 )

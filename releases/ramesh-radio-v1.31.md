@@ -1,18 +1,18 @@
-# Ramesh Radio 1.31 / code31 — direct tab dragging test candidate, NOT published
+# Ramesh Radio 1.31 / code31 — drag whole category tabs
 
 ## English
 
-This new candidate is not installed on a phone; no device test of 1.31 is claimed. The owner reports that a few stations played successfully in the previous 1.30 candidate; that is not whole-catalogue listening or acceptance of this new gesture.
+The owner installed on a phone, supplied a screenshot of the direct-drag interface and accepted this candidate: “Its super now you can publish now”. Earlier the owner reported a few stations playing successfully. Publish the exact accepted candidate without rebuilding; no independently matched installed hash, complete catalogue listening, or separately traced restart/persistence test is claimed.
 
 - Press and hold a category tab (Tamil FM, Tamil News, Cities & FM, Favourites, etc.), then drag it left/right and release at the highlighted destination. Hold near an edge to scroll farther while dragging. All 17 categories now share one horizontally scrollable strip, without a separate More/Less gate. Ordinary swipes still scroll; ordinary taps still select.
 - The complete drop saves the order automatically using the existing stable-ID preference. Cancelling/leaving the gesture does not save a partial move. Reordering does not change the selected category or restart audio. The News subset uses the same saved order, preserving all other categories.
 - Keep More → Arrange whole tabs as an accessible arrow-button alternative, with independent navigation/category resets. Category chips also expose earlier/later accessibility actions. Bottom navigation ordering remains available in that editor.
 - Unchanged from 1.30: 532 catalogue records (504 original +28 deduplicated additions), 13 shared-provider streams held for content review, 42 unreachable endpoints unresolved. Connection/audio-metadata checks do not establish station identity, normal programmes, absence of promotions or availability on every phone. Tamil 80’s programme is NOT restored or bypassed.
-- In-place update from 1.29/1.30 with the established package and signing key; no new permissions, favourite/history/custom-station deletion or storage reset. Do not uninstall or clear data: uninstalling may erase local data, favourites and custom stations. Public 1.29 and the exact earlier test APK remain unchanged. SMS/Oor selected test builds and Live Guard/site/Store remain out of scope. No publication/main merge authorized.
+- In-place update from 1.29/1.30 with the established package and signing key; no new permissions, favourite/history/custom-station deletion or storage reset. Do not uninstall or clear data: uninstalling may erase local data, favourites and custom stations. Public 1.29 and the exact earlier test APK remain unchanged. SMS/Oor selected test builds and Live Guard/site/Store remain out of scope. Owner authorized Radio-only publication; pending SMS/Oor work is not part of this release.
 
 ## தமிழ்
 
-இது புதிய சோதனைப் பதிப்பு மட்டுமே; வெளியிடப்படவில்லை. இந்தப் புதிய இழுக்கும் வசதி உரிமையாளரின் போனில் இன்னும் சோதிக்கப்படவில்லை. முந்தைய பதிப்பில் சில நிலையங்கள் ஒலித்ததாக உரிமையாளர் தெரிவித்தார்; எல்லா நிலையங்களையும் கேட்டதாக உறுதி இல்லை.
+உரிமையாளர் புதிய தாவல் வசதியுள்ள திரைப் படத்தை அளித்து வெளியிட அனுமதித்துள்ளார். ஏற்கெனவே சில நிலையங்கள் ஒலித்ததாகவும் தெரிவித்தார். அவர் ஏற்றுக்கொண்ட அதே கோப்பு மீண்டும் உருவாக்கப்படாமல் வெளியிடப்படுகிறது. எல்லா நிலையங்களையும் கேட்டதாகவோ போனில் உள்ள கோப்பின் தனிப்பட்ட அடையாளத்தைச் சரிபார்த்ததாகவோ உறுதி இல்லை.
 
 - தமிழ் வானொலி, தமிழ்ச் செய்திகள், நகரங்கள், விருப்பமானவை போன்ற வகைத் தாவலை அழுத்திப் பிடித்து இடது அல்லது வலது பக்கம் இழுத்து விடுங்கள். ஓரத்தில் பிடித்தால் பட்டியல் தானாக நகரும். எல்லா வகைகளும் ஒரே கிடைமட்டப் பட்டியலில் உள்ளன. சாதாரணமாகத் தொட்டால் வகை தேர்வாகும்; விரலால் தள்ளினால் பட்டியல் நகரும்.
 - விடும்போது வரிசை தானாகச் சேமிக்கப்படும். ரத்து செய்தால் சேமிக்கப்படாது. தேர்ந்தெடுத்த வகை மற்றும் நடக்கும் ஒலிபரப்பு மாறாது. செய்தித் தாவல்களுக்கும் இதே வரிசை பொருந்தும்.

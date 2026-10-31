@@ -57,23 +57,13 @@ internal object DestinationSearchPolicy {
             ?.let { parts.add(it) }
         PlaceDataPolicy.cleanPlaceName(district)
             ?.let { PlaceDataPolicy.withoutDistrictSuffix(it) }
-            ?.let { districtName ->
-                // Town and district can legitimately share a name. Preserve the role label.
-                parts.removeAll { PlaceDataPolicy.samePlaceName(it, districtName) }
-                parts += "$districtName $districtWord"
-            }
+            ?.takeUnless { value -> parts.any { PlaceDataPolicy.samePlaceName(it, value) } }
+            ?.let { parts += "$it $districtWord" }
         PlaceDataPolicy.cleanPlaceName(state)?.let { parts.add(it) }
         val pin = postalCode?.trim()?.takeIf { it.matches(Regex("""\d{6}""")) }
         val place = parts.joinToString(", ")
         return listOfNotNull(place.takeIf { it.isNotBlank() }, pin).joinToString(" ")
     }
-
-    fun validCoordinates(latitude: Double, longitude: Double): Boolean =
-        latitude.isFinite() && longitude.isFinite() && latitude in -90.0..90.0 && longitude in -180.0..180.0
-
-    fun destinationName(feature: String?, locality: String?, subLocality: String?, query: String): String =
-        PlaceDataPolicy.cleanCityOrVillage(listOf(feature, locality, subLocality))
-            .ifBlank { query.substringBefore(',').trim() }
 
     /** Drops repeats: the same name and details, or the same name within about a kilometre. */
     fun distinct(candidates: List<DestinationCandidate>): List<DestinationCandidate> {
@@ -145,10 +135,10 @@ private fun candidate(
     districtWord: String
 ): DestinationCandidate? {
     if (!address.hasLatitude() || !address.hasLongitude()) return null
-    if (!DestinationSearchPolicy.validCoordinates(address.latitude, address.longitude)) return null
-    val name = DestinationSearchPolicy.destinationName(
-        address.featureName, address.locality, address.subLocality, query
-    )
+    if (!address.latitude.isFinite() || !address.longitude.isFinite()) return null
+    val name = PlaceDataPolicy.cleanCityOrVillage(
+        listOf(address.featureName, address.locality, address.subLocality, address.subAdminArea)
+    ).ifBlank { query.substringBefore(',').trim() }
     val distanceKm = origin?.let { here ->
         val result = FloatArray(1)
         Location.distanceBetween(here.latitude, here.longitude, address.latitude, address.longitude, result)
