@@ -63,3 +63,11 @@ class SmsSpeechPrivacyContracts(unittest.TestCase):
         ui = (BASE / 'ui/SmsPrivacyDialogs.kt').read_text()
         for text in ('speech.platform.bing.com', 'sender names', 'transaction amounts', 'on-device voice only', 'Play Protect', 'மறுத்தால்'):
             self.assertIn(text, ui)
+
+    def test_published_sms_card_discloses_cloud_and_unresolved_warning(self):
+        site = (ROOT / 'site/index.html').read_text()
+        card = site.split('<!-- SMS Guard -->', 1)[1].split('<!-- Live Guard -->', 1)[0]
+        for text in ('Play Protect installation block unresolved', 'Cloud HD voice is OFF until separate consent', 'Microsoft', 'not an independent audit', 'Incoming MMS is incomplete', 'Do not uninstall/reset'):
+            self.assertIn(text, card)
+        for text in ('nothing is uploaded anywhere', '100% OTP silence', 'Spoof-proof', 'OTP &amp; வங்கி எண்கள் ஒருபோதும் சொல்லப்படாது'):
+            self.assertNotIn(text, card)
