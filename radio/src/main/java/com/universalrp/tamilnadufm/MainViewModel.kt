@@ -55,6 +55,8 @@ data class UiState(
     val query: String = "",
     /** v1.2: the app opens on தமிழ், the user's own language — not on "All channels". */
     val category: String = Category.TAMIL,
+    val navigationOrder: List<String> = com.universalrp.tamilnadufm.data.RadioTabOrder.navigation,
+    val categoryOrder: List<String> = com.universalrp.tamilnadufm.data.RadioTabOrder.categories,
     val stations: List<RadioStation> = emptyList(),
     val visible: List<RadioStation> = emptyList(),
     val favourites: Set<String> = emptySet(),
@@ -90,7 +92,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val ctx: Context = app.applicationContext
     private val repo = StationRepository(ctx)
 
-    private val _state = MutableStateFlow(UiState())
+    private val _state = MutableStateFlow(UiState(navigationOrder = repo.tabOrder(true), categoryOrder = repo.tabOrder(false)))
     val state: StateFlow<UiState> = _state
 
     private var controller: MediaController? = null
@@ -297,6 +299,26 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         applyFilter()
     }
 
+    fun moveTab(navigation: Boolean, id: String, delta: Int) {
+        val defaults = if (navigation) com.universalrp.tamilnadufm.data.RadioTabOrder.navigation else com.universalrp.tamilnadufm.data.RadioTabOrder.categories
+        val order = com.universalrp.tamilnadufm.data.RadioTabOrder.move(repo.tabOrder(navigation), defaults, id, delta)
+        repo.saveTabOrder(navigation, order)
+        mutate { if (navigation) it.copy(navigationOrder = order) else it.copy(categoryOrder = order) }
+    }
+
+    fun dropCategoryTab(id: String, target: String, after: Boolean) {
+        val defaults = com.universalrp.tamilnadufm.data.RadioTabOrder.categories
+        val order = com.universalrp.tamilnadufm.data.RadioTabOrder.place(repo.tabOrder(false), defaults, id, target, after)
+        repo.saveTabOrder(false, order)
+        mutate { it.copy(categoryOrder = order) }
+    }
+
+    fun resetTabOrder(navigation: Boolean) {
+        val order = if (navigation) com.universalrp.tamilnadufm.data.RadioTabOrder.navigation else com.universalrp.tamilnadufm.data.RadioTabOrder.categories
+        repo.saveTabOrder(navigation, order)
+        mutate { if (navigation) it.copy(navigationOrder = order) else it.copy(categoryOrder = order) }
+    }
+
     fun setCategory(category: String) {
         mutate { it.copy(category = category) }
         applyFilter()
@@ -446,6 +468,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      *   results when playing from the directory sheet).
      */
     fun play(station: RadioStation, queueOverride: List<RadioStation>? = null) {
+        if (!com.universalrp.tamilnadufm.data.RadioStreamPolicy.canPlay(station.url)) {
+            mutate { it.copy(message = com.universalrp.tamilnadufm.data.RadioStreamPolicy.notice(
+                com.universalrp.updates.AppLanguageState.current == com.universalrp.updates.AppLanguage.TAMIL)) }
+            return
+        }
         PlayerBus.ensureService(ctx)
         val c = controller ?: run {
             mutate { it.copy(message = "Player is still starting — tap again in a second.") }
@@ -458,7 +485,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             if (c.isPlaying) c.pause() else resumePlayer(c)
         } else {
             PlayerBus.clearError()
-            val source = queueOverride ?: _state.value.visible
+            val source = (queueOverride ?: _state.value.visible).filter { com.universalrp.tamilnadufm.data.RadioStreamPolicy.canPlay(it.url) }
             val queue = if (source.any { it.url == station.url }) source else listOf(station)
             val index = queue.indexOfFirst { it.url == station.url }.coerceAtLeast(0)
             c.setMediaItems(queue.map { toMediaItem(it) }, index, 0L)

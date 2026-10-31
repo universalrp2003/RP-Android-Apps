@@ -204,3 +204,35 @@
 
 - Exact-artifact promotion41186750835 succeeded: public release429825220, asset694885172, published2026-10-31T08:59:10Z;14,500,707 bytes/SHA c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805. Source08c33944/run41181427941/artifact13035561625, no rebuild; signer7366… verified; no dangerous permission addition against public2.79. Re-downloaded/hash-checked in publisher CI. Never overwrite this release or rebuild a replacement2.81 APK. No phone-installed hash or Google clearance is implied.
 - Associated main/website/Store-feed metadata updates may now point to2.81, retaining13 non-Store apps plus separate Store. Older releases remain immutable. SMS/Oor production scope stays at existing public versions pending resumed investigation; held c96dd9e9 remains reachable, with no authorization to publish those apps.
+
+### 31 October 2026 — owner resumes SMS/Oor fixes after LG completion
+
+- Owner now asks to find solutions and fix SMS Guard / Oor Arivippu. Resume the held c96dd9e9 app fixes selectively; keep all published LG2.81 bytes, public metadata, other apps and owner records unchanged. Current Arena branch is arena/9e83fc74-rp-android-apps; no branch reset/switch.
+- New distinct candidates: SMS1.1.14/code20 and Oor1.1.13/code18. Preserve public SMS1.1.11/Oor1.1.10 and all previous candidate bytes. No authorization to publish or merge these candidates yet; build/sign/test on this branch, then obtain acceptance.
+- SMS broadcast processing must not perform remote link probes. Use a committed extracted-URL queue and network-constrained WorkManager retries with bounded/fair URL batches; no message body/key/URL in WorkManager inputs or logs. Pending is not safe; preserve local threats, bill review gates, manual reminders and all existing records. Respect block/mute/quiet/internet settings during deferred completion.
+- Incoming MMS remains unimplemented: block *new* default-role requests and explain companion mode. Preserve manifest/package/signer and the existing native switch-back action for existing default users; no uninstall, clear-data or protection bypass. This is not a full MMS implementation or a claimed Play Protect fix.
+- Play Protect 1.1.12 harmful block remains unresolved until exact-artifact evidence and Google review/phone outcome establish otherwise. Do not use signing/package churn, security-warning overrides or CI success as clearance. See docs/investigations/sms-oor-resumed-2026-10-31.md.
+
+### 31 October 2026 — Ramesh Radio catalogue/content and tab-order request
+
+- Owner installed SMS1.1.14/Oor1.1.13 but awaits natural SMS/travel; keep their selected1fb1ba41 artifacts frozen and their public releases unchanged. New radio work does not authorize their publication or main merge.
+- Owner identifies Tamil80’s Radio (Tamilradios logo), psrlive2.listenon.in/80, playing an uninstall/use-the-provider-app announcement. Hold that shared psrlive*.listenon.in provider family for content review, preserving favourites/history/custom URLs. Do not assert all related stations were heard or all Tamilradios-logo stations are bad. Do not strip audio, spoof first-party app headers, renew access tokens or invent same-name alternate streams.
+- Radio candidate1.30/code30 retains public1.29. Full catalogue audit must cover every shipped entry, distinguish audio-metadata reachability from listening/content review and retain transient/unreachable records for review, not silently delete owner data. New discovery candidates need actual probe evidence; do not claim universal region/device support or no promotions.
+- Owner asked for whole-tab ordering. Provide persisted independent ordering of bottom navigation and station category tabs with accessible earlier/later controls and per-list reset. Keep all tabs reachable and the selected tab/playback unchanged. No uninstall or signing-key change.
+
+### 31 October 2026 — owner clarifies direct whole-category dragging
+
+- Owner's category-chip screenshots and “move free this whole tap” request mean long-press/drag the actual horizontal category chips, not only the More editor. Owner reports a few1.30 stations played; do not generalize this into whole-catalogue/content verification or publication approval.
+- New distinct Radio1.31/code31 candidate: preserve exact1.30 APK; retain package/signer, all532 seed records, existing provider holds and existing stable-ID order preferences. No SMS/Oor/LG/site/Store changes or publication/main merge authorization.
+- Direct reorder covers all17 Radio category tabs in one continuous horizontal strip, with edge auto-scroll, drop-only persistence, cancellation without a partial save, unchanged active selection/playback and shared News-category order. Keep accessible arrows/reset/editor and custom accessibility actions; bottom navigation remains editable there. Native build/tests and actual phone gesture/persistence checks are separate evidence.
+
+### 31 October 2026 — owner accepts Radio1.31 and authorizes publication
+
+- Owner screenshot of direct-drag UI plus “Its super now you can publish now” authorizes exact Radio1.31/source691d176cc00adb59702e53bbae3e99bfc2663ec5, artifact13044417700/run41205378161. Promote15179972B/SHA fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22 without rebuild; no installed-phone hash/full listening/post-restart trace claimed. See docs/radio-1.31-owner-acceptance.md.
+- Radio-only integration deliberately restores SMS/Oor app files and related contracts to main/public versions. All held work remains immutable/reachable at47717f9b0072c8e50a6b4a9e32d537603840b950; selected SMS/Oor artifacts remain1fb1ba41. Reapply selectively only when owner resumes those tests, retaining all newer Radio/release/site work. No branch reset or unauthorized app publication.
+- Keep13 ordinary apps plus separate Store. Update Radio public website/Store feed only after exact release promotion succeeds, merge only after current CI passes, then watch main Pages deployment.13 provider holds and42 unresolved stream endpoints remain explicit limits.
+
+### Radio1.31 public immutable receipt
+
+- Promotion41207596858 SUCCESS; release429967173, APK asset695516209, published2026-10-31T13:53:48Z. Exact accepted15179972B/SHA fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22 from691d176/run41205378161/artifact13044417700. Package/code/minSDK/nondebuggable, established signer vs1.29, no-new-dangerous permission comparison, draft re-download/hash and public digest passed. No rebuild or previous-asset overwrite. Initial41207339658 draft-tag REST lookup failure recovered by pinning exact draft IDs, not weakening provenance checks.
+- Main/Pages/Store-feed integration may now advertise Radio1.31 while retaining all13 ordinary apps +separate Store. Frozen SMS/Oor source at47717f9 and selected1fb artifacts remain held; their production source remains restored to public versions for this Radio-only PR.

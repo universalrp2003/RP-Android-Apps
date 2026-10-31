@@ -112,7 +112,7 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             TransportBar(vm, state, playback.isPlaying, playback.isBuffering)
         }
 
-        BottomNav(state.tab) { vm.selectTab(it) }
+        BottomNav(state.tab, state.navigationOrder) { vm.selectTab(it) }
     }
 
     if (state.showNowPlaying) {
@@ -364,14 +364,20 @@ private fun TransportBar(
 }
 
 @Composable
-private fun BottomNav(current: Tab, onSelect: (Tab) -> Unit) {
+private fun BottomNav(current: Tab, order: List<String>, onSelect: (Tab) -> Unit) {
     Surface(color = SurfaceHigh, modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            NavItem("Radio", Icons.Filled.Radio, current == Tab.RADIO) { onSelect(Tab.RADIO) }
-            NavItem("News", Icons.Filled.Newspaper, current == Tab.NEWS) { onSelect(Tab.NEWS) }
-            NavItem("Local", Icons.Filled.LibraryMusic, current == Tab.LOCAL) { onSelect(Tab.LOCAL) }
-            NavItem("EQ", Icons.Filled.Equalizer, current == Tab.EQUALIZER) { onSelect(Tab.EQUALIZER) }
-            NavItem("More", Icons.Filled.MoreHoriz, current == Tab.MORE) { onSelect(Tab.MORE) }
+            order.forEach { id ->
+                val tab = Tab.valueOf(id)
+                val (label, icon) = when (tab) {
+                    Tab.RADIO -> "Radio" to Icons.Filled.Radio
+                    Tab.NEWS -> "News" to Icons.Filled.Newspaper
+                    Tab.LOCAL -> "Local" to Icons.Filled.LibraryMusic
+                    Tab.EQUALIZER -> "EQ" to Icons.Filled.Equalizer
+                    Tab.MORE -> "More" to Icons.Filled.MoreHoriz
+                }
+                NavItem(label, icon, current == tab) { onSelect(tab) }
+            }
         }
     }
 }

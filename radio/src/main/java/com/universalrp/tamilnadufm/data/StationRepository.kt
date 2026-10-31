@@ -49,6 +49,22 @@ class StationRepository(context: Context) {
         emptyList()
     }
 
+    fun tabOrder(navigation: Boolean): List<String> {
+        val defaults = if (navigation) RadioTabOrder.navigation else RadioTabOrder.categories
+        val raw = prefs.getString(if (navigation) "navigation_order_v1" else "category_order_v1", null)
+        val saved = runCatching {
+            val values = JSONArray(raw ?: "[]")
+            (0 until values.length()).map { values.optString(it) }
+        }.getOrDefault(emptyList())
+        return RadioTabOrder.normalize(saved, defaults)
+    }
+
+    fun saveTabOrder(navigation: Boolean, order: List<String>) {
+        val defaults = if (navigation) RadioTabOrder.navigation else RadioTabOrder.categories
+        prefs.edit().putString(if (navigation) "navigation_order_v1" else "category_order_v1",
+            JSONArray(RadioTabOrder.normalize(order, defaults)).toString()).apply()
+    }
+
     // ---------------------------------------------------------------- custom
 
     fun customStations(): List<RadioStation> = try {
@@ -185,12 +201,10 @@ class StationRepository(context: Context) {
             val json = JSONObject(raw)
             val urlArray = json.optJSONArray("urls") ?: return null
             val nameArray = json.optJSONArray("names")
-            val urls = (0 until urlArray.length()).mapNotNull {
-                urlArray.optString(it).takeIf { s -> s.isNotBlank() }
-            }
-            if (urls.isEmpty()) return null
-            val names = (0 until urls.size).map { i -> nameArray?.optString(i).orEmpty() }
-            Triple(urls, names, json.optInt("index", 0).coerceIn(0, urls.size - 1))
+            val urls = (0 until urlArray.length()).map { urlArray.optString(it) }
+            val names = (0 until urlArray.length()).map { nameArray?.optString(it).orEmpty() }
+            // Filter in memory only: retain favourites, history, custom records and saved queue.
+            RadioStreamPolicy.playableQueue(urls, names, json.optInt("index", 0))
         } catch (t: Throwable) {
             null
         }

@@ -677,6 +677,9 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         runCatching { aboutContext.packageManager.getPackageInfo(aboutContext.packageName, 0).versionName }.getOrNull() ?: "unknown"
     }
 
+    var showTabOrder by remember { mutableStateOf(false) }
+    if (showTabOrder) TabOrderEditor(vm, state) { showTabOrder = false }
+
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
     // v1.13 — the last station starts by itself on launch; this is the owner's off switch.
@@ -717,6 +720,16 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                             .clickable { showGuide = true }
                             .padding(vertical = 8.dp),
                     )
+                }
+            }
+        }
+
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().clickable { showTabOrder = true }.padding(14.dp)) {
+                    Text(if (tamil) "முழுத் தாவல்களின் வரிசையை மாற்று" else "Arrange whole tabs", color = Saffron, fontWeight = FontWeight.SemiBold)
+                    Text(if (tamil) "கீழ்த் தாவல்கள் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
+                        else "Put navigation tabs and station categories in your preferred order.", color = TextSecondary)
                 }
             }
         }

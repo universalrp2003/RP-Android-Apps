@@ -97,6 +97,7 @@ jobs:
               ("live-guard-v2.79", "CleanSweep-v2.79.apk", 14479951, "95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac"),
               ("live-guard-v2.81", "CleanSweep-v2.81.apk", 14500707, "c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805"),
               ("ramesh-radio-v1.29", "Ramesh-Radio-v1.29.apk", 15141600, "11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d"),
+              ("ramesh-radio-v1.31", "Ramesh-Radio-v1.31.apk", 15179972, "fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22"),
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
           ]
@@ -195,8 +196,8 @@ jobs:
           test -s site/apks/CleanSweep-v2.75.zip
           test -s site/apks/CleanSweep-v2.81.apk
           test -s site/apks/CleanSweep-v2.81.zip
-          test -s site/apks/Ramesh-Radio-v1.29.apk
-          test -s site/apks/Ramesh-Radio-v1.29.zip
+          test -s site/apks/Ramesh-Radio-v1.31.apk
+          test -s site/apks/Ramesh-Radio-v1.31.zip
           test -s site/apks/PulseEQ-v1.11.apk
           test -s site/apks/PulseEQ-v1.11.zip
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.16.apk
