@@ -123,7 +123,7 @@ object BillReminderEngine {
     // A payment deadline, not causal language ("declined due to INVALID CARD").
     // Expiry/valid-until/standalone "before" are not evidence of money owed.
     private val ANCHOR_KEYWORD = Regex(
-        "\\b(?:due(?!\\s+to\\b)(?:\\s+(?:date|on|by))?|" +
+        "\\b(?:due(?!\\s+to\\b)(?:\\s+(?:date|on|by|before))?|" +
             "last\\s+date(?:\\s+(?:to\\s+pay|for\\s+payment))?|pay\\s+(?:by|before)|" +
             "payable\\s+(?:by|on)|overdue\\s+(?:since|from))\\b",
         RegexOption.IGNORE_CASE,

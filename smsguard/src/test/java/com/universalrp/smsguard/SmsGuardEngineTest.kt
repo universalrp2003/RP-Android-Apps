@@ -1054,6 +1054,8 @@ class SmsGuardEngineTest {
             "Credit card statement dated 24-10-2026. Total amount due Rs.500. Payment due date: 27 Oct 2026.",
             "Electricity bill Rs.500. Last date to pay is 27-10-2026.",
             "Credit card bill Rs.500 overdue since 27-10-2026.",
+            "Electricity bill Rs.500 is due before 27-10-2026.",
+            "Electricity bill Rs.500 due date is 27-Oct-26.",
         )
         for (body in bodies) {
             val sender = SenderIdentityEngine.identify("JT-SBIINB-T", body)
