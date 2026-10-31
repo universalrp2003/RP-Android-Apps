@@ -15,7 +15,7 @@ class SmsGuardOtpSenderAndProgressContractTest(unittest.TestCase):
         self.assertIn('announceOtpSenderOnly: Boolean = false', PREFS)
         self.assertIn('"announce_otp_sender_only", false', PREFS)
         self.assertIn('if (!settings.announceOtpSenderOnly) return null', PLANNER)
-        self.assertIn('OTP message from $safeName arrived.', PLANNER)
+        self.assertIn('Private message from $safeName arrived.', PLANNER)
         self.assertNotIn('otp.code', PLANNER)
         self.assertIn('never its code or message text', CONTROLS)
         self.assertIn('announceOtpSenderOnly = prefs.announceOtpSenderOnly', PROCESSOR)

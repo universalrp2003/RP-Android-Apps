@@ -182,6 +182,23 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            val sendPermissionNeeded by vm.sendPermissionNeeded.collectAsState()
+            val sendPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                vm.clearSendPermissionRequest()
+                vm.postBanner(if (prefs.tamil) "வரைவு பாதுகாக்கப்பட்டது; அனுப்ப மீண்டும் Send அழுத்துங்கள்." else "Draft kept. Tap Send again if you want to send it.")
+            }
+            LaunchedEffect(sendPermissionNeeded) {
+                if (sendPermissionNeeded) sendPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+            }
+
+            var showCloudSpeechDisclosure by remember { mutableStateOf(false) }
+            var showSmsReadDisclosure by remember { mutableStateOf(false) }
+            if (!prefs.cloudSpeechChoiceMade || showCloudSpeechDisclosure) {
+                com.universalrp.smsguard.ui.CloudSpeechDisclosure(prefs.tamil,
+                    onChoice = { vm.setCloudSpeechConsent(it); showCloudSpeechDisclosure = false },
+                    onDismiss = { vm.setCloudSpeechConsent(false); showCloudSpeechDisclosure = false })
+            }
+
             val permissionsLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions(),
             ) {
@@ -299,35 +316,27 @@ class MainActivity : ComponentActivity() {
             }
 
             fun requestDefaultSmsRole() {
-                GuardSettingsStore.savePreviousDefaultSmsPackage(
-                    this@MainActivity,
-                    SmsRepository.currentSystemDefaultSmsPackage(this@MainActivity),
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val rm = getSystemService(RoleManager::class.java)
-                    if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS) && !rm.isRoleHeld(RoleManager.ROLE_SMS)) {
-                        roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_SMS))
-                        return
-                    }
-                }
-                val legacyIntent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
-                    putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
-                }
-                roleLauncher.launch(legacyIntent)
+                // Do not offer an incomplete default messaging role: MMS is not implemented.
+                vm.postBanner(if (prefs.tamil) {
+                    "MMS பெறுதல் இன்னும் இல்லை. உங்கள் முழுமையான செய்திச் செயலியை இயல்புநிலையாக வைத்திருங்கள்; துணைப் பயன்முறையைப் பயன்படுத்துங்கள்."
+                } else {
+                    "Default SMS setup is unavailable until MMS reception is implemented. Keep your full messaging app as default and use companion mode."
+                })
             }
 
-            fun requestCompanionSmsPermissions() {
-                val perms = buildList {
-                    add(Manifest.permission.READ_SMS)
-                    add(Manifest.permission.RECEIVE_SMS)
-                    add(Manifest.permission.SEND_SMS)
-                    add(Manifest.permission.READ_PHONE_STATE)
-                    add(Manifest.permission.READ_CONTACTS)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        add(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                }.toTypedArray()
-                permissionsLauncher.launch(perms)
+            fun requestCompanionSmsPermissions() { showSmsReadDisclosure = true }
+            if (showSmsReadDisclosure) {
+                com.universalrp.smsguard.ui.SmsReadDisclosure(prefs.tamil,
+                    onDismiss = { showSmsReadDisclosure = false },
+                    onAccept = {
+                        showSmsReadDisclosure = false
+                        val requested = mutableListOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
+                        if (Build.VERSION.SDK_INT >= 33) requested += Manifest.permission.POST_NOTIFICATIONS
+                        val missing = requested.filter {
+                            androidx.core.content.ContextCompat.checkSelfPermission(this@MainActivity, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                        }
+                        if (missing.isNotEmpty()) permissionsLauncher.launch(missing.toTypedArray()) else vm.refreshAll(true)
+                    })
             }
 
             fun openAppInfoForRestrictedSettings() {
@@ -655,6 +664,9 @@ class MainActivity : ComponentActivity() {
                                     )
                                     MainTab.CONTROLS -> ControlsTab(
                                         vm = vm,
+                                        onCloudSpeechChoice = { showCloudSpeechDisclosure = true },
+                                        onRequestContacts = { permissionsLauncher.launch(arrayOf(Manifest.permission.READ_CONTACTS)) },
+                                        onRequestSimInfo = { permissionsLauncher.launch(arrayOf(Manifest.permission.READ_PHONE_STATE)) },
                                         onFinanceLockChange = { enabled ->
                                             if (enabled) vm.setFinanceLockEnabled(true)
                                             else {

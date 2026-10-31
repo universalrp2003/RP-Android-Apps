@@ -176,6 +176,8 @@ fun MessagesTab(
                 }
             }
 
+            item { SmsSecurityNotice(prefs.tamil, palette) }
+
             // 1. Setup helper card until Default SMS Role is granted
             if (!isDefaultSms) {
                 item {

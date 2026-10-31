@@ -245,7 +245,8 @@ class SmsGuardEngineTest {
             settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true, shortEveryMessageEnabled = true, mutePromoVoice = true),
         )
         assertNotNull(offlineVoice)
-        assertTrue(offlineVoice!!.contains("cannot verify"))
+        assertTrue("Pending speech must not claim a completed verdict", offlineVoice!!.contains("cannot verify"))
+        assertFalse("Deferred online checks must not falsely claim loss of connectivity", offlineVoice.contains("No internet right now"))
 
         val afterReconnect = LinkSecurityScanner.scanSingleUrl(
             "https://bit.ly/parcel99",
@@ -262,7 +263,16 @@ class SmsGuardEngineTest {
             tamil = false,
         )
         assertNotNull(reconnectVoice)
-        assertTrue(reconnectVoice!!.contains("safe to open"))
+        assertTrue(reconnectVoice!!.contains("no threat detected"))
+        assertTrue(reconnectVoice.contains("not a safety guarantee"))
+        assertFalse(reconnectVoice.contains("safe to open"))
+        val tamilVoice = SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
+            postSender.spokenNameEn, postSender.spokenNameTa, listOf(afterReconnect), tamil = true)
+        assertNotNull(tamilVoice)
+        assertTrue(tamilVoice!!.contains("பாதுகாப்பு உத்தரவாதம் அல்ல"))
+        assertFalse(tamilVoice.contains("திறக்கலாம்"))
+        assertNull(SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
+            postSender.spokenNameEn, postSender.spokenNameTa, listOf(whileOffline), tamil = false))
     }
 
     @Test
@@ -899,6 +909,7 @@ class SmsGuardEngineTest {
         for ((voiceId, sampleText) in voicesToVerify) {
             val diagnostics = java.util.concurrent.CopyOnWriteArrayList<String>()
             val mp3 = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
+                networkAllowed = { true }, // Synthetic opt-in CI voice probe, no personal SMS.
                 text = sampleText,
                 voiceName = voiceId,
                 timeoutMs = 20000L,
@@ -917,6 +928,7 @@ class SmsGuardEngineTest {
     fun liveHdVoiceFailoverSynthesizesWithinProductionDeadline() {
         val diagnostics = java.util.concurrent.CopyOnWriteArrayList<String>()
         val audio = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
+                networkAllowed = { true }, // Synthetic opt-in CI voice probe, no personal SMS.
             text = "வணக்கம். உயர்தரக் குரல் தயாராக உள்ளது.",
             voiceName = "ta-IN-ValluvarNeural", timeoutMs = 4200,
             diagnostic = { diagnostics.add(it) },
@@ -1024,6 +1036,64 @@ class SmsGuardEngineTest {
         val debit = "Your A/c XX4821 is debited by Rs.500.00 on 24-10-2026 Ref 629512349876 Avl Bal Rs.24800"
         val sbi = SenderIdentityEngine.identify("JT-SBIINB-T", debit)
         assertNull("A bank debit is a transaction, never a bill reminder", BillReminderEngine.parseBillSms(debit, sbi, false, billNowMs(), zone))
+    }
+
+    @Test
+    fun transactionReasonsAndUnrelatedDatesNeverCreateBills() {
+        // Synthetic data only: owner report was a declined SBI card, not an unpaid bill.
+        val messages = listOf(
+            "Transaction declined on 24-10-2026 due to INVALID CARD. -SBI",
+            "Your credit card transaction of Rs.500 on 24-10-2026 failed DUE TO insufficient funds.",
+            "Your payment failed due to technical reasons on 24-10-2026.",
+            "Your bill payment was reversed on 24-10-2026 due to a bank error.",
+            "Refund of Rs.500 on 24-10-2026 due to duplicate bill payment.",
+            "Credit card bill statement generated on 24-10-2026. Amount Rs.500.",
+            "Invoice Rs.500 generated on 24-10-2026; card valid until 01-11-2026.",
+            "Bill payment declined on 24-10-2026. Retry before 26-10-2026.",
+            "Amount due Rs.500. Transaction attempted on 24-10-2026.",
+            "Credit card bill due date unavailable. Statement generated on 24-10-2026.",
+        )
+        for (body in messages) {
+            val sender = SenderIdentityEngine.identify("JT-SBIINB-T", body)
+            assertNull(body, BillReminderEngine.parseBillSms(body, sender, false, billNowMs(), zone))
+        }
+    }
+
+    @Test
+    fun genuineDeadlinesSurviveFailedPaymentReasonsAndEarlierTransactionDates() {
+        val bodies = listOf(
+            "Payment failed on 24-10-2026 due to insufficient funds. Credit card bill Rs.500 remains unpaid. Pay by 27-10-2026.",
+            "Credit card statement dated 24-10-2026. Total amount due Rs.500. Payment due date: 27 Oct 2026.",
+            "Electricity bill Rs.500. Last date to pay is 27-10-2026.",
+            "Credit card bill Rs.500 overdue since 27-10-2026.",
+            "Electricity bill Rs.500 is due before 27-10-2026.",
+            "Electricity bill Rs.500 due date is 27-Oct-26.",
+        )
+        for (body in bodies) {
+            val sender = SenderIdentityEngine.identify("JT-SBIINB-T", body)
+            val parsed = BillReminderEngine.parseBillSms(body, sender, false, billNowMs(), zone)
+            assertNotNull(body, parsed)
+            assertEquals(body, LocalDate.of(2026, 10, 27), parsed!!.dueDate)
+        }
+    }
+
+    @Test
+    fun savedFalseRemindersAreRetainedForReviewButNeverPlannedAsDues() {
+        val body = "Credit card transaction declined on 24-10-2026 due to INVALID CARD."
+        val invalid = bill("false", billToday).copy(sourceMessageId = 123L, sourceBody = body)
+        val manual = invalid.copy(id = "manual", sourceMessageId = null)
+        val legacy = invalid.copy(id = "legacy", sourceBody = "")
+        val genuine = invalid.copy(id = "genuine", sourceBody = body + " Bill Rs.500 remains due on 27-10-2026.")
+        assertTrue(BillReminderEngine.needsReview(invalid))
+        assertFalse(BillReminderEngine.needsReview(manual))
+        assertFalse(BillReminderEngine.needsReview(legacy))
+        assertFalse(BillReminderEngine.needsReview(genuine))
+        val stored = listOf(invalid, manual, legacy, genuine)
+        val plan = BillReminderEngine.planDailyAnnouncements(stored, billToday, 0, 2)
+        assertEquals(setOf("manual", "legacy", "genuine"), plan.urgentBills.map { it.id }.toSet())
+        assertEquals(4, stored.size)
+        assertEquals(body, invalid.sourceBody)
+        assertFalse(invalid.isPaid)
     }
 
     @Test

@@ -477,7 +477,7 @@ object SmsRepository {
                 val isSent = row.type != Telephony.Sms.MESSAGE_TYPE_INBOX
                 val contact = lookupContactName(context, row.address)
                 val sender = SenderIdentityEngine.identify(row.address, row.body, contact)
-                val otp = if (isSent) OtpResult(false, null) else OtpDetector.analyze(row.body)
+                val otp = OtpDetector.analyze(row.body)
                 val extractedUrls = LinkSecurityScanner.extractUrls(row.body)
                 val links = extractedUrls.map { url ->
                     val localCheck = LinkSecurityScanner.scanSingleUrl(

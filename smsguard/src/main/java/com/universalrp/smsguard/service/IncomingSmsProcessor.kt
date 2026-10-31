@@ -109,7 +109,6 @@ object IncomingSmsProcessor {
             while (recentFingerprints.size > 40) recentFingerprints.removeFirst()
         }
 
-        val pendingResult = null // Handled synchronously in caller's goAsync coroutine
         processReceivedSms(
             context = appCtx,
             rawAddress = rawAddress,
@@ -118,9 +117,8 @@ object IncomingSmsProcessor {
             subId = subId,
             persistToProvider = isPrimaryDeliverBroadcast && isDefault,
             postSystemNotification = isDefault,
+            deferOnlineChecks = true,
         )
-        @Suppress("UNUSED_VARIABLE")
-        val unused = pendingResult
     }
 
     /**
@@ -135,6 +133,7 @@ object IncomingSmsProcessor {
         persistToProvider: Boolean,
         postSystemNotification: Boolean,
         overrideOnlineState: Boolean? = null,
+        deferOnlineChecks: Boolean = false,
     ): ProcessedIncomingSummary {
         val appCtx = context.applicationContext
         val wakeLock = runCatching {
@@ -176,6 +175,7 @@ object IncomingSmsProcessor {
                 internetAllowed = prefs.internetEnabled,
                 hasValidatedNetwork = online,
                 safeBrowsingApiKey = apiKey,
+                deferOnlineChecks = deferOnlineChecks || isBlocked,
             )
             if (linkResults.isNotEmpty()) {
                 GuardSettingsStore.cacheLinkResults(appCtx, linkResults)
@@ -206,6 +206,7 @@ object IncomingSmsProcessor {
                         queuedAtMs = timestampMs,
                     ),
                 )
+                PendingLinkCheckWorker.schedule(appCtx, awaitPersistence = deferOnlineChecks)
             }
 
             val finance = FinanceLedgerEngine.parseSingleSms(
@@ -370,6 +371,28 @@ object IncomingSmsProcessor {
         } finally {
             runCatching { if (wakeLock?.isHeld == true) wakeLock.release() }
         }
+    }
+
+    /** A deferred threat still needs a visible warning when voice is disabled or quiet. */
+    @SuppressLint("MissingPermission")
+    fun notifyDeferredThreat(context: Context, threadKey: String, domain: String, tamil: Boolean) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return
+        ensureChannels(context)
+        val open = PendingIntent.getActivity(context, (threadKey + "_link").hashCode(),
+            Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_OPEN_THREAD_KEY, threadKey),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val title = if (tamil) "இணைப்பு ஆபத்து எச்சரிக்கை" else "Link threat warning"
+        val notice = NotificationCompat.Builder(context, CH_THREAT)
+            .setSmallIcon(R.drawable.ic_stat_shield).setContentTitle(title)
+            .setContentText(if (tamil) "$domain இணைப்பு சோதனையில் ஆபத்தாகக் குறிக்கப்பட்டது; தொடாதீர்கள்."
+                else "Checks flagged $domain as a threat. Do not touch; open SMS Guard to review.")
+            .setContentIntent(open).setAutoCancel(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
+            .setPublicVersion(NotificationCompat.Builder(context, CH_THREAT)
+                .setSmallIcon(R.drawable.ic_stat_shield).setContentTitle(title).build())
+            .build()
+        runCatching { NotificationManagerCompat.from(context).notify((threadKey + "_link").hashCode(), notice) }
     }
 
     @SuppressLint("MissingPermission")

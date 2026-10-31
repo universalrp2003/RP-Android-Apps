@@ -115,7 +115,7 @@ object BillReminderScheduler {
     fun onBillCaptured(context: Context, bill: BillReminder) {
         val appCtx = context.applicationContext
         val prefs = GuardSettingsStore.reload(appCtx)
-        if (!prefs.billRemindersEnabled) return
+        if (!prefs.billRemindersEnabled || BillReminderEngine.needsReview(bill)) return
         ensureChannel(appCtx)
         val today = LocalDate.now()
         if (!BillReminderEngine.isUrgent(bill.dueDate, today)) return
@@ -135,8 +135,8 @@ object BillReminderScheduler {
         tamil: Boolean,
         countRoutine: Boolean,
     ) {
-        val urgent = plan.urgentBills
-        val routine = plan.routineBills
+        val urgent = plan.urgentBills.filterNot(BillReminderEngine::needsReview)
+        val routine = plan.routineBills.filterNot(BillReminderEngine::needsReview)
         if (urgent.isEmpty() && routine.isEmpty()) return
 
         val prefs = GuardSettingsStore.ensureLoaded(context)
@@ -229,7 +229,7 @@ object BillReminderScheduler {
         ensureChannel(appCtx)
         val today = LocalDate.now()
         val order = compareBy<BillReminder> { it.dueEpochDay }.thenBy { it.billerEn }
-        val unpaid = GuardSettingsStore.getBillReminders(appCtx).filter { !it.isPaid }.sortedWith(order)
+        val unpaid = GuardSettingsStore.getBillReminders(appCtx).filter { !it.isPaid && !BillReminderEngine.needsReview(it) }.sortedWith(order)
         if (unpaid.isEmpty()) return
         val urgent = unpaid.filter { BillReminderEngine.isUrgent(it.dueDate, today) }
         val routine = unpaid.filterNot { it in urgent }
