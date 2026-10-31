@@ -55,6 +55,8 @@ data class GuardPrefs(
     val voiceEnabled: Boolean = true,
     val cloudSpeechConsent: Boolean = false,
     val cloudSpeechChoiceMade: Boolean = false,
+    val smsOnlyDefaultAcknowledged: Boolean = false,
+    val unsupportedMmsCount: Int = 0,
     val senderOnlyVoiceEnabled: Boolean = false,
     val announceOtpSenderOnly: Boolean = false,
     val readFullNormalSmsEnabled: Boolean = true,
@@ -167,6 +169,8 @@ object GuardSettingsStore {
             voiceEnabled = p.getBoolean("voice_enabled", true),
             cloudSpeechConsent = p.getBoolean("cloud_speech_consent_v1", false),
             cloudSpeechChoiceMade = p.getBoolean("cloud_speech_choice_v1", false),
+            smsOnlyDefaultAcknowledged = p.getBoolean("sms_only_default_ack_v1", false),
+            unsupportedMmsCount = p.getInt("unsupported_mms_count", 0).coerceAtLeast(0),
             senderOnlyVoiceEnabled = p.getBoolean("sender_only_voice", false),
             announceOtpSenderOnly = p.getBoolean("announce_otp_sender_only", false),
             readFullNormalSmsEnabled = p.getBoolean("read_full_normal_sms", true),
@@ -442,6 +446,24 @@ object GuardSettingsStore {
         val stored = KeystoreSecretStore.getSecret(context, SECRET_FINANCE_PIN_HASH) ?: return false
         if (stored.isBlank()) return false
         return stored == hashFinancePin(candidatePin)
+    }
+
+    fun acknowledgeSmsOnlyDefault(context: Context) {
+        prefs(context).edit().putBoolean("sms_only_default_ack_v1", true).commit()
+        reload(context)
+    }
+
+    @Synchronized
+    fun recordUnsupportedMms(context: Context) {
+        val p = prefs(context)
+        val count = p.getInt("unsupported_mms_count", 0).coerceIn(0, 999)
+        p.edit().putInt("unsupported_mms_count", count + 1).commit()
+        reload(context)
+    }
+
+    fun clearUnsupportedMmsNotice(context: Context) {
+        prefs(context).edit().putInt("unsupported_mms_count", 0).apply()
+        reload(context)
     }
 
     fun savePreviousDefaultSmsPackage(context: Context, pkg: String?) {

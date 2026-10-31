@@ -703,7 +703,7 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.15"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.16"',
             'tagPrefix = "live-guard"', 'version = "2.81"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',

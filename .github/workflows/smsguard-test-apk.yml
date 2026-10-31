@@ -190,6 +190,32 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+
+      - name: Exercise exact signed APK default-SMS consent, chooser, cancellation and receive path
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 smsguard/tools/default-role-smoke.py "${{ steps.apk.outputs.path }}"
+
+      - name: Upload synthetic default-role emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SMS-Guard-default-role-emulator-evidence
+          path: smsguard-role-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify emulator exercised unchanged selected APK
+        run: echo '${{ steps.apk.outputs.sha256 }}  ${{ steps.apk.outputs.path }}' | sha256sum --check
+
       - name: Upload signed SMS Guard Test APK artifact
         uses: actions/upload-artifact@v4
         with:

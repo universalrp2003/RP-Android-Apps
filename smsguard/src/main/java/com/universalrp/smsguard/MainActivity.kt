@@ -174,12 +174,7 @@ class MainActivity : ComponentActivity() {
             ) {
                 SmsRepository.clearContactCache()
                 vm.refreshAll(scanUncheckedLinksOnline = true)
-                if (!SmsRepository.isDefaultSmsApp(this@MainActivity)) {
-                    // On custom OEM skins (e.g. HyperOS / MIUI), open Default Apps settings directly as fallback
-                    runCatching {
-                        startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
-                    }
-                }
+                // Cancellation is a valid choice: never force-open Settings afterward.
             }
 
             val sendPermissionNeeded by vm.sendPermissionNeeded.collectAsState()
@@ -315,13 +310,46 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
+            var showSmsOnlyDefaultDisclosure by remember { mutableStateOf(false) }
+
             fun requestDefaultSmsRole() {
-                // Do not offer an incomplete default messaging role: MMS is not implemented.
-                vm.postBanner(if (prefs.tamil) {
-                    "MMS பெறுதல் இன்னும் இல்லை. உங்கள் முழுமையான செய்திச் செயலியை இயல்புநிலையாக வைத்திருங்கள்; துணைப் பயன்முறையைப் பயன்படுத்துங்கள்."
-                } else {
-                    "Default SMS setup is unavailable until MMS reception is implemented. Keep your full messaging app as default and use companion mode."
-                })
+                val ctx = this@MainActivity
+                val settings = GuardSettingsStore.ensureLoaded(ctx)
+                val manager = if (Build.VERSION.SDK_INT >= 29) getSystemService(RoleManager::class.java) else null
+                val roleAvailable = Build.VERSION.SDK_INT >= 29 && manager?.isRoleAvailable(RoleManager.ROLE_SMS) == true
+                val step = com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.next(
+                    SmsRepository.isDefaultSmsApp(ctx), settings.smsOnlyDefaultAcknowledged,
+                    Build.VERSION.SDK_INT, roleAvailable)
+                if (step == com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.DISCLOSE_MMS_LIMIT) {
+                    showSmsOnlyDefaultDisclosure = true
+                    return
+                }
+                if (step == com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.ALREADY_DEFAULT) {
+                    vm.refreshAll()
+                    return
+                }
+                GuardSettingsStore.savePreviousDefaultSmsPackage(ctx, SmsRepository.currentSystemDefaultSmsPackage(ctx))
+                val request = when (step) {
+                    com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.REQUEST_ROLE -> if (Build.VERSION.SDK_INT >= 29 && manager != null)
+                        manager.createRequestRoleIntent(RoleManager.ROLE_SMS) else Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                    com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.LEGACY_REQUEST -> Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
+                        .putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
+                    else -> Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                }
+                runCatching { roleLauncher.launch(request) }.onFailure {
+                    vm.postBanner(if (settings.tamil) "Android இயல்புநிலைத் தேர்வைத் திறக்க முடியவில்லை. Settings → Apps → Default apps → SMS-ல் தேர்ந்தெடுக்கலாம்."
+                        else "Could not open Android's chooser. Use Settings → Apps → Default apps → SMS.")
+                }
+            }
+
+            if (showSmsOnlyDefaultDisclosure) {
+                com.universalrp.smsguard.ui.SmsOnlyDefaultDisclosure(prefs.tamil,
+                    onDismiss = { showSmsOnlyDefaultDisclosure = false },
+                    onAccept = {
+                        GuardSettingsStore.acknowledgeSmsOnlyDefault(this@MainActivity)
+                        showSmsOnlyDefaultDisclosure = false
+                        requestDefaultSmsRole()
+                    })
             }
 
             fun requestCompanionSmsPermissions() { showSmsReadDisclosure = true }

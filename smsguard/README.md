@@ -1,17 +1,17 @@
 # SMS Guard (குறுஞ்செய்தி காவலன்)
 
-**Package:** `com.universalrp.smsguard` · Android 8.0+ · Development version **1.1.15 / code 21**. See the [public releases](https://github.com/universalrp2003/RP-Android-Apps/releases?q=sms-guard&expanded=true) and [verification receipt](../docs/sms-guard-1.1.15-verification.md) for actual publication/build status rather than treating this source version as an installed-phone test.
+**Package:** `com.universalrp.smsguard` · Android 8.0+ · Development version **1.1.16 / code 22**. See the [public releases](https://github.com/universalrp2003/RP-Android-Apps/releases?q=sms-guard&expanded=true) and [verification receipt](../docs/sms-guard-1.1.16-verification.md) for actual publication/build status rather than treating this source version as an installed-phone test.
 
 ## Read before installing or sharing
 
-**Play Protect's sensitive-data installation block remains unresolved.** The owner reports blocked older APKs and explicitly authorized publishing bug fixes for family/friends with this disclosure. The app still declares SMS read/receive permissions. Installation may remain blocked; keep Play Protect enabled and respect warnings. No Google clearance, malware-free guarantee or exact new-build phone test is claimed. Update same-key installations normally; do not uninstall/reset to force installation and risk local data loss.
+**Earlier sensitive-data blocks were followed by an owner1.1.15 scan saying “This app looks safe” and a running-app screenshot. This is one phone, not universal Google clearance.** The owner reports blocked older APKs and explicitly authorized publishing bug fixes for family/friends with this disclosure. The app still declares SMS read/receive permissions. Installation may remain blocked; keep Play Protect enabled and respect warnings. No Google clearance, malware-free guarantee or exact new-build phone test is claimed. Update same-key installations normally; do not uninstall/reset to force installation and risk local data loss.
 
-[Full warning, privacy choices and audit access](../docs/sms-guard-play-protect.md) · [Privacy policy](../PRIVACY.md) · [1.1.15 notes](../releases/sms-guard-v1.1.15.md). Public source enables review, not a safety certification.
+[Full warning, privacy choices and audit access](../docs/sms-guard-play-protect.md) · [Privacy policy](../PRIVACY.md) · [1.1.15 notes](../releases/sms-guard-v1.1.16.md). Public source enables review, not a safety certification.
 
 ## Features and limitations
 
 - Tamil/English SMS inbox companion, on-device bill/finance analysis, optional voice announcements, sleep schedule and manual/global Stop. Automatic outgoing-message echoes are suppressed; manual sent-message replay is explicitly user-started and privacy-screened.
-- **Incoming MMS is incomplete**. New default-SMS setup is unavailable; keep a complete messaging app as default. This is not a full-featured replacement for all messaging.
+- **Incoming MMS is incomplete**. New default-SMS setup requires explicit SMS-only acknowledgement before Android's chooser. MMS may be missed and not recoverable; keep a complete messaging app as default if you need MMS. Incoming notices only create a content-free local warning, not MMS download/recovery. This is not a full-featured replacement for all messaging.
 - Local suspicious-link rules plus Internet-controlled HEAD-only redirect checks, system DNS and Cloudflare security DNS-over-HTTPS; optional Google Safe Browsing with the user's API key. URLs/hostnames/request metadata leave the phone for online checks. No threat detected is not a guarantee; failed/offline checks stay pending. Durable bounded background work resumes deferred checks; failed rescans invalidate old green results.
 - **HD cloud speech is separately opt-in, OFF by default even on upgrades.** Enabling it sends spoken text—including sender names, ordinary SMS content and financial amounts—to Microsoft. Gender/language profiles can rotate daily. Internet ON alone does not permit cloud speech. Review/withdraw in Controls; withdrawal cannot recall text already sent.
 - Without consent/connectivity, use only an installed system voice reported as non-network. If none exists, no speech—not an automatic network fallback. Availability, gender and provider behavior depend on installed engines. There is no zero-latency promise.

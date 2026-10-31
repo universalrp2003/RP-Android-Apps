@@ -687,7 +687,7 @@ fun AboutSmsGuardScreen(
             )
         }
 
-        item { SmsSecurityNotice(tamil, palette) }
+        item { SmsMessagingLimitNotice(tamil, palette) }
 
         // Official Verified GitHub Updater Control
         item {
