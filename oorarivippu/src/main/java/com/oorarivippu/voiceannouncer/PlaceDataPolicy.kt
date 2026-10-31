@@ -85,7 +85,8 @@ internal object PlaceDataPolicy {
     /** District and town are different roles, even when both are called Pudukkottai. */
     fun addressNames(locality: String?, subAdminArea: String?): AddressNames = AddressNames(
         cityOrVillage = cleanCityOrVillage(listOf(locality)),
-        district = cleanPlaceName(subAdminArea)?.takeUnless(::isRegionName).orEmpty(),
+        district = cleanPlaceName(subAdminArea)?.takeUnless(::isRegionName)
+            ?.let(::withoutDistrictSuffix).orEmpty(),
     )
 
     fun cleanSubArea(candidates: Iterable<String?>, cityOrVillage: String): String =
