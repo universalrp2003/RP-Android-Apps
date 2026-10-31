@@ -7,6 +7,10 @@
 - Owner reports these supplied bytes were installed on a phone, tested and accepted. Owner tested the supplied 2.81 update, reported it working perfectly and authorized publication on31 October2026. Screenshots show a completed bulletin at14:22 and the next check at14:52 with30m selected. Installed-phone hash was not independently measured. CI/emulator checks are not universal OEM/all-interval/unplugged proof. Earlier2.79/2.80 assets remain unchanged.
 - In-place update intended for the current owner-key install. Do not uninstall, clear data or bypass a signing/security warning; uninstalling may erase local data. No new runtime-dangerous permissions. Optional precise-alarm access from the earlier candidate remains separate from audio/network guarantees.
 
+## Exact release artifact
+
+Source08c339448a3bc2a286b1340c217eb256c6abdac8; signed run41181427941/artifact13035561625; no rebuild.14,500,707 bytes, SHA-256 `c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805`. Owner-authorized same-key **update**; uninstalling may erase local data. This is not Google Play Protect clearance.
+
 ## தமிழ்
 
 - அடுத்த ஒலித் துண்டுக்கு முன் செயலியின் சொந்த முந்தைய ஒலியை வேறு செயலியின் இசையாகத் தவறாகக் கருதும் சோதனை திருத்தப்பட்டுள்ளது. திரை, அழைப்பு, அமைதி நேரம், நாள் மாற்றம் மற்றும் நிறுத்து கட்டுப்பாடுகள் தொடரும்.
@@ -15,7 +19,3 @@
 - அமைப்புகளை மீண்டும் திறப்பதால் காத்திருக்கும் சோதனை நேரம் தொடர்ந்து முன்னே கொண்டுவரப்படாது. பயனர் இடைவெளியை மாற்றினால் அட்டவணை மாறும். முழுமையாக வாசித்த செய்திகள், கடைசி முழுத் தொகுப்பு மற்றும் கடைசி ஒலி நேரம் தனித்தனியாகக் காட்டப்படும்.
 - உரிமையாளர் இந்தப் புதுப்பிப்பை கைபேசியில் சோதித்து நன்றாகச் செயல்படுவதாக உறுதிப்படுத்தி வெளியிட அனுமதித்துள்ளார். நிறுவப்பட்ட கோப்பின் ஹாஷ் தனியாகச் சரிபார்க்கப்படவில்லை. தானியங்கிச் சோதனையோ குறுகிய நேர முன்மாதிரி விழிப்புச் சோதனையோ உண்மையான கைபேசி ஒலி மற்றும் மின்னேற்றமற்ற சோதனைக்குச் சமம் அல்ல. முந்தைய வெளியீடும் சோதனைப் பதிப்பும் மாற்றப்படவில்லை.
 - தற்போதைய உரிமையாளர் கையொப்ப நிறுவலைத் தரவை அழிக்காமல் புதுப்பிக்க வேண்டும். செயலியை நீக்கினால் உள்ளூர் தரவு அழியலாம். கையொப்ப அல்லது பாதுகாப்பு எச்சரிக்கையைத் தவிர்க்க வேண்டாம். புதிய ஆபத்தான இயக்கநேர அனுமதிகள் இல்லை; துல்லிய அலார அனுமதி இணையமோ ஒலியோ வெற்றி பெறும் உத்தரவாதம் அல்ல.
-
-## Exact release artifact
-
-Source08c339448a3bc2a286b1340c217eb256c6abdac8; signed run41181427941/artifact13035561625; no rebuild.14,500,707 bytes, SHA-256 `c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805`. Owner-authorized same-key **update**; uninstalling may erase local data. This is not Google Play Protect clearance.
