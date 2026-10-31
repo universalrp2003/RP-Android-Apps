@@ -79,9 +79,6 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
     // station list down before the user has chosen anything.
     var searchOpen by rememberSaveable { mutableStateOf(state.query.isNotBlank()) }
     var showSortInfo by rememberSaveable { mutableStateOf(false) }
-    // v1.15 — fourteen category chips pushed the list down. The six that matter open first;
-    // the genre/archive chips sit behind "More", which is the owner's "important items first".
-    var chipsExpanded by rememberSaveable { mutableStateOf(false) }
     var iconView by rememberSaveable { mutableStateOf(false) }
     var selectedIconStation by remember { mutableStateOf<RadioStation?>(null) }
     var showGuide by rememberSaveable { mutableStateOf(false) }
@@ -204,36 +201,13 @@ fun RadioScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         }
 
         item {
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // தமிழ் first: it is the default selection, so the app opens on Tamil.
-                val primary = state.categoryOrder.take(6)
-                val more = state.categoryOrder.drop(6)
-                primary.forEach { id ->
-                    Chip(
-                        label = Category.label(id),
-                        selected = state.category == id,
-                        onClick = { vm.setCategory(id) },
-                    )
-                }
-                Chip(
-                    label = if (chipsExpanded) "Less ▴" else "More ▾",
-                    selected = false,
-                    onClick = { chipsExpanded = !chipsExpanded },
-                )
-                if (chipsExpanded) {
-                    more.forEach { id ->
-                        Chip(
-                            label = Category.label(id),
-                            selected = state.category == id,
-                            onClick = { vm.setCategory(id) },
-                        )
-                    }
-                }
-            }
+            DraggableCategoryTabs(
+                ids = state.categoryOrder,
+                selected = state.category,
+                onSelect = vm::setCategory,
+                onDrop = vm::dropCategoryTab,
+                onMove = { id, delta -> vm.moveTab(false, id, delta) },
+            )
         }
 
         // Continue where you left off
@@ -632,21 +606,19 @@ fun NewsScreen(vm: MainViewModel, state: UiState, listState: LazyListState) {
         }
 
         item {
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                val newsCategories = setOf(Category.ALL_NEWS, Category.TAMIL_NEWS,
-                    Category.WORLD_NEWS, Category.INDIA_NEWS, Category.ENGLISH)
-                val chips = state.categoryOrder.filter { it in newsCategories }
-                chips.forEach { id ->
-                    Chip(
-                        label = Category.label(id),
-                        selected = state.category == id,
-                        onClick = { vm.setCategory(id) },
-                    )
-                }
-            }
+            val newsCategories = setOf(Category.ALL_NEWS, Category.TAMIL_NEWS,
+                Category.WORLD_NEWS, Category.INDIA_NEWS, Category.ENGLISH)
+            val chips = state.categoryOrder.filter { it in newsCategories }
+            DraggableCategoryTabs(
+                ids = chips,
+                selected = state.category,
+                onSelect = vm::setCategory,
+                onDrop = vm::dropCategoryTab,
+                onMove = { id, delta ->
+                    val target = chips.getOrNull(chips.indexOf(id) + delta)
+                    if (target != null) vm.dropCategoryTab(id, target, delta > 0)
+                },
+            )
         }
 
         item {

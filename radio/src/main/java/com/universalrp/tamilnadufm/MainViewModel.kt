@@ -306,6 +306,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { if (navigation) it.copy(navigationOrder = order) else it.copy(categoryOrder = order) }
     }
 
+    fun dropCategoryTab(id: String, target: String, after: Boolean) {
+        val defaults = com.universalrp.tamilnadufm.data.RadioTabOrder.categories
+        val order = com.universalrp.tamilnadufm.data.RadioTabOrder.place(repo.tabOrder(false), defaults, id, target, after)
+        repo.saveTabOrder(false, order)
+        mutate { it.copy(categoryOrder = order) }
+    }
+
     fun resetTabOrder(navigation: Boolean) {
         val order = if (navigation) com.universalrp.tamilnadufm.data.RadioTabOrder.navigation else com.universalrp.tamilnadufm.data.RadioTabOrder.categories
         repo.saveTabOrder(navigation, order)

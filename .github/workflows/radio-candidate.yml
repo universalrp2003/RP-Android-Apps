@@ -45,22 +45,22 @@ jobs:
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           apk=radio/build/outputs/apk/release/radio-release.apk
           "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/radio-badging.txt"
-          grep -Fq "package: name='com.universalrp.tamilnadufm' versionCode='30' versionName='1.30'" "$RUNNER_TEMP/radio-badging.txt"
+          grep -Fq "package: name='com.universalrp.tamilnadufm' versionCode='31' versionName='1.31'" "$RUNNER_TEMP/radio-badging.txt"
           ! grep -q application-debuggable "$RUNNER_TEMP/radio-badging.txt"
           "$tools/apksigner" verify --print-certs "$apk" > "$RUNNER_TEMP/radio-signature.txt"
           grep -Fq '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$RUNNER_TEMP/radio-signature.txt"
-          cp "$apk" "$RUNNER_TEMP/Ramesh-Radio-v1.30.apk"
+          cp "$apk" "$RUNNER_TEMP/Ramesh-Radio-v1.31.apk"
           python3 - <<'PY'
           import base64,hashlib,json,os,pathlib,subprocess
-          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'Ramesh-Radio-v1.30.apk';data=p.read_bytes()
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'Ramesh-Radio-v1.31.apk';data=p.read_bytes()
           payload=json.dumps({'encoding':'base64','content':base64.b64encode(data).decode()})
           r=subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'],input=payload,text=True,capture_output=True,check=True)
           print('::notice title=Radio candidate receipt::bytes='+str(len(data))+' sha256='+hashlib.sha256(data).hexdigest()+' blob='+json.loads(r.stdout)['sha'])
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: Ramesh-Radio-1.30-signed-candidate
-          path: ${{ runner.temp }}/Ramesh-Radio-v1.30.apk
+          name: Ramesh-Radio-1.31-signed-candidate
+          path: ${{ runner.temp }}/Ramesh-Radio-v1.31.apk
           retention-days: 30
       - name: Bounded real failures
         if: failure()
