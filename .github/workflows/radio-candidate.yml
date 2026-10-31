@@ -2,7 +2,7 @@ name: Ramesh Radio signed candidate (no publication)
 on:
   push:
     branches: ["arena/**"]
-    paths: ["radio/**", ".github/workflows/radio-candidate.yml"]
+    paths: ["radio/**", "shared/**", "tools/**", "releases/ramesh-radio-*.md", ".github/workflows/radio-candidate.yml"]
   workflow_dispatch:
 permissions:
   contents: read
