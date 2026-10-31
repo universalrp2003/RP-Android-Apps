@@ -2,6 +2,8 @@
 
 Owner authorized a code audit/improvements, not publication. Do not change or replace the owner's exact LG2.81 test artifact (source08c33944/run41181427941/artifact13035561625). New shared directory **candidate-version** entries do not change public pointers or those retained bytes.
 
+- Cache follow-through: ignore legacy-policy or24h-expired/future-dated SAFE entries, and invalidate an existing green entry when a rescan is pending. Otherwise the corrected scanner would still leave old green inbox badges visible. Keep stored threat warnings on failed rescans; no SMS/settings/bill records are deleted.
+
 ## Confirmed and corrected
 
 SMS1.1.13/code19 (new candidate, not same-version replacement):
@@ -16,7 +18,7 @@ Oor1.1.12/code17:
 - Destination district details were discarded when locality/district shared a name. Preserve explicit district role, merging only the redundant unlabelled locality.
 - Reject finite-but-out-of-range coordinates as well as NaN/infinite coordinates before distance/arrival computation.
 
-Regression additions: nine SMS failure/success/offline cases, three destination policy cases and three Python call-site/network-method/disclosure contracts. Existing bill/route/history controls remain.
+Regression additions: twelve SMS failure/success/offline/cache cases, three destination policy cases and four Python call-site/network-method/disclosure/cache contracts. Existing bill/route/history controls remain.
 
 Removed blanket “Allow restricted settings” / “Unlock” setup advice. The setup banner and Controls now disclose the incoming-MMS limitation and advise against overriding Android security warnings. The App Info action remains native permission inspection, not a protection bypass.
 

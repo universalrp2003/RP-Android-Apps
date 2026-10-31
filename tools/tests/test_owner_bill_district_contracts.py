@@ -77,6 +77,13 @@ class OwnerScreenshotContracts(unittest.TestCase):
         controls = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/ui/ControlsTab.kt").read_text()
         self.assertIn("Text(ui.setupBannerBody", controls)
 
+    def test_cached_green_verdicts_are_versioned_and_invalidated_after_failed_rescan(self):
+        store = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/data/GuardSettingsStore.kt").read_text()
+        self.assertIn('o.optInt("policyRevision", 0)', store)
+        self.assertIn('LinkScanCachePolicy.reusable(verdict,', store)
+        self.assertIn('LinkScanCachePolicy.invalidateSafe(', store)
+        self.assertNotIn('if (finalVerdicts.isEmpty()) return', store)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -10,6 +10,8 @@
 
 These exact new bytes are **not installed on a phone**. Uninstalling may erase local data; preserve the existing installation and backups.
 
+- Cache follow-through: ignore legacy-policy or24h-expired/future-dated SAFE entries, and invalidate an existing green entry when a rescan is pending. Otherwise the corrected scanner would still leave old green inbox badges visible. Keep stored threat warnings on failed rescans; no SMS/settings/bill records are deleted.
+
 ## தமிழ்
 
 இணையச் சோதனை தோல்வியடைந்தால் இணைப்பு பாதுகாப்பானது என்று காட்டாது. முடிந்த சோதனைகளில் அச்சுறுத்தல் தெரியவில்லை என்பது பாதுகாப்பு உத்தரவாதம் அல்ல. இணைப்பின் உள்ளடக்கத்தைப் பதிவிறக்கும் GET முறைக்குப் பதிலாக HEAD மட்டும் பயன்படுத்தப்படும்; முடியாத சோதனை காத்திருப்பில் இருக்கும். DNS வடிகட்டலைத் தவிர்க்க நேரடி IP முகவரி பயன்படுத்தப்படாது. இணையச் சோதனையில் இணைப்பு, IP மற்றும் வழக்கமான கோரிக்கை விவரங்கள் வெளியே செல்லலாம். இது வெளியிடப்படாத சோதனைப் பதிப்பு. பழைய தரவை அழிக்கவோ செயலியை நீக்கவோ வேண்டாம். Google பாதுகாப்பு எச்சரிக்கை இன்னும் தீர்க்கப்படவில்லை; அதைப் புறக்கணித்து நிறுவ வேண்டாம். MMS பெறுதல் இன்னும் முழுமையாகச் செயல்படுத்தப்படவில்லை.

@@ -1,5 +1,6 @@
 package com.universalrp.smsguard
 
+import com.universalrp.smsguard.engine.LinkScanCachePolicy
 import com.universalrp.smsguard.engine.LinkSecurityScanner
 import com.universalrp.smsguard.engine.LinkVerdict
 import org.junit.Assert.*
@@ -73,5 +74,24 @@ class LinkVerificationFailureTest {
         assertEquals(0, transport.browsingCalls)
         assertEquals(0, transport.probeCalls)
         assertEquals(0, transport.dnsCalls)
+    }
+
+    @Test fun legacyGreenCacheIsNotReusedAfterPolicyUpgrade() {
+        assertFalse(LinkScanCachePolicy.reusable(LinkVerdict.SAFE, 0, 1000, 2000))
+        assertFalse(LinkScanCachePolicy.reusable(LinkVerdict.SAFE, 1, 1000, 2000))
+        assertTrue(LinkScanCachePolicy.reusable(LinkVerdict.SAFE, LinkScanCachePolicy.REVISION, 1000, 2000))
+    }
+    @Test fun oldFutureAndMissingPositiveCacheTimestampsAreNotTrusted() {
+        for ((checked, now) in listOf(0L to 1000L, 3000L to 2000L,
+            1000L to (1000L + LinkScanCachePolicy.MAX_SAFE_AGE_MS))) {
+            assertFalse(LinkScanCachePolicy.reusable(LinkVerdict.SAFE, LinkScanCachePolicy.REVISION, checked, now))
+        }
+    }
+    @Test fun unavailableRescanInvalidatesEarlierGreenButDoesNotEraseThreatWarning() {
+        assertTrue(LinkScanCachePolicy.invalidateSafe(LinkVerdict.SAFE, LinkVerdict.PENDING_OFFLINE))
+        assertTrue(LinkScanCachePolicy.invalidateSafe(LinkVerdict.SAFE, LinkVerdict.PENDING_INTERNET_OFF))
+        assertFalse(LinkScanCachePolicy.invalidateSafe(LinkVerdict.UNSAFE, LinkVerdict.PENDING_OFFLINE))
+        assertTrue(LinkScanCachePolicy.reusable(LinkVerdict.UNSAFE, 0, 0, 2000))
+        assertFalse(LinkScanCachePolicy.reusable(LinkVerdict.PENDING_OFFLINE, LinkScanCachePolicy.REVISION, 1000, 2000))
     }
 }
