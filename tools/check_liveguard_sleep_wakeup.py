@@ -3,6 +3,7 @@
 Not an audio, remote-provider, 30m/1h/2h/3h wall-clock or physical-phone certification.
 """
 import json
+import hashlib
 import os
 from pathlib import Path
 import subprocess
@@ -67,6 +68,7 @@ def main(apk):
     seed('cleansweep_news_voice', {'news_voice_interval_minutes': 30,
         'news_voice_last_auto_ms': due - 30 * 60_000,
         'news_voice_v265_default_3h_on': True})
+    seed('cleansweep_net_split', {'split_enabled': False, 'radio_change_announce': False})
     seed('cleansweep_state', {'voice_on': True, 'voice_news_headlines': True,
         'persistent_monitor': False, 'charge_monitor': False, 'status_pill': False})
     shell('chown', '-R', f'{uid}:{uid}', f'{DATA}/shared_prefs')
@@ -103,12 +105,16 @@ def main(apk):
     checked = int(observed.get('last_check', 0))
     assert due - 1000 <= checked <= due + 30_000, observed
     assert int(observed['next_check']) > checked, observed
-    report = {'source': os.environ['GITHUB_SHA'], 'apk': Path(apk).name,
+    identity = json.loads((Path(apk).parent / 'candidate-info.json').read_text())
+    assert identity['source'] == os.environ['GITHUB_SHA'], identity
+    assert identity['sha256'] == hashlib.sha256(Path(apk).read_bytes()).hexdigest(), 'Tested APK differs from retained signed candidate'
+    report = {'source': os.environ['GITHUB_SHA'], 'apk': Path(apk).name, 'candidate': identity,
         'expectedDueMs': due, 'observedCheckMs': checked, 'latenessMs': checked - due,
         'status': observed, 'result': 'PASS: persisted exact alarm restarted a dead app process and entered the foreground check in forced Doze',
         'limits': 'Seeded 90-second deadline; no full real-time interval, provider, completed-audio, OEM or physical-phone proof.'}
     (OUT/'wakeup.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report, indent=2))
+    print('::notice title=Sleeping news verified::' + json.dumps(report).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
 
 if __name__ == '__main__':
     try: main(sys.argv[1])
