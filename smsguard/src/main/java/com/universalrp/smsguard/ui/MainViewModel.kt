@@ -525,9 +525,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (announceAloud && prefs.voiceEnabled) {
                 val speech = when (res.verdict) {
                     LinkVerdict.SAFE -> if (prefs.tamil) {
-                        "பச்சை டிக் பாதுகாப்பு உறுதி! ${res.displayDomain} இணைப்பு பாதுகாப்பானது, திறக்கலாம்."
+                        "${res.displayDomain} சோதனையில் அச்சுறுத்தல் தெரியவில்லை. இது பாதுகாப்பு உத்தரவாதம் அல்ல."
                     } else {
-                        "Green tick verified! ${res.displayDomain} is safe to open."
+                        "No threat detected in checks for ${res.displayDomain}. This is not a safety guarantee."
                     }
                     LinkVerdict.UNSAFE -> if (prefs.tamil) {
                         "ஆபத்து எச்சரிக்கை! ${res.displayDomain} போலியான ஆபத்தான இணைப்பு — தயவுசெய்து தொடாதீர்கள்!"
@@ -560,9 +560,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _sendPermissionNeeded = MutableStateFlow(false)
+    val sendPermissionNeeded: StateFlow<Boolean> = _sendPermissionNeeded
+    fun clearSendPermissionRequest() { _sendPermissionNeeded.value = false }
+
     fun sendSms(recipient: String, text: String, subId: Int, onDone: (Boolean) -> Unit) {
         val ctx = getApplication<Application>()
         val prefs = prefsFlow.value
+        if (!SmsRepository.hasSendSmsPermission(ctx)) {
+            _sendPermissionNeeded.value = true
+            onDone(false) // Keep the draft. Never auto-send after permission approval.
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val result = SmsRepository.sendSmsMessage(ctx, recipient, text, subId)
             withContext(Dispatchers.Main) {
@@ -676,7 +685,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         if (msg.isSentByMe) {
-            val cleanText = msg.body.take(180)
+            val cleanText = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(msg.body)?.take(180)
+                ?: run {
+                    postBanner(if (prefs.tamil) "ரகசியக் குறியீடு உள்ள செய்தி குரலில் படிக்கப்படாது." else "Secret-bearing messages are not read aloud.")
+                    return
+                }
             val sentLine = if (prefs.tamil) {
                 "நீங்கள் அனுப்பிய செய்தி: $cleanText"
             } else {
@@ -893,7 +906,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     BillFilter.ALL -> true
                     BillFilter.UNPAID -> !b.isPaid
                     BillFilter.PAID -> b.isPaid
-                    BillFilter.DUE_SOON -> !b.isPaid && BillReminderEngine.isUrgent(b.dueDate, today)
+                    BillFilter.DUE_SOON -> !b.isPaid && !BillReminderEngine.needsReview(b) && BillReminderEngine.isUrgent(b.dueDate, today)
                 }
             }
             .sortedWith(
@@ -1012,6 +1025,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setInternetEnabled(enabled: Boolean) {
         val ctx = getApplication<Application>()
+        if (!enabled) SmsVoiceAnnouncer.stop(ctx)
         GuardSettingsStore.updateInternetEnabled(ctx, enabled)
         if (enabled) {
             viewModelScope.launch(Dispatchers.IO) {
@@ -1021,6 +1035,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             refreshAll()
         }
+    }
+
+    fun setCloudSpeechConsent(enabled: Boolean) {
+        SmsVoiceAnnouncer.stop(getApplication())
+        GuardSettingsStore.updateCloudSpeechConsent(getApplication(), enabled)
     }
 
     fun setVoiceEnabled(enabled: Boolean) {

@@ -64,6 +64,9 @@ fun ControlsTab(
     isDefaultSms: Boolean,
     onRequestDefaultSms: () -> Unit,
     onSwitchBackDefaultSms: () -> Unit,
+    onCloudSpeechChoice: () -> Unit,
+    onRequestContacts: () -> Unit,
+    onRequestSimInfo: () -> Unit,
 ) {
     var expandVoices by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -100,6 +103,22 @@ fun ControlsTab(
                     palette = palette,
                     onCheckedChange = { vm.setInternetEnabled(it) },
                 )
+                ToggleRowItem(
+                    title = if (prefs.tamil) "HD குரலுக்கு உரையைப் பகிர ஒப்புதல்" else "Share announcement text for HD voice",
+                    subtitle = if (prefs.tamil) "Microsoft-க்கு வாசிக்கும் உரை அனுப்பப்படும்; விருப்பத் தேர்வு." else "Spoken text is sent to Microsoft; optional and off until you consent.",
+                    checked = prefs.cloudSpeechConsent,
+                    onCheckedChange = { if (it) onCloudSpeechChoice() else vm.setCloudSpeechConsent(false) },
+                    palette = palette,
+                )
+                TextButton(onClick = onCloudSpeechChoice) {
+                    Text(if (prefs.tamil) "குரல் தரவுப் பகிர்வை மறுபரிசீலனை செய்" else "Review speech data sharing")
+                }
+                TextButton(onClick = onRequestContacts) {
+                    Text(if (prefs.tamil) "விருப்பம்: தொடர்புப் பெயர்களுக்கு Contacts அனுமதி" else "Optional: allow Contacts for saved names")
+                }
+                TextButton(onClick = onRequestSimInfo) {
+                    Text(if (prefs.tamil) "விருப்பம்: SIM பெயர்களுக்கு Phone அனுமதி" else "Optional: allow Phone for SIM labels")
+                }
                 ToggleRowItem(
                     title = ui.toggleVoiceTitle,
                     subtitle = ui.toggleVoiceDesc,
@@ -521,9 +540,10 @@ fun ControlsTab(
                 Text(
                     if (isDefaultSms) ui.defaultSmsActiveBadge else ui.setupBannerTitle,
                     fontWeight = FontWeight.Bold,
-                    color = if (isDefaultSms) palette.safeGreen else palette.warnAmber,
+                    color = palette.warnAmber,
                     fontSize = 14.5.sp,
                 )
+                Text(ui.setupBannerBody, color = palette.textMuted, fontSize = 12.5.sp)
                 if (isDefaultSms) {
                     OutlinedButton(onClick = onSwitchBackDefaultSms, modifier = Modifier.fillMaxWidth()) {
                         Text(ui.switchBackSmsBtn)
@@ -667,6 +687,8 @@ fun AboutSmsGuardScreen(
             )
         }
 
+        item { SmsSecurityNotice(tamil, palette) }
+
         // Official Verified GitHub Updater Control
         item {
             SectionCard(palette = palette) {
@@ -699,21 +721,14 @@ fun AboutSmsGuardScreen(
                 ) { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
                 }
-                LinkRow(
-                    if (tamil) "முந்தைய மாற்று களஞ்சியம் (InternetRadio)" else "Legacy Mirror Repository",
-                    "https://github.com/universalrp2003/InternetRadio",
-                    palette,
-                ) { url ->
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                }
             }
         }
 
-        // Shared Sister Apps list (all 7 RP Ideas apps)
+        // Shared published-app directory; do not freeze the suite size in a label.
         item {
             SectionCard(palette = palette) {
                 Text(
-                    if (tamil) "எமது RP Ideas செயலிகள் (7)" else "Our RP Ideas Android Apps (7)",
+                    if (tamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas Android Apps",
                     fontWeight = FontWeight.Bold,
                     color = palette.accent,
                 )

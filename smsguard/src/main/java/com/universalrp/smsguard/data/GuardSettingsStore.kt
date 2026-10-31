@@ -3,6 +3,7 @@ package com.universalrp.smsguard.data
 import android.content.Context
 import com.universalrp.smsguard.engine.BillCategory
 import com.universalrp.smsguard.engine.BillReminder
+import com.universalrp.smsguard.engine.LinkScanCachePolicy
 import com.universalrp.smsguard.engine.LinkScanResult
 import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.UserAccountProfile
@@ -52,6 +53,8 @@ data class GuardPrefs(
     val tamil: Boolean = true,
     val internetEnabled: Boolean = true,
     val voiceEnabled: Boolean = true,
+    val cloudSpeechConsent: Boolean = false,
+    val cloudSpeechChoiceMade: Boolean = false,
     val senderOnlyVoiceEnabled: Boolean = false,
     val announceOtpSenderOnly: Boolean = false,
     val readFullNormalSmsEnabled: Boolean = true,
@@ -137,6 +140,11 @@ object GuardSettingsStore {
 
     private fun readPrefs(context: Context): GuardPrefs {
         val p = prefs(context)
+        // Remove legacy *audio cache* only; never erase SMS, settings, bills or accounts.
+        if (!p.getBoolean("speech_privacy_cache_v2", false)) {
+            context.cacheDir.resolve("smsguard_neural_tts").deleteRecursively()
+            p.edit().putBoolean("speech_privacy_cache_v2", true).apply()
+        }
         val accounts = parseUserAccounts(p.getString("user_accounts_json", null))
         val excluded = p.getStringSet("excluded_finance_ids", emptySet())
             .orEmpty()
@@ -157,6 +165,8 @@ object GuardSettingsStore {
             tamil = p.getBoolean("tamil", true),
             internetEnabled = p.getBoolean("internet_enabled", true),
             voiceEnabled = p.getBoolean("voice_enabled", true),
+            cloudSpeechConsent = p.getBoolean("cloud_speech_consent_v1", false),
+            cloudSpeechChoiceMade = p.getBoolean("cloud_speech_choice_v1", false),
             senderOnlyVoiceEnabled = p.getBoolean("sender_only_voice", false),
             announceOtpSenderOnly = p.getBoolean("announce_otp_sender_only", false),
             readFullNormalSmsEnabled = p.getBoolean("read_full_normal_sms", true),
@@ -223,6 +233,13 @@ object GuardSettingsStore {
 
     fun updateInternetEnabled(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean("internet_enabled", enabled).apply()
+        reload(context)
+    }
+
+    fun updateCloudSpeechConsent(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean("cloud_speech_consent_v1", enabled)
+            .putBoolean("cloud_speech_choice_v1", true).commit()
+        if (!enabled) context.cacheDir.resolve("smsguard_neural_tts_v2").deleteRecursively()
         reload(context)
     }
 
@@ -484,17 +501,18 @@ object GuardSettingsStore {
         }.getOrDefault(emptyList())
     }
 
-    // --- Scanned Link Verdict Cache (ONLY final SAFE / UNSAFE verdicts — NEVER transient offline states!) ---
+    // --- Verdict cache: version/age-bound positives; pending rescans invalidate prior positives. ---
 
     @Synchronized
     fun cacheLinkResults(context: Context, results: List<LinkScanResult>) {
-        val finalVerdicts = results.filter {
-            it.verdict == LinkVerdict.SAFE || it.verdict == LinkVerdict.UNSAFE
-        }
-        if (finalVerdicts.isEmpty()) return
+        if (results.isEmpty()) return
         val existing = getCachedLinkResultsMap(context).toMutableMap()
-        for (r in finalVerdicts) {
-            existing[r.originalUrl] = r
+        for (r in results) {
+            if (r.verdict == LinkVerdict.SAFE || r.verdict == LinkVerdict.UNSAFE) {
+                existing[r.originalUrl] = r
+            } else if (LinkScanCachePolicy.invalidateSafe(existing[r.originalUrl]?.verdict, r.verdict)) {
+                existing.remove(r.originalUrl) // Metadata only; never remove SMS/settings/bills.
+            }
         }
         val trimmed = existing.values.sortedByDescending { it.checkedAtMs }.take(400)
         val arr = JSONArray()
@@ -506,6 +524,7 @@ object GuardSettingsStore {
                     .put("finalUrl", item.finalUrl)
                     .put("displayDomain", item.displayDomain)
                     .put("verdict", item.verdict.name)
+                    .put("policyRevision", LinkScanCachePolicy.REVISION)
                     .put("reasonEn", item.reasonEn)
                     .put("reasonTa", item.reasonTa)
                     .put("checkedAtMs", item.checkedAtMs),
@@ -522,7 +541,8 @@ object GuardSettingsStore {
                 for (i in 0 until arr.length()) {
                     val o = arr.getJSONObject(i)
                     val verdict = runCatching { LinkVerdict.valueOf(o.getString("verdict")) }.getOrNull()
-                    if (verdict == LinkVerdict.SAFE || verdict == LinkVerdict.UNSAFE) {
+                    if (verdict != null && LinkScanCachePolicy.reusable(verdict,
+                            o.optInt("policyRevision", 0), o.optLong("checkedAtMs", 0L), System.currentTimeMillis())) {
                         val item = LinkScanResult(
                             originalUrl = o.getString("originalUrl"),
                             normalizedUrl = o.optString("normalizedUrl"),
@@ -621,6 +641,16 @@ object GuardSettingsStore {
         reload(context)
     }
 
+    @Synchronized
+    fun advancePendingLinkCheck(
+        context: Context, entry: QueuedSmsLinkCheck, completedUrls: Set<String>, attemptedUrls: Set<String>,
+    ) {
+        writePendingQueue(context, PendingLinkQueuePolicy.advance(
+            getPendingQueue(context), entry, completedUrls, attemptedUrls,
+        ))
+        reload(context)
+    }
+
     fun getPendingQueue(context: Context): List<QueuedSmsLinkCheck> {
         val raw = prefs(context).getString("pending_links_queue_v1", null) ?: return emptyList()
         return runCatching {
@@ -662,7 +692,8 @@ object GuardSettingsStore {
                     .put("queuedAtMs", item.queuedAtMs),
             )
         }
-        prefs(context).edit().putString("pending_links_queue_v1", arr.toString()).apply()
+        // Durable before the broadcast finishes; never persist a full SMS body here.
+        check(prefs(context).edit().putString("pending_links_queue_v1", arr.toString()).commit())
     }
 
     // --- Bill / payment-due reminders storage ---

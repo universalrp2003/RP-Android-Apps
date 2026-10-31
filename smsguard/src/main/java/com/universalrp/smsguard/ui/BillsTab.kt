@@ -327,7 +327,9 @@ private fun BillReminderCard(
     onDelete: () -> Unit,
 ) {
     val days = BillReminderEngine.daysUntilDue(bill.dueDate, today)
+    val needsReview = BillReminderEngine.needsReview(bill)
     val (badge, badgeColor) = when {
+        needsReview -> ui.billsReviewBadge to palette.warnAmber
         days < 0 -> (if (tamil) "${-days} நாள் ${ui.billsOverdue}" else "${-days}d ${ui.billsOverdue}") to palette.dangerRed
         days == 0L -> (if (tamil) "${ui.billsOverdue} · இன்று" else "Today!") to palette.dangerRed
         days <= BillReminderEngine.URGENT_WINDOW_DAYS -> ui.billsUrgentBadge to palette.dangerRed
@@ -340,7 +342,7 @@ private fun BillReminderCard(
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
             .background(palette.card)
-            .border(1.dp, if (days <= BillReminderEngine.URGENT_WINDOW_DAYS && !bill.isPaid) badgeColor.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(16.dp))
+            .border(1.dp, if (!needsReview && days <= BillReminderEngine.URGENT_WINDOW_DAYS && !bill.isPaid) badgeColor.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(16.dp))
             .clickable { onClick() }
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -358,13 +360,13 @@ private fun BillReminderCard(
                     color = if (bill.isPaid) palette.textMuted else palette.textPrimary,
                 )
                 Text(
-                    text = "${bill.dueDate.format(DATE_FMT)} · ${categoryLabel(bill.category, ui)}",
+                    text = if (needsReview) ui.billsReviewBadge else "${bill.dueDate.format(DATE_FMT)} · ${categoryLabel(bill.category, ui)}",
                     fontSize = 11.5.sp,
                     color = palette.textMuted,
                 )
             }
             Spacer(Modifier.width(8.dp))
-            Column(horizontalAlignment = Alignment.End) {
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                 if (bill.amountInr != null) {
                     Text(
                         text = FinanceLedgerEngine.formatInr(bill.amountInr),
@@ -374,25 +376,29 @@ private fun BillReminderCard(
                     )
                 }
                 Text(
-                    text = if (bill.isPaid) ui.billsPaidBadge else badge,
-                    color = if (bill.isPaid) palette.safeGreen else badgeColor,
+                    text = if (bill.isPaid && !needsReview) ui.billsPaidBadge else badge,
+                    color = if (bill.isPaid && !needsReview) palette.safeGreen else badgeColor,
                     fontWeight = FontWeight.Bold,
                     fontSize = 11.5.sp,
                 )
             }
         }
 
-        Row(
+        // The source label must not compete with four minimum-touch-target buttons.
+        Text(
+            text = if (bill.isFromSms) ui.billsFromSmsBadge else ui.billsManualBadge,
+            fontSize = 10.sp,
+            color = palette.textMuted,
             modifier = Modifier.fillMaxWidth(),
+        )
+        if (needsReview) {
+            Text(ui.billsReviewNotice, color = palette.warnAmber, fontSize = 12.sp)
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = if (bill.isFromSms) ui.billsFromSmsBadge else ui.billsManualBadge,
-                fontSize = 10.sp,
-                color = palette.textMuted,
-                modifier = Modifier.weight(1f),
-            )
             TextButton(onClick = onTogglePaid, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                 Text(
                     if (bill.isPaid) ui.billsMarkUnpaid else ui.billsMarkPaid,

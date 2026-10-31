@@ -208,12 +208,13 @@ object NeuralCloudVoiceEngine {
         neuralVoiceName: String,
         speechRateMode: Int,
         timeoutMs: Long = 3800L,
+        networkAllowed: () -> Boolean,
     ): File? {
-        val trimmed = text.trim().take(1200)
-        if (trimmed.isEmpty()) return null
+        val trimmed = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(text)?.take(1200) ?: return null
+        if (trimmed.isEmpty() || !networkAllowed()) return null
 
-        var cacheKey = sha256Hex("v1|$neuralVoiceName|$speechRateMode|$trimmed")
-        val targetDir = cacheDir?.let { File(it, "smsguard_neural_tts").apply { mkdirs() } }
+        var cacheKey = sha256Hex("v2|$neuralVoiceName|$speechRateMode|$trimmed")
+        val targetDir = cacheDir?.let { File(it, "smsguard_neural_tts_v2").apply { mkdirs() } }
         var cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 256L) {
             return cachedFile
@@ -226,10 +227,11 @@ object NeuralCloudVoiceEngine {
             rate = ratePercentString(speechRateMode),
             timeoutMs = timeoutMs,
             onVoiceSelected = { selectedVoice = it },
+            networkAllowed = networkAllowed,
         ) ?: return null
 
-        if (mp3Bytes.size < 256) return null
-        cacheKey = sha256Hex("v1|$selectedVoice|$speechRateMode|$trimmed")
+        if (mp3Bytes.size < 256 || !networkAllowed()) return null
+        cacheKey = sha256Hex("v2|$selectedVoice|$speechRateMode|$trimmed")
         cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
         val outputFile = cachedFile
 
@@ -262,7 +264,10 @@ object NeuralCloudVoiceEngine {
         diagnostic: ((String) -> Unit)? = null,
         allowVoiceFallback: Boolean = true,
         onVoiceSelected: ((String) -> Unit)? = null,
+        networkAllowed: () -> Boolean,
     ): ByteArray? {
+        val safeText = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(text) ?: return null
+        if (!networkAllowed()) return null
         return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
             onSelected = { selected ->
                 diagnostic?.invoke("HD_VOICE_SELECTED=$selected")
@@ -270,8 +275,8 @@ object NeuralCloudVoiceEngine {
             }) { candidate, budget ->
             diagnostic?.invoke("HD_VOICE_ATTEMPT=$candidate")
             val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(candidate)
-            streamWebSocketOnce(text, serverVoice, rate, budget,
-                diagnostic = diagnostic)
+            if (!networkAllowed()) null else streamWebSocketOnce(safeText, serverVoice, rate, budget,
+                diagnostic = diagnostic, networkAllowed = networkAllowed)
         }
     }
 
@@ -281,7 +286,9 @@ object NeuralCloudVoiceEngine {
         rate: String,
         timeoutMs: Long,
         diagnostic: ((String) -> Unit)? = null,
+        networkAllowed: () -> Boolean,
     ): ByteArray? {
+        if (!networkAllowed()) return null
         val attemptStarted = System.nanoTime()
         val escaped = sanitizeSsmlText(text)
         if (escaped.isEmpty()) return null
@@ -317,6 +324,7 @@ object NeuralCloudVoiceEngine {
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    if (!networkAllowed()) { webSocket.cancel(); doneLatch.countDown(); return }
                     diagnostic?.invoke("OPEN HTTP=${response.code}")
                     val ts = jsUtcDateString()
                     val configMsg =
@@ -339,7 +347,7 @@ object NeuralCloudVoiceEngine {
                             "Path:ssml\r\n\r\n" +
                             ssml
                     webSocket.send(configMsg)
-                    webSocket.send(ssmlMsg)
+                    if (networkAllowed()) webSocket.send(ssmlMsg) else { webSocket.cancel(); doneLatch.countDown() }
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {

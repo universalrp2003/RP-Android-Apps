@@ -78,7 +78,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),
             'oorarivippu': ('1.1.10', '15', 'oor-arivippu-v1.1.10'),
-            'smsguard': ('1.1.11', '17', 'sms-guard-v1.1.11'),
+            'smsguard': ('1.1.15', '21', 'sms-guard-v1.1.15'),
             'voicenotes': ('1.3.3', '7', 'voice-notes-v1.3.3'),
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
             'vasanthi': ('1.1.5', '8', 'vasanthi-ai-v1.1.5'),
