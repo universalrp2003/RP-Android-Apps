@@ -23,8 +23,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - name: Wait for the selected source's shared regression build
-        run: gh run watch 41214456050 --exit-status --interval 30
       - name: Verify authorization, successful native gates and unchanged compiled inputs
         shell: bash
         run: |
@@ -54,8 +52,12 @@ jobs:
           assert artifact['id']==13047597952 and artifact['name']=='SMS-Guard-signed-candidate' and not artifact['expired']
           assert artifact['workflow_run']['id']==run['id'] and artifact['workflow_run']['head_sha']==source
           assert artifact['digest']=='sha256:'+os.environ['ARCHIVE_SHA']
-          full=api('actions/runs/41214456050')
-          assert full['head_sha']==source and full['status']=='completed' and full['conclusion']=='success'
+          # Pin completed SMS release and shared-neural regression gates. The unrelated
+          # four-app aggregate has a global single-pending queue (superseded on docs pushes)
+          # and remains a merge gate; it is not the source of this SMS APK.
+          for run_id,path in ((41214456132,'.github/workflows/smsguard-release.yml'), (41214456065,'.github/workflows/hd-voice-failover.yml')):
+              gate=api('actions/runs/'+str(run_id))
+              assert (gate['head_sha'],gate['status'],gate['conclusion'],gate['path']) == (source,'completed','success',path)
           subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'],check=True)
           paths=subprocess.check_output(['git','diff','--name-only',source,'HEAD'],text=True).splitlines()
           forbidden=[p for p in paths if (p.startswith(('smsguard/','shared/','gradle/','ci-keystore/')) and p!='smsguard/README.md') or p in {'build.gradle.kts','settings.gradle.kts','gradle.properties','gradlew','gradlew.bat'}]
