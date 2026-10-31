@@ -19,6 +19,21 @@ OUT.mkdir(exist_ok=True)
 def report_failure(kind, error, tb):
     detail = ''.join(traceback.format_exception(kind, error, tb))[-1800:]
     print('::error title=Sleeping news emulator::' + detail.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+    # Keep failures inspectable through the GitHub Checks API even when artifact/log
+    # storage is unavailable. Never relax delivery, dead-process or timing assertions.
+    for name in ('alarm-after.txt', 'activity-after.txt', 'power-after.txt', 'idle-before.txt', 'logcat.txt'):
+        report = OUT / name
+        if not report.exists(): continue
+        lines = report.read_text(errors='replace').splitlines()
+        if name in ('alarm-after.txt', 'activity-after.txt', 'logcat.txt'):
+            matches = set()
+            for index, line in enumerate(lines):
+                if PKG in line or 'AndroidRuntime' in line or 'FATAL EXCEPTION' in line:
+                    matches.update(range(max(0, index-2), min(len(lines), index+8)))
+            lines = [lines[index] for index in sorted(matches)]
+        detail = '\n'.join(lines)[-5000:]
+        print('::warning title=Sleeping news diagnostic::' + (name + '\n' + detail).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+
 sys.excepthook = report_failure
 def adb(*args, input=None):
     return subprocess.check_output(['adb', *args], input=input, timeout=40).decode(errors='replace').strip()
@@ -123,7 +138,7 @@ def main(apk):
 if __name__ == '__main__':
     try: main(sys.argv[1])
     finally:
-        for name, command in [('alarm-after.txt', ('dumpsys','alarm')), ('activity-after.txt', ('dumpsys','activity','services',PKG))]:
+        for name, command in [('alarm-after.txt', ('dumpsys','alarm')), ('activity-after.txt', ('dumpsys','activity','services',PKG)), ('power-after.txt', ('dumpsys','power'))]:
             try: (OUT/name).write_text(shell(*command))
             except subprocess.SubprocessError: pass
         try: (OUT/'logcat.txt').write_text(adb('logcat','-d','-t','700'))

@@ -81,6 +81,7 @@ jobs:
           receipt = dict(source=os.environ['GITHUB_SHA'], version='2.81', code=86, bytes=p.stat().st_size, sha256=hashlib.sha256(p.read_bytes()).hexdigest(), signer=cert, publication=False, physicalPhoneTest=False)
           (p.parent/'candidate-info.json').write_text(json.dumps(receipt, indent=2))
           print(json.dumps(receipt, indent=2))
+          print('::notice title=Signed news candidate::' + json.dumps(receipt))
           PY
       - name: Retain exact signed candidate (not a release)
         uses: actions/upload-artifact@v4
