@@ -58,10 +58,15 @@ jobs:
           expected=before.replace('version = "1.1.14"','version = "1.1.11"').replace('version = "1.1.13"','version = "1.1.10"')
           actual=pathlib.Path(shared).read_text()
           assert actual in (expected,expected.replace('publishedVersion = "1.29"','publishedVersion = "1.31"'))
-          # Never replace a tag or any draft/public release. API failures fail closed.
-          for endpoint,key in (('releases?per_page=100','tag_name'),('tags?per_page=100','name')):
-              values=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp','repos/'+os.environ['GH_REPO']+'/'+endpoint],text=True))
-              assert not any(v[key]=='ramesh-radio-v1.31' for page in values for v in page)
+          # Resume only the exact draft created by the first promotion attempt. Never replace assets.
+          draft=api('releases/429967173')
+          assert draft['draft'] and draft['tag_name']=='ramesh-radio-v1.31' and draft['target_commitish']==source
+          assets=[a for a in draft['assets'] if a['name']=='Ramesh-Radio-v1.31.apk']
+          assert len(assets)==1 and assets[0]['id']==695516209 and assets[0]['size']==15179972
+          assert assets[0]['digest']=='sha256:'+os.environ['EXPECTED_SHA']
+          assert sorted(a['name'] for a in draft['assets'])==['Ramesh-Radio-v1.31.apk','Ramesh-Radio-v1.31.sha256']
+          releases=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp','repos/'+os.environ['GH_REPO']+'/releases?per_page=100'],text=True))
+          assert [r['id'] for page in releases for r in page if r['tag_name']=='ramesh-radio-v1.31']==[429967173]
           PY
       - name: Download and verify the pinned immutable archive
         shell: bash
@@ -99,12 +104,12 @@ jobs:
           python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/radio-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
           grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
           printf '%s  Ramesh-Radio-v1.31.apk\n' "$EXPECTED_SHA" > /tmp/Ramesh-Radio-v1.31.sha256
-          gh release create ramesh-radio-v1.31 --draft "$apk" /tmp/Ramesh-Radio-v1.31.sha256 --target "$SOURCE" --title 'Ramesh Radio 1.31 — drag category tabs and reviewed station catalogue' --notes-file releases/ramesh-radio-v1.31.md
+          # The authenticated draft already holds the selected APK; no upload/rebuild/replacement.
           python3 - <<'PY'
           import json,os,subprocess
-          r=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases/tags/ramesh-radio-v1.31'],text=True))
+          r=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases/429967173'],text=True))
           a=[a for a in r['assets'] if a['name']=='Ramesh-Radio-v1.31.apk']
-          assert r['draft'] and len(a)==1 and a[0]['size']==15179972 and a[0]['digest']=='sha256:'+os.environ['EXPECTED_SHA']
+          assert r['draft'] and r['target_commitish']==os.environ['SOURCE'] and len(a)==1 and a[0]['size']==15179972 and a[0]['digest']=='sha256:'+os.environ['EXPECTED_SHA']
           PY
           mkdir /tmp/radio-redownload
           gh release download ramesh-radio-v1.31 --pattern Ramesh-Radio-v1.31.apk --dir /tmp/radio-redownload
