@@ -27,10 +27,10 @@ class WebsiteUsabilityTest(unittest.TestCase):
             self.assertIsNotNone(datetime.fromisoformat(value.replace('Z', '+00:00')).tzinfo)
 
     def test_changed_tag_and_stale_date_are_rejected(self):
-        stamp = self.evidence['releases']['live-guard-v2.79']
+        stamp = self.evidence['releases']['live-guard-v2.81']
         for stale in [self.source.replace('datetime="' + stamp + '"', 'datetime="2025-01-01T01:00:00Z"', 1),
                       self.source.replace('>30 Oct 2026</time>', '>31 Oct 2026</time>', 1),
-                      self.source.replace('data-release-tag="live-guard-v2.79"', 'data-release-tag="live-guard-v0.0"', 1)]:
+                      self.source.replace('data-release-tag="live-guard-v2.81"', 'data-release-tag="live-guard-v0.0"', 1)]:
             with self.assertRaises(ValueError):
                 dates.check(stale, self.evidence)
 
@@ -47,7 +47,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertEqual(evidence, self.evidence)
 
     def test_refresh_repairs_date_tag_after_a_pinned_release_changes(self):
-        stale = self.source.replace('data-release-tag="live-guard-v2.79"', 'data-release-tag="old-version"')
+        stale = self.source.replace('data-release-tag="live-guard-v2.81"', 'data-release-tag="old-version"')
         source, evidence = dates.refresh(stale, lambda tag: {'tag_name': tag, 'published_at': self.evidence['releases'][tag]})
         self.assertEqual(source, self.source)
         self.assertEqual(evidence, self.evidence)
