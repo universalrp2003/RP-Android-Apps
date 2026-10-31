@@ -90,7 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          apk=/tmp/accepted-tamilanstore/Tamilan-Store-v0.7.apk
+          apk=/tmp/accepted-store/Tamilan-Store-v0.7.apk
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           "$tools/aapt2" dump badging "$apk" > /tmp/candidate-badging
           grep -Fq "package: name='com.universalrp.tamilanstore' versionCode='7' versionName='0.7'" /tmp/candidate-badging
@@ -101,15 +101,15 @@ jobs:
           test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
           mkdir /tmp/previous-store
           gh release download tamilan-store-v0.6 --pattern Tamilan-Store-v0.6.apk --dir /tmp/previous-store
-          echo '7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f  /tmp/previous-tamilanstore/Tamilan-Store-v0.6.apk' | sha256sum --check
-          "$tools/apksigner" verify --print-certs /tmp/previous-tamilanstore/Tamilan-Store-v0.6.apk > /tmp/previous-signer
+          echo '7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f  /tmp/previous-store/Tamilan-Store-v0.6.apk' | sha256sum --check
+          "$tools/apksigner" verify --print-certs /tmp/previous-store/Tamilan-Store-v0.6.apk > /tmp/previous-signer
           previous="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/previous-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
           test "$previous" = "$signer"
-          "$tools/aapt2" dump badging /tmp/previous-tamilanstore/Tamilan-Store-v0.6.apk > /tmp/previous-badging
+          "$tools/aapt2" dump badging /tmp/previous-store/Tamilan-Store-v0.6.apk > /tmp/previous-badging
           python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
           grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
           echo '::notice title=Publication preflight::Package, version, minimum SDK, non-debuggable status, both signing identities and no-new-dangerous-permission checks passed.'
-          if ! gh release create tamilan-store-v0.7 --draft "$apk" /tmp/accepted-tamilanstore/Tamilan-Store-v0.7.sha256 --target "$RELEASE_TARGET" --title 'Tamilan Store 0.7 — verified downloads and Android installer handoff' --notes-file releases/tamilan-store-v0.7.md --latest=false 2>/tmp/create-release-error; then
+          if ! gh release create tamilan-store-v0.7 --draft "$apk" /tmp/accepted-store/Tamilan-Store-v0.7.sha256 --target "$RELEASE_TARGET" --title 'Tamilan Store 0.7 — verified downloads and Android installer handoff' --notes-file releases/tamilan-store-v0.7.md --latest=false 2>/tmp/create-release-error; then
             python3 - <<'PYERROR'
           import pathlib
           text = pathlib.Path('/tmp/create-release-error').read_text(errors='replace')
@@ -143,8 +143,8 @@ jobs:
           mkdir /tmp/published-store
           gh release download tamilan-store-v0.7 --pattern 'Tamilan-Store-v0.7.*' --dir /tmp/published-store
           (cd /tmp/published-store && sha256sum --check Tamilan-Store-v0.7.sha256)
-          test "$(sha256sum /tmp/published-tamilanstore/Tamilan-Store-v0.7.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
-          cmp /tmp/accepted-tamilanstore/Tamilan-Store-v0.7.sha256 /tmp/published-tamilanstore/Tamilan-Store-v0.7.sha256
+          test "$(sha256sum /tmp/published-store/Tamilan-Store-v0.7.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
+          cmp /tmp/accepted-store/Tamilan-Store-v0.7.sha256 /tmp/published-store/Tamilan-Store-v0.7.sha256
           gh api repos/$GH_REPO/releases/tags/tamilan-store-v0.7 > /tmp/public-release.json
           python3 - <<'PY'
           import json, os
