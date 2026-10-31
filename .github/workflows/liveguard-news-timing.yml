@@ -68,8 +68,11 @@ jobs:
           from verify_release_signing_policy import verify_fresh_install_signer
           p = Path('cleaner/build/outputs/apk/release/cleaner-release.apk')
           signer = Path(os.environ['RUNNER_TEMP'], 'news-candidate-signer.txt').read_text()
-          cert = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]+)', signer).group(1)
-          verify_fresh_install_signer(cert)
+          certs = re.findall(r'certificate SHA-256 digest:\s*([0-9a-f:]+)', signer, re.I)
+          assert certs, 'apksigner returned no certificate SHA-256 digest; refusing to guess'
+          verified = {verify_fresh_install_signer(cert) for cert in certs}
+          assert len(verified) == 1, 'APK carries unexpected distinct signing certificates'
+          cert = verified.pop()
           badging = Path(os.environ['RUNNER_TEMP'], 'news-candidate-badging.txt').read_text()
           assert "name='com.universalrp.cleansweep'" in badging and "versionCode='85'" in badging and "versionName='2.80'" in badging
           assert "sdkVersion:'26'" in badging
@@ -124,7 +127,7 @@ jobs:
               report = Path(os.environ['RUNNER_TEMP'], name)
               if report.exists():
                   for line in report.read_text(errors='replace').splitlines():
-                      if line.startswith(('package:', 'sdkVersion:', 'ADDED-', 'EVIDENCE-', 'REASON:', 'Signer #1 certificate SHA-256')): err(line)
+                      if line.startswith(('package:', 'sdkVersion:', 'ADDED-', 'EVIDENCE-', 'REASON:')) or 'SHA-256' in line: err(line)
           p = Path('news-timing-build.log')
           if p.exists():
               for line in p.read_text(errors='replace').splitlines():

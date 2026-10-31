@@ -50,7 +50,10 @@ class NewsAutoScheduleTest {
         assertNotEquals(0L, shadowOf(alarms).peekNextScheduledAlarm()!!.windowLengthMs)
     }
     @Test fun resyncUpdatesOneAlarmRatherThanDuplicating() {
-        NewsAutoSchedule.sync(app); NewsAutoSchedule.sync(app)
+        NewsAutoSchedule.sync(app)
+        app.getSharedPreferences("liveguard_news_schedule", Context.MODE_PRIVATE).edit().putString("last_result", "preparing").commit()
+        NewsAutoSchedule.sync(app)
+        assertEquals("retry", NewsAutoSchedule.status.value.result)
         assertEquals(1, shadowOf(alarms).scheduledAlarms.size)
     }
     @Test fun disablingNewsCancelsTheAlarm() {
@@ -79,6 +82,19 @@ class NewsAutoScheduleTest {
         assertEquals("screen_on", NewsAutoSchedule.status.value.result)
         assertEquals(0L, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
         assertTrue(NewsAutoSchedule.status.value.nextCheck > System.currentTimeMillis())
+    }
+    @Test fun manualPreparationBlocksAutomaticNewsBeforeAnySound() = runBlocking {
+        NewsHeadlinesVoiceWatcher.withManualRead {
+            assertEquals("manual_busy", NewsHeadlinesVoiceWatcher.automaticBlockReason(app))
+        }
+        assertEquals("screen_on", NewsHeadlinesVoiceWatcher.automaticBlockReason(app))
+    }
+    @Test fun cancellingManualPreparationReleasesAutomaticGate() = runBlocking {
+        try {
+            NewsHeadlinesVoiceWatcher.withManualRead<Unit> { throw kotlinx.coroutines.CancellationException("test Stop") }
+            fail("Cancellation must propagate")
+        } catch (_: kotlinx.coroutines.CancellationException) { }
+        assertEquals("screen_on", NewsHeadlinesVoiceWatcher.automaticBlockReason(app))
     }
     @Test fun intervalPreferenceIsPreservedAcrossRescheduling() {
         app.getSharedPreferences("cleansweep_news_voice", Context.MODE_PRIVATE).edit().putInt("news_voice_interval_minutes", 30).commit()

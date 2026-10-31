@@ -44,6 +44,9 @@ object NewsAutoSchedule {
             alarms.cancel(intent(app)); WorkManager.getInstance(app).cancelUniqueWork(WORK)
             prefs(app).edit().remove(NEXT).apply(); publish(app); return
         }
+        val p = prefs(app)
+        if (!lock.isLocked && p.getString(RESULT, "") in setOf("checking", "fetching", "selecting", "preparing", "playing"))
+            p.edit().putString(RESULT, "retry").apply() // A dead process cannot still be preparing/playing.
         val now = System.currentTimeMillis()
         val saved = prefs(app).getLong(NEXT, 0)
         // Reopening the Activity must never postpone a persisted deadline. A shortened interval wins.

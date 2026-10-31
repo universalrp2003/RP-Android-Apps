@@ -39,6 +39,12 @@ import java.util.concurrent.TimeUnit
  */
 object NewsHeadlinesVoiceWatcher {
 
+    private val manualReads = java.util.concurrent.atomic.AtomicInteger(0)
+    internal suspend fun <T> withManualRead(block: suspend () -> T): T {
+        manualReads.incrementAndGet()
+        return try { block() } finally { manualReads.decrementAndGet() }
+    }
+
     private const val PREFS = "cleansweep_news_voice"
     private const val KEY_INTERVAL_MIN = "news_voice_interval_minutes"
     private const val KEY_V265_DEFAULT_3H_APPLIED = "news_voice_v265_default_3h_on"
@@ -178,8 +184,9 @@ object NewsHeadlinesVoiceWatcher {
     fun automaticBlockReason(context: Context, checkMedia: Boolean = true): String? {
         val app = context.applicationContext
         if (!Announcer.enabled(app) || !isEnabled(app)) return "disabled"
-        if (app.getSystemService(PowerManager::class.java)?.isInteractive == true) return "screen_on"
         if (CallGuard.inCall(app)) return "call"
+        if (manualReads.get() > 0) return "manual_busy"
+        if (app.getSystemService(PowerManager::class.java)?.isInteractive == true) return "screen_on"
         if (checkMedia && app.getSystemService(AudioManager::class.java)?.isMusicActive == true) return "media"
         val localHour = Instant.now().atZone(ZoneId.systemDefault()).hour
         if (NewsSpeechSanitizer.isNightNewsQuietHour(localHour) || Announcer.inQuietHours(app) || Announcer.inSilentPlace(app)) return "quiet"
@@ -236,7 +243,9 @@ object NewsHeadlinesVoiceWatcher {
      * A failed/interrupted read never marks the batch announced, so the button and the next
      * interval tick can retry it instead of silently consuming the day's news.
      */
-    suspend fun readTodaysHeadlinesManually(context: Context): Int {
+    suspend fun readTodaysHeadlinesManually(context: Context): Int = withManualRead { readManual(context) }
+
+    private suspend fun readManual(context: Context): Int {
         val app = context.applicationContext
         val lang = Lang.languageIn(app)
         val tamil = lang == AppLang.TA

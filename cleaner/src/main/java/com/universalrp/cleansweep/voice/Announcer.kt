@@ -822,6 +822,7 @@ object Announcer {
         if (request.english.isNullOrBlank() && request.tamil.isNullOrBlank()) return false
         main.post {
             prefsContext = ctx
+            watchInternet(ctx)
             if (request.exclusive) {
                 // A manual news read must not be followed by an unrelated queued alert if HD
                 // fails. Cancel the active clip and drop stale pending requests first.
@@ -1010,6 +1011,10 @@ object Announcer {
                         useTamil = useTamil,
                     )
                 }
+                if (com.universalrp.updates.CallGuard.inCall(context)) {
+                    main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS, false) }
+                    return@submit
+                }
                 if (request.event == Event.NEWS_HEADLINES && !request.manual &&
                     NewsHeadlinesVoiceWatcher.automaticBlockReason(context) != null) {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
@@ -1069,7 +1074,10 @@ object Announcer {
                     if (active?.id != requestId || Thread.currentThread().isInterrupted || newsExpired(request) ||
                                 (request.event == Event.NEWS_HEADLINES && !request.manual &&
                                     NewsHeadlinesVoiceWatcher.automaticBlockReason(context, checkMedia = false) != null) || com.universalrp.updates.CallGuard.inCall(context)) {
-                        main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
+                        main.post {
+                            if (active?.id == requestId) finish(if (com.universalrp.updates.CallGuard.inCall(context))
+                                VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS else VoiceDeliveryPolicy.Stage.CANCELLED, false)
+                        }
                         return@submit
                     }
                 }

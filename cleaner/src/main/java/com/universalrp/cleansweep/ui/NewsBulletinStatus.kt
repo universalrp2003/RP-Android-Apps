@@ -68,6 +68,7 @@ private fun NewsScheduleStatus() {
         "screen_on" -> tr("Waiting for screen off")
         "call" -> tr("Waiting for call to end")
         "media" -> tr("Waiting for other audio to stop")
+        "manual_busy" -> tr("Manual news read in progress")
         "quiet" -> tr("Silent during quiet hours or silent places")
         "interval" -> tr("Selected interval has not elapsed")
         "offline" -> tr("Waiting for validated internet")
