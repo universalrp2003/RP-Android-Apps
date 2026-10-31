@@ -103,7 +103,7 @@ object SmsAnnouncementPlanner {
             return if (settings.tamil) {
                 "$senderName இடமிருந்து இணைப்புடன் செய்தி வந்துள்ளது. சரிபார்ப்பு இன்னும் முடியவில்லை — தயவுசெய்து தொடாதீர்கள். இணைய அணுகல் கிடைக்கும்போது பின்னணிச் சோதனை நடைபெறும்."
             } else {
-                "Message with a link from $senderName. Verification is not complete yet — do not touch the link. Background checks run when internet access is available."
+                "Message with a link from $senderName. I cannot verify this link yet — do not touch it. Background checks run when internet access is available."
             }
         }
         if (hasPendingInternetOff) {

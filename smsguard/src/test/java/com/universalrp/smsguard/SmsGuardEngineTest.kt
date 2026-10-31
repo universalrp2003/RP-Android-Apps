@@ -245,7 +245,8 @@ class SmsGuardEngineTest {
             settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true, shortEveryMessageEnabled = true, mutePromoVoice = true),
         )
         assertNotNull(offlineVoice)
-        assertTrue(offlineVoice!!.contains("cannot verify"))
+        assertTrue("Pending speech must not claim a completed verdict", offlineVoice!!.contains("cannot verify"))
+        assertFalse("Deferred online checks must not falsely claim loss of connectivity", offlineVoice.contains("No internet right now"))
 
         val afterReconnect = LinkSecurityScanner.scanSingleUrl(
             "https://bit.ly/parcel99",

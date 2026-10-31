@@ -39,8 +39,10 @@ jobs:
                   for line in (output.text or '').splitlines():
                       if line.startswith('SMS_LIVE_PROFILE '):
                           print('::notice title=Actual HD failover::' + line[:1200].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
-              for failure in root.findall('.//failure') + root.findall('.//error'):
-                  print('::error title=HD failure::' + failure.get('message','')[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              for case in root.findall('testcase'):
+                  for failure in case.findall('failure') + case.findall('error'):
+                      detail = case.get('name','?') + ': ' + failure.get('message','') + ' ' + (failure.text or '')[:500]
+                      print('::error title=HD failure::' + detail[:1200].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
       - uses: actions/upload-artifact@v4
         if: always()
         with:
