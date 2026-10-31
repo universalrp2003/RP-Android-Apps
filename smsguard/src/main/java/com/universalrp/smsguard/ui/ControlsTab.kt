@@ -521,7 +521,7 @@ fun ControlsTab(
                 Text(
                     if (isDefaultSms) ui.defaultSmsActiveBadge else ui.setupBannerTitle,
                     fontWeight = FontWeight.Bold,
-                    color = if (isDefaultSms) palette.safeGreen else palette.warnAmber,
+                    color = palette.warnAmber,
                     fontSize = 14.5.sp,
                 )
                 Text(ui.setupBannerBody, color = palette.textMuted, fontSize = 12.5.sp)

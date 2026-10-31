@@ -43,5 +43,27 @@ class SmsBackgroundContracts(unittest.TestCase):
         self.assertIn("companion mode", setup)
         self.assertIn("fun switchBackToPreviousSmsApp()", source)
 
+    def test_regular_work_does_not_expand_into_unused_foreground_capabilities(self):
+        import xml.etree.ElementTree as ET
+        manifest = ET.parse(ROOT / "smsguard/src/main/AndroidManifest.xml").getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        tools = "{http://schemas.android.com/tools}"
+        permissions = [p for p in manifest.findall("uses-permission")
+                       if p.get(android + "name") == "android.permission.FOREGROUND_SERVICE"]
+        self.assertEqual(1, len(permissions))
+        self.assertEqual("remove", permissions[0].get(tools + "node"))
+        foreground = [s for s in manifest.findall("application/service")
+                      if s.get(android + "name") == "androidx.work.impl.foreground.SystemForegroundService"]
+        self.assertEqual("remove", foreground[0].get(tools + "node"))
+        worker = (BASE / "service/PendingLinkCheckWorker.kt").read_text()
+        self.assertNotIn(".setExpedited(", worker)
+        self.assertNotIn("setForeground(", worker)
+
+    def test_permission_button_does_not_misrepresent_send_contact_and_sim_requests(self):
+        catalog = (BASE / "ui/BilingualCatalog.kt").read_text()
+        self.assertNotIn("Grant Companion SMS Read/Receive Only", catalog)
+        self.assertIn("Review SMS, Contacts & SIM permissions", catalog)
+        self.assertIn("Default SMS active — MMS is not supported", catalog)
+
 if __name__ == "__main__":
     unittest.main()
