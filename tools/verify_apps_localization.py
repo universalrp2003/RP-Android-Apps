@@ -714,12 +714,12 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.12"', 'publishedVersion = "1.1.11"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.13"', 'publishedVersion = "1.1.11"',
             'tagPrefix = "live-guard"', 'version = "2.81"', 'publishedVersion = "2.79"',
             'tagPrefix = "ramesh-radio"', 'version = "1.29"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.11"', 'publishedVersion = "1.1.10"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.12"', 'publishedVersion = "1.1.10"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.2"',
             'tagPrefix = "voice-notes"', 'version = "1.3.3"',

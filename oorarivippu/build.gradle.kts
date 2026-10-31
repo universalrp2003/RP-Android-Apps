@@ -17,8 +17,8 @@ android {
         applicationId = "com.oorarivippu.voiceannouncer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.1.11"
+        versionCode = 17
+        versionName = "1.1.12"
         vectorDrawables.useSupportLibrary = true
     }
 

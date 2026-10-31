@@ -28,10 +28,10 @@ data class LinkScanResult(
 )
 
 /**
- * Multi-layer privacy-preserving SMS URL scanner:
- *  - NEVER uploads the user's SMS body or personal details anywhere.
+ * Multi-layer SMS URL scanner (online checks disclose URLs/request metadata):
+ *  - Does not upload the complete SMS body. URLs may themselves contain personal tokens.
  *  - Inspects only extracted URL hostnames, HTTP redirect headers (zero JS/WebView),
- *    encrypted DNS-over-HTTPS threat intelligence (Cloudflare 1.1.1.2 + Quad9 9.9.9.9),
+ *    encrypted DNS-over-HTTPS threat intelligence (Cloudflare Security),
  *    and optional user-supplied Google Safe Browsing API v4 key.
  */
 object LinkSecurityScanner {
@@ -318,7 +318,7 @@ object LinkSecurityScanner {
             )
         }
 
-        // Query Threat-Intel DoH (Cloudflare Security 1.1.1.2 + Quad9 9.9.9.9) on BOTH initial & final host
+        // Query Cloudflare Security on BOTH initial & final host; unavailable is not clean.
         val hostsToVerify = linkedSetOf(initialHost.lowercase(Locale.US), finalHost.lowercase(Locale.US))
         for (host in hostsToVerify) {
             when (transport.queryDohThreatIntel(host)) {
@@ -362,7 +362,14 @@ object LinkSecurityScanner {
         // Optional user-configured Google Safe Browsing API v4 secondary check
         val apiKey = safeBrowsingApiKey?.trim()?.takeIf { it.isNotEmpty() }
         if (apiKey != null) {
-            if (transport.querySafeBrowsingOptional(effectiveFinalUrl, apiKey) == true) {
+            val browsing = transport.querySafeBrowsingOptional(effectiveFinalUrl, apiKey)
+            if (browsing == null) {
+                return LinkScanResult(rawUrl, normalizedUrl, effectiveFinalUrl, finalHost,
+                    LinkVerdict.PENDING_OFFLINE,
+                    "Configured Safe Browsing check unavailable — no safety verdict. Do not open yet.",
+                    "தேர்ந்தெடுத்த பாதுகாப்புச் சோதனை கிடைக்கவில்லை — பாதுகாப்பை உறுதிப்படுத்த முடியாது. இப்போது திறக்காதீர்கள்.")
+            }
+            if (browsing) {
                 return LinkScanResult(
                     originalUrl = rawUrl,
                     normalizedUrl = normalizedUrl,
@@ -375,20 +382,12 @@ object LinkSecurityScanner {
             }
         }
 
-        // If a shortener never revealed its final destination & couldn't connect, never issue a blind green tick!
-        if (initialHost.lowercase(Locale.US) in SHORTENER_HOSTS &&
-            effectiveFinalUrl == normalizedUrl &&
-            !redirectProbe.reachable
-        ) {
-            return LinkScanResult(
-                originalUrl = rawUrl,
-                normalizedUrl = normalizedUrl,
-                finalUrl = effectiveFinalUrl,
-                displayDomain = finalHost,
-                verdict = LinkVerdict.PENDING_OFFLINE,
-                reasonEn = "Shortened link ($initialHost) could not reveal destination yet — do not touch until verified.",
-                reasonTa = "சுருக்கப்பட்ட இணைப்பின் ($initialHost) உண்மையான முகவரி இன்னும் தெரியவில்லை — தொடாதீர்கள்.",
-            )
+        // Failure is not a clean scan: DNS resolution alone cannot clear a failed web probe.
+        if (!redirectProbe.reachable || redirectProbe.statusCode !in 200..299) {
+            return LinkScanResult(rawUrl, normalizedUrl, effectiveFinalUrl, finalHost,
+                LinkVerdict.PENDING_OFFLINE,
+                "Web or redirect check incomplete — no safety verdict. Do not open yet.",
+                "இணையதள அல்லது வழிமாற்றுச் சோதனை முடியவில்லை — பாதுகாப்பை உறுதிப்படுத்த முடியாது. இப்போது திறக்காதீர்கள்.")
         }
 
         // Plain unencrypted HTTP final page without HTTPS upgrade is unsafe for entering any credentials
@@ -415,8 +414,8 @@ object LinkSecurityScanner {
             finalUrl = effectiveFinalUrl,
             displayDomain = finalHost,
             verdict = LinkVerdict.SAFE,
-            reasonEn = "Verified safe HTTPS link ($domainSummary) — clean security check.",
-            reasonTa = "சரிபார்க்கப்பட்ட பாதுகாப்பான இணைப்பு ($domainSummary) — கிளிக் செய்யப் பாதுகாப்பானது.",
+            reasonEn = "No threat detected by completed checks ($domainSummary). This is not a safety guarantee.",
+            reasonTa = "முடிந்த சோதனைகளில் அச்சுறுத்தல் கண்டறியப்படவில்லை ($domainSummary). இது பாதுகாப்பு உத்தரவாதம் அல்ல.",
         )
     }
 
@@ -591,7 +590,7 @@ object LinkSecurityScanner {
     }
 
     /**
-     * Real production HTTP header unshortener + Dual Encrypted DoH Threat-Intel engine.
+     * Production HEAD-only unshortener and encrypted DNS threat-intelligence checks.
      */
     object LiveHttpDohTransport : NetworkTransport {
 
@@ -604,14 +603,17 @@ object LinkSecurityScanner {
                 var conn: HttpURLConnection? = null
                 try {
                     val u = URL(current)
-                    if (u.protocol !in listOf("http", "https")) break
+                    // Recheck every hop before visiting it, not only the final response.
+                    if (u.protocol !in listOf("http", "https") ||
+                        inspectUrlLocally(current, u.protocol == "http", null) != null) {
+                        return RedirectProbeResult(false, current, 0, null, null)
+                    }
                     conn = (u.openConnection() as HttpURLConnection).apply {
                         instanceFollowRedirects = false
-                        requestMethod = "GET"
+                        requestMethod = "HEAD"
                         connectTimeout = 4500
                         readTimeout = 4500
                         setRequestProperty("User-Agent", "SMSGuard-LinkShield/1.0")
-                        setRequestProperty("Range", "bytes=0-0")
                         setRequestProperty("Accept", "*/*")
                     }
                     lastStatus = conn.responseCode
@@ -631,7 +633,7 @@ object LinkSecurityScanner {
                                 val hostPart = location.removePrefix("intent://").substringBefore("#Intent")
                                 current = "https://$hostPart"
                                 return RedirectProbeResult(
-                                    reachable = true,
+                                    reachable = false,
                                     finalUrl = current,
                                     statusCode = lastStatus,
                                     contentType = contentType,
@@ -670,12 +672,12 @@ object LinkSecurityScanner {
                         errorMessage = e.message,
                     )
                 } finally {
-                    runCatching { conn?.inputStream?.close() }
+                    // HEAD probes never open/read a response body or fall back to GET.
                     conn?.disconnect()
                 }
             }
             return RedirectProbeResult(
-                reachable = lastStatus > 0,
+                reachable = false, // Redirect limit exhausted: destination is not verified.
                 finalUrl = current,
                 statusCode = lastStatus,
                 contentType = contentType,
@@ -727,20 +729,25 @@ object LinkSecurityScanner {
                 return ThreatDnsVerdict.BLOCKED_MALWARE_OR_PHISHING
             }
 
-            // 2. Secondary Malware/Phishing check via raw IP 1.1.1.2 (makes ZERO DNS hostname lookup, so NextDNS never blocks/flags it;
-            //    auto-skips for 10 mins if current network firewall drops direct HTTPS to 1.1.1.2 so links verify in <50ms!):
+            // Respect the network's DNS/filtering policy; never evade it with raw-IP HTTPS.
+            // Failed/malformed threat intelligence cannot be treated as a clean result.
             val now = System.currentTimeMillis()
             if (now >= directDohUnreachableUntilMs) {
                 val encoded = URLEncoder.encode(host, "UTF-8")
-                val cfSec = fetchDohJson("https://1.1.1.2/dns-query?name=$encoded&type=A", timeoutMs = 1200)
+                val cfSec = fetchDohJson("https://security.cloudflare-dns.com/dns-query?name=$encoded&type=A", timeoutMs = 1200)
                 if (cfSec == null) {
                     directDohUnreachableUntilMs = now + 10 * 60_000L
                 } else if (isCloudflareSecurityBlocked(cfSec)) {
                     return ThreatDnsVerdict.BLOCKED_MALWARE_OR_PHISHING
+                } else if (cfSec.optInt("Status", -1) == 3) {
+                    return ThreatDnsVerdict.DOMAIN_DOES_NOT_EXIST
+                } else if (cfSec.optInt("Status", -1) == 0 &&
+                    (cfSec.optJSONArray("Answer")?.length() ?: 0) > 0) {
+                    return ThreatDnsVerdict.CLEAN
                 }
             }
 
-            return ThreatDnsVerdict.CLEAN
+            return ThreatDnsVerdict.NETWORK_UNAVAILABLE
         }
 
         private fun isCloudflareSecurityBlocked(sec: JSONObject): Boolean {
@@ -809,6 +816,7 @@ object LinkSecurityScanner {
                 if (conn.responseCode !in 200..299) return null
                 val body = conn.inputStream.bufferedReader().use { it.readText() }
                 val json = JSONObject(body)
+                if (json.has("error")) return null
                 (json.optJSONArray("matches")?.length() ?: 0) > 0
             } catch (_: Exception) {
                 null

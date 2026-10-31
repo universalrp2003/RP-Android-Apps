@@ -181,14 +181,14 @@ object SmsAnnouncementPlanner {
         }
 
         return if (settings.tamil) {
-            val linkPart = if (allLinksSafe) " இணைப்பு சரிபார்க்கப்பட்டது — பாதுகாப்பானது." else ""
+            val linkPart = if (allLinksSafe) " இணைப்புச் சோதனையில் அச்சுறுத்தல் தெரியவில்லை; பாதுகாப்பு உத்தரவாதம் அல்ல." else ""
             if (textToSpeak.isNotBlank()) {
                 "$senderName இடமிருந்து செய்தி: $textToSpeak.$linkPart"
             } else {
                 "$senderName இடமிருந்து புதிய குறுஞ்செய்தி வந்துள்ளது.$linkPart"
             }
         } else {
-            val linkPart = if (allLinksSafe) " Link verified safe to open." else ""
+            val linkPart = if (allLinksSafe) " No link threat detected; this is not a safety guarantee." else ""
             if (textToSpeak.isNotBlank()) {
                 "Message from $senderName: $textToSpeak.$linkPart"
             } else {
@@ -217,9 +217,9 @@ object SmsAnnouncementPlanner {
             }
         } else {
             if (tamil) {
-                "இணையம் இணைந்தது. $senderNameTa அனுப்பிய செய்தியின் இணைப்பு ($domain) சரிபார்க்கப்பட்டது — பச்சை டிக் பாதுகாப்பானது, திறக்கலாம்."
+                "இணையம் இணைந்தது. $senderNameTa அனுப்பிய செய்தியின் இணைப்பு ($domain) சோதனையில் அச்சுறுத்தல் தெரியவில்லை; பாதுகாப்பு உத்தரவாதம் அல்ல."
             } else {
-                "Internet reconnected. The link ($domain) from $senderNameEn has been verified — safe to open."
+                "Internet reconnected. The link ($domain) from $senderNameEn has no threat detected by completed checks. This is not a safety guarantee."
             }
         }
     }

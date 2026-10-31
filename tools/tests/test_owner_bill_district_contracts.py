@@ -50,6 +50,33 @@ class OwnerScreenshotContracts(unittest.TestCase):
         self.assertIn('logTitle = logTitles.joinToString(" · ")', source)
         self.assertNotIn("logTitle = landmark", source)
 
+    def test_sms_header_probe_never_fetches_a_body_or_bypasses_dns(self):
+        source = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/engine/LinkSecurityScanner.kt").read_text()
+        probe = source.split("override fun resolveRedirectsHeaderOnly(startUrl", 1)[1].split("@Volatile", 1)[0]
+        self.assertIn('requestMethod = "HEAD"', probe)
+        self.assertNotIn('requestMethod = "GET"', probe)
+        self.assertNotIn("inputStream", probe)
+        self.assertIn("inspectUrlLocally(current", probe)
+        self.assertNotIn("https://1.1.1.2/", source)
+        self.assertIn("https://security.cloudflare-dns.com/", source)
+        self.assertIn('cfSec.optInt("Status", -1)', source)
+
+    def test_destination_does_not_promote_district_or_accept_invalid_coordinates(self):
+        source = (ROOT / "oorarivippu/src/main/java/com/oorarivippu/voiceannouncer/DestinationResolver.kt").read_text()
+        candidate = source.split("private fun candidate(", 1)[1].split("internal fun lastKnownLocation", 1)[0]
+        self.assertIn("DestinationSearchPolicy.validCoordinates", candidate)
+        self.assertIn("DestinationSearchPolicy.destinationName", candidate)
+        self.assertNotIn("listOf(address.featureName, address.locality, address.subLocality, address.subAdminArea)", candidate)
+
+    def test_sms_does_not_instruct_unlocking_restricted_settings_and_discloses_mms_limit(self):
+        catalog = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/ui/BilingualCatalog.kt").read_text()
+        self.assertNotIn("Allow restricted settings", catalog)
+        self.assertNotIn("Android 15/16 Unlock", catalog)
+        self.assertIn("Incoming MMS is not implemented", catalog)
+        self.assertIn("முழுமையான MMS பெறுதல் இல்லை", catalog)
+        controls = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/ui/ControlsTab.kt").read_text()
+        self.assertIn("Text(ui.setupBannerBody", controls)
+
 
 if __name__ == "__main__":
     unittest.main()

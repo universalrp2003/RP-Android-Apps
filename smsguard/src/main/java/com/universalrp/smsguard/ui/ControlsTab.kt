@@ -524,6 +524,7 @@ fun ControlsTab(
                     color = if (isDefaultSms) palette.safeGreen else palette.warnAmber,
                     fontSize = 14.5.sp,
                 )
+                Text(ui.setupBannerBody, color = palette.textMuted, fontSize = 12.5.sp)
                 if (isDefaultSms) {
                     OutlinedButton(onClick = onSwitchBackDefaultSms, modifier = Modifier.fillMaxWidth()) {
                         Text(ui.switchBackSmsBtn)
