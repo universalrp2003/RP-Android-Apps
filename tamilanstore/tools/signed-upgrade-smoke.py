@@ -18,8 +18,27 @@ PKG = 'com.universalrp.tamilanstore'
 OLD_SHA = '3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474'
 
 
-def adb(*args):
-    return subprocess.check_output(['adb', *args], stderr=subprocess.STDOUT, timeout=90).decode(errors='replace')
+def adb(*args, timeout=90):
+    return subprocess.check_output(['adb', *args], stderr=subprocess.STDOUT, timeout=timeout).decode(errors='replace')
+
+
+def enable_ci_root():
+    # adbd can return nonzero while restarting after boot. Validate UID independently;
+    # bounded infrastructure recovery only, never an install retry or a phone-root attempt.
+    last = ''
+    for attempt in range(5):
+        try:
+            adb('root', timeout=20)
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            last = str(getattr(error, 'output', b''))[-500:]
+        try:
+            adb('wait-for-device', timeout=30)
+            if adb('shell', 'id', '-u', timeout=10).strip() == '0':
+                return
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
+            last = str(getattr(error, 'output', b''))[-500:]
+        time.sleep(2)
+    raise AssertionError('CI emulator adbd did not become root after five bounded attempts: ' + last)
 
 
 def ui():
@@ -79,9 +98,7 @@ def run(out):
     before_digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
     assert previous.stat().st_size == 19276334
     assert hashlib.sha256(previous.read_bytes()).hexdigest() == OLD_SHA
-    adb('root')
-    adb('wait-for-device')
-    assert adb('shell', 'id', '-u').strip() == '0'
+    enable_ci_root()
     # Fresh fixture installation is setup on this empty emulator, not the tested upgrade.
     adb('install', str(previous))
     launch()

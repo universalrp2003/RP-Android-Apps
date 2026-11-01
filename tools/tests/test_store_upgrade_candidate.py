@@ -36,3 +36,56 @@ class StoreUpgradeCandidateTest(unittest.TestCase):
         build = (ROOT / 'tamilanstore/build.gradle.kts').read_text()
         self.assertIn('applicationId = "com.universalrp.tamilanstore"', build)
         self.assertNotIn('applicationIdSuffix', build)
+
+class StoreUpgradeProbeSafetyTest(unittest.TestCase):
+    @staticmethod
+    def probe():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('store_upgrade_probe', ROOT/'tamilanstore/tools/signed-upgrade-smoke.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_non_ci_environment_never_contacts_a_device(self):
+        from unittest.mock import patch
+        probe = self.probe()
+        with patch.dict('os.environ', {'CI': 'false', 'GITHUB_ACTIONS': 'true'}), patch.object(probe, 'adb') as adb:
+            with self.assertRaises(AssertionError):
+                probe.run(Path('/tmp/unused-synthetic-output'))
+            adb.assert_not_called()
+
+    def test_physical_device_serial_stops_before_root_or_install(self):
+        from unittest.mock import patch
+        probe = self.probe()
+        with patch.dict('os.environ', {'CI': 'true', 'GITHUB_ACTIONS': 'true'}), patch.object(probe, 'adb', return_value='physical-fixture-serial') as adb:
+            with self.assertRaises(AssertionError):
+                probe.run(Path('/tmp/unused-synthetic-output'))
+            adb.assert_called_once_with('get-serialno')
+
+    def test_non_qemu_device_stops_before_root_or_install(self):
+        from unittest.mock import patch, call
+        probe = self.probe()
+        with patch.dict('os.environ', {'CI': 'true', 'GITHUB_ACTIONS': 'true'}), patch.object(probe, 'adb', side_effect=['emulator-5554', '0']) as adb:
+            with self.assertRaises(AssertionError):
+                probe.run(Path('/tmp/unused-synthetic-output'))
+            self.assertEqual(adb.call_args_list, [call('get-serialno'), call('shell', 'getprop', 'ro.kernel.qemu')])
+
+    def test_adbd_restart_error_is_not_mistaken_for_an_upgrade_failure(self):
+        from unittest.mock import patch
+        import subprocess
+        probe = self.probe()
+        # A failed root command can mean that adbd is restarting. The UID, not exit status,
+        # decides readiness; no installation operation is involved in this helper.
+        with patch.object(probe, 'adb', side_effect=[subprocess.CalledProcessError(1, ['adb','root'], output=b'restarting'), '', '0']) as adb, patch.object(probe.time, 'sleep'):
+            probe.enable_ci_root()
+            self.assertEqual(adb.call_count, 3)
+            self.assertEqual(adb.call_args_list[-1].args, ('shell', 'id', '-u'))
+
+    def test_root_readiness_is_bounded_and_fails_closed(self):
+        from unittest.mock import patch
+        probe = self.probe()
+        with patch.object(probe, 'adb', side_effect=['', '', '2000'] * 5) as adb, patch.object(probe.time, 'sleep'):
+            with self.assertRaisesRegex(AssertionError, 'five bounded attempts'):
+                probe.enable_ci_root()
+            self.assertEqual(adb.call_count, 15)
+            self.assertFalse(any('install' in call.args for call in adb.call_args_list))
