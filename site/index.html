@@ -393,10 +393,11 @@
       transition: transform 0.12s ease, opacity 0.12s ease;
     }
     .btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    a[data-apk] { white-space: nowrap; flex-shrink: 0; }
     .btn-primary { background: var(--accent); color: var(--accent-dark); }
     .btn-zip { background: var(--zip-bg); color: var(--zip-dark); }
     .btn-outline { border: 1px solid var(--surface-border); background: var(--surface); color: var(--accent); }
-    .migration-notice {
+    .migration-notice, .store-install-warning {
       background: rgba(251, 191, 36, 0.11);
       border: 1px solid rgba(251, 191, 36, 0.55);
       border-left: 5px solid var(--amber);
@@ -451,7 +452,7 @@
     .latest .ldl { text-align: right; white-space: nowrap; }
     .latest .ldl .btn { font-size: 0.78rem; padding: 6px 12px; }
     @media (max-width: 620px) {
-      .latest .ldate, .latest .lsize { display: none; }
+      .latest .ldate, .latest .lsize, .latest .lver { display: none; }
     }
     .grid {
       display: grid;
@@ -807,84 +808,84 @@
               <td class="ldate"><time datetime="2026-10-31T16:28:10Z" data-release-tag="sms-guard-v1.1.16">31 Oct 2026</time></td>
               <td class="lver">v1.1.16</td>
               <td class="lsize">12.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.16.apk" data-name="SMS-Guard-v1.1.16.apk" data-sha="db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk" aria-label="Download APK · SMS-Guard-v1.1.16.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.16.apk" data-name="SMS-Guard-v1.1.16.apk" data-sha="db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk" aria-label="Download APK · SMS-Guard-v1.1.16.apk">APK · v1.1.16</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-live-guard">🛡️ Live Guard <span class="ta-name">(கைபேசி காவலன்)</span> <small class="filename-alias">(APK: CleanSweep)</small></a></td>
               <td class="ldate"><time datetime="2026-10-31T08:59:10Z" data-release-tag="live-guard-v2.81">31 Oct 2026</time></td>
               <td class="lver">v2.81</td>
               <td class="lsize">14.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/CleanSweep-v2.81.apk" data-name="CleanSweep-v2.81.apk" data-sha="c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.81/CleanSweep-v2.81.apk" aria-label="Download APK · CleanSweep-v2.81.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/CleanSweep-v2.81.apk" data-name="CleanSweep-v2.81.apk" data-sha="c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.81/CleanSweep-v2.81.apk" aria-label="Download APK · CleanSweep-v2.81.apk">APK · v2.81</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-ramesh-radio">📻 Ramesh Radio <span class="ta-name">(தமிழன் வானொலி)</span></a></td>
               <td class="ldate"><time datetime="2026-10-31T13:53:48Z" data-release-tag="ramesh-radio-v1.31">31 Oct 2026</time></td>
               <td class="lver">v1.31</td>
               <td class="lsize">15.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.31.apk" data-name="Ramesh-Radio-v1.31.apk" data-sha="fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk" aria-label="Download APK · Ramesh-Radio-v1.31.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.31.apk" data-name="Ramesh-Radio-v1.31.apk" data-sha="fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk" aria-label="Download APK · Ramesh-Radio-v1.31.apk">APK · v1.31</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-oor-arivippu">📍 Oor Arivippu <span class="ta-name">(ஊர் அறிவிப்பு)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T10:08:22Z" data-release-tag="oor-arivippu-v1.1.10">29 Oct 2026</time></td>
               <td class="lver">v1.1.10</td>
               <td class="lsize">12.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk" aria-label="Download APK · Oor-Arivippu-v1.1.10.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk" aria-label="Download APK · Oor-Arivippu-v1.1.10.apk">APK · v1.1.10</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-pulseeq">🎧 PulseEQ <span class="ta-name">(ஒலி சமநிலையாக்கி)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T12:01:26Z" data-release-tag="pulseeq-v1.11">29 Oct 2026</time></td>
               <td class="lver">v1.11</td>
               <td class="lsize">12.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">APK · v1.11</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-rp-vocal-remover-studio">🎤 RP Vocal Remover Studio <span class="ta-name">(இசை மட்டும் வேண்டும்)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T12:11:23Z" data-release-tag="rp-vocal-remover-studio-v0.1.16">29 Oct 2026</time></td>
               <td class="lver">v0.1.16</td>
               <td class="lsize">65.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">APK · v0.1.16</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-secret-message">🔐 Secret Message <span class="ta-name">(இரகசிய செய்தி)</span></a></td>
               <td class="ldate"><time datetime="2026-10-22T16:42:52Z" data-release-tag="secret-message-v1.1.3">22 Oct 2026</time></td>
               <td class="lver">v1.1.3</td>
               <td class="lsize">29.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">APK · v1.1.3</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-expense-tracker">💰 Expense Tracker <span class="ta-name">(செலவு கண்காணிப்பு)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T10:55:43Z" data-release-tag="expense-tracker-v1.2">29 Oct 2026</time></td>
               <td class="lver">v1.2</td>
               <td class="lsize">11.6 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">APK · v1.2</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-voice-notes">🎙️ Voice Notes <span class="ta-name">(குரல் குறிப்பு)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T11:18:31Z" data-release-tag="voice-notes-v1.3.3">29 Oct 2026</time></td>
               <td class="lver">v1.3.3</td>
               <td class="lsize">13.1 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk" aria-label="Download APK · Voice-Notes-v1.3.3.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk" aria-label="Download APK · Voice-Notes-v1.3.3.apk">APK · v1.3.3</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-tamil-podcast">🎧 Tamil Podcast Player <span class="ta-name">(கதை சொல்லி)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T10:20:33Z" data-release-tag="tamil-podcast-v1.6">29 Oct 2026</time></td>
               <td class="lver">v1.6</td>
               <td class="lsize">12.0 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">APK · v1.6</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-elderly-launcher">📱 Elderly Launcher <span class="ta-name">(முதியவர் திரை)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T11:04:13Z" data-release-tag="elderly-launcher-v1.5">29 Oct 2026</time></td>
               <td class="lver">v1.5</td>
               <td class="lsize">11.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk" aria-label="Download APK · Elderly-Launcher-v1.5.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk" aria-label="Download APK · Elderly-Launcher-v1.5.apk">APK · v1.5</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-vasanthi-ai">🔊 Vasanthi AI <span class="ta-name">(என்னைச் சுற்றி)</span></a></td>
               <td class="ldate"><time datetime="2026-10-29T09:07:16Z" data-release-tag="vasanthi-ai-v1.1.5">29 Oct 2026</time></td>
               <td class="lver">v1.1.5</td>
               <td class="lsize">45.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">⚡ APK</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">APK · v1.1.5</a></td>
             </tr>
             <tr>
               <td class="lname"><a href="#app-daily-vault">DailyVault <span class="ta-name">(தினக்கணக்கு)</span></a></td>
@@ -963,7 +964,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="SMS-Guard-v1.1.16.zip" href="apks/SMS-Guard-v1.1.16.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.16.apk" data-name="SMS-Guard-v1.1.16.apk" data-sha="db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df" data-status="st-smsguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk" aria-label="Download APK · SMS-Guard-v1.1.16.apk">⚡ Direct APK (v1.1.16)</a>
+            <a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.16.apk" data-name="SMS-Guard-v1.1.16.apk" data-sha="db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df" data-status="st-smsguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk" aria-label="Download APK · SMS-Guard-v1.1.16.apk">APK · v1.1.16</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.16">Release Notes</a>
           </div>
         </article>
@@ -1071,7 +1072,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="CleanSweep-v2.81.zip" href="apks/CleanSweep-v2.81.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/CleanSweep-v2.81.apk" data-name="CleanSweep-v2.81.apk" data-sha="c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805" data-status="st-liveguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.81/CleanSweep-v2.81.apk" aria-label="Download APK · CleanSweep-v2.81.apk">⚡ Direct APK (v2.81)</a>
+            <a class="btn btn-primary" data-apk="apks/CleanSweep-v2.81.apk" data-name="CleanSweep-v2.81.apk" data-sha="c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805" data-status="st-liveguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.81/CleanSweep-v2.81.apk" aria-label="Download APK · CleanSweep-v2.81.apk">APK · v2.81</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.81">Release Notes</a>
           </div>
         </article>
@@ -1165,7 +1166,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Ramesh-Radio-v1.31.zip" href="apks/Ramesh-Radio-v1.31.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.31.apk" data-name="Ramesh-Radio-v1.31.apk" data-sha="fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22" data-status="st-radio" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk" aria-label="Download APK · Ramesh-Radio-v1.31.apk">⚡ Direct APK (v1.31)</a>
+            <a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.31.apk" data-name="Ramesh-Radio-v1.31.apk" data-sha="fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22" data-status="st-radio" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk" aria-label="Download APK · Ramesh-Radio-v1.31.apk">APK · v1.31</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.31">Release Notes</a>
           </div>
         </article>
@@ -1256,7 +1257,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Oor-Arivippu-v1.1.10.zip" href="apks/Oor-Arivippu-v1.1.10.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-oor" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk" aria-label="Download APK · Oor-Arivippu-v1.1.10.apk">⚡ Direct APK (v1.1.10)</a>
+            <a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.10.apk" data-name="Oor-Arivippu-v1.1.10.apk" data-sha="7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa" data-status="st-oor" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk" aria-label="Download APK · Oor-Arivippu-v1.1.10.apk">APK · v1.1.10</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10">Release Notes</a>
           </div>
         </article>
@@ -1340,7 +1341,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="PulseEQ-v1.11.zip" href="apks/PulseEQ-v1.11.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-pulseeq" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">⚡ Direct APK (v1.11)</a>
+            <a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-pulseeq" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">APK · v1.11</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.11">Release Notes</a>
           </div>
         </article>
@@ -1423,7 +1424,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="RP-Vocal-Remover-Studio-v0.1.16.zip" href="apks/RP-Vocal-Remover-Studio-v0.1.16.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-vocal" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">⚡ Direct APK (v0.1.16)</a>
+            <a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-vocal" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">APK · v0.1.16</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.16">Release Notes</a>
           </div>
         </article>
@@ -1496,7 +1497,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Secret-Message-v1.1.3.zip" href="apks/Secret-Message-v1.1.3.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-secret" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">⚡ Direct APK (v1.1.3)</a>
+            <a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-secret" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">APK · v1.1.3</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3">Release Notes</a>
           </div>
         </article>
@@ -1575,7 +1576,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Expense-Tracker-v1.2.zip" href="apks/Expense-Tracker-v1.2.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-expense" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">⚡ Direct APK (v1.2)</a>
+            <a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-expense" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">APK · v1.2</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2">Release Notes</a>
           </div>
         </article>
@@ -1651,7 +1652,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Voice-Notes-v1.3.3.zip" href="apks/Voice-Notes-v1.3.3.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-voice" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk" aria-label="Download APK · Voice-Notes-v1.3.3.apk">⚡ Direct APK (v1.3.3)</a>
+            <a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.3.apk" data-name="Voice-Notes-v1.3.3.apk" data-sha="71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35" data-status="st-voice" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk" aria-label="Download APK · Voice-Notes-v1.3.3.apk">APK · v1.3.3</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3">Release Notes</a>
           </div>
         </article>
@@ -1690,7 +1691,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Vasanthi-AI-v1.1.5.zip" href="apks/Vasanthi-AI-v1.1.5.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-vasanthi" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">⚡ Direct APK (v1.1.5)</a>
+            <a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-vasanthi" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">APK · v1.1.5</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/vasanthi-ai-v1.1.5">Release Notes</a>
           </div>
         </article>
@@ -1725,7 +1726,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Tamil-Podcast-Player-v1.6.zip" href="apks/Tamil-Podcast-Player-v1.6.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-podcast" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">⚡ Direct APK (v1.6)</a>
+            <a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-podcast" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">APK · v1.6</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamil-podcast-v1.6">Release Notes</a>
           </div>
         </article>
@@ -1760,7 +1761,7 @@
           </div>
           <div class="hero-links">
             <a class="btn btn-zip" download="Elderly-Launcher-v1.5.zip" href="apks/Elderly-Launcher-v1.5.zip">📦 Download .ZIP</a>
-            <a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-launcher" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk" aria-label="Download APK · Elderly-Launcher-v1.5.apk">⚡ Direct APK (v1.5)</a>
+            <a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.5.apk" data-name="Elderly-Launcher-v1.5.apk" data-sha="c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39" data-status="st-launcher" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk" aria-label="Download APK · Elderly-Launcher-v1.5.apk">APK · v1.5</a>
             <a class="btn btn-outline" href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5">Release Notes</a>
           </div>
         </article>
@@ -1794,6 +1795,10 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header"><h2 id="app-tamilan-store" tabindex="-1">தமிழன் · Tamilan Store</h2><span class="ver">v0.8 · Android 8.0+</span></div>
+            <aside class="store-install-warning" role="note" aria-label="Tamilan Store installation warning">
+              <p data-content-lang="en"><strong>Installation warning reported — 1 November 2026.</strong> Play Protect showed “Harmful app blocked” for Store0.8 on the owner's phone. A later running-app screen does not establish that Google cleared the warning. Keep Play Protect enabled; stop if warned and do not bypass it or uninstall a working app. Automated checks are not Google approval. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/tamilan-store-play-protect.md">Investigation and next steps</a>.</p>
+              <p data-content-lang="ta" lang="ta"><strong>நிறுவல் எச்சரிக்கை — 1 நவம்பர் 2026.</strong> உரிமையாளரின் கைபேசியில் Store0.8-க்கு Play Protect “Harmful app blocked” எனக் காட்டியது. பின்னர் செயலி இயங்கும் படம் Google எச்சரிக்கை நீங்கியதற்குச் சான்றல்ல. Play Protect இயக்கத்தில் இருக்கட்டும்; எச்சரித்தால் நிறுத்துங்கள். எச்சரிக்கையை மீறவோ செயல்படும் செயலியை நீக்கவோ வேண்டாம். தானியங்கிச் சோதனை Google ஒப்புதல் அல்ல.</p>
+            </aside>
             <div class="release-brief"><p data-content-lang="en">Fresh Tamil/English welcome design and gentle scrolling text with a saved pause control. Motion stops for Android reduced animations, touch exploration and background use; no flashing. Real galleries now cover all13 ordinary apps, including7 DailyVault and6 refreshed SMS Guard screens.</p><p data-content-lang="ta" lang="ta">புதிய தமிழ்/ஆங்கில வரவேற்பும் மெதுவாக நகரும் உரையும்; நிறுத்தும் தேர்வு சேமிக்கப்படும். Android இயக்கங்கள் நிறுத்தப்பட்டால், தொடு ஆய்வு அல்லது பின்னணி நிலையில் உரை நகராது; மின்னும் விளைவுகள் இல்லை. தினக்கணக்கின்7 திரைகள், SMS Guard-ன்6 புதிய திரைகள் உட்பட13 வழக்கமான செயலிகளுக்கும் உண்மையான படங்கள்.</p><p class="testing-status"><span data-content-lang="en">Exact signed0.8 APK passed Android15 update/language/pause/gallery checks and native tests/lint; separate archive/installer regressions passed. Same key, no added permissions. No physical-phone or Google verification of0.8 claimed. Update without uninstalling or clearing data.</span><span data-content-lang="ta" lang="ta">இதே கையொப்ப0.8 கோப்பு Android15 புதுப்பிப்பு/மொழி/நிறுத்தம்/படங்கள் மற்றும் native/லின்ட் சோதனைகளில் தேர்ச்சி; தனி நிறுவல்/கோப்பு சோதனைகளும் வெற்றி. அதே கையொப்பம்; புதிய அனுமதி இல்லை.0.8-க்கான உண்மைக் கைபேசி/Google சோதனை எனக் கூறவில்லை. நீக்காமல் தரவை அழிக்காமல் புதுப்பிக்கவும்.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.8">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div>
             <p class="tagline" data-content-lang="en">Our optional first-party app store. No account and no ads. Downloads are verified before Android prompts you to install.</p><p class="ta-note" data-content-lang="ta" lang="ta">விரும்பினால் பயன்படுத்தக்கூடிய நமது செயலி அங்காடி. பயனர் கணக்கு தேவையில்லை; விளம்பரமும் இல்லை. சரிபார்த்த பின்னர் நிறுவ ஆண்ட்ராய்டு ஒப்புதல் கேட்கும்.</p>
             <figure class="shot has-img">

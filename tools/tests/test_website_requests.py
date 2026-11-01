@@ -209,3 +209,21 @@ class RealApplicationImageCoverageTest(unittest.TestCase):
             self.assertNotIn('Concept illustration',card)
             for src in sources:
                 self.assertTrue((ROOT/'site'/src).is_file(),src)
+
+class ApkButtonVersionTest(unittest.TestCase):
+    def test_all_table_and_card_apk_buttons_show_their_exact_link_version(self):
+        source=(ROOT/'site/index.html').read_text()
+        buttons=re.findall(r'(<a\b[^>]*data-apk="[^"]+"[^>]*>)([^<]*)</a>',source)
+        self.assertEqual(len(buttons),28)
+        for opening,label in buttons:
+            version=re.search(r'-v([0-9.]+)\.apk',opening).group(1)
+            self.assertEqual(label,f'APK · v{version}')
+        self.assertIn('a[data-apk] { white-space: nowrap; flex-shrink: 0; }',source)
+
+    def test_store_owner_block_is_not_misrepresented_as_google_clearance(self):
+        source=(ROOT/'site/index.html').read_text()
+        card=source.split('<h2 id="app-tamilan-store"',1)[1].split('</article>',1)[0]
+        self.assertIn('Harmful app blocked',card)
+        self.assertIn('does not establish that Google cleared',card)
+        self.assertIn('do not bypass',card)
+        self.assertIn('docs/tamilan-store-play-protect.md',card)
