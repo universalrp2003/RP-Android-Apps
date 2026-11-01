@@ -114,7 +114,10 @@ read -r SCREEN_W SCREEN_H < <("$ADB" shell wm size | tr -d '\r' | sed -n 's/^Phy
 dump_ui() {
   local attempt
   for attempt in 1 2 3 4 5; do
-    if "$ADB" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 \
+    # Some uiautomator failures exit zero without writing a file. Never reuse
+    # an earlier viewport's XML as evidence for the current assertion.
+    if "$ADB" shell rm -f /sdcard/window.xml >/dev/null 2>&1 \
+      && "$ADB" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 \
       && "$ADB" shell cat /sdcard/window.xml > "$UI_XML" 2>/dev/null \
       && grep -q '<hierarchy' "$UI_XML"; then
       return 0
@@ -265,7 +268,7 @@ wait_for text "Recipient view timer"
 # The app's wording replaces the preview's ("This preview cannot deliver messages …").
 wait_for text "It starts on both phones when the other person views your message." contains
 scroll_until text "About Secret Message"
-wait_for text "has not been independently security-reviewed" contains
+scroll_until text "has not been independently security-reviewed" contains
 
 STEP="app settings (1.1.0): ready for chats, this phone, guide and About"
 scroll_until text "Ready for chats"

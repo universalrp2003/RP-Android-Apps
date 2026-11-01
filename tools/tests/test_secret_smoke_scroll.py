@@ -60,3 +60,37 @@ fail() { echo "$1" >&2; exit 42; }
         result=self.find('<node text="wanted" bounds="[0,0][0,0]"/><node text="wanted" bounds="[10,180][90,230]"/>')
         self.assertEqual(result.returncode,0,result.stderr)
         self.assertEqual(result.stdout.strip(),'50 190')
+
+    def test_disclosure_body_is_scrolled_into_view_independently_of_heading(self):
+        self.assertIn('scroll_until text "About Secret Message"\nscroll_until text "has not been independently security-reviewed" contains',SOURCE)
+
+    def test_zero_exit_dump_failure_cannot_reuse_old_viewport_xml(self):
+        helper='dump_ui() {'+SOURCE.split('dump_ui() {',1)[1].split('\n# Print "x y"',1)[0]
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)
+            remote=path/'remote.xml';remote.write_text('<hierarchy><node text="stale"/></hierarchy>')
+            counter=path/'attempts'
+            adb=path/'adb'
+            adb.write_text('''#!/usr/bin/env python3
+import os,sys
+from pathlib import Path
+remote=Path(os.environ['REMOTE']);counter=Path(os.environ['COUNTER'])
+args=sys.argv[1:]
+if args[:3]==['shell','rm','-f']:
+ remote.unlink(missing_ok=True)
+elif args[:3]==['shell','uiautomator','dump']:
+ n=int(counter.read_text())+1 if counter.exists() else 1
+ counter.write_text(str(n))
+ if n==1:print('ERROR: could not get idle state.')
+ else:remote.write_text('<hierarchy><node text="fresh"/></hierarchy>')
+elif args[:2]==['shell','cat']:
+ if not remote.exists():sys.exit(1)
+ print(remote.read_text())
+else:sys.exit(91)
+''')
+            adb.chmod(0o755)
+            result=subprocess.run(['bash','-c','set -euo pipefail\nsleep() { :; }\n'+helper+'\ndump_ui\ncat "$UI_XML"\n'],env=dict(os.environ,ADB=str(adb),UI_XML=str(path/'local.xml'),REMOTE=str(remote),COUNTER=str(counter)),capture_output=True,text=True,timeout=5)
+            self.assertEqual(result.returncode,0,result.stderr)
+            self.assertIn('fresh',result.stdout)
+            self.assertNotIn('stale',result.stdout)
+            self.assertEqual(counter.read_text(),'2')
