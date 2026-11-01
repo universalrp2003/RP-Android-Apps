@@ -28,3 +28,10 @@ These are synthetic CI results, not physical-phone, audible-volume or Play Prote
 
 The replacement full gate must pass before any tested-candidate success claim. No failing
 run's APK is eligible for publication. Candidate artifacts upload only after both phases pass.
+
+- a947925 / run41304542139 / job124842135449: large-text Y comparison failed again
+  (`1214` versus `1153`). The generic helper could first miss a still-loading description,
+  then return its text child from the fallback wait. Volume geometry checks now use an
+  exclusively description-based selector, with no text fallback. Keep both centre and height
+  assertions and the actual 2.0 configuration assertion. Surface Kotlin stack locations in
+  failure annotations as well. The lifecycle/restart correction still needs its successful run.

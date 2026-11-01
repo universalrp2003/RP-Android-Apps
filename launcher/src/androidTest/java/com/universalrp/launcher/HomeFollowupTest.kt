@@ -19,10 +19,11 @@ class HomeFollowupTest {
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = instrumentation.targetContext
     private val device = UiDevice.getInstance(instrumentation)
-    private fun find(label: String): androidx.test.uiautomator.UiObject2 {
+    private fun find(label: String, descriptionOnly: Boolean = false): androidx.test.uiautomator.UiObject2 {
         repeat(12) {
-            (device.findObject(By.desc(label))
-                ?: device.wait(Until.findObject(By.text(label)), 500))?.let { return it }
+            val node = if (descriptionOnly) device.wait(Until.findObject(By.desc(label)), 500)
+                else device.findObject(By.desc(label)) ?: device.wait(Until.findObject(By.text(label)), 500)
+            node?.let { return it }
             device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 0.7f)
         }
         device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "failure.xml"))
@@ -59,7 +60,7 @@ class HomeFollowupTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             assertNotNull(device.wait(Until.findObject(By.text(Pattern.compile("(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)"))), 15_000))
             shot("01-clock-small-status")
-            val minus = find(context.getString(R.string.volume_down))
+            val minus = find(context.getString(R.string.volume_down), descriptionOnly = true)
             val plus = device.wait(Until.findObject(By.desc(context.getString(R.string.volume_up))), 5_000)
             assertNotNull(plus)
             assertEquals("Volume buttons must be adjacent in the same row", minus.visibleBounds.centerY(), plus!!.visibleBounds.centerY())
@@ -89,10 +90,10 @@ class HomeFollowupTest {
                 scenario.onActivity { assertEquals(2f, it.resources.configuration.fontScale, 0.01f) }
                 resetScroll()
                 shot("04-large-font-clock")
-                val largeMinus = find(context.getString(R.string.volume_down))
-                val largePlus = find(context.getString(R.string.volume_up))
-                assertEquals(largeMinus.visibleBounds.centerY(), largePlus.visibleBounds.centerY())
-                assertEquals(largeMinus.visibleBounds.height(), largePlus.visibleBounds.height())
+                val largeMinus = find(context.getString(R.string.volume_down), descriptionOnly = true)
+                val largePlus = find(context.getString(R.string.volume_up), descriptionOnly = true)
+                assertEquals("200% volume button centres", largeMinus.visibleBounds.centerY(), largePlus.visibleBounds.centerY())
+                assertEquals("200% volume button heights", largeMinus.visibleBounds.height(), largePlus.visibleBounds.height())
                 shot("05-large-font-volume")
                 find(context.getString(R.string.favourite_apps_add))
                 shot("06-large-font-favourites")
