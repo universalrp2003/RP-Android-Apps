@@ -8,6 +8,11 @@ import android.os.Looper
 import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
@@ -21,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -60,32 +66,35 @@ fun StoreShowcase(tamil: Boolean, appCount: Int, motionEnabled: Boolean,
         "RP Ideas · தமிழ் மற்றும் ஆங்கில செயலிகள் · விளம்பரமும் கணக்கும் இல்லை · பதிவிறக்கக் கோப்பு சரிபார்ப்பு · நிறுவ Android ஒப்புதல் தேவை"
     else "RP Ideas · Tamil & English apps · No ads or accounts · Download file checks · Android confirmation before installation"
     Card(shape = RoundedCornerShape(24.dp), modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.background(Brush.linearGradient(listOf(Color(0xFF123B40), Color(0xFF162639))))
-            .padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(Modifier.fillMaxWidth().background(Brush.linearGradient(listOf(Color(0xFF123B40), Color(0xFF162639))))) {
+        Image(painterResource(R.drawable.tamil_landscape), contentDescription = null,
+            modifier = Modifier.fillMaxWidth().height(96.dp).align(Alignment.TopEnd).alpha(0.55f), contentScale = ContentScale.FillBounds)
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Column(Modifier.weight(1f)) {
-                    Text(if (tamil) "தமிழன்" else "Tamilan", style = MaterialTheme.typography.headlineMedium)
+                    Text(if (tamil) "தமிழன்" else "Tamilan", style = MaterialTheme.typography.titleLarge)
                     Text(if (tamil) "RP Ideas · செயலி அங்காடி" else "RP Ideas · App store", style = MaterialTheme.typography.labelLarge)
                 }
                 TextButton(onClick = onLanguage) { Text(if (tamil) "English" else "தமிழ்") }
             }
             Text(if (tamil) "$appCount செயலிகள் · உங்கள் விருப்பப்படி" else "$appCount apps · Your choice",
-                style = MaterialTheme.typography.titleMedium)
-            Text(if (tamil) "தேடுங்கள். திரைகளைப் பாருங்கள். விரும்பினால் நிறுவுங்கள்." else "Discover. Preview. Install when you choose.",
-                style = MaterialTheme.typography.bodyMedium)
-            HorizontalDivider(color = Color(0xFF377477))
+                style = MaterialTheme.typography.labelSmall)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(message,
                 modifier = (if (moving) Modifier.basicMarquee(iterations = Int.MAX_VALUE,
-                    initialDelayMillis = 2000, repeatDelayMillis = 1800, velocity = 24.dp) else Modifier)
+                    initialDelayMillis = 2000, repeatDelayMillis = 1800, velocity = 24.dp) else Modifier).weight(1f)
                     .clearAndSetSemantics { contentDescription = message },
-                maxLines = if (moving) 1 else Int.MAX_VALUE, style = MaterialTheme.typography.bodySmall)
+                // Decorative summary only; TalkBack receives the full text above.
+                maxLines = if (moving) 1 else 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
             TextButton(onClick = { onMotionChanged(!motionEnabled) }) {
                 Text(if (motionEnabled) {
                     if (tamil) "உரை நகர்வை நிறுத்து" else "Pause scrolling text"
                 } else {
                     if (tamil) "உரை நகர்வை இயக்கு" else "Enable scrolling text"
-                })
+                }, style = MaterialTheme.typography.labelSmall)
             }
+            }
+        }
         }
     }
 }

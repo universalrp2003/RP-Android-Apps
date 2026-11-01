@@ -43,6 +43,9 @@ jobs:
               "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v$version/DailyVault-v$version.apk" \
               -o "$RUNNER_TEMP/store-fixtures/DailyVault-v$version.apk"
           done
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk' \
+            -o "$RUNNER_TEMP/store-fixtures/Ramesh-Radio-v1.29.apk"
           python3 - <<'PYFIXTURE'
           import hashlib, os, pathlib
           root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'store-fixtures'
@@ -54,6 +57,8 @@ jobs:
           for version, (size, digest) in pins.items():
               data = (root / f'DailyVault-v{version}.apk').read_bytes()
               assert len(data) == size and hashlib.sha256(data).hexdigest() == digest, version
+          data = (root / 'Ramesh-Radio-v1.29.apk').read_bytes()
+          assert len(data) == 15141600 and hashlib.sha256(data).hexdigest() == '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d'
           PYFIXTURE
           cp "$RUNNER_TEMP/store-fixtures/DailyVault-v0.5.apk" tamilanstore/src/androidTest/assets/
           gradle :tamilanstore:assembleDebugAndroidTest --no-daemon --stacktrace

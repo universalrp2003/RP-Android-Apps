@@ -30,10 +30,15 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
+    # Ordinary edits belong to the read-only preview workflow, not old release rebuilds.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[publish-tamilanstore]') ||
+      contains(github.event.head_commit.message, '[publish-dailyvault]')
     strategy:
       fail-fast: false
       matrix:
-        app: [tamilanstore, dailyvault]
+        app: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.app) || (contains(github.event.head_commit.message, '[publish-tamilanstore]') && '["tamilanstore"]' || '["dailyvault"]')) }}
     name: Verify ${{ matrix.app }} candidate (publish only by explicit selection)
     runs-on: ubuntu-latest
     env:
@@ -51,11 +56,8 @@ jobs:
           set -euo pipefail
           case "$APP" in
             tamilanstore)
-              echo 'module=tamilanstore' >> "$GITHUB_OUTPUT"
-              echo 'version=0.8' >> "$GITHUB_OUTPUT"
-              echo 'code=8' >> "$GITHUB_OUTPUT"
-              echo 'slug=tamilan-store' >> "$GITHUB_OUTPUT"
-              echo 'label=Tamilan-Store' >> "$GITHUB_OUTPUT"
+              echo '::error::Store 0.8 is immutable. The 0.9 redesign is preview-only; use tamilanstore-preview.yml.'
+              exit 2
               ;;
             dailyvault)
               echo 'module=dailyvault' >> "$GITHUB_OUTPUT"
