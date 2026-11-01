@@ -89,3 +89,19 @@ class StoreUpgradeProbeSafetyTest(unittest.TestCase):
                 probe.enable_ci_root()
             self.assertEqual(adb.call_count, 15)
             self.assertFalse(any('install' in call.args for call in adb.call_args_list))
+
+    def test_package_evidence_supports_old_and_new_dumpsys_uid_labels(self):
+        probe = self.probe()
+        for label in ('userId', 'appId'):
+            dump = f'{label}=10123\nversionCode=8 minSdk=26 targetSdk=36\nversionName=0.8\n'
+            result = probe.parse_package_state(dump, 'package:com.universalrp.tamilanstore uid:10123\n')
+            self.assertEqual(result, {'code':8, 'name':'0.8', 'uid':'10123'})
+
+    def test_package_evidence_does_not_guess_missing_code_name_or_exact_uid(self):
+        probe = self.probe()
+        valid = 'versionCode=10\nversionName=0.9-rc1\n'
+        listing = 'package:com.universalrp.tamilanstore uid:10123\n'
+        for dump, entries in ((valid, ''), (valid, 'package:com.universalrp.tamilanstore.other uid:10123'),
+                              ('versionName=0.9-rc1', listing), ('versionCode=10', listing)):
+            with self.assertRaises(AssertionError):
+                probe.parse_package_state(dump, entries)

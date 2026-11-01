@@ -73,13 +73,20 @@ def prefs():
     return {n.get('name'): n.get('value') for n in ET.fromstring(raw).findall('boolean')}
 
 
-def package_state():
-    dump = adb('shell', 'dumpsys', 'package', PKG)
+def parse_package_state(dump, listing):
     code = re.search(r'\bversionCode=(\d+)', dump)
     name = re.search(r'\bversionName=([^\s]+)', dump)
-    uid = re.search(r'\buserId=(\d+)', dump)
-    assert code and name and uid, 'Cannot inspect installed package'
+    # Android dumpsys changed userId/appId labels. Use the package command's explicit
+    # user-0 UID listing instead; still require the exact package, never a substring match.
+    uid = re.search(r'^package:' + re.escape(PKG) + r'\s+uid:(\d+)\s*$', listing, re.MULTILINE)
+    assert code and name and uid, f'Cannot inspect installed package: code={bool(code)} name={bool(name)} uid={bool(uid)}'
     return {'code': int(code[1]), 'name': name[1], 'uid': uid[1]}
+
+
+def package_state():
+    dump = adb('shell', 'dumpsys', 'package', PKG)
+    listing = adb('shell', 'cmd', 'package', 'list', 'packages', '-U', '--user', '0', PKG)
+    return parse_package_state(dump, listing)
 
 
 def snap(out, name):
