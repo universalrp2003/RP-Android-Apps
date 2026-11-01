@@ -14,7 +14,8 @@
       "artifact_id": 13076668065,
       "archive_sha256": "605e82b25466fc3885ac29c1c04f41c3027768014ef2b8ed4338c93be79c587a",
       "apk_sha256": "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a",
-      "bytes": 13135195
+      "bytes": 13135195,
+      "resume_draft_release_id": 430463361
     }
   }
 }

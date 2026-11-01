@@ -49,8 +49,19 @@ def main():
     for module in pins['apps']:
         _, version, _, baseline_tag, _, _, _ = APPS[module]
         tag = ('live-guard' if module == 'cleaner' else 'voice-notes')+'-v'+version
-        assert not any(r['tag_name']==tag for r in old_releases), 'Never replace even an existing draft'
-        assert not any(t['name']==tag for t in tags), 'Never replace a release tag'
+        existing=[r for r in old_releases if r['tag_name']==tag]
+        tag_refs=[t for t in tags if t['name']==tag]
+        if existing:
+            # Only resume the exact draft whose ID/bytes were inspected after our prior
+            # publisher stopped. Never recreate it, upload over it or accept arbitrary drafts.
+            assert len(existing)==1
+            draft=existing[0]
+            assert draft['id']==pins['apps'][module].get('resume_draft_release_id')
+            assert draft['draft'] and not draft['prerelease'] and draft['target_commitish']==source
+            assert not tag_refs or (len(tag_refs)==1 and tag_refs[0]['commit']['sha']==source)
+        else:
+            assert not pins['apps'][module].get('resume_draft_release_id')
+            assert not tag_refs, 'Never replace a release tag' 
     sdk = Path(os.environ['ANDROID_HOME'])/'build-tools'
     tools = sorted(sdk.iterdir(), key=lambda p:tuple(int(n) for n in re.findall(r'\d+',p.name)))[-1]
     receipts = []
@@ -99,10 +110,17 @@ def main():
         checksum=root/(new_name.removesuffix('.apk')+'.sha256'); checksum.write_text(sha(candidate)+'  '+new_name+'\n')
         tag=('live-guard' if module=='cleaner' else 'voice-notes')+'-v'+version
         title=('Live Guard' if module=='cleaner' else 'Voice Notes')+' '+version
-        subprocess.run(['gh','release','create',tag,'--target',source,'--title',title,'--notes-file',f'releases/{tag}.md','--draft',
-                        str(candidate)+'#'+new_name,str(checksum)+'#'+checksum.name],check=True)
+        resume_id=pin.get('resume_draft_release_id')
+        if not resume_id:
+            subprocess.run(['gh','release','create',tag,'--target',source,'--title',title,'--notes-file',f'releases/{tag}.md','--draft',
+                            str(candidate)+'#'+new_name,str(checksum)+'#'+checksum.name],check=True)
         for attempt in range(12):
-            draft=api('releases/tags/'+tag); assert draft['draft'] and not draft['prerelease']
+            # GitHub's tag endpoint does not expose a draft before its tag is published.
+            drafts=[r for r in pages('releases') if r['tag_name']==tag]
+            assert len(drafts)==1
+            draft=api('releases/'+str(drafts[0]['id']))
+            if resume_id: assert draft['id']==resume_id
+            assert draft['target_commitish']==source and draft['draft'] and not draft['prerelease']
             assert len(draft['assets'])==2
             asset=next(a for a in draft['assets'] if a['name']==new_name)
             checksum_asset=next(a for a in draft['assets'] if a['name']==checksum.name)
@@ -112,7 +130,12 @@ def main():
         assert asset['size']==pin['bytes']
         for phase in ('draft','public'):
             destination=root/phase; destination.mkdir()
-            subprocess.run(['gh','release','download',tag,'--pattern',new_name,'--dir',str(destination)],check=True)
+            if phase=='draft':
+                with (destination/new_name).open('wb') as stream:
+                    subprocess.run(['gh','api',f'repos/{REPO}/releases/assets/{asset["id"]}',
+                                    '-H','Accept: application/octet-stream'],stdout=stream,check=True)
+            else:
+                subprocess.run(['gh','release','download',tag,'--pattern',new_name,'--dir',str(destination)],check=True)
             assert sha(destination/new_name)==pin['apk_sha256'] and (destination/new_name).stat().st_size==pin['bytes']
             if phase=='draft': subprocess.run(['gh','release','edit',tag,'--draft=false','--latest=false'],check=True)
         public=api('releases/tags/'+tag); assert not public['draft'] and not public['prerelease']
