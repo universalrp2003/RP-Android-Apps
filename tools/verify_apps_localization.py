@@ -704,14 +704,14 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.16"',
-            'tagPrefix = "live-guard"', 'version = "2.81"',
+            'tagPrefix = "live-guard"', 'version = "2.82"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
             'tagPrefix = "oor-arivippu"', 'version = "1.1.10"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.2"',
-            'tagPrefix = "voice-notes"', 'version = "1.3.3"',
+            'tagPrefix = "voice-notes"', 'version = "1.3.4"',
             'tagPrefix = "vasanthi-ai"', 'version = "1.1.5"',
             'tagPrefix = "tamil-podcast"', 'version = "1.6"',
             'tagPrefix = "elderly-launcher"', 'version = "1.5"',
@@ -994,10 +994,11 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         # Owner-approved isolated preview must not advertise a nonexistent public release.
         if gradle.parent.name == "tamilanstore":
-            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.8":
-                raise ValueError("Tamilan preview identity/version changed; review publication gates")
-            if by_package.get(pkg.group(1)) != ver.group(1):
-                raise ValueError("Tamilan directory candidate version differs from source")
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.9":
+                raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
+            # Stable0.9 is public from the exact signed/native-tested artifact; older assets stay immutable.
+            if by_package.get(pkg.group(1)) != "0.9":
+                raise ValueError("Tamilan published directory must match the verified public stable0.9")
             continue
         checked += 1
         if pkg.group(1) not in by_package:

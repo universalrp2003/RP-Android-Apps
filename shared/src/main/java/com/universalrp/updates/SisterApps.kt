@@ -54,8 +54,8 @@ object SisterApps {
             name = "Live Guard",
             tamilName = "கைபேசி காவலன்",
             tagPrefix = "live-guard",
-            version = "2.81",
-            publishedVersion = "2.81",
+            version = "2.82",
+            publishedVersion = "2.82",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
         ),
@@ -123,8 +123,8 @@ object SisterApps {
             name = "Voice Notes",
             tamilName = "குரல் குறிப்பு",
             tagPrefix = "voice-notes",
-            version = "1.3.3",
-            publishedVersion = "1.3.3",
+            version = "1.3.4",
+            publishedVersion = "1.3.4",
             packageName = "com.universalrp.voicenotes",
             aboutLabel = "Voice Notes — GitHub release",
         ),
@@ -165,14 +165,14 @@ object SisterApps {
         ),
         SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.8", publishedVersion = "0.8",
+            tagPrefix = "tamilan-store", version = "0.9", publishedVersion = "0.9",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
-        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.8",
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.9",
         "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.5",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,

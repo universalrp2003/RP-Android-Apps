@@ -1,0 +1,36 @@
+name: Inspect bounded synthetic Store native failure evidence
+on:
+  push:
+    branches: ["arena/e24330d5-rp-android-apps"]
+    paths: [".github/workflows/inspect-store-native-evidence.yml"]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Read only the failed synthetic emulator logs, never owner data
+        shell: python
+        run: |
+          import hashlib,io,json,subprocess,zipfile
+          repo='universalrp2003/RP-Android-Apps'
+          assert __import__('os').environ['GH_REPO']==repo
+          meta=json.loads(subprocess.check_output(['gh','api',f'repos/{repo}/actions/artifacts/13076984841'],text=True))
+          assert meta['workflow_run']['id']==41292129931 and meta['name']=='tamilan-store-emulator-evidence'
+          data=subprocess.check_output(['gh','api',f'repos/{repo}/actions/artifacts/13076984841/zip'])
+          assert len(data)==meta['size_in_bytes']<20000 and 'sha256:'+hashlib.sha256(data).hexdigest()==meta['digest']
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              assert sum(i.file_size for i in archive.infolist())<150000
+              for name in archive.namelist():
+                  if not name.endswith('.txt'):continue
+                  text=archive.read(name).decode(errors='replace')
+                  print(name+'\n'+text,flush=True)
+                  # Batch bounded annotations so expected assumption stacks cannot hide a real failure.
+                  for offset in range(0,len(text),5000):
+                      chunk=(name+': '+text[offset:offset+5000]).replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+                      print('::notice title=Prior synthetic native evidence::'+chunk,flush=True)

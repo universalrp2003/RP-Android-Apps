@@ -18,11 +18,11 @@
       "name": "Live Guard",
       "tamilName": "கைபேசி காவலன்",
       "packageName": "com.universalrp.cleansweep",
-      "version": "2.81",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.81/CleanSweep-v2.81.apk",
-      "size": 14500707,
-      "sha256": "c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.81"
+      "version": "2.82",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.82/CleanSweep-v2.82.apk",
+      "size": 14505867,
+      "sha256": "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.82"
     },
     {
       "id": "radio",
@@ -95,11 +95,11 @@
       "name": "Voice Notes",
       "tamilName": "குரல் குறிப்பு",
       "packageName": "com.universalrp.voicenotes",
-      "version": "1.3.3",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.3/Voice-Notes-v1.3.3.apk",
+      "version": "1.3.4",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk",
       "size": 13135195,
-      "sha256": "71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.3"
+      "sha256": "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.4"
     },
     {
       "id": "vasanthi",

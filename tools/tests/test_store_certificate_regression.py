@@ -20,10 +20,12 @@ class StoreCertificateRegression(unittest.TestCase):
 
     def test_published_store_matches_the_exact_verified_release(self):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.8", publishedVersion = "0.8"', text)
+        self.assertIn('tagPrefix = "tamilan-store", version = "0.9", publishedVersion = "0.9"', text)
         site = (ROOT/'site/index.html').read_text()
-        self.assertIn('tamilan-store-v0.8/Tamilan-Store-v0.8.apk', site)
-        self.assertIn('3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474', site)
+        self.assertIn('tamilan-store-v0.9/Tamilan-Store-v0.9.apk', site)
+        self.assertIn('6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab', site)
+        mirrors = (ROOT/'.github/workflows/pages.yml').read_text()
+        self.assertIn('3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474', mirrors)
 
     def test_installer_handoff_keeps_uri_read_only_and_failures_typed(self):
         source = ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore'

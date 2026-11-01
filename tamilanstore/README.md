@@ -1,4 +1,19 @@
-# தமிழன் / Tamilan Store 0.8
+# தமிழன் / Tamilan Store — 0.9 release-key candidate source
+
+**Unpublished redesign candidate `0.9-rc1`, versionCode 10.** Compact bilingual app cards, expandable
+screenshots, the restored local Tamil Nadu landscape, automatic foreground metadata checks,
+brief update notices and an explicit, verified sequential **Update all** queue.
+See [design, safety boundaries and test status](../docs/tamilan-store-0.9-redesign.md).
+
+Use the new `tamilanstore-signed-candidate.yml` workflow for a release-key **0.8 → 0.9-rc1** upgrade candidate (no publication). See [the upgrade/signing report](../docs/tamilan-store-0.9-upgrade.md).
+
+The separate preview workflow produces debug-key CI artifacts, **not same-key upgrades for an owner's
+release installation**. Do not uninstall a working app or erase records to try that artifact.
+The public download, directory and immutable release remain **0.8**. Its reported Play Protect
+**harmful-app block is unresolved**; this redesign is not a clearance or a bypass.
+
+## Last published release — 0.8
+
 
 **Published:** [exact verified Store0.8 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.8/Tamilan-Store-v0.8.apk). [Publication receipt and test limits](../docs/tamilan-store-0.8-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
 

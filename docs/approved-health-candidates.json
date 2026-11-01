@@ -1,0 +1,21 @@
+{
+  "publication_authorized": true,
+  "scope": "Voice Notes 1.3.4 and Live Guard 2.82 only; Store 0.9 promoted separately",
+  "source": "184df48396cf5797bcfdf9880e307673631efd7d",
+  "run_id": 41290393202,
+  "apps": {
+    "cleaner": {
+      "artifact_id": 13077057172,
+      "archive_sha256": "d8991e80ddb42727c715f8b8fbbc78c1ae5015adbad5ad23b024955963090542",
+      "apk_sha256": "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5",
+      "bytes": 14505867
+    },
+    "voicenotes": {
+      "artifact_id": 13076668065,
+      "archive_sha256": "605e82b25466fc3885ac29c1c04f41c3027768014ef2b8ed4338c93be79c587a",
+      "apk_sha256": "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a",
+      "bytes": 13135195,
+      "resume_draft_release_id": 430463361
+    }
+  }
+}

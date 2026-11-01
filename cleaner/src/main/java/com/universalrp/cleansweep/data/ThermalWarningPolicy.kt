@@ -27,15 +27,16 @@ object ThermalWarningPolicy {
     data class Decision(val warn: Boolean, val sensor: Sensor, val celsius: Float?)
 
     /**
-     * Battery temperature (broadcast, then the kernel fallback) is preferred; a hot CPU
-     * zone is reported separately and never described as a battery temperature. Nothing
+     * Battery temperature (broadcast, then the kernel fallback) is preferred; CPU zones
+     * never trigger speech because their OEM labels/units are not reliable. Nothing
      * reported at all means no warning and no invented number.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun decide(batteryC: Float?, kernelBatteryC: Float?, cpuC: Float?): Decision {
         val battery = (batteryC ?: kernelBatteryC)?.takeIf { it.isFinite() }
         if (battery != null && battery >= WARN_BATTERY_C) return Decision(true, Sensor.BATTERY, battery)
-        val cpu = cpuC?.takeIf { it.isFinite() }
-        if (cpu != null && cpu >= WARN_CPU_C) return Decision(true, Sensor.CPU, cpu)
+        // Raw OEM thermal-zone labels/units are not portable CPU evidence.
+        // Keep processor readings informational only; never trigger automatic speech.
         return Decision(false, Sensor.NONE, null)
     }
 

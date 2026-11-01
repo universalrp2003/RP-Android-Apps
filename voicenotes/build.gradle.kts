@@ -18,13 +18,15 @@ android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
     namespace = "com.universalrp.voicenotes"
     compileSdk = 36
+    testBuildType = "release"
 
     defaultConfig {
         applicationId = "com.universalrp.voicenotes"
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.3.3"
+        versionCode = 8
+        versionName = "1.3.4"
     }
 
     signingConfigs {
@@ -66,6 +68,8 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
     testImplementation("org.json:json:20240303")
@@ -88,4 +92,18 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+}
+
+// External-service availability is isolated from the ordinary deterministic unit-test lane.
+val liveNoteTest = "com.universalrp.voicenotes.LiveNoteHdTest"
+tasks.withType<Test>().configureEach {
+    if (name != "testLiveNoteHd") filter { excludeTestsMatching(liveNoteTest) }
+}
+tasks.register<Test>("testLiveNoteHd") {
+    group = "verification"
+    description = "Synthetic long Tamil/English note synthesis using the real production budget."
+    dependsOn("testReleaseUnitTest")
+    filter { includeTestsMatching(liveNoteTest) }
+    testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
+    classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
 }

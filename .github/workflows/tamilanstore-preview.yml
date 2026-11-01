@@ -43,6 +43,9 @@ jobs:
               "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v$version/DailyVault-v$version.apk" \
               -o "$RUNNER_TEMP/store-fixtures/DailyVault-v$version.apk"
           done
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk' \
+            -o "$RUNNER_TEMP/store-fixtures/Ramesh-Radio-v1.29.apk"
           python3 - <<'PYFIXTURE'
           import hashlib, os, pathlib
           root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'store-fixtures'
@@ -54,6 +57,8 @@ jobs:
           for version, (size, digest) in pins.items():
               data = (root / f'DailyVault-v{version}.apk').read_bytes()
               assert len(data) == size and hashlib.sha256(data).hexdigest() == digest, version
+          data = (root / 'Ramesh-Radio-v1.29.apk').read_bytes()
+          assert len(data) == 15141600 and hashlib.sha256(data).hexdigest() == '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d'
           PYFIXTURE
           cp "$RUNNER_TEMP/store-fixtures/DailyVault-v0.5.apk" tamilanstore/src/androidTest/assets/
           gradle :tamilanstore:assembleDebugAndroidTest --no-daemon --stacktrace
@@ -103,15 +108,16 @@ jobs:
           for path in paths:
               if path.exists():
                   lines = path.read_text(errors='replace').splitlines()
-                  markers = ('AssertionError', 'Exception:', 'FAILURES', 'Error:', 'INSTRUMENTATION_FAILED', 'INSTRUMENTATION_CODE', 'FAIL ', 'stack=')
-                  selected = set(range(max(0,len(lines)-8),len(lines)))
+                  # AssumptionViolatedException is an expected skipped phase test, not a failure.
+                  # Emit the tail first and batch annotations: GitHub caps errors per step.
+                  markers = ('AssertionError', 'FAILURES!!!', 'Error:', 'INSTRUMENTATION_FAILED', 'Process crashed', 'shortMsg=', 'FATAL EXCEPTION')
+                  selected = set(range(max(0,len(lines)-18),len(lines)))
                   for index,line in enumerate(lines):
                       if any(marker in line for marker in markers):
-                          selected.update(range(max(0,index-2),min(len(lines),index+5)))
-                  for index in sorted(selected)[:45]:
-                      line = lines[index]
-                      text = (path.name + ': ' + line[-700:]).replace('%','%25').replace('\r','%0D').replace('\n','%0A')
-                      print('::error title=Emulator checkpoint::' + text)
+                          selected.update(range(max(0,index-3),min(len(lines),index+10)))
+                  chunks = [lines[index][-700:] for index in sorted(selected)]
+                  text = path.name + ': ' + '\n'.join(chunks)[-5500:]
+                  print('::error title=Emulator checkpoint::' + text.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
       - name: Surface bounded Gradle diagnostics
         if: failure()
         env:
@@ -132,7 +138,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v7
         with:
-          name: tamilan-store-preview
+          name: tamilan-store-debug-emulator-only
           path: tamilanstore/build/outputs/apk/debug/*.apk
           retention-days: 30
       - uses: actions/upload-artifact@v7

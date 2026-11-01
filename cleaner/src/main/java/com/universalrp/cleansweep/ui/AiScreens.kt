@@ -1035,7 +1035,8 @@ private fun VitalsGrid(
             )
             val chargingMinutes = com.universalrp.cleansweep.data.batteryTimeMinutes(battery)
             val etaValue = when {
-                battery.charging && battery.percent >= 100 -> tr("Full")
+                battery.fullChargeConfirmed -> tr("Full")
+                battery.powerConnected && battery.percent >= 100 -> tr("100% — charge completion not confirmed")
                 battery.charging -> chargingMinutes?.let { com.universalrp.cleansweep.data.formatMinutes(it) }
                     ?: tr("Estimating")
                 battery.powerConnected -> tr("Connected · not charging")

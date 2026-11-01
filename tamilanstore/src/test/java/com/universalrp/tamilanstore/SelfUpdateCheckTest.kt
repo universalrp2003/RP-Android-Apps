@@ -2,6 +2,7 @@ package com.universalrp.tamilanstore
 
 import org.json.JSONArray
 import org.json.JSONObject
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -61,4 +62,16 @@ class SelfUpdateCheckTest {
         assertEquals(100, SelfUpdateCheck.PAGE_SIZE)
         assertTrue(SelfUpdateCheck.MAX_RELEASE_PAGES in 1..10)
     }
+    @Test fun stableReleaseSupersedesItsRcButNotItselfOrANewerInstall() {
+        assertTrue(SelfUpdateCheck.isNewerRelease("0.9-rc1", "0.9"))
+        assertTrue(SelfUpdateCheck.isNewerRelease("0.9.0-rc2", "0.9"))
+        assertTrue(SelfUpdateCheck.isNewerRelease("0.8", "0.9"))
+        assertFalse(SelfUpdateCheck.isNewerRelease("0.9", "0.9"))
+        assertFalse(SelfUpdateCheck.isNewerRelease("0.10-rc1", "0.9"))
+        for (invalid in listOf("", "broken", "0.9-surprise", "0.99999999999999999999999")) {
+            assertFalse(SelfUpdateCheck.isNewerRelease(invalid, "0.9"))
+        }
+        assertFalse(SelfUpdateCheck.isNewerRelease("0.8", "0.9-rc1"))
+    }
+
 }

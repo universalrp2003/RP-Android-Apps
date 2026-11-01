@@ -262,6 +262,7 @@ fun VoiceNotesScreen(
 
     fun stopPlayback() {
         playbackRequest++
+        status = ""
         speaker.stop()
         playbackJob?.cancel()
         playbackJob = null
@@ -274,7 +275,7 @@ fun VoiceNotesScreen(
         if (wasPlaying) { status = ""; return }
         val request = playbackRequest
         speakingId = note.id
-        status = ""
+        status = tr("Preparing or playing HD voice. Tap Stop to cancel.", "HD குரல் தயாராகிறது அல்லது வாசிக்கப்படுகிறது. நிறுத்து பொத்தானால் ரத்து செய்யலாம்.")
         playbackJob = scope.launch {
             val ok = try {
                 val profile = NoteSpeech.profileFor(text = note.text, preferTamil = tamil)
@@ -289,9 +290,9 @@ fun VoiceNotesScreen(
                 // A cancelled/slow previous request must not clear the new note's Stop button.
                 if (request == playbackRequest) { speakingId = null; playbackJob = null }
             }
-            if (request == playbackRequest && !ok) status = tr(
-                "HD voice needs internet. No robotic voice fallback is used.",
-                "HD குரல் வாசிக்க இணையம் தேவை. ரோபோ குரலுக்கு மாறாது.",
+            if (request == playbackRequest) status = if (ok) "" else tr(
+                "HD playback could not complete. Check your connection or try again; the voice service may be unavailable. No robotic voice fallback is used.",
+                "HD குரல் வாசிப்பை முடிக்க முடியவில்லை. இணையத்தைச் சரிபார்க்கவும் அல்லது மீண்டும் முயலவும்; குரல் சேவை கிடைக்காமல் இருக்கலாம். ரோபோ குரலுக்கு மாறாது.",
             )
         }
     }

@@ -92,7 +92,8 @@ object ChargeNotifier {
 
         val isUnlimited = dataUsage?.isUnlimited5g == true
         val chargeStatusText = when {
-            battery.percent >= 100 -> t("Full")
+            battery.fullChargeConfirmed -> t("Full")
+            battery.percent >= 100 -> t("100% — charge completion not confirmed")
             battery.charging -> LiveChargingEta.estimate(battery)?.let { t("ETA %s", formatMinutes(it.minutesToFull)) }
             else -> null
         }
@@ -114,7 +115,8 @@ object ChargeNotifier {
         val minutes = runCatching { batteryTimeMinutes(battery) }.getOrNull()
         val duration = minutes?.let { formatMinutes(it) }
         val timeLine = when {
-            battery.percent == 100 -> t("Full")
+            battery.fullChargeConfirmed -> t("Full")
+            battery.percent == 100 -> t("100% — charge completion not confirmed")
             battery.charging && duration != null -> t("Estimated to 100% from recent charging: %s", duration)
             battery.charging -> t("Estimating charging time; more observations are needed.")
             battery.powerConnected -> t("Charging time unavailable while the battery is not charging.")
@@ -304,7 +306,8 @@ object ChargeNotifier {
             val language = Lang.languageIn(context)
             fun t(text: String, vararg args: Any) = Lang.translate(language, text, *args)
             val chargeStatusText = when {
-                battery.percent >= 100 -> t("Full")
+                battery.fullChargeConfirmed -> t("Full")
+            battery.percent >= 100 -> t("100% — charge completion not confirmed")
                 battery.charging -> LiveChargingEta.estimate(battery)?.let { t("ETA %s", formatMinutes(it.minutesToFull)) }
                 else -> null
             }

@@ -100,6 +100,13 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "100% — charge completion not confirmed" to "100% — சார்ஜ் நிறைவு உறுதியாகவில்லை",
+        "At or below %s%%, while running on battery." to "பேட்டரியில் இயங்கும்போது %s%% அல்லது அதற்குக் கீழே.",
+        "Low-battery warning: %s%%" to "பேட்டரி குறைவு எச்சரிக்கை: %s%%",
+        "Low-battery warning threshold, 10 to 40 percent" to "பேட்டரி குறைவு எச்சரிக்கை அளவு, 10 முதல் 40 சதவீதம்",
+        "Requires 100%, Android full status and a working current sensor near zero for 60 seconds. Unsupported phones stay silent; charger input power is not measured." to "100%, Android முழு சார்ஜ் நிலை மற்றும் செயல்படும் மின்னோட்ட சென்சாரில் 60 நொடிகள் பூஜ்ஜியத்திற்கு அருகில் இருக்க வேண்டும். ஆதரிக்காத போன்களில் ஒலிக்காது; சார்ஜரின் உள்ளீட்டு சக்தியை அளவிடாது.",
+        "Battery at or above %s°C. Processor-temperature speech is disabled." to "பேட்டரி %s°C அல்லது அதற்கு மேல். செயலி வெப்பக் குரல் அறிவிப்பு முடக்கப்பட்டுள்ளது.",
+
         "Bulletin interrupted; selected interval respected before retry" to "வாசிப்பு இடைநிறுத்தப்பட்டது; மீண்டும் முயல தேர்ந்தெடுத்த இடைவெளி பின்பற்றப்படும்",
         "Completed stories today" to "இன்று முழுமையாக வாசித்த செய்திகள்",
         "Last fully completed bulletin" to "கடைசியாக முழுமையாக முடித்த செய்தித் தொகுப்பு",

@@ -87,9 +87,20 @@ object AppGuides {
                 "பேட்டரி மற்றும் வெப்பம்",
                 "The battery figure and the temperature come from the phone's own sensors. Some phones do not " +
                     "report every value, and then the app says it is unavailable instead of guessing. The 44 °C " +
-                    "warning is a warning only: it does not stop any app or start any cooling.",
+                    "warning is battery-only: unreliable OEM CPU zones never trigger speech. Set the low-battery " +
+                    "slider from 10 to 40% in Voice. Full-charge speech requires a working current counter " +
+                    "observed charging earlier in this connection, Android FULL, 100% and near-zero battery " +
+                    "current (within 20 mA) for 60 seconds. Zero-only or unavailable counters stay silent. " +
+                    "Keep monitoring active; interrupted observations must start again. This is not charger " +
+                    "input power. The warning does not stop any app or start cooling.",
                 "பேட்டரி அளவும் வெப்பநிலையும் போனின் சென்சார்களிலிருந்தே வருகின்றன. சில போன்கள் எல்லா மதிப்புகளையும் " +
                     "தருவதில்லை; அப்போது ஊகிக்காமல் 'கிடைக்கவில்லை' என்று காட்டும். 44 °C எச்சரிக்கை எச்சரிக்கை மட்டுமே: " +
+                    "பேட்டரிக்கு மட்டும். நம்பகமற்ற OEM செயலி சென்சாரால் குரல் எச்சரிக்கை வராது. குரல் பகுதியில் " +
+                    "பேட்டரி குறைவு அளவை 10 முதல் 40% வரை மாற்றலாம். இணைத்ததிலிருந்து முன்பு மின்னோட்டம் " +
+                    "இருந்ததை அளந்த செயல்படும் சென்சார், Android முழு சார்ஜ் நிலை, 100% மற்றும் 60 நொடிகள் " +
+                    "பூஜ்ஜியத்திற்கு அருகில் (20 mA வரம்பில்) பேட்டரி மின்னோட்டம் இருந்தால்தான் நிறைவு ஒலிக்கும். " +
+                    "எப்போதும் பூஜ்ஜியம் அல்லது அளவு கிடைக்காத சென்சாரில் ஒலிக்காது. கண்காணிப்பு செயலில் இருக்க " +
+                    "வேண்டும்; இடைநிறுத்தப்பட்ட அளவீடு மீண்டும் தொடங்கும். இது சார்ஜர் உள்ளீட்டு சக்தி அல்ல. " +
                     "எந்தச் செயலியையும் நிறுத்தாது, குளிர்விக்கவும் செய்யாது.",
             ),
             topic(
@@ -151,13 +162,13 @@ object AppGuides {
                 "Voice announcements and calls",
                 "குரல் அறிவிப்புகள் மற்றும் அழைப்புகள்",
                 "Voice defaults ON with 10 Studio Ultra-HD online voices (5 Male + 5 Female) and automatic daily " +
-                    "Male ↔ Female rotation, falling back automatically to your phone's installed Android TTS " +
-                    "voice whenever offline. It can tell you about charging, heat, transport changes (Wi-Fi ⇄ " +
+                    "Male ↔ Female rotation. Only online HD voices are used; offline or service failures wait " +
+                    "without a robotic fallback. It can tell you about charging, battery heat, transport changes (Wi-Fi ⇄ " +
                     "mobile) and 4G ⇄ 5G hops in Tamil or English. Nothing is ever spoken during a phone call: " +
                     "announcements wait and show \"Blocked: phone call in progress\".",
                 "குரல் அறிவிப்பு இயல்பாகவே (Default ON) 10 ஸ்டுடியோ Ultra-HD ஆன்லைன் குரல்களுடன் (5 ஆண் + 5 பெண்) " +
-                    "தினமும் ஆண் ↔ பெண் தானியங்கி மாற்றத்துடன் இயங்கும்; இணையம் இல்லாதபோது போனின் சிஸ்டம் TTS " +
-                    "குரலுக்குத் தானாக மாறும். சார்ஜிங், வெப்பம், Wi-Fi ⇄ மொபைல் மற்றும் 4G ⇄ 5G மாற்றங்களைத் " +
+                    "தினமும் ஆண் ↔ பெண் தானியங்கி மாற்றத்துடன் இயங்கும். ஆன்லைன் HD குரல் மட்டுமே; இணையம் அல்லது " +
+                    "சேவை கிடைக்காதபோது இயந்திரக் குரலுக்கு மாறாமல் காத்திருக்கும். சார்ஜிங், பேட்டரி வெப்பம், Wi-Fi ⇄ மொபைல் மற்றும் 4G ⇄ 5G மாற்றங்களைத் " +
                     "தமிழ் அல்லது ஆங்கிலத்தில் கூறும். தொலைபேசி அழைப்பின்போது எதுவும் ஒலிக்காது (\"தடுக்கப்பட்டது: " +
                     "தொலைபேசி அழைப்பு நடைபெறுகிறது\").",
             ),

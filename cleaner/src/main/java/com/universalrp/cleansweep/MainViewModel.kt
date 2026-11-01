@@ -265,6 +265,7 @@ data class UiState(
     /** True while an HD announcement is actually playing, for the global stop button. */
     val voiceSpeaking: Boolean = false,
     val voiceBatteryLow: Boolean = true,
+    val voiceLowPercent: Int = Announcer.LOW_PERCENT,
     val voiceBatteryFull: Boolean = true,
     val voiceOverheat: Boolean = true,
     val voiceCharging: Boolean = true,
@@ -1531,6 +1532,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(voiceOn = on) }
     }
 
+    fun setVoiceLowPercent(value: Int) {
+        Announcer.setLowPercent(ctx, value)
+        mutate { it.copy(voiceLowPercent = Announcer.lowPercent(ctx)) }
+    }
+
     fun setVoiceEvent(event: Announcer.Event, on: Boolean) {
         Announcer.setAllows(ctx, event, on)
         // v2.7: muting the answers is also the Stop button — anything being read out halts
@@ -1549,6 +1555,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             it.copy(
                 voiceOn = Announcer.enabled(ctx),
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
+                voiceLowPercent = Announcer.lowPercent(ctx),
                 voiceBatteryFull = Announcer.allows(ctx, Announcer.Event.BATTERY_FULL),
                 voiceOverheat = Announcer.allows(ctx, Announcer.Event.OVERHEAT),
                 voiceCharging = Announcer.allows(ctx, Announcer.Event.CHARGING),
@@ -1726,6 +1733,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 silentPlaceSlots = Announcer.silentPlaceSlots(ctx),
                 voiceSpeaking = Announcer.speaking.value,
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
+                voiceLowPercent = Announcer.lowPercent(ctx),
                 voiceBatteryFull = Announcer.allows(ctx, Announcer.Event.BATTERY_FULL),
                 voiceOverheat = Announcer.allows(ctx, Announcer.Event.OVERHEAT),
                 voiceCharging = Announcer.allows(ctx, Announcer.Event.CHARGING),

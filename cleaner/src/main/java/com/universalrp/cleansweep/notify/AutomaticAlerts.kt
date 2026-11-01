@@ -26,6 +26,15 @@ object AutomaticAlerts {
     private var knownTransport: String? = null
     @Volatile private var generation = 0
     private val networkRefresh = Runnable { context?.let { observeNetwork(it) } }
+    // Poll only while an existing UI/service owner is active. Near-zero current may not
+    // cause another BATTERY_CHANGED broadcast, so the 60-second check must not rely on one.
+    private val batteryRefresh = object : Runnable {
+        override fun run() {
+            if (!registered) return
+            context?.let { sampleBattery(it) }
+            main.postDelayed(this, 10_000L)
+        }
+    }
     private val callback = object : ConnectivityManager.NetworkCallback() {
         override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) { changed() }
         override fun onAvailable(network: Network) { changed() }
@@ -58,12 +67,14 @@ object AutomaticAlerts {
         runCatching { context.applicationContext.registerReceiver(chargingReceiver, powerFilter) }
         runCatching { context.applicationContext.registerReceiver(screenReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF)) }
         observerState.value = VoiceObserverStatus(owners.size, battery, network, power)
+        main.postDelayed(batteryRefresh, 10_000L)
     } }
 
     fun stop(owner: String) { main.post {
         owners.remove(owner)
         if (owners.isNotEmpty() || !registered) { observerState.value = observerState.value.copy(owners = owners.size); return@post }
         registered = false; generation++
+        main.removeCallbacks(batteryRefresh)
         main.removeCallbacks(networkRefresh)
         runCatching { connectivity?.unregisterNetworkCallback(callback) }
         runCatching { context?.unregisterReceiver(batteryReceiver) }
@@ -107,12 +118,12 @@ object AutomaticAlerts {
                 if (VoiceDeliveryPolicy.cooldownReady(now, prefs.getLong(key, 0), interval))
                     Announcer.speak(context, english, tamil, event, onStarted = { prefs.edit().putLong(key, System.currentTimeMillis()).apply() })
             }
-            if (!battery.powerConnected && battery.percent in 0 until Announcer.LOW_PERCENT)
+            if (com.universalrp.cleansweep.data.BatteryAlertPolicy.low(battery.percent, battery.powerConnected, Announcer.lowPercent(context)))
                 alert(Announcer.KEY_LAST_LOW, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_LOW,
                     "Battery low: ${battery.percent} percent. Please recharge.", "பேட்டரி குறைவு: ${battery.percent} சதவீதம். சார்ஜ் செய்யவும்.")
-            if (battery.powerConnected && battery.percent >= 100)
+            if (battery.fullChargeConfirmed)
                 alert(Announcer.KEY_LAST_FULL, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_FULL,
-                    "The battery has reached 100 percent.", "பேட்டரி முழுமை அடைந்தது. சார்ஜரை அகற்றவும்.")
+                    "Battery charge completion confirmed. Unplug when convenient.", "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்.")
             if ((battery.temperatureC ?: -100f) >= Announcer.HOT_BATTERY_C)
                 alert(Announcer.KEY_LAST_HOT, 3 * 60 * 60 * 1000L, Announcer.Event.OVERHEAT,
                     "The battery is running hot. Please review charging and phone use.", "பேட்டரி அதிக வெப்பமாக உள்ளது. சார்ஜ் மற்றும் போன் பயன்பாட்டை சரிபார்க்கவும்.")

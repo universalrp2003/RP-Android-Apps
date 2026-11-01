@@ -1,6 +1,6 @@
 package com.universalrp.voicenotes
 
-import android.media.MediaPlayer
+import android.media.AudioAttributes
 import com.universalrp.voice.SharedNeuralVoiceEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
@@ -24,7 +24,7 @@ import java.io.File
 class VoiceNoteSpeaker internal constructor(
     private val cacheDir: File,
     private val synthesize: (String, String, String) -> ByteArray? = { text, voice, pitch ->
-        SharedNeuralVoiceEngine.synthesizeRawMp3(text = text, voiceName = voice, pitch = pitch)
+        NoteHdVoice.synthesize(text, voice, pitch)
     },
     private val playAudio: ((ByteArray, () -> Boolean) -> Boolean)? = null,
 ) {
@@ -40,7 +40,7 @@ class VoiceNoteSpeaker internal constructor(
      */
     suspend fun speak(text: String, voiceId: String, pitch: String): Boolean {
         val requestGeneration = generation.get()
-        val chunks = NoteSpeech.chunk(text)
+        val chunks = NoteSpeech.chunk(text, maxChars = NoteHdVoice.MAX_CHARS)
         if (chunks.isEmpty() || voiceId.isBlank()) return false
         return playbackMutex.withLock {
             for (chunk in chunks) {
@@ -67,21 +67,14 @@ class VoiceNoteSpeaker internal constructor(
         val file = File.createTempFile("voice-note-", ".mp3", cacheDir)
         return runCatching {
             file.writeBytes(bytes)
-            val player = MediaPlayer()
-            try {
-                player.setDataSource(file.absolutePath)
-                player.prepare()
-                if (generation.get() != requestGeneration) return@runCatching false
-                player.start()
-                // Block until the clip ends, so chunks are spoken in order rather than over each
-                // other. A cancelled coroutine interrupts this wait.
-                while (generation.get() == requestGeneration && player.isPlaying) {
-                    Thread.sleep(50)
-                }
-            } finally {
-                runCatching { player.release() }
-            }
-            generation.get() == requestGeneration
+            SharedNeuralVoiceEngine.playMp3FileBlocking(
+                file = file, volumeScalar = 1f,
+                audioAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build(),
+                shouldStop = { generation.get() != requestGeneration },
+                maxDurationMs = 180_000L,
+            )
         }.getOrElse { false }.also { file.delete() }
     }
 }

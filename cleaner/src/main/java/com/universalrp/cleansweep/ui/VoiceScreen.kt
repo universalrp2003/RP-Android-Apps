@@ -53,6 +53,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.UiState
 import com.universalrp.cleansweep.data.tr
@@ -644,16 +646,28 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 )
                 VoiceSwitch(
                     title = tr("Battery low"),
-                    subtitle = tr("Under %s%%, while the phone is running on the battery.")
-                        .format(Announcer.LOW_PERCENT),
+                    subtitle = tr("At or below %s%%, while running on battery.").format(state.voiceLowPercent),
                     icon = Icons.Outlined.BatteryAlert,
                     tint = DangerRed,
                     checked = state.voiceBatteryLow,
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.BATTERY_LOW, it) },
                 )
+                var lowSlider by remember(state.voiceLowPercent) { mutableStateOf(state.voiceLowPercent.toFloat()) }
+                Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                    Text(tr("Low-battery warning: %s%%").format(lowSlider.toInt()), style = MaterialTheme.typography.bodyMedium)
+                    androidx.compose.material3.Slider(
+                        value = lowSlider,
+                        onValueChange = { lowSlider = kotlin.math.round(it) },
+                        onValueChangeFinished = { vm.setVoiceLowPercent(lowSlider.toInt()) },
+                        valueRange = 10f..40f, steps = 29,
+                        modifier = Modifier.fillMaxWidth().semantics {
+                            contentDescription = tr("Low-battery warning threshold, 10 to 40 percent")
+                        },
+                    )
+                }
                 VoiceSwitch(
                     title = tr("Battery full"),
-                    subtitle = tr("When the charge reaches 100% — a reminder to unplug."),
+                    subtitle = tr("Requires 100%, Android full status and a working current sensor near zero for 60 seconds. Unsupported phones stay silent; charger input power is not measured."),
                     icon = Icons.Outlined.BatteryFull,
                     tint = GoodGreen,
                     checked = state.voiceBatteryFull,
@@ -661,8 +675,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 )
                 VoiceSwitch(
                     title = tr("Running hot"),
-                    subtitle = tr("Battery above %s°C or the processor above %s°C.")
-                        .format(Announcer.HOT_BATTERY_C.toInt(), Announcer.HOT_CPU_C.toInt()),
+                    subtitle = tr("Battery at or above %s°C. Processor-temperature speech is disabled.")
+                        .format(Announcer.HOT_BATTERY_C.toInt()),
                     icon = Icons.Outlined.Thermostat,
                     tint = WarnAmber,
                     checked = state.voiceOverheat,

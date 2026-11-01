@@ -76,4 +76,23 @@ class VoiceNoteSpeakerTest {
             assertEquals(0, played.get())
         } finally { release.countDown(); speaker.stop(); dir.deleteRecursively() }
     }
+    @Test fun longNotesUseSmallCompleteSequentialClipsAndStopOnSynthesisFailure() = runBlocking {
+        val dir = Files.createTempDirectory("voice-speaker-test").toFile()
+        val text = "A synthetic long note sentence. ".repeat(100)
+        val received = mutableListOf<String>()
+        val expected = NoteSpeech.chunk(text, maxChars = NoteHdVoice.MAX_CHARS)
+        val speaker = VoiceNoteSpeaker(dir, { chunk, _, _ -> received.add(chunk); byteArrayOf(1) }, { _, _ -> true })
+        try {
+            assertTrue(speaker.speak(text, "en-IN-PrabhatNeural", "+0Hz"))
+            assertEquals(expected, received)
+            assertTrue(received.size > 1)
+            assertTrue(received.all { it.length <= 300 })
+            assertEquals(text.trim().replace(Regex("\\s+"), " "), received.joinToString(" ").replace(Regex("\\s+"), " "))
+            var calls = 0
+            val failing = VoiceNoteSpeaker(dir, { _, _, _ -> if (++calls == 2) null else byteArrayOf(1) }, { _, _ -> true })
+            assertFalse(failing.speak(text, "en-IN-PrabhatNeural", "+0Hz"))
+            assertEquals(2, calls)
+        } finally { speaker.stop(); dir.deleteRecursively() }
+    }
+
 }
