@@ -1,0 +1,9 @@
+# Tamilan Store0.8 verification and publication receipt
+
+Publication authorized: yes. Owner asked to find DailyVault images in the supplied Drive folder, improve Tamilan Store presentation/scroll text, build and publish, update the website and verify everything. Scope is Store0.8/code8 and public listing images, not replacement APKs for accepted SMS/Radio/LG/DailyVault or the held Oor candidate.
+
+Seven DailyVault JPEGs were listed/downloaded through the connected Drive tool. Originals moved out of the repository to `/tmp/dailyvault-drive-originals` immediately. Visual review: zero/empty records, blank spending/note forms, backup guidance; no backup password or personal record visible. Re-encoded metadata-free copies populate website hero plus6 gallery screens and the7-image Store gallery. Six reviewed SMS images remain included; raw inbox/financial summaries remain private. Three embedded thumbnail rectangles in Store website images are opaquely masked with an explicit caption. No Drive sharing permission changed; source privacy-sensitive originals are not committed.
+
+Refreshed native header: static gradient, bilingual welcome/catalog count and a gentle marquee. Local persistent motion switch, lifecycle/system-animation/touch-exploration guards, static wrapping and full accessibility text. No flashing, sound or new network feed. Existing download/signature/package/version/downgrade gates, pending transfers, contextual installation permission and Android user consent are preserved. Manifest and permissions unchanged; same signing key/package.
+
+Pending actual native candidate, exact signed-APK Android35 showcase/update/gallery test, separate existing archive/installer instrumentation, package/signature/actual permission delta, artifact/hash, publication, CI-before-merge, main Pages and live verification. Public pointers remain Store0.7 until exact0.8 bytes are published and verified. No physical-phone/Google clearance for0.8 claimed.

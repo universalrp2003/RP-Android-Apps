@@ -9,9 +9,6 @@ import android.os.Bundle
 import android.os.Build
 import android.Manifest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.draw.paint
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -73,6 +70,7 @@ class MainActivity : ComponentActivity() {
             val model: StoreModel = viewModel()
             val transfer by model.transfer.collectAsStateWithLifecycle()
             var tamil by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("tamil", true)) }
+            var motionEnabled by rememberSaveable { mutableStateOf(getPreferences(0).getBoolean("store_motion_v1", true)) }
             var showSelfUpdate by rememberSaveable { mutableStateOf(false) }
             var checkingSelf by remember { mutableStateOf(false) }
             var selfMessage by remember { mutableStateOf("") }
@@ -113,13 +111,12 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     LazyColumn(Modifier.safeDrawingPadding().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         item {
-                            Row(Modifier.fillMaxWidth().paint(painterResource(R.drawable.tamil_landscape), sizeToIntrinsics = false, contentScale = ContentScale.FillBounds), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Column(Modifier.weight(1f).padding(top = 14.dp)) {
-                                    Text(bi("தமிழன்", "Tamilan"), style = MaterialTheme.typography.headlineSmall)
-                                    Text(bi("செயலி அங்காடி", "App store"), style = MaterialTheme.typography.labelMedium)
-                                }
-                                TextButton(onClick = { tamil = !tamil; getPreferences(0).edit().putBoolean("tamil", tamil).apply() }) { Text(if (tamil) "English" else "தமிழ்") }
-                            }
+                            StoreShowcase(tamil, model.apps.size, motionEnabled,
+                                onMotionChanged = { enabled ->
+                                    motionEnabled = enabled
+                                    getPreferences(0).edit().putBoolean("store_motion_v1", enabled).apply()
+                                },
+                                onLanguage = { tamil = !tamil; getPreferences(0).edit().putBoolean("tamil", tamil).apply() })
                         }
                         item {
                             Row(Modifier.horizontalScroll(rememberScrollState())) {
@@ -169,7 +166,7 @@ class MainActivity : ComponentActivity() {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(bi("உருவாக்கம்: ரமேஷ்பிரதாப் R · RP Ideas. மென்பொருள் உதவி: Arena.ai Agent Mode.", "Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode."))
                                 TextButton(onClick = { open("https://github.com/universalrp2003/RP-Android-Apps") }) { Text(bi("மூல நிரல் / GitHub", "Source / GitHub")) }
-                                Text(bi("தமிழன் · 0.7. நமது 13 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.7. Our 13 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
+                                Text(bi("தமிழன் · 0.8. நமது 13 செயலிகள். கணக்கு, விளம்பரம் இல்லை.", "Tamilan · 0.8. Our 13 apps, no account or ads."), style = MaterialTheme.typography.bodySmall)
                                 Text(bi("சேர்க்கப்பட்ட பட்டியல்: 30 அக்டோபர் 2026. இணையம் இருந்தால் வெளியீட்டுப் பட்டியல் புதுப்பிக்கப்படும். நிறுவிய பதிப்புகள் சாதனத்தில் மட்டும் ஒப்பிடப்படும். நிறுவியவுடன் திரும்பினால் நிலை புதுப்பிக்கும்.", "Bundled catalog: 30 October 2026. Public release metadata refreshes when online. Installed versions are compared locally; status refreshes when returning from installation."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(onClick = {
                                     val enable = !UpdateNotifications.enabled(this@MainActivity)

@@ -20,7 +20,7 @@ class StoreCertificateRegression(unittest.TestCase):
 
     def test_published_store_matches_the_exact_verified_release(self):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.7", publishedVersion = "0.7"', text)
+        self.assertIn('tagPrefix = "tamilan-store", version = "0.8", publishedVersion = "0.7"', text)
         site = (ROOT/'site/index.html').read_text()
         self.assertIn('tamilan-store-v0.7/Tamilan-Store-v0.7.apk', site)
         self.assertIn('b6618ea5e101c23ce4aada39b28820e9840bd1eede03140ff2582255fe4fd8fe', site)

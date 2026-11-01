@@ -29,7 +29,11 @@ fun AppScreenshots(appId: String, tamil: Boolean) {
         Text(if(tamil)"திரைப் படங்கள் விரைவில் · உண்மையான படங்கள் இன்னும் சேர்க்கப்படவில்லை." else "Screenshots pending · real app screens not yet supplied.",style=MaterialTheme.typography.labelSmall)
         return
     }
-    Text(if(tamil)"முந்தைய செயலித் திரைகள் · பெரிதாக்கத் தொடவும்" else "Earlier app screens · tap to enlarge",style=MaterialTheme.typography.labelSmall)
+    Text(if(appId == "smsguard" || appId == "dailyvault") {
+        if(tamil) "உரிமையாளர் அளித்த திரைகள் · பெரிதாக்கத் தொடவும்" else "Owner-supplied app screens · tap to enlarge"
+    } else {
+        if(tamil) "முந்தைய செயலித் திரைகள் · பெரிதாக்கத் தொடவும்" else "Earlier app screens · tap to enlarge"
+    },style=MaterialTheme.typography.labelSmall)
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
         files.forEachIndexed { index,name ->
             // Decode to thumbnail dimensions, not full-res for each card.

@@ -165,7 +165,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.7", publishedVersion = "0.7",
+            tagPrefix = "tamilan-store", version = "0.8", publishedVersion = "0.7",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
