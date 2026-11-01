@@ -6,12 +6,20 @@ set -euo pipefail
 [[ "$(adb shell getprop ro.kernel.qemu | tr -d '\r')" == 1 ]]
 root="$RUNNER_TEMP/launcher-home"
 pkg=com.universalrp.launcher
+mkdir -p "$root"
+exec > >(tee "$root/smoke.log") 2>&1
+trap 'rc=$?; echo "ERROR: smoke line $LINENO (status $rc)" >&2' ERR
+package_uid() {
+    adb shell cmd package list packages -U --user 0 "$pkg" | tr -d '\r' |
+        awk -v target="package:$pkg" '$1 == target && $2 ~ /^uid:[0-9]+$/ {sub(/^uid:/, "", $2); print $2}'
+}
 adb root
 adb wait-for-device
 # Preserve the actual failing status, even while collecting bounded synthetic UI evidence.
 trap 'status=$?; trap - EXIT; adb pull /sdcard/Android/data/com.universalrp.launcher/files/. "$root/ui/" || true; exit "$status"' EXIT
 adb install "$root/Elderly-Launcher-v1.5.apk"
-before="$(adb shell dumpsys package "$pkg" | grep 'userId=' | head -1 | tr -d '\r')"
+before="$(package_uid)"
+[[ "$before" =~ ^[0-9]+$ ]]
 adb shell "mkdir -p /data/user/0/$pkg/files /data/user/0/$pkg/shared_prefs"
 adb shell "echo synthetic-launcher-upgrade > /data/user/0/$pkg/files/upgrade-fixture.txt"
 adb shell "echo '<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?><map><boolean name=\"asked_for_home\" value=\"true\" /></map>' > /data/user/0/$pkg/shared_prefs/launcher.xml"
@@ -22,7 +30,7 @@ adb shell "chown -R $owner:$owner /data/user/0/$pkg/files /data/user/0/$pkg/shar
 contact_before="$(adb shell sha256sum /data/user/0/$pkg/shared_prefs/launcher_favourites.xml)"
 adb install -r "$root/Elderly-Launcher-v1.6.apk"
 [[ "$contact_before" == "$(adb shell sha256sum /data/user/0/$pkg/shared_prefs/launcher_favourites.xml)" ]]
-after="$(adb shell dumpsys package "$pkg" | grep 'userId=' | head -1 | tr -d '\r')"
+after="$(package_uid)"
 [[ -n "$before" && "$before" == "$after" ]]
 adb install -r "$(find launcher/build/outputs/apk/androidTest/release -name '*.apk' | head -1)"
 adb shell am instrument -w -r -e class com.universalrp.launcher.HomeFollowupTest \

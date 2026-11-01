@@ -93,7 +93,7 @@ jobs:
         run: |
           import os,pathlib
           root=pathlib.Path(os.environ['RUNNER_TEMP'])
-          for path in [root/'launcher-home-build.log', root/'launcher-home/native.txt', root/'launcher-home/restart.txt']:
+          for path in [root/'launcher-home-build.log', root/'launcher-home/smoke.log', root/'launcher-home/native.txt', root/'launcher-home/restart.txt']:
               if not path.exists():continue
               lines=path.read_text(errors='replace').splitlines()
               chosen=[s for s in lines if any(k in s for k in ('e:', 'FAILURE:', 'AssertionError', 'Error:', 'Exception:'))]
