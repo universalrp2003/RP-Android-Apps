@@ -21,8 +21,8 @@ class HomeFollowupTest {
     private val device = UiDevice.getInstance(instrumentation)
     private fun find(label: String): androidx.test.uiautomator.UiObject2 {
         repeat(12) {
-            (device.wait(Until.findObject(By.text(label)), 500)
-                ?: device.findObject(By.desc(label)))?.let { return it }
+            (device.findObject(By.desc(label))
+                ?: device.wait(Until.findObject(By.text(label)), 500))?.let { return it }
             device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 0.7f)
         }
         device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "failure.xml"))
@@ -85,10 +85,14 @@ class HomeFollowupTest {
         val oldScale = device.executeShellCommand("settings get system font_scale").trim()
         try {
             device.executeShellCommand("settings put system font_scale 2.0")
-            ActivityScenario.launch(MainActivity::class.java).use {
+            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+                scenario.onActivity { assertEquals(2f, it.resources.configuration.fontScale, 0.01f) }
                 resetScroll()
                 shot("04-large-font-clock")
-                find(context.getString(R.string.volume_down)); find(context.getString(R.string.volume_up))
+                val largeMinus = find(context.getString(R.string.volume_down))
+                val largePlus = find(context.getString(R.string.volume_up))
+                assertEquals(largeMinus.visibleBounds.centerY(), largePlus.visibleBounds.centerY())
+                assertEquals(largeMinus.visibleBounds.height(), largePlus.visibleBounds.height())
                 shot("05-large-font-volume")
                 find(context.getString(R.string.favourite_apps_add))
                 shot("06-large-font-favourites")

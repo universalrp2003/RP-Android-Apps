@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -382,11 +384,11 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     }
                     Text(text = volumeReadout(), color = Muted, fontSize = 14.sp,
                         textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(modifier = Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         for (up in listOf(false, true)) {
                             val label = context.getString(if (up) R.string.volume_up else R.string.volume_down)
                             BigButton(label = label, symbol = if (up) "+" else "−",
-                                height = 0, background = CardBg, modifier = Modifier.weight(1f), onClick = {
+                                height = 0, background = CardBg, modifier = Modifier.weight(1f).fillMaxHeight(), onClick = {
                                     val result = LauncherActions.nudgeVolume(context, up)
                                     if (result is LauncherActions.Result.Failed) notice = context.getString(R.string.volume_unavailable)
                                 })
