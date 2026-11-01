@@ -65,11 +65,11 @@ or downloaded art. Material guidance favors clear hierarchy and grouped actions 
   These are not Android runtime or security-audit evidence.
 - Added six native JVM queue/evidence tests: serial order, illegal transitions, cancellation,
   permission/background pauses, bounded immutable plans, process-death default, all 13
-  entries, and signer/name/versionCode evidence boundaries. Execution pending Android CI.
+  entries, and signer/name/versionCode evidence boundaries. All six passed in Android CI (receipt below).
 - Added native Android15 test: compact Tamil/English UI, expandable gallery, actual consent
   cancellation, first Android prompt cancellation → pause, explicit resume, **two sequential
   confirmed same-key public-fixture updates** (Radio1.29→1.31, DailyVault0.4→0.5), and 200%
-  font-scale screenshots. Execution pending CI; tests are not results.
+  font-scale screenshots. Passed in Android CI (receipt below); not a physical-phone result.
 - Existing archive tamper/identity/signer and read-only handoff tests stay enabled. All fixture
   installation/removal is restricted to the existing guarded, fresh CI emulator; never owner data.
 - Read-only preview workflow only. Legacy Store0.8 publisher now fails closed before signing
@@ -84,3 +84,31 @@ or downloaded art. Material guidance favors clear hierarchy and grouped actions 
 Physical-phone/OEM installer behavior, Android8, 320dp screens, TalkBack interaction, unknown-source
 denial, network interruption, low storage, actual process kill and signature/downgrade integration
 remain explicit follow-ups. A successful CI run cannot settle the outstanding Play Protect report.
+
+## CI receipt — 1 November 2026, 07:07:40 UTC
+
+[Read-only preview run 41283159703](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41283159703)
+**SUCCESS**, job **124779032975**, tested application source commit
+`2feb88c1e7038ff4bdac3023beeb28d43279e394`. Unit tests, debug lint, debug compilation,
+instrumentation compilation and guarded Android15 emulator phases all passed. In particular,
+the redesign's native test has no skip/assumption path: it reviews/cancels consent, cancels
+Android's first prompt, explicitly resumes, installs Radio1.31 followed by DailyVault0.5,
+and checks each package's expected versionCode/name and pinned signer before completion.
+The six new JVM state/evidence tests run with the existing module suite. The native UI test
+also opens the gallery, switches languages, checks rotation retention and captures both
+languages at 200% font scaling. This does **not** cover every pending case listed above.
+
+Run artifacts (available through the run page; retention applies):
+
+| Artifact | ID | ZIP bytes | GitHub-reported archive SHA-256 (not an APK hash) |
+| --- | --- | ---: | --- |
+| `tamilan-store-emulator-evidence` | 13073998526 | 3,241,107 | `a5274b0f1b88c8ac3e1666782839235b10caccfa1831e3f2ee1d23189894282b` |
+| `tamilan-store-test-reports` | 13074322679 | 49,629 | `add3a15a5c0d67f7675e3cac958044976287e6b2c713da29e6298fb9f8e777c2` |
+| `tamilan-store-preview` (debug-key artifact, not a release upgrade) | 13073784068 | 24,122,717 | `a95aea6b71d727b1c652b1ccd18c469748080d52d3bb2383487e4600bfded21c` |
+
+The agent verified success via Actions job/step status and artifact metadata. Sandbox network
+restrictions prevented downloading the signed artifact/log URLs, so the captured screenshots
+have **not** been independently visually inspected here; use the evidence artifact to review
+the real native rendering. There is no fabricated browser mockup or claimed screenshot review.
+The legacy Store/DailyVault publisher run **41283159583** was **skipped**, as intended.
+No release or website deployment was requested or performed.
