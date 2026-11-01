@@ -9,6 +9,7 @@ import runpy
 import subprocess
 import sys
 import time
+import xml.etree.ElementTree as ET
 
 HELPERS = runpy.run_path('tamilanstore/tools/signed-upgrade-smoke.py', run_name='ci_helpers')
 adb = HELPERS['adb']
@@ -70,6 +71,14 @@ def main(module):
     time.sleep(2)
     assert adb('shell', 'pidof', package).strip()
     assert adb('shell', 'cat', f'{data}/files/{filename}').strip() == fixture.read_text().strip()
+    restored = ET.fromstring(adb('shell', 'cat', f'{data}/shared_prefs/{prefs_name}.xml'))
+    settings = {node.get('name'): node.get('value') for node in restored}
+    if module == 'voicenotes':
+        assert settings.get('hd_voice_disclosure_acknowledged') == 'false'
+        assert settings.get('app_lock') == 'false'
+    else:
+        assert settings.get('voice_low_percent') == '33'
+        assert settings.get('voice_battery_low') == 'false'
     if module == 'voicenotes':
         test_apks = list(Path(module+'/build/outputs/apk/androidTest/release').glob('*.apk')); assert len(test_apks) == 1
         adb('install', str(test_apks[0]))
@@ -88,4 +97,11 @@ def main(module):
     (root/'verification.json').write_text(json.dumps(receipt, indent=2)+'\n')
     print('::notice title=Exact signed upgrade and playback::'+json.dumps(receipt))
 
-if __name__ == '__main__': main(sys.argv[1])
+if __name__ == '__main__':
+    try: main(sys.argv[1])
+    except Exception as error:
+        import traceback
+        detail = traceback.format_exc()
+        if isinstance(error, subprocess.CalledProcessError): detail += str(error.output)[-1500:]
+        print('::error title=Exact update/native playback::'+detail[-4000:].replace('%','%25').replace('\n','%0A'),flush=True)
+        raise

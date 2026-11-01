@@ -40,7 +40,7 @@ class VoiceNoteSpeaker internal constructor(
      */
     suspend fun speak(text: String, voiceId: String, pitch: String): Boolean {
         val requestGeneration = generation.get()
-        val chunks = NoteSpeech.chunk(text)
+        val chunks = NoteSpeech.chunk(text, maxChars = NoteHdVoice.MAX_CHARS)
         if (chunks.isEmpty() || voiceId.isBlank()) return false
         return playbackMutex.withLock {
             for (chunk in chunks) {
