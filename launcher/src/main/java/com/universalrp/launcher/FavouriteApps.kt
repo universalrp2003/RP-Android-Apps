@@ -14,7 +14,7 @@ object FavouriteApps {
             array.opt(it) as? String
         })
     }.getOrDefault(emptyList())
-    fun load(context: Context): List<String> = decode(context.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(KEY, null))
+    fun load(context: Context): List<String> = decode(runCatching { context.getSharedPreferences(FILE, Context.MODE_PRIVATE).getString(KEY, null) }.getOrNull())
     private fun save(context: Context, packages: List<String>) {
         context.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
             .putString(KEY, JSONArray(FavouriteAppPolicy.clean(packages)).toString()).apply()

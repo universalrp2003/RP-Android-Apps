@@ -37,6 +37,18 @@ class HomeFollowupTest {
         device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "$name.xml"))
     }
     @Test fun signedUpdatePreservesPrivateDataAndNewHomeControlsWork() {
+        val label = context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo("com.android.settings", 0)).toString()
+        if (InstrumentationRegistry.getArguments().getString("phase") == "restart") {
+            assertEquals(listOf("com.android.settings"), FavouriteApps.load(context))
+            assertEquals("Synthetic contact", Favourites.load(context).single().name)
+            ActivityScenario.launch(MainActivity::class.java).use {
+                find(context.getString(R.string.favourite_apps_remove, label)).click()
+                device.waitForIdle()
+                assertTrue(FavouriteApps.load(context).isEmpty())
+            }
+            assertEquals("Synthetic contact", Favourites.load(context).single().name)
+            return
+        }
         assertEquals("synthetic-launcher-upgrade", File(context.filesDir, "upgrade-fixture.txt").readText().trim())
         assertTrue(context.getSharedPreferences("launcher", 0).getBoolean("asked_for_home", false))
         // Synthetic contact setup only, never click its calling button or the emergency button.
@@ -56,7 +68,6 @@ class HomeFollowupTest {
             shot("02-adjacent-volume-with-levels")
             find(context.getString(R.string.favourite_apps_add)).click()
             assertNotNull(device.wait(Until.findObject(By.text(context.getString(R.string.favourite_apps_pick))), 10_000))
-            val label = context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo("com.android.settings", 0)).toString()
             find(label).click()
             instrumentation.waitForIdleSync()
             assertEquals(listOf("com.android.settings"), FavouriteApps.load(context))
@@ -90,5 +101,6 @@ class HomeFollowupTest {
         assertTrue(FavouriteApps.load(context).isEmpty())
         assertEquals("Synthetic contact", Favourites.load(context).single().name)
         assertEquals("synthetic-launcher-upgrade", File(context.filesDir, "upgrade-fixture.txt").readText().trim())
+        assertTrue(FavouriteApps.add(context, "com.android.settings"))
     }
 }

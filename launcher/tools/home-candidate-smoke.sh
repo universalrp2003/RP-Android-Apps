@@ -29,6 +29,11 @@ adb shell am instrument -w -r -e class com.universalrp.launcher.HomeFollowupTest
   com.universalrp.launcher.test/androidx.test.runner.AndroidJUnitRunner | tee "$root/native.txt"
 grep -q '^OK (' "$root/native.txt"
 ! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$root/native.txt"
+adb shell am force-stop "$pkg"
+adb shell am instrument -w -r -e phase restart -e class com.universalrp.launcher.HomeFollowupTest \
+  com.universalrp.launcher.test/androidx.test.runner.AndroidJUnitRunner | tee "$root/restart.txt"
+grep -q '^OK (' "$root/restart.txt"
+! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$root/restart.txt"
 (cd "$root" && sha256sum -c Elderly-Launcher-v1.6.sha256)
 printf 'PASS: same UID/private fixture/home preference; AM/PM; adjacent volume and actual levels; native app picker/add/open/persistence/remove; contact isolation; 200%% font reachability. No phone/Google/hardware audio proof.\n' | tee "$root/result.txt"
 python3 - <<'PYRECEIPT'
@@ -39,7 +44,7 @@ receipt=dict(source=os.environ['GITHUB_SHA'],package='com.universalrp.launcher',
              sha256=hashlib.sha256(apk.read_bytes()).hexdigest(),bytes=apk.stat().st_size,
              signer='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d',
              same_uid=True,private_fixture_preserved=True,old_contact_preferences_preserved=True,
-             native_picker_add_open_remove_and_recreate=True,font_200_controls_reachable=True,
+             native_picker_add_open_remove_and_recreate=True,process_restart_preferences_preserved=True,font_200_controls_reachable=True,
              physical_phone_tested=False,hardware_audio_tested=False,play_protect_tested=False,published=False)
 (root/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
 print('::notice title=Exact unpublished Launcher candidate::'+json.dumps(receipt))
