@@ -534,10 +534,12 @@ object SharedNeuralVoiceEngine {
         allowVoiceFallback: Boolean = true,
         onVoiceSelected: ((String) -> Unit)? = null,
         attemptTimeoutMs: Long = 0L,
+        diagnostic: (String) -> Unit = {},
     ): ByteArray? {
         return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
             onSelected = onVoiceSelected ?: {}, attemptTimeoutMs = attemptTimeoutMs) { candidate, budget ->
-            streamWebSocketOnce(text, formatServerVoiceName(candidate), rate, pitch, budget)
+            diagnostic("HD_ATTEMPT=$candidate budgetMs=$budget")
+            streamWebSocketOnce(text, formatServerVoiceName(candidate), rate, pitch, budget, diagnostic = diagnostic)
         }
     }
 
@@ -548,6 +550,7 @@ object SharedNeuralVoiceEngine {
         pitch: String,
         timeoutMs: Long,
         onPeerClosing: ((Int) -> Unit)? = null,
+        diagnostic: (String) -> Unit = {},
     ): ByteArray? {
         val attemptStarted = System.nanoTime()
         val escaped = sanitizeSsmlText(text)
@@ -585,6 +588,7 @@ object SharedNeuralVoiceEngine {
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    diagnostic("HD_OPEN=${response.code}")
                     val ts = jsUtcDateString()
                     val configMsg =
                         "X-Timestamp:$ts\r\n" +
@@ -633,6 +637,7 @@ object SharedNeuralVoiceEngine {
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    diagnostic("HD_FAILURE=${t.javaClass.simpleName} http=${response?.code ?: 0}")
                     if (response?.code == 403) {
                         saw403ServerDate.set(response.header("Date"))
                     }
@@ -640,6 +645,7 @@ object SharedNeuralVoiceEngine {
                 }
 
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    diagnostic("HD_CLOSING=$code")
                     onPeerClosing?.invoke(code)
                     runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
                     doneLatch.countDown()
@@ -670,6 +676,7 @@ object SharedNeuralVoiceEngine {
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
+        diagnostic("HD_RESULT=completed:${completedCleanly.get()} finished:$finished bytes:${out.size}")
         return if (completedCleanly.get() && out.size >= 256) out else null
     }
 

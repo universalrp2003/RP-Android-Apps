@@ -35,7 +35,7 @@ def main(module):
     badging = output(str(tools/'aapt2'), 'dump', 'badging', str(candidate))
     previous = output(str(tools/'aapt2'), 'dump', 'badging', str(baseline))
     assert f"package: name='{package}' versionCode='{code}' versionName='{version}'" in badging
-    assert "sdkVersion:'26'" in badging and 'application-debuggable' not in badging
+    assert re.search(r"(?:sdkVersion|minSdkVersion):\s*'26'", badging) and 'application-debuggable' not in badging, "SDK/debug mismatch: " + repr([l for l in badging.splitlines() if "dkVersion" in l or "debuggable" in l])
     for apk in (candidate, baseline):
         certs = output(str(tools/'apksigner'), 'verify', '--print-certs', str(apk))
         signers = set(re.findall(r'certificate SHA-256 digest: ([a-fA-F0-9]+)', certs))
@@ -56,4 +56,10 @@ def main(module):
     (root/(new_name.removesuffix('.apk')+'.sha256')).write_text(sha(candidate)+'  '+new_name+'\n')
     print('::notice title=Signed candidate identity::'+json.dumps(receipt))
 
-if __name__ == '__main__': main(sys.argv[1])
+if __name__ == '__main__':
+    try: main(sys.argv[1])
+    except Exception:
+        import traceback
+        detail = traceback.format_exc()
+        print('::error title=Candidate inspection::'+detail[-3500:].replace('%','%25').replace('\n','%0A'))
+        raise

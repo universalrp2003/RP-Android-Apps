@@ -54,6 +54,11 @@ jobs:
           extra=()
           if [[ '${{ matrix.module }}' == voicenotes ]]; then extra=(:voicenotes:assembleReleaseAndroidTest :voicenotes:testLiveNoteHd); fi
           gradle :${{ matrix.module }}:testReleaseUnitTest :${{ matrix.module }}:lintRelease :${{ matrix.module }}:assembleRelease "${extra[@]}" --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/health-build-${{ matrix.module }}.log"
+      - name: Independent short and long HD reference (diagnostic, not runtime fallback)
+        if: always() && matrix.module == 'voicenotes'
+        run: |
+          python3 -m pip install --disable-pip-version-check --no-input 'edge-tts==7.3.1'
+          python3 tools/probe_note_hd_reference.py
       - name: Actual APK identity, signer continuity and mandatory permission delta
         run: python3 tools/inspect_battery_voice_candidate.py ${{ matrix.module }}
       - name: Enable disposable emulator acceleration
