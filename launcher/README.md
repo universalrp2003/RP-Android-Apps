@@ -1,14 +1,14 @@
 # Elderly Launcher (முதியவர் திரை)
 
-**Current public stable release:** 1.5 / code 6. Its APK is unchanged.
+**Current public stable release:** 1.7 / code 8. Exact owner-accepted candidate, promoted without rebuilding; public1.5 and prior1.6 candidate bytes remain unchanged.
 
-## Owner follow-up — unpublished1.7/code8 candidate
+## Owner-accepted1.7/code8 — published
 
 - Retains compact battery/charging text and explicit12-hour AM/PM time from exact candidate1.6.
 - Fixes volume delegation: select Media or Ringtone, then −/+ changes the selected real index directly. Adds only normal MODIFY_AUDIO_SETTINGS (not a runtime prompt); no notification-policy access, DND override or ring silent/vibrate transition. Unsupported/policy-blocked changes show an error rather than fake success. Actual hardware sound remains phone-dependent.
 - Favourite apps and the picker use two-column growing icon/name tiles, no duplicated names/removal lines. Add/manage shows + for adding and − for removing saved shortcuts, without uninstalling anything. Up to8 package identities remain in the same independent private preference file; contact favourites are untouched.
 - Signed1.6→1.7 update/private-data and real media/ring index-change tests, two-column geometry, management add/remove/open, process-restart and actual200% text checks are required before success is claimed. No owner phone test of1.7 or Google clearance claimed.
-- Public1.5 and exact owner-given1.6 stay immutable. No publication authorized. [Candidate notes](../releases/elderly-launcher-v1.7.md).
+- Published1.7:11521755B/SHA256 `13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec`, promotion41312659562. Owner accepted and authorized publication; installed-phone hash/audible output not independently matched. [Candidate notes](../releases/elderly-launcher-v1.7.md).
 
 ## Historical1.4 verification (not evidence for1.6)
 
@@ -25,11 +25,11 @@ Package `com.universalrp.launcher`. Android 8.0 / API 26 or later.
 
 No account, ads or app analytics. Contacts/favourites stay on the phone. The launcher posts no notifications. Calls, contacts and torch use contextual Android permissions. Project and release links open in the browser; there is no package-install permission.
 
-## Release and testing
+## Historical1.4 release and testing
 
 [Official release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.4) - [APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.4/Elderly-Launcher-v1.4.apk) - [release notes](../releases/elderly-launcher-v1.4.md).
 
-Published APK: 11,514,811 bytes; SHA-256 `7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232`.
+Historical1.4 APK: 11,514,811 bytes; SHA-256 `7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232`.
 
 The owner installed the version 1.4 candidates and supplied Play Protect screens saying This app looks safe, then confirmed All good. These releases promote the same immutable candidate APKs from run 40485186570, not new binaries. This is owner phone evidence, not an independent security audit or a guarantee about future scans. Stop if any security warning appears.
 

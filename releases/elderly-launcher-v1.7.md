@@ -1,11 +1,11 @@
 # Elderly Launcher 1.7 — working volume and compact app management
 
-Unpublished candidate, code8; public1.5 and exact candidate1.6 remain unchanged.
+Published owner-accepted exact candidate, code8; public1.5 and exact candidate1.6 remain unchanged. See [publication receipt](../docs/launcher-1.7-publication.json).
 
 - Explicit Media / Ringtone target with adjacent −/+ buttons. Change one real stream index directly, without merely invoking Android's suggested-volume panel. Normal MODIFY_AUDIO_SETTINGS permission added; no new dangerous permission. Fixed-volume/policy restrictions are reported, not bypassed. Ring silent/vibrate transitions remain in Android settings, no DND access requested.
 - Favourite apps and the app picker use growing two-column icon/name tiles. No duplicated app-name/removal lines or chevrons on home. Add/manage opens the same picker: + adds, − removes only a shortcut. Existing saved package identities/contact favourites stay unchanged; unavailable shortcuts can also be removed there.
 - Existing compact battery, AM/PM clock, font scaling, emergency confirmation and browser-only updates retained. Normal same-key update; never uninstall or clear data to force installation. Uninstalling may erase local data.
-- Automated gates must pass before any success claim. No physical-device test of these new bytes, audible hardware test, Google/Play Protect approval or all-OEM guarantee is claimed. The owner's1.6 screenshots establish observed operation only, not a matched installed hash. No new publication authorized.
+- Automated gates passed for the exact published bytes. The owner accepted1.7 and authorized publication on1November2026; the installed-phone hash and audible hardware output were not independently matched. No physical-device test independently tied to an installed-phone hash, Google/Play Protect approval or all-OEM guarantee is claimed. The privacy-reviewed1.7 screenshots show this phone's choices, not app defaults or proof of a completed emergency call.
 
 ## தமிழ்
 
@@ -13,4 +13,4 @@ Unpublished candidate, code8; public1.5 and exact candidate1.6 remain unchanged.
 
 விருப்பச் செயலிகள் இரண்டு நெடுவரிசைகளில் சின்னம், பெயருடன் தெரியும். நீண்ட நீக்க உரையும் தேவையற்ற இடைவெளியும் இல்லை. செயலிகளைச் சேர் / நீக்கு பக்கத்தில் + சேர்க்கும்; − குறுக்குவழியை மட்டும் நீக்கும், செயலியை நிறுவல் நீக்கம் செய்யாது. ஏற்கனவே சேமித்த செயலிகளும் தொடர்புகளும் பாதுகாக்கப்படும்.
 
-இது வெளியிடப்படாத சோதனைப் பதிப்பு. பழைய செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம். புதிய பதிப்பிற்கு கைபேசி அல்லது கூகுள் ஒப்புதல் சோதனை நடந்ததாகக் கூறவில்லை.
+உரிமையாளர் ஏற்ற அதே கோப்பு மீண்டும் கட்டப்படாமல் வெளியிடப்பட்டுள்ளது. பழைய செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம். உரிமையாளர் 1.7-ஐ ஏற்றார்; நிறுவிய கைபேசிக் கோப்பு/ஒலி தனியாகப் பொருத்திச் சரிபார்க்கப்படவில்லை. கூகுள் ஒப்புதலோ எல்லா சாதனங்களுக்கான உறுதியோ கூறவில்லை.

@@ -126,7 +126,7 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
         self.assertEqual({app: len(files) for app, files in index.items()},
                          {'smsguard':6,'liveguard':13,'radio':8,'oorarivippu':5,'pulseeq':4,
-                          'vocalremover':5,'podcast':4,'expensetracker':3,'launcher':4,
+                          'vocalremover':5,'podcast':4,'expensetracker':3,'launcher':3,
                           'vasanthi':5,'voicenotes':3,'secretmessage':5,'dailyvault':7})
         for app,files in index.items():
             self.assertGreaterEqual(len(files),3)

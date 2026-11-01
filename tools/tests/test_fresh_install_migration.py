@@ -26,7 +26,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('daily-vault-v0.5', 'DailyVault-v0.5.apk', '0.5', 11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
             ('tamilan-store-v0.9', 'Tamilan-Store-v0.9.apk', '0.9', 19309106, '6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab'),
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
-            ('elderly-launcher-v1.5', 'Elderly-Launcher-v1.5.apk', '1.5', 11498427, 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39'),
+            ('elderly-launcher-v1.7', 'Elderly-Launcher-v1.7.apk', '1.7', 11521755, '13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec'),
             ('voice-notes-v1.3.4', 'Voice-Notes-v1.3.4.apk', '1.3.4', 13135195, '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a'),
             ('live-guard-v2.82', 'CleanSweep-v2.82.apk', '2.82', 14505867, '3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5'),
             ('ramesh-radio-v1.31', 'Ramesh-Radio-v1.31.apk', '1.31', 15179972, 'fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22'),

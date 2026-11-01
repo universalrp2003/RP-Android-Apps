@@ -154,7 +154,7 @@ object SisterApps {
             tamilName = "முதியவர் திரை",
             tagPrefix = "elderly-launcher",
             version = "1.7",
-            publishedVersion = "1.5",
+            publishedVersion = "1.7",
             packageName = "com.universalrp.launcher",
             aboutLabel = "Elderly Launcher — GitHub release",
         ),
