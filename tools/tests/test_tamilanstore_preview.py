@@ -125,9 +125,9 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
     def test_real_gallery_counts_and_paths(self):
         index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
         self.assertEqual({app: len(files) for app, files in index.items()},
-                         {'smsguard':5,'liveguard':13,'radio':8,'oorarivippu':5,'pulseeq':4,
+                         {'smsguard':6,'liveguard':13,'radio':8,'oorarivippu':5,'pulseeq':4,
                           'vocalremover':5,'podcast':4,'expensetracker':3,'launcher':4,
-                          'vasanthi':5,'voicenotes':3,'secretmessage':5})
+                          'vasanthi':5,'voicenotes':3,'secretmessage':5,'dailyvault':7})
         for app,files in index.items():
             self.assertGreaterEqual(len(files),3)
             for name in files:
@@ -137,6 +137,50 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         self.assertIn('Screenshots pending',gallery)
         self.assertIn('Earlier app screens',gallery)
         self.assertIn('AlertDialog(',gallery)
+    def test_sms_owner_gallery_matches_privacy_reviewed_web_images(self):
+        index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
+        web=[ROOT/'site/images/sms-guard.jpg']+[ROOT/f'site/images/sms-guard/{i}.jpg' for i in range(1,6)]
+        self.assertEqual(len(index['smsguard']),len(web))
+        for name,path in zip(index['smsguard'],web):
+            self.assertEqual((STORE/'src/main/assets/screenshots'/name).read_bytes(),path.read_bytes())
+        card=(ROOT/'site/index.html').read_text().split('<!-- SMS Guard -->',1)[1].split('<!-- Live Guard -->',1)[0]
+        self.assertIn('View 5 more screenshots',card)
+        self.assertIn('These are this phone’s settings, not app defaults',card)
+        self.assertIn('Private inbox and financial-summary images are excluded',card)
+        for i in (6,7,8):
+            self.assertNotIn(f'images/sms-guard/{i}.jpg',card)
+
+    def test_store_website_owner_gallery_has_seven_images_and_redaction_caption(self):
+        site=(ROOT/'site/index.html').read_text()
+        section=site.split('<h2 id="optional-store-title">',1)[1].split('      <div class="note">',1)[0]
+        paths=['images/tamilan-store.jpg']+[f'images/tamilan-store/{i}.jpg' for i in range(1,7)]
+        for path in paths:
+            self.assertEqual(section.count(f'src="{path}"'),1)
+            self.assertTrue((ROOT/'site'/path).read_bytes().startswith(b'\xff\xd8'))
+        self.assertIn('View 6 more screenshots',section)
+        self.assertIn('Private message and financial previews are masked',section)
+        self.assertIn('not new releases or proof of update/install success',section)
+
+    def test_store_motion_is_optional_local_accessible_and_lifecycle_gated(self):
+        ui=(STORE/'src/main/java/com/universalrp/tamilanstore/StoreShowcase.kt').read_text()
+        for text in ('basicMarquee', 'Pause scrolling text', 'உரை நகர்வை நிறுத்து',
+                     'ValueAnimator.areAnimatorsEnabled()', 'TouchExplorationStateChangeListener',
+                     'Lifecycle.State.RESUMED', 'clearAndSetSemantics', 'onDispose',
+                     'unregisterContentObserver', 'StoreMotionPolicy.shouldScroll'):
+            self.assertIn(text,ui)
+        self.assertNotIn('rememberInfiniteTransition',ui)
+        main=(STORE/'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
+        self.assertIn('store_motion_v1',main)
+        self.assertIn('StoreShowcase(tamil, model.apps.size',main)
+
+    def test_dailyvault_owner_images_are_shared_and_no_vault_binary_changes(self):
+        index=json.loads((STORE/'src/main/assets/screenshots/index.json').read_text())
+        web=[ROOT/'site/images/daily-vault.jpg']+[ROOT/f'site/images/daily-vault/{i}.jpg' for i in range(1,7)]
+        self.assertEqual(len(index),13)
+        self.assertEqual(len(index['dailyvault']),7)
+        for name,path in zip(index['dailyvault'],web):
+            self.assertEqual((STORE/'src/main/assets/screenshots'/name).read_bytes(),path.read_bytes())
+
     def test_name_request_and_own_release_discovery(self):
         catalog=json.loads((STORE/'src/main/assets/catalog.json').read_text())
         self.assertEqual(next(a for a in catalog['apps'] if a['id']=='liveguard')['tamilName'],'கைபேசி காவலன்')

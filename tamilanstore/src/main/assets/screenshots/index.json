@@ -4,7 +4,8 @@
     "smsguard-2.jpg",
     "smsguard-3.jpg",
     "smsguard-4.jpg",
-    "smsguard-5.jpg"
+    "smsguard-5.jpg",
+    "smsguard-6.jpg"
   ],
   "liveguard": [
     "liveguard-1.jpg",
@@ -86,5 +87,14 @@
     "secretmessage-3.jpg",
     "secretmessage-4.jpg",
     "secretmessage-5.jpg"
+  ],
+  "dailyvault": [
+    "dailyvault-1.jpg",
+    "dailyvault-2.jpg",
+    "dailyvault-3.jpg",
+    "dailyvault-4.jpg",
+    "dailyvault-5.jpg",
+    "dailyvault-6.jpg",
+    "dailyvault-7.jpg"
   ]
 }

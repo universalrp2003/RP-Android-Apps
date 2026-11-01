@@ -25,3 +25,13 @@ Public release **430049093**, APK **695875803**, checksum **695875811**, publish
 Website, both feeds, Store embedded catalog and Pages mirrors now select this exact version/hash; historical mirror retained. Other app records remain byte-for-byte unchanged. CI-before-merge and main Pages/live verification remain the final integration gates. No new1.1.16 APK is claimed phone-tested or Google-cleared. An emulator is not a carrier/OEM/Play Protect test.
 
 See [release notes](../releases/sms-guard-v1.1.16.md), [privacy](../PRIVACY.md) and [earlier warning plus owner scan result](sms-guard-play-protect.md).
+
+
+## Owner feedback — 1 November 2026
+
+Following the1.1.16 release, the owner reports: “Its working fine no Google play warning.” Record this as successful owner-reported use with no warning observed on their phone. It is not an independently matched installed version/hash, a detailed natural-SMS/MMS/voice test, or universal Google approval. Do not describe this owner’s current phone as blocked or restore the obsolete unresolved-status banner. No new APK or publication is requested by this feedback; the next request is an audit of website/Store application images.
+
+
+## Listing screenshots supplied — 1 November 2026
+
+The owner's new Controls screenshot displays “Default SMS active — MMS is not supported” and a switch-back action. This supports the reported successful default setup on that phone; no installed APK version/hash or independent Android role-holder query is shown. Six non-message/non-financial-summary screenshots are prepared for the website and future Store gallery; the inbox and Finance screenshots remain private and are excluded. Settings shown are the owner's selections, not initial defaults or proof of speech/security behavior. No APK is rebuilt or released for image collection. See [image audit](application-image-audit-2026-11-01.md).

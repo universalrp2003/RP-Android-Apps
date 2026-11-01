@@ -102,9 +102,9 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual({asset for asset, _ in cards}, ld_assets)
         self.assertEqual({tag for _, tag in table}, ld_tags)
         self.assertEqual({tag for _, tag in cards}, ld_tags)
-        self.assertIn('Tamilan-Store-v0.7.apk', ld_assets)
+        self.assertIn('Tamilan-Store-v0.8.apk', ld_assets)
         self.assertIn('DailyVault-v0.5.apk', ld_assets)
-        optional_tags = {'tamilan-store-v0.7'}
+        optional_tags = {'tamilan-store-v0.8'}
         self.assertTrue(optional_tags.issubset(ld_tags))
         self.assertEqual(len(optional_tags), 1)
         self.assertEqual(len(ld_tags - optional_tags), 13)
@@ -159,7 +159,7 @@ class WebsiteRequestsTest(unittest.TestCase):
         missing_json_ld = self.source.replace('"position": 14,', '"position": 13,')
         self.assert_site_rejected(missing_json_ld)
         duplicate_card = self.source.replace('data-apk="apks/DailyVault-v0.5.apk"',
-                                             'data-apk="apks/Tamilan-Store-v0.7.apk"', 1)
+                                             'data-apk="apks/Tamilan-Store-v0.8.apk"', 1)
         self.assert_site_rejected(duplicate_card)
         stale_sha = self.source.replace(
             'SHA-256: c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805',
@@ -195,3 +195,17 @@ class WebsiteRequestsTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class RealApplicationImageCoverageTest(unittest.TestCase):
+    def test_all_fourteen_app_cards_have_real_local_images(self):
+        site=(ROOT/'site/index.html').read_text()
+        cards=re.findall(r'<article class="card">(.*?)</article>',site,re.S)
+        app_cards=[c for c in cards if re.search(r'<h2[^>]+id="app-',c)]
+        self.assertEqual(len(app_cards),14)
+        for card in app_cards:
+            sources=re.findall(r'<img[^>]+src="(images/[^"]+)"',card)
+            self.assertTrue(sources)
+            self.assertNotIn('Concept illustration',card)
+            for src in sources:
+                self.assertTrue((ROOT/'site'/src).is_file(),src)

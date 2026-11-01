@@ -1,30 +1,7 @@
-# App screenshots
+# Application listing images
 
-Drop one screenshot per app here, using these **exact** filenames (the cards on
-`index.html` already point at them). When a file is present the card shows it
-automatically; until then a neat "coming soon" placeholder is shown.
+All14 application cards now reference real app screens (including the separate optional Store). SMS Guard, DailyVault and Store use owner-supplied late-October/November2026 screens, reviewed for privacy. The older Secret Message, Expense Tracker, Voice Notes, Vasanthi AI, Podcast and Launcher website illustrations were replaced with real screens already bundled in Store; captions explicitly identify older screens. Expense Tracker uses its permission screen, not the financial-summary image. Do not relabel earlier pictures as latest-version or safety proof.
 
-| App | Filename |
-| --- | --- |
-| SMS Guard | `sms-guard.jpg` |
-| Live Guard (CleanSweep) | `live-guard.jpg` |
-| Ramesh Radio | `ramesh-radio.jpg` |
-| Oor Arivippu | `oor-arivippu.jpg` |
-| PulseEQ | `pulseeq.jpg` |
-| RP Vocal Remover Studio | `vocal-remover.jpg` |
-| Secret Message | `secret-message-card.jpg` |
-| Expense Tracker | `expense-tracker-card.jpg` |
-| Voice Notes | `voice-notes-card.jpg` |
-| Vasanthi AI | `vasanthi-ai-card.jpg` (a diagram with no lettering, so no Tamil can be wrong) |
-| Tamil Podcast Player | `tamil-podcast-card.jpg` |
-| Elderly Launcher | `elderly-launcher-card.jpg` |
+SMS images: one Controls hero plus five gallery images; raw inbox/finance summaries excluded. DailyVault: one Overview hero plus six empty-record/blank-form/backup images. Store: one hero plus six gallery images; three embedded private thumbnails have opaque labelled masks. Image metadata is stripped; other UI content is not fabricated. Source screenshots supplied for troubleshooting do not automatically authorize public publication.
 
-The five `-card.jpg` files above are **concept illustrations, not screenshots**. They were drawn
-because no phone screenshot exists for those apps yet, and a card that claims to show an app it
-cannot show is worse than a card that says plainly it is an illustration. Each one is labelled as a
-concept illustration on the card itself. When a real screenshot arrives, drop it in under the same
-name and the label goes with it.
-
-Tips: phone screenshots (PNG is fine — rename to `.jpg`, or tell me and I'll
-accept `.png`), portrait, ~1080px wide. One clear home-screen shot per app is
-enough. Push them here and the site picks them up on the next Pages deploy.
+New uploads should use demonstration records and hide messages, OTPs, sender/phone/account identifiers, passwords and personal financial data. Use actual JPEG/PNG encoding matching filenames (do not just rename a PNG to JPG). Public website publication requires main Pages; bundled Store image changes require a normally versioned APK update, never replacement of an existing release asset.

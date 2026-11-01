@@ -1,6 +1,6 @@
-# தமிழன் / Tamilan Store 0.7
+# தமிழன் / Tamilan Store 0.8
 
-**Published:** [exact verified Store0.7 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.7/Tamilan-Store-v0.7.apk). [Publication receipt and test limits](../docs/tamilan-store-0.7-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
+**Published:** [exact verified Store0.8 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.8/Tamilan-Store-v0.8.apk). [Publication receipt and test limits](../docs/tamilan-store-0.8-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
 
 Store is separate from the **13 regular non-Store apps**, including DailyVault0.5. Its13-app bundled fallback and release-metadata refresh list the same verified public apps. No account, ads or automatic installation. The corrected current-release signer pin and typed download/verification errors retain size/hash/package/version/minimum-SDK/signer/downgrade gates. The user selects Install; Android makes the final confirmation. Installed same-key apps can update without uninstalling or clearing their data.
 
@@ -94,3 +94,8 @@ Secret Message: five owner-supplied camera photos (WA0019–WA0023) added: home,
 The owner reports Daily Vault 0.5 opens and works on their phone, but Store downloads fail before installation and an existing 0.3 cannot be updated. Screenshots show an initial Android Update offer, not completed 0.3 → 0.5 installation or preservation of previous records. No installed signer/hash was supplied.
 
 Confirmed source defect: Store 0.6 retained the retired 9e30… certificate while immutable current APKs and CI pin 7366…. Candidate 0.7 corrects that pin (Secret Message unchanged), keeps installed-signer/downgrade protection, reports separate failure stages and explains the explicit Install action. This does not make legacy-key apps update-compatible and must not be “fixed” by trusting both keys or uninstalling data-bearing apps. Existing public assets/catalog pointers stay unchanged pending verified publication. See `releases/tamilan-store-v0.7.md`.
+
+
+## 0.8 — authorized screenshot and storefront refresh
+
+Candidate0.8/code8: native teal/blue welcome with gentle Tamil/English scrolling text and a persistent pause control. Android disabled animations, touch exploration and background lifecycle disable motion; static text wraps. No flashing, auto-download, new feed or permission expansion. Existing verifier and Android user-confirmed installation unchanged.13 real app galleries now include7 empty/blank DailyVault screens and6 privacy-reviewed SMS screens. Private inbox/finance originals are excluded. Owner authorized publication; exact signed release UI/update test and existing archive installer probes are required. See [receipt](../docs/tamilan-store-0.8-verification.md); do not overwrite0.7 or uninstall/clear records.

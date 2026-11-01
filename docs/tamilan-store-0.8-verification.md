@@ -1,0 +1,32 @@
+# Tamilan Store0.8 verification and publication receipt
+
+Publication authorized: yes. Owner asked to find DailyVault images in the supplied Drive folder, improve Tamilan Store presentation/scroll text, build and publish, update the website and verify everything. Scope is Store0.8/code8 and public listing images, not replacement APKs for accepted SMS/Radio/LG/DailyVault or the held Oor candidate.
+
+Seven DailyVault JPEGs were listed/downloaded through the connected Drive tool. Originals moved out of the repository to `/tmp/dailyvault-drive-originals` immediately. Visual review: zero/empty records, blank spending/note forms, backup guidance; no backup password or personal record visible. Re-encoded metadata-free copies populate website hero plus6 gallery screens and the7-image Store gallery. Six reviewed SMS images remain included; raw inbox/financial summaries remain private. Three embedded thumbnail rectangles in Store website images are opaquely masked with an explicit caption. No Drive sharing permission changed; source privacy-sensitive originals are not committed.
+
+Refreshed native header: static gradient, bilingual welcome/catalog count and a gentle marquee. Local persistent motion switch, lifecycle/system-animation/touch-exploration guards, static wrapping and full accessibility text. No flashing, sound or new network feed. Existing download/signature/package/version/downgrade gates, pending transfers, contextual installation permission and Android user consent are preserved. Manifest and permissions unchanged; same signing key/package.
+
+Pending actual native candidate, exact signed-APK Android35 showcase/update/gallery test, separate existing archive/installer instrumentation, package/signature/actual permission delta, artifact/hash, publication, CI-before-merge, main Pages and live verification. Public pointers remain Store0.7 until exact0.8 bytes are published and verified. No physical-phone/Google clearance for0.8 claimed.
+
+
+Initial local checks:257 Python tests, source/localization and whitespace PASS. Native debug preview compiled/tested/linted but its first archive/installer emulator attempt failed; current bounded tail did not expose the root assertion. No pass claimed. Diagnostics expanded to include actual assertion/exception/runner status context before retrying. Exact signed release candidate is still in progress. Six older website concept/missing images replaced with already-approved real Store screens, with earlier-screen captions; Expense uses its permission view rather than financial-summary picture. No public pointers changed yet.
+
+
+## Selected signed candidate and successful gates
+
+Selected compiled source `478a6fa77ec988575b3df3e4e13c70c830325e72`, [candidate run41255179187](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41255179187), Store job124696719729 **success**: release JVM tests (including all16 motion-policy combinations), release lint, signed assembly, package/code8/min26/nondebuggable/established signer and digest verification. Artifact **13063301085** (`tamilanstore-verified-release-apk`), archive17,878,090 bytes / SHA-256 `68d690803c49714dc9847483c6139195f37919c58c598c9a6695bbb118d911b7`. Inner APK SHA-256 **`3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474`**; exact inner byte count will be recorded from authenticated archive extraction during promotion.
+
+Exact signed release Android35 UI smoke passed: actual same-key Store0.7→0.8 retains English; Tamil/English header works; pause survives restart and same-key reinstall; reduced system-animation path;13 packaged galleries; DailyVault screenshot enlargement. Evidence **13063770096**, archive SHA-256 `72174cbac01aee3df1e97a4af88a6193bbcfe2cf8768481c03eb14ea94c2f47c`. APK checksum unchanged after emulator use. No physical-phone/Google test claimed.
+
+Separate existing debug archive/installer tests passed [41255580040](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41255580040), job124697920928, at `bc3551364f71f1d423b3ab81b5272d2d1dc590a3`; additional PR preview41255585030 also succeeded. Diff from the selected candidate changes only website/docs/workflow diagnostics, **no compiled Store/shared inputs**. First preview failure remains recorded rather than claimed successful; no failure assertion was weakened.
+
+Local257 Python tests, source/localization, script syntax and whitespace PASS. All14 website application cards now use actual screens (some explicitly older), not concept illustrations. Source picture bytes decode, private new originals are excluded or explicitly masked. Whole selected-source matrix and promotion preflight/publication/main deployment still need completion.
+
+
+## Exact-byte publication complete
+
+[Publisher41256209522](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41256209522), job124699801279, **SUCCESS**. It authenticated candidate run/job/source/archive, equivalent compiled inputs of the successful preview, pinned exact-release emulator evidence, package/code8/min26/nondebuggable/signer, established Store0.7 compatibility and built-permission delta: **no added permissions of any protection level**. Draft digest checked before publication; final public bytes re-downloaded/hash-checked and checksum manifest compared. No rebuild/overwrite.
+
+Public release **430268186**, APK **696852937**, checksum **696852940**, published **2026-11-01T00:19:21Z**, target478a6fa77ec988575b3df3e4e13c70c830325e72. **Tamilan-Store-v0.8.apk**, **19,276,334 bytes**, SHA-256 **`3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474`**; retained source blob **5fe4d5f903e11a0788a2847cea02d88fec37773d**. Independently downloaded via Git blob only to `/tmp`, size/hash matched. Local ZIP inspection verifies all13 real-image galleries,7 DailyVault and6 SMS pictures exactly match selected source. Established signer7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d.
+
+[Download0.8](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.8/Tamilan-Store-v0.8.apk). Store0.7 remains immutable. DailyVault0.5, SMS1.1.16, Radio1.31, LG2.81 and held Oor untouched. Website JSON-LD/table/card, shared public link, actual publication timestamp and Pages mirror now select exact0.8; old mirror retained.13 ordinary-app feed entries are unchanged. CI-before-merge, main Pages and live checks remain final integration gates. No0.8 owner-phone/Google clearance claimed.
