@@ -142,5 +142,7 @@ if __name__ == '__main__':
     try:
         run(out)
     except Exception:
-        (out / 'failure.txt').write_text(traceback.format_exc())
+        detail = traceback.format_exc()
+        (out / 'failure.txt').write_text(detail)
+        print('::error title=Store exact upgrade failure::' + detail[-4500:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'), flush=True)
         raise

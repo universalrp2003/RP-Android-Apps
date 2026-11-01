@@ -82,9 +82,18 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
+          ram-size: 2048M
+          cores: 2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: python3 tamilanstore/tools/signed-upgrade-smoke.py "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk" "$RUNNER_TEMP/Store0.8.apk" tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk
+          script: >-
+            bash -o pipefail -c '
+            echo "::notice title=Store upgrade harness::Starting guarded exact-APK probe";
+            python3 tamilanstore/tools/signed-upgrade-smoke.py
+            "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk"
+            "$RUNNER_TEMP/Store0.8.apk" tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk
+            2>&1 | tee "$RUNNER_TEMP/store-upgrade-console.log"'
+
       - name: Exact artifact receipt after upgrade testing
         shell: bash
         run: |
@@ -114,6 +123,7 @@ jobs:
           path: |
             ${{ runner.temp }}/store-signed-upgrade-evidence/
             ${{ runner.temp }}/store-signed-build.log
+            ${{ runner.temp }}/store-upgrade-console.log
             tamilanstore/build/test-results/
             tamilanstore/build/reports/
           retention-days: 14
@@ -124,7 +134,9 @@ jobs:
         run: |
           import os,pathlib
           root=pathlib.Path(os.environ['RUNNER_TEMP'])
-          for p in [root/'store-signed-build.log',root/'store-signed-upgrade-evidence/failure.txt']:
+          if not (root/'store-upgrade-console.log').exists():
+              print('::error title=Store upgrade checkpoint::Emulator step failed before producing harness console output; no upgrade pass is claimed.')
+          for p in [root/'store-upgrade-console.log',root/'store-signed-upgrade-evidence/failure.txt']:
               if not p.exists(): continue
               lines=p.read_text(errors='replace').splitlines()
               selected=[s for s in lines if any(t in s for t in ('e:', ' FAILED', 'Error:', 'Exception', 'AssertionError', 'FAILURE:'))] or lines[-12:]
