@@ -81,7 +81,7 @@ class HomeFollowupTest {
             assertTrue(device.wait(Until.hasObject(By.pkg("com.android.settings").depth(0)), 10_000))
             device.pressBack()
         }
-        // New process/activity reads the same persisted choices without a reset.
+        // A new activity exercises actual 200% text; a second instrumentation process checks disk persistence.
         val oldScale = device.executeShellCommand("settings get system font_scale").trim()
         try {
             device.executeShellCommand("settings put system font_scale 2.0")
@@ -99,12 +99,16 @@ class HomeFollowupTest {
                 find(context.getString(R.string.favourite_apps_remove, label)).click()
                 device.waitForIdle()
                 assertTrue(FavouriteApps.load(context).isEmpty())
+                // Leave a real UI-added choice for restart. Closing this activity performs the
+                // Android lifecycle flush of SharedPreferences.apply before the shell force-stop.
+                find(context.getString(R.string.favourite_apps_add)).click()
+                find(label).click()
+                instrumentation.waitForIdleSync()
+                assertEquals(listOf("com.android.settings"), FavouriteApps.load(context))
             }
         } finally { device.executeShellCommand("settings put system font_scale ${oldScale.toFloatOrNull() ?: 1f}") }
-        FavouriteApps.remove(context, "com.android.settings")
-        assertTrue(FavouriteApps.load(context).isEmpty())
+        assertEquals(listOf("com.android.settings"), FavouriteApps.load(context))
         assertEquals("Synthetic contact", Favourites.load(context).single().name)
         assertEquals("synthetic-launcher-upgrade", File(context.filesDir, "upgrade-fixture.txt").readText().trim())
-        assertTrue(FavouriteApps.add(context, "com.android.settings"))
     }
 }
