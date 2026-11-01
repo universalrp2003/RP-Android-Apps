@@ -67,12 +67,23 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash launcher/tools/home-candidate-smoke.sh
+      - name: Upload only the tested signed candidate, not the old baseline APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: Elderly-Launcher-1.6-signed-tested-candidate
+          path: |
+            ${{ runner.temp }}/launcher-home/Elderly-Launcher-v1.6.apk
+            ${{ runner.temp }}/launcher-home/Elderly-Launcher-v1.6.sha256
+            ${{ runner.temp }}/launcher-home/verification.json
+          retention-days: 30
+          if-no-files-found: error
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: launcher-home-1.6-candidate-and-synthetic-evidence
+          name: launcher-home-1.6-synthetic-evidence
           path: |
             ${{ runner.temp }}/launcher-home/
+            !${{ runner.temp }}/launcher-home/*.apk
             ${{ runner.temp }}/launcher-home-build.log
             launcher/build/reports/
           retention-days: 14

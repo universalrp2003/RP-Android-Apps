@@ -61,6 +61,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -538,7 +540,8 @@ private fun AppRow(app: AppEntry, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 84.dp),
+            .heightIn(min = 84.dp)
+            .semantics { contentDescription = app.label },
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = CardBg,
@@ -613,7 +616,8 @@ private fun BigButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = (if (height > 0) height else 112).dp),
+            .heightIn(min = (if (height > 0) height else 112).dp)
+            .then(if (symbol != null) Modifier.semantics { contentDescription = label } else Modifier),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = background,

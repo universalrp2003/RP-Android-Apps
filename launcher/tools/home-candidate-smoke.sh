@@ -31,3 +31,16 @@ grep -q '^OK (' "$root/native.txt"
 ! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$root/native.txt"
 (cd "$root" && sha256sum -c Elderly-Launcher-v1.6.sha256)
 printf 'PASS: same UID/private fixture/home preference; AM/PM; adjacent volume and actual levels; native app picker/add/open/persistence/remove; contact isolation; 200%% font reachability. No phone/Google/hardware audio proof.\n' | tee "$root/result.txt"
+python3 - <<'PYRECEIPT'
+import hashlib,json,os,pathlib
+root=pathlib.Path(os.environ['RUNNER_TEMP'])/'launcher-home'
+apk=root/'Elderly-Launcher-v1.6.apk'
+receipt=dict(source=os.environ['GITHUB_SHA'],package='com.universalrp.launcher',version='1.6',code=7,
+             sha256=hashlib.sha256(apk.read_bytes()).hexdigest(),bytes=apk.stat().st_size,
+             signer='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d',
+             same_uid=True,private_fixture_preserved=True,old_contact_preferences_preserved=True,
+             native_picker_add_open_remove_and_recreate=True,font_200_controls_reachable=True,
+             physical_phone_tested=False,hardware_audio_tested=False,play_protect_tested=False,published=False)
+(root/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
+print('::notice title=Exact unpublished Launcher candidate::'+json.dumps(receipt))
+PYRECEIPT

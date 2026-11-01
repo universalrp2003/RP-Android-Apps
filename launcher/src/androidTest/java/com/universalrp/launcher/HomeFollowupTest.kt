@@ -21,7 +21,8 @@ class HomeFollowupTest {
     private val device = UiDevice.getInstance(instrumentation)
     private fun find(label: String): androidx.test.uiautomator.UiObject2 {
         repeat(12) {
-            device.wait(Until.findObject(By.text(label)), 500)?.let { return it }
+            (device.wait(Until.findObject(By.text(label)), 500)
+                ?: device.findObject(By.desc(label)))?.let { return it }
             device.findObject(By.scrollable(true))?.scroll(Direction.DOWN, 0.7f)
         }
         device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "failure.xml"))
@@ -46,8 +47,8 @@ class HomeFollowupTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             assertNotNull(device.wait(Until.findObject(By.text(Pattern.compile("(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)"))), 15_000))
             shot("01-clock-small-status")
-            val minus = find("−")
-            val plus = device.wait(Until.findObject(By.text("+")), 5_000)
+            val minus = find(context.getString(R.string.volume_down))
+            val plus = device.wait(Until.findObject(By.desc(context.getString(R.string.volume_up))), 5_000)
             assertNotNull(plus)
             assertEquals("Volume buttons must be adjacent in the same row", minus.visibleBounds.centerY(), plus!!.visibleBounds.centerY())
             assertTrue("Minus precedes plus", minus.visibleBounds.centerX() < plus.visibleBounds.centerX())
@@ -76,7 +77,7 @@ class HomeFollowupTest {
             ActivityScenario.launch(MainActivity::class.java).use {
                 resetScroll()
                 shot("04-large-font-clock")
-                find("−"); find("+")
+                find(context.getString(R.string.volume_down)); find(context.getString(R.string.volume_up))
                 shot("05-large-font-volume")
                 find(context.getString(R.string.favourite_apps_add))
                 shot("06-large-font-favourites")
