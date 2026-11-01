@@ -82,7 +82,7 @@ or downloaded art. Material guidance favors clear hierarchy and grouped actions 
 ### Pending owner/device coverage
 
 Physical-phone/OEM installer behavior, Android8, 320dp screens, TalkBack interaction, unknown-source
-denial, network interruption, low storage, actual process kill and signature/downgrade integration
+denial, network interruption, low storage, in-flight rotation, actual process kill and signature/downgrade integration
 remain explicit follow-ups. A successful CI run cannot settle the outstanding Play Protect report.
 
 ## CI receipt — 1 November 2026, 07:07:40 UTC
@@ -95,7 +95,7 @@ the redesign's native test has no skip/assumption path: it reviews/cancels conse
 Android's first prompt, explicitly resumes, installs Radio1.31 followed by DailyVault0.5,
 and checks each package's expected versionCode/name and pinned signer before completion.
 The six new JVM state/evidence tests run with the existing module suite. The native UI test
-also opens the gallery, switches languages, checks rotation retention and captures both
+also opens the gallery, switches languages, recreates the activity after queue dismissal and captures both
 languages at 200% font scaling. This does **not** cover every pending case listed above.
 
 Run artifacts (available through the run page; retention applies):
