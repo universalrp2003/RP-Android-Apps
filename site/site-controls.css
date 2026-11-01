@@ -37,7 +37,7 @@ html[data-site-language="ta"] .testing-status span + span::before { content: "";
   .latest .ldate, .latest .lsize { display: none; }
   .latest { padding: 14px 12px; }
   .latest .lname { overflow-wrap: anywhere; }
-  .latest .ldl .btn { white-space: normal; max-width: 90px; min-height: 44px; }
+  .latest .ldl .btn { white-space: nowrap; max-width: none; min-height: 44px; }
   .tool-row { align-items: stretch; }
   .tool-row label, .tool-row select { width: 100%; }
   .grid { grid-template-columns: minmax(0, 1fr); }

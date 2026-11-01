@@ -80,7 +80,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertIn(':focus-visible', self.css)
         self.assertNotIn('fetch(', self.script)
         self.assertNotIn('https://', self.script)
-        self.assertLess(self.source.index('</style>'), self.source.index('href="site-controls.css"'))
+        self.assertLess(self.source.index('</style>'), self.source.index('href="site-controls.css'))
 
     def test_current_release_disclosures_are_not_hidden_as_technical_history(self):
         self.assertEqual(self.source.count('class="release-brief"'), 14)
