@@ -471,3 +471,14 @@ Owner authorized SMS-only default mode with one-time MMS acknowledgement, banner
 ## Tamilan Store0.8 — 1 November2026
 
 Owner-authorized exact-artifact [publisher41256209522](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41256209522) SUCCESS; source478a6fa77ec988575b3df3e4e13c70c830325e72, candidate41255179187/job124696719729/artifact13063301085, archiveSHA68d690803c49714dc9847483c6139195f37919c58c598c9a6695bbb118d911b7. Release430268186/APK696852937/checksum696852940, public2026-11-01T00:19:21Z. **Tamilan-Store-v0.8.apk**, **19,276,334 bytes**, SHA-256 `3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474`. Same package/code8/min26/target36/nondebuggable/established signer; actual full permission comparison vs immutable0.7 found no added permissions. Exact release emulator update/language/pause/gallery proof, compatible-input preview installer regressions, pinned archive/evidence, draft verification and public re-download/hash passed. No rebuild or replacement. No physical-phone/Google clearance for0.8 claimed. Read [receipt](tamilan-store-0.8-verification.md). Other accepted APKs/held Oor unchanged.
+
+## 1 November2026 — authorized battery/HD fixes (same-key updates)
+
+Publication41291004476/job124802071983 SUCCESS. Source184df48396cf5797bcfdf9880e307673631efd7d; signed candidate41290393202, Android35 updates preserve UID, synthetic private data and prefs/restart; exact Voice Notes release target completed real synthetic Tamil/English MP3 playback and rejected corrupt audio. Full merged permission equality and mandatory dangerous-permission delta passed. ZIP/APK/signers checked again; draft/public bytes re-downloaded and matched. No old release or APK replaced; no physical phone/Google/charger-sensor proof claimed.
+
+| Release / asset | Bytes | SHA-256 |
+|---|---:|---|
+| live-guard-v2.82 · `CleanSweep-v2.82.apk` | 14,505,867 | `3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5` |
+| voice-notes-v1.3.4 · `Voice-Notes-v1.3.4.apk` | 13,135,195 | `1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a` |
+
+Live Guard release430464154/APK697815080/checksum697815078, public2026-11-01T09:58:01Z. Voice Notes release430463361/APK697811787/checksum697811788, public2026-11-01T09:57:54Z. Stable certificate7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d. Update current same-key installations; do not uninstall/clear data. The first publisher's draft-tag API404 was resolved by resuming the pinned draft ID without uploading/replacing its assets.

@@ -134,7 +134,7 @@ def run(out):
     # The operation being tested: same-package, release-key, higher-version update. No reset.
     adb('install', '-r', str(candidate))
     new = package_state()
-    assert new['code'] == 10 and new['name'] == '0.9-rc1'
+    assert new['code'] == 11 and new['name'] == '0.9'
     assert new['uid'] == old['uid']
     assert adb('shell', 'sha256sum', marker).split()[0] == marker_hash
     assert prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false'
@@ -150,7 +150,7 @@ def run(out):
     wait_text('Enable scrolling text')
     snap(out, '03-after-restart')
     assert hashlib.sha256(candidate.read_bytes()).hexdigest() == before_digest
-    result = dict(from_version='0.8', to_version='0.9-rc1', version_code=10,
+    result = dict(from_version='0.8', to_version='0.9', version_code=11,
                   package=PKG, installation_method='adb install -r; no bypass flags',
                   debug_over_release_rejected=True, same_uid=True, private_file_preserved=True, language_preserved=True,
                   motion_preference_preserved=True, restart_passed=True,

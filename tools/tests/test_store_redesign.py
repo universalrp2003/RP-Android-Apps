@@ -43,12 +43,13 @@ class StoreRedesignContracts(unittest.TestCase):
         self.assertIn('DropdownMenu(', ui)
         self.assertNotIn('fontScale =', ui)
 
-    def test_preview_does_not_replace_or_advertise_immutable_public_release(self):
+    def test_stable_version_does_not_reuse_immutable_public_release(self):
         build = (ROOT/'tamilanstore/build.gradle.kts').read_text()
-        self.assertIn('versionName = "0.9-rc1"', build)
-        self.assertIn('versionCode = 10', build)
+        self.assertIn('versionName = "0.9"', build)
+        self.assertIn('versionCode = 11', build)
         site = (ROOT/'site/index.html').read_text()
-        self.assertNotIn('Tamilan-Store-v0.9', site)
+        receipt = (ROOT/'docs/tamilan-store-0.9-upgrade.md').read_text()
+        self.assertIn('0.9-rc1', receipt)  # Retain the earlier candidate's separate provenance.
         workflow = (ROOT/'.github/workflows/new-apps-public-release.yml').read_text()
         self.assertIn('Store 0.8 is immutable', workflow)
         guard = workflow.split('  publish:', 1)[1].split('    strategy:', 1)[0]

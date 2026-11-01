@@ -3,9 +3,7 @@ on:
   push:
     branches: ["arena/e24330d5-rp-android-apps"]
     paths:
-      - ".github/workflows/promote-verified-health-updates.yml"
       - "docs/approved-health-candidates.json"
-      - "tools/promote_verified_health_updates.py"
 permissions:
   contents: write
   actions: read

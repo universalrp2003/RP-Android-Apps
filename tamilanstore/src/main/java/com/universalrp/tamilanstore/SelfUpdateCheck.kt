@@ -59,6 +59,17 @@ object SelfUpdateCheck {
         candidates.filter { versionParts(it.first) != null }
             .maxWithOrNull { a, b -> compareVersions(a.first, b.first) }
 
+    /** A stable release also supersedes its own RC; stripping '-rc1' alone hides that update. */
+    internal fun isNewerRelease(currentVersion: String, stableVersion: String): Boolean {
+        if (versionParts(stableVersion) == null) return false
+        val match = Regex("([0-9]+(?:\\.[0-9]+){1,3})(?:-(rc[0-9]+))?").matchEntire(currentVersion)
+            ?: return false
+        val current = match.groupValues[1]
+        if (versionParts(current) == null) return false
+        val compared = compareVersions(stableVersion, current)
+        return compared > 0 || (compared == 0 && match.groupValues[2].isNotEmpty())
+    }
+
     private fun compareVersions(a: String, b: String): Int {
         val av = versionParts(a) ?: return -1
         val bv = versionParts(b) ?: return 1

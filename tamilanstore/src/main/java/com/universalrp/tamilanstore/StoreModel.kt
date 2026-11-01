@@ -57,7 +57,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch {
                 try {
                     val release = withTimeout(30_000) { SelfUpdateCheck.latestRelease() }
-                    selfUpdate = release?.takeIf { InstalledStatus.resolve(InstalledApp(ownVersion.substringBefore('-'), true), it.first) == AppStatus.UPDATE_AVAILABLE }
+                    selfUpdate = release?.takeIf { SelfUpdateCheck.isNewerRelease(ownVersion, it.first) }
                     selfCheckUnavailable = false
                 } catch (e: CancellationException) {
                     if (e !is TimeoutCancellationException) throw e

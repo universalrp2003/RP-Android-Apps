@@ -27,8 +27,8 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('tamilan-store-v0.8', 'Tamilan-Store-v0.8.apk', '0.8', 19276334, '3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474'),
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
             ('elderly-launcher-v1.5', 'Elderly-Launcher-v1.5.apk', '1.5', 11498427, 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39'),
-            ('voice-notes-v1.3.3', 'Voice-Notes-v1.3.3.apk', '1.3.3', 13135195, '71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35'),
-            ('live-guard-v2.81', 'CleanSweep-v2.81.apk', '2.81', 14500707, 'c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805'),
+            ('voice-notes-v1.3.4', 'Voice-Notes-v1.3.4.apk', '1.3.4', 13135195, '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a'),
+            ('live-guard-v2.82', 'CleanSweep-v2.82.apk', '2.82', 14505867, '3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5'),
             ('ramesh-radio-v1.31', 'Ramesh-Radio-v1.31.apk', '1.31', 15179972, 'fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22'),
             ('pulseeq-v1.11', 'PulseEQ-v1.11.apk', '1.11', 12165793, 'bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a'),
             ('rp-vocal-remover-studio-v0.1.16', 'RP-Vocal-Remover-Studio-v0.1.16.apk', '0.1.16', 65163821, '6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e'),
@@ -86,7 +86,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'launcher': ('1.5', '6', 'elderly-launcher-v1.5'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Source-only redesign; the last published migration receipt stays immutable.
-            'tamilanstore': ('0.9-rc1', '10', 'tamilan-store-v0.8'),
+            'tamilanstore': ('0.9', '11', 'tamilan-store-v0.9'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():

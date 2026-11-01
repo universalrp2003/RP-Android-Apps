@@ -61,7 +61,7 @@ def main():
             assert not tag_refs or (len(tag_refs)==1 and tag_refs[0]['commit']['sha']==source)
         else:
             assert not pins['apps'][module].get('resume_draft_release_id')
-            assert not tag_refs, 'Never replace a release tag' 
+            assert not tag_refs, 'Never replace a release tag'
     sdk = Path(os.environ['ANDROID_HOME'])/'build-tools'
     tools = sorted(sdk.iterdir(), key=lambda p:tuple(int(n) for n in re.findall(r'\d+',p.name)))[-1]
     receipts = []

@@ -8,10 +8,10 @@ class StoreUpgradeCandidateTest(unittest.TestCase):
         workflow = (ROOT / '.github/workflows/tamilanstore-signed-candidate.yml').read_text()
         for token in ('contents: read', 'prepare-release-signing', 'RP_RELEASE_KEYSTORE_BASE64',
                       ':tamilanstore:testReleaseUnitTest', ':tamilanstore:lintRelease', ':tamilanstore:assembleRelease',
-                      'application-debuggable', "versionCode='10' versionName='0.9-rc1'",
+                      'application-debuggable', "versionCode='11' versionName='0.9'",
                       '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d',
                       '3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474',
-                      'Tamilan-Store-0.9-rc1-release-key-upgrade-candidate', 'sha256sum --check', 'old == new'):
+                      'Tamilan-Store-0.9-release-key-upgrade-candidate', 'sha256sum --check', 'old == new'):
             self.assertIn(token, workflow)
         self.assertNotIn('contents: write', workflow)
         self.assertNotIn('gh release', workflow)
