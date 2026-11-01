@@ -290,8 +290,8 @@ fun VoiceNotesScreen(
                 if (request == playbackRequest) { speakingId = null; playbackJob = null }
             }
             if (request == playbackRequest && !ok) status = tr(
-                "HD voice needs internet. No robotic voice fallback is used.",
-                "HD குரல் வாசிக்க இணையம் தேவை. ரோபோ குரலுக்கு மாறாது.",
+                "HD playback could not complete. Check your connection or try again; the voice service may be unavailable. No robotic voice fallback is used.",
+                "HD குரல் வாசிப்பை முடிக்க முடியவில்லை. இணையத்தைச் சரிபார்க்கவும் அல்லது மீண்டும் முயலவும்; குரல் சேவை கிடைக்காமல் இருக்கலாம். ரோபோ குரலுக்கு மாறாது.",
             )
         }
     }

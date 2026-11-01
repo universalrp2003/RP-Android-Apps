@@ -1,0 +1,13 @@
+# Voice Notes 1.3.4 — patient HD note playback
+
+- Long notes no longer use the short-alert 4.2-second synthesis budget split between voices. Each bounded 900-character clip gets one 30-second total deadline, up to 10 seconds per distinct same-language HD voice. Stop/cancellation remains interruptible; chunks never overlap. Region/gender may differ during HD recovery; no robotic/device-TTS fallback is added.
+- MP3 playback waits for actual completion, detects decoder/player failure, uses media/speech audio attributes and cleans temporary clips after release. A failure message no longer incorrectly declares that internet is absent: service/network or playback can fail even with Wi-Fi enabled. Internet access is still required; third-party service availability is not guaranteed.
+- Selected text is sent only after the existing explicit HD disclosure/consent. Synthetic Tamil/English CI probes contain no saved/private notes. Note storage, note format, app lock and microphone behavior are unchanged.
+- Same package and established signer as 1.3.3; **update in place, do not uninstall or clear data**. Uninstalling may erase local data. Saved notes/preferences are intended to remain. No new permissions, no private screenshot/note uploads, no old asset replacement. No physical-device test of these exact new bytes or Play Protect clearance claimed. Automated/emulator evidence is not audible owner-phone proof.
+
+## தமிழ்
+
+- நீண்ட குறிப்புகளுக்கு குறுகிய அறிவிப்பின் 4.2 நொடி கால வரம்பு இனி பயன்படுத்தப்படாது. ஒவ்வொரு அதிகபட்ச 900 எழுத்துத் துண்டுக்கும் மொத்தம் 30 நொடிகள்; அதே மொழியில் தனித்த உயர்தரக் குரல் ஒன்றுக்கு அதிகபட்சம் 10 நொடிகள் கிடைக்கும். நிறுத்து உடனடியாகச் செயல்படும்; ஒலித் துண்டுகள் ஒன்றன்மேல் ஒன்று ஒலிக்காது. வட்டாரமோ ஆண்/பெண் குரலோ மாறலாம்; ரோபோ/சாதன TTS மாற்றுவழி சேர்க்கப்படவில்லை.
+- MP3 முழுமையாக முடிவதைச் சரிபார்த்து, வாசிப்புத் தோல்வியைக் கண்டறிந்து, தற்காலிகக் கோப்புகளை விடுவித்த பின் நீக்கும். Wi-Fi இருந்தாலும் சேவை அல்லது வாசிப்புத் தோல்வி வரலாம்; இணையம் இல்லை எனத் தவறாக மட்டும் கூறாது. இணையம் தேவை; மூன்றாம் தரப்புச் சேவை கிடைப்பது உறுதி அல்ல.
+- முந்தைய HD அனுமதி விளக்கத்திற்குப் பிறகே தேர்ந்தெடுத்த உரை அனுப்பப்படும். CI-யில் செயற்கை தமிழ்/ஆங்கில உரை மட்டுமே; தனிப்பட்ட குறிப்புகள் இல்லை. குறிப்புக் கோப்பு வடிவம், பூட்டு, மைக் நடத்தை மாறவில்லை.
+- 1.3.3 கையொப்பத்திலேயே வழக்கமான புதுப்பிப்பு. **நீக்கவோ தரவை அழிக்கவோ வேண்டாம்**; நீக்கினால் உள்ளூர் குறிப்புகள் அழியும். குறிப்புகளும் அமைப்புகளும் தொடரும் வகையில் அமைக்கப்பட்டுள்ளது. புதிய அனுமதிகள் இல்லை; பழைய APK மாற்றப்படாது. இந்தத் துல்லியமான புதிய கோப்பிற்கு கைபேசி சோதனையோ Play Protect ஒப்புதலோ கூறவில்லை. தானியங்கிச் சோதனை உரிமையாளர் போனில் ஒலியைக் கேட்ட சோதனைக்கு ஈடல்ல.

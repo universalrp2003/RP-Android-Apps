@@ -17,7 +17,11 @@ class VoiceNotesContractTest(unittest.TestCase):
         self.assertIn("speaker.speak(note.text, voiceId, pitch)", MAIN)
         self.assertIn("No robotic voice fallback is used.", MAIN)
         self.assertNotIn("android.speech.tts.TextToSpeech", MAIN)
-        self.assertIn("SharedNeuralVoiceEngine.synthesizeRawMp3", SPEAKER)
+        self.assertIn("NoteHdVoice.synthesize", SPEAKER)
+        policy = (ROOT / "voicenotes/src/main/java/com/universalrp/voicenotes/NoteHdVoice.kt").read_text()
+        self.assertIn("SharedNeuralVoiceEngine.synthesizeRawMp3", policy)
+        self.assertIn("timeoutMs = TIMEOUT_MS", policy)
+        self.assertIn("attemptTimeoutMs = ATTEMPT_MS", policy)
 
     def test_owner_requested_search_removed_but_edit_preserves_ids(self):
         self.assertNotIn("searchQuery", MAIN)

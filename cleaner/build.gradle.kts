@@ -19,8 +19,8 @@ android {
         applicationId = "com.universalrp.cleansweep"
         minSdk = 26
         targetSdk = 36
-        versionCode = 86
-        versionName = "2.81"
+        versionCode = 87
+        versionName = "2.82"
     }
 
     signingConfigs {

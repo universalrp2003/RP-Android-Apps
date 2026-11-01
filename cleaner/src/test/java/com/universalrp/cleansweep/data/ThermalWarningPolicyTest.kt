@@ -29,12 +29,12 @@ class ThermalWarningPolicyTest {
         assertNull(decision.celsius)
         assertNull(ThermalWarningPolicy.celsiusText(null))
     }
-    @Test fun aHotCpuZoneIsNamedAsCpuAndNeverAsBatteryHeat() {
-        val decision = ThermalWarningPolicy.decide(batteryC = 38f, kernelBatteryC = null, cpuC = 75.4f)
-        assertTrue(decision.warn)
-        assertEquals(ThermalWarningPolicy.Sensor.CPU, decision.sensor)
-        assertEquals("75.4 °C", ThermalWarningPolicy.celsiusText(decision.celsius))
-        assertFalse(ThermalWarningPolicy.decide(batteryC = 38f, kernelBatteryC = null, cpuC = 74.9f).warn)
+    @Test fun unverifiedCpuZonesNeverTriggerSpeechEvenOnAnIdleCoolBattery() {
+        for (cpu in listOf(75.4f, 110f, Float.NaN, Float.POSITIVE_INFINITY)) {
+            assertFalse(ThermalWarningPolicy.decide(30f, null, cpu).warn)
+            assertFalse(ThermalWarningPolicy.decide(null, null, cpu).warn)
+        }
+        assertTrue(ThermalWarningPolicy.decide(44f, null, 90f).warn)
     }
     @Test fun theSameWarningIsHushedForItsWindowAndSurvivesAClockChange() {
         val now = 1_700_000_000_000L

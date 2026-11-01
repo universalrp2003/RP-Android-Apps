@@ -109,7 +109,7 @@ class HealthWatchWorker(
         val prefs = Announcer.prefs(ctx)
 
         // Battery low — only while it is actually running on the battery.
-        if (!battery.powerConnected && battery.percent in 0 until Announcer.LOW_PERCENT) {
+        if (com.universalrp.cleansweep.data.BatteryAlertPolicy.low(battery.percent, battery.powerConnected, Announcer.lowPercent(ctx))) {
             val last = prefs.getLong(Announcer.KEY_LAST_LOW, 0L)
             if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
                 Announcer.speakAndWait(
@@ -122,12 +122,12 @@ class HealthWatchWorker(
         }
 
         // Battery full — worth a word only while it is still on the cable.
-        if (battery.powerConnected && battery.percent >= 100) {
+        if (battery.fullChargeConfirmed) {
             val last = prefs.getLong(Announcer.KEY_LAST_FULL, 0L)
             if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
                 Announcer.speakAndWait(
                     ctx, "",
-                    "பேட்டரி முழுமை அடைந்தது. சார்ஜரை அகற்றவும்.",
+                    "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்.",
                     Announcer.Event.BATTERY_FULL,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_FULL, System.currentTimeMillis()).apply() },
                 )

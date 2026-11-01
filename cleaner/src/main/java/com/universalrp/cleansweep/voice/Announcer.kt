@@ -134,6 +134,12 @@ object Announcer {
 
     /** Battery below this speaks a warning while unplugged. */
     const val LOW_PERCENT = 20
+    const val KEY_LOW_PERCENT = "voice_low_percent"
+    fun lowPercent(context: Context): Int = com.universalrp.cleansweep.data.BatteryAlertPolicy.lowThreshold(
+        prefs(context).getInt(KEY_LOW_PERCENT, LOW_PERCENT))
+    fun setLowPercent(context: Context, value: Int) {
+        prefs(context).edit().putInt(KEY_LOW_PERCENT, com.universalrp.cleansweep.data.BatteryAlertPolicy.lowThreshold(value)).apply()
+    }
 
     /**
      * Battery temperature (°C) that counts as too hot. 2.41: one owner-set **44 °C**
