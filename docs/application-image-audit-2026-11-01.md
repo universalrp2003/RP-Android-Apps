@@ -62,3 +62,10 @@ Privacy review: the two home screenshots include an embedded SMS inbox thumbnail
 The expanded self-update screenshot visibly reports installed Store0.7. Other screenshots show catalog/installed version labels, including the already-held Oor1.1.13 installation; these are not independent APK hash checks, trip tests, authorization to publish Oor, or evidence every listed app was installed/updated. Caption distinguishes capture-time versions from new releases. Existing accepted apps and public APK bytes remain untouched.
 
 Updated prepared-source image totals:57 website application images and65 Store gallery images. **Not live:** collection/preparation only, no push/deployment/build/release. Only **DailyVault** screenshots remain requested; the Tamilan Store website-image gap now has prepared assets.
+
+
+## Authorized publication phase — DailyVault complete and Store0.8 public
+
+Owner subsequently authorized Drive retrieval, Store design/animation, build/publication and website verification. Seven empty/blank DailyVault screens fetched and reviewed; prepared in both galleries. All six remaining website illustration/missing-image gaps now use real existing Store screens, labelled older where applicable; Expense uses its permission screen, not financial summary. All14 website cards now have actual screenshots:70 image references. Store0.8 contains72 screenshots across all13 ordinary app galleries.
+
+Signed Store0.8 was published without rebuild by41256209522; release430268186/APK696852937/checksum696852940,19,276,334 bytes/SHA3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474. Exact APK ZIP inspected locally only under `/tmp`; all72 asset bytes match reviewed source. Native update/language/motion/gallery and separate archive/installer gates passed. Public0.7/other APKs unchanged; no DailyVault rebuild published. Earlier “prepared/not live” entries describe their collection stage, not final release status. Website integration/Pages is the remaining gate; see [Store0.8 receipt](tamilan-store-0.8-verification.md).

@@ -1,6 +1,6 @@
-# தமிழன் / Tamilan Store 0.7
+# தமிழன் / Tamilan Store 0.8
 
-**Published:** [exact verified Store0.7 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.7/Tamilan-Store-v0.7.apk). [Publication receipt and test limits](../docs/tamilan-store-0.7-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
+**Published:** [exact verified Store0.8 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.8/Tamilan-Store-v0.8.apk). [Publication receipt and test limits](../docs/tamilan-store-0.8-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
 
 Store is separate from the **13 regular non-Store apps**, including DailyVault0.5. Its13-app bundled fallback and release-metadata refresh list the same verified public apps. No account, ads or automatic installation. The corrected current-release signer pin and typed download/verification errors retain size/hash/package/version/minimum-SDK/signer/downgrade gates. The user selects Install; Android makes the final confirmation. Installed same-key apps can update without uninstalling or clearing their data.
 

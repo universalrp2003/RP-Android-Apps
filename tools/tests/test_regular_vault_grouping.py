@@ -10,7 +10,7 @@ class RegularVaultGroupingTest(unittest.TestCase):
         ids = re.findall(r'id = "([^"]+)"', source)
         self.assertEqual(ids[-2:], ['dailyvault', 'tamilanstore'])
         self.assertEqual(len(ids[:-1]), 13)
-        self.assertIn('$RELEASE_BASE/tamilan-store-v0.7', source)
+        self.assertIn('$RELEASE_BASE/tamilan-store-v0.8', source)
         self.assertIn('$RELEASE_BASE/daily-vault-v0.5', source)
         site = (ROOT/'site/index.html').read_text()
         regular = re.search(r'aria-label="13 regular Android applications">(.*?)</section>', site, re.S)[1]

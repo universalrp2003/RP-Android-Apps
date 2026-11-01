@@ -165,14 +165,14 @@ object SisterApps {
         ),
         SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.8", publishedVersion = "0.7",
+            tagPrefix = "tamilan-store", version = "0.8", publishedVersion = "0.8",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
-        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.7",
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.8",
         "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.5",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,
