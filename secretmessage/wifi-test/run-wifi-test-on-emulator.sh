@@ -114,7 +114,10 @@ read -r SCREEN_W SCREEN_H < <("$ADB" shell wm size | tr -d '\r' | sed -n 's/^Phy
 dump_ui() {
   local attempt
   for attempt in 1 2 3 4 5; do
-    if "$ADB" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 \
+    # Some uiautomator failures exit zero without writing a file. Never reuse
+    # an earlier viewport's XML as evidence for the current assertion.
+    if "$ADB" shell rm -f /sdcard/window.xml >/dev/null 2>&1 \
+      && "$ADB" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 \
       && "$ADB" shell cat /sdcard/window.xml > "$UI_XML" 2>/dev/null \
       && grep -q '<hierarchy' "$UI_XML"; then
       return 0
@@ -126,20 +129,25 @@ dump_ui() {
 
 # Print "x y" for the first node whose attribute equals (or, with "contains", includes) the value.
 find_node() {
-  python3 - "$UI_XML" "$1" "$2" "${3:-equals}" <<'PY'
+  python3 - "$UI_XML" "$1" "$2" "${3:-equals}" "$SCREEN_W" "$SCREEN_H" <<'PY'
 import re
 import sys
 import xml.etree.ElementTree as ET
 
 path, attribute, value, mode = sys.argv[1:5]
+width, height = map(int, sys.argv[5:7])
 for node in ET.parse(path).getroot().iter("node"):
     actual = node.get(attribute, "")
     if actual == value or (mode == "contains" and value in actual):
-        match = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
+        match = re.match(r"\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]", node.get("bounds", ""))
         if match:
             x1, y1, x2, y2 = map(int, match.groups())
-            print((x1 + x2) // 2, (y1 + y2) // 2)
-            sys.exit(0)
+            # Compose can retain offscreen/zero-area semantics. They cannot prove
+            # visibility or provide a safe tap coordinate; keep searching.
+            x1, y1, x2, y2 = max(0, x1), max(0, y1), min(width, x2), min(height, y2)
+            if x2 > x1 and y2 > y1:
+                print((x1 + x2) // 2, (y1 + y2) // 2)
+                sys.exit(0)
 sys.exit(1)
 PY
 }
@@ -188,18 +196,23 @@ scroll() {
   sleep 1
 }
 
-# Scroll down until a node matches (at most 12 swipes), for the long settings screen.
+# Search either side of the current viewport, including after returning from Guide.
+# Do not assume every preceding target leaves the screen above the next target.
+# Bound both directions; missing controls and dead app processes still fail.
 scroll_until() {
-  local attribute="$1" value="$2" mode="${3:-equals}" swipes=0
-  while (( swipes < 12 )); do
-    app_alive || fail "The app process is not running while looking for: $value"
-    if dump_ui && find_node "$attribute" "$value" "$mode" >/dev/null; then
-      return 0
-    fi
-    scroll down
-    swipes=$((swipes + 1))
+  local attribute="$1" value="$2" mode="${3:-equals}" direction swipes
+  for direction in down up; do
+    for ((swipes=0; swipes<=12; swipes++)); do
+      app_alive || fail "The app process is not running while looking for: $value"
+      if dump_ui && find_node "$attribute" "$value" "$mode" >/dev/null; then
+        return 0
+      fi
+      if (( swipes < 12 )); then
+        scroll "$direction"
+      fi
+    done
   done
-  fail "Could not find $attribute '$value' after scrolling. Visible text: $(visible_text)"
+  fail "Could not find visible $attribute '$value' after bounded down/up scrolling. Visible text: $(visible_text)"
 }
 
 tap() {
@@ -255,7 +268,7 @@ wait_for text "Recipient view timer"
 # The app's wording replaces the preview's ("This preview cannot deliver messages …").
 wait_for text "It starts on both phones when the other person views your message." contains
 scroll_until text "About Secret Message"
-wait_for text "has not been independently security-reviewed" contains
+scroll_until text "has not been independently security-reviewed" contains
 
 STEP="app settings (1.1.0): ready for chats, this phone, guide and About"
 scroll_until text "Ready for chats"
