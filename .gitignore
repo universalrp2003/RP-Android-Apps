@@ -12,3 +12,6 @@ ci-keystore/
 
 # Rust compiler outputs; only Cargo manifests and Cargo.lock are source.
 **/target/
+
+# Disposable Store upgrade emulator evidence (synthetic only).
+store-signed-upgrade-results/
