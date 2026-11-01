@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-10-31",
+  "updated": "2026-11-01",
   "apps": [
     {
       "id": "smsguard",
@@ -128,11 +128,11 @@
       "name": "Elderly Launcher",
       "tamilName": "முதியவர் திரை",
       "packageName": "com.universalrp.launcher",
-      "version": "1.5",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.5/Elderly-Launcher-v1.5.apk",
-      "size": 11498427,
-      "sha256": "c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.5"
+      "version": "1.7",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.7/Elderly-Launcher-v1.7.apk",
+      "size": 11521755,
+      "sha256": "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.7"
     }
   ]
 }

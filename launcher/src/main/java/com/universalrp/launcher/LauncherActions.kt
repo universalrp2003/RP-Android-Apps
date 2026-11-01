@@ -54,6 +54,16 @@ object LauncherActions {
         }
     }
 
+    /** Resolve only saved shortcuts on home; enumerate the whole inventory only in the picker. */
+    fun favouriteApp(context: Context, packageName: String): AppEntry? = runCatching {
+        val manager = context.packageManager
+        if (manager.getLaunchIntentForPackage(packageName) == null) return null
+        val info = manager.getApplicationInfo(packageName, 0)
+        AppEntry(manager.getApplicationLabel(info).toString(), packageName,
+            (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+            runCatching { manager.getApplicationIcon(info) }.getOrNull())
+    }.getOrNull()
+
     fun launchApp(context: Context, packageName: String): Result {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
             ?: return Result.Failed(R.string.no_apps_found)
@@ -156,28 +166,30 @@ object LauncherActions {
         }
     }
 
-    /**
-     * Turns the volume up or down, the way the phone's own buttons do.
-     *
-     * `adjustVolume` rather than `adjustStreamVolume(STREAM_MUSIC, ...)`. The old version changed
-     * the media volume only, and media volume is inaudible when nothing is playing - so the button
-     * moved a number nobody could hear and read as "not working", which is what the owner reported.
-     * `adjustVolume` acts on whichever stream is relevant at the moment, which is the ring volume
-     * when the phone is idle and the media volume while something plays, exactly like the hardware
-     * buttons.
-     *
-     * FLAG_SHOW_UI puts the system's own slider on screen, so the press has a visible result even
-     * when the volume is already at its limit and the number cannot move.
-     */
-    fun nudgeVolume(context: Context, up: Boolean): Result {
+    /** Change the explicitly selected stream, not an OEM's suggested-volume UI delegate. */
+    fun nudgeVolume(context: Context, up: Boolean, stream: Int = AudioManager.STREAM_MUSIC): Result {
+        if (stream != AudioManager.STREAM_MUSIC && stream != AudioManager.STREAM_RING)
+            return Result.Failed(R.string.volume_unavailable)
         val audio = context.getSystemService(AudioManager::class.java)
-            ?: return Result.Failed(R.string.volume_up)
+            ?: return Result.Failed(R.string.volume_unavailable)
         return try {
-            val direction = if (up) AudioManager.ADJUST_RAISE else AudioManager.ADJUST_LOWER
-            audio.adjustVolume(direction, AudioManager.FLAG_SHOW_UI)
-            Result.Done
+            if (audio.isVolumeFixed) return Result.Failed(R.string.volume_unavailable)
+            // Never change silent/vibrate mode or cross the ring-silent boundary. Android
+            // and the user retain control of DND; no policy-access permission is requested.
+            if (stream == AudioManager.STREAM_RING && audio.ringerMode != AudioManager.RINGER_MODE_NORMAL)
+                return Result.Failed(R.string.volume_ring_boundary)
+            val current = audio.getStreamVolume(stream)
+            val minimum = if (android.os.Build.VERSION.SDK_INT >= 28) audio.getStreamMinVolume(stream) else 0
+            val maximum = audio.getStreamMaxVolume(stream)
+            if (maximum <= minimum) return Result.Failed(R.string.volume_unavailable)
+            val target = VolumeStep.target(current, minimum, maximum, up,
+                keepRingAudible = stream == AudioManager.STREAM_RING)
+                ?: return Result.Failed(R.string.volume_ring_boundary)
+            if (target != current) audio.setStreamVolume(stream, target, 0)
+            if (audio.getStreamVolume(stream) == target) Result.Done
+            else Result.Failed(R.string.volume_unavailable)
         } catch (error: Exception) {
-            Result.Failed(R.string.volume_up)
+            Result.Failed(R.string.volume_unavailable)
         }
     }
 

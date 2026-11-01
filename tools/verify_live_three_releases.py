@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post-deployment read-only proof of the three authorized public releases on Pages.
+"""Post-deployment read-only proof of the authorized public releases and privacy-reviewed Launcher gallery on Pages.
 
 Only fixed official paths; no owner data, external submissions or release mutation.
 Run in main Pages deploy after the checked artifact is actually deployed.
@@ -68,13 +68,19 @@ def main():
     store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
     checks = [('Tamilan-Store-v0.9.apk', store),
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
-              ('CleanSweep-v2.82.apk', health['apps']['cleaner'])]
+              ('CleanSweep-v2.82.apk', health['apps']['cleaner']),
+              ('Elderly-Launcher-v1.7.apk', json.loads((ROOT/'docs/launcher-1.7-publication.json').read_text()))]
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000
         validate_apk(get_bounded('apks/' + name, pin['bytes']), pin['bytes'], pin['apk_sha256'])
         validate_zip(get_bounded('apks/' + name[:-4] + '.zip', 40_000_000), name, pin['bytes'], pin['apk_sha256'])
         print(f'PASS: live APK and ZIP {name}: {pin["bytes"]}B SHA256 {pin["apk_sha256"]}', flush=True)
-    print('PASS: main Pages deployment serves all three exact published APKs and ZIP contents; no Google/device clearance claimed', flush=True)
+    gallery = json.loads((ROOT/'docs/launcher-1.7-gallery-review.json').read_text())
+    for image in gallery['images']:
+        data = get_bounded(image['website'], 1_000_000)
+        validate_apk(data, image['bytes'], image['sha256'])
+        print('PASS: live privacy-reviewed Launcher screenshot ' + image['website'], flush=True)
+    print('PASS: main Pages serves all four exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
 
 
 if __name__ == '__main__':
