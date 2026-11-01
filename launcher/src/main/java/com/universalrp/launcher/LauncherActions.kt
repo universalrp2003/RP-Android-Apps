@@ -54,6 +54,16 @@ object LauncherActions {
         }
     }
 
+    /** Resolve only saved shortcuts on home; enumerate the whole inventory only in the picker. */
+    fun favouriteApp(context: Context, packageName: String): AppEntry? = runCatching {
+        val manager = context.packageManager
+        if (manager.getLaunchIntentForPackage(packageName) == null) return null
+        val info = manager.getApplicationInfo(packageName, 0)
+        AppEntry(manager.getApplicationLabel(info).toString(), packageName,
+            (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+            runCatching { manager.getApplicationIcon(info) }.getOrNull())
+    }.getOrNull()
+
     fun launchApp(context: Context, packageName: String): Result {
         val intent = context.packageManager.getLaunchIntentForPackage(packageName)
             ?: return Result.Failed(R.string.no_apps_found)

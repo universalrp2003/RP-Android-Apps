@@ -251,10 +251,12 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
         } else notice = "விளக்கிற்கு கேமரா அனுமதி தேவை. / Camera permission is needed for the torch."
     }
 
-    // A launcher's screen is recreated constantly, so the app list is loaded once per composition
-    // on a background thread and never on the main thread.
-    LaunchedEffect(showAppList) {
-        apps = withContext(Dispatchers.IO) { LauncherActions.installedApps(context) }
+    // Read only saved shortcut identities on home; refresh the full launchable list on opening it.
+    LaunchedEffect(showAppList, favouriteApps) {
+        apps = withContext(Dispatchers.IO) {
+            if (showAppList) LauncherActions.installedApps(context)
+            else favouriteApps.mapNotNull { LauncherActions.favouriteApp(context, it) }
+        }
     }
 
     // The clock ticks so the time is never more than a minute stale.
