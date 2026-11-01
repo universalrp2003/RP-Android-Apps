@@ -45,8 +45,8 @@ class StoreRedesignContracts(unittest.TestCase):
 
     def test_preview_does_not_replace_or_advertise_immutable_public_release(self):
         build = (ROOT/'tamilanstore/build.gradle.kts').read_text()
-        self.assertIn('versionName = "0.9-preview"', build)
-        self.assertIn('versionCode = 9', build)
+        self.assertIn('versionName = "0.9-rc1"', build)
+        self.assertIn('versionCode = 10', build)
         site = (ROOT/'site/index.html').read_text()
         self.assertNotIn('Tamilan-Store-v0.9', site)
         workflow = (ROOT/'.github/workflows/new-apps-public-release.yml').read_text()

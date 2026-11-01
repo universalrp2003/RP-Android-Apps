@@ -1,0 +1,123 @@
+name: Tamilan Store release-key upgrade candidate (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - "tamilanstore/**"
+      - ".github/workflows/tamilanstore-signed-candidate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: store-signed-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify-upgrade:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.14.3'
+      - name: Source and localization gates
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+      - name: Test, lint and build release-key candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle :tamilanstore:testReleaseUnitTest :tamilanstore:lintRelease :tamilanstore:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/store-signed-build.log"
+      - name: Pin identity, signer and exact upgrade fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          mkdir -p "$RUNNER_TEMP/store-upgrade-candidate"
+          apk="$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk"
+          cp tamilanstore/build/outputs/apk/release/tamilanstore-release.apk "$apk"
+          "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/store-candidate-badging.txt"
+          grep -Fq "package: name='com.universalrp.tamilanstore' versionCode='10' versionName='0.9-rc1'" "$RUNNER_TEMP/store-candidate-badging.txt"
+          ! grep -q application-debuggable "$RUNNER_TEMP/store-candidate-badging.txt"
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.8/Tamilan-Store-v0.8.apk' \
+            -o "$RUNNER_TEMP/Store0.8.apk"
+          echo "3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474  $RUNNER_TEMP/Store0.8.apk" | sha256sum --check
+          test "$(stat -c %s "$RUNNER_TEMP/Store0.8.apk")" = 19276334
+          for name in candidate previous; do
+            if [[ "$name" == candidate ]]; then file="$apk"; else file="$RUNNER_TEMP/Store0.8.apk"; fi
+            "$tools/apksigner" verify --print-certs "$file" > "$RUNNER_TEMP/store-$name-signer.txt"
+            signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' "$RUNNER_TEMP/store-$name-signer.txt" | tr -d ' :\r' | tr A-F a-f | sort -u)"
+            test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          done
+          (cd "$RUNNER_TEMP/store-upgrade-candidate" && sha256sum Tamilan-Store-v0.9-rc1.apk > Tamilan-Store-v0.9-rc1.sha256)
+      - name: Enable guarded emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exact signed Store0.8 upgrade and data preservation on Android15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 tamilanstore/tools/signed-upgrade-smoke.py "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk" "$RUNNER_TEMP/Store0.8.apk"
+      - name: Exact artifact receipt after upgrade testing
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP/store-upgrade-candidate"
+          sha256sum --check Tamilan-Store-v0.9-rc1.sha256
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk'
+          receipt=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'store-signed-upgrade-evidence/result.json').read_text())
+          receipt.update(source=os.environ['GITHUB_SHA'],bytes=p.stat().st_size,apk_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),signer='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
+          (p.parent/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print('::notice title=Store release-key upgrade receipt::'+json.dumps(receipt))
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Tamilan-Store-0.9-rc1-release-key-upgrade-candidate
+          path: ${{ runner.temp }}/store-upgrade-candidate/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload synthetic upgrade evidence and reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tamilan-store-release-key-upgrade-evidence
+          path: |
+            ${{ runner.temp }}/store-signed-upgrade-evidence/
+            ${{ runner.temp }}/store-signed-build.log
+            tamilanstore/build/test-results/
+            tamilanstore/build/reports/
+          retention-days: 14
+          if-no-files-found: warn
+      - name: Surface bounded candidate failures
+        if: failure()
+        shell: python
+        run: |
+          import os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          for p in [root/'store-signed-build.log',root/'store-signed-upgrade-evidence/failure.txt']:
+              if not p.exists(): continue
+              lines=p.read_text(errors='replace').splitlines()
+              selected=[s for s in lines if any(t in s for t in ('e:', ' FAILED', 'Error:', 'Exception', 'AssertionError', 'FAILURE:'))] or lines[-12:]
+              for line in selected[-20:]:
+                  print('::error title=Store signed upgrade::'+line[-700:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+      - name: Remove ephemeral private keystore
+        if: always()
+        run: rm -f ci-keystore/release.p12

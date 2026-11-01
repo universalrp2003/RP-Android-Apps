@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Exact release-key Store upgrade on a disposable CI emulator, never an owner's phone.
+
+ADB tests Android package/signing/data continuity, NOT Play Protect or file-manager installation.
+"""
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import time
+import traceback
+import xml.etree.ElementTree as ET
+
+PKG = 'com.universalrp.tamilanstore'
+OLD_SHA = '3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474'
+
+
+def adb(*args):
+    return subprocess.check_output(['adb', *args], stderr=subprocess.STDOUT, timeout=90).decode(errors='replace')
+
+
+def ui():
+    adb('shell', 'uiautomator', 'dump', '/sdcard/store-upgrade.xml')
+    text = adb('shell', 'cat', '/sdcard/store-upgrade.xml')
+    return text, list(ET.fromstring(text).iter('node'))
+
+
+def wait_text(label):
+    deadline = time.monotonic() + 45
+    while time.monotonic() < deadline:
+        text, nodes = ui()
+        match = next((n for n in nodes if n.get('text') == label), None)
+        if match is not None:
+            return match
+        time.sleep(1)
+    raise AssertionError('Missing native UI text: ' + label)
+
+
+def click(label):
+    node = wait_text(label)
+    x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
+    adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
+
+
+def launch():
+    adb('shell', 'am', 'start', '-W', '-n', PKG + '/.MainActivity')
+
+
+def prefs():
+    raw = adb('shell', 'cat', f'/data/user/0/{PKG}/shared_prefs/MainActivity.xml')
+    return {n.get('name'): n.get('value') for n in ET.fromstring(raw).findall('boolean')}
+
+
+def package_state():
+    dump = adb('shell', 'dumpsys', 'package', PKG)
+    code = re.search(r'\bversionCode=(\d+)', dump)
+    name = re.search(r'\bversionName=([^\s]+)', dump)
+    uid = re.search(r'\buserId=(\d+)', dump)
+    assert code and name and uid, 'Cannot inspect installed package'
+    return {'code': int(code[1]), 'name': name[1], 'uid': uid[1]}
+
+
+def snap(out, name):
+    text, _ = ui()
+    (out / (name + '.xml')).write_text(text)
+    (out / (name + '.png')).write_bytes(subprocess.check_output(['adb', 'exec-out', 'screencap', '-p'], timeout=30))
+
+
+def run(out):
+    # No install, root, settings or application-data operation before all these guards pass.
+    assert os.environ.get('CI') == 'true' and os.environ.get('GITHUB_ACTIONS') == 'true'
+    assert adb('get-serialno').strip().startswith('emulator-')
+    assert adb('shell', 'getprop', 'ro.kernel.qemu').strip() == '1'
+    assert len(sys.argv) == 3
+    candidate, previous = map(Path, sys.argv[1:])
+    before_digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
+    assert previous.stat().st_size == 19276334
+    assert hashlib.sha256(previous.read_bytes()).hexdigest() == OLD_SHA
+    adb('root')
+    adb('wait-for-device')
+    assert adb('shell', 'id', '-u').strip() == '0'
+    # Fresh fixture installation is setup on this empty emulator, not the tested upgrade.
+    adb('install', str(previous))
+    launch()
+    click('English')
+    click('Pause scrolling text')
+    wait_text('Enable scrolling text')
+    for attempt in range(20):
+        if prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false':
+            break
+        time.sleep(0.2)
+    assert prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false'
+    old = package_state()
+    assert old['code'] == 8 and old['name'] == '0.8'
+    marker = f'/data/user/0/{PKG}/files/synthetic-upgrade-marker'
+    adb('shell', f'mkdir -p /data/user/0/{PKG}/files; printf synthetic-ci-only > {marker}')
+    marker_hash = adb('shell', 'sha256sum', marker).split()[0]
+    snap(out, '01-store08-before-upgrade')
+    adb('shell', 'am', 'force-stop', PKG)
+    # The operation being tested: same-package, release-key, higher-version update. No reset.
+    adb('install', '-r', str(candidate))
+    new = package_state()
+    assert new['code'] == 10 and new['name'] == '0.9-rc1'
+    assert new['uid'] == old['uid']
+    assert adb('shell', 'sha256sum', marker).split()[0] == marker_hash
+    assert prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false'
+    launch()
+    wait_text('Tamilan')
+    wait_text('Enable scrolling text')
+    assert 'Debug preview' not in ui()[0], 'Release artifact must not masquerade as a debug preview'
+    snap(out, '02-store09-release-key-upgrade')
+    # Restart must preserve the two real UI preferences as well as the synthetic file.
+    adb('shell', 'am', 'force-stop', PKG)
+    launch()
+    wait_text('Tamilan')
+    wait_text('Enable scrolling text')
+    snap(out, '03-after-restart')
+    assert hashlib.sha256(candidate.read_bytes()).hexdigest() == before_digest
+    result = dict(from_version='0.8', to_version='0.9-rc1', version_code=10,
+                  package=PKG, installation_method='adb install -r; no bypass flags',
+                  same_uid=True, private_file_preserved=True, language_preserved=True,
+                  motion_preference_preserved=True, restart_passed=True,
+                  physical_phone_tested=False, play_protect_tested=False,
+                  debug_to_release_upgrade_supported=False)
+    (out / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
+    print('::notice title=Store0.8 release-key upgrade::' + json.dumps(result))
+
+
+if __name__ == '__main__':
+    out = Path(os.environ.get('RUNNER_TEMP', '/tmp')) / 'store-signed-upgrade-evidence'
+    out.mkdir(parents=True, exist_ok=True)
+    try:
+        run(out)
+    except Exception:
+        (out / 'failure.txt').write_text(traceback.format_exc())
+        raise

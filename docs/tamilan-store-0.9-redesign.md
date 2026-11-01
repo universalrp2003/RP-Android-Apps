@@ -4,6 +4,12 @@
 The public website/directory and immutable Store0.8 assets are unchanged. The reported
 Play Protect harmful-app block remains unresolved; neither this UI nor CI establishes clearance.
 
+> Follow-up: the owner reported that the debug preview requires fresh installation.
+> It is not release-key upgrade-compatible. Current source is **0.9-rc1 / code 10** with
+> a dedicated release-key candidate workflow; see [upgrade investigation and gates](tamilan-store-0.9-upgrade.md).
+> The 0.9-preview/code9 results below are historical evidence for that earlier source, not
+> proof that the new signed candidate or Play Protect has passed.
+
 ## Design research and decisions
 
 Reviewed the official [F-Droid documentation](https://f-droid.org/en/docs/),

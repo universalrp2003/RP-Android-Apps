@@ -86,7 +86,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'launcher': ('1.5', '6', 'elderly-launcher-v1.5'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Source-only redesign; the last published migration receipt stays immutable.
-            'tamilanstore': ('0.9-preview', '9', 'tamilan-store-v0.8'),
+            'tamilanstore': ('0.9-rc1', '10', 'tamilan-store-v0.8'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():

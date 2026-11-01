@@ -188,6 +188,11 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onLanguage = { tamil = !tamil; getPreferences(0).edit().putBoolean("tamil", tamil).apply() })
                         }
+                        // Debug artifacts are for emulator/development validation, never release-key upgrades.
+                        if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) item {
+                            Text(bi("சோதனைக் கோப்பு · வெளியீட்டு அங்காடியை இதனால் புதுப்பிக்க முடியாது", "Debug preview · cannot update release Store"),
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
+                        }
                         item {
                             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                 TextButton(onClick = { showSearch = true }) { Text(bi("தேடு", "Search") + if (query.isBlank()) "" else " · $query", maxLines = 2) }

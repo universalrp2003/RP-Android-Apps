@@ -137,7 +137,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v7
         with:
-          name: tamilan-store-preview
+          name: tamilan-store-debug-emulator-only
           path: tamilanstore/build/outputs/apk/debug/*.apk
           retention-days: 30
       - uses: actions/upload-artifact@v7
