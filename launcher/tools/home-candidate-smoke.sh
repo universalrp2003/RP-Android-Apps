@@ -15,6 +15,11 @@ package_uid() {
 }
 adb root
 adb wait-for-device
+# A slow install must not leave the disposable emulator asleep behind its keyguard.
+adb shell settings put system screen_off_timeout 1800000
+adb shell svc power stayon true
+adb shell input keyevent KEYCODE_WAKEUP
+adb shell wm dismiss-keyguard
 # Preserve the actual failing status, even while collecting bounded synthetic UI evidence.
 trap 'status=$?; trap - EXIT; adb pull /sdcard/Android/data/com.universalrp.launcher/files/. "$root/ui/" || true; exit "$status"' EXIT
 adb install "$root/Elderly-Launcher-v1.5.apk"
@@ -33,6 +38,8 @@ adb install -r "$root/Elderly-Launcher-v1.6.apk"
 after="$(package_uid)"
 [[ -n "$before" && "$before" == "$after" ]]
 adb install -r "$(find launcher/build/outputs/apk/androidTest/release -name '*.apk' | head -1)"
+adb shell input keyevent KEYCODE_WAKEUP
+adb shell wm dismiss-keyguard
 adb shell am instrument -w -r -e class com.universalrp.launcher.HomeFollowupTest \
   com.universalrp.launcher.test/androidx.test.runner.AndroidJUnitRunner | tee "$root/native.txt"
 grep -q '^OK (' "$root/native.txt"

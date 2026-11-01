@@ -35,3 +35,9 @@ run's APK is eligible for publication. Candidate artifacts upload only after bot
   exclusively description-based selector, with no text fallback. Keep both centre and height
   assertions and the actual 2.0 configuration assertion. Surface Kotlin stack locations in
   failure annotations as well. The lifecycle/restart correction still needs its successful run.
+
+- 3ae6f3c / run41305019822 / job124843543560: first clock wait failed at test line61,
+  before any UI screenshot had been taken. Prior runs rendered and verified that same clock.
+  Keep the clock assertion, explicitly keep the CI emulator awake/dismiss its noncredential
+  keyguard, and collect startup/final synthetic UI even on early assertions. The cause of this
+  particular missing-clock observation was not established from its available evidence.

@@ -8,6 +8,7 @@ import androidx.test.uiautomator.Direction
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import org.junit.Assert.*
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -37,6 +38,7 @@ class HomeFollowupTest {
         device.takeScreenshot(File(context.getExternalFilesDir(null), "$name.png"))
         device.dumpWindowHierarchy(File(context.getExternalFilesDir(null), "$name.xml"))
     }
+    @After fun collectFinalSyntheticUi() { shot("final-state") }
     @Test fun signedUpdatePreservesPrivateDataAndNewHomeControlsWork() {
         val label = context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo("com.android.settings", 0)).toString()
         if (InstrumentationRegistry.getArguments().getString("phase") == "restart") {
@@ -58,7 +60,9 @@ class HomeFollowupTest {
         assertNotNull("Emulator Settings must be a launchable fixture", settings)
         FavouriteApps.remove(context, "com.android.settings")
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            assertNotNull(device.wait(Until.findObject(By.text(Pattern.compile("(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)"))), 15_000))
+            device.waitForIdle()
+            shot("00-launch-state")
+            assertNotNull("12-hour AM/PM clock on the awake home screen",(device.wait(Until.findObject(By.text(Pattern.compile("(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)"))), 15_000))
             shot("01-clock-small-status")
             val minus = find(context.getString(R.string.volume_down), descriptionOnly = true)
             val plus = device.wait(Until.findObject(By.desc(context.getString(R.string.volume_up))), 5_000)

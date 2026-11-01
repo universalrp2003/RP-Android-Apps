@@ -98,6 +98,12 @@ jobs:
               lines=path.read_text(errors='replace').splitlines()
               chosen=[s for s in lines if any(k in s for k in ('e:', 'FAILURE:', 'AssertionError', 'Error:', 'Exception:', 'HomeFollowupTest.kt'))]
               print('::error title=Launcher candidate::'+(path.name+': '+'\n'.join(chosen or lines[-12:]))[-5000:].replace('%','%25').replace('\n','%0A'))
+          import xml.etree.ElementTree as ET
+          for path in (root/'launcher-home/ui').glob('final-state.xml'):
+              nodes=ET.parse(path).iter('node')
+              summary=[{k:n.get(k) for k in ('package','text','content-desc','bounds') if n.get(k)} for n in nodes]
+              text=str(summary[:60])[:5000]
+              print('::error title=Synthetic final UI::'+text.replace('%','%25').replace('\n','%0A'))
       - name: Remove temporary signing material
         if: always()
         run: rm -f ci-keystore/release.p12
