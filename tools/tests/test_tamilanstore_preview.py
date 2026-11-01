@@ -186,7 +186,7 @@ class StoreGalleryAndSelfUpdateTest(unittest.TestCase):
         self.assertEqual(next(a for a in catalog['apps'] if a['id']=='liveguard')['tamilName'],'கைபேசி காவலன்')
         ui=(STORE/'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
         self.assertIn('open(Catalog.WEBSITE + "#request-app")',ui)
-        self.assertIn('SelfUpdateCheck.latestRelease()',ui)
+        self.assertIn('SelfUpdateCheck.latestRelease()', (STORE/'src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text())
         check=(STORE/'src/main/java/com/universalrp/tamilanstore/SelfUpdateCheck.kt').read_text()
         for token in ['getBoolean("draft")','getBoolean("prerelease")','Tamilan-Store-v$version.apk',
                       'instanceFollowRedirects = false','readBytesLimited(2_000_000)',

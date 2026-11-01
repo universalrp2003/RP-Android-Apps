@@ -85,7 +85,8 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
             'launcher': ('1.5', '6', 'elderly-launcher-v1.5'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
-            'tamilanstore': ('0.8', '8', 'tamilan-store-v0.8'),
+            # Source-only redesign; the last published migration receipt stays immutable.
+            'tamilanstore': ('0.9-preview', '9', 'tamilan-store-v0.8'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():
@@ -132,9 +133,11 @@ class FreshInstallMigrationTest(unittest.TestCase):
         self.assertIn('default: false', workflow)
         self.assertIn('- tamilanstore', workflow)
         self.assertIn('- dailyvault', workflow)
-        self.assertIn("echo 'version=0.8'", workflow)
+        self.assertIn("Store 0.8 is immutable", workflow)
+        self.assertNotIn("echo 'version=0.8'", workflow)
         self.assertIn("echo 'version=0.5'", workflow)
-        self.assertIn('app: [tamilanstore, dailyvault]', workflow)
+        self.assertIn('app: ${{ fromJSON(', workflow)
+        self.assertIn("format('[\"{0}\"]', inputs.app)", workflow)
         self.assertIn("if: ${{ env.PUBLISH_REQUESTED == 'true' }}", workflow)
         self.assertIn('[publish-tamilanstore]', workflow)
         self.assertIn('[publish-dailyvault]', workflow)

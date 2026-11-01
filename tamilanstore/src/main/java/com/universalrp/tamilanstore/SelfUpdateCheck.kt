@@ -1,5 +1,7 @@
 package com.universalrp.tamilanstore
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -16,6 +18,7 @@ object SelfUpdateCheck {
     suspend fun latestRelease(): Pair<String, String>? = withContext(Dispatchers.IO) {
         val candidates = mutableListOf<Pair<String, String>>()
         for (page in 1..MAX_RELEASE_PAGES) {
+            currentCoroutineContext().ensureActive()
             val connection = URL("$API?per_page=$PAGE_SIZE&page=$page").openConnection() as HttpURLConnection
             connection.connectTimeout = 15_000
             connection.readTimeout = 15_000

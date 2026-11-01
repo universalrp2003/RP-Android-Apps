@@ -39,7 +39,7 @@ fun AppScreenshots(appId: String, tamil: Boolean) {
             // Decode to thumbnail dimensions, not full-res for each card.
             val image=remember(name) { context.assets.open("screenshots/$name").use { BitmapFactory.decodeStream(it,null,BitmapFactory.Options().apply { inSampleSize=4 }) }?.asImageBitmap() }
             if(image!=null) Image(image,contentDescription=if(tamil)"திரைப் படம் ${index+1}; பெரிதாக்கு" else "Screenshot ${index+1}; enlarge",
-                modifier=Modifier.width(82.dp).height(146.dp).clickable { selected=name },contentScale=ContentScale.Fit)
+                modifier=Modifier.width(64.dp).height(114.dp).clickable { selected=name },contentScale=ContentScale.Fit)
         }
     }
     selected?.let { name ->

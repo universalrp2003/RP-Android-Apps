@@ -994,10 +994,11 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         # Owner-approved isolated preview must not advertise a nonexistent public release.
         if gradle.parent.name == "tamilanstore":
-            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.8":
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.9-preview":
                 raise ValueError("Tamilan preview identity/version changed; review publication gates")
-            if by_package.get(pkg.group(1)) != ver.group(1):
-                raise ValueError("Tamilan directory candidate version differs from source")
+            # The redesign is an unpublished candidate, never advertise it as a download.
+            if by_package.get(pkg.group(1)) != "0.8":
+                raise ValueError("Tamilan published directory must remain on immutable 0.8")
             continue
         checked += 1
         if pkg.group(1) not in by_package:

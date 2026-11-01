@@ -32,5 +32,12 @@ run_phase legacy
 adb uninstall com.universalrp.dailyvault
 adb install "$fixtures/DailyVault-v0.4.apk"
 run_phase current
+# The archive phases above never confirm installation. The redesign test below explicitly
+# cancels the first prompt, resumes, confirms a synthetic same-key update and reads PM evidence.
+adb install "$fixtures/Ramesh-Radio-v1.29.apk"
+adb shell am instrument -w -r -e class com.universalrp.tamilanstore.StoreRedesignTest \
+  com.universalrp.tamilanstore.test/androidx.test.runner.AndroidJUnitRunner | tee "$evidence/redesign.txt"
+grep -q '^OK (' "$evidence/redesign.txt"
+! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$evidence/redesign.txt"
 adb pull /sdcard/Android/data/com.universalrp.tamilanstore/files/. "$evidence/"
-echo 'PASS: fresh install confirmation, same-key update confirmation, legacy-key block, size/hash/identity rejection; no confirmed installation is claimed.'
+echo 'PASS: archive gates and legacy-key preservation; compact bilingual UI; consent cancel; installer cancellation pauses; explicit resume and PackageManager-confirmed synthetic DailyVault update. Not physical-phone or Play Protect evidence.'
