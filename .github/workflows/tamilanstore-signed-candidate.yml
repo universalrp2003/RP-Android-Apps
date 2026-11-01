@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gradle :tamilanstore:testReleaseUnitTest :tamilanstore:lintRelease :tamilanstore:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/store-signed-build.log"
+          gradle :tamilanstore:testReleaseUnitTest :tamilanstore:lintRelease :tamilanstore:assembleRelease :tamilanstore:assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/store-signed-build.log"
       - name: Pin identity, signer and exact upgrade fixture
         shell: bash
         run: |
@@ -55,6 +55,17 @@ jobs:
             -o "$RUNNER_TEMP/Store0.8.apk"
           echo "3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474  $RUNNER_TEMP/Store0.8.apk" | sha256sum --check
           test "$(stat -c %s "$RUNNER_TEMP/Store0.8.apk")" = 19276334
+          "$tools/aapt" dump badging "$RUNNER_TEMP/Store0.8.apk" > "$RUNNER_TEMP/store-previous-badging.txt"
+          python3 - <<'PY'
+          import json,os,pathlib,sys
+          sys.path.insert(0,'tools')
+          from verify_release_permission_delta import parse_badging
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          old=parse_badging((root/'store-previous-badging.txt').read_text())
+          new=parse_badging((root/'store-candidate-badging.txt').read_text())
+          assert old and new and old == new, 'Merged APK permissions differ; review before producing candidate'
+          (root/'store-upgrade-candidate/permissions.json').write_text(json.dumps({'added':[],'removed':[],'permissions':sorted(new)},indent=2)+'\n')
+          PY
           for name in candidate previous; do
             if [[ "$name" == candidate ]]; then file="$apk"; else file="$RUNNER_TEMP/Store0.8.apk"; fi
             "$tools/apksigner" verify --print-certs "$file" > "$RUNNER_TEMP/store-$name-signer.txt"
@@ -73,7 +84,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: python3 tamilanstore/tools/signed-upgrade-smoke.py "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk" "$RUNNER_TEMP/Store0.8.apk"
+          script: python3 tamilanstore/tools/signed-upgrade-smoke.py "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk" "$RUNNER_TEMP/Store0.8.apk" tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk
       - name: Exact artifact receipt after upgrade testing
         shell: bash
         run: |
@@ -84,6 +95,7 @@ jobs:
           import hashlib,json,os,pathlib
           p=pathlib.Path(os.environ['RUNNER_TEMP'])/'store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk'
           receipt=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'store-signed-upgrade-evidence/result.json').read_text())
+          receipt['permission_comparison']=json.loads((p.parent/'permissions.json').read_text())
           receipt.update(source=os.environ['GITHUB_SHA'],bytes=p.stat().st_size,apk_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),signer='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
           (p.parent/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
           print('::notice title=Store release-key upgrade receipt::'+json.dumps(receipt))

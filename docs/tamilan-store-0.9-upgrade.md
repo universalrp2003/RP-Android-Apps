@@ -32,9 +32,11 @@ This request concerns Store itself, not a demonstrated catalog queue failure.
   New version/code only; immutable 0.8 and existing website/directory links remain untouched.
 - Dedicated `tamilanstore-signed-candidate.yml` workflow prepares the existing owner release key
   using configured Actions secrets and fails closed if the key/fingerprint is absent or wrong.
-  It verifies the non-debuggable APK's package/version/code/signature and SHA-256.
+  It verifies the non-debuggable APK's package/version/code/signature and SHA-256, and requires
+  identical old/new **merged APK permission sets**, not just source manifest declarations.
 - Pin the exact public Store0.8 fixture's size/SHA/signature. On an isolated Android15 CI emulator,
   install that fixture, choose English and paused motion, seed a synthetic private-file marker,
+  reproduce rejection of the debug APK as an update without changing the existing install,
   then test **`adb install -r` without uninstall, data clear or bypass flags**. Verify code10,
   retained UID, file contents and both actual preferences before/after launch and restart.
 - This tests Android PackageManager signature/version/data continuity, **not** interactive

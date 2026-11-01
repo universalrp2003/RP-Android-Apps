@@ -74,8 +74,8 @@ def run(out):
     assert os.environ.get('CI') == 'true' and os.environ.get('GITHUB_ACTIONS') == 'true'
     assert adb('get-serialno').strip().startswith('emulator-')
     assert adb('shell', 'getprop', 'ro.kernel.qemu').strip() == '1'
-    assert len(sys.argv) == 3
-    candidate, previous = map(Path, sys.argv[1:])
+    assert len(sys.argv) == 4
+    candidate, previous, debug = map(Path, sys.argv[1:])
     before_digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
     assert previous.stat().st_size == 19276334
     assert hashlib.sha256(previous.read_bytes()).hexdigest() == OLD_SHA
@@ -99,6 +99,13 @@ def run(out):
     adb('shell', f'mkdir -p /data/user/0/{PKG}/files; printf synthetic-ci-only > {marker}')
     marker_hash = adb('shell', 'sha256sum', marker).split()[0]
     snap(out, '01-store08-before-upgrade')
+    # Reproduce the supplied artifact's incompatibility WITHOUT changing the installation.
+    rejected = subprocess.run(['adb', 'install', '-r', str(debug)], capture_output=True, text=True, timeout=90)
+    diagnostic = rejected.stdout + rejected.stderr
+    assert rejected.returncode != 0 and 'INSTALL_FAILED_UPDATE_INCOMPATIBLE' in diagnostic
+    (out / 'debug-upgrade-rejection.txt').write_text(diagnostic)
+    assert package_state() == old
+    assert adb('shell', 'sha256sum', marker).split()[0] == marker_hash
     adb('shell', 'am', 'force-stop', PKG)
     # The operation being tested: same-package, release-key, higher-version update. No reset.
     adb('install', '-r', str(candidate))
@@ -121,7 +128,7 @@ def run(out):
     assert hashlib.sha256(candidate.read_bytes()).hexdigest() == before_digest
     result = dict(from_version='0.8', to_version='0.9-rc1', version_code=10,
                   package=PKG, installation_method='adb install -r; no bypass flags',
-                  same_uid=True, private_file_preserved=True, language_preserved=True,
+                  debug_over_release_rejected=True, same_uid=True, private_file_preserved=True, language_preserved=True,
                   motion_preference_preserved=True, restart_passed=True,
                   physical_phone_tested=False, play_protect_tested=False,
                   debug_to_release_upgrade_supported=False)
