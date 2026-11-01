@@ -103,7 +103,7 @@ jobs:
           python3 - <<'PY'
           import hashlib,json,os,pathlib
           p=pathlib.Path(os.environ['RUNNER_TEMP'])/'store-upgrade-candidate/Tamilan-Store-v0.9-rc1.apk'
-          receipt=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'store-signed-upgrade-evidence/result.json').read_text())
+          receipt=json.loads((pathlib.Path(os.environ['GITHUB_WORKSPACE'])/'store-signed-upgrade-results/result.json').read_text())
           receipt['permission_comparison']=json.loads((p.parent/'permissions.json').read_text())
           receipt.update(source=os.environ['GITHUB_SHA'],bytes=p.stat().st_size,apk_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),signer='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
           (p.parent/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
@@ -121,7 +121,7 @@ jobs:
         with:
           name: tamilan-store-release-key-upgrade-evidence
           path: |
-            ${{ runner.temp }}/store-signed-upgrade-evidence/
+            store-signed-upgrade-results/
             ${{ runner.temp }}/store-signed-build.log
             ${{ runner.temp }}/store-upgrade-console.log
             tamilanstore/build/test-results/
@@ -136,7 +136,7 @@ jobs:
           root=pathlib.Path(os.environ['RUNNER_TEMP'])
           if not (root/'store-upgrade-console.log').exists():
               print('::error title=Store upgrade checkpoint::Emulator step failed before producing harness console output; no upgrade pass is claimed.')
-          for p in [root/'store-upgrade-console.log',root/'store-signed-upgrade-evidence/failure.txt']:
+          for p in [root/'store-upgrade-console.log',pathlib.Path('store-signed-upgrade-results/failure.txt')]:
               if not p.exists(): continue
               lines=p.read_text(errors='replace').splitlines()
               selected=[s for s in lines if any(t in s for t in ('e:', ' FAILED', 'Error:', 'Exception', 'AssertionError', 'FAILURE:'))] or lines[-12:]

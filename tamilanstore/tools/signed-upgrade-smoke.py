@@ -137,7 +137,7 @@ def run(out):
 
 
 if __name__ == '__main__':
-    out = Path(os.environ.get('RUNNER_TEMP', '/tmp')) / 'store-signed-upgrade-evidence'
+    out = Path(__file__).resolve().parents[2] / 'store-signed-upgrade-results'
     out.mkdir(parents=True, exist_ok=True)
     try:
         run(out)
