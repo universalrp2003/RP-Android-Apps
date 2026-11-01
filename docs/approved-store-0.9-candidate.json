@@ -1,0 +1,12 @@
+{
+  "publication_authorized": true,
+  "scope": "Only owner-authorized stable Tamilan Store0.9/code11; exact tested bytes, no rebuild or replacement",
+  "source": "e8aacc05eddb356c4c66d230b9c4a70782a6b725",
+  "candidate_run": 41291274414,
+  "native_run": 41291274381,
+  "artifact_id": 13077013499,
+  "archive_sha256": "7a91e6c5a2af793abf29dc9d6491c1fc402898076bf1df933aa792062eaa9e2d",
+  "archive_bytes": 17898073,
+  "apk_sha256": "6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab",
+  "bytes": 19309106
+}

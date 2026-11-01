@@ -47,7 +47,8 @@ def main():
     except ValueError as error:
         print('::error title=Release signing hold::' + str(error))
         raise SystemExit(1)
-    print('Signer matches the pinned fresh-install identity. Existing installs require uninstall/reinstall; this is not a Play Protect or device-safety certification.')
+    print('Signing policy check passed. Compatible same-key installs use normal updates; a different signer cannot update in place. '
+          'Do not uninstall or clear data as a workaround. This is not a Play Protect or device-safety certification.')
 
 
 if __name__ == '__main__':
