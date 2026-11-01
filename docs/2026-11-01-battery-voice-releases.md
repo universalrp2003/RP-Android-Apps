@@ -21,3 +21,14 @@ Threat/data flow: unchanged public metadata and explicit-consent online speech o
 ## Verification status
 
 Local281Python source regressions pass; bilingual source gates pass. Android builds, live probes, exact signed update/emulator playback and immutable publication receipts pending. Store stable0.9/code11 will be built/verified separately after published app metadata is refreshed, retaining compact UI/Tamil Nadu art and sequential user-confirmed updates. Earlier0.9-rc1/code10 proof remains historical, not a stable0.9 receipt.
+
+## Final signed health/voice candidate gates — PASS
+
+Source `184df48396cf5797bcfdf9880e307673631efd7d`, workflow41290393202 SUCCESS; cleaner job124800269469 and Voice Notes job124800269522 both SUCCESS. Source/security/bilingual checks, release JVM regressions, release lint, stable signatures, full actual merged permission equality and dangerous-permission delta passed. Android35 same-key updates from public2.81 /1.3.3 preserve UID, private fixture data and existing preference values through restart, without clear/uninstall/bypass. Native Voice Notes instrumented **release** target synthesizes/decodes/completes both Tamil and English playback, rejects corrupt audio, removes temporary clips, and its installed APK re-download matches the exact candidate SHA. No physical phone/Google/hardware current-sensor test claimed.
+
+- Live Guard2.82/code87: `CleanSweep-v2.82.apk`,14,505,867 bytes, SHA `3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5`; artifact13077057172, ZIP SHA `d8991e80ddb42727c715f8b8fbbc78c1ae5015adbad5ad23b024955963090542`.
+- Voice Notes1.3.4/code8: `Voice-Notes-v1.3.4.apk`,13,135,195 bytes, SHA `1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a`; artifact13076668065, ZIP SHA `605e82b25466fc3885ac29c1c04f41c3027768014ef2b8ed4338c93be79c587a`.
+- Both stable signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`.
+- Final long-note production chunks select the requested HD voices and complete within15s per-voice limit (sample observed5–12s). Earlier oversized900-character attempts could discard hundreds of kilobytes at10s; independently measured upstream900-character completion~16.8s. Smaller chunks + patient budget are therefore a measured fix, not an assertion that every service/network failure was caused by missing internet. Service outages remain possible.
+
+Exact health publication pins are in `docs/approved-health-candidates.json`; release creation and public byte re-download verification still pending. Store0.9 is separately built/published after these become public; current public asset pointers remain unchanged until successful publication.
