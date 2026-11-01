@@ -1,4 +1,5 @@
 package com.universalrp.launcher
+import android.media.AudioManager
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -150,6 +151,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
     var choosingFavouriteApp by remember { mutableStateOf(false) }
     var favouriteApps by remember { mutableStateOf(FavouriteApps.load(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
+    var volumeStream by remember { mutableStateOf(AudioManager.STREAM_MUSIC) }
     var torchOn by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
     var confirmEmergency by remember { mutableStateOf(false) }
@@ -318,6 +320,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                 ) {
                     Text(
                         text = LocalContext.current.getString(if (choosingFavouriteApp) R.string.favourite_apps_pick else R.string.all_apps),
+                        modifier = Modifier.weight(1f),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -341,21 +344,31 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     )
                 }
             } else {
-                for (app in apps) {
+                val entries = if (choosingFavouriteApp) {
+                    favouriteApps.filter { saved -> apps.none { it.packageName == saved } }
+                        .map { AppEntry(context.getString(R.string.favourite_app_unavailable, it), it, false) } + apps
+                } else apps
+                for (pair in entries.chunked(2)) {
                     item {
-                        AppRow(app = app, onClick = {
-                            if (choosingFavouriteApp) {
-                                if (!FavouriteApps.add(context, app.packageName)) {
-                                    notice = context.getString(if (favouriteApps.size >= FavouriteAppPolicy.MAX) R.string.favourite_apps_full else R.string.favourite_apps_not_added)
-                                }
-                                favouriteApps = FavouriteApps.load(context)
-                                choosingFavouriteApp = false
-                                showAppList = false
-                            } else {
-                                val result = LauncherActions.launchApp(context, app.packageName)
-                                if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
+                        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            for (app in pair) {
+                                val selected = app.packageName in favouriteApps
+                                AppTile(app, Modifier.weight(1f).fillMaxHeight(), managing = choosingFavouriteApp,
+                                    selected = selected, onClick = {
+                                        if (choosingFavouriteApp) {
+                                            if (selected) FavouriteApps.remove(context, app.packageName)
+                                            else if (!FavouriteApps.add(context, app.packageName)) {
+                                                notice = context.getString(if (favouriteApps.size >= FavouriteAppPolicy.MAX) R.string.favourite_apps_full else R.string.favourite_apps_not_added)
+                                            }
+                                            favouriteApps = FavouriteApps.load(context)
+                                        } else {
+                                            val result = LauncherActions.launchApp(context, app.packageName)
+                                            if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
+                                        }
+                                    })
                             }
-                        })
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -382,6 +395,14 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                             }
                         }
                     }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        for (stream in listOf(AudioManager.STREAM_MUSIC, AudioManager.STREAM_RING)) {
+                            val label = context.getString(if (stream == AudioManager.STREAM_MUSIC) R.string.volume_media else R.string.volume_ring)
+                            OutlinedButton(onClick = { volumeStream = stream }, modifier = Modifier.weight(1f).heightIn(min = 48.dp).semantics { contentDescription = label }) {
+                                Text((if (stream == volumeStream) "✓ " else "") + label, color = Accent, textAlign = TextAlign.Center)
+                            }
+                        }
+                    }
                     Text(text = volumeReadout(), color = Muted, fontSize = 14.sp,
                         textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                     Row(modifier = Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -389,8 +410,8 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                             val label = context.getString(if (up) R.string.volume_up else R.string.volume_down)
                             BigButton(label = label, symbol = if (up) "+" else "−",
                                 height = 0, background = CardBg, modifier = Modifier.weight(1f).fillMaxHeight(), onClick = {
-                                    val result = LauncherActions.nudgeVolume(context, up)
-                                    if (result is LauncherActions.Result.Failed) notice = context.getString(R.string.volume_unavailable)
+                                    val result = LauncherActions.nudgeVolume(context, up, volumeStream)
+                                    if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
                                 })
                         }
                     }
@@ -412,11 +433,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     onOpen = { packageName ->
                         val result = LauncherActions.launchApp(context, packageName)
                         if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
-                    }, onAdd = { choosingFavouriteApp = true; showAppList = true },
-                    onRemove = { packageName ->
-                        FavouriteApps.remove(context, packageName)
-                        favouriteApps = FavouriteApps.load(context)
-                    })
+                    }, onAdd = { choosingFavouriteApp = true; showAppList = true })
             }
             item {
                 BigButton(
@@ -743,25 +760,47 @@ private val ButtonText = Color(LauncherPalette.BUTTON_TEXT)
 
 @Composable
 private fun FavouriteAppsCard(packages: List<String>, apps: List<AppEntry>, onOpen: (String) -> Unit,
-    onAdd: () -> Unit, onRemove: (String) -> Unit) {
+    onAdd: () -> Unit) {
     val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = CardBg)) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(context.getString(R.string.favourite_apps), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
             if (packages.isEmpty()) Text(context.getString(R.string.favourite_apps_empty), color = Muted, fontSize = 13.sp)
-            for (packageName in packages) {
-                val app = apps.firstOrNull { it.packageName == packageName }
-                // Keep unavailable favourites removable; a temporary profile lock must not erase them.
-                if (app != null) AppRow(app) { onOpen(packageName) }
-                else Text(context.getString(R.string.favourite_app_unavailable, packageName), color = Muted, fontSize = 15.sp)
-                TextButton(onClick = { onRemove(packageName) }) {
-                    Text(context.getString(R.string.favourite_apps_remove, app?.label ?: packageName), color = Muted, fontSize = 14.sp)
+            for (pair in packages.chunked(2)) {
+                Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    for (packageName in pair) {
+                        val app = apps.firstOrNull { it.packageName == packageName }
+                            ?: AppEntry(context.getString(R.string.favourite_app_unavailable, packageName), packageName, false)
+                        AppTile(app, Modifier.weight(1f).fillMaxHeight(), onClick = { onOpen(packageName) })
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
             OutlinedButton(onClick = onAdd, modifier = Modifier.heightIn(min = 52.dp)) {
                 Text(context.getString(R.string.favourite_apps_add), color = Accent, fontSize = 15.sp)
             }
+        }
+    }
+}
+
+/** Shared two-column tile: no duplicate app-name/removal rows or decorative chevrons. */
+@Composable
+private fun AppTile(app: AppEntry, modifier: Modifier = Modifier, managing: Boolean = false,
+    selected: Boolean = false, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val description = if (!managing) app.label else context.getString(
+        if (selected) R.string.favourite_apps_remove else R.string.favourite_apps_add_named, app.label)
+    val tileBackground = if (selected && managing) AccentBg else CardBg
+    Button(onClick = onClick, modifier = modifier.fillMaxWidth().heightIn(min = 112.dp)
+        .semantics { contentDescription = description }, shape = RoundedCornerShape(16.dp),
+        contentPadding = PaddingValues(10.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = tileBackground, contentColor = ButtonText,
+            disabledContainerColor = CardBg, disabledContentColor = Muted)) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (managing) Text(if (selected) "−" else "+", color = Accent, fontSize = 22.sp)
+            app.icon?.let { Image(it.toBitmap(ICON_PIXELS, ICON_PIXELS).asImageBitmap(), null, Modifier.size(40.dp)) }
+            Text(app.label, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
         }
     }
 }

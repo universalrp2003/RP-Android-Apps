@@ -55,12 +55,16 @@
     <string name="loading_apps">ஏற்றுகிறது...</string>
     <string name="favourite_apps">விருப்பச் செயலிகள்</string>
     <string name="favourite_apps_empty">அடிக்கடி பயன்படுத்தும் செயலிகளை இங்கே சேர்க்கவும்.</string>
-    <string name="favourite_apps_add">செயலியைச் சேர்</string>
+    <string name="favourite_apps_add">செயலிகளைச் சேர் / நீக்கு</string>
     <string name="favourite_apps_remove">%1$s — பட்டியலிலிருந்து நீக்கு</string>
-    <string name="favourite_apps_pick">விருப்பச் செயலியைத் தேர்ந்தெடு</string>
+    <string name="favourite_apps_pick">சேர் (+) / நீக்கு (−)</string>
     <string name="favourite_apps_full">எட்டு விருப்பச் செயலிகள் வரை சேர்க்கலாம்.</string>
     <string name="favourite_apps_not_added">செயலி ஏற்கனவே உள்ளது அல்லது இப்போது கிடைக்கவில்லை.</string>
     <string name="favourite_app_unavailable">செயலி இப்போது கிடைக்கவில்லை: %1$s</string>
     <string name="volume_levels">அழைப்பு ஒலி %1$s · ஊடக ஒலி %2$s</string>
     <string name="volume_unavailable">ஒலியை மாற்ற முடியவில்லை. தொலைபேசியின் ஒலி அமைப்பைப் பார்க்கவும்.</string>
+    <string name="favourite_apps_add_named">%1$s — குறுக்குவழியைச் சேர்</string>
+    <string name="volume_media">ஊடகம்</string>
+    <string name="volume_ring">அழைப்பு மணி</string>
+    <string name="volume_ring_boundary">அமைதிநிலை அல்லது தொந்தரவு செய்யாதே அமைப்பை மாற்ற, தொலைபேசியின் ஒலி அமைப்பைப் பயன்படுத்தவும்.</string>
 </resources>

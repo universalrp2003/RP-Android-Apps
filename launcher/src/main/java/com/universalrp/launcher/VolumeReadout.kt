@@ -14,7 +14,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
-/** Show both actual levels because adjustVolume's suggested stream is selected by Android/OEM. */
+/** Read actual levels only; the controls explicitly select media or ringtone independently. */
 @Composable
 fun volumeReadout(): String {
     val context = LocalContext.current

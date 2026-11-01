@@ -27,3 +27,12 @@ object FavouriteAppPolicy {
 data class VolumeLevel(val current: Int, val maximum: Int) {
     fun label(): String = if (maximum > 0 && current in 0..maximum) "$current/$maximum" else "—"
 }
+
+/** Clamp one real index step; ring zero must remain a system-controlled silent transition. */
+object VolumeStep {
+    fun target(current: Int, minimum: Int, maximum: Int, up: Boolean, keepRingAudible: Boolean): Int? {
+        if (minimum < 0 || maximum < minimum || current !in minimum..maximum) return null
+        val target = (current.toLong() + if (up) 1L else -1L).coerceIn(minimum.toLong(), maximum.toLong()).toInt()
+        return if (keepRingAudible && target == 0 && current != 0) null else target
+    }
+}

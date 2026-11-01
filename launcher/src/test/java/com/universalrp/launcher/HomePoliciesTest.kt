@@ -42,4 +42,14 @@ class HomePoliciesTest {
         assertEquals("15/15", VolumeLevel(15, 15).label())
         for (bad in listOf(VolumeLevel(-1, 15), VolumeLevel(16, 15), VolumeLevel(0, 0))) assertEquals("—", bad.label())
     }
+    @Test fun explicitVolumeStepsClampAndRespectRingSilentBoundary() {
+        assertEquals(6, VolumeStep.target(7, 0, 15, false, false))
+        assertEquals(8, VolumeStep.target(7, 0, 15, true, false))
+        assertEquals(0, VolumeStep.target(0, 0, 15, false, false))
+        assertEquals(15, VolumeStep.target(15, 0, 15, true, false))
+        assertNull(VolumeStep.target(1, 0, 7, false, true))
+        assertEquals(1, VolumeStep.target(2, 0, 7, false, true))
+        assertNull(VolumeStep.target(-1, 0, 7, true, false))
+        assertNull(VolumeStep.target(7, 8, 7, true, false))
+    }
 }

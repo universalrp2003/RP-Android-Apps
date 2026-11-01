@@ -2,13 +2,13 @@
 
 **Current public stable release:** 1.5 / code 6. Its APK is unchanged.
 
-## Requested home improvements — unpublished1.6/code7 candidate
+## Owner follow-up — unpublished1.7/code8 candidate
 
-- Smaller centred battery/charging text; explicit12-hour AM/PM time.
-- Favourite apps directly below favourite contacts. Choose from installed launchable apps, tap to open, remove the shortcut without uninstalling. Up to8 local package identities, saved independently of contacts. No new permission or remote processing.
-- Adjacent large −/+ controls with real ring/media index/max values immediately above them. Android chooses the affected stream like hardware volume keys; values are not decibels and no Do Not Disturb bypass is attempted.
-- A single scrolling home replaces the clipped nested grid; controls grow with larger fonts. Emergency confirmation and normal same-key updates remain.
-- Candidate unit/lint/native signed-update evidence must pass; no physical-phone/Google approval claimed. No new publication requested. [Candidate notes](../releases/elderly-launcher-v1.6.md).
+- Retains compact battery/charging text and explicit12-hour AM/PM time from exact candidate1.6.
+- Fixes volume delegation: select Media or Ringtone, then −/+ changes the selected real index directly. Adds only normal MODIFY_AUDIO_SETTINGS (not a runtime prompt); no notification-policy access, DND override or ring silent/vibrate transition. Unsupported/policy-blocked changes show an error rather than fake success. Actual hardware sound remains phone-dependent.
+- Favourite apps and the picker use two-column growing icon/name tiles, no duplicated names/removal lines. Add/manage shows + for adding and − for removing saved shortcuts, without uninstalling anything. Up to8 package identities remain in the same independent private preference file; contact favourites are untouched.
+- Signed1.6→1.7 update/private-data and real media/ring index-change tests, two-column geometry, management add/remove/open, process-restart and actual200% text checks are required before success is claimed. No owner phone test of1.7 or Google clearance claimed.
+- Public1.5 and exact owner-given1.6 stay immutable. No publication authorized. [Candidate notes](../releases/elderly-launcher-v1.7.md).
 
 ## Historical1.4 verification (not evidence for1.6)
 
