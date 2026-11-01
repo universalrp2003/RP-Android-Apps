@@ -48,6 +48,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              ("tamilan-store-v0.9", "Tamilan-Store-v0.9.apk", 19309106, "6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab"),
               ("live-guard-v2.82", "CleanSweep-v2.82.apk", 14505867, "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
               ("tamilan-store-v0.5", "Tamilan-Store-v0.5.apk", 16912504, "d5f41e7b5142507e8b42fb9d2c4e0e2d492eaf03581a53b3dabacf692daf4bc7"),
@@ -189,6 +190,8 @@ jobs:
           test -s site/apks/DailyVault-v0.5.apk
           test -s site/apks/DailyVault-v0.4.zip
           test -s site/apks/DailyVault-v0.5.zip
+          test -s site/apks/Tamilan-Store-v0.9.apk
+          test -s site/apks/Tamilan-Store-v0.9.zip
           test -s site/apks/Tamilan-Store-v0.8.apk
           test -s site/apks/Tamilan-Store-v0.8.zip
           test -s site/apks/Tamilan-Store-v0.6.apk
@@ -254,6 +257,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+      - name: Verify deployed metadata and three exact public APK and ZIP downloads
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python3 tools/verify_live_three_releases.py

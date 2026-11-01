@@ -24,7 +24,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('oor-arivippu-v1.1.10', 'Oor-Arivippu-v1.1.10.apk', '1.1.10', 12842800, '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa'),
             ('tamil-podcast-v1.6', 'Tamil-Podcast-Player-v1.6.apk', '1.6', 11967239, 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
             ('daily-vault-v0.5', 'DailyVault-v0.5.apk', '0.5', 11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
-            ('tamilan-store-v0.8', 'Tamilan-Store-v0.8.apk', '0.8', 19276334, '3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474'),
+            ('tamilan-store-v0.9', 'Tamilan-Store-v0.9.apk', '0.9', 19309106, '6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab'),
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
             ('elderly-launcher-v1.5', 'Elderly-Launcher-v1.5.apk', '1.5', 11498427, 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39'),
             ('voice-notes-v1.3.4', 'Voice-Notes-v1.3.4.apk', '1.3.4', 13135195, '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a'),
@@ -85,7 +85,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
             'launcher': ('1.5', '6', 'elderly-launcher-v1.5'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
-            # Source-only redesign; the last published migration receipt stays immutable.
+            # Stable Store0.9 published from the exact signed/native-tested candidate.
             'tamilanstore': ('0.9', '11', 'tamilan-store-v0.9'),
         }
         seen_codes = {}

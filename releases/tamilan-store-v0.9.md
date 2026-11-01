@@ -5,6 +5,7 @@
 - The Store self-update notice recognizes stable0.9 as newer than0.9-rc1, without weakening installer/signature checks.
 - Signed same-package update over public0.8 and the release-key0.9-rc1 candidate; stable0.9 has the higher code11. Preserve language/motion preferences and installed app data. **Do not uninstall or clear data**; uninstalling may erase local data. A separately debug-signed preview cannot be replaced by a differently signed release. Stop on a signing/security warning; do not disable protection.
 - Archive package/version/signer/hash validation, read-only installer setup, explicit unknown-source consent and cancellation protections remain. Earlier releases/assets are unchanged.
+- Exact automated stable upgrade coverage is0.8→0.9. RC1 compatibility is based on the same signer/higher version code; no separately executed exact RC1 upgrade test is claimed.
 - Owner reports the supplied Store works; the installed hash was not independently matched. These exact stable0.9 bytes have no physical-device or Google Play Protect test. Automated Android15 emulator results are not Google clearance, every-OEM proof or a guarantee of external service availability. The earlier Store harmful-app warning remains unresolved; this release does not claim to clear it.
 
 ## தமிழ்
