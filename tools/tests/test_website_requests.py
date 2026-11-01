@@ -219,6 +219,7 @@ class ApkButtonVersionTest(unittest.TestCase):
             version=re.search(r'-v([0-9.]+)\.apk',opening).group(1)
             self.assertEqual(label,f'APK · v{version}')
         self.assertIn('a[data-apk] { white-space: nowrap; flex-shrink: 0; }',source)
+        self.assertIn('href="site-controls.css?v=20261101-versions"',source)
 
     def test_store_owner_block_is_not_misrepresented_as_google_clearance(self):
         source=(ROOT/'site/index.html').read_text()
