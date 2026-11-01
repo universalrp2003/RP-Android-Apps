@@ -62,7 +62,7 @@ class HomeFollowupTest {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             device.waitForIdle()
             shot("00-launch-state")
-            assertNotNull("12-hour AM/PM clock on the awake home screen",(device.wait(Until.findObject(By.text(Pattern.compile("(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)"))), 15_000))
+            assertNotNull("12-hour AM/PM clock on the awake home screen", device.wait(Until.findObject(By.text(Pattern.compile("(1[0-2]|[1-9]):[0-5][0-9] (AM|PM)"))), 15_000))
             shot("01-clock-small-status")
             val minus = find(context.getString(R.string.volume_down), descriptionOnly = true)
             val plus = device.wait(Until.findObject(By.desc(context.getString(R.string.volume_up))), 5_000)
