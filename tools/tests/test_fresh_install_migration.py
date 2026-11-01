@@ -83,7 +83,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
             'vasanthi': ('1.1.5', '8', 'vasanthi-ai-v1.1.5'),
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
-            'launcher': ('1.5', '6', 'elderly-launcher-v1.5'),
+            'launcher': ('1.6', '7', 'elderly-launcher-v1.6'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Stable Store0.9 published from the exact signed/native-tested candidate.
             'tamilanstore': ('0.9', '11', 'tamilan-store-v0.9'),

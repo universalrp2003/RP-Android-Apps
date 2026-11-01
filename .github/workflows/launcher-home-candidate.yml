@@ -1,0 +1,92 @@
+name: Launcher home signed update and native UI (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths: ["launcher/**", ".github/workflows/launcher-home-candidate.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: launcher-home-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.14.3'
+      - name: Source, unit, lint and exact signed release candidate
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+          gradle :launcher:testReleaseUnitTest :launcher:lintRelease :launcher:assembleRelease :launcher:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/launcher-home-build.log"
+      - name: Pin baseline, signer, permissions and candidate hash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/launcher-home"
+          cp launcher/build/outputs/apk/release/launcher-release.apk "$RUNNER_TEMP/launcher-home/Elderly-Launcher-v1.6.apk"
+          gh release download elderly-launcher-v1.5 --pattern Elderly-Launcher-v1.5.apk --dir "$RUNNER_TEMP/launcher-home"
+          cd "$RUNNER_TEMP/launcher-home"
+          echo 'c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39  Elderly-Launcher-v1.5.apk' | sha256sum -c
+          test "$(stat -c %s Elderly-Launcher-v1.5.apk)" = 11498427
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          for version in 1.5 1.6; do
+            "$tools/apksigner" verify --print-certs "Elderly-Launcher-v$version.apk" > "signer-$version.txt"
+            grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "signer-$version.txt"
+            "$tools/aapt" dump badging "Elderly-Launcher-v$version.apk" > "badging-$version.txt"
+          done
+          grep -Fq "package: name='com.universalrp.launcher' versionCode='7' versionName='1.6'" badging-1.6.txt
+          ! grep -q application-debuggable badging-1.6.txt
+          python3 "$GITHUB_WORKSPACE/tools/verify_release_permission_delta.py" --candidate-badging badging-1.6.txt --previous-badging badging-1.5.txt
+          PYTHONPATH="$GITHUB_WORKSPACE/tools" python3 -c 'from verify_release_permission_delta import parse_badging; assert parse_badging(open("badging-1.5.txt").read()) == parse_badging(open("badging-1.6.txt").read())'
+          sha256sum Elderly-Launcher-v1.6.apk > Elderly-Launcher-v1.6.sha256
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exact 1.5 update, data retention and native accessible home
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash launcher/tools/home-candidate-smoke.sh
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: launcher-home-1.6-candidate-and-synthetic-evidence
+          path: |
+            ${{ runner.temp }}/launcher-home/
+            ${{ runner.temp }}/launcher-home-build.log
+            launcher/build/reports/
+          retention-days: 14
+      - name: Surface bounded synthetic failures
+        if: failure()
+        shell: python
+        run: |
+          import os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          for path in [root/'launcher-home-build.log', root/'launcher-home/native.txt']:
+              if not path.exists():continue
+              lines=path.read_text(errors='replace').splitlines()
+              chosen=[s for s in lines if any(k in s for k in ('e:', 'FAILURE:', 'AssertionError', 'Error:', 'Exception:'))]
+              print('::error title=Launcher candidate::'+(path.name+': '+'\n'.join(chosen or lines[-12:]))[-5000:].replace('%','%25').replace('\n','%0A'))
+      - name: Remove temporary signing material
+        if: always()
+        run: rm -f ci-keystore/release.p12

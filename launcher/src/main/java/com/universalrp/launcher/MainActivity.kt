@@ -26,17 +26,16 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -75,16 +74,7 @@ import kotlinx.coroutines.withContext
 /** SharedPreferences key recording that the first-run home-screen prompt has been shown. */
 private const val KEY_ASKED_HOME = "asked_for_home"
 
-/**
- * The home screen.
- *
- * Two states and no menus: the grid of big buttons, and the list of every installed app. There is
- * no settings screen, because a screen for configuring a launcher is a screen somebody has to learn
- * to use, and this launcher exists precisely so nobody has to learn anything.
- *
- * Everything is at least 18sp and every button is at least 96dp tall, because the whole point is
- * that it can be read and hit without reading carefully or aiming precisely.
- */
+/** Accessible home with large actions, local contact/app favourites and explicit volume controls. */
 class MainActivity : ComponentActivity() {
 
     private val callPermission =
@@ -153,6 +143,8 @@ class MainActivity : ComponentActivity() {
 private fun LauncherScreen(onEmergency: (String) -> Unit) {
     val context = LocalContext.current
     var showAppList by remember { mutableStateOf(false) }
+    var choosingFavouriteApp by remember { mutableStateOf(false) }
+    var favouriteApps by remember { mutableStateOf(FavouriteApps.load(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
     var torchOn by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf<String?>(null) }
@@ -166,7 +158,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             confirmEmergency -> confirmEmergency = false
             notice != null -> notice = null
             addingFavourite -> addingFavourite = false
-            showAppList -> showAppList = false
+            showAppList -> { showAppList = false; choosingFavouriteApp = false }
             else -> Unit // A home screen must not finish on Back.
         }
     }
@@ -260,9 +252,7 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
     // A launcher's screen is recreated constantly, so the app list is loaded once per composition
     // on a background thread and never on the main thread.
     LaunchedEffect(showAppList) {
-        if (showAppList && apps.isEmpty()) {
-            apps = withContext(Dispatchers.IO) { LauncherActions.installedApps(context) }
-        }
+        apps = withContext(Dispatchers.IO) { LauncherActions.installedApps(context) }
     }
 
     // The clock ticks so the time is never more than a minute stale.
@@ -274,7 +264,13 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
         }
     }
 
+    val homeScroll = rememberLazyListState()
+    val appScroll = rememberLazyListState()
+    LaunchedEffect(showAppList, choosingFavouriteApp) {
+        if (showAppList) appScroll.scrollToItem(0)
+    }
     LazyColumn(
+        state = if (showAppList) appScroll else homeScroll,
         modifier = Modifier
             .fillMaxSize()
             .background(Bg)
@@ -293,12 +289,15 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                 Text(
                     text = now,
                     fontSize = 36.sp,
+                    textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )
                 Text(
                     text = batteryText(),
-                    fontSize = 16.sp,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
                     color = Muted,
                 )
             }
@@ -312,12 +311,12 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = LocalContext.current.getString(R.string.all_apps),
+                        text = LocalContext.current.getString(if (choosingFavouriteApp) R.string.favourite_apps_pick else R.string.all_apps),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                     )
-                    TextButton(onClick = { showAppList = false }) {
+                    TextButton(onClick = { showAppList = false; choosingFavouriteApp = false }) {
                         Text(
                             text = LocalContext.current.getString(R.string.back),
                             color = Accent,
@@ -339,9 +338,16 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                 for (app in apps) {
                     item {
                         AppRow(app = app, onClick = {
-                            val result = LauncherActions.launchApp(context, app.packageName)
-                            if (result is LauncherActions.Result.Failed) {
-                                notice = context.getString(result.reasonRes)
+                            if (choosingFavouriteApp) {
+                                if (!FavouriteApps.add(context, app.packageName)) {
+                                    notice = context.getString(if (favouriteApps.size >= FavouriteAppPolicy.MAX) R.string.favourite_apps_full else R.string.favourite_apps_not_added)
+                                }
+                                favouriteApps = FavouriteApps.load(context)
+                                choosingFavouriteApp = false
+                                showAppList = false
+                            } else {
+                                val result = LauncherActions.launchApp(context, app.packageName)
+                                if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
                             }
                         })
                     }
@@ -349,42 +355,37 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
             }
         } else {
             item {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(BUTTON_GRID_HEIGHT_DP),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    // A plain loop over item {}, not the items() extension. The grid's own member
-                    // items(count: Int) shadows the List overload for the compiler's purposes, and
-                    // resolving that costs a CI cycle to discover. item {} is a member with one
-                    // signature and nothing to resolve.
-                    for (button in BigButtons.home()) {
-                        item {
-                            BigButton(
-                                label = LocalContext.current.getString(button.labelRes),
-                                height = 0,
-                                background = CardBg,
-                                onClick = {
-                                    if (button.action == BigButtons.Action.TORCH &&
-                                        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-                                        cameraPermission.launch(Manifest.permission.CAMERA)
-                                        return@BigButton
-                                    }
-                                    val result = handleAction(
-                                        context = context,
-                                        action = button.action,
-                                        torchOn = torchOn,
-                                        onTorch = { torchOn = it },
-                                        onAppList = { showAppList = true },
-                                    )
-                                    if (result is LauncherActions.Result.Failed) {
-                                        notice = context.getString(result.reasonRes)
-                                    }
-                                },
-                            )
+                // One scroll owner: all controls are reachable without a clipped nested grid.
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val tiles = BigButtons.home().filter { it.action != BigButtons.Action.VOLUME_UP && it.action != BigButtons.Action.VOLUME_DOWN }
+                    for (pair in tiles.chunked(2)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            for (button in pair) {
+                                BigButton(
+                                    label = context.getString(button.labelRes), height = 0, background = CardBg,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = {
+                                        if (button.action == BigButtons.Action.TORCH && ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                                            cameraPermission.launch(Manifest.permission.CAMERA)
+                                        } else {
+                                            val result = handleAction(context, button.action, torchOn, { torchOn = it }, { showAppList = true })
+                                            if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
+                                        }
+                                    },
+                                )
+                            }
+                        }
+                    }
+                    Text(text = volumeReadout(), color = Muted, fontSize = 14.sp,
+                        textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        for (up in listOf(false, true)) {
+                            val label = context.getString(if (up) R.string.volume_up else R.string.volume_down)
+                            BigButton(label = label, symbol = if (up) "+" else "−",
+                                height = 0, background = CardBg, modifier = Modifier.weight(1f), onClick = {
+                                    val result = LauncherActions.nudgeVolume(context, up)
+                                    if (result is LauncherActions.Result.Failed) notice = context.getString(R.string.volume_unavailable)
+                                })
                         }
                     }
                 }
@@ -400,6 +401,17 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
                     Favourites.remove(context, number)
                     favourites = Favourites.load(context)
                 }) }
+            item {
+                FavouriteAppsCard(packages = favouriteApps, apps = apps,
+                    onOpen = { packageName ->
+                        val result = LauncherActions.launchApp(context, packageName)
+                        if (result is LauncherActions.Result.Failed) notice = context.getString(result.reasonRes)
+                    }, onAdd = { choosingFavouriteApp = true; showAppList = true },
+                    onRemove = { packageName ->
+                        FavouriteApps.remove(context, packageName)
+                        favouriteApps = FavouriteApps.load(context)
+                    })
+            }
             item {
                 BigButton(
                     label = LocalContext.current.getString(BigButtons.emergency().labelRes),
@@ -526,7 +538,7 @@ private fun AppRow(app: AppEntry, onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(84.dp),
+            .heightIn(min = 84.dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = CardBg,
@@ -594,12 +606,14 @@ private fun BigButton(
     height: Int,
     background: Color,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    symbol: String? = null,
 ) {
     Button(
         onClick = onClick,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .then(if (height > 0) Modifier.height(height.dp) else Modifier.aspectRatio(1.15f)),
+            .heightIn(min = (if (height > 0) height else 112).dp),
         shape = RoundedCornerShape(20.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = background,
@@ -608,13 +622,16 @@ private fun BigButton(
             disabledContentColor = Muted,
         ),
     ) {
-        Text(
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (symbol != null) Text(symbol, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+            Text(
             text = label,
             fontSize = 17.sp,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp,
         )
+        }
     }
 }
 
@@ -658,7 +675,7 @@ private fun FavouritesCard(
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Button(
                                 onClick = { onCall(favourite) },
-                                modifier = Modifier.height(64.dp),
+                                modifier = Modifier.heightIn(min = 64.dp),
                                 shape = RoundedCornerShape(16.dp),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = AccentBg,
@@ -701,16 +718,11 @@ private fun FavouritesCard(
     }
 }
 
-/** `h:mm` in 24-hour form, which is unambiguous and needs no AM/PM to read. */
+/** Local time with an explicit AM/PM marker, including noon and midnight. */
 private fun currentTimeText(): String {
     val calendar = java.util.Calendar.getInstance()
-    val hour = calendar.get(java.util.Calendar.HOUR_OF_DAY)
-    val minute = calendar.get(java.util.Calendar.MINUTE)
-    val mm = minute.toString().padStart(2, '0')
-    return "$hour:$mm"
+    return LauncherClock.format(calendar.get(java.util.Calendar.HOUR_OF_DAY), calendar.get(java.util.Calendar.MINUTE))
 }
-
-private val BUTTON_GRID_HEIGHT_DP = 340.dp
 
 private val Bg = Color(LauncherPalette.BACKGROUND)
 private val CardBg = Color(LauncherPalette.CARD)
@@ -720,3 +732,28 @@ private val Accent = Color(LauncherPalette.ACCENT)
 private val Muted = Color(LauncherPalette.MUTED)
 
 private val ButtonText = Color(LauncherPalette.BUTTON_TEXT)
+
+@Composable
+private fun FavouriteAppsCard(packages: List<String>, apps: List<AppEntry>, onOpen: (String) -> Unit,
+    onAdd: () -> Unit, onRemove: (String) -> Unit) {
+    val context = LocalContext.current
+    Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = CardBg)) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(context.getString(R.string.favourite_apps), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold)
+            if (packages.isEmpty()) Text(context.getString(R.string.favourite_apps_empty), color = Muted, fontSize = 13.sp)
+            for (packageName in packages) {
+                val app = apps.firstOrNull { it.packageName == packageName }
+                // Keep unavailable favourites removable; a temporary profile lock must not erase them.
+                if (app != null) AppRow(app) { onOpen(packageName) }
+                else Text(context.getString(R.string.favourite_app_unavailable, packageName), color = Muted, fontSize = 15.sp)
+                TextButton(onClick = { onRemove(packageName) }) {
+                    Text(context.getString(R.string.favourite_apps_remove, app?.label ?: packageName), color = Muted, fontSize = 14.sp)
+                }
+            }
+            OutlinedButton(onClick = onAdd, modifier = Modifier.heightIn(min = 52.dp)) {
+                Text(context.getString(R.string.favourite_apps_add), color = Accent, fontSize = 15.sp)
+            }
+        }
+    }
+}

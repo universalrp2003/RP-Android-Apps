@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Only a disposable CI emulator. No real contacts, calls, unknown-source grants or role changes.
+set -euo pipefail
+[[ "$CI" == true && "$GITHUB_ACTIONS" == true ]]
+[[ "$(adb get-serialno)" == emulator-* ]]
+[[ "$(adb shell getprop ro.kernel.qemu | tr -d '\r')" == 1 ]]
+root="$RUNNER_TEMP/launcher-home"
+pkg=com.universalrp.launcher
+adb root
+adb wait-for-device
+# Preserve the actual failing status, even while collecting bounded synthetic UI evidence.
+trap 'status=$?; trap - EXIT; adb pull /sdcard/Android/data/com.universalrp.launcher/files/. "$root/ui/" || true; exit "$status"' EXIT
+adb install "$root/Elderly-Launcher-v1.5.apk"
+before="$(adb shell dumpsys package "$pkg" | grep 'userId=' | head -1 | tr -d '\r')"
+adb shell "mkdir -p /data/user/0/$pkg/files /data/user/0/$pkg/shared_prefs"
+adb shell "echo synthetic-launcher-upgrade > /data/user/0/$pkg/files/upgrade-fixture.txt"
+adb shell "echo '<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?><map><boolean name=\"asked_for_home\" value=\"true\" /></map>' > /data/user/0/$pkg/shared_prefs/launcher.xml"
+owner="$(adb shell stat -c %u "/data/user/0/$pkg" | tr -d '\r')"
+[[ "$owner" =~ ^[0-9]+$ ]]
+adb shell "echo '<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?><map><string name=\"list\"></string><string name=\"fixture\">synthetic-contact-pref</string></map>' > /data/user/0/$pkg/shared_prefs/launcher_favourites.xml"
+adb shell "chown -R $owner:$owner /data/user/0/$pkg/files /data/user/0/$pkg/shared_prefs"
+contact_before="$(adb shell sha256sum /data/user/0/$pkg/shared_prefs/launcher_favourites.xml)"
+adb install -r "$root/Elderly-Launcher-v1.6.apk"
+[[ "$contact_before" == "$(adb shell sha256sum /data/user/0/$pkg/shared_prefs/launcher_favourites.xml)" ]]
+after="$(adb shell dumpsys package "$pkg" | grep 'userId=' | head -1 | tr -d '\r')"
+[[ -n "$before" && "$before" == "$after" ]]
+adb install -r "$(find launcher/build/outputs/apk/androidTest/release -name '*.apk' | head -1)"
+adb shell am instrument -w -r -e class com.universalrp.launcher.HomeFollowupTest \
+  com.universalrp.launcher.test/androidx.test.runner.AndroidJUnitRunner | tee "$root/native.txt"
+grep -q '^OK (' "$root/native.txt"
+! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$root/native.txt"
+(cd "$root" && sha256sum -c Elderly-Launcher-v1.6.sha256)
+printf 'PASS: same UID/private fixture/home preference; AM/PM; adjacent volume and actual levels; native app picker/add/open/persistence/remove; contact isolation; 200%% font reachability. No phone/Google/hardware audio proof.\n' | tee "$root/result.txt"

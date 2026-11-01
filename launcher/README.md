@@ -1,6 +1,16 @@
 # Elderly Launcher (முதியவர் திரை)
 
-**Current stable release:** 1.4 / code 5
+**Current public stable release:** 1.5 / code 6. Its APK is unchanged.
+
+## Requested home improvements — unpublished1.6/code7 candidate
+
+- Smaller centred battery/charging text; explicit12-hour AM/PM time.
+- Favourite apps directly below favourite contacts. Choose from installed launchable apps, tap to open, remove the shortcut without uninstalling. Up to8 local package identities, saved independently of contacts. No new permission or remote processing.
+- Adjacent large −/+ controls with real ring/media index/max values immediately above them. Android chooses the affected stream like hardware volume keys; values are not decibels and no Do Not Disturb bypass is attempted.
+- A single scrolling home replaces the clipped nested grid; controls grow with larger fonts. Emergency confirmation and normal same-key updates remain.
+- Candidate unit/lint/native signed-update evidence must pass; no physical-phone/Google approval claimed. No new publication requested. [Candidate notes](../releases/elderly-launcher-v1.6.md).
+
+## Historical1.4 verification (not evidence for1.6)
 
 Package `com.universalrp.launcher`. Android 8.0 / API 26 or later.
 
