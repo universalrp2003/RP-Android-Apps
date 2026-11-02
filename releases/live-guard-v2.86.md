@@ -8,7 +8,7 @@
 
 ## Verification boundary
 
-Prepared source and synthetic tests are not audible-speech or provider-map accuracy proof. Record exact CI release build/JVM/lint/signing/permissions/update/native UI results separately before delivery. Owner previously reported no recurring HD warning/Android unresponsive window in2.85; that is limited phone acceptance, not universal proof or Play Protect clearance. Do not repeat accepted phone tests unless a regression appears. This follow-up needs only targeted punctuation and website-place verification.
+Prepared source and synthetic tests are not audible-speech or provider-map accuracy proof. Private CI41400810329 passed626 required JVM tests/66suites, release build/lint, signing/full permission continuity, preserved-data2.82 update and native compact/tab/Expand/menu checks. Exact tested source and APK hash are recorded in docs/live-guard-2.86-candidate-verification.json; not independent local APK or physical-phone proof. Owner previously reported no recurring HD warning/Android unresponsive window in2.85; that is limited phone acceptance, not universal proof or Play Protect clearance. Do not repeat accepted phone tests unless a regression appears. This follow-up needs only targeted punctuation and website-place verification.
 
 ## தமிழ்
 
