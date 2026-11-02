@@ -655,12 +655,13 @@ object Announcer {
      * stale alert when the neural service is unreachable.
      */
     fun speakNewsNow(context: Context, text: String, language: AppLang? = null): Boolean {
+        val spoken = com.universalrp.cleansweep.data.NewsSpeechSanitizer.forSpeech(text)
         val wanted = language ?: Lang.languageIn(context)
         return submit(
             context,
             Request(
-                english = if (wanted == AppLang.EN) text else null,
-                tamil = if (wanted == AppLang.TA) text else null,
+                english = if (wanted == AppLang.EN) spoken else null,
+                tamil = if (wanted == AppLang.TA) spoken else null,
                 wanted = wanted,
                 event = Event.NEWS_HEADLINES,
                 manual = true,

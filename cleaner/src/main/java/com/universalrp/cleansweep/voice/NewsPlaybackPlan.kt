@@ -9,9 +9,9 @@ object NewsPlaybackPlan {
 
     fun build(headlines: List<NewsHeadline>, tamil: Boolean, lead: String = ""): List<Part> = buildList {
         headlines.forEachIndexed { index, item ->
-            val story = item.spokenText.ifBlank {
+            val story = NewsSpeechSanitizer.forSpeech(item.spokenText.ifBlank {
                 NewsSpeechSanitizer.cleanHeadline(item.title, item.source)
-            }.trimEnd('.', '!', '?', ' ', ',', ';', ':', '·')
+            }).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·')
             if (story.isBlank()) return@forEachIndexed
             val intro = if (isEmpty()) {
                 lead.trim().let { if (it.isBlank()) "" else "$it " } +

@@ -28,6 +28,18 @@ internal object DisasterWebPolicy {
             (u.rawQuery?.let { "?$it" } ?: "") + (u.rawFragment?.let { "#$it" } ?: ""))
             .takeIf(::allowed)
     }.getOrNull()
+    // Public provider directory entry verified 2 Nov 2026, NOT a geocoded guess or live GPS link.
+    // Only this explicitly verified town is linked; other places stay an honestly labelled country page.
+    const val ALANGUDI_RADAR = "https://weather.tomorrow.io/IN/TN/%C4%80langudi/134455/radar/"
+    fun tomorrowForPlace(place: com.universalrp.weather.WeatherPlaceCandidate?): String {
+        if (place == null) return Provider.TOMORROW.home
+        val name = place.name.trim().lowercase(java.util.Locale.ROOT).substringBefore(',').trim()
+        val townName = name in setOf("alangudi", "ālangudi", "ஆலங்குடி")
+        // Disambiguate from similarly named villages around Lalgudi and elsewhere. Never alter home.
+        val townArea = place.latitude in 10.30..10.42 && place.longitude in 78.90..79.05
+        return if (townName && townArea) ALANGUDI_RADAR else Provider.TOMORROW.home
+    }
+
     // WebView.setInitialScale ignores display density; onScaleChanged includes it.
     fun initialScale(percent: Int, density: Float): Int = (savedPageZoom(percent) * density).toInt().coerceAtLeast(1)
     val pageZoomChoices = listOf(50, 75, 100, 125, 150, 200)

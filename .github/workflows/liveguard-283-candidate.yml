@@ -1,4 +1,4 @@
-name: Live Guard 2.85 signed upgrade and owner-requested regressions (no publication)
+name: Live Guard 2.86 signed upgrade and owner-requested regressions (no publication)
 on:
   push:
     branches: ["arena/aaa560d4-rp-android-apps"]
@@ -44,7 +44,7 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           def report(text):
-              print('::error title=Live Guard 2.85 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              print('::error title=Live Guard 2.86 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
           p=Path(os.environ['RUNNER_TEMP'])/'liveguard-283-build.log'
           if p.exists():
               lines=p.read_text(errors='replace').splitlines()
@@ -82,13 +82,13 @@ jobs:
         run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.82.apk"
       - uses: actions/upload-artifact@v7
         with:
-          name: Live-Guard-2.85-signed-tested-candidate
+          name: Live-Guard-2.86-signed-tested-candidate
           path: ${{ runner.temp }}/health-cleaner/
           retention-days: 30
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: Live-Guard-2.85-regression-failures
+          name: Live-Guard-2.86-regression-failures
           path: |
             cleaner/build/reports/tests/
             cleaner/build/reports/lint-results-release.html

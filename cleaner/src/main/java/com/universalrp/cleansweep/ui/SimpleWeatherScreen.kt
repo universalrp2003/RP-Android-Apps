@@ -262,11 +262,11 @@ private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCa
             Text(watchWords("Regional reports are not local impact warnings. GDACS Green is not an all-clear for your place.", "பிராந்திய அறிக்கை உள்ளூர் பாதிப்பு எச்சரிக்கை அல்ல. GDACS பச்சை என்பது உங்கள் இடத்தில் அபாயம் இல்லை என்பதல்ல."), style = MaterialTheme.typography.bodySmall)
             FlowRow {
                 TextButton(onClick = { website = "https://www.gdacs.org/" }) { Text(watchWords("GDACS map", "GDACS வரைபடம்")) }
-                TextButton(onClick = { website = DisasterWebPolicy.Provider.TOMORROW.home }) { Text("Tomorrow.io") }
+                TextButton(onClick = { website = DisasterWebPolicy.tomorrowForPlace(place) }) { Text("Tomorrow.io") }
                 TextButton(onClick = { website = CycloneWatchData.IMD }) { Text("IMD") }
                 TextButton(onClick = { browser.openUri(DisasterReports.SACHET) }) { Text(watchWords("Official local alerts", "உள்ளூர் அதிகாரப்பூர்வ எச்சரிக்கை")) }
             }
         }
     }
-    website?.let { DisasterWebWindow(it, place.name) { website = null } }
+    website?.let { DisasterWebWindow(it, place.name, DisasterWebPolicy.tomorrowForPlace(place)) { website = null } }
 }

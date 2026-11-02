@@ -10,6 +10,14 @@
 - For security-sensitive changes, record threat/data-flow assumptions, verified controls, tests and residual gaps. This is a standing development policy, **not a claim that these controls are already implemented suite-wide**, an independent audit, a prompt-injection-proof guarantee or Play Protect clearance.
 - This instruction does not supersede scoped publication approvals, immutable APK/signer/data-preservation rules, consent, or the prohibition on unauthorized third-party sample uploads. Do not rebuild/release unrelated apps or add AI/agent/MCP access to private data simply to apply the checklist.
 
+## Live Guard 2.86 narrow follow-up — 2 November 2026
+
+- Owner reports2.85 HD warning gone, no Android unresponsive/force-close window, other features fine. Limited phone acceptance; not universal playback/ANR/accuracy/Play Protect proof. Screenshots show actual three-provider pages and compact/Expand on that phone. Do not repeat accepted physical tests without a regression; no raw screenshots/private home coordinates in Git.
+- Remaining news issue: editorial '-' read as minus, especially Tamil numeric suffixes. Speech-only formatting now applied after evidence selection in single Read aloud, bulletin and checkpoint plans; original display/source/keys untouched. Preserve real negative values/subtraction/numeric ranges/dates rather than guessing.
+- Provider website location is separate from saved home/API coordinates. Explicitly limited verified public-town URL directory matches BOTH town aliases and geographic area; otherwise country page clearly labelled unlinked. App-place label separate, no home migration, GPS/key injection or same-name geocoding guess. Owner privately clarified district; do not publish private evidence or assume renamed coordinates are correct.
+- Cyclone auto-follow optional: no supported GDACS geographic control established; keep actual dated provider map/manual controls rather than invented live following. Owner explicitly accepts manual if unsupported.
+- Prepared private2.86/code91;66required JVM suites/626declarations not yet executed. See docs/live-guard-2.86-candidate.md. Normal same-key updates only, public2.82 and accepted siblings unchanged; no publication authority.
+
 ## Live Guard 2.85 follow-up — 2 November 2026
 
 - Owner confirmed Android ANR Wait/Close dialog on Read news, plus HD warning after network changes. Source investigation found main-thread selection/checkpoint/cancellation risks and historical automatic-error warning surviving newer success. No phone ANR trace: do not claim a proven unique root cause or physical fix.

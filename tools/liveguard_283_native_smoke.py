@@ -123,7 +123,7 @@ def main():
     seek('Follow my current location')
     seek('Disaster reports · silent')
     click('GDACS map')
-    seek('Selected place: CI synthetic home')
+    seek('App place: CI synthetic home')
     seek('www.gdacs.org')
     seek('Expand');click('Expand');seek('Compact')
     click('IMD');seek('rsmcnewdelhi.imd.gov.in')

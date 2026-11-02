@@ -24,8 +24,15 @@ import kotlin.math.roundToInt
 /** Actual provider pages. No injected map, credentials, location or JavaScript/native bridge. */
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-internal fun DisasterWebWindow(url: String, placeLabel: String = "", onClose: () -> Unit) {
+internal fun DisasterWebWindow(url: String, placeLabel: String = "", tomorrowUrl: String = DisasterWebPolicy.Provider.TOMORROW.home, onClose: () -> Unit) {
     if (!disasterWebAllowed(url)) return
+    val safeTomorrow = tomorrowUrl.takeIf { disasterWebAllowed(it) && DisasterWebPolicy.provider(it) == DisasterWebPolicy.Provider.TOMORROW }
+        ?: DisasterWebPolicy.Provider.TOMORROW.home
+    fun startUrl(provider: DisasterWebPolicy.Provider): String = when {
+        provider == DisasterWebPolicy.provider(url) -> url
+        provider == DisasterWebPolicy.Provider.TOMORROW -> safeTomorrow
+        else -> provider.home
+    }
     val browser = LocalUriHandler.current
     val context = LocalContext.current
     val zoomPrefs = remember { context.getSharedPreferences("disaster_web_page_zoom", Context.MODE_PRIVATE) }
@@ -34,13 +41,13 @@ internal fun DisasterWebWindow(url: String, placeLabel: String = "", onClose: ()
     var zoomMenu by remember { mutableStateOf(false) }
     // Retain a bounded, lazily-created WebView per tab. Detaching/re-attaching, not reloading,
     // preserves provider-owned map zoom/layers/position during tab switches and Expand.
-    val pages = remember(url) { mutableMapOf<DisasterWebPolicy.Provider, WebView>() }
-    val addresses = remember(url) { mutableStateMapOf<DisasterWebPolicy.Provider, String>() }
-    val failures = remember(url) { mutableStateMapOf<DisasterWebPolicy.Provider, String>() }
+    val pages = remember(url, safeTomorrow) { mutableMapOf<DisasterWebPolicy.Provider, WebView>() }
+    val addresses = remember(url, safeTomorrow) { mutableStateMapOf<DisasterWebPolicy.Provider, String>() }
+    val failures = remember(url, safeTomorrow) { mutableStateMapOf<DisasterWebPolicy.Provider, String>() }
     val zooms = remember { mutableStateMapOf<DisasterWebPolicy.Provider, Int>() }
-    var web by remember { mutableStateOf<WebView?>(null) }
+    var web by remember(url, safeTomorrow) { mutableStateOf<WebView?>(null) }
     fun back() { if (web?.canGoBack() == true) web?.goBack() else onClose() }
-    DisposableEffect(url) {
+    DisposableEffect(url, safeTomorrow) {
         onDispose {
             pages.values.forEach { page ->
                 (page.parent as? android.view.ViewGroup)?.removeView(page)
@@ -72,7 +79,7 @@ internal fun DisasterWebWindow(url: String, placeLabel: String = "", onClose: ()
                         }
                     }
                 }
-                val currentUrl = addresses[selected] ?: if (selected == DisasterWebPolicy.provider(url)) url else selected.home
+                val currentUrl = addresses[selected] ?: startUrl(selected)
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     TextButton(onClick = { if (disasterWebAllowed(currentUrl)) browser.openUri(currentUrl) }) {
                         Text(watchWords("Open in browser", "உலாவியில் திற"), style = MaterialTheme.typography.labelSmall)
@@ -93,9 +100,13 @@ internal fun DisasterWebWindow(url: String, placeLabel: String = "", onClose: ()
                         }
                     }
                 }
-                if (placeLabel.isNotBlank()) Text(watchWords("Selected place: ", "தேர்ந்தெடுத்த இடம்: ") + placeLabel,
+                if (placeLabel.isNotBlank()) Text(watchWords("App place: ", "செயலியின் இடம்: ") + placeLabel,
                     Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.labelSmall)
                 Text(Uri.parse(currentUrl).host.orEmpty(), Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.labelSmall)
+                if (selected == DisasterWebPolicy.Provider.TOMORROW && safeTomorrow == DisasterWebPolicy.Provider.TOMORROW.home)
+                    Text(watchWords("Country website page—not linked to the app place. Choose your town on the website.",
+                        "நாட்டின் இணையப் பக்கம்; செயலியின் இடத்துடன் இணைக்கப்படவில்லை. தளத்தில் உங்கள் ஊரைத் தேர்ந்தெடுக்கவும்."),
+                        Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.labelSmall)
                 Text(watchWords("Choose the place and map zoom on the website. Map view stays while this window is open; page zoom is saved.",
                     "இடத்தையும் வரைபட அளவையும் தளத்தில் தேர்ந்தெடுக்கவும். சாளரம் திறந்திருக்கும் வரை வரைபடம் நீடிக்கும்; பக்க அளவு சேமிக்கப்படும்."),
                     Modifier.padding(horizontal = 12.dp), style = MaterialTheme.typography.labelSmall)
@@ -158,7 +169,7 @@ internal fun DisasterWebWindow(url: String, placeLabel: String = "", onClose: ()
                                     failures[provider] = watchWords("Secure connection failed. The page was blocked.", "பாதுகாப்பான இணைப்பு தோல்வி. பக்கம் தடுக்கப்பட்டது.")
                                 }
                             }
-                            loadUrl(if (provider == DisasterWebPolicy.provider(url)) url else provider.home)
+                            loadUrl(startUrl(provider))
                         }
                     }
                     if (frame.getChildAt(0) !== page) {

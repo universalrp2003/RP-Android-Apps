@@ -6,7 +6,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
-    "com.universalrp.cleansweep.ui.DisasterWebPolicyTest": 8,
+    "com.universalrp.cleansweep.data.NewsSpeechFormattingTest": 12,
+    "com.universalrp.cleansweep.ui.DisasterWebPolicyTest": 12,
     "com.universalrp.cleansweep.voice.StableNetworkWindowTest": 6,
     "com.universalrp.cleansweep.data.SimpleWeatherPolicyTest": 13,
     "com.universalrp.cleansweep.data.DisasterReportsTest": 5,
