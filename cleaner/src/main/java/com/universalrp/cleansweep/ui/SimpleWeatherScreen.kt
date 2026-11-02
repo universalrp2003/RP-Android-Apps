@@ -92,19 +92,20 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                     }
                     Switch(gps, { on ->
                         if (on && !WeatherPlaceResolver.hasLocationPermission(context)) permission.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION))
-                        else { gps = on; SavedRainWatches.setCurrentEnabled(context, on); if (!on) SimpleWeatherStore.clear(context, SimpleWeatherStore.GPS); refresh() }
+                        else { gps = on; SavedRainWatches.setCurrentEnabled(context, on); if (!on) { SimpleWeatherStore.clear(context, SimpleWeatherStore.GPS); WeatherWatchWorker.cancelPlaceAlert(context, SimpleWeatherStore.GPS) }; refresh() }
                     })
                 }
                 if (gps) {
                     Text(watchWords("Current location", "தற்போதைய இடம்"), style = MaterialTheme.typography.titleMedium)
                     PlaceForecastCard(SimpleWeatherStore.GPS, null, revision)
                 }
-                extras.forEach { watch ->
+                extras.filter { WeatherForecastClient.haversineKm(it.place.latitude, it.place.longitude, home.latitude, home.longitude) >= .1 }.forEach { watch ->
                     Text(watch.place.name, style = MaterialTheme.typography.titleMedium)
                     if (watch.enabled) PlaceForecastCard(watch.id, watch.place, revision)
                     else Text(watchWords("Watch paused", "கண்காணிப்பு நிறுத்தப்பட்டது"))
                 }
-                SimpleDisasterPanel(home, if (gps) SimpleWeatherStore.read(context, SimpleWeatherStore.GPS)?.place else null)
+                val currentGpsPlace = if (gps) SimpleWeatherStore.read(context, SimpleWeatherStore.GPS)?.place?.takeIf { SimpleWeatherStore.gpsStillAt(context, it) } else null
+                SimpleDisasterPanel(home, currentGpsPlace)
                 TextButton(onClick = { manage = !manage }) { Text(watchWords("Manage other saved places", "மற்ற சேமித்த இடங்களை நிர்வகி")) }
                 if (manage) SavedPlaceManager(extras, onChange = { refresh() })
             }
@@ -148,12 +149,13 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
     val context = LocalContext.current
     val result = remember(id, revision) { SimpleWeatherStore.read(context, id) }
     val snapshot = result?.snapshot
+    val gpsValid = id != SimpleWeatherStore.GPS || (result != null && SimpleWeatherStore.gpsStillAt(context, result.place))
     val matches = expected == null || (result != null && WeatherForecastClient.haversineKm(expected.latitude, expected.longitude, result.place.latitude, result.place.longitude) < .1)
     PanelCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (id == SimpleWeatherStore.GPS && result != null) Text(result.place.name, style = MaterialTheme.typography.titleMedium)
             when {
-                !matches || result == null -> Text(if (id == SimpleWeatherStore.GPS) watchWords("Waiting for a fresh GPS location. Turn on location and tap Check now.", "புதிய GPS இடத்திற்குக் காத்திருக்கிறது. இருப்பிடத்தை இயக்கி இப்போது சரிபார் என்பதை அழுத்தவும்.") else watchWords("Tap Check now for this place.", "இந்த இடத்திற்கு இப்போது சரிபார் என்பதை அழுத்தவும்."))
+                !matches || !gpsValid || result == null -> Text(if (id == SimpleWeatherStore.GPS) watchWords("Waiting for a fresh GPS location. Turn on location and tap Check now.", "புதிய GPS இடத்திற்குக் காத்திருக்கிறது. இருப்பிடத்தை இயக்கி இப்போது சரிபார் என்பதை அழுத்தவும்.") else watchWords("Tap Check now for this place.", "இந்த இடத்திற்கு இப்போது சரிபார் என்பதை அழுத்தவும்."))
                 snapshot == null -> Text(watchWords("Weather unavailable. Precise rain alerts paused—not a dry-weather result.", "வானிலை கிடைக்கவில்லை. துல்லிய மழை அறிவிப்புகள் நிறுத்தப்பட்டுள்ளன; மழை இல்லை என்பதல்ல."))
                 else -> {
                     val age = System.currentTimeMillis() - snapshot.fetchedAtMs
@@ -208,12 +210,12 @@ private fun SavedPlaceManager(places: List<SavedRainWatch>, onChange: () -> Unit
     var history by remember { mutableStateOf<String?>(null) }
     places.forEach { watch ->
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(watch.place.name, Modifier.weight(1f)); Switch(watch.enabled, { SavedRainWatches.toggle(context, watch.id, it); onChange() })
+            Text(watch.place.name, Modifier.weight(1f)); Switch(watch.enabled, { SavedRainWatches.toggle(context, watch.id, it); if (!it) WeatherWatchWorker.cancelPlaceAlert(context, watch.id); onChange() })
         }
         Row {
             TextButton(onClick = { editing = watch.id; name = watch.place.name }) { Text(watchWords("Rename", "பெயர் மாற்று")) }
             TextButton(onClick = { history = if (history == watch.id) null else watch.id }) { Text(watchWords("History", "வரலாறு")) }
-            TextButton(onClick = { SavedRainWatches.remove(context, watch.id); SimpleWeatherStore.clear(context, watch.id); onChange() }) { Text(watchWords("Delete", "நீக்கு")) }
+            TextButton(onClick = { SavedRainWatches.remove(context, watch.id); WeatherWatchWorker.cancelPlaceAlert(context, watch.id); SimpleWeatherStore.clear(context, watch.id); onChange() }) { Text(watchWords("Delete", "நீக்கு")) }
         }
         if (history == watch.id) SavedRainWatches.history(context, watch.id).take(10).forEach { Text(weatherClock(it.at) + " · " + it.message, style = MaterialTheme.typography.bodySmall) }
         if (editing == watch.id) {

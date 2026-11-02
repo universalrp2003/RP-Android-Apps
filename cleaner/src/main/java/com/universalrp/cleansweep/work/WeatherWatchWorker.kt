@@ -80,6 +80,7 @@ class WeatherWatchWorker(
             val app = context.applicationContext
             val wm = WorkManager.getInstance(app)
             if (!WeatherAlertStore.enabled(app)) {
+                (listOf(com.universalrp.cleansweep.data.SimpleWeatherStore.HOME, com.universalrp.cleansweep.data.SimpleWeatherStore.GPS) + SavedRainWatches.read(app).map { it.id }).forEach { cancelPlaceAlert(app, it) }
                 wm.cancelUniqueWork(UNIQUE_PERIODIC)
                 return
             }
@@ -116,6 +117,9 @@ class WeatherWatchWorker(
          * Runs one complete location -> forecast -> policy evaluation cycle.
          * Returns the evaluated decision, or null if neither GPS nor a saved fallback place is available yet.
          */
+        fun cancelPlaceAlert(context: Context, id: String) {
+            context.getSystemService(NotificationManager::class.java)?.cancel(NOTIF_ID_WEATHER + kotlin.math.abs(id.hashCode() % 100_000))
+        }
         private val checkLock = kotlinx.coroutines.sync.Mutex()
         suspend fun executeCheck(context: Context, speakIfTriggered: Boolean): WeatherAlertDecision? =
             checkLock.withLock { executePlaces(context, speakIfTriggered) }
@@ -135,6 +139,7 @@ class WeatherWatchWorker(
                 } else com.universalrp.cleansweep.data.SimpleWeatherStore.clear(ctx, com.universalrp.cleansweep.data.SimpleWeatherStore.GPS)
             }
             var homeDecision: WeatherAlertDecision? = null
+            val fetched = mutableListOf<Pair<com.universalrp.weather.WeatherPlaceCandidate, com.universalrp.weather.WeatherNowcastSnapshot>>()
             for ((id, place) in targets) {
                 fun stillSelected(): Boolean = when (id) {
                     com.universalrp.cleansweep.data.SimpleWeatherStore.HOME -> WeatherAlertStore.savedPlace(ctx) == place
@@ -145,14 +150,18 @@ class WeatherWatchWorker(
                 val before = com.universalrp.cleansweep.data.SimpleWeatherStore.memory(ctx, id, place)
                 try {
                     val requestedKey = WeatherAlertStore.readTomorrowKey(ctx)
-                    val snapshot = WeatherForecastClient.fetchNowcast(place.latitude, place.longitude, requestedKey, includeCyclone = false)
+                    val shared = fetched.firstOrNull { (other, _) -> WeatherForecastClient.haversineKm(other.latitude, other.longitude, place.latitude, place.longitude) < 0.1 }?.second
+                    val snapshot = shared ?: WeatherForecastClient.fetchNowcast(place.latitude, place.longitude, requestedKey, includeCyclone = false)
+                    if (shared == null) fetched.add(place to snapshot)
                     if (!stillSelected() || WeatherAlertStore.readTomorrowKey(ctx) != requestedKey) continue
                     val decision = com.universalrp.cleansweep.data.SimpleWeatherPolicy.evaluate(snapshot, place.name, before, SavedRainWatches.lead(ctx))
                     var memory = if (decision.shouldAnnounce) before else decision.updatedMemory
                     // Source, freshness and selected location are checked AGAIN when queued speech plays.
                     val relevant = { WeatherAlertStore.enabled(ctx) && stillSelected() && WeatherAlertStore.readTomorrowKey(ctx) == requestedKey &&
                         com.universalrp.cleansweep.data.SimpleWeatherPolicy.precise(snapshot) }
-                    if (speakIfTriggered && decision.shouldAnnounce && relevant() &&
+                    if (!com.universalrp.cleansweep.data.SimpleWeatherPolicy.precise(snapshot) || !decision.shouldAnnounce) cancelPlaceAlert(ctx, id)
+                    // Co-located home/GPS/saved watches share one fetch and never speak twice in this check.
+                    if (shared == null && speakIfTriggered && decision.shouldAnnounce && relevant() &&
                         (decision.bypassQuietHours || !Announcer.inQuietHours(ctx))) {
                         postAlertNotification(ctx, decision, tamil, NOTIF_ID_WEATHER + kotlin.math.abs(id.hashCode() % 100_000))
                         if (Announcer.speakWeatherAndWait(ctx, decision.englishSpeech, decision.tamilSpeech,
@@ -170,6 +179,7 @@ class WeatherWatchWorker(
                     }
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) {
+                    cancelPlaceAlert(ctx, id)
                     if (stillSelected()) com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, null, before)
                 }
             }

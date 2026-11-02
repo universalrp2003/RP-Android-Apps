@@ -5,7 +5,7 @@
 ## Owner decisions, 2 November 2026
 
 - Normal “Battery reached 100 percent” speech; Advanced battery checks OFF by default. Only opt-in reveals and enables the sustained current/power estimate announcements. Missing sensors are never zero. Call/silent-place/master voice protections remain.
-- Default town/PIN confirmed and saved first. Existing places preserved; a separate optional current-GPS place changes at weather checks, not continuous tracking. Never overwrite home. Reject old GPS fixes; moving more than 1.2 km resets only that place's speech episode.
+- Default town/PIN confirmed and saved first. Existing places preserved; a separate optional current-GPS place changes at weather checks, not continuous tracking. Never overwrite home. Co-located watches share a request and do not duplicate speech in the same check; a GPS result is hidden when the latest available fix no longer matches. Reject old GPS fixes; moving more than 1.2 km resets only that place's speech episode.
 - Tomorrow.io minute data required for precise rain announcements. If unavailable, pause these alerts and display a clearly labelled general outlook only. User selected STRICT, not automatic substitute alerts.
 - Disaster reports SCREEN ONLY; no automatic GDACS disaster speech. Actual GDACS report/map opens in an isolated app WebView, no local track recreation or fabricated personal-location marker.
 - Compact per-place results: name, provider estimate now, rain time within validated minute horizon, later available outlook, source and check timestamp. No invented rain-probability labels. No-rain claims are limited to the actual available horizon.
