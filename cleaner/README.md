@@ -1,17 +1,12 @@
 # Live Guard (CleanSweep)
 
-## 2.87 scoped follow-up
+Current public APK: **2.87 / code 92**, package `com.universalrp.cleansweep`, Android8.0/API26+.
 
-Owner accepted 2.86 and authorized Live Guard-only publication after automated verification. Adds a separate default-off **Disaster updates with news** switch under Voice → News: one sourced dated update per nearby event in each of three fully completed news bulletins. Fresh optional phone GPS else explicitly saved home; observed advisory wind with verified units, movement unavailable when not verifiable. No standalone alarm/live/local-danger claim. See [candidate scope and residuals](../docs/live-guard-2.87-candidate.md). No repeat accepted physical tests; new CI pending.
-
-> **Prepared private candidate: 2.86/code91. Not published;626required JVM tests, release build/lint, signing/permissions, preserved-data upgrade and native controls passed CI41400810329. Actual pronunciation/website-town check still pending.** Narrow news speech-punctuation and verified website-place linking follow-up. Owner reports2.85 HD warning and Android unresponsive windows did not recur; other features fine. Those accepted fixes remain intact. Public2.82 unchanged. See [candidate boundaries](../docs/live-guard-2.86-candidate.md).
-
-Live Guard is a Tamil/English phone-care, battery/data/weather guard, optional news announcer and device-monitoring app. The current public APK is **2.79 / code 84**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
-
-- [Official website and downloads](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard) · [CleanSweep-v2.79.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk) · [release notes](../releases/live-guard-v2.79.md) · [suite directory](../README.md)
-- Exact promoted APK: **14,479,951 bytes**, SHA-256 `95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac`. Candidate run 41049481796 / artifact 12974397087; successful no-rebuild promotion run 41052024326. Pinned signer, package/version, minimum SDK and built-permission delta were verified; no dangerous permission was added over public 2.75.
-- CI ran 510 required JVM regressions in each Debug/Release variant. The owner accepted the candidate UI and supplied three screenshots; the installed hash was not independently measured. This is not proof of every-category coverage, audible/background delivery, perfect translations or Play Protect clearance. [Owner acceptance](../docs/live-guard-2.79-owner-acceptance.md) · [release ledger](../docs/published-release-digests.md).
-- [Privacy policy](../PRIVACY.md) · [installation advisory](../docs/live-guard-play-protect-install-block.md)
+- [Download CleanSweep-v2.87.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.87/CleanSweep-v2.87.apk) · [release notes](../releases/live-guard-v2.87.md) · [official website](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard)
+- Exact tested source **52b525888631b12ba281e0df328d466013de8f7c**, APK **14,670,451 bytes**, SHA-256 `31df0d1314f3e6a5d6d559dfac2dd96ff87a1c0cb60e03176000f4d8c907e715`. Signed regression run41407403574:669 required JVM tests/68suites, release lint/build, full permission/signer continuity, same-key2.82 saved-data update and native controls passed. Exact artifact13124038781 promoted without rebuild by run41409032348; published release431191311/asset700956127. All previous public release assets unchanged.
+- Enable once under **Voice → News → Disaster updates with news**. Separate default-off opt-in: a nearby GDACS cyclone/flood/earthquake appears once in each of the next three fully completed news bulletins. Fresh optional phone GPS else explicitly saved home. Dated report distance/observed advisory wind only; movement unavailable without a verified unit/value contract. No standalone alarm, local-danger prediction or live tracking. Stop/failure/preparation never consumes a slot.
+- Owner accepted2.86; no repeat accepted phone tests requested.2.87 has automated checks, not new physical/audible/provider-accuracy or Play Protect proof. Normal same-key update only; no uninstall/data-clear. [Scope and residuals](../docs/live-guard-2.87-candidate.md) · [publication receipt](../docs/live-guard-2.87-publication-receipt.json) · [privacy](../PRIVACY.md).
+- Accepted simple100%-reached battery speech/Advanced opt-in, home-first + separate optionalGPS, fresh authenticated Tomorrow minute-only precise15/30/60rain, news formatting and provider website controls retained. Other public apps unchanged.
 
 ## What it does
 
@@ -27,7 +22,7 @@ The app performs a read-only release-metadata check at most once per rolling 24 
 
 Replacement-key versions 2.74 onward can update in place. Do not uninstall or clear data for a same-key update. Only installations using the former exposed key need the documented signing migration: obtain the official replacement first, back up/export important data, and remember that uninstalling may erase local data. Existing release assets remain unchanged.
 
-## Historical device evidence (not transferred to 2.79)
+## Historical device evidence (not transferred to 2.87)
 
 2.50 is the first release that asks for **Location**, so the permission-delta gate required a recorded physical-device install. [`../docs/live-guard-2.50-device-evidence.md`](../docs/live-guard-2.50-device-evidence.md) records it: the owner installed `CleanSweep-v2.50.apk` (13,740,236 bytes, SHA-256 `b4c183c876a8da8aff4169c975c1a1111a3229658620e99fed87cb3e645d6176`) over 2.49 with Play Protect on, Play Protect reported "This app looks safe — You can continue to install it", Android's installer completed the update, and the nearby-cell list then appeared with four cells. **The published asset has that same digest**, so the released APK is the installed one. That is one phone: no second device was tested, no device test covers the Play Store bundle, and no screenshot shows an APK hash.
 

@@ -73,5 +73,7 @@
   "public_publication_authorized": true,
   "independent_arena_apk_download": false,
   "hash_evidence": "CI identity; promotion independently verifies archive/APK and published asset",
-  "published": false
+  "published": true,
+  "promotion_run": 41409032348,
+  "publication_receipt": "docs/live-guard-2.87-publication-receipt.json"
 }
