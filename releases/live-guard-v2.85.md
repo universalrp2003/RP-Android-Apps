@@ -1,6 +1,6 @@
 # Live Guard 2.85 — private candidate only
 
-**Not published.** Normal same-signing-key update, version code 90. Do not uninstall or reset: uninstalling may erase local data. Public Live Guard remains 2.82 until separately approved. Other accepted apps are unchanged.
+**Not published. Not installed on a phone.** Normal same-signing-key update, version code 90. Do not uninstall or reset: uninstalling may erase local data. Public Live Guard remains 2.82 until separately approved. Other accepted apps are unchanged.
 
 - Moves the whole manual-news path and CPU-heavy bulletin selection off main. Audio-start checkpoints are scheduled off main; UI story status no longer takes the durable-history monitor. Completed stories still use durable checkpoints, never marking unfinished stories read.
 - Moves player cancellation off the UI thread and snapshots the old player, rather than letting a late Stop affect a replacement.

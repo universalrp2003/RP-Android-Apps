@@ -17,9 +17,20 @@ DATA=f'/data/user/0/{PKG}'
 ROOT=Path(os.environ.get('RUNNER_TEMP','/tmp'))/'health-cleaner'
 
 def dump():
-    adb('shell','uiautomator','dump','/sdcard/liveguard-283.xml')
-    raw=adb('shell','cat','/sdcard/liveguard-283.xml')
-    return raw,list(ET.fromstring(raw).iter('node'))
+    # UIAutomator can return exit 0 but no file while the first frame is settling.
+    # Retry only hierarchy collection, not installation or app actions; never accept a stale dump.
+    last=''
+    for attempt in range(3):
+        adb('shell','rm','-f','/sdcard/liveguard-283.xml')
+        try:
+            last=adb('shell','uiautomator','dump','/sdcard/liveguard-283.xml')
+            raw=adb('shell','cat','/sdcard/liveguard-283.xml')
+            nodes=list(ET.fromstring(raw).iter('node'))
+            if nodes:return raw,nodes
+        except (subprocess.CalledProcessError,ET.ParseError) as error:
+            last+=str(getattr(error,'output',error))[-1000:]
+        time.sleep(.5)
+    raise AssertionError('UI hierarchy unavailable after bounded collection retries: '+last)
 
 def seek(label):
     # Small overlap matters: a large swipe can skip a short control between two tall cards.
