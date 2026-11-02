@@ -19,8 +19,14 @@ class OorWeatherAlertTest {
         assertTrue(WeatherSeverity.VERY_HEAVY_RAIN.bypassQuietHours)
         assertTrue(WeatherSeverity.CYCLONE_SEVERE.bypassQuietHours)
         val (en, ta) = WeatherAlertPolicy.formatSpeech(WeatherSeverity.CYCLONE_SEVERE, "Alangudi", 10)
-        assertTrue(en.contains("Urgent storm warning"))
-        assertTrue(ta.contains("அவசர புயல் எச்சரிக்கை"))
+        // Shared weather text must not turn a severe forecast into an observed local cyclone.
+        assertTrue(en.contains("Severe weather forecast"))
+        assertTrue(en.contains("not a local observation"))
+        assertFalse(en.contains("cyclone-force winds"))
+        assertTrue(ta.contains("கடும் வானிலை முன்னறிவிப்பு"))
+        val (regional, _) = WeatherAlertPolicy.formatSpeech(WeatherSeverity.CYCLONE_SEVERE, "Test town", 10, "TEST-26")
+        assertTrue(regional.contains("GDACS flags a regional system"))
+        assertTrue(regional.contains("does not predict local wind or landfall"))
         assertTrue(SharedWeatherRuntime.TOMORROW_KEYS_URL.startsWith("https://"))
     }
 }
