@@ -7,7 +7,7 @@ Private follow-up candidate; public2.89 remains unchanged.
 - Keep one dated observation/report timestamp and source, plus a short regional-not-local-warning qualification. Do not repeat the provider-update/issue timestamp. Full stored place labels, coordinates, source-issued versus observation fields and on-screen details are not changed or deleted.
 - Preserve once-per-new-cyclone advisory rules, flood/earthquake counters, saved OFF/language/topics/GPS, HD/call/quiet protections, compact shared notification and restored three-segment D/U meter.
 
-795 required JVM declarations/74suites and4 Android35 tests require a fresh CI run. No physical-device test, audible pronunciation or live-provider accuracy proof for2.90 yet. Normal same-key update only; do not uninstall or clear local data. Uninstalling may erase local data. No public2.90 publication authorized or performed by this implementation step.
+CI41473840436 atdb527cd passed795 executed required JVM tests/74suites,333Python, build/lint/signer/full permission continuity, exact2.89 preserved-data/same-UID update/native UI and all4 Android35 tests. No physical-device test, audible pronunciation or live-provider accuracy proof for2.90 yet. Normal same-key update only; do not uninstall or clear local data. Uninstalling may erase local data. No public2.90 publication authorized or performed by this implementation step.
 
 ## தமிழ்
 
