@@ -43,7 +43,9 @@ def seek(label):
             bounds=list(map(int,re.findall(r'-?\d+',node.get('bounds',''))))
             if len(bounds)==4 and bounds[3]>bounds[1] and bounds[1]>=80 and bounds[3]<=1830:
                 visible.append(node)
-        match=next((n for n in visible if label in n.get('text','')),None)
+        # Prefer the exact control over prose that mentions it (for example Not now).
+        match=next((n for n in visible if label == n.get('text','')),None)
+        if match is None: match=next((n for n in visible if label in n.get('text','')),None)
         if match is not None:return match
         signature=tuple(n.get('text','') for n in visible if n.get('text'))
         unchanged=unchanged+1 if signature==last else 0;last=signature

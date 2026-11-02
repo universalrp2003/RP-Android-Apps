@@ -106,9 +106,9 @@ object NewsDisasterPolicy {
             val wind = if (e.type != "TC") "" else {
                 val value = e.windKmh?.roundToInt()
                 if (tamil) (if (value == null) " தற்போதைய காற்று வேகம் கிடைக்கவில்லை." else " அந்நேர அதிகபட்ச நிலையான காற்று மணிக்கு $value கிலோமீட்டர்; இது உள்ளூர் காற்றல்ல.") +
-                    " சரிபார்த்த இயக்க வேகமும் திசையும் இந்த அறிக்கையில் கிடைக்கவில்லை. கரையைக் கடக்கும் இடம், நேரம் உறுதிசெய்யப்படவில்லை; ஐ எம் டி அறிக்கையைப் பார்க்கவும்."
+                    " சரிபார்த்த திடீர் பலத்த காற்றின் வேகம் கிடைக்கவில்லை. சரிபார்த்த இயக்க வேகமும் திசையும் இந்த அறிக்கையில் கிடைக்கவில்லை. கரையைக் கடக்கும் இடம், நேரம் உறுதிசெய்யப்படவில்லை; ஐ எம் டி அறிக்கையைப் பார்க்கவும்."
                 else (if (value == null) " Current wind unavailable." else " Sustained wind then, $value kilometres per hour, not local wind.") +
-                    " Verified movement speed and direction unavailable in this report. Verified landfall area and time unavailable; consult IMD."
+                    " Verified gust speed unavailable. Verified movement speed and direction unavailable in this report. Verified landfall area and time unavailable; consult IMD."
             }
             if (tamil) "$kind${if (e.region.isNotBlank()) "; ${e.region}" else ""}. $position, $name இடத்திலிருந்து சுமார் $distance கிலோமீட்டர்.$wind ஜி டி ஏ சி எஸ் அறிக்கை புதுப்பிப்பு: ${stamp(e.updated, true)}. மூலம்: ஜி டி ஏ சி எஸ்${if(e.type == "TC") "; ஜே டி டபிள்யூ சி அறிக்கை" else ""}."
             else "$kind${if (e.region.isNotBlank()) "; ${e.region}" else ""}. $position, about $distance kilometres from $name.$wind GDACS report updated ${stamp(e.updated, false)}. Source: GDACS${if(e.type == "TC") "; JTWC advisory" else ""}."

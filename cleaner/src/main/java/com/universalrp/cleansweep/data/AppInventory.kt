@@ -94,7 +94,7 @@ object BloatRules {
         "com.netflix.partner.activation",
     )
 
-    /** Installers that mean "came from an app store" rather than a file. */
+    /** Recognised installer IDs for a heuristic; system installers can also install local APKs. */
     // Recognised identifiers only, NOT authenticated store identities or safety verdicts.
     private val RECOGNISED_INSTALLERS = setOf(
         "com.android.vending", "com.android.packageinstaller", "com.google.android.packageinstaller",
