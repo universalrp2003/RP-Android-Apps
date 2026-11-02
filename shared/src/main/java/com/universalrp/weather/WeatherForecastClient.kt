@@ -451,6 +451,8 @@ object WeatherForecastClient {
             if (nowMs != null) {
                 val updated = parseTimestampMs(props.optString("datemodified")) ?: continue
                 if (nowMs - updated !in 0..18L*60*60_000 || props.optString("iscurrent") != "true") continue
+                val ended=parseTimestampMs(props.optString("todate")) ?: continue
+                if(nowMs-ended>18L*60*60_000) continue
             }
             if (feature.optJSONObject("geometry")?.optString("type") != "Point") continue
             val level = props.optString("alertlevel")

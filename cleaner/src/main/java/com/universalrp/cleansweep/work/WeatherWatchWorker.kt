@@ -140,7 +140,8 @@ class WeatherWatchWorker(
                     if (speakIfTriggered && WeatherAlertStore.enabled(ctx) && result.shouldAnnounce &&
                         (result.bypassQuietHours || !Announcer.inQuietHours(ctx))) {
                         postAlertNotification(ctx, result, tamil, NOTIF_ID_WEATHER + kotlin.math.abs(watch.id.hashCode() % 100_000) + 1)
-                        if (Announcer.speakWeatherAndWait(ctx, result.englishSpeech, result.tamilSpeech, result.bypassQuietHours)) {memory = result.updatedMemory;delivered=true}
+                        if (Announcer.speakWeatherAndWait(ctx, result.englishSpeech, result.tamilSpeech, result.bypassQuietHours,
+                            stillRelevant = { WeatherAlertStore.enabled(ctx) && SavedRainWatches.read(ctx).any {it.id==watch.id && it.enabled && it.place==watch.place} })) {memory = result.updatedMemory;delivered=true}
                     }
                     val clock = WeatherAlertPolicy.format12HourClock(data.fetchedAtMs)
                     val status = "$clock · ${data.source.name} · ${result.minutesUntilRain?.let { "~$it min / நிமி" } ?: "No qualifying rain in available forecast / கிடைத்த முன்னறிவிப்பில் எச்சரிக்கை அளவு மழை இல்லை"} · ${result.severity.name} · ${if(delivered) "Speech completed / பேச்சு முடிந்தது" else if(result.shouldAnnounce) "Speech not delivered / பேச்சு வழங்கப்படவில்லை" else "No new alert / புதிய எச்சரிக்கை இல்லை"}"

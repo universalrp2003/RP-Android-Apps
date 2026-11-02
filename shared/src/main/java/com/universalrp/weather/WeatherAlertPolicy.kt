@@ -261,10 +261,13 @@ object WeatherAlertPolicy {
                     "கனமழை எச்சரிக்கை — இடம் $placeTa: மிகக் கனமழை பெய்ய வாய்ப்புள்ளது. பாதுகாப்பாக இருங்கள்."
             }
             WeatherSeverity.CYCLONE_SEVERE -> {
-                val stormTagEn = cycloneName?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
-                val stormTagTa = cycloneName?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
-                "Urgent storm warning$stormTagEn for $placeEn: cyclone-force winds or extreme heavy rain near $placeEn. Stay indoors in a safe place." to
-                    "அவசர புயல் எச்சரிக்கை$stormTagTa — இடம் $placeTa: புயல் காற்று அல்லது அதி கனமழை அபாயம் உள்ளது. உடனே பாதுகாப்பாக இருங்கள்."
+                if(!cycloneName.isNullOrBlank()) {
+                    "Nearby cyclone bulletin ($cycloneName), referenced to $placeEn: GDACS flags a regional system. This does not predict local wind or landfall. Check official IMD warnings and follow local authority advice." to
+                        "அருகிலுள்ள புயல் அறிவிப்பு ($cycloneName) — குறிப்பு இடம் $placeTa: GDACS பிராந்திய அமைப்பைக் குறிக்கிறது. உள்ளூர் காற்றையோ கரைகடக்கும் இடத்தையோ உறுதிசெய்யாது. அதிகாரப்பூர்வ IMD எச்சரிக்கையையும் உள்ளூர் அறிவுறுத்தலையும் பின்பற்றவும்."
+                } else {
+                    "Severe weather forecast for $placeEn: strong winds or extreme heavy rain are indicated. Take precautions and check official warnings; this is a forecast, not a local observation." to
+                        "கடும் வானிலை முன்னறிவிப்பு — இடம் $placeTa: பலத்த காற்று அல்லது அதி கனமழை வாய்ப்பு காட்டப்படுகிறது. முன்னெச்சரிக்கையுடன் அதிகாரப்பூர்வ எச்சரிக்கையைப் பார்க்கவும்; இது முன்னறிவிப்பு, நேரடி உள்ளூர் கவனிப்பு அல்ல."
+                }
             }
         }
     }

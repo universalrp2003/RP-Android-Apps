@@ -1,5 +1,7 @@
 # Live Guard (CleanSweep)
 
+> **Prepared private candidate:2.83/code88. Not published or phone-tested.** Public2.82 remains unchanged. Adds adjustable low-battery-intake estimates, unplug percentage notice, news topics/language modes, three independent saved rain watches with edit/history,15/30/60-minute desired lead, opt-in TN map and dated supplementary cyclone tracking. See [candidate boundaries and evidence](../docs/live-guard-2.83-candidate.md). Forecast/map access and real-phone behaviour must be validated; no exact rain-arrival, charger-termination or Play Protect guarantee. Normal same-key update, not uninstall/reset. The older release history below is historical.
+
 Live Guard is a Tamil/English phone-care, battery/data/weather guard, optional news announcer and device-monitoring app. The current public APK is **2.79 / code 84**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
 
 - [Official website and downloads](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard) · [CleanSweep-v2.79.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk) · [release notes](../releases/live-guard-v2.79.md) · [suite directory](../README.md)

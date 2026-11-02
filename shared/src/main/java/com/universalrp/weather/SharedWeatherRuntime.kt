@@ -597,9 +597,9 @@ fun TomorrowApiKeyGuideLinks(
     var showGuideDialog by remember { mutableStateOf(false) }
 
     val getKeyLabel = if (tamil) {
-        "இலவச Tomorrow.io API விசை பெறுக — அதிகாரப்பூர்வ தளம்"
+        "Tomorrow.io API விசை / திட்டங்கள் — அதிகாரப்பூர்வ தளம்"
     } else {
-        "Get free Tomorrow.io API key — official site"
+        "Tomorrow.io API key / plans — official site"
     }
     val docsLabel = if (tamil) {
         "Tomorrow.io API விசை வழிகாட்டி பக்கம்"
@@ -612,9 +612,9 @@ fun TomorrowApiKeyGuideLinks(
         "Step-by-step setup & voice guide"
     }
     val dialogTitle = if (tamil) {
-        "Tomorrow.io இலவச API விசை பெறும் முறை"
+        "Tomorrow.io API விசை அணுகல் வழிகாட்டி"
     } else {
-        "How to get a free Tomorrow.io API key"
+        "Tomorrow.io API key access guide"
     }
     val dialogScript = if (tamil) SharedWeatherRuntime.GUIDE_TA else SharedWeatherRuntime.GUIDE_EN
     val readAloudLabel = if (tamil) "வழிகாட்டியை வாசி" else "Read guide aloud"

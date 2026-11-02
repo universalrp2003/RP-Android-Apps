@@ -230,6 +230,7 @@ object Announcer {
         val exclusive: Boolean = false,
         val newsDayScope: String? = null,
         val newsPreferenceFingerprint: String? = null,
+        val stillRelevant: (() -> Boolean)? = null,
         val newsParts: List<String> = emptyList(),
         val onPartCompleted: ((Int) -> Unit)? = null) {
         val id = java.util.UUID.randomUUID().toString()
@@ -624,6 +625,11 @@ object Announcer {
     fun speak(context: Context, english: String, tamil: String, event: Event, onStarted: (() -> Unit)? = null): Boolean =
         submit(context, Request(english, tamil, null, event, event == Event.TEST, onStarted = onStarted))
 
+    /** Recheck resource/connection withdrawal during preparation and playback, not just enqueue. */
+    fun speakIfStillRelevant(context: Context, english: String, tamil: String, event: Event,
+        stillRelevant: () -> Boolean, onStarted: (() -> Unit)? = null): Boolean =
+        submit(context, Request(english,tamil,null,event,false,onStarted=onStarted,stillRelevant=stillRelevant))
+
     fun speakTamil(context: Context, tamilText: String, event: Event, onStarted: (() -> Unit)? = null): Boolean =
         submit(context, Request(null, tamilText, AppLang.TA, event, event == Event.TEST, onStarted = onStarted))
 
@@ -799,6 +805,7 @@ object Announcer {
         tamil: String,
         bypassQuietHours: Boolean,
         timeoutMs: Long = 45_000,
+        stillRelevant: (() -> Boolean)? = null,
     ): Boolean {
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(
@@ -809,6 +816,7 @@ object Announcer {
             manual = false,
             done = done,
             bypassQuietHours = bypassQuietHours,
+            stillRelevant = stillRelevant,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -970,6 +978,7 @@ object Announcer {
     }
 
     private fun newsExpired(request: Request): Boolean =
+        !runCatching {request.stillRelevant?.invoke() != false}.getOrDefault(false) ||
         (request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()) ||
             (request.newsPreferenceFingerprint != null && request.newsPreferenceFingerprint !=
                 prefsContext?.let {com.universalrp.cleansweep.data.NewsPreferences.fingerprint(it)})

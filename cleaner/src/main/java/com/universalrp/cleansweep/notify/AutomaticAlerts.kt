@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 
 /** Immediate listeners only while the app is visible or its EXISTING charging/background service is running. */
 object AutomaticAlerts {
+    @Volatile private var latestBattery: com.universalrp.cleansweep.data.BatteryReading? = null
     private val main = Handler(Looper.getMainLooper())
     private val owners = hashSetOf<String>()
     @Volatile private var registered = false
@@ -112,6 +113,7 @@ object AutomaticAlerts {
         val mine = generation
         batteryJob = scope.launch {
             val battery = runCatching { BatteryReader.read(context) }.getOrNull() ?: return@launch
+            latestBattery = battery
             if (mine != generation || !registered || !Announcer.enabled(context)) return@launch
             val prefs = Announcer.prefs(context); val now = System.currentTimeMillis()
             fun alert(key: String, interval: Long, event: Announcer.Event, english: String, tamil: String) {
@@ -147,8 +149,14 @@ object AutomaticAlerts {
                         "estimated" -> "பேட்டரி நூறு சதவீதம். குறைந்த மின்னோட்டம் நீடிக்கிறது. சார்ஜ் நிறைவு ஒரு மதிப்பீடு மட்டுமே; உறுதிப்படுத்தப்படவில்லை."
                         else -> "பேட்டரி நூறு சதவீதத்தை எட்டியது. சார்ஜ் நிறைவை உறுதிப்படுத்த முடியவில்லை."
                     }
-                    Announcer.speak(context, en, ta, Announcer.Event.BATTERY_FULL,
-                        onStarted = { prefs.edit().putString("charge_283_spoken", key).putInt("charge_283_rank",rank).apply() })
+                    Announcer.speakIfStillRelevant(context, en, ta, Announcer.Event.BATTERY_FULL,
+                        stillRelevant = {
+                            val current = latestBattery
+                            prefs.getString("voice_connection_token", "observed").orEmpty()==token && current?.powerConnected==true && current.percent==100 &&
+                                when(kind) { "confirmed" -> current.fullChargeConfirmed; "estimated" -> current.chargeEstimate.ready; else -> true }
+                        },
+                        onStarted = { if(prefs.getString("voice_connection_token", "observed").orEmpty()==token)
+                            prefs.edit().putString("charge_283_spoken", key).putInt("charge_283_rank",maxOf(rank,prefs.getInt("charge_283_rank",0))).apply() })
                 }
             }
             if ((battery.temperatureC ?: -100f) >= Announcer.HOT_BATTERY_C)

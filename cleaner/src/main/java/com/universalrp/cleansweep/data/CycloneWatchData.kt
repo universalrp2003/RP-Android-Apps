@@ -36,6 +36,8 @@ object CycloneWatchData {
             if(x !in 50.0..105.0 || y !in 0.0..30.0) continue
             val updated=time(props.optString("datemodified")) ?: continue
             if(now-updated !in 0..FRESH_MS) continue
+            val ends=time(props.optString("todate"))
+            if(ends!=null && now-ends>FRESH_MS) continue
             val id=props.optLong("eventid"); if(id<=0) continue
             result.add(CycloneWatch(id,props.optString("eventname").ifBlank { props.optString("name") }.take(100),
                 props.optString("source").take(80),updated,y,x,props.optString("alertlevel").take(20),
@@ -105,7 +107,7 @@ object CycloneWatchData {
         val a=obs[0];val b=obs[1];val hours=(b.at-a.at)/3_600_000.0
         if(hours<=0 || hours>24) return null
         val speed=WeatherForecastClient.haversineKm(a.lat,a.lon,b.lat,b.lon)/hours
-        if(speed>150) return null
+        if(!speed.isFinite() || speed<0.1 || speed>150) return null
         val d=Math.toRadians(b.lon-a.lon); val r1=Math.toRadians(a.lat);val r2=Math.toRadians(b.lat)
         val bearing=(Math.toDegrees(kotlin.math.atan2(kotlin.math.sin(d)*kotlin.math.cos(r2),
             kotlin.math.cos(r1)*kotlin.math.sin(r2)-kotlin.math.sin(r1)*kotlin.math.cos(r2)*kotlin.math.cos(d)))+360)%360
