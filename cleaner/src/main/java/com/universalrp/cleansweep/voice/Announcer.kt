@@ -970,7 +970,9 @@ object Announcer {
     }
 
     private fun newsExpired(request: Request): Boolean =
-        request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()
+        (request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()) ||
+            (request.newsPreferenceFingerprint != null && request.newsPreferenceFingerprint !=
+                prefsContext?.let {com.universalrp.cleansweep.data.NewsPreferences.fingerprint(it)})
 
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
         val profile = request.resolveProfile(context)

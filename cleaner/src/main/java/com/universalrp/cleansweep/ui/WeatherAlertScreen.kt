@@ -177,7 +177,7 @@ fun HomeWeatherAlertCard(state: UiState, vm: MainViewModel) {
 
 private fun homeWeatherSummary(w: WeatherUiSnapshot): String {
     if (!w.enabled) {
-        return tr("30-min rain heads-up & 24x7 cyclone alert — off")
+        return watchWords("Rain & severe-weather watch — off", "மழை / கடும் வானிலை கண்காணிப்பு — அணைப்பு")
     }
     if (w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE) {
         return tr("GPS is off — tap to set PIN code or town (e.g. 622301)")
@@ -343,10 +343,11 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                     if (w.lastCheckedAtMs > 0L) {
                         HorizontalDivider(color = OutlineC.copy(alpha = 0.4f))
                         val checkedTime = WeatherAlertPolicy.format12HourClock(w.lastCheckedAtMs)
-                        val sourceLabel = if (w.source == WeatherSourceKind.TOMORROW_IO_1M) {
-                            watchWords("Tomorrow.io forecast timeline", "Tomorrow.io முன்னறிவிப்பு நேரவரிசை")
-                        } else {
-                            watchWords("Weather-model forecast + cyclone advisories", "வானிலை மாதிரி முன்னறிவிப்பு + புயல் அறிவுறுத்தல்")
+                        val sourceLabel = when(w.source) {
+                            WeatherSourceKind.TOMORROW_IO_1M -> watchWords("Tomorrow.io minute forecast", "Tomorrow.io நிமிட முன்னறிவிப்பு")
+                            WeatherSourceKind.TOMORROW_FORECAST -> watchWords("Tomorrow.io hourly model forecast", "Tomorrow.io மணிநேர மாதிரி முன்னறிவிப்பு")
+                            WeatherSourceKind.MET_NORWAY_MODEL -> watchWords("MET Norway hourly model forecast", "MET Norway மணிநேர மாதிரி முன்னறிவிப்பு")
+                            WeatherSourceKind.OPEN_METEO_DEFAULT -> watchWords("Open-Meteo model forecast (India: interpolated)", "Open-Meteo மாதிரி முன்னறிவிப்பு (இந்தியாவில் இடைநிரப்பல்)")
                         }
                         Text(
                             tr("Last checked") + ": " + checkedTime + " · " + sourceLabel,
@@ -600,12 +601,12 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         )
                     }
                     Text(
-                        "• " + tr("Normal 30-min rain alert stays silent during Quiet Hours (sleeping time)."),
+                        "• " + watchWords("Normal rain alerts respect quiet hours; lead time is selectable above.", "சாதாரண மழை அறிவிப்பு அமைதி நேரத்தில் ஒலிக்காது; முன்னறிவிப்பு நேரத்தை மேலே தேர்வு செய்யலாம்."),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
                     Text(
-                        "• " + tr("Very heavy rain and cyclone warnings announce 24x7 at any hour — never skipped."),
+                        "• " + watchWords("Severe alerts may bypass quiet hours, but calls, permissions, internet and Android scheduling can still block or delay delivery.", "கடும் எச்சரிக்கை அமைதி நேரத்தை மீறலாம்; அழைப்பு, அனுமதி, இணையம் மற்றும் ஆண்ட்ராய்டு திட்டமிடல் வழங்கலைத் தடுக்கலாம் அல்லது தாமதிக்கலாம்."),
                         style = MaterialTheme.typography.bodySmall,
                         color = GoodGreen,
                     )

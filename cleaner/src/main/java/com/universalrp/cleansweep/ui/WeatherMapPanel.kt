@@ -81,7 +81,7 @@ fun WeatherMapPanel(initialPoint: Pair<Double,Double>? = null, onPick: (Double, 
     Canvas(Modifier.fillMaxWidth().aspectRatio(1f).pointerInput(base,weather) {
         detectTapGestures { tap ->
             if(base.size==tiles.size) {
-                val coords=WeatherMapData.coordinates(left+tap.x/size.width*3,top+tap.y/size.height*3)
+                val coords=WeatherMapData.coordinates(left+tap.x.toDouble()/size.width*3,top+tap.y.toDouble()/size.height*3)
                 if(WeatherMapData.tamilNadu(coords.first,coords.second)) { point=coords;onPick(coords.first,coords.second) }
             }
         }
@@ -89,8 +89,8 @@ fun WeatherMapPanel(initialPoint: Pair<Double,Double>? = null, onPick: (Double, 
         detectDragGestures { change, _ ->
             if(base.size==tiles.size) {
                 val p=change.position
-                val coords=WeatherMapData.coordinates(left+p.x.coerceIn(0f,size.width.toFloat())/size.width*3,
-                    top+p.y.coerceIn(0f,size.height.toFloat())/size.height*3)
+                val coords=WeatherMapData.coordinates(left+p.x.coerceIn(0f,size.width.toFloat()).toDouble()/size.width*3,
+                    top+p.y.coerceIn(0f,size.height.toFloat()).toDouble()/size.height*3)
                 if(WeatherMapData.tamilNadu(coords.first,coords.second)) {change.consume();point=coords;onPick(coords.first,coords.second)}
             }
         }
@@ -102,7 +102,12 @@ fun WeatherMapPanel(initialPoint: Pair<Double,Double>? = null, onPick: (Double, 
             drawCircle(Color.Red,7.dp.toPx(),Offset(((t.first-left)*tileSize).toFloat(),((t.second-top)*tileSize).toFloat())) }
     }
     TextButton(onClick={uri.openUri("https://www.openstreetmap.org/copyright")}) {Text("© OpenStreetMap contributors · ODbL")}
-    if(layer.isNotEmpty()) Text("Tomorrow.io · precipitationIntensity · mm/h")
+    if(layer.isNotEmpty()) {
+        Text("Tomorrow.io · precipitationIntensity · mm/h")
+        Text(watchWords("Colour calibration not independently verified; do not read precise amounts or safety from these colours.",
+            "நிற அளவீடு தனியாகச் சரிபார்க்கப்படவில்லை; நிறத்திலிருந்து துல்லியமான அளவையோ பாதுகாப்பையோ கணிக்க வேண்டாம்."))
+        TextButton(onClick={uri.openUri("https://docs.tomorrow.io/reference/data-layers-core")}) {Text(watchWords("Provider precipitation colour legend & units", "வழங்குநரின் மழை நிற விளக்கமும் அலகுகளும்"))}
+    }
     if(note.isNotBlank()) Text(note,color=MaterialTheme.colorScheme.error)
     if(fetched>0) Text(watchWords("Retrieved", "பெறப்பட்டது")+" "+com.universalrp.weather.WeatherAlertPolicy.format12HourClock(fetched))
     Text(watchWords("Forecast/analysis layer, not verified raw ground radar. Transparent tiles do not prove coverage or no rain. Provider issue time and local accuracy are not established. Background alerts do not use map colours.",

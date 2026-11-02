@@ -6,6 +6,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    "com.universalrp.cleansweep.data.LiveGuard283PolicyTest": 6,
+    "com.universalrp.cleansweep.data.SavedRainWatchPreferencesTest": 5,
+    "com.universalrp.cleansweep.weather.LiveGuard283ForecastTest": 2,
     "com.universalrp.cleansweep.voice.NewsPlaybackPlanTest": 8,
     "com.universalrp.cleansweep.voice.NewsTimingPolicyTest": 14,
     "com.universalrp.cleansweep.voice.NewsAutoScheduleTest": 16,
@@ -80,9 +83,9 @@ EXPECTED = {
 }
 
 
-def verify(results_root: Path) -> list[str]:
+def verify(results_root: Path, variants=("Debug", "Release")) -> list[str]:
     summaries = []
-    for variant in ("Debug", "Release"):
+    for variant in variants:
         directory = results_root / f"test{variant}UnitTest"
         reports = [ET.parse(path).getroot() for path in sorted(directory.glob("TEST-*.xml"))]
         if not reports:

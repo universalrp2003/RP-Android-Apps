@@ -60,7 +60,7 @@ object WeatherAlertPolicy {
     ): WeatherAlertDecision {
         require(leadMinutes in setOf(15, 30, 60))
         val leadMax = leadMinutes + 8
-        val nearHorizon = snapshot.timeline.filter { it.minutesAhead in 0..60 }
+        val nearHorizon = snapshot.timeline.filter { it.minutesAhead in 0..maxOf(60,leadMax) }
         val extendedHorizon = snapshot.timeline.filter { it.minutesAhead in 0..120 }
 
         val firstRainSample = snapshot.timeline
@@ -243,8 +243,8 @@ object WeatherAlertPolicy {
             WeatherSeverity.RAIN_SOON -> {
                 val mins = (minutesUntilRain ?: 30).coerceIn(0, 60)
                 if (mins <= 3) {
-                    "Rain alert for $placeEn: rain is starting now near $placeEn." to
-                        "மழை முன்னறிவிப்பு — இடம் $placeTa: இப்போது மழை தொடங்குகிறது."
+                    "Rain alert for $placeEn: the forecast indicates rain may be starting now near $placeEn; this is not a local rain observation." to
+                        "மழை முன்னறிவிப்பு — இடம் $placeTa: முன்னறிவிப்பில் இப்போது மழை தொடங்க வாய்ப்புள்ளது; இது நேரடி உள்ளூர் கவனிப்பு அல்ல."
                 } else {
                     val rounded = ((mins + 2) / 5 * 5).coerceAtLeast(5)
                     "Rain alert for $placeEn: rain is expected near $placeEn in about $rounded minutes." to

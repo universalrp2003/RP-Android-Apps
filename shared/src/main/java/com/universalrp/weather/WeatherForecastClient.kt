@@ -110,7 +110,7 @@ object WeatherForecastClient {
             Locale.US,
             "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
                 "&current=temperature_2m,precipitation,rain,showers,weather_code,cloud_cover,wind_speed_10m,wind_gusts_10m" +
-                "&minutely_15=precipitation,rain,showers,precipitation_probability,weather_code,wind_gusts_10m" +
+                "&minutely_15=precipitation,rain,showers,weather_code,wind_gusts_10m" +
                 "&forecast_minutely_15=12&wind_speed_unit=kmh&timezone=GMT&timeformat=unixtime",
             latitude,
             longitude,
@@ -268,17 +268,19 @@ object WeatherForecastClient {
             )
         }
 
-        // Supplement minutes 60..120 from hourly if available.
+        // Hourly-only responses are model forecasts, not a one-minute feed. Never promote
+        // the first future rainy point into a fictitious current observation.
+        val minuteLead=samples.maxOfOrNull {it.minutesAhead} ?: -1
         for (i in 0 until hourly.length()) {
             val item = hourly.optJSONObject(i) ?: continue
             val epochMs = parseTimestampMs(item.opt("time")) ?: continue
             val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
-            if (deltaMinutes !in 61..120) continue
+            if (deltaMinutes !in -59..120 || (minuteLead>=0 && deltaMinutes<=minuteLead)) continue
             val values = item.optJSONObject("values") ?: continue
             val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
             if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
             samples += MinuteRainSample(
-                minutesAhead = deltaMinutes,
+                minutesAhead = deltaMinutes.coerceAtLeast(0),
                 precipMmPerHour = maxOf(
                     values.optDouble("precipitationIntensity", 0.0),
                     values.optDouble("rainIntensity", 0.0),
@@ -289,11 +291,11 @@ object WeatherForecastClient {
         }
 
         val sorted = samples.sortedBy { it.minutesAhead }
-        require(sorted.isNotEmpty()) { "Empty Tomorrow.io forecast" }
+        require(sorted.isNotEmpty() && sorted.first().minutesAhead<=5) { "Empty or missing-current Tomorrow.io forecast" }
         val nowSample = sorted.firstOrNull()
         return WeatherNowcastSnapshot(
             fetchedAtMs = nowMs,
-            source = if (minutely.length() > 0) WeatherSourceKind.TOMORROW_IO_1M else WeatherSourceKind.TOMORROW_FORECAST,
+            source = if (minuteLead >= 0) WeatherSourceKind.TOMORROW_IO_1M else WeatherSourceKind.TOMORROW_FORECAST,
             temperatureC = firstTemp,
             cloudCoverPercent = firstCloud,
             currentPrecipMmPerHour = nowSample?.precipMmPerHour ?: 0.0,

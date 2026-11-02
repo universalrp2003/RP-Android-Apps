@@ -54,6 +54,14 @@ jobs:
               for failure in ET.parse(p).getroot().findall('.//failure'):
                   report(str(p)+'\n'+failure.get('message','')+'\n'+(failure.text or '')[:4000])
           PY
+      - name: All required release regressions actually ran, no missing/skipped suites
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from tools.verify_cleaner_regressions import verify
+          for summary in verify(Path('cleaner/build/test-results'), variants=('Release',)):
+              print(summary)
+          PY
       - name: Exact identity, signer and full merged permission continuity
         run: python3 tools/inspect_liveguard_283_candidate.py
       - name: Enable emulator acceleration
@@ -67,7 +75,9 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: python3 tools/battery_voice_update_smoke.py cleaner
+          script: |
+            python3 tools/battery_voice_update_smoke.py cleaner
+            python3 tools/liveguard_283_native_smoke.py
       - name: Remove baseline from candidate download
         run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.82.apk"
       - uses: actions/upload-artifact@v7

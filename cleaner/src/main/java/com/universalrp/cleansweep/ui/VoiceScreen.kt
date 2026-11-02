@@ -148,11 +148,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     )
                 }
                 Text(
-                    tr(
-                        "Speaking uses Android's own text-to-speech engine. If your phone has a Tamil " +
-                            "voice installed, Tamil text is spoken in Tamil; otherwise the English " +
-                            "wording is spoken instead of reading Tamil in an English accent."
-                    ),
+                    watchWords("HD neural speech needs internet. Tamil and English use the selected language; there is no automatic Android system-voice fallback.",
+                        "HD நரம்பியல் குரலுக்கு இணையம் தேவை. தமிழ், ஆங்கிலம் தேர்ந்தெடுத்த மொழியில் பேசும்; ஆண்ட்ராய்டு கணினிக் குரலுக்கு தானாக மாறாது."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),

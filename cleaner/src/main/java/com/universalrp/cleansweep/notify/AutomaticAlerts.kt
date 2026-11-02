@@ -138,12 +138,12 @@ object AutomaticAlerts {
                 val previousRank = if(previousToken == token) prefs.getInt("charge_283_rank",0) else 0
                 if (rank > previousRank) {
                     val en = when (kind) {
-                        "confirmed" -> "Battery charge completion confirmed. Unplug when convenient."
+                        "confirmed" -> "Battery reports full with sustained near-zero measured battery current. Unplug when convenient."
                         "estimated" -> "Battery is 100 percent with sustained low battery intake. Charge completion is estimated, not verified."
                         else -> "Battery reached 100 percent. Charge completion could not be verified."
                     }
                     val ta = when (kind) {
-                        "confirmed" -> "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்."
+                        "confirmed" -> "பேட்டரி முழு நிலையைக் காட்டுகிறது; அளந்த மின்னோட்டம் தொடர்ந்து பூஜ்ஜியத்திற்கு அருகில் உள்ளது. வசதியாக சார்ஜரை அகற்றலாம்."
                         "estimated" -> "பேட்டரி நூறு சதவீதம். குறைந்த மின்னோட்டம் நீடிக்கிறது. சார்ஜ் நிறைவு ஒரு மதிப்பீடு மட்டுமே; உறுதிப்படுத்தப்படவில்லை."
                         else -> "பேட்டரி நூறு சதவீதத்தை எட்டியது. சார்ஜ் நிறைவை உறுதிப்படுத்த முடியவில்லை."
                     }
