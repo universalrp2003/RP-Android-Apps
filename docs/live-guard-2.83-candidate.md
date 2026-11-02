@@ -32,6 +32,18 @@ Cyclones: bounded GDACS basin records with freshness checks, latest dated observ
 - IFRCGo/pystac-monty TC event/impact test fixtures (public GitHub) —dated actual/forecast advisory fixes; fixtures are schema evidence, not a current cyclone claim.
 - https://rsmcnewdelhi.imd.gov.in/ —official cyclone advisories/track links, not automatically verified current advisories in this app.
 
-## Validation still required
+## Verified candidate receipt
+
+Targeted [run41378483444](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41378483444) **passed** for source`e58f6beb05b7408333d8943dfbe370bf51eab413`. Artifact`13112670646` contains the exact signed `CleanSweep-v2.83.apk`:14,585,575bytes, SHA-256`2be8a5f2f103323a907d1a83bbd91c112e3da7ac79a827ee79ca01855bf717a2`.
+
+-302 Python tests; all567 required release regression tests across60 suites executed, none skipped; Kotlin compilation and release lint passed.
+- Pinned signer and exact public2.82 baseline digest; full merged permissions unchanged (none added/removed).
+- Exact signed normal update in disposable Android35 emulator preserved synthetic UID, data and preferences and survived restart.
+- Native English settings smoke passed: default-topic restore, battery thresholds, lead-time setting, editing a place at the three-place limit, independent history and cyclone section presence.
+- No physical-phone, new charging cycle, actual HD playback, authenticated Tomorrow map, live/current cyclone or local weather accuracy validation. No Play Protect claim or public publication.
+
+[Machine-readable receipt](live-guard-2.83-candidate-verification.json). Download the Actions artifact within30days; extract only`CleanSweep-v2.83.apk` for an owner test, using Android's normal same-key update.
+
+## Validation boundaries / still required
 
 CI must compile, execute all release/JVM/Robolectric regressions, lint, verify signer + full merged permission continuity against exact public2.82, and exercise the exact signed same-key upgrade plus native settings. Source/localization checks alone are not a build. Synthetic emulator fixtures are not physical-phone charging, live weather accuracy, current cyclone verification or Play Protect clearance. Owner's new charging result and authenticated TN map test remain pending. No perfect-accuracy claim.
