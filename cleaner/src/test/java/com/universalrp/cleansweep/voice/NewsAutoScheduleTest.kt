@@ -8,6 +8,7 @@ import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -119,7 +120,7 @@ class NewsAutoScheduleTest {
         val persisted = app.getSharedPreferences("cleansweep_news_voice", Context.MODE_PRIVATE)
         assertTrue(persisted.getStringSet("news_spoken_keys_ta", emptySet())!!.contains(first.key))
     }
-    @Test fun audibleFailureReschedulesAtSelectedIntervalButConsumesNoStory() {
+    @Test fun audibleFailureReschedulesAtSelectedIntervalButConsumesNoStory() = runBlocking { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         val now = System.currentTimeMillis()
         for (minutes in listOf(30, 60, 120, 180)) {
             NewsHeadlinesVoiceWatcher.recordAudibleActivity(app, now)
@@ -128,8 +129,8 @@ class NewsAutoScheduleTest {
         }
         assertEquals(0L, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
         assertTrue(NewsHeadlinesVoiceWatcher.announcedKeysToday(app, true).isEmpty())
-    }
-    @Test fun laterFullCompletionAdvancesClockWithoutLosingEarlierStoryCheckpoint() {
+    } }
+    @Test fun laterFullCompletionAdvancesClockWithoutLosingEarlierStoryCheckpoint() = runBlocking { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         val now = System.currentTimeMillis()
         val item = com.universalrp.cleansweep.data.NewsHeadline("state", "A fully completed source story", "Source", now, "https://example.com/news")
         NewsHeadlinesVoiceWatcher.recordAudibleActivity(app, now - 1_000L)
@@ -138,12 +139,46 @@ class NewsAutoScheduleTest {
         assertEquals(now, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
         assertEquals(now + NewsHeadlinesVoiceWatcher.intervalMinutes(app) * 60_000L, NewsHeadlinesVoiceWatcher.dueAt(app, now))
         assertEquals(setOf(item.key), NewsHeadlinesVoiceWatcher.announcedKeysToday(app, true, now))
-    }
+    } }
     @Test fun settingsReopenKeepsFutureRetryWhenNoAudioWasPlayed() {
         val saved = System.currentTimeMillis() + 600_000L
         app.getSharedPreferences("liveguard_news_schedule", Context.MODE_PRIVATE).edit().putLong("next_check", saved).commit()
         NewsAutoSchedule.sync(app)
         assertEquals(saved, NewsAutoSchedule.status.value.nextCheck)
+    }
+
+    @Test fun readOnlyStoryStatusNeverWaitsBehindDurableHistoryMonitor() {
+        val held = java.util.concurrent.CountDownLatch(1)
+        val release = java.util.concurrent.CountDownLatch(1)
+        val writer = Thread { synchronized(NewsHeadlinesVoiceWatcher) { held.countDown(); release.await(3, java.util.concurrent.TimeUnit.SECONDS) } }
+        val reader = java.util.concurrent.Executors.newSingleThreadExecutor()
+        writer.start()
+        try {
+            assertTrue(held.await(1, java.util.concurrent.TimeUnit.SECONDS))
+            assertTrue(reader.submit<Set<String>> { NewsHeadlinesVoiceWatcher.announcedKeysToday(app,true) }.get(1,java.util.concurrent.TimeUnit.SECONDS).isEmpty())
+        } finally { release.countDown(); writer.join(1000); reader.shutdownNow() }
+    }
+    @Test fun delayedStartCheckpointCannotOverwriteNewerAudioActivity() = runBlocking {
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            val now = System.currentTimeMillis()
+            NewsHeadlinesVoiceWatcher.recordAudibleActivity(app,now)
+            NewsHeadlinesVoiceWatcher.recordAudibleActivity(app,now-1000)
+            assertEquals(now, NewsHeadlinesVoiceWatcher.lastAudible(app))
+            assertEquals(0L, NewsHeadlinesVoiceWatcher.lastSuccessful(app))
+        }
+    }
+    @Test fun mainThreadAudioStartSchedulesCheckpointWithoutTakingHistoryLock() = runBlocking {
+        val now = System.currentTimeMillis()
+        assertEquals(android.os.Looper.getMainLooper(), android.os.Looper.myLooper())
+        synchronized(NewsHeadlinesVoiceWatcher) {
+            NewsHeadlinesVoiceWatcher.recordAudibleActivity(app,now)
+            assertEquals(0L, NewsHeadlinesVoiceWatcher.lastAudible(app))
+        }
+        kotlinx.coroutines.withTimeout(3000) {
+            NewsAutoSchedule.status.first { it.lastAudible == now }
+        }
+        assertEquals(now,NewsHeadlinesVoiceWatcher.lastAudible(app))
+        assertTrue(NewsHeadlinesVoiceWatcher.announcedKeysToday(app,true).isEmpty())
     }
 
 }

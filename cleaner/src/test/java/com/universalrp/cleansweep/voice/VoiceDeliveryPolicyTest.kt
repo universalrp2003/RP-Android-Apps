@@ -66,4 +66,14 @@ class VoiceDeliveryPolicyTest {
         assertEquals(VoiceDeliveryPolicy.Stage.NOT_REQUESTED, snapshot.stage); assertNull(snapshot.tamilAvailable)
         assertNull(snapshot.mediaVolume); assertEquals("", snapshot.event); assertEquals(0L, snapshot.atMs)
     }
+    @Test fun latestHdFailureIsVisibleWithoutInventingPlayback() {
+        assertTrue(VoiceDeliveryPolicy.hdWaiting(VoiceDeliveryPolicy.Stage.ENGINE_ERROR))
+        assertTrue(VoiceDeliveryPolicy.hdWaiting(VoiceDeliveryPolicy.Stage.NO_INTERNET))
+    }
+    @Test fun laterSuccessOrCancellationDoesNotReuseHistoricalAutomaticFailure() {
+        for(stage in listOf(VoiceDeliveryPolicy.Stage.ENGINE_FINISHED, VoiceDeliveryPolicy.Stage.PLAYING,
+            VoiceDeliveryPolicy.Stage.CANCELLED,VoiceDeliveryPolicy.Stage.QUEUED,VoiceDeliveryPolicy.Stage.NOT_REQUESTED))
+            assertFalse(VoiceDeliveryPolicy.hdWaiting(stage))
+    }
+
 }

@@ -192,11 +192,11 @@ class WeatherAlertAndPlacePolicyTest {
     }
 
     @Test
-    fun openMeteo15MinPrecipitationScalesToHourlyIntensityAndTomorrow1mConvertsWindGusts() {
+    fun openMeteoIntensityAndSparseTomorrowWindUnitsDoNotInventMinuteCoverage() {
         val now = 1_760_000_000_000L
         val openMeteoJson = """
             {
-              "current": {"temperature_2m": 29.0, "precipitation": 0.0, "rain": 0.0, "showers": 0.0, "weather_code": 2, "cloud_cover": 78, "wind_gusts_10m": 24.0},
+              "current": {"time": ${now / 1000}, "temperature_2m": 29.0, "precipitation": 0.0, "rain": 0.0, "showers": 0.0, "weather_code": 2, "cloud_cover": 78, "wind_gusts_10m": 24.0},
               "minutely_15": {
                 "time": [${now / 1000}, ${now / 1000 + 900}, ${now / 1000 + 1800}],
                 "precipitation": [0.0, 0.0, 4.5],
@@ -222,7 +222,9 @@ class WeatherAlertAndPlacePolicyTest {
             }
         """.trimIndent()
         val parsedTm = WeatherForecastClient.parseTomorrowResponse(tomorrowJson, now)
-        assertEquals(WeatherSourceKind.TOMORROW_IO_1M, parsedTm.source)
+        assertEquals(WeatherSourceKind.TOMORROW_FORECAST, parsedTm.source)
+        assertEquals(-1, parsedTm.minuteHorizonMinutes)
+        // Two rows 29 minutes apart verify wind units, not continuous minute-level coverage.
         assertEquals(72.0, parsedTm.timeline.last().windGustKmh, 0.01)
     }
 
@@ -262,9 +264,9 @@ class WeatherAlertAndPlacePolicyTest {
     }
 
     @Test
-    fun defaultKeylessTomorrowTimelinesAndCalibratedFallbacksPreventFalseRainAlerts() {
+    fun historicalSparseTomorrowAndCalibratedFallbacksPreventFalseRainAlerts() {
         val now = InstantIsoMs("2026-10-21T13:11:00Z")
-        // Exact live Alangudi keyless /v4/timelines payload at 6:41 PM IST: cloudy (97.9%), 0 mm/hr rain.
+        // Historical excerpt, not authenticated live access. Two selected minute rows do not establish continuous coverage.
         val alangudiKeylessJson = """
             {
               "data": {
@@ -292,7 +294,9 @@ class WeatherAlertAndPlacePolicyTest {
             }
         """.trimIndent()
         val snapDry = WeatherForecastClient.parseTomorrowTimelinesResponse(alangudiKeylessJson, now)
-        assertEquals(WeatherSourceKind.TOMORROW_IO_1M, snapDry.source)
+        assertEquals(WeatherSourceKind.TOMORROW_FORECAST, snapDry.source)
+        assertEquals(-1, snapDry.minuteHorizonMinutes)
+        assertFalse(com.universalrp.cleansweep.data.SimpleWeatherPolicy.precise(snapDry, now))
         assertEquals(0.0, snapDry.currentPrecipMmPerHour, 0.001)
         val decisionDry = WeatherAlertPolicy.evaluate(snapDry, "Alangudi", WeatherEpisodeMemory(), nowMs = now)
         assertEquals(WeatherSeverity.CLEAR_OR_NORMAL, decisionDry.severity)
@@ -301,7 +305,7 @@ class WeatherAlertAndPlacePolicyTest {
         // Coarse Open-Meteo NWP trace drizzle (0.15 mm over 15m, low probability) must NOT trigger a false alert:
         val noisyOpenMeteo = """
             {
-              "current": {"temperature_2m": 25.5, "precipitation": 0.15, "rain": 0.15, "showers": 0.0, "weather_code": 51, "cloud_cover": 95, "wind_gusts_10m": 15.0},
+              "current": {"time": ${now / 1000}, "temperature_2m": 25.5, "precipitation": 0.15, "rain": 0.15, "showers": 0.0, "weather_code": 51, "cloud_cover": 95, "wind_gusts_10m": 15.0},
               "minutely_15": {
                 "time": [${now / 1000}, ${now / 1000 + 900}],
                 "precipitation": [0.15, 0.20],

@@ -1,7 +1,9 @@
-name: Live Guard sleeping news candidate (no publication)
+name: Historical Live Guard 2.81 sleeping news candidate (no publication)
 on:
   push:
-    branches: ["arena/**"]
+    # Immutable 2.81 lane; fixed version/code/artifact pins below are historical.
+    # Current Live Guard has the dedicated versioned signed/update regression workflow.
+    branches: ["arena/e42be75c-rp-android-apps"]
     paths:
       - "cleaner/**"
       - "tools/check_liveguard_sleep_wakeup.py"

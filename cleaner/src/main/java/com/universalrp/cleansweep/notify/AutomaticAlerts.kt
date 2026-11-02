@@ -12,6 +12,7 @@ import kotlinx.coroutines.*
 
 /** Immediate listeners only while the app is visible or its EXISTING charging/background service is running. */
 object AutomaticAlerts {
+    @Volatile private var latestBattery: com.universalrp.cleansweep.data.BatteryReading? = null
     private val main = Handler(Looper.getMainLooper())
     private val owners = hashSetOf<String>()
     @Volatile private var registered = false
@@ -102,9 +103,9 @@ object AutomaticAlerts {
         knownTransport = current
         Announcer.prefs(context).edit().putString("last_transport", current).apply()
         if (!VoiceDeliveryPolicy.changedTransport(before, current)) return // Initial state/VPN/unknown is not an invented transition.
-        if (current == "mobile") Announcer.speak(context, "You are now on mobile data; this uses your data plan.",
-            "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.", Announcer.Event.NETWORK_CHANGE)
-        else Announcer.speak(context, "You are back on Wi-Fi.", "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.", Announcer.Event.NETWORK_CHANGE)
+        if (current == "mobile") Announcer.speakIfStillRelevant(context, "You are now on mobile data; this uses your data plan.",
+            "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
+        else Announcer.speakIfStillRelevant(context, "You are back on Wi-Fi.", "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
     }
 
     private fun sampleBattery(context: Context) {
@@ -112,6 +113,7 @@ object AutomaticAlerts {
         val mine = generation
         batteryJob = scope.launch {
             val battery = runCatching { BatteryReader.read(context) }.getOrNull() ?: return@launch
+            latestBattery = battery
             if (mine != generation || !registered || !Announcer.enabled(context)) return@launch
             val prefs = Announcer.prefs(context); val now = System.currentTimeMillis()
             fun alert(key: String, interval: Long, event: Announcer.Event, english: String, tamil: String) {
@@ -121,9 +123,45 @@ object AutomaticAlerts {
             if (com.universalrp.cleansweep.data.BatteryAlertPolicy.low(battery.percent, battery.powerConnected, Announcer.lowPercent(context)))
                 alert(Announcer.KEY_LAST_LOW, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_LOW,
                     "Battery low: ${battery.percent} percent. Please recharge.", "பேட்டரி குறைவு: ${battery.percent} சதவீதம். சார்ஜ் செய்யவும்.")
-            if (battery.fullChargeConfirmed)
-                alert(Announcer.KEY_LAST_FULL, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_FULL,
-                    "Battery charge completion confirmed. Unplug when convenient.", "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்.")
+            // A percentage-only notice is not a charge-termination claim. Deduplicate per connection,
+            // and mark only after playback starts (quiet/call/offline rejection must not consume it).
+            if (!battery.powerConnected) prefs.edit().remove("charge_283_spoken").remove("charge_283_rank").apply()
+            if (battery.powerConnected && battery.percent == 100) {
+                val kind = when {
+                    com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && battery.fullChargeConfirmed -> "confirmed"
+                    com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && battery.chargeEstimate.ready -> "estimated"
+                    com.universalrp.cleansweep.data.ChargeAnnouncementSettings.percentNotice(context) -> "percentage"
+                    else -> ""
+                }
+                val token = prefs.getString("voice_connection_token", "observed").orEmpty()
+                val key = "$token:$kind"
+                val rank = when(kind) { "confirmed" -> 3; "estimated" -> 2; "percentage" -> 1; else -> 0 }
+                val previousRank = com.universalrp.cleansweep.data.ChargeNoticeRankPolicy.previous(token,
+                    prefs.getString("charge_283_spoken", "").orEmpty(),prefs.getInt("charge_283_rank",0))
+                if (rank > previousRank) {
+                    val en = when (kind) {
+                        "confirmed" -> "Battery reports full with sustained near-zero measured battery current. Unplug when convenient."
+                        "estimated" -> "Battery is 100 percent with sustained low battery intake. Charge completion is estimated, not verified."
+                        else -> "Battery reached 100 percent."
+                    }
+                    val ta = when (kind) {
+                        "confirmed" -> "பேட்டரி முழு நிலையைக் காட்டுகிறது; அளந்த மின்னோட்டம் தொடர்ந்து பூஜ்ஜியத்திற்கு அருகில் உள்ளது. வசதியாக சார்ஜரை அகற்றலாம்."
+                        "estimated" -> "பேட்டரி நூறு சதவீதம். குறைந்த மின்னோட்டம் நீடிக்கிறது. சார்ஜ் நிறைவு ஒரு மதிப்பீடு மட்டுமே; உறுதிப்படுத்தப்படவில்லை."
+                        else -> "பேட்டரி நூறு சதவீதத்தை எட்டியது."
+                    }
+                    Announcer.speakIfStillRelevant(context, en, ta, Announcer.Event.BATTERY_FULL,
+                        stillRelevant = {
+                            val current = latestBattery
+                            prefs.getString("voice_connection_token", "observed").orEmpty()==token && current?.powerConnected==true && current.percent==100 &&
+                                when(kind) { "confirmed" -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && current.fullChargeConfirmed; "estimated" -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && current.chargeEstimate.ready; else -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.percentNotice(context) }
+                        },
+                        onStarted = { if(prefs.getString("voice_connection_token", "observed").orEmpty()==token) {
+                            val next=com.universalrp.cleansweep.data.ChargeNoticeRankPolicy.started(token,
+                                prefs.getString("charge_283_spoken", "").orEmpty(),prefs.getInt("charge_283_rank",0),rank)
+                            prefs.edit().putString("charge_283_spoken", key).putInt("charge_283_rank",next).apply()
+                        } })
+                }
+            }
             if ((battery.temperatureC ?: -100f) >= Announcer.HOT_BATTERY_C)
                 alert(Announcer.KEY_LAST_HOT, 3 * 60 * 60 * 1000L, Announcer.Event.OVERHEAT,
                     "The battery is running hot. Please review charging and phone use.", "பேட்டரி அதிக வெப்பமாக உள்ளது. சார்ஜ் மற்றும் போன் பயன்பாட்டை சரிபார்க்கவும்.")

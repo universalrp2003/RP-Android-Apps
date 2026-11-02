@@ -16,7 +16,22 @@ class StoreCertificateRegression(unittest.TestCase):
     def test_bundled_fallback_uses_verified_current_release_receipts(self):
         bundled = json.loads((ROOT/"tamilanstore/src/main/assets/catalog.json").read_text())
         published = json.loads((ROOT/"site/catalog-v2.json").read_text())
-        self.assertEqual(published, bundled)
+        # The accepted Store0.9 APK is NOT rebuilt for a Live Guard-only release.
+        # Its verified offline fallback may lag; online catalogs use the new public receipt.
+        old = {a['id']: a for a in bundled['apps']}
+        live = {a['id']: a for a in published['apps']}
+        self.assertEqual(set(old), set(live))
+        for app in old:
+            if app != 'liveguard': self.assertEqual(old[app], live[app], app)
+        self.assertEqual((old['liveguard']['version'], old['liveguard']['sha256']),
+            ('2.82', '3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5'))
+        receipt = json.loads((ROOT/'docs/live-guard-2.87-publication-receipt.json').read_text())
+        self.assertEqual(live['liveguard']['version'], '2.87')
+        self.assertEqual(live['liveguard']['sha256'], receipt['apk_sha256'])
+        self.assertEqual(live['liveguard']['size'], receipt['bytes'])
+        self.assertEqual(live['liveguard']['url'], receipt['url'])
+        ledger = (ROOT/'docs/published-release-digests.md').read_text()
+        for app in (old['liveguard'], live['liveguard']): self.assertIn(app['sha256'], ledger)
 
     def test_published_store_matches_the_exact_verified_release(self):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()

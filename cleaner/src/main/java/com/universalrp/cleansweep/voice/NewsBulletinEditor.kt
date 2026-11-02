@@ -15,6 +15,7 @@ import org.json.JSONObject
 
 /** Bounded, extractive AI editing: the model selects source sentences; it cannot write spoken facts. */
 object NewsBulletinEditor {
+    val status = kotlinx.coroutines.flow.MutableStateFlow("Not prepared / இன்னும் தயாரிக்கப்படவில்லை")
     const val TIMEOUT_MS = 15_000L
 
     fun evidence(items: List<NewsHeadline>, tamil: Boolean): String = JSONArray().apply {
@@ -52,7 +53,11 @@ object NewsBulletinEditor {
         if (items.isEmpty()) return items
         val config = AiSettings.load(context)
         // Never silently send scheduled news to public keyless endpoints. Use only the owner's configured provider.
-        if (!config.ready || config.provider == AiProvider.FREE) return items
+        if (!config.ready || config.provider == AiProvider.FREE) {
+            status.value = "Local filtering: no configured news AI / உள்ளூர் வடிகட்டல்: செய்தி AI அமைக்கப்படவில்லை"
+            return items
+        }
+        status.value = "Local fallback: provider request not completed / உள்ளூர் மாற்று: AI கோரிக்கை முடியவில்லை"
         return try {
             withTimeoutOrNull(minOf(TIMEOUT_MS, budget.remainingMs().coerceAtLeast(1))) {
                 val reply = AiClient.ask(
@@ -68,7 +73,12 @@ object NewsBulletinEditor {
                     allowSearch = false,
                     budget = budget,
                 )
-                if (reply.ok) validated(reply.text, items, tamil) ?: items else items
+                if (reply.ok) {
+                    val checked = validated(reply.text, items, tamil)
+                    if (checked != null) status.value = "AI-assisted source selection: ${config.provider.label} / ஆதாரத் தேர்வுக்கு AI உதவி"
+                    else status.value = "Local fallback: invalid AI response / உள்ளூர் மாற்று: தவறான AI பதில்"
+                    checked ?: items
+                } else items
             } ?: items
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { items }

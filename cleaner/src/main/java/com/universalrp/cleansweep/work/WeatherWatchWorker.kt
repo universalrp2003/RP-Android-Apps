@@ -21,6 +21,8 @@ import com.universalrp.cleansweep.R
 import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.WeatherAlertStore
+import com.universalrp.cleansweep.data.SavedRainWatches
+import kotlinx.coroutines.sync.withLock
 import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.weather.WeatherAlertDecision
 import com.universalrp.weather.WeatherAlertPolicy
@@ -78,6 +80,7 @@ class WeatherWatchWorker(
             val app = context.applicationContext
             val wm = WorkManager.getInstance(app)
             if (!WeatherAlertStore.enabled(app)) {
+                (listOf(com.universalrp.cleansweep.data.SimpleWeatherStore.HOME, com.universalrp.cleansweep.data.SimpleWeatherStore.GPS) + SavedRainWatches.read(app).map { it.id }).forEach { cancelPlaceAlert(app, it) }
                 wm.cancelUniqueWork(UNIQUE_PERIODIC)
                 return
             }
@@ -114,66 +117,80 @@ class WeatherWatchWorker(
          * Runs one complete location -> forecast -> policy evaluation cycle.
          * Returns the evaluated decision, or null if neither GPS nor a saved fallback place is available yet.
          */
-        suspend fun executeCheck(
-            context: Context,
-            speakIfTriggered: Boolean,
-        ): WeatherAlertDecision? {
+        fun cancelPlaceAlert(context: Context, id: String) {
+            context.getSystemService(NotificationManager::class.java)?.cancel(NOTIF_ID_WEATHER + kotlin.math.abs(id.hashCode() % 100_000))
+        }
+        private val checkLock = kotlinx.coroutines.sync.Mutex()
+        suspend fun executeCheck(context: Context, speakIfTriggered: Boolean): WeatherAlertDecision? =
+            checkLock.withLock { executePlaces(context, speakIfTriggered) }
+
+        private suspend fun executePlaces(context: Context, speakIfTriggered: Boolean): WeatherAlertDecision? {
             val ctx = context.applicationContext
             val tamil = Lang.languageIn(ctx) == AppLang.TA
-            val saved = WeatherAlertStore.savedPlace(ctx)
-            val resolved = WeatherPlaceResolver.resolveActiveLocationSuspend(
-                context = ctx,
-                savedName = saved?.name.orEmpty(),
-                savedDetails = saved?.details.orEmpty(),
-                savedLat = saved?.latitude ?: Double.NaN,
-                savedLon = saved?.longitude ?: Double.NaN,
-                tamil = tamil,
-            )
-            if (!resolved.hasCoordinates) return null
-
-            val tomorrowKey = WeatherAlertStore.readTomorrowKey(ctx)
-            val snapshot = WeatherForecastClient.fetchNowcast(
-                latitude = resolved.latitude,
-                longitude = resolved.longitude,
-                tomorrowApiKey = tomorrowKey,
-            )
-            val memory = WeatherAlertStore.loadMemory(ctx)
-            val decision = WeatherAlertPolicy.evaluate(
-                snapshot = snapshot,
-                placeLabel = resolved.name,
-                previous = memory,
-            )
-
-            WeatherAlertStore.saveEvaluation(
-                context = ctx,
-                locationMode = resolved.mode,
-                placeName = resolved.name,
-                placeDetails = resolved.details,
-                snapshot = snapshot,
-                decision = decision,
-            )
-
-            if (decision.severity == WeatherSeverity.CLEAR_OR_NORMAL) {
-                ctx.getSystemService(NotificationManager::class.java)?.cancel(NOTIF_ID_WEATHER)
-            } else if (speakIfTriggered && WeatherAlertStore.enabled(ctx) && decision.shouldAnnounce) {
-                val quietBlocked = !decision.bypassQuietHours && Announcer.inQuietHours(ctx)
-                if (!quietBlocked) {
-                    postAlertNotification(ctx, decision, tamil)
-                }
-                Announcer.speakWeatherAndWait(
-                    context = ctx,
-                    english = decision.englishSpeech,
-                    tamil = decision.tamilSpeech,
-                    bypassQuietHours = decision.bypassQuietHours,
-                )
+            val home = WeatherAlertStore.savedPlace(ctx) ?: return null // Confirm a fixed place first.
+            data class Target(val id: String, val place: com.universalrp.weather.WeatherPlaceCandidate)
+            val targets = mutableListOf(Target(com.universalrp.cleansweep.data.SimpleWeatherStore.HOME, home))
+            targets += SavedRainWatches.read(ctx).filter { it.enabled }.map { Target(it.id, it.place) }
+            if (SavedRainWatches.currentEnabled(ctx)) {
+                val gps = WeatherPlaceResolver.resolveActiveLocationSuspend(ctx, "", "", Double.NaN, Double.NaN, tamil, gpsOnly = true)
+                if (gps.hasCoordinates && gps.mode == com.universalrp.weather.LocationResolutionMode.GPS_AUTOMATIC) {
+                    targets += Target(com.universalrp.cleansweep.data.SimpleWeatherStore.GPS,
+                        com.universalrp.weather.WeatherPlaceCandidate(gps.name, gps.details, "", gps.latitude, gps.longitude))
+                } else com.universalrp.cleansweep.data.SimpleWeatherStore.clear(ctx, com.universalrp.cleansweep.data.SimpleWeatherStore.GPS)
             }
-            return decision
+            var homeDecision: WeatherAlertDecision? = null
+            val fetched = mutableListOf<Pair<com.universalrp.weather.WeatherPlaceCandidate, com.universalrp.weather.WeatherNowcastSnapshot>>()
+            for ((id, place) in targets) {
+                fun stillSelected(): Boolean = when (id) {
+                    com.universalrp.cleansweep.data.SimpleWeatherStore.HOME -> WeatherAlertStore.savedPlace(ctx) == place
+                    com.universalrp.cleansweep.data.SimpleWeatherStore.GPS -> SavedRainWatches.currentEnabled(ctx) &&
+                        com.universalrp.cleansweep.data.SimpleWeatherStore.gpsStillAt(ctx, place)
+                    else -> SavedRainWatches.read(ctx).any { it.id == id && it.enabled && it.place == place }
+                }
+                val before = com.universalrp.cleansweep.data.SimpleWeatherStore.memory(ctx, id, place)
+                try {
+                    val requestedKey = WeatherAlertStore.readTomorrowKey(ctx)
+                    val shared = fetched.firstOrNull { (other, _) -> WeatherForecastClient.haversineKm(other.latitude, other.longitude, place.latitude, place.longitude) < 0.1 }?.second
+                    val snapshot = shared ?: WeatherForecastClient.fetchNowcast(place.latitude, place.longitude, requestedKey, includeCyclone = false)
+                    if (shared == null) fetched.add(place to snapshot)
+                    if (!stillSelected() || WeatherAlertStore.readTomorrowKey(ctx) != requestedKey) continue
+                    val decision = com.universalrp.cleansweep.data.SimpleWeatherPolicy.evaluate(snapshot, place.name, before, SavedRainWatches.lead(ctx))
+                    var memory = if (decision.shouldAnnounce) before else decision.updatedMemory
+                    // Source, freshness and selected location are checked AGAIN when queued speech plays.
+                    val relevant = { WeatherAlertStore.enabled(ctx) && stillSelected() && WeatherAlertStore.readTomorrowKey(ctx) == requestedKey &&
+                        com.universalrp.cleansweep.data.SimpleWeatherPolicy.precise(snapshot) }
+                    if (!com.universalrp.cleansweep.data.SimpleWeatherPolicy.precise(snapshot) || !decision.shouldAnnounce) cancelPlaceAlert(ctx, id)
+                    // Co-located home/GPS/saved watches share one fetch and never speak twice in this check.
+                    if (shared == null && speakIfTriggered && decision.shouldAnnounce && relevant() &&
+                        (decision.bypassQuietHours || !Announcer.inQuietHours(ctx))) {
+                        postAlertNotification(ctx, decision, tamil, NOTIF_ID_WEATHER + kotlin.math.abs(id.hashCode() % 100_000))
+                        if (Announcer.speakWeatherAndWait(ctx, decision.englishSpeech, decision.tamilSpeech,
+                                decision.bypassQuietHours, stillRelevant = relevant)) memory = decision.updatedMemory
+                    }
+                    if (!stillSelected()) continue
+                    com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, snapshot, memory)
+                    if (id == com.universalrp.cleansweep.data.SimpleWeatherStore.HOME) {
+                        // The primary snapshot is always HOME; moving GPS cannot overwrite its label or history.
+                        WeatherAlertStore.saveEvaluation(ctx, com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
+                            place.name, place.details, snapshot, decision.copy(updatedMemory = memory))
+                        homeDecision = decision
+                    } else if (id != com.universalrp.cleansweep.data.SimpleWeatherStore.GPS) {
+                        SavedRainWatches.save(ctx, id, memory, WeatherAlertPolicy.format12HourClock(snapshot.fetchedAtMs) + " · " + snapshot.source.name)
+                    }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) {
+                    cancelPlaceAlert(ctx, id)
+                    if (stillSelected()) com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, null, before)
+                }
+            }
+            return homeDecision
         }
 
         private fun postAlertNotification(
             context: Context,
             decision: WeatherAlertDecision,
             tamil: Boolean,
+            notificationId: Int = NOTIF_ID_WEATHER,
         ) {
             val nm = context.getSystemService(NotificationManager::class.java) ?: return
             val severe = decision.severity.bypassQuietHours
@@ -212,7 +229,7 @@ class WeatherWatchWorker(
                 .setAutoCancel(true)
                 .setContentIntent(openIntent)
                 .build()
-            runCatching { nm.notify(NOTIF_ID_WEATHER, notif) }
+            runCatching { nm.notify(notificationId, notif) }
         }
     }
 }

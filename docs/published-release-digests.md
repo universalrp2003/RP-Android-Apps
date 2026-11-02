@@ -496,3 +496,11 @@ Publisher checked both exact source workflows/required steps, ancestor/unchanged
 - [Elderly-Launcher-v1.7.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.7/Elderly-Launcher-v1.7.apk):11521755 bytes; SHA256 `13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec`.
 - Candidatec4331d91/run41309213845/artifact13085047634; exact-byte publication41312659562/job124866111589 SUCCESS, release430611845/APK698463228/checksum698463220, public2026-11-01T13:44:12Z. No rebuild; draft/public bytes verified, previous public assets unchanged.
 - Owner accepted and authorized publication; installed-phone hash/audible output not independently matched. No Google, all-OEM or completed-emergency-call proof. Site gallery uses only privacy-reviewed crops; installed Store0.9 retains its earlier bundled gallery. New Store source gallery waits for a separately authorized release.
+
+## Live Guard2.87 — authorized exact-byte publication, 2 November2026
+
+| Release / APK | Bytes | SHA-256 |
+| --- | ---: | --- |
+| live-guard-v2.87 · `CleanSweep-v2.87.apk` | 14,670,451 | `31df0d1314f3e6a5d6d559dfac2dd96ff87a1c0cb60e03176000f4d8c907e715` |
+
+Source `52b525888631b12ba281e0df328d466013de8f7c`; code92/package`com.universalrp.cleansweep`/min26; signer`7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`. Build41407403574/job125152452757/artifact13124038781 passed669JVM68suites, lint, signing/full unchanged permissions, normal2.82 saved-data update/native checks. Publisher41409032348/job125157571083 independently verified archive/APK/signature/permissions, re-downloaded draft and public bytes, and preserved all previous public release assets. Release431191311/asset700956127; published`2026-11-02T07:52:14Z`. No rebuild. Owner accepted2.86 and authorized this announcement-only follow-up.2.87 not phone-installed/audibly tested; not provider accuracy/Play Protect clearance. Receipt:docs/live-guard-2.87-publication-receipt.json. Other apps unchanged; Store live catalog metadata only, no Store APK release.

@@ -17,6 +17,9 @@ import com.universalrp.cleansweep.data.NewsSpeechSanitizer
 import com.universalrp.cleansweep.data.TamilInfoStripRepo
 import com.universalrp.cleansweep.data.WeatherAlertStore
 import com.universalrp.updates.CallGuard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
@@ -39,6 +42,7 @@ import java.util.concurrent.TimeUnit
  */
 object NewsHeadlinesVoiceWatcher {
 
+    private val checkpointScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
     private val manualReads = java.util.concurrent.atomic.AtomicInteger(0)
     internal suspend fun <T> withManualRead(block: suspend () -> T): T {
         manualReads.incrementAndGet()
@@ -110,9 +114,18 @@ object NewsHeadlinesVoiceWatcher {
         NewsTimingPolicy.activityAnchor(lastSuccessful(context), prefs(context).getLong(KEY_LAST_AUDIBLE_MS, 0L), now)
 
     /** Actual audio activity, NOT success or headline consumption. Durable across process death. */
-    @Synchronized
     internal fun recordAudibleActivity(context: Context, nowMs: Long = System.currentTimeMillis()) {
-        prefs(context).edit().putLong(KEY_LAST_AUDIBLE_MS, nowMs).commit()
+        // Announcer's onStarted callback runs on main. Never commit or wait for the
+        // story-history monitor there. A late start checkpoint must not roll time back.
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            checkpointScope.launch { persistAudibleActivity(context.applicationContext, nowMs) }
+        } else persistAudibleActivity(context, nowMs)
+    }
+
+    @Synchronized
+    private fun persistAudibleActivity(context: Context, nowMs: Long) {
+        val p = prefs(context)
+        p.edit().putLong(KEY_LAST_AUDIBLE_MS, maxOf(p.getLong(KEY_LAST_AUDIBLE_MS, 0L), nowMs)).commit()
         NewsAutoSchedule.playbackProgress(context)
     }
 
@@ -132,16 +145,13 @@ object NewsHeadlinesVoiceWatcher {
     private fun dayScope(nowMs: Long, zone: ZoneId): String =
         zone.id + "|" + Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
 
-    @Synchronized
+    // Read-only snapshot: UI status must never wait behind a durable story-history commit.
     fun announcedKeysToday(context: Context, tamil: Boolean, nowMs: Long = System.currentTimeMillis()): Set<String> {
         val p = prefs(context)
         val dayKey = if (tamil) KEY_SPOKEN_DAY_TA else KEY_SPOKEN_DAY_EN
         val setKey = if (tamil) KEY_SPOKEN_KEYS_TA else KEY_SPOKEN_KEYS_EN
         val scope = dayScope(nowMs, ZoneId.systemDefault())
-        if (p.getString(dayKey, null) != scope) {
-            p.edit().putString(dayKey, scope).remove(setKey).apply()
-            return emptySet()
-        }
+        if (p.getString(dayKey, null) != scope) return emptySet()
         return p.getStringSet(setKey, emptySet()).orEmpty().toSet()
     }
 
@@ -221,8 +231,8 @@ object NewsHeadlinesVoiceWatcher {
         if (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(app)) return blocked("offline")
         NewsAutoSchedule.result(app, "fetching")
 
-        val lang = Lang.languageIn(app)
-        val tamil = lang == AppLang.TA
+        val lang = if(com.universalrp.cleansweep.data.NewsPreferences.tamil(app)) AppLang.TA else AppLang.EN
+        val tamil = com.universalrp.cleansweep.data.NewsPreferences.tamil(app)
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
         automaticBlockReason(app)?.let { return blocked(it) }
         if (snapshot.items.isEmpty() && snapshot.outcome == TamilInfoStripRepo.Outcome.FEEDS_UNAVAILABLE) return blocked("feeds_unavailable")
@@ -252,12 +262,14 @@ object NewsHeadlinesVoiceWatcher {
      * A failed/interrupted read retains only fully completed story checkpoints. Unfinished
      * stories remain eligible; preparation alone never consumes any news.
      */
-    suspend fun readTodaysHeadlinesManually(context: Context): Int = withManualRead { readManual(context) }
+    suspend fun readTodaysHeadlinesManually(context: Context): Int = withContext(Dispatchers.IO) {
+        withManualRead { readManual(context) }
+    }
 
     private suspend fun readManual(context: Context): Int {
         val app = context.applicationContext
-        val lang = Lang.languageIn(app)
-        val tamil = lang == AppLang.TA
+        val lang = if(com.universalrp.cleansweep.data.NewsPreferences.tamil(app)) AppLang.TA else AppLang.EN
+        val tamil = com.universalrp.cleansweep.data.NewsPreferences.tamil(app)
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = true, tamil = tamil)
         val batch = prepareBalancedBatch(app, snapshot.items, tamil)
         // A repeated manual tap is not permission to replay already-read or recycled stories.
@@ -270,27 +282,41 @@ object NewsHeadlinesVoiceWatcher {
         return batch.size
     }
 
-    private suspend fun playBatch(app: Context, batch: List<NewsHeadline>, lang: AppLang, manual: Boolean = false): Boolean {
+    private suspend fun playBatch(app: Context, batch: List<NewsHeadline>, lang: AppLang, manual: Boolean = false): Boolean = withContext(Dispatchers.IO) {
+        val fingerprint=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(app)
+        if(batch.any {it.preferenceFingerprint.isNotEmpty() && it.preferenceFingerprint!=fingerprint}) return@withContext false
         val tamil = lang == AppLang.TA
         val lead = prependWeatherSafetyLead(app, "", tamil)
-        val plan = NewsPlaybackPlan.build(batch, tamil, lead)
-        if (plan.isEmpty()) return false
-        val spoken = Announcer.speakNewsBulletinAndWait(
-            context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,
-            newsParts = plan.map { it.text },
-            onStarted = { recordAudibleActivity(app) },
-            onPartCompleted = { part ->
-                val now = System.currentTimeMillis()
-                recordAudibleActivity(app, now)
-                plan.getOrNull(part)?.completedHeadline?.let { index ->
-                    val item = batch[index]
-                    if (NewsPolicy.isToday(item.publishedAtMs, now, ZoneId.systemDefault()))
-                        markHeadlinesAnnounced(app, listOf(item), tamil, now, completeBulletin = false)
-                }
-            },
-        )
-        if (spoken) markHeadlinesAnnounced(app, batch, tamil)
-        return spoken
+        if (batch.isEmpty()) return@withContext false
+        val updates = com.universalrp.cleansweep.data.NewsDisasterUpdates
+        val draft = updates.prepare(app)?.let { updates.reserve(app, it.events, it.origin, System.currentTimeMillis(), it.fingerprint) }
+        var completed = false
+        try {
+            val plan = NewsPlaybackPlan.build(batch, tamil, lead) +
+                draft?.text(tamil)?.let { text -> NewsSpeechSanitizer.splitForHd(text).map { NewsPlaybackPlan.Part(it) } }.orEmpty()
+            if (plan.isEmpty()) return@withContext false
+            val spoken = Announcer.speakNewsBulletinAndWait(
+                context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,
+                newsParts = plan.map { it.text },
+                preferenceFingerprint = fingerprint,
+                stillRelevant = draft?.let { { updates.relevant(app, it) } },
+                onStarted = { recordAudibleActivity(app) },
+                onPartCompleted = { part ->
+                    val now = System.currentTimeMillis()
+                    recordAudibleActivity(app, now)
+                    plan.getOrNull(part)?.completedHeadline?.let { index ->
+                        val item = batch[index]
+                        if (NewsPolicy.isToday(item.publishedAtMs, now, ZoneId.systemDefault()))
+                            markHeadlinesAnnounced(app, listOf(item), tamil, now, completeBulletin = false)
+                    }
+                },
+            )
+            completed = spoken
+            if (spoken) markHeadlinesAnnounced(app, batch, tamil)
+            spoken
+        } finally {
+            if (draft != null) updates.finish(app, draft, completed)
+        }
     }
 
     /**

@@ -199,6 +199,16 @@ object Announcer {
     private val neuralExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
         Thread(r, "CleanSweepNeuralHd").apply { isDaemon = true }
     }
+    // MediaPlayer JNI/binder calls can wait on prepare()/decoder work. Keep cancellation
+    // off main and snapshot the OLD player so a delayed Stop cannot stop its successor.
+    private val playerControlExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "CleanSweepPlayerControl").apply { isDaemon = true }
+    }
+    private fun interruptPlayback() {
+        active?.worker?.cancel(true)
+        val player = activeMediaPlayer ?: return
+        playerControlExecutor.execute { runCatching { player.stop() } }
+    }
     private val malePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     private val femalePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     // RANDOM announcement rotation: flip gender every announcement and step to the NEXT Ultra-HD
@@ -229,6 +239,8 @@ object Announcer {
         /** A manual news read owns the queue: stale unrelated requests must not play instead. */
         val exclusive: Boolean = false,
         val newsDayScope: String? = null,
+        val newsPreferenceFingerprint: String? = null,
+        val stillRelevant: (() -> Boolean)? = null,
         val newsParts: List<String> = emptyList(),
         val onPartCompleted: ((Int) -> Unit)? = null) {
         val id = java.util.UUID.randomUUID().toString()
@@ -311,8 +323,7 @@ object Announcer {
                     resetHdOutage(ctx) // Connectivity loss is not a sustained HD-provider outage.
                     if (active?.preparedNewsParts?.isNotEmpty() == true) return@postDelayed
                     speakingState.value = false
-                    runCatching { activeMediaPlayer?.stop() }
-                    active?.worker?.cancel(true)
+                    interruptPlayback()
                     if (active != null) finish(VoiceDeliveryPolicy.Stage.NO_INTERNET, false, pump = false)
                 }, NewsTimingPolicy.HANDOFF_GRACE_MS)
             }
@@ -623,6 +634,11 @@ object Announcer {
     fun speak(context: Context, english: String, tamil: String, event: Event, onStarted: (() -> Unit)? = null): Boolean =
         submit(context, Request(english, tamil, null, event, event == Event.TEST, onStarted = onStarted))
 
+    /** Recheck resource/connection withdrawal during preparation and playback, not just enqueue. */
+    fun speakIfStillRelevant(context: Context, english: String, tamil: String, event: Event,
+        stillRelevant: () -> Boolean, onStarted: (() -> Unit)? = null): Boolean =
+        submit(context, Request(english,tamil,null,event,false,onStarted=onStarted,stillRelevant=stillRelevant))
+
     fun speakTamil(context: Context, tamilText: String, event: Event, onStarted: (() -> Unit)? = null): Boolean =
         submit(context, Request(null, tamilText, AppLang.TA, event, event == Event.TEST, onStarted = onStarted))
 
@@ -639,12 +655,13 @@ object Announcer {
      * stale alert when the neural service is unreachable.
      */
     fun speakNewsNow(context: Context, text: String, language: AppLang? = null): Boolean {
+        val spoken = com.universalrp.cleansweep.data.NewsSpeechSanitizer.forSpeech(text)
         val wanted = language ?: Lang.languageIn(context)
         return submit(
             context,
             Request(
-                english = if (wanted == AppLang.EN) text else null,
-                tamil = if (wanted == AppLang.TA) text else null,
+                english = if (wanted == AppLang.EN) spoken else null,
+                tamil = if (wanted == AppLang.TA) spoken else null,
                 wanted = wanted,
                 event = Event.NEWS_HEADLINES,
                 manual = true,
@@ -711,17 +728,18 @@ object Announcer {
     fun cancelAnswers() { main.post {
         pending.filter { it.event == Event.ANSWER }.forEach { pending.remove(it); it.done?.complete(false) }
         if (active?.event == Event.ANSWER) {
-            runCatching { activeMediaPlayer?.stop() }
+            interruptPlayback()
             finish(VoiceDeliveryPolicy.Stage.CANCELLED, false)
         }
     } }
 
     /** Keep a worker alive until the engine finishes/fails, rather than finishing while TTS is still starting. */
     suspend fun speakAndWait(context: Context, english: String, tamil: String, event: Event,
-        timeoutMs: Long = 45_000, onStarted: (() -> Unit)? = null, requestKey: String? = null): Boolean {
+        timeoutMs: Long = 45_000, onStarted: (() -> Unit)? = null, requestKey: String? = null,
+        stillRelevant: (() -> Boolean)? = null): Boolean {
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(english.takeIf { it.isNotBlank() }, tamil.takeIf { it.isNotBlank() }, null,
-            event, event == Event.TEST, done = done, onStarted = onStarted, requestKey = requestKey)
+            event, event == Event.TEST, done = done, onStarted = onStarted, requestKey = requestKey, stillRelevant = stillRelevant)
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
         return try {
@@ -752,6 +770,8 @@ object Announcer {
         manual: Boolean = false,
         newsParts: List<String> = emptyList(),
         onPartCompleted: ((Int) -> Unit)? = null,
+        preferenceFingerprint: String? = null,
+        stillRelevant: (() -> Boolean)? = null,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
         // timeout when Android already reports no internet. Automatic news can still wait
@@ -769,8 +789,10 @@ object Announcer {
             requestKey = "news_bulletin:${System.nanoTime()}",
             exclusive = manual,
             newsDayScope = currentNewsDayScope(),
+            newsPreferenceFingerprint = preferenceFingerprint,
             newsParts = newsParts,
             onPartCompleted = onPartCompleted,
+            stillRelevant = stillRelevant,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -796,6 +818,7 @@ object Announcer {
         tamil: String,
         bypassQuietHours: Boolean,
         timeoutMs: Long = 45_000,
+        stillRelevant: (() -> Boolean)? = null,
     ): Boolean {
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(
@@ -806,6 +829,7 @@ object Announcer {
             manual = false,
             done = done,
             bypassQuietHours = bypassQuietHours,
+            stillRelevant = stillRelevant,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -824,7 +848,8 @@ object Announcer {
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual,
             inCall = com.universalrp.updates.CallGuard.inCall(ctx),
-            bypassQuietHours = request.bypassQuietHours,
+            bypassQuietHours = request.bypassQuietHours || (request.event in setOf(Event.BATTERY_FULL, Event.CHARGING,
+                Event.UNPLUGGED_EARLY, Event.CHARGER_IDLE) && com.universalrp.cleansweep.data.ChargeAnnouncementSettings.allowQuiet(ctx)),
             silentPlace = inSilentPlace(ctx),
         )
         if (blocked != null) {
@@ -839,8 +864,7 @@ object Announcer {
                 // A manual news read must not be followed by an unrelated queued alert if HD
                 // fails. Cancel the active clip and drop stale pending requests first.
                 queueEpoch++
-                active?.worker?.cancel(true)
-                runCatching { activeMediaPlayer?.stop() }
+                interruptPlayback()
                 if (active != null) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
                 pending.forEach {
                     record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED)
@@ -856,7 +880,7 @@ object Announcer {
                 if (automaticAnswerIds.size > 128) automaticAnswerIds.remove(automaticAnswerIds.first())
             }
             if ((request.manual || (request.event == Event.OVERHEAT || request.bypassQuietHours) && active?.event == Event.ANSWER) && active != null) {
-                runCatching { activeMediaPlayer?.stop() }
+                interruptPlayback()
                 finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
             }
             if (pending.size >= 4) pending.removeLast().also { record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED); it.done?.complete(false) }
@@ -934,7 +958,8 @@ object Announcer {
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
             request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
-            bypassQuietHours = request.bypassQuietHours,
+            bypassQuietHours = request.bypassQuietHours || (request.event in setOf(Event.BATTERY_FULL, Event.CHARGING,
+                Event.UNPLUGGED_EARLY, Event.CHARGER_IDLE) && com.universalrp.cleansweep.data.ChargeAnnouncementSettings.allowQuiet(context)),
             silentPlace = inSilentPlace(context),
         )
         if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
@@ -965,7 +990,10 @@ object Announcer {
     }
 
     private fun newsExpired(request: Request): Boolean =
-        request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()
+        !runCatching {request.stillRelevant?.invoke() != false}.getOrDefault(false) ||
+        (request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()) ||
+            (request.newsPreferenceFingerprint != null && request.newsPreferenceFingerprint !=
+                prefsContext?.let {com.universalrp.cleansweep.data.NewsPreferences.fingerprint(it)})
 
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
         val profile = request.resolveProfile(context)
@@ -1004,8 +1032,18 @@ object Announcer {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
                     return@submit
                 }
+                val cached = if (request.event == Event.NETWORK_CHANGE)
+                    com.universalrp.voice.SharedNeuralVoiceEngine.cachedProfileFileOrNull(context.cacheDir, request.text, profile, useTamil) else null
+                if (request.event == Event.NETWORK_CHANGE && cached == null && !awaitHandoffInternet(context, request)) {
+                    main.post {
+                        if (active?.id == requestId) finish(if (newsExpired(request)) VoiceDeliveryPolicy.Stage.CANCELLED
+                            else VoiceDeliveryPolicy.Stage.NO_INTERNET, false)
+                    }
+                    return@submit // Validation/flapping is not a failed HD-provider attempt.
+                }
                 val online = com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
                 val mp3 = when {
+                    cached != null -> cached
                     request.event == Event.NEWS_HEADLINES && request.preparedNewsParts.isNotEmpty() ->
                         request.preparedNewsParts[request.partIndex.coerceIn(0, request.preparedNewsParts.lastIndex)]
                     online -> com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
@@ -1025,6 +1063,10 @@ object Announcer {
                 }
                 if (com.universalrp.updates.CallGuard.inCall(context)) {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS, false) }
+                    return@submit
+                }
+                if(request.newsPreferenceFingerprint!=null && request.newsPreferenceFingerprint!=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) {
+                    main.post { if(active?.id==requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED,false) }
                     return@submit
                 }
                 if (request.event == Event.NEWS_HEADLINES && !request.manual &&
@@ -1123,6 +1165,24 @@ object Announcer {
                 Thread.interrupted()
             }
         }
+    }
+
+    /** Worker-only and bounded: do not spend synthesis retries on a flapping replacement route. */
+    private fun awaitHandoffInternet(context: Context, request: Request): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager ?: return false
+        val stable = StableNetworkWindow()
+        val deadline = android.os.SystemClock.elapsedRealtime() + NewsTimingPolicy.HANDOFF_GRACE_MS
+        while (android.os.SystemClock.elapsedRealtime() < deadline) {
+            if (active?.id != request.id || Thread.currentThread().isInterrupted || newsExpired(request)) return false
+            val network = runCatching {
+                cm.activeNetwork?.takeIf { n -> cm.getNetworkCapabilities(n)?.hasCapability(
+                    android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true }?.networkHandle
+            }.getOrNull()
+            if (stable.observe(network, android.os.SystemClock.elapsedRealtime())) return true
+            try { Thread.sleep(100L) }
+            catch (_: InterruptedException) { Thread.currentThread().interrupt(); return false }
+        }
+        return false
     }
 
     /** A handoff must not consume both HD attempts while the replacement network validates. */
@@ -1245,8 +1305,7 @@ object Announcer {
     private fun cancelRequest(id: String, stage: VoiceDeliveryPolicy.Stage) {
         if (active?.id == id) {
             queueEpoch++
-            active?.worker?.cancel(true)
-            runCatching { activeMediaPlayer?.stop() }
+            interruptPlayback()
             finish(stage, false)
         }
         else pending.firstOrNull { it.id == id }?.let {
@@ -1256,8 +1315,7 @@ object Announcer {
 
     fun stop() { main.post {
         queueEpoch++
-        active?.worker?.cancel(true)
-        runCatching { activeMediaPlayer?.stop() }
+        interruptPlayback()
         prefsContext?.let { noteHdAvailable(it) }
         speakingState.value = false
         pending.forEach { it.done?.complete(false) }; pending.clear()
@@ -1266,8 +1324,7 @@ object Announcer {
 
     fun shutdown() { main.post {
         queueEpoch++
-        active?.worker?.cancel(true)
-        runCatching { activeMediaPlayer?.stop() }
+        interruptPlayback()
         prefsContext?.let { noteHdAvailable(it) }
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)

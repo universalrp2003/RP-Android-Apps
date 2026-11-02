@@ -113,8 +113,8 @@ fun SharedWeatherControlDialog(
         allowGps && state.gpsTurnedOn && state.permissionGranted && isCellTowerMode ->
             bi(
                 tamil,
-                "📡 Mobile Tower Location ON — automatically finds your current town/village (0% GPS battery drain).",
-                "📡 மொபைல் டவர் இடம் இயக்கத்தில் — உங்கள் தற்போதைய ஊரைத் தானாகக் கண்டறியும் (0% GPS பேட்டரி செலவு).",
+                "Mobile-tower location uses approximate fixes; updates may use battery.",
+                "மொபைல் டவர் இடம் தோராயமானது; புதுப்பிப்புக்கு பேட்டரி செலவாகலாம்.",
             )
         allowGps && state.gpsTurnedOn && state.permissionGranted ->
             bi(
@@ -171,22 +171,22 @@ fun SharedWeatherControlDialog(
     )
     val quietRule2 = bi(
         tamil,
-        "• Very heavy rain & cyclone alerts announce 24×7 day or night — never skipped!",
-        "• மிகக் கனமழை மற்றும் புயல் எச்சரிக்கைகள் இரவு-பகல் 24×7 எப்போதும் ஒலிக்கும்!",
+        "• Severe rain/cyclone alerts may bypass quiet hours; calls, permissions, connectivity and Android scheduling can still prevent or delay delivery.",
+        "• கடும் மழை/புயல் அமைதி நேரத்தை மீறலாம்; அழைப்பு, அனுமதி, இணையம், ஆண்ட்ராய்டு திட்டமிடல் வழங்கலைத் தடுக்கலாம் அல்லது தாமதிக்கலாம்.",
     )
 
     val tomorrowTitle = bi(
         tamil,
-        "Tomorrow.io 1-minute precision (optional)",
-        "Tomorrow.io 1-நிமிட துல்லியம் (விருப்பத்தேர்வு)",
+        "Tomorrow.io forecast access (personal key)",
+        "Tomorrow.io முன்னறிவிப்பு (தனிப்பட்ட விசை)",
     )
     val tomorrowSub = if (state.hasTomorrowKey) {
-        bi(tamil, "Personal Tomorrow.io key active (Keystore encrypted)", "Tomorrow.io விசை செயலில் உள்ளது (பாதுகாப்பாகச் சேமிக்கப்பட்டது)")
+        bi(tamil, "Personal key saved, not proof of access (Keystore encrypted)", "விசை சேமிக்கப்பட்டது; அணுகல் சான்றல்ல (பாதுகாப்பாகச் சேமிக்கப்பட்டது)")
     } else {
         bi(
             tamil,
-            "Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota",
-            "Tomorrow.io 1-நிமிட ரேடார் விசை இன்றி தானாகவே இயங்குகிறது — கூடுதல் வரம்பிற்கு மட்டும் சொந்த விசை",
+            "Personal key required for production Tomorrow.io access; model forecasts are the fallback.",
+            "Tomorrow.io நிரந்தர அணுகலுக்கு தனிப்பட்ட விசை தேவை; இல்லையெனில் மாதிரி முன்னறிவிப்பு.",
         )
     }
     val keyFieldLabel = bi(tamil, "Tomorrow.io API key", "Tomorrow.io API விசை")
@@ -277,7 +277,7 @@ fun SharedWeatherControlDialog(
                                 } else {
                                     bi(
                                         tamil,
-                                        "🔒 Why optional Location permission exists: Android blocks reading your SIM's Mobile Signal Tower without 'Location' permission. Ramesh Radio NEVER asks automatically and NEVER tracks your movements — type your PIN/Town once below for 100% zero-permission accuracy, or tap below only if you want optional Mobile Tower detection.",
+                                        "🔒 Why optional Location permission exists: Android blocks reading your SIM's Mobile Signal Tower without 'Location' permission. Ramesh Radio NEVER asks automatically and NEVER tracks your movements — type your PIN/Town once below without Location permission; forecasts and town matching remain approximate, or tap below only if you want optional Mobile Tower detection.",
                                         "🔒 விருப்ப Location அனுமதி ஏன் உள்ளது: 'Location' அனுமதி இல்லாமல் மொபைல் சிக்னல் டவரைப் படிக்க Android அனுமதிக்காது. ரமேஷ் ரேடியோ ஒருபோதும் தானாக அனுமதி கேட்காது; உங்கள் பயணத்தைக் கண்காணிக்கவும் செய்யாது. எந்த அனுமதியும் இன்றி கீழே PIN/ஊரைச் சேமிக்கலாம், அல்லது விருப்பப்பட்டால் மட்டும் கீழுள்ள பொத்தானை அழுத்தலாம்.",
                                     )
                                 },
