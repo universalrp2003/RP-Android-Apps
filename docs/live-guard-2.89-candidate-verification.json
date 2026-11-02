@@ -71,8 +71,8 @@
   "publication_authorized": true,
   "publication_hold": false,
   "published": true,
-  "main_merged": false,
-  "website_or_live_catalog_promoted": false,
+  "main_merged": true,
+  "website_or_live_catalog_promoted": true,
   "previous_verified_source": "f9fc4301def1e19fa6e78636a3e57ad5477f6fe5",
   "previous_ci_run_id": 41449403198,
   "previous_artifact_id": 13144399017,
@@ -100,5 +100,16 @@
   "native_restored_six_segment_rendering_passed": true,
   "public_release_id": 431535692,
   "public_asset_id": 701965379,
-  "publication_receipt": "live-guard-2.89-publication-receipt.json"
+  "publication_receipt": "live-guard-2.89-publication-receipt.json",
+  "main_pr": 83,
+  "main_merge_commit": "08f8cd21fa04e676b152eb278f8ddeb36c7ac6ae",
+  "pages_run_id": 41461910400,
+  "pages_deploy_job_id": 125333808884,
+  "pages_deployment_id": 7494684338,
+  "pages_conclusion": "success",
+  "pages_verified_at": "2026-11-02T14:30:10Z",
+  "pages_verification": "Actual deployed HTML/date/catalog metadata matched source, exact public2.89 APK/ZIP bytes hashed, retained accepted APK/ZIP and safe gallery checks passed. Existing >1GB Pages artifact size warning remained non-fatal in this successful deployment.",
+  "metadata_followup_ci_run": 41459148110,
+  "metadata_followup_ci_conclusion": "success",
+  "metadata_followup_artifact_promoted": false
 }
