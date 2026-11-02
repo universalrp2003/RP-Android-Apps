@@ -8,7 +8,7 @@ Private candidate, not yet published. Public2.88 and all sibling APKs remain unc
 - Legacy versions did not record which cyclone advisory was spoken. The latest valid advisory may therefore be heard once after this policy upgrade, even if that cyclone was mentioned earlier. Existing legacy counters are retained, not reset. Flood/earthquake three-successful-bulletin rules remain unchanged.
 - All existing disaster OFF choices, master/news/HD/call/quiet/silent-place/location gates and topic/language/home/battery choices remain. Stop/failed playback does not mark an advisory delivered. Bounded durable per-storm high-water memory survives ordinary updates/restarts; process death between completed audio and a successful disk write can still cause a repeat. No absolute exactly-once claim.
 
-Automated verification pending. No physical-device test of2.89; no new audible/provider-accuracy/Play Protect claim. Normal same-key update; do not uninstall or clear local data. Uninstalling may erase local data.
+Private automated verification passed:750 required JVM tests/71suites,325Python, release build/lint/signature/permission continuity and same-key2.88 preserved-data/native UI checks (CI41439482711/source6ea5873). Publication remains held. No physical-device test of2.89; no new audible/provider-accuracy/Play Protect claim. Normal same-key update; do not uninstall or clear local data. Uninstalling may erase local data.
 
 ## Additional held-build improvements
 
@@ -16,7 +16,7 @@ Automated verification pending. No physical-device test of2.89; no new audible/p
 - Movement/landfall remain explicitly unavailable until a reliable, validated source contract exists. No invented speed, landfall, live safety prediction or Windy trial-data use. Official IMD links remain available.
 - Security → App identity details shows Android-reported signer hashes, signing history, package and reported installer. Opted-in local history distinguishes signing rotation from an unexplained signer difference and records comparable installer changes; not a malware/safety verdict. Powerful-access combinations receive reasons/manual review. Familiar labels/package prefixes are not authenticated trust.
 - A one-time Enable / Not now introduction explains optional local security history; no new permission, background service, APK upload or automatic removal. Existing opt-in/OFF choices are preserved. APK/link review stays deferred.
-- Extended verification pending; earlier2.89 test results do not cover these additions. Publication remains on hold.
+- Extended verification passed in CI41439482711, including optional-history Not now and signer-detail UI probes. Earlier2.89 results alone did not cover these additions. Publication remains on hold.
 
 ## தமிழ்
 
