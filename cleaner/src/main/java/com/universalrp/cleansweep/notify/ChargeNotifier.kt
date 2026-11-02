@@ -281,10 +281,17 @@ object ChargeNotifier {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             ?: return
         try {
-            if (!ChargeMonitorService.alive) RoutineStatus.acquire(context, RoutineStatus.FALLBACK)
-            val notification = build(context, battery)
-            if (!stillCurrent()) return
-            manager.notify(NOTIFICATION_ID, notification)
+            val prepared = build(context, battery)
+            // The potentially slow measurement build must not acquire a lease. A
+            // cancelled fallback could otherwise leave a ghost owner, resurrected
+            // when another participant releases its card. Serialize the final
+            // relevance check/acquire/post with coordinator release operations.
+            synchronized(RoutineStatus) {
+                if (!stillCurrent()) return
+                val notification = if (!ChargeMonitorService.alive)
+                    RoutineStatus.acquire(context, RoutineStatus.FALLBACK) else prepared
+                manager.notify(NOTIFICATION_ID, notification)
+            }
         } catch (e: Exception) {
             // Notifications switched off by the user: the voice line still works.
         }

@@ -62,3 +62,8 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
         pill=(JAVA/'notify/StatusPill.kt').read_text()
         self.assertNotIn('numSegments',pill)
         self.assertIn('NetworkActivityPolicy.level(entry.second)',pill)
+        notifier=(JAVA/'notify/ChargeNotifier.kt').read_text()
+        post=notifier.split('fun post(context:',1)[1].split('fun clear(context:',1)[0]
+        guarded=post.split('synchronized(RoutineStatus)',1)[1]
+        self.assertLess(post.index('val prepared = build'),post.index('RoutineStatus.acquire'))
+        self.assertLess(guarded.index('if (!stillCurrent()) return'),guarded.index('RoutineStatus.acquire'))
