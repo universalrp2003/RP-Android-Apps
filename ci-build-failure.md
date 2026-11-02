@@ -2,20 +2,34 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:79 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:92:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:93:21 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:79 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:92:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:93:21 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
 ```
 
 ## Gradle summary
 ```
+[Incubating] Problems report is available at: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':cleaner:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 45s
+399 actionable tasks: 176 executed, 223 from cache
 ```
-(no failing tests recorded in the JUnit XML)
+com.universalrp.cleansweep.weather.LiveGuard283ForecastTest :: emptyTomorrowCannotMeanDry
+    java.lang.Exception: Unexpected exception, expected<java.lang.IllegalArgumentException> but was<org.json.JSONException>
+
+(1 failing test(s))
 
 ## Store artwork step
 ```
