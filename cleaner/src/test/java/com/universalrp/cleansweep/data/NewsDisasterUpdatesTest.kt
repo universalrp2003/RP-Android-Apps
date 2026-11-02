@@ -26,7 +26,7 @@ class NewsDisasterUpdatesTest {
     @Before fun clean() { listOf(NewsDisasterUpdates.PREFS,WeatherAlertStore.PREFS,"saved_rain_watches_283").forEach { c.getSharedPreferences(it,0).edit().clear().commit() } }
     @After fun release() { drafts.forEach { NewsDisasterUpdates.finish(c,it,false) } }
     private fun enable() = NewsDisasterUpdates.setEnabled(c,true)
-    @Test fun separateOptInDefaultSilent() = runBlocking { assertFalse(NewsDisasterUpdates.enabled(c));assertNull(NewsDisasterUpdates.prepare(c));assertNull(reserve()) }
+    @Test fun explicitOffStaysSilent() = runBlocking { NewsDisasterUpdates.setEnabled(c,false);assertFalse(NewsDisasterUpdates.enabled(c));assertNull(NewsDisasterUpdates.prepare(c));assertNull(reserve()) }
     @Test fun noLocationNoAnnouncement() { assertNull(NewsDisasterUpdates.origin(c,now)) }
     @Test fun missingFreshGpsUsesLabelledHome() { WeatherAlertStore.savePlace(c,home);SavedRainWatches.setCurrentEnabled(c,true);val o=NewsDisasterUpdates.origin(c,now)!!;assertFalse(o.phone);assertEquals(home.latitude,o.lat,0.0) }
     @Test fun preparingDoesNotConsume() { enable();val d=reserve()!!;assertEquals(0,NewsDisasterUpdates.count(c,d.events.single().key));NewsDisasterUpdates.finish(c,d,false);assertEquals(0,NewsDisasterUpdates.count(c,"TC:123")) }

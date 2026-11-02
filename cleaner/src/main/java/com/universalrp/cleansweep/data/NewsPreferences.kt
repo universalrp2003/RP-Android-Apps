@@ -5,9 +5,10 @@ import android.content.Context
 object NewsPreferences {
     enum class Language { APP, TAMIL_ONLY, TAMIL_TRANSLATED, ENGLISH }
     private fun prefs(context: Context) = context.getSharedPreferences("news_topics_283", Context.MODE_PRIVATE)
+    fun allCategories(): Set<BalancedNewsPolicy.Category> = BalancedNewsPolicy.Category.values().toSet()
     fun selected(context: Context): Set<BalancedNewsPolicy.Category> = prefs(context).getStringSet("topics", emptySet()).orEmpty()
-        .mapNotNull { name -> BalancedNewsPolicy.Category.values().firstOrNull { it.name == name } }.toSet()
-    fun categories(context: Context) = selected(context).ifEmpty { BalancedNewsPolicy.DEFAULT_CATEGORIES }
+        .mapNotNull { name -> BalancedNewsPolicy.Category.values().firstOrNull { it.name == name } }.toSet().ifEmpty { allCategories() }
+    fun categories(context: Context) = selected(context)
     fun language(context: Context) = runCatching { Language.valueOf(prefs(context).getString("language", "APP")!!) }.getOrDefault(Language.APP)
     fun tamil(context: Context) = when (language(context)) {
         Language.TAMIL_ONLY -> true

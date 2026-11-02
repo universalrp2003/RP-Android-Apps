@@ -1,0 +1,93 @@
+package com.universalrp.cleansweep.ui
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.universalrp.cleansweep.data.FeatureDiscovery
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+
+/** First foreground opening after a feature arrives, not a hidden Settings-only control. */
+@Composable
+fun FeatureUpdatesNotice() {
+    val context = LocalContext.current
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    var resumed by remember { mutableStateOf(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, _ -> resumed = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    var feature by remember { mutableStateOf<FeatureDiscovery.Feature?>(null) }
+    var enabled by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(resumed) {
+        if (resumed) {
+            val next = withContext(Dispatchers.IO) { FeatureDiscovery.next(context)?.let { it to FeatureDiscovery.enabled(context, it) } }
+            feature = next?.first
+            enabled = next?.second ?: false
+        }
+    }
+    val current = feature ?: return
+    if (!resumed) return
+    fun choose(choice: FeatureDiscovery.Choice) {
+        if (busy) return
+        busy = true
+        scope.launch {
+            try {
+                val (saved, state) = withContext(Dispatchers.IO) {
+                    FeatureDiscovery.respond(context, current, choice) to FeatureDiscovery.enabled(context, current)
+                }
+                enabled = state
+                error = !saved
+                if (saved) {
+                    val next = withContext(Dispatchers.IO) { FeatureDiscovery.next(context)?.let { it to FeatureDiscovery.enabled(context, it) } }
+                    feature = next?.first; enabled = next?.second ?: false
+                }
+            } finally { busy = false }
+        }
+    }
+    // Exhaustive compiled content: a future feature cannot accidentally inherit this description.
+    val title = when (current) {
+        FeatureDiscovery.Feature.DISASTER_NEWS -> watchWords("New: disaster updates with news", "புதிய வசதி: செய்தியுடன் பேரிடர் அறிக்கைகள்")
+    }
+    val ask = current.mode == FeatureDiscovery.Mode.ASK_FIRST
+    AlertDialog(
+        onDismissRequest = { choose(if (ask) FeatureDiscovery.Choice.NOT_NOW else FeatureDiscovery.Choice.ACKNOWLEDGE) },
+        title = { Text(title) },
+        text = {
+            when (current) {
+            FeatureDiscovery.Feature.DISASTER_NEWS -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(watchWords("Hear a short nearby cyclone, flood or earthquake report with each of the next three completed news bulletins. Distances use a fresh enabled phone location, otherwise explicitly your saved home. These are dated reports, not live local danger warnings.",
+                    "அருகிலுள்ள புயல், வெள்ளம், நிலநடுக்க அறிக்கையை அடுத்த மூன்று முழுமையான செய்தி வாசிப்புகளில் தலா ஒருமுறை கேட்கலாம். அனுமதித்த புதிய கைப்பேசி இருப்பிடம் இல்லையெனில் சேமித்த வீடு எனத் தெரிவிக்கும். இவை நேரமிட்ட அறிக்கைகள்; நேரலை உள்ளூர் அபாய எச்சரிக்கைகள் அல்ல."))
+                Text(if (enabled) watchWords("Currently on. You can turn it off here or under Voice → News.", "இப்போது இயக்கத்தில் உள்ளது. இங்கேயோ குரல் → செய்திகள் பகுதியிலோ அணைக்கலாம்.")
+                    else watchWords("Your previous OFF choice has been kept. You can enable it here or later under Voice → News.", "நீங்கள் முன்பு அணைத்த தேர்வு பாதுகாக்கப்பட்டுள்ளது. இங்கேயோ பின்னர் குரல் → செய்திகள் பகுதியிலோ இயக்கலாம்."))
+                Text(watchWords("All 13 news topics are now selected by default. Your customised topics, language and voice safety settings are kept. At most eight eligible fresh stories per bulletin; not every topic is guaranteed in every reading.",
+                    "இயல்பில் 13 செய்தித் தலைப்புகளும் தேர்வு செய்யப்படும். நீங்கள் மாற்றிய தலைப்புகள், மொழி, குரல் பாதுகாப்பு அமைப்புகள் மாறாது. ஒரு வாசிப்பில் அதிகபட்சம் எட்டு தகுதியான புதிய செய்திகள்; ஒவ்வொரு தலைப்பும் ஒவ்வொரு முறையும் கிடைக்கும் என உறுதி இல்லை."))
+                if (error) Text(watchWords("Could not save. Please try again.", "சேமிக்க முடியவில்லை. மீண்டும் முயலவும்."))
+            }
+            }
+        },
+        confirmButton = { TextButton(enabled = !busy, onClick = { choose(if (ask) FeatureDiscovery.Choice.ENABLE else FeatureDiscovery.Choice.ACKNOWLEDGE) }) {
+            Text(if (ask) watchWords("Enable", "இயக்கு") else watchWords("Got it", "புரிந்தது"))
+        } },
+        dismissButton = { TextButton(enabled = !busy, onClick = { choose(if (ask) FeatureDiscovery.Choice.NOT_NOW else if (enabled) FeatureDiscovery.Choice.DISABLE else FeatureDiscovery.Choice.ENABLE) }) {
+            Text(if (ask) watchWords("Not now", "இப்போது வேண்டாம்") else if (enabled) watchWords("Turn off", "அணை") else watchWords("Enable", "இயக்கு"))
+        } },
+    )
+}

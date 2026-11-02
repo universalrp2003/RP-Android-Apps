@@ -62,7 +62,7 @@ class SavedRainWatchPreferencesTest {
         try {SavedRainWatches.setLead(context,17);fail("Invalid lead was accepted")} catch(_:IllegalArgumentException) {}
     }
     @Test fun languageAndEmptyTopicDefaultsRemainExplicit() {
-        assertEquals(BalancedNewsPolicy.DEFAULT_CATEGORIES,NewsPreferences.categories(context))
+        assertEquals(NewsPreferences.allCategories(),NewsPreferences.categories(context))
         // Read state directly; don't initialise audio to test persistence.
         context.getSharedPreferences("news_topics_283",0).edit().putString("language","TAMIL_ONLY")
             .putStringSet("topics",setOf("SPORTS")).commit()

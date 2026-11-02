@@ -1,5 +1,7 @@
 # Live Guard (CleanSweep)
 
+Private2.88/code93 candidate: owner-approved discoverable default-on disaster news + one-time introduction, all13 topics by default while preserving explicit/custom choices. Advanced battery remains optional. Verification pending; public2.87 unchanged. See [scope](../docs/live-guard-2.88-candidate.md).
+
 Current public APK: **2.87 / code 92**, package `com.universalrp.cleansweep`, Android8.0/API26+.
 
 - [Download CleanSweep-v2.87.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.87/CleanSweep-v2.87.apk) · [release notes](../releases/live-guard-v2.87.md) · [official website](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard)

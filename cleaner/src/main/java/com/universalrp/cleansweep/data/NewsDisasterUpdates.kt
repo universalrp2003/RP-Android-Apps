@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
 object NewsDisasterUpdates {
     const val PREFS = "news_disasters_287"
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-    fun enabled(c: Context): Boolean = prefs(c).getBoolean("enabled", false)
+    fun enabled(c: Context): Boolean = prefs(c).getBoolean("enabled", FeatureDiscovery.defaultEnabled(FeatureDiscovery.Feature.DISASTER_NEWS.mode))
     fun setEnabled(c: Context, value: Boolean) {
         prefs(c).edit().putBoolean("enabled", value).putString("generation", UUID.randomUUID().toString()).apply()
         // Withdrawal cancels already-prepared audio, even if toggled back on immediately.
@@ -30,8 +30,8 @@ object NewsDisasterUpdates {
             home.getString("saved_place_lon", ""), SavedRainWatches.currentEnabled(c).toString()).joinToString("|")
     }
     private val inFlight = ConcurrentHashMap<String, String>()
-    private val client = OkHttpClient.Builder().connectTimeout(3, TimeUnit.SECONDS).readTimeout(3, TimeUnit.SECONDS)
-        .callTimeout(4, TimeUnit.SECONDS).followRedirects(false).followSslRedirects(false).build()
+    private val client by lazy { OkHttpClient.Builder().connectTimeout(3, TimeUnit.SECONDS).readTimeout(3, TimeUnit.SECONDS)
+        .callTimeout(4, TimeUnit.SECONDS).followRedirects(false).followSslRedirects(false).build() }
     private fun get(url: String, deadline: Long): String {
         require(Regex("https://www\\.gdacs\\.org/(gdacsapi/api/events/geteventlist/MAP\\?eventtype=(TC|FL|EQ)|gdacsapi/api/events/geteventdata\\?eventtype=TC&eventid=[0-9]{1,12}|gdacsapi/api/export/gettimeline\\?id=[0-9]{1,12})").matches(url))
         val left = deadline - SystemClock.elapsedRealtime()
