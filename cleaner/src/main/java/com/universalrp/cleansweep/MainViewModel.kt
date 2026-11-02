@@ -3410,13 +3410,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             }
             val tamil = Lang.languageIn(ctx) == AppLang.TA
             val saved = WeatherAlertStore.savedPlace(ctx)
-            val resolved = com.universalrp.weather.WeatherPlaceResolver.resolveActiveLocation(
-                context = ctx,
-                savedName = saved?.name.orEmpty(),
-                savedDetails = saved?.details.orEmpty(),
-                savedLat = saved?.latitude ?: Double.NaN,
-                savedLon = saved?.longitude ?: Double.NaN,
-                tamil = tamil,
+            val resolved = com.universalrp.weather.ResolvedWeatherLocation(
+                mode = if (saved == null) com.universalrp.weather.LocationResolutionMode.NEEDS_SAVED_PLACE else com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
+                gpsTurnedOn = com.universalrp.weather.WeatherPlaceResolver.isDeviceLocationTurnedOn(ctx),
+                permissionGranted = com.universalrp.weather.WeatherPlaceResolver.hasLocationPermission(ctx),
+                name = saved?.name.orEmpty(), details = saved?.details.orEmpty(),
+                latitude = saved?.latitude ?: Double.NaN, longitude = saved?.longitude ?: Double.NaN,
             )
             val current = _state.value.weather
             val fresh = WeatherAlertStore.readUiSnapshot(
@@ -3583,9 +3582,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate {
             it.copy(
                 message = if (rawKey.isBlank()) {
-                    tr("Tomorrow.io key removed — using free built-in weather radar.")
+                    if (Lang.isTamil) "விசை அகற்றப்பட்டது; துல்லிய மழை அறிவிப்புகள் நிறுத்தப்பட்டன." else "Key removed; precise rain alerts paused."
                 } else if (ok) {
-                    tr("Tomorrow.io 1-minute rain key saved securely.")
+                    if (Lang.isTamil) "விசை பாதுகாப்பாகச் சேமிக்கப்பட்டது; அணுகலைச் சரிபார்க்கவும்." else "Key saved securely; check access now."
                 } else {
                     tr("Could not encrypt key in Android Keystore.")
                 }

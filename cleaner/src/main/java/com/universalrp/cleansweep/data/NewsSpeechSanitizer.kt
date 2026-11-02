@@ -197,6 +197,19 @@ object NewsSpeechSanitizer {
         return picked
     }
 
+    /** Speech-only editorial punctuation. Original source/display/evidence and story keys stay intact.
+     * Numeric signs, subtraction, numeric ranges and dates are deliberately not guessed/reworded.
+     */
+    fun forSpeech(text: String): String = text
+        // Tamil numeric suffixes: 2017-க்குப் / 2-வது must not become "minus".
+        .replace(Regex("(?<=\\p{N})[-‐‑](?=[\\u0B80-\\u0BFF&&\\p{L}])"), "")
+        // Compounds and named identifiers, not a sign before a numeric token.
+        .replace(Regex("(?<=[\\p{L}\\p{M}])[-‐‑](?=[\\p{L}\\p{M}\\p{N}])"), " ")
+        .replace(Regex("\\s+[|–—]\\s+"), ", ")
+        .replace(Regex("\\s+-\\s+(?=[\\p{L}\\p{M}])"), ", ")
+        .replace(Regex("(?<=[\\p{L}\\p{M}])[–—](?=[\\p{L}\\p{M}])"), ", ")
+        .replace(Regex("\\s+"), " ").trim()
+
     /**
      * Builds a smooth, natural broadcast script for TTS in Tamil or English.
      * No numeric ordinals ("news 1, news 2 …") — just a clean intro followed by the headlines,
@@ -204,7 +217,9 @@ object NewsSpeechSanitizer {
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
         val cleaned = headlines
-            .map { it.spokenText.ifBlank { cleanHeadline(it.title, it.source) }.trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .map { item -> val label = if (BalancedNewsPolicy.category(item) == BalancedNewsPolicy.Category.HUMOUR)
+                (if(tamil) "நகைச்சுவை; உண்மைச் செய்தியல்ல. " else "Humour, not factual news. ") else ""
+                label + forSpeech(item.spokenText.ifBlank { cleanHeadline(item.title, item.source) }).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
             .filter { it.isNotBlank() }
         if (cleaned.isEmpty()) return ""
         val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "

@@ -148,11 +148,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     )
                 }
                 Text(
-                    tr(
-                        "Speaking uses Android's own text-to-speech engine. If your phone has a Tamil " +
-                            "voice installed, Tamil text is spoken in Tamil; otherwise the English " +
-                            "wording is spoken instead of reading Tamil in an English accent."
-                    ),
+                    watchWords("HD neural speech needs internet. Tamil and English use the selected language; there is no automatic Android system-voice fallback.",
+                        "HD நரம்பியல் குரலுக்கு இணையம் தேவை. தமிழ், ஆங்கிலம் தேர்ந்தெடுத்த மொழியில் பேசும்; ஆண்ட்ராய்டு கணினிக் குரலுக்கு தானாக மாறாது."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -215,8 +212,11 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         }
                     }
                     NewsBulletinStatus()
+                    NewsTopicSettings { vm.stopSpeakingNow() }
                 }
             }
+
+            BatteryIntakeSettings()
 
             // ------------------------------------------------- Announcer voice (v2.68, simple choice)
             PanelCard(Modifier.fillMaxWidth()) {
@@ -381,14 +381,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 // 2.72: if the HD voice has been unreachable for a sustained period, say so
                 // here too. The notification card only appears after 30 seconds of outage,
                 // but this screen should not need the owner to wait for it.
-                val hdWaiting =
-                    automatic.stage in setOf(
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET,
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.ENGINE_ERROR,
-                    ) || delivery.stage in setOf(
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET,
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.ENGINE_ERROR,
-                    )
+                // Last automatic status is historical evidence, not the current HD state.
+                // A later successful manual request must clear the warning as well.
+                val hdWaiting = com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.hdWaiting(delivery.stage)
                 if (hdWaiting) {
                     Text(
                         "\u23F3 " + tr(
@@ -667,7 +662,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 }
                 VoiceSwitch(
                     title = tr("Battery full"),
-                    subtitle = tr("Requires 100%, Android full status and a working current sensor near zero for 60 seconds. Unsupported phones stay silent; charger input power is not measured."),
+                    subtitle = watchWords("Choose percentage-only notice or sustained low-intake estimate above. Confirmed, estimated and unverified are different messages.", "மேலே சதவீத அறிவிப்பு அல்லது நீடித்த குறைந்த மின்னோட்ட மதிப்பீட்டைத் தேர்வு செய்யவும். உறுதியானது, மதிப்பீடு, உறுதியாகாதது தனித்தனி அறிவிப்புகள்."),
                     icon = Icons.Outlined.BatteryFull,
                     tint = GoodGreen,
                     checked = state.voiceBatteryFull,
@@ -707,9 +702,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.STORAGE_LOW, it) },
                 )
                 VoiceSwitch(
-                    title = tr("Charger removed early"),
-                    subtitle = tr("Unplugged below %s%%, and only after the hour you set below.")
-                        .format(Announcer.UNPLUG_BEFORE_PERCENT),
+                    title = watchWords("Charger removed — current battery level", "சார்ஜர் அகற்றப்பட்டது — தற்போதைய பேட்டரி அளவு"),
+                    subtitle = watchWords("Announces at any battery level. Early-removal reminders are separate.", "எந்த பேட்டரி அளவிலும் அறிவிக்கும். முன்கூட்டியே அகற்றிய நினைவூட்டல் தனியானது."),
                     icon = Icons.Outlined.PowerOff,
                     tint = WarnAmber,
                     checked = state.voiceUnplugged,

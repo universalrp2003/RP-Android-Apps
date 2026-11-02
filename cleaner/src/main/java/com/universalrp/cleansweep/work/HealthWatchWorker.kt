@@ -121,18 +121,8 @@ class HealthWatchWorker(
             }
         }
 
-        // Battery full — worth a word only while it is still on the cable.
-        if (battery.fullChargeConfirmed) {
-            val last = prefs.getLong(Announcer.KEY_LAST_FULL, 0L)
-            if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
-                Announcer.speakAndWait(
-                    ctx, "",
-                    "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்.",
-                    Announcer.Event.BATTERY_FULL,
-                    onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_FULL, System.currentTimeMillis()).apply() },
-                )
-            }
-        }
+        // Full/percentage speech has a single per-connection owner in AutomaticAlerts.
+        // A second hourly-worker path would bypass the Advanced switch and deduplication.
 
         // Storage nearly full — the one warning that gets more painful the longer it waits.
         val storage = health?.storage
@@ -257,12 +247,20 @@ class HealthWatchWorker(
                 "You are now on mobile data. This uses your data plan.",
                 "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.",
                 Announcer.Event.NETWORK_CHANGE,
+                stillRelevant = {
+                    val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+                    active?.hasTransport(if (now == "wifi") NetworkCapabilities.TRANSPORT_WIFI else NetworkCapabilities.TRANSPORT_CELLULAR) == true
+                },
             )
             "wifi" -> Announcer.speakAndWait(
                 ctx,
                 "You are back on Wi-Fi.",
                 "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.",
                 Announcer.Event.NETWORK_CHANGE,
+                stillRelevant = {
+                    val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+                    active?.hasTransport(if (now == "wifi") NetworkCapabilities.TRANSPORT_WIFI else NetworkCapabilities.TRANSPORT_CELLULAR) == true
+                },
             )
         }
     }

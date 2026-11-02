@@ -56,8 +56,11 @@ object WeatherAlertPolicy {
         previous: WeatherEpisodeMemory,
         nowMs: Long = snapshot.fetchedAtMs,
         placeDetails: String = "",
+        leadMinutes: Int = 30,
     ): WeatherAlertDecision {
-        val nearHorizon = snapshot.timeline.filter { it.minutesAhead in 0..60 }
+        require(leadMinutes in setOf(15, 30, 60))
+        val leadMax = leadMinutes + 8
+        val nearHorizon = snapshot.timeline.filter { it.minutesAhead in 0..maxOf(60,leadMax) }
         val extendedHorizon = snapshot.timeline.filter { it.minutesAhead in 0..120 }
 
         val firstRainSample = snapshot.timeline
@@ -88,11 +91,12 @@ object WeatherAlertPolicy {
             minutesUntilRain = minutesUntilRain,
             peakPrecip60 = peakPrecip60,
             peakGust60 = peakGust60,
+            leadMax = leadMax,
         )
 
         // Reset episode memory only after sustained dry calm conditions (90+ continuous dry minutes).
         val dryNow = snapshot.currentPrecipMmPerHour < DRY_THRESHOLD_MM_HR &&
-            (minutesUntilRain == null || minutesUntilRain > TARGET_LEAD_MAX_MINUTES) &&
+            (minutesUntilRain == null || minutesUntilRain > leadMax) &&
             rawSeverity == WeatherSeverity.CLEAR_OR_NORMAL
 
         val workingMemory = if (dryNow) {
@@ -179,6 +183,7 @@ object WeatherAlertPolicy {
         minutesUntilRain: Int?,
         peakPrecip60: Double,
         peakGust60: Double,
+        leadMax: Int = TARGET_LEAD_MAX_MINUTES,
     ): WeatherSeverity {
         val cycloneAdvisory = snapshot.activeCyclone != null
         if (cycloneAdvisory || peakGust60 >= CYCLONE_GUST_KMH || peakPrecip60 >= EXTREME_CLOUDBURST_MM_HR) {
@@ -190,7 +195,7 @@ object WeatherAlertPolicy {
         }
         // 30-minute rain warning: approaching within 1..38 minutes (or just started) AND the expected
         // rain reaches a noticeable rate — a merely dark, chilly, trace-drizzle sky must not speak.
-        if (minutesUntilRain != null && minutesUntilRain in 0..TARGET_LEAD_MAX_MINUTES && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
+        if (minutesUntilRain != null && minutesUntilRain in 0..leadMax && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
             return WeatherSeverity.RAIN_SOON
         }
         return if (currentlyRaining && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
@@ -238,8 +243,8 @@ object WeatherAlertPolicy {
             WeatherSeverity.RAIN_SOON -> {
                 val mins = (minutesUntilRain ?: 30).coerceIn(0, 60)
                 if (mins <= 3) {
-                    "Rain alert for $placeEn: rain is starting now near $placeEn." to
-                        "மழை முன்னறிவிப்பு — இடம் $placeTa: இப்போது மழை தொடங்குகிறது."
+                    "Rain alert for $placeEn: the forecast indicates rain may be starting now near $placeEn; this is not a local rain observation." to
+                        "மழை முன்னறிவிப்பு — இடம் $placeTa: முன்னறிவிப்பில் இப்போது மழை தொடங்க வாய்ப்புள்ளது; இது நேரடி உள்ளூர் கவனிப்பு அல்ல."
                 } else {
                     val rounded = ((mins + 2) / 5 * 5).coerceAtLeast(5)
                     "Rain alert for $placeEn: rain is expected near $placeEn in about $rounded minutes." to
@@ -256,10 +261,13 @@ object WeatherAlertPolicy {
                     "கனமழை எச்சரிக்கை — இடம் $placeTa: மிகக் கனமழை பெய்ய வாய்ப்புள்ளது. பாதுகாப்பாக இருங்கள்."
             }
             WeatherSeverity.CYCLONE_SEVERE -> {
-                val stormTagEn = cycloneName?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
-                val stormTagTa = cycloneName?.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()
-                "Urgent storm warning$stormTagEn for $placeEn: cyclone-force winds or extreme heavy rain near $placeEn. Stay indoors in a safe place." to
-                    "அவசர புயல் எச்சரிக்கை$stormTagTa — இடம் $placeTa: புயல் காற்று அல்லது அதி கனமழை அபாயம் உள்ளது. உடனே பாதுகாப்பாக இருங்கள்."
+                if(!cycloneName.isNullOrBlank()) {
+                    "Nearby cyclone bulletin ($cycloneName), referenced to $placeEn: GDACS flags a regional system. This does not predict local wind or landfall. Check official IMD warnings and follow local authority advice." to
+                        "அருகிலுள்ள புயல் அறிவிப்பு ($cycloneName) — குறிப்பு இடம் $placeTa: GDACS பிராந்திய அமைப்பைக் குறிக்கிறது. உள்ளூர் காற்றையோ கரைகடக்கும் இடத்தையோ உறுதிசெய்யாது. அதிகாரப்பூர்வ IMD எச்சரிக்கையையும் உள்ளூர் அறிவுறுத்தலையும் பின்பற்றவும்."
+                } else {
+                    "Severe weather forecast for $placeEn: strong winds or extreme heavy rain are indicated. Take precautions and check official warnings; this is a forecast, not a local observation." to
+                        "கடும் வானிலை முன்னறிவிப்பு — இடம் $placeTa: பலத்த காற்று அல்லது அதி கனமழை வாய்ப்பு காட்டப்படுகிறது. முன்னெச்சரிக்கையுடன் அதிகாரப்பூர்வ எச்சரிக்கையைப் பார்க்கவும்; இது முன்னறிவிப்பு, நேரடி உள்ளூர் கவனிப்பு அல்ல."
+                }
             }
         }
     }

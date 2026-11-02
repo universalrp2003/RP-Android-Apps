@@ -5,7 +5,8 @@ import java.util.Locale
 
 /** Source-grounded selection. Quotas are ceilings, never a reason to invent or recycle news. */
 object BalancedNewsPolicy {
-    enum class Category(val quota: Int) { STATE(3), INDIA(1), WORLD(1), SCIENCE(1), CYBER(1), ENVIRONMENT(1) }
+    enum class Category(val quota: Int) { STATE(3), INDIA(1), WORLD(1), SCIENCE(1), CYBER(1), ENVIRONMENT(1), AI(1), WEATHER(1), SPORTS(1), GOVERNMENT(1), JOBS(1), ENTERTAINMENT(1), HUMOUR(1) }
+    val DEFAULT_CATEGORIES = setOf(Category.STATE, Category.INDIA, Category.WORLD, Category.SCIENCE, Category.CYBER, Category.ENVIRONMENT)
     private val junk = Regex(
         "today.?s? headlines|top \\d+ news|headlines?\\s*\\d*\\s*(?:am|pm)|" +
             "தலைப்புச்? செய்திகள்|தலைப்புச்செய்திகள்|செய்தித் தொகுப்பு|" +
@@ -47,6 +48,13 @@ object BalancedNewsPolicy {
         val feed = item.category.lowercase(Locale.ROOT)
         // A specialist feed is still checked for actual topic evidence; gadget ads aren't discoveries.
         if (has(text, cyber)) return Category.CYBER
+        if (has(text, listOf("job notification", "recruitment", "vacancies", "வேலைவாய்ப்பு", "பணியிடங்கள்", "ஆட்சேர்ப்பு"))) return Category.JOBS
+        if (has(text, listOf("government announcement", "gazette", "government order", "அரசாணை", "அரசு அறிவிப்பு"))) return Category.GOVERNMENT
+        if (has(text, listOf("artificial intelligence", "machine learning", "செயற்கை நுண்ணறிவு"))) return Category.AI
+        if (has(text, listOf("cricket", "football", "olympic", "sports", "கிரிக்கெட்", "விளையாட்டு", "கால்பந்து"))) return Category.SPORTS
+        if (has(text, listOf("joke", "humour", "நகைச்சுவை"))) return Category.HUMOUR
+        if (has(text, listOf("cinema", "film release", "திரைப்படம்", "சினிமா"))) return Category.ENTERTAINMENT
+        if (has(text, listOf("weather", "rain forecast", "meteorological", "வானிலை", "மழை முன்னறிவிப்பு"))) return Category.WEATHER
         if (has(text, environment)) return Category.ENVIRONMENT
         if (has(text, science)) return Category.SCIENCE
         if (feed in setOf("science", "cyber", "environment")) return null
@@ -81,13 +89,16 @@ object BalancedNewsPolicy {
     }
 
     fun reserveCategories(items: List<NewsHeadline>, limit: Int): List<NewsHeadline> {
-        val reserved = Category.values().flatMap { c -> items.filter { category(it) == c }.take(10) }
+        val categories=Category.values().toList()
+        val perCategory=(limit/categories.size).coerceAtLeast(1).coerceAtMost(10)
+        val reserved = categories.flatMap { c -> items.filter { category(it) == c }.take(perCategory) }
         return (reserved + items).distinctBy { it.key }.take(limit)
     }
 
     fun select(
         items: List<NewsHeadline>, announced: Set<String>, recentTitles: List<String>, tamil: Boolean,
         nowMs: Long, zone: ZoneId, rotation: Int, perCategoryMultiplier: Int = 1,
+        enabled: Set<Category> = DEFAULT_CATEGORIES,
     ): List<NewsHeadline> {
         require(perCategoryMultiplier in 1..3)
         val valid = items.map { it.copy(title = NewsSpeechSanitizer.cleanHeadline(it.title, it.source)) }
@@ -98,20 +109,24 @@ object BalancedNewsPolicy {
                 it.key !in announced && recentTitles.none { old -> sameEvent(old, it.title) } }
         val picked = ArrayList<NewsHeadline>(8)
         val publishers = mutableMapOf<String, Int>()
-        for (bucket in Category.values()) {
+        val active = enabled.ifEmpty { DEFAULT_CATEGORIES }
+        val buckets = Category.values().filter { it in active }
+        val orderedBuckets = if (active == DEFAULT_CATEGORIES) buckets else
+            buckets.drop(Math.floorMod(rotation, buckets.size)) + buckets.take(Math.floorMod(rotation, buckets.size))
+        for (bucket in orderedBuckets) {
             val candidates = valid.filter { category(it) == bucket }
             // Prefer rotation, then source diversity, then freshness within today's pool.
             val ordered = candidates.sortedWith(compareByDescending<NewsHeadline> { subtopicScore(it, rotation) }
                 .thenBy { publishers[it.source] ?: 0 }.thenByDescending { it.publishedAtMs })
             for (item in ordered) {
-                if (picked.count { category(it) == bucket } >= bucket.quota * perCategoryMultiplier) break
+                if (picked.count { category(it) == bucket } >= (if (active == DEFAULT_CATEGORIES) bucket.quota else maxOf(1, 8 / active.size)) * perCategoryMultiplier) break
                 if (picked.any { sameEvent(it.title, item.title) ||
                     (it.spokenText.isNotBlank() && item.spokenText.isNotBlank() && sameEvent(it.spokenText, item.spokenText)) || NewsPolicy.canonicalLink(it.link) == NewsPolicy.canonicalLink(item.link) }) continue
                 picked.add(item)
                 publishers[item.source] = (publishers[item.source] ?: 0) + 1
             }
         }
-        return picked
+        return picked.take(8 * perCategoryMultiplier)
     }
 
     /** AI can choose an exact source sentence, never supply arbitrary generated facts. */
