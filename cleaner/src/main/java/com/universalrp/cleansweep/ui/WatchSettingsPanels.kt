@@ -21,17 +21,17 @@ fun NewsTopicSettings(onChange: () -> Unit) {
     var language by remember { mutableStateOf(NewsPreferences.language(context)) }
     val editing by NewsBulletinEditor.status.collectAsState()
     Text(watchWords("News topics", "செய்தித் தலைப்புகள்"),style=MaterialTheme.typography.titleMedium)
-    Text(watchWords("No selection = the existing balanced bulletin. Selected topics only; up to eight fresh stories, never filler. Unavailable categories may be empty.",
-        "தேர்வு இல்லையெனில் வழக்கமான சமச்சீர் செய்திகள். தேர்ந்தெடுத்த தலைப்புகளில் மட்டும் எட்டு புதிய செய்திகள் வரை; நிரப்புச் செய்தி இல்லை. கிடைக்காத தலைப்பு காலியாக இருக்கலாம்."))
+    Text(watchWords("All topics are selected by default. Customise your topics below; up to eight fresh stories per bulletin, never filler. Unavailable categories may be empty.",
+        "இயல்பில் எல்லாத் தலைப்புகளும் தேர்வு செய்யப்படும். கீழே விருப்பத் தலைப்புகளை மாற்றலாம்; ஒரு வாசிப்பில் எட்டு புதிய செய்திகள் வரை; நிரப்புச் செய்தி இல்லை. கிடைக்காத தலைப்பு காலியாக இருக்கலாம்."))
     FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
         BalancedNewsPolicy.Category.values().forEach { category ->
             FilterChip(selected=category in topics,onClick={
-                onChange(); topics=if(category in topics) topics-category else topics+category
+                onChange(); topics=if(category in topics && topics.size > 1) topics-category else topics+category
                 NewsPreferences.save(context,topics,language)
             }, label={Text(NewsPreferences.label(category,Lang.isTamil))})
         }
     }
-    TextButton(onClick={onChange();topics=emptySet();NewsPreferences.save(context,topics,language)}) {
+    TextButton(onClick={onChange();topics=NewsPreferences.allCategories();NewsPreferences.save(context,topics,language)}) {
         Text(watchWords("Restore default topics", "தொடக்கத் தலைப்புகளை மீட்டமை"))
     }
     Text(watchWords("News language", "செய்தி மொழி"))
@@ -128,6 +128,14 @@ fun BatteryCompletionReason(battery: BatteryReading) {
 fun NewsDisasterSettings() {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(NewsDisasterUpdates.enabled(context)) }
+    val preferences = remember(context) { context.getSharedPreferences(NewsDisasterUpdates.PREFS, android.content.Context.MODE_PRIVATE) }
+    DisposableEffect(preferences) {
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == "enabled") enabled = NewsDisasterUpdates.enabled(context)
+        }
+        preferences.registerOnSharedPreferenceChangeListener(listener)
+        onDispose { preferences.unregisterOnSharedPreferenceChangeListener(listener) }
+    }
     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(watchWords("Disaster updates with news", "செய்தியுடன் பேரிடர் அறிக்கைகள்"))

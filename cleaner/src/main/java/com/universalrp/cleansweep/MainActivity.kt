@@ -103,6 +103,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 AppRoot(vm)
+                com.universalrp.cleansweep.ui.FeatureUpdatesNotice()
             }
         }
     }

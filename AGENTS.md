@@ -10,6 +10,11 @@
 - For security-sensitive changes, record threat/data-flow assumptions, verified controls, tests and residual gaps. This is a standing development policy, **not a claim that these controls are already implemented suite-wide**, an independent audit, a prompt-injection-proof guarantee or Play Protect clearance.
 - This instruction does not supersede scoped publication approvals, immutable APK/signer/data-preservation rules, consent, or the prohibition on unauthorized third-party sample uploads. Do not rebuild/release unrelated apps or add AI/agent/MCP access to private data simply to apply the checklist.
 
+## Live Guard2.88 — owner correction, 2 November2026
+
+- Owner says hidden default-off new features are undiscoverable. Clarified: disaster-news ON by default with one-time notice for never-configured users, preserve explicit OFF; all13 news topics by default, preserve custom subsets/language. This supersedes2.87 default-off only. Future optional features must offer Enable / Not now, not silently enable every new setting. Keep battery Advanced optional and all voice/location safety/consent gates.
+- Build2.88/code93. Owner explicitly chose publish2.88 for everyone after automated checks (third clarification). Promote only exact verified Live Guard bytes; update website/live catalog afterward. Exact public2.88 now published by41416558931; prior2.87 and siblings unchanged; metadata only follows receipt. No unrelated release. Implement stable per-feature foreground discovery acknowledgement, actual on/off state and immediate off action, no new notification/permission/background popup. Do not publish the three private screenshots. See docs/live-guard-2.88-candidate.md; 689 JVM/69suites, build/lint/sign/permissions/normal2.87 update/native notice passed41414340270; receipt docs/live-guard-2.88-publication-receipt.json. Not physical/audible proof.
+
 ## Live Guard 2.87 — authorized news-integrated disaster follow-up, 2 November 2026
 
 - Owner accepts2.86 “all okay” and explicitly authorizes next Live Guard-only build/publication. This supersedes earlier screen-only/no-publication restriction only for this scoped opted-in news addition, not siblings/standalone disaster speech.

@@ -96,10 +96,18 @@ def main():
     seed('weather_alert_state','<map/>')
     adb('shell',f'chown -R {uid}:{uid} {DATA}/shared_prefs; restorecon -RF {DATA}/shared_prefs')
     screen('VOICE')
+    seek('New: disaster updates with news')
+    # A missing legacy preference means ON; the notice must offer immediate withdrawal.
+    click('Turn off')
+    assert value('news_disasters_287','enabled')=='false'
+    assert value('feature_discovery_v1','disaster_news')=='true'
+    screen('VOICE')
+    raw,_=dump();assert 'New: disaster updates with news' not in raw
+    assert value('news_disasters_287','enabled')=='false'
     seek('News topics')
     click('Restore default topics')
     node=next(n for n in prefs('news_topics_283') if n.get('name')=='topics')
-    assert len(node)==0
+    assert len(node)==13
     # Advanced OFF is real behaviour, not merely a collapsed visual panel.
     screen('VOICE')
     click('Advanced battery checks')
@@ -142,6 +150,7 @@ def main():
     stored=json.loads(value('saved_rain_watches_283','places'))
     assert len(stored)==3 and stored[0]['id']==places[0]['id']
     assert adb('shell','pidof',PKG).strip()
+    receipt['native_288_feature_notice_smoke']=True
     receipt['native_283_settings_smoke']=True
     receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')

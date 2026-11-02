@@ -65,7 +65,7 @@ class LauncherPublicationTests(unittest.TestCase):
         apps = {a['id']: a for a in feed['apps']}
         self.assertEqual((apps['launcher']['version'], apps['launcher']['sha256']), ('1.7', promotion.DIGEST))
         for name, version, digest in (
-            ('liveguard', '2.87', '31df0d1314f3e6a5d6d559dfac2dd96ff87a1c0cb60e03176000f4d8c907e715'),
+            ('liveguard', '2.88', '87be21168e9f7d619ee8709163f632ebfd79b1a731d2b45e8b4d6618ca43a70c'),
             ('voicenotes', '1.3.4', '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a')):
             self.assertEqual((apps[name]['version'], apps[name]['sha256']), (version, digest))
         pages = (ROOT/'.github/workflows/pages.yml').read_text()

@@ -25,8 +25,8 @@ class StoreCertificateRegression(unittest.TestCase):
             if app != 'liveguard': self.assertEqual(old[app], live[app], app)
         self.assertEqual((old['liveguard']['version'], old['liveguard']['sha256']),
             ('2.82', '3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5'))
-        receipt = json.loads((ROOT/'docs/live-guard-2.87-publication-receipt.json').read_text())
-        self.assertEqual(live['liveguard']['version'], '2.87')
+        receipt = json.loads((ROOT/'docs/live-guard-2.88-publication-receipt.json').read_text())
+        self.assertEqual(live['liveguard']['version'], '2.88')
         self.assertEqual(live['liveguard']['sha256'], receipt['apk_sha256'])
         self.assertEqual(live['liveguard']['size'], receipt['bytes'])
         self.assertEqual(live['liveguard']['url'], receipt['url'])
