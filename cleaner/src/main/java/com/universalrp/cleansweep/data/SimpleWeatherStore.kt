@@ -37,7 +37,11 @@ object SimpleWeatherStore {
         Result(place, snapshot, p.optBoolean("error"))
     }.getOrNull()
     fun memory(c: Context, id: String, place: WeatherPlaceCandidate): WeatherEpisodeMemory {
-        val old = read(c, id) ?: return WeatherEpisodeMemory()
+        val old = read(c, id) ?: return when {
+            id == HOME && WeatherAlertStore.readCachedForWidget(c).placeName == place.name -> WeatherAlertStore.loadMemory(c)
+            id != HOME && id != GPS && SavedRainWatches.read(c).any { it.id == id && it.place == place } -> SavedRainWatches.memory(c, id)
+            else -> WeatherEpisodeMemory()
+        }
         if (WeatherForecastClient.haversineKm(old.place.latitude, old.place.longitude, place.latitude, place.longitude) > 1.2) return WeatherEpisodeMemory()
         return runCatching {
             val p = JSONObject(prefs(c).getString("memory_$id", "{}")!!)

@@ -247,7 +247,8 @@ private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCa
                 if (b.failedTypes.isNotEmpty()) Text(watchWords("Some reports unavailable—not an all-clear.", "சில அறிக்கைகள் கிடைக்கவில்லை; அபாயம் இல்லை என்பதல்ல."))
                 if (b.reports.isEmpty() && b.failedTypes.isEmpty()) Text(watchWords("No recent matching regional GDACS reports. Check official local warnings below.", "சமீபத்திய பொருந்தும் பிராந்திய GDACS அறிக்கை இல்லை. கீழே அதிகாரப்பூர்வ உள்ளூர் எச்சரிக்கைகளைப் பார்க்கவும்."))
                 b.reports.forEach { report ->
-                    Text(report.name + " · " + report.type + " · GDACS " + report.alert)
+                    val type = when (report.type) { "TC" -> watchWords("Cyclone", "புயல்"); "FL" -> watchWords("Flood", "வெள்ளம்"); else -> watchWords("Earthquake", "நிலநடுக்கம்") }
+                    Text(report.name + " · " + type + " · GDACS " + report.alert)
                     Text(weatherClock(report.updated) + " · " + String.format(Locale.US, "%.0f km", report.distanceKm) + watchWords(" to report reference point", " அறிக்கையின் குறிப்பு இடத்திற்கு"), style = MaterialTheme.typography.bodySmall)
                     TextButton(onClick = { website = report.url }) { Text(watchWords("View GDACS map & report", "GDACS வரைபடமும் அறிக்கையும்")) }
                 }

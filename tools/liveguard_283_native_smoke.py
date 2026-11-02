@@ -82,8 +82,8 @@ def main():
     ET.SubElement(xml,'boolean',name='current',value='false')
     ET.SubElement(xml,'string',name='history_'+places[0]['id']).text=json.dumps([dict(at=1700000000000,message='Synthetic check only; not a real rain alert')])
     seed('saved_rain_watches_283',ET.tostring(xml,encoding='unicode'))
-    adb('shell',f'chown -R {uid}:{uid} {DATA}/shared_prefs; restorecon -RF {DATA}/shared_prefs')
     seed('weather_alert_state','<map/>')
+    adb('shell',f'chown -R {uid}:{uid} {DATA}/shared_prefs; restorecon -RF {DATA}/shared_prefs')
     screen('VOICE')
     seek('News topics')
     click('Restore default topics')
@@ -111,6 +111,10 @@ def main():
     click('60 min');assert value('saved_rain_watches_283','lead')=='60'
     seek('Follow my current location')
     seek('Disaster reports · silent')
+    click('GDACS map')
+    seek('Selected place: CI synthetic home')
+    seek('www.gdacs.org')
+    click('Close')
     click('Manage other saved places')
     seek('CI synthetic place 1')
     click('History')
@@ -121,7 +125,7 @@ def main():
     assert len(stored)==3 and stored[0]['id']==places[0]['id']
     assert adb('shell','pidof',PKG).strip()
     receipt['native_283_settings_smoke']=True
-    receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section; no live API, GDACS WebView, speech or phone accuracy claim'
+    receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native website-window open/close; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Live Guard 2.83 native settings::'+receipt['native_283_scope'])
 
