@@ -1,8 +1,8 @@
+# Live Guard (CleanSweep)
+
 ## 2.87 scoped follow-up
 
 Owner accepted 2.86 and authorized Live Guard-only publication after automated verification. Adds a separate default-off **Disaster updates with news** switch under Voice → News: one sourced dated update per nearby event in each of three fully completed news bulletins. Fresh optional phone GPS else explicitly saved home; observed advisory wind with verified units, movement unavailable when not verifiable. No standalone alarm/live/local-danger claim. See [candidate scope and residuals](../docs/live-guard-2.87-candidate.md). No repeat accepted physical tests; new CI pending.
-
-# Live Guard (CleanSweep)
 
 > **Prepared private candidate: 2.86/code91. Not published;626required JVM tests, release build/lint, signing/permissions, preserved-data upgrade and native controls passed CI41400810329. Actual pronunciation/website-town check still pending.** Narrow news speech-punctuation and verified website-place linking follow-up. Owner reports2.85 HD warning and Android unresponsive windows did not recur; other features fine. Those accepted fixes remain intact. Public2.82 unchanged. See [candidate boundaries](../docs/live-guard-2.86-candidate.md).
 
