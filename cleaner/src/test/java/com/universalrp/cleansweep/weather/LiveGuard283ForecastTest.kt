@@ -9,6 +9,27 @@ class LiveGuard283ForecastTest {
     @Test(expected=IllegalArgumentException::class) fun emptyTomorrowCannotMeanDry() {
         WeatherForecastClient.parseTomorrowResponse("""{"timelines":{}}""",0)
     }
+    @Test(expected=IllegalArgumentException::class) fun absentRainNeverBecomesADryForecast() {
+        val now=1_760_000_000_000L
+        WeatherForecastClient.parseOpenMeteoResponse("""{"current":{"time":${now/1000},"precipitation":0},"minutely_15":{"time":[${now/1000}],"precipitation":[null]}}""",now)
+    }
+    @Test(expected=IllegalArgumentException::class) fun staleCurrentDataCannotAppearFresh() {
+        WeatherForecastClient.parseOpenMeteoResponse("""{"current":{"time":1,"precipitation":0}}""",1_760_000_000_000L)
+    }
+    @Test fun hourlyFutureRainIsNotACurrentObservationOrAMinuteFeed() {
+        val now=1_760_000_000_000L
+        val raw="""{"timelines":{"hourly":[{"time":"${java.time.Instant.ofEpochMilli(now)}","values":{"precipitationIntensity":0}},{"time":"${java.time.Instant.ofEpochMilli(now+3_600_000)}","values":{"precipitationIntensity":2.5}}]}}"""
+        val result=WeatherForecastClient.parseTomorrowResponse(raw,now)
+        assertEquals(com.universalrp.weather.WeatherSourceKind.TOMORROW_FORECAST,result.source)
+        assertEquals(0.0,result.currentPrecipMmPerHour,0.001)
+        assertEquals(2.5,result.timeline.last().precipMmPerHour,0.001)
+    }
+    @Test fun hostileUrlsAndCredentialForwardingAreRejectedBeforeAnyNetworkCall() {
+        for(url in listOf("http://api.tomorrow.io/","https://evil.test/","https://api.tomorrow.io@evil.test/","https://api.met.no:444/")) {
+            try {WeatherForecastClient.httpGet(url);fail("Untrusted URL accepted")} catch(_:IllegalArgumentException) {}
+        }
+        try {WeatherForecastClient.httpGet("https://api.met.no/",mapOf("apikey" to "synthetic-not-a-secret"));fail("Credential forwarding accepted")} catch(_:IllegalArgumentException) {}
+    }
     @Test fun cycloneDatesAndStaleRecordsCannotInventCurrentStorm() {
         assertNull(CycloneWatchData.time("not dated"))
         assertNull(CycloneWatchData.movement(listOf(

@@ -60,3 +60,11 @@ object ChargeAnnouncementSettings {
     fun setEarlyReminder(context: Context, on: Boolean) { prefs(context).edit().putBoolean("early_reminder", on).apply() }
     val policy = ChargeCompletionEstimatePolicy()
 }
+
+/** A quieter/noisier sensor cannot reopen a weaker notice; a NEW connection starts at rank zero. */
+object ChargeNoticeRankPolicy {
+    fun previous(connection: String, previousKey: String, previousRank: Int): Int =
+        if(previousKey.substringBeforeLast(':')==connection) previousRank.coerceIn(0,3) else 0
+    fun started(connection: String, previousKey: String, previousRank: Int, rank: Int): Int =
+        maxOf(rank,previous(connection,previousKey,previousRank))
+}

@@ -61,6 +61,12 @@ class LiveGuard283PolicyTest {
         val seen=(0..12).flatMap { r -> choose(r,enabled).also {assertEquals(8,it.size)} }.mapNotNull {BalancedNewsPolicy.category(it)}.toSet()
         assertEquals(enabled,seen)
     }
+    @Test fun noticeRanksNeverWeakenAndNewConnectionsResetEvenWithoutAnObservedDisconnect() {
+        assertEquals(2,ChargeNoticeRankPolicy.started("one","one:estimated",2,1))
+        assertEquals(3,ChargeNoticeRankPolicy.started("one","one:estimated",2,3))
+        assertEquals(0,ChargeNoticeRankPolicy.previous("two","one:confirmed",3))
+        assertEquals(1,ChargeNoticeRankPolicy.started("two","one:confirmed",3,1))
+    }
     @Test fun coordinatesRejectNonfiniteValues() {
         assertTrue(SavedRainWatches.validCoordinates(10.8,78.7))
         assertFalse(SavedRainWatches.validCoordinates(Double.NaN,78.7))

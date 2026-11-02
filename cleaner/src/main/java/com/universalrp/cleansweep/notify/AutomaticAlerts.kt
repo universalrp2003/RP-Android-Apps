@@ -136,8 +136,8 @@ object AutomaticAlerts {
                 val token = prefs.getString("voice_connection_token", "observed").orEmpty()
                 val key = "$token:$kind"
                 val rank = when(kind) { "confirmed" -> 3; "estimated" -> 2; "percentage" -> 1; else -> 0 }
-                val previousToken = prefs.getString("charge_283_spoken", "").orEmpty().substringBeforeLast(':')
-                val previousRank = if(previousToken == token) prefs.getInt("charge_283_rank",0) else 0
+                val previousRank = com.universalrp.cleansweep.data.ChargeNoticeRankPolicy.previous(token,
+                    prefs.getString("charge_283_spoken", "").orEmpty(),prefs.getInt("charge_283_rank",0))
                 if (rank > previousRank) {
                     val en = when (kind) {
                         "confirmed" -> "Battery reports full with sustained near-zero measured battery current. Unplug when convenient."
@@ -155,8 +155,11 @@ object AutomaticAlerts {
                             prefs.getString("voice_connection_token", "observed").orEmpty()==token && current?.powerConnected==true && current.percent==100 &&
                                 when(kind) { "confirmed" -> current.fullChargeConfirmed; "estimated" -> current.chargeEstimate.ready; else -> true }
                         },
-                        onStarted = { if(prefs.getString("voice_connection_token", "observed").orEmpty()==token)
-                            prefs.edit().putString("charge_283_spoken", key).putInt("charge_283_rank",maxOf(rank,prefs.getInt("charge_283_rank",0))).apply() })
+                        onStarted = { if(prefs.getString("voice_connection_token", "observed").orEmpty()==token) {
+                            val next=com.universalrp.cleansweep.data.ChargeNoticeRankPolicy.started(token,
+                                prefs.getString("charge_283_spoken", "").orEmpty(),prefs.getInt("charge_283_rank",0),rank)
+                            prefs.edit().putString("charge_283_spoken", key).putInt("charge_283_rank",next).apply()
+                        } })
                 }
             }
             if ((battery.temperatureC ?: -100f) >= Announcer.HOT_BATTERY_C)
