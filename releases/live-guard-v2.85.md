@@ -10,7 +10,7 @@
 
 ## Verification boundary
 
-Source work and regression additions are not proof that the reported phone ANR or live HD/network behavior is fixed. No ANR trace has been supplied. CI compilation/JVM/lint/signer/permission/normal-upgrade/native UI evidence must be recorded separately; physical-phone Read news, Stop and Wi-Fi/mobile recovery remain acceptance checks. No public publication or Play Protect clearance is implied.
+Source work and regression additions are not proof that the reported phone ANR or live HD/network behavior is fixed. No ANR trace has been supplied. Private CI41395967905 passed release compilation/lint,610 required JVM regressions, signer/full permission continuity, preserved-data2.82 update and native compact-tab/Expand/menu checks; physical-phone Read news, Stop and Wi-Fi/mobile recovery remain acceptance checks. No public publication or Play Protect clearance is implied.
 
 ## தமிழ்
 

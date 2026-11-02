@@ -18,12 +18,24 @@ Owner confirmed Android's actual “not responding / Wait / Close app” dialog 
 
 - Actual pages, HTTPS top-level scheme/host/userinfo/port allowlist; only known GDACS legacy HTTP links are upgraded before navigation. Lookalikes, arbitrary subdomains, credentials, active schemes and nonstandard ports stay blocked. TLS errors cancel; safe browsing on; no mixed content.
 - No native/JS bridge or injected scripts, API key, place coordinates or Android location. File/content access, geolocation, third-party cookies and multiple-window support off. Public site scripts/subresources are provider-owned and may contact their own vendors; not a full network sandbox. Websites receive ordinary browser connection metadata. Provider storage uses WebView's existing app-wide website store; no claim of separate cookie profiles between apps/windows. No raw owner evidence or credentials persisted in diagnostics.
-- Only bounded numeric page zoom is newly persisted; live URLs/map state remain session memory. Up to three lazy WebViews, destroyed on close. No new permissions, dependencies, unrelated app rebuild or publication.
+- Only bounded numeric page zoom is newly persisted; live URLs/map state remain session memory. Up to three lazy WebViews, destroyed on close. No new permissions/dependencies, sibling product changes or publication. The shared directory candidate version is aligned to 2.85; its publishedVersion remains 2.82, and accepted public APK bytes remain unchanged.
 - SACHET remains a separate explicit official-local-alert browser link, not a fourth tab.
 
 ## Verification status
 
-At source preparation: 309 Python source tests pass; 65 required JVM suites / 610 declarations configured, **not yet execution evidence**. CI release compilation, lint, exact signer/full permission continuity, same-key preserved-data upgrade from public 2.82 and native compact/tab/Expand/page-zoom-menu checks must pass before delivery. Native UI checks do not prove rendered-map accuracy or HD output. Physical phone Read news/Stop/network handover and provider-specific zoom behavior remain pending.
+**PASS: private verification run [41395967905](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41395967905), job125117239541, 13m40s.** Exact tested source `d4b49084aec222e7e83dd50dc6f98ee23600c2e3`; later documentation commits do not change the APK.
+
+- 309 Python source tests; **610 executed required JVM regressions /65 suites**, none missing/skipped; release compile/lint/sign PASS.
+- APK `CleanSweep-v2.85.apk`,2.85/code90,14,653,079 bytes; SHA-256 `84a36c0cc8973122cca069341a3b0bcb81eff6a2b5d932d8ec95657f85cb2f1f`.
+- Signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`; zero added/removed merged permissions versus public2.82. Same UID, data/preferences preserved, restart PASS for normal same-key2.82→2.85 update.
+- Native synthetic English UI PASS: opt-in Advanced/thresholds, place-first/home,60-minute lead, saved-place history; compact website-window controls, GDACS/IMD/Tomorrow.io tabs, Expand/Compact, page-zoom menu and Close. **Not** proof of actual provider map geometry, geographic-zoom persistence, chosen page-scale restoration on a phone, live API entitlement, audible HD output or ANR fix.
+- [Private artifact13120046127](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41395967905/artifacts/13120046127), `Live-Guard-2.85-signed-tested-candidate`, ZIP14,197,270 bytes, expires2December2026. Hash/bytes are CI evidence; no independent local APK download/hash.
+- [Machine-readable receipt](live-guard-2.85-candidate-verification.json). No physical-phone or Play Protect clearance claim. Public2.82/site/catalog unchanged; no publication.
+
+First attempted run41395837407 stopped before compilation: missing literal phone-test-status sentence and directory candidate version mismatch in source guards, both corrected. A later historical2.84 rerun41392195951 failed only collecting its first UI hierarchy (no file); the2.85 native collector now retries hierarchy collection a bounded three times and never reuses a stale dump. No install/data-reset workaround is used.
+
+**Remaining owner checks:** normal update from installed2.84 (do not uninstall); Read news while scrolling/back/Stop; actual Wi-Fi↔mobile HD output and latest diagnostics; provider-owned map controls and state through tabs/Expand. ANR trace/logcat, if the dialog repeats, is needed for a defensible specific diagnosis. No raw owner evidence is published.
+
 
 ## References consulted
 
