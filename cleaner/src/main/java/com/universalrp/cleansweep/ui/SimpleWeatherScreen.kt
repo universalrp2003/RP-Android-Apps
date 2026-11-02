@@ -170,15 +170,17 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                     Text(source + " · " + weatherClock(snapshot.fetchedAtMs), style = MaterialTheme.typography.bodySmall)
                     if (!fresh) Text(watchWords("Out of date—tap Check now. Rain timing is unavailable.", "பழைய தரவு; இப்போது சரிபார் என்பதை அழுத்தவும். மழை நேரம் கிடைக்கவில்லை."))
                     else {
-                        Text(watchWords("Now (provider estimate): ", "இப்போது (சேவை மதிப்பீடு): ") +
+                        Text(watchWords("At last check: ", "இறுதிச் சரிபார்ப்பில்: ") +
                             (snapshot.temperatureC?.let { String.format(Locale.US, "%.0f°C", it) } ?: "—") + " · " +
-                            (if (snapshot.currentPrecipMmPerHour >= .3) watchWords("Rain", "மழை") else watchWords("No rain reported", "மழை பதிவாகவில்லை")))
+                            (if (snapshot.currentPrecipMmPerHour > 0.0) watchWords("Rain", "மழை") else watchWords("No rain reported", "மழை பதிவாகவில்லை")))
                         Text(watchWords("Cloud ", "மேகம் ") + (snapshot.cloudCoverPercent?.let { "$it%" } ?: "—") + " · " +
                             watchWords("Wind gust ", "காற்று வீச்சு ") + (if (snapshot.currentWindGustKmh > 0) String.format(Locale.US, "%.0f km/h", snapshot.currentWindGustKmh) else "—"), style = MaterialTheme.typography.bodySmall)
-                        val wet = snapshot.timeline.firstOrNull { it.precipMmPerHour >= .3 && (!precise || it.minutesAhead <= snapshot.minuteHorizonMinutes) }
+                        val elapsedMinutes = (age / 60_000).toInt().coerceAtLeast(0)
+                        val remainingMinutes = (snapshot.minuteHorizonMinutes - elapsedMinutes).coerceAtLeast(0)
+                        val wet = snapshot.timeline.firstOrNull { it.minutesAhead >= elapsedMinutes && it.precipMmPerHour > 0.0 && (!precise || it.minutesAhead <= snapshot.minuteHorizonMinutes) }
                         if (precise) {
-                            Text(if (wet == null) watchWords("No rain forecast in the next ", "அடுத்த ") + snapshot.minuteHorizonMinutes + watchWords(" min", " நிமிடங்களில் மழை முன்னறிவிப்பு இல்லை")
-                                else if (wet.minutesAhead == 0) watchWords("Rain indicated now", "இப்போது மழை காட்டப்படுகிறது")
+                            Text(if (wet == null) watchWords("No rain forecast in the next ", "அடுத்த ") + remainingMinutes + watchWords(" min", " நிமிடங்களில் மழை முன்னறிவிப்பு இல்லை")
+                                else if (wet.minutesAhead <= elapsedMinutes) watchWords("Rain indicated now", "இப்போது மழை காட்டப்படுகிறது")
                                 else watchWords("Rain expected around ", "மழை எதிர்பார்க்கப்படும் நேரம் சுமார் ") + weatherClock(snapshot.fetchedAtMs + wet.minutesAhead * 60_000L),
                                 style = MaterialTheme.typography.titleMedium)
                         } else {
@@ -194,7 +196,7 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                         }
                         // A model's zero precipitation is not zero probability. No invented chance labels.
                         val later = snapshot.timeline.filter { it.minutesAhead > if (precise) snapshot.minuteHorizonMinutes else 0 }
-                        if (later.isNotEmpty()) Text(if (later.any { it.precipMmPerHour >= .3 }) watchWords("Later outlook: rain indicated in the available forecast.", "பிந்தைய முன்னறிவிப்பு: கிடைத்த தரவில் மழை காட்டப்படுகிறது.")
+                        if (later.isNotEmpty()) Text(if (later.any { it.precipMmPerHour > 0.0 }) watchWords("Later outlook: rain indicated in the available forecast.", "பிந்தைய முன்னறிவிப்பு: கிடைத்த தரவில் மழை காட்டப்படுகிறது.")
                             else watchWords("Later outlook: no rain indicated in the available forecast.", "பிந்தைய முன்னறிவிப்பு: கிடைத்த தரவில் மழை காட்டப்படவில்லை."), style = MaterialTheme.typography.bodySmall)
                     }
                 }
