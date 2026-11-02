@@ -204,7 +204,7 @@ def main():
             'The dedicated live-voice task is missing or gates the build')
     require(not (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text().count('@Test') == 0,
             'The live-network suite disappeared instead of being excluded')
-    require(sum(expected.values()) == 713 and len(expected) == 69, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 750 and len(expected) == 71, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)

@@ -70,9 +70,15 @@ object InsightsJson {
     }
     private fun pkg(value: ObservedPackage) = JSONObject().apply {
         put("pkg", value.packageName); put("label", value.label); put("installed", value.installedAtMs); put("updated", value.updatedAtMs); put("system", value.isSystem)
+        putNullable("identity", value.identity?.let { JSONObject().put("current", JSONArray(it.current.toList())).put("history", JSONArray(it.history.toList())).put("multiple", it.multiple) })
+        putNullable("installer", value.installer)
     }
     private fun readPackage(value: JSONObject) = ObservedPackage(value.getString("pkg"), value.getString("label"),
-        value.optLong("installed"), value.optLong("updated"), value.optBoolean("system"))
+        value.optLong("installed"), value.optLong("updated"), value.optBoolean("system"),
+        value.optJSONObject("identity")?.let { v ->
+            fun set(k: String): Set<String> { val a = v.getJSONArray(k); require(a.length() <= 32); return (0 until a.length()).map { a.getString(it) }.toSet() }
+            PackageIdentity(set("current"), set("history"), v.getBoolean("multiple")).also { require(it.valid()) }
+        }, if (value.isNull("installer")) null else value.optString("installer").takeIf { it.isNotBlank() })
     private fun snapshot(value: SecuritySnapshot) = JSONObject().apply {
         put("at", value.atMs); put("observations", array(value.observations.map(::observation))); put("packages", array(value.packages.map(::pkg)))
         put("unavailable", JSONArray(value.unavailableChecks.toList()))

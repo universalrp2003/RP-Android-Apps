@@ -101,8 +101,12 @@ def main():
     click('Turn off')
     assert value('news_disasters_287','enabled')=='false'
     assert value('feature_discovery_v1','disaster_news')=='true'
+    seek('New: security change review')
+    click('Not now')
+    assert value('feature_discovery_v1','security_review_changes')=='true'
+    assert value('liveguard_insights','security_history')=='false'
     screen('VOICE')
-    raw,_=dump();assert 'New: disaster updates with news' not in raw
+    raw,_=dump();assert 'New: disaster updates with news' not in raw and 'New: security change review' not in raw
     assert value('news_disasters_287','enabled')=='false'
     seek('News topics')
     click('Restore default topics')
@@ -151,6 +155,10 @@ def main():
     assert len(stored)==3 and stored[0]['id']==places[0]['id']
     assert adb('shell','pidof',PKG).strip()
     receipt['native_288_feature_notice_smoke']=True
+    screen('SECURITY')
+    click('App identity details')
+    seek('Current signer SHA-256:')
+    receipt['native_289_named_security_smoke']=True
     receipt['native_283_settings_smoke']=True
     receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')

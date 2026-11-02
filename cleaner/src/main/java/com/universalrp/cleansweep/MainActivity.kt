@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 AppRoot(vm)
-                com.universalrp.cleansweep.ui.FeatureUpdatesNotice()
+                com.universalrp.cleansweep.ui.FeatureUpdatesNotice(onChanged = vm::refreshFeatureChoices)
             }
         }
     }

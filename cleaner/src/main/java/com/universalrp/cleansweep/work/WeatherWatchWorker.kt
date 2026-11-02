@@ -127,7 +127,7 @@ class WeatherWatchWorker(
         private suspend fun executePlaces(context: Context, speakIfTriggered: Boolean): WeatherAlertDecision? {
             val ctx = context.applicationContext
             val tamil = Lang.languageIn(ctx) == AppLang.TA
-            val home = WeatherAlertStore.savedPlace(ctx) ?: return null // Confirm a fixed place first.
+            val home = WeatherAlertStore.savedPlace(ctx)?.takeIf { com.universalrp.cleansweep.data.NamedWeatherPlace.usable(it) } ?: return null // Confirm a fixed place first.
             data class Target(val id: String, val place: com.universalrp.weather.WeatherPlaceCandidate)
             val targets = mutableListOf(Target(com.universalrp.cleansweep.data.SimpleWeatherStore.HOME, home))
             targets += SavedRainWatches.read(ctx).filter { it.enabled }.map { Target(it.id, it.place) }
@@ -141,6 +141,7 @@ class WeatherWatchWorker(
             var homeDecision: WeatherAlertDecision? = null
             val fetched = mutableListOf<Pair<com.universalrp.weather.WeatherPlaceCandidate, com.universalrp.weather.WeatherNowcastSnapshot>>()
             for ((id, place) in targets) {
+                if (!com.universalrp.cleansweep.data.NamedWeatherPlace.usable(place)) continue
                 fun stillSelected(): Boolean = when (id) {
                     com.universalrp.cleansweep.data.SimpleWeatherStore.HOME -> WeatherAlertStore.savedPlace(ctx) == place
                     com.universalrp.cleansweep.data.SimpleWeatherStore.GPS -> SavedRainWatches.currentEnabled(ctx) &&
@@ -154,7 +155,7 @@ class WeatherWatchWorker(
                     val snapshot = shared ?: WeatherForecastClient.fetchNowcast(place.latitude, place.longitude, requestedKey, includeCyclone = false)
                     if (shared == null) fetched.add(place to snapshot)
                     if (!stillSelected() || WeatherAlertStore.readTomorrowKey(ctx) != requestedKey) continue
-                    val decision = com.universalrp.cleansweep.data.SimpleWeatherPolicy.evaluate(snapshot, place.name, before, SavedRainWatches.lead(ctx))
+                    val decision = com.universalrp.cleansweep.data.SimpleWeatherPolicy.evaluate(snapshot, com.universalrp.cleansweep.data.NamedWeatherPlace.label(place), before, SavedRainWatches.lead(ctx))
                     var memory = if (decision.shouldAnnounce) before else decision.updatedMemory
                     // Source, freshness and selected location are checked AGAIN when queued speech plays.
                     val relevant = { WeatherAlertStore.enabled(ctx) && stillSelected() && WeatherAlertStore.readTomorrowKey(ctx) == requestedKey &&

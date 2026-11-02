@@ -27,7 +27,7 @@ object NewsDisasterUpdates {
     private fun fingerprint(c: Context): String {
         val home = c.getSharedPreferences(WeatherAlertStore.PREFS, Context.MODE_PRIVATE)
         return listOf(prefs(c).getString("generation", ""), home.getString("saved_place_lat", ""),
-            home.getString("saved_place_lon", ""), SavedRainWatches.currentEnabled(c).toString()).joinToString("|")
+            home.getString("saved_place_lon", ""), home.getString("saved_place_name", ""), home.getString("saved_place_details", ""), SavedRainWatches.currentEnabled(c).toString()).joinToString("|")
     }
     private val inFlight = ConcurrentHashMap<String, String>()
     private val client by lazy { OkHttpClient.Builder().connectTimeout(3, TimeUnit.SECONDS).readTimeout(3, TimeUnit.SECONDS)
@@ -54,6 +54,7 @@ object NewsDisasterUpdates {
     }
     @android.annotation.SuppressLint("MissingPermission")
     internal fun origin(c: Context, now: Long): NewsDisasterPolicy.Origin? {
+        val home = WeatherAlertStore.savedPlace(c)?.takeIf { NamedWeatherPlace.usable(it) } ?: return null
         if (SavedRainWatches.currentEnabled(c) && WeatherPlaceResolver.hasLocationPermission(c) &&
             WeatherPlaceResolver.isDeviceLocationTurnedOn(c)) {
             val gps = runCatching {
@@ -64,11 +65,16 @@ object NewsDisasterUpdates {
                         it.elapsedRealtimeNanos > 0 && SystemClock.elapsedRealtimeNanos() - it.elapsedRealtimeNanos in 0..NewsDisasterPolicy.GPS_FRESH_MS * 1_000_000 &&
                         SavedRainWatches.validCoordinates(it.latitude, it.longitude) }.maxByOrNull { it.time }
             }.getOrNull()
-            if (gps != null) return NewsDisasterPolicy.Origin(gps.latitude, gps.longitude, true, gps.time)
+            val named = SimpleWeatherStore.read(c, SimpleWeatherStore.GPS)?.takeIf { result ->
+                result.snapshot?.let { now - it.fetchedAtMs in 0..SimpleWeatherPolicy.FRESH_MS } == true
+            }?.place?.takeIf { place ->
+                gps != null && NamedWeatherPlace.usable(place) &&
+                    com.universalrp.weather.WeatherForecastClient.haversineKm(place.latitude, place.longitude, gps.latitude, gps.longitude) <= 1.2
+            }
+            if (gps != null && named != null) return NewsDisasterPolicy.Origin(gps.latitude, gps.longitude, true, gps.time, NamedWeatherPlace.label(named))
         }
-        val home = WeatherAlertStore.savedPlace(c) ?: return null
         if (!SavedRainWatches.validCoordinates(home.latitude, home.longitude)) return null
-        return NewsDisasterPolicy.Origin(home.latitude, home.longitude, false, now)
+        return NewsDisasterPolicy.Origin(home.latitude, home.longitude, false, now, NamedWeatherPlace.label(home))
     }
     // Corrupt/oversized memory fails closed, rather than resetting completed events to zero.
     private fun counts(c: Context): JSONObject? = runCatching {

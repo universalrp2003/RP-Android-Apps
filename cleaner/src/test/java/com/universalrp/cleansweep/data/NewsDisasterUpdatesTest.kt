@@ -71,4 +71,8 @@ class NewsDisasterUpdatesTest {
     @Test fun oneMemoryRecordPerStormNotPerAdvisory() { enable();for(at in listOf(advisoryAt,advisoryAt+60_000,advisoryAt+120_000)){NewsDisasterUpdates.finish(c,cycloneDraft(cyclone(at))!!,true)};assertEquals(1,ledger().length());assertNull(cycloneDraft()) }
     @Test fun newestOfDuplicateStormEntriesWins() { enable();val d=reserve(listOf(cyclone(),cyclone(advisoryAt+3_600_000)))!!;assertEquals(advisoryAt+3_600_000,d.events.single().positionAt);NewsDisasterUpdates.finish(c,d,true);assertNull(cycloneDraft()) }
     @Test fun malformedCycloneLedgerDoesNotResetToUnheard() { enable();putLedger(JSONObject().put("TC:123",JSONObject().put("at",advisoryAt).put("done","true")));assertNull(cycloneDraft()) }
+
+    @Test fun unnamedSavedHomeMustBeConfirmedBeforeDisasterSpeech() { WeatherAlertStore.savePlace(c,home.copy(name="Home",details=""));assertNull(NewsDisasterUpdates.origin(c,now)) }
+    @Test fun savedReferenceTownIsReturnedWithoutMovingCoordinates() { WeatherAlertStore.savePlace(c,home.copy(name="Alangudi",details="Pudukkottai"));val o=NewsDisasterUpdates.origin(c,now)!!;assertEquals("Alangudi, Pudukkottai",o.placeName);assertEquals(home.latitude,o.lat,0.0) }
+
 }

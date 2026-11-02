@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
 
 /** First foreground opening after a feature arrives, not a hidden Settings-only control. */
 @Composable
-fun FeatureUpdatesNotice() {
+fun FeatureUpdatesNotice(onChanged: () -> Unit = {}) {
     val context = LocalContext.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var resumed by remember { mutableStateOf(lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) }
@@ -56,6 +56,7 @@ fun FeatureUpdatesNotice() {
                 enabled = state
                 error = !saved
                 if (saved) {
+                    onChanged()
                     val next = withContext(Dispatchers.IO) { FeatureDiscovery.next(context)?.let { it to FeatureDiscovery.enabled(context, it) } }
                     feature = next?.first; enabled = next?.second ?: false
                 }
@@ -64,6 +65,7 @@ fun FeatureUpdatesNotice() {
     }
     // Exhaustive compiled content: a future feature cannot accidentally inherit this description.
     val title = when (current) {
+        FeatureDiscovery.Feature.SECURITY_HISTORY -> watchWords("New: security change review", "புதிய வசதி: பாதுகாப்பு மாற்ற ஆய்வு")
         FeatureDiscovery.Feature.DISASTER_NEWS -> watchWords("New: disaster updates with news", "புதிய வசதி: செய்தியுடன் பேரிடர் அறிக்கைகள்")
     }
     val ask = current.mode == FeatureDiscovery.Mode.ASK_FIRST
@@ -72,6 +74,14 @@ fun FeatureUpdatesNotice() {
         title = { Text(title) },
         text = {
             when (current) {
+            FeatureDiscovery.Feature.SECURITY_HISTORY -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(watchWords("Review newly observed access, installer and signing-identity changes during security checks. Android-verified signing rotation is distinguished from an unexplained change; neither proves malware or safety. Powerful access combinations get a clear explanation.",
+                    "பாதுகாப்புச் சரிபார்ப்பில் புதிதாகக் கண்ட அணுகல், நிறுவிய மூலம், கையொப்ப அடையாள மாற்றங்களைப் பார்க்கலாம். Android உறுதிசெய்த கையொப்பச் சுழற்சி தனியாகக் காட்டப்படும்; மாற்றம் மட்டும் தீம்பொருள் அல்லது பாதுகாப்புச் சான்றல்ல. பல வலுவான அணுகல்கள் சேர்ந்திருந்தால் காரணம் விளக்கப்படும்."))
+                Text(watchWords("Enable stores up to 200 change events privately on this phone, including package/signing evidence. No APK upload, new permission, automatic app removal or continuous spying. First check establishes a baseline. Use Security → What changed? to review or turn recording off. Not now keeps your existing choice.",
+                    "இயக்கினால் தொகுப்பு/கையொப்பச் சான்றுடன் அதிகபட்சம் 200 மாற்றங்கள் இந்தப் போனில் மட்டும் சேமிக்கப்படும். APK பதிவேற்றம், புதிய அனுமதி, தானியங்கி செயலி நீக்கம் அல்லது தொடர்ந்த உளவு இல்லை. முதல் சரிபார்ப்பு அடிப்படை நிலை. பாதுகாப்பு → மாற்ற வரலாற்றில் பார்க்கவோ பதிவை அணைக்கவோ முடியும். இப்போது வேண்டாம் என்பது பழைய தேர்வைப் பாதுகாக்கும்."))
+                Text(if (enabled) watchWords("Local history is already enabled.", "உள்ளூர் வரலாறு ஏற்கெனவே இயக்கத்தில் உள்ளது.") else watchWords("Local history is currently off.", "உள்ளூர் வரலாறு தற்போது அணைக்கப்பட்டுள்ளது."))
+                if (error) Text(watchWords("Could not save. Please try again.", "சேமிக்க முடியவில்லை. மீண்டும் முயலவும்."))
+            }
             FeatureDiscovery.Feature.DISASTER_NEWS -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(watchWords("Hear the latest verified cyclone advisory once in the next completed news bulletin. Unchanged/older advisories are not repeated; newer pending details replace older ones. Floods and earthquakes still appear in three completed bulletins. Distances use a fresh enabled phone location, otherwise explicitly your saved home. These are dated reports, not live local danger warnings.",
                     "புதிய சரிபார்த்த புயல் அறிக்கை அடுத்த முழுமையான செய்தி வாசிப்பில் ஒருமுறை வரும். அதே அல்லது பழைய அறிக்கை மீண்டும் வராது; புதிய அறிக்கை பழைய காத்திருக்கும் விவரங்களை மாற்றும். வெள்ளம், நிலநடுக்கம் மூன்று முழுமையான வாசிப்புகளில் வரும். அனுமதித்த புதிய கைப்பேசி இருப்பிடம் இல்லையெனில் சேமித்த வீடு எனத் தெரிவிக்கும். இவை நேரமிட்ட அறிக்கைகள்; நேரலை உள்ளூர் அபாய எச்சரிக்கைகள் அல்ல."))

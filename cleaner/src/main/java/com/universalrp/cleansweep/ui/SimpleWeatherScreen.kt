@@ -56,13 +56,13 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
             Text(watchWords("Rain & safety", "மழை & பாதுகாப்பு"), Modifier.padding(12.dp), style = MaterialTheme.typography.titleLarge)
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (home == null) {
+            if (home == null || !NamedWeatherPlace.usable(home)) {
                 Text(watchWords("Choose your default place first", "முதலில் உங்கள் வழக்கமான இடத்தைத் தேர்ந்தெடுக்கவும்"), style = MaterialTheme.typography.titleMedium)
-                Text(watchWords("Save your town or PIN code. It stays fixed when you travel.", "ஊர் அல்லது அஞ்சல் குறியீட்டைச் சேமிக்கவும். பயணத்திலும் இந்த இடம் மாறாது."))
+                Text(watchWords("Confirm your town and district for rain and disaster reports. A street address is not needed; GPS never overwrites this saved place.", "மழை, பேரிடர் அறிக்கைகளுக்கு ஊர், மாவட்டத்தை உறுதிப்படுத்தவும். தெரு முகவரி தேவையில்லை; GPS இந்தச் சேமித்த இடத்தை மாற்றாது."))
                 PlaceSearch(onSelect = { vm.selectWeatherPlace(it); revision++ })
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(watchWords("Home · ", "வழக்கமான இடம் · ") + home.name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    Text(watchWords("Home · ", "வழக்கமான இடம் · ") + NamedWeatherPlace.label(home), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                     TextButton(onClick = { editingHome = !editingHome }) { Text(watchWords("Change", "மாற்று")) }
                 }
                 if (editingHome) PlaceSearch(onSelect = { vm.selectWeatherPlace(it); editingHome = false; revision++ })

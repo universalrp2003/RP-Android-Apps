@@ -115,7 +115,9 @@ object SecurityHistoryRepo {
     @Synchronized fun setEnabled(context: Context, value: Boolean) {
         flags(context).edit().putBoolean("security_history", value).apply()
     }
-    fun packages(apps: List<AppRow>): List<ObservedPackage> = apps.map { ObservedPackage(it.pkg, it.label, it.firstInstallMs, it.updatedMs, it.isSystem) }
+    @Synchronized fun setEnabledDurably(context: Context, value: Boolean): Boolean =
+        flags(context).edit().putBoolean("security_history", value).commit()
+    fun packages(apps: List<AppRow>): List<ObservedPackage> = apps.map { ObservedPackage(it.pkg, it.label, it.firstInstallMs, it.updatedMs, it.isSystem, it.identity, it.installer) }
     @Synchronized fun record(context: Context, report: SecurityReport, apps: List<AppRow>) {
         if (!enabled(context)) return
         cache = SecurityHistoryPolicy.observe(load(context), SecurityHistoryPolicy.snapshot(report, packages(apps)))

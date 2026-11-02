@@ -222,6 +222,8 @@ object SecuritySettingsRoutes {
             "usage_access" -> "Usage access → $selected → Permit usage access. Keep access for tools you intentionally use."
             "overlay" -> "Display over other apps → $selected. Android 11+ may open the app list; select this app. On MIUI/HyperOS it may be under Apps → Manage apps → app → Other permissions."
             "sms_readers", "banking_sms_readers" -> "This app's own permission page → $selected → Permissions → SMS. The button opens that app's page, not a list of other apps and not the ROM's global permission hub; if your ROM opens something else, use this manual path. Revoke only if unnecessary; verified messaging, banking and UPI apps may need it. On MIUI/HyperOS choose Apps → Manage apps → the app → App permissions. On ColorOS choose Settings → Apps → App management → the app → Permissions."
+            "access_combo_overlay" -> "App info → $selected → review Accessibility and Display over other apps. These are separate Android pages; do not disable an assistive tool you need without checking."
+            "access_combo_installer" -> "App info → $selected → review Notification access and Install unknown apps. Review whether both are expected; no permission is changed automatically."
             "app_info", "sideloaded", "odd_installer", "root_tools" -> "App info → $selected. Verify its source and purpose; uninstall only if you recognise it as unwanted."
             "facebook_stubs" -> "App info → $selected → Disable, if available and you do not need it. Do not remove unrelated system components."
             "no_lock" -> "Security / Passwords and security → Screen lock → set a PIN, pattern or password."

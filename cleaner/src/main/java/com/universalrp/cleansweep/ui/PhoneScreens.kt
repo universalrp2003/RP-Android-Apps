@@ -438,6 +438,7 @@ private fun InfoRow(label: String, value: String) {
 
 @Composable
 fun SecurityScreen(state: UiState, vm: MainViewModel) {
+    var identities by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         if (state.securityReport == null) vm.loadSecurity()
     }
@@ -489,10 +490,30 @@ fun SecurityScreen(state: UiState, vm: MainViewModel) {
                         if (previous.isFuture(System.currentTimeMillis())) Text(tr("Phone clock changed; saved date may be ahead of now."), color = WarnAmber, style = MaterialTheme.typography.labelSmall)
                         TextButton(onClick = { vm.clearLastPermissionReview() }) { Text(tr("Clear last-review summary")) }
                     }
+                    Text(watchWords("Changed since the last comparable recorded check—not a live surveillance or malware verdict.", "கடைசி ஒப்பிடக்கூடிய பதிவுச் சரிபார்ப்பிலிருந்து கண்ட மாற்றங்கள்; நேரலைக் கண்காணிப்போ தீம்பொருள் தீர்ப்போ அல்ல."), style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = { identities = !identities }) { Text(watchWords("App identity details", "செயலியின் அடையாள விவரங்கள்")) }
                     TextButton(onClick = { vm.openInsights(InsightsTab.SECURITY_HISTORY) }) { Text(tr("What changed? Security timeline")) }
                     TextButton(onClick = { vm.openInsights(InsightsTab.ACTION_CHECKLIST) }) { Text(tr("Action checklist")) }
                     state.securityReadError?.let { Text(it, color = WarnAmber, style = MaterialTheme.typography.bodySmall) }
                     if (state.securityReport?.unavailableChecks?.isNotEmpty() == true) Text(tr("Some checks are unavailable. Missing observations are not proof of safety."), color = WarnAmber, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            if (identities) {
+                item(key = "identity_caution") { Text(watchWords("Android-reported evidence, not an identity registry or safety certificate. An installer name or familiar app label does not establish trust. Missing evidence is unavailable, not safe.", "Android வழங்கிய சான்று; அடையாளப் பதிவகமோ பாதுகாப்புச் சான்றிதழோ அல்ல. நிறுவிய மூலத்தின் பெயரோ பழக்கமான செயலிப் பெயரோ நம்பகத்தன்மையை நிரூபிக்காது. சான்று இல்லாவிட்டால் கிடைக்கவில்லை; பாதுகாப்பானது என்பதல்ல.")) }
+                items(state.appInventory?.rows.orEmpty(), key = { "identity:" + it.pkg }) { app ->
+                    PanelCard(Modifier.fillMaxWidth()) { Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Text(app.label, fontWeight = FontWeight.SemiBold)
+                        Text(app.pkg, style = MaterialTheme.typography.bodySmall)
+                        Text(watchWords("Reported installer: ", "குறிப்பிட்ட நிறுவல் மூலம்: ") + (app.installer ?: watchWords("Unavailable", "கிடைக்கவில்லை")))
+                        val identity = app.identity
+                        if (identity?.valid() != true) Text(watchWords("Signing evidence unavailable", "கையொப்பச் சான்று கிடைக்கவில்லை"), color = WarnAmber)
+                        else {
+                            Text(watchWords("Current signer SHA-256:", "தற்போதைய கையொப்ப SHA-256:"))
+                            identity.current.sorted().forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            Text(watchWords("Android-reported historical signer count: ", "Android குறிப்பிட்ட முந்தைய கையொப்ப எண்ணிக்கை: ") + (identity.history - identity.current).size)
+                            (identity.history - identity.current).sorted().forEach { Text(it, style = MaterialTheme.typography.bodySmall) }
+                        }
+                    } }
                 }
             }
             if (state.securityBusy) {

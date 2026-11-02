@@ -202,10 +202,10 @@ private fun LazyListScope.securityTimeline(state: UiState, vm: MainViewModel, on
                     SecurityChangeKind.REVIEW_CLEARED -> "Review acknowledgement removed"
                 }
                 Text(tr(label), color = AccentCyan, style = MaterialTheme.typography.labelMedium)
-                Text(event.title, fontWeight = FontWeight.SemiBold)
+                Text(tr(event.title), fontWeight = FontWeight.SemiBold)
                 event.appLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 event.packageName?.let { Notice(it) }
-                Notice(readingTime(event.atMs)); Notice(event.detail)
+                Notice(readingTime(event.atMs)); Notice(tr(event.detail))
             }
         }
     }

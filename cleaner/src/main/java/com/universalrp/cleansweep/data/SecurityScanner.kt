@@ -29,22 +29,6 @@ object SecurityScanner {
      */
     private const val ENABLED_NOTIFICATION_LISTENERS = "enabled_notification_listeners"
 
-    /** Accessibility services that belong to the phone itself. */
-    private val SYSTEM_ACCESSIBILITY = listOf(
-        "com.android.", "android.", "com.google.android.marvin", "com.google.android.accessibility",
-        "com.samsung.accessibility", "com.miui.accessibility", "com.oppo.", "com.coloros.",
-        "com.vivo.", "com.oneplus.", "com.huawei.", "com.transsion.",
-    )
-
-    private val KNOWN_STORES = listOf(
-        "vending", "packageinstaller", "galaxyapps", "appstore", "market", "appgallery",
-        "getapps", "huawei", "amazon", "aptoide", "samsung", "miui", "coloros", "vivo",
-        // v2.11: F-Droid and Aurora are legitimate stores, and Xiaomi's own store
-        // reports as com.xiaomi.discover — flagging them cried wolf on every phone
-        // that uses them.
-        "fdroid", "xiaomi", "aurora", "microsoft",
-    )
-
     /** App names that mean a root tool — word-boundary, so "Rootless" never matches. */
     private val ROOT_TOOL_NAME =
         Regex("(?i)\\broot\\b|rooted|magisk|supersu|kingroot|apatch|kernelsu")
@@ -82,7 +66,7 @@ object SecurityScanner {
         // ---------------------------------------------------- usability checks
         val accessibilityRead = enabledServices(context, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         if (accessibilityRead == null) unavailable += "accessibility"
-        val accessibility = accessibilityRead.orEmpty().filter { name -> SYSTEM_ACCESSIBILITY.none { name.startsWith(it) } }
+        val accessibility = accessibilityRead.orEmpty()
         if (accessibility.isNotEmpty()) {
             findings.add(
                 Finding(
@@ -90,8 +74,8 @@ object SecurityScanner {
                     title = "Accessibility services are switched on",
                     detail = "An accessibility service can read everything on your screen and tap " +
                         "buttons for you. Legitimate ones exist (screen readers, auto-clickers), but " +
-                        "malware loves this permission more than any other.",
-                    severity = Severity.HIGH,
+                        "review whether each service is expected. An enabled service alone is not proof of malware.",
+                    severity = Severity.MEDIUM,
                     count = accessibility.size,
                     samples = accessibility.map { serviceApp(context, it)?.label ?: it },
                     affectedApps = accessibility.mapNotNull { serviceApp(context, it) },
@@ -102,7 +86,7 @@ object SecurityScanner {
 
         val listenersRead = enabledServices(context, ENABLED_NOTIFICATION_LISTENERS)
         if (listenersRead == null) unavailable += "notification_listeners"
-        val listeners = listenersRead.orEmpty().filter { name -> SYSTEM_ACCESSIBILITY.none { name.startsWith(it) } }
+        val listeners = listenersRead.orEmpty()
         if (listeners.isNotEmpty()) {
             findings.add(
                 Finding(
@@ -283,8 +267,8 @@ object SecurityScanner {
                     id = "banking_sms_readers",
                     title = if (bankingSmsApps.size == 1) "1 banking/payment app has SMS permission"
                     else "${bankingSmsApps.size} banking/payment apps have SMS permission",
-                    detail = "Banking & UPI payment apps legitimately use SMS for SIM verification and OTPs. Kept under weekly reminder check.",
-                    severity = Severity.INFO,
+                    detail = "The name resembles a banking/payment app, but a name does not verify its identity. Review the exact package, signer and granted SMS access; some genuine apps need this for verification.",
+                    severity = Severity.MEDIUM,
                     count = bankingSmsApps.size,
                     samples = bankingSmsApps.map { it.label },
                     affectedApps = bankingSmsApps.map { FindingApp(it.label, it.pkg) },
@@ -312,8 +296,7 @@ object SecurityScanner {
 
         val suspiciousInstallers = apps.filter { app ->
             if (app.isSystem || app.installer == null) return@filter false
-            val lower = app.installer.lowercase()
-            KNOWN_STORES.none { lower.contains(it) }
+            !BloatRules.isTrustedInstaller(app.installer)
         }
         if (suspiciousInstallers.isNotEmpty()) {
             findings.add(
@@ -323,7 +306,7 @@ object SecurityScanner {
                     else "${suspiciousInstallers.size} apps came from an unusual installer",
                     detail = "The installer package is the app that put this one on your phone. " +
                         "Browser or file-manager installs show up here. The Play Store, " +
-                        "F-Droid, Aurora and your phone maker's own store are never listed.",
+                        "Recognised installer identifiers are omitted from this heuristic; an identifier is not authenticated store identity or a safety verdict.",
                     severity = Severity.LOW,
                     count = suspiciousInstallers.size,
                     samples = suspiciousInstallers.map { "${it.label} ← ${it.installer}" },
@@ -409,6 +392,29 @@ object SecurityScanner {
                 severity = Severity.INFO,
             )
         )
+
+        unavailable += SecurityIdentityPolicy.unavailable(unavailable)
+        val accessPackages = accessibility.mapNotNull { ComponentName.unflattenFromString(it)?.packageName }.toSet()
+        val listenerPackages = listenersRead.orEmpty()
+            .mapNotNull { ComponentName.unflattenFromString(it)?.packageName }.toSet()
+        for ((id, _) in SecurityIdentityPolicy.combinations) {
+            if (id in unavailable) continue
+            val targets = apps.filter { app ->
+                val held = buildSet {
+                    if (app.pkg in accessPackages) add("accessibility")
+                    if (app.pkg in listenerPackages) add("notification_listeners")
+                    if ("android.permission.SYSTEM_ALERT_WINDOW" in app.grantedPermissions) add("overlay")
+                    if ("android.permission.REQUEST_INSTALL_PACKAGES" in app.grantedPermissions) add("install_other_apps")
+                }
+                id in SecurityIdentityPolicy.combinations(held)
+            }
+            if (targets.isNotEmpty()) findings += Finding(id, "Powerful access combination needs review",
+                if (id == "access_combo_overlay") "Observed accessibility plus draw-over-apps access in the same app. Useful legitimate tools may need this; it can also enable deceptive screens. This is not proof of malware."
+                else "Observed notification-reading plus APK-install access in the same app. Review whether both are expected. Android still normally requires install confirmation; this is not proof of malware.",
+                Severity.MEDIUM, targets.size, targets.map { it.label },
+                "Review the exact app and its special access in Android settings; do not disable an assistive tool you rely on without checking.",
+                targets.map { FindingApp(it.label, it.pkg) })
+        }
 
         kotlinx.coroutines.currentCoroutineContext().ensureActive()
         val score = score(findings)
