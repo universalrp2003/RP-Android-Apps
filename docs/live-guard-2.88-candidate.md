@@ -5,7 +5,7 @@ Owner corrected the hidden default-off switch and explicitly chose via clarifica
 - All13 topics by default, preserving customised selections.
 - Reusable future opt-in introductions: Enable / Not now; no silent activation of all settings. Advanced battery remains optional/off by default.
 
-Build-only private candidate for this follow-up. Public2.87/site/Store catalog and all sibling public APKs stay unchanged; no new publication marker. Three private screenshots are feedback only, not public assets or installed-hash/audible proof.
+Owner subsequently explicitly chose publish2.88 for everyone after automated checks. Only Live Guard may be published, using the exact verified artifact without rebuild. Until successful promotion public2.87/site/Store catalog and all sibling public APKs stay unchanged; no generic publication marker. Three private screenshots are feedback only, not public assets or installed-hash/audible proof.
 
 ## Boundaries
 Default changes apply to absent settings only. Existing enabled=false/true and generations, news language/custom subsets and stable three-read counters remain. Old empty topic set meant restore defaults and now resolves to all13; last chip cannot be deselected to create a misleading empty selection. All13 eligible topics still share the existing maximum-eight, quality/freshness, evidence and rotation policy.

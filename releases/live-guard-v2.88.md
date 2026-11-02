@@ -1,6 +1,6 @@
 # Live Guard 2.88 — discover new features after updating
 
-Private candidate; public2.87 stays unchanged until separately authorized promotion. No physical-device test of2.88 and no Play Protect clearance claim.
+Owner-authorized follow-up; public2.87 stays unchanged until successful verified exact-byte promotion. No physical-device test of2.88 and no Play Protect clearance claim.
 
 - Disaster updates with news are ON by default for new/updated users who never explicitly chose a value. A saved OFF choice is preserved. Master voice/news, call, quiet/silent-place and HD-only gates still apply; no standalone disaster alarm.
 - A one-time in-app notice automatically appears on the first foreground opening. It explains the feature, shows its actual current state and offers Got it / Turn off (or Enable if previously off). Acknowledgement persists across relaunches. No new notification or location permission and no repeated background popups.
@@ -12,4 +12,4 @@ Normal same-key update; do not uninstall or clear local data. Uninstalling may e
 
 ## தமிழ்
 
-புதிய வசதிகள் மறைந்து போகாமல், செயலியைப் புதுப்பித்தபின் முதன்முறை திறக்கும்போது விளக்கம் காட்டப்படும். செய்தியுடன் பேரிடர் அறிக்கைகள் இயல்பில் இயக்கத்தில் இருக்கும்; நீங்கள் முன்பு அணைத்திருந்தால் அந்தத் தேர்வு மாறாது. விளக்கத்திலேயே அணைக்கலாம். செய்தித் தலைப்புகள் இயல்பில் அனைத்தும் தேர்வு செய்யப்படும்; நீங்கள் மாற்றிய தலைப்புகளும் மொழியும் பாதுகாக்கப்படும். ஒரு வாசிப்பில் அதிகபட்சம் எட்டு தகுதியான செய்திகளே. மேம்பட்ட பேட்டரி சோதனைகள் தானாக இயக்கப்படாது. எதிர்கால விருப்ப வசதிகளுக்கு இயக்கு / இப்போது வேண்டாம் என்று கேட்கும் அமைப்பு சேர்க்கப்பட்டுள்ளது. இது தனிச் சோதனைப் பதிப்பு; தற்போதைய பொது வெளியீடு மாறாது. அதே கையொப்பப் புதுப்பிப்பைப் பயன்படுத்தவும்; நீக்கவோ உள்ளூர் தரவை அழிக்கவோ வேண்டாம்.
+புதிய வசதிகள் மறைந்து போகாமல், செயலியைப் புதுப்பித்தபின் முதன்முறை திறக்கும்போது விளக்கம் காட்டப்படும். செய்தியுடன் பேரிடர் அறிக்கைகள் இயல்பில் இயக்கத்தில் இருக்கும்; நீங்கள் முன்பு அணைத்திருந்தால் அந்தத் தேர்வு மாறாது. விளக்கத்திலேயே அணைக்கலாம். செய்தித் தலைப்புகள் இயல்பில் அனைத்தும் தேர்வு செய்யப்படும்; நீங்கள் மாற்றிய தலைப்புகளும் மொழியும் பாதுகாக்கப்படும். ஒரு வாசிப்பில் அதிகபட்சம் எட்டு தகுதியான செய்திகளே. மேம்பட்ட பேட்டரி சோதனைகள் தானாக இயக்கப்படாது. எதிர்கால விருப்ப வசதிகளுக்கு இயக்கு / இப்போது வேண்டாம் என்று கேட்கும் அமைப்பு சேர்க்கப்பட்டுள்ளது. தானியக்கச் சோதனைகள் வெற்றிபெற்ற அதே கோப்பு மட்டுமே பொது வெளியீடாகும்; மற்ற செயலிகள் மாறாது. அதே கையொப்பப் புதுப்பிப்பைப் பயன்படுத்தவும்; நீக்கவோ உள்ளூர் தரவை அழிக்கவோ வேண்டாம்.
