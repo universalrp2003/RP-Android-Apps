@@ -15,12 +15,20 @@ import kotlin.coroutines.resume
 object OfficialCycloneClient {
     private val client by lazy { OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
         .connectTimeout(2,TimeUnit.SECONDS).readTimeout(2,TimeUnit.SECONDS).callTimeout(3,TimeUnit.SECONDS).build() }
+    private data class Cached(val bytes: ByteArray, val etag: String?, val modified: String?)
+    private val cache = linkedMapOf<String,Cached>() // Public products only, at most2.5MB total.
+    private val textCache = linkedMapOf<String,String>()
     private fun get(url: String, deadline: Long, max: Int): ByteArray {
         require(OfficialCyclonePolicy.allowed(url))
         val left = deadline-SystemClock.elapsedRealtime(); require(left > 0)
-        val call = client.newCall(Request.Builder().url(url).header("User-Agent","RP-LiveGuard-OfficialCyclone/1.0").build())
+        val old = synchronized(cache) { cache[url] }
+        val request = Request.Builder().url(url).header("User-Agent","RP-LiveGuard-OfficialCyclone/1.0")
+        old?.etag?.let { request.header("If-None-Match",it) }
+        if(old?.etag == null) old?.modified?.let { request.header("If-Modified-Since",it) }
+        val call = client.newCall(request.build())
         call.timeout().timeout(minOf(left,3000),TimeUnit.MILLISECONDS)
         return call.execute().use { response ->
+            if(response.code==304 && old!=null) { require(old.bytes.size<=max); return@use old.bytes }
             require(response.isSuccessful)
             val body = response.body ?: error("No body")
             require(body.contentLength() <= max)
@@ -31,12 +39,19 @@ object OfficialCycloneClient {
                     if(n<0) break
                     out.write(buffer,0,n)
                 }
-                require(out.size() <= max); out.toByteArray()
+                require(out.size() <= max)
+                out.toByteArray().also { bytes -> synchronized(cache) {
+                    cache.remove(url)
+                    cache[url]=Cached(bytes,response.header("ETag")?.takeIf { it.length<=512 },response.header("Last-Modified")?.takeIf { it.length<=128 })
+                    while(cache.size>6 || cache.values.sumOf { it.bytes.size }>2_500_000) cache.remove(cache.keys.first())
+                } }
             }
         }
     }
     internal suspend fun pdfText(c: Context, bytes: ByteArray, timeoutMillis: Long = 3500): String? {
         if (timeoutMillis <= 0 || Build.VERSION.SDK_INT < 35 || bytes.size > 2_000_000 || !bytes.take(5).toByteArray().contentEquals("%PDF-".toByteArray())) return null
+        val hash = java.util.Base64.getEncoder().encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(bytes))
+        synchronized(textCache) { textCache[hash] }?.let { return it }
         val file = File.createTempFile("imd-", ".pdf", c.cacheDir)
         return try {
             file.writeBytes(bytes)
@@ -73,6 +88,10 @@ object OfficialCycloneClient {
                 }
             }
         } finally { file.delete() }
+        .also { text -> if(text!=null) synchronized(textCache) {
+            textCache[hash]=text
+            while(textCache.size>2) textCache.remove(textCache.keys.first())
+        } }
     }
     suspend fun fetch(c: Context, now: Long, deadline: Long): List<OfficialCycloneBulletin> = withContext(Dispatchers.IO) {
         val found = mutableListOf<OfficialCycloneBulletin>()

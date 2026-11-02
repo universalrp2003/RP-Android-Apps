@@ -54,7 +54,7 @@ object RoutineStatus {
         // WorkManager removes its foreground notification after doWork returns. Reconcile
         // remaining owners after teardown; generation checks prevent stop/restart races.
         if (owner.startsWith("news-worker:")) for (delay in listOf(250L, 1000L)) handler.postDelayed({
-            synchronized(this) { if (generation == token) publish(c.applicationContext) }
+            synchronized(this) { if (generation == token || owners.isNotEmpty()) publish(c.applicationContext) }
         }, delay)
     }
     @Synchronized fun publish(c: Context) {

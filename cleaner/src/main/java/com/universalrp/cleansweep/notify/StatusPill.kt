@@ -300,7 +300,7 @@ object StatusPill {
         meter.rxSpeed = com.universalrp.cleansweep.data.NetworkActivityPolicy.smooth(meter.rxSpeed, reading.rxSpeed)
         meter.txSpeed = com.universalrp.cleansweep.data.NetworkActivityPolicy.smooth(meter.txSpeed, reading.txSpeed)
         fun rate(value: Long) = if (value < 0) {
-            if (com.universalrp.cleansweep.data.Lang.isTamil) "கிடைக்கவில்லை" else "unavailable"
+            if (com.universalrp.cleansweep.data.Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA) "கிடைக்கவில்லை" else "unavailable"
         } else "$value B/s"
         meter.contentDescription = "D: ${rate(meter.rxSpeed)}; U: ${rate(meter.txSpeed)}"
         if (reading.showNetworkMeter) meter.invalidate()
