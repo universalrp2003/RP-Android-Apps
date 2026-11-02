@@ -100,6 +100,10 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Installer attribution is not a verified trust verdict." to "நிறுவல் மூலம் குறித்த தகவல் சரிபார்க்கப்பட்ட நம்பகத்தன்மைத் தீர்ப்பல்ல.",
+        "SMS access can expose messages and OTPs. Review the exact package and granted access; names alone do not verify identity, and legitimate verification or automation tools may need this." to "SMS அணுகலால் செய்திகள் மற்றும் OTP-கள் தெரியக்கூடும். செயலித் தொகுப்பையும் அனுமதிகளையும் ஆய்வு செய்யவும்; பெயர் மட்டும் அடையாளச் சான்றல்ல. உண்மையான உறுதிப்படுத்தல் அல்லது தானியக்கக் கருவிகளுக்கும் இது தேவைப்படலாம்.",
+        "SMS access can expose messages and OTPs. Review the exact package and granted access; names alone do not verify identity, and legitimate verification or automation tools may need this. Your default SMS app is not listed." to "SMS அணுகலால் செய்திகள் மற்றும் OTP-கள் தெரியக்கூடும். செயலித் தொகுப்பையும் அனுமதிகளையும் ஆய்வு செய்யவும்; பெயர் மட்டும் அடையாளச் சான்றல்ல. உண்மையான உறுதிப்படுத்தல் அல்லது தானியக்கக் கருவிகளுக்கும் இது தேவைப்படலாம். இயல்புநிலை SMS செயலி இங்கு பட்டியலிடப்படவில்லை.",
+        "Review whether SMS is needed for the feature you use. Revoke only after checking; permissions alone do not prove malware." to "நீங்கள் பயன்படுத்தும் வசதிக்கு SMS தேவையா என ஆய்வு செய்யவும். சரிபார்த்த பின்னரே அனுமதியை நீக்கவும்; அனுமதிகள் மட்டும் தீம்பொருள் சான்றல்ல.",
         "Powerful access combination needs review" to "வலுவான அணுகல்கள் சேர்ந்துள்ளதை ஆய்வு செய்யவும்",
         "Signing identity rotated" to "கையொப்ப அடையாளம் சுழற்சி முறையில் மாற்றப்பட்டது",
         "Signing identity changed" to "கையொப்ப அடையாளம் மாறியுள்ளது",

@@ -205,7 +205,9 @@ private fun LazyListScope.securityTimeline(state: UiState, vm: MainViewModel, on
                 Text(tr(event.title), fontWeight = FontWeight.SemiBold)
                 event.appLabel?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
                 event.packageName?.let { Notice(it) }
-                Notice(readingTime(event.atMs)); Notice(tr(event.detail))
+                Notice(readingTime(event.atMs))
+                Notice(tr(event.detail).replace("Installer attribution is not a verified trust verdict.",
+                    tr("Installer attribution is not a verified trust verdict.")))
             }
         }
     }

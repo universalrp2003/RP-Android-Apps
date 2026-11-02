@@ -160,9 +160,9 @@ def main():
     seek('Current signer SHA-256:')
     receipt['native_289_named_security_smoke']=True
     receipt['native_283_settings_smoke']=True
-    receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
+    receipt['native_283_scope']='Synthetic English UI, optional security history Not now preserves OFF, app signer detail expansion, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
-    print('::notice title=Live Guard 2.83 native settings::'+receipt['native_283_scope'])
+    print('::notice title=Live Guard 2.89 native settings::'+receipt['native_283_scope'])
 
 if __name__=='__main__':
     try:main()

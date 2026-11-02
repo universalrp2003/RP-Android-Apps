@@ -229,8 +229,8 @@ object SecurityScanner {
         // must disappear from this finding (v2.7 — \"revoked but still showing\").
         // v2.8: the default SMS app is supposed to read SMS — flagging it HIGH is a false
         // alarm, so it is excluded and named in the detail line instead.
-        // Also distinguish banking/UPI applications that legitimately need SMS to verify
-        // bank accounts and receive OTPs (tagged INFO/review rather than high-risk malware alarm).
+        // Labels are only a grouping aid, not identity evidence. Both groups get the same
+        // review severity; legitimate messaging, verification and automation tools may need SMS.
         val defaultSmsPkg = try { android.provider.Telephony.Sms.getDefaultSmsPackage(context) } catch (e: Exception) {
             unavailable += setOf("sms_readers", "banking_sms_readers"); null
         }
@@ -251,12 +251,12 @@ object SecurityScanner {
                     id = "sms_readers",
                     title = if (unexpectedSmsApps.size == 1) "1 non-banking app can read your SMS"
                     else "${unexpectedSmsApps.size} non-banking apps can read your SMS",
-                    detail = "SMS is where OTPs arrive. Only your messaging app and trusted banking apps should need this.$defaultNote",
-                    severity = Severity.HIGH,
+                    detail = "SMS access can expose messages and OTPs. Review the exact package and granted access; names alone do not verify identity, and legitimate verification or automation tools may need this.$defaultNote",
+                    severity = Severity.MEDIUM,
                     count = unexpectedSmsApps.size,
                     samples = unexpectedSmsApps.map { it.label },
                     affectedApps = unexpectedSmsApps.map { FindingApp(it.label, it.pkg) },
-                    fixHint = "Revoke SMS permission for anything that is not your SMS app.",
+                    fixHint = "Review whether SMS is needed for the feature you use. Revoke only after checking; permissions alone do not prove malware.",
                 )
             )
         }
@@ -305,7 +305,7 @@ object SecurityScanner {
                     title = if (suspiciousInstallers.size == 1) "1 app came from an unusual installer"
                     else "${suspiciousInstallers.size} apps came from an unusual installer",
                     detail = "The installer package is the app that put this one on your phone. " +
-                        "Browser or file-manager installs show up here. The Play Store, " +
+                        "Browser or file-manager installs show up here. " +
                         "Recognised installer identifiers are omitted from this heuristic; an identifier is not authenticated store identity or a safety verdict.",
                     severity = Severity.LOW,
                     count = suspiciousInstallers.size,
