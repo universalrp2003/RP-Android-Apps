@@ -1,6 +1,20 @@
 # CI build failure excerpt
 
-_No Gradle build log: the failure happened before or after the build._
+## Kotlin / resource errors
+```
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:79 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:92:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:93:21 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:84:79 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:92:55 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/src/main/java/com/universalrp/cleansweep/ui/WeatherMapPanel.kt:93:21 Argument type mismatch: actual type is 'Float', but 'Double' was expected.
+```
+
+## Gradle summary
+```
+```
 (no failing tests recorded in the JUnit XML)
 
 ## Store artwork step
