@@ -30,6 +30,9 @@ class LiveGuard283ForecastTest {
         }
         try {WeatherForecastClient.httpGet("https://api.met.no/",mapOf("apikey" to "synthetic-not-a-secret"));fail("Credential forwarding accepted")} catch(_:IllegalArgumentException) {}
     }
+    @Test(expected=IllegalArgumentException::class) fun outdatedMetModelIssueIsNotFreshBecauseItWasJustDownloaded() {
+        WeatherForecastClient.parseMetNorwayResponse("""{"properties":{"meta":{"updated_at":"2020-01-01T00:00:00Z"},"timeseries":[]}}""",1_760_000_000_000L)
+    }
     @Test fun cycloneDatesAndStaleRecordsCannotInventCurrentStorm() {
         assertNull(CycloneWatchData.time("not dated"))
         assertNull(CycloneWatchData.movement(listOf(

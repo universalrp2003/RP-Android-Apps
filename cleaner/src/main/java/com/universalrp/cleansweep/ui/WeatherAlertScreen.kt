@@ -342,7 +342,8 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
 
                     if (w.lastCheckedAtMs > 0L) {
                         HorizontalDivider(color = OutlineC.copy(alpha = 0.4f))
-                        val checkedTime = WeatherAlertPolicy.format12HourClock(w.lastCheckedAtMs)
+                        val checkedTime = java.time.Instant.ofEpochMilli(w.lastCheckedAtMs).atZone(java.time.ZoneId.systemDefault())
+                            .format(java.time.format.DateTimeFormatter.ofPattern("dd MMM, hh:mm a"))
                         val sourceLabel = when(w.source) {
                             WeatherSourceKind.TOMORROW_IO_1M -> watchWords("Tomorrow.io minute forecast", "Tomorrow.io நிமிட முன்னறிவிப்பு")
                             WeatherSourceKind.TOMORROW_FORECAST -> watchWords("Tomorrow.io hourly model forecast", "Tomorrow.io மணிநேர மாதிரி முன்னறிவிப்பு")
@@ -638,7 +639,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                             )
                             Text(
                                 if (w.hasTomorrowKey) {
-                                    tr("Personal Tomorrow.io key active (encrypted on phone)")
+                                    watchWords("Personal key saved, not proof of access (encrypted on phone)", "தனிப்பட்ட விசை சேமிக்கப்பட்டது; அணுகல் சான்றல்ல (போனில் மறையாக்கம்)")
                                 } else {
                                     watchWords("Authenticated provider access required; plans and coverage vary. Keyless access is for evaluation, not production.", "வழங்குநரின் விசை அணுகல் தேவை; திட்டமும் தரவுப் பரப்பும் மாறும். விசையற்ற அணுகல் சோதனைக்கானது; தொடர்ந்த பயன்பாட்டிற்கு அல்ல.")
                                 },

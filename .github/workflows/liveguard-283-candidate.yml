@@ -92,4 +92,5 @@ jobs:
           path: |
             cleaner/build/reports/tests/
             cleaner/build/reports/lint-results-release.html
+            ${{ runner.temp }}/health-cleaner/last-native-ui.xml
           retention-days: 7

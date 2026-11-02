@@ -22,18 +22,29 @@ def dump():
     return raw,list(ET.fromstring(raw).iter('node'))
 
 def seek(label):
-    for _ in range(32):
+    # Small overlap matters: a large swipe can skip a short control between two tall cards.
+    last=None;unchanged=0
+    for attempt in range(65):
         raw,nodes=dump()
-        match=next((n for n in nodes if label in n.get('text','') and n.get('bounds')!='[0,0][0,0]'),None)
-        if match is not None:
-            (ROOT/'last-native-ui.xml').write_text(raw)
-            return match
-        adb('shell','input','swipe','540','1600','540','620','180')
+        (ROOT/'last-native-ui.xml').write_text(raw)
+        visible=[]
+        for node in nodes:
+            bounds=list(map(int,re.findall(r'-?\d+',node.get('bounds',''))))
+            if len(bounds)==4 and bounds[3]>bounds[1] and bounds[1]>=80 and bounds[3]<=1830:
+                visible.append(node)
+        match=next((n for n in visible if label in n.get('text','')),None)
+        if match is not None:return match
+        signature=tuple(n.get('text','') for n in visible if n.get('text'))
+        unchanged=unchanged+1 if signature==last else 0;last=signature
+        if unchanged>=3:
+            break
+        adb('shell','input','swipe','540','1350','540','930','220')
+    print('::error title=Visible native page::'+repr([n.get('text') for n in visible if n.get('text')])[-8000:].replace('%','%25').replace('\n','%0A'))
     raise AssertionError('Native control not found: '+label)
 
 def click(label):
     node=seek(label)
-    x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds','')))
+    x1,y1,x2,y2=map(int,re.findall(r'-?\d+',node.get('bounds','')))
     adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
     time.sleep(.25)
 

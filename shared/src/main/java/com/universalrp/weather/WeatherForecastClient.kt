@@ -314,6 +314,8 @@ object WeatherForecastClient {
     ): WeatherNowcastSnapshot {
         val root = JSONObject(jsonText)
         val series = root.getJSONObject("properties").getJSONArray("timeseries")
+        val issued=parseTimestampMs(root.getJSONObject("properties").optJSONObject("meta")?.opt("updated_at"))
+        require(issued!=null && nowMs-issued in -300_000L..43_200_000L) { "Stale or undated MET Norway model issue" }
         val samples = mutableListOf<MinuteRainSample>()
         var firstTemp: Double? = null
         var firstCloud: Int? = null

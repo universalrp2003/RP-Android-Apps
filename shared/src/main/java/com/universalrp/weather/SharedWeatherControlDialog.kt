@@ -181,7 +181,7 @@ fun SharedWeatherControlDialog(
         "Tomorrow.io முன்னறிவிப்பு (தனிப்பட்ட விசை)",
     )
     val tomorrowSub = if (state.hasTomorrowKey) {
-        bi(tamil, "Personal Tomorrow.io key active (Keystore encrypted)", "Tomorrow.io விசை செயலில் உள்ளது (பாதுகாப்பாகச் சேமிக்கப்பட்டது)")
+        bi(tamil, "Personal key saved, not proof of access (Keystore encrypted)", "விசை சேமிக்கப்பட்டது; அணுகல் சான்றல்ல (பாதுகாப்பாகச் சேமிக்கப்பட்டது)")
     } else {
         bi(
             tamil,
