@@ -1,3 +1,13 @@
+# Live Guard2.89 — corrected three-segment meter published
+
+Owner rejected the single dim LEDs and requested restoring the previous three D/U segments, reporting other functions working and explicitly approving build/publication. This supersedes the earlier HOLD and single-LED approval. No raw screenshots published; limited prior-candidate acceptance is not a hash-matched corrected-phone/audio/all-feature proof.
+
+Corrected source38b469547c0f23a0ff0e7fd3899ae6048bdc60dd, CI41456236839/job125313509970 PASS:790 required JVM/74suites,327Python, build/lint/sign/full permission continuity/exact2.88 same-key same-UID saved-data update/native UI and all4 required Android35 tests, including six restored segments active/idle. Promotion41458813358/job125322280250 passed expanded333 Python/source boundary checks and published exact artifact13148701222 without rebuilding. APK14,719,995B/SHA2561eb064d81102c7cc32fb1cb9ea386b6cb3aa235900b1c119b1783b68f342c698, release431535692/asset701965379. Prior public assets unchanged. See [publication receipt](live-guard-2.89-publication-receipt.json). Site/main metadata follows this exact release; verify main Pages deployment separately.
+
+Single-LED candidate13144399017 is superseded and must not be promoted. Earlier records below are historical; their HOLD/single-LED wording does not describe the corrected public artifact. IMD PDF live-layout/Android35+ limits and no physical/audio/local-danger-accuracy/PlayProtect proof remain.
+
+## Historical implementation and verification record
+
 # Live Guard2.89/code94 — owner-requested clarification and advisory freshness
 
 ## Latest private verification — approved additions passed

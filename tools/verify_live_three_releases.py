@@ -66,7 +66,8 @@ def main():
             time.sleep(10)
     health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
     store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
-    checks = [('Tamilan-Store-v0.9.apk', store),
+    checks = [('CleanSweep-v2.89.apk', json.loads((ROOT/'docs/live-guard-2.89-publication-receipt.json').read_text())),
+              ('Tamilan-Store-v0.9.apk', store),
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
               ('CleanSweep-v2.82.apk', health['apps']['cleaner']),
               ('Elderly-Launcher-v1.7.apk', json.loads((ROOT/'docs/launcher-1.7-publication.json').read_text()))]

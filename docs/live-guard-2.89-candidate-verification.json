@@ -70,7 +70,7 @@
   "hash_evidence": "CI inspection/annotations and GitHub artifact API metadata; APK/archive not independently downloaded or hashed in Arena. Artifact/log blob host is inaccessible here.",
   "publication_authorized": true,
   "publication_hold": false,
-  "published": false,
+  "published": true,
   "main_merged": false,
   "website_or_live_catalog_promoted": false,
   "previous_verified_source": "f9fc4301def1e19fa6e78636a3e57ad5477f6fe5",
@@ -97,5 +97,8 @@
     "User-selected APK review",
     "Share-to-check links"
   ],
-  "native_restored_six_segment_rendering_passed": true
+  "native_restored_six_segment_rendering_passed": true,
+  "public_release_id": 431535692,
+  "public_asset_id": 701965379,
+  "publication_receipt": "live-guard-2.89-publication-receipt.json"
 }
