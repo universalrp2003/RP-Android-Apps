@@ -1,5 +1,11 @@
 # Verified published Android APK digests
 
+## Live Guard2.88 — discoverable defaults, exact verified bytes
+
+Owner explicitly authorized disaster-news default ON with one-time notice (preserve explicit OFF), all13 default topics (preserve custom/language), future opt-in introductions and publication after checks. [Signed run41414340270](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41414340270)/job125174416840 passed689 required JVM tests/69suites, build/lint/sign/full-permission continuity, normal public2.87 saved-data update and native notice/Turn off/persistent acknowledgement/relaunch/all13 reset plus accepted controls. Exact sourceec25204b64fdce2e83ed83e3e50c7a66caf9c882/artifact13127658323/archiveadb33b4aa7026d127f911b0719d37c2062360d7288838bf5b0920a3dd6326ccf.
+
+[Publisher41416558931](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41416558931)/job125181717278 verified APK identity2.88/code93/min26/nondebuggable, established signer7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d and unchanged permissions; draft/public bytes re-downloaded and hashed. Public release431241194/asset701116629 at2026-11-02T08:55:53Z: **14,680,987 bytes**, SHA256 `87be21168e9f7d619ee8709163f632ebfd79b1a731d2b45e8b4d6618ca43a70c`. No rebuild/overwrite; prior public assets unchanged. [Receipt](live-guard-2.88-publication-receipt.json). No new physical/audible/provider-accuracy/Play Protect proof. Normal same-key update; do not uninstall/clear data. Store0.9 source/embedded2.82 fallback and all sibling APKs unchanged; only Live Guard website/live catalog metadata advances.
+
 ## Ramesh Radio1.31 — exact owner-accepted candidate published
 
 Published by [promotion41207596858](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41207596858), public release429967173 / asset695516209, published2026-10-31T13:53:48Z. `Ramesh-Radio-v1.31.apk`: **15,179,972 bytes**, SHA-256 `fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22`. [Public release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.31).

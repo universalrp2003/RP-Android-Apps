@@ -1,6 +1,6 @@
 # Live Guard 2.88 — discover new features after updating
 
-Owner-authorized follow-up; public2.87 stays unchanged until successful verified exact-byte promotion. No physical-device test of2.88 and no Play Protect clearance claim.
+Owner-authorized follow-up published as the exact verified APK; historical2.87 and sibling public apps remain unchanged. No physical-device test of2.88 and no Play Protect clearance claim.
 
 - Disaster updates with news are ON by default for new/updated users who never explicitly chose a value. A saved OFF choice is preserved. Master voice/news, call, quiet/silent-place and HD-only gates still apply; no standalone disaster alarm.
 - A one-time in-app notice automatically appears on the first foreground opening. It explains the feature, shows its actual current state and offers Got it / Turn off (or Enable if previously off). Acknowledgement persists across relaunches. No new notification or location permission and no repeated background popups.
@@ -9,6 +9,10 @@ Owner-authorized follow-up; public2.87 stays unchanged until successful verified
 - Three-read disaster counters, saved home, optional GPS, weather, accepted maps/formatting and battery defaults remain. Advanced battery checks are NOT enabled automatically.
 
 Normal same-key update; do not uninstall or clear local data. Uninstalling may erase local data and discovery/counter history.
+
+## Verified publication
+
+689 required JVM tests/69suites, signed build/lint, unchanged full permissions, same-key2.87 preserved-data update and native notice/off/acknowledgement/all-topics checks passed in41414340270. Exact tested artifact13127658323/sourceec25204b64fdce2e83ed83e3e50c7a66caf9c882 promoted without rebuild by41416558931. APK14,680,987 bytes; SHA256 `87be21168e9f7d619ee8709163f632ebfd79b1a731d2b45e8b4d6618ca43a70c`. No new physical-device/audible/provider-accuracy proof.
 
 ## தமிழ்
 
