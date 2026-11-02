@@ -122,3 +122,19 @@ fun BatteryCompletionReason(battery: BatteryReading) {
     }
     Text(watchWords(en,ta)+" · ${battery.chargeEstimate.elapsedSeconds}s",style=MaterialTheme.typography.bodySmall)
 }
+
+/** Separate opt-in; changing it withdraws any already-prepared bulletin immediately. */
+@Composable
+fun NewsDisasterSettings() {
+    val context = LocalContext.current
+    var enabled by remember { mutableStateOf(NewsDisasterUpdates.enabled(context)) }
+    Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        Column(Modifier.weight(1f)) {
+            Text(watchWords("Disaster updates with news", "செய்தியுடன் பேரிடர் அறிக்கைகள்"))
+            Text(watchWords("Each nearby cyclone, flood or earthquake: once in the next 3 completed news reads. Fresh phone location if enabled, otherwise explicitly saved home. Dated report values, not local danger predictions.",
+                "அருகிலுள்ள புயல், வெள்ளம், நிலநடுக்கம்: அடுத்த 3 முழுமையான செய்தி வாசிப்புகளில் தலா ஒருமுறை. அனுமதித்த புதிய கைப்பேசி இருப்பிடம்; இல்லையெனில் சேமித்த வீடு எனத் தெரிவிக்கப்படும். நேரமிட்ட அறிக்கையே; உள்ளூர் அபாயக் கணிப்பு அல்ல."),
+                style = MaterialTheme.typography.labelSmall)
+        }
+        Switch(enabled, { enabled = it; NewsDisasterUpdates.setEnabled(context, it) })
+    }
+}

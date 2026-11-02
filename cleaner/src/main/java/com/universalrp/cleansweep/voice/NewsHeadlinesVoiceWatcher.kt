@@ -282,30 +282,41 @@ object NewsHeadlinesVoiceWatcher {
         return batch.size
     }
 
-    private suspend fun playBatch(app: Context, batch: List<NewsHeadline>, lang: AppLang, manual: Boolean = false): Boolean {
+    private suspend fun playBatch(app: Context, batch: List<NewsHeadline>, lang: AppLang, manual: Boolean = false): Boolean = withContext(Dispatchers.IO) {
         val fingerprint=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(app)
-        if(batch.any {it.preferenceFingerprint.isNotEmpty() && it.preferenceFingerprint!=fingerprint}) return false
+        if(batch.any {it.preferenceFingerprint.isNotEmpty() && it.preferenceFingerprint!=fingerprint}) return@withContext false
         val tamil = lang == AppLang.TA
         val lead = prependWeatherSafetyLead(app, "", tamil)
-        val plan = NewsPlaybackPlan.build(batch, tamil, lead)
-        if (plan.isEmpty()) return false
-        val spoken = Announcer.speakNewsBulletinAndWait(
-            context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,
-            newsParts = plan.map { it.text },
-            preferenceFingerprint = fingerprint,
-            onStarted = { recordAudibleActivity(app) },
-            onPartCompleted = { part ->
-                val now = System.currentTimeMillis()
-                recordAudibleActivity(app, now)
-                plan.getOrNull(part)?.completedHeadline?.let { index ->
-                    val item = batch[index]
-                    if (NewsPolicy.isToday(item.publishedAtMs, now, ZoneId.systemDefault()))
-                        markHeadlinesAnnounced(app, listOf(item), tamil, now, completeBulletin = false)
-                }
-            },
-        )
-        if (spoken) markHeadlinesAnnounced(app, batch, tamil)
-        return spoken
+        if (batch.isEmpty()) return@withContext false
+        val updates = com.universalrp.cleansweep.data.NewsDisasterUpdates
+        val draft = updates.prepare(app)?.let { updates.reserve(app, it.events, it.origin, System.currentTimeMillis(), it.fingerprint) }
+        var completed = false
+        try {
+            val plan = NewsPlaybackPlan.build(batch, tamil, lead) +
+                draft?.text(tamil)?.let { text -> NewsSpeechSanitizer.splitForHd(text).map { NewsPlaybackPlan.Part(it) } }.orEmpty()
+            if (plan.isEmpty()) return@withContext false
+            val spoken = Announcer.speakNewsBulletinAndWait(
+                context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,
+                newsParts = plan.map { it.text },
+                preferenceFingerprint = fingerprint,
+                stillRelevant = draft?.let { { updates.relevant(app, it) } },
+                onStarted = { recordAudibleActivity(app) },
+                onPartCompleted = { part ->
+                    val now = System.currentTimeMillis()
+                    recordAudibleActivity(app, now)
+                    plan.getOrNull(part)?.completedHeadline?.let { index ->
+                        val item = batch[index]
+                        if (NewsPolicy.isToday(item.publishedAtMs, now, ZoneId.systemDefault()))
+                            markHeadlinesAnnounced(app, listOf(item), tamil, now, completeBulletin = false)
+                    }
+                },
+            )
+            completed = spoken
+            if (spoken) markHeadlinesAnnounced(app, batch, tamil)
+            spoken
+        } finally {
+            if (draft != null) updates.finish(app, draft, completed)
+        }
     }
 
     /**

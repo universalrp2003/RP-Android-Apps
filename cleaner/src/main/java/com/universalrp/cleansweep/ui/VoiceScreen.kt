@@ -213,6 +213,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     }
                     NewsBulletinStatus()
                     NewsTopicSettings { vm.stopSpeakingNow() }
+                    NewsDisasterSettings()
                 }
             }
 

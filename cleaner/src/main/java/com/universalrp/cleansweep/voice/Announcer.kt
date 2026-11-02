@@ -771,6 +771,7 @@ object Announcer {
         newsParts: List<String> = emptyList(),
         onPartCompleted: ((Int) -> Unit)? = null,
         preferenceFingerprint: String? = null,
+        stillRelevant: (() -> Boolean)? = null,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
         // timeout when Android already reports no internet. Automatic news can still wait
@@ -791,6 +792,7 @@ object Announcer {
             newsPreferenceFingerprint = preferenceFingerprint,
             newsParts = newsParts,
             onPartCompleted = onPartCompleted,
+            stillRelevant = stillRelevant,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
