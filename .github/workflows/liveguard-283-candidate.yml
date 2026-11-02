@@ -1,4 +1,6 @@
 name: Live Guard 2.88 signed upgrade and owner-requested regressions (no publication)
+# Metadata integration retry: run41416926897 failed fetching Robolectric Android14,
+# before futureNotNowDoesNotActivate executed. App/test sources and all gates unchanged.
 on:
   push:
     branches: ["arena/215d8bab-rp-android-apps"]
