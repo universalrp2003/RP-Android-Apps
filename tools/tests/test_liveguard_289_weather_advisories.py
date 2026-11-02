@@ -67,3 +67,5 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
         guarded=post.split('synchronized(RoutineStatus)',1)[1]
         self.assertLess(post.index('val prepared = build'),post.index('RoutineStatus.acquire'))
         self.assertLess(guarded.index('if (!stillCurrent()) return'),guarded.index('RoutineStatus.acquire'))
+        worker=(JAVA/'work/ChargerWatchWorker.kt').read_text()
+        self.assertIn('} finally {\n        com.universalrp.cleansweep.notify.RoutineStatus.workerFinished(applicationContext)',worker)

@@ -49,11 +49,17 @@ object RoutineStatus {
     @Synchronized fun release(c: Context, owner: String) {
         if (owners.remove(owner) == null) return
         if (owner == MONITOR || owner == FALLBACK) { monitorLine = ""; monitorDetail = "" }
-        val token = ++generation
+        ++generation
         publish(c)
-        // WorkManager removes its foreground notification after doWork returns. Reconcile
-        // remaining owners after teardown; generation checks prevent stop/restart races.
-        if (owner.startsWith("news-worker:")) for (delay in listOf(250L, 1000L)) handler.postDelayed({
+        if (owner.startsWith("news-worker:")) workerFinished(c)
+    }
+    /** Also used by legacy expedited charger work (Android26–30): WorkManager
+     * can tear down ID4201 even when doWork handed monitoring to a real service.
+     * No lease is claimed merely by asking for ForegroundInfo before doWork.
+     */
+    @Synchronized fun workerFinished(c: Context) {
+        val token = generation
+        for (delay in listOf(250L, 1000L)) handler.postDelayed({
             synchronized(this) { if (generation == token || owners.isNotEmpty()) publish(c.applicationContext) }
         }, delay)
     }

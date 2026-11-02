@@ -22,7 +22,13 @@ class ChargerWatchWorker(
     params: WorkerParameters,
 ) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result {
+    override suspend fun doWork(): Result = try {
+        runWatch()
+    } finally {
+        com.universalrp.cleansweep.notify.RoutineStatus.workerFinished(applicationContext)
+    }
+
+    private suspend fun runWatch(): Result {
         val ctx = applicationContext
         val persistent = ChargeMonitorService.persistentEnabled(ctx)
         val pill = ctx.getSharedPreferences(ChargeMonitorService.PILL_PREFS, Context.MODE_PRIVATE)
