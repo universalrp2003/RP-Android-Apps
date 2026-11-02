@@ -47,21 +47,31 @@ class OfficialStatusNativeTest {
     @Test fun invalidPdfCannotReachParser() = runBlocking { assertNull(OfficialCycloneClient.pdfText(c,"not a PDF".toByteArray())) }
     @Test fun foregroundServicesShareCardAndIndependentStop() {
         val instrumentation=InstrumentationRegistry.getInstrumentation()
+        // Fresh targetSdk33+ installs may run FGS without permission, but Android
+        // hides their shade cards. Grant only in this synthetic emulator test.
+        instrumentation.uiAutomation.grantRuntimePermission(c.packageName, android.Manifest.permission.POST_NOTIFICATIONS)
+        assertEquals(android.content.pm.PackageManager.PERMISSION_GRANTED,
+            c.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS))
+        val nm=c.getSystemService(NotificationManager::class.java)
+        assertTrue("Notification permission is a required test precondition", nm.areNotificationsEnabled())
         val activity=instrumentation.startActivitySync(Intent(c,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val monitor=Intent(c,ChargeMonitorService::class.java)
         val radio=Intent(c,RadioWatchService::class.java)
-        c.startForegroundService(monitor);c.startForegroundService(radio)
-        waitFor { RoutineStatus.activeOwners().containsAll(setOf(RoutineStatus.MONITOR,RoutineStatus.RADIO)) }
-        val nm=c.getSystemService(NotificationManager::class.java)
-        waitFor { nm.activeNotifications.any { it.id==RoutineStatus.ID } }
-        assertEquals(1,nm.activeNotifications.count { it.id in setOf(RoutineStatus.ID,4211,280,281) })
-        c.stopService(radio)
-        waitFor { RoutineStatus.RADIO !in RoutineStatus.activeOwners() }
-        assertTrue(RoutineStatus.MONITOR in RoutineStatus.activeOwners())
-        assertTrue(nm.activeNotifications.any { it.id==RoutineStatus.ID })
-        c.stopService(monitor)
-        waitFor { RoutineStatus.MONITOR !in RoutineStatus.activeOwners() }
-        waitFor { nm.activeNotifications.none { it.id==RoutineStatus.ID } }
-        instrumentation.runOnMainSync { activity.finish() }
+        try {
+            c.startForegroundService(monitor);c.startForegroundService(radio)
+            waitFor { RoutineStatus.activeOwners().containsAll(setOf(RoutineStatus.MONITOR,RoutineStatus.RADIO)) }
+            waitFor { nm.activeNotifications.any { it.id==RoutineStatus.ID } }
+            assertEquals(1,nm.activeNotifications.count { it.id in setOf(RoutineStatus.ID,4211,280,281) })
+            c.stopService(radio)
+            waitFor { RoutineStatus.RADIO !in RoutineStatus.activeOwners() }
+            assertTrue(RoutineStatus.MONITOR in RoutineStatus.activeOwners())
+            assertTrue(nm.activeNotifications.any { it.id==RoutineStatus.ID })
+            c.stopService(monitor)
+            waitFor { RoutineStatus.MONITOR !in RoutineStatus.activeOwners() }
+            waitFor { nm.activeNotifications.none { it.id==RoutineStatus.ID } }
+        } finally {
+            c.stopService(radio);c.stopService(monitor)
+            instrumentation.runOnMainSync { activity.finish() }
+        }
     }
 }

@@ -78,7 +78,29 @@ jobs:
           script: |
             python3 tools/battery_voice_update_smoke.py cleaner
             python3 tools/liveguard_283_native_smoke.py
-            gradle :cleaner:connectedReleaseAndroidTest --no-daemon --stacktrace
+            bash -o pipefail -c 'gradle :cleaner:connectedReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/liveguard-native.log"'
+      - name: Surface native failures without downloading artifact blobs
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def report(text):
+              print('::error title=Live Guard native diagnostic::'+text[:12000].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          failures=0
+          for p in Path('cleaner/build/outputs/androidTest-results').rglob('*.xml'):
+              try: root=ET.parse(p).getroot()
+              except ET.ParseError: continue
+              for c in root.iter('testcase'):
+                  for kind in ('failure','error'):
+                      f=c.find(kind)
+                      if f is not None:
+                          failures+=1
+                          report(c.get('classname','')+'.'+c.get('name','')+'\n'+f.get('message','')+'\n'+(f.text or ''))
+          log=Path(os.environ['RUNNER_TEMP'],'liveguard-native.log')
+          if not failures and log.exists(): report('\n'.join(log.read_text(errors='replace').splitlines()[-100:]))
+          PY
       - name: Required native PDF isolation and shared-card tests actually ran
         run: |
           python3 - <<'PYTEST'
