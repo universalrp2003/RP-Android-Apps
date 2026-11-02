@@ -10,6 +10,12 @@
 - For security-sensitive changes, record threat/data-flow assumptions, verified controls, tests and residual gaps. This is a standing development policy, **not a claim that these controls are already implemented suite-wide**, an independent audit, a prompt-injection-proof guarantee or Play Protect clearance.
 - This instruction does not supersede scoped publication approvals, immutable APK/signer/data-preservation rules, consent, or the prohibition on unauthorized third-party sample uploads. Do not rebuild/release unrelated apps or add AI/agent/MCP access to private data simply to apply the checklist.
 
+## Live Guard2.89 — owner weather/advisory correction, 2 November2026
+
+- No-key free weather is normal, not a red error. Label forecast estimates honestly; no local rain-measurement/all-clear claim. Keep strict fresh authorized minute-data precision gate; personal key alone does not prove access.
+- Owner requested GDACS cadence research and selected **once per new cyclone advisory** (ask_user `once`). Latest verified actual/current JTWC advisory in next successful nonempty news bulletin; no unchanged/older repeats, newer pending details supersede old. No fixed3–4/day guarantee or standalone alarm/new poller. Flood/EQ three-read counters unchanged. All existing voice/HD/quiet/location/OFF gates preserved.
+- Candidate2.89/code94, current branch arena/d8c51dc7-rp-android-apps. No new publication approval; public2.88/site/live catalog/siblings unchanged. Separate bounded per-storm advisory high-water ledger; legacy counters preserved. Legacy did not store advisory identity, so latest report may be heard once on upgrade; document audio-to-disk process-death residual. Planned713JVM69suites + exact2.88 same-key/native update gates. See docs/live-guard-2.89-candidate.md. No private screenshots in Git or repeated accepted phone tests.
+
 ## Live Guard2.88 — owner correction, 2 November2026
 
 - Owner says hidden default-off new features are undiscoverable. Clarified: disaster-news ON by default with one-time notice for never-configured users, preserve explicit OFF; all13 news topics by default, preserve custom subsets/language. This supersedes2.87 default-off only. Future optional features must offer Enable / Not now, not silently enable every new setting. Keep battery Advanced optional and all voice/location safety/consent gates.

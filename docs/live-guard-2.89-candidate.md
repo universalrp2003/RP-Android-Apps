@@ -1,0 +1,20 @@
+# Live Guard2.89/code94 — owner-requested clarification and advisory freshness
+
+## Decisions
+Owner reported the no-key red text on another phone and requested correct free-weather details. Owner also requested research into GDACS updates and chose **once per new cyclone advisory**, not3reads per new advisory, via clarification. This supersedes the old cyclone-wide three-read cap only. Speech stays attached to the next successful nonempty news bulletin; no standalone alarm, new poller, master/GPS enablement or bypass. Flood/earthquake counters unchanged. This is candidate/build authorization, not new public-release approval. Public2.88/site/Store/siblings remain unchanged.
+
+## Verified sources (2 November2026)
+- JTWC FAQ https://www.metoc.navy.mil/jtwc/jtwc.html?faq= states North Indian/North Pacific warnings routinely every6hours, southern basins12hours (may increase). Products can be issued up to3hours after synoptic times00/06/12/18UTC. Final warnings stop unless regeneration. Therefore no fixed-clock guarantee of four fresh GDACS advisories per day.
+- GDACS report https://www.gdacs.org/Cyclones/report.aspx?eventtype=TC&eventid=1001346&system=JTWC actually lists00/06/12/18UTC successive advisories; latest seen2Nov06UTC/episode6, following00UTC/episode5. GDACS/API publication time differs from advisory time. 'Current Max' means next72h maximum, not an instantaneous observed value.
+- Structured details https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=1001346 actually had sourceJTWC, episode6, todate06UTC, datemodified08:06:48UTC, impacts[].sourceJTWC and allowlisted timeline818147. Earlier episode5 timeline818121 is historical. Never pin these live IDs into code.
+- Existing normalized observed-wind contract remains from IFRC Monty GDACS schema: actual/current advisory wind_speed is sustained m/s, converted to km/h. No verified movement-speed unit contract: keep unavailable. Forecast rows, impact maxima and metadata timestamps do not supply observed advisory identity.
+
+## Implementation and limits
+Free model weather labelled active/optional-key, neutral no-key message, forecast estimate/nonlocal measurement caveat. All key/entitlement/quota/fresh-minute precision gates remain.
+
+Cyclone memory uses a separate versioned JSON key in existing private disaster prefs, at most256 per-storm high-water records,32KB maximum; no expiry/eviction, rollback or per-advisory unbounded growth. Only JTWC-sourced details/impact timeline, matching storm and actual/current finite fresh position date can enter speech. Unverified/stale/missing timeline skips cyclone addon without blocking ordinary news. Metadata refresh, home/language/distance/wind edits cannot recreate an advisory. Newer reservation replaces older token; older completion/cancellation cannot consume/release newer pending details. Commit happens off-main before releasing reservations. Storage failure/process-death audio-to-commit gap is a bounded residual, not exactly-once proof. Already-playing audio cannot be unsaid; newest pending data is enforced at existing relevance checks.
+
+Migration: legacy counters did not retain advisory identity. New ledger starts independently and may read the current valid advisory once even if this cyclone was mentioned by an earlier version. Preserve old counts and explicit OFF/generation/feature acknowledgements. Future advisory dates remain monotonic. Same-time provider corrections without a new advisory timestamp do not unlock another read.
+
+## Verification
+Planned713 required JVM regressions/69suites (24new advisory authority/persistence/supersession/dedup/capacity tests), full build/lint/sign/full permission continuity, normal exact public2.88 preserved-data update and accepted native notice/settings/maps tests. Source/Python checks separately recorded; no phone/live provider accuracy or audible proof and no repeated accepted physical tests requested. Publication remains pending separate authorization; do not substitute a later metadata build for any exact verified artifact.

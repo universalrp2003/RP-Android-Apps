@@ -1,9 +1,7 @@
-name: Live Guard 2.88 signed upgrade and owner-requested regressions (no publication)
-# Metadata integration retry: run41416926897 failed fetching Robolectric Android14,
-# before futureNotNowDoesNotActivate executed. App/test sources and all gates unchanged.
+name: Live Guard 2.89 signed upgrade and owner-requested regressions (no publication)
 on:
   push:
-    branches: ["arena/215d8bab-rp-android-apps"]
+    branches: ["arena/d8c51dc7-rp-android-apps"]
     paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_283_candidate.py", "tools/liveguard_283_native_smoke.py", ".github/workflows/liveguard-283-candidate.yml"]
 permissions:
   contents: read
@@ -46,7 +44,7 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           def report(text):
-              print('::error title=Live Guard 2.88 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              print('::error title=Live Guard 2.89 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
           p=Path(os.environ['RUNNER_TEMP'])/'liveguard-283-build.log'
           if p.exists():
               lines=p.read_text(errors='replace').splitlines()
@@ -68,7 +66,7 @@ jobs:
         run: python3 tools/inspect_liveguard_283_candidate.py
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
-      - name: Same-key 2.87 update, saved data and native settings
+      - name: Same-key 2.88 update, saved data and native settings
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -81,16 +79,16 @@ jobs:
             python3 tools/battery_voice_update_smoke.py cleaner
             python3 tools/liveguard_283_native_smoke.py
       - name: Remove baseline from candidate download
-        run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.87.apk"
+        run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.88.apk"
       - uses: actions/upload-artifact@v7
         with:
-          name: Live-Guard-2.88-signed-tested-candidate
+          name: Live-Guard-2.89-signed-tested-candidate
           path: ${{ runner.temp }}/health-cleaner/
           retention-days: 30
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: Live-Guard-2.88-regression-failures
+          name: Live-Guard-2.89-regression-failures
           path: |
             cleaner/build/reports/tests/
             cleaner/build/reports/lint-results-release.html

@@ -11,13 +11,13 @@ import kotlin.math.roundToInt
 /** Supplementary regional reports, never a local impact/safety prediction or live telemetry. */
 object NewsDisasterPolicy {
     const val MAX_EVENTS = 3
-    const val MAX_TRACKED = 256 // Tombstones are not expired: old episodes must not regain three reads.
+    const val MAX_TRACKED = 256 // Bounded per-event tombstones; cyclone advisory high-water records are never evicted.
     const val GPS_FRESH_MS = 5 * 60_000L
     const val DRAFT_FRESH_MS = 10 * 60_000L
     data class Origin(val lat: Double, val lon: Double, val phone: Boolean, val at: Long)
     data class Event(val id: Long, val type: String, val name: String, val updated: Long,
         val distanceKm: Double, val positionAt: Long? = null, val windKmh: Double? = null) {
-        val key: String get() = "$type:$id" // Deliberately NOT episode, report time, distance or language.
+        val key: String get() = "$type:$id" // Stable event identity; cyclone advisory timestamp is tracked separately.
     }
     fun fresh(e: Event, now: Long): Boolean = now - e.updated in 0..maxAge(e.type) &&
         (e.positionAt == null || now - e.positionAt in 0..CycloneWatchData.FRESH_MS)
@@ -40,6 +40,19 @@ object NewsDisasterPolicy {
             // Only a bounded storm identifier is spoken from free provider text. Other types use fixed labels.
             Event(it.id, it.type, it.name.takeIf { n -> Regex("[A-Z][A-Z0-9-]{1,29}").matches(n) }.orEmpty(), it.updated, it.distanceKm)
         }
+    }
+    /** Pin the advisory authority; forecast-model impacts must not impersonate JTWC observations. */
+    fun advisoryTimeline(details: String, eventId: Long): String? {
+        val p = JSONObject(details).optJSONObject("properties") ?: return null
+        if (p.optLong("eventid") != eventId || p.optString("eventtype") != "TC" || p.optString("source") != "JTWC") return null
+        val impacts = p.optJSONArray("impacts") ?: return null
+        for (i in 0 until minOf(impacts.length(), 10)) {
+            val impact = impacts.optJSONObject(i) ?: continue
+            if (impact.optString("source") != "JTWC") continue
+            val url = impact.optJSONObject("resource")?.optString("timeline").orEmpty()
+            if (Regex("https://www\\.gdacs\\.org/gdacsapi/api/export/gettimeline\\?id=[0-9]{1,12}").matches(url)) return url
+        }
+        return null
     }
     fun observed(event: Event, raw: String, origin: Origin, now: Long): Event? {
         require(event.type == "TC")

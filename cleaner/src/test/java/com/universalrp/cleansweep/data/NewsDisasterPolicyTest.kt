@@ -47,4 +47,11 @@ class NewsDisasterPolicyTest {
     @Test fun capsThreeSuccessfulReadsNotAttempts() { var n=0;repeat(5){n=NewsDisasterPolicy.completed(n,false)};assertEquals(0,n);repeat(3){assertTrue(NewsDisasterPolicy.eligible(n));n=NewsDisasterPolicy.completed(n,true)};assertFalse(NewsDisasterPolicy.eligible(n));assertEquals(3,NewsDisasterPolicy.completed(n,true)) }
     @Test fun updatedEpisodeCannotChangeIdentity() { assertEquals(event.key,event.copy(updated=now+1,distanceKm=12.0,positionAt=now,windKmh=90.0).key) }
     @Test fun scopeIsRegionalNotImpactRadius() { val s=NewsDisasterPolicy.speech(listOf(event),home,false);assertTrue(s.contains("impact boundaries"));assertTrue(s.contains("local authorities"));assertFalse(s.contains("safe")) }
+
+    private val timelineUrl = "https://www.gdacs.org/gdacsapi/api/export/gettimeline?id=123"
+    private fun details(source: String = "JTWC", impact: String = "JTWC", id: Long = 123, url: String = timelineUrl) = JSONObject().put("properties",JSONObject().put("eventid",id).put("eventtype","TC").put("source",source).put("impacts",JSONArray().put(JSONObject().put("source",impact).put("resource",JSONObject().put("timeline",url))))).toString()
+    @Test fun verifiedJtwcAdvisoryTimelineAccepted() { assertEquals(timelineUrl,NewsDisasterPolicy.advisoryTimeline(details(),123)) }
+    @Test fun otherMeteorologicalSourcesCannotSupplyObservedSpeech() { assertNull(NewsDisasterPolicy.advisoryTimeline(details(source="GFS"),123));assertNull(NewsDisasterPolicy.advisoryTimeline(details(impact="ECMWF"),123)) }
+    @Test fun foreignEventDetailsRejected() { assertNull(NewsDisasterPolicy.advisoryTimeline(details(id=999),123)) }
+    @Test fun timelineHostAndPathMustRemainAllowlisted() { for(url in listOf("http://www.gdacs.org/gdacsapi/api/export/gettimeline?id=123","https://evil.example/timeline","https://www.gdacs.org/redirect?url=evil"))assertNull(NewsDisasterPolicy.advisoryTimeline(details(url=url),123)) }
 }

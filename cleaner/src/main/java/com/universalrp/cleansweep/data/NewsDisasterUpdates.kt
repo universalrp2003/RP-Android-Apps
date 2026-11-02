@@ -77,6 +77,20 @@ object NewsDisasterUpdates {
             json.keys().forEach { k -> require(Regex("(TC|FL|EQ):[0-9]{1,12}").matches(k) && json.getInt(k) in 0..3) } }
     }.getOrNull()
     internal fun count(c: Context, key: String): Int = counts(c)?.optInt(key, 0) ?: 3
+    // One bounded high-water record per cyclone, NOT one record per advisory. Never evict
+    // completed records: a cached older bulletin must not become eligible again.
+    internal const val ADVISORIES = "cyclone_advisories_v1"
+    private fun advisories(c: Context): JSONObject? = runCatching {
+        val raw = prefs(c).getString(ADVISORIES, "{}")!!; require(raw.length <= 32_000)
+        JSONObject(raw).also { json ->
+            require(json.length() <= NewsDisasterPolicy.MAX_TRACKED)
+            json.keys().forEach { key ->
+                require(Regex("TC:[1-9][0-9]{0,11}").matches(key))
+                val record = json.getJSONObject(key)
+                require(record.length() == 2 && (record.get("at") is Long || record.get("at") is Int) && record.getLong("at") > 0 && record.get("done") is Boolean)
+            }
+        }
+    }.getOrNull()
     data class Draft(val events: List<NewsDisasterPolicy.Event>, val origin: NewsDisasterPolicy.Origin,
         val token: String, val fingerprint: String, val created: Long, val elapsed: Long) {
         fun text(tamil: Boolean): String = NewsDisasterPolicy.speech(events, origin, tamil)
@@ -85,11 +99,30 @@ object NewsDisasterUpdates {
         now: Long, expectedFingerprint: String? = null): Draft? {
         if (!enabled(c) || (expectedFingerprint != null && fingerprint(c) != expectedFingerprint)) return null
         val counts = counts(c) ?: return null
+        val advisories = advisories(c)
         val token = UUID.randomUUID().toString()
         val selected = mutableListOf<NewsDisasterPolicy.Event>()
-        for (e in events.distinctBy { it.key }) {
+        val latest = events.groupBy { it.key }.values.map { group ->
+            group.maxByOrNull { if (it.type == "TC") it.positionAt ?: Long.MIN_VALUE else it.updated }!!
+        }
+        for (e in latest) {
             if (selected.size == NewsDisasterPolicy.MAX_EVENTS) break
-            if (NewsDisasterPolicy.fresh(e, now) && NewsDisasterPolicy.eligible(counts.optInt(e.key, 0)) &&
+            if (e.type !in setOf("TC", "FL", "EQ") || e.id !in 1..999_999_999_999 || !NewsDisasterPolicy.fresh(e, now)) continue
+            if (e.type == "TC") {
+                // Only an actual/current JTWC timeline row supplies this timestamp. A feed's
+                // datemodified, new fetch time, movement, language or home change is NOT an advisory.
+                val at = e.positionAt ?: continue
+                val ledger = advisories ?: continue
+                val old = ledger.optJSONObject(e.key)
+                if (old == null && ledger.length() >= NewsDisasterPolicy.MAX_TRACKED) continue
+                val previousAt = old?.getLong("at") ?: 0L
+                if (at < previousAt || (at == previousAt && (old!!.getBoolean("done") || inFlight.containsKey(e.key)))) continue
+                ledger.put(e.key, JSONObject().put("at", at).put("done", false))
+                // Supersede an older queued draft. Its relevance/finish callbacks no longer own
+                // this token, so it cannot consume or release the newer advisory's reservation.
+                inFlight[e.key] = token
+                selected.add(e)
+            } else if (NewsDisasterPolicy.eligible(counts.optInt(e.key, 0)) &&
                 (counts.has(e.key) || counts.length() < NewsDisasterPolicy.MAX_TRACKED) &&
                 inFlight.putIfAbsent(e.key, token) == null) {
                 selected.add(e)
@@ -97,8 +130,9 @@ object NewsDisasterUpdates {
             }
         }
         if (selected.isEmpty()) return null
-        selected.forEach { if (!counts.has(it.key)) counts.put(it.key, 0) }
-        if (!prefs(c).edit().putString("counts", counts.toString()).commit()) {
+        val editor = prefs(c).edit().putString("counts", counts.toString())
+        if (advisories != null) editor.putString(ADVISORIES, advisories.toString())
+        if (!editor.commit()) {
             selected.forEach { inFlight.remove(it.key, token) }; return null
         }
         return Draft(selected, origin, token, fingerprint(c), now, SystemClock.elapsedRealtime())
@@ -113,10 +147,16 @@ object NewsDisasterUpdates {
         try {
             if (!success || !enabled(c) || fingerprint(c) != draft.fingerprint) return
             val counts = counts(c) ?: return
-            draft.events.filter { inFlight[it.key] == draft.token }.forEach {
-                counts.put(it.key, NewsDisasterPolicy.completed(counts.optInt(it.key, 0), true))
+            val advisories = advisories(c)
+            draft.events.filter { inFlight[it.key] == draft.token }.forEach { event ->
+                if (event.type == "TC") {
+                    val record = advisories?.optJSONObject(event.key)
+                    if (record != null && record.getLong("at") == event.positionAt) record.put("done", true)
+                } else counts.put(event.key, NewsDisasterPolicy.completed(counts.optInt(event.key, 0), true))
             }
-            prefs(c).edit().putString("counts", counts.toString()).commit() // Worker only, before releasing reservations.
+            val editor = prefs(c).edit().putString("counts", counts.toString())
+            if (advisories != null) editor.putString(ADVISORIES, advisories.toString())
+            editor.commit() // Worker only. Process-death/storage-failure delivery gap is not exactly-once proof.
         } finally { draft.events.forEach { inFlight.remove(it.key, draft.token) } }
     }
     data class Candidate(val events: List<NewsDisasterPolicy.Event>, val origin: NewsDisasterPolicy.Origin, val fingerprint: String)
@@ -129,17 +169,15 @@ object NewsDisasterUpdates {
         for (type in listOf("TC", "FL", "EQ")) {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             val batch = runCatching { NewsDisasterPolicy.parse(get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventtype=$type", deadline), type, origin, now) }
-                .getOrDefault(emptyList()).filter { NewsDisasterPolicy.eligible(count(c, it.key)) }
-            events.addAll(batch)
+                .getOrDefault(emptyList()).filter { type == "TC" || NewsDisasterPolicy.eligible(count(c, it.key)) }
+            if (type != "TC") events.addAll(batch)
             if (type == "TC") for (e in batch.take(NewsDisasterPolicy.MAX_EVENTS)) {
                 val enriched = runCatching {
                     val details = get("https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=${e.id}", deadline)
-                    val p = JSONObject(details).getJSONObject("properties")
-                    require(p.getLong("eventid") == e.id && p.getString("eventtype") == "TC")
-                    val timeline = CycloneWatchData.timelineUrl(details) ?: error("No timeline")
+                    val timeline = NewsDisasterPolicy.advisoryTimeline(details, e.id) ?: error("No verified JTWC timeline")
                     NewsDisasterPolicy.observed(e, get(timeline, deadline), origin, now)
                 }.getOrNull()
-                if (enriched != null) { events.remove(e); if (enriched.distanceKm <= 2000.0) events.add(enriched) }
+                if (enriched != null && enriched.distanceKm <= 2000.0) events.add(enriched)
             }
         }
         if (fingerprint != fingerprint(c)) return@withContext null
