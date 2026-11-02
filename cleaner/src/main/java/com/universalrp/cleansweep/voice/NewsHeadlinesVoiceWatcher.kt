@@ -17,6 +17,9 @@ import com.universalrp.cleansweep.data.NewsSpeechSanitizer
 import com.universalrp.cleansweep.data.TamilInfoStripRepo
 import com.universalrp.cleansweep.data.WeatherAlertStore
 import com.universalrp.updates.CallGuard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
@@ -39,6 +42,7 @@ import java.util.concurrent.TimeUnit
  */
 object NewsHeadlinesVoiceWatcher {
 
+    private val checkpointScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + Dispatchers.IO)
     private val manualReads = java.util.concurrent.atomic.AtomicInteger(0)
     internal suspend fun <T> withManualRead(block: suspend () -> T): T {
         manualReads.incrementAndGet()
@@ -110,9 +114,18 @@ object NewsHeadlinesVoiceWatcher {
         NewsTimingPolicy.activityAnchor(lastSuccessful(context), prefs(context).getLong(KEY_LAST_AUDIBLE_MS, 0L), now)
 
     /** Actual audio activity, NOT success or headline consumption. Durable across process death. */
-    @Synchronized
     internal fun recordAudibleActivity(context: Context, nowMs: Long = System.currentTimeMillis()) {
-        prefs(context).edit().putLong(KEY_LAST_AUDIBLE_MS, nowMs).commit()
+        // Announcer's onStarted callback runs on main. Never commit or wait for the
+        // story-history monitor there. A late start checkpoint must not roll time back.
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            checkpointScope.launch { persistAudibleActivity(context.applicationContext, nowMs) }
+        } else persistAudibleActivity(context, nowMs)
+    }
+
+    @Synchronized
+    private fun persistAudibleActivity(context: Context, nowMs: Long) {
+        val p = prefs(context)
+        p.edit().putLong(KEY_LAST_AUDIBLE_MS, maxOf(p.getLong(KEY_LAST_AUDIBLE_MS, 0L), nowMs)).commit()
         NewsAutoSchedule.playbackProgress(context)
     }
 
@@ -132,16 +145,13 @@ object NewsHeadlinesVoiceWatcher {
     private fun dayScope(nowMs: Long, zone: ZoneId): String =
         zone.id + "|" + Instant.ofEpochMilli(nowMs).atZone(zone).toLocalDate()
 
-    @Synchronized
+    // Read-only snapshot: UI status must never wait behind a durable story-history commit.
     fun announcedKeysToday(context: Context, tamil: Boolean, nowMs: Long = System.currentTimeMillis()): Set<String> {
         val p = prefs(context)
         val dayKey = if (tamil) KEY_SPOKEN_DAY_TA else KEY_SPOKEN_DAY_EN
         val setKey = if (tamil) KEY_SPOKEN_KEYS_TA else KEY_SPOKEN_KEYS_EN
         val scope = dayScope(nowMs, ZoneId.systemDefault())
-        if (p.getString(dayKey, null) != scope) {
-            p.edit().putString(dayKey, scope).remove(setKey).apply()
-            return emptySet()
-        }
+        if (p.getString(dayKey, null) != scope) return emptySet()
         return p.getStringSet(setKey, emptySet()).orEmpty().toSet()
     }
 
@@ -252,7 +262,9 @@ object NewsHeadlinesVoiceWatcher {
      * A failed/interrupted read retains only fully completed story checkpoints. Unfinished
      * stories remain eligible; preparation alone never consumes any news.
      */
-    suspend fun readTodaysHeadlinesManually(context: Context): Int = withManualRead { readManual(context) }
+    suspend fun readTodaysHeadlinesManually(context: Context): Int = withContext(Dispatchers.IO) {
+        withManualRead { readManual(context) }
+    }
 
     private suspend fun readManual(context: Context): Int {
         val app = context.applicationContext

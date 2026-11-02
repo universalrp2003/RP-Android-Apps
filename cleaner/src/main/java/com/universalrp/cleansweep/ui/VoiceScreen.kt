@@ -381,14 +381,9 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 // 2.72: if the HD voice has been unreachable for a sustained period, say so
                 // here too. The notification card only appears after 30 seconds of outage,
                 // but this screen should not need the owner to wait for it.
-                val hdWaiting =
-                    automatic.stage in setOf(
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET,
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.ENGINE_ERROR,
-                    ) || delivery.stage in setOf(
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET,
-                        com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.ENGINE_ERROR,
-                    )
+                // Last automatic status is historical evidence, not the current HD state.
+                // A later successful manual request must clear the warning as well.
+                val hdWaiting = com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.hdWaiting(delivery.stage)
                 if (hdWaiting) {
                     Text(
                         "\u23F3 " + tr(

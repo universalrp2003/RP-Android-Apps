@@ -9,6 +9,8 @@ import com.universalrp.cleansweep.data.BalancedNewsPolicy
 import com.universalrp.cleansweep.data.NewsHeadline
 import com.universalrp.cleansweep.data.NewsPolicy
 import com.universalrp.cleansweep.data.TamilInfoStripRepo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,12 +36,13 @@ object NewsBulletinPipeline {
     }
     data class Report(val atMs: Long, val rows: List<Row>, val items: List<NewsHeadline>, val translationAttempted: Boolean)
 
-    suspend fun prepare(context: Context, items: List<NewsHeadline>, tamil: Boolean, announced: Set<String>, recent: List<String>, rotation: Int): List<NewsHeadline> {
+    suspend fun prepare(context: Context, items: List<NewsHeadline>, tamil: Boolean, announced: Set<String>, recent: List<String>, rotation: Int): List<NewsHeadline> = withContext(Dispatchers.Default) {
         val fingerprint = com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)
         val enabled = com.universalrp.cleansweep.data.NewsPreferences.categories(context)
         val now = System.currentTimeMillis()
         val zone = ZoneId.systemDefault()
         val nativePool = BalancedNewsPolicy.select(items, announced, recent, tamil, now, zone, rotation, perCategoryMultiplier = 3, enabled = enabled)
+        currentCoroutineContext().ensureActive()
         var edited = nativePool
         var english = emptyList<NewsHeadline>()
         var translated = emptyList<NewsHeadline>()
@@ -63,12 +66,12 @@ object NewsBulletinPipeline {
         currentCoroutineContext().ensureActive()
         val readyAt = System.currentTimeMillis()
         // Date is evaluated again after all networking. Valid AI rejections are never resurrected by a later timeout.
-        if (fingerprint != com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) return emptyList()
+        if (fingerprint != com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) return@withContext emptyList()
         val final = BalancedNewsPolicy.select(edited + translated, announced, recent, tamil, readyAt, ZoneId.systemDefault(), rotation, enabled = enabled)
         fun count(list: List<NewsHeadline>, category: BalancedNewsPolicy.Category) = list.count { BalancedNewsPolicy.category(it) == category && NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
         mutableReport.value = Report(readyAt, enabled.map { category ->
             Row(category, count(items, category), count(nativePool, category), count(edited, category), count(english, category), count(translated, category), count(final, category))
         }, final, attempted)
-        return final.map { it.copy(preferenceFingerprint=fingerprint) }
+        final.map { it.copy(preferenceFingerprint=fingerprint) }
     }
 }

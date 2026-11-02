@@ -114,6 +114,13 @@ def main():
     click('GDACS map')
     seek('Selected place: CI synthetic home')
     seek('www.gdacs.org')
+    seek('Expand');click('Expand');seek('Compact')
+    click('IMD');seek('rsmcnewdelhi.imd.gov.in')
+    click('Tomorrow.io');seek('weather.tomorrow.io')
+    click('GDACS');seek('www.gdacs.org')
+    click('Compact');seek('Expand')
+    click('Page zoom');seek('125%')
+    adb('shell','input','keyevent','4')
     click('Close')
     click('Manage other saved places')
     seek('CI synthetic place 1')
@@ -125,7 +132,7 @@ def main():
     assert len(stored)==3 and stored[0]['id']==places[0]['id']
     assert adb('shell','pidof',PKG).strip()
     receipt['native_283_settings_smoke']=True
-    receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native website-window open/close; no live API, rendered-map accuracy, speech or phone accuracy claim'
+    receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Live Guard 2.83 native settings::'+receipt['native_283_scope'])
 

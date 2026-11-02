@@ -229,9 +229,11 @@ private fun SavedPlaceManager(places: List<SavedRainWatch>, onChange: () -> Unit
     if (places.size < SavedRainWatches.MAX_PLACES) PlaceSearch { SavedRainWatches.add(context, it); onChange() }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCandidate?) {
     val scope = rememberCoroutineScope()
+    val browser = androidx.compose.ui.platform.LocalUriHandler.current
     var useGps by remember { mutableStateOf(false) }
     val place = if (useGps) gps ?: home else home
     var batch by remember(place) { mutableStateOf<DisasterReports.Batch?>(null) }
@@ -258,10 +260,11 @@ private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCa
                 }
             }
             Text(watchWords("Regional reports are not local impact warnings. GDACS Green is not an all-clear for your place.", "பிராந்திய அறிக்கை உள்ளூர் பாதிப்பு எச்சரிக்கை அல்ல. GDACS பச்சை என்பது உங்கள் இடத்தில் அபாயம் இல்லை என்பதல்ல."), style = MaterialTheme.typography.bodySmall)
-            Row {
+            FlowRow {
                 TextButton(onClick = { website = "https://www.gdacs.org/" }) { Text(watchWords("GDACS map", "GDACS வரைபடம்")) }
+                TextButton(onClick = { website = DisasterWebPolicy.Provider.TOMORROW.home }) { Text("Tomorrow.io") }
                 TextButton(onClick = { website = CycloneWatchData.IMD }) { Text("IMD") }
-                TextButton(onClick = { website = DisasterReports.SACHET }) { Text(watchWords("Official local alerts", "உள்ளூர் அதிகாரப்பூர்வ எச்சரிக்கை")) }
+                TextButton(onClick = { browser.openUri(DisasterReports.SACHET) }) { Text(watchWords("Official local alerts", "உள்ளூர் அதிகாரப்பூர்வ எச்சரிக்கை")) }
             }
         }
     }

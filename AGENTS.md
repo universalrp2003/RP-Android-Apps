@@ -10,6 +10,13 @@
 - For security-sensitive changes, record threat/data-flow assumptions, verified controls, tests and residual gaps. This is a standing development policy, **not a claim that these controls are already implemented suite-wide**, an independent audit, a prompt-injection-proof guarantee or Play Protect clearance.
 - This instruction does not supersede scoped publication approvals, immutable APK/signer/data-preservation rules, consent, or the prohibition on unauthorized third-party sample uploads. Do not rebuild/release unrelated apps or add AI/agent/MCP access to private data simply to apply the checklist.
 
+## Live Guard 2.85 follow-up — 2 November 2026
+
+- Owner confirmed Android ANR Wait/Close dialog on Read news, plus HD warning after network changes. Source investigation found main-thread selection/checkpoint/cancellation risks and historical automatic-error warning surviving newer success. No phone ANR trace: do not claim a proven unique root cause or physical fix.
+- Private 2.85/code90 implements main-safe manual news/selection/start checkpoints, nonblocking history snapshots and off-main player cancellation; bounded validated-route handoff grace and stale-transport relevance; latest-runtime HD warning while retaining historical automatic diagnostics. HD-only remains; no shared engine/other app changes.
+- Owner explicitly selected **GDACS, IMD, Tomorrow.io**, not SACHET as third tab. Compact actual-provider viewer with Expand/Compact and per-provider page zoom. Provider map state retained through tabs/Expand only in live window; no unsupported persistent geographic zoom/deep-link promise. SACHET remains separate official browser link. No injected map/GPS/key/bridge; attribution intact.
+- 309 local Python source checks; 65 required JVM suites/610 declarations prepared, not yet execution proof. Follow docs/live-guard-2.85-candidate.md and record exact CI result before delivery. Normal same-key update only, never uninstall/reset. Public2.82/other accepted apps/site unchanged; no publication authority.
+
 ## Latest Live Guard owner feedback — 2 November 2026 (supersedes complex 2.83 UI below)
 
 - Owner rejected the crowded 2.83 controls. Normal 100% speech by default; Advanced battery checks OFF and reveal thresholds only when enabled. Preserve call/silent-place/master/quiet-hour protections and no unsupported-zero guessing.

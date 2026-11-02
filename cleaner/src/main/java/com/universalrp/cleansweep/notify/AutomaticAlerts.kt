@@ -103,9 +103,9 @@ object AutomaticAlerts {
         knownTransport = current
         Announcer.prefs(context).edit().putString("last_transport", current).apply()
         if (!VoiceDeliveryPolicy.changedTransport(before, current)) return // Initial state/VPN/unknown is not an invented transition.
-        if (current == "mobile") Announcer.speak(context, "You are now on mobile data; this uses your data plan.",
-            "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.", Announcer.Event.NETWORK_CHANGE)
-        else Announcer.speak(context, "You are back on Wi-Fi.", "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.", Announcer.Event.NETWORK_CHANGE)
+        if (current == "mobile") Announcer.speakIfStillRelevant(context, "You are now on mobile data; this uses your data plan.",
+            "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
+        else Announcer.speakIfStillRelevant(context, "You are back on Wi-Fi.", "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.", Announcer.Event.NETWORK_CHANGE, stillRelevant = { transport(context) == current })
     }
 
     private fun sampleBattery(context: Context) {

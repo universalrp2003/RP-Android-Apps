@@ -199,6 +199,16 @@ object Announcer {
     private val neuralExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
         Thread(r, "CleanSweepNeuralHd").apply { isDaemon = true }
     }
+    // MediaPlayer JNI/binder calls can wait on prepare()/decoder work. Keep cancellation
+    // off main and snapshot the OLD player so a delayed Stop cannot stop its successor.
+    private val playerControlExecutor = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "CleanSweepPlayerControl").apply { isDaemon = true }
+    }
+    private fun interruptPlayback() {
+        active?.worker?.cancel(true)
+        val player = activeMediaPlayer ?: return
+        playerControlExecutor.execute { runCatching { player.stop() } }
+    }
     private val malePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     private val femalePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     // RANDOM announcement rotation: flip gender every announcement and step to the NEXT Ultra-HD
@@ -313,8 +323,7 @@ object Announcer {
                     resetHdOutage(ctx) // Connectivity loss is not a sustained HD-provider outage.
                     if (active?.preparedNewsParts?.isNotEmpty() == true) return@postDelayed
                     speakingState.value = false
-                    runCatching { activeMediaPlayer?.stop() }
-                    active?.worker?.cancel(true)
+                    interruptPlayback()
                     if (active != null) finish(VoiceDeliveryPolicy.Stage.NO_INTERNET, false, pump = false)
                 }, NewsTimingPolicy.HANDOFF_GRACE_MS)
             }
@@ -718,17 +727,18 @@ object Announcer {
     fun cancelAnswers() { main.post {
         pending.filter { it.event == Event.ANSWER }.forEach { pending.remove(it); it.done?.complete(false) }
         if (active?.event == Event.ANSWER) {
-            runCatching { activeMediaPlayer?.stop() }
+            interruptPlayback()
             finish(VoiceDeliveryPolicy.Stage.CANCELLED, false)
         }
     } }
 
     /** Keep a worker alive until the engine finishes/fails, rather than finishing while TTS is still starting. */
     suspend fun speakAndWait(context: Context, english: String, tamil: String, event: Event,
-        timeoutMs: Long = 45_000, onStarted: (() -> Unit)? = null, requestKey: String? = null): Boolean {
+        timeoutMs: Long = 45_000, onStarted: (() -> Unit)? = null, requestKey: String? = null,
+        stillRelevant: (() -> Boolean)? = null): Boolean {
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(english.takeIf { it.isNotBlank() }, tamil.takeIf { it.isNotBlank() }, null,
-            event, event == Event.TEST, done = done, onStarted = onStarted, requestKey = requestKey)
+            event, event == Event.TEST, done = done, onStarted = onStarted, requestKey = requestKey, stillRelevant = stillRelevant)
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
         return try {
@@ -851,8 +861,7 @@ object Announcer {
                 // A manual news read must not be followed by an unrelated queued alert if HD
                 // fails. Cancel the active clip and drop stale pending requests first.
                 queueEpoch++
-                active?.worker?.cancel(true)
-                runCatching { activeMediaPlayer?.stop() }
+                interruptPlayback()
                 if (active != null) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
                 pending.forEach {
                     record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED)
@@ -868,7 +877,7 @@ object Announcer {
                 if (automaticAnswerIds.size > 128) automaticAnswerIds.remove(automaticAnswerIds.first())
             }
             if ((request.manual || (request.event == Event.OVERHEAT || request.bypassQuietHours) && active?.event == Event.ANSWER) && active != null) {
-                runCatching { activeMediaPlayer?.stop() }
+                interruptPlayback()
                 finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)
             }
             if (pending.size >= 4) pending.removeLast().also { record(ctx, it, VoiceDeliveryPolicy.Stage.CANCELLED); it.done?.complete(false) }
@@ -1020,8 +1029,18 @@ object Announcer {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED, false) }
                     return@submit
                 }
+                val cached = if (request.event == Event.NETWORK_CHANGE)
+                    com.universalrp.voice.SharedNeuralVoiceEngine.cachedProfileFileOrNull(context.cacheDir, request.text, profile, useTamil) else null
+                if (request.event == Event.NETWORK_CHANGE && cached == null && !awaitHandoffInternet(context, request)) {
+                    main.post {
+                        if (active?.id == requestId) finish(if (newsExpired(request)) VoiceDeliveryPolicy.Stage.CANCELLED
+                            else VoiceDeliveryPolicy.Stage.NO_INTERNET, false)
+                    }
+                    return@submit // Validation/flapping is not a failed HD-provider attempt.
+                }
                 val online = com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(context)
                 val mp3 = when {
+                    cached != null -> cached
                     request.event == Event.NEWS_HEADLINES && request.preparedNewsParts.isNotEmpty() ->
                         request.preparedNewsParts[request.partIndex.coerceIn(0, request.preparedNewsParts.lastIndex)]
                     online -> com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
@@ -1145,6 +1164,24 @@ object Announcer {
         }
     }
 
+    /** Worker-only and bounded: do not spend synthesis retries on a flapping replacement route. */
+    private fun awaitHandoffInternet(context: Context, request: Request): Boolean {
+        val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? android.net.ConnectivityManager ?: return false
+        val stable = StableNetworkWindow()
+        val deadline = android.os.SystemClock.elapsedRealtime() + NewsTimingPolicy.HANDOFF_GRACE_MS
+        while (android.os.SystemClock.elapsedRealtime() < deadline) {
+            if (active?.id != request.id || Thread.currentThread().isInterrupted || newsExpired(request)) return false
+            val network = runCatching {
+                cm.activeNetwork?.takeIf { n -> cm.getNetworkCapabilities(n)?.hasCapability(
+                    android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) == true }?.networkHandle
+            }.getOrNull()
+            if (stable.observe(network, android.os.SystemClock.elapsedRealtime())) return true
+            try { Thread.sleep(100L) }
+            catch (_: InterruptedException) { Thread.currentThread().interrupt(); return false }
+        }
+        return false
+    }
+
     /** A handoff must not consume both HD attempts while the replacement network validates. */
     private fun awaitNewsInternet(context: Context, request: Request, preparationDeadline: Long): Boolean {
         val graceEnd = minOf(preparationDeadline, System.nanoTime() + NewsTimingPolicy.HANDOFF_GRACE_MS * 1_000_000L)
@@ -1265,8 +1302,7 @@ object Announcer {
     private fun cancelRequest(id: String, stage: VoiceDeliveryPolicy.Stage) {
         if (active?.id == id) {
             queueEpoch++
-            active?.worker?.cancel(true)
-            runCatching { activeMediaPlayer?.stop() }
+            interruptPlayback()
             finish(stage, false)
         }
         else pending.firstOrNull { it.id == id }?.let {
@@ -1276,8 +1312,7 @@ object Announcer {
 
     fun stop() { main.post {
         queueEpoch++
-        active?.worker?.cancel(true)
-        runCatching { activeMediaPlayer?.stop() }
+        interruptPlayback()
         prefsContext?.let { noteHdAvailable(it) }
         speakingState.value = false
         pending.forEach { it.done?.complete(false) }; pending.clear()
@@ -1286,8 +1321,7 @@ object Announcer {
 
     fun shutdown() { main.post {
         queueEpoch++
-        active?.worker?.cancel(true)
-        runCatching { activeMediaPlayer?.stop() }
+        interruptPlayback()
         prefsContext?.let { noteHdAvailable(it) }
         pending.forEach { it.done?.complete(false) }; pending.clear()
         finish(VoiceDeliveryPolicy.Stage.CANCELLED, false, pump = false)

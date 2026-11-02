@@ -6,6 +6,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    "com.universalrp.cleansweep.ui.DisasterWebPolicyTest": 8,
+    "com.universalrp.cleansweep.voice.StableNetworkWindowTest": 6,
     "com.universalrp.cleansweep.data.SimpleWeatherPolicyTest": 13,
     "com.universalrp.cleansweep.data.DisasterReportsTest": 5,
     "com.universalrp.cleansweep.data.SimpleWeatherPreferencesTest": 6,
@@ -14,7 +16,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.weather.LiveGuard283ForecastTest": 7,
     "com.universalrp.cleansweep.voice.NewsPlaybackPlanTest": 8,
     "com.universalrp.cleansweep.voice.NewsTimingPolicyTest": 14,
-    "com.universalrp.cleansweep.voice.NewsAutoScheduleTest": 16,
+    "com.universalrp.cleansweep.voice.NewsAutoScheduleTest": 19,
     "com.universalrp.cleansweep.data.NewsTranslationPolicyTest": 22,
     "com.universalrp.cleansweep.voice.NewsTranslatorTest": 8,
     "com.universalrp.cleansweep.data.BalancedNewsPolicyTest": 27,
@@ -29,7 +31,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.ai.AssistantEvidencePolicyTest": 10,
     "com.universalrp.cleansweep.widget.WidgetReadingPolicyTest": 12,
     "com.universalrp.cleansweep.voice.HdVoiceExplainerTest": 6,
-    "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 15,
+    "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 17,
     "com.universalrp.cleansweep.data.PlanPolicyTest": 25,
     "com.universalrp.cleansweep.data.CompatibilityReportTest": 4,
     "com.universalrp.cleansweep.data.SecurityHistoryPolicyTest": 12,

@@ -247,12 +247,20 @@ class HealthWatchWorker(
                 "You are now on mobile data. This uses your data plan.",
                 "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.",
                 Announcer.Event.NETWORK_CHANGE,
+                stillRelevant = {
+                    val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+                    active?.hasTransport(if (now == "wifi") NetworkCapabilities.TRANSPORT_WIFI else NetworkCapabilities.TRANSPORT_CELLULAR) == true
+                },
             )
             "wifi" -> Announcer.speakAndWait(
                 ctx,
                 "You are back on Wi-Fi.",
                 "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.",
                 Announcer.Event.NETWORK_CHANGE,
+                stillRelevant = {
+                    val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+                    active?.hasTransport(if (now == "wifi") NetworkCapabilities.TRANSPORT_WIFI else NetworkCapabilities.TRANSPORT_CELLULAR) == true
+                },
             )
         }
     }
