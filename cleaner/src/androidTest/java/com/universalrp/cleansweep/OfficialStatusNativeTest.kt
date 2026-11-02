@@ -45,6 +45,29 @@ class OfficialStatusNativeTest {
         assertEquals(80,bulletin!!.windHigh)
     }
     @Test fun invalidPdfCannotReachParser() = runBlocking { assertNull(OfficialCycloneClient.pdfText(c,"not a PDF".toByteArray())) }
+    @Test fun restoredThreeSegmentsVisibleActiveAndIdle() {
+        InstrumentationRegistry.getInstrumentation().runOnMainSync {
+            val density=c.resources.displayMetrics.density
+            val w=(34*density).toInt();val h=(14*density).toInt()
+            val view=NetworkLedMeterView(c).apply { animStep=2;isDownloadActive=true;isUploadActive=true }
+            view.layout(0,0,w,h)
+            val bitmap=android.graphics.Bitmap.createBitmap(w,h,android.graphics.Bitmap.Config.ARGB_8888)
+            fun renderAndCheck(active:Boolean) {
+                view.isDownloadActive=active;view.isUploadActive=active
+                bitmap.eraseColor(android.graphics.Color.BLACK)
+                view.draw(android.graphics.Canvas(bitmap))
+                val start=10.5f*density;val gap=1.5f*density
+                val segment=(w-start-2*gap)/3
+                for(row in 0..1) for(i in 0..2) {
+                    val pixel=bitmap.getPixel((start+i*(segment+gap)+segment/2).toInt(),(h*(row+.5f)/2).toInt())
+                    val brightness=android.graphics.Color.red(pixel)+android.graphics.Color.green(pixel)+android.graphics.Color.blue(pixel)
+                    if(active) assertTrue("All six active segments visible",brightness>250)
+                    else assertTrue("Idle tracks remain visible, not falsely active",brightness in 100..200)
+                }
+            }
+            renderAndCheck(true);renderAndCheck(false);bitmap.recycle()
+        }
+    }
     @Test fun foregroundServicesShareCardAndIndependentStop() {
         val instrumentation=InstrumentationRegistry.getInstrumentation()
         // Fresh targetSdk33+ installs may run FGS without permission, but Android

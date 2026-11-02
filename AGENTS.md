@@ -1,5 +1,11 @@
 # Project guidance and owner decisions
 
+## Live Guard2.89 — owner correction and publication approval, 2 November2026
+
+- Owner tested candidate, rejected the dim single D/U LEDs as unusable and explicitly requested restoring the previous three-segment D and U indicators. Restore original34dp meter width, original visible tracks/colours/activity animation; preserve compact shared notification and official cyclone integration. This supersedes earlier single-LED approval only. Others reported working fine, not universal feature/accuracy proof.
+- Owner explicitly said “Others are working fine you can build publish”: publication HOLD lifted for the corrected Live Guard-only candidate AFTER fresh automated verification. Promote exact newly tested bytes, not prior single-LED artifact13144399017. Same-key update; no reinstall/data clear; no unrelated apps. Do not repeat accepted phone tests. Screenshots remain private; do not copy raw attachments into Git or release notes.
+- Added fourth Android35 native test checks all six restored segments active/idle on actual Canvas; source/build/native checks pending for this correction. Earlier790/3-test receipt does not verify this source. IMD live-layout/physical brightness/audio/provider accuracy limits remain.
+
 ## Standing security-by-design requirement — owner direction, 1 November 2026
 
 - The owner requests remembering prompt-injection/data-leakage risks, researching security guidance, and applying the agent's security knowledge as broadly as appropriate in future app work. Follow [the researched security baseline](docs/security-by-design.md); refresh authoritative guidance when changing a relevant feature. Use proportionate, evidence-backed controls, not unnecessary features/dependencies.

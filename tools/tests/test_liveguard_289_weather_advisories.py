@@ -50,7 +50,7 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
         self.assertNotIn('latitude=',client)
         self.assertNotIn('pdfbox',(ROOT/'cleaner/build.gradle.kts').read_text().lower())
 
-    def test_shared_card_keeps_foreground_ownership_and_no_fake_led_animation(self):
+    def test_shared_card_keeps_foreground_ownership_and_owner_restored_three_segments(self):
         status=(JAVA/'notify/RoutineStatus.kt').read_text()
         self.assertIn('generation == token',status)
         self.assertIn('if (owner !in owners) return',status)
@@ -60,8 +60,10 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
             self.assertIn('STOP_FOREGROUND_DETACH',text)
             self.assertIn('RoutineStatus.release',text)
         pill=(JAVA/'notify/StatusPill.kt').read_text()
-        self.assertNotIn('numSegments',pill)
-        self.assertIn('NetworkActivityPolicy.level(entry.second)',pill)
+        self.assertIn('val numSegments = 3',pill)
+        self.assertIn('width = (dp(context, 34)',pill)
+        self.assertIn('meter.isDownloadActive = reading.rxSpeed > 200L',pill)
+        self.assertIn('meter.isUploadActive = reading.txSpeed > 200L',pill)
         notifier=(JAVA/'notify/ChargeNotifier.kt').read_text()
         post=notifier.split('fun post(context:',1)[1].split('fun clear(context:',1)[0]
         guarded=post.split('synchronized(RoutineStatus)',1)[1]
