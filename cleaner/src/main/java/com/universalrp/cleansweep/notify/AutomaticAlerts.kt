@@ -153,7 +153,7 @@ object AutomaticAlerts {
                         stillRelevant = {
                             val current = latestBattery
                             prefs.getString("voice_connection_token", "observed").orEmpty()==token && current?.powerConnected==true && current.percent==100 &&
-                                when(kind) { "confirmed" -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && current.fullChargeConfirmed; "estimated" -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && current.chargeEstimate.ready; else -> true }
+                                when(kind) { "confirmed" -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && current.fullChargeConfirmed; "estimated" -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.advanced(context) && current.chargeEstimate.ready; else -> com.universalrp.cleansweep.data.ChargeAnnouncementSettings.percentNotice(context) }
                         },
                         onStarted = { if(prefs.getString("voice_connection_token", "observed").orEmpty()==token) {
                             val next=com.universalrp.cleansweep.data.ChargeNoticeRankPolicy.started(token,

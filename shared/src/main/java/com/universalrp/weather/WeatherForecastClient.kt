@@ -40,9 +40,10 @@ object WeatherForecastClient {
         longitude: Double,
         tomorrowApiKey: String? = null,
         nowMs: Long = System.currentTimeMillis(),
+        includeCyclone: Boolean = true,
     ): WeatherNowcastSnapshot {
         val cleanKey = tomorrowApiKey?.trim().orEmpty()
-        val advisory = runCatching { checkNearbyCyclone(latitude, longitude, nowMs) }.getOrNull()
+        val advisory = if (includeCyclone) runCatching { checkNearbyCyclone(latitude, longitude, nowMs) }.getOrNull() else null
 
         var tomorrowStatus = if (cleanKey.isEmpty()) "NO_KEY" else "UNAVAILABLE"
         fun failure(error: Throwable) {
@@ -55,9 +56,10 @@ object WeatherForecastClient {
         // 1. Optional user-supplied personal Tomorrow.io API key (dedicated personal quota)
         if (cleanKey.isNotEmpty()) {
             val keyedTimelines = runCatching {
-                val raw = httpGet(
-                    url = buildTomorrowTimelinesUrl(latitude, longitude),
+                val raw = httpRequest(
+                    url = "https://api.tomorrow.io/v4/timelines",
                     headers = mapOf("apikey" to cleanKey, "accept" to "application/json"),
+                    postBody = tomorrowTimelineBody(latitude, longitude),
                 )
                 parseTomorrowTimelinesResponse(raw, nowMs, advisory)
             }.onFailure(::failure).getOrNull()
@@ -91,6 +93,14 @@ object WeatherForecastClient {
             headers = mapOf("accept" to "application/json"),
         )
         return parseOpenMeteoResponse(openMeteoRaw, nowMs, advisory).copy(tomorrowStatus = tomorrowStatus)
+    }
+
+    internal fun tomorrowTimelineBody(latitude: Double, longitude: Double): String {
+        require(latitude.isFinite() && longitude.isFinite() && latitude in -90.0..90.0 && longitude in -180.0..180.0)
+        return JSONObject().put("location", String.format(Locale.US, "%.4f,%.4f", latitude, longitude))
+            .put("fields", JSONArray(listOf("precipitationIntensity", "weatherCode", "windSpeed", "windGust", "temperature", "cloudCover")))
+            .put("timesteps", JSONArray(listOf("1m", "1h"))).put("startTime", "now").put("endTime", "nowPlus2h")
+            .put("units", "metric").toString()
     }
 
     internal fun buildTomorrowTimelinesUrl(latitude: Double, longitude: Double): String {
@@ -157,14 +167,14 @@ object WeatherForecastClient {
             val values = item.optJSONObject("values") ?: continue
             val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
             if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
+            val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
+            if (deltaMinutes < -2 || deltaMinutes > 125) continue
             if (firstTemp == null && !values.isNull("temperature")) {
                 firstTemp = values.optDouble("temperature").takeIf { it.isFinite() }
             }
             if (firstCloud == null && !values.isNull("cloudCover")) {
                 firstCloud = values.optInt("cloudCover")
             }
-            val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
-            if (deltaMinutes < -2 || deltaMinutes > 125) continue
             val intensity = maxOf(
                 values.optDouble("precipitationIntensity", 0.0),
                 values.optDouble("rainIntensity", 0.0),
@@ -258,14 +268,14 @@ object WeatherForecastClient {
             val values = item.optJSONObject("values") ?: continue
             val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
             if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
+            val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
+            if (deltaMinutes < -2 || deltaMinutes > 120) continue
             if (firstTemp == null && !values.isNull("temperature")) {
                 firstTemp = values.optDouble("temperature").takeIf { it.isFinite() }
             }
             if (firstCloud == null && !values.isNull("cloudCover")) {
                 firstCloud = values.optInt("cloudCover")
             }
-            val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
-            if (deltaMinutes < -2 || deltaMinutes > 120) continue
             val intensity = maxOf(
                 values.optDouble("precipitationIntensity", 0.0),
                 values.optDouble("rainIntensity", 0.0),
@@ -528,13 +538,15 @@ object WeatherForecastClient {
         return if (end > minutes.first()) end else -1
     }
 
-    internal fun httpGet(url: String, headers: Map<String, String> = emptyMap()): String {
+    internal fun httpGet(url: String, headers: Map<String, String> = emptyMap()): String = httpRequest(url, headers)
+
+    private fun httpRequest(url: String, headers: Map<String, String>, postBody: String? = null): String {
         val target = URL(url)
         require(target.protocol == "https" && target.userInfo == null && target.port in setOf(-1,443) &&
             target.host in setOf("api.tomorrow.io", "api.met.no", "api.open-meteo.com", "www.gdacs.org"))
         require("apikey" !in headers || target.host == "api.tomorrow.io")
         val conn = (target.openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
+            requestMethod = if (postBody == null) "GET" else "POST"
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
             instanceFollowRedirects = false
@@ -545,6 +557,13 @@ object WeatherForecastClient {
             headers.forEach { (k, v) -> setRequestProperty(k, v) }
         }
         return try {
+            if (postBody != null) {
+                val body = postBody.toByteArray(Charsets.UTF_8)
+                conn.doOutput = true
+                conn.setRequestProperty("Content-Type", "application/json; charset=utf-8")
+                conn.setFixedLengthStreamingMode(body.size)
+                conn.outputStream.use { it.write(body) }
+            }
             val code = conn.responseCode
             if (code !in 200..299) throw IllegalStateException("HTTP $code")
             val bytes = conn.inputStream.use { it.readBytesBounded(2_000_000) }

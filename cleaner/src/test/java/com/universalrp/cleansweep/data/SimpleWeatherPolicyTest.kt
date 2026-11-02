@@ -37,4 +37,11 @@ class SimpleWeatherPolicyTest {
         val s = WeatherForecastClient.parseTomorrowResponse(raw, now)
         assertEquals(-1, s.minuteHorizonMinutes); assertEquals(WeatherSourceKind.TOMORROW_FORECAST, s.source)
     }
+    @Test fun timelineRequestUsesDocumentedBodyWithoutCredentials() {
+        val body = org.json.JSONObject(WeatherForecastClient.tomorrowTimelineBody(10.0, 78.0))
+        assertEquals("nowPlus2h", body.getString("endTime"))
+        assertEquals("1m", body.getJSONArray("timesteps").getString(0))
+        assertFalse(body.has("apikey"))
+    }
+
 }

@@ -22,7 +22,7 @@ internal fun disasterWebAllowed(url: String): Boolean = runCatching {
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-internal fun DisasterWebWindow(url: String, onClose: () -> Unit) {
+internal fun DisasterWebWindow(url: String, placeLabel: String = "", onClose: () -> Unit) {
     if (!disasterWebAllowed(url)) return
     val browser = LocalUriHandler.current
     var web by remember { mutableStateOf<WebView?>(null) }
@@ -36,6 +36,7 @@ internal fun DisasterWebWindow(url: String, onClose: () -> Unit) {
                     TextButton(onClick = { browser.openUri(url) }) { Text(watchWords("Open in browser", "உலாவியில் திற")) }
                     TextButton(onClick = onClose) { Text(watchWords("Close", "மூடு")) }
                 }
+                if (placeLabel.isNotBlank()) Text(watchWords("Selected place: ", "தேர்ந்தெடுத்த இடம்: ") + placeLabel, Modifier.padding(horizontal = 16.dp))
                 Text(Uri.parse(url).host.orEmpty(), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall)
                 if (failed) Text(watchWords("Website could not load. Retry in your browser; no safety conclusion can be drawn.",
                     "இணையதளம் திறக்கவில்லை. உலாவியில் முயலவும்; பாதுகாப்பு முடிவு கூற முடியாது."), Modifier.padding(16.dp))

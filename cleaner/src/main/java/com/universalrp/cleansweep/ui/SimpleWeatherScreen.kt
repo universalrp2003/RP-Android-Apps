@@ -260,5 +260,5 @@ private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCa
             }
         }
     }
-    website?.let { DisasterWebWindow(it) { website = null } }
+    website?.let { DisasterWebWindow(it, place.name) { website = null } }
 }

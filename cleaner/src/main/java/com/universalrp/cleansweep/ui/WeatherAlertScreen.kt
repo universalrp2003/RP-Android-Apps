@@ -180,9 +180,11 @@ private fun homeWeatherSummary(w: WeatherUiSnapshot): String {
         return watchWords("Rain & severe-weather watch — off", "மழை / கடும் வானிலை கண்காணிப்பு — அணைப்பு")
     }
     if (w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE) {
-        return tr("GPS is off — tap to set PIN code or town (e.g. 622301)")
+        return watchWords("Choose your default town / PIN code", "வழக்கமான ஊர் / அஞ்சல் குறியீட்டைத் தேர்ந்தெடுக்கவும்")
     }
     val where = w.activePlaceName.ifBlank { w.savedPlaceName }.ifBlank { tr("GPS automatic") }
+    if (w.source != WeatherSourceKind.TOMORROW_IO_1M || System.currentTimeMillis() - w.lastCheckedAtMs !in 0..com.universalrp.cleansweep.data.SimpleWeatherPolicy.FRESH_MS)
+        return where + " · " + watchWords("Precise rain alerts paused · open outlook", "துல்லிய மழை அறிவிப்புகள் நிறுத்தம் · முன்னறிவிப்பைப் பார்")
     return when (w.severity) {
         WeatherSeverity.CYCLONE_SEVERE -> where + " · " + tr("Urgent cyclone / extreme storm warning!")
         WeatherSeverity.VERY_HEAVY_RAIN -> where + " · " + tr("Very heavy rain warning active")

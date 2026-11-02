@@ -12,7 +12,7 @@
 
 ## Research and limits
 
-- Tomorrow.io forecast documentation: https://docs.tomorrow.io/reference/weather-forecast — minute data for premium users; website accuracy observed by owner does not establish this API key's entitlement. Diagnostic codes distinguish denied access, quota, hourly-only and general unavailability. No keys in logs or URLs.
+- Tomorrow.io forecast documentation: https://docs.tomorrow.io/reference/weather-forecast — minute data for premium users; website accuracy observed by owner does not establish this API key's entitlement. Diagnostic codes distinguish denied access, quota, hourly-only and general unavailability. No keys in logs or URLs. Rechecked official Access Keys documentation (api-authentication.md): the `apikey` header is supported. Use the documented POST Timelines body (post-timelines.md) instead of relying on GET parameter serialization. Rate-limiting.md identifies HTTP429; hourly/daily request budgets depend on plan. Rain checks no longer fetch GDACS on each place request.
 - GDACS actual report example: https://www.gdacs.org/report.aspx?eventid=1001346&episodeid=5&eventtype=TC — regional impact classification, map layers/track/cones, dated summaries. Green is not a local all-clear. Display full provider attribution and disclaimers.
 - https://sachet.ndma.gov.in/ and /CapFeed — official area-specific CAP warnings; agency integration guide could not be retrieved in research. No unverified CAP endpoint or fabricated local-warning ingestion. Link the actual official portal in the app window instead.
 - IMD/RSMC remains regional cyclone warning authority: https://rsmcnewdelhi.imd.gov.in/.
@@ -22,4 +22,4 @@
 
 ## Validation to complete
 
-585 required JVM regressions/62 suites, lint/release compile, same-key normal upgrade, full permission continuity, and native home-first/Advanced/lead/history smoke. Physical audio, real Tomorrow.io access and plan, local forecast accuracy and actual website rendering are not emulator proof. Never uninstall or clear owner data for testing.
+591 required JVM regressions/63 suites, lint/release compile, same-key normal upgrade, full permission continuity, and native home-first/Advanced/lead/history smoke. Physical audio, real Tomorrow.io access and plan, local forecast accuracy and actual website rendering are not emulator proof. Never uninstall or clear owner data for testing.

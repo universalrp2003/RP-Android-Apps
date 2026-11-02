@@ -144,12 +144,13 @@ class WeatherWatchWorker(
                 }
                 val before = com.universalrp.cleansweep.data.SimpleWeatherStore.memory(ctx, id, place)
                 try {
-                    val snapshot = WeatherForecastClient.fetchNowcast(place.latitude, place.longitude, WeatherAlertStore.readTomorrowKey(ctx))
-                    if (!stillSelected()) continue
+                    val requestedKey = WeatherAlertStore.readTomorrowKey(ctx)
+                    val snapshot = WeatherForecastClient.fetchNowcast(place.latitude, place.longitude, requestedKey, includeCyclone = false)
+                    if (!stillSelected() || WeatherAlertStore.readTomorrowKey(ctx) != requestedKey) continue
                     val decision = com.universalrp.cleansweep.data.SimpleWeatherPolicy.evaluate(snapshot, place.name, before, SavedRainWatches.lead(ctx))
                     var memory = if (decision.shouldAnnounce) before else decision.updatedMemory
                     // Source, freshness and selected location are checked AGAIN when queued speech plays.
-                    val relevant = { WeatherAlertStore.enabled(ctx) && stillSelected() &&
+                    val relevant = { WeatherAlertStore.enabled(ctx) && stillSelected() && WeatherAlertStore.readTomorrowKey(ctx) == requestedKey &&
                         com.universalrp.cleansweep.data.SimpleWeatherPolicy.precise(snapshot) }
                     if (speakIfTriggered && decision.shouldAnnounce && relevant() &&
                         (decision.bypassQuietHours || !Announcer.inQuietHours(ctx))) {
