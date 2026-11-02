@@ -1,6 +1,6 @@
 # Live Guard 2.84 — private test candidate
 
-Not published; not installed on a phone. Automated validation and physical-device testing are pending for this source revision. Public 2.82 remains unchanged.
+Not published; not installed on a phone. Signed build, regression, native settings and normal preserved-data upgrade checks passed for source80757effea6d971c860249f0bff9d041761acb40. Physical-device testing remains pending. Public 2.82 remains unchanged.
 
 - Normal 100% battery speech, optional Advanced battery checks.
 - Default place first, separate moving GPS place, compact place-labelled weather cards.
@@ -10,7 +10,7 @@ Not published; not installed on a phone. Automated validation and physical-devic
 
 ## தமிழ்
 
-இது தனிப்பட்ட சோதனைப் பதிப்பு. வெளியிடப்படவில்லை. தானியங்கி சரிபார்ப்பும் நேரடிப் போன் சோதனையும் இன்னும் முடிவடையவில்லை.
+இது தனிப்பட்ட சோதனைப் பதிப்பு. வெளியிடப்படவில்லை. தானியங்கி சரிபார்ப்பும் வழக்கமான புதுப்பிப்புச் சோதனையும் வெற்றி. நேரடிப் போன் சோதனை இன்னும் முடிவடையவில்லை.
 
 - நூறு சதவீத பேட்டரி அறிவிப்பு வழக்கம்போல்; மேம்பட்ட சோதனை விருப்பத் தேர்வு.
 - முதலில் வழக்கமான இடத்தைச் சேமிக்கவும்; தற்போதைய இருப்பிடம் தனியாகக் காட்டப்படும்.
