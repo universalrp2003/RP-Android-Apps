@@ -56,6 +56,7 @@ data class BatteryReading(
     val currentSource: BatteryValuePolicy.CurrentSource = BatteryValuePolicy.CurrentSource.NONE,
     /** Sustained supported-current evidence, NOT merely displayed 100%. */
     val fullChargeConfirmed: Boolean = false,
+    val chargeEstimate: ChargeEstimate = ChargeEstimate(reason = "Waiting for battery observations"),
 ) {
     /** Voltage is read only from Android's battery-changed broadcast in this implementation. */
     val voltageSource: BatteryMeasurementSource
@@ -239,6 +240,9 @@ object BatteryReader {
             reportedLevel = level.takeIf { scale > 0 && it in 0..scale },
             reportedScale = scale.takeIf { it > 0 && level in 0..it },
             currentSource = current.source,
+            chargeEstimate = ChargeAnnouncementSettings.policy.observe(powerConnected, percent,
+                status == BatteryManager.BATTERY_STATUS_FULL, BatteryValuePolicy.microAmpsToAmps(propertyCurrent),
+                voltageV, android.os.SystemClock.elapsedRealtime(), ChargeAnnouncementSettings.thresholds(context)),
             fullChargeConfirmed = FullChargeMonitor.policy.observe(
                 connected = powerConnected, percent = percent,
                 androidFull = status == BatteryManager.BATTERY_STATUS_FULL,

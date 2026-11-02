@@ -204,7 +204,9 @@ object NewsSpeechSanitizer {
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
         val cleaned = headlines
-            .map { it.spokenText.ifBlank { cleanHeadline(it.title, it.source) }.trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .map { item -> val label = if (BalancedNewsPolicy.category(item) == BalancedNewsPolicy.Category.HUMOUR)
+                (if(tamil) "நகைச்சுவை; உண்மைச் செய்தியல்ல. " else "Humour, not factual news. ") else ""
+                label + item.spokenText.ifBlank { cleanHeadline(item.title, item.source) }.trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
             .filter { it.isNotBlank() }
         if (cleaned.isEmpty()) return ""
         val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "

@@ -824,7 +824,8 @@ object Announcer {
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual,
             inCall = com.universalrp.updates.CallGuard.inCall(ctx),
-            bypassQuietHours = request.bypassQuietHours,
+            bypassQuietHours = request.bypassQuietHours || (request.event in setOf(Event.BATTERY_FULL, Event.CHARGING,
+                Event.UNPLUGGED_EARLY, Event.CHARGER_IDLE) && com.universalrp.cleansweep.data.ChargeAnnouncementSettings.allowQuiet(ctx)),
             silentPlace = inSilentPlace(ctx),
         )
         if (blocked != null) {
@@ -934,7 +935,8 @@ object Announcer {
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
             request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
-            bypassQuietHours = request.bypassQuietHours,
+            bypassQuietHours = request.bypassQuietHours || (request.event in setOf(Event.BATTERY_FULL, Event.CHARGING,
+                Event.UNPLUGGED_EARLY, Event.CHARGER_IDLE) && com.universalrp.cleansweep.data.ChargeAnnouncementSettings.allowQuiet(context)),
             silentPlace = inSilentPlace(context),
         )
         if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }

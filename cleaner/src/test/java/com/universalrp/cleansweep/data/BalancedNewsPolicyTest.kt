@@ -26,7 +26,7 @@ class BalancedNewsPolicyTest {
     @Test fun fullBulletinHasExactlyTheApprovedMix() {
         val result = select(mixed())
         assertEquals(8, result.size)
-        BalancedNewsPolicy.Category.values().forEach { category -> assertEquals(category.quota, result.count { BalancedNewsPolicy.category(it) == category }) }
+        BalancedNewsPolicy.DEFAULT_CATEGORIES.forEach { category -> assertEquals(category.quota, result.count { BalancedNewsPolicy.category(it) == category }) }
     }
     @Test fun missingCategoriesNeverBecomeGeneralNewsFiller() {
         assertEquals(3, select((1..12).map { item("Chennai opens public service centre number $it for residents") }).size)

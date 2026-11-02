@@ -18,6 +18,8 @@ enum class WeatherSeverity(val rank: Int, val bypassQuietHours: Boolean) {
 enum class WeatherSourceKind {
     OPEN_METEO_DEFAULT,
     TOMORROW_IO_1M,
+    TOMORROW_FORECAST,
+    MET_NORWAY_MODEL,
 }
 
 enum class LocationResolutionMode {

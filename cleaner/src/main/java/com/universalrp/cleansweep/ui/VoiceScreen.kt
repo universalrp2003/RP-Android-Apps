@@ -215,8 +215,11 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         }
                     }
                     NewsBulletinStatus()
+                    NewsTopicSettings { vm.stopSpeakingNow() }
                 }
             }
+
+            BatteryIntakeSettings()
 
             // ------------------------------------------------- Announcer voice (v2.68, simple choice)
             PanelCard(Modifier.fillMaxWidth()) {
@@ -667,7 +670,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 }
                 VoiceSwitch(
                     title = tr("Battery full"),
-                    subtitle = tr("Requires 100%, Android full status and a working current sensor near zero for 60 seconds. Unsupported phones stay silent; charger input power is not measured."),
+                    subtitle = watchWords("Choose percentage-only notice or sustained low-intake estimate above. Confirmed, estimated and unverified are different messages.", "மேலே சதவீத அறிவிப்பு அல்லது நீடித்த குறைந்த மின்னோட்ட மதிப்பீட்டைத் தேர்வு செய்யவும். உறுதியானது, மதிப்பீடு, உறுதியாகாதது தனித்தனி அறிவிப்புகள்."),
                     icon = Icons.Outlined.BatteryFull,
                     tint = GoodGreen,
                     checked = state.voiceBatteryFull,
@@ -707,9 +710,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.STORAGE_LOW, it) },
                 )
                 VoiceSwitch(
-                    title = tr("Charger removed early"),
-                    subtitle = tr("Unplugged below %s%%, and only after the hour you set below.")
-                        .format(Announcer.UNPLUG_BEFORE_PERCENT),
+                    title = watchWords("Charger removed — current battery level", "சார்ஜர் அகற்றப்பட்டது — தற்போதைய பேட்டரி அளவு"),
+                    subtitle = watchWords("Announces at any battery level. Early-removal reminders are separate.", "எந்த பேட்டரி அளவிலும் அறிவிக்கும். முன்கூட்டியே அகற்றிய நினைவூட்டல் தனியானது."),
                     icon = Icons.Outlined.PowerOff,
                     tint = WarnAmber,
                     checked = state.voiceUnplugged,

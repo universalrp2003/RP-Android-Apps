@@ -89,17 +89,8 @@ object SharedWeatherRuntime {
     const val TOMORROW_KEYS_URL = "https://app.tomorrow.io/development/keys"
     const val TOMORROW_DOCS_URL = "https://docs.tomorrow.io/reference/welcome"
 
-    const val GUIDE_EN =
-        "1. Tap 'Get free Tomorrow.io API key — official site' and sign in (Google or email).\n" +
-            "2. Open 'API Management' in your Tomorrow.io dashboard and copy your Default API Key (free tier includes 500 calls/day — plenty for one personal phone).\n" +
-            "3. Come back here, paste the key into the Tomorrow.io API key box, tap 'Save key', and tap 'Check now'.\n" +
-            "4. Your key is encrypted with Android Keystore on this phone and never shared. If quota ever runs out, the app automatically falls back to the built-in free radar."
-
-    const val GUIDE_TA =
-        "1. 'இலவச Tomorrow.io API விசை பெறுக' பொத்தானைத் தட்டி உள்நுழையவும் (Google அல்லது மின்னஞ்சல்).\n" +
-            "2. Tomorrow.io பக்கத்தில் 'API Management' பகுதியைத் திறந்து உங்கள் Default API Key-ஐ நகலெடுக்கவும் (இலவச திட்டத்தில் ஒரு நாளைக்கு 500 அழைப்புகள் கிடைக்கும் — ஒரு போனுக்கு இது தாராளமானது).\n" +
-            "3. இங்கே திரும்பி வந்து Tomorrow.io API விசைப் பெட்டியில் ஒட்டி, 'விசையைச் சேமி' தட்டி, 'இப்போது சரிபார்' அழுத்தவும்.\n" +
-            "4. உங்கள் விசை போனின் Android Keystore-இல் பாதுகாப்பாக மறையாக்கம் செய்யப்படும். விசை இல்லாவிட்டாலும் உள்ளமைந்த இலவச மழை & புயல் ரேடார் தானாக வேலை செய்யும்."
+    const val GUIDE_EN = "Use your personal Tomorrow.io API key for authenticated forecast/map access. Check your plan, quota and coverage in the official dashboard. Keyless access is for evaluation only. The key is encrypted on this phone and sent only to Tomorrow.io. When unavailable, model forecasts may be used; these are not raw radar and cannot guarantee rain arrival."
+    const val GUIDE_TA = "முன்னறிவிப்பு/வரைபட அணுகலுக்கு உங்கள் தனிப்பட்ட Tomorrow.io API விசையைப் பயன்படுத்தவும். அதிகாரப்பூர்வப் பக்கத்தில் திட்டம், வரம்பு, தரவுப் பரப்பைச் சரிபார்க்கவும். விசையற்ற அணுகல் சோதனைக்கு மட்டுமே. விசை போனில் மறையாக்கப்பட்டு Tomorrow.io-க்கு மட்டும் அனுப்பப்படும். கிடைக்காவிட்டால் மாதிரி முன்னறிவிப்பு பயன்படுத்தப்படலாம்; இது உண்மையான ரேடார் அல்ல; மழை தொடங்கும் நேரத்தை உறுதிசெய்யாது."
 
     private const val PREFS_NAME = "rp_shared_weather_watch"
     private const val KEY_ENABLED = "weather_enabled"

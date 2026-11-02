@@ -56,7 +56,10 @@ object WeatherAlertPolicy {
         previous: WeatherEpisodeMemory,
         nowMs: Long = snapshot.fetchedAtMs,
         placeDetails: String = "",
+        leadMinutes: Int = 30,
     ): WeatherAlertDecision {
+        require(leadMinutes in setOf(15, 30, 60))
+        val leadMax = leadMinutes + 8
         val nearHorizon = snapshot.timeline.filter { it.minutesAhead in 0..60 }
         val extendedHorizon = snapshot.timeline.filter { it.minutesAhead in 0..120 }
 
@@ -88,11 +91,12 @@ object WeatherAlertPolicy {
             minutesUntilRain = minutesUntilRain,
             peakPrecip60 = peakPrecip60,
             peakGust60 = peakGust60,
+            leadMax = leadMax,
         )
 
         // Reset episode memory only after sustained dry calm conditions (90+ continuous dry minutes).
         val dryNow = snapshot.currentPrecipMmPerHour < DRY_THRESHOLD_MM_HR &&
-            (minutesUntilRain == null || minutesUntilRain > TARGET_LEAD_MAX_MINUTES) &&
+            (minutesUntilRain == null || minutesUntilRain > leadMax) &&
             rawSeverity == WeatherSeverity.CLEAR_OR_NORMAL
 
         val workingMemory = if (dryNow) {
@@ -179,6 +183,7 @@ object WeatherAlertPolicy {
         minutesUntilRain: Int?,
         peakPrecip60: Double,
         peakGust60: Double,
+        leadMax: Int = TARGET_LEAD_MAX_MINUTES,
     ): WeatherSeverity {
         val cycloneAdvisory = snapshot.activeCyclone != null
         if (cycloneAdvisory || peakGust60 >= CYCLONE_GUST_KMH || peakPrecip60 >= EXTREME_CLOUDBURST_MM_HR) {
@@ -190,7 +195,7 @@ object WeatherAlertPolicy {
         }
         // 30-minute rain warning: approaching within 1..38 minutes (or just started) AND the expected
         // rain reaches a noticeable rate — a merely dark, chilly, trace-drizzle sky must not speak.
-        if (minutesUntilRain != null && minutesUntilRain in 0..TARGET_LEAD_MAX_MINUTES && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
+        if (minutesUntilRain != null && minutesUntilRain in 0..leadMax && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {
             return WeatherSeverity.RAIN_SOON
         }
         return if (currentlyRaining && peakPrecip60 >= NOTICEABLE_RAIN_MM_HR) {

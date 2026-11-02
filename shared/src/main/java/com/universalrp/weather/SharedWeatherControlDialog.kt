@@ -113,7 +113,7 @@ fun SharedWeatherControlDialog(
         allowGps && state.gpsTurnedOn && state.permissionGranted && isCellTowerMode ->
             bi(
                 tamil,
-                "📡 Mobile Tower Location ON — automatically finds your current town/village (0% GPS battery drain).",
+                "Mobile-tower location uses approximate fixes; updates may use battery.",
                 "📡 மொபைல் டவர் இடம் இயக்கத்தில் — உங்கள் தற்போதைய ஊரைத் தானாகக் கண்டறியும் (0% GPS பேட்டரி செலவு).",
             )
         allowGps && state.gpsTurnedOn && state.permissionGranted ->
@@ -177,16 +177,16 @@ fun SharedWeatherControlDialog(
 
     val tomorrowTitle = bi(
         tamil,
-        "Tomorrow.io 1-minute precision (optional)",
-        "Tomorrow.io 1-நிமிட துல்லியம் (விருப்பத்தேர்வு)",
+        "Tomorrow.io forecast access (personal key)",
+        "Tomorrow.io முன்னறிவிப்பு (தனிப்பட்ட விசை)",
     )
     val tomorrowSub = if (state.hasTomorrowKey) {
         bi(tamil, "Personal Tomorrow.io key active (Keystore encrypted)", "Tomorrow.io விசை செயலில் உள்ளது (பாதுகாப்பாகச் சேமிக்கப்பட்டது)")
     } else {
         bi(
             tamil,
-            "Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota",
-            "Tomorrow.io 1-நிமிட ரேடார் விசை இன்றி தானாகவே இயங்குகிறது — கூடுதல் வரம்பிற்கு மட்டும் சொந்த விசை",
+            "Personal key required for production Tomorrow.io access; model forecasts are the fallback.",
+            "Tomorrow.io நிரந்தர அணுகலுக்கு தனிப்பட்ட விசை தேவை; இல்லையெனில் மாதிரி முன்னறிவிப்பு.",
         )
     }
     val keyFieldLabel = bi(tamil, "Tomorrow.io API key", "Tomorrow.io API விசை")

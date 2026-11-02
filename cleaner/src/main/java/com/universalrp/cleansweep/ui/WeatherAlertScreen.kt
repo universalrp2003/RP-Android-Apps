@@ -186,7 +186,7 @@ private fun homeWeatherSummary(w: WeatherUiSnapshot): String {
     return when (w.severity) {
         WeatherSeverity.CYCLONE_SEVERE -> where + " · " + tr("Urgent cyclone / extreme storm warning!")
         WeatherSeverity.VERY_HEAVY_RAIN -> where + " · " + tr("Very heavy rain warning active")
-        WeatherSeverity.RAIN_SOON -> where + " · " + tr("Rain expected within ~30 minutes")
+        WeatherSeverity.RAIN_SOON -> where + " · " + watchWords("Rain indicated within the selected watch window", "தேர்ந்தெடுத்த காலவரம்பில் மழை வாய்ப்பு")
         WeatherSeverity.CLEAR_OR_NORMAL -> where + " · " + tr("Silent watch — speaks only before rain or storm")
     }
 }
@@ -263,7 +263,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                tr("Speaks ~30 minutes before rain starts. Never sends daily routine weather spam."),
+                                watchWords("Uses the selected lead time; arrival is approximate and background delivery may be delayed.", "தேர்ந்தெடுத்த முன்னறிவிப்பு நேரம் பயன்படுத்தப்படும்; மழை தொடங்கும் நேரம் தோராயமானது; பின்னணி அறிவிப்பு தாமதிக்கலாம்."),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                             )
@@ -344,9 +344,9 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         HorizontalDivider(color = OutlineC.copy(alpha = 0.4f))
                         val checkedTime = WeatherAlertPolicy.format12HourClock(w.lastCheckedAtMs)
                         val sourceLabel = if (w.source == WeatherSourceKind.TOMORROW_IO_1M) {
-                            tr("Tomorrow.io 1-min radar")
+                            watchWords("Tomorrow.io forecast timeline", "Tomorrow.io முன்னறிவிப்பு நேரவரிசை")
                         } else {
-                            tr("Built-in radar + cyclone watch")
+                            watchWords("Weather-model forecast + cyclone advisories", "வானிலை மாதிரி முன்னறிவிப்பு + புயல் அறிவுறுத்தல்")
                         }
                         Text(
                             tr("Last checked") + ": " + checkedTime + " · " + sourceLabel,
@@ -356,7 +356,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         val liveStatusText = when (w.severity) {
                             WeatherSeverity.CYCLONE_SEVERE -> tr("Urgent cyclone / extreme storm warning!")
                             WeatherSeverity.VERY_HEAVY_RAIN -> tr("Very heavy rain warning active")
-                            WeatherSeverity.RAIN_SOON -> tr("Rain expected within ~30 minutes")
+                            WeatherSeverity.RAIN_SOON -> watchWords("Rain indicated within the selected watch window", "தேர்ந்தெடுத்த காலவரம்பில் மழை வாய்ப்பு")
                             WeatherSeverity.CLEAR_OR_NORMAL -> tr("No rain approaching right now — staying quiet")
                         }
                         Text(
@@ -381,6 +381,8 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                     }
                 }
             }
+
+            RainWatchSettingsPanel()
 
             // 2. Smart Location Card (Automatic GPS when ON -> Oor Arivippu PIN/Town Picker when OFF)
             PanelCard(Modifier.fillMaxWidth()) {
@@ -411,7 +413,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
 
                     val modeExplanation = when {
                         w.gpsTurnedOn && w.locationPermissionGranted ->
-                            tr("Phone GPS is ON — location updates automatically without battery drain.")
+                            watchWords("GPS is on. Location checks can use battery; saved areas work without GPS.", "GPS இயங்குகிறது. இடச் சரிபார்ப்பு மின்கலத்தைப் பயன்படுத்தலாம்; சேமித்த இடங்கள் GPS இன்றிச் செயல்படும்.")
                         w.gpsTurnedOn && !w.locationPermissionGranted ->
                             tr("Phone GPS is ON — grant location access for automatic area detection, or save your PIN/town below.")
                         w.savedPlaceName.isNotBlank() ->
@@ -629,7 +631,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         Spacer(Modifier.width(8.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                tr("Tomorrow.io 1-minute precision (optional)"),
+                                watchWords("Tomorrow.io access (optional personal key)", "Tomorrow.io அணுகல் (விருப்பத் தனிப்பட்ட விசை)"),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -637,7 +639,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                                 if (w.hasTomorrowKey) {
                                     tr("Personal Tomorrow.io key active (encrypted on phone)")
                                 } else {
-                                    tr("Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota")
+                                    watchWords("Authenticated provider access required; plans and coverage vary. Keyless access is for evaluation, not production.", "வழங்குநரின் விசை அணுகல் தேவை; திட்டமும் தரவுப் பரப்பும் மாறும். விசையற்ற அணுகல் சோதனைக்கானது; தொடர்ந்த பயன்பாட்டிற்கு அல்ல.")
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (w.hasTomorrowKey) GoodGreen else TextSecondary,

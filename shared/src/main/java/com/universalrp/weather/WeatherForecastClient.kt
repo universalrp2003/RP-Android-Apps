@@ -16,21 +16,8 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/**
- * Multi-layer 1-minute weather radar nowcast & 24×7 cyclone engine:
- *
- *  1. **Personal Tomorrow.io 1-Minute Radar** (optional user API key):
- *     Uses dedicated quota via `apikey` header on Tomorrow.io `1m` + `1h` timelines.
- *  2. **Built-in Default Tomorrow.io Keyless 1-Minute Radar** (ZERO API key required!):
- *     Queries `https://api.tomorrow.io/v4/timelines?...&timesteps=1m,1h&startTime=now&endTime=nowPlus2h`
- *     directly from each user's device IP with a 10-minute ~2 km tile cache so EVERY user gets
- *     Tomorrow.io 1-minute radar precision automatically out of the box without pasting a key.
- *  3. **MET Norway ECMWF Global High-Resolution Model** (automatic fallback if CGNAT IP hits HTTP 429):
- *     Queries Norwegian Meteorological Institute `Locationforecast 2.0` (`ECMWF`, zero key).
- *  4. **Calibrated Open-Meteo + Official GDACS Tropical Cyclone Watch**:
- *     Final fallback filtering out coarse NWP trace drizzle noise (`< 0.35 mm / 15m` at low probability)
- *     while keeping full cyclone and downpour protection active 24×7.
- */
+/** Authenticated Tomorrow.io timelines, then explicitly model-based MET Norway/Open-Meteo fallbacks.
+ * Provider time steps are not demonstrated local forecast accuracy or raw ground-radar coverage. */
 object WeatherForecastClient {
 
     private const val CONNECT_TIMEOUT_MS = 10_000
@@ -78,26 +65,8 @@ object WeatherForecastClient {
             if (keyedForecast != null) return keyedForecast
         }
 
-        // 2. Built-in DEFAULT for every user automatically: Tomorrow.io Keyless 1-Minute Timelines API!
-        val keyless = runCatching {
-            val tileKey = String.format(Locale.US, "%.2f,%.2f", latitude, longitude)
-            val cached = cachedKeylessTile
-            val raw = if (cached != null && cached.tileKey == tileKey &&
-                nowMs - cached.fetchedAtMs in 0 until KEYLESS_CACHE_TTL_MS
-            ) {
-                cached.rawJson
-            } else {
-                httpGet(
-                    url = buildTomorrowTimelinesUrl(latitude, longitude),
-                    headers = mapOf("accept" to "application/json"),
-                ).also { freshJson ->
-                    cachedKeylessTile = CachedTileNowcast(tileKey, nowMs, freshJson)
-                }
-            }
-            parseTomorrowTimelinesResponse(raw, nowMs, advisory)
-        }.getOrNull()
-        if (keyless != null) return keyless
-
+        // Keyless Tomorrow.io is documented for evaluation only, not a production fallback.
+        // No authenticated access: use labelled numerical-model forecasts, never pretend radar.
         // 3. Secondary zero-key fallback if mobile carrier CGNAT IP hits HTTP 429: MET Norway (ECMWF)
         val metNorway = runCatching {
             val raw = httpGet(
@@ -178,6 +147,8 @@ object WeatherForecastClient {
             val item = minutelyIntervals.optJSONObject(i) ?: continue
             val epochMs = parseTimestampMs(item.opt("startTime") ?: item.opt("time")) ?: continue
             val values = item.optJSONObject("values") ?: continue
+            val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
+            if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
             if (firstTemp == null && !values.isNull("temperature")) {
                 firstTemp = values.optDouble("temperature").takeIf { it.isFinite() }
             }
@@ -208,6 +179,8 @@ object WeatherForecastClient {
             val item = hourlyIntervals.optJSONObject(i) ?: continue
             val epochMs = parseTimestampMs(item.opt("startTime") ?: item.opt("time")) ?: continue
             val values = item.optJSONObject("values") ?: continue
+            val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
+            if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
             if (firstTemp == null && !values.isNull("temperature")) {
                 firstTemp = values.optDouble("temperature").takeIf { it.isFinite() }
             }
@@ -237,7 +210,7 @@ object WeatherForecastClient {
         val nowSample = sorted.first()
         return WeatherNowcastSnapshot(
             fetchedAtMs = nowMs,
-            source = WeatherSourceKind.TOMORROW_IO_1M,
+            source = if (minutelyIntervals.length() > 0) WeatherSourceKind.TOMORROW_IO_1M else WeatherSourceKind.TOMORROW_FORECAST,
             temperatureC = firstTemp,
             cloudCoverPercent = firstCloud,
             currentPrecipMmPerHour = nowSample.precipMmPerHour,
@@ -270,6 +243,8 @@ object WeatherForecastClient {
             val item = minutely.optJSONObject(i) ?: continue
             val epochMs = parseTimestampMs(item.opt("time")) ?: continue
             val values = item.optJSONObject("values") ?: continue
+            val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
+            if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
             if (firstTemp == null && !values.isNull("temperature")) {
                 firstTemp = values.optDouble("temperature").takeIf { it.isFinite() }
             }
@@ -299,6 +274,8 @@ object WeatherForecastClient {
             val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
             if (deltaMinutes !in 61..120) continue
             val values = item.optJSONObject("values") ?: continue
+            val rainValue = values.optDouble("precipitationIntensity", values.optDouble("rainIntensity", Double.NaN))
+            if (!rainValue.isFinite() || rainValue !in 0.0..1000.0) continue
             samples += MinuteRainSample(
                 minutesAhead = deltaMinutes,
                 precipMmPerHour = maxOf(
@@ -311,10 +288,11 @@ object WeatherForecastClient {
         }
 
         val sorted = samples.sortedBy { it.minutesAhead }
+        require(sorted.isNotEmpty()) { "Empty Tomorrow.io forecast" }
         val nowSample = sorted.firstOrNull()
         return WeatherNowcastSnapshot(
             fetchedAtMs = nowMs,
-            source = WeatherSourceKind.TOMORROW_IO_1M,
+            source = if (minutely.length() > 0) WeatherSourceKind.TOMORROW_IO_1M else WeatherSourceKind.TOMORROW_FORECAST,
             temperatureC = firstTemp,
             cloudCoverPercent = firstCloud,
             currentPrecipMmPerHour = nowSample?.precipMmPerHour ?: 0.0,
@@ -355,7 +333,8 @@ object WeatherForecastClient {
                 details?.optDouble("wind_speed", 0.0) ?: 0.0,
             )
             val next1h = data.optJSONObject("next_1_hours")?.optJSONObject("details")
-            val precipMmHr = next1h?.optDouble("precipitation_amount", 0.0) ?: 0.0
+            val precipMmHr = next1h?.optDouble("precipitation_amount", Double.NaN) ?: Double.NaN
+            if(!precipMmHr.isFinite() || precipMmHr !in 0.0..1000.0) continue
             // Suppress trace coarse drizzle (< 0.5 mm/h) so light humid cloud cover never false-alarms.
             val calibratedPrecip = if (precipMmHr < 0.50) 0.0 else precipMmHr
             samples += MinuteRainSample(
@@ -371,7 +350,7 @@ object WeatherForecastClient {
         val nowSample = sorted.first()
         return WeatherNowcastSnapshot(
             fetchedAtMs = nowMs,
-            source = WeatherSourceKind.OPEN_METEO_DEFAULT,
+            source = WeatherSourceKind.MET_NORWAY_MODEL,
             temperatureC = firstTemp,
             cloudCoverPercent = firstCloud,
             currentPrecipMmPerHour = nowSample.precipMmPerHour,
@@ -450,6 +429,7 @@ object WeatherForecastClient {
         jsonText: String,
         latitude: Double,
         longitude: Double,
+        nowMs: Long? = null,
     ): OfficialCycloneAdvisory? {
         val root = JSONObject(jsonText)
         val features = root.optJSONArray("features") ?: return null
@@ -458,6 +438,11 @@ object WeatherForecastClient {
             val feature = features.optJSONObject(i) ?: continue
             val props = feature.optJSONObject("properties") ?: continue
             if (props.optString("eventtype") != "TC") continue
+            if (nowMs != null) {
+                val updated = parseTimestampMs(props.optString("datemodified")) ?: continue
+                if (nowMs - updated !in 0..18L*60*60_000 || props.optString("iscurrent") != "true") continue
+            }
+            if (feature.optJSONObject("geometry")?.optString("type") != "Point") continue
             val level = props.optString("alertlevel")
             if (level != "Red" && level != "Orange") continue
             val coords = feature.optJSONObject("geometry")?.optJSONArray("coordinates") ?: continue
@@ -472,7 +457,7 @@ object WeatherForecastClient {
                     eventName = name,
                     alertLevel = level,
                     distanceKm = distKm,
-                    maxWindKmh = props.optDouble("severity", 0.0),
+                    maxWindKmh = props.optJSONObject("severitydata")?.optDouble("severity", 0.0) ?: 0.0,
                 )
             }
         }
@@ -482,13 +467,13 @@ object WeatherForecastClient {
     private fun checkNearbyCyclone(latitude: Double, longitude: Double, nowMs: Long): OfficialCycloneAdvisory? {
         val fresh = cachedCycloneJson?.takeIf { nowMs - cachedCycloneCheckAtMs < 60 * 60_000L }
             ?: httpGet(
-                url = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventlist=TC",
+                url = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventtype=TC",
                 headers = mapOf("accept" to "application/json"),
             ).also {
                 cachedCycloneJson = it
                 cachedCycloneCheckAtMs = nowMs
             }
-        return parseGdacsCycloneAdvisory(fresh, latitude, longitude)
+        return parseGdacsCycloneAdvisory(fresh, latitude, longitude, nowMs)
     }
 
     private fun parseTimestampMs(raw: Any?): Long? = when (raw) {
@@ -504,11 +489,15 @@ object WeatherForecastClient {
     }
 
     internal fun httpGet(url: String, headers: Map<String, String> = emptyMap()): String {
-        val conn = (URL(url).openConnection() as HttpURLConnection).apply {
+        val target = URL(url)
+        require(target.protocol == "https" && target.userInfo == null && target.port in setOf(-1,443) &&
+            target.host in setOf("api.tomorrow.io", "api.met.no", "api.open-meteo.com", "www.gdacs.org"))
+        require("apikey" !in headers || target.host == "api.tomorrow.io")
+        val conn = (target.openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             connectTimeout = CONNECT_TIMEOUT_MS
             readTimeout = READ_TIMEOUT_MS
-            instanceFollowRedirects = true
+            instanceFollowRedirects = false
             setRequestProperty(
                 "User-Agent",
                 "RP-LiveGuard-Weather/1.1 (+https://github.com/universalrp2003/RP-Android-Apps)",
@@ -518,10 +507,18 @@ object WeatherForecastClient {
         return try {
             val code = conn.responseCode
             if (code !in 200..299) throw IllegalStateException("HTTP $code")
-            conn.inputStream.bufferedReader(Charsets.UTF_8).use(BufferedReader::readText)
+            val bytes = conn.inputStream.use { it.readBytesBounded(2_000_000) }
+            bytes.toString(Charsets.UTF_8)
         } finally {
             conn.disconnect()
         }
+    }
+
+    private fun java.io.InputStream.readBytesBounded(limit: Int): ByteArray {
+        val out = java.io.ByteArrayOutputStream(); val block = ByteArray(8192)
+        while (true) { val count = read(block); if (count < 0) break
+            require(out.size() + count <= limit) { "Weather response too large" }; out.write(block,0,count) }
+        return out.toByteArray()
     }
 
     internal fun haversineKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

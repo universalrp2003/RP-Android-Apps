@@ -21,6 +21,8 @@ import com.universalrp.cleansweep.R
 import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.WeatherAlertStore
+import com.universalrp.cleansweep.data.SavedRainWatches
+import kotlinx.coroutines.sync.withLock
 import com.universalrp.cleansweep.voice.Announcer
 import com.universalrp.weather.WeatherAlertDecision
 import com.universalrp.weather.WeatherAlertPolicy
@@ -114,12 +116,40 @@ class WeatherWatchWorker(
          * Runs one complete location -> forecast -> policy evaluation cycle.
          * Returns the evaluated decision, or null if neither GPS nor a saved fallback place is available yet.
          */
-        suspend fun executeCheck(
+        private val checkLock = kotlinx.coroutines.sync.Mutex()
+        suspend fun executeCheck(context: Context, speakIfTriggered: Boolean): WeatherAlertDecision? =
+            checkLock.withLock { executePlaces(context, speakIfTriggered) }
+
+        private suspend fun executePlaces(
             context: Context,
             speakIfTriggered: Boolean,
         ): WeatherAlertDecision? {
             val ctx = context.applicationContext
             val tamil = Lang.languageIn(ctx) == AppLang.TA
+            var extraDecision: WeatherAlertDecision? = null
+            for (watch in SavedRainWatches.read(ctx).filter { it.enabled }) {
+                try {
+                    val data = WeatherForecastClient.fetchNowcast(watch.place.latitude, watch.place.longitude, WeatherAlertStore.readTomorrowKey(ctx))
+                    val before = SavedRainWatches.memory(ctx, watch.id)
+                    val result = WeatherAlertPolicy.evaluate(data, watch.place.name, before,
+                        leadMinutes = SavedRainWatches.lead(ctx))
+                    // Withdrawal/deletion while a request was in flight must win.
+                    if (SavedRainWatches.read(ctx).none { it.id == watch.id && it.enabled }) continue
+                    var memory = if (result.shouldAnnounce) before else result.updatedMemory
+                    if (speakIfTriggered && WeatherAlertStore.enabled(ctx) && result.shouldAnnounce &&
+                        (result.bypassQuietHours || !Announcer.inQuietHours(ctx))) {
+                        postAlertNotification(ctx, result, tamil, NOTIF_ID_WEATHER + kotlin.math.abs(watch.id.hashCode() % 100_000) + 1)
+                        if (Announcer.speakWeatherAndWait(ctx, result.englishSpeech, result.tamilSpeech, result.bypassQuietHours)) memory = result.updatedMemory
+                    }
+                    val clock = WeatherAlertPolicy.format12HourClock(data.fetchedAtMs)
+                    val status = "$clock · ${data.source.name} · ${result.minutesUntilRain?.let { "~$it min / நிமி" } ?: "No rain in available forecast / கிடைத்த முன்னறிவிப்பில் மழை இல்லை"}"
+                    SavedRainWatches.save(ctx, watch.id, memory, status)
+                    extraDecision = result
+                } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                catch (_: Exception) { SavedRainWatches.save(ctx, watch.id, SavedRainWatches.memory(ctx,watch.id),
+                    "Check failed; no current forecast / சரிபார்ப்பு தோல்வி; தற்போதைய முன்னறிவிப்பு இல்லை") }
+            }
+            if (!SavedRainWatches.currentEnabled(ctx)) return extraDecision
             val saved = WeatherAlertStore.savedPlace(ctx)
             val resolved = WeatherPlaceResolver.resolveActiveLocationSuspend(
                 context = ctx,
@@ -129,7 +159,7 @@ class WeatherWatchWorker(
                 savedLon = saved?.longitude ?: Double.NaN,
                 tamil = tamil,
             )
-            if (!resolved.hasCoordinates) return null
+            if (!resolved.hasCoordinates) return extraDecision
 
             val tomorrowKey = WeatherAlertStore.readTomorrowKey(ctx)
             val snapshot = WeatherForecastClient.fetchNowcast(
@@ -142,6 +172,7 @@ class WeatherWatchWorker(
                 snapshot = snapshot,
                 placeLabel = resolved.name,
                 previous = memory,
+                leadMinutes = SavedRainWatches.lead(ctx),
             )
 
             WeatherAlertStore.saveEvaluation(
@@ -174,6 +205,7 @@ class WeatherWatchWorker(
             context: Context,
             decision: WeatherAlertDecision,
             tamil: Boolean,
+            notificationId: Int = NOTIF_ID_WEATHER,
         ) {
             val nm = context.getSystemService(NotificationManager::class.java) ?: return
             val severe = decision.severity.bypassQuietHours
@@ -212,7 +244,7 @@ class WeatherWatchWorker(
                 .setAutoCancel(true)
                 .setContentIntent(openIntent)
                 .build()
-            runCatching { nm.notify(NOTIF_ID_WEATHER, notif) }
+            runCatching { nm.notify(notificationId, notif) }
         }
     }
 }

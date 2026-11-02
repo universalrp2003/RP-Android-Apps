@@ -121,9 +121,36 @@ object AutomaticAlerts {
             if (com.universalrp.cleansweep.data.BatteryAlertPolicy.low(battery.percent, battery.powerConnected, Announcer.lowPercent(context)))
                 alert(Announcer.KEY_LAST_LOW, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_LOW,
                     "Battery low: ${battery.percent} percent. Please recharge.", "பேட்டரி குறைவு: ${battery.percent} சதவீதம். சார்ஜ் செய்யவும்.")
-            if (battery.fullChargeConfirmed)
-                alert(Announcer.KEY_LAST_FULL, 6 * 60 * 60 * 1000L, Announcer.Event.BATTERY_FULL,
-                    "Battery charge completion confirmed. Unplug when convenient.", "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்.")
+            // A percentage-only notice is not a charge-termination claim. Deduplicate per connection,
+            // and mark only after playback starts (quiet/call/offline rejection must not consume it).
+            if (!battery.powerConnected) prefs.edit().remove("charge_283_spoken").remove("charge_283_rank").apply()
+            if (battery.powerConnected && battery.percent == 100) {
+                val kind = when {
+                    battery.fullChargeConfirmed -> "confirmed"
+                    battery.chargeEstimate.ready -> "estimated"
+                    com.universalrp.cleansweep.data.ChargeAnnouncementSettings.percentNotice(context) -> "percentage"
+                    else -> ""
+                }
+                val token = prefs.getString("voice_connection_token", "observed").orEmpty()
+                val key = "$token:$kind"
+                val rank = when(kind) { "confirmed" -> 3; "estimated" -> 2; "percentage" -> 1; else -> 0 }
+                val previousToken = prefs.getString("charge_283_spoken", "").orEmpty().substringBeforeLast(':')
+                val previousRank = if(previousToken == token) prefs.getInt("charge_283_rank",0) else 0
+                if (rank > previousRank) {
+                    val en = when (kind) {
+                        "confirmed" -> "Battery charge completion confirmed. Unplug when convenient."
+                        "estimated" -> "Battery is 100 percent with sustained low battery intake. Charge completion is estimated, not verified."
+                        else -> "Battery reached 100 percent. Charge completion could not be verified."
+                    }
+                    val ta = when (kind) {
+                        "confirmed" -> "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்."
+                        "estimated" -> "பேட்டரி நூறு சதவீதம். குறைந்த மின்னோட்டம் நீடிக்கிறது. சார்ஜ் நிறைவு ஒரு மதிப்பீடு மட்டுமே; உறுதிப்படுத்தப்படவில்லை."
+                        else -> "பேட்டரி நூறு சதவீதத்தை எட்டியது. சார்ஜ் நிறைவை உறுதிப்படுத்த முடியவில்லை."
+                    }
+                    Announcer.speak(context, en, ta, Announcer.Event.BATTERY_FULL,
+                        onStarted = { prefs.edit().putString("charge_283_spoken", key).putInt("charge_283_rank",rank).apply() })
+                }
+            }
             if ((battery.temperatureC ?: -100f) >= Announcer.HOT_BATTERY_C)
                 alert(Announcer.KEY_LAST_HOT, 3 * 60 * 60 * 1000L, Announcer.Event.OVERHEAT,
                     "The battery is running hot. Please review charging and phone use.", "பேட்டரி அதிக வெப்பமாக உள்ளது. சார்ஜ் மற்றும் போன் பயன்பாட்டை சரிபார்க்கவும்.")
