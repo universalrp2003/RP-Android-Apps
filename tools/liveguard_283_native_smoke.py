@@ -105,6 +105,8 @@ def main():
     assert value('feature_discovery_v1','disaster_news')=='true'
     seek('New: security change review')
     click('Not now')
+    # Wait for acknowledgement/dismissal, not an arbitrary IO timing assumption.
+    seek('News topics')
     assert value('feature_discovery_v1','security_review_changes')=='true'
     assert value('liveguard_insights','security_history')=='false'
     screen('VOICE')
