@@ -39,4 +39,8 @@ class InsightsJsonTest {
         val raw = InsightsJson.security(state).replace("accessibility|org.example.reader|", "forged-key")
         assertEquals(SecurityHistoryState(), InsightsJson.readSecurity(raw))
     }
+
+    @Test fun signingLineageAndInstallerRoundTripPrivately() { val identity=PackageIdentity(setOf("b".repeat(64)),setOf("a".repeat(64),"b".repeat(64)));val state=SecurityHistoryPolicy.observe(SecurityHistoryState(),insightSnapshot(packages=listOf(ObservedPackage("org.test","Test",identity=identity,installer="org.store"))));assertEquals(state,InsightsJson.readSecurity(InsightsJson.security(state))) }
+    @Test fun legacyHistoryWithoutSigningFieldsStillDecodes() { val state=SecurityHistoryPolicy.observe(SecurityHistoryState(),insightSnapshot(packages=listOf(ObservedPackage("org.test","Test"))));assertEquals(state,InsightsJson.readSecurity(InsightsJson.security(state))) }
+
 }

@@ -11,13 +11,13 @@ import kotlin.math.roundToInt
 /** Supplementary regional reports, never a local impact/safety prediction or live telemetry. */
 object NewsDisasterPolicy {
     const val MAX_EVENTS = 3
-    const val MAX_TRACKED = 256 // Tombstones are not expired: old episodes must not regain three reads.
+    const val MAX_TRACKED = 256 // Bounded per-event tombstones; cyclone advisory high-water records are never evicted.
     const val GPS_FRESH_MS = 5 * 60_000L
     const val DRAFT_FRESH_MS = 10 * 60_000L
-    data class Origin(val lat: Double, val lon: Double, val phone: Boolean, val at: Long)
+    data class Origin(val lat: Double, val lon: Double, val phone: Boolean, val at: Long, val placeName: String = "")
     data class Event(val id: Long, val type: String, val name: String, val updated: Long,
-        val distanceKm: Double, val positionAt: Long? = null, val windKmh: Double? = null) {
-        val key: String get() = "$type:$id" // Deliberately NOT episode, report time, distance or language.
+        val distanceKm: Double, val positionAt: Long? = null, val windKmh: Double? = null, val region: String = "", val official: OfficialCycloneBulletin? = null) {
+        val key: String get() = "$type:$id" // Stable event identity; cyclone advisory timestamp is tracked separately.
     }
     fun fresh(e: Event, now: Long): Boolean = now - e.updated in 0..maxAge(e.type) &&
         (e.positionAt == null || now - e.positionAt in 0..CycloneWatchData.FRESH_MS)
@@ -38,8 +38,28 @@ object NewsDisasterPolicy {
         val safe = JSONObject().put("features", org.json.JSONArray(active)).toString()
         return DisasterReports.parse(safe, type, origin.lat, origin.lon, now).filter { it.id in 1..999_999_999_999 }.map {
             // Only a bounded storm identifier is spoken from free provider text. Other types use fixed labels.
-            Event(it.id, it.type, it.name.takeIf { n -> Regex("[A-Z][A-Z0-9-]{1,29}").matches(n) }.orEmpty(), it.updated, it.distanceKm)
+            Event(it.id, it.type, it.name.takeIf { n -> Regex("[A-Z][A-Z0-9-]{1,29}").matches(n) }.orEmpty(), it.updated, it.distanceKm, region = region(active, it.id))
         }
+    }
+    private fun region(features: List<JSONObject>, id: Long): String {
+        val iso = features.firstOrNull { it.optJSONObject("properties")?.optLong("eventid") == id }
+            ?.optJSONObject("properties")?.optString("iso3").orEmpty()
+        // Use ISO country names, not arbitrary event prose or provider instructions.
+        return Locale.getISOCountries().firstOrNull { runCatching { Locale("", it).getISO3Country() == iso }.getOrDefault(false) }
+            ?.let { Locale("", it).getDisplayCountry(Locale.ENGLISH) }.orEmpty()
+    }
+    /** Pin the advisory authority; forecast-model impacts must not impersonate JTWC observations. */
+    fun advisoryTimeline(details: String, eventId: Long): String? {
+        val p = JSONObject(details).optJSONObject("properties") ?: return null
+        if (p.optLong("eventid") != eventId || p.optString("eventtype") != "TC" || p.optString("source") != "JTWC") return null
+        val impacts = p.optJSONArray("impacts") ?: return null
+        for (i in 0 until minOf(impacts.length(), 10)) {
+            val impact = impacts.optJSONObject(i) ?: continue
+            if (impact.optString("source") != "JTWC") continue
+            val url = impact.optJSONObject("resource")?.optString("timeline").orEmpty()
+            if (Regex("https://www\\.gdacs\\.org/gdacsapi/api/export/gettimeline\\?id=[0-9]{1,12}").matches(url)) return url
+        }
+        return null
     }
     fun observed(event: Event, raw: String, origin: Origin, now: Long): Event? {
         require(event.type == "TC")
@@ -61,18 +81,26 @@ object NewsDisasterPolicy {
         return event.copy(positionAt = latest.first, windKmh = wind,
             distanceKm = WeatherForecastClient.haversineKm(origin.lat, origin.lon, lat, lon))
     }
-    private fun stamp(at: Long, tamil: Boolean): String = DateTimeFormatter.ofPattern("d MMM HH:mm z",
+    private fun stamp(at: Long, tamil: Boolean): String = DateTimeFormatter.ofPattern("d MMM h:mm a z",
         if (tamil) Locale.forLanguageTag("ta-IN") else Locale.ENGLISH).withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(at))
     fun speech(events: List<Event>, origin: Origin, tamil: Boolean): String {
         if (events.isEmpty()) return ""
+        val name = NamedWeatherPlace.clean(origin.placeName).ifBlank {
+            if (tamil) "குறிப்பு இடத்தின் பெயர் கிடைக்கவில்லை" else "reference place name unavailable"
+        }
         val place = if (origin.phone) {
-            if (tamil) "${stamp(origin.at, true)} நேர கைப்பேசி இருப்பிடத்திலிருந்து" else "from your phone location at ${stamp(origin.at, false)}"
-        } else if (tamil) "சேமித்த வீட்டிலிருந்து" else "from your saved home"
-        val lead = if (tamil) "ஜி டி ஏ சி எஸ் பேரிடர் அறிக்கைகள். " else "GDACS regional disaster reports. "
+            if (tamil) "$name; ${stamp(origin.at, true)} நேர கைப்பேசி இருப்பிடம்" else "$name; phone location checked at ${stamp(origin.at, false)}"
+        } else if (tamil) "$name; நீங்கள் சேமித்த இடம்" else "$name; your saved reference place"
+        val lead = if (tamil) "பிராந்திய பேரிடர் செய்திகள். குறிப்பு இடம்: $place. " else "Regional disaster news. Reference place: $place. "
         return lead + events.take(MAX_EVENTS).joinToString(" ") { e ->
-            val kind = when (e.type) { "TC" -> if (tamil) "புயல் ${e.name}" else "Cyclone ${e.name}"
+            val cycloneName = e.name.replace(Regex("-[0-9]{2}$"), "").lowercase(Locale.ROOT).replaceFirstChar { it.uppercase() }
+                .ifBlank { if (tamil) "பெயர் கிடைக்கவில்லை; ஜி டி ஏ சி எஸ் எண் ${e.id}" else "name unavailable; GDACS event ${e.id}" }
+            val kind = when (e.type) { "TC" -> if (tamil) "புயல் செய்தி: ${cycloneName}" else "Cyclone update: ${cycloneName}"
                 "FL" -> if (tamil) "வெள்ளம்" else "Flood"
                 else -> if (tamil) "நிலநடுக்கம்" else "Earthquake" }
+            if (e.official != null) return@joinToString if (tamil)
+                "$kind. $name இடத்திலிருந்து அறிக்கையின் புயல் நிலை சுமார் ${e.distanceKm.roundToInt()} கிலோமீட்டர். ${e.official.speech(true)}"
+            else "$kind. Reported position about ${e.distanceKm.roundToInt()} kilometres from $name. ${e.official.speech(false)}"
             val at = stamp(e.positionAt ?: e.updated, tamil)
             val distance = e.distanceKm.roundToInt().coerceAtLeast(0)
             val position = if (e.positionAt != null) {
@@ -81,12 +109,12 @@ object NewsDisasterPolicy {
             val wind = if (e.type != "TC") "" else {
                 val value = e.windKmh?.roundToInt()
                 if (tamil) (if (value == null) " தற்போதைய காற்று வேகம் கிடைக்கவில்லை." else " அந்நேர அதிகபட்ச நிலையான காற்று மணிக்கு $value கிலோமீட்டர்; இது உள்ளூர் காற்றல்ல.") +
-                    " அறிக்கையில் இயக்க வேகம் கிடைக்கவில்லை."
+                    " சரிபார்த்த திடீர் பலத்த காற்றின் வேகம் கிடைக்கவில்லை. சரிபார்த்த இயக்க வேகமும் திசையும் இந்த அறிக்கையில் கிடைக்கவில்லை. கரையைக் கடக்கும் இடம், நேரம் உறுதிசெய்யப்படவில்லை; ஐ எம் டி அறிக்கையைப் பார்க்கவும்."
                 else (if (value == null) " Current wind unavailable." else " Sustained wind then, $value kilometres per hour, not local wind.") +
-                    " Reported movement speed unavailable."
+                    " Verified gust speed unavailable. Verified movement speed and direction unavailable in this report. Verified landfall area and time unavailable; consult IMD."
             }
-            if (tamil) "$kind. $position, $place சுமார் $distance கிலோமீட்டர்.$wind"
-            else "$kind. $position, about $distance kilometres $place.$wind"
+            if (tamil) "$kind${if (e.region.isNotBlank()) "; ${e.region}" else ""}. $position, $name இடத்திலிருந்து சுமார் $distance கிலோமீட்டர்.$wind ஜி டி ஏ சி எஸ் அறிக்கை புதுப்பிப்பு: ${stamp(e.updated, true)}. மூலம்: ஜி டி ஏ சி எஸ்${if(e.type == "TC") "; ஜே டி டபிள்யூ சி அறிக்கை" else ""}."
+            else "$kind${if (e.region.isNotBlank()) "; ${e.region}" else ""}. $position, about $distance kilometres from $name.$wind GDACS report updated ${stamp(e.updated, false)}. Source: GDACS${if(e.type == "TC") "; JTWC advisory" else ""}."
         } + if (tamil) " இவை நேரலை அல்ல; பாதிப்பு எல்லை அல்ல. உள்ளூர் எச்சரிக்கைக்கு ஐ எம் டி, அதிகாரிகளைப் பின்பற்றவும்."
             else " Not live positions or impact boundaries. Follow IMD and local authorities for local warnings."
     }

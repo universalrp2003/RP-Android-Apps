@@ -14,13 +14,15 @@ android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
     namespace = "com.universalrp.cleansweep"
     compileSdk = 36
+    testBuildType = "release"
 
     defaultConfig {
         applicationId = "com.universalrp.cleansweep"
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 36
-        versionCode = 93
-        versionName = "2.88"
+        versionCode = 94
+        versionName = "2.89"
     }
 
     signingConfigs {
@@ -104,6 +106,8 @@ tasks.register<Test>("testLiveStudioVoice") {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation("androidx.work:work-testing:2.10.0")

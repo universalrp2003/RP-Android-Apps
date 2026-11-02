@@ -116,7 +116,7 @@ class NetworkLedMeterView(context: Context) : View(context) {
  * Features:
  * - Real-time mobile data (cleanly hidden if on Wi-Fi / Unlimited 5G per user choice)
  * - Watts ONLY while a charger is connected; data and D/U meter automatically return on unplug
- * - Animated D & U LED meter bars while unplugged
+ * - Restored three-segment D & U LED meter bars while unplugged
  * - Move, drag, and resize controls
  * - Landscape transparent touch-through behavior
  */
@@ -357,6 +357,10 @@ object StatusPill {
         meter.isUploadActive = reading.txSpeed > 200L
         meter.qualityGrade = reading.qualityGrade
         meter.animStep = animCounter
+        fun rate(value: Long) = if (value < 0) {
+            if (com.universalrp.cleansweep.data.Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA) "கிடைக்கவில்லை" else "unavailable"
+        } else "$value B/s"
+        meter.contentDescription = "D: ${rate(reading.rxSpeed)}; U: ${rate(reading.txSpeed)}"
         if (reading.showNetworkMeter) meter.invalidate()
         root.requestLayout()
     }

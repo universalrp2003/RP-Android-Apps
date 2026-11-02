@@ -605,6 +605,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    fun refreshFeatureChoices() { viewModelScope.launch { savedInsights() } }
+
     fun openInsights(tab: InsightsTab = InsightsTab.COMPATIBILITY) {
         mutate { it.copy(insightsTab = tab) }
         navigate(Screen.INSIGHTS)

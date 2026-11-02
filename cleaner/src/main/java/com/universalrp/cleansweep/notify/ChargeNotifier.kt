@@ -223,19 +223,26 @@ object ChargeNotifier {
                 Pair(R.drawable.ic_stat_data, 0xFF38BDF8.toInt())
         }
 
-        return NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(netIconRes)
-            .setColor(netIconColor)
-            .setContentTitle(title)
-            .setContentText(if (battery.powerConnected) t("Battery-side charging power") else details)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$details\n$hintText"))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setShowWhen(false)
-            .setContentIntent(openApp)
-            .addAction(0, t("Stop"), stopPending)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+        val tamil = language == com.universalrp.cleansweep.data.AppLang.TA
+        val compactMain = if (battery.powerConnected) "⚡ ${chargingContent.text} · $percent" else netQuality?.takeIf { it.isWifi || it.isMobile }?.let {
+            "↓ ${if(it.throughputMeasured) it.formattedRxSpeed else "—"}  ↑ ${if(it.throughputMeasured) it.formattedTxSpeed else "—"} · ${if (it.isWifi) "Wi-Fi" else if (tamil) "மொபைல்" else "Mobile"}"
+        } ?: if (tamil) "இணைய அளவீடு கிடைக்கவில்லை · $percent" else "Network reading unavailable · $percent"
+        val compactDetail = buildList {
+            if (battery.powerConnected) {
+                add(if (tamil) "மின்கலப் பக்கம் · $timeLine" else "Battery-side · $timeLine")
+                battery.temperatureC?.let { add("♨ " + "%.1f °C".format(java.util.Locale.US, it)) }
+            } else {
+                if (dataUsage?.readingAvailable == true && !isUnlimited) add(
+                    if (tamil) "இன்று ${dataUsage.formattedToday} · மீதி ≈ ${dataUsage.formattedRemaining}"
+                    else "Today ${dataUsage.formattedToday} · Left ≈ ${dataUsage.formattedRemaining}")
+                else add(if (isUnlimited) (if (tamil) "5G ∞ · பயனர் அமைப்பு" else "5G ∞ · user-set")
+                    else if (tamil) "மொபைல் கணக்கு கிடைக்கவில்லை" else "Mobile usage unavailable")
+                if (dataUsage?.readingAvailable == true && !isUnlimited) add(if (tamil) "அளவிட்ட கணக்கு; நிறுவன இருப்பு அல்ல${if(dataUsage.isPartial) "; பகுதியளவு" else ""}" else "Observed, not carrier balance${if(dataUsage.isPartial) "; partial" else ""}")
+                netQuality?.pingMs?.let { add("↔ $it ms · $percent") }
+            }
+            heatLine?.let { add("⚠ " + (if (tamil) "மின்கலம் அதிக வெப்பம்; ஆறவிடவும்" else "Battery hot; allow cooling")) }
+        }.joinToString("\n")
+        return RoutineStatus.monitor(context, compactMain, compactDetail)
     }
 
     /**
@@ -274,9 +281,17 @@ object ChargeNotifier {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             ?: return
         try {
-            val notification = build(context, battery)
-            if (!stillCurrent()) return
-            manager.notify(NOTIFICATION_ID, notification)
+            val prepared = build(context, battery)
+            // The potentially slow measurement build must not acquire a lease. A
+            // cancelled fallback could otherwise leave a ghost owner, resurrected
+            // when another participant releases its card. Serialize the final
+            // relevance check/acquire/post with coordinator release operations.
+            synchronized(RoutineStatus) {
+                if (!stillCurrent()) return
+                val notification = if (!ChargeMonitorService.alive)
+                    RoutineStatus.acquire(context, RoutineStatus.FALLBACK) else prepared
+                manager.notify(NOTIFICATION_ID, notification)
+            }
         } catch (e: Exception) {
             // Notifications switched off by the user: the voice line still works.
         }
@@ -286,7 +301,7 @@ object ChargeNotifier {
     fun clear(context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         try {
-            manager?.cancel(NOTIFICATION_ID)
+            RoutineStatus.release(context, RoutineStatus.FALLBACK)
         } catch (e: Exception) {
             // Nothing to cancel.
         }
@@ -348,8 +363,8 @@ object ChargeNotifier {
             content.text,
             content.packPercent,
             netQuality?.grade,
-            netQuality?.rxSpeedBytesPerSec ?: 0L,
-            netQuality?.txSpeedBytesPerSec ?: 0L,
+            netQuality?.takeIf { it.throughputMeasured }?.rxSpeedBytesPerSec ?: -1L,
+            netQuality?.takeIf { it.throughputMeasured }?.txSpeedBytesPerSec ?: -1L,
             showNetworkMeter = content.showNetworkMeter,
             stillCurrent = stillCurrent,
         )

@@ -56,13 +56,13 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
             Text(watchWords("Rain & safety", "மழை & பாதுகாப்பு"), Modifier.padding(12.dp), style = MaterialTheme.typography.titleLarge)
         }
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            if (home == null) {
+            if (home == null || !NamedWeatherPlace.usable(home)) {
                 Text(watchWords("Choose your default place first", "முதலில் உங்கள் வழக்கமான இடத்தைத் தேர்ந்தெடுக்கவும்"), style = MaterialTheme.typography.titleMedium)
-                Text(watchWords("Save your town or PIN code. It stays fixed when you travel.", "ஊர் அல்லது அஞ்சல் குறியீட்டைச் சேமிக்கவும். பயணத்திலும் இந்த இடம் மாறாது."))
+                Text(watchWords("Confirm your town and district for rain and disaster reports. A street address is not needed; GPS never overwrites this saved place.", "மழை, பேரிடர் அறிக்கைகளுக்கு ஊர், மாவட்டத்தை உறுதிப்படுத்தவும். தெரு முகவரி தேவையில்லை; GPS இந்தச் சேமித்த இடத்தை மாற்றாது."))
                 PlaceSearch(onSelect = { vm.selectWeatherPlace(it); revision++ })
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(watchWords("Home · ", "வழக்கமான இடம் · ") + home.name, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    Text(watchWords("Home · ", "வழக்கமான இடம் · ") + NamedWeatherPlace.label(home), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
                     TextButton(onClick = { editingHome = !editingHome }) { Text(watchWords("Change", "மாற்று")) }
                 }
                 if (editingHome) PlaceSearch(onSelect = { vm.selectWeatherPlace(it); editingHome = false; revision++ })
@@ -167,14 +167,15 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                         WeatherSourceKind.MET_NORWAY_MODEL -> "MET Norway"
                         else -> "Open-Meteo"
                     }
-                    Text(source + " · " + weatherClock(snapshot.fetchedAtMs), style = MaterialTheme.typography.bodySmall)
+                    Text(source + " · " + watchWords("Checked ", "சரிபார்த்தது ") + weatherClock(snapshot.fetchedAtMs), style = MaterialTheme.typography.bodySmall)
                     if (!fresh) Text(watchWords("Out of date—tap Check now. Rain timing is unavailable.", "பழைய தரவு; இப்போது சரிபார் என்பதை அழுத்தவும். மழை நேரம் கிடைக்கவில்லை."))
                     else {
-                        Text(watchWords("At last check: ", "இறுதிச் சரிபார்ப்பில்: ") +
+                        Text(watchWords("Latest forecast: ", "சமீபத்திய முன்னறிவிப்பு: ") +
                             (snapshot.temperatureC?.let { String.format(Locale.US, "%.0f°C", it) } ?: "—") + " · " +
-                            (if (snapshot.currentPrecipMmPerHour > 0.0) watchWords("Rain", "மழை") else watchWords("No rain reported", "மழை பதிவாகவில்லை")))
+                            (if (snapshot.currentPrecipMmPerHour > 0.0) watchWords("Rain indicated in forecast", "முன்னறிவிப்பில் மழை காட்டப்படுகிறது") else watchWords("No rain indicated in forecast", "முன்னறிவிப்பில் மழை காட்டப்படவில்லை")))
                         Text(watchWords("Cloud ", "மேகம் ") + (snapshot.cloudCoverPercent?.let { "$it%" } ?: "—") + " · " +
                             watchWords("Wind gust ", "காற்று வீச்சு ") + (if (snapshot.currentWindGustKmh > 0) String.format(Locale.US, "%.0f km/h", snapshot.currentWindGustKmh) else "—"), style = MaterialTheme.typography.bodySmall)
+                        Text(watchWords("Forecast estimate, not a local rain measurement.", "இது முன்னறிவிப்பு மதிப்பீடு; உங்கள் இடத்தில் அளந்த மழை அல்ல."), style = MaterialTheme.typography.bodySmall)
                         val elapsedMinutes = (age / 60_000).toInt().coerceAtLeast(0)
                         val remainingMinutes = (snapshot.minuteHorizonMinutes - elapsedMinutes).coerceAtLeast(0)
                         val wet = snapshot.timeline.firstOrNull { it.minutesAhead >= elapsedMinutes && it.precipMmPerHour > 0.0 && (!precise || it.minutesAhead <= snapshot.minuteHorizonMinutes) }
@@ -185,14 +186,14 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                                 style = MaterialTheme.typography.titleMedium)
                         } else {
                             val reason = when (snapshot.tomorrowStatus) {
-                                "NO_KEY" -> watchWords("Tomorrow.io key needed", "Tomorrow.io விசை தேவை")
+                                "NO_KEY" -> watchWords("Free weather active — no API key needed", "இலவச வானிலை செயலில் உள்ளது — API விசை தேவையில்லை")
                                 "ACCESS_DENIED" -> watchWords("Tomorrow.io access denied—check key and plan", "Tomorrow.io அணுகல் மறுக்கப்பட்டது; விசை, திட்டத்தைச் சரிபார்")
                                 "QUOTA_LIMIT" -> watchWords("Tomorrow.io quota reached", "Tomorrow.io ஒதுக்கீட்டு வரம்பு எட்டியது")
                                 "HOURLY_ONLY" -> watchWords("Tomorrow.io minute data unavailable", "Tomorrow.io நிமிடத் தரவு கிடைக்கவில்லை")
                                 else -> watchWords("Tomorrow.io minute forecast unavailable", "Tomorrow.io நிமிட முன்னறிவிப்பு கிடைக்கவில்லை")
                             }
-                            Text(reason, color = MaterialTheme.colorScheme.error)
-                            Text(watchWords("Precise rain alerts paused. General outlook only.", "துல்லிய மழை அறிவிப்புகள் நிறுத்தப்பட்டுள்ளன. பொதுவான முன்னறிவிப்பு மட்டுமே."))
+                            Text(reason, color = if (snapshot.tomorrowStatus == "NO_KEY") MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
+                            Text(watchWords("General forecast available. Precise 15/30/60-minute rain alerts need fresh Tomorrow.io minute data with authorized access; a key alone does not guarantee it.", "பொதுவான முன்னறிவிப்பு கிடைக்கிறது. துல்லியமான 15/30/60 நிமிட மழை அறிவிப்புகளுக்கு அனுமதியுடன் புதிய Tomorrow.io நிமிடத் தரவு தேவை; விசை மட்டும் இருந்தால் போதாது."))
                         }
                         // A model's zero precipitation is not zero probability. No invented chance labels.
                         val later = snapshot.timeline.filter { it.minutesAhead > if (precise) snapshot.minuteHorizonMinutes else 0 }

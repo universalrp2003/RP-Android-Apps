@@ -43,7 +43,9 @@ def seek(label):
             bounds=list(map(int,re.findall(r'-?\d+',node.get('bounds',''))))
             if len(bounds)==4 and bounds[3]>bounds[1] and bounds[1]>=80 and bounds[3]<=1830:
                 visible.append(node)
-        match=next((n for n in visible if label in n.get('text','')),None)
+        # Prefer the exact control over prose that mentions it (for example Not now).
+        match=next((n for n in visible if label == n.get('text','')),None)
+        if match is None: match=next((n for n in visible if label in n.get('text','')),None)
         if match is not None:return match
         signature=tuple(n.get('text','') for n in visible if n.get('text'))
         unchanged=unchanged+1 if signature==last else 0;last=signature
@@ -101,8 +103,14 @@ def main():
     click('Turn off')
     assert value('news_disasters_287','enabled')=='false'
     assert value('feature_discovery_v1','disaster_news')=='true'
+    seek('New: security change review')
+    click('Not now')
+    # Wait for acknowledgement/dismissal, not an arbitrary IO timing assumption.
+    seek('News topics')
+    assert value('feature_discovery_v1','security_review_changes')=='true'
+    assert value('liveguard_insights','security_history')=='false'
     screen('VOICE')
-    raw,_=dump();assert 'New: disaster updates with news' not in raw
+    raw,_=dump();assert 'New: disaster updates with news' not in raw and 'New: security change review' not in raw
     assert value('news_disasters_287','enabled')=='false'
     seek('News topics')
     click('Restore default topics')
@@ -151,10 +159,14 @@ def main():
     assert len(stored)==3 and stored[0]['id']==places[0]['id']
     assert adb('shell','pidof',PKG).strip()
     receipt['native_288_feature_notice_smoke']=True
+    screen('SECURITY')
+    click('App identity details')
+    seek('Current signer SHA-256:')
+    receipt['native_289_named_security_smoke']=True
     receipt['native_283_settings_smoke']=True
-    receipt['native_283_scope']='Synthetic English UI, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
+    receipt['native_283_scope']='Synthetic English UI, optional security history Not now preserves OFF, app signer detail expansion, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
-    print('::notice title=Live Guard 2.83 native settings::'+receipt['native_283_scope'])
+    print('::notice title=Live Guard 2.89 native settings::'+receipt['native_283_scope'])
 
 if __name__=='__main__':
     try:main()

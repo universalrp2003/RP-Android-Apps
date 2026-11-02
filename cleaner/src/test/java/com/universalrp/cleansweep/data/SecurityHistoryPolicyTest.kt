@@ -78,4 +78,24 @@ class SecurityHistoryPolicyTest {
         assertEquals(SecurityHistoryPolicy.MAX_EVENTS, state.events.size)
         assertEquals(state, SecurityHistoryPolicy.observe(state, insightSnapshot(50)))
     }
+
+    private fun pkgIdentity(signer: String? = "a", installer: String? = "org.store", history: Set<String>? = null) = ObservedPackage("org.test","Familiar name",identity=signer?.let { PackageIdentity(setOf(it.repeat(64)),history ?: setOf(it.repeat(64))) },installer=installer)
+    @Test fun firstSigningObservationIsBaselineNotSuspiciousChange() { val old=baseline(insightSnapshot(packages=listOf(pkgIdentity(null))));val fresh=SecurityHistoryPolicy.observe(old,insightSnapshot(2000,packages=listOf(pkgIdentity())));assertFalse(fresh.events.any { it.title.contains("Signing identity") }) }
+    @Test fun signingChangeRequiresComparableEvidenceAndSamePackage() {
+        val findings = listOf(insightFinding(pkg = "org.test"))
+        val old = baseline(insightSnapshot(findings = findings, packages = listOf(pkgIdentity())))
+        val reviewed = SecurityHistoryPolicy.review(old, old.latest!!.observations.single(), true, 1100)
+        val fresh = SecurityHistoryPolicy.observe(reviewed, insightSnapshot(2000, findings, listOf(pkgIdentity("b"))))
+        assertTrue(fresh.events.any { it.title == "Signing identity changed" && it.detail.contains("alone does not prove malware") })
+        assertTrue(fresh.reviewed.isEmpty()) // Same update timestamp must not preserve stale trust.
+    }
+    @Test fun platformRotationExplainedSeparately() {
+        val old = baseline(insightSnapshot(packages = listOf(pkgIdentity().copy(isSystem = true))))
+        val rotated = pkgIdentity("b", history = setOf("a".repeat(64), "b".repeat(64))).copy(isSystem = true)
+        val fresh = SecurityHistoryPolicy.observe(old, insightSnapshot(2000, packages = listOf(rotated)))
+        assertTrue(fresh.events.any { it.title == "Signing identity rotated" }) // System apps are not exempt.
+    }
+    @Test fun failedSigningReadRetainsLastEvidenceWithoutClaimingChange() { val old=baseline(insightSnapshot(packages=listOf(pkgIdentity())));val fresh=SecurityHistoryPolicy.observe(old,insightSnapshot(2000,packages=listOf(pkgIdentity(null))));assertEquals(old.latest!!.packages.single().identity,fresh.latest!!.packages.single().identity);assertFalse(fresh.events.any { it.title.contains("Signing identity") }) }
+    @Test fun installerChangeIsAttributionNotTrustProof() { val old=baseline(insightSnapshot(packages=listOf(pkgIdentity())));val fresh=SecurityHistoryPolicy.observe(old,insightSnapshot(2000,packages=listOf(pkgIdentity(installer="org.other"))));assertTrue(fresh.events.any { it.title=="Reported installer changed" && it.detail.contains("not a verified trust verdict") }) }
+
 }

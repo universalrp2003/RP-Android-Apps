@@ -16,15 +16,15 @@ class FeatureDiscoveryTest {
     private val feature = FeatureDiscovery.Feature.DISASTER_NEWS
     private val notice = FeatureDiscovery.Mode.DEFAULT_ON_NOTICE
     private val ask = FeatureDiscovery.Mode.ASK_FIRST
-    @Before fun clean() { listOf(FeatureDiscovery.PREFS, NewsDisasterUpdates.PREFS, "news_topics_283").forEach { c.getSharedPreferences(it,0).edit().clear().commit() } }
+    @Before fun clean() { listOf(FeatureDiscovery.PREFS, NewsDisasterUpdates.PREFS, "news_topics_283", "liveguard_insights").forEach { c.getSharedPreferences(it,0).edit().clear().commit() } }
     private fun rawDisaster() = c.getSharedPreferences(NewsDisasterUpdates.PREFS,0)
     @Test fun disasterOnForUnconfiguredNewAndUpdatedUsers() { assertTrue(NewsDisasterUpdates.enabled(c));assertFalse(rawDisaster().contains("enabled")) }
     @Test fun previousExplicitOffPreserved() { NewsDisasterUpdates.setEnabled(c,false);assertFalse(NewsDisasterUpdates.enabled(c));assertEquals(feature,FeatureDiscovery.next(c)) }
     @Test fun previousExplicitOnPreserved() { NewsDisasterUpdates.setEnabled(c,true);assertTrue(NewsDisasterUpdates.enabled(c)) }
     @Test fun oldDefaultOffWithoutStoredChoiceBecomesOnWithoutResettingCounts() { rawDisaster().edit().putString("counts","{\"TC:123\":3}").commit();assertTrue(NewsDisasterUpdates.enabled(c));assertEquals(3,NewsDisasterUpdates.count(c,"TC:123")) }
     @Test fun introductionPendingOnFirstOpening() { assertEquals(feature,FeatureDiscovery.next(c));assertFalse(FeatureDiscovery.seen(c,feature)) }
-    @Test fun acknowledgeDurableAndNotRepeated() { assertTrue(FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.ACKNOWLEDGE));assertNull(FeatureDiscovery.next(c));assertTrue(c.getSharedPreferences(FeatureDiscovery.PREFS,0).getBoolean(feature.key,false)) }
-    @Test fun turnOffFromNoticePersists() { assertTrue(FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.DISABLE));assertFalse(NewsDisasterUpdates.enabled(c));assertNull(FeatureDiscovery.next(c)) }
+    @Test fun acknowledgeDurableAndNotRepeated() { assertTrue(FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.ACKNOWLEDGE));assertEquals(FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.next(c));assertTrue(c.getSharedPreferences(FeatureDiscovery.PREFS,0).getBoolean(feature.key,false)) }
+    @Test fun turnOffFromNoticePersists() { assertTrue(FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.DISABLE));assertFalse(NewsDisasterUpdates.enabled(c));assertEquals(FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.next(c)) }
     @Test fun acknowledgingDoesNotTurnPreviousOffBackOn() { NewsDisasterUpdates.setEnabled(c,false);FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.ACKNOWLEDGE);assertFalse(NewsDisasterUpdates.enabled(c)) }
     @Test fun explicitEnableFromNoticeAllowed() { NewsDisasterUpdates.setEnabled(c,false);FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.ENABLE);assertTrue(NewsDisasterUpdates.enabled(c)) }
     @Test fun introductionNeverResetsThreeReadMemory() { rawDisaster().edit().putString("counts","{\"TC:123\":2}").commit();FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.DISABLE);assertEquals(2,NewsDisasterUpdates.count(c,"TC:123")) }
@@ -38,4 +38,10 @@ class FeatureDiscoveryTest {
     @Test fun futureAskFirstRequiresExplicitEnable() { assertTrue(FeatureDiscovery.resolve(ask,false,FeatureDiscovery.Choice.ENABLE)) }
     @Test fun futureNotNowDoesNotActivate() { assertFalse(FeatureDiscovery.resolve(ask,false,FeatureDiscovery.Choice.NOT_NOW)) }
     @Test fun acknowledgementCannotBypassFutureConsent() { try {FeatureDiscovery.resolve(ask,false,FeatureDiscovery.Choice.ACKNOWLEDGE);fail("Ask-first feature accepted acknowledgement")} catch(_:IllegalArgumentException) {} }
+
+    @Test fun securityIntroductionAppearsAfterDisasterAndStartsOff() { FeatureDiscovery.respond(c,feature,FeatureDiscovery.Choice.ACKNOWLEDGE);assertEquals(FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.next(c));assertFalse(SecurityHistoryRepo.enabled(c)) }
+    @Test fun notNowSecurityNeverEnablesHistory() { assertTrue(FeatureDiscovery.respond(c,FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.Choice.NOT_NOW));assertFalse(SecurityHistoryRepo.enabled(c));assertTrue(FeatureDiscovery.seen(c,FeatureDiscovery.Feature.SECURITY_HISTORY)) }
+    @Test fun explicitSecurityEnablePersistsWithoutChangingDisaster() { NewsDisasterUpdates.setEnabled(c,false);assertTrue(FeatureDiscovery.respond(c,FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.Choice.ENABLE));assertTrue(SecurityHistoryRepo.enabled(c));assertFalse(NewsDisasterUpdates.enabled(c)) }
+    @Test fun securityNotNowPreservesPreviouslyEnabledHistory() { SecurityHistoryRepo.setEnabledDurably(c,true);FeatureDiscovery.respond(c,FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.Choice.NOT_NOW);assertTrue(SecurityHistoryRepo.enabled(c)) }
+
 }

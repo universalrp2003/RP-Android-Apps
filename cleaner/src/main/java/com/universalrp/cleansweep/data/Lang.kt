@@ -100,6 +100,20 @@ object Lang {
      * entry is harmless (English shows through).
      */
     private val TAMIL: Map<String, String> = mapOf(
+        "Installer attribution is not a verified trust verdict." to "நிறுவல் மூலம் குறித்த தகவல் சரிபார்க்கப்பட்ட நம்பகத்தன்மைத் தீர்ப்பல்ல.",
+        "SMS access can expose messages and OTPs. Review the exact package and granted access; names alone do not verify identity, and legitimate verification or automation tools may need this." to "SMS அணுகலால் செய்திகள் மற்றும் OTP-கள் தெரியக்கூடும். செயலித் தொகுப்பையும் அனுமதிகளையும் ஆய்வு செய்யவும்; பெயர் மட்டும் அடையாளச் சான்றல்ல. உண்மையான உறுதிப்படுத்தல் அல்லது தானியக்கக் கருவிகளுக்கும் இது தேவைப்படலாம்.",
+        "SMS access can expose messages and OTPs. Review the exact package and granted access; names alone do not verify identity, and legitimate verification or automation tools may need this. Your default SMS app is not listed." to "SMS அணுகலால் செய்திகள் மற்றும் OTP-கள் தெரியக்கூடும். செயலித் தொகுப்பையும் அனுமதிகளையும் ஆய்வு செய்யவும்; பெயர் மட்டும் அடையாளச் சான்றல்ல. உண்மையான உறுதிப்படுத்தல் அல்லது தானியக்கக் கருவிகளுக்கும் இது தேவைப்படலாம். இயல்புநிலை SMS செயலி இங்கு பட்டியலிடப்படவில்லை.",
+        "Review whether SMS is needed for the feature you use. Revoke only after checking; permissions alone do not prove malware." to "நீங்கள் பயன்படுத்தும் வசதிக்கு SMS தேவையா என ஆய்வு செய்யவும். சரிபார்த்த பின்னரே அனுமதியை நீக்கவும்; அனுமதிகள் மட்டும் தீம்பொருள் சான்றல்ல.",
+        "Powerful access combination needs review" to "வலுவான அணுகல்கள் சேர்ந்துள்ளதை ஆய்வு செய்யவும்",
+        "Signing identity rotated" to "கையொப்ப அடையாளம் சுழற்சி முறையில் மாற்றப்பட்டது",
+        "Signing identity changed" to "கையொப்ப அடையாளம் மாறியுள்ளது",
+        "Reported installer changed" to "குறிப்பிட்ட நிறுவல் மூலம் மாறியுள்ளது",
+        "Android reports a signing lineage including the previous signer. Rotation is not proof of malware or safety." to "முந்தைய கையொப்பமும் உள்ள தொடர் அடையாளத்தை Android குறிப்பிட்டுள்ளது. கையொப்பச் சுழற்சி தீம்பொருள் அல்லது பாதுகாப்புச் சான்றல்ல.",
+        "No continuity with the previous signer was observed. Review the package and source; this alone does not prove malware." to "முந்தைய கையொப்பத்துடன் தொடர்ச்சி கண்டறியப்படவில்லை. செயலித் தொகுப்பையும் மூலத்தையும் ஆய்வு செய்யவும்; இது மட்டும் தீம்பொருள் சான்றல்ல.",
+        "Observed accessibility plus draw-over-apps access in the same app. Useful legitimate tools may need this; it can also enable deceptive screens. This is not proof of malware." to "ஒரே செயலியில் அணுகல்தன்மையும் மற்ற செயலிகள்மீது காட்டும் அணுகலும் கண்டறியப்பட்டன. பயனுள்ள கருவிகளுக்கும் இது தேவைப்படலாம்; போலித் திரைகளுக்கும் பயன்படலாம். இது தீம்பொருள் சான்றல்ல.",
+        "Observed notification-reading plus APK-install access in the same app. Review whether both are expected. Android still normally requires install confirmation; this is not proof of malware." to "ஒரே செயலியில் அறிவிப்பு வாசிப்பும் APK நிறுவல் அணுகலும் கண்டறியப்பட்டன. இரண்டும் தேவையா என ஆய்வு செய்யவும். நிறுவுவதற்கு Android பொதுவாக உறுதிப்படுத்தல் கேட்கும்; இது தீம்பொருள் சான்றல்ல.",
+        "Review the exact app and its special access in Android settings; do not disable an assistive tool you rely on without checking." to "Android அமைப்புகளில் குறிப்பிட்ட செயலியையும் சிறப்பு அணுகலையும் ஆய்வு செய்யவும்; உங்களுக்கு உதவும் கருவியைச் சரிபார்க்காமல் அணைக்க வேண்டாம்.",
+        "The name resembles a banking/payment app, but a name does not verify its identity. Review the exact package, signer and granted SMS access; some genuine apps need this for verification." to "பெயர் வங்கி/பணப்பரிமாற்றச் செயலி போல் உள்ளது; பெயர் மட்டும் அடையாளத்தை உறுதிசெய்யாது. தொகுப்பு, கையொப்பம், SMS அணுகலை ஆய்வு செய்யவும்; சில உண்மையான செயலிகளுக்கு உறுதிப்படுத்த இது தேவைப்படும்.",
         "100% — charge completion not confirmed" to "100% — சார்ஜ் நிறைவு உறுதியாகவில்லை",
         "At or below %s%%, while running on battery." to "பேட்டரியில் இயங்கும்போது %s%% அல்லது அதற்குக் கீழே.",
         "Low-battery warning: %s%%" to "பேட்டரி குறைவு எச்சரிக்கை: %s%%",

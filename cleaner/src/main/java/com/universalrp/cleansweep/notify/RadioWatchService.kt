@@ -83,7 +83,7 @@ class RadioWatchService : Service() {
 
     companion object {
         private const val CHANNEL = "radio_watch"
-        private const val NOTIFICATION_ID = 4211
+        private const val NOTIFICATION_ID = RoutineStatus.ID
         private const val SAMPLE_MS = 3_000L
 
         /** A modem can flap for a few seconds; do not narrate every hop. */
@@ -136,7 +136,9 @@ class RadioWatchService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        RoutineStatus.acquire(this, RoutineStatus.RADIO)
         startForeground(NOTIFICATION_ID, buildNotification("4G/5G watch is on"))
+        RoutineStatus.removeLegacy(this)
 
         // 2.56: earlier builds stored the 4G/5G announce toggle only under cleansweep_net_split
         // without setting Announcer.KEY_RADIO_CHANGE or turning on master voice output.
@@ -168,6 +170,8 @@ class RadioWatchService : Service() {
     override fun onDestroy() {
         handler.removeCallbacks(poll)
         unregisterRadioListener()
+        stopForeground(STOP_FOREGROUND_DETACH)
+        RoutineStatus.release(this, RoutineStatus.RADIO)
         super.onDestroy()
     }
 
@@ -359,22 +363,12 @@ class RadioWatchService : Service() {
             else NetworkSplit.format(status.fiveGUsedMb) + " used"
             "4G $four · 5G $five"
         }
-        return NotificationCompat.Builder(this, CHANNEL)
-            // 2.53 — a launcher icon as a status-bar icon renders as a white square (Android only
-            // uses the alpha channel there). This is the same monochrome glyph the data notification uses.
-            .setSmallIcon(R.drawable.ic_stat_data)
-            .setContentTitle("Live Guard")
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$detail\n$body"))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
-            .setContentIntent(open)
-            .build()
+        RoutineStatus.update(this, RoutineStatus.RADIO, body.replace(" used", ""))
+        return RoutineStatus.build(this)
     }
 
     private fun refreshNotification() {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.notify(NOTIFICATION_ID, buildNotification("4G/5G watch is on"))
+        buildNotification("4G/5G watch is on") // Coordinator posts only for a still-active owner.
     }
 }

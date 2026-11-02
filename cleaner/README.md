@@ -1,5 +1,7 @@
 # Live Guard (CleanSweep)
 
+Private2.89/code94 candidate: clearer free-weather labels and once-per-new verified cyclone advisory. Verification pending; public2.88 unchanged. [Scope](../docs/live-guard-2.89-candidate.md).
+
 Current public APK: **2.88 / code 93**, package `com.universalrp.cleansweep`, Android8.0/API26+.
 
 - [Download CleanSweep-v2.88.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.88/CleanSweep-v2.88.apk) · [release notes](../releases/live-guard-v2.88.md) · [official website](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard)

@@ -139,8 +139,8 @@ fun NewsDisasterSettings() {
     Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(watchWords("Disaster updates with news", "செய்தியுடன் பேரிடர் அறிக்கைகள்"))
-            Text(watchWords("Each nearby cyclone, flood or earthquake: once in the next 3 completed news reads. Fresh phone location if enabled, otherwise explicitly saved home. Dated report values, not local danger predictions.",
-                "அருகிலுள்ள புயல், வெள்ளம், நிலநடுக்கம்: அடுத்த 3 முழுமையான செய்தி வாசிப்புகளில் தலா ஒருமுறை. அனுமதித்த புதிய கைப்பேசி இருப்பிடம்; இல்லையெனில் சேமித்த வீடு எனத் தெரிவிக்கப்படும். நேரமிட்ட அறிக்கையே; உள்ளூர் அபாயக் கணிப்பு அல்ல."),
+            Text(watchWords("Cyclone: latest verified new advisory once in the next completed news read; no unchanged/older repeats. Newer details replace older pending reports. Flood/earthquake: next 3 completed news reads. Fresh phone location if enabled, otherwise explicitly saved home. Dated report values, not local danger predictions.",
+                "புயல்: புதிய சரிபார்த்த அறிக்கை அடுத்த முழுமையான வாசிப்பில் ஒருமுறை; அதே/பழைய அறிக்கை மீண்டும் வராது. புதிய விவரங்கள் பழைய காத்திருக்கும் அறிக்கையை மாற்றும். வெள்ளம்/நிலநடுக்கம்: அடுத்த 3 முழுமையான வாசிப்புகள். அனுமதித்த புதிய கைப்பேசி இருப்பிடம்; இல்லையெனில் சேமித்த வீடு எனத் தெரிவிக்கப்படும். நேரமிட்ட அறிக்கையே; உள்ளூர் அபாயக் கணிப்பு அல்ல."),
                 style = MaterialTheme.typography.labelSmall)
         }
         Switch(enabled, { enabled = it; NewsDisasterUpdates.setEnabled(context, it) })
