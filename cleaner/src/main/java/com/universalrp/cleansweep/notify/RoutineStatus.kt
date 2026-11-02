@@ -76,7 +76,7 @@ object RoutineStatus {
         val b = NotificationCompat.Builder(c, ChargeNotifier.CHANNEL_ID).setSmallIcon(R.drawable.ic_stat_data)
             .setContentTitle(if (tamil) "கைபேசி காவலன்" else "Live Guard").setContentText(main)
             .setStyle(NotificationCompat.BigTextStyle().bigText(listOf(main, detail).filter { it.isNotBlank() }.joinToString("\n")))
-            .setColor(0xFF38BDF8.toInt()).setOnlyAlertOnce(true).setOngoing(true).setShowWhen(false).setShowBadge(false)
+            .setColor(0xFF38BDF8.toInt()).setOnlyAlertOnce(true).setOngoing(true).setShowWhen(false).setBadgeIconType(NotificationCompat.BADGE_ICON_NONE)
             .setPriority(NotificationCompat.PRIORITY_LOW).setContentIntent(open)
         if (hasMonitor) {
             val stop = PendingIntent.getService(c, 4202, Intent(c, ChargeMonitorService::class.java).setAction(ChargeMonitorService.ACTION_STOP_SERVICE), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)

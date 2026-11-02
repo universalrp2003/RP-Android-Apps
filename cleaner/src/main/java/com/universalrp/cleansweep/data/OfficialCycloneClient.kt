@@ -35,13 +35,13 @@ object OfficialCycloneClient {
             }
         }
     }
-    internal suspend fun pdfText(c: Context, bytes: ByteArray): String? {
-        if (Build.VERSION.SDK_INT < 35 || bytes.size > 2_000_000 || !bytes.take(5).toByteArray().contentEquals("%PDF-".toByteArray())) return null
+    internal suspend fun pdfText(c: Context, bytes: ByteArray, timeoutMillis: Long = 3500): String? {
+        if (timeoutMillis <= 0 || Build.VERSION.SDK_INT < 35 || bytes.size > 2_000_000 || !bytes.take(5).toByteArray().contentEquals("%PDF-".toByteArray())) return null
         val file = File.createTempFile("imd-", ".pdf", c.cacheDir)
         return try {
             file.writeBytes(bytes)
             withContext(Dispatchers.Main) {
-                withTimeoutOrNull(3500) {
+                withTimeoutOrNull(minOf(3500, timeoutMillis)) {
                     suspendCancellableCoroutine<String?> { continuation ->
                         var descriptor: ParcelFileDescriptor? = null
                         val connection = object : ServiceConnection {
@@ -82,7 +82,7 @@ object OfficialCycloneClient {
             val html = get("https://rsmcnewdelhi.imd.gov.in/",deadline,400_000).toString(Charsets.UTF_8)
             for(url in OfficialCyclonePolicy.imdLinks(html)) {
                 currentCoroutineContext().ensureActive()
-                val text = pdfText(c,get(url,deadline,2_000_000)) ?: continue
+                val text = pdfText(c,get(url,deadline,2_000_000),deadline-SystemClock.elapsedRealtime()) ?: continue
                 OfficialCyclonePolicy.imd(text,url,now)?.let { found.add(it) }
             }
         } catch(cancelled: CancellationException) { throw cancelled } catch(_: Exception) { }

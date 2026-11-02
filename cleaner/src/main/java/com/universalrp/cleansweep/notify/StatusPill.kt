@@ -299,7 +299,10 @@ object StatusPill {
         meter.scaleFactor = currentScale
         meter.rxSpeed = com.universalrp.cleansweep.data.NetworkActivityPolicy.smooth(meter.rxSpeed, reading.rxSpeed)
         meter.txSpeed = com.universalrp.cleansweep.data.NetworkActivityPolicy.smooth(meter.txSpeed, reading.txSpeed)
-        meter.contentDescription = "D: ${meter.rxSpeed} B/s; U: ${meter.txSpeed} B/s"
+        fun rate(value: Long) = if (value < 0) {
+            if (com.universalrp.cleansweep.data.Lang.isTamil) "கிடைக்கவில்லை" else "unavailable"
+        } else "$value B/s"
+        meter.contentDescription = "D: ${rate(meter.rxSpeed)}; U: ${rate(meter.txSpeed)}"
         if (reading.showNetworkMeter) meter.invalidate()
         root.requestLayout()
     }

@@ -45,7 +45,7 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
         client=(JAVA/'data/OfficialCycloneClient.kt').read_text()
         self.assertIn('Build.VERSION.SDK_INT < 35',client)
         self.assertIn('ParcelFileDescriptor.MODE_READ_ONLY',client)
-        self.assertIn('withTimeoutOrNull(3500)',client)
+        self.assertIn('withTimeoutOrNull(minOf(3500, timeoutMillis))',client)
         self.assertIn('.followRedirects(false)',client)
         self.assertNotIn('latitude=',client)
         self.assertNotIn('pdfbox',(ROOT/'cleaner/build.gradle.kts').read_text().lower())

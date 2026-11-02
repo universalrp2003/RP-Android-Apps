@@ -32,6 +32,7 @@ class OfficialStatusNativeTest {
         val paint=Paint().apply { textSize=13f }
         val lines=listOf("India Meteorological Department NATIONAL BULLETIN NO. 1",
             "TIME OF ISSUE: 1730 HOURS IST DATED:02.11.2026", "Cyclonic Storm \"TESTSTORM\" over sea.",
+            "It lay centred at 1430 hours IST of today, the 2nd November 2026 near latitude 14.3N and longitude 80.9E.",
             "Forecast location and intensity are given in following table:",
             "02.11.26/1430 14.3/80.9 70-80 gusting to 90 Cyclonic Storm")
         lines.forEachIndexed { n,line -> page.canvas.drawText(line,25f,35f+n*25,paint) }

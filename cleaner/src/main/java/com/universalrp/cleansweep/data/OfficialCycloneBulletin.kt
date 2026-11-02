@@ -14,7 +14,10 @@ data class OfficialCycloneBulletin(
 ) {
     fun fresh(now: Long) = now - issuedAt in 0..18*3_600_000L && now - observedAt in 0..18*3_600_000L && issuedAt >= observedAt
     fun matches(event: NewsDisasterPolicy.Event): Boolean = event.type == "TC" &&
-        name.equals(event.name.replace(Regex("-[0-9]{2}$"), ""), true)
+        name.equals(event.name.replace(Regex("-[0-9]{2}$"), ""), true) &&
+        (Regex("-([0-9]{2})$").find(event.name)?.groupValues?.get(1)?.toInt()?.let {
+            it == Instant.ofEpochMilli(observedAt).atZone(ZoneOffset.UTC).year % 100
+        } ?: true)
     fun speech(tamil: Boolean): String {
         fun time(at: Long) = DateTimeFormatter.ofPattern("d MMM h:mm a z", if(tamil) Locale.forLanguageTag("ta-IN") else Locale.ENGLISH)
             .withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(at))
@@ -46,6 +49,15 @@ object OfficialCyclonePolicy {
     fun forecastTimes(value: String): String = Regex("([0-9]{4})(?:\\s*[-–]\\s*([0-9]{4}))?\\s*(?:Hrs|hours)\\s*IST",RegexOption.IGNORE_CASE).replace(value) { m ->
         fun time(code: String): String = runCatching { LocalTime.of(code.take(2).toInt(),code.takeLast(2).toInt()).format(DateTimeFormatter.ofPattern("h:mm a",Locale.ENGLISH)) }.getOrDefault("time unavailable")
         time(m.groupValues[1]) + m.groupValues[2].takeIf { it.isNotBlank() }?.let { "–"+time(it) }.orEmpty()+" IST"
+    }
+    private fun forecastDateValid(text: String, issued: LocalDate): Boolean {
+        val pattern = Regex("([0-9]{1,2})(?:st|nd|rd|th)?\\s+(January|February|March|April|May|June|July|August|September|October|November|December)(?:,?\\s+([0-9]{4}))?",RegexOption.IGNORE_CASE)
+        val dates = pattern.findAll(text).map { m -> runCatching {
+            val month = java.time.Month.values().first { it.getDisplayName(java.time.format.TextStyle.FULL,Locale.ENGLISH).equals(m.groupValues[2],true) }
+            val year = m.groupValues[3].toIntOrNull() ?: (issued.year + if(issued.monthValue==12 && month.value==1) 1 else 0)
+            LocalDate.of(year,month,m.groupValues[1].toInt())
+        }.getOrNull() }.toList()
+        return dates.isNotEmpty() && dates.all { it != null && !it.isBefore(issued) && !it.isAfter(issued.plusDays(5)) }
     }
     /** Fixed grammar translation only; proper place names remain as issued, no model/API. */
     fun tamilLandfall(quote: String): String? {
@@ -86,7 +98,9 @@ object OfficialCyclonePolicy {
         val lat = pos.groupValues[2].toDouble() * if(pos.groupValues[3] == "S") -1 else 1
         val lon = pos.groupValues[4].toDouble() * if(pos.groupValues[5] == "W") -1 else 1
         require(SavedRainWatches.validCoordinates(lat,lon))
-        val w = Regex("MAX SUSTAINED WINDS - ([0-9]{1,3}) KT, GUSTS ([0-9]{1,3}) KT").find(observed) ?: return null
+        val distribution = observed.substringAfter("PRESENT WIND DISTRIBUTION:", "").substringBefore("REPEAT POSIT:")
+        require(observed.contains("REPEAT POSIT:"))
+        val w = Regex("MAX SUSTAINED WINDS - ([0-9]{1,3}) KT, GUSTS ([0-9]{1,3}) KT").find(distribution) ?: return null
         fun km(k: String) = kotlin.math.round(k.toInt()*1.852).toInt()
         val wind = km(w.groupValues[1]); val gust = km(w.groupValues[2]); require(range(wind,wind,gust))
         val move = Regex("MOVEMENT PAST SIX HOURS - ([0-9]{1,3}) DEGREES AT ([0-9]{1,3}) KTS").find(observed)
@@ -111,13 +125,25 @@ object OfficialCyclonePolicy {
         val lat = first.groupValues[3].toDouble(); val lon = first.groupValues[4].toDouble(); require(SavedRainWatches.validCoordinates(lat,lon))
         val lo = first.groupValues[5].toInt(); val hi = first.groupValues[6].toInt(); val gust = first.groupValues[7].toInt(); require(range(lo,hi,gust))
         val intro = s.substringBefore("Forecast location and intensity").substringBefore("Forecast track and intensity")
+        // A table can start with a forecast if the source layout changes. Require the dated
+        // observed narrative AND coordinates to agree before calling its first row actual.
+        val narrative = Regex("lay (?:centred|centered) at ([0-9]{2})\\s*([0-9]{2})\\s*(?:hours|hrs) IST",RegexOption.IGNORE_CASE).find(intro) ?: return null
+        require(narrative.groupValues[1] + narrative.groupValues[2] == first.groupValues[2])
+        val tail = intro.substring(narrative.range.last+1).take(500)
+        val nd = Regex("([0-9]{1,2})(?:st|nd|rd|th)?\\s+([A-Za-z]{3,9}),?\\s+([0-9]{4})",RegexOption.IGNORE_CASE).find(tail) ?: return null
+        val narrativeDate = LocalDate.parse("${nd.groupValues[1]} ${nd.groupValues[2]} ${nd.groupValues[3]}",
+            java.time.format.DateTimeFormatterBuilder().parseCaseInsensitive().appendPattern("d MMMM uuuu").toFormatter(Locale.ENGLISH).withResolverStyle(java.time.format.ResolverStyle.STRICT))
+        require(narrativeDate == obsDate)
+        val coordinates = Regex("near latitude\\s+([0-9.]+)\\s*°?N\\s+and longitude\\s+([0-9.]+)\\s*°?E",RegexOption.IGNORE_CASE).find(tail) ?: return null
+        require(kotlin.math.abs(coordinates.groupValues[1].toDouble()-lat)<0.01 && kotlin.math.abs(coordinates.groupValues[2].toDouble()-lon)<0.01)
+
         val m = Regex("moved (?:nearly )?([a-z-]+?)(?:wards|ward)? with a speed of ([0-9]{1,3}) kmph during (?:the )?past 6 hours",RegexOption.IGNORE_CASE).find(intro)
         val d = m?.groupValues?.get(1)?.lowercase(Locale.ROOT)?.replace("-", "")?.removeSuffix("wards")?.removeSuffix("ward")?.takeIf { it in setOf("north","south","east","west","northwest","northeast","southwest","southeast","northnorthwest","northnortheast","eastnortheast","eastsoutheast","southsoutheast","southsouthwest","westsouthwest","westnorthwest") }
         val movement = m?.groupValues?.get(2)?.toInt()?.takeIf { it in 0..150 && d != null }
         // Only a bounded forecast sentence with explicit coastal crossing AND date/time cues.
         // Whitelisted lexical characters; never read arbitrary instructions/HTML from a PDF.
         val landfall = Regex("(?:It is|The system is) (?:very )?likely to [^.]{0,450}?cross [^.]{1,350}\\.",RegexOption.IGNORE_CASE).find(intro)?.value?.takeIf {
-            it.length <= 650 && Regex("[A-Za-z0-9 &,;:()/'–—-]+\\.").matches(it) &&
+            it.length <= 650 && forecastDateValid(it, date) && Regex("[A-Za-z0-9 &,;:()/'–—-]+\\.").matches(it) &&
                 Regex("coast",RegexOption.IGNORE_CASE).containsMatchIn(it) && Regex("hours|morning|evening|night|forenoon|afternoon",RegexOption.IGNORE_CASE).containsMatchIn(it) &&
                 Regex("[0-9]{1,2}(?:st|nd|rd|th)?\\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)",RegexOption.IGNORE_CASE).containsMatchIn(it) &&
                 !Regex("ignore|instruction|send money|http|password|account",RegexOption.IGNORE_CASE).containsMatchIn(it)

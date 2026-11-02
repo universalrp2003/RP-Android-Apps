@@ -224,7 +224,7 @@ object ChargeNotifier {
         }
 
         val tamil = language == com.universalrp.cleansweep.data.AppLang.TA
-        val compactMain = if (battery.powerConnected) "⚡ ${chargingContent.text} · $percent" else netQuality?.let {
+        val compactMain = if (battery.powerConnected) "⚡ ${chargingContent.text} · $percent" else netQuality?.takeIf { it.isWifi || it.isMobile }?.let {
             "↓ ${if(it.throughputMeasured) it.formattedRxSpeed else "—"}  ↑ ${if(it.throughputMeasured) it.formattedTxSpeed else "—"} · ${if (it.isWifi) "Wi-Fi" else if (tamil) "மொபைல்" else "Mobile"}"
         } ?: if (tamil) "இணைய அளவீடு கிடைக்கவில்லை · $percent" else "Network reading unavailable · $percent"
         val compactDetail = buildList {
