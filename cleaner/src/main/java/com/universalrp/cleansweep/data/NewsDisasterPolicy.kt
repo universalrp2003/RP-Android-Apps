@@ -16,7 +16,7 @@ object NewsDisasterPolicy {
     const val DRAFT_FRESH_MS = 10 * 60_000L
     data class Origin(val lat: Double, val lon: Double, val phone: Boolean, val at: Long, val placeName: String = "")
     data class Event(val id: Long, val type: String, val name: String, val updated: Long,
-        val distanceKm: Double, val positionAt: Long? = null, val windKmh: Double? = null, val region: String = "") {
+        val distanceKm: Double, val positionAt: Long? = null, val windKmh: Double? = null, val region: String = "", val official: OfficialCycloneBulletin? = null) {
         val key: String get() = "$type:$id" // Stable event identity; cyclone advisory timestamp is tracked separately.
     }
     fun fresh(e: Event, now: Long): Boolean = now - e.updated in 0..maxAge(e.type) &&
@@ -98,6 +98,9 @@ object NewsDisasterPolicy {
             val kind = when (e.type) { "TC" -> if (tamil) "புயல் செய்தி: ${cycloneName}" else "Cyclone update: ${cycloneName}"
                 "FL" -> if (tamil) "வெள்ளம்" else "Flood"
                 else -> if (tamil) "நிலநடுக்கம்" else "Earthquake" }
+            if (e.official != null) return@joinToString if (tamil)
+                "$kind. $name இடத்திலிருந்து அறிக்கையின் புயல் நிலை சுமார் ${e.distanceKm.roundToInt()} கிலோமீட்டர். ${e.official.speech(true)}"
+            else "$kind. Reported position about ${e.distanceKm.roundToInt()} kilometres from $name. ${e.official.speech(false)}"
             val at = stamp(e.positionAt ?: e.updated, tamil)
             val distance = e.distanceKm.roundToInt().coerceAtLeast(0)
             val position = if (e.positionAt != null) {

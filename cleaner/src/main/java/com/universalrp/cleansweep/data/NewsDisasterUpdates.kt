@@ -5,6 +5,7 @@ import android.location.LocationManager
 import android.os.SystemClock
 import com.universalrp.weather.WeatherPlaceResolver
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -115,7 +116,7 @@ object NewsDisasterUpdates {
             if (selected.size == NewsDisasterPolicy.MAX_EVENTS) break
             if (e.type !in setOf("TC", "FL", "EQ") || e.id !in 1..999_999_999_999 || !NewsDisasterPolicy.fresh(e, now)) continue
             if (e.type == "TC") {
-                // Only an actual/current JTWC timeline row supplies this timestamp. A feed's
+                // A validated actual/current timeline or directly dated official bulletin supplies this timestamp. A feed's
                 // datemodified, new fetch time, movement, language or home change is NOT an advisory.
                 val at = e.positionAt ?: continue
                 val ledger = advisories ?: continue
@@ -171,6 +172,8 @@ object NewsDisasterUpdates {
         val now = System.currentTimeMillis(); val origin = origin(c, now) ?: return@withContext null
         val fingerprint = fingerprint(c)
         val deadline = SystemClock.elapsedRealtime() + 16_000
+        kotlinx.coroutines.coroutineScope {
+        val official = async { OfficialCycloneClient.fetch(c, now, deadline) }
         val events = mutableListOf<NewsDisasterPolicy.Event>()
         for (type in listOf("TC", "FL", "EQ")) {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
@@ -183,10 +186,12 @@ object NewsDisasterUpdates {
                     val timeline = NewsDisasterPolicy.advisoryTimeline(details, e.id) ?: error("No verified JTWC timeline")
                     NewsDisasterPolicy.observed(e, get(timeline, deadline), origin, now)
                 }.getOrNull()
-                if (enriched != null && enriched.distanceKm <= 2000.0) events.add(enriched)
+                events.add(enriched ?: e) // A direct official bulletin can supply a missing GDACS timeline.
             }
         }
-        if (fingerprint != fingerprint(c)) return@withContext null
-        Candidate(events.sortedBy { it.distanceKm }, origin, fingerprint)
+        val reports = official.await()
+        val enriched = events.map { if(it.type == "TC") OfficialCycloneClient.enrich(it,reports,origin,now) else it }
+        if (fingerprint != fingerprint(c)) null else Candidate(enriched.filter { it.distanceKm <= 2000 && (it.type != "TC" || it.positionAt != null) }.sortedBy { it.distanceKm }, origin, fingerprint)
+        }
     }
 }

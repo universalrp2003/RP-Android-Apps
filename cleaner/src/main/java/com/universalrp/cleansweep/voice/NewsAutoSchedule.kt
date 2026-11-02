@@ -120,16 +120,9 @@ object NewsAutoSchedule {
         }
     }
     fun result(c: Context, value: String) { prefs(c).edit().putString(RESULT, value).apply(); publish(c) }
-    fun notification(c: Context): Notification {
-        val tamil = Lang.languageIn(c) == com.universalrp.cleansweep.data.AppLang.TA
-        c.getSystemService(NotificationManager::class.java).createNotificationChannel(
-            NotificationChannel("liveguard_news_check", if (tamil) "செய்தி அறிவிப்பு" else "Scheduled news", NotificationManager.IMPORTANCE_LOW))
-        val open = PendingIntent.getActivity(c, 280, Intent(c, com.universalrp.cleansweep.MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        return Notification.Builder(c, "liveguard_news_check").setSmallIcon(com.universalrp.cleansweep.R.drawable.ic_stat_voice)
-            .setContentTitle(if (tamil) "கைபேசி காவலன்" else "Live Guard")
-            .setContentText(if (tamil) "திட்டமிட்ட செய்தி அறிவிப்பு தயாராகிறது" else "Preparing scheduled news announcement")
-            .setContentIntent(open).setOngoing(true).build()
-    }
+    fun notification(c: Context, owner: String = com.universalrp.cleansweep.notify.RoutineStatus.ALARM): Notification =
+        com.universalrp.cleansweep.notify.RoutineStatus.acquire(c, owner)
+
 }
 
 class NewsWakeReceiver : BroadcastReceiver() {
@@ -155,18 +148,23 @@ class NewsAnnouncementService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val n = NewsAutoSchedule.notification(this)
-        if (Build.VERSION.SDK_INT >= 34) startForeground(280, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        else startForeground(280, n)
+        if (Build.VERSION.SDK_INT >= 34) startForeground(com.universalrp.cleansweep.notify.RoutineStatus.ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        else startForeground(com.universalrp.cleansweep.notify.RoutineStatus.ID, n)
         if (runJob?.isActive != true) runJob = scope.launch { try { NewsAutoSchedule.run(applicationContext, origin = "alarm") } finally { stopSelf() } }
         return START_NOT_STICKY
     }
-    override fun onDestroy() { scope.cancel(); super.onDestroy() }
+    override fun onDestroy() {
+        scope.cancel()
+        stopForeground(STOP_FOREGROUND_DETACH)
+        com.universalrp.cleansweep.notify.RoutineStatus.release(this, com.universalrp.cleansweep.notify.RoutineStatus.ALARM)
+        super.onDestroy()
+    }
 }
 
 class NewsDueWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun getForegroundInfo(): ForegroundInfo = if (Build.VERSION.SDK_INT >= 34)
-        ForegroundInfo(281, NewsAutoSchedule.notification(applicationContext), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        else ForegroundInfo(281, NewsAutoSchedule.notification(applicationContext))
+        ForegroundInfo(com.universalrp.cleansweep.notify.RoutineStatus.ID, NewsAutoSchedule.notification(applicationContext, "news-worker:$id"), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        else ForegroundInfo(com.universalrp.cleansweep.notify.RoutineStatus.ID, NewsAutoSchedule.notification(applicationContext, "news-worker:$id"))
     override suspend fun doWork(): Result {
         val c = applicationContext
         try {
@@ -181,6 +179,6 @@ class NewsDueWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         } catch (_: SecurityException) {
             NewsAutoSchedule.result(c, "restricted"); NewsAutoSchedule.recovery(c)
             return Result.retry()
-        }
+        } finally { com.universalrp.cleansweep.notify.RoutineStatus.release(applicationContext, "news-worker:$id") }
     }
 }

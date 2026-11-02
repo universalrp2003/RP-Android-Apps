@@ -18,12 +18,17 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
         self.assertIn('No rain indicated in forecast',s)
         self.assertNotIn('No rain reported',s)
 
-    def test_cyclone_fetch_requires_verified_timeline_not_legacy_lifetime_cap(self):
+    def test_cyclone_fetch_requires_verified_timeline_or_direct_dated_official_bulletin(self):
         s=(JAVA/'data/NewsDisasterUpdates.kt').read_text()
         self.assertIn('type == "TC" || NewsDisasterPolicy.eligible(count(c, it.key))',s)
         self.assertIn('NewsDisasterPolicy.advisoryTimeline(details, e.id)',s)
         self.assertIn('if (type != "TC") events.addAll(batch)',s)
-        self.assertIn('if (enriched != null && enriched.distanceKm <= 2000.0)',s)
+        self.assertIn('OfficialCycloneClient.enrich(it,reports,origin,now)',s)
+        self.assertIn('it.distanceKm <= 2000 && (it.type != "TC" || it.positionAt != null)',s)
+        policy=(JAVA/'data/OfficialCycloneBulletin.kt').read_text()
+        self.assertIn('WARNING POSITION:',policy)
+        self.assertIn('substringBefore("FORECASTS:")',policy)
+        self.assertIn('it.fresh(now)',policy)
 
     def test_new_policy_explained_without_changing_feature_acknowledgement_id(self):
         for f in ('ui/WatchSettingsPanels.kt','ui/FeatureUpdatesNotice.kt'):
@@ -33,3 +38,27 @@ class WeatherAdvisorySourceTest(unittest.TestCase):
         s=(JAVA/'data/FeatureDiscovery.kt').read_text()
         self.assertIn('disaster_news',s)
         self.assertNotIn('disaster_news_289',s)
+
+    def test_pdf_isolation_and_private_data_boundary(self):
+        manifest=(ROOT/'cleaner/src/main/AndroidManifest.xml').read_text()
+        self.assertIn('android:name=".data.ImdPdfTextService" android:exported="false" android:isolatedProcess="true"',manifest)
+        client=(JAVA/'data/OfficialCycloneClient.kt').read_text()
+        self.assertIn('Build.VERSION.SDK_INT < 35',client)
+        self.assertIn('ParcelFileDescriptor.MODE_READ_ONLY',client)
+        self.assertIn('withTimeoutOrNull(3500)',client)
+        self.assertIn('.followRedirects(false)',client)
+        self.assertNotIn('latitude=',client)
+        self.assertNotIn('pdfbox',(ROOT/'cleaner/build.gradle.kts').read_text().lower())
+
+    def test_shared_card_keeps_foreground_ownership_and_no_fake_led_animation(self):
+        status=(JAVA/'notify/RoutineStatus.kt').read_text()
+        self.assertIn('generation == token',status)
+        self.assertIn('if (owner !in owners) return',status)
+        for f in ('notify/RadioWatchService.kt','notify/ChargeMonitorService.kt','voice/NewsAutoSchedule.kt'):
+            text=(JAVA/f).read_text()
+            self.assertIn('startForeground(',text)
+            self.assertIn('STOP_FOREGROUND_DETACH',text)
+            self.assertIn('RoutineStatus.release',text)
+        pill=(JAVA/'notify/StatusPill.kt').read_text()
+        self.assertNotIn('numSegments',pill)
+        self.assertIn('NetworkActivityPolicy.level(entry.second)',pill)

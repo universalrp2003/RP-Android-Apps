@@ -110,6 +110,8 @@
         android:theme="@style/Theme.CleanSweep"
         android:localeConfig="@xml/locales_config">
 
+        <!-- Bounded official PDF text extraction, isolated from app UID/permissions. No FGS. -->
+        <service android:name=".data.ImdPdfTextService" android:exported="false" android:isolatedProcess="true" />
         <service android:name=".voice.NewsAnnouncementService" android:exported="false" android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="User-selected screen-off news bulletin: bounded preparation and playback at the configured interval" />

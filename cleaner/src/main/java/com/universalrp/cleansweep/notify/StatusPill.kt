@@ -27,85 +27,30 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.universalrp.cleansweep.data.LiveNetworkQuality
 
-/**
- * Animated dual-channel network activity LED meter:
- * - [D] Download: lights left-to-right (0 -> 1 -> 2)
- * - [U] Upload: lights right-to-left (2 -> 1 -> 0)
- * Illuminated in Gold (top quality), Emerald Green (good), Red (poor) with smooth background track.
- */
+/** One steady LED per direction. Brightness follows measured traffic, not ping quality. */
 class NetworkLedMeterView(context: Context) : View(context) {
-    var isDownloadActive: Boolean = true
-    var isUploadActive: Boolean = true
-    var qualityGrade: LiveNetworkQuality.QualityGrade? = null
-    var animStep: Int = 0
+    var rxSpeed: Long = -1
+    var txSpeed: Long = -1
     var scaleFactor: Float = 1.0f
-
-    private val litPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        typeface = Typeface.DEFAULT_BOLD
-    }
-
-    private fun dp(v: Float): Float = v * resources.displayMetrics.density
-
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { typeface = Typeface.DEFAULT_BOLD }
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val w = width.toFloat()
-        val h = height.toFloat()
-        if (w <= 0 || h <= 0) return
-
-        val rowH = h / 2f
-        textPaint.textSize = (rowH * 0.72f).coerceAtLeast(dp(6f))
-        val tagW = dp(8f) * scaleFactor
-        val barStartX = tagW + dp(2.5f)
-        val barW = (w - barStartX).coerceAtLeast(dp(18f) * scaleFactor)
-        val barH = dp(2.8f) * scaleFactor
-        val numSegments = 3
-        val segGap = dp(1.5f) * scaleFactor
-        val totalGaps = (numSegments - 1) * segGap
-        val segW = (barW - totalGaps) / numSegments
-
-        val baseColor = when (qualityGrade) {
-            LiveNetworkQuality.QualityGrade.TOP_QUALITY -> Color.parseColor("#00E676")    // Very Good = Green
-            LiveNetworkQuality.QualityGrade.MEDIUM_QUALITY -> Color.parseColor("#FFD600") // Medium = Yellow
-            LiveNetworkQuality.QualityGrade.BAD_QUALITY -> Color.parseColor("#FF3B30")    // Bad = Red
-            LiveNetworkQuality.QualityGrade.UNKNOWN, null -> Color.parseColor("#38BDF8")
-        }
-
-        // Row 1: Download [D] (lights left to right)
-        val dCenterY = rowH * 0.5f
-        textPaint.color = if (isDownloadActive) baseColor else Color.parseColor("#66FFFFFF")
-        canvas.drawText("D", 0f, dCenterY + textPaint.textSize * 0.35f, textPaint)
-        for (i in 0 until numSegments) {
-            val left = barStartX + i * (segW + segGap)
-            val top = dCenterY - barH / 2f
-            val rect = RectF(left, top, left + segW, top + barH)
-            val isLit = isDownloadActive && ((animStep % numSegments) >= i)
-            if (isLit) {
-                litPaint.color = baseColor
-                litPaint.alpha = 255
-            } else {
-                litPaint.color = Color.parseColor("#33FFFFFF")
+        val row = height / 2f
+        if (row <= 0 || width <= 0) return
+        textPaint.textSize = (row * .78f).coerceAtLeast(6f * resources.displayMetrics.density)
+        for ((i, entry) in listOf("D" to rxSpeed, "U" to txSpeed).withIndex()) {
+            val level = com.universalrp.cleansweep.data.NetworkActivityPolicy.level(entry.second)
+            val cy = row * (i + .5f)
+            textPaint.color = Color.parseColor("#E8FBFF")
+            canvas.drawText(entry.first, 0f, cy + textPaint.textSize * .35f, textPaint)
+            paint.color = Color.parseColor(if (i == 0) "#38D9FF" else "#7DFFB2")
+            paint.alpha = level.alpha
+            canvas.drawCircle(width - row * .48f, cy, row * .30f, paint)
+            if (level == com.universalrp.cleansweep.data.NetworkActivityPolicy.Level.HIGH) {
+                paint.color = Color.WHITE; paint.alpha = 230
+                canvas.drawCircle(width - row * .48f, cy, row * .12f, paint)
             }
-            canvas.drawRoundRect(rect, dp(1.2f), dp(1.2f), litPaint)
-        }
-
-        // Row 2: Upload [U] (lights right to left: from mobile data count inwards)
-        val uCenterY = rowH * 1.5f
-        textPaint.color = if (isUploadActive) baseColor else Color.parseColor("#66FFFFFF")
-        canvas.drawText("U", 0f, uCenterY + textPaint.textSize * 0.35f, textPaint)
-        for (i in 0 until numSegments) {
-            val left = barStartX + i * (segW + segGap)
-            val top = uCenterY - barH / 2f
-            val rect = RectF(left, top, left + segW, top + barH)
-            val revIndex = (numSegments - 1) - i
-            val isLit = isUploadActive && ((animStep % numSegments) >= revIndex)
-            if (isLit) {
-                litPaint.color = baseColor
-                litPaint.alpha = 255
-            } else {
-                litPaint.color = Color.parseColor("#33FFFFFF")
-            }
-            canvas.drawRoundRect(rect, dp(1.2f), dp(1.2f), litPaint)
         }
     }
 }
@@ -116,7 +61,7 @@ class NetworkLedMeterView(context: Context) : View(context) {
  * Features:
  * - Real-time mobile data (cleanly hidden if on Wi-Fi / Unlimited 5G per user choice)
  * - Watts ONLY while a charger is connected; data and D/U meter automatically return on unplug
- * - Animated D & U LED meter bars while unplugged
+ * - One rate-driven D LED and one U LED while unplugged
  * - Move, drag, and resize controls
  * - Landscape transparent touch-through behavior
  */
@@ -247,7 +192,6 @@ object StatusPill {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     private var blinkState = false
-    private var animCounter = 0
 
     fun remove() {
         main.post { hide() }
@@ -287,7 +231,7 @@ object StatusPill {
         // GONE (not INVISIBLE) releases the meter's width as well as hiding its LEDs.
         meter.visibility = if (reading.showNetworkMeter) View.VISIBLE else View.GONE
         meter.layoutParams = (meter.layoutParams as LinearLayout.LayoutParams).apply {
-            width = (dp(context, 34) * currentScale).toInt()
+            width = (dp(context, 21) * currentScale).toInt()
             height = (dp(context, 14) * currentScale).toInt()
             marginStart = if (rawText.isNotBlank() && reading.showNetworkMeter) {
                 (dp(context, 5) * currentScale).toInt()
@@ -353,10 +297,9 @@ object StatusPill {
 
         root.background = gd
         meter.scaleFactor = currentScale
-        meter.isDownloadActive = reading.rxSpeed > 200L
-        meter.isUploadActive = reading.txSpeed > 200L
-        meter.qualityGrade = reading.qualityGrade
-        meter.animStep = animCounter
+        meter.rxSpeed = com.universalrp.cleansweep.data.NetworkActivityPolicy.smooth(meter.rxSpeed, reading.rxSpeed)
+        meter.txSpeed = com.universalrp.cleansweep.data.NetworkActivityPolicy.smooth(meter.txSpeed, reading.txSpeed)
+        meter.contentDescription = "D: ${meter.rxSpeed} B/s; U: ${meter.txSpeed} B/s"
         if (reading.showNetworkMeter) meter.invalidate()
         root.requestLayout()
     }
@@ -392,7 +335,6 @@ object StatusPill {
 
         lastReading = reading
         blinkState = !blinkState
-        animCounter++
         applyStyle(root, tv, meter, context, reading)
         position(context, manager, root)
         root.post { position(context, manager, root) }

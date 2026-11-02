@@ -35,7 +35,7 @@ jobs:
       - name: JVM regressions, lint and signed Live Guard candidate only
         run: |
           set -o pipefail
-          gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/liveguard-283-build.log"
+          gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/liveguard-283-build.log"
       - name: Surface compiler, JVM and lint failures in readable annotations
         if: failure()
         run: |
@@ -78,6 +78,18 @@ jobs:
           script: |
             python3 tools/battery_voice_update_smoke.py cleaner
             python3 tools/liveguard_283_native_smoke.py
+            gradle :cleaner:connectedReleaseAndroidTest --no-daemon --stacktrace
+      - name: Required native PDF isolation and shared-card tests actually ran
+        run: |
+          python3 - <<'PYTEST'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          roots=[ET.parse(p).getroot() for p in Path('cleaner/build/outputs/androidTest-results/connected').rglob('*.xml')]
+          cases=[c for r in roots for c in r.iter('testcase') if c.get('classname','').endswith('OfficialStatusNativeTest')]
+          assert len(cases)==3, f'Expected 3 native tests, got {len(cases)}'
+          assert all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases)
+          print('PASS: 3 required Android35 native PDF isolation/invalid-PDF/shared foreground-card tests')
+          PYTEST
       - name: Remove baseline from candidate download
         run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.88.apk"
       - uses: actions/upload-artifact@v7
@@ -91,6 +103,8 @@ jobs:
           name: Live-Guard-2.89-regression-failures
           path: |
             cleaner/build/reports/tests/
+            cleaner/build/reports/androidTests/
+            cleaner/build/outputs/androidTest-results/
             cleaner/build/reports/lint-results-release.html
             ${{ runner.temp }}/health-cleaner/last-native-ui.xml
           retention-days: 7

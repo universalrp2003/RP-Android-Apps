@@ -18,6 +18,11 @@ Private automated verification passed:750 required JVM tests/71suites,325Python,
 - A one-time Enable / Not now introduction explains optional local security history; no new permission, background service, APK upload or automatic removal. Existing opt-in/OFF choices are preserved. APK/link review stays deferred.
 - Extended verification passed in CI41439482711, including optional-history Not now and signer-detail UI probes. Earlier2.89 results alone did not cover these additions. Publication remains on hold.
 
+## Further held-build work — verification pending
+- One compact routine-status notification combines monitor/radio/news with independent foreground ownership; urgent alerts remain separate. One steady rate-driven LED each for D/U, low/medium/high brightness, no chasing segments.
+- Keyless public JTWC bulletin text supplies explicitly dated observed wind/gust/movement. IMD national PDF discovery/native isolated extraction requires Android15+; older Android uses clearly attributed JTWC fallback. IMD structured API was not keyless in the checked response. Unknown/stale/unsupported fields remain unavailable. No AI weather or mixed-source wind figures, no private-coordinate upload or new permission.
+- Earlier790 gate declaration/new3 native tests are not executed proof yet; earlier750-test receipt covers only prior code. Publication remains held.
+
 ## தமிழ்
 
 API விசை இல்லாமலும் கிடைக்கும் இலவச வானிலை பிழை அல்ல என்று தெளிவாகக் காட்டும் மாற்றம். மதிப்புகள் முன்னறிவிப்பு; உங்கள் இடத்தில் அளந்த மழை அல்ல. துல்லியமான மழை நேர அறிவிப்புகளுக்குப் புதிய அனுமதித்த நிமிடத் தரவு தேவை. புதிய சரிபார்த்த புயல் அறிக்கை அடுத்த வெற்றிகரமான செய்தி வாசிப்பில் ஒருமுறை மட்டுமே; அதே அல்லது பழைய அறிக்கையை மீண்டும் சொல்லாது. புதிய காத்திருக்கும் அறிக்கை பழைய விவரங்களை மாற்றும். வெள்ளம்/நிலநடுக்கத்திற்கான மூன்று வாசிப்பு விதி தொடரும். முந்தைய பதிப்பு எந்தப் புயல் அறிக்கையை வாசித்தது என்பதைச் சேமிக்காததால், புதுப்பித்தபின் தற்போதைய அறிக்கை ஒருமுறை வரலாம். ஏற்கெனவே அணைத்த தேர்வுகளும் குரல் பாதுகாப்பு அமைப்புகளும் மாறாது. இன்னும் தனிப்பட்ட சோதனைப் பதிப்பு; பொது வெளியீடு அல்ல. நீக்கவோ தரவை அழிக்கவோ வேண்டாம்.
