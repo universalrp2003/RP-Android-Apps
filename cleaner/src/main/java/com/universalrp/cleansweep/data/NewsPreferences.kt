@@ -22,6 +22,7 @@ object NewsPreferences {
         // New choices must not wait for an old feed-cache interval; published/read history stays intact.
         context.getSharedPreferences("cleansweep_info_strip", Context.MODE_PRIVATE).edit()
             .remove("today_fetch_attempt").remove("today_fetch_attempt_en").apply()
+        com.universalrp.cleansweep.voice.Announcer.stop()
     }
     fun label(category: BalancedNewsPolicy.Category, tamil: Boolean): String {
         val labels = when (category) {

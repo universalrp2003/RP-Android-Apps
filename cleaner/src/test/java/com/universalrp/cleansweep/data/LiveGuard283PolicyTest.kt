@@ -37,12 +37,31 @@ class LiveGuard283PolicyTest {
             for(t in 0L..300_000L step 10_000L) assertFalse(p.observe(true,100,true,0.2f,volts,t,settings).ready)
         }
     }
-    @Test fun selectedTopicsRotateAcrossMoreThanEightAndExcludeDefaults() {
-        val enabled=BalancedNewsPolicy.Category.values().toList()
+    @Test fun selectedTopicsExcludeUnselectedNewsAndRotateFairly() {
         val now=java.time.Instant.parse("2026-11-02T09:00:00Z").toEpochMilli()
-        val items=enabled.map { NewsHeadline(it.name,"A complete validated headline covering public research and services today", "Example", now-1000,"https://example.org/${it.name}") }
-        val a=BalancedNewsPolicy.select(items, emptySet(),emptyList(),false,now,java.time.ZoneId.of("UTC"),0,enabled=enabled)
-        assertTrue(a.size<=8)
+        val titles=listOf("Chennai metro opens a new transport corridor for commuters",
+            "India parliament approves legislation on national education funding",
+            "Japan government signs international trade agreement with foreign partners",
+            "NASA launches a satellite to study distant stars in space",
+            "Android malware steals banking credentials through fraudulent mobile applications",
+            "Wildlife conservation project protects endangered species in remote forest",
+            "Artificial intelligence laboratory announces a new machine learning method",
+            "Weather forecast predicts heavy rain over coastal districts tomorrow",
+            "Cricket team wins the international sports championship after final match",
+            "Government announcement introduces a gazette order for public services",
+            "Recruitment notification announces vacancies for teachers in government schools",
+            "Cinema producers confirm film release dates for upcoming festival season",
+            "Humour columnist shares a joke about a surprisingly talkative parrot")
+        val items=titles.mapIndexed {i,title -> NewsHeadline("Top News",title,"BBC",now-1000,"https://example.org/$i")}
+        val enabled=BalancedNewsPolicy.Category.values().toSet()
+        fun choose(rotation:Int,topics:Set<BalancedNewsPolicy.Category>) = BalancedNewsPolicy.select(items,emptySet(),emptyList(),false,now,java.time.ZoneId.of("UTC"),rotation,enabled=topics)
+        val sports=choose(0,setOf(BalancedNewsPolicy.Category.SPORTS))
+        assertEquals(1,sports.size)
+        assertEquals(BalancedNewsPolicy.Category.SPORTS,BalancedNewsPolicy.category(sports.single()))
+        val seen=(0..12).flatMap { r -> choose(r,enabled).also {assertEquals(8,it.size)} }.mapNotNull {BalancedNewsPolicy.category(it)}.toSet()
+        assertEquals(enabled,seen)
+    }
+    @Test fun coordinatesRejectNonfiniteValues() {
         assertTrue(SavedRainWatches.validCoordinates(10.8,78.7))
         assertFalse(SavedRainWatches.validCoordinates(Double.NaN,78.7))
     }

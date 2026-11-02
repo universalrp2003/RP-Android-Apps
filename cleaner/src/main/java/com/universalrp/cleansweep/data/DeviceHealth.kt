@@ -221,6 +221,9 @@ object BatteryReader {
             null
         }
 
+        val completionEstimate = ChargeAnnouncementSettings.policy.observe(powerConnected, percent,
+                status == BatteryManager.BATTERY_STATUS_FULL, BatteryValuePolicy.microAmpsToAmps(propertyCurrent),
+                voltageV, android.os.SystemClock.elapsedRealtime(), ChargeAnnouncementSettings.thresholds(context))
         val reading = BatteryReading(
             percent = percent.coerceIn(if (percent < 0) -1 else 0, 100),
             temperatureC = temperatureC,
@@ -240,9 +243,7 @@ object BatteryReader {
             reportedLevel = level.takeIf { scale > 0 && it in 0..scale },
             reportedScale = scale.takeIf { it > 0 && level in 0..it },
             currentSource = current.source,
-            chargeEstimate = ChargeAnnouncementSettings.policy.observe(powerConnected, percent,
-                status == BatteryManager.BATTERY_STATUS_FULL, BatteryValuePolicy.microAmpsToAmps(propertyCurrent),
-                voltageV, android.os.SystemClock.elapsedRealtime(), ChargeAnnouncementSettings.thresholds(context)),
+            chargeEstimate = completionEstimate,
             fullChargeConfirmed = FullChargeMonitor.policy.observe(
                 connected = powerConnected, percent = percent,
                 androidFull = status == BatteryManager.BATTERY_STATUS_FULL,
@@ -250,7 +251,7 @@ object BatteryReader {
                 // working documented counter during this continuously observed connection.
                 currentA = BatteryValuePolicy.microAmpsToAmps(propertyCurrent),
                 nowMs = android.os.SystemClock.elapsedRealtime(),
-            ),
+            ) && completionEstimate.ready,
         )
         LiveChargingEta.observe(reading)
         return reading

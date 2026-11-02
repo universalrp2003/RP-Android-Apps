@@ -229,6 +229,7 @@ object Announcer {
         /** A manual news read owns the queue: stale unrelated requests must not play instead. */
         val exclusive: Boolean = false,
         val newsDayScope: String? = null,
+        val newsPreferenceFingerprint: String? = null,
         val newsParts: List<String> = emptyList(),
         val onPartCompleted: ((Int) -> Unit)? = null) {
         val id = java.util.UUID.randomUUID().toString()
@@ -752,6 +753,7 @@ object Announcer {
         manual: Boolean = false,
         newsParts: List<String> = emptyList(),
         onPartCompleted: ((Int) -> Unit)? = null,
+        preferenceFingerprint: String? = null,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
         // timeout when Android already reports no internet. Automatic news can still wait
@@ -769,6 +771,7 @@ object Announcer {
             requestKey = "news_bulletin:${System.nanoTime()}",
             exclusive = manual,
             newsDayScope = currentNewsDayScope(),
+            newsPreferenceFingerprint = preferenceFingerprint,
             newsParts = newsParts,
             onPartCompleted = onPartCompleted,
         )
@@ -1027,6 +1030,10 @@ object Announcer {
                 }
                 if (com.universalrp.updates.CallGuard.inCall(context)) {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS, false) }
+                    return@submit
+                }
+                if(request.newsPreferenceFingerprint!=null && request.newsPreferenceFingerprint!=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) {
+                    main.post { if(active?.id==requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED,false) }
                     return@submit
                 }
                 if (request.event == Event.NEWS_HEADLINES && !request.manual &&

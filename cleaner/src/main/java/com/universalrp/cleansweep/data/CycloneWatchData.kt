@@ -13,7 +13,7 @@ import java.util.Locale
 data class CycloneFix(val lat: Double, val lon: Double, val at: Long, val observed: Boolean)
 data class CycloneWatch(val id: Long, val name: String, val source: String, val updated: Long,
     val lat: Double, val lon: Double, val alert: String, val distanceKm: Double,
-    val fixes: List<CycloneFix> = emptyList())
+    val fixes: List<CycloneFix> = emptyList(), val positionAt: Long? = null)
 object CycloneWatchData {
     const val IMD = "https://rsmcnewdelhi.imd.gov.in/"
     const val EVENTS = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventtype=TC"
@@ -94,7 +94,9 @@ object CycloneWatchData {
                 val details=WeatherForecastClient.httpGet("https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=${storm.id}")
                 timelineUrl(details)?.let { parseFixes(WeatherForecastClient.httpGet(it),now) }.orEmpty()
             }.getOrDefault(emptyList())
-            storm.copy(fixes=fixes)
+            val observed=fixes.filter {it.observed && it.at<=now}.maxByOrNull {it.at}
+            if(observed==null) storm.copy(fixes=fixes) else storm.copy(fixes=fixes,lat=observed.lat,lon=observed.lon,
+                positionAt=observed.at,distanceKm=WeatherForecastClient.haversineKm(lat,lon,observed.lat,observed.lon))
         }
     }
     fun movement(fixes: List<CycloneFix>): Pair<Double,Double>? {

@@ -89,7 +89,9 @@ object BalancedNewsPolicy {
     }
 
     fun reserveCategories(items: List<NewsHeadline>, limit: Int): List<NewsHeadline> {
-        val reserved = Category.values().flatMap { c -> items.filter { category(it) == c }.take(10) }
+        val categories=Category.values().toList()
+        val perCategory=(limit/categories.size).coerceAtLeast(1).coerceAtMost(10)
+        val reserved = categories.flatMap { c -> items.filter { category(it) == c }.take(perCategory) }
         return (reserved + items).distinctBy { it.key }.take(limit)
     }
 

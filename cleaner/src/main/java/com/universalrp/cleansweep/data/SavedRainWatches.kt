@@ -32,10 +32,24 @@ object SavedRainWatches {
         if (old.size >= MAX_PLACES || old.any { kotlin.math.abs(it.place.latitude-place.latitude)<0.001 && kotlin.math.abs(it.place.longitude-place.longitude)<0.001 }) return false
         write(context, old + SavedRainWatch(UUID.randomUUID().toString(), place.copy(name=place.name.take(100)), true)); return true
     }
+    @Synchronized fun update(context: Context, id: String, place: WeatherPlaceCandidate): Boolean {
+        if(!validCoordinates(place.latitude,place.longitude) || place.name.isBlank()) return false
+        val old=read(context); val watch=old.firstOrNull { it.id==id } ?: return false
+        if(old.any { it.id!=id && kotlin.math.abs(it.place.latitude-place.latitude)<0.001 && kotlin.math.abs(it.place.longitude-place.longitude)<0.001 }) return false
+        val moved=kotlin.math.abs(watch.place.latitude-place.latitude)>0.00001 || kotlin.math.abs(watch.place.longitude-place.longitude)>0.00001
+        write(context,old.map { if(it.id==id) it.copy(place=place.copy(name=place.name.trim().take(100))) else it })
+        if(moved) prefs(context).edit().remove("memory_$id").remove("status_$id").apply()
+        return true
+    }
+    data class History(val at: Long,val message: String)
+    fun history(context: Context,id: String): List<History> = runCatching {
+        val a=JSONArray(prefs(context).getString("history_$id","[]"))
+        (0 until minOf(a.length(),40)).map { val p=a.getJSONObject(it);History(p.getLong("at"),p.getString("message")) }
+    }.getOrDefault(emptyList())
     @Synchronized fun toggle(context: Context, id: String, on: Boolean) = write(context, read(context).map { if (it.id == id) it.copy(enabled=on) else it })
     @Synchronized fun remove(context: Context, id: String) {
         write(context, read(context).filterNot { it.id == id })
-        prefs(context).edit().remove("memory_$id").remove("status_$id").apply()
+        prefs(context).edit().remove("memory_$id").remove("status_$id").remove("history_$id").apply()
     }
     private fun write(context: Context, places: List<SavedRainWatch>) {
         val out = JSONArray()
@@ -47,8 +61,12 @@ object SavedRainWatches {
         WeatherEpisodeMemory(p.optBoolean("active"),p.optInt("rank"),p.optLong("dry"),p.optLong("rain"),p.optLong("severe"))
     }.getOrDefault(WeatherEpisodeMemory())
     fun status(context: Context, id: String) = prefs(context).getString("status_$id", "Not checked / இன்னும் சரிபார்க்கவில்லை").orEmpty()
-    fun save(context: Context, id: String, m: WeatherEpisodeMemory, status: String) {
-        prefs(context).edit().putString("memory_$id",JSONObject().put("active",m.episodeActive).put("rank",m.highestAnnouncedRank)
+    @Synchronized fun save(context: Context, id: String, m: WeatherEpisodeMemory, status: String) {
+        if(read(context).none { it.id==id }) return
+        val log=JSONArray()
+        (listOf(History(System.currentTimeMillis(),status.take(500)))+history(context,id)).take(40)
+            .forEach { log.put(JSONObject().put("at",it.at).put("message",it.message)) }
+        prefs(context).edit().putString("history_$id",log.toString()).putString("memory_$id",JSONObject().put("active",m.episodeActive).put("rank",m.highestAnnouncedRank)
             .put("dry",m.drySinceMs).put("rain",m.lastRainAnnouncedAtMs).put("severe",m.lastSevereAnnouncedAtMs).toString())
             .putString("status_$id", status.take(500)).apply()
     }

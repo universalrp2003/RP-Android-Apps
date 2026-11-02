@@ -188,6 +188,7 @@ object WeatherForecastClient {
                 firstCloud = values.optInt("cloudCover")
             }
             val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
+            if (deltaMinutes < -59) continue
             if (deltaMinutes <= maxMinutelyLead || deltaMinutes > 125) continue
             val gustMs = maxOf(
                 values.optDouble("windGust", 0.0),
@@ -375,6 +376,10 @@ object WeatherForecastClient {
         val current = root.optJSONObject("current")
         val tempC = current?.takeIf { !it.isNull("temperature_2m") }?.optDouble("temperature_2m")
         val cloudPct = current?.takeIf { !it.isNull("cloud_cover") }?.optInt("cloud_cover")
+        val currentAt=parseTimestampMs(current?.opt("time"))
+        require(currentAt!=null && nowMs-currentAt in -15L*60_000..30L*60_000) { "Stale or undated Open-Meteo current data" }
+        val currentRain=current?.optDouble("precipitation",Double.NaN) ?: Double.NaN
+        require(currentRain.isFinite() && currentRain in 0.0..1000.0) { "Missing precipitation measurement" }
         val currentPrecip15 = maxOf(
             current?.optDouble("precipitation", 0.0) ?: 0.0,
             (current?.optDouble("rain", 0.0) ?: 0.0) + (current?.optDouble("showers", 0.0) ?: 0.0),
@@ -397,6 +402,8 @@ object WeatherForecastClient {
             val epochMs = parseTimestampMs(times.opt(i)) ?: continue
             val deltaMinutes = ((epochMs - nowMs) / 60_000.0).toInt()
             if (deltaMinutes < -14 || deltaMinutes > 135) continue
+            val supplied=precips.optDouble(i,Double.NaN)
+            if(!supplied.isFinite() || supplied !in 0.0..1000.0) continue
             val mm15 = maxOf(
                 precips.optDouble(i, 0.0),
                 rains.optDouble(i, 0.0) + showers.optDouble(i, 0.0),
@@ -411,6 +418,7 @@ object WeatherForecastClient {
             )
         }
 
+        require(samples.isNotEmpty()) { "Missing Open-Meteo forecast" }
         return WeatherNowcastSnapshot(
             fetchedAtMs = nowMs,
             source = WeatherSourceKind.OPEN_METEO_DEFAULT,

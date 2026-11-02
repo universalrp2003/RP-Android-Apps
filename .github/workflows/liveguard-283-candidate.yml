@@ -33,7 +33,27 @@ jobs:
           python3 tools/verify_cleaner_localization.py
           python3 tools/verify_release_signing_policy.py --fresh-install
       - name: JVM regressions, lint and signed Live Guard candidate only
-        run: gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/liveguard-283-build.log"
+      - name: Surface compiler, JVM and lint failures in readable annotations
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def report(text):
+              print('::error title=Live Guard 2.83 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          p=Path(os.environ['RUNNER_TEMP'])/'liveguard-283-build.log'
+          if p.exists():
+              lines=p.read_text(errors='replace').splitlines()
+              errors=[line for line in lines if line.startswith('e: ') or 'error:' in line.lower() or ' FAILED' in line or 'What went wrong' in line]
+              report('\n'.join(errors) if errors else '\n'.join(lines[-80:]))
+          for p in Path('cleaner/build/test-results').glob('**/TEST-*.xml'):
+              for failure in ET.parse(p).getroot().findall('.//failure'):
+                  report(str(p)+'\n'+failure.get('message','')+'\n'+(failure.text or '')[:4000])
+          PY
       - name: Exact identity, signer and full merged permission continuity
         run: python3 tools/inspect_liveguard_283_candidate.py
       - name: Enable emulator acceleration

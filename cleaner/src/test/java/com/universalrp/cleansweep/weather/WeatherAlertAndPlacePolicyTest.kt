@@ -196,7 +196,7 @@ class WeatherAlertAndPlacePolicyTest {
         val now = 1_760_000_000_000L
         val openMeteoJson = """
             {
-              "current": {"temperature_2m": 29.0, "precipitation": 0.0, "rain": 0.0, "showers": 0.0, "weather_code": 2, "cloud_cover": 78, "wind_gusts_10m": 24.0},
+              "current": {"time": ${now / 1000}, "temperature_2m": 29.0, "precipitation": 0.0, "rain": 0.0, "showers": 0.0, "weather_code": 2, "cloud_cover": 78, "wind_gusts_10m": 24.0},
               "minutely_15": {
                 "time": [${now / 1000}, ${now / 1000 + 900}, ${now / 1000 + 1800}],
                 "precipitation": [0.0, 0.0, 4.5],
@@ -301,7 +301,7 @@ class WeatherAlertAndPlacePolicyTest {
         // Coarse Open-Meteo NWP trace drizzle (0.15 mm over 15m, low probability) must NOT trigger a false alert:
         val noisyOpenMeteo = """
             {
-              "current": {"temperature_2m": 25.5, "precipitation": 0.15, "rain": 0.15, "showers": 0.0, "weather_code": 51, "cloud_cover": 95, "wind_gusts_10m": 15.0},
+              "current": {"time": ${now / 1000}, "temperature_2m": 25.5, "precipitation": 0.15, "rain": 0.15, "showers": 0.0, "weather_code": 51, "cloud_cover": 95, "wind_gusts_10m": 15.0},
               "minutely_15": {
                 "time": [${now / 1000}, ${now / 1000 + 900}],
                 "precipitation": [0.15, 0.20],

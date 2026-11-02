@@ -271,6 +271,8 @@ object NewsHeadlinesVoiceWatcher {
     }
 
     private suspend fun playBatch(app: Context, batch: List<NewsHeadline>, lang: AppLang, manual: Boolean = false): Boolean {
+        val fingerprint=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(app)
+        if(batch.any {it.preferenceFingerprint.isNotEmpty() && it.preferenceFingerprint!=fingerprint}) return false
         val tamil = lang == AppLang.TA
         val lead = prependWeatherSafetyLead(app, "", tamil)
         val plan = NewsPlaybackPlan.build(batch, tamil, lead)
@@ -278,6 +280,7 @@ object NewsHeadlinesVoiceWatcher {
         val spoken = Announcer.speakNewsBulletinAndWait(
             context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,
             newsParts = plan.map { it.text },
+            preferenceFingerprint = fingerprint,
             onStarted = { recordAudibleActivity(app) },
             onPartCompleted = { part ->
                 val now = System.currentTimeMillis()

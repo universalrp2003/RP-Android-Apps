@@ -2,6 +2,7 @@ package com.universalrp.cleansweep.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,7 +25,7 @@ import kotlin.math.floor
 /** Fixed small TN-region viewport. Only visible tiles, loaded after an explicit user action. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun WeatherMapPanel(onPick: (Double, Double)->Unit) {
+fun WeatherMapPanel(initialPoint: Pair<Double,Double>? = null, onPick: (Double, Double)->Unit) {
     val context=LocalContext.current; val uri=LocalUriHandler.current
     var open by remember { mutableStateOf(false) }
     var weather by remember { mutableStateOf(false) }
@@ -35,6 +36,7 @@ fun WeatherMapPanel(onPick: (Double, Double)->Unit) {
     var busy by remember { mutableStateOf(false) }
     var fetched by remember { mutableStateOf(0L) }
     var point by remember { mutableStateOf<Pair<Double,Double>?>(null) }
+    LaunchedEffect(initialPoint) { point=initialPoint }
     val center=WeatherMapData.tile(10.8,78.4)
     val left=floor(center.first).toInt()-1; val top=floor(center.second).toInt()-1
     val tiles=(0..2).flatMap { row -> (0..2).map { col -> left+col to top+row } }
@@ -75,11 +77,21 @@ fun WeatherMapPanel(onPick: (Double, Double)->Unit) {
         FilterChip(minutes==m,{minutes=m},label={Text(if(m==0) watchWords("Current estimate", "தற்போதைய மதிப்பீடு") else "+$m min · "+watchWords("forecast", "முன்னறிவிப்பு"))})
     } }
     if(busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+    Text(watchWords("Tap or drag the red pin within the Tamil Nadu-region map; name the selected area below.", "தமிழ்நாடு பகுதி வரைபடத்தில் தட்டவும் அல்லது சிவப்பு இடக்குறியை இழுக்கவும்; கீழே பெயர் கொடுக்கவும்."))
     Canvas(Modifier.fillMaxWidth().aspectRatio(1f).pointerInput(base,weather) {
         detectTapGestures { tap ->
             if(base.size==tiles.size) {
                 val coords=WeatherMapData.coordinates(left+tap.x/size.width*3,top+tap.y/size.height*3)
                 if(WeatherMapData.tamilNadu(coords.first,coords.second)) { point=coords;onPick(coords.first,coords.second) }
+            }
+        }
+    }.pointerInput(base,weather) {
+        detectDragGestures { change, _ ->
+            if(base.size==tiles.size) {
+                val p=change.position
+                val coords=WeatherMapData.coordinates(left+p.x.coerceIn(0f,size.width.toFloat())/size.width*3,
+                    top+p.y.coerceIn(0f,size.height.toFloat())/size.height*3)
+                if(WeatherMapData.tamilNadu(coords.first,coords.second)) {change.consume();point=coords;onPick(coords.first,coords.second)}
             }
         }
     }) {

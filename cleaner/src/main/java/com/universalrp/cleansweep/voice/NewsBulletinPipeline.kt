@@ -69,6 +69,6 @@ object NewsBulletinPipeline {
         mutableReport.value = Report(readyAt, enabled.map { category ->
             Row(category, count(items, category), count(nativePool, category), count(edited, category), count(english, category), count(translated, category), count(final, category))
         }, final, attempted)
-        return final
+        return final.map { it.copy(preferenceFingerprint=fingerprint) }
     }
 }
