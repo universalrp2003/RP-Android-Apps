@@ -38,15 +38,15 @@ class NewsDisasterPolicyTest {
     @Test fun foreignStormTimelineRejected() { assertNull(NewsDisasterPolicy.observed(event,timeline(row().put("storm_id",999)),home,now)) }
     @Test fun staleActualRejected() { assertNull(NewsDisasterPolicy.observed(event,timeline(row(at=now-19*3_600_000)),home,now)) }
     @Test fun futureActualRejected() { assertNull(NewsDisasterPolicy.observed(event,timeline(row(at=now+1)),home,now)) }
-    @Test fun unsupportedWindNotZero() { val e=NewsDisasterPolicy.observed(event,timeline(row(wind=0.0)),home,now)!!;assertNull(e.windKmh);assertTrue(NewsDisasterPolicy.speech(listOf(e),home,false).contains("Current wind unavailable")) }
-    @Test fun unitlessMovementZeroNeverStationary() { val e=NewsDisasterPolicy.observed(event,timeline(row()),home,now)!!;val s=NewsDisasterPolicy.speech(listOf(e),home,false);assertTrue(s.contains("Verified movement speed and direction unavailable"));assertFalse(s.contains("movement speed 0")) }
-    @Test fun homeExplicitNotCurrentPhone() { val s=NewsDisasterPolicy.speech(listOf(event),home,false);assertTrue(s.contains("your saved reference place"));assertTrue(s.contains("report reference point"));assertFalse(s.contains("from your phone"));assertTrue(s.contains("Not live")) }
-    @Test fun phoneSampleTimeExplicit() { val s=NewsDisasterPolicy.speech(listOf(event),home.copy(phone=true),false);assertTrue(s.contains("phone location checked at"));assertFalse(s.contains("your saved reference place")) }
-    @Test fun tamilLabelsHomeAndUnavailable() { val s=NewsDisasterPolicy.speech(listOf(event),home,true);assertTrue(s.contains("நீங்கள் சேமித்த இடம்"));assertTrue(s.contains("இயக்க வேகமும் திசையும் இந்த அறிக்கையில் கிடைக்கவில்லை"));assertFalse(s.contains("Green")) }
+    @Test fun unsupportedWindNotZero() { val e=NewsDisasterPolicy.observed(event,timeline(row(wind=0.0)),home,now)!!;assertNull(e.windKmh);assertFalse(NewsDisasterPolicy.speech(listOf(e),home,false).contains("wind")) }
+    @Test fun unitlessMovementZeroNeverStationary() { val e=NewsDisasterPolicy.observed(event,timeline(row()),home,now)!!;val s=NewsDisasterPolicy.speech(listOf(e),home,false);assertFalse(s.contains("movement speed"));assertFalse(s.contains("movement speed 0")) }
+    @Test fun homeExplicitNotCurrentPhone() { val s=NewsDisasterPolicy.speech(listOf(event),home,false);assertTrue(s.contains("Saved reference"));assertTrue(s.contains("report reference point"));assertFalse(s.contains("from your phone"));assertTrue(s.contains("not local danger warnings")) }
+    @Test fun phoneSampleTimeExplicit() { val s=NewsDisasterPolicy.speech(listOf(event),home.copy(phone=true),false);assertTrue(s.contains("Phone location"));assertFalse(s.contains("Saved reference")) }
+    @Test fun tamilLabelsHomeAndUnavailable() { val s=NewsDisasterPolicy.speech(listOf(event),home,true);assertTrue(s.contains("சேமித்த இடம்"));assertFalse(s.contains("கிடைக்கவில்லை"));assertFalse(s.contains("Green")) }
     @Test fun emptyReportsNeverAllClear() { assertEquals("",NewsDisasterPolicy.speech(emptyList(),home,false)) }
     @Test fun capsThreeSuccessfulReadsNotAttempts() { var n=0;repeat(5){n=NewsDisasterPolicy.completed(n,false)};assertEquals(0,n);repeat(3){assertTrue(NewsDisasterPolicy.eligible(n));n=NewsDisasterPolicy.completed(n,true)};assertFalse(NewsDisasterPolicy.eligible(n));assertEquals(3,NewsDisasterPolicy.completed(n,true)) }
     @Test fun updatedEpisodeCannotChangeIdentity() { assertEquals(event.key,event.copy(updated=now+1,distanceKm=12.0,positionAt=now,windKmh=90.0).key) }
-    @Test fun scopeIsRegionalNotImpactRadius() { val s=NewsDisasterPolicy.speech(listOf(event),home,false);assertTrue(s.contains("impact boundaries"));assertTrue(s.contains("local authorities"));assertFalse(s.contains("safe")) }
+    @Test fun scopeIsRegionalNotImpactRadius() { val s=NewsDisasterPolicy.speech(listOf(event),home,false);assertTrue(s.contains("Regional reports"));assertTrue(s.contains("not local danger warnings"));assertFalse(s.contains("safe")) }
 
     private val timelineUrl = "https://www.gdacs.org/gdacsapi/api/export/gettimeline?id=123"
     private fun details(source: String = "JTWC", impact: String = "JTWC", id: Long = 123, url: String = timelineUrl) = JSONObject().put("properties",JSONObject().put("eventid",id).put("eventtype","TC").put("source",source).put("impacts",JSONArray().put(JSONObject().put("source",impact).put("resource",JSONObject().put("timeline",url))))).toString()
@@ -55,9 +55,24 @@ class NewsDisasterPolicyTest {
     @Test fun foreignEventDetailsRejected() { assertNull(NewsDisasterPolicy.advisoryTimeline(details(id=999),123)) }
     @Test fun timelineHostAndPathMustRemainAllowlisted() { for(url in listOf("http://www.gdacs.org/gdacsapi/api/export/gettimeline?id=123","https://evil.example/timeline","https://www.gdacs.org/redirect?url=evil"))assertNull(NewsDisasterPolicy.advisoryTimeline(details(url=url),123)) }
 
-    @Test fun cycloneHasNameReferencePlaceAndFieldSources() { val e=event.copy(positionAt=now-60_000,windKmh=110.0);val text=NewsDisasterPolicy.speech(listOf(e),home,false);assertTrue(text.contains("Cyclone update: Test"));assertTrue(text.contains("Test town, Test district"));assertTrue(text.contains("Source: GDACS; JTWC advisory"));assertTrue(text.contains("GDACS report updated"));assertTrue(text.contains("110 kilometres per hour, not local wind")) }
-    @Test fun movementAndLandfallNeverInventedFromWindOrDistance() { val text=NewsDisasterPolicy.speech(listOf(event.copy(windKmh=110.0)),home,false);assertTrue(text.contains("gust speed unavailable"));assertTrue(text.contains("movement speed and direction unavailable"));assertTrue(text.contains("landfall area and time unavailable"));assertFalse(text.contains("50 kilometres per hour")) }
+    @Test fun cycloneHasNameReferencePlaceAndFieldSources() { val e=event.copy(positionAt=now-60_000,windKmh=110.0);val text=NewsDisasterPolicy.speech(listOf(e),home,false);assertTrue(text.contains("Cyclone: Test"));assertTrue(text.contains("Test town"));assertFalse(text.contains("Test district"));assertTrue(text.contains("Source: GDACS; JTWC"));assertTrue(text.contains("reported position at"));assertTrue(text.contains("110 kilometres per hour, not local wind")) }
+    @Test fun movementAndLandfallNeverInventedFromWindOrDistance() { val text=NewsDisasterPolicy.speech(listOf(event.copy(windKmh=110.0)),home,false);assertFalse(text.contains("unavailable"));assertFalse(text.contains("gust"));assertFalse(text.contains("movement"));assertFalse(text.contains("landfall"));assertFalse(text.contains("50 kilometres per hour")) }
     @Test fun eventKindsRemainDistinct() { for((kind,label) in listOf("FL" to "Flood","EQ" to "Earthquake")){val text=NewsDisasterPolicy.speech(listOf(event.copy(type=kind,region="India")),home,false);assertTrue(text.contains("$label; India"));assertFalse(text.contains("JTWC advisory"))} }
-    @Test fun unknownPlaceNameNotClaimedToBeHomeOrGpsTown() { val text=NewsDisasterPolicy.speech(listOf(event),home.copy(placeName=""),false);assertTrue(text.contains("reference place name unavailable"));assertFalse(text.contains("Alangudi")) }
+    @Test fun unknownPlaceNameNotClaimedToBeHomeOrGpsTown() { val text=NewsDisasterPolicy.speech(listOf(event),home.copy(placeName=""),false);assertFalse(text.contains("unavailable"));assertTrue(text.contains("Saved reference"));assertFalse(text.contains("Alangudi")) }
 
+    @Test fun compactAddonNamesPlaceOnlyOnceForAllThreeEvents() {
+        for(tamil in listOf(false,true)) {
+            val label=if(tamil) "சோதனை ஊர் 622301, மாவட்டம்" else "Test town 622301, Test district"
+            val name=if(tamil) "சோதனை ஊர்" else "Test town"
+            val text=NewsDisasterPolicy.speech(listOf(event,event.copy(type="FL"),event.copy(type="EQ")),home.copy(placeName=label),tamil)
+            assertEquals(1,Regex(Regex.escape(name)).findAll(text).count())
+            assertFalse(text.contains("622301"));assertFalse(text.contains("unavailable"));assertFalse(text.contains("கிடைக்கவில்லை"))
+            assertTrue(text.length < if(tamil) 850 else 650)
+        }
+    }
+    @Test fun compactSpeechDoesNotMutateStoredReferenceLabel() {
+        val origin=home.copy(placeName="Test town 622301, Test district")
+        NewsDisasterPolicy.speech(listOf(event),origin,false)
+        assertEquals("Test town 622301, Test district",origin.placeName)
+    }
 }

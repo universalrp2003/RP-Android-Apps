@@ -46,4 +46,14 @@ Forecast location and intensity are given in following table:
     @Test fun primaryImdNotMixedWithJtwcNumbers() { val at=now+3*3600000;val imd=OfficialCyclonePolicy.imd(i,iurl,at)!!;val jt=OfficialCyclonePolicy.jtwc(j,jurl,now)!!;val e=OfficialCycloneClient.enrich(NewsDisasterPolicy.Event(123,"TC","TESTSTORM-26",now,1.0),listOf(jt,imd),NewsDisasterPolicy.Origin(10.0,78.0,false,now,"Test town"),at);assertEquals("IMD",e.official!!.authority);assertEquals(80.0,e.windKmh!!,0.0) }
     @Test fun englishAndTamilNeverClaimLocalWind() { val b=OfficialCyclonePolicy.jtwc(j,jurl,now)!!;assertTrue(b.speech(false).contains("not local wind"));assertTrue(b.speech(true).contains("இது உள்ளூர் காற்றல்ல")) }
     @Test fun missingLandfallNotDerivedFromTrack() { assertNull(OfficialCyclonePolicy.jtwc(j,jurl,now)!!.landfallForecast) }
+    @Test fun compactOfficialSpeechSkipsMissingFieldsAndDuplicateIssueTimestamp() {
+        val b=OfficialCyclonePolicy.jtwc(j,jurl,now)!!.copy(gust=null,movementKmh=null,direction=null,landfallForecast=null)
+        for(tamil in listOf(false,true)) {
+            val text=b.speech(tamil)
+            assertFalse(text.contains("unavailable"));assertFalse(text.contains("கிடைக்கவில்லை"))
+            assertFalse(text.contains("Bulletin issued"));assertFalse(text.contains("வெளியீடு"))
+            assertTrue(text.contains(if(tamil) "நிலையான காற்று" else "Sustained wind"))
+            assertTrue(text.length<330)
+        }
+    }
 }

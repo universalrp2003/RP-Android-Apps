@@ -85,37 +85,33 @@ object NewsDisasterPolicy {
         if (tamil) Locale.forLanguageTag("ta-IN") else Locale.ENGLISH).withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(at))
     fun speech(events: List<Event>, origin: Origin, tamil: Boolean): String {
         if (events.isEmpty()) return ""
-        val name = NamedWeatherPlace.clean(origin.placeName).ifBlank {
-            if (tamil) "குறிப்பு இடத்தின் பெயர் கிடைக்கவில்லை" else "reference place name unavailable"
-        }
-        val place = if (origin.phone) {
-            if (tamil) "$name; ${stamp(origin.at, true)} நேர கைப்பேசி இருப்பிடம்" else "$name; phone location checked at ${stamp(origin.at, false)}"
-        } else if (tamil) "$name; நீங்கள் சேமித்த இடம்" else "$name; your saved reference place"
-        val lead = if (tamil) "பிராந்திய பேரிடர் செய்திகள். குறிப்பு இடம்: $place. " else "Regional disaster news. Reference place: $place. "
+        val name = NamedWeatherPlace.spokenName(origin.placeName)
+        val reference = if (origin.phone) {
+            if (tamil) "கைப்பேசி இருப்பிடம்" else "Phone location"
+        } else if (tamil) "சேமித்த இடம்" else "Saved reference"
+        // Mention the locality once for the entire add-on, not again for every event.
+        val lead = "$reference${if (name.isBlank()) "" else ": $name"}. "
         return lead + events.take(MAX_EVENTS).joinToString(" ") { e ->
             val cycloneName = e.name.replace(Regex("-[0-9]{2}$"), "").lowercase(Locale.ROOT).replaceFirstChar { it.uppercase() }
-                .ifBlank { if (tamil) "பெயர் கிடைக்கவில்லை; ஜி டி ஏ சி எஸ் எண் ${e.id}" else "name unavailable; GDACS event ${e.id}" }
-            val kind = when (e.type) { "TC" -> if (tamil) "புயல் செய்தி: ${cycloneName}" else "Cyclone update: ${cycloneName}"
+            val kind = when (e.type) {
+                "TC" -> (if (tamil) "புயல்" else "Cyclone") + if (cycloneName.isBlank()) "" else ": $cycloneName"
                 "FL" -> if (tamil) "வெள்ளம்" else "Flood"
-                else -> if (tamil) "நிலநடுக்கம்" else "Earthquake" }
-            if (e.official != null) return@joinToString if (tamil)
-                "$kind. $name இடத்திலிருந்து அறிக்கையின் புயல் நிலை சுமார் ${e.distanceKm.roundToInt()} கிலோமீட்டர். ${e.official.speech(true)}"
-            else "$kind. Reported position about ${e.distanceKm.roundToInt()} kilometres from $name. ${e.official.speech(false)}"
-            val at = stamp(e.positionAt ?: e.updated, tamil)
-            val distance = e.distanceKm.roundToInt().coerceAtLeast(0)
-            val position = if (e.positionAt != null) {
-                if (tamil) "$at அறிக்கையின் புயல் நிலை" else "reported position at $at"
-            } else if (tamil) "$at புதுப்பித்த அறிக்கையின் குறிப்பு இடம்" else "report reference point, updated $at"
-            val wind = if (e.type != "TC") "" else {
-                val value = e.windKmh?.roundToInt()
-                if (tamil) (if (value == null) " தற்போதைய காற்று வேகம் கிடைக்கவில்லை." else " அந்நேர அதிகபட்ச நிலையான காற்று மணிக்கு $value கிலோமீட்டர்; இது உள்ளூர் காற்றல்ல.") +
-                    " சரிபார்த்த திடீர் பலத்த காற்றின் வேகம் கிடைக்கவில்லை. சரிபார்த்த இயக்க வேகமும் திசையும் இந்த அறிக்கையில் கிடைக்கவில்லை. கரையைக் கடக்கும் இடம், நேரம் உறுதிசெய்யப்படவில்லை; ஐ எம் டி அறிக்கையைப் பார்க்கவும்."
-                else (if (value == null) " Current wind unavailable." else " Sustained wind then, $value kilometres per hour, not local wind.") +
-                    " Verified gust speed unavailable. Verified movement speed and direction unavailable in this report. Verified landfall area and time unavailable; consult IMD."
+                else -> if (tamil) "நிலநடுக்கம்" else "Earthquake"
             }
-            if (tamil) "$kind${if (e.region.isNotBlank()) "; ${e.region}" else ""}. $position, $name இடத்திலிருந்து சுமார் $distance கிலோமீட்டர்.$wind ஜி டி ஏ சி எஸ் அறிக்கை புதுப்பிப்பு: ${stamp(e.updated, true)}. மூலம்: ஜி டி ஏ சி எஸ்${if(e.type == "TC") "; ஜே டி டபிள்யூ சி அறிக்கை" else ""}."
-            else "$kind${if (e.region.isNotBlank()) "; ${e.region}" else ""}. $position, about $distance kilometres from $name.$wind GDACS report updated ${stamp(e.updated, false)}. Source: GDACS${if(e.type == "TC") "; JTWC advisory" else ""}."
-        } + if (tamil) " இவை நேரலை அல்ல; பாதிப்பு எல்லை அல்ல. உள்ளூர் எச்சரிக்கைக்கு ஐ எம் டி, அதிகாரிகளைப் பின்பற்றவும்."
-            else " Not live positions or impact boundaries. Follow IMD and local authorities for local warnings."
+            val distance = e.distanceKm.roundToInt().coerceAtLeast(0)
+            val away = if (tamil) "சுமார் $distance கிலோமீட்டர் தொலைவில்" else "about $distance kilometres away"
+            if (e.official != null) return@joinToString "$kind, $away. ${e.official.speech(tamil)}"
+            val at = stamp(e.positionAt ?: e.updated, tamil)
+            val position = if (e.positionAt != null) {
+                if (tamil) "$at அறிக்கையின் நிலை" else "reported position at $at"
+            } else if (tamil) "$at அறிக்கையின் குறிப்பு இடம்" else "report reference point at $at"
+            val wind = e.windKmh?.takeIf { e.type == "TC" && it.isFinite() && it > 0 }?.roundToInt()?.let {
+                if (tamil) " நிலையான காற்று மணிக்கு $it கிலோமீட்டர்; இது உள்ளூர் காற்றல்ல."
+                else " Sustained wind $it kilometres per hour, not local wind."
+            }.orEmpty()
+            val source = if (tamil) "மூலம்: ஜி டி ஏ சி எஸ்${if (e.type == "TC") "; ஜே டி டபிள்யூ சி" else ""}"
+                else "Source: GDACS${if (e.type == "TC") "; JTWC" else ""}"
+            "$kind${if (e.region.isBlank()) "" else "; ${e.region}"}. $position, $away.$wind $source."
+        } + if (tamil) " பிராந்திய அறிக்கை; உள்ளூர் அபாய எச்சரிக்கை அல்ல." else " Regional reports, not local danger warnings."
     }
 }

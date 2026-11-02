@@ -1,5 +1,10 @@
 # Project guidance and owner decisions
 
+## Live Guard2.90 — concise disaster speech, owner correction 2 November2026
+
+- Owner reports overly long speech repeating locality/postal code three times and listing unavailable data. Speak locality once per news disaster add-on, no PIN/district/state address tail, and only available verified details. Keep one dated observation/source and concise regional-not-local-warning qualification. Missing fields remain unknown in data; never fabricate zeros or all-clear. Saved display labels/coordinates, ledger/advisory cadence, OFF/language/GPS/safety, three-segment D/U and shared notification unchanged.
+- Implemented held2.90/code95; public2.89 immutable. This request authorizes the concise-speech correction and private checks, not blanket future publication. Fresh build/native checks required; no repeated accepted phone tests or raw screenshot publication. Current Arena branch is arena/e319d5ab-rp-android-apps (older branch notes below are historical).
+
 ## Live Guard2.89 — owner correction and publication approval, 2 November2026
 
 - Owner tested candidate, rejected the dim single D/U LEDs as unusable and explicitly requested restoring the previous three-segment D and U indicators. Restore original34dp meter width, original visible tracks/colours/activity animation; preserve compact shared notification and official cyclone integration. This supersedes earlier single-LED approval only. Others reported working fine, not universal feature/accuracy proof.

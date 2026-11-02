@@ -23,15 +23,15 @@ data class OfficialCycloneBulletin(
             .withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(at))
         val wind = if(windLow == windHigh) "$windHigh" else "$windLow–$windHigh"
         val dir = direction?.let { if (!tamil) (it.toIntOrNull()?.let { degrees -> "$degrees degrees" } ?: it) else mapOf("north" to "வடக்கு", "south" to "தெற்கு", "east" to "கிழக்கு", "west" to "மேற்கு", "northwest" to "வடமேற்கு", "northeast" to "வடகிழக்கு", "southwest" to "தென்மேற்கு", "southeast" to "தென்கிழக்கு", "westnorthwest" to "மேற்கு வடமேற்கு", "northnorthwest" to "வடக்கு வடமேற்கு", "northnortheast" to "வடக்கு வடகிழக்கு", "eastnortheast" to "கிழக்கு வடகிழக்கு", "eastsoutheast" to "கிழக்கு தென்கிழக்கு", "southsoutheast" to "தெற்கு தென்கிழக்கு", "southsouthwest" to "தெற்கு தென்மேற்கு", "westsouthwest" to "மேற்கு தென்மேற்கு")[it] ?: "$it டிகிரி திசை" }
-        return if(tamil) "அறிக்கை வெளியீடு: ${time(issuedAt)}. புயல் நிலை நேரம்: ${time(observedAt)}. நிலையான காற்று${if(authority=="JTWC") "; ஒரு நிமிட சராசரி" else ""} மணிக்கு $wind கிலோமீட்டர்; இது உள்ளூர் காற்றல்ல." +
-            (gust?.let { " திடீர் பலத்த காற்று மணிக்கு $it கிலோமீட்டர்." } ?: " திடீர் பலத்த காற்றின் வேகம் கிடைக்கவில்லை.") +
-            (movementKmh?.let { " கடந்த ஆறு மணி நேர இயக்கம்: மணிக்கு $it கிலோமீட்டர்${dir?.let { d -> "; $d" }.orEmpty()}." } ?: " சரிபார்த்த இயக்க வேகம் கிடைக்கவில்லை.") +
-            (landfallForecast?.let { OfficialCyclonePolicy.tamilLandfall(it) ?: " கரையைக் கடக்கும் முன்கணிப்பு ஐ எம் டி அறிக்கையில் உள்ளது; இந்தத் தமிழ் வாசிப்பிற்கான சரிபார்த்த மொழிபெயர்ப்பு கிடைக்கவில்லை. இது உறுதிசெய்த நிகழ்வு அல்ல." } ?: " சரிபார்த்த கரையைக் கடக்கும் இடம், நேரம் கிடைக்கவில்லை; ஐ எம் டி அறிக்கையைப் பார்க்கவும்.") +
+        return if(tamil) "புயல் நிலை: ${time(observedAt)}. நிலையான காற்று${if(authority=="JTWC") "; ஒரு நிமிட சராசரி" else ""} மணிக்கு $wind கிலோமீட்டர்; இது உள்ளூர் காற்றல்ல." +
+            (gust?.let { " திடீர் பலத்த காற்று மணிக்கு $it கிலோமீட்டர்." } ?: "") +
+            (movementKmh?.let { " கடந்த ஆறு மணி நேர இயக்கம்: மணிக்கு $it கிலோமீட்டர்${dir?.let { d -> "; $d" }.orEmpty()}." } ?: "") +
+            (landfallForecast?.let { OfficialCyclonePolicy.tamilLandfall(it) } ?: "") +
             " மூலம்: ${if(authority == "IMD") "ஐ எம் டி" else "ஜே டி டபிள்யூ சி"}."
-        else "Bulletin issued ${time(issuedAt)}. Observed position at ${time(observedAt)}. Sustained wind${if(authority=="JTWC") " (one-minute average)" else ""} $wind kilometres per hour, not local wind." +
-            (gust?.let { " Gusts $it kilometres per hour." } ?: " Verified gust speed unavailable.") +
-            (movementKmh?.let { " Movement over the past six hours: $it kilometres per hour${dir?.let { d -> ", $d" }.orEmpty()}." } ?: " Verified movement speed unavailable.") +
-            (landfallForecast?.let { " Forecast landfall, not confirmed: ${OfficialCyclonePolicy.forecastTimes(it)}" } ?: " Verified landfall area and time unavailable; consult IMD.") +
+        else "Observed at ${time(observedAt)}. Sustained wind${if(authority=="JTWC") " (one-minute average)" else ""} $wind kilometres per hour, not local wind." +
+            (gust?.let { " Gusts $it kilometres per hour." } ?: "") +
+            (movementKmh?.let { " Movement over the past six hours: $it kilometres per hour${dir?.let { d -> ", $d" }.orEmpty()}." } ?: "") +
+            (landfallForecast?.let { " Forecast landfall, not confirmed: ${OfficialCyclonePolicy.forecastTimes(it)}" } ?: "") +
             " Source: $authority."
     }
 }
