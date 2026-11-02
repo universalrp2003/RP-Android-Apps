@@ -117,9 +117,16 @@ object TamilInfoStripRepo {
         )
     }
 
+    private fun selectedTopicFeeds(context: Context, tamil: Boolean): List<Triple<String, String, String>> =
+        NewsPreferences.categories(context).filter { it !in BalancedNewsPolicy.DEFAULT_CATEGORIES }.map { category ->
+            val query = android.net.Uri.encode(NewsPreferences.query(category, tamil) + " when:1d")
+            Triple(category.name, if (tamil) "Google News Tamil" else "Google News India",
+                "https://news.google.com/rss/search?q=$query&hl=${if (tamil) "ta" else "en-IN"}&gl=IN&ceid=IN:${if (tamil) "ta" else "en"}")
+        }
+
     suspend fun getEnglishSpecialistsForTranslation(context: Context): List<NewsHeadline> = withContext(Dispatchers.IO) {
         currentCoroutineContext().ensureActive()
-        val feeds = specialistFeeds(false)
+        val feeds = specialistFeeds(false) + ENGLISH_RSS_FEEDS + selectedTopicFeeds(context, false)
         val fetched = fetchFeeds(feeds).flatMap { it.items }
         NewsPolicy.todayForLanguage(fetched, System.currentTimeMillis(), ZoneId.systemDefault(), tamil = false)
     }
@@ -169,7 +176,7 @@ object TamilInfoStripRepo {
         val internet = caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
         val general = if (tamil) TAMIL_RSS_FEEDS else ENGLISH_RSS_FEEDS
         // Interleave specialist and general sources so a slow first category cannot starve the others.
-        val specialist = specialistFeeds(tamil)
+        val specialist = selectedTopicFeeds(context, tamil) + specialistFeeds(tamil)
         val feeds = (0 until maxOf(general.size, specialist.size)).flatMap { index ->
             listOfNotNull(general.getOrNull(index), specialist.getOrNull(index))
         } + cyberFraudFeeds(tamil)

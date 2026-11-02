@@ -1,5 +1,7 @@
 # Live Guard (CleanSweep)
 
+> **Prepared private candidate: 2.84/code89. Not published; validation pending.** Simpler place-first weather, normal 100% speech with opt-in Advanced checks, strict Tomorrow.io minute-data alerts, separate home/GPS results, silent regional disaster reports and actual GDACS website window. Public 2.82 stays unchanged. See [candidate boundaries](../docs/live-guard-2.84-candidate.md).
+
 Live Guard is a Tamil/English phone-care, battery/data/weather guard, optional news announcer and device-monitoring app. The current public APK is **2.79 / code 84**, package `com.universalrp.cleansweep`, minimum Android 8.0 (API 26).
 
 - [Official website and downloads](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard) · [CleanSweep-v2.79.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk) · [release notes](../releases/live-guard-v2.79.md) · [suite directory](../README.md)

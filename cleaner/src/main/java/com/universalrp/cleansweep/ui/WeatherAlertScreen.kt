@@ -177,7 +177,7 @@ fun HomeWeatherAlertCard(state: UiState, vm: MainViewModel) {
 
 private fun homeWeatherSummary(w: WeatherUiSnapshot): String {
     if (!w.enabled) {
-        return tr("30-min rain heads-up & 24x7 cyclone alert — off")
+        return watchWords("Rain & severe-weather watch — off", "மழை / கடும் வானிலை கண்காணிப்பு — அணைப்பு")
     }
     if (w.locationMode == LocationResolutionMode.NEEDS_SAVED_PLACE) {
         return tr("GPS is off — tap to set PIN code or town (e.g. 622301)")
@@ -186,14 +186,14 @@ private fun homeWeatherSummary(w: WeatherUiSnapshot): String {
     return when (w.severity) {
         WeatherSeverity.CYCLONE_SEVERE -> where + " · " + tr("Urgent cyclone / extreme storm warning!")
         WeatherSeverity.VERY_HEAVY_RAIN -> where + " · " + tr("Very heavy rain warning active")
-        WeatherSeverity.RAIN_SOON -> where + " · " + tr("Rain expected within ~30 minutes")
+        WeatherSeverity.RAIN_SOON -> where + " · " + watchWords("Rain indicated within the selected watch window", "தேர்ந்தெடுத்த காலவரம்பில் மழை வாய்ப்பு")
         WeatherSeverity.CLEAR_OR_NORMAL -> where + " · " + tr("Silent watch — speaks only before rain or storm")
     }
 }
 
 /** Full configuration & live status screen for 30-Minute Rain + Severe Cyclone Voice Alerts. */
 @Composable
-fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
+private fun LegacyWeatherAlertScreen(state: UiState, vm: MainViewModel) {
     val w = state.weather
     var query by rememberSaveable { mutableStateOf("") }
     var tomorrowExpanded by rememberSaveable { mutableStateOf(false) }
@@ -263,7 +263,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
-                                tr("Speaks ~30 minutes before rain starts. Never sends daily routine weather spam."),
+                                watchWords("Uses the selected lead time; arrival is approximate and background delivery may be delayed.", "தேர்ந்தெடுத்த முன்னறிவிப்பு நேரம் பயன்படுத்தப்படும்; மழை தொடங்கும் நேரம் தோராயமானது; பின்னணி அறிவிப்பு தாமதிக்கலாம்."),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary,
                             )
@@ -342,11 +342,13 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
 
                     if (w.lastCheckedAtMs > 0L) {
                         HorizontalDivider(color = OutlineC.copy(alpha = 0.4f))
-                        val checkedTime = WeatherAlertPolicy.format12HourClock(w.lastCheckedAtMs)
-                        val sourceLabel = if (w.source == WeatherSourceKind.TOMORROW_IO_1M) {
-                            tr("Tomorrow.io 1-min radar")
-                        } else {
-                            tr("Built-in radar + cyclone watch")
+                        val checkedTime = java.time.Instant.ofEpochMilli(w.lastCheckedAtMs).atZone(java.time.ZoneId.systemDefault())
+                            .format(java.time.format.DateTimeFormatter.ofPattern("dd MMM, hh:mm a"))
+                        val sourceLabel = when(w.source) {
+                            WeatherSourceKind.TOMORROW_IO_1M -> watchWords("Tomorrow.io minute forecast", "Tomorrow.io நிமிட முன்னறிவிப்பு")
+                            WeatherSourceKind.TOMORROW_FORECAST -> watchWords("Tomorrow.io hourly model forecast", "Tomorrow.io மணிநேர மாதிரி முன்னறிவிப்பு")
+                            WeatherSourceKind.MET_NORWAY_MODEL -> watchWords("MET Norway hourly model forecast", "MET Norway மணிநேர மாதிரி முன்னறிவிப்பு")
+                            WeatherSourceKind.OPEN_METEO_DEFAULT -> watchWords("Open-Meteo model forecast (India: interpolated)", "Open-Meteo மாதிரி முன்னறிவிப்பு (இந்தியாவில் இடைநிரப்பல்)")
                         }
                         Text(
                             tr("Last checked") + ": " + checkedTime + " · " + sourceLabel,
@@ -356,7 +358,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         val liveStatusText = when (w.severity) {
                             WeatherSeverity.CYCLONE_SEVERE -> tr("Urgent cyclone / extreme storm warning!")
                             WeatherSeverity.VERY_HEAVY_RAIN -> tr("Very heavy rain warning active")
-                            WeatherSeverity.RAIN_SOON -> tr("Rain expected within ~30 minutes")
+                            WeatherSeverity.RAIN_SOON -> watchWords("Rain indicated within the selected watch window", "தேர்ந்தெடுத்த காலவரம்பில் மழை வாய்ப்பு")
                             WeatherSeverity.CLEAR_OR_NORMAL -> tr("No rain approaching right now — staying quiet")
                         }
                         Text(
@@ -381,6 +383,8 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                     }
                 }
             }
+
+            RainWatchSettingsPanel()
 
             // 2. Smart Location Card (Automatic GPS when ON -> Oor Arivippu PIN/Town Picker when OFF)
             PanelCard(Modifier.fillMaxWidth()) {
@@ -411,7 +415,7 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
 
                     val modeExplanation = when {
                         w.gpsTurnedOn && w.locationPermissionGranted ->
-                            tr("Phone GPS is ON — location updates automatically without battery drain.")
+                            watchWords("GPS is on. Location checks can use battery; saved areas work without GPS.", "GPS இயங்குகிறது. இடச் சரிபார்ப்பு மின்கலத்தைப் பயன்படுத்தலாம்; சேமித்த இடங்கள் GPS இன்றிச் செயல்படும்.")
                         w.gpsTurnedOn && !w.locationPermissionGranted ->
                             tr("Phone GPS is ON — grant location access for automatic area detection, or save your PIN/town below.")
                         w.savedPlaceName.isNotBlank() ->
@@ -598,12 +602,12 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         )
                     }
                     Text(
-                        "• " + tr("Normal 30-min rain alert stays silent during Quiet Hours (sleeping time)."),
+                        "• " + watchWords("Normal rain alerts respect quiet hours; lead time is selectable above.", "சாதாரண மழை அறிவிப்பு அமைதி நேரத்தில் ஒலிக்காது; முன்னறிவிப்பு நேரத்தை மேலே தேர்வு செய்யலாம்."),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
                     Text(
-                        "• " + tr("Very heavy rain and cyclone warnings announce 24x7 at any hour — never skipped."),
+                        "• " + watchWords("Severe alerts may bypass quiet hours, but calls, permissions, internet and Android scheduling can still block or delay delivery.", "கடும் எச்சரிக்கை அமைதி நேரத்தை மீறலாம்; அழைப்பு, அனுமதி, இணையம் மற்றும் ஆண்ட்ராய்டு திட்டமிடல் வழங்கலைத் தடுக்கலாம் அல்லது தாமதிக்கலாம்."),
                         style = MaterialTheme.typography.bodySmall,
                         color = GoodGreen,
                     )
@@ -629,15 +633,15 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
                         Spacer(Modifier.width(8.dp))
                         Column(Modifier.weight(1f)) {
                             Text(
-                                tr("Tomorrow.io 1-minute precision (optional)"),
+                                watchWords("Tomorrow.io access (optional personal key)", "Tomorrow.io அணுகல் (விருப்பத் தனிப்பட்ட விசை)"),
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                             )
                             Text(
                                 if (w.hasTomorrowKey) {
-                                    tr("Personal Tomorrow.io key active (encrypted on phone)")
+                                    watchWords("Personal key saved, not proof of access (encrypted on phone)", "தனிப்பட்ட விசை சேமிக்கப்பட்டது; அணுகல் சான்றல்ல (போனில் மறையாக்கம்)")
                                 } else {
-                                    tr("Tomorrow.io 1-min radar runs automatically by default — optional personal key for extra quota")
+                                    watchWords("Authenticated provider access required; plans and coverage vary. Keyless access is for evaluation, not production.", "வழங்குநரின் விசை அணுகல் தேவை; திட்டமும் தரவுப் பரப்பும் மாறும். விசையற்ற அணுகல் சோதனைக்கானது; தொடர்ந்த பயன்பாட்டிற்கு அல்ல.")
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = if (w.hasTomorrowKey) GoodGreen else TextSecondary,

@@ -10,6 +10,12 @@
 - For security-sensitive changes, record threat/data-flow assumptions, verified controls, tests and residual gaps. This is a standing development policy, **not a claim that these controls are already implemented suite-wide**, an independent audit, a prompt-injection-proof guarantee or Play Protect clearance.
 - This instruction does not supersede scoped publication approvals, immutable APK/signer/data-preservation rules, consent, or the prohibition on unauthorized third-party sample uploads. Do not rebuild/release unrelated apps or add AI/agent/MCP access to private data simply to apply the checklist.
 
+## Active Live Guard private candidate —2 November2026
+
+- Owner approved battery estimate controls, unplug-current-percentage/optional early reminder/explicit quiet-hour allowance; news multi-topics and Tamil-only/translation modes; three named independent editable rain watches with history and15/30/60-minute desired lead; small Tamil Nadu Tomorrow.io map and nearby cyclone watch. Accuracy and honest unavailable states take priority over appearance. Owner's new charging result is pending.
+- Prepared source2.83/code88 is a **test candidate only**, not authority to replace public Live Guard2.82, Voice Notes1.3.4, Launcher1.7, Radio1.31 or Store0.9. Do not publish unrelated APKs. Public website/catalog metadata stays pinned. See `docs/live-guard-2.83-candidate.md` for evidence and residual gates; source checks are not compilation, phone or weather-accuracy proof.
+- No keyless Tomorrow production promise or fake observational radar. Credentials stay in existing encrypted storage and HTTPS headers. Missing sensor/precipitation values are not zero. Forecast tracks/positions must be dated and separate from observations; GDACS is supplementary, IMD/RSMC the regional warning authority. No invented landfall, filler news, jobs or jokes.
+
 ## Active project scope
 
 - Maintain the thirteen published non-Store products: `cleaner` (Live Guard), `radio`, `equalizer` (PulseEQ), `vocalremover`, `oorarivippu`, `smsguard`, `voicenotes`, `expensetracker`, `vasanthi`, `podcast`, `launcher`, `dailyvault`, and the separately released `secretmessage/wifi-test` product. Keep Tamilan Store separate. The four legacy batch modules remain cleaner/radio/equalizer/vocalremover; standalone products keep their own release workflows. Only publish owner-authorized changed apps; do not combine all twelve into one release batch.

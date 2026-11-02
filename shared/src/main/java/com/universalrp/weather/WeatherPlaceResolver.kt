@@ -156,6 +156,7 @@ object WeatherPlaceResolver {
         savedLat: Double,
         savedLon: Double,
         tamil: Boolean,
+        gpsOnly: Boolean = false,
     ): ResolvedWeatherLocation = withContext(Dispatchers.IO) {
         val gpsOn = isDeviceLocationTurnedOn(context)
         val permitted = hasLocationPermission(context)
@@ -166,9 +167,10 @@ object WeatherPlaceResolver {
                 cached.latitude.isFinite() &&
                 cached.longitude.isFinite() &&
                 cached.time > 0L &&
-                (now - cached.time) <= FRESH_FIX_MAX_AGE_MS
+                now - cached.time in 0..FRESH_FIX_MAX_AGE_MS
             val activeLoc = if (freshEnough) cached else (requestQuickFix(context) ?: cached)
-            if (activeLoc != null && activeLoc.latitude.isFinite() && activeLoc.longitude.isFinite()) {
+            if (activeLoc != null && activeLoc.latitude.isFinite() && activeLoc.longitude.isFinite() &&
+                activeLoc.time > 0 && now - activeLoc.time in 0..FRESH_FIX_MAX_AGE_MS) {
                 val label = reverseGeocodeLabel(context, activeLoc.latitude, activeLoc.longitude, tamil)
                 return@withContext ResolvedWeatherLocation(
                     mode = LocationResolutionMode.GPS_AUTOMATIC,
@@ -181,7 +183,8 @@ object WeatherPlaceResolver {
                 )
             }
         }
-        resolveActiveLocation(context, savedName, savedDetails, savedLat, savedLon, tamil)
+        if (gpsOnly) ResolvedWeatherLocation(LocationResolutionMode.NEEDS_SAVED_PLACE, gpsOn, permitted)
+        else resolveActiveLocation(context, savedName, savedDetails, savedLat, savedLon, tamil)
     }
 
     @SuppressLint("MissingPermission")

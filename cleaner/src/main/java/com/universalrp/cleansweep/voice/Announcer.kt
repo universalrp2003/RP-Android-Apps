@@ -229,6 +229,8 @@ object Announcer {
         /** A manual news read owns the queue: stale unrelated requests must not play instead. */
         val exclusive: Boolean = false,
         val newsDayScope: String? = null,
+        val newsPreferenceFingerprint: String? = null,
+        val stillRelevant: (() -> Boolean)? = null,
         val newsParts: List<String> = emptyList(),
         val onPartCompleted: ((Int) -> Unit)? = null) {
         val id = java.util.UUID.randomUUID().toString()
@@ -623,6 +625,11 @@ object Announcer {
     fun speak(context: Context, english: String, tamil: String, event: Event, onStarted: (() -> Unit)? = null): Boolean =
         submit(context, Request(english, tamil, null, event, event == Event.TEST, onStarted = onStarted))
 
+    /** Recheck resource/connection withdrawal during preparation and playback, not just enqueue. */
+    fun speakIfStillRelevant(context: Context, english: String, tamil: String, event: Event,
+        stillRelevant: () -> Boolean, onStarted: (() -> Unit)? = null): Boolean =
+        submit(context, Request(english,tamil,null,event,false,onStarted=onStarted,stillRelevant=stillRelevant))
+
     fun speakTamil(context: Context, tamilText: String, event: Event, onStarted: (() -> Unit)? = null): Boolean =
         submit(context, Request(null, tamilText, AppLang.TA, event, event == Event.TEST, onStarted = onStarted))
 
@@ -752,6 +759,7 @@ object Announcer {
         manual: Boolean = false,
         newsParts: List<String> = emptyList(),
         onPartCompleted: ((Int) -> Unit)? = null,
+        preferenceFingerprint: String? = null,
     ): Boolean {
         // A tapped read must not leave the owner staring at a busy button for the whole
         // timeout when Android already reports no internet. Automatic news can still wait
@@ -769,6 +777,7 @@ object Announcer {
             requestKey = "news_bulletin:${System.nanoTime()}",
             exclusive = manual,
             newsDayScope = currentNewsDayScope(),
+            newsPreferenceFingerprint = preferenceFingerprint,
             newsParts = newsParts,
             onPartCompleted = onPartCompleted,
         )
@@ -796,6 +805,7 @@ object Announcer {
         tamil: String,
         bypassQuietHours: Boolean,
         timeoutMs: Long = 45_000,
+        stillRelevant: (() -> Boolean)? = null,
     ): Boolean {
         val done = kotlinx.coroutines.CompletableDeferred<Boolean>()
         val request = Request(
@@ -806,6 +816,7 @@ object Announcer {
             manual = false,
             done = done,
             bypassQuietHours = bypassQuietHours,
+            stillRelevant = stillRelevant,
         )
         if (!submit(context, request)) return false
         var endStage = VoiceDeliveryPolicy.Stage.TIMED_OUT
@@ -824,7 +835,8 @@ object Announcer {
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(ctx), request.manual || allows(ctx, request.event), inQuietHours(ctx), request.manual,
             inCall = com.universalrp.updates.CallGuard.inCall(ctx),
-            bypassQuietHours = request.bypassQuietHours,
+            bypassQuietHours = request.bypassQuietHours || (request.event in setOf(Event.BATTERY_FULL, Event.CHARGING,
+                Event.UNPLUGGED_EARLY, Event.CHARGER_IDLE) && com.universalrp.cleansweep.data.ChargeAnnouncementSettings.allowQuiet(ctx)),
             silentPlace = inSilentPlace(ctx),
         )
         if (blocked != null) {
@@ -934,7 +946,8 @@ object Announcer {
         val blocked = VoiceDeliveryPolicy.blocked(
             enabled(context), request.manual || allows(context, request.event), inQuietHours(context),
             request.manual, inCall = com.universalrp.updates.CallGuard.inCall(context),
-            bypassQuietHours = request.bypassQuietHours,
+            bypassQuietHours = request.bypassQuietHours || (request.event in setOf(Event.BATTERY_FULL, Event.CHARGING,
+                Event.UNPLUGGED_EARLY, Event.CHARGER_IDLE) && com.universalrp.cleansweep.data.ChargeAnnouncementSettings.allowQuiet(context)),
             silentPlace = inSilentPlace(context),
         )
         if (blocked != null) { record(context, request, blocked); request.done?.complete(false); drain(context); return }
@@ -965,7 +978,10 @@ object Announcer {
     }
 
     private fun newsExpired(request: Request): Boolean =
-        request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()
+        !runCatching {request.stillRelevant?.invoke() != false}.getOrDefault(false) ||
+        (request.newsDayScope != null && request.newsDayScope != currentNewsDayScope()) ||
+            (request.newsPreferenceFingerprint != null && request.newsPreferenceFingerprint !=
+                prefsContext?.let {com.universalrp.cleansweep.data.NewsPreferences.fingerprint(it)})
 
     private fun startStudioOnlineUtterance(context: Context, request: Request) {
         val profile = request.resolveProfile(context)
@@ -1025,6 +1041,10 @@ object Announcer {
                 }
                 if (com.universalrp.updates.CallGuard.inCall(context)) {
                     main.post { if (active?.id == requestId) finish(VoiceDeliveryPolicy.Stage.CALL_IN_PROGRESS, false) }
+                    return@submit
+                }
+                if(request.newsPreferenceFingerprint!=null && request.newsPreferenceFingerprint!=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) {
+                    main.post { if(active?.id==requestId) finish(VoiceDeliveryPolicy.Stage.CANCELLED,false) }
                     return@submit
                 }
                 if (request.event == Event.NEWS_HEADLINES && !request.manual &&

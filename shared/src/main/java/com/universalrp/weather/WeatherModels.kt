@@ -18,6 +18,8 @@ enum class WeatherSeverity(val rank: Int, val bypassQuietHours: Boolean) {
 enum class WeatherSourceKind {
     OPEN_METEO_DEFAULT,
     TOMORROW_IO_1M,
+    TOMORROW_FORECAST,
+    MET_NORWAY_MODEL,
 }
 
 enum class LocationResolutionMode {
@@ -76,6 +78,11 @@ data class WeatherNowcastSnapshot(
     val currentWeatherCode: Int,
     val timeline: List<MinuteRainSample>,
     val activeCyclone: OfficialCycloneAdvisory? = null,
+    /** Last minute covered by a contiguous, validated Tomorrow.io minutely series; never hourly interpolation. */
+    val minuteHorizonMinutes: Int = -1,
+    /** Safe diagnostic code only: never a URL, API key or raw provider response. */
+    val tomorrowStatus: String = "",
+
 )
 
 data class WeatherEpisodeMemory(

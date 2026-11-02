@@ -221,8 +221,8 @@ object NewsHeadlinesVoiceWatcher {
         if (!com.universalrp.voice.SharedNeuralVoiceEngine.hasInternet(app)) return blocked("offline")
         NewsAutoSchedule.result(app, "fetching")
 
-        val lang = Lang.languageIn(app)
-        val tamil = lang == AppLang.TA
+        val lang = if(com.universalrp.cleansweep.data.NewsPreferences.tamil(app)) AppLang.TA else AppLang.EN
+        val tamil = com.universalrp.cleansweep.data.NewsPreferences.tamil(app)
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = false, tamil = tamil)
         automaticBlockReason(app)?.let { return blocked(it) }
         if (snapshot.items.isEmpty() && snapshot.outcome == TamilInfoStripRepo.Outcome.FEEDS_UNAVAILABLE) return blocked("feeds_unavailable")
@@ -256,8 +256,8 @@ object NewsHeadlinesVoiceWatcher {
 
     private suspend fun readManual(context: Context): Int {
         val app = context.applicationContext
-        val lang = Lang.languageIn(app)
-        val tamil = lang == AppLang.TA
+        val lang = if(com.universalrp.cleansweep.data.NewsPreferences.tamil(app)) AppLang.TA else AppLang.EN
+        val tamil = com.universalrp.cleansweep.data.NewsPreferences.tamil(app)
         val snapshot = TamilInfoStripRepo.getItemsForLanguage(app, forceRefresh = true, tamil = tamil)
         val batch = prepareBalancedBatch(app, snapshot.items, tamil)
         // A repeated manual tap is not permission to replay already-read or recycled stories.
@@ -271,6 +271,8 @@ object NewsHeadlinesVoiceWatcher {
     }
 
     private suspend fun playBatch(app: Context, batch: List<NewsHeadline>, lang: AppLang, manual: Boolean = false): Boolean {
+        val fingerprint=com.universalrp.cleansweep.data.NewsPreferences.fingerprint(app)
+        if(batch.any {it.preferenceFingerprint.isNotEmpty() && it.preferenceFingerprint!=fingerprint}) return false
         val tamil = lang == AppLang.TA
         val lead = prependWeatherSafetyLead(app, "", tamil)
         val plan = NewsPlaybackPlan.build(batch, tamil, lead)
@@ -278,6 +280,7 @@ object NewsHeadlinesVoiceWatcher {
         val spoken = Announcer.speakNewsBulletinAndWait(
             context = app, text = plan.joinToString(" ") { it.text }, language = lang, manual = manual,
             newsParts = plan.map { it.text },
+            preferenceFingerprint = fingerprint,
             onStarted = { recordAudibleActivity(app) },
             onPartCompleted = { part ->
                 val now = System.currentTimeMillis()

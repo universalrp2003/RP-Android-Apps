@@ -364,12 +364,10 @@ private fun BatteryCard(battery: BatteryReading, screenOn: Boolean) {
                 color = TextSecondary,
             )
             Spacer(Modifier.height(6.dp))
-            Text(
-                "Charging speed in watts is voltage × current. A 10 W charger shows about 9 W at the " +
-                    "battery because some power turns into heat on the way in.",
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-            )
+            BatteryCompletionReason(battery)
+            Text(watchWords("Battery voltage × current estimates battery-side power, not charger output. Losses and phone use vary; no fixed conversion ratio is assumed.",
+                "பேட்டரி மின்னழுத்தம் × மின்னோட்டம் என்பது பேட்டரி சக்தியின் மதிப்பீடு; சார்ஜர் வெளியீடு அல்ல. இழப்பும் போன் பயன்பாடும் மாறும்; நிலையான மாற்று விகிதம் இல்லை."),
+                style = MaterialTheme.typography.bodySmall, color = TextSecondary)
             // 2.41 notes: what the numbers above are (and are not), why the screen changes the
             // battery-side reading, and one honest 44 °C notice. No cause is claimed for a warm
             // phone and no value is invented when a sensor is missing.

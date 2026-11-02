@@ -121,18 +121,8 @@ class HealthWatchWorker(
             }
         }
 
-        // Battery full — worth a word only while it is still on the cable.
-        if (battery.fullChargeConfirmed) {
-            val last = prefs.getLong(Announcer.KEY_LAST_FULL, 0L)
-            if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
-                Announcer.speakAndWait(
-                    ctx, "",
-                    "பேட்டரி சார்ஜ் நிறைவு உறுதியானது. வசதியாக சார்ஜரை அகற்றலாம்.",
-                    Announcer.Event.BATTERY_FULL,
-                    onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_FULL, System.currentTimeMillis()).apply() },
-                )
-            }
-        }
+        // Full/percentage speech has a single per-connection owner in AutomaticAlerts.
+        // A second hourly-worker path would bypass the Advanced switch and deduplication.
 
         // Storage nearly full — the one warning that gets more painful the longer it waits.
         val storage = health?.storage
