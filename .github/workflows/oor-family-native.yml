@@ -73,7 +73,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
             python3 tools/oor_family_upgrade_smoke.py
-            bash -o pipefail -c 'gradle :oorarivippu:connectedReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-native.log"'
+            bash -o pipefail -c 'gradle :oorarivippu:connectedReleaseAndroidTest -x :oorarivippu:packageRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-native.log"'
             python3 tools/verify_oor_family_native.py
       - name: No missing, skipped or failing native/JVM tests; exact installed candidate
         run: |
