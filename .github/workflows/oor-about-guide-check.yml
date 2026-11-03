@@ -1,0 +1,54 @@
+name: Oor About and bilingual guide source correction (no publication)
+on:
+  push:
+    branches: ["arena/e6ccb9f0-rp-android-apps"]
+    paths:
+      - "oorarivippu/src/**"
+      - "shared/src/main/java/com/universalrp/updates/AppGuides.kt"
+      - "tools/verify_apps_localization.py"
+      - "tools/tests/test_oor_about_guide.py"
+      - ".github/workflows/oor-about-guide-check.yml"
+permissions:
+  contents: read
+concurrency:
+  group: oor-about-guide-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - name: Source, bilingual and non-publication contracts
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+      - uses: actions/setup-java@v6
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v6
+      - name: Compile Oor and run actual guide and existing unit tests, no APK assembly
+        run: ./gradlew :oorarivippu:compileReleaseKotlin :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease --stacktrace
+      - name: Verify guide tests actually ran without skips or failures
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as E
+          roots=[E.parse(p).getroot() for p in Path('oorarivippu/build/test-results/testReleaseUnitTest').glob('TEST-*.xml')]
+          assert roots, 'No unit test results'
+          guide=[r for r in roots if r.get('name')=='com.oorarivippu.voiceannouncer.OorAboutGuideTest']
+          assert len(guide)==1 and int(guide[0].get('tests','0'))==4
+          for r in roots:
+              for field in ('failures','errors','skipped'): assert int(r.get(field,'0'))==0, (r.get('name'),field)
+          total=sum(int(r.get('tests','0')) for r in roots)
+          print(f'::notice title=Oor About and Guide source verification::Compiled Oor, passed {total} unit tests including all 4 new About/Guide tests; no skips or failures. No APK assembled or published; installed 1.1.15 unchanged.')
+          PY
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: oor-about-guide-test-and-lint-reports-only
+          path: |
+            oorarivippu/build/test-results/testReleaseUnitTest/
+            oorarivippu/build/reports/lint-results-release.*
+          if-no-files-found: warn
+          retention-days: 14

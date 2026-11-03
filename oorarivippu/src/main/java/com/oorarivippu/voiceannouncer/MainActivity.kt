@@ -1346,16 +1346,38 @@ private fun OorSettingsFullDialog(
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("🔗 " + ui.sourceRepositoryLabel) }
                         Divider(color = Color(0xFFE2E8F0))
-                        Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        val releaseLinks = listOf(
-                            ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
-                            ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
-                            ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.26",
-                            ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
-                            ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
-                            ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9",
-                            ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3"
+                        Text(
+                            if (oorIsTamil)
+                                "குடும்ப ஊர் பகிர்வு விருப்பமானது. இருவரும் உறுதிப்படுத்த வேண்டும்; காத்திருக்கும் அழைப்புகள் உட்பட ஆறு இணைப்புகள் வரை. ஒவ்வொருவருக்கும் உங்கள் பகிர்வைத் தனியாக இயக்கவும்/அணைக்கவும்."
+                            else
+                                "Family town sharing is optional. Both people confirm; up to six connections including pending invitations. Control your sharing separately for each person.",
+                            fontSize = 13.sp
                         )
+                        Text(
+                            if (oorIsTamil)
+                                "பயணத்தை நிறுத்தினால் பதிவேற்றம் இடைநிறுத்தப்படும்; பகிர்வின் இயக்கத் தேர்வு நினைவில் இருக்கும். கடைசி மறையாக்கிய ஊர் அறிக்கை 15 நிமிடத்திற்குள் காலாவதியாகும். குடும்பக் குரல் கைப்பேசியில் மட்டும்; இது நேரலை அல்லது அவசரக் கண்காணிப்பு அல்ல."
+                            else
+                                "Stopping a trip pauses uploads, not your saved sharing switch. The latest encrypted town report expires within 15 minutes. Family speech is on-device only; this is not live or emergency tracking.",
+                            fontSize = 13.sp
+                        )
+                        com.universalrp.updates.SisterApps.byId("oorarivippu")?.let { app ->
+                            TextButton(
+                                onClick = { openExternalLink(context, com.universalrp.updates.SisterApps.releaseUrl(app)) },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(if (oorIsTamil) "வெளியிடப்பட்ட பதிப்பு: ${app.publishedVersion}" else "Published release: ${app.publishedVersion}")
+                            }
+                        }
+                        TextButton(
+                            onClick = { openExternalLink(context, "https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (oorIsTamil) "இணைய வழிகாட்டி & மறைக்கப்பட்ட படங்கள்" else "Web guide & redacted screenshots")
+                        }
+                        Divider(color = Color(0xFFE2E8F0))
+                        Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        // Use the suite's verified public versions, never a second stale tag list.
+                        val releaseLinks = com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu")
                         releaseLinks.forEach { (label, url) ->
                             TextButton(
                                 onClick = { openExternalLink(context, url) },

@@ -740,10 +740,26 @@ def verify_about_links() -> None:
     oor_source = oor_path.read_text(encoding="utf-8")
     oor_strings = (ROOT / "oorarivippu/src/main/java/com/oorarivippu/voiceannouncer/BilingualStrings.kt").read_text(encoding="utf-8")
     oor_about_text = oor_source + "\n" + oor_strings
-    oor_urls = set(re.findall(r'https://github\.com/universalrp2003/RP-Android-Apps/releases/tag/[^"\\]+', oor_source))
-    missing_oor = EXPECTED_OOR_RELEASE_URLS - oor_urls
-    if missing_oor:
-        raise ValueError(f"Oor Arivippu About is missing current release links: {sorted(missing_oor)}")
+    # Oor now renders the shared verified public catalog, not the historical 7-tag list
+    # still used by the isolated Secret Message preview below.
+    for required in (
+        'SisterApps.releaseLinks(excludeId = "oorarivippu")',
+        'SisterApps.byId("oorarivippu")',
+        'SisterApps.releaseUrl(app)',
+        'https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html',
+    ):
+        if required not in oor_source:
+            raise ValueError(f"Oor Arivippu About must use current public metadata and web guide: {required}")
+    if re.search(r'https://github\.com/universalrp2003/RP-Android-Apps/releases/tag/', oor_source):
+        raise ValueError("Oor Arivippu About must not duplicate hardcoded release tags")
+    guide_source = (ROOT / "shared/src/main/java/com/universalrp/updates/AppGuides.kt").read_text(encoding="utf-8")
+    oor_guide = guide_source.split("val oorArivippu = GuideContent(", 1)[1].split("// SMS Guard", 1)[0]
+    for required in ("Connecting family", "Remembered sharing", "Received towns", "Family privacy",
+                     "குடும்ப இணைப்பு", "குடும்பத் தனியுரிமை", "not a separate always-on"):
+        if required not in oor_guide:
+            raise ValueError(f"Oor built-in bilingual guide is missing current feature guidance: {required}")
+    if "30-minute rain & 24×7 cyclone voice alerts" in oor_guide:
+        raise ValueError("Oor guide still promises unconditional 24x7 weather monitoring")
     for required in (
         "https://universalrp2003.github.io/RP-Android-Apps/",
         "https://github.com/universalrp2003/InternetRadio",
