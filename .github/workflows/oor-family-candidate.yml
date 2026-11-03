@@ -1,0 +1,81 @@
+name: Oor family sharing candidate and isolated service tests (no publication)
+on:
+  push:
+    branches: ["arena/d4f4c9b6-rp-android-apps"]
+    paths: ["oorarivippu/**", ".github/workflows/oor-family-candidate.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: oor-family-candidate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with: {node-version: '22'}
+      - name: Isolated relay policy tests
+        working-directory: oorarivippu/family-relay
+        run: npm ci && npm test
+      - name: Real local Worker two-device encrypted transport
+        working-directory: oorarivippu/family-relay
+        run: |
+          npx wrangler dev --local --ip 127.0.0.1 --port 8787 --log-level error > "$RUNNER_TEMP/family-worker.log" 2>&1 &
+          PID=$!
+          trap 'kill "$PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          node test/http-smoke.mjs http://127.0.0.1:8787
+      - name: Source and existing public catalog boundaries
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_cleaner_localization.py
+      - uses: actions/setup-java@v6
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v6
+        with: {gradle-version: '8.14.3'}
+      - name: Oor candidate JVM, release lint and signed APK only
+        env:
+          RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+        run: |
+          set -o pipefail
+          gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-build.log"
+      - name: Surface bounded compiler and test diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def report(t): print('::error title=Oor family candidate::'+t[-12000:].replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+          p=Path(os.environ['RUNNER_TEMP'])/'oor-family-build.log'
+          if p.exists():
+              lines=p.read_text(errors='replace').splitlines()
+              report('\n'.join([l for l in lines if l.startswith('e: ') or ' FAILED' in l or 'error:' in l.lower()] or lines[-60:]))
+          for p in Path('oorarivippu/build/test-results').rglob('TEST-*.xml'):
+              for f in ET.parse(p).getroot().iter('failure'): report((f.text or '')[:4000])
+          PY
+      - name: Require all family crypto tests actually ran
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          rows=[ET.parse(p).getroot() for p in Path('oorarivippu/build/test-results').rglob('TEST-*FamilyProtocolTest.xml')]
+          assert len(rows)==1 and int(rows[0].get('tests'))==15
+          assert all(int(rows[0].get(k,'0'))==0 for k in ('failures','errors','skipped'))
+          print('PASS:15 required JVM family cryptography/privacy/freshness tests executed')
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Oor-1.1.14-family-unconfigured-signed-candidate
+          path: oorarivippu/build/outputs/apk/release/*.apk
+          retention-days: 14

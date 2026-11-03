@@ -542,6 +542,8 @@ fun OorArivippuScreen(
                 )
             }
 
+            com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil)
+
             // Permission Banner (shown only until granted)
             if (!hasPermissions) {
                 Card(

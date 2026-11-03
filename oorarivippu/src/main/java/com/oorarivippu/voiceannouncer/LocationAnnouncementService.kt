@@ -398,6 +398,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun stopTrackingAndService() {
+        com.oorarivippu.voiceannouncer.family.FamilyRepository.stopAll(this)
         AppPreferences.setTrackingEnabled(false)
         updateOfflineReminderSchedule()
         isForegroundStarted = false
@@ -732,6 +733,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     district = resolved.district
                 )
                 updateForegroundNotification()
+                // Fresh geocoder locality/district only; NEVER subarea, road, PIN, speed or coordinates.
+                if (com.oorarivippu.voiceannouncer.family.FamilyStore.active(this@LocationAnnouncementService) > 0) {
+                    serviceScope.launch {
+                        com.oorarivippu.voiceannouncer.family.FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage, resolved.district, location)
+                    }
+                }
                 if (cityOrVillage.isBlank()) return@launch
 
                 val isFirstStartAnnouncement =
@@ -977,7 +984,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         if (previousRequestLocation != null) {
             val elapsedMs = nowElapsedMs - lastGeocodeStartedAtElapsedMs
             val distanceMeters = previousRequestLocation.distanceTo(location)
-            if (elapsedMs < GEOCODE_MIN_INTERVAL_MS || distanceMeters < GEOCODE_MIN_DISTANCE_METERS) {
+            val familyHeartbeat = com.oorarivippu.voiceannouncer.family.FamilyStore.active(this) > 0 &&
+                elapsedMs >= com.oorarivippu.voiceannouncer.family.FamilyProtocol.HEARTBEAT
+            if (elapsedMs < GEOCODE_MIN_INTERVAL_MS || (distanceMeters < GEOCODE_MIN_DISTANCE_METERS && !familyHeartbeat)) {
                 return false
             }
         }
@@ -1600,7 +1609,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification_location)
             .setContentTitle(ui.appTitle)
-            .setContentText(contentText)
+            .setContentText(if (com.oorarivippu.voiceannouncer.family.FamilyStore.active(this) > 0)
+                (if(snap.appLanguage=="en") "Family town sharing ON · " else "குடும்ப ஊர் பகிர்வு இயக்கம் · ") + contentText else contentText)
             .setContentIntent(openPendingIntent)
             .setOngoing(true)
             .addAction(

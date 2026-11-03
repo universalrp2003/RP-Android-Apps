@@ -1,3 +1,19 @@
+## Active Oor family-sharing implementation — 3 November 2026
+
+Owner authorizes implementing optional consent-based family town sharing in Oor, without Google Maps. Clarifications selected: town/area only (no exact coordinates/map/history), use Secret Message's server **method**, and retain only the latest encrypted town update for at most15minutes. Separate Cloudflare Worker/service; do not modify Secret Message or reuse its keys/data/live deployment. No paid subscription/resource upgrades. Each member separately consents, both confirm a private invitation/code, defaultOFF,1/4/8hour timed sharing only during an explicitly started trip, easy localOFF/revocation, visible status, stale/unavailable timestamps and no all-clear/emergency guarantees. Do not upload subareas/roads/PINs/speed/contacts/coordinates. Existing Android location/geocoder remain; no claim to eliminate Google-powered platform services.
+
+Preparing unpublished Oor1.1.14/code19 (held1.1.13 is not republished); public1.1.10 and all siblings/Live Guard2.93 remain immutable. Family service URL defaults empty and fails closed; no real sharing until separate service deployment and live synthetic tests are verified. Candidate source, backend17policy tests and local realHTTP two-device encrypted flow prepared/passed locally; Android/JVM/build/native/signature/saved-data/device evidence remains pending. Do not claim perfect, independently audited, physical-family/background/OEM reliability or publish an APK merely because source checks pass. Preserve the deferred Live Guard layout request immediately below; do not implement it in this Oor task.
+
+## Deferred owner request — next Live Guard update, 3 November 2026
+
+Owner reports the current app is working fine and explicitly asks to remember these small layout corrections for the **next version update**, not to ship another update now:
+
+- Remove/reduce the unused vertical gap between the home rain/news area and the Free storage card, as marked in the supplied screenshot. Check spacers, padding and any empty conditional rows; do not remove useful content or disturb the accepted headline/weather controls.
+- Reduce the oversized **Scan & clean junk** button label, including its Tamil translation, so it is more compact and does not wrap unnecessarily. Keep system font scaling, legibility and an accessible touch target; adjust excess button padding only as needed.
+- Preserve accepted functionality, saved data/preferences and all sibling apps. Owner acceptance is not independent installed-hash, all-device, audio or provider-accuracy proof.
+- This is a deferred requirement only: no implementation, version bump, build, release, or repeat phone test requested now. Implement and verify these changes when the next Live Guard update is undertaken.
+- Reference screenshots were supplied privately on 3 November 2026; do not publish originals or depend on their temporary upload paths for the requirement.
+
 ## Live Guard 2.93 published — metadata integration pending main Pages proof
 
 Publisher41575729325/job125718668800 SUCCESS: exact tested source6635216/CI41574228784/artifact13202943297 promoted without rebuild to release432264587/APK704212734 at2026-11-03T04:02:56Z,14747343B/SHA9f8e7936ae98ed5fb43e9087acf6a6de87dc5837fd66c9a97faa0216aa55f012. Older public assets untouched. Never rerun its pinned publisher against this now-public tag. 876JVM/83suites,352Python,all5Android35/build/lint/sign/fullpermissions/exact2.89preserved-data update passed. New source metadata integration is not another approved candidate promotion; only original bytes remain public. Website/live catalogs advance LG2.93 only, Store embedded fallback/sibling binaries unchanged; current CI before merge and actual main-only Pages/live hash verification remain required. No physical/audio/all-OEM/live-feed/Google clearance claim.

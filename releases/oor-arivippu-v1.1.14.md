@@ -1,0 +1,15 @@
+# Oor Arivippu 1.1.14 — private family-town sharing candidate
+
+Not a public release. No physical-device test. Do not substitute this for the accepted public1.1.10 APK.
+
+Optional family-town sharing uses a separate Cloudflare Worker approach, not the Secret Message relay itself. A private invitation connects one other phone; both confirm a comparison code. Each person independently enables sharing for1/4/8hours during a user-started trip. Pairing and location permission alone do not enable sharing. Viewing a family member does not require your own trip or location sharing.
+
+Only the geocoder's town and district plus observation time are encrypted with standard AES-256-GCM. No exact coordinates, address, PIN, road, speed, route history or contact book is sent to this service. Names are local labels only. The service holds only the latest encrypted update per direction for at most15minutes, shorter when the sharing duration ends. Application alarms delete expired ciphertext; no application request logs. Provider-level network/account metadata and platform retention are distinct and are not claimed absent. Invitation secrets must only be sent to the intended person over a trusted channel.
+
+Sharing is OFF initially, has a visible foreground status and stops locally before a network stop request. If offline, an earlier update may remain visible until its15-minute expiry. Either person can revoke the connection. Unknown/expired/unavailable data is never shown as a current location or assurance of safety. Updates are normally attempted at most once per5minutes while trip tracking runs; Android/OEM, GPS, geocoding and network restrictions can delay or prevent them. No emergency/continuous-tracking guarantee. The Google Maps app and Maps API are not used; existing Android/Play-services location and platform geocoding remain.
+
+Existing trip announcements/settings are retained. No new Android permissions. Service configuration, CI, same-key upgrade and new-feature device checks must be verified before release readiness is claimed. No independent security audit or live-family/physical background reliability proof. Install a verified candidate as a same-key update only; do not uninstall or clear local data. Uninstalling may erase local data and pairing keys.
+
+## தமிழ்
+
+இது தனிப்பட்ட குடும்ப ஊர் பகிர்வுக்கான சோதனைப் பதிப்பு; பொதுவான வெளியீடு அல்ல. கைப்பேசிச் சோதனை இன்னும் இல்லை. தனிப்பட்ட அழைப்பை ஏற்று இருவரும் குறியீட்டை ஒப்பிட்டு இணைப்பை உறுதிப்படுத்த வேண்டும். ஒவ்வொருவரும் தனித்தனியாகப் பயணத்தின்போது ஊரைப் பகிர அனுமதிக்க வேண்டும். இணைப்பு மட்டும் பகிர்வை இயக்காது. ஊர், மாவட்டம் மற்றும் நேரம் மட்டும் மறையாக்கிப் பகிரப்படும். துல்லிய இடம், முகவரி, அஞ்சல் குறியீடு, வேகம் அல்லது பயண வரலாறு அனுப்பப்படாது. கடைசி மறையாக்கிய அறிக்கை பதினைந்து நிமிடத்திற்குள் காலாவதியாகும். இணையம் இல்லாமல் நிறுத்தினால் பழைய அறிக்கை அதன் காலம் முடியும் வரை தெரியலாம். மற்றவர் ஊரைப் பார்க்க உங்கள் இடத்தைப் பகிர வேண்டியதில்லை. இது அவசரச் சேவையோ தொடர்ச்சியான கண்காணிப்பு உறுதியோ அல்ல. சேமித்த விருப்பங்களையும் ஏற்கெனவே உள்ள பயணப் பேச்சையும் பாதுகாக்க வேண்டும். கையொப்பம் பொருந்தும் புதுப்பிப்பாக மட்டும் நிறுவவும்; செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம்.

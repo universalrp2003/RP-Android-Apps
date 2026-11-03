@@ -17,8 +17,12 @@ android {
         applicationId = "com.oorarivippu.voiceannouncer"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.1.10"
+        versionCode = 19
+        versionName = "1.1.14"
+        // Configured only after the separate family service passes its real HTTPS checks.
+        val familyUrl = providers.gradleProperty("oorFamilyServiceUrl").orElse("").get()
+        require(familyUrl.isEmpty() || familyUrl.matches(Regex("https://oor-family-relay\\.[a-z0-9-]+\\.workers\\.dev")))
+        buildConfigField("String", "FAMILY_SERVICE_URL", "\"$familyUrl\"")
         vectorDrawables.useSupportLibrary = true
     }
 
@@ -43,6 +47,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
