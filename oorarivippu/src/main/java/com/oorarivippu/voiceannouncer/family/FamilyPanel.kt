@@ -20,7 +20,7 @@ import java.text.DateFormat
 import java.util.Date
 
 /** Explicit, private family connections. Opening this panel never enables any sharing. */
-@Composable fun FamilyPanel(tamil: Boolean) {
+@Composable fun FamilyPanel(tamil: Boolean, onChanged: () -> Unit = {}) {
     val c=LocalContext.current
     fun words(en: String,ta: String)=if(tamil) ta else en
     var open by remember { mutableStateOf(false) }
@@ -40,7 +40,7 @@ import java.util.Date
             try { action();rows=FamilyRepository.views(c) }
             catch(e:CancellationException){throw e}
             catch(_:Exception){ error=true;rows=emptyList() }
-            finally {busy=false;tick=System.currentTimeMillis()}
+            finally {busy=false;tick=System.currentTimeMillis();onChanged()}
         }
     }
     LaunchedEffect(open,lifecycle) {
@@ -64,6 +64,10 @@ import java.util.Date
             if(!FamilyRepository.configured) {
                 Text(words("Service setup/testing is not complete. Real family sharing is unavailable; nothing is being uploaded.","சேவை அமைப்பும் சோதனையும் இன்னும் நிறைவடையவில்லை. குடும்பப் பகிர்வு கிடைக்கவில்லை; எந்த இடமும் பதிவேற்றப்படவில்லை."))
             } else {
+                TextButton(onClick={
+                    try { FamilyRepository.stopAll(c);rows=rows.map{it.copy(sharing=false,pending=true)};onChanged();if(!busy)run{} }
+                    catch(_:Exception){error=true}
+                }) {Text(words("Stop all my family sharing", "எனது குடும்பப் பகிர்வு அனைத்தையும் நிறுத்து"))}
                 OutlinedTextField(name,{name=it.take(80)},label={Text(words("Family member's name (on this phone only)","குடும்ப நபரின் பெயர் (இந்தக் கைப்பேசியில் மட்டும்)"))},singleLine=true)
                 Button(enabled=!busy && name.isNotBlank(),onClick={run { outgoing=FamilyRepository.create(c,name);name="" }}) {Text(words("Create private invitation","தனிப்பட்ட அழைப்பை உருவாக்கு"))}
                 if(outgoing.isNotEmpty()) {
@@ -100,8 +104,8 @@ import java.util.Date
                             }
                         }
                     }
-                    if(row.sharing) TextButton(onClick={FamilyRepository.stop(c,row.id);run {}}){Text(words("Stop sharing now","பகிர்வை இப்போது நிறுத்து"))}
-                    TextButton(enabled=!busy,onClick={FamilyRepository.stop(c,row.id,remove=true);run {}}){Text(words("Remove connection / cancel invite","இணைப்பை நீக்கு / அழைப்பை ரத்து செய்"))}
+                    if(row.sharing) TextButton(onClick={try {FamilyRepository.stop(c,row.id);rows=rows.map{if(it.id==row.id)it.copy(sharing=false,pending=true)else it};onChanged();if(!busy)run {}}catch(_:Exception){error=true}}){Text(words("Stop sharing now","பகிர்வை இப்போது நிறுத்து"))}
+                    TextButton(enabled=!busy,onClick={run {FamilyRepository.stop(c,row.id,remove=true)}}){Text(words("Remove connection / cancel invite","இணைப்பை நீக்கு / அழைப்பை ரத்து செய்"))}
                 }
                 TextButton(enabled=!busy,onClick={run {}}){Text(words("Refresh / retry pending stops","புதுப்பி / காத்திருக்கும் நிறுத்தத்தை மீண்டும் முயல்"))}
             }

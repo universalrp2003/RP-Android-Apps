@@ -542,7 +542,7 @@ fun OorArivippuScreen(
                 )
             }
 
-            com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil)
+            com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil, onChanged = onSettingsChanged)
 
             // Permission Banner (shown only until granted)
             if (!hasPermissions) {

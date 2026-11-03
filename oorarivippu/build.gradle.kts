@@ -13,8 +13,11 @@ android {
     namespace = "com.oorarivippu.voiceannouncer"
     compileSdk = 36
 
+    testBuildType = "release"
+
     defaultConfig {
         applicationId = "com.oorarivippu.voiceannouncer"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 26
         targetSdk = 36
         versionCode = 19
@@ -73,6 +76,8 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:okhttp:4.12.0")

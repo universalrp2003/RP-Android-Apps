@@ -4,7 +4,7 @@ import {digest} from '../src/policy.mjs';
 const base=process.argv[2];assert(base && /^(http:\/\/(127\.0\.0\.1|localhost):\d+|https:\/\/oor-family-relay\.[a-z0-9-]+\.workers\.dev)$/.test(base));
 const random=n=>randomBytes(n).toString('hex');const id=random(16),a=random(32),b=random(32),invite=random(32),key=randomBytes(32),confirmation=random(16);
 async function request(method,action,token,body,expected=200) {
- const r=await fetch(`${base}/v1/pairs/${id}/${action}`,{method,redirect:'error',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
+ const r=await fetch(`${base}/v1/pairs/${id}/${action}`,{method,redirect:'error',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json; charset=utf-8'},...(body?{body:JSON.stringify(body)}:{})});
  assert.equal(r.status,expected,`${method} ${action} returned ${r.status}`);return r.json();
 }
 const health=await (await fetch(base+'/health')).json();assert.equal(health.protocol,'oor-family/1');

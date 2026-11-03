@@ -84,7 +84,7 @@ object FamilyRepository {
         update(app,id){it.put("until",0).put("pending",if(remove) "remove" else "stop")}
         scope.launch { lock.withLock { flush(app) } }
     }
-    fun stopAll(c: Context) { runCatching { FamilyStore.read(c).forEach { stop(c,it.getString("id")) } } }
+    fun stopAll(c: Context) { FamilyStore.read(c).forEach { stop(c,it.getString("id")) } }
     private fun flush(c: Context) {
         for(row in FamilyStore.read(c)) {
             val pending=row.optString("pending");if(pending.isEmpty()) continue

@@ -195,6 +195,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     if (!isForegroundStarted) startTrackingInForeground()
                     else updateHeadsetWhereAmIControl()
                     updateOfflineReminderSchedule()
+                    updateForegroundNotification()
                     return START_STICKY
                 }
                 return START_NOT_STICKY
@@ -398,7 +399,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun stopTrackingAndService() {
-        com.oorarivippu.voiceannouncer.family.FamilyRepository.stopAll(this)
+        runCatching { com.oorarivippu.voiceannouncer.family.FamilyRepository.stopAll(this) }
         AppPreferences.setTrackingEnabled(false)
         updateOfflineReminderSchedule()
         isForegroundStarted = false

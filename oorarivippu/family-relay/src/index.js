@@ -13,10 +13,11 @@ export default {
     if (!(await limiter.limit({key:request.headers.get('CF-Connecting-IP')??'local'})).success) return json(429);
     let body={};
     if (['POST','PUT'].includes(request.method)) {
-      if (request.headers.get('Content-Type')!=='application/json' || Number(request.headers.get('Content-Length')??0)>2048) return json(400);
+      if (!/^application\/json(?:;\s*charset=utf-8)?$/i.test(request.headers.get('Content-Type')??'') || Number(request.headers.get('Content-Length')??0)>2048) return json(400);
       const reader=request.body?.getReader();if (!reader) return json(400);
       let length=0,chunks=[];
-      const timer=new Promise((_,reject)=>setTimeout(()=>reject(new Error('timeout')),5000));
+      let timerId;
+      const timer=new Promise((_,reject)=>{timerId=setTimeout(()=>reject(new Error('timeout')),5000);});
       try {
         while(true) {
           const {done,value}=await Promise.race([reader.read(),timer]);if(done) break;
@@ -25,6 +26,7 @@ export default {
         const bytes=new Uint8Array(length);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}
         body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
       } catch { await reader.cancel().catch(()=>{});return json(400); }
+      finally { clearTimeout(timerId); }
     }
     return env.PAIRS.getByName(match[1]).fetch(new Request('https://internal/'+match[2],{method:request.method,
       headers:{Authorization:request.headers.get('Authorization'),'Content-Type':'application/json'},
