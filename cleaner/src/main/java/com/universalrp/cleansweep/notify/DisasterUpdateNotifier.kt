@@ -35,13 +35,15 @@ object DisasterUpdateNotifier {
             require(json.length() <= NewsDisasterPolicy.MAX_TRACKED)
             for (key in json.keys()) {
                 require(Regex("(TC|EQ|FL):[0-9]{1,12}").matches(key))
-                require(json.getLong(key) > 0)
+                require((json.get(key) is Long || json.get(key) is Int) && json.getLong(key) > 0)
             }
         }
     }.getOrNull()
     @Synchronized fun cancel(c: Context) {
         val manager = c.getSystemService(NotificationManager::class.java) ?: return
-        ledger(c)?.keys()?.forEach { runCatching { manager.cancel("advisory:$it", ID) } }
+        // Explicit OFF also clears our own visible cards if the receipt file was corrupted.
+        runCatching { manager.activeNotifications.filter { it.id == ID && it.tag?.startsWith("advisory:") == true }
+            .forEach { manager.cancel(it.tag, ID) } }
     }
     private fun sourceUrl(e: NewsDisasterPolicy.Event): String? {
         val url = e.official?.url ?: return "https://www.gdacs.org/report.aspx?eventtype=${e.type}&eventid=${e.id}"
@@ -62,7 +64,8 @@ object DisasterUpdateNotifier {
         if (manager.getNotificationChannel(CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE) return 0
         val memory = ledger(c) ?: return 0 // Corruption/full memory never resets earlier deliveries.
         var posted = 0
-        for (e in events.groupBy { it.key }.values.mapNotNull { group -> group.maxByOrNull { it.positionAt ?: it.updated } }.take(NewsDisasterPolicy.MAX_EVENTS)) {
+        for (e in events.groupBy { it.key }.values.mapNotNull { group -> group.maxByOrNull { it.positionAt ?: it.updated } }) {
+            if (posted >= NewsDisasterPolicy.MAX_EVENTS) break
             if (!enabled(c) || !NewsDisasterUpdates.enabled(c)) break
             if (e.id !in 1..999_999_999_999L || e.type !in setOf("TC", "FL", "EQ") ||
                 !e.distanceKm.isFinite() || e.distanceKm !in 0.0..2000.0 || !NewsDisasterPolicy.fresh(e, now)) continue

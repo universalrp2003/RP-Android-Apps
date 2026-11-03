@@ -106,7 +106,11 @@ object NetworkSplit {
         mirror(context)
     }
 
-    fun countingSinceMs(context: Context): Long = prefs(context).getLong(KEY_COUNTING_SINCE_MS, 0L)
+    @Synchronized
+    fun countingSinceMs(context: Context): Long {
+        resetDayIfNeeded(context)
+        return prefs(context).getLong(KEY_COUNTING_SINCE_MS, 0L)
+    }
 
     fun markCountingStarted(context: Context) {
         prefs(context).edit().putLong(KEY_COUNTING_SINCE_MS, System.currentTimeMillis()).apply()

@@ -21,7 +21,7 @@ class NetworkSplitDayTest {
     @Test fun readFourGResetsWithoutServiceOrTraffic() { assertEquals(0L, NetworkSplit.fourGBytes(c));assertEquals(LocalDate.now().toString(),p.getString(NetworkSplit.KEY_DAY,"")) }
     @Test fun readFiveGResetsWithoutService() { assertEquals(0L,NetworkSplit.fiveGBytes(c)) }
     @Test fun statusCannotShowYesterday() { val s=NetworkSplit.status(c,1024.0);assertEquals(0.0,s.fourGUsedMb,0.0);assertEquals(0.0,s.fiveGUsedMb,0.0) }
-    @Test fun staleBaselineIsNeverCarriedIntoToday() { assertEquals(-1L,NetworkSplit.lastCumulative(c));assertTrue(p.getLong(NetworkSplit.KEY_COUNTING_SINCE_MS,0)>1) }
+    @Test fun staleBaselineIsNeverCarriedIntoToday() { assertTrue(NetworkSplit.countingSinceMs(c)>1);assertEquals(-1L,NetworkSplit.lastCumulative(c));assertTrue(p.getLong(NetworkSplit.KEY_COUNTING_SINCE_MS,0)>1) }
     @Test fun firstNewBaselineDoesNotBackfillHistory() { NetworkSplit.setLastCumulative(c,9000);assertEquals(9000L,NetworkSplit.lastCumulative(c));assertEquals(0L,NetworkSplit.fourGBytes(c)) }
     @Test fun incrementStartsNewDayRatherThanAddingToYesterday() { NetworkSplit.addDelta(c,30,true);assertEquals(30L,NetworkSplit.fiveGBytes(c));assertEquals(0L,NetworkSplit.fourGBytes(c)) }
     @Test fun repeatedReadsKeepTodaysSamplesAndBaseline() { NetworkSplit.resetDayIfNeeded(c);NetworkSplit.addDelta(c,42,false);NetworkSplit.setLastCumulative(c,55);repeat(3){NetworkSplit.status(c,1024.0)};assertEquals(42L,NetworkSplit.fourGBytes(c));assertEquals(55L,NetworkSplit.lastCumulative(c)) }

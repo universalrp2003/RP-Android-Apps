@@ -874,7 +874,6 @@ private fun HomeMobileDataCard(state: UiState, vm: MainViewModel) {
                 TextButton(onClick = { showResetDialog = false }) {
                     Text(tr("Cancel"), color = TextSecondary)
                 }
-                }
             },
         )
     }
