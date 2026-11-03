@@ -532,3 +532,6 @@ Source `52b525888631b12ba281e0df328d466013de8f7c`; code92/package`com.universalr
 Exact tested bytes promoted without rebuild; prior public releases unchanged. No corrected physical-phone/audio/live-provider/PlayProtect proof.
 
 Live Guard2.89 website completion: PR83/main08f8cd21fa04e676b152eb278f8ddeb36c7ac6ae; Pages41461910400/deployjob125333808884/deployment7494684338 SUCCESS2026-11-02T14:30:10Z. Actual live metadata and exact public APK/ZIP bytes verified. Metadata follow-up CI41459148110 successful but not promoted; public APK remains1eb064d81102c7cc32fb1cb9ea386b6cb3aa235900b1c119b1783b68f342c698.
+
+
+Oor1.1.15 website completion: PR86/main6630717bb02b870af55f98f2f63349141e355115; Pages41653421483/build125977290891/deploy125978314339/deployment7521386373 SUCCESS2026-11-03T14:28:04Z. Actual live bilingual guide/HTML/catalogs/dates matched tested source;7 APK/single-APK ZIP pairs, including exact Oor1.1.15 SHAec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5, verified. Browser41652463620/job125973930768 passed19 checks; current local366Python passed. See docs/oor-family-1.1.15-website-verification.json. No private screenshots or app-store submission.
