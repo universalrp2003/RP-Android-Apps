@@ -53,7 +53,7 @@ class NoSignalBeep {
             runCatching {
                 val id = SubscriptionManager.getDefaultDataSubscriptionId()
                 if (id != subscription) { subscription = id; policy.reset() }
-                if (!SubscriptionManager.isValidSubscriptionId(id)) return@runCatching
+                if (id !in 0 until Int.MAX_VALUE) return@runCatching
                 val tm = c.getSystemService(TelephonyManager::class.java)?.createForSubscriptionId(id) ?: return@runCatching
                 if (tm.simState != TelephonyManager.SIM_STATE_READY) return@runCatching
                 val service = tm.serviceState ?: return@runCatching

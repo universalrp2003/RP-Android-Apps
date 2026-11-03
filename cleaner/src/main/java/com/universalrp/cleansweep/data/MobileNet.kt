@@ -200,7 +200,7 @@ object MobileNet {
     private fun telephony(context: Context): TelephonyManager? {
         val base = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager ?: return null
         val id = android.telephony.SubscriptionManager.getDefaultDataSubscriptionId()
-        return if (android.telephony.SubscriptionManager.isValidSubscriptionId(id))
+        return if (id in 0 until Int.MAX_VALUE)
             runCatching { base.createForSubscriptionId(id) }.getOrDefault(base) else base
     }
 

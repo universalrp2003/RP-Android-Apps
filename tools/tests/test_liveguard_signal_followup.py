@@ -22,6 +22,9 @@ class SignalFollowupContracts(unittest.TestCase):
             self.assertIn(gate,s)
         self.assertIn('TONE_PROP_BEEP, 120',s)
         self.assertIn('STREAM_MUSIC, 10',s)
+        self.assertNotIn('isValidSubscriptionId(',s)
+        self.assertIn('id !in 0 until Int.MAX_VALUE',s)
+        self.assertNotIn('isValidSubscriptionId(',(SRC/'data/MobileNet.kt').read_text())
     def test_widget_source_brand_removed_but_report_provenance_kept(self):
         s=(SRC/'widget/CompactWidgetPolicy.kt').read_text()
         self.assertNotIn('"Tomorrow.io"',s)
