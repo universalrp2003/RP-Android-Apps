@@ -94,6 +94,7 @@ jobs:
               ("sms-guard-v1.1.16", "SMS-Guard-v1.1.16.apk", 12824500, "db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df"),
               ("vasanthi-ai-v1.1.5", "Vasanthi-AI-v1.1.5.apk", 45777962, "4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6"),
               ("oor-arivippu-v1.1.10", "Oor-Arivippu-v1.1.10.apk", 12842800, "7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa"),
+              ("oor-arivippu-v1.1.15", "Oor-Arivippu-v1.1.15.apk", 12891952, "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5"),
               ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
               ("daily-vault-v0.4", "DailyVault-v0.4.apk", 12532289, "39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1"),
               ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
@@ -189,6 +190,9 @@ jobs:
           test -s site/apks/Vasanthi-AI-v1.1.5.zip
           test -s site/apks/Oor-Arivippu-v1.1.10.apk
           test -s site/apks/Oor-Arivippu-v1.1.10.zip
+          test -s site/apks/Oor-Arivippu-v1.1.15.apk
+          test -s site/apks/Oor-Arivippu-v1.1.15.zip
+          test -s site/oor-arivippu-guide.html
           test -s site/apks/Tamil-Podcast-Player-v1.6.apk
           test -s site/apks/Tamil-Podcast-Player-v1.6.zip
           test -s site/apks/DailyVault-v0.4.apk
@@ -276,7 +280,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-      - name: Verify deployed metadata, six exact public APK/ZIP downloads and safe Launcher screenshots
+      - name: Verify deployed metadata, seven exact public APK/ZIP downloads and safe Launcher screenshots
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
         run: python3 tools/verify_live_three_releases.py

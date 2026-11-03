@@ -1,0 +1,13 @@
+{
+  "authorized": true,
+  "authorization_basis": "Owner chose a separate Secret Message-style service for latest encrypted town-only family updates, maximum fifteen minutes, independent consent and Stop.",
+  "repository": "universalrp2003/RP-Android-Apps",
+  "source": "d40ce3e1b3baa2fedb5c6670776ea491d3ad305f",
+  "candidate_run": 41624729742,
+  "worker_name": "oor-family-relay",
+  "town_only": true,
+  "encrypted_latest_max_minutes": 15,
+  "change_secret_message": false,
+  "paid_upgrade_authorized": false,
+  "public_release_authorized": false
+}

@@ -1,0 +1,17 @@
+{
+  "source": "b5cdd433d36e9abbbee7cbb52238f4a276b627a7",
+  "run_id": 41644644026,
+  "job_id": 125947282795,
+  "artifact_id": 13234478573,
+  "archive_sha256": "b4a35d24ac6114373588cd1c9c92ddcf2fc4cdcfa7097daee9d6f27c514fc3f7",
+  "bytes": 12891952,
+  "publication_authorized": true,
+  "only_app": "oorarivippu",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_reports_working": true,
+  "required_jvm_tests": 30,
+  "required_android35_native_tests": 2,
+  "apk_sha256": "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5"
+}

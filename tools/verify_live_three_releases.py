@@ -42,7 +42,7 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
         matches = data == local if name.endswith('.html') else json.loads(data) == json.loads(local)
@@ -66,7 +66,8 @@ def main():
             time.sleep(10)
     health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
     store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
-    checks = [('CleanSweep-v2.93.apk', json.loads((ROOT/'docs/live-guard-2.93-publication-receipt.json').read_text())),
+    checks = [('Oor-Arivippu-v1.1.15.apk', json.loads((ROOT/'docs/oor-family-1.1.15-publication-receipt.json').read_text())),
+              ('CleanSweep-v2.93.apk', json.loads((ROOT/'docs/live-guard-2.93-publication-receipt.json').read_text())),
               ('CleanSweep-v2.89.apk', json.loads((ROOT/'docs/live-guard-2.89-publication-receipt.json').read_text())),
               ('Tamilan-Store-v0.9.apk', store),
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
