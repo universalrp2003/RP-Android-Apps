@@ -28,10 +28,13 @@ jobs:
         with: {gradle-version: '8.14.3'}
       - name: Offline source, bilingual and public-byte guards
         run: |
-          python3 -m unittest discover -s tools/tests -q
-          python3 tools/verify_apps_localization.py
-          python3 tools/verify_cleaner_localization.py
-          python3 tools/verify_release_signing_policy.py --fresh-install
+          set -o pipefail
+          (
+            python3 -m unittest discover -s tools/tests -q &&
+            python3 tools/verify_apps_localization.py &&
+            python3 tools/verify_cleaner_localization.py &&
+            python3 tools/verify_release_signing_policy.py --fresh-install
+          ) 2>&1 | tee "$RUNNER_TEMP/liveguard-source.log"
       - name: JVM regressions, lint and signed Live Guard candidate only
         run: |
           set -o pipefail
@@ -45,6 +48,8 @@ jobs:
           import xml.etree.ElementTree as ET
           def report(text):
               print('::error title=Live Guard 2.93 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          source_log=Path(os.environ['RUNNER_TEMP'])/'liveguard-source.log'
+          if source_log.exists(): report('\n'.join(source_log.read_text(errors='replace').splitlines()[-80:]))
           p=Path(os.environ['RUNNER_TEMP'])/'liveguard-283-build.log'
           if p.exists():
               lines=p.read_text(errors='replace').splitlines()
