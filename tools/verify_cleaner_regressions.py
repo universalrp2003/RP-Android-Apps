@@ -6,6 +6,11 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    "com.universalrp.cleansweep.data.SimSignalPolicyTest": 6,
+    "com.universalrp.cleansweep.data.RainNoticePolicyTest": 6,
+    "com.universalrp.cleansweep.notify.NoSignalPolicyTest": 8,
+    "com.universalrp.cleansweep.notify.NoSignalBeepTest": 6,
+    "com.universalrp.cleansweep.widget.DisasterWidgetCacheTest": 7,
     "com.universalrp.cleansweep.data.NetworkSplitDayTest": 8,
     "com.universalrp.cleansweep.ui.HomeCompactPolicyTest": 4,
     "com.universalrp.cleansweep.notify.DisasterUpdateNotifierTest": 14,
@@ -14,7 +19,7 @@ EXPECTED = {
     "com.universalrp.cleansweep.notify.RoutineStatusTest": 12,
     "com.universalrp.cleansweep.data.NamedWeatherPlaceTest": 10,
     "com.universalrp.cleansweep.data.SecurityIdentityPolicyTest": 12,
-    "com.universalrp.cleansweep.data.FeatureDiscoveryTest": 26,
+    "com.universalrp.cleansweep.data.FeatureDiscoveryTest": 28,
     "com.universalrp.cleansweep.data.NewsDisasterPolicyTest": 34,
     "com.universalrp.cleansweep.data.NewsDisasterUpdatesTest": 41,
     "com.universalrp.cleansweep.data.NewsSpeechFormattingTest": 12,

@@ -18,7 +18,8 @@ object SimpleWeatherPolicy {
         val decision = WeatherAlertPolicy.evaluate(input, place, previous, nowMs = now, leadMinutes = lead)
         val allowed = precise(snapshot, now) && decision.severity != WeatherSeverity.CYCLONE_SEVERE &&
             (decision.minutesUntilRain ?: Int.MAX_VALUE) <= snapshot.minuteHorizonMinutes
-        return if (allowed) decision else decision.copy(shouldAnnounce = false, bypassQuietHours = false,
+        val speech = RainNoticePolicy.formatSpeech(decision.severity, place, decision.minutesUntilRain)
+        return if (allowed) decision.copy(englishSpeech = speech.first, tamilSpeech = speech.second) else decision.copy(shouldAnnounce = false, bypassQuietHours = false,
             minutesUntilRain = if (precise(snapshot, now)) decision.minutesUntilRain else null,
             englishSpeech = "", tamilSpeech = "", updatedMemory = previous)
     }

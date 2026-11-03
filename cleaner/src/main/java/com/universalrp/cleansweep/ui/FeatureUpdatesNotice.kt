@@ -65,6 +65,7 @@ fun FeatureUpdatesNotice(onChanged: () -> Unit = {}) {
     }
     // Exhaustive compiled content: a future feature cannot accidentally inherit this description.
     val title = when (current) {
+        FeatureDiscovery.Feature.NO_SIGNAL_BEEP -> watchWords("New: quiet no-signal beep", "புதிய வசதி: சிக்னல் இழப்பிற்கு மெதுவான ஒலி")
         FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS -> watchWords("New: silent disaster notifications", "புதிய வசதி: ஒலியில்லா பேரிடர் அறிவிப்புகள்")
         FeatureDiscovery.Feature.SECURITY_HISTORY -> watchWords("New: security change review", "புதிய வசதி: பாதுகாப்பு மாற்ற ஆய்வு")
         FeatureDiscovery.Feature.DISASTER_NEWS -> watchWords("New: disaster updates with news", "புதிய வசதி: செய்தியுடன் பேரிடர் அறிக்கைகள்")
@@ -75,6 +76,13 @@ fun FeatureUpdatesNotice(onChanged: () -> Unit = {}) {
         title = { Text(title) },
         text = {
             when (current) {
+            FeatureDiscovery.Feature.NO_SIGNAL_BEEP -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(watchWords("Optional, off until enabled. After stable SIM service, one short quiet beep if Android confirms no service and zero signal for 15 seconds. Rearms only after 30 seconds of restored service. Uses the default data SIM, not Wi-Fi. A percentage is the relative Android 0–4 signal level (0/25/50/75/100%), not a precise reception measurement.",
+                    "விருப்ப வசதி; இயக்கும் வரை அணைந்திருக்கும். நிலையான சிம் சேவைக்குப் பின் 15 நொடிகள் சேவையும் சிக்னலும் இல்லை என Android உறுதிசெய்தால் ஒரே சிறிய மெதுவான ஒலி. சேவை 30 நொடிகள் மீண்ட பிறகே மறுபடி தயாராகும். இயல்பு தரவு சிம் மட்டும்; வைஃபை அல்ல. சதவீதம் Android அளிக்கும் ஒப்பீட்டு நிலை; துல்லிய வரவேற்பு அளவல்ல."))
+                Text(watchWords("No beep in calls, quiet hours, silent places, silent/vibrate/DND, airplane mode, media playback or muted media. No volume increase. Phone permission is required; no SIM/unknown readings are not treated as loss. Uses the existing radio-watch service and its ongoing status notification; no separate poller. Android/OEM background restrictions apply. Change later under Mobile → 4G / 5G split.",
+                    "அழைப்பு, அமைதி நேரம்/இடம், அமைதி/அதிர்வு முறை, தொந்தரவு வேண்டாம், விமான முறை, ஊடக இயக்கம் அல்லது ஊடக ஒலி அணைந்திருந்தால் ஒலி இல்லை. ஒலியளவு உயர்த்தப்படாது. தொலைபேசி அனுமதி தேவை; சிம் இல்லாமை அல்லது தெரியாத அளவு சிக்னல் இழப்பல்ல. ஏற்கெனவே உள்ள வலைக் கண்காணிப்பும் அதன் நிலை அறிவிப்பும் பயன்படுத்தப்படும்; தனிச் சரிபார்ப்பு இல்லை. Android பின்னணிக் கட்டுப்பாடுகள் பொருந்தும். பின்னர் மொபைல் → 4G / 5G பிரிவில் மாற்றலாம்."))
+                if (error) Text(watchWords("Could not save. Please try again.", "சேமிக்க முடியவில்லை. மீண்டும் முயலவும்."))
+            }
             FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(watchWords("One silent notification for each new verified cyclone advisory or new flood/earthquake event found during existing disaster-with-news checks. Tap it to open the source report. No extra speech, sound, vibration or separate background polling; unchanged/older reports are not repeated. Not an emergency-alert service or a local impact prediction.",
                     "செய்தியுடன் பேரிடர் சரிபார்ப்பு நடக்கும்போது கண்டறியும் புதிய சரிபார்த்த புயல் அறிக்கை அல்லது புதிய வெள்ளம்/நிலநடுக்க நிகழ்வுக்கு ஓர் ஒலியில்லா அறிவிப்பு. அதைத் தொட்டால் மூல அறிக்கை திறக்கும். கூடுதல் பேச்சு, ஒலி, அதிர்வு அல்லது தனிப் பின்னணிச் சரிபார்ப்பு இல்லை; அதே/பழைய அறிக்கை மீளாது. இது அவசர எச்சரிக்கை சேவையோ உள்ளூர் பாதிப்புக் கணிப்போ அல்ல."))

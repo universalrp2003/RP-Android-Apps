@@ -97,4 +97,42 @@ class OfficialStatusNativeTest {
             instrumentation.runOnMainSync { activity.finish() }
         }
     }
+    @Test fun weatherWidgetShowsVerifiedReportWithoutBrandingOrButtonOverlap() {
+        val prefs = c.getSharedPreferences("cleansweep_widget_views", 0)
+        val home = WeatherAlertStore.savedPlace(c) ?: error("Native script must supply a synthetic home")
+        val news = NewsDisasterUpdates.enabled(c)
+        val now = System.currentTimeMillis()
+        try {
+            NewsDisasterUpdates.setEnabled(c, true)
+            prefs.edit().putString("profile_987654", "WEATHER").commit()
+            com.universalrp.cleansweep.widget.DisasterWidgetCache.save(c,
+                listOf(NewsDisasterPolicy.Event(987654,"TC","CI TEST",now,50.0,now,100.0)),
+                NewsDisasterPolicy.Origin(home.latitude,home.longitude,false,now), now)
+            val options = android.os.Bundle().apply { putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,250) }
+            val weather = WeatherAlertStore.CachedWidgetWeather(true,home.name,"CLEAR_OR_NORMAL",null,27.0,14.0,"TOMORROW_IO_1M",now)
+            val companion = com.universalrp.cleansweep.widget.CleanSweepWidget.Companion
+            val method = companion.javaClass.declaredMethods.single { it.name == "build" && it.parameterTypes.size == 8 }.apply { isAccessible = true }
+            val remote = method.invoke(companion,c,987654,options,null,null,null,weather,now) as android.widget.RemoteViews
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val view = remote.apply(c,android.widget.FrameLayout(c))
+                val density = c.resources.displayMetrics.density
+                view.measure(android.view.View.MeasureSpec.makeMeasureSpec((400*density).toInt(),android.view.View.MeasureSpec.EXACTLY),
+                    android.view.View.MeasureSpec.makeMeasureSpec((250*density).toInt(),android.view.View.MeasureSpec.EXACTLY))
+                view.layout(0,0,view.measuredWidth,view.measuredHeight)
+                val details = view.findViewById<android.widget.TextView>(R.id.widget_data)
+                val report = view.findViewById<android.widget.TextView>(R.id.widget_disaster)
+                val controls = view.findViewById<android.view.View>(R.id.widget_mode).parent as android.view.View
+                assertFalse(details.text.contains("Tomorrow.io"))
+                assertTrue(report.text.contains("CI TEST") && report.text.contains("GDACS/JTWC"))
+                assertTrue(report.text.contains("not a local impact prediction"))
+                assertEquals(android.view.View.VISIBLE,report.visibility)
+                assertTrue("Report must not overlap controls",report.bottom <= controls.top)
+                assertTrue("Controls remain inside widget",controls.bottom <= view.measuredHeight)
+            }
+        } finally {
+            prefs.edit().remove("profile_987654").commit()
+            c.getSharedPreferences(com.universalrp.cleansweep.widget.DisasterWidgetCache.PREFS,0).edit().clear().commit()
+            NewsDisasterUpdates.setEnabled(c,news)
+        }
+    }
 }

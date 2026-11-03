@@ -286,7 +286,7 @@ object MobileNet {
             try {
                 val strength = tm.signalStrength
                 if (strength != null) {
-                    signalLevel = strength.level.coerceIn(0, 4)
+                    signalLevel = strength.level.takeIf { it in 0..4 }
                     val nr = strength.cellSignalStrengths.firstOrNull { it is android.telephony.CellSignalStrengthNr }
                     val lte = strength.cellSignalStrengths.firstOrNull { it is android.telephony.CellSignalStrengthLte }
                     val gsm = strength.cellSignalStrengths.firstOrNull { it is android.telephony.CellSignalStrengthGsm }

@@ -23,6 +23,7 @@ class CompactWidgetPolicyTest {
             minutesUntilRain = null, temperatureC = 28.2, windGustKmh = 7.4,
             sourceName = "TOMORROW_IO_1M", lastCheckedAtMs = 1_000L, clockLabel = "8:20 PM",
         )
+        assertFalse(calmTa.details.contains("Tomorrow.io"));assertTrue(calmTa.details.contains("முன்னறிவிப்பு"))
         assertEquals("மழை & புயல்", calmTa.title)
         assertEquals("28°C", calmTa.hero)
         assertTrue(calmTa.state.contains("ஆலங்குடி") && calmTa.state.contains("மழை அறிகுறி இல்லை"))

@@ -14,6 +14,9 @@
         android:layout_marginTop="3dp" android:textColor="#E2E8F0" android:textSize="12sp" android:maxLines="2" android:ellipsize="end" />
     <TextView android:id="@+id/widget_brief" android:layout_width="match_parent" android:layout_height="wrap_content"
         android:layout_marginTop="2dp" android:textColor="#A9BBD1" android:textSize="11sp" android:maxLines="2" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_disaster" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="4dp" android:textColor="#E2E8F0" android:textSize="10sp" android:maxLines="5"
+        android:ellipsize="end" android:visibility="gone" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical">
         <TextView android:id="@+id/widget_mode" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1"

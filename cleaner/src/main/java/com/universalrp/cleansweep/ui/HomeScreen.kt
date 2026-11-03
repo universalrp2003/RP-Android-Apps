@@ -702,24 +702,25 @@ fun TamilInfoStrip(
     )
     Surface(modifier = modifier.clickable { showHeadlines = true }, shape = RoundedCornerShape(12.dp), color = SurfaceHigh,
         border = androidx.compose.foundation.BorderStroke(1.dp, OutlineC)) {
-        Row(Modifier.fillMaxWidth().padding(start = 12.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Owner requested headlines only: no publisher/category ribbon and no static security-tip filler.
+        Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, bottom = 8.dp)) {
+            // A separate top control row leaves the complete width for headline text.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onReadTopNews, enabled = !newsVoiceBusy,
+                    contentPadding = PaddingValues(horizontal = 6.dp)) {
+                    Text(watchWords("Read", "வாசி"), style = MaterialTheme.typography.labelSmall)
+                }
+                IconButton(onClick = onTogglePause) {
+                    Icon(if (isPaused) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
+                        contentDescription = tr(if (isPaused) "Resume headlines" else "Pause headlines"), tint = TextSecondary,
+                        modifier = Modifier.size(18.dp))
+                }
+                IconButton(onClick = onRefresh, enabled = !loading) {
+                    if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = AccentCyan, strokeWidth = 2.dp)
+                    else Icon(Icons.Outlined.Refresh, contentDescription = tr("Refresh today's headlines"), tint = AccentCyan, modifier = Modifier.size(18.dp))
+                }
+            }
             Text(headline?.title ?: tr(empty), style = MaterialTheme.typography.bodySmall, color = TextPrimary,
-                maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            TextButton(onClick = onReadTopNews, enabled = !newsVoiceBusy,
-                contentPadding = PaddingValues(horizontal = 6.dp)) {
-                Text(watchWords("Read news", "செய்தி வாசி"), style = MaterialTheme.typography.labelSmall,
-                    maxLines = 2)
-            }
-            IconButton(onClick = onTogglePause) {
-                Icon(if (isPaused) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
-                    contentDescription = tr(if (isPaused) "Resume headlines" else "Pause headlines"), tint = TextSecondary,
-                    modifier = Modifier.size(18.dp))
-            }
-            IconButton(onClick = onRefresh, enabled = !loading) {
-                if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = AccentCyan, strokeWidth = 2.dp)
-                else Icon(Icons.Outlined.Refresh, contentDescription = tr("Refresh today's headlines"), tint = AccentCyan, modifier = Modifier.size(18.dp))
-            }
+                modifier = Modifier.fillMaxWidth().padding(end = 8.dp))
         }
     }
 }
@@ -1355,16 +1356,22 @@ private fun HomeSectionHeader(
 @Composable
 private fun HomeMobileSignal(state: UiState, vm: MainViewModel) {
     val mobile = state.mobile
+    val level = mobile?.signalLevel?.takeUnless { it == 0 && mobile.signalDbm == null }
+    val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(level)
+    val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(level)) {
+        0 -> DangerRed; 1 -> WarnAmber; 2 -> GoodGreen; else -> TextSecondary
+    }
     Row(Modifier.fillMaxWidth().clickable { vm.navigate(Screen.MOBILE); vm.loadMobile() }
-        .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Outlined.SignalCellularAlt, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
-        Spacer(Modifier.width(8.dp))
-        Text(mobile?.operatorName?.takeUnless { it.isBlank() || it == "Not available" } ?: watchWords("Mobile signal", "மொபைல் சிக்னல்"),
+        .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(mobile?.operatorName?.takeUnless { it.isBlank() || it == "Not available" } ?: watchWords("SIM signal", "சிம் சிக்னல்"),
             style = MaterialTheme.typography.bodySmall, maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        Text(percent?.let { "$it%" } ?: "— %", style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold, color = tone)
         Text(listOfNotNull(mobile?.networkType?.takeIf { it.isNotBlank() }, mobile?.signalDbm?.let { "$it dBm" })
             .joinToString(" · ").ifBlank { watchWords("Not available", "கிடைக்கவில்லை") },
-            style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+            style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.weight(1.5f))
     }
 }
 
@@ -1385,7 +1392,8 @@ private fun HomePermissionSummary(state: UiState, vm: MainViewModel) {
             add(watchWords("Status pill overlay", "நிலை குறிக்கான மேலடுக்கு") to { vm.setStatusPill(true) })
         if ((state.chargeMonitor || state.persistentMonitor || com.universalrp.cleansweep.data.NetworkSplit.separateEnabled(context) ||
             com.universalrp.cleansweep.data.NetworkSplit.announceEnabled(context) ||
-            com.universalrp.cleansweep.notify.DisasterUpdateNotifier.enabled(context)) && !notifications)
+            com.universalrp.cleansweep.notify.DisasterUpdateNotifier.enabled(context) ||
+            com.universalrp.cleansweep.notify.NoSignalBeep.enabled(context)) && !notifications)
             add(watchWords("Notifications", "அறிவிப்புகள்") to {
                 context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
                     .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName))

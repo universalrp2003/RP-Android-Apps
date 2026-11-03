@@ -1,4 +1,4 @@
-name: Live Guard 2.91 signed upgrade and owner-requested regressions (no publication)
+name: Live Guard 2.92 signed upgrade and owner-requested regressions (no publication)
 on:
   push:
     branches: ["arena/e319d5ab-rp-android-apps"]
@@ -44,7 +44,7 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           def report(text):
-              print('::error title=Live Guard 2.91 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              print('::error title=Live Guard 2.92 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
           p=Path(os.environ['RUNNER_TEMP'])/'liveguard-283-build.log'
           if p.exists():
               lines=p.read_text(errors='replace').splitlines()
@@ -108,21 +108,21 @@ jobs:
           import xml.etree.ElementTree as ET
           roots=[ET.parse(p).getroot() for p in Path('cleaner/build/outputs/androidTest-results/connected').rglob('*.xml')]
           cases=[c for r in roots for c in r.iter('testcase') if c.get('classname','').endswith('OfficialStatusNativeTest')]
-          assert len(cases)==4, f'Expected 4 native tests, got {len(cases)}'
+          assert len(cases)==5, f'Expected 5 native tests, got {len(cases)}'
           assert all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases)
-          print('PASS: 4 required Android35 native PDF isolation/invalid-PDF/shared foreground-card/restored six-segment rendering tests')
+          print('PASS: 5 required Android35 native PDF isolation/invalid-PDF/shared foreground-card/six-segment/widget report rendering tests')
           PYTEST
       - name: Remove baseline from candidate download
         run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.89.apk"
       - uses: actions/upload-artifact@v7
         with:
-          name: Live-Guard-2.91-signed-tested-candidate
+          name: Live-Guard-2.92-signed-tested-candidate
           path: ${{ runner.temp }}/health-cleaner/
           retention-days: 30
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: Live-Guard-2.91-regression-failures
+          name: Live-Guard-2.92-regression-failures
           path: |
             cleaner/build/reports/tests/
             cleaner/build/reports/androidTests/

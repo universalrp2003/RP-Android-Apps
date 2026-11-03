@@ -3480,7 +3480,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     val text = if (Lang.isTamil) decision.tamilSpeech else decision.englishSpeech
                     Announcer.speakNow(ctx, text)
                 } else {
-                    val sample = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+                    val sample = com.universalrp.cleansweep.data.RainNoticePolicy.formatSpeech(
                         severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
                         placeLabel = place ?: if (Lang.isTamil) "உங்கள் ஊர்" else "your location",
                         minutesUntilRain = 30,
@@ -3502,7 +3502,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val place = _state.value.weather.activePlaceName.takeIf { it.isNotBlank() }
             ?: _state.value.weather.savedPlaceName.takeIf { it.isNotBlank() }
             ?: if (Lang.isTamil) "உங்கள் பகுதி" else "your area"
-        val sample = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+        val sample = com.universalrp.cleansweep.data.RainNoticePolicy.formatSpeech(
             severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
             placeLabel = place,
             minutesUntilRain = 30,

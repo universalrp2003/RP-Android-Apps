@@ -137,11 +137,11 @@ object CompactWidgetPolicy {
         }
 
         val windRounded = windGustKmh.takeIf { it.isFinite() && it >= 0.5 }?.roundToInt()
-        val providerShort = if (sourceName == "TOMORROW_IO_1M") "Tomorrow.io" else label("Radar", "ரேடார்")
+        val forecastKind = if (sourceName == "TOMORROW_IO_1M") label("Forecast", "முன்னறிவிப்பு") else label("Model outlook", "மாதிரி முன்னறிவிப்பு")
         val parts = buildList {
             if (severityName != "CLEAR_OR_NORMAL" && tempLabel != null) add(tempLabel)
             if (windRounded != null) add(label("Wind ${windRounded} km/h", "காற்று ${windRounded} km/h"))
-            add(providerShort)
+            add(forecastKind)
             if (clockLabel.isNotBlank()) add(clockLabel)
         }
         return WeatherCardText(

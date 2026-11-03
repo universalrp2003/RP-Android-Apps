@@ -194,6 +194,7 @@ object NewsDisasterUpdates {
         val enriched = events.map { if(it.type == "TC") OfficialCycloneClient.enrich(it,reports,origin,now) else it }
         if (fingerprint != fingerprint(c) || !enabled(c)) null else {
             val candidate = Candidate(enriched.filter { it.distanceKm <= 2000 && (it.type != "TC" || it.positionAt != null) }.sortedBy { it.distanceKm }, origin, fingerprint)
+            runCatching { com.universalrp.cleansweep.widget.DisasterWidgetCache.save(c, candidate.events, origin, now) }
             // Separate delivery ledger. Failure here never changes/reserves a spoken read.
             runCatching { com.universalrp.cleansweep.notify.DisasterUpdateNotifier.postVerified(c, candidate.events, now) }
             candidate

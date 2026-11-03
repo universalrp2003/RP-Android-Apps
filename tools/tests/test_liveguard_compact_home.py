@@ -35,7 +35,7 @@ class CompactHomeSourceContracts(unittest.TestCase):
         source = (SRC / 'ui/HomeScreen.kt').read_text()
         card = source.split('private fun HomeMobileDataCard', 1)[1]
         self.assertLess(card.index('if (detailsOpen)'), card.index('Android usage is an estimate'))
-        self.assertIn('watchWords("Read news"', source)
+        self.assertIn('watchWords("Read"', source)
         self.assertIn('mobile?.signalDbm', source)
         self.assertIn('watchWords("Latency"', source)
         self.assertIn('HomeCompactPolicy.observedCacheBytes(state.usageAccess', source)

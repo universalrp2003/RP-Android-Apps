@@ -1,5 +1,12 @@
 # Project guidance and owner decisions
 
+## Live Guard2.92 — screenshot corrections and optional beep, 3 November2026
+
+- Owner clarifies short Read text at top, no headline squeeze/truncation; replace SIM bars with colour-coded percentage; remove Tomorrow.io widget text and use spare space for available fresh disaster details. Shorten rain notification: town once/no state/PIN repetition; preserve forecast qualification and accepted cyclone speech/saved coordinates/siblings.
+- Percent is Android's relative0–4 mapped0/25/50/75/100, never invented89% or dBm-derived precision. Unknown invalid readings stay unknown. Widget uses bounded verified saved-home-region report cache from existing news checks, source/time/non-local qualifier, fresh/home/OFF checks; no new disaster poller or consumed delivery ledger.
+- Optional no-signal beep ASK_FIRST/defaultOFF with Enable/Not now, existing radio service/status only. Default data SIM, stable30s service then15s confirmed zero/out-of-service, once per episode and30s recovery. Never for unknown/no-SIM/airplane, calls, quiet/silent places/hours, silent/vibrate/DND, media/voice or muted media; never raises volume/voice master.10% ToneGenerator gain/120ms is relative, not physical loudness proof. Android/OEM lifetime/modem limitations remain.
+- Held private2.92/code97; public2.89 immutable/no publication approval.858 JVM declarations/82suites,343Python checks prepared; build/lint/signer/permission/exact2.89 update/5 Android35 tests including real widget report inflation/layout pending. Source/docs are not executed or audible/device proof. See docs/live-guard-2.92-candidate.md. No raw screenshots, sample uploads, new permissions or dependencies.
+
 ## Live Guard2.91 — compact home / rollover / opt-in silent updates, 3 November2026
 
 - Owner accepts concise cyclone speech: preserve it unchanged. New compact home Read news text control, folded mobile Details/history, carrier/network/real dBm strip (ping labelled Latency), last-scan JunkMB/observed App-cacheMB, small relevant-permission count hidden when satisfied. Unknown/inaccessible/filtered-empty cache is not zero or a full-device inventory; no grants for disabled optional GPS/tower/Wi-Fi features.

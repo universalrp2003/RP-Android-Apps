@@ -142,6 +142,7 @@ open class CleanSweepWidget : AppWidgetProvider() {
             fun label(en: String, ta: String) = if (tamil) ta else en
             val profile = profile(context, id)
             val views = RemoteViews(context.packageName, R.layout.widget_cleansweep_compact)
+            views.setViewVisibility(R.id.widget_disaster, View.GONE)
             val percent = WidgetReadingPolicy.percent(battery?.percent, battery?.reportedLevel, battery?.reportedScale)
             val plan = runCatching { PlanStore.load(context) }.getOrNull()
             val planSet = plan != null && (plan.mode == PlanDataMode.TOTAL || plan.mode == PlanDataMode.DAILY) && plan.startDay != null
@@ -245,6 +246,13 @@ open class CleanSweepWidget : AppWidgetProvider() {
                     views.setTextViewText(R.id.widget_state, card.state)
                     views.setTextViewText(R.id.widget_data, card.details)
                     views.setTextViewText(R.id.widget_brief, card.brief)
+                    val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 165)
+                    val disaster = if (weather?.enabled == true) DisasterWidgetCache.text(context, tamil, checked) else null
+                    if (disaster != null && height >= 180) {
+                        views.setTextViewText(R.id.widget_disaster, disaster)
+                        views.setInt(R.id.widget_disaster, "setMaxLines", if (height >= 230) 5 else 3)
+                        views.setViewVisibility(R.id.widget_disaster, View.VISIBLE)
+                    }
                 }
             }
             views.setViewVisibility(R.id.widget_brief, if (options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 165) < 145) View.GONE else View.VISIBLE)
