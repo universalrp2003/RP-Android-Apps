@@ -1,0 +1,23 @@
+{
+  "version": "1.1.15",
+  "pull_request": 87,
+  "main_sha": "1d8907a657a77e159abe669e7d6adf1e59a9a9ed",
+  "pages_run": 41656589104,
+  "build_job": 125988422218,
+  "deploy_job": 125989726381,
+  "deployment_id": 7521870178,
+  "completed_at": "2026-11-03T14:47:45Z",
+  "conclusion": "success",
+  "live_four_redacted_screenshots_and_artwork_zip_hashes_verified": true,
+  "live_guide_and_catalogs_verified": true,
+  "existing_seven_apk_and_zip_pairs_verified": true,
+  "public_oor_apk_unchanged_sha256": "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5",
+  "browser_run": 41655789785,
+  "browser_job": 125985593965,
+  "browser_checks_passed": 19,
+  "local_python_tests_passed": 371,
+  "review_sha256": "c64d6fc10d993f05615cc8f773465cd35f58a3891d63623a58ffccb67e277fb1",
+  "originals_published": false,
+  "store_apk_changed": false,
+  "app_store_submission": false
+}
