@@ -33,9 +33,12 @@ object FamilyStore {
         return (0 until rows.length()).map { rows.getJSONObject(it) }
     }
     @Synchronized fun change(c: Context, f: (MutableList<JSONObject>)->Unit) {
-        val rows=read(c).toMutableList();f(rows);require(rows.size<=FamilyProtocol.MAX_MEMBERS)
+        val rows=read(c).toMutableList()
+        fun encode()=JSONArray().also { a->rows.forEach { a.put(it) } }.toString()
+        val before=encode();f(rows);require(rows.size<=FamilyProtocol.MAX_MEMBERS)
+        val after=encode();if(after==before)return // Refresh/replay must not cause redundant encrypted disk writes.
         val cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key())
-        val plain=JSONArray().also { a->rows.forEach { a.put(it) } }.toString().toByteArray(Charsets.UTF_8)
+        val plain=after.toByteArray(Charsets.UTF_8)
         val e=Base64.getEncoder();val sealed=e.encodeToString(cipher.iv)+"."+e.encodeToString(cipher.doFinal(plain))
         check(c.getSharedPreferences("oor_family_v1",0).edit().putString("sealed",sealed).commit())
     }

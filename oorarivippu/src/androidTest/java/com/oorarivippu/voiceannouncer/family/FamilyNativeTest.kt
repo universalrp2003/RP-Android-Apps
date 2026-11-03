@@ -26,6 +26,8 @@ class FamilyNativeTest {
         try {
             FamilyStore.change(c){it.add(org.json.JSONObject().put("name","SyntheticFamily").put("key","f".repeat(64)))}
             val prefs=c.getSharedPreferences("oor_family_v1",0);val sealed=prefs.getString("sealed",null)!!
+            FamilyStore.change(c){}
+            assertEquals(sealed,prefs.getString("sealed",null))
             assertFalse(sealed.contains("SyntheticFamily"));assertFalse(sealed.contains("f".repeat(64)))
             assertEquals("SyntheticFamily",FamilyStore.read(c).single().getString("name"))
             prefs.edit().putString("sealed",sealed.dropLast(5)+"AAAAA").commit()

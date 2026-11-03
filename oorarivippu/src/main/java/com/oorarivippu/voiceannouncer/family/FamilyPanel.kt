@@ -37,7 +37,7 @@ import java.util.Date
         if(busy) return
         busy=true;error=false
         scope.launch {
-            try { action();FamilyRepository.views(c);if(rows.any{it.confirmed && it.town!=null})onFamilyUpdates() }
+            try { action();val latest=FamilyRepository.views(c);if(latest.any{it.confirmed && it.town!=null})onFamilyUpdates() }
             catch(e:CancellationException){throw e}
             catch(_:Exception){ error=true }
             finally {busy=false;tick=System.currentTimeMillis();onChanged()}
@@ -98,7 +98,7 @@ import java.util.Date
                     HorizontalDivider()
                     Text(row.name,style=MaterialTheme.typography.titleSmall)
                     if(row.setupPending) Text(words("Connection setup pending · sharing OFF. Refresh to retry, or remove and create a new invite if expired.","இணைப்பு அமைப்பு காத்திருக்கிறது · பகிர்வு அணைப்பு. புதுப்பித்து முயலவும்; காலாவதியானால் நீக்கிப் புதிய அழைப்பை உருவாக்கவும்."))
-                    else if(row.pending) Text(words("Sharing OFF locally. Stop/remove pending online confirmation. An earlier update may remain visible until its 15-minute expiry.","இந்தக் கைப்பேசியில் பகிர்வு அணைந்தது. இணையத்தில் நிறுத்தம் அல்லது நீக்கம் உறுதியாகக் காத்திருக்கிறது. முந்தைய அறிக்கை பதினைந்து நிமிடக் காலம் முடியும் வரை தெரியலாம்."))
+                    else if(row.pending) Text(words("Uploads paused locally. Stop/remove pending online confirmation. An earlier update may remain visible until its 15-minute expiry.","இந்தக் கைப்பேசியில் பகிர்வு அணைந்தது. இணையத்தில் நிறுத்தம் அல்லது நீக்கம் உறுதியாகக் காத்திருக்கிறது. முந்தைய அறிக்கை பதினைந்து நிமிடக் காலம் முடியும் வரை தெரியலாம்."))
                     else if(row.unavailable) Text(words("Unavailable · not a live location","கிடைக்கவில்லை · நேரலை இடம் அல்ல"))
                     else if(!row.paired) Text(words("Waiting for invitation acceptance","அழைப்பை ஏற்பதற்குக் காத்திருக்கிறது"))
                     if(row.invitation.isNotEmpty()) TextButton(enabled=!busy,onClick={c.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {type="text/plain";putExtra(Intent.EXTRA_TEXT,row.invitation)},words("Private invitation","தனிப்பட்ட அழைப்பு")))}) {Text(words("Share this private invitation (10-minute limit)","இந்தத் தனிப்பட்ட அழைப்பைப் பகிர் (பத்து நிமிடக் காலம்)"))}
