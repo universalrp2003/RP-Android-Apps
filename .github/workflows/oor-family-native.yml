@@ -1,0 +1,115 @@
+name: Oor configured private family candidate, same-key upgrade and native HTTPS tests
+on:
+  push:
+    branches: ["arena/d4f4c9b6-rp-android-apps"]
+    paths: ["docs/oor-family-native-verification-pins.json"]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: oor-family-native-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+        with: {fetch-depth: 0}
+      - name: Require successful separate deployment and identical tested application source
+        run: |
+          python3 - <<'PY'
+          import json,os,re,subprocess
+          from pathlib import Path
+          p=json.loads(Path('docs/oor-family-native-verification-pins.json').read_text())
+          assert p['publication_authorized'] is False and p['physical_phone_tested'] is False
+          assert re.fullmatch(r'https://oor-family-relay\.[a-z0-9-]+\.workers\.dev',p['service_url'])
+          subprocess.run(['git','merge-base','--is-ancestor',p['source'],'HEAD'],check=True)
+          subprocess.run(['git','diff','--exit-code',p['source'],'HEAD','--','oorarivippu/','shared/'],check=True)
+          def api(path): return json.loads(subprocess.check_output(['gh','api',path],text=True))
+          r=api(f'repos/{os.environ["GH_REPO"]}/actions/runs/{p["deployment_run"]}')
+          assert r['conclusion']=='success' and r['path']=='.github/workflows/oor-family-service.yml'
+          assert r['head_branch']=='arena/d4f4c9b6-rp-android-apps'
+          jobs=api(f'repos/{os.environ["GH_REPO"]}/actions/runs/{p["deployment_run"]}/jobs')['jobs']
+          annotations=[a for j in jobs for a in api(j['check_run_url']+'/annotations')]
+          assert any(a['title']=='Oor family verified test service' and a['message']==p['service_url'] for a in annotations)
+          with open(os.environ['GITHUB_ENV'],'a') as f: f.write('ORG_GRADLE_PROJECT_oorFamilyServiceUrl='+p['service_url']+'\n')
+          PY
+      - uses: actions/setup-node@v6
+        with: {node-version: '22'}
+      - name: Policy and deployed HTTPS consent/replay/stop regression
+        run: |
+          node --test oorarivippu/family-relay/test/policy.test.mjs
+          node oorarivippu/family-relay/test/http-smoke.mjs "$ORG_GRADLE_PROJECT_oorFamilyServiceUrl"
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+      - uses: actions/setup-java@v6
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v6
+        with: {gradle-version: '8.14.3'}
+      - name: Configured release JVM, lint, signed APK and native test APK
+        run: |
+          set -o pipefail
+          gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease :oorarivippu:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-build.log"
+      - name: Actual identity, signature and full permission continuity with accepted public Oor
+        run: python3 tools/inspect_oor_family_candidate.py
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Android 35 same-key saved-data update, bilingual consent and real encrypted paired-client HTTPS
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            python3 tools/oor_family_upgrade_smoke.py
+            bash -o pipefail -c 'gradle :oorarivippu:connectedReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-native.log"'
+      - name: No missing, skipped or failing native/JVM tests; exact installed candidate
+        run: |
+          python3 - <<'PY'
+          import hashlib,json,os,subprocess
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          native=[c for p in Path('oorarivippu/build/outputs/androidTest-results/connected').rglob('*.xml') for c in ET.parse(p).getroot().iter('testcase') if c.get('classname','').endswith('FamilyNativeTest')]
+          jvm=[c for p in Path('oorarivippu/build/test-results').rglob('TEST-*FamilyProtocolTest.xml') for c in ET.parse(p).getroot().iter('testcase')]
+          assert len(native)==2 and len(jvm)==17
+          assert all(c.find(k) is None for c in native+jvm for k in ('failure','error','skipped'))
+          root=Path(os.environ['RUNNER_TEMP'])/'health-oorarivippu';p=root/'verification.json';r=json.loads(p.read_text())
+          installed=subprocess.check_output(['adb','shell','pm','path',r['package']],text=True).strip().removeprefix('package:')
+          pulled=root/'installed-exact.apk';subprocess.run(['adb','pull',installed,str(pulled)],check=True)
+          assert hashlib.sha256(pulled.read_bytes()).hexdigest()==r['sha256'];pulled.unlink()
+          r.update(native_tests=2,family_jvm_tests=17,android_api=35,exact_installed_apk_verified=True)
+          p.write_text(json.dumps(r,indent=2)+'\n')
+          print('::notice title=Verified private Oor family candidate::'+json.dumps(r))
+          (root/'Oor-Arivippu-v1.1.10.apk').unlink()
+          PY
+      - name: Bounded diagnostics only, no captures of real family data
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def error(s): print('::error title=Oor family native candidate::'+s[-12000:].replace('%','%25').replace('\n','%0A').replace('\r','%0D'))
+          for n in ('oor-family-build.log','oor-family-native.log'):
+              p=Path(os.environ['RUNNER_TEMP'])/n
+              if p.exists():
+                  lines=p.read_text(errors='replace').splitlines();error('\n'.join([l for l in lines if l.startswith('e: ') or ' FAILED' in l or 'error:' in l.lower()] or lines[-60:]))
+          for p in Path('oorarivippu/build').rglob('TEST-*.xml'):
+              for f in ET.parse(p).getroot().iter('failure'): error((f.text or '')[:4000])
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Oor-Arivippu-1.1.14-configured-private-family-candidate
+          path: ${{ runner.temp }}/health-oorarivippu/
+          retention-days: 30
