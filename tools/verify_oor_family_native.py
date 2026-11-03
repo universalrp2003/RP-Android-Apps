@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 def main():
     native=[c for p in Path('oorarivippu/build/outputs/androidTest-results/connected').rglob('*.xml') for c in ET.parse(p).getroot().iter('testcase') if c.get('classname','').endswith('FamilyNativeTest')]
     jvm=[c for p in Path('oorarivippu/build/test-results').rglob('TEST-*FamilyProtocolTest.xml') for c in ET.parse(p).getroot().iter('testcase')]
-    assert len(native)==2 and len(jvm)==17, f'Required native=2 JVM=17; got native={len(native)}, JVM={len(jvm)}'
+    assert len(native)==2 and len(jvm)==30, f'Required native=2 JVM=30; got native={len(native)}, JVM={len(jvm)}'
     assert all(c.find(k) is None for c in native+jvm for k in ('failure','error','skipped'))
     root=Path(os.environ['RUNNER_TEMP'])/'health-oorarivippu';p=root/'verification.json';r=json.loads(p.read_text())
     installed=subprocess.check_output(['adb','shell','pm','path',r['package']],text=True).strip().removeprefix('package:')
@@ -14,7 +14,7 @@ def main():
     actual=hashlib.sha256(pulled.read_bytes()).hexdigest()
     assert actual==r['sha256'], f'Installed APK {actual} differs from inspected candidate {r["sha256"]}'
     pulled.unlink()
-    r.update(native_tests=2,family_jvm_tests=17,android_api=35,exact_installed_apk_verified=True)
+    r.update(native_tests=2,family_jvm_tests=30,android_api=35,exact_installed_apk_verified=True)
     p.write_text(json.dumps(r,indent=2)+'\n')
     print('::notice title=Verified private Oor family candidate::'+json.dumps(r))
     (root/'Oor-Arivippu-v1.1.10.apk').unlink()

@@ -46,6 +46,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.Locale
 import kotlin.coroutines.resume
@@ -66,6 +68,7 @@ import kotlin.coroutines.resume
 class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
 
     companion object {
+        const val ACTION_FAMILY_UPDATES = "com.oorarivippu.voiceannouncer.action.FAMILY_UPDATES"
         const val ACTION_START_TRACKING = "com.oorarivippu.voiceannouncer.action.START_TRACKING"
         const val ACTION_STOP_TRACKING = "com.oorarivippu.voiceannouncer.action.STOP_TRACKING"
         const val ACTION_TEST_VOICE = "com.oorarivippu.voiceannouncer.action.TEST_VOICE"
@@ -111,7 +114,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
          * deliberately not part of the delivery report.
          */
         val logTitle: String? = null,
+        val isFamilyUpdate: Boolean = false,
     )
+    private var familyPollJob: Job? = null
+    private var familySpeechRequested=false
+    private val familyAnnouncementLock=kotlinx.coroutines.sync.Mutex()
+    private val neuralWorkCount=java.util.concurrent.atomic.AtomicInteger(0)
     private var pendingSpeechQueue: PendingSpeech? = null
     private var latestSpeakingRequest: PendingSpeech? = null
     private var speakingRequiresInternet = false
@@ -186,6 +194,11 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
+            ACTION_FAMILY_UPDATES -> {
+                familySpeechRequested=true
+                serviceScope.launch { announceFamilyUpdates() }
+                return if(AppPreferences.state.value.isTrackingEnabled) START_STICKY else START_NOT_STICKY
+            }
             ACTION_STOP_TRACKING -> {
                 stopTrackingAndService()
                 return START_NOT_STICKY
@@ -284,6 +297,77 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         return START_STICKY
     }
 
+    /** Only while an existing visible Oor trip runs; no receiver/alarm/background service added. */
+    private fun startFamilyPolling() {
+        if(familyPollJob?.isActive==true)return
+        familyPollJob=serviceScope.launch {
+            while(AppPreferences.state.value.isTrackingEnabled) {
+                try {
+                    if(com.oorarivippu.voiceannouncer.family.FamilyRepository.configured) {
+                        com.oorarivippu.voiceannouncer.family.FamilyRepository.views(this@LocationAnnouncementService)
+                        familySpeechRequested=true
+                        announceFamilyUpdates()
+                    }
+                } catch(cancelled: kotlinx.coroutines.CancellationException){throw cancelled}
+                catch(_:Exception){ /* Family network/storage failure never interrupts place speech. */ }
+                delay(60_000)
+            }
+        }
+    }
+    private fun familyAudioAllowed(): Boolean {
+        val audio=getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?:return false
+        val notifications=getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?:return false
+        return com.oorarivippu.voiceannouncer.family.FamilySharingPolicy.audioAllowed(
+            audio.ringerMode==AudioManager.RINGER_MODE_NORMAL,
+            notifications.currentInterruptionFilter==NotificationManager.INTERRUPTION_FILTER_ALL,
+            isPhoneCallAudioActive(),audio.getStreamVolume(AudioManager.STREAM_MUSIC),AppPreferences.state.value.speechVolumePercent)
+    }
+    private suspend fun announceFamilyUpdates() {
+        if(!familyAnnouncementLock.tryLock())return
+        try {
+        val repo=com.oorarivippu.voiceannouncer.family.FamilyRepository
+        if(!AppPreferences.state.value.isTrackingEnabled && !repo.homeVisible) {familySpeechRequested=false;stopSelf();return}
+        val engine=tts
+        if(!isTtsReady || engine==null)return
+        familySpeechRequested=false
+        if(!familyAudioAllowed() || engine.isSpeaking || activeMediaPlayer!=null || neuralWorkCount.get()>0 || pendingSpeechQueue!=null) {
+            if(!AppPreferences.state.value.isTrackingEnabled && !engine.isSpeaking && activeMediaPlayer==null && pendingSpeechQueue==null)stopSelf()
+            return
+        }
+        val language=AppPreferences.state.value.voiceLanguage
+        val actual=configureTtsLanguage(language,true) // ON-DEVICE ONLY: family labels/towns never go to online HD.
+        if(actual==null){if(!AppPreferences.state.value.isTrackingEnabled)stopSelf();return}
+        val rows=withContext(Dispatchers.IO){repo.cached(this@LocationAnnouncementService)}
+        val messages=mutableListOf<String>()
+        for(row in rows) {
+            val town=row.town?:continue
+            if(!row.confirmed || !com.oorarivippu.voiceannouncer.family.FamilySharingPolicy.fresh(town.at,System.currentTimeMillis()))continue
+            if(withContext(Dispatchers.IO){repo.claimSpeech(this@LocationAnnouncementService,row.id,town.at)})
+                messages.add(com.oorarivippu.voiceannouncer.family.FamilySharingPolicy.sentence(row.name,town.town,actual!="en"))
+        }
+        if(messages.isEmpty()){if(!AppPreferences.state.value.isTrackingEnabled)stopSelf();return}
+        if(!AppPreferences.state.value.isTrackingEnabled && !repo.homeVisible){stopSelf();return}
+        // One bounded utterance; durable per-member high-water prevents repeats/reopen/restart replay.
+        // No family announcement is written to the ordinary travel/speech history.
+        if(!familyAudioAllowed() || engine.isSpeaking || activeMediaPlayer!=null || neuralWorkCount.get()>0)return
+        val text=messages.joinToString(" ")
+        val speech=PendingSpeech(text,text,actual,false,TextToSpeech.QUEUE_ADD,requireOnDeviceVoice=true,logTitle=null,isFamilyUpdate=true)
+        latestSpeakingRequest=speech;speakingRequiresInternet=false
+        requestAudioFocusAndSpeak(engine,text,TextToSpeech.QUEUE_ADD,speech)
+        serviceScope.launch {
+            var started=false
+            repeat(900) {
+                if(latestSpeakingRequest!==speech)return@launch
+                val speaking=engine.isSpeaking
+                if(speaking)started=true
+                if(!familyAudioAllowed() || (!AppPreferences.state.value.isTrackingEnabled && !repo.homeVisible)){engine.stop();if(!AppPreferences.state.value.isTrackingEnabled)stopSelf();return@launch}
+                if(started && !speaking)return@launch
+                delay(200)
+            }
+        }
+        } finally {familyAnnouncementLock.unlock()}
+    }
+
     private fun hasLocationPermission(): Boolean {
         val fineGranted = ContextCompat.checkSelfPermission(
             this,
@@ -322,6 +406,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             stopVoiceImmediately()
         }
         updateOfflineReminderSchedule(announceImmediately = true)
+        startFamilyPolling()
     }
 
     private fun updateHeadsetWhereAmIControl() {
@@ -399,8 +484,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun stopTrackingAndService() {
-        runCatching { com.oorarivippu.voiceannouncer.family.FamilyRepository.stopAll(this) }
+        familyPollJob?.cancel();familyPollJob=null
         AppPreferences.setTrackingEnabled(false)
+        runCatching { com.oorarivippu.voiceannouncer.family.FamilyRepository.pauseTrip(this) }
         updateOfflineReminderSchedule()
         isForegroundStarted = false
         updateHeadsetWhereAmIControl()
@@ -1073,6 +1159,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onInit(status: Int) {
+        if(status==TextToSpeech.SUCCESS) serviceScope.launch { delay(100);if(familySpeechRequested)announceFamilyUpdates() }
         if (status == TextToSpeech.SUCCESS) {
             isTtsReady = true
             configureTtsLanguage(AppPreferences.state.value.voiceLanguage)
@@ -1271,7 +1358,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             speakingRequiresInternet = requiresInternet
             latestSpeakingRequest = speech
             val mainHandler = Handler(Looper.getMainLooper())
+            neuralWorkCount.incrementAndGet()
             neuralExecutor.execute {
+                try {
                 if (neuralGeneration.get() != myGen) return@execute
                 val mp3 = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
                     cacheDir = cacheDir,
@@ -1364,6 +1453,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     requestAudioFocusAndSpeak(engine, localized, queueMode, speech)
                     monitorCallModeDuringSpeech(engine)
                 }
+                } finally {neuralWorkCount.decrementAndGet()}
             }
             return
         }
@@ -1462,7 +1552,16 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 .setAcceptsDelayedFocusGain(false)
                 .setOnAudioFocusChangeListener {}
                 .build()
-            audioManager.requestAudioFocus(focusRequest)
+            val granted=audioManager.requestAudioFocus(focusRequest)
+            if(speech.isFamilyUpdate && granted!=AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                if(!AppPreferences.state.value.isTrackingEnabled)stopSelf()
+                return
+            }
+        }
+        if(speech.isFamilyUpdate && !familyAudioAllowed()) {
+            if(focusRequest!=null)audioManager?.abandonAudioFocusRequest(focusRequest)
+            if(!AppPreferences.state.value.isTrackingEnabled)stopSelf()
+            return
         }
 
         engine.setAudioAttributes(audioAttributes)
@@ -1511,6 +1610,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 kotlinx.coroutines.delay(300L)
                 if (engine.isSpeaking()) idleChecks = 0 else idleChecks++
                 if (isPhoneCallAudioActive()) {
+                    if(latestSpeakingRequest?.isFamilyUpdate==true){engine.stop();break}
                     if (pendingSpeechQueue == null) {
                         pendingSpeechQueue = latestSpeakingRequest
                     }
@@ -1632,6 +1732,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
+        familyPollJob?.cancel();familyPollJob=null
         OorWeatherMonitor.detachBackgroundHost()
         offlineReminderJob?.cancel()
         offlineReminderJob = null

@@ -81,7 +81,7 @@ jobs:
           import json,os
           from pathlib import Path
           r=json.loads((Path(os.environ['RUNNER_TEMP'])/'health-oorarivippu'/'verification.json').read_text())
-          assert r['native_tests']==2 and r['family_jvm_tests']==17 and r['exact_installed_apk_verified']
+          assert r['native_tests']==2 and r['family_jvm_tests']==30 and r['exact_installed_apk_verified']
           assert r['same_uid'] and r['data_preserved'] and r['preferences_preserved'] and r['bilingual_family_consent_rendered']
           assert r['publication_authorized'] is False and r['physical_phone_tested'] is False
           PY
@@ -102,6 +102,6 @@ jobs:
           PY
       - uses: actions/upload-artifact@v7
         with:
-          name: Oor-Arivippu-1.1.14-configured-private-family-candidate
+          name: Oor-Arivippu-1.1.15-configured-private-family-candidate
           path: ${{ runner.temp }}/health-oorarivippu/
           retention-days: 30

@@ -193,6 +193,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onPause() {
+        com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible=false
+        super.onPause()
+    }
+
     override fun onStop() {
         OorWeatherMonitor.onWindowStop()
         internetMonitor?.stop()
@@ -209,6 +214,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible=true
         AppPreferences.updateLiveStatus(
             isGpsEnabled = GpsStateReceiver.isGpsProviderEnabled(this)
         )
@@ -542,7 +548,11 @@ fun OorArivippuScreen(
                 )
             }
 
-            com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil, onChanged = onSettingsChanged)
+            com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil, onChanged = onSettingsChanged, onFamilyUpdates = {
+                if(com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible) runCatching {
+                    context.startService(Intent(context,LocationAnnouncementService::class.java).setAction(LocationAnnouncementService.ACTION_FAMILY_UPDATES))
+                }
+            })
 
             // Permission Banner (shown only until granted)
             if (!hasPermissions) {

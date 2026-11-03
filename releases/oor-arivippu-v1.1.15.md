@@ -1,0 +1,17 @@
+# Oor Arivippu 1.1.15 — family home card and remembered ON/OFF
+
+Unpublished test candidate. No physical-device test of this version. The owner's private screenshots confirm a connection and town display on 1.1.14 only, not every reliability/security property.
+
+Verified family names and the latest unexpired town/district with a last-reported time now appear on the main window above the trip-status card. Each verified person has a My sharing ON/OFF switch. No 1/4/8-hour selection. ON remembers the owner's explicit choice until OFF; uploads occur only while Oor trip tracking runs. Turning off the trip pauses uploads and revokes its current server lease, without forgetting the switch. Returning to a trip renews a bounded server lease; no indefinite server grant or new backend deployment. Existing 1.1.14 timed grants migrate OFF, never into persistent consent without an explicit ON.
+
+Fresh received family updates receive at most one automatic on-device speech attempt, with member name and last-reported town. No replay from repeated refresh/reopen/restart; no backlog of expired updates. Silent/vibrate/DND/call/muted volume, another announcement or unavailable on-device voices can delay or prevent speech. Family labels/towns are not sent to online HD voice synthesis or saved into travel/speech history. While a trip is running, bounded checks use the existing visible foreground service; otherwise checking/announcements are limited to a resumed app window. No new background receiver/service/permission. This is not an emergency service or continuous-tracking guarantee.
+
+Only the latest town report is cached locally encrypted, freshness/consent expiry checked before display/speech; no route history. Separate relay retains the existing encrypted town-only, observation-based fifteen-minute expiry. No Maps app/API, precise coordinates, road, PIN, speed, contacts or route history are added to family uploads. Existing platform location/geocoder dependencies remain. Connection verification and each member's independent sharing consent remain mandatory. Remove and Stop all stay available. Offline remote stopping can be delayed until the earlier report expires.
+
+Install only as a same-key update; do not uninstall or clear local data. Uninstalling may erase local data and pairing keys. Secret Message, Live Guard and public Oor1.1.10 assets remain unchanged. CI/native/signed-package verification must pass before delivery. No independent audit, all-OEM/background/GPS/physical-audio or Play Protect claim.
+
+## தமிழ்
+
+குடும்ப நபரின் பெயரும் கடைசியாகப் பகிர்ந்த ஊரும் நேரத்துடன் முதன்மைத் திரையில் பயண நிலைக்கு மேலே காட்டப்படும். உறுதிப்படுத்திய ஒவ்வொரு நபருக்கும் எனது பகிர்வு இயக்கம்/அணைப்பு தேர்வு இருக்கும். ஒன்று/நான்கு/எட்டு மணி தேர்வு இல்லை. நீங்கள் அணைக்கும் வரை இயக்கம் நினைவில் இருக்கும்; பயணக் கண்காணிப்பின்போது மட்டும் ஊர் பதிவேற்றப்படும். பயணத்தை நிறுத்தினால் பதிவேற்றம் இடைநிறுத்தப்படும்; பகிரும் விருப்பம் மறக்கப்படாது. பழைய நேர வரம்புள்ள பகிர்வு தானாக நிரந்தர இயக்கமாக மாற்றப்படாது.
+
+புதிய குடும்ப அறிக்கையில் பெயரும் கடைசியாகத் தெரிவித்த ஊரும் ஒருமுறை கைப்பேசிக் குரலில் அறிவிக்க முயலும். இணைய HD குரலுக்கு குடும்ப விவரங்கள் அனுப்பப்படாது; பேச்சு/பயண வரலாற்றிலும் சேமிக்கப்படாது. அமைதி/அதிர்வு/தொந்தரவு செய்யாதே முறை, அழைப்பு, ஒலி அணைப்பு, மற்றொரு அறிவிப்பு அல்லது குரல் இல்லாமையால் தாமதமாகலாம் அல்லது வராமல் போகலாம். காலாவதியான அறிக்கைகள் மீண்டும் பேசப்படாது. இது அவசரச் சேவையோ தொடர்ச்சியான கண்காணிப்பு உறுதியோ அல்ல. இந்தப் பதிப்பின் நேரடி கைப்பேசிச் சோதனை இன்னும் இல்லை. செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம்.

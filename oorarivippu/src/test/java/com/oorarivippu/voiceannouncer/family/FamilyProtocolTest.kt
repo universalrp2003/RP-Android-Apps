@@ -22,4 +22,17 @@ class FamilyProtocolTest {
     @Test fun confirmationBindsInviteAndGuestNonce() { assertEquals(FamilyProtocol.verification(id,key,"d".repeat(32)),FamilyProtocol.verification(id,key,"d".repeat(32)));assertNotEquals(FamilyProtocol.verification(id,key,"d".repeat(32)),FamilyProtocol.verification(id,key,"e".repeat(32))) }
     @Test fun aStopRevisionCannotBeOverwrittenByStartReply() { assertTrue(FamilyProtocol.canAcceptStart(0,0,false,true));assertFalse(FamilyProtocol.canAcceptStart(0,1,false,true));assertFalse(FamilyProtocol.canAcceptStart(1,2,true,true)) }
     @Test fun startingNeedsTrackingAndNoPendingStop() { assertFalse(FamilyProtocol.canAcceptStart(0,0,true,true));assertFalse(FamilyProtocol.canAcceptStart(0,0,false,false)) }
+    @Test fun persistentOnPausesWithoutTracking() {assertFalse(FamilySharingPolicy.renew(true,true,false,false,0,now))}
+    @Test fun explicitOffNeverRenews() {assertFalse(FamilySharingPolicy.renew(false,true,true,false,0,now))}
+    @Test fun unverifiedConnectionNeverRenews() {assertFalse(FamilySharingPolicy.renew(true,false,true,false,0,now))}
+    @Test fun pendingStopNeverRenews() {assertFalse(FamilySharingPolicy.renew(true,true,true,true,0,now))}
+    @Test fun renewOnlyNearLeaseExpiry() {assertTrue(FamilySharingPolicy.renew(true,true,true,false,now,now));assertFalse(FamilySharingPolicy.renew(true,true,true,false,now+FamilySharingPolicy.LEASE,now))}
+    @Test fun leaseCannotUndoStopOrTripPause() {assertFalse(FamilySharingPolicy.acceptLease(true,1,2,false,true));assertFalse(FamilySharingPolicy.acceptLease(true,1,1,false,false));assertFalse(FamilySharingPolicy.acceptLease(false,1,1,false,true));assertTrue(FamilySharingPolicy.acceptLease(true,1,1,false,true))}
+    @Test fun newestSpeechIsOnceNotEveryRefresh() {assertTrue(FamilySharingPolicy.announce(true,now,now-1,now));assertFalse(FamilySharingPolicy.announce(true,now,now,now));assertFalse(FamilySharingPolicy.announce(true,now-1,now,now))}
+    @Test fun neverSpeakExpiredFutureOrUnverifiedReports() {assertFalse(FamilySharingPolicy.announce(true,now,0,now+FamilyProtocol.TTL));assertFalse(FamilySharingPolicy.announce(true,now+1,0,now));assertFalse(FamilySharingPolicy.announce(false,now,0,now))}
+    @Test fun localSpeechContainsMemberAndTown() {assertEquals("Synthetic Member. Last reported town: Synthetic Town.",FamilySharingPolicy.sentence("Synthetic Member","Synthetic Town",false));assertTrue(FamilySharingPolicy.sentence("சோதனை","செயற்கை ஊர்",true).contains("கடைசியாகத் தெரிவித்த ஊர்"))}
+    @Test fun silentAndDndNeverSpeakFamily() {assertFalse(FamilySharingPolicy.audioAllowed(false,true,false,5,50));assertFalse(FamilySharingPolicy.audioAllowed(true,false,false,5,50))}
+    @Test fun activeCallNeverSpeaksFamily() {assertFalse(FamilySharingPolicy.audioAllowed(true,true,true,5,50))}
+    @Test fun muteNeverSpeaksFamily() {assertFalse(FamilySharingPolicy.audioAllowed(true,true,false,0,50));assertFalse(FamilySharingPolicy.audioAllowed(true,true,false,5,0));assertTrue(FamilySharingPolicy.audioAllowed(true,true,false,5,50))}
+    @Test fun serverLeaseRemainsBoundedDespitePersistentSwitch() {assertTrue(FamilySharingPolicy.LEASE < 8*60*60_000L);assertTrue(FamilySharingPolicy.RENEW_BEFORE>FamilyProtocol.HEARTBEAT-1)}
 }

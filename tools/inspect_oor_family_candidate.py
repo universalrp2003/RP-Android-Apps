@@ -6,9 +6,9 @@ from pathlib import Path
 import inspect_battery_voice_candidate as inspector
 
 inspector.APPS['oorarivippu'] = (
-    'com.oorarivippu.voiceannouncer', '1.1.14', 19, 'oor-arivippu-v1.1.10',
+    'com.oorarivippu.voiceannouncer', '1.1.15', 20, 'oor-arivippu-v1.1.10',
     'Oor-Arivippu-v1.1.10.apk', '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa',
-    'Oor-Arivippu-v1.1.14-family-candidate.apk')
+    'Oor-Arivippu-v1.1.15-family-candidate.apk')
 if __name__ == '__main__':
     inspector.main('oorarivippu')
     root = Path(os.environ['RUNNER_TEMP']) / 'health-oorarivippu'

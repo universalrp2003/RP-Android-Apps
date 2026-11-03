@@ -49,7 +49,7 @@ def main():
     hashes = (digest(marker),digest(saved))
     adb('install','-r',str(candidate))
     new_uid, installed = state()
-    assert new_uid == uid and 'versionCode=19' in installed and 'versionName=1.1.14' in installed
+    assert new_uid == uid and 'versionCode=20' in installed and 'versionName=1.1.15' in installed
     assert (digest(marker),digest(saved)) == hashes
     # Synthetic emulator only: avoid platform permission popups. Tracking remains explicitly OFF.
     for permission in ('ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATION','POST_NOTIFICATIONS'):

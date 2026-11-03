@@ -70,12 +70,12 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           rows=[ET.parse(p).getroot() for p in Path('oorarivippu/build/test-results').rglob('TEST-*FamilyProtocolTest.xml')]
-          assert len(rows)==1 and int(rows[0].get('tests'))==17
+          assert len(rows)==1 and int(rows[0].get('tests'))==30
           assert all(int(rows[0].get(k,'0'))==0 for k in ('failures','errors','skipped'))
-          print('PASS:17 required JVM family cryptography/privacy/freshness tests executed')
+          print('PASS:30 required JVM family cryptography/privacy/freshness tests executed')
           PY
       - uses: actions/upload-artifact@v7
         with:
-          name: Oor-1.1.14-family-unconfigured-signed-candidate
+          name: Oor-1.1.15-family-unconfigured-signed-candidate
           path: oorarivippu/build/outputs/apk/release/*.apk
           retention-days: 14

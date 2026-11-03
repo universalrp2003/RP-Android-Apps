@@ -39,5 +39,5 @@ object FamilyStore {
         val e=Base64.getEncoder();val sealed=e.encodeToString(cipher.iv)+"."+e.encodeToString(cipher.doFinal(plain))
         check(c.getSharedPreferences("oor_family_v1",0).edit().putString("sealed",sealed).commit())
     }
-    fun active(c: Context): Int = runCatching { read(c).count { it.optLong("until")>System.currentTimeMillis() && it.optString("pending").isEmpty() } }.getOrDefault(0)
+    fun active(c: Context): Int = runCatching { read(c).count { it.optBoolean("enabled") && it.optLong("until")>System.currentTimeMillis() && it.optString("pending").isEmpty() } }.getOrDefault(0)
 }
