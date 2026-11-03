@@ -105,6 +105,10 @@ def main():
     assert value('feature_discovery_v1','disaster_news')=='true'
     seek('New: security change review')
     click('Not now')
+    seek('New: silent disaster notifications')
+    click('Not now')
+    assert value('feature_discovery_v1','disaster_silent_notifications')=='true'
+    assert value('disaster_notifications_291','enabled')=='false'
     # Wait for acknowledgement/dismissal, not an arbitrary IO timing assumption.
     seek('News topics')
     assert value('feature_discovery_v1','security_review_changes')=='true'
@@ -126,6 +130,15 @@ def main():
     screen('VOICE')
     click('Advanced battery checks')
     assert value('charge_announcement_v283','advanced')=='false'
+    screen('HOME')
+    seek('App cache · observed')
+    seek('Latency')
+    seek('Details')
+    raw,_=dump()
+    assert 'Android usage is an estimate' not in raw and 'Data budget &amp; history' not in raw
+    click('Details')
+    seek('Data budget & history')
+    click('Details')
     screen('WEATHER')
     seek('Choose your default place first')
     seek('Town / PIN code')
@@ -137,7 +150,7 @@ def main():
     seek('Home · CI synthetic home')
     click('60 min');assert value('saved_rain_watches_283','lead')=='60'
     seek('Follow my current location')
-    seek('Disaster reports · silent')
+    seek('Disaster reports')
     click('GDACS map')
     seek('App place: CI synthetic home')
     seek('www.gdacs.org')

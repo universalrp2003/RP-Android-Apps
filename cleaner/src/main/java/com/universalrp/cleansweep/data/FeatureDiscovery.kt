@@ -10,7 +10,8 @@ object FeatureDiscovery {
     // Stable IDs, not version numbers: acknowledged introductions never reappear every update.
     enum class Feature(val key: String, val mode: Mode) {
         DISASTER_NEWS("disaster_news", Mode.DEFAULT_ON_NOTICE),
-        SECURITY_HISTORY("security_review_changes", Mode.ASK_FIRST)
+        SECURITY_HISTORY("security_review_changes", Mode.ASK_FIRST),
+        DISASTER_NOTIFICATIONS("disaster_silent_notifications", Mode.ASK_FIRST)
     }
     fun defaultEnabled(mode: Mode) = mode == Mode.DEFAULT_ON_NOTICE
     fun resolve(mode: Mode, current: Boolean, choice: Choice): Boolean {
@@ -24,15 +25,17 @@ object FeatureDiscovery {
     fun enabled(c: Context, feature: Feature): Boolean = when (feature) {
         Feature.DISASTER_NEWS -> NewsDisasterUpdates.enabled(c)
         Feature.SECURITY_HISTORY -> SecurityHistoryRepo.enabled(c)
+        Feature.DISASTER_NOTIFICATIONS -> com.universalrp.cleansweep.notify.DisasterUpdateNotifier.enabled(c)
     }
     /** IO only: acknowledge durably before dismissing. Never touches the master voice/GPS/permissions. */
     fun respond(c: Context, feature: Feature, choice: Choice): Boolean {
         val current = enabled(c, feature)
         val next = resolve(feature.mode, current, choice)
         if (feature == Feature.SECURITY_HISTORY && !SecurityHistoryRepo.setEnabledDurably(c, next)) return false
+        if (feature == Feature.DISASTER_NOTIFICATIONS && !com.universalrp.cleansweep.notify.DisasterUpdateNotifier.setEnabledDurably(c, next)) return false
         if (next != current) when (feature) {
             Feature.DISASTER_NEWS -> NewsDisasterUpdates.setEnabled(c, next)
-            Feature.SECURITY_HISTORY -> Unit // Already committed durably above.
+            Feature.SECURITY_HISTORY, Feature.DISASTER_NOTIFICATIONS -> Unit // Already committed durably above.
         }
         return prefs(c).edit().putBoolean(feature.key, true).commit()
     }

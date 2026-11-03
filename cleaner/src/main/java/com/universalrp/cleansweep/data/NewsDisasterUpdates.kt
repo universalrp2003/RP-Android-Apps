@@ -15,13 +15,14 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-/** No worker/notification/standalone speaker. Called only by an existing nonempty news read. */
+/** No separate worker/standalone speaker. Verified candidates also feed an opt-in silent notifier. */
 object NewsDisasterUpdates {
     const val PREFS = "news_disasters_287"
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     fun enabled(c: Context): Boolean = prefs(c).getBoolean("enabled", FeatureDiscovery.defaultEnabled(FeatureDiscovery.Feature.DISASTER_NEWS.mode))
     fun setEnabled(c: Context, value: Boolean) {
         prefs(c).edit().putBoolean("enabled", value).putString("generation", UUID.randomUUID().toString()).apply()
+        if (!value) com.universalrp.cleansweep.notify.DisasterUpdateNotifier.cancel(c)
         // Withdrawal cancels already-prepared audio, even if toggled back on immediately.
         com.universalrp.cleansweep.voice.Announcer.stop()
     }
@@ -191,7 +192,12 @@ object NewsDisasterUpdates {
         }
         val reports = official.await()
         val enriched = events.map { if(it.type == "TC") OfficialCycloneClient.enrich(it,reports,origin,now) else it }
-        if (fingerprint != fingerprint(c)) null else Candidate(enriched.filter { it.distanceKm <= 2000 && (it.type != "TC" || it.positionAt != null) }.sortedBy { it.distanceKm }, origin, fingerprint)
+        if (fingerprint != fingerprint(c) || !enabled(c)) null else {
+            val candidate = Candidate(enriched.filter { it.distanceKm <= 2000 && (it.type != "TC" || it.positionAt != null) }.sortedBy { it.distanceKm }, origin, fingerprint)
+            // Separate delivery ledger. Failure here never changes/reserves a spoken read.
+            runCatching { com.universalrp.cleansweep.notify.DisasterUpdateNotifier.postVerified(c, candidate.events, now) }
+            candidate
+        }
         }
     }
 }

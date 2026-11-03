@@ -16,7 +16,7 @@ class FeatureDiscoveryTest {
     private val feature = FeatureDiscovery.Feature.DISASTER_NEWS
     private val notice = FeatureDiscovery.Mode.DEFAULT_ON_NOTICE
     private val ask = FeatureDiscovery.Mode.ASK_FIRST
-    @Before fun clean() { listOf(FeatureDiscovery.PREFS, NewsDisasterUpdates.PREFS, "news_topics_283", "liveguard_insights").forEach { c.getSharedPreferences(it,0).edit().clear().commit() } }
+    @Before fun clean() { listOf(FeatureDiscovery.PREFS, NewsDisasterUpdates.PREFS, "news_topics_283", "liveguard_insights", com.universalrp.cleansweep.notify.DisasterUpdateNotifier.PREFS).forEach { c.getSharedPreferences(it,0).edit().clear().commit() } }
     private fun rawDisaster() = c.getSharedPreferences(NewsDisasterUpdates.PREFS,0)
     @Test fun disasterOnForUnconfiguredNewAndUpdatedUsers() { assertTrue(NewsDisasterUpdates.enabled(c));assertFalse(rawDisaster().contains("enabled")) }
     @Test fun previousExplicitOffPreserved() { NewsDisasterUpdates.setEnabled(c,false);assertFalse(NewsDisasterUpdates.enabled(c));assertEquals(feature,FeatureDiscovery.next(c)) }
@@ -44,4 +44,6 @@ class FeatureDiscoveryTest {
     @Test fun explicitSecurityEnablePersistsWithoutChangingDisaster() { NewsDisasterUpdates.setEnabled(c,false);assertTrue(FeatureDiscovery.respond(c,FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.Choice.ENABLE));assertTrue(SecurityHistoryRepo.enabled(c));assertFalse(NewsDisasterUpdates.enabled(c)) }
     @Test fun securityNotNowPreservesPreviouslyEnabledHistory() { SecurityHistoryRepo.setEnabledDurably(c,true);FeatureDiscovery.respond(c,FeatureDiscovery.Feature.SECURITY_HISTORY,FeatureDiscovery.Choice.NOT_NOW);assertTrue(SecurityHistoryRepo.enabled(c)) }
 
+    @Test fun silentNotificationsAreAskFirstAndNotNowStaysOff() { val f=FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS;assertEquals(ask,f.mode);assertFalse(FeatureDiscovery.enabled(c,f));assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.NOT_NOW));assertTrue(FeatureDiscovery.seen(c,f));assertFalse(FeatureDiscovery.enabled(c,f)) }
+    @Test fun explicitSilentNotificationEnableDoesNotTurnNewsBackOn() { val f=FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS;NewsDisasterUpdates.setEnabled(c,false);assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.ENABLE));assertTrue(FeatureDiscovery.enabled(c,f));assertFalse(NewsDisasterUpdates.enabled(c)) }
 }

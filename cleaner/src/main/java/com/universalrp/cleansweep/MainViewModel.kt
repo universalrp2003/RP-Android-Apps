@@ -142,6 +142,7 @@ data class UiState(
     // App cache screen
     val usageAccess: Boolean = false,
     val appsLoading: Boolean = false,
+    val appCachesReadAtMs: Long = 0L,
     val includeSystemApps: Boolean = MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM,
     val appCaches: List<AppCacheInfo> = emptyList(),
     val pendingManualApps: Int = 0,
@@ -1068,7 +1069,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val mine = ++cacheRevision
         cacheJob?.cancel()
         if (!AppCacheRepo.hasUsageAccess(ctx)) {
-            mutate { it.copy(usageAccess = false, appsLoading = false) }
+            mutate { it.copy(usageAccess = false, appsLoading = false, appCachesReadAtMs = 0L) }
             return
         }
         val include = _state.value.includeSystemApps
@@ -1078,7 +1079,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val list = AppCacheRepo.load(ctx, include).map { it.copy(selected = selected[it.pkg] ?: false) }
                 ensureActive()
-                if (mine == cacheRevision) mutate { it.copy(appCaches = list) }
+                if (mine == cacheRevision) mutate { it.copy(appCaches = list, appCachesReadAtMs = System.currentTimeMillis()) }
             } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { if (mine == cacheRevision) mutate { it.copy(message = "Cache refresh failed. Previous readings have not been replaced.") } } finally { if (mine == cacheRevision) mutate { it.copy(appsLoading = false) } }
         }
     }
@@ -2800,8 +2801,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (_state.value.mobileBusy) return
         mutate { it.copy(mobileBusy = true, screen = _state.value.screen) }
         viewModelScope.launch {
-            val snapshot = runCatching { MobileNet.snapshot(ctx) }.getOrNull()
-            val usage = runCatching { UsageStats.read(ctx) }.getOrNull()
+            val snapshot = withContext(Dispatchers.IO) { runCatching { MobileNet.snapshot(ctx) }.getOrNull() }
+            val usage = withContext(Dispatchers.IO) { runCatching { UsageStats.read(ctx) }.getOrNull() }
             mutate {
                 it.copy(
                     mobileBusy = false,

@@ -65,6 +65,7 @@ fun FeatureUpdatesNotice(onChanged: () -> Unit = {}) {
     }
     // Exhaustive compiled content: a future feature cannot accidentally inherit this description.
     val title = when (current) {
+        FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS -> watchWords("New: silent disaster notifications", "புதிய வசதி: ஒலியில்லா பேரிடர் அறிவிப்புகள்")
         FeatureDiscovery.Feature.SECURITY_HISTORY -> watchWords("New: security change review", "புதிய வசதி: பாதுகாப்பு மாற்ற ஆய்வு")
         FeatureDiscovery.Feature.DISASTER_NEWS -> watchWords("New: disaster updates with news", "புதிய வசதி: செய்தியுடன் பேரிடர் அறிக்கைகள்")
     }
@@ -74,6 +75,13 @@ fun FeatureUpdatesNotice(onChanged: () -> Unit = {}) {
         title = { Text(title) },
         text = {
             when (current) {
+            FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(watchWords("One silent notification for each new verified cyclone advisory or new flood/earthquake event found during existing disaster-with-news checks. Tap it to open the source report. No extra speech, sound, vibration or separate background polling; unchanged/older reports are not repeated. Not an emergency-alert service or a local impact prediction.",
+                    "செய்தியுடன் பேரிடர் சரிபார்ப்பு நடக்கும்போது கண்டறியும் புதிய சரிபார்த்த புயல் அறிக்கை அல்லது புதிய வெள்ளம்/நிலநடுக்க நிகழ்வுக்கு ஓர் ஒலியில்லா அறிவிப்பு. அதைத் தொட்டால் மூல அறிக்கை திறக்கும். கூடுதல் பேச்சு, ஒலி, அதிர்வு அல்லது தனிப் பின்னணிச் சரிபார்ப்பு இல்லை; அதே/பழைய அறிக்கை மீளாது. இது அவசர எச்சரிக்கை சேவையோ உள்ளூர் பாதிப்புக் கணிப்போ அல்ல."))
+                Text(watchWords("Optional and off until enabled. Disaster updates with news and Android notifications must also be allowed. Your news speech and its read counts stay unchanged. Change this later under Rain & safety → Disaster reports.",
+                    "விருப்ப வசதி; நீங்கள் இயக்கும் வரை அணைந்திருக்கும். செய்தியுடன் பேரிடர் அறிக்கைகளும் Android அறிவிப்புகளும் அனுமதிக்கப்பட்டிருக்க வேண்டும். செய்திப் பேச்சும் வாசிப்பு எண்ணிக்கையும் மாறாது. பின்னர் மழை மற்றும் பாதுகாப்பு → பேரிடர் அறிக்கைகளில் மாற்றலாம்."))
+                if (error) Text(watchWords("Could not save. Please try again.", "சேமிக்க முடியவில்லை. மீண்டும் முயலவும்."))
+            }
             FeatureDiscovery.Feature.SECURITY_HISTORY -> Column(Modifier.heightIn(max = 360.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(watchWords("Review newly observed access, installer and signing-identity changes during security checks. Android-verified signing rotation is distinguished from an unexplained change; neither proves malware or safety. Powerful access combinations get a clear explanation.",
                     "பாதுகாப்புச் சரிபார்ப்பில் புதிதாகக் கண்ட அணுகல், நிறுவிய மூலம், கையொப்ப அடையாள மாற்றங்களைப் பார்க்கலாம். Android உறுதிசெய்த கையொப்பச் சுழற்சி தனியாகக் காட்டப்படும்; மாற்றம் மட்டும் தீம்பொருள் அல்லது பாதுகாப்புச் சான்றல்ல. பல வலுவான அணுகல்கள் சேர்ந்திருந்தால் காரணம் விளக்கப்படும்."))

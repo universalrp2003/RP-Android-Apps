@@ -184,6 +184,7 @@ object NetworkSplit {
     }
 
     // -------------------------------------------------------------- counters
+    @Synchronized
     fun resetDayIfNeeded(context: Context) {
         val p = prefs(context)
         val today = LocalDate.now().toString()
@@ -199,22 +200,41 @@ object NetworkSplit {
     }
 
     /** Adds a sampled delta to the right counter. [is5g] comes from the radio listener. */
+    @Synchronized
     fun addDelta(context: Context, deltaBytes: Long, is5g: Boolean) {
         if (deltaBytes <= 0) return
+        resetDayIfNeeded(context)
         val p = prefs(context)
         val key = if (is5g) KEY_5G_TODAY else KEY_4G_TODAY
         p.edit().putLong(key, p.getLong(key, 0L) + deltaBytes).apply()
     }
 
-    fun lastCumulative(context: Context): Long = prefs(context).getLong(KEY_LAST_CUMULATIVE, -1L)
+    @Synchronized
+    fun lastCumulative(context: Context): Long {
+        // A read may happen while the sampler is stopped, including the first read after midnight.
+        resetDayIfNeeded(context)
+        return prefs(context).getLong(KEY_LAST_CUMULATIVE, -1L)
+    }
 
+    @Synchronized
     fun setLastCumulative(context: Context, value: Long) {
+        resetDayIfNeeded(context)
         prefs(context).edit().putLong(KEY_LAST_CUMULATIVE, value).apply()
     }
 
-    fun fourGBytes(context: Context): Long = prefs(context).getLong(KEY_4G_TODAY, 0L)
+    @Synchronized
+    fun fourGBytes(context: Context): Long {
+        // A read may happen while the sampler is stopped, including the first read after midnight.
+        resetDayIfNeeded(context)
+        return prefs(context).getLong(KEY_4G_TODAY, 0L)
+    }
 
-    fun fiveGBytes(context: Context): Long = prefs(context).getLong(KEY_5G_TODAY, 0L)
+    @Synchronized
+    fun fiveGBytes(context: Context): Long {
+        // A read may happen while the sampler is stopped, including the first read after midnight.
+        resetDayIfNeeded(context)
+        return prefs(context).getLong(KEY_5G_TODAY, 0L)
+    }
 
     /**
      * The figures the mobile screen shows. [dailyLimitMb] is the pack allowance the user
@@ -225,6 +245,7 @@ object NetworkSplit {
      * longer displays them: the card and the ongoing watch show `…UsedMb` (and "Unlimited"
      * for 5G) while the measured pack remainder lives in Live Guard / My plan.
      */
+    @Synchronized
     fun status(context: Context, dailyLimitMb: Double): Status {
         val unlimited = fiveGUnlimited(context)
         val fourG = fourGBytes(context) / MB

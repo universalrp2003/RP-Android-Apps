@@ -234,6 +234,8 @@ private fun SavedPlaceManager(places: List<SavedRainWatch>, onChange: () -> Unit
 @Composable
 private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCandidate?) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var silentUpdates by remember { mutableStateOf(com.universalrp.cleansweep.notify.DisasterUpdateNotifier.enabled(context)) }
     val browser = androidx.compose.ui.platform.LocalUriHandler.current
     var useGps by remember { mutableStateOf(false) }
     val place = if (useGps) gps ?: home else home
@@ -242,7 +244,16 @@ private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCa
     var website by remember { mutableStateOf<String?>(null) }
     PanelCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(watchWords("Disaster reports · silent", "பேரிடர் அறிக்கைகள் · ஒலியின்றி"), style = MaterialTheme.typography.titleMedium)
+            Text(watchWords("Disaster reports", "பேரிடர் அறிக்கைகள்"), style = MaterialTheme.typography.titleMedium)
+            Text(watchWords("View reports here. News announcements keep their own setting.", "இங்கே அறிக்கைகளைப் பார்க்கலாம். செய்திப் பேச்சின் அமைப்பு தனியாகவே இருக்கும்."), style = MaterialTheme.typography.labelSmall)
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text(watchWords("Silent update notifications", "ஒலியில்லா புதிய அறிக்கை அறிவிப்புகள்"), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                Switch(silentUpdates, { value -> scope.launch {
+                    val saved = withContext(Dispatchers.IO) { com.universalrp.cleansweep.notify.DisasterUpdateNotifier.setEnabledDurably(context, value) }
+                    if (saved) silentUpdates = value
+                } })
+            }
+            if (silentUpdates) Text(watchWords("During disaster-with-news checks only. Tap notifications for source details. No extra speech.", "செய்தியுடன் பேரிடர் சரிபார்ப்பின்போது மட்டும். மூல விவரங்களுக்கு அறிவிப்பைத் தொடவும். கூடுதல் பேச்சில்லை."), style = MaterialTheme.typography.labelSmall)
             if (gps != null) Row { FilterChip(!useGps, { useGps = false }, label = { Text(watchWords("Home", "வழக்கமான இடம்")) }); Spacer(Modifier.width(8.dp)); FilterChip(useGps, { useGps = true }, label = { Text(watchWords("Current location", "தற்போதைய இடம்")) }) }
             Text(place.name)
             OutlinedButton(onClick = { busy = true; scope.launch {

@@ -202,11 +202,16 @@ class RadioWatchService : Service() {
         maybeAnnounce()
 
         val cumulative = todayMobileBytes()
-        if (cumulative <= 0) return
+        if (cumulative <= 0) {
+            // No mobile traffic is still a new-day reading, not a reason to retain yesterday's card.
+            refreshNotification()
+            return
+        }
 
         val last = NetworkSplit.lastCumulative(this)
         if (last < 0) {
             NetworkSplit.setLastCumulative(this, cumulative)
+            refreshNotification()
             return
         }
         val delta = cumulative - last
