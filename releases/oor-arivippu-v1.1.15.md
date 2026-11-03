@@ -10,6 +10,10 @@ Only the latest town report is cached locally encrypted, freshness/consent expir
 
 Install only as a same-key update; do not uninstall or clear local data. Uninstalling may erase local data and pairing keys. Secret Message, Live Guard and public Oor1.1.10 assets remain unchanged. CI/native/signed-package verification must pass before delivery. No independent audit, all-OEM/background/GPS/physical-audio or Play Protect claim.
 
+## Verified test candidate
+
+Final CI41644644026/job125947282795 passed30family JVM/19backend/360Python checks,2real Android35 native tests, live HTTPS, release build/lint/signature/full permission continuity, same-key public1.1.10 saved-data/settings/restart, real main-window member/town/switch click, persistent consent pause/resume and migration, durable speech high-water and exact installed APK hash. `docs/oor-family-1.1.15-candidate-verification.json` records exact evidence. No physical-device test of this version; no assertion of audible speech playback or all-device reliability. No public release.
+
 ## தமிழ்
 
 குடும்ப நபரின் பெயரும் கடைசியாகப் பகிர்ந்த ஊரும் நேரத்துடன் முதன்மைத் திரையில் பயண நிலைக்கு மேலே காட்டப்படும். உறுதிப்படுத்திய ஒவ்வொரு நபருக்கும் எனது பகிர்வு இயக்கம்/அணைப்பு தேர்வு இருக்கும். ஒன்று/நான்கு/எட்டு மணி தேர்வு இல்லை. நீங்கள் அணைக்கும் வரை இயக்கம் நினைவில் இருக்கும்; பயணக் கண்காணிப்பின்போது மட்டும் ஊர் பதிவேற்றப்படும். பயணத்தை நிறுத்தினால் பதிவேற்றம் இடைநிறுத்தப்படும்; பகிரும் விருப்பம் மறக்கப்படாது. பழைய நேர வரம்புள்ள பகிர்வு தானாக நிரந்தர இயக்கமாக மாற்றப்படாது.
