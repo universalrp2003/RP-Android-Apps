@@ -215,7 +215,7 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                         )
                     }
                     Spacer(Modifier.height(6.dp))
-                    com.universalrp.updates.SisterApps.projectLinks().forEach { (label, url) ->
+                    LiveGuardAboutPolicy.projectLinks(com.universalrp.updates.SisterApps.projectLinks()).forEach { (label, url) ->
                         TextButton(
                             onClick = {
                                 runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
@@ -262,8 +262,8 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     Text(tr("Other RP Ideas Android Apps"), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AccentCyan)
                     Spacer(Modifier.height(2.dp))
                     Text(tr("App releases"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                    // All seven RP Ideas apps from one shared list.
-                    com.universalrp.updates.SisterApps.releaseLinks().forEach { (label, url) ->
+                    // Other apps only, including DailyVault once in its correct section.
+                    LiveGuardAboutPolicy.releaseLinks(com.universalrp.updates.SisterApps.releaseLinks()).forEach { (label, url) ->
                         TextButton(onClick = {
                             runCatching { sourceContext.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
                         }) { Text("🔗 " + tr(label), color = AccentCyan) }
@@ -273,7 +273,7 @@ fun AboutScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
 
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp)) {
-                    Text("CleanSweep v$installedVersion",
+                    Text("Live Guard v$installedVersion",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = AccentCyan,

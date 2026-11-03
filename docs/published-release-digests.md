@@ -1,5 +1,12 @@
 # Verified published Android APK digests
 
+## Live Guard2.93 — owner-authorized dBm, About and widget correction
+
+Exact source663521675a7bb3a7b5a67eda1489b1de77ee4079, [candidate41574228784](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41574228784)/job125713908983, artifact13202943297. 876 executed JVM tests/83suites,352 Python checks, build/lint/signer/full permission equality, exact public2.89 same-key/same-UID/saved-data update and all5 Android35 native tests passed. This includes real widget report/control bounds at400×250dp and explicit missing-report state at400×165dp.
+
+[Publisher41575729325](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41575729325)/job125718668800 extracted and verified the pinned archive/receipt, package2.93/code98/min26, established signer, permission equality and independently downloaded draft/public bytes. Release432264587/APK704212734, published2026-11-03T04:02:56Z: **14,747,343 bytes**, SHA256 `9f8e7936ae98ed5fb43e9087acf6a6de87dc5837fd66c9a97faa0216aa55f012`. No rebuild/overwrite; all prior public asset IDs/digests unchanged. [Publication receipt](live-guard-2.93-publication-receipt.json). No physical-device, audible-output, all-OEM, live-provider accuracy or Play Protect clearance proof. Same-key update only; do not uninstall or clear data. Public Store0.9 APK/embedded2.82 fallback and all siblings remain unchanged; only website/live feed metadata advances after separate CI/main Pages proof.
+
+
 ## Live Guard2.88 — discoverable defaults, exact verified bytes
 
 Owner explicitly authorized disaster-news default ON with one-time notice (preserve explicit OFF), all13 default topics (preserve custom/language), future opt-in introductions and publication after checks. [Signed run41414340270](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41414340270)/job125174416840 passed689 required JVM tests/69suites, build/lint/sign/full-permission continuity, normal public2.87 saved-data update and native notice/Turn off/persistent acknowledgement/relaunch/all13 reset plus accepted controls. Exact sourceec25204b64fdce2e83ed83e3e50c7a66caf9c882/artifact13127658323/archiveadb33b4aa7026d127f911b0719d37c2062360d7288838bf5b0920a3dd6326ccf.

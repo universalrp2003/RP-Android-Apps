@@ -1,0 +1,75 @@
+package com.universalrp.cleansweep.widget
+
+import android.content.Context
+import com.universalrp.cleansweep.data.*
+import com.universalrp.weather.WeatherForecastClient
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** Last verified home-region reports from existing news checks. No fetcher or spoken/notification ledger. */
+object DisasterWidgetCache {
+    const val PREFS = "disaster_widget_292"
+    private fun prefs(c: Context) = c.getSharedPreferences(PREFS, 0)
+    private fun scope(c: Context): String? = WeatherAlertStore.savedPlace(c)?.let { "${it.latitude}|${it.longitude}|${it.name}" }
+    fun save(c: Context, events: List<NewsDisasterPolicy.Event>, origin: NewsDisasterPolicy.Origin, now: Long, complete: Boolean = true, manual: Boolean = false) {
+        val home = WeatherAlertStore.savedPlace(c) ?: return
+        // The widget refers to saved home, never a distant moving GPS place used by a news bulletin.
+        if (WeatherForecastClient.haversineKm(home.latitude, home.longitude, origin.lat, origin.lon) > 1.2) {
+            prefs(c).edit().clear().apply(); CleanSweepWidget.refresh(c); return
+        }
+        val savedScope = "${home.latitude}|${home.longitude}|${home.name}"
+        val rows = JSONArray()
+        events.filter { NewsDisasterPolicy.fresh(it, now) && it.distanceKm.isFinite() &&
+            it.distanceKm in 0.0..(when (it.type) { "TC" -> 2000.0; "FL" -> 500.0; "EQ" -> 300.0; else -> -1.0 }) &&
+            (it.type != "TC" || it.positionAt != null) }.take(3).forEach { e ->
+            rows.put(JSONObject().put("type", e.type).put("name", NamedWeatherPlace.clean(e.name).take(80))
+                .put("at", e.positionAt ?: e.updated).put("updated", e.updated)
+                .put("source", e.official?.authority ?: if (e.type == "TC") "GDACS/JTWC" else "GDACS")
+                .put("wind", e.official?.windHigh ?: e.windKmh?.toInt() ?: JSONObject.NULL))
+        }
+        prefs(c).edit().putString("scope", savedScope).putString("rows", rows.toString()).putLong("checked", now)
+            .putBoolean("complete", complete).putBoolean("manual", manual).putBoolean("failed", false).apply()
+        CleanSweepWidget.refresh(c)
+    }
+    fun failed(c: Context) {
+        prefs(c).edit().putBoolean("failed", true).apply()
+        CleanSweepWidget.refresh(c)
+    }
+    /** Always show why there are no details; never turn an empty/failed/stale check into an all-clear. */
+    fun display(c: Context, tamil: Boolean, now: Long): String {
+        fun words(en: String, ta: String) = if (tamil) ta else en
+        val p = prefs(c)
+        val report = text(c, tamil, now)
+        if (report != null) return (if (p.getBoolean("failed", false))
+            words("Refresh failed · cached report\n", "புதுப்பித்தல் தோல்வி · சேமித்த அறிக்கை\n") else "") + report
+        if (scope(c) == null) return words("Set home in app for regional reports", "பிராந்திய அறிக்கைக்கு ஆப்பில் வீட்டை அமைக்கவும்")
+        if (p.getBoolean("failed", false)) return words("Reports unavailable · Refresh to retry · not an all-clear", "அறிக்கைகள் கிடைக்கவில்லை · மீண்டும் புதுப்பிக்கவும் · ஆபத்தில்லை என்பதல்ல")
+        if (!NewsDisasterUpdates.enabled(c) && !p.getBoolean("manual", false))
+            return words("Disaster news off · Refresh for manual reports", "பேரிடர் செய்திகள் அணைப்பு · அறிக்கைக்கு புதுப்பி")
+        if (p.getString("scope", null) != scope(c)) return words("Regional reports not checked · tap Refresh", "பிராந்திய அறிக்கைகள் சரிபார்க்கப்படவில்லை · புதுப்பி")
+        val age = now - p.getLong("checked", 0)
+        if (age !in 0..3_600_000L) return words("Regional reports need refresh · not an all-clear", "பிராந்திய அறிக்கையைப் புதுப்பிக்கவும் · ஆபத்தில்லை என்பதல்ல")
+        if (!p.getBoolean("complete", false)) return words("Some reports unavailable · not an all-clear · Refresh", "சில அறிக்கைகள் கிடைக்கவில்லை · ஆபத்தில்லை என்பதல்ல · புதுப்பி")
+        return words("No matching GDACS reports in this check · not an all-clear", "இச்சரிபார்ப்பில் பொருந்தும் GDACS அறிக்கைகள் இல்லை · ஆபத்தில்லை என்பதல்ல")
+    }
+    fun text(c: Context, tamil: Boolean, now: Long): String? {
+        if ((!NewsDisasterUpdates.enabled(c) && !prefs(c).getBoolean("manual", false)) || prefs(c).getString("scope", null) != scope(c)) return null
+        return runCatching {
+            val raw = prefs(c).getString("rows", "[]")!!; require(raw.length <= 6000)
+            val rows = JSONArray(raw); require(rows.length() <= 3)
+            (0 until rows.length()).mapNotNull { i ->
+                val r = rows.getJSONObject(i); val type = r.getString("type")
+                require(type in setOf("TC", "FL", "EQ"))
+                val at = r.getLong("at"); val updated = r.getLong("updated")
+                val maxAge = (if (type == "EQ") 24 else 18) * 3_600_000L
+                if (now - at !in 0..maxAge || now - updated !in 0..maxAge) return@mapNotNull null
+                val kind = when(type) { "TC" -> if(tamil) "புயல்" else "Cyclone"; "FL" -> if(tamil) "வெள்ளம்" else "Flood"; else -> if(tamil) "நிலநடுக்கம்" else "Earthquake" }
+                val source = r.getString("source").takeIf { it in setOf("IMD","JTWC","GDACS","GDACS/JTWC") } ?: return@mapNotNull null
+                val wind = r.optInt("wind", -1).takeIf { it in 1..350 }?.let { if(tamil) " · புயல் காற்று $it km/h" else " · storm wind $it km/h" }.orEmpty()
+                val stamp = java.time.format.DateTimeFormatter.ofPattern("d MMM h:mm a").withZone(java.time.ZoneId.systemDefault())
+                    .format(java.time.Instant.ofEpochMilli(at))
+                "$kind ${NamedWeatherPlace.clean(r.getString("name")).take(80)}$wind · $source · $stamp"
+            }.takeIf { it.isNotEmpty() }?.joinToString("\n", prefix = if(tamil) "பிராந்திய அறிக்கை · உள்ளூர் பாதிப்புக் கணிப்பு அல்ல\n" else "Regional report · not a local impact prediction\n")
+        }.getOrNull()
+    }
+}

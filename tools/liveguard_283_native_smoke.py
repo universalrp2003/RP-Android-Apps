@@ -105,6 +105,14 @@ def main():
     assert value('feature_discovery_v1','disaster_news')=='true'
     seek('New: security change review')
     click('Not now')
+    seek('New: silent disaster notifications')
+    click('Not now')
+    assert value('feature_discovery_v1','disaster_silent_notifications')=='true'
+    assert value('disaster_notifications_291','enabled')=='false'
+    seek('New: quiet no-signal beep')
+    click('Not now')
+    assert value('feature_discovery_v1','no_signal_beep')=='true'
+    assert value('no_signal_beep_292','enabled')=='false'
     # Wait for acknowledgement/dismissal, not an arbitrary IO timing assumption.
     seek('News topics')
     assert value('feature_discovery_v1','security_review_changes')=='true'
@@ -126,6 +134,16 @@ def main():
     screen('VOICE')
     click('Advanced battery checks')
     assert value('charge_announcement_v283','advanced')=='false'
+    screen('HOME')
+    assert seek('Read').get('text')=='Read'
+    seek('App cache · observed')
+    seek('Latency')
+    seek('Details')
+    raw,_=dump()
+    assert 'Android usage is an estimate' not in raw and 'Data budget &amp; history' not in raw
+    click('Details')
+    seek('Data budget & history')
+    click('Details')
     screen('WEATHER')
     seek('Choose your default place first')
     seek('Town / PIN code')
@@ -137,7 +155,7 @@ def main():
     seek('Home · CI synthetic home')
     click('60 min');assert value('saved_rain_watches_283','lead')=='60'
     seek('Follow my current location')
-    seek('Disaster reports · silent')
+    seek('Disaster reports')
     click('GDACS map')
     seek('App place: CI synthetic home')
     seek('www.gdacs.org')
@@ -164,7 +182,8 @@ def main():
     seek('Current signer SHA-256:')
     receipt['native_289_named_security_smoke']=True
     receipt['native_283_settings_smoke']=True
-    receipt['native_283_scope']='Synthetic English UI, optional security history Not now preserves OFF, app signer detail expansion, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
+    receipt['native_292_top_read_and_opt_in_smoke']=True
+    receipt['native_283_scope']='Synthetic English top Read/full-width headline controls, quiet no-signal Not now retains OFF, compact home/Details,  optional security history Not now preserves OFF, app signer detail expansion, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Live Guard 2.89 native settings::'+receipt['native_283_scope'])
 

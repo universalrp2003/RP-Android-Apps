@@ -105,7 +105,7 @@ class RadioWatchService : Service() {
 
         /** True when either split feature is on, i.e. the service has a reason to exist. */
         fun needed(context: Context): Boolean =
-            NetworkSplit.separateEnabled(context) || NetworkSplit.announceEnabled(context)
+            NetworkSplit.separateEnabled(context) || NetworkSplit.announceEnabled(context) || NoSignalBeep.enabled(context)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -126,8 +126,10 @@ class RadioWatchService : Service() {
     @Volatile
     private var lastAnnouncedNr: Boolean? = null
 
+    private val noSignal = NoSignalBeep()
     private val poll = object : Runnable {
         override fun run() {
+            runCatching { noSignal.sample(this@RadioWatchService) }
             runCatching { sample() }
             handler.postDelayed(this, SAMPLE_MS)
         }
@@ -169,6 +171,7 @@ class RadioWatchService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(poll)
+        noSignal.close()
         unregisterRadioListener()
         stopForeground(STOP_FOREGROUND_DETACH)
         RoutineStatus.release(this, RoutineStatus.RADIO)
@@ -197,16 +200,22 @@ class RadioWatchService : Service() {
     private fun todayMobileBytes(): Long = UsageStats.read(this).todayMobileBytes ?: 0L
 
     private fun sample() {
+        if (!NetworkSplit.separateEnabled(this) && !NetworkSplit.announceEnabled(this)) { refreshNotification(); return }
         ensureRadioListenerRegistered()
         NetworkSplit.resetDayIfNeeded(this)
         maybeAnnounce()
 
         val cumulative = todayMobileBytes()
-        if (cumulative <= 0) return
+        if (cumulative <= 0) {
+            // No mobile traffic is still a new-day reading, not a reason to retain yesterday's card.
+            refreshNotification()
+            return
+        }
 
         val last = NetworkSplit.lastCumulative(this)
         if (last < 0) {
             NetworkSplit.setLastCumulative(this, cumulative)
+            refreshNotification()
             return
         }
         val delta = cumulative - last
@@ -350,7 +359,8 @@ class RadioWatchService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val body = if (!NetworkSplit.separateEnabled(this)) {
-            "Announcing 4G ⇄ 5G changes"
+            if (NetworkSplit.announceEnabled(this)) "Announcing 4G ⇄ 5G changes"
+            else if (com.universalrp.cleansweep.data.Lang.isTamil) "சிக்னல் இழப்பு ஒலி இயக்கத்தில்" else "No-signal beep enabled"
         } else {
             val limitMb = if (DataUsageTracker.hasConfiguredPlan(this))
                 DataUsageTracker.getPackLimitGb(this) * 1024.0 else 0.0

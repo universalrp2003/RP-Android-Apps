@@ -74,6 +74,7 @@ data class MobileSnapshot(
     val needsLocationPermission: Boolean = false,
     /** The user chose Approximate, which Android does not accept for `CellInfo`. */
     val locationApproximate: Boolean = false,
+    val signalKind: String? = null,
 )
 
 data class PingStats(
@@ -197,8 +198,12 @@ object MobileNet {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
-    private fun telephony(context: Context): TelephonyManager? =
-        context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+    private fun telephony(context: Context): TelephonyManager? {
+        val base = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager ?: return null
+        val id = android.telephony.SubscriptionManager.getDefaultDataSubscriptionId()
+        return if (id in 0 until Int.MAX_VALUE)
+            runCatching { base.createForSubscriptionId(id) }.getOrDefault(base) else base
+    }
 
     fun snapshot(context: Context): MobileSnapshot {
         val tm = telephony(context)
@@ -215,6 +220,7 @@ object MobileNet {
         var is5g = false
         var signalDbm: Int? = null
         var signalLevel: Int? = null
+        var signalKind: String? = null
         val sims = mutableListOf<SimInfo>()
         val towers = mutableListOf<CellTower>()
 
@@ -286,14 +292,21 @@ object MobileNet {
             try {
                 val strength = tm.signalStrength
                 if (strength != null) {
-                    signalLevel = strength.level.coerceIn(0, 4)
-                    val nr = strength.cellSignalStrengths.firstOrNull { it is android.telephony.CellSignalStrengthNr }
-                    val lte = strength.cellSignalStrengths.firstOrNull { it is android.telephony.CellSignalStrengthLte }
-                    val gsm = strength.cellSignalStrengths.firstOrNull { it is android.telephony.CellSignalStrengthGsm }
-                    val picked = nr ?: lte ?: gsm
-                    val dbm = picked?.dbm
-                    if (nr != null) is5g = true
-                    if (dbm != null && dbm < 0) signalDbm = dbm
+                    signalLevel = strength.level.takeIf { it in 0..4 }
+                    fun kind(cell: android.telephony.CellSignalStrength): String? = when (cell) {
+                        is android.telephony.CellSignalStrengthNr -> "NR_SS_RSRP"
+                        is android.telephony.CellSignalStrengthLte -> "LTE_RSRP"
+                        is android.telephony.CellSignalStrengthWcdma -> "WCDMA_RSCP"
+                        is android.telephony.CellSignalStrengthGsm -> "GSM_RSSI"
+                        else -> null
+                    }
+                    // An unavailable NR value must not mask an available LTE anchor measurement.
+                    val picked = strength.cellSignalStrengths.sortedBy { when (kind(it)) {
+                        "NR_SS_RSRP" -> 0; "LTE_RSRP" -> 1; "WCDMA_RSCP" -> 2; else -> 3
+                    } }.firstOrNull { SimSignalPolicy.percent(it.dbm, kind(it)) != null }
+                    signalDbm = picked?.dbm
+                    signalKind = picked?.let { kind(it) }
+                    if (signalKind == "NR_SS_RSRP") is5g = true
                 }
             } catch (e: SecurityException) {
                 notes.add("The signal strength needs the Phone permission (it is never used for anything else).")
@@ -404,6 +417,7 @@ object MobileNet {
             notes = notes,
             needsLocationPermission = needsLocation,
             locationApproximate = approximateOnly,
+            signalKind = signalKind,
         )
     }
 

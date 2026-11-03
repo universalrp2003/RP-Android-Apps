@@ -20,6 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SignalCellularAlt
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,8 @@ fun RadioSplitCard() {
     var announce by remember { mutableStateOf(NetworkSplit.announceEnabled(context)) }
     var policy by remember { mutableStateOf(NetworkSplit.policy(context)) }
     var expanded by remember { mutableStateOf(false) }
+    var noSignal by remember { mutableStateOf(com.universalrp.cleansweep.notify.NoSignalBeep.enabled(context)) }
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     val limitMb = if (DataUsageTracker.hasConfiguredPlan(context)) {
         DataUsageTracker.getPackLimitGb(context) * 1024.0
@@ -141,6 +144,16 @@ fun RadioSplitCard() {
                 Spacer(Modifier.height(8.dp))
             }
 
+            Text(watchWords("SIM % is a dBm-derived estimate, not reception reliability.", "சிம் சதவீதம் dBm அடிப்படையிலான மதிப்பீடு; வரவேற்பு நம்பகத்தன்மை அல்ல."), style = MaterialTheme.typography.labelSmall)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(watchWords("Quiet no-signal beep", "சிக்னல் இழப்பிற்கு மெதுவான ஒலி"), modifier = Modifier.weight(1f))
+                Switch(noSignal, { value -> scope.launch {
+                    val saved = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                        com.universalrp.cleansweep.notify.NoSignalBeep.setEnabledDurably(context, value)
+                    }
+                    if (saved) noSignal = value
+                } })
+            }
             // ---- switches ------------------------------------------------
             SplitSwitch(
                 title = tr("Count 4G and 5G separately"),

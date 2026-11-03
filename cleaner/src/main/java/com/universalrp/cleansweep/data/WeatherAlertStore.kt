@@ -353,7 +353,7 @@ object WeatherAlertStore {
         val placeName = p.getString(KEY_LAST_PLACE_NAME, "").orEmpty()
         val placeDetails = p.getString(KEY_LAST_PLACE_DETAILS, "").orEmpty()
         val cycloneName = decodeCyclone(p.getString(KEY_LAST_CYCLONE, ""))?.eventName?.takeIf { it.isNotBlank() }
-        val speech = WeatherAlertPolicy.formatSpeech(
+        val speech = RainNoticePolicy.formatSpeech(
             severity = severity,
             placeLabel = placeName,
             minutesUntilRain = mins,

@@ -1,7 +1,7 @@
-name: Live Guard 2.89 signed upgrade and owner-requested regressions (no publication)
+name: Live Guard 2.93 signed upgrade and dBm, About and widget regressions (candidate only)
 on:
   push:
-    branches: ["arena/d8c51dc7-rp-android-apps"]
+    branches: ["arena/e319d5ab-rp-android-apps"]
     paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_283_candidate.py", "tools/liveguard_283_native_smoke.py", ".github/workflows/liveguard-283-candidate.yml"]
 permissions:
   contents: read
@@ -28,10 +28,13 @@ jobs:
         with: {gradle-version: '8.14.3'}
       - name: Offline source, bilingual and public-byte guards
         run: |
-          python3 -m unittest discover -s tools/tests -q
-          python3 tools/verify_apps_localization.py
-          python3 tools/verify_cleaner_localization.py
-          python3 tools/verify_release_signing_policy.py --fresh-install
+          set -o pipefail
+          (
+            python3 -m unittest discover -s tools/tests -q &&
+            python3 tools/verify_apps_localization.py &&
+            python3 tools/verify_cleaner_localization.py &&
+            python3 tools/verify_release_signing_policy.py --fresh-install
+          ) 2>&1 | tee "$RUNNER_TEMP/liveguard-source.log"
       - name: JVM regressions, lint and signed Live Guard candidate only
         run: |
           set -o pipefail
@@ -44,12 +47,19 @@ jobs:
           from pathlib import Path
           import xml.etree.ElementTree as ET
           def report(text):
-              print('::error title=Live Guard 2.89 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+              print('::error title=Live Guard 2.93 diagnostic::'+text[-16000:].replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          source_log=Path(os.environ['RUNNER_TEMP'])/'liveguard-source.log'
+          if source_log.exists(): report('\n'.join(source_log.read_text(errors='replace').splitlines()[-80:]))
           p=Path(os.environ['RUNNER_TEMP'])/'liveguard-283-build.log'
           if p.exists():
               lines=p.read_text(errors='replace').splitlines()
               errors=[line for line in lines if line.startswith('e: ') or 'error:' in line.lower() or ' FAILED' in line or 'What went wrong' in line]
               report('\n'.join(errors) if errors else '\n'.join(lines[-80:]))
+              # Include the actual cause when failure happens before any compiler/test output.
+              for index, line in enumerate(lines):
+                  if '* What went wrong:' in line:
+                      report('\n'.join(lines[index:index+70]))
+                      break
           for p in Path('cleaner/build/test-results').glob('**/TEST-*.xml'):
               for failure in ET.parse(p).getroot().findall('.//failure'):
                   report(str(p)+'\n'+failure.get('message','')+'\n'+(failure.text or '')[:4000])
@@ -66,7 +76,7 @@ jobs:
         run: python3 tools/inspect_liveguard_283_candidate.py
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
-      - name: Same-key 2.88 update, saved data and native settings
+      - name: Same-key 2.89 update, saved data and native settings
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -108,21 +118,21 @@ jobs:
           import xml.etree.ElementTree as ET
           roots=[ET.parse(p).getroot() for p in Path('cleaner/build/outputs/androidTest-results/connected').rglob('*.xml')]
           cases=[c for r in roots for c in r.iter('testcase') if c.get('classname','').endswith('OfficialStatusNativeTest')]
-          assert len(cases)==4, f'Expected 4 native tests, got {len(cases)}'
+          assert len(cases)==5, f'Expected 5 native tests, got {len(cases)}'
           assert all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases)
-          print('PASS: 4 required Android35 native PDF isolation/invalid-PDF/shared foreground-card/restored six-segment rendering tests')
+          print('PASS: 5 required Android35 native PDF isolation/invalid-PDF/shared foreground-card/six-segment/widget report rendering tests')
           PYTEST
       - name: Remove baseline from candidate download
-        run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.88.apk"
+        run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.89.apk"
       - uses: actions/upload-artifact@v7
         with:
-          name: Live-Guard-2.89-signed-tested-candidate
+          name: Live-Guard-2.93-signed-tested-candidate
           path: ${{ runner.temp }}/health-cleaner/
           retention-days: 30
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: Live-Guard-2.89-regression-failures
+          name: Live-Guard-2.93-regression-failures
           path: |
             cleaner/build/reports/tests/
             cleaner/build/reports/androidTests/
