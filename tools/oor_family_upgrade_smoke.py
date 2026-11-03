@@ -78,7 +78,7 @@ def main():
         adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
     launch()
     click('Family · optional town sharing');wait('Family town sharing')
-    wait('Stop all my family sharing')
+    wait('Stop all my family sharing',scroll=True)
     assert not any('setup/testing is not complete' in n.get('text','') for n in nodes())
     # The feature is configured, but opening it must create neither a connection nor a share.
     assert adb('shell',f'test ! -f {data}/shared_prefs/oor_family_v1.xml && echo ABSENT').strip()=='ABSENT'
