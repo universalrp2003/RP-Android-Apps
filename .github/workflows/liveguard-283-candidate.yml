@@ -50,6 +50,11 @@ jobs:
               lines=p.read_text(errors='replace').splitlines()
               errors=[line for line in lines if line.startswith('e: ') or 'error:' in line.lower() or ' FAILED' in line or 'What went wrong' in line]
               report('\n'.join(errors) if errors else '\n'.join(lines[-80:]))
+              # Include the actual cause when failure happens before any compiler/test output.
+              for index, line in enumerate(lines):
+                  if '* What went wrong:' in line:
+                      report('\n'.join(lines[index:index+70]))
+                      break
           for p in Path('cleaner/build/test-results').glob('**/TEST-*.xml'):
               for failure in ET.parse(p).getroot().findall('.//failure'):
                   report(str(p)+'\n'+failure.get('message','')+'\n'+(failure.text or '')[:4000])
