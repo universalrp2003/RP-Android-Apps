@@ -83,6 +83,11 @@ def main():
         data = get_bounded(image['website'], 1_000_000)
         validate_apk(data, image['bytes'], image['sha256'])
         print('PASS: live privacy-reviewed Launcher screenshot ' + image['website'], flush=True)
+    oor_gallery=json.loads((ROOT/'docs/oor-family-1.1.15-gallery-review.json').read_text())
+    for image in oor_gallery['images']+[oor_gallery['artwork_archive']]:
+        data=get_bounded(image['website'],2_000_000)
+        validate_apk(data,image['bytes'],image['sha256'])
+    print('::notice title=Live redacted Oor gallery::Four reviewed masked screenshots and artwork ZIP match pinned bytes on the live website; originals are not published.',flush=True)
     print(f'PASS: main Pages serves all {len(checks)} exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
 
 

@@ -172,7 +172,13 @@ try {
   await test('Oor bilingual guide is responsive at 320/390/768/1280 and 200% text', async page => {
     await page.goto(base + '/oor-arivippu-guide.html');
     assert.equal(await page.locator('section[lang="ta"]').count(), 1);
-    assert.equal(await page.locator('img').count(), 0, 'private screenshots excluded');
+    assert.equal(await page.locator('img').count(), 4, 'only reviewed redacted screenshots');
+    for (const image of await page.locator('img').all()) {
+      await image.scrollIntoViewIfNeeded();
+      await image.evaluate(node => node.decode());
+      assert.match(await image.getAttribute('src'), /^images\/oor-arivippu-v1\.1\.15\//);
+      assert.equal(await image.evaluate(node => node.naturalWidth > 0), true);
+    }
     assert.match(await page.locator('body').innerText(), /Pending invitations count/);
     for (const width of [320, 390, 768, 1280]) {
       await page.setViewportSize({ width, height: 900 });
