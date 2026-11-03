@@ -18,6 +18,10 @@ class OorAboutCandidateContracts(unittest.TestCase):
             self.assertIn(value,runner)
         self.assertIn('len(native)==3 and len(jvm)==30 and len(about)==4',verifier)
         self.assertIn("actual==r['sha256']",verifier)
+        self.assertIn("['adb','exec-out','cat',installed]",verifier)
+        self.assertIn("len(read.stdout)==r['bytes']",verifier)
+        self.assertIn('read.returncode==0',verifier)
+        self.assertIn("startswith('emulator-')",verifier)
     def test_fixture_is_seeded_on_old_actual_app_before_non_destructive_update(self):
         source=(ROOT/'tools/oor_family_upgrade_smoke.py').read_text()
         self.assertLess(source.index("'upgradePhase','seed'"),source.index("adb('install','-r',str(candidate))"))

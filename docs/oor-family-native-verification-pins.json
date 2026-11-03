@@ -4,6 +4,6 @@
   "service_url": "https://oor-family-relay.universalrp2003.workers.dev",
   "publication_authorized": false,
   "physical_phone_tested": false,
-  "verification_attempt": 1,
+  "verification_attempt": 2,
   "candidate_version": "1.1.16"
 }
