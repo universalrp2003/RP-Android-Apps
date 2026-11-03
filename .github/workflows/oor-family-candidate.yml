@@ -48,7 +48,7 @@ jobs:
           RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
         run: |
           set -o pipefail
-          gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-build.log"
+          gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease :oorarivippu:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/oor-family-build.log"
       - name: Surface bounded compiler and test diagnostics
         if: failure()
         run: |
