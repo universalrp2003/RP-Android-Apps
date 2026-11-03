@@ -1,6 +1,6 @@
 # Oor Arivippu 1.1.16 — corrected in-app About and bilingual guide
 
-Private update candidate, not a public release. This exact version is not installed on a phone for independent physical testing; native/emulator verification must complete before delivery. Published 1.1.15 remains unchanged.
+Verified private update candidate, not a public release. Exact configured native run41669768816 passed same-key public1.1.15 upgrade, saved data/selected encrypted family fixture, bilingual About/Guide and existing family checks, signature/permissions and installed-APK byte/hash verification. See `docs/oor-about-guide-1.1.16-candidate-verification.json`. No physical-device test; verification is on a disposable Android35 emulator. No independently verified owner-phone installation or physical-audio claim. Published1.1.15 remains unchanged.
 
 - About now uses the suite's verified published app links instead of a stale duplicate seven-release list. Oor's own latest-public-release button opens the live official app section, avoiding a build-time link to a predecessor. Installed version, credits, official repositories and the clearly labelled legacy mirror remain.
 - About includes a Tamil/English optional-family summary and a direct link to the live bilingual web guide and owner-authorized masked screenshots.
@@ -17,4 +17,4 @@ Install as a same-key update over 1.1.15. **Do not uninstall or clear local data
 
 குடும்ப இணைப்பின் இருவர் உறுதிப்படுத்தல், இயல்பாக அணைந்த பகிர்வு, காத்திருக்கும் அழைப்புகள் உட்பட ஆறு இணைப்புகள், நினைவில் இருக்கும் இயக்கம்/அணைப்பு, பயணத்தின்போது மட்டும் பதிவேற்றம், பயணம் நிறுத்தப்பட்டால் இடைநிறுத்தம், காலாவதி மற்றும் கைப்பேசிக் குரல் வரம்புகள் தமிழ்/ஆங்கில வழிகாட்டியில் சேர்க்கப்பட்டுள்ளன. மழை/புயல் வழிகாட்டியில் எப்போதும் இயங்கும் கண்காணிப்பு அல்லது துல்லிய நிமிட உறுதி இல்லை; இயங்கும் நேரம், வழங்குநர் அனுமதி/தகவல் மற்றும் ஒலி வரம்புகள் விளக்கப்படுகின்றன. செயல்பாட்டு மழை/குடும்பச் சேவை மாற்றமில்லை.
 
-இது பொதுவெளியீடு அல்ல; சரிபார்க்கப்பட வேண்டிய புதுப்பிப்புக் கோப்பு. தனியான நேரடிக் கைப்பேசி/குரல் அல்லது எல்லாச் சாதன நம்பகத்தன்மைக்கான உறுதி இல்லை. அதே கையொப்பப் புதுப்பிப்பாக நிறுவவும். செயலியை நீக்கவோ உள்ளூர் தரவை அழிக்கவோ வேண்டாம்; நீக்கினால் தரவும் இணைப்பு விசைகளும் அழியலாம். ஏற்கெனவே சேமித்த பகிர்வு விருப்பங்கள் தொடர வேண்டும். இது அவசரக் கண்காணிப்புச் சேவை அல்ல.
+இது பொதுவெளியீடு அல்ல; சரிபார்க்கப்பட்ட தனிப் புதுப்பிப்புக் கோப்பு. தனியான நேரடிக் கைப்பேசி/குரல் அல்லது எல்லாச் சாதன நம்பகத்தன்மைக்கான உறுதி இல்லை. அதே கையொப்பப் புதுப்பிப்பாக நிறுவவும். செயலியை நீக்கவோ உள்ளூர் தரவை அழிக்கவோ வேண்டாம்; நீக்கினால் தரவும் இணைப்பு விசைகளும் அழியலாம். ஏற்கெனவே சேமித்த பகிர்வு விருப்பங்கள் தொடர வேண்டும். இது அவசரக் கண்காணிப்புச் சேவை அல்ல.

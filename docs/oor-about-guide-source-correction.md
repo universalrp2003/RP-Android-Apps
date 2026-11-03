@@ -20,3 +20,7 @@ The original compilation, unit-test and lint step passed, but the first report g
 
 ## Verified source result
 CI41662291118/job126008336139 at source336a779 SUCCESS: release Kotlin compile, release lint,98actual unit tests including all4new About/Guide tests, no failures/unexpected skips. One pre-existing opt-in external live-speech probe was explicitly not run; no audible-speech claim. Local375Python/localization passed. DraftPR88 remains unmerged. No new APK delivered or published; installed1.1.15 unchanged. See `oor-about-guide-source-verification.json`.
+
+## Follow-up: owner-approved new APK prepared and verified
+
+The earlier source-only boundary above is historical, not a statement that the new candidate is still unbuilt. After owner “Ok do”, configured same-key1.1.16/code21 passed exact installed-byte/native/upgrade/bilingual UI verification in41669768816. See `oor-about-guide-1.1.16-candidate.md` and its JSON receipt. Public1.1.15/site/catalog remain unchanged; no new public promotion authorized. The phone is not automatically updated by this source change.
