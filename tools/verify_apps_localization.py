@@ -708,7 +708,7 @@ def verify_about_links() -> None:
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.15"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.16"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
             'tagPrefix = "expense-tracker"', 'version = "1.2"',
             'tagPrefix = "voice-notes"', 'version = "1.3.4"',
