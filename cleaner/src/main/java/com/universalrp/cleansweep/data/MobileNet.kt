@@ -197,8 +197,12 @@ object MobileNet {
         ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) ==
             PackageManager.PERMISSION_GRANTED
 
-    private fun telephony(context: Context): TelephonyManager? =
-        context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+    private fun telephony(context: Context): TelephonyManager? {
+        val base = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager ?: return null
+        val id = android.telephony.SubscriptionManager.getDefaultDataSubscriptionId()
+        return if (android.telephony.SubscriptionManager.isValidSubscriptionId(id))
+            runCatching { base.createForSubscriptionId(id) }.getOrDefault(base) else base
+    }
 
     fun snapshot(context: Context): MobileSnapshot {
         val tm = telephony(context)

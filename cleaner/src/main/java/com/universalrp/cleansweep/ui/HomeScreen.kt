@@ -1356,7 +1356,7 @@ private fun HomeSectionHeader(
 @Composable
 private fun HomeMobileSignal(state: UiState, vm: MainViewModel) {
     val mobile = state.mobile
-    val level = mobile?.signalLevel?.takeUnless { it == 0 && mobile.signalDbm == null }
+    val level = mobile?.signalLevel?.takeUnless { it == 0 && mobile?.signalDbm == null }
     val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(level)
     val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(level)) {
         0 -> DangerRed; 1 -> WarnAmber; 2 -> GoodGreen; else -> TextSecondary

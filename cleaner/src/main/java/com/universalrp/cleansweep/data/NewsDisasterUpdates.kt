@@ -23,6 +23,7 @@ object NewsDisasterUpdates {
     fun setEnabled(c: Context, value: Boolean) {
         prefs(c).edit().putBoolean("enabled", value).putString("generation", UUID.randomUUID().toString()).apply()
         if (!value) com.universalrp.cleansweep.notify.DisasterUpdateNotifier.cancel(c)
+        com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(c)
         // Withdrawal cancels already-prepared audio, even if toggled back on immediately.
         com.universalrp.cleansweep.voice.Announcer.stop()
     }

@@ -126,7 +126,7 @@ class OfficialStatusNativeTest {
                 assertTrue(report.text.contains("CI TEST") && report.text.contains("GDACS/JTWC"))
                 assertTrue(report.text.contains("not a local impact prediction"))
                 assertEquals(android.view.View.VISIBLE,report.visibility)
-                assertTrue("Report must not overlap controls",report.bottom <= controls.top)
+                assertTrue("Report must not overlap controls",(report.parent as android.view.View).top + report.bottom <= controls.top)
                 assertTrue("Controls remain inside widget",controls.bottom <= view.measuredHeight)
             }
         } finally {

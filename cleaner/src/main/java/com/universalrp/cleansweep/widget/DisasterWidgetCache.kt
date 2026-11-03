@@ -17,6 +17,7 @@ object DisasterWidgetCache {
         if (WeatherForecastClient.haversineKm(home.latitude, home.longitude, origin.lat, origin.lon) > 1.2) {
             prefs(c).edit().clear().apply(); CleanSweepWidget.refresh(c); return
         }
+        val savedScope = "${home.latitude}|${home.longitude}|${home.name}"
         val rows = JSONArray()
         events.filter { NewsDisasterPolicy.fresh(it, now) && it.distanceKm.isFinite() &&
             it.distanceKm in 0.0..(when (it.type) { "TC" -> 2000.0; "FL" -> 500.0; "EQ" -> 300.0; else -> -1.0 }) &&
@@ -26,7 +27,7 @@ object DisasterWidgetCache {
                 .put("source", e.official?.authority ?: if (e.type == "TC") "GDACS/JTWC" else "GDACS")
                 .put("wind", e.official?.windHigh ?: e.windKmh?.toInt() ?: JSONObject.NULL))
         }
-        prefs(c).edit().putString("scope", scope(c)).putString("rows", rows.toString()).apply()
+        prefs(c).edit().putString("scope", savedScope).putString("rows", rows.toString()).apply()
         CleanSweepWidget.refresh(c)
     }
     fun text(c: Context, tamil: Boolean, now: Long): String? {
