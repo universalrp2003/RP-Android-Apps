@@ -185,7 +185,7 @@ try {
   await test('Oor guide native keyboard FAQ and Tamil anchors work', async page => {
     await page.goto(base + '/oor-arivippu-guide.html');
     await page.locator('a[href="#tamil"]').click();
-    await page.waitForURL('**/#tamil');
+    await page.waitForURL('**/oor-arivippu-guide.html#tamil');
     const faq=page.locator('details').first();
     await faq.locator('summary').focus(); await page.keyboard.press('Enter');
     assert.equal(await faq.evaluate(node => node.open), true);
@@ -202,10 +202,14 @@ try {
   await test('Oor guide stays useful without JavaScript', async page => {
     await page.goto(base + '/oor-arivippu-guide.html');
     await page.locator('a[href="#privacy"]').click();
-    await page.waitForURL('**/#privacy');
+    await page.waitForURL('**/oor-arivippu-guide.html#privacy');
     await page.locator('details').first().locator('summary').click();
     assert.equal(await page.locator('details').first().evaluate(node=>node.open),true);
     assert.equal(await page.locator('#tamil').count(),1);
   }, {javaScriptEnabled:false});
   console.log(`${passed} browser checks passed.`);
+  console.log('::notice title=Website browser verification::'+passed+' browser checks passed, including Oor guide mobile/text-scale, keyboard, Tamil, no-JS and accessibility.');
+} catch (error) {
+  console.log('::error title=Website browser verification::'+String(error.stack || error).replaceAll('%','%25').replaceAll('\r','%0D').replaceAll('\n','%0A'));
+  throw error;
 } finally { await browser.close(); }
