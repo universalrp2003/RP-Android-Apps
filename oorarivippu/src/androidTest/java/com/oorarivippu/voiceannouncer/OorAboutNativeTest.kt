@@ -64,6 +64,8 @@ class OorAboutNativeTest {
         }
         fun find(label: String, scroll: Boolean = false): AccessibilityNodeInfo {
             repeat(35) {
+                instrumentation.waitForIdleSync()
+                automation.waitForIdle(220, 5000)
                 val root = automation.rootInActiveWindow
                 val screen = Rect().also { root?.getBoundsInScreen(it) }
                 val match = nodes().firstOrNull { node ->
@@ -73,7 +75,9 @@ class OorAboutNativeTest {
                 }
                 if (match != null) return match
                 if (scroll && !screen.isEmpty) {
-                    val command = "input swipe ${screen.centerX()} ${screen.top + screen.height() * 3 / 4} ${screen.centerX()} ${screen.top + screen.height() / 3} 180"
+                    val command = "input swipe ${screen.centerX()} ${screen.top + screen.height() * 7 / 10} ${screen.centerX()} ${screen.top + screen.height() * 4 / 10} 650"
+                    // Slow overlapping drags, NOT short high-velocity flings that can skip
+                    // multiline Tamil controls after a previously matched label leaves view.
                     ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command)).use { it.readBytes() }
                 }
                 SystemClock.sleep(180)

@@ -27,5 +27,5 @@ class OorAboutCandidateContracts(unittest.TestCase):
         self.assertLess(source.index("'upgradePhase','seed'"),source.index("adb('install','-r',str(candidate))"))
         self.assertIn('digest(family_fixture)==family_hash',source)
         native=(ROOT/'oorarivippu/src/androidTest/java/com/oorarivippu/voiceannouncer/OorAboutNativeTest.kt').read_text()
-        for value in ('assertEquals("1.1.15", version)','assertEquals("1.1.16", version)','FamilyStore.read(fixture).single()','AppGuides.oorArivippu.topics','listOf(false, true)'):
+        for value in ('assertEquals("1.1.15", version)','assertEquals("1.1.16", version)','FamilyStore.read(fixture).single()','AppGuides.oorArivippu.topics','listOf(false, true)','automation.waitForIdle(220, 5000)','650'):
             self.assertIn(value,native)
