@@ -72,7 +72,8 @@ def main():
                 w,h=map(int,re.findall(r'(\d+)x(\d+)',adb('shell','wm','size'))[-1])
                 adb('shell','input','swipe',str(w//2),str(int(h*.67)),str(w//2),str(int(h*.43)),'400')
             time.sleep(1)
-        raise AssertionError('Missing bilingual family UI: '+label)
+        visible=[n.get('text','')[:240] for n in nodes() if n.get('text')]
+        raise AssertionError('Missing bilingual family UI: '+label+'; synthetic UI labels: '+repr(visible))
     def click(label):
         n=wait(label); x1,y1,x2,y2=map(int,re.findall(r'\d+',n.get('bounds','')))
         adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
@@ -86,6 +87,14 @@ def main():
     # Toggle through the real app UI, then back: bilingual consent is available without changing saved settings.
     click('தமிழ்');click('குடும்பம் · விருப்பமான ஊர் பகிர்வு');wait('குடும்ப ஊர் பகிர்வு')
     wait('எனது குடும்பப் பகிர்வு அனைத்தையும் நிறுத்து',scroll=True);click('மூடு');click('ENG')
+    wait('Family · optional town sharing')
+    # ADB force-stop can kill Android's asynchronous legacy language preference write.
+    # Wait for the real UI AND durable preferences before testing cold restart.
+    for _ in range(30):
+        current={n.get('name'):n.text for n in ET.fromstring(adb('shell','cat',saved)) if n.tag=='string'}
+        if current.get('app_language')=='en': break
+        time.sleep(.2)
+    assert current.get('app_language')=='en'
     adb('shell','am','force-stop',PKG);launch();wait('Family · optional town sharing')
     settings={n.get('name'):(n.text if n.tag=='string' else n.get('value')) for n in ET.fromstring(adb('shell','cat',saved))}
     for key,value in {'app_language':'en','is_tracking_enabled':'false','announce_same_city_sub_area':'false','bike_car_detection_enabled':'false','min_distance_meters':'750','speech_volume_percent':'37','destination_name':'Synthetic saved destination'}.items():
