@@ -28,7 +28,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
       - name: Compile Oor and run actual guide and existing unit tests, no APK assembly
         run: ./gradlew :oorarivippu:compileReleaseKotlin :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease --stacktrace
-      - name: Verify guide tests actually ran without skips or failures
+      - name: Verify required guide tests ran and explicitly account for the separate opt-in speech probe
         if: always()
         run: |
           python3 - <<'PY'
@@ -38,10 +38,19 @@ jobs:
           assert roots, 'No unit test results'
           guide=[r for r in roots if r.get('name')=='com.oorarivippu.voiceannouncer.OorAboutGuideTest']
           assert len(guide)==1 and int(guide[0].get('tests','0'))==4
+          allowed_skip=('com.oorarivippu.voiceannouncer.NeuralCloudVoiceEngineTest', 'livePlaceAnnouncementSynthesisWorksForTamilAndEnglishStudioVoices')
+          skipped=[]
           for r in roots:
-              for field in ('failures','errors','skipped'): assert int(r.get(field,'0'))==0, (r.get('name'),field)
+              for field in ('failures','errors'): assert int(r.get(field,'0'))==0, (r.get('name'),field)
+              for c in r.iter('testcase'):
+                  if c.find('skipped') is not None:
+                      identity=(c.get('classname'),c.get('name'))
+                      assert identity==allowed_skip, ('Unexpected skipped test',identity)
+                      skipped.append(identity)
+          assert int(guide[0].get('skipped','0'))==0, 'A required new guide test was skipped'
+          assert len(skipped)<=1
           total=sum(int(r.get('tests','0')) for r in roots)
-          print(f'::notice title=Oor About and Guide source verification::Compiled Oor, passed {total} unit tests including all 4 new About/Guide tests; no skips or failures. No APK assembled or published; installed 1.1.15 unchanged.')
+          print(f'::notice title=Oor About and Guide source verification::Compiled Oor and passed {total-len(skipped)} unit tests, including all 4 required About/Guide tests; no failures or unexpected skips. Separately accounted for {len(skipped)} pre-existing opt-in external live-speech probe, not run in this source-only task. No APK assembled or published; installed 1.1.15 unchanged.')
           PY
       - uses: actions/upload-artifact@v7
         if: always()

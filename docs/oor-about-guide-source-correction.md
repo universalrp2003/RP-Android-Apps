@@ -15,3 +15,5 @@ Published **1.1.15/code20** remains the exact accepted configured APK, **12,891,
 These edits do **not** update a phone, authorize another publication, rebuild the existing release, bump a version, alter the relay or change family consent/location/speech behavior. A later APK must have a new version/code, the existing verified relay configuration, same-key upgrade and native UI verification, and its own exact-byte promotion authorization. Generic unconfigured CI outputs are not deliverables.
 
 The dedicated workflow compiles Oor, runs its actual unit tests and release lint, uploads reports only and never assembles/publishes an APK. Source checks alone are not native layout, phone, audio or installed-version proof.
+
+The original compilation, unit-test and lint step passed, but the first report gate incorrectly rejected the pre-existing opt-in external live-speech test's deliberate skip. The gate now names and reports only that one allowed skipped probe; required guide tests and every other deterministic test must run without failures or skips. No live audio success is inferred.

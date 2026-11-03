@@ -39,3 +39,6 @@ class OorAboutGuideContracts(unittest.TestCase):
         self.assertNotIn('assembleRelease',text)
         self.assertNotIn('gh release',text)
         self.assertNotIn('RP_RELEASE_KEYSTORE_PASSWORD',text)
+        self.assertIn('livePlaceAnnouncementSynthesisWorksForTamilAndEnglishStudioVoices',text)
+        self.assertIn('Unexpected skipped test',text)
+        self.assertIn('A required new guide test was skipped',text)
