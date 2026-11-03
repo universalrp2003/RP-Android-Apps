@@ -169,18 +169,23 @@ object NewsDisasterUpdates {
         } finally { draft.events.forEach { inFlight.remove(it.key, draft.token) } }
     }
     data class Candidate(val events: List<NewsDisasterPolicy.Event>, val origin: NewsDisasterPolicy.Origin, val fingerprint: String)
-    suspend fun prepare(c: Context): Candidate? = withContext(Dispatchers.IO) {
-        if (!enabled(c)) return@withContext null
-        val now = System.currentTimeMillis(); val origin = origin(c, now) ?: return@withContext null
+    suspend fun prepare(c: Context, widgetOnly: Boolean = false): Candidate? = withContext(Dispatchers.IO) {
+        if (!widgetOnly && !enabled(c)) return@withContext null
+        val now = System.currentTimeMillis()
+        val origin = if (widgetOnly) WeatherAlertStore.savedPlace(c)?.takeIf { NamedWeatherPlace.usable(it) }?.let {
+            NewsDisasterPolicy.Origin(it.latitude,it.longitude,false,now,NamedWeatherPlace.label(it))
+        } else origin(c, now)
+        if (origin == null) return@withContext null
         val fingerprint = fingerprint(c)
         val deadline = SystemClock.elapsedRealtime() + 16_000
         kotlinx.coroutines.coroutineScope {
         val official = async { OfficialCycloneClient.fetch(c, now, deadline) }
         val events = mutableListOf<NewsDisasterPolicy.Event>()
+        var complete = true
         for (type in listOf("TC", "FL", "EQ")) {
             kotlinx.coroutines.currentCoroutineContext().ensureActive()
             val batch = runCatching { NewsDisasterPolicy.parse(get("https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventtype=$type", deadline), type, origin, now) }
-                .getOrDefault(emptyList()).filter { type == "TC" || NewsDisasterPolicy.eligible(count(c, it.key)) }
+                .onFailure { complete = false }.getOrDefault(emptyList()).filter { widgetOnly || type == "TC" || NewsDisasterPolicy.eligible(count(c, it.key)) }
             if (type != "TC") events.addAll(batch)
             if (type == "TC") for (e in batch.take(NewsDisasterPolicy.MAX_EVENTS)) {
                 val enriched = runCatching {
@@ -193,11 +198,11 @@ object NewsDisasterUpdates {
         }
         val reports = official.await()
         val enriched = events.map { if(it.type == "TC") OfficialCycloneClient.enrich(it,reports,origin,now) else it }
-        if (fingerprint != fingerprint(c) || !enabled(c)) null else {
+        if (fingerprint != fingerprint(c) || (!widgetOnly && !enabled(c))) null else {
             val candidate = Candidate(enriched.filter { it.distanceKm <= 2000 && (it.type != "TC" || it.positionAt != null) }.sortedBy { it.distanceKm }, origin, fingerprint)
-            runCatching { com.universalrp.cleansweep.widget.DisasterWidgetCache.save(c, candidate.events, origin, now) }
+            runCatching { com.universalrp.cleansweep.widget.DisasterWidgetCache.save(c, candidate.events, origin, now, complete, widgetOnly) }
             // Separate delivery ledger. Failure here never changes/reserves a spoken read.
-            runCatching { com.universalrp.cleansweep.notify.DisasterUpdateNotifier.postVerified(c, candidate.events, now) }
+            if (!widgetOnly) runCatching { com.universalrp.cleansweep.notify.DisasterUpdateNotifier.postVerified(c, candidate.events, now) }
             candidate
         }
         }

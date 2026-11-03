@@ -1,0 +1,13 @@
+# Live Guard 2.93 — finer signal estimate, corrected About and honest widget reports
+
+- SIM signal now uses the actual reported dBm measurement and its radio-specific nominal range, with an approximate sign and red/amber/green indication. It is an estimate, not reception reliability or calibrated coverage. Unknown, unsupported or invalid values stay unknown; an unavailable NR measurement cannot mask a usable LTE anchor.
+- Live Guard About no longer lists Legacy Mirror Repository. DailyVault appears once under Other RP Ideas Android Apps, not project links. Other apps' About layouts are unchanged.
+- Remove the widget's continuous 24×7 storm-watch claim. Keep forecast/model, checked-time and report source/date qualifications. Missing reports now have a reason rather than a blank area; empty, failed and stale checks never mean all-clear.
+- Widget Refresh queues one coalesced, bounded, silent check of saved-home regional reports and weather. It does not turn disaster news ON, speak, post disaster notifications or consume spoken/read delivery counts. No new periodic disaster poller or permissions. OFF preferences are retained; Android scheduling and network restrictions still apply.
+- Preserve the accepted concise cyclone/news/rain speech, top Read control, optional default-OFF quiet beep, three-segment D/U, saved home and existing settings. No sibling rebuild or older public asset replacement.
+
+Candidate verification pending when these notes were prepared; final results are recorded separately in the candidate/publication receipt. No physical-device, audible-output, all-OEM, live-provider accuracy or Play Protect clearance claim. Install as a same-key update; do not uninstall or clear local data. Uninstalling may erase local data.
+
+## தமிழ்
+
+சிம் சிக்னல் இப்போது கைப்பேசி தரும் அளவையும் வலை வகையின் வரம்பையும் வைத்து மதிப்பீட்டுச் சதவீதமாகவும் நிறமாகவும் தெரியும். இது துல்லிய வரவேற்பு நம்பகத்தன்மை அல்ல; தெரியாத அளவு கற்பனையாகக் காட்டப்படாது. பழைய மாற்றுக் களஞ்சிய இணைப்பு விவரப் பக்கத்தில் நீக்கப்பட்டது. தினக்கணக்கு மற்ற செயலிகள் பகுதியில் மட்டும் இருக்கும். வானிலை விட்ஜெட்டில் தொடர்ச்சியான கண்காணிப்பு என்ற தவறான வாசகம் நீக்கப்பட்டது. அறிக்கை இல்லாதபோது காரணம் தெரியும்; அது ஆபத்தில்லை என்ற உறுதி அல்ல. புதுப்பி பொத்தான் வீட்டுப் பகுதியின் அறிக்கைகளையும் வானிலையையும் அமைதியாக ஒருமுறை சரிபார்க்கும். செய்திப் பேச்சையும் வாசிப்பு எண்ணிக்கையையும் இயக்காது அல்லது மாற்றாது; தனிப் பின்னணிப் பேரிடர் கண்காணிப்பு இல்லை. சேமித்த வீடு, விருப்பங்கள், ஏற்றுக்கொண்ட புயல் பேச்சு மற்றும் தரவு விளக்குகள் மாறாது. கைப்பேசி மற்றும் ஒலிச் சோதனைச் சான்று இல்லை. கையொப்பம் பொருந்தும் புதுப்பிப்பாக நிறுவவும்; செயலியை நீக்கவோ உள்ளூர் தரவை அழிக்கவோ வேண்டாம்.

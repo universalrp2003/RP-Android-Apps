@@ -123,11 +123,30 @@ class OfficialStatusNativeTest {
                 val report = view.findViewById<android.widget.TextView>(R.id.widget_disaster)
                 val controls = view.findViewById<android.view.View>(R.id.widget_mode).parent as android.view.View
                 assertFalse(details.text.contains("Tomorrow.io"))
+                assertFalse(view.findViewById<android.widget.TextView>(R.id.widget_brief).text.contains("24×7"))
                 assertTrue(report.text.contains("CI TEST") && report.text.contains("GDACS/JTWC"))
                 assertTrue(report.text.contains("not a local impact prediction"))
                 assertEquals(android.view.View.VISIBLE,report.visibility)
                 assertTrue("Report must not overlap controls",(report.parent as android.view.View).top + report.bottom <= controls.top)
                 assertTrue("Controls remain inside widget",controls.bottom <= view.measuredHeight)
+            }
+            // Short host sizes must explain missing reports instead of hiding the entire area.
+            c.getSharedPreferences(com.universalrp.cleansweep.widget.DisasterWidgetCache.PREFS,0).edit().clear().commit()
+            options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,165)
+            val compact = method.invoke(companion,c,987654,options,null,null,null,weather,now) as android.widget.RemoteViews
+            InstrumentationRegistry.getInstrumentation().runOnMainSync {
+                val view = compact.apply(c,android.widget.FrameLayout(c))
+                val density = c.resources.displayMetrics.density
+                view.measure(android.view.View.MeasureSpec.makeMeasureSpec((400*density).toInt(),android.view.View.MeasureSpec.EXACTLY),
+                    android.view.View.MeasureSpec.makeMeasureSpec((165*density).toInt(),android.view.View.MeasureSpec.EXACTLY))
+                view.layout(0,0,view.measuredWidth,view.measuredHeight)
+                val report = view.findViewById<android.widget.TextView>(R.id.widget_disaster)
+                val frame = report.parent as android.view.ViewGroup
+                val controls = view.findViewById<android.view.View>(R.id.widget_mode).parent as android.view.View
+                assertEquals(android.view.View.VISIBLE,report.visibility)
+                assertTrue(report.text.contains("not checked"))
+                assertTrue(frame.clipChildren)
+                assertTrue(frame.bottom <= controls.top && controls.bottom <= view.measuredHeight)
             }
         } finally {
             prefs.edit().remove("profile_987654").commit()

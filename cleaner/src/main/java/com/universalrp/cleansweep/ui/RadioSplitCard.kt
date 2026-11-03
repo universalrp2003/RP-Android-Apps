@@ -144,7 +144,7 @@ fun RadioSplitCard() {
                 Spacer(Modifier.height(8.dp))
             }
 
-            Text(watchWords("SIM % = Android relative level (0–4), not precise reception.", "சிம் சதவீதம் Android ஒப்பீட்டு நிலை; துல்லிய வரவேற்பு அளவல்ல."), style = MaterialTheme.typography.labelSmall)
+            Text(watchWords("SIM % is a dBm-derived estimate, not reception reliability.", "சிம் சதவீதம் dBm அடிப்படையிலான மதிப்பீடு; வரவேற்பு நம்பகத்தன்மை அல்ல."), style = MaterialTheme.typography.labelSmall)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(watchWords("Quiet no-signal beep", "சிக்னல் இழப்பிற்கு மெதுவான ஒலி"), modifier = Modifier.weight(1f))
                 Switch(noSignal, { value -> scope.launch {

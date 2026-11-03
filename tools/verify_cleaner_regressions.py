@@ -6,11 +6,12 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
-    "com.universalrp.cleansweep.data.SimSignalPolicyTest": 6,
+    "com.universalrp.cleansweep.ui.LiveGuardAboutPolicyTest": 4,
+    "com.universalrp.cleansweep.data.SimSignalPolicyTest": 12,
     "com.universalrp.cleansweep.data.RainNoticePolicyTest": 6,
     "com.universalrp.cleansweep.notify.NoSignalPolicyTest": 8,
     "com.universalrp.cleansweep.notify.NoSignalBeepTest": 6,
-    "com.universalrp.cleansweep.widget.DisasterWidgetCacheTest": 7,
+    "com.universalrp.cleansweep.widget.DisasterWidgetCacheTest": 15,
     "com.universalrp.cleansweep.data.NetworkSplitDayTest": 8,
     "com.universalrp.cleansweep.ui.HomeCompactPolicyTest": 4,
     "com.universalrp.cleansweep.notify.DisasterUpdateNotifierTest": 14,

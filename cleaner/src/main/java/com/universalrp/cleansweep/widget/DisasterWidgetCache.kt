@@ -11,7 +11,7 @@ object DisasterWidgetCache {
     const val PREFS = "disaster_widget_292"
     private fun prefs(c: Context) = c.getSharedPreferences(PREFS, 0)
     private fun scope(c: Context): String? = WeatherAlertStore.savedPlace(c)?.let { "${it.latitude}|${it.longitude}|${it.name}" }
-    fun save(c: Context, events: List<NewsDisasterPolicy.Event>, origin: NewsDisasterPolicy.Origin, now: Long) {
+    fun save(c: Context, events: List<NewsDisasterPolicy.Event>, origin: NewsDisasterPolicy.Origin, now: Long, complete: Boolean = true, manual: Boolean = false) {
         val home = WeatherAlertStore.savedPlace(c) ?: return
         // The widget refers to saved home, never a distant moving GPS place used by a news bulletin.
         if (WeatherForecastClient.haversineKm(home.latitude, home.longitude, origin.lat, origin.lon) > 1.2) {
@@ -27,11 +27,33 @@ object DisasterWidgetCache {
                 .put("source", e.official?.authority ?: if (e.type == "TC") "GDACS/JTWC" else "GDACS")
                 .put("wind", e.official?.windHigh ?: e.windKmh?.toInt() ?: JSONObject.NULL))
         }
-        prefs(c).edit().putString("scope", savedScope).putString("rows", rows.toString()).apply()
+        prefs(c).edit().putString("scope", savedScope).putString("rows", rows.toString()).putLong("checked", now)
+            .putBoolean("complete", complete).putBoolean("manual", manual).putBoolean("failed", false).apply()
         CleanSweepWidget.refresh(c)
     }
+    fun failed(c: Context) {
+        prefs(c).edit().putBoolean("failed", true).apply()
+        CleanSweepWidget.refresh(c)
+    }
+    /** Always show why there are no details; never turn an empty/failed/stale check into an all-clear. */
+    fun display(c: Context, tamil: Boolean, now: Long): String {
+        fun words(en: String, ta: String) = if (tamil) ta else en
+        val p = prefs(c)
+        val report = text(c, tamil, now)
+        if (report != null) return (if (p.getBoolean("failed", false))
+            words("Refresh failed · cached report\n", "புதுப்பித்தல் தோல்வி · சேமித்த அறிக்கை\n") else "") + report
+        if (scope(c) == null) return words("Set home in app for regional reports", "பிராந்திய அறிக்கைக்கு ஆப்பில் வீட்டை அமைக்கவும்")
+        if (p.getBoolean("failed", false)) return words("Reports unavailable · Refresh to retry · not an all-clear", "அறிக்கைகள் கிடைக்கவில்லை · மீண்டும் புதுப்பிக்கவும் · ஆபத்தில்லை என்பதல்ல")
+        if (!NewsDisasterUpdates.enabled(c) && !p.getBoolean("manual", false))
+            return words("Disaster news off · Refresh for manual reports", "பேரிடர் செய்திகள் அணைப்பு · அறிக்கைக்கு புதுப்பி")
+        if (p.getString("scope", null) != scope(c)) return words("Regional reports not checked · tap Refresh", "பிராந்திய அறிக்கைகள் சரிபார்க்கப்படவில்லை · புதுப்பி")
+        val age = now - p.getLong("checked", 0)
+        if (age !in 0..3_600_000L) return words("Regional reports need refresh · not an all-clear", "பிராந்திய அறிக்கையைப் புதுப்பிக்கவும் · ஆபத்தில்லை என்பதல்ல")
+        if (!p.getBoolean("complete", false)) return words("Some reports unavailable · not an all-clear · Refresh", "சில அறிக்கைகள் கிடைக்கவில்லை · ஆபத்தில்லை என்பதல்ல · புதுப்பி")
+        return words("No matching GDACS reports in this check · not an all-clear", "இச்சரிபார்ப்பில் பொருந்தும் GDACS அறிக்கைகள் இல்லை · ஆபத்தில்லை என்பதல்ல")
+    }
     fun text(c: Context, tamil: Boolean, now: Long): String? {
-        if (!NewsDisasterUpdates.enabled(c) || prefs(c).getString("scope", null) != scope(c)) return null
+        if ((!NewsDisasterUpdates.enabled(c) && !prefs(c).getBoolean("manual", false)) || prefs(c).getString("scope", null) != scope(c)) return null
         return runCatching {
             val raw = prefs(c).getString("rows", "[]")!!; require(raw.length <= 6000)
             val rows = JSONArray(raw); require(rows.length() <= 3)

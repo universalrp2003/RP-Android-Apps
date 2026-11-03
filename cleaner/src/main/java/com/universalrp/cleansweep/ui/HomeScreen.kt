@@ -1356,9 +1356,8 @@ private fun HomeSectionHeader(
 @Composable
 private fun HomeMobileSignal(state: UiState, vm: MainViewModel) {
     val mobile = state.mobile
-    val level = mobile?.signalLevel?.takeUnless { it == 0 && mobile?.signalDbm == null }
-    val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(level)
-    val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(level)) {
+    val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(mobile?.signalDbm, mobile?.signalKind)
+    val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(percent)) {
         0 -> DangerRed; 1 -> WarnAmber; 2 -> GoodGreen; else -> TextSecondary
     }
     Row(Modifier.fillMaxWidth().clickable { vm.navigate(Screen.MOBILE); vm.loadMobile() }
@@ -1367,7 +1366,7 @@ private fun HomeMobileSignal(state: UiState, vm: MainViewModel) {
         Text(mobile?.operatorName?.takeUnless { it.isBlank() || it == "Not available" } ?: watchWords("SIM signal", "சிம் சிக்னல்"),
             style = MaterialTheme.typography.bodySmall, maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        Text(percent?.let { "$it%" } ?: "— %", style = MaterialTheme.typography.bodyMedium,
+        Text(percent?.let { "≈$it%" } ?: "— %", style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold, color = tone)
         Text(listOfNotNull(mobile?.networkType?.takeIf { it.isNotBlank() }, mobile?.signalDbm?.let { "$it dBm" })
             .joinToString(" · ").ifBlank { watchWords("Not available", "கிடைக்கவில்லை") },

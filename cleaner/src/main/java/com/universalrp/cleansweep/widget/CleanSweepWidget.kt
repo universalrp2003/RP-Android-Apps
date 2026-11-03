@@ -45,7 +45,7 @@ open class CleanSweepWidget : AppWidgetProvider() {
                     try {
                         val anyWeatherVisible = ownedIds(app).any { profile(app, it) == CompactWidgetPolicy.Profile.WEATHER }
                         if (anyWeatherVisible) {
-                            runCatching { WeatherWatchWorker.executeCheck(app, speakIfTriggered = false) }
+                            runCatching { WeatherWatchWorker.runWidgetCheck(app) }.onFailure { DisasterWidgetCache.failed(app) }
                         }
                         refresh(app).join()
                     } finally {
@@ -247,8 +247,8 @@ open class CleanSweepWidget : AppWidgetProvider() {
                     views.setTextViewText(R.id.widget_data, card.details)
                     views.setTextViewText(R.id.widget_brief, card.brief)
                     val height = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 165)
-                    val disaster = if (weather?.enabled == true) DisasterWidgetCache.text(context, tamil, checked) else null
-                    if (disaster != null && height >= 180) {
+                    val disaster = if (weather?.enabled == true) DisasterWidgetCache.display(context, tamil, checked) else null
+                    if (disaster != null) {
                         views.setTextViewText(R.id.widget_disaster, disaster)
                         views.setInt(R.id.widget_disaster, "setMaxLines", if (height >= 230) 5 else 3)
                         views.setViewVisibility(R.id.widget_disaster, View.VISIBLE)

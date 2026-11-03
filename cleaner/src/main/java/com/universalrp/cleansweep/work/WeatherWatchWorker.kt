@@ -48,6 +48,24 @@ class WeatherWatchWorker(
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         Lang.set(Lang.languageIn(ctx))
+        if (inputData.getBoolean(KEY_WIDGET, false)) {
+            // Explicit widget tap only. No periodic report polling, speech, alert notification or ledger writes.
+            if (!WeatherAlertStore.enabled(ctx)) return Result.success()
+            try {
+                kotlinx.coroutines.withTimeout(55_000) {
+                    com.universalrp.cleansweep.data.NewsDisasterUpdates.prepare(ctx, widgetOnly = true)
+                    if (WeatherAlertStore.enabled(ctx)) executeCheck(ctx, speakIfTriggered = false)
+                }
+            } catch (_: kotlinx.coroutines.TimeoutCancellationException) {
+                com.universalrp.cleansweep.widget.DisasterWidgetCache.failed(ctx)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                com.universalrp.cleansweep.widget.DisasterWidgetCache.failed(ctx)
+            }
+            com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx).join()
+            return Result.success() // User can retry; never create an automatic report retry loop.
+        }
         val forced = inputData.getBoolean(KEY_FORCE, false)
         if (!forced && !WeatherAlertStore.enabled(ctx)) {
             return Result.success()
@@ -75,6 +93,13 @@ class WeatherWatchWorker(
         private const val CHANNEL_SEVERE = "weather_severe_storm"
         private const val NOTIF_ID_WEATHER = 42_570
         const val KEY_FORCE = "force_weather_check"
+        const val KEY_WIDGET = "silent_widget_check"
+        fun runWidgetCheck(context: Context) {
+            val request = OneTimeWorkRequestBuilder<WeatherWatchWorker>()
+                .setInputData(workDataOf(KEY_WIDGET to true)).build()
+            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                "liveguard_widget_manual_reports", ExistingWorkPolicy.KEEP, request)
+        }
 
         fun syncSchedule(context: Context) {
             val app = context.applicationContext

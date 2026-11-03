@@ -1,3 +1,7 @@
+## Active owner correction — 3 November 2026, Live Guard 2.93/code98
+
+Owner now authorizes publication of this corrected Live Guard version only, after candidate verification. Supersedes prior private-only restriction for this scope. Implement dBm-derived approximate signal % (not Android 25% steps or calibrated reception), Live Guard-only About removal of Legacy and DailyVault project duplicate (DailyVault remains Other Apps), widget snapshot/no-24×7 wording and explicit report status with bounded, coalesced, silent manual Refresh. Preserve saved home/settings, accepted speech/beep/three-segment D/U and all sibling/old public bytes. Current public remains 2.89 until exact verified promotion. No email response/signup/private instruction export or GitHub permission approval authorized. Candidate/new publication evidence must be recorded; historical receipts below are not new-version proof.
+
 # Project guidance and owner decisions
 
 ## Live Guard2.92 — screenshot corrections and optional beep, 3 November2026
