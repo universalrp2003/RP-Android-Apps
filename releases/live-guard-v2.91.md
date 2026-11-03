@@ -8,7 +8,7 @@ Private candidate only; public 2.89 is unchanged.
 - Optional silent disaster-update notifications use existing disaster-with-news checks only: latest verified new cyclone observation/advisory once, flood/earthquake once per new event, no refresh/older replay. Enable / Not now introduction; off until explicit choice. No separate poller, additional speech or permission auto-grant. Tap opens the verified source report. Regional reports are not local-impact predictions or an emergency-alert service.
 - Notification deduplication is separate from spoken-advisory memory. Preserve accepted concise speech, flood/earthquake three-read rules, saved OFF/language/topics/places, quiet/call/HD protections, shared routine status and three-segment D/U.
 
-Verification pending: 823 required JVM declarations in 77 suites and expanded exact-APK native checks are prepared, not yet executed for this source. No physical-device test, provider-accuracy or audible-speech proof. Normal same-key update only: do not uninstall or clear local data; uninstalling may erase local data. No public publication authorized.
+CI41561059637 at source c3925de passed823 executed required JVM tests in77 suites,339Python checks, build/lint/signer/full permission continuity, exact public2.89 preserved-data/same-UID update/native compact-home and opt-in checks, and all4 Android35 tests. No physical-device test, provider-accuracy or audible-speech proof. Normal same-key update only: do not uninstall or clear local data; uninstalling may erase local data. No public publication authorized.
 
 ## தமிழ்
 
