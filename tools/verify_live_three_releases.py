@@ -66,7 +66,8 @@ def main():
             time.sleep(10)
     health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
     store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
-    checks = [('CleanSweep-v2.89.apk', json.loads((ROOT/'docs/live-guard-2.89-publication-receipt.json').read_text())),
+    checks = [('CleanSweep-v2.93.apk', json.loads((ROOT/'docs/live-guard-2.93-publication-receipt.json').read_text())),
+              ('CleanSweep-v2.89.apk', json.loads((ROOT/'docs/live-guard-2.89-publication-receipt.json').read_text())),
               ('Tamilan-Store-v0.9.apk', store),
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
               ('CleanSweep-v2.82.apk', health['apps']['cleaner']),
@@ -81,7 +82,7 @@ def main():
         data = get_bounded(image['website'], 1_000_000)
         validate_apk(data, image['bytes'], image['sha256'])
         print('PASS: live privacy-reviewed Launcher screenshot ' + image['website'], flush=True)
-    print('PASS: main Pages serves all four exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
+    print(f'PASS: main Pages serves all {len(checks)} exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
 
 
 if __name__ == '__main__':

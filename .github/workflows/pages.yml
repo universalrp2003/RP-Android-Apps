@@ -48,6 +48,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              ("live-guard-v2.93", "CleanSweep-v2.93.apk", 14747343, "9f8e7936ae98ed5fb43e9087acf6a6de87dc5837fd66c9a97faa0216aa55f012"),
               ("live-guard-v2.89", "CleanSweep-v2.89.apk", 14719995, "1eb064d81102c7cc32fb1cb9ea386b6cb3aa235900b1c119b1783b68f342c698"),
               ("tamilan-store-v0.9", "Tamilan-Store-v0.9.apk", 19309106, "6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab"),
               ("live-guard-v2.88", "CleanSweep-v2.88.apk", 14680987, "87be21168e9f7d619ee8709163f632ebfd79b1a731d2b45e8b4d6618ca43a70c"),
@@ -210,6 +211,8 @@ jobs:
           test -s site/apks/Voice-Notes-v1.3.3.zip
           test -s site/apks/CleanSweep-v2.75.apk
           test -s site/apks/CleanSweep-v2.75.zip
+          test -s site/apks/CleanSweep-v2.93.apk
+          test -s site/apks/CleanSweep-v2.93.zip
           test -s site/apks/CleanSweep-v2.89.apk
           test -s site/apks/CleanSweep-v2.89.zip
           test -s site/apks/CleanSweep-v2.88.apk
@@ -273,7 +276,7 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-      - name: Verify deployed metadata, four exact public APK/ZIP downloads and safe Launcher screenshots
+      - name: Verify deployed metadata, six exact public APK/ZIP downloads and safe Launcher screenshots
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
         run: python3 tools/verify_live_three_releases.py
