@@ -6,7 +6,7 @@
 - Widget Refresh queues one coalesced, bounded, silent check of saved-home regional reports and weather. It does not turn disaster news ON, speak, post disaster notifications or consume spoken/read delivery counts. No new periodic disaster poller or permissions. OFF preferences are retained; Android scheduling and network restrictions still apply.
 - Preserve the accepted concise cyclone/news/rain speech, top Read control, optional default-OFF quiet beep, three-segment D/U, saved home and existing settings. No sibling rebuild or older public asset replacement.
 
-Candidate verification pending when these notes were prepared; final results are recorded separately in the candidate/publication receipt. No physical-device test, audible-output test, all-OEM proof, live-provider accuracy proof or Play Protect clearance claim. Install as a same-key update; do not uninstall or clear local data. Uninstalling may erase local data.
+Verified source6635216, CI41574228784/job125713908983:876 executed JVM tests/83suites,352 Python checks, build/lint/signer/full permission equality, exact public2.89 same-key/same-UID saved-data/preferences/restart update and all5 Android35 native tests passed. Actual widget inflation verifies dated reports/control bounds at400×250dp and explicit missing-report status at400×165dp. Exact candidate bytes only; publication has a separate pinned immutable receipt. No physical-device test, audible-output test, all-OEM proof, live-provider accuracy proof or Play Protect clearance claim. Install as a same-key update; do not uninstall or clear local data. Uninstalling may erase local data.
 
 ## தமிழ்
 
