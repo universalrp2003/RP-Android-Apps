@@ -305,6 +305,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 try {
                     if(com.oorarivippu.voiceannouncer.family.FamilyRepository.configured) {
                         com.oorarivippu.voiceannouncer.family.FamilyRepository.views(this@LocationAnnouncementService)
+                        updateForegroundNotification()
                         familySpeechRequested=true
                         announceFamilyUpdates()
                     }

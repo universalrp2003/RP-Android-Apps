@@ -130,7 +130,9 @@ object FamilyRepository {
         } }
     }
     private fun renewLeases(c: Context) {
-        for(row in FamilyStore.read(c)) {
+        for(snapshot in FamilyStore.read(c)) {
+            val row=FamilyStore.read(c).firstOrNull{it.getString("id")==snapshot.getString("id")}?:continue
+            if(row.optLong("revision")!=snapshot.optLong("revision"))continue
             val now=System.currentTimeMillis()
             if(!FamilySharingPolicy.renew(row.optBoolean("enabled"),row.optBoolean("approved"),AppPreferences.state.value.isTrackingEnabled,row.optString("pending").isNotEmpty(),row.optLong("until"),now))continue
             val revision=row.optLong("revision")
@@ -201,8 +203,10 @@ object FamilyRepository {
         val label=runCatching { FamilyProtocol.clean(town) }.getOrNull()?:return@withLock
         val region=runCatching { if(district.isBlank()) "" else FamilyProtocol.clean(district) }.getOrNull()?:return@withLock
         val now=System.currentTimeMillis()
-        for(row in FamilyStore.read(c)) {
-            if(!row.optBoolean("enabled") || row.optLong("until")<=now || row.optString("pending").isNotEmpty() || now-row.optLong("lastSent") !in FamilyProtocol.HEARTBEAT..Long.MAX_VALUE) continue
+        for(snapshot in FamilyStore.read(c)) {
+            // OFF/remove can arrive outside the network mutex. Re-read EACH recipient before upload.
+            val row=FamilyStore.read(c).firstOrNull{it.getString("id")==snapshot.getString("id")}?:continue
+            if(!FamilySharingPolicy.send(row.optBoolean("enabled"),row.optLong("revision"),snapshot.optLong("revision"),row.optString("pending").isNotEmpty(),AppPreferences.state.value.isTrackingEnabled,row.optLong("until"),System.currentTimeMillis()) || now-row.optLong("lastSent") !in FamilyProtocol.HEARTBEAT..Long.MAX_VALUE)continue
             if(!AppPreferences.state.value.isTrackingEnabled) break
             runCatching {
                 api(row,"PUT","town",FamilyProtocol.encrypt(row.getString("id"),row.getString("role"),row.getString("key"),FamilyProtocol.Town(label,region,fix.time),row.getInt("generation")))

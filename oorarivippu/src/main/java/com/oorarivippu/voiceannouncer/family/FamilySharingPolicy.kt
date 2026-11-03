@@ -8,6 +8,8 @@ object FamilySharingPolicy {
         enabled && approved && tracking && !pending && until-now < RENEW_BEFORE
     fun acceptLease(enabled: Boolean, revision: Long, current: Long, pending: Boolean, tracking: Boolean) =
         enabled && FamilyProtocol.canAcceptStart(revision,current,pending,tracking)
+    fun send(enabled: Boolean,revision: Long,snapshotRevision: Long,pending: Boolean,tracking: Boolean,until: Long,now: Long) =
+        enabled && revision==snapshotRevision && !pending && tracking && until>now
     fun fresh(at: Long,now: Long) = at>0 && now-at in 0 until FamilyProtocol.TTL
     fun announce(approved: Boolean,at: Long,previous: Long,now: Long) = approved && fresh(at,now) && at>previous
     fun audioAllowed(normalRinger: Boolean,dndClear: Boolean,call: Boolean,mediaVolume: Int,speechVolume: Int) =

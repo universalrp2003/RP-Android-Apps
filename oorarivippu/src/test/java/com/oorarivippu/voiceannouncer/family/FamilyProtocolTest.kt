@@ -23,7 +23,7 @@ class FamilyProtocolTest {
     @Test fun aStopRevisionCannotBeOverwrittenByStartReply() { assertTrue(FamilyProtocol.canAcceptStart(0,0,false,true));assertFalse(FamilyProtocol.canAcceptStart(0,1,false,true));assertFalse(FamilyProtocol.canAcceptStart(1,2,true,true)) }
     @Test fun startingNeedsTrackingAndNoPendingStop() { assertFalse(FamilyProtocol.canAcceptStart(0,0,true,true));assertFalse(FamilyProtocol.canAcceptStart(0,0,false,false)) }
     @Test fun persistentOnPausesWithoutTracking() {assertFalse(FamilySharingPolicy.renew(true,true,false,false,0,now))}
-    @Test fun explicitOffNeverRenews() {assertFalse(FamilySharingPolicy.renew(false,true,true,false,0,now))}
+    @Test fun explicitOffNeverRenews() {assertFalse(FamilySharingPolicy.renew(false,true,true,false,0,now));assertFalse(FamilySharingPolicy.send(false,1,1,false,true,now+1,now));assertFalse(FamilySharingPolicy.send(true,2,1,false,true,now+1,now));assertFalse(FamilySharingPolicy.send(true,1,1,true,true,now+1,now));assertTrue(FamilySharingPolicy.send(true,1,1,false,true,now+1,now))}
     @Test fun unverifiedConnectionNeverRenews() {assertFalse(FamilySharingPolicy.renew(true,false,true,false,0,now))}
     @Test fun pendingStopNeverRenews() {assertFalse(FamilySharingPolicy.renew(true,true,true,true,0,now))}
     @Test fun renewOnlyNearLeaseExpiry() {assertTrue(FamilySharingPolicy.renew(true,true,true,false,now,now));assertFalse(FamilySharingPolicy.renew(true,true,true,false,now+FamilySharingPolicy.LEASE,now))}
