@@ -20,4 +20,6 @@ class FamilyProtocolTest {
     @Test fun noNumericAddressesPinsOrCoordinatesInLabels() { for(s in listOf("10.1,78.2","Town 622301","12 Main Street","","x".repeat(81)))assertTrue(runCatching{FamilyProtocol.clean(s)}.isFailure);assertEquals("ஆலங்குடி",FamilyProtocol.clean("ஆலங்குடி")) }
     @Test fun fixRequiresWallMonotonicFreshnessAndAccuracy() { assertTrue(FamilyProtocol.freshFix(1000,1000,500f));assertFalse(FamilyProtocol.freshFix(1000,130000,500f));assertFalse(FamilyProtocol.freshFix(-1,1000,500f));assertFalse(FamilyProtocol.freshFix(1000,1000,Float.NaN));assertFalse(FamilyProtocol.freshFix(1000,1000,5001f)) }
     @Test fun confirmationBindsInviteAndGuestNonce() { assertEquals(FamilyProtocol.verification(id,key,"d".repeat(32)),FamilyProtocol.verification(id,key,"d".repeat(32)));assertNotEquals(FamilyProtocol.verification(id,key,"d".repeat(32)),FamilyProtocol.verification(id,key,"e".repeat(32))) }
+    @Test fun aStopRevisionCannotBeOverwrittenByStartReply() { assertTrue(FamilyProtocol.canAcceptStart(0,0,false,true));assertFalse(FamilyProtocol.canAcceptStart(0,1,false,true));assertFalse(FamilyProtocol.canAcceptStart(1,2,true,true)) }
+    @Test fun startingNeedsTrackingAndNoPendingStop() { assertFalse(FamilyProtocol.canAcceptStart(0,0,true,true));assertFalse(FamilyProtocol.canAcceptStart(0,0,false,false)) }
 }

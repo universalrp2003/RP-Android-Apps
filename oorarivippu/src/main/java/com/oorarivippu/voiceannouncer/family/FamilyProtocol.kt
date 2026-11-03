@@ -33,6 +33,8 @@ object FamilyProtocol {
         return sha("oor-family-verify/v1|$id|$key|$confirmation").take(5).joinToString("") { "%02x".format(it.toInt() and 255) }.chunked(5).joinToString(" ")
     }
     fun clean(raw: String): String = raw.trim().replace(Regex("\\s+")," ").also { require(label.matches(it) && it.any(Char::isLetter)) }
+    fun canAcceptStart(expectedRevision: Long,currentRevision: Long,pending: Boolean,tracking: Boolean): Boolean =
+        expectedRevision==currentRevision && !pending && tracking
     fun freshFix(wallAge: Long, elapsedAge: Long, accuracy: Float): Boolean = wallAge in 0..120_000 && elapsedAge in 0..120_000 && accuracy.isFinite() && accuracy in 0f..5000f
     data class Town(val town: String,val district: String,val at: Long)
     private fun aad(id: String,role: String,at: Long): ByteArray { require(hex32.matches(id) && role in setOf("a","b"));return "oor-family-town/v1|$id|$role|$at".toByteArray(Charsets.UTF_8) }
