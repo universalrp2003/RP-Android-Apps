@@ -60,10 +60,22 @@ def main():
     def nodes():
         adb('shell','uiautomator','dump','/sdcard/oor-family-ui.xml')
         return list(ET.fromstring(adb('shell','cat','/sdcard/oor-family-ui.xml')).iter('node'))
+    dismissed_launcher_anr=False
     def wait(label,scroll=False):
+        nonlocal dismissed_launcher_anr
         until=time.monotonic()+35
         while time.monotonic()<until:
             candidates=nodes()
+            # Disposable emulator boot can leave Google's launcher ANR on top of our activity.
+            # Recover ONCE from that exact unrelated system-app dialog; never hide an Oor ANR.
+            if not dismissed_launcher_anr and any("Pixel Launcher" in n.get('text','') and "responding" in n.get('text','') for n in candidates):
+                close=next((n for n in candidates if n.get('text')=='Close app'),None)
+                assert close is not None
+                x1,y1,x2,y2=map(int,re.findall(r'\d+',close.get('bounds','')))
+                adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2))
+                dismissed_launcher_anr=True
+                adb('shell','am','start','-W','-n',PKG+'/.MainActivity')
+                continue
             found=next((n for n in candidates if n.get('text')==label),None)
             if found is None and label in ('தமிழ்','ENG'):
                 found=next((n for n in candidates if 'தமிழ்' in n.get('text','') and 'ENG' in n.get('text','')),None)
