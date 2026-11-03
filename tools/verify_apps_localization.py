@@ -744,8 +744,7 @@ def verify_about_links() -> None:
     # still used by the isolated Secret Message preview below.
     for required in (
         'SisterApps.releaseLinks(excludeId = "oorarivippu")',
-        'SisterApps.byId("oorarivippu")',
-        'SisterApps.releaseUrl(app)',
+        'SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu"',
         'https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html',
     ):
         if required not in oor_source:

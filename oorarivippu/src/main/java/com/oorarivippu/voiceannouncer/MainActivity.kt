@@ -1360,13 +1360,13 @@ private fun OorSettingsFullDialog(
                                 "Stopping a trip pauses uploads, not your saved sharing switch. The latest encrypted town report expires within 15 minutes. Family speech is on-device only; this is not live or emergency tracking.",
                             fontSize = 13.sp
                         )
-                        com.universalrp.updates.SisterApps.byId("oorarivippu")?.let { app ->
-                            TextButton(
-                                onClick = { openExternalLink(context, com.universalrp.updates.SisterApps.releaseUrl(app)) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Text(if (oorIsTamil) "வெளியிடப்பட்ட பதிப்பு: ${app.publishedVersion}" else "Published release: ${app.publishedVersion}")
-                            }
+                        // The live app section stays current after future releases; a build-time
+                        // publishedVersion would otherwise permanently link to its predecessor.
+                        TextButton(
+                            onClick = { openExternalLink(context, com.universalrp.updates.SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (oorIsTamil) "ஊர் அறிவிப்பின் சமீபத்திய பொதுப் பதிப்பு" else "Latest public Oor release")
                         }
                         TextButton(
                             onClick = { openExternalLink(context, "https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html") },

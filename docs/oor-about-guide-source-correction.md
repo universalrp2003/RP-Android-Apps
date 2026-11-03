@@ -3,7 +3,7 @@
 The owner correctly identified that the built-in About/Guide had been missed. Publishing website text and masked screenshots did not change the installed 1.1.15 APK.
 
 ## Corrections
-- Replace the second hardcoded, stale seven-release list with `SisterApps` verified public metadata. Show Oor's public release separately; exclude self from Other Apps. Preserve installed-version lookup, credits, official repositories and the clearly labelled legacy mirror.
+- Replace the second hardcoded, stale seven-release list with `SisterApps` verified public metadata. Link Oor's latest public release to its live website app section (not a build-time predecessor tag), separately; exclude self from Other Apps. Preserve installed-version lookup, credits, official repositories and the clearly labelled legacy mirror.
 - Add English/Tamil optional-family summary and a direct link to the live bilingual web guide and reviewed masked screenshots.
 - Update only Oor's shared built-in guide: mutual confirmation/default OFF, six connections including pending, saved per-person ON/OFF, trip-only upload/pause, old timed-grant migration OFF, freshness/expiry, receiver window, private device-only speech and audio limits, provider boundaries and no emergency/all-clear guarantee.
 - Replace misleading unconditional 24×7/free/minute-precise weather guidance with actual active-host, saved-OFF and provider/coverage/quota/Android limitations. No weather runtime change.

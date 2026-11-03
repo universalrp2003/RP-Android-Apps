@@ -14,7 +14,7 @@ class OorAboutGuideContracts(unittest.TestCase):
         localization.verify_about_links()
         text=MAIN.read_text()
         for required in ('SisterApps.releaseLinks(excludeId = "oorarivippu")',
-                         'SisterApps.byId("oorarivippu")','SisterApps.releaseUrl(app)',
+                         'SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu"',
                          'oor-arivippu-guide.html','${ui.aboutVersionLabel}: $installedVersion'):
             self.assertIn(required,text)
         self.assertNotIn('/releases/tag/',text)
