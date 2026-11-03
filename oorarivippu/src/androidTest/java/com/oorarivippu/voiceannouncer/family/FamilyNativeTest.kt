@@ -43,7 +43,11 @@ class FamilyNativeTest {
             val id=FamilyProtocol.invite(invitation).id
             FamilyRepository.join(b,"Synthetic Parent",invitation)
             assertEquals(0,FamilyStore.active(a));assertEquals(0,FamilyStore.active(b))
+            // Simulate lost setup acknowledgements: same identities must retry idempotently.
+            FamilyStore.change(a){it.single().put("pending","create")}
+            FamilyStore.change(b){it.single().put("pending","claim").put("invite",FamilyProtocol.invite(invitation).token)}
             val av=FamilyRepository.views(a).single();val bv=FamilyRepository.views(b).single()
+            assertFalse(av.setupPending);assertFalse(bv.setupPending)
             assertEquals(av.code,bv.code);assertFalse(av.confirmed);assertNull(av.town)
             FamilyRepository.confirm(a,id)
             AppPreferences.setTrackingEnabled(true)

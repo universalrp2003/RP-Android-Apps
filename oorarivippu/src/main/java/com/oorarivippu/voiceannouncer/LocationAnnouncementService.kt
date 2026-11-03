@@ -737,7 +737,10 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 // Fresh geocoder locality/district only; NEVER subarea, road, PIN, speed or coordinates.
                 if (com.oorarivippu.voiceannouncer.family.FamilyStore.active(this@LocationAnnouncementService) > 0) {
                     serviceScope.launch {
-                        com.oorarivippu.voiceannouncer.family.FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage, resolved.district, location)
+                        try {
+                            com.oorarivippu.voiceannouncer.family.FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage, resolved.district, location)
+                        } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch(_:Exception) { /* Family/storage failure never breaks accepted trip announcements. */ }
                     }
                 }
                 if (cityOrVillage.isBlank()) return@launch

@@ -40,18 +40,22 @@ object FamilyRepository {
     suspend fun create(c: Context,name: String): String = withContext(Dispatchers.IO) { lock.withLock {
         require(FamilyStore.read(c).size<FamilyProtocol.MAX_MEMBERS)
         val row=JSONObject().put("id",FamilyProtocol.random(16)).put("role","a").put("auth",FamilyProtocol.random()).put("key",FamilyProtocol.random()).put("invite",FamilyProtocol.random()).put("name",FamilyProtocol.clean(name)).put("until",0).put("pending","")
+        row.put("pending","create")
+        FamilyStore.change(c){ it.add(row) } // Persist capabilities BEFORE HTTP: a lost reply can be retried safely.
         api(row,"POST","create",JSONObject().put("inviteHash",FamilyProtocol.authHash(row.getString("invite"))))
-        FamilyStore.change(c){ it.add(row) }
+        update(c,row.getString("id")){it.put("pending","")}
         FamilyProtocol.Invite(row.getString("id"),row.getString("invite"),row.getString("key")).text()
     } }
     suspend fun join(c: Context,name: String,code: String) = withContext(Dispatchers.IO) { lock.withLock {
         val invite=FamilyProtocol.invite(code)
         require(FamilyStore.read(c).size<FamilyProtocol.MAX_MEMBERS && FamilyStore.read(c).none { it.optString("id")==invite.id })
         val row=JSONObject().put("id",invite.id).put("role","b").put("auth",FamilyProtocol.random()).put("key",invite.key).put("name",FamilyProtocol.clean(name)).put("until",0).put("pending","")
-        api(row,"POST","claim",JSONObject().put("guestHash",FamilyProtocol.authHash(row.getString("auth"))).put("confirmation",FamilyProtocol.random(16)),invite.token)
+        row.put("pending","claim").put("invite",invite.token).put("confirmation",FamilyProtocol.random(16))
         FamilyStore.change(c){ it.add(row) }
+        api(row,"POST","claim",JSONObject().put("guestHash",FamilyProtocol.authHash(row.getString("auth"))).put("confirmation",row.getString("confirmation")),invite.token)
+        update(c,invite.id){it.put("pending","");it.remove("invite")}
     } }
-    data class View(val id: String,val name: String,val paired: Boolean,val confirmed: Boolean,val myConfirmed: Boolean,val code: String,val town: FamilyProtocol.Town?,val sharing: Boolean,val pending: Boolean,val unavailable: Boolean)
+    data class View(val id: String,val name: String,val paired: Boolean,val confirmed: Boolean,val myConfirmed: Boolean,val code: String,val town: FamilyProtocol.Town?,val sharing: Boolean,val pending: Boolean,val unavailable: Boolean,val setupPending: Boolean,val invitation: String)
     suspend fun views(c: Context): List<View> = withContext(Dispatchers.IO) { lock.withLock {
         flush(c)
         FamilyStore.read(c).map { row ->
@@ -62,9 +66,12 @@ object FamilyRepository {
             if(confirmation.isNotEmpty()) update(c,id){it.put("confirmation",confirmation)}
             val approved=status?.optJSONObject("confirmed")?.let{it.optBoolean("a")&&it.optBoolean("b")}==true
             val now=System.currentTimeMillis()
+            val latest=FamilyStore.read(c).firstOrNull{it.getString("id")==id}?:row
             val town=if(approved && row.optString("pending").isEmpty()) runCatching { status!!.optJSONObject("update")?.let { FamilyProtocol.decrypt(id,other,row.getString("key"),it,status!!.getLong("now"),now) } }.getOrNull() else null
             View(id,row.getString("name"),status?.optBoolean("paired")==true,approved,status?.optJSONObject("confirmed")?.optBoolean(role)==true,
-                if(confirmation.isEmpty()) "" else FamilyProtocol.verification(id,row.getString("key"),confirmation),town,row.optLong("until")>now && row.optString("pending").isEmpty(),row.optString("pending").isNotEmpty(),status==null)
+                if(confirmation.isEmpty()) "" else FamilyProtocol.verification(id,row.getString("key"),confirmation),town,latest.optLong("until")>now && latest.optString("pending").isEmpty(),latest.optString("pending").isNotEmpty(),status==null,
+                latest.optString("pending") in listOf("create","claim"),
+                if(role=="a" && status?.optBoolean("paired")!=true && latest.optString("invite").isNotEmpty()) FamilyProtocol.Invite(id,latest.getString("invite"),latest.getString("key")).text() else "")
         }
     } }
     suspend fun confirm(c: Context,id: String) = withContext(Dispatchers.IO) { lock.withLock {
@@ -89,9 +96,23 @@ object FamilyRepository {
         for(row in FamilyStore.read(c)) {
             val pending=row.optString("pending");if(pending.isEmpty()) continue
             try {
-                if(pending=="remove") api(row,"DELETE","pair") else api(row,"PUT","consent",JSONObject().put("until",0))
-            } catch(e:FamilyFailure) { if(e.code !in listOf(403,404,410)) continue } catch(_:Exception) { continue }
-            FamilyStore.change(c){ rows->if(pending=="remove") rows.removeAll {it.getString("id")==row.getString("id")} else rows.firstOrNull{it.getString("id")==row.getString("id")}?.put("pending","") }
+                when(pending) {
+                    "create" -> api(row,"POST","create",JSONObject().put("inviteHash",FamilyProtocol.authHash(row.getString("invite"))))
+                    "claim" -> api(row,"POST","claim",JSONObject().put("guestHash",FamilyProtocol.authHash(row.getString("auth"))).put("confirmation",row.getString("confirmation")),row.getString("invite"))
+                    "remove" -> api(row,"DELETE","pair")
+                    "stop" -> api(row,"PUT","consent",JSONObject().put("until",0))
+                    else -> continue
+                }
+            } catch(e:FamilyFailure) {
+                if(pending !in listOf("remove","stop") || e.code !in listOf(403,404,410)) continue
+            } catch(_:Exception) { continue }
+            FamilyStore.change(c){ rows->
+                if(pending=="remove") rows.removeAll {it.getString("id")==row.getString("id")}
+                else rows.firstOrNull{it.getString("id")==row.getString("id")}?.let{
+                    // Do not overwrite a newer local stop/remove while a setup response was in flight.
+                    if(it.optString("pending")==pending) { it.put("pending","");if(pending=="claim")it.remove("invite") }
+                }
+            }
         }
     }
     suspend fun publish(c: Context,town: String,district: String,fix: Location) = withContext(Dispatchers.IO) { lock.withLock {
