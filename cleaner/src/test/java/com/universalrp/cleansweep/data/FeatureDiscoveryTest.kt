@@ -47,5 +47,17 @@ class FeatureDiscoveryTest {
     @Test fun silentNotificationsAreAskFirstAndNotNowStaysOff() { val f=FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS;assertEquals(ask,f.mode);assertFalse(FeatureDiscovery.enabled(c,f));assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.NOT_NOW));assertTrue(FeatureDiscovery.seen(c,f));assertFalse(FeatureDiscovery.enabled(c,f)) }
     @Test fun explicitSilentNotificationEnableDoesNotTurnNewsBackOn() { val f=FeatureDiscovery.Feature.DISASTER_NOTIFICATIONS;NewsDisasterUpdates.setEnabled(c,false);assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.ENABLE));assertTrue(FeatureDiscovery.enabled(c,f));assertFalse(NewsDisasterUpdates.enabled(c)) }
     @Test fun noSignalIsAskFirstNotNowKeepsOff() { val f=FeatureDiscovery.Feature.NO_SIGNAL_BEEP;assertEquals(ask,f.mode);assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.NOT_NOW));assertFalse(FeatureDiscovery.enabled(c,f));assertTrue(FeatureDiscovery.seen(c,f)) }
-    @Test fun noSignalEnableLeavesNewsAndVoiceOff() { val f=FeatureDiscovery.Feature.NO_SIGNAL_BEEP;NewsDisasterUpdates.setEnabled(c,false);com.universalrp.cleansweep.voice.Announcer.prefs(c).edit().putBoolean(com.universalrp.cleansweep.voice.Announcer.KEY_ON,false).commit();assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.ENABLE));assertTrue(FeatureDiscovery.enabled(c,f));assertFalse(NewsDisasterUpdates.enabled(c));assertFalse(com.universalrp.cleansweep.voice.Announcer.enabled(c)) }
+    @Test fun noSignalEnableLeavesNewsAndVoiceOff() {
+        val f = FeatureDiscovery.Feature.NO_SIGNAL_BEEP
+        NewsDisasterUpdates.setEnabled(c,false)
+        // Model an existing user's explicit OFF after the historical one-time HD-default migration.
+        com.universalrp.cleansweep.voice.Announcer.ensureHdVoiceDefaults262(c)
+        com.universalrp.cleansweep.voice.Announcer.prefs(c).edit()
+            .putBoolean(com.universalrp.cleansweep.voice.Announcer.KEY_ON,false).commit()
+        assertFalse("Fixture starts with migrated explicit voice OFF",com.universalrp.cleansweep.voice.Announcer.enabled(c))
+        assertTrue(FeatureDiscovery.respond(c,f,FeatureDiscovery.Choice.ENABLE))
+        assertTrue(FeatureDiscovery.enabled(c,f))
+        assertFalse("Beep cannot enable disaster news",NewsDisasterUpdates.enabled(c))
+        assertFalse("Beep cannot re-enable voice",com.universalrp.cleansweep.voice.Announcer.enabled(c))
+    }
 }
