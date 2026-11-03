@@ -1,3 +1,10 @@
+## Oor Arivippu1.1.15 — owner-authorized exact configured APK, 3 November2026
+
+- Public [Oor-Arivippu-v1.1.15.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.15/Oor-Arivippu-v1.1.15.apk): **12891952 bytes**, SHA256 `ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5`.
+- Native CI41644644026/job125947282795/sourceb5cdd433d36e9abbbee7cbb52238f4a276b627a7/artifact13234478573; archiveSHA `b4a35d24ac6114373588cd1c9c92ddcf2fc4cdcfa7097daee9d6f27c514fc3f7`. Stable signer, unchanged full permission set vs public1.1.10 (`7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa`). 30familyJVM/19backend/360Python/2Android35 logical paired-store native tests, lint, exact installed emulator hash and same-key selected saved-data/restart continuity passed. No rebuild for publication.
+- Publisher41650005746/job125965340754 SUCCESS; release432774743/APK705821389/checksum705821391; public2026-11-03T14:04:12Z. Independently checked pinned native run/steps, safe artifact/archive/APK hashes, identity/signer/permissions/baseline, draft AND public downloads; all older public release assets unchanged. Rechecked live isolated relay with synthetic clients; no service deployment or sibling APK publication.
+- Owner reports1.1.15 installed/working, with private screenshots of main family member/town and saved ON; not independent physical installed-hash, audible-playback, all-OEM/security or PlayProtect proof. Keep candidate receipt historical flags; separate authorization/publication receipt: `docs/oor-family-1.1.15-publication-receipt.json`. Do NOT rerun the guarded publisher now its tag exists. Main Pages integration/live guide/catalog/APK+ZIP checks still pending at this entry's creation.
+
 # Verified published Android APK digests
 
 ## Live Guard2.93 — owner-authorized dBm, About and widget correction

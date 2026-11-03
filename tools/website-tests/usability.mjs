@@ -169,5 +169,43 @@ try {
       assert.deepEqual(result.violations.map(item => ({ id: item.id, nodes: item.nodes.map(node => node.html) })), []);
     }
   });
+  await test('Oor bilingual guide is responsive at 320/390/768/1280 and 200% text', async page => {
+    await page.goto(base + '/oor-arivippu-guide.html');
+    assert.equal(await page.locator('section[lang="ta"]').count(), 1);
+    assert.equal(await page.locator('img').count(), 0, 'private screenshots excluded');
+    assert.match(await page.locator('body').innerText(), /Pending invitations count/);
+    for (const width of [320, 390, 768, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'guide width '+width);
+    }
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.evaluate(() => document.documentElement.style.fontSize = '200%');
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'guide text scale');
+  });
+  await test('Oor guide native keyboard FAQ and Tamil anchors work', async page => {
+    await page.goto(base + '/oor-arivippu-guide.html');
+    await page.locator('a[href="#tamil"]').click();
+    await page.waitForURL('**/#tamil');
+    const faq=page.locator('details').first();
+    await faq.locator('summary').focus(); await page.keyboard.press('Enter');
+    assert.equal(await faq.evaluate(node => node.open), true);
+    await page.keyboard.press('Enter');
+    assert.equal(await faq.evaluate(node => node.open), false);
+    assert.equal(await page.locator('a.download').getAttribute('href'), 'https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.15/Oor-Arivippu-v1.1.15.apk');
+  });
+  await test('Oor guide accessibility including expanded troubleshooting', async page => {
+    await page.goto(base + '/oor-arivippu-guide.html');
+    await page.locator('details').evaluateAll(nodes => nodes.forEach(node => node.open=true));
+    const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
+    assert.deepEqual(result.violations.map(item=>({id:item.id,nodes:item.nodes.map(node=>node.html)})),[]);
+  });
+  await test('Oor guide stays useful without JavaScript', async page => {
+    await page.goto(base + '/oor-arivippu-guide.html');
+    await page.locator('a[href="#privacy"]').click();
+    await page.waitForURL('**/#privacy');
+    await page.locator('details').first().locator('summary').click();
+    assert.equal(await page.locator('details').first().evaluate(node=>node.open),true);
+    assert.equal(await page.locator('#tamil').count(),1);
+  }, {javaScriptEnabled:false});
   console.log(`${passed} browser checks passed.`);
 } finally { await browser.close(); }
