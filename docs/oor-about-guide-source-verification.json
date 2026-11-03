@@ -1,0 +1,21 @@
+{
+  "scope": "Oor About/Guide source only, not a new APK release",
+  "source": "336a779bffb1e7f2cfe5ad9abb9bb5531210d90a",
+  "run_id": 41662291118,
+  "job_id": 126008336139,
+  "conclusion": "success",
+  "local_python_tests": 375,
+  "unit_tests_passed": 98,
+  "required_about_guide_tests_passed": 4,
+  "allowed_preexisting_external_live_speech_probes_not_run": 1,
+  "unexpected_skips": 0,
+  "failures": 0,
+  "release_kotlin_compiled": true,
+  "release_lint_passed": true,
+  "apk_assembled_in_dedicated_workflow": false,
+  "new_apk_delivered": false,
+  "publication_authorized": false,
+  "installed_about_updated": false,
+  "draft_pull_request": 88,
+  "unchanged_public_apk_sha256": "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5"
+}

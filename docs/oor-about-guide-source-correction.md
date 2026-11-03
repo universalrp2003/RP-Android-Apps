@@ -17,3 +17,6 @@ These edits do **not** update a phone, authorize another publication, rebuild th
 The dedicated workflow compiles Oor, runs its actual unit tests and release lint, uploads reports only and never assembles/publishes an APK. Source checks alone are not native layout, phone, audio or installed-version proof.
 
 The original compilation, unit-test and lint step passed, but the first report gate incorrectly rejected the pre-existing opt-in external live-speech test's deliberate skip. The gate now names and reports only that one allowed skipped probe; required guide tests and every other deterministic test must run without failures or skips. No live audio success is inferred.
+
+## Verified source result
+CI41662291118/job126008336139 at source336a779 SUCCESS: release Kotlin compile, release lint,98actual unit tests including all4new About/Guide tests, no failures/unexpected skips. One pre-existing opt-in external live-speech probe was explicitly not run; no audible-speech claim. Local375Python/localization passed. DraftPR88 remains unmerged. No new APK delivered or published; installed1.1.15 unchanged. See `oor-about-guide-source-verification.json`.
