@@ -4,10 +4,11 @@ from html.parser import HTMLParser
 import json
 from pathlib import Path
 import re
+import sys
 import unittest
-from promote_verified_oor_115 import validate_receipt, SIGNER, OLD_TAG, OLD_SHA, CANDIDATE_NAME
-
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+from promote_verified_oor_115 import validate_receipt, SIGNER, OLD_TAG, OLD_SHA, CANDIDATE_NAME
 
 class GuideHTML(HTMLParser):
     def __init__(self, source):
