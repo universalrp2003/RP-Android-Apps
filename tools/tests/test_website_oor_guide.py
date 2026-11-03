@@ -27,7 +27,9 @@ class OorGuideTests(unittest.TestCase):
         self.assertEqual(len(html.ids),len(set(html.ids)))
         for link in html.links:
             if link.startswith('#'):self.assertIn(link[1:],html.ids)
-        self.assertEqual(html.images,[]);self.assertEqual(html.scripts,[])
+        review=json.loads((ROOT/"docs/oor-family-1.1.15-gallery-review.json").read_text())
+        self.assertTrue(review["visual_review_completed"])
+        self.assertEqual(html.images,[im["website"] for im in review["images"]]);self.assertEqual(html.scripts,[])
         self.assertIn('lang="ta"',source);self.assertIn('name="viewport"',source)
         self.assertNotIn('/tmp/',source);self.assertNotIn('Screenshot_2026',source)
         self.assertIn('oor-arivippu-guide.html',(ROOT/'site/index.html').read_text())
