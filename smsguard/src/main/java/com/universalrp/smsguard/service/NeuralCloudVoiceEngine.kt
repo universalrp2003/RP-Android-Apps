@@ -274,7 +274,7 @@ object NeuralCloudVoiceEngine {
                 diagnostic?.invoke("HD_VOICE_SELECTED=$selected")
                 onVoiceSelected?.invoke(selected)
             }) { candidate, budget ->
-            diagnostic?.invoke("HD_VOICE_ATTEMPT=$candidate")
+            diagnostic?.invoke("HD_VOICE_ATTEMPT=$candidate budgetMs=$budget")
             val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(candidate)
             if (!networkAllowed()) null else streamWebSocketOnce(safeText, serverVoice, rate, budget,
                 diagnostic = diagnostic, networkAllowed = networkAllowed)

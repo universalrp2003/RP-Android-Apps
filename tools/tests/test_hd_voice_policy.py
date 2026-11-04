@@ -61,6 +61,20 @@ class HdVoicePolicyTest(unittest.TestCase):
         self.assertIn('allowVoiceFallback = false', probe)
         self.assertTrue((ROOT/'docs/sms-voice-null-audio-issue-49.md').exists())
 
+    def test_one_deadline_is_shared_55_30_15_so_a_slow_first_voice_is_not_abandoned(self):
+        # Issue #49: equal thirds (1,400 ms each) were shorter than the service's own
+        # time-to-first-audio, so healthy attempts were thrown away and the caller saw null.
+        failover = (ROOT/'shared/src/main/java/com/universalrp/voice/NeuralVoiceFailover.kt').read_text()
+        policy = (ROOT/'shared/src/main/java/com/universalrp/voice/NeuralBudgetPolicy.kt').read_text()
+        self.assertIn('NeuralBudgetPolicy.share(', failover)
+        self.assertNotIn('remaining / (voices.size - index)', failover)
+        for weight in ('intArrayOf(55, 30, 15)', 'intArrayOf(65, 35)', 'intArrayOf(100)'):
+            self.assertIn(weight, policy)
+        self.assertIn('(index until voices).sumOf', policy)
+        # A patient caller still caps each attempt and is unaffected by the weighting.
+        clean = (ROOT/'cleaner/src/main/java/com/universalrp/cleansweep/voice/Announcer.kt').read_text()
+        self.assertIn('attemptTimeoutMs = NewsVoicePreparationPolicy.VOICE_ATTEMPT_TIMEOUT_MS', clean)
+
     def test_optional_model_monitoring_is_direct_and_never_silently_passes_dns(self):
         source = (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text()
         self.assertIn('allowVoiceFallback = false',source)
