@@ -52,7 +52,7 @@ Everything in this table must be green on the branch. If a row is red, do not me
 | `Website usability checks (no deployment)` | the 14 cards, dates, checksums, keyboard/a11y and the `tools/tests/test_website*.py` contracts |
 | `Deploy Official Website to GitHub Pages` (build job on the branch) | every mirror downloads and SHA-matches, the mirror budget holds |
 | the app's own release workflows (SMS Guard, Oor, Podcast, Vasanthi, …) | they build and verify without publishing |
-| local `python3 -m unittest discover -s tools/tests -q` | 421 Python checks today |
+| local `python3 -m unittest discover -s tools/tests -q` | 424 Python checks today |
 
 Local Gradle/Android builds are not possible in the Arena sandbox — Kotlin correctness is
 established by CI only. Do not describe a source check as a build.
@@ -107,7 +107,17 @@ Only two kinds of release may be mirrored:
 2. the historical builds `tools/verify_live_three_releases.py` byte-checks after each deploy.
 
 `tools/tests/test_website_mirror_budget.py` enforces both the rule and the `MIRROR_BUDGET` in
-`pages.yml`. When a new version ships, **drop an older mirror in the same change**; the retired
+`pages.yml`.
+
+**Actions artifacts are a separate pile with the same problem.** Every `Build APK` run uploads five
+APK/bundle packages; at 30-day retention that reached 9,299 packages and ~187 GB (free on a public
+repository, so it is hygiene rather than a bill, but it buries the runs anyone needs). The five
+heavy uploads now keep **7 days**, and `.github/workflows/cleanup-artifacts.yml` prunes the rest
+every six hours with `tools/cleanup_actions_artifacts.py`: at most 300 packages per run, never
+anything younger than 7 days, never the newest package of a pipeline/branch, never a recent Pages
+package, and never an artifact id quoted in `docs/` or `releases/`. A manual dispatch defaults to a
+dry run. The Arena integration cannot delete artifacts (403), so this workflow is the supported path
+— do not try to bulk-delete from a shell session. When a new version ships, **drop an older mirror in the same change**; the retired
 build stays downloadable from its GitHub release page, so no download is lost — only the duplicate
 copy on the website disappears.
 
@@ -151,7 +161,7 @@ sequence (§4), with a human deciding, not an assistant's tool call.
 
 Say what the evidence says and stop there:
 
-- ✅ "923 required JVM tests / 89 suites, 418→421 Python checks, 9 Android 35 native tests, exact
+- ✅ "923 required JVM tests / 89 suites, 418→424 Python checks, 9 Android 35 native tests, exact
   installed-byte hash matched, same key, no permission delta."
 - ❌ "Works on all phones", "Play Protect clean", "dual-SIM verified", "audible speech verified" —
   unless the owner personally reports that specific result on that specific phone, and then say it

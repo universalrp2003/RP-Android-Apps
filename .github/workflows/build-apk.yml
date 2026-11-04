@@ -1731,7 +1731,7 @@ jobs:
       - name: Upload Google Play bundles (.aab)
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 30
+          retention-days: 7
           name: store-bundles
           path: |
             cleaner/build/outputs/bundle/release/*.aab
@@ -1741,7 +1741,7 @@ jobs:
       - name: Upload CleanSweep APK
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 30
+          retention-days: 7
           name: cleansweep-apk
           path: |
             cleaner/build/outputs/apk/*/*.apk
@@ -1750,21 +1750,21 @@ jobs:
       - name: Upload PulseEQ APK
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 30
+          retention-days: 7
           name: pulseeq-apk
           path: equalizer/build/outputs/apk/*/*.apk
 
       - name: Upload Ramesh Radio APK
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 30
+          retention-days: 7
           name: ramesh-radio-apk
           path: radio/build/outputs/apk/*/*.apk
 
       - name: Upload RP Vocal Remover Studio APKs
         uses: actions/upload-artifact@v4
         with:
-          retention-days: 30
+          retention-days: 7
           name: rp-vocal-remover-studio-apks
           path: |
             vocalremover/build/outputs/apk/release/*.apk
