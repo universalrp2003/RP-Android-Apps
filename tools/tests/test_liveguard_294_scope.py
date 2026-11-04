@@ -3,7 +3,7 @@ import unittest
 ROOT=Path(__file__).resolve().parents[2]
 BASE=ROOT/'cleaner/src/main/java/com/universalrp/cleansweep'
 class LiveGuard294ScopeTests(unittest.TestCase):
-    def test_each_sim_uses_its_own_subscription_without_location(self):
+    def test_each_sim_uses_its_own_subscription_and_shared_safe_reader(self):
         s=(BASE/'notify/PillSignalReader.kt').read_text()
         self.assertIn('createForSubscriptionId(info.subscriptionId)',s)
         self.assertIn('simSlotIndex',s)
@@ -11,6 +11,7 @@ class LiveGuard294ScopeTests(unittest.TestCase):
         self.assertNotIn('allCellInfo',s)
         self.assertNotIn('ACCESS_FINE_LOCATION',s)
         self.assertIn('Manifest.permission.READ_PHONE_STATE',s)
+        self.assertIn('SubscriptionSignalReader.read(context, tm, subscriptions.size)',s)
     def test_default_does_not_overwrite_explicit_news_choice(self):
         s=(BASE/'data/NewsPreferences.kt').read_text()
         self.assertIn('getString("language", Language.TAMIL_TRANSLATED.name)',s)
@@ -30,7 +31,7 @@ class LiveGuard294ScopeTests(unittest.TestCase):
         self.assertIn('python3 tools/verify_liveguard_294_installed.py',s)
         gate=(ROOT/'tools/verify_liveguard_294_native.py').read_text()
         self.assertIn("('OfficialStatusNativeTest',5)",gate)
-        self.assertIn("('PillDefaultsNativeTest',3)",gate)
+        self.assertIn("('PillDefaultsNativeTest',4)",gate)
         self.assertNotIn('subprocess',gate)
         self.assertIn('final_installed_apk_sha256',gate)
         self.assertIn('Live-Guard-2.94-signed-tested-candidate',s)

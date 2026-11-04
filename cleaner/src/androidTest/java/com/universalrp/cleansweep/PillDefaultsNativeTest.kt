@@ -76,4 +76,30 @@ class PillDefaultsNativeTest {
             i.waitForIdleSync()
         }
     }
+    @Test fun actualOverlayOmitsUnavailableSignalsWithoutLosingDataOrMeter() {
+        assertTrue(StatusPill.canDraw(c))
+        val prefs=c.getSharedPreferences(StatusPill.PREFS,0)
+        val saved=prefs.getString(StatusPill.KEY_SIGNAL_MODE,null)
+        try {
+            StatusPill.setSignalMode(c,PillSignalPolicy.Mode.BOTH)
+            listOf(listOf(PillSignalPolicy.Sample(1,null,null),PillSignalPolicy.Sample(2,-95,"LTE_RSRP")),
+                emptyList()).forEach { samples ->
+                StatusPill.update(c,"12 MB",simSignals=samples)
+                i.waitForIdleSync()
+                i.runOnMainSync {
+                    val field=StatusPill::class.java.getDeclaredField("rootContainer").apply { isAccessible=true }
+                    val root=field.get(StatusPill) as LinearLayout
+                    val text=(root.getChildAt(0) as TextView).text.toString()
+                    assertTrue(text.contains("12 MB"))
+                    assertFalse(text.contains("S1"));assertFalse(text.contains("—"))
+                    if (samples.isEmpty()) assertEquals("12 MB",text) else assertTrue(text.contains("S2 ≈47%"))
+                    assertEquals(android.view.View.VISIBLE,root.getChildAt(1).visibility)
+                }
+            }
+        } finally {
+            prefs.edit().putString(StatusPill.KEY_SIGNAL_MODE,saved).commit()
+            StatusPill.remove();i.waitForIdleSync()
+        }
+    }
+
 }

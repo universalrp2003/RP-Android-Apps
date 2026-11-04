@@ -6,8 +6,9 @@ class LiveGuard293Corrections(unittest.TestCase):
     def test_dbm_with_measurement_kind_and_visible_estimate(self):
         s=(SRC/'ui/HomeScreen.kt').read_text()
         self.assertIn('percent(mobile?.signalDbm, mobile?.signalKind)',s)
-        self.assertIn('≈$it%',s)
-        self.assertIn('SimSignalPolicy.percent(it.dbm, kind(it))',(SRC/'data/MobileNet.kt').read_text())
+        self.assertIn('if (percent != null) Text("≈$percent%"',s)
+        self.assertIn('SubscriptionSignalReader.read(context, tm, sims.size, reportedCells)',(SRC/'data/MobileNet.kt').read_text())
+        self.assertIn('SimSignalPolicy.percent(it.first, it.second)',(SRC/'data/SubscriptionSignalReader.kt').read_text())
     def test_liveguard_only_about_filter_is_used(self):
         s=(SRC/'ui/AboutScreen.kt').read_text()
         self.assertIn('LiveGuardAboutPolicy.projectLinks',s)

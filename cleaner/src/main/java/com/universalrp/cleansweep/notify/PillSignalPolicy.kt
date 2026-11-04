@@ -11,13 +11,13 @@ object PillSignalPolicy {
     fun labels(samples: List<Sample>, mode: Mode): List<Label> {
         if (mode == Mode.OFF) return emptyList()
         val slots = samples.filter { it.slot in 1..2 }.distinctBy { it.slot }.sortedBy { it.slot }
-        // No readable subscription is unknown, not a zero-strength measurement.
+        // Select the physical slot first; an unknown first SIM must not silently become SIM2.
         val selected = if (mode == Mode.BOTH) (1..2).map { slot ->
             slots.firstOrNull { it.slot == slot } ?: Sample(slot, null, null)
         } else listOf(slots.firstOrNull() ?: Sample(1, null, null))
-        return selected.map {
-            val percent = SimSignalPolicy.percent(it.dbm, it.kind)
-            Label("S${it.slot} " + (percent?.let { value -> "≈$value%" } ?: "—"), SimSignalPolicy.tone(percent))
+        return selected.mapNotNull {
+            val percent = SimSignalPolicy.percent(it.dbm, it.kind) ?: return@mapNotNull null
+            Label("S${it.slot} ≈$percent%", SimSignalPolicy.tone(percent))
         }
     }
 }

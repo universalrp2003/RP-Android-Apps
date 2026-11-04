@@ -116,11 +116,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        com.universalrp.cleansweep.data.ForegroundSignalAccess.start()
         com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.syncSchedule(applicationContext)
         com.universalrp.cleansweep.notify.AutomaticAlerts.start(applicationContext, alertOwner)
     }
 
     override fun onStop() {
+        com.universalrp.cleansweep.data.ForegroundSignalAccess.stop()
         com.universalrp.cleansweep.voice.NewsAutoSchedule.requestDueCheck(applicationContext, delayMs = 15_000L)
         com.universalrp.cleansweep.notify.AutomaticAlerts.stop(alertOwner)
         super.onStop()

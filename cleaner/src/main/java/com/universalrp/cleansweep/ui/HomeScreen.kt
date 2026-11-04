@@ -796,14 +796,14 @@ private fun HomeMobileDataCard(state: UiState, vm: MainViewModel) {
                 Text(tr("Unlimited 5G mode • Counters hidden (user-set)"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             } else {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Column(Modifier.weight(1f)) {
+                    if (pack?.readingAvailable == true) Column(Modifier.weight(1f)) {
                         Text(tr("Mobile data (Today)"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Text(pack?.formattedToday ?: tr("Not measured"), style = MaterialTheme.typography.titleMedium,
+                        Text(pack.formattedToday, style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold, color = AccentCyan)
                     }
-                    Column(Modifier.weight(1f)) {
+                    if (pack?.readingAvailable == true && com.universalrp.cleansweep.data.DataUsageTracker.hasConfiguredPlan(androidx.compose.ui.platform.LocalContext.current)) Column(Modifier.weight(1f)) {
                         Text(tr("Pack balance left"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Text(pack?.formattedRemaining ?: tr("Not measured"), style = MaterialTheme.typography.titleMedium,
+                        Text(pack.formattedRemaining, style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold, color = AccentViolet)
                     }
                 }
@@ -819,10 +819,12 @@ private fun HomeMobileDataCard(state: UiState, vm: MainViewModel) {
                     Switch(checked = isUnlimited, onCheckedChange = { vm.setUnlimited5g(it) })
                 }
                 if (!isUnlimited) {
-                    Text(tr("Pack Plan: ") + (pack?.formattedPackTotal ?: tr("Not measured")) + " / " + (pack?.formattedPackLimit ?: tr("Not loaded")),
-                        style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                    LinearProgressIndicator(progress = { pack?.progressRatio ?: 0f }, modifier = Modifier.fillMaxWidth(),
-                        color = AccentCyan, trackColor = SurfaceHigh)
+                    if (pack?.readingAvailable == true && com.universalrp.cleansweep.data.DataUsageTracker.hasConfiguredPlan(androidx.compose.ui.platform.LocalContext.current)) {
+                        Text(tr("Pack Plan: ") + pack.formattedPackTotal + " / " + pack.formattedPackLimit,
+                            style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        LinearProgressIndicator(progress = { pack.progressRatio }, modifier = Modifier.fillMaxWidth(),
+                            color = AccentCyan, trackColor = SurfaceHigh)
+                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = { showQuotaDialog = true }, modifier = Modifier.weight(1f)) { Text(tr("Set Pack Size")) }
                         TextButton(onClick = { showResetDialog = true }, modifier = Modifier.weight(1f)) { Text(tr("Reset Recharge")) }
@@ -1363,19 +1365,22 @@ private fun HomeSectionHeader(
 private fun HomeMobileSignal(state: UiState, vm: MainViewModel) {
     val mobile = state.mobile
     val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(mobile?.signalDbm, mobile?.signalKind)
+    val operator = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(mobile?.operatorName)
+    val network = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(mobile?.networkType)
+    if (operator == null && network == null && percent == null) return
     val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(percent)) {
         0 -> DangerRed; 1 -> WarnAmber; 2 -> GoodGreen; else -> TextSecondary
     }
     Row(Modifier.fillMaxWidth().clickable { vm.navigate(Screen.MOBILE); vm.loadMobile() }
         .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(mobile?.operatorName?.takeUnless { it.isBlank() || it == "Not available" } ?: watchWords("SIM signal", "சிம் சிக்னல்"),
+        Text(operator ?: watchWords("SIM signal", "சிம் சிக்னல்"),
             style = MaterialTheme.typography.bodySmall, maxLines = 1,
             overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-        Text(percent?.let { "≈$it%" } ?: "— %", style = MaterialTheme.typography.bodyMedium,
+        if (percent != null) Text("≈$percent%", style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold, color = tone)
-        Text(listOfNotNull(mobile?.networkType?.takeIf { it.isNotBlank() }, mobile?.signalDbm?.let { "$it dBm" })
-            .joinToString(" · ").ifBlank { watchWords("Not available", "கிடைக்கவில்லை") },
+        Text(listOfNotNull(network, mobile?.signalDbm?.let { "$it dBm" })
+            .joinToString(" · "),
             style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.weight(1.5f))
     }
 }

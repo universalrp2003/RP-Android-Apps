@@ -7,7 +7,7 @@ class Scoped294Promotion(unittest.TestCase):
         r=dict(source=p['source'],package='com.universalrp.cleansweep',version='2.94',code=99,sha256=p['apk_sha256'],bytes=123,signer=SIGNER,
                same_uid=True,data_preserved=True,preferences_preserved=True,restart_passed=True,native_283_settings_smoke=True,
                native_288_feature_notice_smoke=True,native_289_named_security_smoke=True,native_292_top_read_and_opt_in_smoke=True,native_294_pill_defaults_overlay=True,
-               final_installed_apk_sha256=p["apk_sha256"],required_android35_native_tests=8,
+               final_installed_apk_sha256=p["apk_sha256"],required_android35_native_tests=9,
                added_permissions=[],removed_permissions=[],baseline_tag=OLD_TAG,baseline_sha256=OLD_SHA,physical_phone_tested=False,play_protect_tested=False)
         return r,p
     def test_scoped_identity_and_baseline(self):
@@ -22,7 +22,7 @@ class Scoped294Promotion(unittest.TestCase):
             with self.assertRaises(AssertionError):validate_receipt(r,p)
     def test_publisher_has_immutable_and_gate_boundaries(self):
         s=(Path(__file__).resolve().parents[1]/'promote_verified_liveguard_294.py').read_text()
-        for text in ('== 890','== 85','== 8','Never overwrite','Never replace tag',"for phase in ('draft', 'public')",'parse_badging(badging) == parse_badging(previous)'):
+        for text in ('== 902','== 86','== 9','Never overwrite','Never replace tag',"for phase in ('draft', 'public')",'parse_badging(badging) == parse_badging(previous)'):
             self.assertIn(text,s)
         self.assertNotIn('assembleRelease',s)
         self.assertNotIn('release_all',s)
