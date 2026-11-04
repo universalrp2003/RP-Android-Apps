@@ -14,7 +14,7 @@ class ServingSignalContracts(unittest.TestCase):
     def test_existing_grant_and_visible_ui_not_overlay_location_permission(self):
         s=(BASE/'data/SubscriptionSignalReader.kt').read_text()
         for text in ('!ForegroundSignalAccess.visible', '!MobileNet.hasPreciseLocation(context)',
-                     'if (!cell.isRegistered)', 'timestamp > 0 && timestamp <= now'):
+                     'if (!cell.isRegistered)', 'timestamp > 0 && timestamp <= now', 'catch (_: SecurityException)'):
             self.assertIn(text,s)
         for text in ('requestPermissions', 'requestCellInfoUpdate', 'SharedPreferences', 'cellIdentity', 'Thread(', 'Handler('):
             self.assertNotIn(text,s)

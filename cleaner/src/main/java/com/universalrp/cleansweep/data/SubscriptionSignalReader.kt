@@ -18,7 +18,14 @@ object SubscriptionSignalReader {
         // Existing precise-location grant + visible UI only. A floating overlay alone
         // is not permission to start background tower/location reads. Denial just hides.
         if (activeSimCount != 1 || !ForegroundSignalAccess.visible || !MobileNet.hasPreciseLocation(context)) return null
-        val cells = reportedCells ?: runCatching { tm.allCellInfo.orEmpty() }.getOrDefault(emptyList())
+        val cells = reportedCells ?: try {
+            tm.allCellInfo.orEmpty()
+        } catch (_: SecurityException) {
+            // The existing grant can be revoked between checking it and the modem call.
+            return null
+        } catch (_: Exception) {
+            return null
+        }
         if (!ForegroundSignalAccess.visible) return null
         val now = SystemClock.elapsedRealtimeNanos()
         val candidates = cells.mapNotNull { cell ->
