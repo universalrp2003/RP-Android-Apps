@@ -151,7 +151,13 @@ object TamilInfoStripRepo {
     suspend fun getItems(context: Context, forceRefresh: Boolean = false): Snapshot =
         getItemsForLanguage(context, forceRefresh = forceRefresh, tamil = Lang.languageIn(context) == AppLang.TA)
 
-    suspend fun getItemsForLanguage(context: Context, forceRefresh: Boolean = false, tamil: Boolean): Snapshot = withContext(Dispatchers.IO) {
+    /**
+     * [allowNetwork] = false is the 2.95 startup rule (see [NewsStartupPolicy]): show what is
+     * already saved, never begin a feed fetch while the app is still opening, and never write a
+     * fetch attempt/day marker — the later automatic pass must still be able to fetch normally.
+     */
+    suspend fun getItemsForLanguage(context: Context, forceRefresh: Boolean = false, tamil: Boolean,
+                                    allowNetwork: Boolean = true): Snapshot = withContext(Dispatchers.IO) {
         val prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val itemsKey = if (tamil) ITEMS else ITEMS_EN
         val attemptKey = if (tamil) LAST_ATTEMPT else LAST_ATTEMPT_EN
@@ -168,6 +174,15 @@ object TamilInfoStripRepo {
         val attempted = prefs.getLong(attemptKey, 0L)
         val lastOutcome = runCatching { Outcome.valueOf(prefs.getString(outcomeKey, "NO_TODAY_NEWS")!!) }.getOrDefault(Outcome.NO_TODAY_NEWS)
         val interval = if (lastOutcome in setOf(Outcome.OFFLINE, Outcome.FEEDS_UNAVAILABLE)) RETRY_MS else CACHE_MS
+        if (!allowNetwork) {
+            // 2.95: cache-only pass. No socket, no attempt marker, no feed work during startup.
+            return@withContext Snapshot(
+                cached,
+                shownFor(prefs, day, shownDayKey, shownSetKey),
+                if (cached.isNotEmpty()) Outcome.READY else lastOutcome,
+                attempted.takeIf { it > 0 },
+            )
+        }
         if (!forceRefresh && prefs.getString(fetchDayKey, null) == day && now >= attempted && now - attempted < interval) {
             return@withContext Snapshot(cached, shownFor(prefs, day, shownDayKey, shownSetKey), if (cached.isNotEmpty()) Outcome.READY else lastOutcome, attempted.takeIf { it > 0 })
         }

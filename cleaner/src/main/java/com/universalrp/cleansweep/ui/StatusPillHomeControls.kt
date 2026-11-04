@@ -80,8 +80,8 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
                         }) })
                     }
                 }
-                Text(watchWords("Unplugged: approximate dBm signal; first installed SIM by default, separate readings for Both SIMs. Missing readings stay hidden, never a neighbour or another SIM. Serving-cell fallback needs visible app UI, an existing precise-location grant and one active SIM. Charging stays watts only.",
-                    "சார்ஜர் இல்லாதபோது: தோராய dBm சிக்னல்; இயல்பாக முதல் சிம், இரு சிம்களுக்கும் தனித்தனி அளவீடு. கிடைக்காத அளவு மறையும்; அண்டை டவர்/வேறு சிம் அல்ல. மாற்று இணைந்த செல் வாசிப்பிற்கு திரையில் திறந்த செயலி, ஏற்கனவே துல்லிய இருப்பிட அனுமதி, செயலில் ஒரே சிம் தேவை. சார்ஜில் வாட்ஸ் மட்டும்."),
+                Text(watchWords("Unplugged the pill shows only coloured percentages, left to right in physical-slot order (first installed SIM first; Both SIMs adds the second). Each percentage is a rough estimate of where the measured dBm sits inside that radio's own range — not reception reliability and not Android's four bars; the Guide explains the ranges. Missing readings stay hidden, never a neighbour or another SIM. Serving-cell fallback needs visible app UI, an existing precise-location grant and one active SIM. Charging stays watts only.",
+                    "சார்ஜர் இல்லாதபோது பட்டியில் நிறமுள்ள சதவீதங்கள் மட்டுமே, இடமிருந்து வலமாக சிம் இட வரிசையில் (முதலில் பொருத்திய சிம் முன்னிலை; இரு சிம்கள் தேர்ந்தெடுத்தால் இரண்டாவது சேரும்). ஒவ்வொரு சதவீதமும் அந்த ரேடியோவின் வரம்புக்குள் அளந்த dBm எங்கே உள்ளது என்பதன் தோராயம் — வரவேற்பு நம்பகத்தன்மையோ ஆண்ட்ராய்டின் நான்கு பட்டைகளோ அல்ல; வரம்புகளை வழிகாட்டி விளக்குகிறது. கிடைக்காத அளவு மறையும்; அண்டை டவர்/வேறு சிம் அல்ல. மாற்று இணைந்த செல் வாசிப்பிற்கு திரையில் திறந்த செயலி, ஏற்கனவே துல்லிய இருப்பிட அனுமதி, செயலில் ஒரே சிம் தேவை. சார்ஜில் வாட்ஸ் மட்டும்."),
                     style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                 Spacer(Modifier.height(10.dp))
                 // Option 1: Hide mobile data on Wi-Fi / 5G

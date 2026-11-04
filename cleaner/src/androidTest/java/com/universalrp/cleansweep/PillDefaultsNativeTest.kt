@@ -57,8 +57,12 @@ class PillDefaultsNativeTest : ExactCandidateNativeTest() {
                 val root=field.get(StatusPill) as LinearLayout
                 val text=(root.getChildAt(0) as TextView).text as Spanned
                 assertTrue(text.toString().contains("12 MB"))
-                assertTrue(text.toString().contains("S1 ≈47%"))
-                assertTrue(text.toString().contains("S2 ≈73%"))
+                // 2.95: compact pill — coloured percentages only, no slot labels and no ≈.
+                assertTrue(text.toString().contains("47%"))
+                assertTrue(text.toString().contains("73%"))
+                assertFalse(text.toString().contains("≈"))
+                assertFalse(text.toString().contains("S1"))
+                assertFalse(text.toString().contains("S2"))
                 val colors=text.getSpans(0,text.length,ForegroundColorSpan::class.java).map { it.foregroundColor }
                 assertTrue(colors.contains(Color.parseColor("#FFD600")))
                 assertTrue(colors.contains(Color.parseColor("#00E676")))
@@ -92,7 +96,9 @@ class PillDefaultsNativeTest : ExactCandidateNativeTest() {
                     val text=(root.getChildAt(0) as TextView).text.toString()
                     assertTrue(text.contains("12 MB"))
                     assertFalse(text.contains("S1"));assertFalse(text.contains("—"))
-                    if (samples.isEmpty()) assertEquals("12 MB",text) else assertTrue(text.contains("S2 ≈47%"))
+                    if (samples.isEmpty()) assertEquals("12 MB",text) else {
+                        assertTrue(text.contains("47%"));assertFalse(text.contains("≈"));assertFalse(text.contains("S2"))
+                    }
                     assertEquals(android.view.View.VISIBLE,root.getChildAt(1).visibility)
                 }
             }

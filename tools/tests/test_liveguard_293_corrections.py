@@ -7,7 +7,7 @@ class LiveGuard293Corrections(unittest.TestCase):
         s=(SRC/'ui/HomeScreen.kt').read_text()
         self.assertIn('percent(mobile?.signalDbm, mobile?.signalKind)',s)
         self.assertIn('if (percent != null) Text("≈$percent%"',s)
-        self.assertIn('SubscriptionSignalReader.read(context, tm, sims.size, reportedCells)',(SRC/'data/MobileNet.kt').read_text())
+        self.assertIn('SubscriptionSignalReader.read(context, tm, activeSimCount, reportedCells)',(SRC/'data/MobileNet.kt').read_text())
         self.assertIn('SimSignalPolicy.percent(it.first, it.second)',(SRC/'data/SubscriptionSignalReader.kt').read_text())
     def test_liveguard_only_about_filter_is_used(self):
         s=(SRC/'ui/AboutScreen.kt').read_text()

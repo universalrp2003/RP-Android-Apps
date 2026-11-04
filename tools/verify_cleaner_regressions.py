@@ -6,8 +6,8 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
-    "com.universalrp.cleansweep.data.ServingSignalPolicyTest": 12,
-    "com.universalrp.cleansweep.notify.PillSignalPolicyTest": 10,
+    "com.universalrp.cleansweep.data.ServingSignalPolicyTest": 18,
+    "com.universalrp.cleansweep.notify.PillSignalPolicyTest": 11,
     "com.universalrp.cleansweep.data.NewsLanguageDefaultTest": 4,
     "com.universalrp.cleansweep.ui.LiveGuardAboutPolicyTest": 4,
     "com.universalrp.cleansweep.data.SimSignalPolicyTest": 12,
@@ -106,6 +106,11 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.NewsBulletinHdPipelineTest": 9,
     # 2.77: prepare every news part before playback; bounded patient synthesis budgets.
     "com.universalrp.cleansweep.voice.NewsVoicePreparationPolicyTest": 7,
+    # 2.95: the opening minute starts no feed fetch, Home's heavy readings are rate-limited, and the
+    # serving-cell fallback counts physical slots instead of OEM list entries.
+    "com.universalrp.cleansweep.data.NewsStartupPolicyTest": 5,
+    "com.universalrp.cleansweep.data.SimAttributionPolicyTest": 4,
+    "com.universalrp.cleansweep.ui.HomeRefreshPolicyTest": 5,
 }
 
 

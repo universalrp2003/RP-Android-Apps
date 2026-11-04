@@ -11,7 +11,7 @@ class LiveGuard294ScopeTests(unittest.TestCase):
         self.assertNotIn('allCellInfo',s)
         self.assertNotIn('ACCESS_FINE_LOCATION',s)
         self.assertIn('Manifest.permission.READ_PHONE_STATE',s)
-        self.assertIn('SubscriptionSignalReader.read(context, tm, subscriptions.size)',s)
+        self.assertIn('SubscriptionSignalReader.read(context, tm, activeSimCount)',s)
     def test_default_does_not_overwrite_explicit_news_choice(self):
         s=(BASE/'data/NewsPreferences.kt').read_text()
         self.assertIn('getString("language", Language.TAMIL_TRANSLATED.name)',s)

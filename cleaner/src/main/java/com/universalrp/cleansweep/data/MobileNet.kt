@@ -223,6 +223,9 @@ object MobileNet {
         var is5g = false
         val signalLevel: Int? = null
         val sims = mutableListOf<SimInfo>()
+        // 2.95: one entry per active subscription (physical slot, or null when the OEM hides it).
+        // The serving-cell fallback is gated on this, not on how many rows the list happened to hold.
+        val subscriptionSlots = mutableListOf<Int?>()
         val towers = mutableListOf<CellTower>()
         var reportedCells: List<CellInfo>? = null
 
@@ -303,6 +306,7 @@ object MobileNet {
             }
             val infos = subscriptionManager?.activeSubscriptionInfoList.orEmpty()
             infos.forEachIndexed { index, info ->
+                subscriptionSlots.add(info.simSlotIndex.takeIf { it >= 0 })
                 val slot = if (info.simSlotIndex >= 0) info.simSlotIndex + 1 else index + 1
                 val carrier = info.carrierName?.toString().orEmpty().ifBlank { operator }
                 sims.add(
@@ -353,8 +357,9 @@ object MobileNet {
             }
         }
 
+        val activeSimCount = SimAttributionPolicy.activeSimCount(subscriptionSlots)
         val reading = runCatching {
-            SubscriptionSignalReader.read(context, tm, sims.size, reportedCells)
+            SubscriptionSignalReader.read(context, tm, activeSimCount, reportedCells)
         }.getOrNull()
         val signalDbm = reading?.dbm
         val signalKind = reading?.kind

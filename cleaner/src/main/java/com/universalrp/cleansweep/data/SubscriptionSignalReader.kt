@@ -27,7 +27,8 @@ object SubscriptionSignalReader {
             return null
         }
         if (!ForegroundSignalAccess.visible) return null
-        val now = SystemClock.elapsedRealtimeNanos()
+        val nowNanos = SystemClock.elapsedRealtimeNanos()
+        val nowMs = SystemClock.elapsedRealtime()
         val candidates = cells.mapNotNull { cell ->
             if (!cell.isRegistered) return@mapNotNull null
             val measurement = when {
@@ -38,8 +39,10 @@ object SubscriptionSignalReader {
                 else -> return@mapNotNull null
             }
             @Suppress("DEPRECATION")
-            val timestamp = cell.timeStamp
-            val age = if (timestamp > 0 && timestamp <= now) (now - timestamp) / 1_000_000L else null
+            val sampledAt = cell.timeStamp
+            // 2.95: normalise the modem's millisecond/nanosecond convention instead of treating a
+            // fresh millisecond stamp (or a missing one) as stale; the 60 s rule still applies.
+            val age = ServingSignalPolicy.ageMs(sampledAt, nowNanos, nowMs)
             ServingSignalPolicy.Cell(true, measurement.first, measurement.second, age)
         }
         return ServingSignalPolicy.resolve(null, null, candidates, activeSimCount)
