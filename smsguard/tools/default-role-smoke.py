@@ -16,6 +16,8 @@ def adb(*args):
     return subprocess.check_output(['adb', *args], timeout=60).decode(errors='replace')
 
 def launch():
+    adb('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP')
+    adb('shell', 'wm', 'dismiss-keyguard')
     adb('shell', 'am', 'start', '-W', '-n', PKG + '/.MainActivity')
 
 def nodes():
@@ -34,7 +36,7 @@ def wait(predicate, label, timeout=40):
         ns = nodes()
         if predicate(ns): return ns
         time.sleep(1)
-    raise AssertionError('Timed out: ' + label)
+    raise AssertionError('Timed out: ' + label + '; visible labels=' + repr([n.get('text', '') for n in ns]))
 
 def has(ns, text):
     return any(text in n.get('text', '') for n in ns)
