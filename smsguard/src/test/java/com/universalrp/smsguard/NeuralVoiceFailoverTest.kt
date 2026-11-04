@@ -93,8 +93,13 @@ class NeuralVoiceFailoverTest {
     }
 
     @Test fun budgetWeightsAreDefinedForOneTwoAndThreeVoicesAndRefuseImpossibleCalls() {
+        // Shares are taken from what is left, so the LAST attempt of any set takes all of it:
+        // 55/30/15 of 4,200 ms is 2,310 then 1,260 then 630, and 65/35 of 1,000 ms is 650 then 350.
+        assertEquals(2310L, com.universalrp.voice.NeuralBudgetPolicy.share(4200, 0, 3))
+        assertEquals(1260L, com.universalrp.voice.NeuralBudgetPolicy.share(1890, 1, 3))
+        assertEquals(630L, com.universalrp.voice.NeuralBudgetPolicy.share(630, 2, 3))
         assertEquals(650L, com.universalrp.voice.NeuralBudgetPolicy.share(1000, 0, 2))
-        assertEquals(350L, com.universalrp.voice.NeuralBudgetPolicy.share(1000, 1, 2))
+        assertEquals(350L, com.universalrp.voice.NeuralBudgetPolicy.share(350, 1, 2))
         assertEquals(1000L, com.universalrp.voice.NeuralBudgetPolicy.share(1000, 0, 1))
         for (bad in listOf(Triple(0L, 0, 3), Triple(1000L, 3, 3), Triple(1000L, -1, 3), Triple(1000L, 0, 0))) {
             assertEquals(0L, com.universalrp.voice.NeuralBudgetPolicy.share(bad.first, bad.second, bad.third))
