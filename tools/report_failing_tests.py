@@ -37,7 +37,9 @@ def result_files() -> list[str]:
 
 def main() -> int:
     found = 0
+    seen = 0
     for path in result_files():
+        seen += 1
         try:
             root = ET.parse(path).getroot()
         except Exception as exc:  # unreadable or half-written XML is not worth failing over
@@ -52,10 +54,16 @@ def main() -> int:
                     print("    " + line)
                 print()
 
-    if found == 0:
-        print("(no failing tests recorded in the JUnit XML)")
-    else:
+    if found:
         print("(%d failing test(s))" % found)
+    elif seen:
+        # Silence is the honest answer when the build never reached a test task: the caller's
+        # failure was a source gate, a lint error or a compile error, and a "no failing tests"
+        # line would be turned into a bogus ::error:: annotation by the workflows below.
+        print("(no failing tests in %d result file(s))" % seen)
+    # No XML at all means the failure happened before any test task ran, so there is nothing to
+    # report here; the caller's own log tail names that failure. Printing anything would become a
+    # misleading ::error:: annotation, which is how a stale source gate once looked like a test bug.
     return 0
 
 

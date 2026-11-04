@@ -62,6 +62,15 @@ Both `Build APK` (`.github/workflows/build-apk.yml`) and `Deploy Official Websit
 
 Publication is controlled per app, never as a cross-app batch. Manual workflow dispatch requires a single app choice and defaults to candidate-only; the established one-app workflows also accept their app-specific `[publish-<app>]` commit marker. The two new-app releases use separate `[publish-tamilanstore]` or `[publish-dailyvault]` markers. Candidate builds must pass before a release marker is used, and every release workflow repeats its own build, signer, package/version and asset gates. The official Pages mirror is refreshed only after the public release asset's tag, size and SHA-256 have been verified and the site change is on `main`.
 
+### Site mirror retention (why old builds are not mirrored twice)
+
+`pages.yml` mirrors a release as `site/apks/<asset>` **plus** a byte-identical `.zip`, so every mirrored release costs twice its size. The Pages upload limit is 1 GB and the artifact once reached ~2 GB, which produced the deploy warning *"Uploaded artifact size ... exceeds the allowed size of 1 GB"*. The mirror therefore keeps only:
+
+* the **current release of every app** — those files are what each app's APK fallback button, its `.ZIP` button and its structured-data `downloadUrl` point at, and
+* the **historical builds that `tools/verify_live_three_releases.py` byte-checks** after every deploy.
+
+Older builds are **not deleted**: they stay on their GitHub release page forever, and the site's visible download buttons link to those release URLs. Retiring a mirror is not a release, a retag or an asset change. The mirror is capped by `MIRROR_BUDGET` inside `pages.yml` (800,000,000 B counting both copies) and `tools/tests/test_website_mirror_budget.py` fails if the list grows past it or if a mirrored tag is neither a current release nor a byte-checked pin — so when a new version ships, drop an older mirror in the same change instead of growing the artifact.
+
 `releases/latest-tag.txt` is deliberately **not** ignored: the Live Guard permission-delta gate reads it as the previous-release baseline, so changing it still triggers a run. `site/**` is of course never ignored — it is the site's own content.
 
 ## Historical publication — SMS Guard 1.1.7 / code 13 (25 October 2026)
