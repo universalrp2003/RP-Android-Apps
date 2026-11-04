@@ -55,8 +55,7 @@ object SisterApps {
             tamilName = "கைபேசி காவலன்",
             tagPrefix = "live-guard",
             version = "2.95",
-            // Advanced only after the 2.95 asset is public and digest-verified.
-            publishedVersion = "2.94",
+            publishedVersion = "2.95",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
         ),

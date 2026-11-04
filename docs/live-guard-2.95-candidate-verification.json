@@ -64,5 +64,6 @@
   "python_checks": 418,
   "evidence_basis": "Completed CI job and its signed-candidate/native gate annotations plus immutable artifact metadata (artifact digest reported by the GitHub API). The local sandbox cannot download the artifact host; the publisher separately extracts the receipt and independently verifies the exact archive/APK bytes.",
   "publication_authorized": true,
-  "public_release_completed": false
+  "public_release_completed": true,
+  "public_tag": "live-guard-v2.95"
 }
