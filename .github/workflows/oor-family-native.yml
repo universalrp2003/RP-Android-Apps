@@ -1,7 +1,7 @@
-name: Oor configured private family candidate, same-key upgrade and native HTTPS tests
+name: Oor 1.1.16 configured About/Guide update and preserved-data native tests
 on:
   push:
-    branches: ["arena/d4f4c9b6-rp-android-apps"]
+    branches: ["arena/e6ccb9f0-rp-android-apps"]
     paths: ["docs/oor-family-native-verification-pins.json"]
 permissions:
   contents: read
@@ -81,7 +81,8 @@ jobs:
           import json,os
           from pathlib import Path
           r=json.loads((Path(os.environ['RUNNER_TEMP'])/'health-oorarivippu'/'verification.json').read_text())
-          assert r['native_tests']==2 and r['family_jvm_tests']==30 and r['exact_installed_apk_verified']
+          assert r['native_tests']==3 and r['family_jvm_tests']==30 and r['about_guide_jvm_tests']==4
+          assert r['bilingual_about_guide_rendered'] and r['encrypted_family_fixture_decrypted_after_upgrade'] and r['exact_installed_apk_verified']
           assert r['same_uid'] and r['data_preserved'] and r['preferences_preserved'] and r['bilingual_family_consent_rendered']
           assert r['publication_authorized'] is False and r['physical_phone_tested'] is False
           PY
@@ -102,6 +103,6 @@ jobs:
           PY
       - uses: actions/upload-artifact@v7
         with:
-          name: Oor-Arivippu-1.1.15-configured-private-family-candidate
+          name: Oor-Arivippu-1.1.16-configured-about-guide-candidate
           path: ${{ runner.temp }}/health-oorarivippu/
           retention-days: 30

@@ -24,7 +24,7 @@ def main():
     HELPERS['enable_ci_root']()
     root = Path(os.environ['RUNNER_TEMP']) / 'health-oorarivippu'
     p = root / 'verification.json'; receipt = json.loads(p.read_text())
-    candidate = root / receipt['apk']; baseline = root / 'Oor-Arivippu-v1.1.10.apk'
+    candidate = root / receipt['apk']; baseline = root / 'Oor-Arivippu-v1.1.15.apk'
     assert hashlib.sha256(candidate.read_bytes()).hexdigest() == receipt['sha256']
     assert hashlib.sha256(baseline.read_bytes()).hexdigest() == receipt['baseline_sha256']
     assert receipt['publication_authorized'] is False
@@ -35,7 +35,7 @@ def main():
         uid = re.search(r'^package:'+re.escape(PKG)+r'\s+uid:(\d+)\s*$',listing,re.M)
         assert uid
         return uid[1], adb('shell','dumpsys','package',PKG)
-    uid, old = state(); assert 'versionCode=15' in old and 'versionName=1.1.10' in old
+    uid, old = state(); assert 'versionCode=20' in old and 'versionName=1.1.15' in old
     data = f'/data/user/0/{PKG}'
     fixture = root / 'synthetic-upgrade-marker'; fixture.write_text('Synthetic saved Oor data; not a private location.')
     prefs = root / 'synthetic-prefs.xml'
@@ -47,9 +47,23 @@ def main():
     def digest(path): return adb('shell','sha256sum',path).split()[0]
     marker = f'{data}/files/synthetic-upgrade-marker'; saved = f'{data}/shared_prefs/oor_arivippu_prefs.xml'
     hashes = (digest(marker),digest(saved))
+    # Seed the prior public APK's real Android-Keystore-backed family store in an
+    # isolated synthetic namespace; preserve its exact ciphertext across the upgrade.
+    test_apks=list(Path('oorarivippu/build/outputs/apk/androidTest/release').glob('*.apk'));assert len(test_apks)==1
+    adb('install','-r',str(test_apks[0]))
+    seeded=adb('shell','am','instrument','-w','-r','-e','class',
+               'com.oorarivippu.voiceannouncer.OorAboutNativeTest#bilingualAboutGuideAndSavedFamilyFixture',
+               '-e','upgradePhase','seed','com.oorarivippu.voiceannouncer.test/androidx.test.runner.AndroidJUnitRunner')
+    (root/'baseline-family-fixture-instrumentation.txt').write_text(seeded)
+    assert 'OK (1 test)' in seeded and 'INSTRUMENTATION_CODE: -1' in seeded, seeded[-7000:]
+    assert 'INSTRUMENTATION_STATUS_CODE: 0' in seeded and 'FAILURES' not in seeded
+    family_fixture=f'{data}/shared_prefs/about_upgrade_oor_family_v1.xml'
+    family_hash=digest(family_fixture)
     adb('install','-r',str(candidate))
+    assert digest(family_fixture)==family_hash, 'Encrypted family fixture ciphertext changed during update'
+
     new_uid, installed = state()
-    assert new_uid == uid and 'versionCode=20' in installed and 'versionName=1.1.15' in installed
+    assert new_uid == uid and 'versionCode=21' in installed and 'versionName=1.1.16' in installed
     assert (digest(marker),digest(saved)) == hashes
     # Synthetic emulator only: avoid platform permission popups. Tracking remains explicitly OFF.
     for permission in ('ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATION','POST_NOTIFICATIONS'):
@@ -115,6 +129,7 @@ def main():
     adb('shell','am','force-stop',PKG)
     receipt.update(same_uid=True,data_preserved=True,preferences_preserved=True,restart_passed=True,
                    bilingual_family_consent_rendered=True,opening_panel_did_not_connect_or_share=True,
+                   baseline_family_fixture_seeded=True, encrypted_family_fixture_ciphertext_preserved=True,
                    update_method='adb install -r; no data clear, uninstall, downgrade or bypass')
     p.write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Oor exact signed saved-data upgrade::'+json.dumps(receipt))

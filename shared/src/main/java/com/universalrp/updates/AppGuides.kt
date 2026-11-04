@@ -511,8 +511,8 @@ object AppGuides {
     // Oor Arivippu
     // ---------------------------------------------------------------------------------------
     val oorArivippu = GuideContent(
-        intro = "Oor Arivippu says the place and district you reach while you travel. Tap a topic to open it.",
-        introTa = "ஊர் அறிவிப்பு நீங்கள் பயணிக்கும்போது அடையும் ஊர் மற்றும் மாவட்டத்தைக் கூறும். ஒரு தலைப்பைத் " +
+        intro = "Oor Arivippu announces places while you travel and optionally shares encrypted last-reported towns with mutually confirmed family connections. Tap a topic to open it.",
+        introTa = "ஊர் அறிவிப்பு பயணத்தில் ஊரை அறிவிக்கும்; இருவரும் உறுதிப்படுத்திய குடும்ப இணைப்புகளுக்கு விருப்பமாக மறையாக்கிய கடைசி ஊரைப் பகிரலாம். ஒரு தலைப்பைத் " +
             "தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
             topic(
@@ -558,14 +558,38 @@ object AppGuides {
                 "சுருக்கமான முகப்புத் திரை, தமிழ் | ENG பொத்தான் & அமைப்புகள்",
                 "The compact Home screen gives you a clear Start / Stop (தொடங்கு / நிறுத்து) button, live rain banner " +
                     "(shown when Rain Alert is on and active), current City/Village card, current session distance " +
-                    "traveled in km, and destination proximity card. The top தமிழ் | ENG button switches both app UI " +
+                    "traveled in km, and destination proximity card. Verified family connections also have name/town/sharing cards above trip status. The top தமிழ் | ENG button switches both app UI " +
                     "and voice announcement language together with automatic daily Male ↔ Female Studio HD voices " +
                     "(and automatic Male/Female Android system voice fallback offline). All extra options live inside Settings (⚙️).",
                 "சுருக்கமான முகப்புத் திரையில் பெரிய தொடங்கு / நிறுத்து பொத்தான், மழை எச்சரிக்கைப் பட்டை, தற்போதைய " +
                     "ஊர்/பகுதி விவரம், இந்தப் பயணத்தில் கடந்த தூரம் (km) மற்றும் இலக்கு தூரப் பெட்டி ஆகியவை மட்டும் " +
-                    "தெளிவாக இருக்கும். மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் " +
+                    "தெளிவாக இருக்கும். உறுதிப்படுத்திய குடும்ப இணைப்புகளின் பெயர்/ஊர்/பகிர்வு அட்டைகளும் பயண நிலைக்கு மேலே இருக்கும். மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் " +
                     "(ஆன்லைனில் தினசரி ஆண் ↔ பெண் HD குரல்களும், ஆஃப்லைனில் போனின் ஆண்/பெண் சிஸ்டம் குரலும் தானாக இயங்கும்). " +
                     "மற்ற அனைத்து விருப்பங்களும் அமைப்புகள் (⚙️) உள்ளே உள்ளன.",
+            ),
+            topic(
+                "Connecting family — up to six connections",
+                "குடும்ப இணைப்பு — ஆறு இணைப்புகள் வரை",
+                "Family town sharing is optional and starts OFF. A phone can have up to six connections, including pending invitations; a pending removal can still occupy a slot. Enter a local member label, create a private invitation and send it only to the intended person. It expires after ten minutes and connects one other phone. The recipient accepts the connection only, with sharing still OFF. Compare the code on both phones over a trusted channel, then both confirm only if it matches. Local labels stay on your phone. Each connection is separate, not automatic access for an entire family group.",
+                "குடும்ப ஊர் பகிர்வு விருப்பமானது; இயல்பாக அணைந்திருக்கும். காத்திருக்கும் அழைப்புகள் உட்பட ஆறு இணைப்புகள் வரை சேர்க்கலாம்; நீக்கம் நிறைவடையும் வரை அதுவும் இடத்தைப் பயன்படுத்தலாம். உள்ளூர் பெயரை உள்ளிட்டு தனிப்பட்ட அழைப்பை உருவாக்கி குறிப்பிட்ட நபருக்கு மட்டும் அனுப்பவும். அழைப்பு பத்து நிமிடத்தில் காலாவதியாகும்; ஒரு கைப்பேசி மட்டுமே இணையலாம். மற்றவர் இணைப்பை மட்டும் ஏற்ற பிறகும் பகிர்வு அணைந்தே இருக்கும். நம்பகமான வழியில் இரு கைப்பேசிக் குறியீடுகளையும் ஒப்பிட்டு பொருந்தினால் மட்டுமே இருவரும் உறுதிப்படுத்தவும். உள்ளூர் பெயர் உங்கள் கைப்பேசியில் மட்டும் இருக்கும். ஒரு இணைப்பு குடும்பத்தினர் அனைவருக்கும் தானாக அணுகலை வழங்காது.",
+            ),
+            topic(
+                "Remembered sharing ON/OFF and paused trips",
+                "நினைவில் இருக்கும் பகிர்வு இயக்கம்/அணைப்பு",
+                "My sharing controls YOUR outgoing town for that one person, not their sharing. ON stays remembered across trips until you turn it OFF or the connection becomes invalid; there are no 1/4/8-hour controls. Uploads require your user-started running Oor trip, fresh usable location, internet and a valid verified connection. Stopping the trip pauses uploads but keeps saved ON; a later trip can resume. OFF, Stop all my family sharing and Remove connection revoke your local intent; remote stopping can be delayed offline. An earlier report can remain until expiry. Existing connections remain saved on update, but old timed sharing migrates OFF and must be explicitly enabled again. Update without uninstalling or clearing data.",
+                "எனது பகிர்வு என்பது அந்த நபருக்கு உங்கள் ஊரை அனுப்பும் அனுமதி; அவருடைய பகிர்வை அது இயக்காது. நீங்கள் அணைக்கும் வரை அல்லது இணைப்பு செல்லாததாகும் வரை தேர்வு அடுத்த பயணங்களிலும் நினைவில் இருக்கும்; ஒன்று/நான்கு/எட்டு மணி கட்டுப்பாடுகள் இல்லை. நீங்கள் தொடங்கிய Oor பயணம், புதிய இடம், இணையம் மற்றும் உறுதிப்படுத்திய இணைப்பு தேவை. பயணத்தை நிறுத்தினால் பதிவேற்றம் இடைநிறுத்தப்படும்; இயக்கத் தேர்வு நினைவில் இருக்கும். அடுத்த பயணத்தில் மீண்டும் தொடங்கலாம். தனியாக அணைக்கலாம், அனைத்தையும் நிறுத்தலாம் அல்லது இணைப்பை நீக்கலாம். இணையமில்லாமல் தொலை நிறுத்தம் தாமதமாகலாம்; பழைய அறிக்கை காலாவதியாகும் வரை தெரியலாம். புதுப்பிப்பில் இணைப்புகள் இருக்கும்; பழைய நேரவரம்புப் பகிர்வு அணைந்தே தொடங்கும். விரும்பினால் மீண்டும் இயக்கவும். செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம்.",
+            ),
+            topic(
+                "Received towns, freshness and family speech",
+                "பெறப்பட்ட ஊர், காலாவதி மற்றும் குடும்பக் குரல்",
+                "The main family card shows a local member label, last-reported town and observation time above trip status. This is not a live position. Senders normally attempt updates no more often than every five minutes during their trip; usable reports expire within fifteen minutes. No fresh town shared is not an all-clear. Receiving needs the resumed app window or an existing visible Oor trip service; with the app closed and no trip running there is no continuous family polling. You do not need to share your own town to receive. Each new report gets at most one on-device speech attempt; reopening does not replay it. Family details are not sent to online HD voices or ordinary travel/speech history. Calls, silent/vibrate/DND, mute, busy audio, denied audio focus or missing device voices can prevent speech; unlike normal trip speech, do not assume a family report will play after a call. Contact the person directly when needed; this is not an emergency tracker.",
+                "முதன்மைக் குடும்ப அட்டை பயண நிலைக்கு மேலே உள்ளூர் பெயர், கடைசியாகத் தெரிவித்த ஊர் மற்றும் பதிவுநேரத்தைக் காட்டும்; அது நேரலை இடம் அல்ல. அனுப்புபவர் பயணத்தின்போது வழக்கமாக ஐந்து நிமிட இடைவெளியில் புதுப்பிக்க முயல்வார்; அறிக்கை பதினைந்து நிமிடத்திற்குள் காலாவதியாகும். புதிய ஊர் இல்லாதது பாதுகாப்பிற்கான உறுதி அல்ல. செயலித் திரை முன்வந்திருக்கும்போதோ அறிவிப்புடன் Oor பயணம் இயங்கும்போதோ அறிக்கைகள் பார்க்கப்படும்; இரண்டும் இல்லாவிட்டால் தொடர்ந்து பார்க்காது. பெறுவதற்கு உங்கள் ஊரைப் பகிர வேண்டியதில்லை. புதிய அறிக்கைக்கு அதிகபட்சம் ஒருமுறை கைப்பேசிக் குரல் முயற்சி; மீண்டும் திறந்தால் அதையே மீண்டும் பேசாது. குடும்ப விவரங்கள் இணைய HD குரலுக்கோ சாதாரண பயண/பேச்சு வரலாற்றுக்கோ அனுப்பப்படாது. அழைப்பு, அமைதி/அதிர்வு/தொந்தரவு செய்யாதே முறை, ஒலி அணைப்பு, வேறு ஒலி அல்லது சாதனக் குரல் இல்லாமை குரலைத் தடுக்கலாம். அழைப்புக்குப் பிறகு குடும்ப அறிக்கை பேசும் என்று கருத வேண்டாம். தேவையெனில் நேரடியாகத் தொடர்புகொள்ளவும்; இது அவசரக் கண்காணிப்பு அல்ல.",
+            ),
+            topic(
+                "Family privacy and the web guide",
+                "குடும்பத் தனியுரிமையும் இணைய வழிகாட்டியும்",
+                "Only end-to-end encrypted town, district and observation time go through the separate Oor relay. Family uploads do not include precise coordinates, address, roads, PIN, speed, contacts or route history. The relay/provider can see network metadata such as IP addresses and timing; this is not a promise that nothing leaves the phone or provider backups have no traces. Local labels, keys and the latest-report cache are encrypted on the phone, with expiry checked before use. Existing positioning/geocoding and ordinary online trip voices have separate provider boundaries. Source availability is not an independent audit or universal Android/background/audio guarantee. About includes Web guide & redacted screenshots for the full English/Tamil instructions and reviewed masked screenshots.",
+                "தனி Oor சேவைக்கு ஊர், மாவட்டம், பதிவுநேரம் மட்டும் முனையிலிருந்து முனை வரை மறையாக்கி அனுப்பப்படும். துல்லிய இடம், முகவரி, சாலை, அஞ்சல் குறியீடு, வேகம், தொடர்புகள் அல்லது பாதை வரலாறு குடும்பப் பதிவேற்றத்தில் இல்லை. சேவை/வழங்குநருக்கு IP முகவரி மற்றும் நேரம் போன்ற இணைய விவரங்கள் தெரியலாம்; எதுவும் வெளியே செல்லாது அல்லது வழங்குநர் காப்பில் தடயமே இல்லை என்ற உறுதி அல்ல. உள்ளூர் பெயர்கள், விசைகள் மற்றும் கடைசி அறிக்கை கைப்பேசியில் மறையாக்கப்படும்; பயன்படுத்தும் முன் காலாவதி பார்க்கப்படும். இடச் சேவை, ஊர் தேடல் மற்றும் சாதாரண இணையப் பயணக் குரல்களுக்கு தனி வழங்குநர் எல்லைகள் உள்ளன. திறந்த மூலக் குறியீடு தனிச் சுயாதீனத் தணிக்கையோ எல்லாச் சாதன/பின்னணி/ஒலி உறுதியோ அல்ல. செயலி விவரத்தில் இணைய வழிகாட்டி மற்றும் மறைக்கப்பட்ட படங்களுக்கான இணைப்பு உள்ளது.",
             ),
             topic(
                 "Travel and repeat settings",
@@ -598,27 +622,20 @@ object AppGuides {
                     "Geocoder வழங்குநர் தனது கொள்கைப்படி தேடலைச் செயலாக்கலாம்.",
             ),
             topic(
-                "Calls and the headset button",
+                "Trip calls and the headset button",
                 "அழைப்புகள் மற்றும் ஹெட்செட் பொத்தான்",
-                "Nothing is spoken while the phone is ringing or you are on a call: the announcement waits and " +
+                "Ordinary travel speech is held while the phone is ringing or you are on a call: the announcement waits and " +
                     "plays after the call ends. With a headset, its button asks \"Where am I?\" and you get the " +
                     "current place once.",
-                "போன் அடிக்கும்போதோ நீங்கள் அழைப்பில் இருக்கும்போதோ எதுவும் ஒலிக்காது: அறிவிப்பு காத்திருந்து " +
+                "சாதாரண பயணக் குரல் போன் அடிக்கும்போதோ நீங்கள் அழைப்பில் இருக்கும்போதோ ஒலிக்காது: அறிவிப்பு காத்திருந்து " +
                     "அழைப்பு முடிந்த பிறகு ஒலிக்கும். ஹெட்செட்டின் பொத்தான் \"நான் எங்கே இருக்கிறேன்?\" என்று " +
                     "கேட்கும்; தற்போதைய இடம் ஒருமுறை கூறப்படும்.",
             ),
             topic(
-                "30-minute rain & 24×7 cyclone voice alerts",
-                "30 நிமிட மழை & 24×7 புயல் குரல் எச்சரிக்கை",
-                "Tap the cloud button at the top (or the Rain & Cyclone card on the main screen). When phone " +
-                    "GPS is ON, alerts turn on automatically on update and follow your live travel route; when " +
-                    "GPS is OFF, your saved PIN/village (e.g. 622301) or saved destination is used automatically. " +
-                    "Normal rain stays silent during Quiet Hours (10 PM – 7 AM); heavy rain and cyclone warnings " +
-                    "announce 24×7 day or night, with an animated alert banner at the top and a free Tomorrow.io key guide.",
-                "மேலே உள்ள மேகப் பொத்தானை (அல்லது முகப்பு அட்டையை) தட்டவும். போன் GPS இயக்கத்தில் இருந்தால் " +
-                    "புதுப்பிப்பின்போது தானாக இயங்கி பயண வழியைப் பின்தொடரும்; GPS அணைந்தால் சேமித்த PIN/ஊர் (உதா: 622301) " +
-                    "பயன்படும். சாதாரண மழை இரவு (10 PM – 7 AM) ஒலிக்காது; மிகக் கனமழை & புயல் 24×7 ஒலிக்கும். " +
-                    "மேலே சிறிய அனிமேஷன் பட்டையும் இலவச Tomorrow.io விசை வழிகாட்டியும் உள்ளன.",
+                "Rain and cyclone alerts — active-session limits",
+                "மழை மற்றும் புயல் எச்சரிக்கை — இயங்கும் நேர வரம்புகள்",
+                "Open Settings > Rain & cyclone voice alert. Automatic checks need the Oor window open or your announcer/trip host active, the alert switch enabled and the scheduled check due; this is not a separate always-on 24×7 monitoring service. GPS can supply the place, otherwise a saved place or destination may be used; check the selected place. Explicitly saved OFF is preserved. Rain timing and warnings depend on the available provider data, freshness, internet, quota and coverage. A personal Tomorrow.io key needs suitable plan access; keyless evaluation and model fallback are not guaranteed minute-precise rain arrival, raw radar or verified landfall. Quiet hours and Android/audio restrictions can prevent announcements. No banner or speech is not an all-clear.",
+                "அமைப்புகளில் மழை & புயல் குரல் எச்சரிக்கையைத் திறக்கவும். தானியங்கிச் சோதனைக்கு Oor திரை திறந்திருத்தல் அல்லது பயண அறிவிப்பு இயங்குதல், எச்சரிக்கைத் தேர்வு இயக்கம் மற்றும் சோதனை நேரம் வந்திருத்தல் தேவை. இது தனியான எப்போதும் இயங்கும் கண்காணிப்புச் சேவை அல்ல. GPS இடம் அல்லது சேமித்த ஊர்/இலக்கு பயன்படுத்தப்படலாம்; தேர்ந்த இடத்தைச் சரிபார்க்கவும். நீங்கள் அணைத்த தேர்வு பாதுகாக்கப்படும். மழை நேரமும் எச்சரிக்கையும் வழங்குநர் தகவல், புதுமை, இணையம், பயன்பாட்டு வரம்பு மற்றும் பரப்பைப் பொறுத்தவை. தனிப்பட்ட Tomorrow.io விசைக்கு பொருத்தமான திட்ட அனுமதி தேவை; விசையில்லா மதிப்பீடு/மாதிரி முன்னறிவிப்பு துல்லிய நிமிட வருகை, நேரடி ரேடார் அல்லது உறுதியான கரைகடப்பைக் குறிக்காது. அமைதி நேரம் மற்றும் Android/ஒலி கட்டுப்பாடுகள் அறிவிப்பைத் தடுக்கலாம். பட்டை அல்லது குரல் இல்லாதது பாதுகாப்பு உறுதி அல்ல.",
             ),
             topic(
                 "Updating Oor Arivippu",
