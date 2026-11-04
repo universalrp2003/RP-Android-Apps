@@ -11,6 +11,7 @@ class ServingSignalContracts(unittest.TestCase):
             self.assertIn(text,s)
         self.assertNotIn('maxBy',s)
         self.assertNotIn('sortedByDescending',s)
+        self.assertNotIn('— means unavailable', (BASE/'ui/StatusPillHomeControls.kt').read_text())
     def test_existing_grant_and_visible_ui_not_overlay_location_permission(self):
         s=(BASE/'data/SubscriptionSignalReader.kt').read_text()
         for text in ('!ForegroundSignalAccess.visible', '!MobileNet.hasPreciseLocation(context)',

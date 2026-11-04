@@ -80,8 +80,8 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
                         }) })
                     }
                 }
-                Text(watchWords("Unplugged: approximate dBm-based signal, first installed SIM by default. Both SIMs use separate readings. — means unavailable; allow Phone permission to read. Charging remains watts only.",
-                    "சார்ஜர் இல்லாதபோது: dBm அடிப்படையிலான தோராய சிக்னல்; இயல்பாக முதல் சிம். இரு சிம்களுக்கும் தனித்தனி அளவீடு. — என்றால் கிடைக்கவில்லை; தொலைபேசி அனுமதி தேவை. சார்ஜில் வாட்ஸ் மட்டும்."),
+                Text(watchWords("Unplugged: approximate dBm signal; first installed SIM by default, separate readings for Both SIMs. Missing readings stay hidden, never a neighbour or another SIM. Serving-cell fallback needs visible app UI, an existing precise-location grant and one active SIM. Charging stays watts only.",
+                    "சார்ஜர் இல்லாதபோது: தோராய dBm சிக்னல்; இயல்பாக முதல் சிம், இரு சிம்களுக்கும் தனித்தனி அளவீடு. கிடைக்காத அளவு மறையும்; அண்டை டவர்/வேறு சிம் அல்ல. மாற்று இணைந்த செல் வாசிப்பிற்கு திரையில் திறந்த செயலி, ஏற்கனவே துல்லிய இருப்பிட அனுமதி, செயலில் ஒரே சிம் தேவை. சார்ஜில் வாட்ஸ் மட்டும்."),
                     style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                 Spacer(Modifier.height(10.dp))
                 // Option 1: Hide mobile data on Wi-Fi / 5G
