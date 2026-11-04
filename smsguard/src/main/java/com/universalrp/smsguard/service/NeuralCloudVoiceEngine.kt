@@ -23,6 +23,7 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.floor
 
@@ -319,6 +320,11 @@ object NeuralCloudVoiceEngine {
         val doneLatch = CountDownLatch(1)
         val saw403ServerDate = AtomicReference<String?>(null)
         val completedCleanly = AtomicBoolean(false)
+        // Close code and audio-frame counters exist so a failed probe says WHY it failed instead of
+        // only "null": 1011 is the service's transient overload answer and is the one repeatable case.
+        val lastCloseCode = AtomicInteger(0)
+        val audioFrames = AtomicInteger(0)
+        val firstAudioNanos = AtomicReference(0L)
 
         val ws = wsClient.newWebSocket(
             request,
@@ -366,6 +372,12 @@ object NeuralCloudVoiceEngine {
                     if (audioStart <= raw.size) {
                         val headerText = String(raw, 2, headerLen.coerceAtMost(raw.size - 2), Charsets.ISO_8859_1)
                         if (headerText.contains("Path:audio") && raw.size > audioStart) {
+                            if (firstAudioNanos.compareAndSet(0L, System.nanoTime())) {
+                                diagnostic?.invoke(
+                                    "FIRST_AUDIO_MS=" + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
+                                )
+                            }
+                            audioFrames.incrementAndGet()
                             synchronized(audioBuffer) {
                                 audioBuffer.write(raw, audioStart, raw.size - audioStart)
                             }
@@ -389,12 +401,14 @@ object NeuralCloudVoiceEngine {
                 }
 
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    lastCloseCode.set(code)
                     diagnostic?.invoke("PEER_CLOSING CODE=$code")
                     runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
                     doneLatch.countDown()
                 }
 
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    if (lastCloseCode.get() == 0) lastCloseCode.set(code)
                     diagnostic?.invoke("CLOSED CODE=$code")
                     doneLatch.countDown()
                 }
@@ -422,8 +436,23 @@ object NeuralCloudVoiceEngine {
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
-        diagnostic?.invoke("COMPLETE=${completedCleanly.get()} BYTES=${out.size}")
-        return if (completedCleanly.get() && out.size >= 256) out else null
+        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
+        diagnostic?.invoke(
+            "COMPLETE=${completedCleanly.get()} BYTES=${out.size} FRAMES=${audioFrames.get()} ELAPSED_MS=$elapsedMs"
+        )
+        if (completedCleanly.get() && out.size >= 256) return out
+        // Issue #49: the same source passed and failed this probe. Evidence is what was missing, so
+        // the attempt now reports the close code and how far it got; the failure reason is a peer
+        // answer (1011 internal error, 403 throttle, timeout or a close before turn.end), never
+        // "null" with no cause. The single-voice policy stays as pinned: no same-voice retry.
+        if (!completedCleanly.get()) {
+            val closeCode = lastCloseCode.get()
+            diagnostic?.invoke(
+                if (closeCode == 0) "NO_TURN_END BYTES=${out.size} ELAPSED_MS=$elapsedMs"
+                else "NO_TURN_END CLOSE=$closeCode BYTES=${out.size} ELAPSED_MS=$elapsedMs"
+            )
+        }
+        return null
     }
 
     private fun sha256Hex(s: String): String =
