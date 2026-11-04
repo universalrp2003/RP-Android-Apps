@@ -12,6 +12,7 @@ actually hit. This is the short list to read before touching GitHub again. It do
 3. Merge-க்கு முன் அந்த செயலியின் candidate run, website சோதனை, Build APK எல்லாம் பச்சை நிறமாக இருக்க வேண்டும்.
 4. வெளியீட்டுக்குப் பிறகு site, catalog, release-dates, README, receipt ஆகியவற்றை அதே APK-இன் அளவு/SHA உடன் மட்டுமே புதுப்பிக்க வேண்டும்.
 5. கைப்பேசியில் சோதிக்காத ஒன்றை "சோதித்தது" என்று எழுதக் கூடாது; சொந்தப் படங்களையும் ரகசியத் தகவலையும் பதிவேற்றக் கூடாது.
+6. வெளிப்புற tool/MCP சேவைகளுக்கு repo-வில் எழுதும் அனுமதியோ (merge, tag, workflow) ரகசியங்களோ தரக்கூடாது.
 
 ## 1. The five things that must never happen
 
@@ -121,7 +122,32 @@ copy on the website disappears.
 - Download APKs only under `/tmp`, never into the repository checkout.
 - If Play Protect warns, stop. Do not tell a user to bypass it.
 
-## 8. Honest wording
+## 8. External tooling and MCP servers
+
+[`github.com/mcp`](https://github.com/mcp) is GitHub's MCP registry: a catalogue of servers that let
+an AI assistant call some app's API. An installed MCP server acts with **the authority of the token
+you give it**, and being listed in the registry is not a security audit of its code. This project
+publishes real APKs and holds keystore secrets, so the default answer is "not needed":
+
+- **Nothing in the release pipeline uses MCP.** Builds, gates, publishing, site deployment and the
+  live byte verification all run in `.github/workflows` and are checked with `git`/`gh`.
+- **Only one server is acceptable**, and only when you want an assistant in your own editor to read
+  this repo: the official [`github/github-mcp-server`](https://github.com/github/github-mcp-server),
+  in **read-only** mode, with toolsets limited to `repos,actions,pull_requests`.
+- **Forbidden capabilities**, regardless of server: merging PRs, pushing to `main`, creating or
+  moving tags, triggering or dispatching workflows, editing release assets, or reading secrets. A
+  server that can do any of these can publish a build by accident — the exact failure this repo's
+  pinned publishers exist to prevent.
+- **Token hygiene**: a fine-grained token scoped to this one repository, read-only permissions, no
+  `workflow` scope, stored by the MCP host — never pasted into chat, a commit, an issue or a doc.
+- **Third-party servers** (browser, scraping, database, design tools, …) are opt-in per person and
+  never part of this repository's process. Read the source before installing one, and never point
+  one at this repo with a write-capable token.
+
+If an MCP tool ever proposes a release action, stop: releases go through the documented publisher
+sequence (§4), with a human deciding, not an assistant's tool call.
+
+## 9. Honest wording
 
 Say what the evidence says and stop there:
 
@@ -133,7 +159,7 @@ Say what the evidence says and stop there:
 - Publication receipts must keep `physical_phone_tested`, `installed_phone_hash_matched` and
   `play_protect_clearance` truthful even when the release is fully published.
 
-## 9. If something goes wrong
+## 10. If something goes wrong
 
 1. **A red check that is not yours** — read its annotation before touching anything; confirm whether
    it was already red on `main` (this repo had two such cases: `Build APK` pinning 2.93, and the SMS
