@@ -785,6 +785,7 @@ object Lang {
         "Hide news strip" to "செய்திப் பட்டையை மறை",
         "Today's headlines" to "இன்றைய செய்திகள்",
         "Fetching today's headlines…" to "இன்றைய செய்திகளைப் பெறுகிறது…",
+        "Saved headlines appear here; fresh news is checked a minute after opening." to "சேமித்த செய்திகள் இங்கே தோன்றும்; புதிய செய்திகள் செயலியைத் திறந்த ஒரு நிமிடம் கழித்து சரிபார்க்கப்படும்.",
         "You're caught up with today's headlines. Tap to review." to "இன்றைய செய்திகளைப் பார்த்துவிட்டீர்கள். மீண்டும் பார்க்கத் தட்டவும்.",
         "Offline: no dated headlines from today are available." to "இணையம் இல்லை: இன்றைய தேதியுள்ள செய்திகள் கிடைக்கவில்லை.",
         "News feeds unavailable. No old news substituted." to "செய்தி ஊட்டங்கள் கிடைக்கவில்லை. பழைய செய்திகள் மாற்றாகக் காட்டப்படாது.",

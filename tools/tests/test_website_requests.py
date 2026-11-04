@@ -162,7 +162,7 @@ class WebsiteRequestsTest(unittest.TestCase):
                                              'data-apk="apks/Tamilan-Store-v0.9.apk"', 1)
         self.assert_site_rejected(duplicate_card)
         stale_sha = self.source.replace(
-            'SHA-256: c26de0c09022ea5d05169c238f91308de367dc2e0ccb16c902699d17de34c195',
+            'SHA-256: b51d355d113511f45a6cf121fffc0765f188b578e69001e11e4f986f0a7eecb7',
             'SHA-256: ' + '0' * 64,
         )
         self.assertNotEqual(stale_sha, self.source)

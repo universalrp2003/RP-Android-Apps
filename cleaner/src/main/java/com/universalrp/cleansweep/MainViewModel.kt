@@ -50,6 +50,7 @@ import com.universalrp.cleansweep.data.SpeedProgress
 import com.universalrp.cleansweep.data.SpeedResult
 import com.universalrp.cleansweep.data.UsageStats
 import com.universalrp.cleansweep.data.tr
+import com.universalrp.cleansweep.ui.HomeRefreshPolicy
 import com.universalrp.cleansweep.data.NetworkReport
 import com.universalrp.cleansweep.data.NetworkScanner
 import com.universalrp.cleansweep.data.SecurityReport
@@ -309,6 +310,8 @@ data class UiState(
     val newsShown: Set<String> = emptySet(),
     val newsLoading: Boolean = false,
     val newsOutcome: TamilInfoStripRepo.Outcome = TamilInfoStripRepo.Outcome.NO_TODAY_NEWS,
+    /** 2.95: nothing saved yet and the startup delay still holds, so no "no news today" claim. */
+    val newsStartupPending: Boolean = false,
     val tamilInfoVisible: Boolean = true,
     val tamilInfoPaused: Boolean = false,
     val newsVoiceEnabled: Boolean = true,
@@ -363,6 +366,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var newsJob: Job? = null
     private var newsReadingJob: Job? = null
     private var homeReadingJob: Job? = null
+    /** 2.95: when this process opened, so automatic news fetching can wait one minute. */
+    private val openedAtElapsedMs = android.os.SystemClock.elapsedRealtime()
+    private var lastHealthReadMs = 0L
+    private var lastNetworkReadMs = 0L
     private var phoneAgeCalculatedOn: String? = null
     private var healthReadingJob: Job? = null
     private var currentSettings = ScanSettings()
@@ -583,26 +590,50 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Runs only while Home is visible, not a new background service. All reads/probes are off the UI thread. */
+    /**
+     * 2.95 — one owner, rate-limited readings. Home still ticks every 15 s, but the battery/storage/
+     * RAM read runs at most every 30 s and the latency probe plus NetworkStats query at most every
+     * 60 s (HomeRefreshPolicy). Previously all of it — including a charge-history disk write — ran
+     * on every tick, which is the overlapping startup/periodic load the OPPO could not sustain.
+     */
     fun refreshDashboardReadings() {
         if (homeReadingJob?.isActive == true) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        val healthDue = HomeRefreshPolicy.due(now, lastHealthReadMs, HomeRefreshPolicy.HEALTH_INTERVAL_MS)
+        val networkDue = HomeRefreshPolicy.due(now, lastNetworkReadMs, HomeRefreshPolicy.NETWORK_INTERVAL_MS)
+        if (!healthDue && !networkDue) return
         homeReadingJob = viewModelScope.launch {
             val today = java.time.LocalDate.now().toString()
-            val age = if (_state.value.phoneAge == null || phoneAgeCalculatedOn != today) {
+            val health = if (healthDue) {
+                lastHealthReadMs = android.os.SystemClock.elapsedRealtime()
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        DeviceHealthReader.read(ctx).also { runCatching { ChargeHistoryRepo.record(ctx, it.battery) } }
+                    }.getOrNull()
+                }
+            } else null
+            val networkAndPack = if (networkDue) {
+                lastNetworkReadMs = android.os.SystemClock.elapsedRealtime()
+                withContext(Dispatchers.IO) {
+                    runCatching { LiveNetworkQuality.measure(ctx) }.getOrNull() to
+                        runCatching { DataUsageTracker.getUsageInfo(ctx) }.getOrNull()
+                }
+            } else null
+            val age = if (healthDue && (_state.value.phoneAge == null || phoneAgeCalculatedOn != today)) {
                 withContext(Dispatchers.IO) {
                     runCatching { PhoneAgeEstimator.estimateAge() }.getOrElse { PhoneAgeEstimator.unavailable() }
                 }.also { phoneAgeCalculatedOn = today }
             } else _state.value.phoneAge
-            val values = withContext(Dispatchers.IO) {
-                val health = runCatching { DeviceHealthReader.read(ctx) }.getOrNull()
-                health?.battery?.let { runCatching { ChargeHistoryRepo.record(ctx, it) } }
-                val network = runCatching { LiveNetworkQuality.measure(ctx) }.getOrNull()
-                val pack = runCatching { DataUsageTracker.getUsageInfo(ctx) }.getOrNull()
-                Triple(health, network, pack)
+            mutate {
+                it.copy(
+                    health = health ?: it.health,
+                    storage = health?.storage ?: it.storage,
+                    liveNetworkQuality = networkAndPack?.first ?: it.liveNetworkQuality,
+                    dataPackInfo = networkAndPack?.second ?: it.dataPackInfo,
+                    phoneAge = age ?: it.phoneAge,
+                )
             }
-            mutate { it.copy(health = values.first ?: it.health, storage = values.first?.storage ?: it.storage,
-                liveNetworkQuality = values.second ?: it.liveNetworkQuality, dataPackInfo = values.third ?: it.dataPackInfo,
-                phoneAge = age ?: it.phoneAge) }
-            rebuildChecklist()
+            if (healthDue) rebuildChecklist()
         }
     }
 
@@ -2755,7 +2786,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “கைபேசி காவலன்”" else "Language: English",
             )
         }
-        loadTamilInfoStrip(force = false)
+        // A language switch is a user action: it may fetch in the new language at once.
+        loadTamilInfoStrip(userInitiated = true)
         refreshAssistantWelcome()
         ChargeMonitorService.refreshIfRunning()
         com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
@@ -3209,13 +3241,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // -------------------------------------------------------- Tamil info strip
 
-    fun loadTamilInfoStrip(force: Boolean = false) {
+    /**
+     * 2.95 — the startup rule (NewsStartupPolicy): an automatic pass in the first minute shows the
+     * saved headlines and touches no feed. A later automatic pass, or any Read/Refresh tap
+     * ([force] / [userInitiated]), fetches exactly as before. Only one pass may run at a time, so a
+     * language switch, the date-change broadcast and the Home tick can never stack jobs.
+     */
+    fun loadTamilInfoStrip(force: Boolean = false, userInitiated: Boolean = false) {
         if (newsJob?.isActive == true) return
+        val elapsed = android.os.SystemClock.elapsedRealtime() - openedAtElapsedMs
+        val allowNetwork = NewsStartupPolicy.allowNetwork(force, userInitiated, elapsed)
         newsJob = viewModelScope.launch {
             mutate { it.copy(newsLoading = true) }
             try {
                 val isTa = Lang.languageIn(ctx) == AppLang.TA
-                val result = TamilInfoStripRepo.getItemsForLanguage(ctx, forceRefresh = force, tamil = isTa)
+                val result = TamilInfoStripRepo.getItemsForLanguage(
+                    ctx, forceRefresh = force, tamil = isTa, allowNetwork = allowNetwork,
+                )
                 val valid = com.universalrp.cleansweep.data.NewsPolicy.todayForLanguage(
                     result.items,
                     System.currentTimeMillis(),
@@ -3228,6 +3270,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                         tamilInfoItems = valid,
                         newsShown = shown,
                         newsOutcome = if (valid.isEmpty() && result.items.isNotEmpty()) TamilInfoStripRepo.Outcome.NO_TODAY_NEWS else result.outcome,
+                        // Never say "no news today" while the startup delay still holds.
+                        newsStartupPending = !allowNetwork && valid.isEmpty(),
                         newsLoading = false,
                     )
                 }

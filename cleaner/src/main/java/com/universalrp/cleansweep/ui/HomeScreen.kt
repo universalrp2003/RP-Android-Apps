@@ -275,7 +275,16 @@ fun HomeScreen(
             }
         }
 
-        LedBar(Modifier.fillMaxWidth().padding(horizontal = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp))
+        // 2.95 — the running/glowing LED sweep that sat above the news card is gone: it repainted
+        // every frame for decoration and was the heaviest thing on Home. A plain static rule keeps
+        // the same spacing and the same visual separation, with no animation at all.
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp),
+            thickness = 1.dp,
+            color = OutlineC,
+        )
 
         if (state.tamilInfoVisible) {
             TamilInfoStrip(
@@ -288,6 +297,7 @@ fun HomeScreen(
                 onTogglePause = { vm.toggleTamilInfoPause() },
                 onHide = { vm.toggleTamilInfoVisibility() },
                 onRefresh = { vm.loadTamilInfoStrip(force = true) },
+                startupPending = state.newsStartupPending,
                 onSpeak = { text -> vm.speakTamilText(text) },
                 onReadTopNews = { vm.readTodaysNewsNow() },
                 onStopSpeaking = { vm.stopSpeakingNow() },
@@ -634,6 +644,8 @@ fun TamilInfoStrip(
     onStopSpeaking: () -> Unit = {},
     newsVoiceBusy: Boolean = false,
     voiceSpeaking: Boolean = false,
+    /** 2.95: the opening minute holds the saved headlines and starts no feed fetch. */
+    startupPending: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var currentKey by remember { mutableStateOf<String?>(null) }
@@ -654,6 +666,7 @@ fun TamilInfoStrip(
     val headline = items.firstOrNull { it.key == currentKey }
     val empty = when {
         loading && items.isEmpty() -> "Fetching today's headlines…"
+        startupPending && items.isEmpty() -> "Saved headlines appear here; fresh news is checked a minute after opening."
         items.isNotEmpty() -> "You're caught up with today's headlines. Tap to review."
         outcome == com.universalrp.cleansweep.data.TamilInfoStripRepo.Outcome.OFFLINE -> "Offline: no dated headlines from today are available."
         outcome == com.universalrp.cleansweep.data.TamilInfoStripRepo.Outcome.FEEDS_UNAVAILABLE -> "News feeds unavailable. No old news substituted."

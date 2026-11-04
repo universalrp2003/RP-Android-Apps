@@ -537,6 +537,10 @@ Live Guard2.89 website completion: PR83/main08f8cd21fa04e676b152eb278f8ddeb36c7a
 
 Exact configured native candidate promoted without rebuilding by41751132736/job126316197572, release433392185/APK707716347/checksum707716348. APK `Oor-Arivippu-v1.1.16.apk`:12891948bytes/SHA256 `3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee`, established signer7366d76…; prior public assets unchanged. Source6858701/native41669768816/artifact13249211486; full publication receipt `oor-about-guide-1.1.16-publication-receipt.json`. Owner says perfect/publish; no independent phone-hash/audio/OEM/security/PlayProtect clearance claim. Public15 and its masked screenshots remain preserved and labelled15.
 
+
+## Live Guard2.95 — 4 November2026
+
+`CleanSweep-v2.95.apk` — 14764951bytes — SHA256 `b51d355d113511f45a6cf121fffc0765f188b578e69001e11e4f986f0a7eecb7`. Exact verified configured candidate (run41775933822/job126396167317/artifact13297955668, archiveSHA `4b5b59d9db00b0f173f17ada79f8803d9fb4793d5a497599c7f882e62d57e594`) promoted without rebuilding by41777666831/job126401682358, release433537408/APK708318869. Public2.94 and older assets unchanged. Same signer, no permission delta; 923 required JVM tests/89suites/418Python/9Android35 native tests, not physical dual-SIM, OEM-modem, audio or Google clearance proof.
 ## Live Guard2.94
 
 `CleanSweep-v2.94.apk` — 14762179bytes — SHA256 `c26de0c09022ea5d05169c238f91308de367dc2e0ccb16c902699d17de34c195`. Exact verified configured candidate promoted without rebuild; public2.93 and older assets unchanged. Same signer, no permission delta; Android35 synthetic tests, not physical/audio/dual-SIM/Google clearance proof.

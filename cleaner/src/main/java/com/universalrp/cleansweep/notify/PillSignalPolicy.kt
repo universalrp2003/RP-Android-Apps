@@ -2,7 +2,14 @@ package com.universalrp.cleansweep.notify
 
 import com.universalrp.cleansweep.data.SimSignalPolicy
 
-/** Per-slot measured dBm, never a copy of the default-data SIM or Android's four bars. */
+/**
+ * Per-slot measured dBm, never a copy of the default-data SIM or Android's four bars.
+ *
+ * 2.95 — the owner asked for a compact pill: no `S1`/`S2` slot labels and no `≈` marker, just the
+ * coloured percentages in physical-slot order (`46% 76%`). The slot order is unchanged, and the
+ * "this is an estimate" explanation now lives in the Guide and the pill settings text, not in the
+ * few pixels of the floating pill itself.
+ */
 object PillSignalPolicy {
     enum class Mode { FIRST, BOTH, OFF }
     data class Sample(val slot: Int, val dbm: Int?, val kind: String?)
@@ -17,7 +24,7 @@ object PillSignalPolicy {
         } else listOf(slots.firstOrNull() ?: Sample(1, null, null))
         return selected.mapNotNull {
             val percent = SimSignalPolicy.percent(it.dbm, it.kind) ?: return@mapNotNull null
-            Label("S${it.slot} ≈$percent%", SimSignalPolicy.tone(percent))
+            Label("$percent%", SimSignalPolicy.tone(percent))
         }
     }
 }
