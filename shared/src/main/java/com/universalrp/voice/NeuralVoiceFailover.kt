@@ -35,11 +35,13 @@ object NeuralVoiceFailover {
             if (Thread.currentThread().isInterrupted) return null
             val remaining = timeoutMs - (clockMs() - started).coerceAtLeast(0)
             if (remaining <= 0) return null
-            // Default: equal shares of one deadline. Patient callers (news preparation) may
-            // cap each voice instead, so the first slow model cannot consume the whole budget
-            // before alternatives are tried, while the total deadline still bounds the call.
+            // Default: the first voice takes the majority share of one deadline (55/30/15 for the
+            // usual three) because the service's time-to-first-audio is 0.13-3.1 s and equal
+            // thirds abandoned voices that would have answered (issue #49). Patient callers (news
+            // preparation) may still cap each voice instead, and the total deadline always bounds
+            // the call.
             val budget = if (attemptTimeoutMs > 0L) minOf(remaining, attemptTimeoutMs)
-                         else remaining / (voices.size - index)
+                         else NeuralBudgetPolicy.share(remaining, index, voices.size)
             if (budget <= 0) return null
             val bytes = attempt(voice, budget)
             if (Thread.currentThread().isInterrupted) return null

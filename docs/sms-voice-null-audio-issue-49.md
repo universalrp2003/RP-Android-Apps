@@ -101,6 +101,21 @@ Classes: `OK`, `DNS_FAILURE`, `TLS_FAILURE`, `HTTP_403_THROTTLE`, `HTTP_429_THRO
 The assertion itself is untouched: every required profile still needs more than 1500 real MP3 bytes,
 and the probe is still direct (no fallback, no DNS-only success).
 
+## Resolution (chosen: budget shaping)
+
+The owner chose remedy 1. `NeuralBudgetPolicy` now divides one deadline as **55 % / 30 % / 15 %**
+(of what is left, so unused time is handed forward) instead of equal thirds, and
+`NeuralVoiceFailover.synthesize` uses it. Nothing else changed: same candidate list, same order,
+same total deadline, same "≥ 256 bytes and a clean turn.end" success condition, same ban on
+same-voice retries, and patient callers that pass `attemptTimeoutMs` (Live Guard news preparation,
+Voice Notes) keep their per-attempt cap exactly as before.
+
+With the failover deadline unchanged at 4,200 ms the first voice now gets ~2,310 ms instead of
+1,400 ms — comfortably more than the 1,590 ms first-audio time measured for `ta-MY-SuryaNeural` —
+while the second and third voices still get 1,260 ms and 630 ms of whatever remains. The expected
+observable change in the HD recovery lane is that the *first* Tamil voice completes instead of being
+abandoned and the third one rescuing the call.
+
 ## How to investigate the next occurrence
 
 `.github/workflows/sms-live-probe.yml` runs on a branch push whose commit message contains

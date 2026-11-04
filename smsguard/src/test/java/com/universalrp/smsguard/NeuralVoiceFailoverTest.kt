@@ -78,6 +78,29 @@ class NeuralVoiceFailoverTest {
             assertEquals(1, calls)
         } finally { Thread.interrupted() }
     }
+    @Test fun firstVoiceGetsTheMajorityOfOneDeadline() {
+        // Issue #49: 1,400 ms per voice abandoned voices that answer at ~1.6 s. The first voice now
+        // takes 55 % of what is left, and the rest is shared 30/15, never exceeding the deadline.
+        var now = 0L
+        val budgets = mutableListOf<Long>()
+        NeuralVoiceFailover.synthesize("ta-MY-SuryaNeural", 4200, clockMs = { now }) { _, budget ->
+            budgets.add(budget)
+            now += budget
+            null
+        }
+        assertEquals(listOf(2310L, 1260L, 630L), budgets)
+        assertEquals(4200L, now)
+    }
+
+    @Test fun budgetWeightsAreDefinedForOneTwoAndThreeVoicesAndRefuseImpossibleCalls() {
+        assertEquals(650L, com.universalrp.voice.NeuralBudgetPolicy.share(1000, 0, 2))
+        assertEquals(350L, com.universalrp.voice.NeuralBudgetPolicy.share(1000, 1, 2))
+        assertEquals(1000L, com.universalrp.voice.NeuralBudgetPolicy.share(1000, 0, 1))
+        for (bad in listOf(Triple(0L, 0, 3), Triple(1000L, 3, 3), Triple(1000L, -1, 3), Triple(1000L, 0, 0))) {
+            assertEquals(0L, com.universalrp.voice.NeuralBudgetPolicy.share(bad.first, bad.second, bad.third))
+        }
+    }
+
     @Test fun perAttemptCapGivesEachVoiceItsOwnBudgetInsideOneDeadline() {
         var now = 0L
         val budgets = mutableListOf<Long>()
