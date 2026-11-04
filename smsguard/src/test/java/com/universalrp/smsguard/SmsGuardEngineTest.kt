@@ -916,12 +916,39 @@ class SmsGuardEngineTest {
                 allowVoiceFallback = false,
                 diagnostic = { diagnostics.add(it) },
             )
-            val result = "$voiceId bytes=${mp3?.size ?: 0} diagnostics=${diagnostics.joinToString(" | ")}"
+            // Issue #49: an intermittent null must name its upstream cause in the CI annotation.
+            val failureClass = liveFailureClass(diagnostics.toList(), mp3?.size ?: 0)
+            val result = "$voiceId class=$failureClass bytes=${mp3?.size ?: 0} " +
+                "diagnostics=${diagnostics.joinToString(" | ")}"
             println("SMS_LIVE_PROFILE $result")
             if (mp3 == null || mp3.size <= 1500) failedProfiles.add(result)
         }
         // Attempt every required profile, but retain failure if ANY required voice fails.
         assertTrue("Required live profiles failed: ${failedProfiles.joinToString(" ; ")}", failedProfiles.isEmpty())
+    }
+
+    /**
+     * Issue #49 evidence: classify the LAST attempt of a live profile from its own diagnostics, so a
+     * red probe says "peer closed 1011" / "HTTP 403 throttle" / "deadline" instead of only "null".
+     * The assertion itself is unchanged - real MP3 bytes are still required for every profile.
+     */
+    private fun liveFailureClass(diagnostics: List<String>, bytes: Int): String {
+        if (bytes > 1500) return "OK"
+        val text = diagnostics.joinToString(" | ")
+        return when {
+            text.contains("DNS_FAILURE") -> "DNS_FAILURE"
+            text.contains("TLS_FAILURE") -> "TLS_FAILURE"
+            text.contains("HTTP=403") -> "HTTP_403_THROTTLE"
+            text.contains("HTTP=429") -> "HTTP_429_THROTTLE"
+            Regex("HTTP=5\\d\\d").containsMatchIn(text) -> "HTTP_5XX"
+            text.contains("SOCKET_TIMEOUT") -> "SOCKET_TIMEOUT"
+            text.contains("DEADLINE_EXCEEDED") -> "DEADLINE_EXCEEDED"
+            text.contains("CLOSE=1011") || text.contains("CODE=1011") -> "PEER_1011"
+            text.contains("PEER_CLOSING CODE=") || text.contains("CLOSED CODE=") -> "PEER_CLOSED_EARLY"
+            text.contains("COMPLETE=false") -> "NO_TURN_END"
+            text.contains("WEBSOCKET_FAILURE") -> "WEBSOCKET_FAILURE"
+            else -> "UNKNOWN"
+        }
     }
 
     @Test

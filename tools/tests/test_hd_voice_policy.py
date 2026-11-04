@@ -45,6 +45,22 @@ class HdVoicePolicyTest(unittest.TestCase):
         self.assertIn("if (err.message === 'SHA-256 mismatch')",site)
         self.assertIn('Integrity failure must never become an unchecked direct download',site)
 
+    def test_live_probe_names_the_upstream_cause_instead_of_a_bare_null(self):
+        # Issue #49: an intermittent service answer must be attributable from the CI annotation.
+        engine = (ROOT/'smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt').read_text()
+        for marker in ('FIRST_AUDIO_MS=', 'FRAMES=', 'ELAPSED_MS=', 'NO_TURN_END CLOSE=', 'lastCloseCode'):
+            self.assertIn(marker, engine)
+        # Evidence must never carry speech text, URLs, headers or exception messages.
+        self.assertNotIn('response.header("Set-Cookie")', engine)
+        probe = (ROOT/'smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt').read_text()
+        self.assertIn('class=$failureClass', probe)
+        for cls in ('HTTP_403_THROTTLE', 'PEER_1011', 'DEADLINE_EXCEEDED', 'NO_TURN_END', 'SOCKET_TIMEOUT'):
+            self.assertIn(cls, probe)
+        # The strict success condition is unchanged: real bytes, direct voice, no fallback.
+        self.assertIn('mp3.size <= 1500', probe)
+        self.assertIn('allowVoiceFallback = false', probe)
+        self.assertTrue((ROOT/'docs/sms-voice-null-audio-issue-49.md').exists())
+
     def test_optional_model_monitoring_is_direct_and_never_silently_passes_dns(self):
         source = (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text()
         self.assertIn('allowVoiceFallback = false',source)
