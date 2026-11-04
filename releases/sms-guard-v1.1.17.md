@@ -8,6 +8,8 @@ Normal same-key update from 1.1.16: do not uninstall or clear app data. Existing
 
 This release is not a physical-phone, carrier/MMS, audible-playback or Google Play Protect certification. Historical legacy-key installations cannot update across signing identities; do not erase data as a workaround.
 
+Exact release bytes are not installed on a phone as part of this CI verification. Emulator tests are separate evidence, not phone acceptance.
+
 ## தமிழ்
 
 இணையக் குரலின் முதல் தேர்வுக்கு ஒரே காலவரம்புக்குள் அதிக நேரம் வழங்கப்படுகிறது; மாற்றுக் குரல்கள் தொடரும். இணையச் சேவை எப்போதும் வெற்றி பெறும் என்ற உறுதி இல்லை.

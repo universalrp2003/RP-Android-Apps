@@ -44,7 +44,7 @@ object SisterApps {
             name = "SMS Guard (குறுஞ்செய்தி காவலன்)",
             tamilName = "குறுஞ்செய்தி காவலன்",
             tagPrefix = "sms-guard",
-            version = "1.1.16",
+            version = "1.1.17",
             publishedVersion = "1.1.16",
             packageName = "com.universalrp.smsguard",
             aboutLabel = "SMS Guard (குறுஞ்செய்தி காவலன்) — GitHub release",
