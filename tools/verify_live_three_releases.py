@@ -66,7 +66,8 @@ def main():
             time.sleep(10)
     health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
     store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
-    checks = [('Oor-Arivippu-v1.1.16.apk', json.loads((ROOT/'docs/oor-about-guide-1.1.16-publication-receipt.json').read_text())),
+    checks = [('CleanSweep-v2.94.apk', json.loads((ROOT/'docs/live-guard-2.94-publication-receipt.json').read_text())),
+              ('Oor-Arivippu-v1.1.16.apk', json.loads((ROOT/'docs/oor-about-guide-1.1.16-publication-receipt.json').read_text())),
               ('Oor-Arivippu-v1.1.15.apk', json.loads((ROOT/'docs/oor-family-1.1.15-publication-receipt.json').read_text())),
               ('CleanSweep-v2.93.apk', json.loads((ROOT/'docs/live-guard-2.93-publication-receipt.json').read_text())),
               ('CleanSweep-v2.89.apk', json.loads((ROOT/'docs/live-guard-2.89-publication-receipt.json').read_text())),
