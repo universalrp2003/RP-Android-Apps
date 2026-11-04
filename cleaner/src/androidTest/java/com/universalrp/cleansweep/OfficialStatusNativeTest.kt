@@ -19,7 +19,7 @@ import java.time.Instant
 
 /** Synthetic fixtures only. No live weather, real alert, speech or phone accuracy claim. */
 @RunWith(AndroidJUnit4::class)
-class OfficialStatusNativeTest {
+class OfficialStatusNativeTest : ExactCandidateNativeTest() {
     private val c: Context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private fun waitFor(condition: () -> Boolean) {
         val until=SystemClock.elapsedRealtime()+15_000

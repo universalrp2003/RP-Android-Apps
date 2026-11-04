@@ -14,6 +14,8 @@ def main():
         assert all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases),classname
     p=Path(os.environ['RUNNER_TEMP'])/'health-cleaner/verification.json'
     r=json.loads(p.read_text());assert r['final_installed_apk_sha256']==r['sha256'],'Missing exact installed-APK proof before emulator shutdown'
+    r['native_tests_assert_installed_sha256']=True
+    r['installed_apk_proof_stage']='before_instrumentation_and_inside_each_required_test'
     r['native_294_pill_defaults_overlay']=True;r['required_android35_native_tests']=9
     p.write_text(json.dumps(r,indent=2)+'\n')
     print('::notice title=Required Live Guard2.94 native gates::'+json.dumps(r),flush=True)

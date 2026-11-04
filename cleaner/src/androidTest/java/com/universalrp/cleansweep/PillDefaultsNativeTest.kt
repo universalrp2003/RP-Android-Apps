@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 
 /** Disposable emulator synthetic values only; no real dual-SIM/OEM reception claim. */
 @RunWith(AndroidJUnit4::class)
-class PillDefaultsNativeTest {
+class PillDefaultsNativeTest : ExactCandidateNativeTest() {
     private val i get() = InstrumentationRegistry.getInstrumentation()
     private val c: Context get() = i.targetContext
     @Test fun missingNewsChoiceDefaultsToTranslationWithoutResettingExplicitChoices() {

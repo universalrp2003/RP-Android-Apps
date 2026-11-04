@@ -6,7 +6,7 @@ class Scoped294Promotion(unittest.TestCase):
         p=dict(source='a'*40,apk_sha256='b'*64,bytes=123)
         r=dict(source=p['source'],package='com.universalrp.cleansweep',version='2.94',code=99,sha256=p['apk_sha256'],bytes=123,signer=SIGNER,
                same_uid=True,data_preserved=True,preferences_preserved=True,restart_passed=True,native_283_settings_smoke=True,
-               native_288_feature_notice_smoke=True,native_289_named_security_smoke=True,native_292_top_read_and_opt_in_smoke=True,native_294_pill_defaults_overlay=True,
+               native_288_feature_notice_smoke=True,native_289_named_security_smoke=True,native_292_top_read_and_opt_in_smoke=True,native_294_pill_defaults_overlay=True,native_tests_assert_installed_sha256=True,
                final_installed_apk_sha256=p["apk_sha256"],required_android35_native_tests=9,
                added_permissions=[],removed_permissions=[],baseline_tag=OLD_TAG,baseline_sha256=OLD_SHA,physical_phone_tested=False,play_protect_tested=False)
         return r,p
@@ -17,7 +17,7 @@ class Scoped294Promotion(unittest.TestCase):
             r,p=self.receipt();r[field]=value
             with self.assertRaises(AssertionError):validate_receipt(r,p)
     def test_no_missing_upgrade_or_ui_evidence(self):
-        for field in ('same_uid','preferences_preserved','native_292_top_read_and_opt_in_smoke','native_294_pill_defaults_overlay'):
+        for field in ('same_uid','preferences_preserved','native_292_top_read_and_opt_in_smoke','native_294_pill_defaults_overlay','native_tests_assert_installed_sha256'):
             r,p=self.receipt();r[field]=False
             with self.assertRaises(AssertionError):validate_receipt(r,p)
     def test_publisher_has_immutable_and_gate_boundaries(self):

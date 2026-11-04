@@ -30,7 +30,7 @@ STEPS = ('Offline source, bilingual and public-byte guards',
 def validate_receipt(r, p):
     assert (r['source'], r['package'], r['version'], r['code'], r['sha256'], r['bytes'], r['signer']) == (
         p['source'], 'com.universalrp.cleansweep', '2.94', 99, p['apk_sha256'], p['bytes'], SIGNER)
-    for gate in ('same_uid', 'data_preserved', 'preferences_preserved', 'restart_passed', 'native_283_settings_smoke', 'native_288_feature_notice_smoke', 'native_289_named_security_smoke', 'native_292_top_read_and_opt_in_smoke', 'native_294_pill_defaults_overlay'):
+    for gate in ('same_uid', 'data_preserved', 'preferences_preserved', 'restart_passed', 'native_283_settings_smoke', 'native_288_feature_notice_smoke', 'native_289_named_security_smoke', 'native_292_top_read_and_opt_in_smoke', 'native_294_pill_defaults_overlay', 'native_tests_assert_installed_sha256'):
         assert r[gate] is True, gate
     assert r['final_installed_apk_sha256'] == p['apk_sha256']
     assert r['required_android35_native_tests'] == 9
@@ -59,7 +59,7 @@ def main():
     subprocess.run(['git', 'diff', '--exit-code', source, 'HEAD', '--', 'cleaner/', 'shared/', 'gradle/',
                     'build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradlew', 'gradlew.bat',
                     'tools/verify_cleaner_regressions.py', 'tools/inspect_liveguard_294_candidate.py',
-                    'tools/liveguard_283_native_smoke.py', 'tools/verify_liveguard_294_installed.py', 'tools/verify_liveguard_294_native.py', '.github/workflows/liveguard-294-candidate.yml'], check=True)
+                    'tools/liveguard_283_native_smoke.py', 'tools/verify_liveguard_294_installed.py', 'tools/run_liveguard_294_native.py', 'tools/verify_liveguard_294_native.py', '.github/workflows/liveguard-294-candidate.yml'], check=True)
     info = api(f'actions/runs/{p["run_id"]}')
     assert (info['head_sha'], info['head_branch'], info['status'], info['conclusion'], info['path']) == (
         source, BRANCH, 'completed', 'success', '.github/workflows/liveguard-294-candidate.yml')

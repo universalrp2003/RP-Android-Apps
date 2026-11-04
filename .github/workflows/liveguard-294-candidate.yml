@@ -2,7 +2,7 @@ name: Live Guard 2.94 signed upgrade, SIM pill, Tamil defaults and compact home 
 on:
   push:
     branches: ["arena/282fce0a-rp-android-apps"]
-    paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_294_candidate.py", "tools/liveguard_283_native_smoke.py", "tools/verify_liveguard_294_installed.py", "tools/verify_liveguard_294_native.py", ".github/workflows/liveguard-294-candidate.yml"]
+    paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_294_candidate.py", "tools/liveguard_283_native_smoke.py", "tools/verify_liveguard_294_installed.py", "tools/run_liveguard_294_native.py", "tools/verify_liveguard_294_native.py", ".github/workflows/liveguard-294-candidate.yml"]
 permissions:
   contents: read
 concurrency:
@@ -89,8 +89,8 @@ jobs:
             python3 tools/battery_voice_update_smoke.py cleaner
             python3 tools/liveguard_283_native_smoke.py
             adb shell appops set com.universalrp.cleansweep SYSTEM_ALERT_WINDOW allow
-            bash -o pipefail -c 'gradle :cleaner:connectedReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/liveguard-native.log"'
             python3 tools/verify_liveguard_294_installed.py
+            bash -o pipefail -c 'python3 tools/run_liveguard_294_native.py 2>&1 | tee "$RUNNER_TEMP/liveguard-native.log"'
       - name: Surface native failures without downloading artifact blobs
         if: failure()
         run: |
