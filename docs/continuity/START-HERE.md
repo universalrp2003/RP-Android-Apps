@@ -41,3 +41,7 @@ There is no need to uninstall apps, clear their data or generate a replacement s
 - Owner reports that something works are useful, but not independent installed-phone hash, audible-speech, all-device reliability, security audit or Play Protect clearance.
 
 **தமிழ் சுருக்கம்:** ஒரு AI சேவை நின்றாலும் GitHub-இல் உள்ள நிரலும் வெளியிட்ட செயலிகளும் அதனால் அழியாது. இந்த வழிகாட்டியை உங்கள் சாதனத்தில் சேமிக்கவும். நிரல்/செயலிக் கோப்புகள் மற்றும் தனிப்பட்ட கையொப்பச் சாவிக்கு தனித்தனி பாதுகாப்பான காப்பு தேவை. சாவி அல்லது கடவுச்சொல்லை உரையாடலில் அனுப்ப வேண்டாம். செயலியை நீக்கவோ தரவை அழிக்கவோ அவசரப்பட வேண்டாம்.
+
+## Separate Drive backup (partial)
+
+See [DRIVE-BACKUP-STATUS.md](DRIVE-BACKUP-STATUS.md) for the4November source/document copies and remaining APK/weekly-automation gaps. This does not change the documents-only scope of the original continuity ZIP.
