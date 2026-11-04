@@ -1,12 +1,12 @@
 # SMS Guard (குறுஞ்செய்தி காவலன்)
 
-**Package:** `com.universalrp.smsguard` · Android 8.0+ · Development version **1.1.16 / code 22**. See the [public releases](https://github.com/universalrp2003/RP-Android-Apps/releases?q=sms-guard&expanded=true) and [verification receipt](../docs/sms-guard-1.1.16-verification.md) for actual publication/build status rather than treating this source version as an installed-phone test.
+**Package:** `com.universalrp.smsguard` · Android 8.0+ · Development version **1.1.17 / code 23**. See the [public releases](https://github.com/universalrp2003/RP-Android-Apps/releases?q=sms-guard&expanded=true) and [verification receipt](../docs/sms-guard-1.1.17-verification.md) for actual publication/build status rather than treating this source version as an installed-phone test.
 
 ## Read before installing or sharing
 
 **Earlier sensitive-data blocks were followed by an owner1.1.15 scan saying “This app looks safe” and a running-app screenshot. This is one phone, not universal Google clearance.** The owner reports blocked older APKs and explicitly authorized publishing bug fixes for family/friends with this disclosure. The app still declares SMS read/receive permissions. Installation may remain blocked; keep Play Protect enabled and respect warnings. No Google clearance, malware-free guarantee or exact new-build phone test is claimed. Update same-key installations normally; do not uninstall/reset to force installation and risk local data loss.
 
-[Full warning, privacy choices and audit access](../docs/sms-guard-play-protect.md) · [Privacy policy](../PRIVACY.md) · [1.1.15 notes](../releases/sms-guard-v1.1.16.md). Public source enables review, not a safety certification.
+[Full warning, privacy choices and audit access](../docs/sms-guard-play-protect.md) · [Privacy policy](../PRIVACY.md) · [1.1.17 notes](../releases/sms-guard-v1.1.17.md). Public source enables review, not a safety certification.
 
 ## Features and limitations
 

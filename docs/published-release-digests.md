@@ -544,3 +544,7 @@ Exact configured native candidate promoted without rebuilding by41751132736/job1
 ## Live Guard2.94
 
 `CleanSweep-v2.94.apk` — 14762179bytes — SHA256 `c26de0c09022ea5d05169c238f91308de367dc2e0ccb16c902699d17de34c195`. Exact verified configured candidate promoted without rebuild; public2.93 and older assets unchanged. Same signer, no permission delta; Android35 synthetic tests, not physical/audio/dual-SIM/Google clearance proof.
+
+## SMS Guard 1.1.17 — 4 November 2026
+
+Exact tested `SMS-Guard-v1.1.17.apk`: **12,840,884 bytes**, SHA-256 `b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd`. Source e194b6d9018e0d6a5704f6db738dc91996adf0bd, candidate41827320776, publisher41828474358, release433882628, asset709405003. No rebuild; public1.1.16 IDs/digests preserved. Android35 exact-byte update preserves UID, role and synthetic SMS; full permission equality passed. No phone/audio/Google claim.

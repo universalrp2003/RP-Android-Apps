@@ -13,3 +13,7 @@ Source `e194b6d9018e0d6a5704f6db738dc91996adf0bd`; run **41827320776**, job **12
 Unit tests, release lint/build/signature checks and Android35 exact-byte baseline 1.1.16 → candidate upgrade passed, preserving UID, role and synthetic SMS. Evidence artifact13321100027, archive `6c8ed096d1927e23000edd07a69b376e7275a921b3065241f5e76a7db39fec89`. Actual installed APK hash matched. No physical phone/MMS/Play Protect/audio proof. Live probe41825858972 and HD failover41825859178 passed with unchanged runtime inputs; Surya completed at1,643ms with24,192bytes in the SMS lane and was selected in the shared lane. Release verification41827320660 also passed.
 
 426 Python checks passed locally. Publisher must promote these exact bytes, compare full permissions against public1.1.16 and refuse an existing tag.
+
+## Publication complete
+
+Publisher41828474358 succeeded, verifying full permission equality and exact draft/public bytes without rebuilding. Release433882628, asset709405003, published 2026-11-04T12:21:13Z. Public API size/digest match the selected candidate. Prior1.1.16 asset IDs/sizes/digests independently match before/after metadata. Website integration/deployment verification remains pending.
