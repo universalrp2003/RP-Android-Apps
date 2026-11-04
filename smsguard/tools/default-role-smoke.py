@@ -65,7 +65,10 @@ def installed_hash():
     return adb('shell', 'sha256sum', remote).split()[0]
 
 def uid():
-    return re.search(r'userId=(\d+)', adb('shell', 'dumpsys', 'package', PKG)).group(1)
+    listing = adb('shell', 'pm', 'list', 'packages', '-U', PKG)
+    match = re.search(r'^package:' + re.escape(PKG) + r'\s+uid:(\d+)\s*$', listing, re.M)
+    assert match, 'Missing exact package UID in: ' + listing
+    return match.group(1)
 
 adb('install', '-r', baseline)
 assert installed_hash() == hashlib.sha256(Path(baseline).read_bytes()).hexdigest()
