@@ -49,3 +49,5 @@ jobs:
           name: hd-recovery-test-reports
           path: smsguard/build/test-results/
           retention-days: 14
+
+# Revalidate SMS Guard 1.1.17 after GitHub incident recovery.

@@ -69,3 +69,5 @@ jobs:
             edge-reference-report.json
           if-no-files-found: warn
           retention-days: 14
+
+# Revalidate SMS Guard 1.1.17 after GitHub incident recovery.
