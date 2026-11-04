@@ -19,7 +19,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
         site = (ROOT / 'site/index.html').read_text()
         pages = (ROOT / '.github/workflows/pages.yml').read_text()
         releases = (
-            ('sms-guard-v1.1.16', 'SMS-Guard-v1.1.16.apk', '1.1.16', 12824500, 'db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df'),
+            ('sms-guard-v1.1.17', 'SMS-Guard-v1.1.17.apk', '1.1.17', 12840884, 'b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd'),
             ('vasanthi-ai-v1.1.5', 'Vasanthi-AI-v1.1.5.apk', '1.1.5', 45777962, '4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6'),
             ('oor-arivippu-v1.1.16', 'Oor-Arivippu-v1.1.16.apk', '1.1.16', 12891948, '3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee'),
             ('tamil-podcast-v1.6', 'Tamil-Podcast-Player-v1.6.apk', '1.6', 11967239, 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
@@ -78,7 +78,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),
             'oorarivippu': ('1.1.16', '21', 'oor-arivippu-v1.1.16'),
-            'smsguard': ('1.1.16', '22', 'sms-guard-v1.1.16'),
+            'smsguard': ('1.1.17', '23', 'sms-guard-v1.1.17'),
             'voicenotes': ('1.3.4', '8', 'voice-notes-v1.3.4'),
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
             'vasanthi': ('1.1.5', '8', 'vasanthi-ai-v1.1.5'),
