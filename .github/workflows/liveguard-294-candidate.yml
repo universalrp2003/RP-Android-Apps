@@ -2,7 +2,7 @@ name: Live Guard 2.94 signed upgrade, SIM pill, Tamil defaults and compact home 
 on:
   push:
     branches: ["arena/282fce0a-rp-android-apps"]
-    paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_294_candidate.py", "tools/liveguard_283_native_smoke.py", ".github/workflows/liveguard-294-candidate.yml"]
+    paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_294_candidate.py", "tools/liveguard_283_native_smoke.py", "tools/verify_liveguard_294_installed.py", "tools/verify_liveguard_294_native.py", ".github/workflows/liveguard-294-candidate.yml"]
 permissions:
   contents: read
 concurrency:
@@ -90,6 +90,7 @@ jobs:
             python3 tools/liveguard_283_native_smoke.py
             adb shell appops set com.universalrp.cleansweep SYSTEM_ALERT_WINDOW allow
             bash -o pipefail -c 'gradle :cleaner:connectedReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/liveguard-native.log"'
+            python3 tools/verify_liveguard_294_installed.py
       - name: Surface native failures without downloading artifact blobs
         if: failure()
         run: |
@@ -113,29 +114,7 @@ jobs:
           if not failures and log.exists(): report('\n'.join(log.read_text(errors='replace').splitlines()[-100:]))
           PY
       - name: Required native PDF isolation and shared-card tests actually ran
-        run: |
-          python3 - <<'PYTEST'
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-          roots=[ET.parse(p).getroot() for p in Path('cleaner/build/outputs/androidTest-results/connected').rglob('*.xml')]
-          cases=[c for r in roots for c in r.iter('testcase') if c.get('classname','').endswith('OfficialStatusNativeTest')]
-          assert len(cases)==5, f'Expected 5 native tests, got {len(cases)}'
-          assert all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in cases)
-          new=[c for r in roots for c in r.iter('testcase') if c.get('classname','').endswith('PillDefaultsNativeTest')]
-          assert len(new)==3, f'Expected 3 SIM/default/overlay tests, got {len(new)}'
-          assert all(c.find('failure') is None and c.find('error') is None and c.find('skipped') is None for c in new)
-          import json,os,subprocess,hashlib
-          path=Path(os.environ['RUNNER_TEMP'])/'health-cleaner/verification.json'
-          receipt=json.loads(path.read_text())
-          installed=subprocess.check_output(['adb','shell','pm','path',receipt['package']],text=True).strip().removeprefix('package:')
-          digest=hashlib.sha256(subprocess.check_output(['adb','exec-out','cat',installed])).hexdigest()
-          assert digest==receipt['sha256'], 'Final installed APK bytes differ from archived candidate'
-          receipt['native_294_pill_defaults_overlay']=True
-          receipt['final_installed_apk_sha256']=digest
-          receipt['required_android35_native_tests']=8
-          path.write_text(json.dumps(receipt,indent=2)+'\n')
-          print('PASS: all 8 Android35 native tests; installed raw APK SHA256 matches candidate')
-          PYTEST
+        run: python3 tools/verify_liveguard_294_native.py
       - name: Remove baseline from candidate download
         run: rm "${RUNNER_TEMP}/health-cleaner/CleanSweep-v2.93.apk"
       - uses: actions/upload-artifact@v7
