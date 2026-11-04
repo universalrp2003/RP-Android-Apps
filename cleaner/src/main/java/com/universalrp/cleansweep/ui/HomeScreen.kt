@@ -343,12 +343,17 @@ fun HomeScreen(
             // Every section is keyed, so the restored scroll position still points at the
             // same card when a conditional card (setup prompt, health, last clean) appears
             // or disappears between visits.
-            item(key = "permission_summary") { HomePermissionSummary(state, vm) }
+            // Keep an empty permission summary out of the LazyColumn spacing rhythm.
 
             // 2.52 — the first screen now answers three questions and nothing else: what the
             // phone has, the one action that frees space, and the plan. Everything else is
             // grouped into tap-to-open sections below, so the page is short until asked.
-            item(key = "hero") { HomeHeroCard(state, vm) }
+            item(key = "hero") {
+                Column {
+                    HomePermissionSummary(state, vm)
+                    HomeHeroCard(state, vm)
+                }
+            }
 
             item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
 
@@ -1248,6 +1253,7 @@ private fun HomeHeroCard(state: UiState, vm: MainViewModel) {
             Spacer(Modifier.height(14.dp))
             GradientButton(
                 text = if (state.report != null) tr("Scan again") else tr("Scan & clean junk"),
+                compact = true,
                 icon = Icons.Outlined.AutoFixHigh,
                 onClick = { vm.startScan() },
                 modifier = Modifier.fillMaxWidth(),
@@ -1402,7 +1408,7 @@ private fun HomePermissionSummary(state: UiState, vm: MainViewModel) {
     }
     if (missing.isEmpty()) return
     var expanded by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    Column {
+    Column(Modifier.padding(bottom = 8.dp)) {
         TextButton(onClick = { expanded = !expanded }, contentPadding = PaddingValues(horizontal = 4.dp)) {
             Icon(Icons.Outlined.Security, contentDescription = null, tint = WarnAmber, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))

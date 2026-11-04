@@ -130,6 +130,12 @@ object AppGuides {
                     "அதைப் படிக்கும், பின்னணியில் ஒருபோதும் படிக்காது, எதுவும் பதிவேற்றப்படுவதில்லை.",
             ),
             topic(
+                "SIM signal pill and news defaults",
+                "சிம் சிக்னல் குறி மற்றும் செய்தி இயல்புகள்",
+                "Home → Phone, network & security → Status Bar Pill & LED Meter lets you choose First SIM (default), Both SIMs or Off for the signal text. S1/S2 are physical slots, ordered by the first installed SIM, not the data SIM. Each reading uses that subscription's own measured dBm, normalised to its radio's range: ≈ is an estimate, not reception reliability. Red/yellow/green show low/middle/high estimates; — is unavailable, not zero. Allow Phone permission and overlay permission yourself; no location permission or tower identities are used by the pill. Charging keeps watts-only; unplugging restores data, signal and D/U activity. Existing move/drag/resize and Wi-Fi hiding choices remain. Voice → News language defaults to Tamil + English-to-Tamil translation when no language was saved; every explicit earlier choice is preserved. Translation needs a working provider and must not invent a result on failure.",
+                "முகப்பு → Phone, network & security → Status Bar Pill & LED Meter பகுதியில் முதல் சிம் (இயல்பு), இரு சிம்கள் அல்லது வேண்டாம் என்பதைத் தேர்ந்தெடுக்கலாம். S1/S2 என்பது சிம் இடங்கள்; முதலில் பொருத்திய சிம் முன்னிலை, தரவு சிம் அல்ல. ஒவ்வொரு சிம்மின் தனித்தனி dBm அளவு ரேடியோ வரம்புக்குள் தோராய சதவீதமாகும்; ≈ என்பது வரவேற்பு நம்பகத்தன்மை அல்ல. சிவப்பு/மஞ்சள்/பச்சை என்பது குறைவு/நடுத்தரம்/அதிகம்; — என்பது கிடைக்கவில்லை, பூஜ்ஜியம் அல்ல. தொலைபேசி மற்றும் மேலடுக்கு அனுமதிகளை நீங்களே வழங்க வேண்டும்; இந்தக் குறி இருப்பிடம் அல்லது டவர் அடையாளத்தைப் படிக்காது. சார்ஜில் வாட்ஸ் மட்டும்; சார்ஜர் நீக்கியதும் தரவு, சிக்னல், D/U மீண்டும் வரும். நகர்த்தல்/அளவு/Wi-Fi விருப்பங்கள் தொடரும். குரல் → செய்தி மொழி பகுதியில் முன்பு மொழி சேமிக்காவிட்டால் தமிழ் + ஆங்கிலத்திலிருந்து தமிழாக்கம் இயல்பு; முன்பு தேர்ந்தெடுத்த மொழி மாறாது. மொழிபெயர்ப்பு சேவைக்கு இணைப்பு தேவை; தோல்வியில் கற்பனை மொழிபெயர்ப்பு வராது.",
+            ),
+            topic(
                 "My plan and the pill colours",
                 "என் திட்டம் மற்றும் பட்டி நிறங்கள்",
                 "Mobile → My plan records the recharge you actually bought: Daily or Total data, the amount, the " +

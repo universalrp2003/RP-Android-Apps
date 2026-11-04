@@ -1,3 +1,7 @@
+## Active owner-authorized Live Guard 2.94 update —4November2026
+
+Owner now explicitly authorizes implementation/build/website/docs/publication of SIM signal in the movable pill (first installed physical SIM default; optional both or OFF), unset news-language default Tamil+English-to-Tamil, and previously deferred home-gap/scan-button sizing fixes. Preserve explicit preferences, data, package/signer, data/D-U/watts behavior and siblings.2.94/code99 is a candidate until signed/native gates succeed and exact bytes are promoted. Public metadata/publishedVersion stays2.93 until actual publication; no old publisher reruns. Dedicated .github/workflows/liveguard-294-candidate.yml on the fixed session branch; narrowly marked [liveguard-294-only] pushes skip the generic sibling-building matrix. No keys/private screenshots/precise locations published. Current Drive APK backup was completed manually by owner: all14sizes/SHA256 matched Drive metadata; old pending notes below are historical, not current Drive status. No weekly automation; secrets privately held by owner, not independently restored.
+
 <!-- Drive continuity:4Nov2026 owner-private source/documents uploaded, APK binaries0/14 pending (network/temporary-secret permission403). No weekly automation. See docs/continuity/DRIVE-BACKUP-STATUS.md; never treat release links as actual backups. -->
 ## Current continuity task — 4 November2026 (supersedes stale pending notes below)
 

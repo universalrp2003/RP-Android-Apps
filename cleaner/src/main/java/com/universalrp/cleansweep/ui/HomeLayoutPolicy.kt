@@ -33,7 +33,7 @@ object HomeLayoutPolicy {
      * Above the first card. This is the gap that was missing entirely: the header is drawn
      * above the list, so a zero top inset put the first card flush against it.
      */
-    const val LIST_TOP_DP = 12
+    const val LIST_TOP_DP = 8
 
     /** Below the last card, clear of the navigation bar. */
     const val LIST_BOTTOM_DP = 28

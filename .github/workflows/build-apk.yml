@@ -88,6 +88,9 @@ concurrency:
 
 jobs:
   build:
+    # This one owner-authorized update has a dedicated signed/native lane. Do not
+    # rebuild sibling apps in the generic matrix for its narrowly marked pushes.
+    if: ${{ !(github.ref == 'refs/heads/arena/282fce0a-rp-android-apps' && contains(github.event.head_commit.message, '[liveguard-294-only]')) }}
     runs-on: ubuntu-latest
     env:
       RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
