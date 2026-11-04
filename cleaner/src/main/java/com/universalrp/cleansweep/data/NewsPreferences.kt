@@ -9,7 +9,7 @@ object NewsPreferences {
     fun selected(context: Context): Set<BalancedNewsPolicy.Category> = prefs(context).getStringSet("topics", emptySet()).orEmpty()
         .mapNotNull { name -> BalancedNewsPolicy.Category.values().firstOrNull { it.name == name } }.toSet().ifEmpty { allCategories() }
     fun categories(context: Context) = selected(context)
-    fun language(context: Context) = runCatching { Language.valueOf(prefs(context).getString("language", "APP")!!) }.getOrDefault(Language.APP)
+    fun language(context: Context) = runCatching { Language.valueOf(prefs(context).getString("language", Language.TAMIL_TRANSLATED.name)!!) }.getOrDefault(Language.TAMIL_TRANSLATED)
     fun tamil(context: Context) = when (language(context)) {
         Language.TAMIL_ONLY -> true
         Language.TAMIL_TRANSLATED -> true

@@ -206,73 +206,39 @@ fun MobileScreen(state: UiState, vm: MainViewModel) {
 @Composable
 private fun MobileStatusCard(state: UiState, vm: MainViewModel) {
     val mobile = state.mobile ?: return
-    val tone = when (mobile.qualityTone) {
-        0 -> GoodGreen
-        2 -> DangerRed
-        else -> WarnAmber
+    val operator = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(mobile.operatorName)
+    val network = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(mobile.networkType)
+    val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(mobile.signalDbm, mobile.signalKind)
+    if (operator == null && network == null && percent == null) return
+    val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(percent)) {
+        0 -> DangerRed; 1 -> WarnAmber; 2 -> GoodGreen; else -> TextSecondary
     }
     PanelCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Outlined.SignalCellularAlt, contentDescription = null, tint = tone)
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        mobile.operatorName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        mobile.networkType +
-                            (if (mobile.is5g) " • 5G SA/NSA" else "") +
-                            (if (mobile.roaming) " • roaming" else "") +
-                            (if (mobile.isVpn) " • VPN on" else ""),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondary,
-                    )
+                if (percent != null) {
+                    Icon(Icons.Outlined.SignalCellularAlt, contentDescription = null, tint = tone)
+                    Spacer(Modifier.width(10.dp))
                 }
-                Text(
-                    mobile.signalDbm?.let { "$it dBm" } ?: "—",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = tone,
-                )
+                Column(Modifier.weight(1f)) {
+                    operator?.let { Text(it, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold) }
+                    network?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = TextSecondary) }
+                }
+                if (percent != null) Text("≈$percent%", style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold, color = tone)
             }
-            Spacer(Modifier.height(8.dp))
-            SignalBars(mobile.signalLevel ?: 0, tone)
+            if (percent != null) {
+                Spacer(Modifier.height(6.dp))
+                Text((if (mobile.signalFromServingCell) watchWords("Serving cell · ", "இணைந்த செல் · ") else "") + "${mobile.signalDbm} dBm",
+                    style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+            }
             Spacer(Modifier.height(6.dp))
-            Text(
-                tr("Signal quality") + ": " + mobile.quality,
-                style = MaterialTheme.typography.bodySmall,
-                color = TextPrimary,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                mobile.dataEnabledString(),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-            )
-            Spacer(Modifier.height(10.dp))
-            MobileInfoRow(tr("SIM & operator"), mobile.operatorName)
+            if (mobile.dataEnabledKnown) Text(mobile.dataEnabledString(), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             mobile.sims.forEach { sim ->
-                MobileInfoRow(
-                    "SIM ${sim.slot}" + (if (sim.isDefaultData) " (data)" else ""),
-                    sim.carrier + (sim.label.takeIf { it.isNotBlank() }?.let { " • $it" } ?: ""),
-                )
+                val carrier = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(sim.carrier)
+                if (carrier != null) MobileInfoRow("SIM ${sim.slot}" + (if (sim.isDefaultData) " (data)" else ""),
+                    carrier + (sim.label.takeIf { it.isNotBlank() }?.let { " • $it" } ?: ""))
             }
-            if (mobile.sims.any { it.signalDbm != null }) {
-                val best = mobile.sims.mapNotNull { it.signalDbm }.maxOrNull()
-                if (best != null) MobileInfoRow("Signal now", "$best dBm")
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                tr(
-                    "dBm is the honest number: −60 is excellent, −100 is barely usable, and a " +
-                        "stronger bar count can lie. Values are read from the system, not estimated."
-                ),
-                style = MaterialTheme.typography.labelSmall,
-                color = TextSecondary,
-            )
         }
     }
 }
@@ -284,30 +250,6 @@ private fun com.universalrp.cleansweep.data.MobileSnapshot.dataEnabledString(): 
     dataEnabled -> "Mobile data is ON."
     activeOnWifi -> "Mobile data is switched off. You are on Wi-Fi."
     else -> "Mobile data is switched off."
-}
-
-/** Four little bars, filled to the reported level. */
-@Composable
-private fun SignalBars(level: Int, tone: Color) {
-    Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        (1..4).forEach { index ->
-            val filled = index <= level
-            Box(
-                Modifier
-                    .width(18.dp)
-                    .height((6 + index * 5).dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(if (filled) tone else SurfaceHigh)
-                    .border(1.dp, OutlineC, RoundedCornerShape(3.dp))
-            )
-        }
-        Spacer(Modifier.width(6.dp))
-        Text(
-            "$level / 4",
-            style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary,
-        )
-    }
 }
 
 @Composable
@@ -458,14 +400,14 @@ private fun TowerCard(towers: List<CellTower>) {
                             tower.id?.let { append("cell $it") }
                             tower.pci?.let { append(if (isNotEmpty()) " • " else "").append("PCI $it") }
                             tower.tac?.let { append(if (isNotEmpty()) " • " else "").append("TAC $it") }
-                            if (isEmpty()) append(tr("details hidden by Android"))
+
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                         modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        tower.dbm?.let { "$it dBm" } ?: "—",
+                    if (tower.dbm != null) Text(
+                        "${tower.dbm} dBm",
                         style = MaterialTheme.typography.labelSmall,
                         color = TextPrimary,
                     )
@@ -482,11 +424,8 @@ private fun TowerCard(towers: List<CellTower>) {
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                tr(
-                    "Android only reveals tower identity to apps that have Location allowed, and " +
-                        "some carriers hide it completely. A dual-SIM phone shows the towers of the " +
-                        "SIM that is carrying data."
-                ),
+                watchWords("Tower reports can combine radios on dual-SIM phones. Only a recent, registered cell with unambiguous SIM attribution can replace a missing signal reading.",
+                    "இரு சிம் போன்களில் டவர் அறிக்கைகள் ரேடியோக்களைக் கலக்கலாம். சிம் தொடர்பு உறுதியான சமீபத்திய இணைந்த செல்லின் அளவு மட்டுமே விடுபட்ட சிக்னலுக்குப் பயன்படும்."),
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
             )
@@ -1007,15 +946,15 @@ private fun DataUsageCard(state: UiState, vm: MainViewModel) {
                 Text(if (state.usageBusy) tr("Reading…") else tr("Tap refresh"), color = TextSecondary)
             } else {
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    UsageTile(
+                    if (usage.todayMobileBytes != null) UsageTile(
                         label = tr("Mobile data (Today)"),
-                        value = usage.todayMobileBytes?.let { formatBytesSafe(it) } ?: "—",
+                        value = formatBytesSafe(usage.todayMobileBytes),
                         color = AccentViolet,
                         modifier = Modifier.weight(1f),
                     )
-                    UsageTile(
+                    if (usage.todayWifiBytes != null) UsageTile(
                         label = tr("Wi-Fi (Today)"),
-                        value = usage.todayWifiBytes?.let { formatBytesSafe(it) } ?: "—",
+                        value = formatBytesSafe(usage.todayWifiBytes),
                         color = AccentCyan,
                         modifier = Modifier.weight(1f),
                     )

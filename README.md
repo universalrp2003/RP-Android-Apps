@@ -18,7 +18,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.16 / code 22](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.16) | [`SMS-Guard-v1.1.16.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.16/SMS-Guard-v1.1.16.apk) |
-| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.93 / code 98](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.93) | [`CleanSweep-v2.93.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.93/CleanSweep-v2.93.apk) |
+| [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [2.94 / code 99](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.94) | [`CleanSweep-v2.94.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.94/CleanSweep-v2.94.apk) |
 | [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.3.4 / code 8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.4) | [`Voice-Notes-v1.3.4.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk) |
 | [**Expense Tracker (செலவு கண்காணிப்பு)**](expensetracker/README.md) · 8.0+ (API 26) | [1.2 / code 3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/expense-tracker-v1.2) | [`Expense-Tracker-v1.2.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk) |
 | [**Ramesh Radio (தமிழன் வானொலி)**](radio/README.md) · 8.0+ (API 26) | [1.31 / code 31](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.31) | [`Ramesh-Radio-v1.31.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk) |
@@ -164,3 +164,15 @@ There are twelve published RP Ideas Android applications in this repository: uti
 [தமிழ் / English help, website and other app links](docs/three-app-help.md). SMS Guard 1.1.9 and Voice Notes 1.2 are public and owner-reported working on one phone. Radio 1.28 is now verified public; stable download links point to the new APK.
 
 **SMS Guard 1.1.15:** latest bug fixes and separately consented cloud speech, released with the [unresolved Play Protect block disclosed](docs/sms-guard-play-protect.md). Keep protection enabled; no exact-build phone test or Google clearance. [Exact-artifact receipt](docs/sms-guard-1.1.15-verification.md).
+
+## Project continuity and recovery
+
+If an AI development service becomes unavailable, start with the [owner continuity guide](docs/continuity/START-HERE.md), [technical handover](docs/continuity/TECHNICAL-HANDOVER.md) and [private backup checklist](docs/continuity/PRIVATE-BACKUP-CHECKLIST.md). A handover pack contains documents and dated public release metadata—not source/APK/phone-data/signing-key backups. Never share signing keys or passwords in a chat.
+
+Create a new documents-only ZIP without network access or publication:
+
+```bash
+python3 tools/create_continuity_pack.py --output /tmp/rp-continuity-documents.zip
+```
+
+The exporter refuses to overwrite an existing file and includes checksums. Transfer it from temporary staging to owner-controlled storage.

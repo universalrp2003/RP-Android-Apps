@@ -366,6 +366,7 @@ object ChargeNotifier {
             netQuality?.takeIf { it.throughputMeasured }?.rxSpeedBytesPerSec ?: -1L,
             netQuality?.takeIf { it.throughputMeasured }?.txSpeedBytesPerSec ?: -1L,
             showNetworkMeter = content.showNetworkMeter,
+            simSignals = if (StatusPill.signalMode(context) == PillSignalPolicy.Mode.OFF) emptyList() else PillSignalReader.read(context),
             stillCurrent = stillCurrent,
         )
     }

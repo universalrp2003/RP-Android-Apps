@@ -22,8 +22,8 @@ import java.net.Socket
  * towers within reach, a latency/jitter test, and how much data has been used today.
  *
  * Nothing here is invented: values the phone refuses to give (because a permission is
- * missing, or on a dual-SIM phone where only the default SIM is readable) are reported as
- * "not available" together with the reason, and the screen says what would unlock them.
+ * missing, or a combined dual-SIM cell list cannot be attributed) are left absent.
+ * Existing permission controls remain optional; missing signal details are not fake zeroes.
  */
 data class SimInfo(
     val slot: Int,
@@ -75,6 +75,8 @@ data class MobileSnapshot(
     /** The user chose Approximate, which Android does not accept for `CellInfo`. */
     val locationApproximate: Boolean = false,
     val signalKind: String? = null,
+    val signalFromServingCell: Boolean = false,
+    val dataEnabledKnown: Boolean = false,
 )
 
 data class PingStats(
@@ -215,14 +217,14 @@ object MobileNet {
 
         var operator = ""
         var dataEnabled = false
+        var dataEnabledKnown = false
         var roaming = false
         var networkType = "Not connected"
         var is5g = false
-        var signalDbm: Int? = null
-        var signalLevel: Int? = null
-        var signalKind: String? = null
+        val signalLevel: Int? = null
         val sims = mutableListOf<SimInfo>()
         val towers = mutableListOf<CellTower>()
+        var reportedCells: List<CellInfo>? = null
 
         val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
         var isVpn = false
@@ -266,11 +268,12 @@ object MobileNet {
         try {
             operator = tm.networkOperatorName.orEmpty()
         } catch (e: Exception) {
-            notes.add("The operator name could not be read.")
+            // Missing operator is simply omitted by the UI.
         }
 
         try {
             dataEnabled = tm.isDataEnabled
+            dataEnabledKnown = true
         } catch (e: SecurityException) {
             // Permission can be revoked between the availability check and this read.
         } catch (e: Exception) {
@@ -283,37 +286,11 @@ object MobileNet {
             networkType = networkTypeLabel(type)
             is5g = is5gType(type)
         } catch (e: SecurityException) {
-            notes.add("Reading the network type needs the Phone permission.")
+            // Keep the optional permission action; do not render an error value.
         } catch (e: Exception) {
             // Ignore.
         }
 
-        if (Build.VERSION.SDK_INT >= 29) {
-            try {
-                val strength = tm.signalStrength
-                if (strength != null) {
-                    signalLevel = strength.level.takeIf { it in 0..4 }
-                    fun kind(cell: android.telephony.CellSignalStrength): String? = when (cell) {
-                        is android.telephony.CellSignalStrengthNr -> "NR_SS_RSRP"
-                        is android.telephony.CellSignalStrengthLte -> "LTE_RSRP"
-                        is android.telephony.CellSignalStrengthWcdma -> "WCDMA_RSCP"
-                        is android.telephony.CellSignalStrengthGsm -> "GSM_RSSI"
-                        else -> null
-                    }
-                    // An unavailable NR value must not mask an available LTE anchor measurement.
-                    val picked = strength.cellSignalStrengths.sortedBy { when (kind(it)) {
-                        "NR_SS_RSRP" -> 0; "LTE_RSRP" -> 1; "WCDMA_RSCP" -> 2; else -> 3
-                    } }.firstOrNull { SimSignalPolicy.percent(it.dbm, kind(it)) != null }
-                    signalDbm = picked?.dbm
-                    signalKind = picked?.let { kind(it) }
-                    if (signalKind == "NR_SS_RSRP") is5g = true
-                }
-            } catch (e: SecurityException) {
-                notes.add("The signal strength needs the Phone permission (it is never used for anything else).")
-            } catch (e: Exception) {
-                // Ignore.
-            }
-        }
 
         try {
             val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE)
@@ -335,7 +312,7 @@ object MobileNet {
                         label = info.displayName?.toString().orEmpty(),
                         roaming = info.dataRoaming == android.telephony.SubscriptionManager.DATA_ROAMING_ENABLE,
                         dataNetworkType = networkType,
-                        signalDbm = signalDbm,
+                        signalDbm = null,
                         signalLevel = signalLevel,
                         isDefaultData = defaultDataSub >= 0 && info.subscriptionId == defaultDataSub,
                     )
@@ -345,7 +322,7 @@ object MobileNet {
                 it.dataRoaming == android.telephony.SubscriptionManager.DATA_ROAMING_ENABLE
             }
         } catch (e: SecurityException) {
-            notes.add("The SIM list needs the Phone permission.")
+            // No SIM error placeholder.
         } catch (e: Exception) {
             // Dual-SIM phones vary a lot; a missing list is not an error.
         }
@@ -355,9 +332,11 @@ object MobileNet {
             // a SecurityException unless the app holds Precise location. The screen shows the
             // card with the button; no note is added here, so the reason is said once.
             needsLocation = true
-        } else {
+        } else if (ForegroundSignalAccess.visible) {
+            reportedCells = emptyList() // Reuse an empty/error result too; do not query twice.
             try {
                 val all = tm.allCellInfo.orEmpty()
+                reportedCells = all
                 // The modem usually reports its serving cell plus a handful of neighbours.
                 // The one in use comes first, then the strongest, so "nearby" reads sensibly.
                 towers.addAll(
@@ -366,23 +345,25 @@ object MobileNet {
                         MAX_TOWERS,
                     )
                 )
-                if (all.isEmpty()) {
-                    notes.add(
-                        "Location is allowed, but this phone or carrier reported no neighbouring cells. " +
-                            "Some modems share only the serving cell, and a few networks hide the ids completely."
-                    )
-                }
             } catch (e: SecurityException) {
                 needsLocation = true
-                notes.add("Android refused the cell list; turn on Precise location for Live Guard and rescan.")
+                // Existing permission controls remain; unavailable cell fields stay hidden.
             } catch (e: Exception) {
                 // Ignore: the screen simply shows what the modem answered.
             }
         }
 
-        if (signalDbm == null && allowed) {
-            notes.add("This phone did not report a dBm value — some models hide it from third-party apps.")
-        }
+        val reading = runCatching {
+            SubscriptionSignalReader.read(context, tm, sims.size, reportedCells)
+        }.getOrNull()
+        val signalDbm = reading?.dbm
+        val signalKind = reading?.kind
+        if (signalKind == "NR_SS_RSRP") is5g = true
+        // No copied default-data reading for another SIM; per-slot pill reads are separate.
+        val measuredSims = sims.map { sim -> sim.copy(
+            signalDbm = if (sim.isDefaultData || sims.size == 1) signalDbm else null,
+            signalLevel = null,
+        ) }
 
         val tone = when {
             signalDbm == null -> 1
@@ -394,7 +375,7 @@ object MobileNet {
         return MobileSnapshot(
             readable = allowed || operator.isNotBlank(),
             operatorName = operator.ifBlank { sims.firstOrNull()?.carrier ?: "Unknown" },
-            sims = sims,
+            sims = measuredSims,
             dataEnabled = dataEnabled,
             roaming = roaming,
             networkType = networkType,
@@ -412,12 +393,14 @@ object MobileNet {
                 null
             } else {
                 "Allow “Phone” access and CleanSweep can show the operator, the SIM names, the network " +
-                    "type and the real signal in dBm. It is used only on this screen and never sent anywhere."
+                    "type and the real signal in dBm. Readings stay on this phone, including the optional pill."
             },
             notes = notes,
             needsLocationPermission = needsLocation,
             locationApproximate = approximateOnly,
             signalKind = signalKind,
+            signalFromServingCell = reading?.fromServingCell == true,
+            dataEnabledKnown = dataEnabledKnown,
         )
     }
 

@@ -25,10 +25,12 @@ import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
 import com.universalrp.cleansweep.ui.theme.TextSecondary
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
     val context = LocalContext.current
     var currentScale by remember { mutableStateOf(StatusPill.scale(context)) }
+    var signalMode by remember { mutableStateOf(StatusPill.signalMode(context)) }
     var hideOnWifi by remember { mutableStateOf(StatusPill.isHideDataOnWifi(context)) }
 
     PanelCard(Modifier.fillMaxWidth()) {
@@ -65,6 +67,23 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
                     color = TextSecondary,
                 )
                 Spacer(Modifier.height(10.dp))
+                Text(watchWords("SIM signal in pill", "மிதக்கும் குறியில் சிம் சிக்னல்"), style = MaterialTheme.typography.bodySmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.values().forEach { mode ->
+                        FilterChip(selected = signalMode == mode, onClick = {
+                            signalMode = mode
+                            StatusPill.setSignalMode(context, mode)
+                        }, label = { Text(when (mode) {
+                            com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.FIRST -> watchWords("First SIM", "முதல் சிம்")
+                            com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.BOTH -> watchWords("Both SIMs", "இரு சிம்கள்")
+                            com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.OFF -> watchWords("Off", "வேண்டாம்")
+                        }) })
+                    }
+                }
+                Text(watchWords("Unplugged: approximate dBm signal; first installed SIM by default, separate readings for Both SIMs. Missing readings stay hidden, never a neighbour or another SIM. Serving-cell fallback needs visible app UI, an existing precise-location grant and one active SIM. Charging stays watts only.",
+                    "சார்ஜர் இல்லாதபோது: தோராய dBm சிக்னல்; இயல்பாக முதல் சிம், இரு சிம்களுக்கும் தனித்தனி அளவீடு. கிடைக்காத அளவு மறையும்; அண்டை டவர்/வேறு சிம் அல்ல. மாற்று இணைந்த செல் வாசிப்பிற்கு திரையில் திறந்த செயலி, ஏற்கனவே துல்லிய இருப்பிட அனுமதி, செயலில் ஒரே சிம் தேவை. சார்ஜில் வாட்ஸ் மட்டும்."),
+                    style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Spacer(Modifier.height(10.dp))
                 // Option 1: Hide mobile data on Wi-Fi / 5G
                 Row(
                     Modifier
@@ -82,7 +101,7 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
                             color = TextPrimary,
                         )
                         Text(
-                            tr("Keeps only the animated D & U lights to save space"),
+                            watchWords("Hides data text; SIM signal and D/U activity remain", "தரவு உரை மறையும்; சிம் சிக்னல் மற்றும் D/U தொடரும்"),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondary,
                         )
