@@ -48,70 +48,25 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              # Retention rule: the current release of every app, plus the historical builds that
+              # the live verifier below byte-checks. The Pages artifact is capped at 1 GB, so older
+              # builds stay on their GitHub release page instead of being mirrored a second time.
               ("live-guard-v2.95", "CleanSweep-v2.95.apk", 14764951, "b51d355d113511f45a6cf121fffc0765f188b578e69001e11e4f986f0a7eecb7"),
               ("live-guard-v2.94", "CleanSweep-v2.94.apk", 14762179, "c26de0c09022ea5d05169c238f91308de367dc2e0ccb16c902699d17de34c195"),
               ("live-guard-v2.93", "CleanSweep-v2.93.apk", 14747343, "9f8e7936ae98ed5fb43e9087acf6a6de87dc5837fd66c9a97faa0216aa55f012"),
               ("live-guard-v2.89", "CleanSweep-v2.89.apk", 14719995, "1eb064d81102c7cc32fb1cb9ea386b6cb3aa235900b1c119b1783b68f342c698"),
               ("tamilan-store-v0.9", "Tamilan-Store-v0.9.apk", 19309106, "6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab"),
-              ("live-guard-v2.88", "CleanSweep-v2.88.apk", 14680987, "87be21168e9f7d619ee8709163f632ebfd79b1a731d2b45e8b4d6618ca43a70c"),
-              ("live-guard-v2.87", "CleanSweep-v2.87.apk", 14670451, "31df0d1314f3e6a5d6d559dfac2dd96ff87a1c0cb60e03176000f4d8c907e715"),
               ("live-guard-v2.82", "CleanSweep-v2.82.apk", 14505867, "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
-              ("tamilan-store-v0.5", "Tamilan-Store-v0.5.apk", 16912504, "d5f41e7b5142507e8b42fb9d2c4e0e2d492eaf03581a53b3dabacf692daf4bc7"),
-              ("daily-vault-v0.3", "DailyVault-v0.3.apk", 12417577, "aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd"),
-              ("ramesh-radio-v1.28", "Ramesh-Radio-v1.28.apk", 15158504, "9c5a69b82e1a98794c66d4b0b337200b2f6fe61a9379e52e6c97a7bd6b8c2a9c"),
-              ("sms-guard-v1.1.9", "SMS-Guard-v1.1.9.apk", 12461665, "7e0f0aac34ced84c3ff608dea1baadb54e57400f63aa9c79e6b1c782142f7fc2"),
-              ("voice-notes-v1.2", "Voice-Notes-v1.2.apk", 12113492, "c779d3650af3e9d23e40fd80b05c0d03f7e4189ada31ee20f7bb89df224e28b0"),
-              ("sms-guard-v1.1.8", "SMS-Guard-v1.1.8.apk", 12445281, "de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582"),
-              ("live-guard-v2.72", "CleanSweep-v2.72.apk", 14413927, "e6664f5d14f7fe31a8a754b5d35bde62ba14d1b6ee894ba2b454f4ab7952fc0b"),
-              ("ramesh-radio-v1.26", "Ramesh-Radio-v1.26.apk", 15092964, "238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13"),
-              ("oor-arivippu-v1.1.9", "Oor-Arivippu-v1.1.9.apk", 12794316, "6915d597faa0ca9c0665bab695863d02fa04f56675796babcd9ce6446e286679"),
-              ("pulseeq-v1.9", "PulseEQ-v1.9.apk", 12100805, "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced"),
-              ("rp-vocal-remover-studio-v0.1.15", "RP-Vocal-Remover-Studio-v0.1.15.apk", 65032741, "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
-              ("expense-tracker-v1.0", "Expense-Tracker-v1.0.apk", 11547831, "6b7f1248eb22c59aba4a12aa43d213a7133f98afe1ed248c2242b03e0e7025d7"),
-              ("expense-tracker-v1.1", "Expense-Tracker-v1.1.apk", 11564215, "dd39091be62fba2d725300ced0132ae04a4da5ff528ca0be73638845272ee3f9"),
-              ("voice-notes-v1.1", "Voice-Notes-v1.1.apk", 12047956, "171e924c68fdde29c8009f754287303b078a078c068a6a0d351ced76c2543f88"),
-              ("live-guard-v2.73", "CleanSweep-v2.73.apk", 14426215, "a5c5f0186a9843ca4761fb89b775b8401885283263d90ab9085397611310e05e"),
-              ("vasanthi-ai-v1.0", "Vasanthi-AI-v1.0.apk", 17355218, "c558b5a35875e1b12cb5e00b88cf2e4493505979437223f642ce78a9572511fa"),
-              ("vasanthi-ai-v1.0.1", "Vasanthi-AI-v1.0.1.apk", 17355222, "5477cfc46f3376207499ea239a8e5edefed0f68d07306cb2df47115ee2e05090"),
-              ("vasanthi-ai-v1.1", "Vasanthi-AI-v1.1.apk", 45771966, "4f9a8d1f3a62a684ac71f6b8cfdffefdc155933ce0861513b2ac2365cc7cd5b6"),
-              ("vasanthi-ai-v1.1.1", "Vasanthi-AI-v1.1.1.apk", 45773770, "90acaf684a4a36d95786266dba0b1fc1a05cba312163c1530ed89abb9d898e4c"),
-              ("vasanthi-ai-v1.1.2", "Vasanthi-AI-v1.1.2.apk", 45773770, "04f24d557b5971460b26fb6528554f02f27654c8cb9bac2c587908c6100f7c4f"),
-              ("tamil-podcast-v1.0", "Tamil-Podcast-Player-v1.0.apk", 11912659, "f84204f78219a4f8aed7648f9a0a2574de40cc1d22471d33bd19b7bc7f13d94b"),
-              ("tamil-podcast-v1.1", "Tamil-Podcast-Player-v1.1.apk", 11916239, "ced6b0e5ba0280c65d777dae8b1c63e2969483135e292c80b88c0db1d05e4441"),
-              ("tamil-podcast-v1.1.1", "Tamil-Podcast-Player-v1.1.1.apk", 11916067, "73d4acc9f3052fec1507e1511d825c8f76cc22e5348cde80771eb842a28b3ede"),
-              ("elderly-launcher-v1.0", "Elderly-Launcher-v1.0.apk", 11473971, "9fdb5cc700cdf95fb8a113328f72e442098b9dbb5cb8217cf00ed9924be7f23b"),
-              ("elderly-launcher-v1.1", "Elderly-Launcher-v1.1.apk", 11497795, "a395ca9be8e351e1f42982c2fa3cd5fcc8e368a8ec11c32eb4582b00ab555402"),
-              ("tamil-podcast-v1.2", "Tamil-Podcast-Player-v1.2.apk", 11916695, "d50ae13968e0b1d45d5ce9c286dc2447afa26d0d93246cfa08eeb0d3d1d01814"),
-              ("elderly-launcher-v1.2", "Elderly-Launcher-v1.2.apk", 11497823, "029b39e2d03f27aca299cde03650448db8b185dfac3003c4ea7ec4732f18dc09"),
-              ("vasanthi-ai-v1.1.3", "Vasanthi-AI-v1.1.3.apk", 45773770, "4dd6de04fc4ae121e487521202e7e64184225af5aa8274ae448e0794aeae5f65"),
-              ("tamil-podcast-v1.3", "Tamil-Podcast-Player-v1.3.apk", 11950127, "15770ec6cfcf671b81cb886bceff7d2b9f3ea620d23f795145f7940b5075bb3e"),
-              ("elderly-launcher-v1.3", "Elderly-Launcher-v1.3.apk", 11514983, "33070c5dbd50dc3a4be0d3239ac43eff5ab1e0313e52da8f87d5986816e86745"),
-              ("vasanthi-ai-v1.1.4", "Vasanthi-AI-v1.1.4.apk", 45790702, "b4646bd856833842d701eacd0761dcbb574636b6ea432b33dba509dbd998bd1e"),
-              ("tamil-podcast-v1.4", "Tamil-Podcast-Player-v1.4.apk", 11983627, "0232ecd612b04686145abe39191ca42e01c318bf9e7ea741de1e6af09e13a5be"),
-              ("elderly-launcher-v1.4", "Elderly-Launcher-v1.4.apk", 11514811, "7cfcde5ec9500281d50704cac17c94e9915c07c0e53dc7bdf3daab5c48899232"),
-              ("sms-guard-v1.1.11", "SMS-Guard-v1.1.11.apk", 12444613, "9fd0aa043eaf261c061b214a27d4427dc73d66eee8a1a23c9dd3697d9f6f0604"),
-              ("sms-guard-v1.1.15", "SMS-Guard-v1.1.15.apk", 12824500, "ca6f4e80a7e417c2f86d25ec7f496f120f6f9f0d44525a2b8af04b5bbf4ee01e"),
               ("sms-guard-v1.1.16", "SMS-Guard-v1.1.16.apk", 12824500, "db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df"),
               ("vasanthi-ai-v1.1.5", "Vasanthi-AI-v1.1.5.apk", 45777962, "4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6"),
-              ("oor-arivippu-v1.1.10", "Oor-Arivippu-v1.1.10.apk", 12842800, "7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa"),
               ("oor-arivippu-v1.1.15", "Oor-Arivippu-v1.1.15.apk", 12891952, "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5"),
               ("oor-arivippu-v1.1.16", "Oor-Arivippu-v1.1.16.apk", 12891948, "3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee"),
               ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
-              ("daily-vault-v0.4", "DailyVault-v0.4.apk", 12532289, "39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1"),
               ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
-              ("tamilan-store-v0.7", "Tamilan-Store-v0.7.apk", 16929208, "b6618ea5e101c23ce4aada39b28820e9840bd1eede03140ff2582255fe4fd8fe"),
-              ("tamilan-store-v0.8", "Tamilan-Store-v0.8.apk", 19276334, "3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474"),
-              ("tamilan-store-v0.6", "Tamilan-Store-v0.6.apk", 16929204, "7a87496f70977cbc8b3085f5af442247b52abf59fab2723c0290de9b4659653f"),
               ("expense-tracker-v1.2", "Expense-Tracker-v1.2.apk", 11564299, "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108"),
-              ("elderly-launcher-v1.5", "Elderly-Launcher-v1.5.apk", 11498427, "c4cb41847576be63e78270672fee80b40b872fa5c9a3984482643233988b5f39"),
               ("elderly-launcher-v1.7", "Elderly-Launcher-v1.7.apk", 11521755, "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec"),
-              ("voice-notes-v1.3.3", "Voice-Notes-v1.3.3.apk", 13135195, "71aba878bc85419933f6d8050626bcf19056f76c4cac7806e8f899efca404d35"),
-              ("live-guard-v2.75", "CleanSweep-v2.75.apk", 14448087, "2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf"),
-              ("live-guard-v2.79", "CleanSweep-v2.79.apk", 14479951, "95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac"),
-              ("live-guard-v2.81", "CleanSweep-v2.81.apk", 14500707, "c851a09f20a0799a49789047d970f2ca512d71a53d16699cd19c36ef57517805"),
-              ("ramesh-radio-v1.29", "Ramesh-Radio-v1.29.apk", 15141600, "11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d"),
               ("ramesh-radio-v1.31", "Ramesh-Radio-v1.31.apk", 15179972, "fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22"),
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
@@ -133,6 +88,13 @@ jobs:
               with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_STORED) as zf:
                   zf.writestr(apk_name, data)
               print(f"VERIFIED CDN MIRROR: {apk_name} ({expected_size:,} B) + {zip_name} ({zip_path.stat().st_size:,} B)")
+          # Each release is stored twice (the .apk and a byte-identical stored .zip), so the
+          # deploy size is roughly double. upload-pages-artifact compresses the archive and the
+          # hard limit is 1 GB, so hold the mirror well below it and prune instead of growing.
+          mirrored = 2 * sum((out_dir / apk_name).stat().st_size for _, apk_name, _, _ in RELEASES)
+          MIRROR_BUDGET = 800_000_000
+          assert mirrored <= MIRROR_BUDGET, f"Site mirror budget exceeded: {mirrored:,} B > {MIRROR_BUDGET:,} B; prune an older mirror"
+          print(f"Site mirror budget: {mirrored:,} B of {MIRROR_BUDGET:,} B across {len(RELEASES)} releases")
           PY
 
       - name: Verify Google Search Console meta tag, HTML file, CDN APKs/ZIPs & sitemap exist
@@ -141,85 +103,6 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
-          test -s site/apks/Ramesh-Radio-v1.28.apk
-          test -s site/apks/Ramesh-Radio-v1.28.zip
-          test -s site/apks/SMS-Guard-v1.1.9.apk
-          test -s site/apks/Voice-Notes-v1.2.apk
-          test -s site/apks/SMS-Guard-v1.1.8.apk
-          test -s site/apks/SMS-Guard-v1.1.8.zip
-          test -s site/apks/CleanSweep-v2.72.apk
-          test -s site/apks/CleanSweep-v2.72.zip
-          test -s site/apks/Ramesh-Radio-v1.26.apk
-          test -s site/apks/Ramesh-Radio-v1.26.zip
-          test -s site/apks/Oor-Arivippu-v1.1.9.apk
-          test -s site/apks/Oor-Arivippu-v1.1.9.zip
-          test -s site/apks/Expense-Tracker-v1.0.apk
-          test -s site/apks/Expense-Tracker-v1.0.zip
-          test -s site/apks/Expense-Tracker-v1.1.apk
-          test -s site/apks/Expense-Tracker-v1.1.zip
-          test -s site/apks/Voice-Notes-v1.1.apk
-          test -s site/apks/Voice-Notes-v1.1.zip
-          test -s site/apks/CleanSweep-v2.73.apk
-          test -s site/apks/CleanSweep-v2.73.zip
-          test -s site/apks/Vasanthi-AI-v1.0.apk
-          test -s site/apks/Vasanthi-AI-v1.0.zip
-          test -s site/apks/Vasanthi-AI-v1.0.1.apk
-          test -s site/apks/Vasanthi-AI-v1.0.1.zip
-          test -s site/apks/Vasanthi-AI-v1.1.apk
-          test -s site/apks/Vasanthi-AI-v1.1.zip
-          test -s site/apks/Vasanthi-AI-v1.1.1.apk
-          test -s site/apks/Vasanthi-AI-v1.1.1.zip
-          test -s site/apks/Vasanthi-AI-v1.1.2.apk
-          test -s site/apks/Vasanthi-AI-v1.1.2.zip
-          test -s site/apks/Tamil-Podcast-Player-v1.0.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.1.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.1.1.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.1.1.zip
-          test -s site/apks/Tamil-Podcast-Player-v1.1.zip
-          test -s site/apks/Tamil-Podcast-Player-v1.0.zip
-          test -s site/apks/Elderly-Launcher-v1.0.apk
-          test -s site/apks/Elderly-Launcher-v1.1.apk
-          test -s site/apks/Elderly-Launcher-v1.1.zip
-          test -s site/apks/Elderly-Launcher-v1.0.zip
-          test -s site/apks/PulseEQ-v1.9.apk
-          test -s site/apks/PulseEQ-v1.9.zip
-          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.apk
-          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.15.zip
-          test -s site/apks/SMS-Guard-v1.1.11.apk
-          test -s site/apks/SMS-Guard-v1.1.11.zip
-          test -s site/apks/SMS-Guard-v1.1.16.apk
-          test -s site/apks/SMS-Guard-v1.1.16.zip
-          test -s site/apks/Vasanthi-AI-v1.1.5.apk
-          test -s site/apks/Vasanthi-AI-v1.1.5.zip
-          test -s site/apks/Oor-Arivippu-v1.1.10.apk
-          test -s site/apks/Oor-Arivippu-v1.1.10.zip
-          test -s site/apks/Oor-Arivippu-v1.1.15.apk
-          test -s site/apks/Oor-Arivippu-v1.1.15.zip
-          test -s site/apks/Oor-Arivippu-v1.1.16.apk
-          test -s site/apks/Oor-Arivippu-v1.1.16.zip
-          test -s site/oor-arivippu-guide.html
-          test -s site/apks/Tamil-Podcast-Player-v1.6.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.6.zip
-          test -s site/apks/DailyVault-v0.4.apk
-          test -s site/apks/DailyVault-v0.5.apk
-          test -s site/apks/DailyVault-v0.4.zip
-          test -s site/apks/DailyVault-v0.5.zip
-          test -s site/apks/Tamilan-Store-v0.9.apk
-          test -s site/apks/Tamilan-Store-v0.9.zip
-          test -s site/apks/Tamilan-Store-v0.8.apk
-          test -s site/apks/Tamilan-Store-v0.8.zip
-          test -s site/apks/Tamilan-Store-v0.6.apk
-          test -s site/apks/Tamilan-Store-v0.6.zip
-          test -s site/apks/Expense-Tracker-v1.2.apk
-          test -s site/apks/Expense-Tracker-v1.2.zip
-          test -s site/apks/Elderly-Launcher-v1.5.apk
-          test -s site/apks/Elderly-Launcher-v1.5.zip
-          test -s site/apks/Elderly-Launcher-v1.7.apk
-          test -s site/apks/Elderly-Launcher-v1.7.zip
-          test -s site/apks/Voice-Notes-v1.3.3.apk
-          test -s site/apks/Voice-Notes-v1.3.3.zip
-          test -s site/apks/CleanSweep-v2.75.apk
-          test -s site/apks/CleanSweep-v2.75.zip
           test -s site/apks/CleanSweep-v2.95.apk
           test -s site/apks/CleanSweep-v2.95.zip
           test -s site/apks/CleanSweep-v2.94.apk
@@ -228,42 +111,36 @@ jobs:
           test -s site/apks/CleanSweep-v2.93.zip
           test -s site/apks/CleanSweep-v2.89.apk
           test -s site/apks/CleanSweep-v2.89.zip
-          test -s site/apks/CleanSweep-v2.88.apk
-          test -s site/apks/CleanSweep-v2.88.zip
-          test -s site/apks/CleanSweep-v2.87.apk
-          test -s site/apks/CleanSweep-v2.87.zip
+          test -s site/apks/Tamilan-Store-v0.9.apk
+          test -s site/apks/Tamilan-Store-v0.9.zip
           test -s site/apks/CleanSweep-v2.82.apk
           test -s site/apks/CleanSweep-v2.82.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk
           test -s site/apks/Voice-Notes-v1.3.4.zip
-          test -s site/apks/CleanSweep-v2.81.apk
-          test -s site/apks/CleanSweep-v2.81.zip
+          test -s site/apks/Secret-Message-v1.1.3.apk
+          test -s site/apks/Secret-Message-v1.1.3.zip
+          test -s site/apks/SMS-Guard-v1.1.16.apk
+          test -s site/apks/SMS-Guard-v1.1.16.zip
+          test -s site/apks/Vasanthi-AI-v1.1.5.apk
+          test -s site/apks/Vasanthi-AI-v1.1.5.zip
+          test -s site/apks/Oor-Arivippu-v1.1.15.apk
+          test -s site/apks/Oor-Arivippu-v1.1.15.zip
+          test -s site/apks/Oor-Arivippu-v1.1.16.apk
+          test -s site/apks/Oor-Arivippu-v1.1.16.zip
+          test -s site/apks/Tamil-Podcast-Player-v1.6.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.6.zip
+          test -s site/apks/DailyVault-v0.5.apk
+          test -s site/apks/DailyVault-v0.5.zip
+          test -s site/apks/Expense-Tracker-v1.2.apk
+          test -s site/apks/Expense-Tracker-v1.2.zip
+          test -s site/apks/Elderly-Launcher-v1.7.apk
+          test -s site/apks/Elderly-Launcher-v1.7.zip
           test -s site/apks/Ramesh-Radio-v1.31.apk
           test -s site/apks/Ramesh-Radio-v1.31.zip
           test -s site/apks/PulseEQ-v1.11.apk
           test -s site/apks/PulseEQ-v1.11.zip
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.16.apk
           test -s site/apks/RP-Vocal-Remover-Studio-v0.1.16.zip
-          test -s site/apks/Secret-Message-v1.1.3.apk
-          test -s site/apks/Secret-Message-v1.1.3.zip
-
-          test -s site/apks/Tamil-Podcast-Player-v1.2.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.2.zip
-          test -s site/apks/Elderly-Launcher-v1.2.apk
-          test -s site/apks/Elderly-Launcher-v1.2.zip
-          test -s site/apks/Vasanthi-AI-v1.1.3.apk
-          test -s site/apks/Vasanthi-AI-v1.1.3.zip
-
-          test -s site/apks/Tamil-Podcast-Player-v1.3.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.3.zip
-          test -s site/apks/Tamil-Podcast-Player-v1.4.apk
-          test -s site/apks/Tamil-Podcast-Player-v1.4.zip
-          test -s site/apks/Elderly-Launcher-v1.3.apk
-          test -s site/apks/Elderly-Launcher-v1.3.zip
-          test -s site/apks/Elderly-Launcher-v1.4.apk
-          test -s site/apks/Elderly-Launcher-v1.4.zip
-          test -s site/apks/Vasanthi-AI-v1.1.4.apk
-          test -s site/apks/Vasanthi-AI-v1.1.4.zip
 
       - name: Build live official Store catalog from public release metadata
         env:
