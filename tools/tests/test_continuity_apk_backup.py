@@ -20,7 +20,7 @@ class ContinuityApkBackupTests(unittest.TestCase):
             with self.subTest(key=key),self.assertRaises(ValueError):validate_inventory(data)
         for p in ('/home/user/apks','/tmp','/tmp/../home/user/apks'):
             with self.subTest(path=p),self.assertRaises(ValueError):safe_staging_path(p)
-        self.assertEqual(safe_staging_path('/tmp/rp-backup-test'),Path('/tmp/rp-backup-test'))
+        self.assertEqual(safe_staging_path('/tmp/rp-backup-test'),Path('/tmp/rp-backup-test').resolve())
     def test_exact_file_check_rejects_wrong_download(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'fake.apk';p.write_bytes(b'not an apk')

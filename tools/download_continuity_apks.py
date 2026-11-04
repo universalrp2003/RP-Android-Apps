@@ -35,7 +35,8 @@ def validate_inventory(data):
 
 def safe_staging_path(path):
     result = Path(path).resolve()
-    if result == Path('/tmp') or Path('/tmp') not in result.parents:
+    tmp_root = Path('/tmp').resolve()
+    if result == tmp_root or tmp_root not in result.parents:
         raise ValueError('APK staging must be a new directory strictly below /tmp')
     return result
 
