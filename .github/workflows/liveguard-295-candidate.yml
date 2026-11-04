@@ -1,3 +1,4 @@
+# Live Guard 2.95 candidate gate: build, JVM/lint, exact installed bytes before instrumentation.
 name: Live Guard 2.95 compact signal pill, honest serving cell and steadier startup regressions (candidate only)
 on:
   push:
