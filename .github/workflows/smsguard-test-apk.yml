@@ -192,6 +192,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Fetch immutable public 1.1.16 upgrade baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/sms-baseline
+          gh release download sms-guard-v1.1.16 --pattern SMS-Guard-v1.1.16.apk --dir /tmp/sms-baseline
+          echo 'db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df  /tmp/sms-baseline/SMS-Guard-v1.1.16.apk' | sha256sum --check
+
       - name: Enable emulator acceleration
         run: sudo chmod a+rw /dev/kvm
 
@@ -204,7 +212,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: python3 smsguard/tools/default-role-smoke.py "${{ steps.apk.outputs.path }}"
+          script: python3 smsguard/tools/default-role-smoke.py "${{ steps.apk.outputs.path }}" /tmp/sms-baseline/SMS-Guard-v1.1.16.apk
 
       - name: Upload synthetic default-role emulator evidence
         if: always()

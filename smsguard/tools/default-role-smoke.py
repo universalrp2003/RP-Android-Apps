@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Exact signed APK, Android35 emulator, synthetic messages only. NOT Play Protect/phone/MMS proof."""
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -57,7 +58,18 @@ def snapshot(label):
     return ns
 
 apk = sys.argv[1]
-adb('install', '-r', apk)
+baseline = sys.argv[2] if len(sys.argv) > 2 else apk
+
+def installed_hash():
+    remote = adb('shell', 'pm', 'path', PKG).strip().splitlines()[0].removeprefix('package:')
+    return adb('shell', 'sha256sum', remote).split()[0]
+
+def uid():
+    return re.search(r'userId=(\d+)', adb('shell', 'dumpsys', 'package', PKG)).group(1)
+
+adb('install', '-r', baseline)
+assert installed_hash() == hashlib.sha256(Path(baseline).read_bytes()).hexdigest()
+old_uid = uid()
 initial = holder()
 assert initial != PKG, 'Fresh emulator unexpectedly already defaults to this app'
 launch()
@@ -103,6 +115,9 @@ wait(lambda ns: has(ns, 'ARENA_SMS_DEFAULT_116'), 'incoming SMS persisted and vi
 snapshot('04-incoming-synthetic-sms')
 # Normal same-key update, not uninstall/clear: role, acknowledgment and SMS must survive.
 adb('install', '-r', apk)
+expected_hash = hashlib.sha256(Path(apk).read_bytes()).hexdigest()
+assert installed_hash() == expected_hash, 'Installed APK differs from selected candidate'
+assert uid() == old_uid, 'Update changed UID'
 launch()
 wait(lambda ns: has(ns, 'ARENA_SMS_DEFAULT_116'), 'SMS survives normal update')
 assert holder()==PKG
@@ -112,6 +127,8 @@ result={'apk':Path(apk).name,'api':adb('shell','getprop','ro.build.version.sdk')
         'chooser_cancel_preserves_default':True,'acknowledgment_survives_restart':True,
         'role_granted_through_system_ui':True,'synthetic_sms_received':True,
         'same_key_update_preserves_role_and_sms':True,
+        'baseline_apk':Path(baseline).name,'installed_apk_sha256':expected_hash,
+        'same_uid_preserved':True,'exact_installed_bytes_verified':True,
         'play_protect_tested':False,'carrier_mms_tested':False,'physical_phone_tested':False}
 (OUT/'result.json').write_text(json.dumps(result,indent=2)+'\n')
 print('::notice title=SMS default-role emulator result::'+json.dumps(result),flush=True)
