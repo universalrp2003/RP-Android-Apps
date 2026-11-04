@@ -962,8 +962,14 @@ class SmsGuardEngineTest {
         )
         println("SMS_LIVE_PROFILE FAILOVER bytes=${audio?.size ?: 0} diagnostics=${diagnostics.joinToString(" | ")}")
         assertTrue("HD failover did not complete: ${diagnostics.joinToString(" | ")}", audio != null && audio.size > 1500)
-        assertFalse(diagnostics.any { it == "HD_VOICE_ATTEMPT=ta-IN-ValluvarNeural" })
+        assertFalse(diagnostics.any { it.startsWith("HD_VOICE_ATTEMPT=ta-IN-ValluvarNeural") })
         assertTrue(diagnostics.any { it.startsWith("HD_VOICE_SELECTED=ta-") })
+        // Issue #49 remedy 1: the first voice must receive most of the single deadline (55 % of
+        // 4,200 ms = 2,310 ms) instead of an equal third, or a voice that answers at ~1.6 s is
+        // abandoned mid-flight and the caller sees null.
+        val firstBudget = diagnostics.first { it.startsWith("HD_VOICE_ATTEMPT=") }
+            .substringAfter("budgetMs=").toLong()
+        assertTrue("first voice got only ${firstBudget}ms of 4,200ms", firstBudget > 4200 / 2)
         var selectedSharedVoice = ""
         val sharedAudio = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeRawMp3(
             text = "வணக்கம். உயர்தரக் குரல் தயாராக உள்ளது.",
