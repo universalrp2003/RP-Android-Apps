@@ -164,3 +164,15 @@ There are twelve published RP Ideas Android applications in this repository: uti
 [தமிழ் / English help, website and other app links](docs/three-app-help.md). SMS Guard 1.1.9 and Voice Notes 1.2 are public and owner-reported working on one phone. Radio 1.28 is now verified public; stable download links point to the new APK.
 
 **SMS Guard 1.1.15:** latest bug fixes and separately consented cloud speech, released with the [unresolved Play Protect block disclosed](docs/sms-guard-play-protect.md). Keep protection enabled; no exact-build phone test or Google clearance. [Exact-artifact receipt](docs/sms-guard-1.1.15-verification.md).
+
+## Project continuity and recovery
+
+If an AI development service becomes unavailable, start with the [owner continuity guide](docs/continuity/START-HERE.md), [technical handover](docs/continuity/TECHNICAL-HANDOVER.md) and [private backup checklist](docs/continuity/PRIVATE-BACKUP-CHECKLIST.md). A handover pack contains documents and dated public release metadata—not source/APK/phone-data/signing-key backups. Never share signing keys or passwords in a chat.
+
+Create a new documents-only ZIP without network access or publication:
+
+```bash
+python3 tools/create_continuity_pack.py --output /tmp/rp-continuity-documents.zip
+```
+
+The exporter refuses to overwrite an existing file and includes checksums. Transfer it from temporary staging to owner-controlled storage.

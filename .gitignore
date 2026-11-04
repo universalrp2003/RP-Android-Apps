@@ -15,3 +15,6 @@ ci-keystore/
 
 # Disposable Store upgrade emulator evidence (synthetic only).
 store-signed-upgrade-results/
+
+# Generated documents-only owner handover; source docs remain tracked.
+/continuity-pack-*.zip
