@@ -212,7 +212,21 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: python3 smsguard/tools/default-role-smoke.py "${{ steps.apk.outputs.path }}" /tmp/sms-baseline/SMS-Guard-v1.1.16.apk
+          script: |
+            mkdir -p smsguard-role-results
+            python3 smsguard/tools/default-role-smoke.py "${{ steps.apk.outputs.path }}" /tmp/sms-baseline/SMS-Guard-v1.1.16.apk > smsguard-role-results/smoke.log 2>&1 || { tail -30 smsguard-role-results/smoke.log; exit 1; }
+
+      - name: Surface bounded emulator failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f smsguard-role-results/smoke.log ]; then
+            tail -25 smsguard-role-results/smoke.log | while IFS= read -r line; do
+              echo "::error title=SMS emulator::$line"
+            done
+          else
+            echo '::error title=SMS emulator::Emulator action failed before running the smoke script.'
+          fi
 
       - name: Upload synthetic default-role emulator evidence
         if: always()
