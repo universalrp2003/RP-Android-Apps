@@ -532,3 +532,7 @@ Source `52b525888631b12ba281e0df328d466013de8f7c`; code92/package`com.universalr
 Exact tested bytes promoted without rebuild; prior public releases unchanged. No corrected physical-phone/audio/live-provider/PlayProtect proof.
 
 Live Guard2.89 website completion: PR83/main08f8cd21fa04e676b152eb278f8ddeb36c7ac6ae; Pages41461910400/deployjob125333808884/deployment7494684338 SUCCESS2026-11-02T14:30:10Z. Actual live metadata and exact public APK/ZIP bytes verified. Metadata follow-up CI41459148110 successful but not promoted; public APK remains1eb064d81102c7cc32fb1cb9ea386b6cb3aa235900b1c119b1783b68f342c698.
+
+## Owner-accepted Oor Arivippu1.1.16 — 4 November2026
+
+Exact configured native candidate promoted without rebuilding by41751132736/job126316197572, release433392185/APK707716347/checksum707716348. APK `Oor-Arivippu-v1.1.16.apk`:12891948bytes/SHA256 `3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee`, established signer7366d76…; prior public assets unchanged. Source6858701/native41669768816/artifact13249211486; full publication receipt `oor-about-guide-1.1.16-publication-receipt.json`. Owner says perfect/publish; no independent phone-hash/audio/OEM/security/PlayProtect clearance claim. Public15 and its masked screenshots remain preserved and labelled15.

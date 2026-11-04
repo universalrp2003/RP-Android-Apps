@@ -197,7 +197,7 @@ try {
     assert.equal(await faq.evaluate(node => node.open), true);
     await page.keyboard.press('Enter');
     assert.equal(await faq.evaluate(node => node.open), false);
-    assert.equal(await page.locator('a.download').getAttribute('href'), 'https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.15/Oor-Arivippu-v1.1.15.apk');
+    assert.equal(await page.locator('a.download').getAttribute('href'), 'https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.16/Oor-Arivippu-v1.1.16.apk');
   });
   await test('Oor guide accessibility including expanded troubleshooting', async page => {
     await page.goto(base + '/oor-arivippu-guide.html');
