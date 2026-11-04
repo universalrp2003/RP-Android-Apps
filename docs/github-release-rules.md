@@ -52,7 +52,7 @@ Everything in this table must be green on the branch. If a row is red, do not me
 | `Website usability checks (no deployment)` | the 14 cards, dates, checksums, keyboard/a11y and the `tools/tests/test_website*.py` contracts |
 | `Deploy Official Website to GitHub Pages` (build job on the branch) | every mirror downloads and SHA-matches, the mirror budget holds |
 | the app's own release workflows (SMS Guard, Oor, Podcast, Vasanthi, …) | they build and verify without publishing |
-| local `python3 -m unittest discover -s tools/tests -q` | 424 Python checks today |
+| local `python3 -m unittest discover -s tools/tests -q` | 426 Python checks today |
 
 Local Gradle/Android builds are not possible in the Arena sandbox — Kotlin correctness is
 established by CI only. Do not describe a source check as a build.
@@ -161,7 +161,7 @@ sequence (§4), with a human deciding, not an assistant's tool call.
 
 Say what the evidence says and stop there:
 
-- ✅ "923 required JVM tests / 89 suites, 418→424 Python checks, 9 Android 35 native tests, exact
+- ✅ "923 required JVM tests / 89 suites, 418→426 Python checks, 9 Android 35 native tests, exact
   installed-byte hash matched, same key, no permission delta."
 - ❌ "Works on all phones", "Play Protect clean", "dual-SIM verified", "audible speech verified" —
   unless the owner personally reports that specific result on that specific phone, and then say it

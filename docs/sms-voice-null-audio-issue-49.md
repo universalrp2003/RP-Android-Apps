@@ -112,9 +112,30 @@ Voice Notes) keep their per-attempt cap exactly as before.
 
 With the failover deadline unchanged at 4,200 ms the first voice now gets ~2,310 ms instead of
 1,400 ms — comfortably more than the 1,590 ms first-audio time measured for `ta-MY-SuryaNeural` —
-while the second and third voices still get 1,260 ms and 630 ms of whatever remains. The expected
-observable change in the HD recovery lane is that the *first* Tamil voice completes instead of being
-abandoned and the third one rescuing the call.
+while the second and third voices still get 1,260 ms and 630 ms of whatever remains. ### Measured after the change
+
+Live probe `41805403494` (preferred voice still resolves to `ta-MY-SuryaNeural`): 4/4 profiles
+`class=OK`, independent `edge-tts==7.3.1` reference 4/4 PASS. HD recovery `41805403597` printed a
+different result from the equal-thirds trace in this document:
+
+```
+HD_VOICE_ATTEMPT=ta-MY-SuryaNeural budgetMs=2310 | OPEN HTTP=101 | FIRST_AUDIO_MS=1308 |
+  DEADLINE_EXCEEDED | COMPLETE=false BYTES=10080 FRAMES=14 ELAPSED_MS=2311 | NO_TURN_END ...
+HD_VOICE_ATTEMPT=ta-SG-AnbuNeural  budgetMs=1247 | OPEN HTTP=101 | FIRST_AUDIO_MS=734 |
+  COMPLETE=true BYTES=21888 FRAMES=31 ELAPSED_MS=1222 | HD_VOICE_SELECTED=ta-SG-AnbuNeural
+```
+
+The preferred voice is now actually attempted with 2,310 ms and produces audio (it is still slower
+than the deadline: its own measured total is ~3.1 s, so the remainder is honestly reported as
+`DEADLINE_EXCEEDED`), and the *second* voice completes with its 1,247 ms share. Before the change
+the call survived only because the third, fastest voice answered in 359 ms; now the call no longer
+depends on reaching the last candidate. The shared engine run in the same workflow recovered on the
+preferred voice (`SHARED_HD_RECOVERY bytes=24192 selected=ta-MY-SuryaNeural`).
+
+Honest limits: the preferred voice did not itself reach `turn.end` inside 2,310 ms on this run, so
+this is a demonstrated improvement in headroom (attempt 1 audio, attempt 2 success), not a claim that
+`ta-MY-SuryaNeural` always completes. Speech remains bounded by the same 4,200 ms deadline and the
+same "complete MP3, > 1,500 bytes" requirement.
 
 ## How to investigate the next occurrence
 
