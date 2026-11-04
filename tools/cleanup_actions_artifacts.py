@@ -149,6 +149,12 @@ def main() -> int:
     print(f'::notice title=Actions artifact cleanup::{verb} {len(batch) if DRY_RUN else deleted} '
           f'of {len(victims)} pending packages, {freed / 1e9:.2f} GB; kept {len(artifacts) - len(victims)} '
           f'(recent, newest per pipeline, recent Pages packages and every id quoted in docs/)')
+    if not DRY_RUN and batch and deleted == 0:
+        # A run that deletes nothing is a failure, not a success: the token cannot write to Actions
+        # storage (Settings -> Actions -> General -> Workflow permissions), or every call was refused.
+        print('::error title=Actions artifact cleanup::no package could be deleted; check the workflow '
+              'token permission (Settings -> Actions -> General -> Workflow permissions)', file=sys.stderr)
+        return 1
     return 0
 
 

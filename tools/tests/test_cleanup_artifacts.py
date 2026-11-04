@@ -49,3 +49,6 @@ class CleanupArtifactsContractTest(unittest.TestCase):
             retention = re.findall(r'retention-days:\s*(\d+)', block)[-1]
             self.assertEqual(retention, '7', name)
         self.assertEqual(int(re.search(r"KEEP_DAYS', '(\d+)'", SCRIPT).group(1)), 7)
+        # A real run that cannot delete anything must fail loudly instead of looking green.
+        self.assertIn('no package could be deleted', SCRIPT)
+        self.assertIn('return 1', SCRIPT)
