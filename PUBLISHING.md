@@ -2,6 +2,8 @@
 
 This guide covers the thirteen **non-Store** RP Ideas products plus the separate Tamilan Store hosted at [`universalrp2003/RP-Android-Apps`](https://github.com/universalrp2003/RP-Android-Apps) and the official website [`universalrp2003.github.io/RP-Android-Apps/`](https://universalrp2003.github.io/RP-Android-Apps/). The four legacy modules are `cleaner` / Live Guard, `radio` / Ramesh Radio, `equalizer` / PulseEQ, and `vocalremover` / RP Vocal Remover Studio. Other Android apps keep their own release workflows. Secret Message retains its separate signing identity. GitHub Releases are the verified direct-download channel. A successful CI build is required before publication; CI success is not Play Protect approval or a device-compatibility certification.
 
+Before touching GitHub for any future change, read the short rule page [`docs/github-release-rules.md`](docs/github-release-rules.md): the five things that must never happen, the merge gate list, the publish order, the mirror budget and the honest-wording rules.
+
 ## Owner-approved localized display names (29 October 2026)
 
 - **Live Guard** — Tamil display/store name: **கைபேசி காவலன்**. Keep the English name **Live Guard**; the old marketing title `CleanSweep` is not the display name.
