@@ -41,6 +41,41 @@ and never called**: the pinned HD-voice contract above forbids wiring it. That i
 product decision, not an oversight — retrying the same voice was rejected in favour of trying a
 different voice.
 
+## Measured on 4 November 2026 (the first run with the new diagnostics)
+
+Probe run `41801643886` (branch `arena/09d22d90-rp-android-apps`), synthetic text only:
+
+| Profile | Kotlin client | First audio | Total | Independent `edge-tts` reference |
+| --- | --- | --- | --- | --- |
+| `ta-MY-SuryaNeural` | 26,640 B | **1,590 ms** | **3,133 ms** | 26,640 B, 2,641 ms |
+| `ta-IN-PallaviNeural` | 25,920 B | 131 ms | 204 ms | 25,776 B, 298 ms |
+| `en-IN-PrabhatNeural` | 30,672 B | 1,552 ms | 2,494 ms | 23,328 B, 1,612 ms |
+| `en-IN-NeerjaNeural` | 24,624 B | 314 ms | 498 ms | 24,624 B, 256 ms |
+
+Advertised `ta-IN` catalogue at the same moment: `PallaviNeural` (Female) and `ValluvarNeural`
+(Male) — Valluvar is still advertised upstream, which is why the client-side remap matters and why
+the probe re-checks this every run.
+
+**The failover lane shows the actual failure mechanism** (`HD voice recovery` run `41801643897`, same
+push). Three distinct Tamil voices share one 4,200 ms deadline, 1,400 ms each:
+
+```
+HD_VOICE_ATTEMPT=ta-MY-SuryaNeural  | OPEN HTTP=101 | DEADLINE_EXCEEDED | COMPLETE=false BYTES=0 FRAMES=0 ELAPSED_MS=1401
+HD_VOICE_ATTEMPT=ta-SG-AnbuNeural   | OPEN HTTP=101 | DEADLINE_EXCEEDED | COMPLETE=false BYTES=0 FRAMES=0 ELAPSED_MS=1392
+HD_VOICE_ATTEMPT=ta-IN-PallaviNeural| OPEN HTTP=101 | FIRST_AUDIO_MS=265 | COMPLETE=true BYTES=23328 FRAMES=33 ELAPSED_MS=359
+HD_VOICE_SELECTED=ta-IN-PallaviNeural
+```
+
+Both first attempts **connected successfully (`HTTP=101`) and then produced zero audio inside their
+share**, while the same Surya voice needs ~1.6 s to first audio and ~3.1 s to finish on an idle
+probe. So the intermittent null is not "the service is down": the equal-share budget is smaller than
+the service's own time-to-first-audio for the slower voices, and success then depends on a later,
+faster voice answering inside its share. When none does, the call returns null — with no cause
+recorded, which is exactly what the issue described.
+
+This also explains why the same source passed and failed: it is a race between a ~1.4 s per-voice
+share and a 0.13–3.1 s time-to-first-audio distribution, not a change in behaviour.
+
 ## What this change adds (evidence, not a weaker test)
 
 `NeuralCloudVoiceEngine.streamWebSocketOnce` now reports, without disclosing text, URLs, headers or
@@ -89,7 +124,16 @@ an outage; a Kotlin-only failure means a protocol/implementation problem on our 
 - This change makes the next occurrence self-diagnosing in CI. It does not claim the service is
   healthy, that any phone hears audio, or that Valluvar is permanently gone — the probe re-checks
   the advertised catalogue every time it runs.
-- If the owner wants the transient absorbed instead of reported, the decision is a one-line policy
-  change (`NeuralRetryPolicy` wired in for close code 1011) plus an update to the pinned contract
-  in `tools/tests/test_hd_voice_policy.py`. That is a behaviour change for every caller, so it is
-  left as an explicit choice rather than made silently.
+- **The measured cause is budget shape, not reachability.** Equal shares (4,200 / 3 = 1,400 ms) are
+  shorter than the slower voices' time-to-first-audio (~1.6 s), so the first two attempts are thrown
+  away on a healthy connection and success depends on a faster third voice. Two remedies exist and
+  both are product decisions:
+  1. **Budget shaping** — give the first voice most of the deadline (e.g. 55 % / 30 % / 15 %, total
+     still 4,200 ms) instead of equal shares. `NeuralVoiceFailover.synthesize` already supports a
+     caller-chosen `attemptTimeoutMs` for patient callers, so this needs no new policy — only a
+     decision about SMS speech latency.
+  2. **Same-voice retry on 1011** — wire `NeuralRetryPolicy` and update the pinned contract in
+     `tools/tests/test_hd_voice_policy.py`. This is the change that contract was written to prevent,
+     so it needs an explicit owner decision.
+- Either way, this investigation changes nothing about success criteria: a profile still needs more
+  than 1,500 real MP3 bytes from the service.
