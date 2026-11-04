@@ -25,9 +25,13 @@
   "installed_phone_hash_matched": false,
   "play_protect_clearance": false,
   "prior_public_assets_unchanged": true,
-  "website_or_live_catalog_promoted": false,
+  "website_or_live_catalog_promoted": true,
   "promotion_run_id": 41777666831,
   "promotion_job_id": 126401682358,
-  "main_merged": false,
-  "verification": "Publisher extracted the pinned archive and receipt, independently verified signer and the full merged permission set, and hash-matched both draft and public APK downloads from the release asset API. The local sandbox cannot reach the release asset host; it checked the successful CI job, the native gate annotations and the public release digest metadata rather than downloading the binary itself. Installed-byte proof ran before instrumentation and inside every required native test; AGP then cleaned up the disposable emulator."
+  "main_merged": true,
+  "verification": "Publisher extracted the pinned archive and receipt, independently verified signer and the full merged permission set, and hash-matched both draft and public APK downloads from the release asset API. The local sandbox cannot reach the release asset host; it checked the successful CI job, the native gate annotations and the public release digest metadata rather than downloading the binary itself. Installed-byte proof ran before instrumentation and inside every required native test; AGP then cleaned up the disposable emulator.",
+  "main_merge_commit": "dabf32c1911260391890e6422f6e4122105a6197",
+  "pages_run_id": 41779657363,
+  "pages_deploy_job_id": 126408558777,
+  "live_verification": "Main-only Pages run 41779657363 deployed the site and its post-deploy step downloaded the live apks/CleanSweep-v2.95.apk and .zip mirrors from universalrp2003.github.io and byte-verified both against 14764951 B and sha256 b51d355d113511f45a6cf121fffc0765f188b578e69001e11e4f986f0a7eecb7, together with the pinned 2.94, 2.93, 2.89, 2.82 and Oor Arivippu / Voice Notes / Launcher assets and the reviewed masked screenshots. The live release table, JSON-LD, card badge and download mirror all read 2.95; 2.94 was promoted and its asset left untouched."
 }
