@@ -107,14 +107,26 @@ def main():
         '--candidate-badging', str(new_file), '--previous-badging', str(old_file))
     before = pages('releases')
     prior = {r['tag_name']: snapshot(r) for r in before if not r['draft']}
-    assert not any(r['tag_name'] == TAG for r in before), 'Never overwrite or blindly resume release'
+    existing=[r for r in before if r['tag_name']==TAG]
+    if p.get('resume_draft_id'):
+        assert len(existing)==1 and existing[0]['id']==p['resume_draft_id'] and existing[0]['draft'], 'Only explicitly pinned exact draft may resume'
+        pinned=api('releases/'+str(p['resume_draft_id']))
+        assert pinned['draft'] and not pinned['prerelease'] and pinned['target_commitish']==source
+        assert {a['id'] for a in pinned['assets']}=={p['resume_apk_asset_id'],p['resume_checksum_asset_id']}
+    else:
+        assert not existing, 'Never overwrite or blindly resume release'
     assert not any(t['name'] == TAG for t in pages('tags')), 'Never replace tag'
     checksum = root/'Oor-Arivippu-v1.1.16.sha256'; checksum.write_text(p['apk_sha256']+'  '+NAME+'\n')
-    subprocess.run(['gh', 'release', 'create', TAG, '--target', source, '--title', 'Oor Arivippu 1.1.16 — corrected About and bilingual built-in guide',
+    if not p.get('resume_draft_id'): subprocess.run(['gh', 'release', 'create', TAG, '--target', source, '--title', 'Oor Arivippu 1.1.16 — corrected About and bilingual built-in guide',
                     '--notes-file', 'releases/'+TAG+'.md', '--draft', str(candidate)+'#'+NAME, str(checksum)+'#'+checksum.name], check=True)
     for attempt in range(12):
-        matches = [r for r in pages('releases') if r['tag_name'] == TAG]; assert len(matches) == 1
-        draft = api('releases/'+str(matches[0]['id']))
+        if p.get('resume_draft_id'):
+            draft=api('releases/'+str(p['resume_draft_id']))
+        else:
+            matches = [r for r in pages('releases') if r['tag_name'] == TAG]
+            if not matches: time.sleep(2); continue
+            assert len(matches)==1
+            draft = api('releases/'+str(matches[0]['id']))
         assert draft['draft'] and not draft['prerelease'] and draft['target_commitish'] == source
         assert sorted(a['name'] for a in draft['assets']) == [NAME, checksum.name]
         asset = next(a for a in draft['assets'] if a['name'] == NAME)
@@ -129,9 +141,13 @@ def main():
             subprocess.run(['gh', 'api', f'repos/{REPO}/releases/assets/{asset["id"]}', '-H', 'Accept: application/octet-stream'], stdout=stream, check=True)
         assert sha(directory/NAME) == p['apk_sha256'] and (directory/NAME).stat().st_size == p['bytes']
         if phase == 'draft': subprocess.run(['gh', 'release', 'edit', TAG, '--draft=false', '--latest=false'], check=True)
-    public = api('releases/tags/'+TAG)
+    for attempt in range(12):
+        public = api('releases/'+str(draft['id']))
+        asset = next(a for a in public['assets'] if a['name'] == NAME)
+        if not public['draft'] and asset['browser_download_url']==f'https://github.com/{REPO}/releases/download/{TAG}/{NAME}': break
+        time.sleep(2)
+    else: raise AssertionError('Published state not yet independently verified; do not rerun publication blindly')
     assert not public['draft'] and not public['prerelease'] and public['id'] == draft['id']
-    asset = next(a for a in public['assets'] if a['name'] == NAME)
     assert asset['digest'] == 'sha256:'+p['apk_sha256'] and asset['size'] == p['bytes']
     assert asset['browser_download_url'] == f'https://github.com/{REPO}/releases/download/{TAG}/{NAME}'
     after = {r['tag_name']: snapshot(r) for r in pages('releases') if not r['draft']}

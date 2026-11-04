@@ -15,5 +15,9 @@
   "required_jvm_tests": 30,
   "required_about_guide_jvm_tests": 4,
   "required_android35_native_tests": 3,
-  "apk_sha256": "3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee"
+  "apk_sha256": "3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee",
+  "resume_draft_id": 433392185,
+  "resume_apk_asset_id": 707716347,
+  "resume_checksum_asset_id": 707716348,
+  "publication_attempt": 2
 }
