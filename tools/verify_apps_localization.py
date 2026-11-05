@@ -1012,8 +1012,8 @@ def verify_module_versions_match_sister_apps() -> int:
             if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.10":
                 raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
             # Stable0.9 is public from the exact signed/native-tested artifact; older assets stay immutable.
-            if by_package.get(pkg.group(1)) != "0.9":
-                raise ValueError("Tamilan published directory must match the verified public stable0.9")
+            if by_package.get(pkg.group(1)) != "0.10":
+                raise ValueError("Tamilan published directory must match the verified public stable0.10")
             continue
         checked += 1
         if pkg.group(1) not in by_package:

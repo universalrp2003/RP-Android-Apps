@@ -27,3 +27,7 @@ Source `d887aad0f9309b387472861502c44312e74bbfae`: screen-off native run **42060
 ## Owner acceptance and publication authorization
 
 The owner downloaded the pinned candidate and reports “Yes its now downloading in background”. No new screenshots were requested; existing galleries remain historical. The owner then explicitly said “You go and publish”. Promote only source d887aad / artifact13431762396 without rebuilding, after rechecking signed upgrade42060013559, native transport42060013567 and archive/installer42060013507. This supersedes the earlier publication hold only. Owner-reported phone use is not an independently matched phone hash or all-OEM/Doze certification.430 Python checks now include exact-promotion boundaries.
+
+## Exact publication complete; website integration
+
+Publisher42063138056 succeeded: release435432949/APK714002527 at2026-11-05T16:19:25Z, exact owner-accepted SHA d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b. No rebuild. Draft/public downloads and API metadata match; all prior public release asset IDs/names/sizes/digests remain unchanged. Public directory and website now select0.10 after publication. Website mirror budget would exceed800MB if0.9 remained mirrored too, so only the website's duplicate0.9 APK/ZIP mirror and its live-verifier entry are retired. Public0.9 GitHub assets and all historical receipts remain immutable. No unrelated app mirror is removed. Final PR/main Pages/live hash gates pending.

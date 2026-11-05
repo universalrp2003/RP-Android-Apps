@@ -65,8 +65,8 @@ def main():
             print(f'Waiting for current deployed metadata ({attempt + 1}/8): {error}', flush=True)
             time.sleep(10)
     health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
-    store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
-    checks = [('Oor-Arivippu-v1.1.17.apk', json.loads((ROOT/'docs/oor-trip-1.1.17-publication-receipt.json').read_text())),
+    checks = [('Tamilan-Store-v0.10.apk', json.loads((ROOT/'docs/tamilan-store-0.10-publication-receipt.json').read_text())),
+              ('Oor-Arivippu-v1.1.17.apk', json.loads((ROOT/'docs/oor-trip-1.1.17-publication-receipt.json').read_text())),
               ('SMS-Guard-v1.1.17.apk', json.loads((ROOT/'docs/sms-guard-1.1.17-publication-receipt.json').read_text())),
               ('SMS-Guard-v1.1.16.apk', json.loads((ROOT/'docs/sms-guard-1.1.16-historical-mirror.json').read_text())),
               ('CleanSweep-v2.95.apk', json.loads((ROOT/'docs/live-guard-2.95-publication-receipt.json').read_text())),
@@ -75,7 +75,6 @@ def main():
               ('Oor-Arivippu-v1.1.15.apk', json.loads((ROOT/'docs/oor-family-1.1.15-publication-receipt.json').read_text())),
               ('CleanSweep-v2.93.apk', json.loads((ROOT/'docs/live-guard-2.93-publication-receipt.json').read_text())),
               ('CleanSweep-v2.89.apk', json.loads((ROOT/'docs/live-guard-2.89-publication-receipt.json').read_text())),
-              ('Tamilan-Store-v0.9.apk', store),
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
               ('CleanSweep-v2.82.apk', health['apps']['cleaner']),
               ('Elderly-Launcher-v1.7.apk', json.loads((ROOT/'docs/launcher-1.7-publication.json').read_text()))]

@@ -552,3 +552,7 @@ Exact tested `SMS-Guard-v1.1.17.apk`: **12,840,884 bytes**, SHA-256 `b9a7befd1e2
 ## Oor Arivippu 1.1.17 — 5 November2026
 
 Exact configured/tested APK **12,908,336B**, SHA-256 `7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f`, source2d9e7d84e5329c35780481fc32a725b20367bdae, candidate41988266646/artifact13397505454, publisher41989305749. Release434905730/asset712530334. No rebuild; prior public assets unchanged. Same signer/full permissions, public1.1.16 saved-data/Keystore update and bilingual100%/200% home UI passed on Android35. No physical-road/audio/Google claim.
+
+## Tamilan Store0.10 — owner-accepted exact background-download update
+
+Published2026-11-05T16:19:25Z, release435432949/asset714002527. APK **19,476,375B** SHA-256 `d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b`. Source d887aad0f9309b387472861502c44312e74bbfae, candidate42060013559/artifact13431762396; native42060013567; archive/installer42060013507; publisher42063138056. No rebuild; all earlier public release asset IDs/sizes/digests checked unchanged. Same-key public0.9 update preserves UID/private file/language/motion/restart and full permissions. Owner reports background downloading works; no independent phone-hash or Google/Doze/all-OEM claim.
