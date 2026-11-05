@@ -77,7 +77,9 @@ def main():
         for item in z.infolist():
             assert not Path(item.filename).is_absolute() and '..' not in Path(item.filename).parts
             assert not stat.S_ISLNK(item.external_attr >> 16)
-        assert [n for n in z.namelist() if n.endswith('.apk')] == [CANDIDATE_NAME]
+        assert sorted(n for n in z.namelist() if n.endswith('.apk')) == sorted([CANDIDATE_NAME, OLD_NAME])
+        import hashlib
+        assert hashlib.sha256(z.read(OLD_NAME)).hexdigest() == OLD_SHA
         receipt = json.loads(z.read('verification.json')); validate_receipt(receipt, p)
         raw=z.read('trip-native.txt').decode(); assert 'OK (1 test)' in raw and 'INSTRUMENTATION_CODE: -1' in raw
         seed=z.read('baseline-family-fixture-instrumentation.txt').decode(); assert 'OK (1 test)' in seed and 'INSTRUMENTATION_CODE: -1' in seed
