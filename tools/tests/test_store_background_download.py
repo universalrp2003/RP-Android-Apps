@@ -26,3 +26,17 @@ class StoreBackgroundDownloadContracts(unittest.TestCase):
         manifest=(ROOT/'tamilanstore/src/main/AndroidManifest.xml').read_text()
         self.assertNotIn('WAKE_LOCK',manifest)
         self.assertNotIn('FOREGROUND_SERVICE',manifest)
+    def test_exact_owner_accepted_publication_is_no_rebuild_and_store_only(self):
+        import json
+        pin=json.loads((ROOT/'docs/approved-store-0.10-candidate.json').read_text())
+        self.assertTrue(pin['publication_authorized'])
+        self.assertTrue(pin['owner_reports_background_download_working'])
+        self.assertEqual(pin['source'],'d887aad0f9309b387472861502c44312e74bbfae')
+        self.assertEqual(pin['apk_sha256'],'d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b')
+        publisher=(ROOT/'tools/promote_verified_store_010.py').read_text()
+        for token in ('verify_candidate_gates(pin)',"pin['background_run']",'sha(archive)',
+                      'parse_badging(badging)==parse_badging(previous)',"for tag, value in prior.items()",
+                      'rebuilt=False',"OLD_TAG='tamilan-store-v0.9'"):
+            self.assertIn(token,publisher)
+        self.assertNotIn('assembleRelease',publisher)
+        self.assertNotIn('--clobber',publisher)
