@@ -4,7 +4,7 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 ## 13 regular apps + separate optional Tamilan Store
 
-DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion. Its already-public APK is unchanged. Store0.9 promotes the exact signed/native-tested stable candidate, with no rebuild. [Three-app verification and limits](docs/2026-11-01-battery-voice-releases.md).
+DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion. Its already-public APK is unchanged. Store0.10 promotes the exact signed/native-tested, owner-accepted background-download update, with no rebuild. [Store0.10 verification and limits](docs/tamilan-store-0.10-background-download.md).
 
 - **[Tamilan Store0.10/code12 — current stable APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.10/Tamilan-Store-v0.10.apk)** · [release notes](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.10) · [website / updates](https://universalrp2003.github.io/RP-Android-Apps/#st-tamilanstore).
 - **[DailyVault0.5/code5 — existing public APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk)** · [release notes](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5) · [website / updates](https://universalrp2003.github.io/RP-Android-Apps/#st-dailyvault).
