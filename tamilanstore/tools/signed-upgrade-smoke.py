@@ -15,7 +15,7 @@ import traceback
 import xml.etree.ElementTree as ET
 
 PKG = 'com.universalrp.tamilanstore'
-OLD_SHA = '3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474'
+OLD_SHA = '6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab'
 
 
 def adb(*args, timeout=90):
@@ -103,7 +103,7 @@ def run(out):
     assert len(sys.argv) == 4
     candidate, previous, debug = map(Path, sys.argv[1:])
     before_digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
-    assert previous.stat().st_size == 19276334
+    assert previous.stat().st_size == 19309106
     assert hashlib.sha256(previous.read_bytes()).hexdigest() == OLD_SHA
     enable_ci_root()
     # Fresh fixture installation is setup on this empty emulator, not the tested upgrade.
@@ -118,7 +118,7 @@ def run(out):
         time.sleep(0.2)
     assert prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false'
     old = package_state()
-    assert old['code'] == 8 and old['name'] == '0.8'
+    assert old['code'] == 11 and old['name'] == '0.9'
     marker = f'/data/user/0/{PKG}/files/synthetic-upgrade-marker'
     adb('shell', f'mkdir -p /data/user/0/{PKG}/files; printf synthetic-ci-only > {marker}')
     marker_hash = adb('shell', 'sha256sum', marker).split()[0]
@@ -134,7 +134,7 @@ def run(out):
     # The operation being tested: same-package, release-key, higher-version update. No reset.
     adb('install', '-r', str(candidate))
     new = package_state()
-    assert new['code'] == 11 and new['name'] == '0.9'
+    assert new['code'] == 12 and new['name'] == '0.10'
     assert new['uid'] == old['uid']
     assert adb('shell', 'sha256sum', marker).split()[0] == marker_hash
     assert prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false'
@@ -150,14 +150,14 @@ def run(out):
     wait_text('Enable scrolling text')
     snap(out, '03-after-restart')
     assert hashlib.sha256(candidate.read_bytes()).hexdigest() == before_digest
-    result = dict(from_version='0.8', to_version='0.9', version_code=11,
+    result = dict(from_version='0.9', to_version='0.10', version_code=12,
                   package=PKG, installation_method='adb install -r; no bypass flags',
                   debug_over_release_rejected=True, same_uid=True, private_file_preserved=True, language_preserved=True,
                   motion_preference_preserved=True, restart_passed=True,
                   physical_phone_tested=False, play_protect_tested=False,
                   debug_to_release_upgrade_supported=False)
     (out / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
-    print('::notice title=Store0.8 release-key upgrade::' + json.dumps(result))
+    print('::notice title=Store0.9 release-key upgrade::' + json.dumps(result))
 
 
 if __name__ == '__main__':

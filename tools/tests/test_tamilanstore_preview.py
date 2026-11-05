@@ -72,7 +72,9 @@ class TamilanStorePreviewTest(unittest.TestCase):
                      '== app.packageName', '== app.version', '== Catalog.signerFor(app.packageName)', 'newCode >= oldCode'):
             self.assertIn(gate, text)
         self.assertIn('ensureActive()', text)
-        self.assertIn('instanceFollowRedirects = false', text)
+        managed = (STORE / 'src/main/java/com/universalrp/tamilanstore/ManagedApkDownload.kt').read_text()
+        self.assertIn('DownloadManager.Request(Uri.parse(app.url))', managed)
+        self.assertIn('Catalog.parse(snapshot)', managed)
         ui = (STORE / 'src/main/java/com/universalrp/tamilanstore/MainActivity.kt').read_text()
         self.assertIn('model.verifiedFile(app)', ui)
         self.assertIn('canRequestPackageInstalls()', ui)

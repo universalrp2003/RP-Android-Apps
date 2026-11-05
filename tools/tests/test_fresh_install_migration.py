@@ -86,7 +86,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'launcher': ('1.7', '8', 'elderly-launcher-v1.7'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Stable Store0.9 published from the exact signed/native-tested candidate.
-            'tamilanstore': ('0.9', '11', 'tamilan-store-v0.9'),
+            'tamilanstore': ('0.10', '12', 'tamilan-store-v0.10'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():

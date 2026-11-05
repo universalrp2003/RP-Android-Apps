@@ -235,7 +235,7 @@ class MainActivity : ComponentActivity() {
                                     }, style = MaterialTheme.typography.titleSmall)
                                     if (current != null) Text(if (tamil) current.tamilName else current.name, style = MaterialTheme.typography.bodySmall)
                                     if (transfer.busy) LinearProgressIndicator(progress = { current?.let { (transfer.bytes.toFloat() / it.size).coerceIn(0f, 1f) } ?: 0f }, modifier = Modifier.fillMaxWidth())
-                                    if (batch.stage == BatchStage.PAUSED) Text(bi("ரத்து, அனுமதி மறுப்பு, செயலி மறைவு அல்லது தோல்வியில் வரிசை நிற்கும். தொடர அழுத்தும் வரை அடுத்த நிறுவல் வராது.", "Cancellation, permission denial, leaving Store or a failure pauses the queue. No next prompt until you Resume."), style = MaterialTheme.typography.bodySmall)
+                                    if (batch.stage == BatchStage.PAUSED) Text(bi("ரத்து, அனுமதி மறுப்பு அல்லது தோல்வியில் வரிசை நிற்கும். தொடர அழுத்தும் வரை அடுத்த நிறுவல் வராது.", "Cancellation, permission denial or a failure pauses the queue. No next prompt until you Resume."), style = MaterialTheme.typography.bodySmall)
                                     if (transfer.failed) Text((transfer.failure ?: TransferFailure.DOWNLOAD).message(tamil), style = MaterialTheme.typography.bodySmall)
                                     FlowRow {
                                         if (batch.stage == BatchStage.PAUSED) {
