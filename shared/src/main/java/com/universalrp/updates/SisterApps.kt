@@ -95,7 +95,7 @@ object SisterApps {
             tamilName = "ஊர் அறிவிப்பு",
             tagPrefix = "oor-arivippu",
             version = "1.1.17",
-            publishedVersion = "1.1.16",
+            publishedVersion = "1.1.17",
             packageName = "com.oorarivippu.voiceannouncer",
             aboutLabel = "Oor Arivippu — GitHub release",
         ),

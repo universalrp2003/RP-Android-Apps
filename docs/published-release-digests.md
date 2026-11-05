@@ -548,3 +548,7 @@ Exact configured native candidate promoted without rebuilding by41751132736/job1
 ## SMS Guard 1.1.17 — 4 November 2026
 
 Exact tested `SMS-Guard-v1.1.17.apk`: **12,840,884 bytes**, SHA-256 `b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd`. Source e194b6d9018e0d6a5704f6db738dc91996adf0bd, candidate41827320776, publisher41828474358, release433882628, asset709405003. No rebuild; public1.1.16 IDs/digests preserved. Android35 exact-byte update preserves UID, role and synthetic SMS; full permission equality passed. No phone/audio/Google claim.
+
+## Oor Arivippu 1.1.17 — 5 November2026
+
+Exact configured/tested APK **12,908,336B**, SHA-256 `7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f`, source2d9e7d84e5329c35780481fc32a725b20367bdae, candidate41988266646/artifact13397505454, publisher41989305749. Release434905730/asset712530334. No rebuild; prior public assets unchanged. Same signer/full permissions, public1.1.16 saved-data/Keystore update and bilingual100%/200% home UI passed on Android35. No physical-road/audio/Google claim.
