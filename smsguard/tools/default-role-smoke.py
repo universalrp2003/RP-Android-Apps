@@ -8,9 +8,11 @@ import subprocess
 import sys
 import time
 import xml.etree.ElementTree as ET
+from role_smoke_ui import known_update_later
 
 PKG = 'com.universalrp.smsguard'
 OUT = Path('smsguard-role-results'); OUT.mkdir(exist_ok=True)
+update_notices_deferred = 0
 
 def adb(*args):
     return subprocess.check_output(['adb', *args], timeout=60).decode(errors='replace')
@@ -20,7 +22,7 @@ def launch():
     adb('shell', 'wm', 'dismiss-keyguard')
     adb('shell', 'am', 'start', '-W', '-n', PKG + '/.MainActivity')
 
-def nodes():
+def raw_nodes():
     adb('shell', 'uiautomator', 'dump', '/sdcard/smsguard-role.xml')
     xml = adb('shell', 'cat', '/sdcard/smsguard-role.xml')
     (OUT / 'last-ui.xml').write_text(xml)
@@ -28,6 +30,22 @@ def nodes():
     labels = [n.get('text', '') for n in ns]
     if any(("isn't responding" in t or 'keeps stopping' in t) and 'SMS Guard' in t for t in labels):
         raise AssertionError('App crashed/ANR: ' + repr(labels))
+    return ns
+
+def nodes():
+    global update_notices_deferred
+    ns = raw_nodes()
+    later = known_update_later(ns)
+    if later is not None:
+        # The old public baseline may asynchronously advertise current 1.1.17.
+        # Defer only that exact app-owned notice, never security/role dialogs.
+        update_notices_deferred += 1
+        (OUT / f'update-notice-{update_notices_deferred}.xml').write_text((OUT/'last-ui.xml').read_text())
+        x1,y1,x2,y2 = map(int, re.findall(r'\d+', later.get('bounds', '')))
+        adb('shell', 'input', 'tap', str((x1+x2)//2), str((y1+y2)//2))
+        print('Deferred ordinary website update notice using Later; role/consent assertions remain required', flush=True)
+        time.sleep(1)
+        ns = raw_nodes()
     return ns
 
 def wait(predicate, label, timeout=40):
@@ -134,6 +152,7 @@ result={'apk':Path(apk).name,'api':adb('shell','getprop','ro.build.version.sdk')
         'same_key_update_preserves_role_and_sms':True,
         'baseline_apk':Path(baseline).name,'installed_apk_sha256':expected_hash,
         'same_uid_preserved':True,'exact_installed_bytes_verified':True,
+        'ordinary_update_notices_deferred':update_notices_deferred,
         'play_protect_tested':False,'carrier_mms_tested':False,'physical_phone_tested':False}
 (OUT/'result.json').write_text(json.dumps(result,indent=2)+'\n')
 print('::notice title=SMS default-role emulator result::'+json.dumps(result),flush=True)
