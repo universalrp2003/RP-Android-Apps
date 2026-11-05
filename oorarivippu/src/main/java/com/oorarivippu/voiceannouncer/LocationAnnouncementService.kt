@@ -754,6 +754,15 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             return
         }
 
+        if (location.hasAccuracy() && location.accuracy.isFinite() && location.accuracy in 0f..65f) {
+            val speed = if (location.hasSpeed() && location.hasSpeedAccuracy() &&
+                location.speedAccuracyMetersPerSecond.isFinite() && location.speedAccuracyMetersPerSecond in 0f..2f &&
+                location.speed.isFinite() && location.speed in 0f..100f) location.speed * 3.6f else null
+            AppPreferences.updateTripFix(location.latitude, location.longitude,
+                location.elapsedRealtimeNanos / 1_000_000L, speed)
+        } else {
+            AppPreferences.updateTripFix(location.latitude, location.longitude, -1L, null)
+        }
         latestReceivedLocation = Location(location)
         if (!location.hasAccuracy() || location.accuracy <= 65f) {
             val anchor = sessionDistanceAnchorLocation

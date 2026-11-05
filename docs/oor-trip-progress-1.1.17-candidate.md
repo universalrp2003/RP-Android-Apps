@@ -1,0 +1,7 @@
+# Oor Arivippu 1.1.17/code22 — unpublished UI/trip candidate
+
+Owner approved implementation, not publication. Compact Tamil controls and family cards; repeated safety caveats moved into family details. No change to consent, pairing, sharing switches, expiry or transport. Recent local announcement history moved intact from settings to home; these are announcement records, not a continuous route log.
+
+Progress uses existing accepted travel callbacks only. Coordinates/speed/fix age are volatile session state, not persisted or uploaded. Require reported position accuracy ≤65m; require valid reported speed with speed uncertainty ≤2m/s. No guessed speed from displacement. Use monotonic fix time; hide readings after30s, on GPS off or trip stopped. Trip start resets readings. Rough minutes use straight-line distance/current speed, minimum3km/h. Never road/traffic ETA. UI timer updates age only while resumed and does not acquire location.
+
+No manifest/polling/API changes. No screenshot originals or family/travel details added. Public1.1.16 and site/catalog pointers stay unchanged. Normal same-key update only; no reset/uninstall. New three JVM policy tests and one Python source contract;427 Python checks pass locally. Kotlin compile/lint, actual emulator rendering/font scaling and physical travel accuracy are separate gates, not proven by source checks. Candidate build pending CI; no release authorized.

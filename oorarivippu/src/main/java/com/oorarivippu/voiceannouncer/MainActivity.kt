@@ -666,7 +666,7 @@ fun OorArivippuScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (state.isTrackingEnabled) ui.masterTurnOff else ui.masterTurnOn,
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -878,6 +878,7 @@ fun OorArivippuScreen(
                             onCancel = { destinationCandidates = emptyList() }
                         )
                     }
+                    TripProgress(state, oorIsTamil)
                     val destinationLat = state.destinationLatitude
                     val destinationLon = state.destinationLongitude
                     if (state.destinationName.isNotBlank() && destinationCandidates.isEmpty()) {
@@ -925,6 +926,123 @@ fun OorArivippuScreen(
                     }
                 }
             }
+                // 4. Recent Voice Announcements History Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = ui.historySectionTitle,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            if (state.history.isNotEmpty()) {
+                                TextButton(onClick = { AppPreferences.clearHistory() }) {
+                                    Text(text = ui.clearHistoryButton)
+                                }
+                            }
+                        }
+                        if (state.history.isEmpty()) {
+                            Text(
+                                text = ui.emptyHistoryText,
+                                color = Color(0xFF64748B),
+                                fontSize = 13.sp
+                            )
+                        } else {
+                            val summary = AnnouncementDeliveryReport.summarize(state.history)
+                            Text(
+                                text = String.format(
+                                    ui.deliverySummaryFormat,
+                                    summary.spoken,
+                                    summary.total
+                                ),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0F766E)
+                            )
+                            Text(
+                                text = String.format(
+                                    ui.deliveryPlacesFormat,
+                                    summary.distinctPlaces
+                                ),
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
+                            state.history.forEach { item ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFF1F5F9))
+                                        .padding(10.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = item.title,
+                                            modifier = Modifier.weight(1f),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF0F766E),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = item.timestamp,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF64748B),
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                    Text(
+                                        text = item.spokenText,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF334155)
+                                    )
+                                    val outcome = AnnouncementDeliveryReport.outcomeOf(item)
+                                    val outcomeLabel = when (outcome) {
+                                        AnnouncementDeliveryReport.Outcome.SPOKEN -> ui.outcomeSpoken
+                                        AnnouncementDeliveryReport.Outcome.QUEUED_CALL -> ui.outcomeQueuedCall
+                                        AnnouncementDeliveryReport.Outcome.NO_INTERNET -> ui.outcomeNoInternet
+                                        AnnouncementDeliveryReport.Outcome.NO_GPS -> ui.outcomeNoGps
+                                        AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE -> ui.outcomeVoiceUnavailable
+                                        AnnouncementDeliveryReport.Outcome.SKIPPED -> ui.outcomeSkipped
+                                    }
+                                    Text(
+                                        text = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
+                                            "\u2713 " + outcomeLabel
+                                        } else {
+                                            "\u26A0 " + outcomeLabel
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
+                                            Color(0xFF15803D)
+                                        } else {
+                                            Color(0xFFB45309)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+
         }
     }
 }
@@ -1196,122 +1314,6 @@ private fun OorSettingsFullDialog(
                                 valueRange = 200f..3000f,
                                 steps = 13
                             )
-                        }
-                    }
-                }
-
-                // 4. Recent Voice Announcements History Card
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = ui.historySectionTitle,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
-                            )
-                            if (state.history.isNotEmpty()) {
-                                TextButton(onClick = { AppPreferences.clearHistory() }) {
-                                    Text(text = ui.clearHistoryButton)
-                                }
-                            }
-                        }
-                        if (state.history.isEmpty()) {
-                            Text(
-                                text = ui.emptyHistoryText,
-                                color = Color(0xFF64748B),
-                                fontSize = 13.sp
-                            )
-                        } else {
-                            val summary = AnnouncementDeliveryReport.summarize(state.history)
-                            Text(
-                                text = String.format(
-                                    ui.deliverySummaryFormat,
-                                    summary.spoken,
-                                    summary.total
-                                ),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF0F766E)
-                            )
-                            Text(
-                                text = String.format(
-                                    ui.deliveryPlacesFormat,
-                                    summary.distinctPlaces
-                                ),
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                            state.history.forEach { item ->
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFFF1F5F9))
-                                        .padding(10.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        Text(
-                                            text = item.title,
-                                            modifier = Modifier.weight(1f),
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF0F766E),
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = item.timestamp,
-                                            fontSize = 11.sp,
-                                            color = Color(0xFF64748B),
-                                            maxLines = 1,
-                                            softWrap = false
-                                        )
-                                    }
-                                    Text(
-                                        text = item.spokenText,
-                                        fontSize = 13.sp,
-                                        color = Color(0xFF334155)
-                                    )
-                                    val outcome = AnnouncementDeliveryReport.outcomeOf(item)
-                                    val outcomeLabel = when (outcome) {
-                                        AnnouncementDeliveryReport.Outcome.SPOKEN -> ui.outcomeSpoken
-                                        AnnouncementDeliveryReport.Outcome.QUEUED_CALL -> ui.outcomeQueuedCall
-                                        AnnouncementDeliveryReport.Outcome.NO_INTERNET -> ui.outcomeNoInternet
-                                        AnnouncementDeliveryReport.Outcome.NO_GPS -> ui.outcomeNoGps
-                                        AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE -> ui.outcomeVoiceUnavailable
-                                        AnnouncementDeliveryReport.Outcome.SKIPPED -> ui.outcomeSkipped
-                                    }
-                                    Text(
-                                        text = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
-                                            "\u2713 " + outcomeLabel
-                                        } else {
-                                            "\u26A0 " + outcomeLabel
-                                        },
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
-                                            Color(0xFF15803D)
-                                        } else {
-                                            Color(0xFFB45309)
-                                        }
-                                    )
-                                }
-                            }
                         }
                     }
                 }
