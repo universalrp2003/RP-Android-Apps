@@ -46,6 +46,11 @@ data class AppStateSnapshot(
     val currentSubArea: String = "",
     val currentDistrict: String = "",
     val currentSpeedKmh: Float = 0f,
+    // Session-only readings: never persisted, uploaded or used to start location requests.
+    val tripLatitude: Double? = null,
+    val tripLongitude: Double? = null,
+    val tripFixElapsedMs: Long = -1L,
+    val tripSpeedKmh: Float? = null,
     val sessionTraveledMeters: Float = 0f,
     val isVehicleMoving: Boolean = false,
     val locationUpdateIntervalSeconds: Int = 5,
@@ -76,6 +81,11 @@ data class AppStateSnapshot(
 }
 
 object AppPreferences {
+    fun updateTripFix(latitude: Double, longitude: Double, elapsedMs: Long, speedKmh: Float?) {
+        _state.value = _state.value.copy(tripLatitude = latitude, tripLongitude = longitude,
+            tripFixElapsedMs = elapsedMs, tripSpeedKmh = speedKmh)
+    }
+
     private const val PREFS_NAME = "oor_arivippu_prefs"
 
     private const val KEY_TRACKING_ENABLED = "is_tracking_enabled"
@@ -156,6 +166,10 @@ object AppPreferences {
         prefs.edit().putBoolean(KEY_TRACKING_ENABLED, enabled).apply()
         _state.value = _state.value.copy(
             isTrackingEnabled = enabled,
+            tripFixElapsedMs = -1L,
+            tripSpeedKmh = null,
+            tripLatitude = null,
+            tripLongitude = null,
             currentSpeedKmh = if (enabled) _state.value.currentSpeedKmh else 0f,
             isVehicleMoving = if (enabled) _state.value.isVehicleMoving else false
         )

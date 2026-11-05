@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.CancellationException
@@ -57,7 +58,7 @@ import java.util.Date
     rows.filter{it.confirmed}.forEach { row ->
         Card(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
-                Text(row.name,style=MaterialTheme.typography.titleMedium)
+                Text(row.name,style=MaterialTheme.typography.titleSmall)
                 FamilyLastReport(row,tick,tamil)
                 FamilySharingControl(row,tamil,busy,
                     onEnable={run{FamilyRepository.setSharing(c,row.id,true)}},
@@ -70,8 +71,8 @@ import java.util.Date
         title={Text(words("Family town sharing", "குடும்ப ஊர் பகிர்வு"))},
         confirmButton={TextButton(onClick={open=false;invite="";outgoing=""}){Text(words("Close","மூடு"))}},
         text={Column(Modifier.fillMaxWidth().heightIn(max=560.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(10.dp)) {
-            Text(words("Only approved people. Both confirm the connection; each separately chooses whether to share. No map, exact coordinates, address or travel history. Town names can be approximate. Not an emergency service.",
-                "அனுமதித்த நபர்கள் மட்டும். இணைப்பை இருவரும் உறுதிப்படுத்த வேண்டும்; ஊரைப் பகிர்வதை ஒவ்வொருவரும் தனியாகத் தேர்ந்தெடுக்க வேண்டும். வரைபடம், துல்லிய இடம், முகவரி அல்லது பயண வரலாறு இல்லை. ஊர்ப் பெயர் தோராயமாக இருக்கலாம். அவசரச் சேவை அல்ல."))
+            Text(words("Only approved people. Both confirm the connection; each separately chooses whether to share. No map, exact coordinates, address or travel history. Town names can be approximate and do not confirm safety. Not an emergency service.",
+                "அனுமதித்த நபர்கள் மட்டும். இணைப்பை இருவரும் உறுதிப்படுத்த வேண்டும்; ஊரைப் பகிர்வதை ஒவ்வொருவரும் தனியாகத் தேர்ந்தெடுக்க வேண்டும். வரைபடம், துல்லிய இடம், முகவரி அல்லது பயண வரலாறு இல்லை. ஊர்ப் பெயர் தோராயமானது; பாதுகாப்புச் சான்று அல்ல. அவசரச் சேவை அல்ல."))
             Text(words("Updates normally every 5 minutes while a user-started trip is tracking. Latest encrypted update expires within 15 minutes. Network, GPS and Android restrictions can delay it. Viewing does not require starting a trip.",
                 "நீங்கள் தொடங்கிய பயணக் கண்காணிப்பின்போது பொதுவாக ஐந்து நிமிடத்திற்கு ஒருமுறை புதுப்பிப்பு. கடைசி மறையாக்கிய அறிக்கை பதினைந்து நிமிடத்திற்குள் காலாவதியாகும். இணையம், இடச் சேவை மற்றும் கைப்பேசிக் கட்டுப்பாடுகளால் தாமதமாகலாம். மற்றவர் ஊரைப் பார்க்கப் பயணத்தைத் தொடங்க வேண்டியதில்லை."))
             Text(words("Your sharing switch stays ON until you turn it OFF. Uploads happen only during Oor trips; stopping a trip pauses uploads, not your saved switch. New family reports are announced once using an on-device voice, not online HD. Silent mode, DND, calls or a missing device voice can delay or prevent speech.",
@@ -125,15 +126,15 @@ import java.util.Date
         Text(listOf(town.town,town.district).filter{it.isNotBlank()}.distinct().joinToString(" · "))
         Text(words("Last reported (not live): ","கடைசியாகத் தெரிவித்த ஊர் (நேரலை அல்ல): ")+DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).format(Date(town.at)),style=MaterialTheme.typography.bodySmall)
         if(row.unavailable) Text(words("Offline / unavailable · showing the last unexpired report","இணையம் இல்லை / கிடைக்கவில்லை · காலாவதியாகாத கடைசி அறிக்கை"),style=MaterialTheme.typography.bodySmall)
-    } else if(row.confirmed) Text(words("No fresh town shared · not an all-clear","புதிய ஊர் பகிரப்படவில்லை · பாதுகாப்பாக உள்ளார் என்பதற்கான உறுதி அல்ல"))
+    } else if(row.confirmed) Text(words("No recent town update","புதிய ஊர் தகவல் இல்லை"), fontSize=13.sp)
 }
 
 @Composable private fun FamilySharingControl(row: FamilyRepository.View,tamil: Boolean,busy: Boolean,onEnable: ()->Unit,onDisable: ()->Unit) {
     fun words(en:String,ta:String)=if(tamil)ta else en
     Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
-        Text(if(row.sharing) words("My sharing: ON","எனது பகிர்வு: இயக்கம்") else words("My sharing: OFF","எனது பகிர்வு: அணைப்பு"),modifier=Modifier.weight(1f))
+        Text(if(row.sharing) words("My sharing: ON","எனது பகிர்வு: ஆன்") else words("My sharing: OFF","எனது பகிர்வு: ஆஃப்"),modifier=Modifier.weight(1f),fontSize=13.sp)
         Switch(checked=row.sharing,enabled=row.sharing || (!busy && !row.pending && !row.unavailable),onCheckedChange={if(it)onEnable()else onDisable()})
     }
-    if(row.sharing) Text(if(row.uploading) words("Sharing your town with this member during this trip","இந்தப் பயணத்தில் இந்த நபருக்கு உங்கள் ஊர் பகிரப்படுகிறது") else words("Saved ON · uploads paused until a trip and secure connection are available","இயக்கம் நினைவில் உள்ளது · பயணமும் பாதுகாப்பான இணைப்பும் கிடைக்கும் வரை பதிவேற்றம் இடைநிறுத்தம்"),style=MaterialTheme.typography.bodySmall)
+    if(row.sharing) Text(if(row.uploading) words("Sharing your town with this member during this trip","இந்தப் பயணத்தில் இந்த நபருக்கு உங்கள் ஊர் பகிரப்படுகிறது") else words("Sharing ON · waiting for trip / connection","பகிர்வு ஆன் · பயணம் / இணைப்புக்குக் காத்திருக்கிறது"),style=MaterialTheme.typography.bodySmall)
     if(row.pending && !row.setupPending) Text(words("Stop/remove pending online confirmation; the old report may remain until its 15-minute expiry.","இணையத்தில் நிறுத்தம்/நீக்கம் உறுதியாகக் காத்திருக்கிறது; பழைய அறிக்கை பதினைந்து நிமிடக் காலம் வரை தெரியலாம்."),style=MaterialTheme.typography.bodySmall)
 }

@@ -66,7 +66,8 @@ def main():
             time.sleep(10)
     health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
     store = json.loads((ROOT / 'docs/approved-store-0.9-candidate.json').read_text())
-    checks = [('SMS-Guard-v1.1.17.apk', json.loads((ROOT/'docs/sms-guard-1.1.17-publication-receipt.json').read_text())),
+    checks = [('Oor-Arivippu-v1.1.17.apk', json.loads((ROOT/'docs/oor-trip-1.1.17-publication-receipt.json').read_text())),
+              ('SMS-Guard-v1.1.17.apk', json.loads((ROOT/'docs/sms-guard-1.1.17-publication-receipt.json').read_text())),
               ('SMS-Guard-v1.1.16.apk', json.loads((ROOT/'docs/sms-guard-1.1.16-historical-mirror.json').read_text())),
               ('CleanSweep-v2.95.apk', json.loads((ROOT/'docs/live-guard-2.95-publication-receipt.json').read_text())),
               ('CleanSweep-v2.94.apk', json.loads((ROOT/'docs/live-guard-2.94-publication-receipt.json').read_text())),
@@ -97,4 +98,9 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception:
+        import traceback
+        print('::error title=Live Pages byte verification::'+traceback.format_exc()[-6000:].replace('%','%25').replace('\n','%0A'), flush=True)
+        raise

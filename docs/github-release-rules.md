@@ -52,7 +52,7 @@ Everything in this table must be green on the branch. If a row is red, do not me
 | `Website usability checks (no deployment)` | the 14 cards, dates, checksums, keyboard/a11y and the `tools/tests/test_website*.py` contracts |
 | `Deploy Official Website to GitHub Pages` (build job on the branch) | every mirror downloads and SHA-matches, the mirror budget holds |
 | the app's own release workflows (SMS Guard, Oor, Podcast, Vasanthi, …) | they build and verify without publishing |
-| local `python3 -m unittest discover -s tools/tests -q` | 426 Python checks today |
+| local `python3 -m unittest discover -s tools/tests -q` | 427 Python checks today |
 
 Local Gradle/Android builds are not possible in the Arena sandbox — Kotlin correctness is
 established by CI only. Do not describe a source check as a build.

@@ -1,12 +1,12 @@
 # Oor Arivippu — Tamil/English place announcer
 
-**Current stable release:** 1.1.7 / code 12
+**Current stable release:** 1.1.17 / code 22
 
 **Package:** `com.oorarivippu.voiceannouncer`
 
 **Minimum Android:** 8.0 / API 26
 
-Oor Arivippu is a bilingual Tamil & English GPS village/town voice announcer with 10 default-ON Studio Ultra-HD voices (daily Male ↔ Female rotation + instant offline system TTS fallback) and 1-minute rain & cyclone route alerts. It is part of the seven-app **RP Ideas** open-source suite at [universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/).
+Oor Arivippu is a bilingual Tamil & English GPS village/town voice announcer with travel announcements, optional family-town sharing and active-trip weather checks. Voice/network availability and weather coverage are limited; no delivery or safety guarantee. It is part of the 13-app **RP Ideas** open-source suite at [universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/).
 
 ## Download the stable release
 

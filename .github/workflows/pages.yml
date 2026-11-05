@@ -64,6 +64,7 @@ jobs:
               ("vasanthi-ai-v1.1.5", "Vasanthi-AI-v1.1.5.apk", 45777962, "4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6"),
               ("oor-arivippu-v1.1.15", "Oor-Arivippu-v1.1.15.apk", 12891952, "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5"),
               ("oor-arivippu-v1.1.16", "Oor-Arivippu-v1.1.16.apk", 12891948, "3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee"),
+              ("oor-arivippu-v1.1.17", "Oor-Arivippu-v1.1.17.apk", 12908336, "7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f"),
               ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
               ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
               ("expense-tracker-v1.2", "Expense-Tracker-v1.2.apk", 11564299, "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108"),
@@ -130,6 +131,8 @@ jobs:
           test -s site/apks/Oor-Arivippu-v1.1.15.zip
           test -s site/apks/Oor-Arivippu-v1.1.16.apk
           test -s site/apks/Oor-Arivippu-v1.1.16.zip
+          test -s site/apks/Oor-Arivippu-v1.1.17.apk
+          test -s site/apks/Oor-Arivippu-v1.1.17.zip
           test -s site/apks/Tamil-Podcast-Player-v1.6.apk
           test -s site/apks/Tamil-Podcast-Player-v1.6.zip
           test -s site/apks/DailyVault-v0.5.apk
