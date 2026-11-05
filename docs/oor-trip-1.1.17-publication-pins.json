@@ -13,5 +13,7 @@
   "new_phone_test_required": false,
   "required_android35_native_tests": 1,
   "owner_acceptance": "Ok do everything",
-  "physical_phone_tested": false
+  "physical_phone_tested": false,
+  "publication_attempt": 2,
+  "previous_attempt_stopped_before_release_creation": "41989191030: retained baseline archive assertion; no release created"
 }
