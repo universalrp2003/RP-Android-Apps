@@ -15,3 +15,7 @@ A live batch remains in memory and does not open installers while Store is hidde
 ## Validation status
 
 429 Python checks and localization/source checks pass locally. New native regression downloads a real immutable public DailyVault APK with the emulator screen OFF, checks persisted system ID recovery, verifies the file on model reopening, reopens again without a second request, and checks explicit cancellation removes the ID. This is not actual process-kill/Doze/OEM proof. Separate signed candidate workflow now checks public0.9→0.10 same-key update and full permission continuity. Kotlin/native execution pending CI. No public Store publication authorized or performed in this change.
+
+## First executed results
+
+Source9f67a1e: Android35 screen-off native workflow42058610255 passed both tests (actual public APK download, same system ID, native hash verification, completed-file reopening and explicit cancellation). Signed candidate42058610282 passed public0.9→0.10 same-UID/private-file/language/motion/restart, established signer and complete permission equality. Artifact13430269468 archiveSHA2269ba37ad02139faa3e045f587d2f3a5d466c47e9e5d1bfa8643a8443e70822; candidate19,476,375B/SHA6a14e98925f8a6d72d52c9fbd41a2f36a544a886b4bed9cc79d245418a2af761. These exact bytes are not published. A subsequent single-install foreground guard also prevents a user-tapped verification finishing after screen-off from launching an installer in the background; latest-source CI must pass separately.

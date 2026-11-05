@@ -327,6 +327,7 @@ class MainActivity : ComponentActivity() {
                                                     scope.launch {
                                                         try {
                                                             val file = model.verifiedFile(app)
+                                                            if (!foreground) return@launch
                                                             if (!packageManager.canRequestPackageInstalls()) {
                                                                 startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
                                                                 message = bi("அனுமதித்தால் திரும்பி வந்து நிறுவு அழுத்தவும். பாதுகாப்புச் சோதனையை அணைக்க வேண்டாம்.", "If you allow this source, return and tap Install. Never disable Play Protect.")
