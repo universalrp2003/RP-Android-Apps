@@ -195,7 +195,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
                     val ready = File(directory, "${app.id}.apk")
                     val part = File(directory, "${app.id}.pending.apk")
                     try {
-                        if (ready.exists() && recovered != null) {
+                        if (ready.exists() && recovered != null && saved.id < 0) {
                             verify(app, ready)
                             if (saved.id >= 0) managed.completed(saved)
                         } else {
