@@ -20,6 +20,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.universalrp.cleansweep.data.*
 import com.universalrp.cleansweep.ui.RainForecastDetailPanel
 import com.universalrp.weather.*
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,6 +33,10 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
         val i = InstrumentationRegistry.getInstrumentation()
         val automation = i.uiAutomation
         val original = Lang.current
+        val repo = SettingsRepo(i.targetContext)
+        val originalId = runBlocking { repo.lang.first() }
+        val prefs = i.targetContext.getSharedPreferences(Lang.PREFS, 0)
+        val originalMirror = prefs.getString(Lang.KEY, null)
         val at = 1_800_000_000_000L
         val snapshot = WeatherNowcastSnapshot(at, WeatherSourceKind.TOMORROW_FORECAST, 30.0, 97,
             0.4, 28.0, 0, listOf(MinuteRainSample(0, 0.4, 28.0), MinuteRainSample(60, 4.2, 24.0)))
@@ -50,10 +56,21 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
                 ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(cmd)).use { it.readBytes() }
                 SystemClock.sleep(400)
             }
-            fail("Visible synthetic rain detail missing: $text")
+            val observed = mutableListOf<String>()
+            fun describe(n: android.view.accessibility.AccessibilityNodeInfo?) {
+                if (n == null || observed.size >= 25) return
+                n.text?.toString()?.let { observed.add(it.take(100)) }
+                for (child in 0 until n.childCount) describe(n.getChild(child))
+            }
+            describe(automation.rootInActiveWindow)
+            fail("Visible synthetic rain detail missing: $text; language=${Lang.current}; nodes=$observed")
         }
         try {
             for (lang in listOf(AppLang.EN, AppLang.TA)) for (scale in listOf(1f, 2f)) {
+                // Seed the real durable language source before MainViewModel starts its
+                // collector; changing only Lang.current races the saved-language restore.
+                runBlocking { repo.setLang(lang.id) }
+                prefs.edit().putString(Lang.KEY, lang.id).commit()
                 val activity = i.startActivitySync(Intent(i.targetContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
                 try {
                     i.runOnMainSync {
@@ -76,6 +93,10 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
                     find(if (lang == AppLang.EN) "Forecast, not an official warning" else "முன்னறிவிப்பு மட்டுமே")
                 } finally { i.runOnMainSync { activity.finish() } }
             }
-        } finally { i.runOnMainSync { Lang.set(original) } }
+        } finally {
+            runBlocking { repo.setLang(originalId) }
+            prefs.edit().apply { if (originalMirror == null) remove(Lang.KEY) else putString(Lang.KEY, originalMirror) }.commit()
+            i.runOnMainSync { Lang.set(original) }
+        }
     }
 }
