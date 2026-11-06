@@ -4,7 +4,7 @@ ROOT=Path(__file__).resolve().parents[2]
 class OorAboutCandidateContracts(unittest.TestCase):
     def test_unique_version_and_owner_authorized_published_metadata(self):
         gradle=(ROOT/'oorarivippu/build.gradle.kts').read_text()
-        self.assertIn('versionCode = 24',gradle);self.assertIn('versionName = "1.1.19"',gradle)
+        self.assertIn('versionCode = 25',gradle);self.assertIn('versionName = "1.1.20"',gradle)
         # Lifecycle candidate: public directory now matches verified1.1.19.
         sister=(ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
         self.assertIn('version = "1.1.19",\n            publishedVersion = "1.1.19"',sister)

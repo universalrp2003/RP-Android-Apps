@@ -66,7 +66,7 @@ internal object SatellitePolicy {
             else -> words("Waiting for receiver status · not reported yet", "பெறுநர் தகவலுக்குக் காத்திருக்கிறது · இன்னும் கிடைக்கவில்லை")
         }
         val callback = object : GnssStatus.Callback() {
-            override fun onStopped() { if(active) { snapshot = null; status = words("GNSS receiver stopped", "GNSS பெறுநர் நின்றுள்ளது") } }
+            override fun onStopped() { if(active) { status = words("GNSS receiver stopped", "GNSS பெறுநர் நின்றுள்ளது") } }
             override fun onSatelliteStatusChanged(value: GnssStatus) {
                 if(!active) return
                 val elapsed = SystemClock.elapsedRealtime()
@@ -134,9 +134,16 @@ internal object SatellitePolicy {
                     }) { Text(words("Check GPS now · 30 seconds", "இப்போது GPS சோதி · 30 வினாடிகள்")) }
                     if(sampleFinished) Text(words("GPS check stopped · no ongoing diagnostic location request", "GPS சோதனை நின்றது · இருப்பிடக் கோரிக்கை தொடரவில்லை"))
                 }
-                val current = snapshot?.takeIf { SatellitePolicy.fresh(it.atMs, now) }
-                if(current == null) Text(if(snapshot != null) words("Receiver status is stale · counts unavailable", "பெறுநர் தகவல் பழையது · எண்ணிக்கை கிடைக்கவில்லை") else status)
+                // Retain the last report only while this dialog remains foreground/open.
+                // Receiver stops and callback gaps must not collapse the user's detail rows.
+                val current = snapshot
+                if(current == null) Text(status)
                 else {
+                    val reportNow = maxOf(now, SystemClock.elapsedRealtime())
+                    val ageSeconds = ((reportNow - current.atMs) / 1000).coerceAtLeast(0)
+                    val recent = SatellitePolicy.fresh(current.atMs, reportNow)
+                    Text(if(recent && sampling) words("Last receiver report: $ageSeconds seconds ago", "கடைசிப் பெறுநர் தகவல்: $ageSeconds வினாடிகளுக்கு முன்")
+                        else words("Last reported result · $ageSeconds seconds old · not live", "கடைசியாகப் பெற்ற முடிவு · $ageSeconds வினாடிகள் பழையது · நேரலை அல்ல"), style=MaterialTheme.typography.bodySmall)
                     Text(words("Reported: ${current.reported} · Used in receiver fix: ${current.rows.count { it.used }}", "தெரிவித்தவை: ${current.reported} · பெறுநர் கணிப்பில் பயன்பட்டவை: ${current.rows.count { it.used }}"))
                     if(current.reported > current.rows.size) Text(words("Used count covers the first 256 reported satellites only", "பயன்பாட்டு எண்ணிக்கை முதல் 256 செயற்கைக்கோள்களுக்கு மட்டும்"))
                     Text(current.rows.groupingBy { it.system }.eachCount().entries.joinToString(" · ") { "${it.key}: ${it.value}" })

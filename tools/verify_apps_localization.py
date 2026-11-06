@@ -1009,7 +1009,7 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         # Owner-approved isolated preview must not advertise a nonexistent public release.
         if gradle.parent.name == "tamilanstore":
-            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.10":
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.11":
                 raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
             # Stable0.9 is public from the exact signed/native-tested artifact; older assets stay immutable.
             if by_package.get(pkg.group(1)) != "0.10":
@@ -1021,6 +1021,8 @@ def verify_module_versions_match_sister_apps() -> int:
                 "module %s (namespace %s) has a versionName but no SisterApps entry"
                 % (gradle.parent.name, pkg.group(1))
             )
+        if gradle.parent.name == "oorarivippu" and ver.group(1) == "1.1.20" and by_package[pkg.group(1)] == "1.1.19":
+            continue  # Scoped candidate; advance public links only after exact verification/promotion.
         if by_package[pkg.group(1)] != ver.group(1):
             raise ValueError(
                 "module %s is version %s but SisterApps advertises %s for %s"

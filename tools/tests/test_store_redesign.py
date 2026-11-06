@@ -45,8 +45,8 @@ class StoreRedesignContracts(unittest.TestCase):
 
     def test_stable_version_does_not_reuse_immutable_public_release(self):
         build = (ROOT/'tamilanstore/build.gradle.kts').read_text()
-        self.assertIn('versionName = "0.10"', build)
-        self.assertIn('versionCode = 12', build)
+        self.assertIn('versionName = "0.11"', build)
+        self.assertIn('versionCode = 13', build)
         site = (ROOT/'site/index.html').read_text()
         receipt = (ROOT/'docs/tamilan-store-0.9-upgrade.md').read_text()
         self.assertIn('0.9-rc1', receipt)  # Retain the earlier candidate's separate provenance.

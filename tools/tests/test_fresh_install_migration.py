@@ -77,7 +77,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'radio': ('1.31', '31', 'ramesh-radio-v1.31'),
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),
-            'oorarivippu': ('1.1.19', '24', 'oor-arivippu-v1.1.19'),
+            'oorarivippu': ('1.1.20', '25', 'oor-arivippu-v1.1.20'),
             'smsguard': ('1.1.17', '23', 'sms-guard-v1.1.17'),
             'voicenotes': ('1.3.4', '8', 'voice-notes-v1.3.4'),
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
@@ -86,7 +86,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'launcher': ('1.7', '8', 'elderly-launcher-v1.7'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Stable Store0.9 published from the exact signed/native-tested candidate.
-            'tamilanstore': ('0.10', '12', 'tamilan-store-v0.10'),
+            'tamilanstore': ('0.11', '13', 'tamilan-store-v0.11'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():

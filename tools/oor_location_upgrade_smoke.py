@@ -24,7 +24,7 @@ def main():
     HELPERS['enable_ci_root']()
     root = Path(os.environ['RUNNER_TEMP']) / 'health-oorarivippu'
     p = root / 'verification.json'; receipt = json.loads(p.read_text())
-    candidate = root / receipt['apk']; baseline = root / 'Oor-Arivippu-v1.1.18.apk'
+    candidate = root / receipt['apk']; baseline = root / 'Oor-Arivippu-v1.1.19.apk'
     assert hashlib.sha256(candidate.read_bytes()).hexdigest() == receipt['sha256']
     assert hashlib.sha256(baseline.read_bytes()).hexdigest() == receipt['baseline_sha256']
     assert receipt['publication_authorized'] is False
@@ -35,7 +35,7 @@ def main():
         uid = re.search(r'^package:'+re.escape(PKG)+r'\s+uid:(\d+)\s*$',listing,re.M)
         assert uid
         return uid[1], adb('shell','dumpsys','package',PKG)
-    uid, old = state(); assert 'versionCode=23' in old and 'versionName=1.1.18' in old
+    uid, old = state(); assert 'versionCode=24' in old and 'versionName=1.1.19' in old
     data = f'/data/user/0/{PKG}'
     fixture = root / 'synthetic-upgrade-marker'; fixture.write_text('Synthetic saved Oor data; not a private location.')
     prefs = root / 'synthetic-prefs.xml'
@@ -63,7 +63,7 @@ def main():
     assert digest(family_fixture)==family_hash, 'Encrypted family fixture ciphertext changed during update'
 
     new_uid, installed = state()
-    assert new_uid == uid and 'versionCode=24' in installed and 'versionName=1.1.19' in installed
+    assert new_uid == uid and 'versionCode=25' in installed and 'versionName=1.1.20' in installed
     assert (digest(marker),digest(saved)) == hashes
     # Synthetic emulator only: avoid platform permission popups. Tracking remains explicitly OFF.
     for permission in ('ACCESS_COARSE_LOCATION','ACCESS_FINE_LOCATION','POST_NOTIFICATIONS'):

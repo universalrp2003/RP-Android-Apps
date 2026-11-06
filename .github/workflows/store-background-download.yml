@@ -35,7 +35,7 @@ jobs:
             mkdir -p background-results
             adb shell am instrument -w -r -e class com.universalrp.tamilanstore.BackgroundDownloadTest com.universalrp.tamilanstore.test/androidx.test.runner.AndroidJUnitRunner > background-results/native.txt
             cat background-results/native.txt
-            grep -F 'OK (2 tests)' background-results/native.txt
+            grep -F 'OK (3 tests)' background-results/native.txt
             grep -F 'INSTRUMENTATION_CODE: -1' background-results/native.txt
       - name: Bounded actual native failures
         if: failure()

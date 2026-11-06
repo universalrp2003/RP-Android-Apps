@@ -129,6 +129,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     fun refreshCatalog() {
         if (refreshing || _transfer.value.appId.isNotBlank() || batch.active) return
         refreshing = true
+        catalogMessage = "checking"
         viewModelScope.launch {
             try {
                 val (text, next) = withContext(Dispatchers.IO) {
@@ -145,6 +146,8 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
                 apps = next
                 catalogMessage = "live"
             } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: IllegalArgumentException) { catalogMessage = "rejected" }
+            catch (_: org.json.JSONException) { catalogMessage = "rejected" }
             catch (_: Exception) { catalogMessage = "offline" }
             finally { refreshing = false; checkRevision++ }
         }

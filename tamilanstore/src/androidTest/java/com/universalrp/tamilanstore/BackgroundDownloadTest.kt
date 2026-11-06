@@ -86,4 +86,21 @@ class BackgroundDownloadTest {
         checkNotNull(context.getSystemService(DownloadManager::class.java))
             .query(DownloadManager.Query().setFilterById(saved.id)).use { assertFalse(it.moveToFirst()) }
     }
+    @Test fun explicitRefreshAdvancesOldOorWithoutStartingADownload() {
+        val i = InstrumentationRegistry.getInstrumentation()
+        val context = i.targetContext.applicationContext as Application
+        ManagedApkDownload(context).cancel()
+        val holder = AtomicReference<StoreModel>()
+        i.runOnMainSync { holder.set(StoreModel(context)); holder.get().refreshCatalog() }
+        val model = holder.get()
+        val deadline = SystemClock.elapsedRealtime() + 45_000
+        while(model.refreshing && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
+        assertFalse("Refresh must finish", model.refreshing)
+        assertEquals("Actual official catalog must validate", "live", model.catalogMessage)
+        val oor = model.apps.single { it.id == "oorarivippu" }
+        assertEquals(AppStatus.UPDATE_AVAILABLE, InstalledStatus.resolve(InstalledApp("1.1.18", true), oor.version))
+        assertTrue(model.transfer.value.appId.isBlank())
+        assertFalse(model.transfer.value.busy)
+        assertNull(ManagedApkDownload(context).restore())
+    }
 }

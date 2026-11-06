@@ -215,9 +215,17 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
+                        item {
+                            TextButton(enabled = !model.refreshing && transfer.appId.isBlank() && !model.batch.active,
+                                onClick = { model.refreshCatalog() }) {
+                                Text(bi("செயலிப் பட்டியலை மீண்டும் பெறு", "Refresh catalog"))
+                            }
+                            if (model.catalogMessage == "live") Text(bi("கடைசிப் பட்டியல் புதுப்பிப்பு வெற்றி", "Last catalog refresh succeeded"), style = MaterialTheme.typography.labelSmall)
+                            if (model.catalogMessage == "rejected") Text(bi("இணையப் பட்டியல் சரிபார்ப்பில் ஏற்கப்படவில்லை · சேமித்த பதிப்புகள் காட்டப்படுகின்றன", "Online catalog rejected by validation · showing saved versions"), style = MaterialTheme.typography.labelSmall)
+                        }
                         if (model.refreshing) item { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) }
                         if (model.catalogMessage == "offline" || model.selfCheckUnavailable) item {
-                            Text(bi("இணையச் சரிபார்ப்பு முழுமையில்லை · சேமித்த பட்டியல் கிடைக்கிறது", "Online check incomplete · saved catalog available"), style = MaterialTheme.typography.labelSmall)
+                            Text(bi("இணையச் சரிபார்ப்பு முழுமையில்லை · சேமித்த பட்டியல் கிடைக்கிறது", "Online check incomplete · showing saved versions, not a confirmed current catalog"), style = MaterialTheme.typography.labelSmall)
                         }
                         model.selfUpdate?.let { release -> item {
                             TextButton(onClick = { open(release.second) }) { Text(bi("அங்காடி ${release.first} உள்ளது · வெளியீட்டைப் பார்", "Store ${release.first} available · View release")) }
