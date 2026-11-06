@@ -43,9 +43,11 @@ class BackgroundDownloadTest {
             assertTrue("Screen-off download did not complete", completed)
             assertFalse(device.isScreenOn)
             assertEquals(app.size, managed.file(recovered).length())
+            val downloaded = managed.openCompleted(recovered).use { it.readBytes() }
+            assertEquals("Provider descriptor exact size", app.size, downloaded.size.toLong())
             val transportHash = java.security.MessageDigest.getInstance("SHA-256")
-                .digest(managed.file(recovered).readBytes()).joinToString("") { "%02x".format(it.toInt() and 255) }
-            assertEquals("Actual system-downloaded bytes", app.sha256, transportHash)
+                .digest(downloaded).joinToString("") { "%02x".format(it.toInt() and 255) }
+            assertEquals("Actual provider-owned system-downloaded bytes", app.sha256, transportHash)
             device.wakeUp()
             val holder = AtomicReference<StoreModel>()
             instrumentation.runOnMainSync { holder.set(StoreModel(context)) }
@@ -85,5 +87,22 @@ class BackgroundDownloadTest {
         assertFalse(managed.file(saved).exists())
         checkNotNull(context.getSystemService(DownloadManager::class.java))
             .query(DownloadManager.Query().setFilterById(saved.id)).use { assertFalse(it.moveToFirst()) }
+    }
+    @Test fun explicitRefreshAdvancesOldOorWithoutStartingADownload() {
+        val i = InstrumentationRegistry.getInstrumentation()
+        val context = i.targetContext.applicationContext as Application
+        ManagedApkDownload(context).cancel()
+        val holder = AtomicReference<StoreModel>()
+        i.runOnMainSync { holder.set(StoreModel(context)); holder.get().refreshCatalog() }
+        val model = holder.get()
+        val deadline = SystemClock.elapsedRealtime() + 45_000
+        while(model.refreshing && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
+        assertFalse("Refresh must finish", model.refreshing)
+        assertEquals("Actual official catalog must validate", "live", model.catalogMessage)
+        val oor = model.apps.single { it.id == "oorarivippu" }
+        assertEquals(AppStatus.UPDATE_AVAILABLE, InstalledStatus.resolve(InstalledApp("1.1.18", true), oor.version))
+        assertTrue(model.transfer.value.appId.isBlank())
+        assertFalse(model.transfer.value.busy)
+        assertNull(ManagedApkDownload(context).restore())
     }
 }

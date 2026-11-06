@@ -21,8 +21,13 @@ object LiveCatalog {
         return next
     }
     fun fetch(): String {
-        val connection = java.net.URL(URL).openConnection() as HttpURLConnection
+        val connection = java.net.URL(URL + "?refresh=" + java.lang.Long.toUnsignedString(System.nanoTime())).openConnection() as HttpURLConnection
         connection.instanceFollowRedirects = false
+        // Public metadata only: per-request nonce avoids stale intermediary/CDN responses.
+        // No device identifier and no extra automatic polling; all validation stays intact.
+        connection.useCaches = false
+        connection.setRequestProperty("Cache-Control", "no-cache, no-store, max-age=0")
+        connection.setRequestProperty("Pragma", "no-cache")
         connection.connectTimeout = 15_000
         connection.readTimeout = 15_000
         try {

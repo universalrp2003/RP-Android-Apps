@@ -1,0 +1,35 @@
+{
+  "from_version": "0.10",
+  "to_version": "0.11",
+  "version_code": 13,
+  "package": "com.universalrp.tamilanstore",
+  "installation_method": "adb install -r; no bypass flags",
+  "debug_over_release_rejected": true,
+  "same_uid": true,
+  "private_file_preserved": true,
+  "language_preserved": true,
+  "motion_preference_preserved": true,
+  "restart_passed": true,
+  "manual_catalog_refresh_rendered": true,
+  "physical_phone_tested": false,
+  "play_protect_tested": false,
+  "debug_to_release_upgrade_supported": false,
+  "permission_comparison": {
+    "added": [],
+    "removed": [],
+    "permissions": [
+      "android.permission.ACCESS_NETWORK_STATE",
+      "android.permission.FOREGROUND_SERVICE",
+      "android.permission.INTERNET",
+      "android.permission.POST_NOTIFICATIONS",
+      "android.permission.RECEIVE_BOOT_COMPLETED",
+      "android.permission.REQUEST_INSTALL_PACKAGES",
+      "android.permission.WAKE_LOCK",
+      "com.universalrp.tamilanstore.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+    ]
+  },
+  "source": "29083446beb03d6d428c3f681fa3283f75a9394d",
+  "bytes": 19476379,
+  "apk_sha256": "1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+}

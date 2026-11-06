@@ -1,7 +1,7 @@
-name: Oor 1.1.19 locality, GNSS and resource-safety candidate (no publication)
+name: Oor 1.1.20 locality, GNSS and resource-safety candidate (no publication)
 on:
   push:
-    branches: ["arena/cbff1d80-rp-android-apps"]
+    branches: ["arena/ce358216-rp-android-apps"]
     paths: ["oorarivippu/**", "tools/*oor_location*", ".github/workflows/oor-location-candidate.yml"]
 permissions:
   contents: read
@@ -39,7 +39,7 @@ jobs:
         run: |
           set -o pipefail
           gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease :oorarivippu:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/oor-trip-build.log
-      - name: Compare actual package, established signer and complete permissions to public 1.1.18
+      - name: Compare actual package, established signer and complete permissions to public 1.1.19
         run: python3 tools/inspect_oor_location_candidate.py
       - run: sudo chmod a+rw /dev/kvm
       - name: Exact public update, encrypted fixture and bilingual home at font 100 and 200 percent
@@ -73,6 +73,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Oor-1.1.19-location-candidate
+          name: Oor-1.1.20-location-candidate
           path: ${{ runner.temp }}/health-oorarivippu/
           retention-days: 14

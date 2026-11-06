@@ -564,3 +564,11 @@ Exact GPS-verified APK **12,924,720B**, SHA-256 `e224ed2a9db1494c480c14e616821b2
 ## Oor Arivippu1.1.19 — synchronous lifecycle guard
 
 12,924,720B, SHA-256 `f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02`, source10f7d339b5451020bfb5fcb9fbba352ea38bdec1, candidate42169463061, publisher42170377449, release436142996/asset716068902. Four actual native tests, including no-frame pause/destroy cleanup, exact public1.1.18 data/Keystore update and bilingual100%/200% controls. No rebuild/overwrite; earlier public assets unchanged. No physical GNSS/reboot-cure/Google claim.
+
+## Oor1.1.20 and Store0.11 — authorized reported-issue corrections
+
+Oor1.1.20/code25: **12,924,720B**, SHA256 `cf92399ca366e6ceb106cfa276579b7d6bf6980e2014f0af8e3f247de9ced19f`, release436223513/APK716334026. [Verification](oor-1.1.20-location-review.md) and [publisher42182257081](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/42182257081). Retains aged/not-live foreground GPS details without prolonging the30-second request.
+
+Store0.11/code13: **19,476,379B**, SHA256 `1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b`, release436230267/APK716355266. [Verification](tamilan-store-0.11-catalog-recovery.md) and [publisher42183336391](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/42183336391). Cache-safe manual catalog refresh and provider-descriptor reads; full integrity and approval protections retained.
+
+Exact signed candidates promoted without rebuilding, no added permissions, previous public release assets unchanged. Same-key upgrade and Android/native proofs are documented separately from unverified physical-phone/OEM/browser/Google outcomes. No user screenshots published. To keep the existing800MB mirror budget, older Store0.10 and Live Guard2.89 APK/ZIP website mirrors are retired; their immutable GitHub APK/checksum release assets remain available. Current14-app downloads and14 explicitly retained historical/current APK/ZIP pairs keep strict live checks.
