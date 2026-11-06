@@ -51,3 +51,8 @@ class OorLocationQualityContracts(unittest.TestCase):
         self.assertIn('GpsDiagnosticProbe(context, lifecycleOwner.lifecycle)',ui)
         self.assertIn('{ probe.stop(); unregister() }',ui)
         self.assertIn('lifecycleOwner.lifecycle.removeObserver(observer)',ui)
+    def test_native_upgrade_version_assertions_match_selected_119_and_118(self):
+        s=(R/'oorarivippu/src/androidTest/java/com/oorarivippu/voiceannouncer/OorLocationNativeTest.kt').read_text()
+        for x in ('assertEquals("1.1.18", version)','assertEquals("1.1.19", version)','Version: 1.1.19'):
+            self.assertIn(x,s)
+        self.assertNotIn('1.1.17',s)

@@ -35,7 +35,7 @@ class OorLocationNativeTest {
         val version = base.packageManager.getPackageInfo(base.packageName, 0).versionName
         if (InstrumentationRegistry.getArguments().getString("upgradePhase") == "seed") {
             // Runs against the exact accepted baseline, BEFORE adb install -r of the candidate.
-            assertEquals("1.1.17", version)
+            assertEquals("1.1.18", version)
             fixture.getSharedPreferences("oor_family_v1", 0).edit().clear().commit()
             FamilyStore.change(fixture) { rows ->
                 rows.add(JSONObject().put("id", "synthetic-upgrade-fixture").put("name", "Synthetic saved family")
@@ -45,7 +45,7 @@ class OorLocationNativeTest {
             assertFalse(fixture.getSharedPreferences("oor_family_v1", 0).getString("sealed", "")!!.contains("Synthetic saved family"))
             return
         }
-        assertEquals("1.1.18", version)
+        assertEquals("1.1.19", version)
         // Successful decryption proves the original Android Keystore key and persisted row survived.
         val saved = FamilyStore.read(fixture).single()
         assertEquals("Synthetic saved family", saved.getString("name"))
@@ -144,7 +144,7 @@ class OorLocationNativeTest {
                     ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("settings put system font_scale 1.0")).use { it.readBytes() }
                     SystemClock.sleep(700)
                     click(if (tamil) "அமைப்புகள்" else "Settings")
-                    find(if (tamil) "பதிப்பு: 1.1.18" else "Version: 1.1.18", true)
+                    find(if (tamil) "பதிப்பு: 1.1.19" else "Version: 1.1.19", true)
                     find(if (tamil) "குடும்ப ஊர் பகிர்வு விருப்பமானது" else "Family town sharing is optional", true)
                     find(if (tamil) "ஊர் அறிவிப்பின் சமீபத்திய பொதுப் பதிப்பு" else "Latest public Oor release", true)
                     find(if (tamil) "இணைய வழிகாட்டி & மறைக்கப்பட்ட படங்கள்" else "Web guide & redacted screenshots", true)
