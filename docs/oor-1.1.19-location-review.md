@@ -25,3 +25,7 @@ Install the final1.1.19 APK over the existing same-key app, including an earlier
 No independently hash-matched physical-phone test, real satellite acquisition, real-road/arrival/audio proof, reboot cause/cure, all-OEM battery guarantee or Google clearance is claimed. Counts are receiver observations, not proof that particular satellites produced a fused distance. Provider locality can still be coarse, wrong or suppressed; stationary/walking drift is not proof of vehicle detection.
 
 The website keeps all previously live13 verified APK/ZIP pairs and adds final1.1.19 as pair14. Intermediate1.1.18 remains unchanged on GitHub; its proposed CDN pair was never deployed. Both compatible12/13-app feeds advance only Oor; Store's immutable bundled fallback remains untouched. Mirror budget remains795,815,998B of800,000,000B.
+
+## Post-deployment metadata correction
+
+Pages42174329487 deployed successfully but strict live verification rejected the catalog snapshot timestamp. The generator retains bundled snapshot updated=2026-11-01; source feeds had been changed to2026-11-06. All generated APK entries independently match canonical public GitHub release metadata. Align both source snapshot timestamps with the existing generator (no APK/URL/hash/entry change); actual publication time remains2026-11-06T05:46:46Z in release-dates.json and publication receipt. Add a regression for this generator/source contract and require a fresh live verification.

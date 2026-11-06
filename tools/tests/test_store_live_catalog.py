@@ -61,6 +61,9 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         served_legacy=json.loads((ROOT/'site/catalog.json').read_text())
         self.assertEqual(12,len(served_legacy['apps']))
         self.assertEqual(13,len(served_current['apps']))
+        # The deployed generator preserves the bundled snapshot metadata; publication
+        # timestamps are independently recorded in release-dates.json.
+        self.assertEqual(snapshot['updated'],served_current['updated'])
         self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id']!='dailyvault']))
         self.assertEqual({a['id'] for a in snapshot['apps']},{a['id'] for a in served_current['apps']})
         bundled={a['id']:a for a in snapshot['apps']}
