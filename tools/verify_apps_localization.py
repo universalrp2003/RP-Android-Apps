@@ -1021,13 +1021,6 @@ def verify_module_versions_match_sister_apps() -> int:
                 "module %s (namespace %s) has a versionName but no SisterApps entry"
                 % (gradle.parent.name, pkg.group(1))
             )
-        if gradle.parent.name == "oorarivippu":
-            # Isolated unapproved1.1.18 candidate: keep public links on accepted1.1.17.
-            if (pkg.group(1), ver.group(1), by_package.get(pkg.group(1))) != (
-                "com.oorarivippu.voiceannouncer", "1.1.18", "1.1.17"
-            ):
-                raise ValueError("Oor candidate/public boundary changed; review publication gates")
-            continue
         if by_package[pkg.group(1)] != ver.group(1):
             raise ValueError(
                 "module %s is version %s but SisterApps advertises %s for %s"
