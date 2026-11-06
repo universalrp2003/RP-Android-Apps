@@ -98,6 +98,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     private var locationManager: LocationManager? = null
     private var tts: TextToSpeech? = null
     private var isTtsReady = false
+    @Volatile private var serviceDestroyed = false
     private val defaultTtsVoices = mutableMapOf<String, Voice?>()
     private data class PendingSpeech(
         val text: String,
@@ -1151,7 +1152,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         // Extract Village / Town / City name reliably across rural and urban India
         val cityOrVillage = PlaceDataPolicy.cleanCityOrVillage(
             // The state (adminArea) is never announced as a town.
-            listOf(PlaceDataPolicy.resolvedLocality(address.locality, address.subLocality, address.subAdminArea))
+            listOf(PlaceDataPolicy.resolvedLocality(address.locality,
+                address.subLocality.takeIf { AppPreferences.state.value.announceSameCitySubArea }, address.subAdminArea))
         )
 
         // Prefer a geocoder's named feature (e.g. a hospital or bus stand) to its road field.
@@ -1178,6 +1180,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onInit(status: Int) {
+        if (serviceDestroyed) return
         if(status==TextToSpeech.SUCCESS) serviceScope.launch { delay(100);if(familySpeechRequested)announceFamilyUpdates() }
         if (status == TextToSpeech.SUCCESS) {
             isTtsReady = true
@@ -1758,6 +1761,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     override fun onDestroy() {
+        serviceDestroyed = true
         familyPollJob?.cancel();familyPollJob=null
         OorWeatherMonitor.detachBackgroundHost()
         offlineReminderJob?.cancel()
