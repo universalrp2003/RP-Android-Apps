@@ -69,6 +69,9 @@ class OorLocationNativeTest {
             return result
         }
         fun find(label: String, scroll: Boolean = false): AccessibilityNodeInfo {
+            var backwards = false
+            var previousViewport = ""
+            var stalled = 0
             repeat(35) {
                 instrumentation.waitForIdleSync()
                 automation.waitForIdle(220, 5000)
@@ -88,8 +91,17 @@ class OorLocationNativeTest {
                         (node.text?.toString()?.contains(label) == true || node.contentDescription?.toString() == label) &&
                             node.isVisibleToUser && !bounds.isEmpty && bounds.height() < minimumVisible && bounds.top < screen.top + screen.height() / 3
                     }
-                    val start = if(clippedAbove) 4 else 7
-                    val end = if(clippedAbove) 7 else 4
+                    val viewport = all.filter { it.isVisibleToUser && !it.text.isNullOrBlank() }.joinToString("|") {
+                        val bounds = Rect().also { r -> it.getBoundsInScreen(r) }
+                        "${it.text}:${bounds.top}:${bounds.bottom}"
+                    }
+                    stalled = if(viewport == previousViewport) stalled + 1 else 0
+                    previousViewport = viewport
+                    // A previous label can leave the cursor BELOW the next control. At a
+                    // real scroll boundary, search back up rather than repeating empty swipes.
+                    if(stalled >= 2) { backwards = !backwards; stalled = 0 }
+                    val start = if(clippedAbove || backwards) 4 else 7
+                    val end = if(clippedAbove || backwards) 7 else 4
                     val command = "input swipe ${screen.centerX()} ${screen.top + screen.height() * start / 10} ${screen.centerX()} ${screen.top + screen.height() * end / 10} 650"
                     // Slow overlapping drags, NOT short high-velocity flings that can skip
                     // multiline Tamil controls after a previously matched label leaves view.
