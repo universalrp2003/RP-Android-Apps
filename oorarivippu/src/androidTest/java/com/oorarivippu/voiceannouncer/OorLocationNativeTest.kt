@@ -125,14 +125,14 @@ class OorLocationNativeTest {
                         find(if (tamil) "வேகம்:" else "Speed:", true)
                         find(if (tamil) "நேரக் கணிப்பு கிடைக்கவில்லை" else "Estimate unavailable", true)
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
-                        find(if (tamil) "நடக்கும்போதும் நின்றபடியும் GPS" else "GPS check works while walking", true)
+                        find(if (tamil) "இப்போது GPS சோதி" else "Check GPS now", true)
                         if(!tamil && scale == "1.0") {
                             click("Check GPS now", true)
                             find("Stop GPS check", true)
                         }
                         // The dialog has a persistent close control, independent of text scroll.
                         click(if (tamil) "விவரங்களை மூடு" else "Close diagnostics")
-                        val inactiveStatus = if (tamil) "நடக்கும்போதும் நின்றபடியும் GPS" else "GPS check works while walking"
+                        val inactiveStatus = if (tamil) "இப்போது GPS சோதி" else "Check GPS now"
                         assertFalse("Closing diagnostics must actually remove receiver content", nodes().any { it.text?.toString()?.contains(inactiveStatus) == true })
                         // Collapse changes the scroll range. Search history from a known top,
                         // not the old expanded-panel offset (which can now be below its title).
