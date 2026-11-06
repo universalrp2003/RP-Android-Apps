@@ -107,7 +107,7 @@ class OorLocationNativeTest {
                     // multiline Tamil controls after a previously matched label leaves view.
                     ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command)).use { it.readBytes() }
                 }
-                SystemClock.sleep(180)
+                SystemClock.sleep(650) // Wait for the actual drag/fling to settle before coordinates are read.
             }
             val observed = nodes().filter { !it.text.isNullOrBlank() || !it.contentDescription.isNullOrBlank() }.take(60).joinToString(" | ") {
                 val bounds = Rect().also { r -> it.getBoundsInScreen(r) }
@@ -117,13 +117,19 @@ class OorLocationNativeTest {
             throw AssertionError(label)
         }
         fun click(label: String, scroll: Boolean = false) {
-            var node: AccessibilityNodeInfo? = find(label, scroll)
+            val labelNode = find(label, scroll)
+            var node: AccessibilityNodeInfo? = labelNode
             while (node != null && !node.isClickable) node = node.parent
             assertNotNull("Clickable actual control: $label", node)
             val hit = Rect().also { node!!.getBoundsInScreen(it) }
             val screen = Rect().also { automation.rootInActiveWindow?.getBoundsInScreen(it) }
             assertTrue("Actual control must intersect viewport: $label", hit.intersect(screen))
             assertTrue("Actual touch target must not be a clipped sliver: $label", hit.height() >= (24 * base.resources.displayMetrics.density).toInt())
+            val textHit = Rect().also { labelNode.getBoundsInScreen(it) }
+            assertTrue("Visible text must intersect its actual clickable control: $label", hit.intersect(textHit))
+            assertTrue("Visible label must not be a clipped sliver: $label", hit.height() >= (12 * base.resources.displayMetrics.density).toInt())
+            // Tap the visible label inside its clickable parent, NOT the center of an
+            // ancestor whose un-clipped bounds can extend behind the toolbar.
             // Real touch, not an accessibility action on a possibly recycled Compose node ID.
             // Subsequent mandatory state assertions must still prove that this control opened.
             ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input tap ${hit.centerX()} ${hit.centerY()}")).use { it.readBytes() }
@@ -172,6 +178,7 @@ class OorLocationNativeTest {
                     find(if (tamil) "இணைய வழிகாட்டி & மறைக்கப்பட்ட படங்கள்" else "Web guide & redacted screenshots", true)
                     // Open the built-in guide FROM About, not a synthetic test-only screen.
                     click(if (tamil) "வழிகாட்டி — எப்படிப் பயன்படுத்துவது" else "Guide — how to use this app", true)
+                    find(if (tamil) "மென்பொருள் உதவி: Arena.ai Agent Mode" else "Software assistance: Arena.ai Agent Mode", true)
                     val selected = AppGuides.oorArivippu.topics.filter {
                         it.title.startsWith("Connecting family") || it.title.startsWith("Remembered sharing") ||
                             it.title.startsWith("Received towns") || it.title.startsWith("Family privacy") ||
