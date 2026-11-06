@@ -1,17 +1,16 @@
 # Live Guard (CleanSweep)
 
-Current public APK: **2.95 / code100**, package `com.universalrp.cleansweep`, Android8.0/API26+.
+Current public APK: **2.96 / code101**, package `com.universalrp.cleansweep`, Android8.0/API26+.
 
-- [Download CleanSweep-v2.95.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.95/CleanSweep-v2.95.apk) · [release notes](../releases/live-guard-v2.95.md) · [official website](https://universalrp2003.github.io/RP-Android-Apps/#app-live-guard).
-- Finer approximate dBm-derived SIM percentage; unknown remains unknown, not calibrated reception reliability. About removes Legacy and places DailyVault only under Other Apps, without changing sibling layouts.
-- Widget forecasts are snapshots, not continuous monitoring. Source/time-labelled regional reports or explicit not-checked/unavailable/no-matching-report status; never all-clear. Refresh queues one coalesced bounded silent saved-home report/weather check, without enabling news, speaking or consuming notification/read ledgers. No new periodic disaster poller or permissions.
-- Preserve accepted concise cyclone/rain/news speech, top Read, default-OFF optional quiet beep, three-segment D/U, home/settings, language/topics and saved OFF choices. New cyclone advisories speak once; flood/earthquake three-read policy is unchanged.
-- 923 executed required JVM tests/89suites,418 Python checks, build/lint/signing/full permissions, exact public2.94 same-key same-UID/saved-data update and all9 Android35 tests passed. Exact tested bytes promoted without rebuilding. [Candidate evidence](../docs/live-guard-2.95-candidate-verification.json) · [publication receipt](../docs/live-guard-2.95-publication-receipt.json).
-- No physical-device, audible-output, all-OEM, live-provider accuracy or Play Protect clearance proof. Same-key update: do not uninstall or clear data. All sibling and older public APK assets are unchanged.
+[Download CleanSweep-v2.96.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.96/CleanSweep-v2.96.apk) · [release notes](../releases/live-guard-v2.96.md) · [verification and limits](../docs/live-guard-2.96-rain-review.md).
 
 ## This update
 
-First installed SIM signal in the movable pill by default; choose Both SIMs or Off. Coloured estimates use subscription-local dBm; unavailable stays hidden. Missing normal readings use only a fresh registered serving cell when one active SIM, a prior precise-location grant and visible app UI make attribution safe. No background cell polling, stronger neighbour, copied SIM or new permission prompt. Charging remains watts-only. Unset news language defaults to Tamil+English-to-Tamil; explicit saved choices remain. Home top gap and Scan button sizing corrected without disabling font scaling. See the built-in bilingual guide.
+Open Rain & safety → View rain details for existing saved-home/current/saved-place forecasts. Available samples up to2hours show approximate local times, predicted rain rate and supplied wind/gust estimates. Old data has no usable rain timeline. Missing samples are not interpolated. Rain rate is not accumulated rainfall or probability; zero is not zero chance of rain.
+
+Forecasts are not local measurements or official warnings. IMD rain/thunderstorm alerts are not automatically imported: official-source links explain how to check affected district, issuer, issue and expiry. No GDACS match is not an all-clear. No extra network poller, permissions or changes to voice eligibility, quiet hours, deduplication or accepted signal/news/widget controls.
+
+927 required JVM regressions/90suites, release lint/signing/full permission equality, exact public2.95 same-key/same-UID saved-data/preferences/restart update and all10 Android35 tests passed, including English/Tamil100%/200% rain details on the exact signed APK. Published without rebuilding. No independent physical-phone, weather-accuracy, audible-output, all-OEM or Google clearance claim. Update without uninstalling or clearing local data. Prior public assets and sibling APKs are unchanged.
 
 ## What it does
 

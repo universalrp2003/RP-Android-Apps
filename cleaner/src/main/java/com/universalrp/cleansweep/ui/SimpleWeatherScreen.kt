@@ -149,6 +149,7 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
     val context = LocalContext.current
     val result = remember(id, revision) { SimpleWeatherStore.read(context, id) }
     val snapshot = result?.snapshot
+    var showDetails by rememberSaveable(id) { mutableStateOf(false) }
     val gpsValid = id != SimpleWeatherStore.GPS || (result != null && SimpleWeatherStore.gpsStillAt(context, result.place))
     val matches = expected == null || (result != null && WeatherForecastClient.haversineKm(expected.latitude, expected.longitude, result.place.latitude, result.place.longitude) < .1)
     PanelCard(Modifier.fillMaxWidth()) {
@@ -195,6 +196,11 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                             Text(reason, color = if (snapshot.tomorrowStatus == "NO_KEY") MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
                             Text(watchWords("General forecast available. Precise 15/30/60-minute rain alerts need fresh Tomorrow.io minute data with authorized access; a key alone does not guarantee it.", "பொதுவான முன்னறிவிப்பு கிடைக்கிறது. துல்லியமான 15/30/60 நிமிட மழை அறிவிப்புகளுக்கு அனுமதியுடன் புதிய Tomorrow.io நிமிடத் தரவு தேவை; விசை மட்டும் இருந்தால் போதாது."))
                         }
+                        TextButton(onClick = { showDetails = !showDetails }) {
+                            Text(if (showDetails) watchWords("Hide rain details", "மழை விவரங்களை மறை")
+                                else watchWords("View rain details", "மழை விவரங்களைப் பார்"))
+                        }
+                        if (showDetails) RainForecastDetailPanel(snapshot, System.currentTimeMillis(), id)
                         // A model's zero precipitation is not zero probability. No invented chance labels.
                         val later = snapshot.timeline.filter { it.minutesAhead > if (precise) snapshot.minuteHorizonMinutes else 0 }
                         if (later.isNotEmpty()) Text(if (later.any { it.precipMmPerHour > 0.0 }) watchWords("Later outlook: rain indicated in the available forecast.", "பிந்தைய முன்னறிவிப்பு: கிடைத்த தரவில் மழை காட்டப்படுகிறது.")
@@ -203,6 +209,36 @@ private fun PlaceForecastCard(id: String, expected: WeatherPlaceCandidate?, revi
                 }
             }
         }
+    }
+}
+
+@Composable
+internal fun RainForecastDetailPanel(snapshot: WeatherNowcastSnapshot, now: Long, id: String) {
+    val points = RainForecastDetails.points(snapshot, now)
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HorizontalDivider()
+        Text(watchWords("Rain forecast details", "மழை முன்னறிவிப்பு விவரங்கள்"), style = MaterialTheme.typography.titleMedium)
+        Text(if (id == SimpleWeatherStore.GPS) watchWords("Forecast for the last validated current location", "கடைசியாக உறுதிசெய்த தற்போதைய இடத்திற்கான முன்னறிவிப்பு")
+            else if (id == SimpleWeatherStore.HOME) watchWords("Forecast for saved home—not your phone's current position", "சேமித்த வழக்கமான இடத்திற்கான முன்னறிவிப்பு; போனின் தற்போதைய இடம் அல்ல")
+            else watchWords("Forecast for this saved place", "இந்தச் சேமித்த இடத்திற்கான முன்னறிவிப்பு"), style = MaterialTheme.typography.bodySmall)
+        Text(watchWords("Available forecast samples · up to 2 hours", "கிடைக்கும் முன்னறிவிப்பு மாதிரிகள் · 2 மணிநேரம் வரை"))
+        Text(watchWords("Approximate local times · ", "தோராய உள்ளூர் நேரம் · ") + ZoneId.systemDefault().id,
+            style = MaterialTheme.typography.bodySmall)
+        if (points.isEmpty()) Text(watchWords("No upcoming samples available. This is not a dry-weather result.", "வரவிருக்கும் மாதிரிகள் கிடைக்கவில்லை. மழை இல்லை என்பதல்ல."))
+        points.forEach { point ->
+            Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceVariant) {
+                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(weatherClock(point.atMs), style = MaterialTheme.typography.titleSmall)
+                    Text(watchWords("Forecast rain rate: ", "முன்னறிவிப்பு மழை வீதம்: ") + String.format(Locale.US, "%.2f mm/h", point.rainMmPerHour))
+                    Text(watchWords("Forecast gust: ", "முன்னறிவிப்பு காற்று வீச்சு: ") +
+                        (point.gustKmh?.let { String.format(Locale.US, "%.0f km/h", it) } ?: watchWords("Not supplied", "வழங்கப்படவில்லை")))
+                }
+            }
+        }
+        Text(watchWords("Rain rate is not accumulated rainfall or rain probability. Zero means no rain indicated in that model sample, not zero chance. Missing periods are not filled in.",
+            "மழை வீதம் மொத்த மழை அளவோ மழை வாய்ப்போ அல்ல. பூஜ்ஜியம் என்பது அந்த மாதிரியில் மழை காட்டப்படவில்லை; வாய்ப்பே இல்லை என்பதல்ல. விடுபட்ட நேரங்கள் நிரப்பப்படாது."), style = MaterialTheme.typography.bodySmall)
+        Text(watchWords("Forecast, not an official warning or a local rain measurement. Hourly data cannot confirm a precise start/end time. Recheck after the data expires.",
+            "முன்னறிவிப்பு மட்டுமே; அதிகாரப்பூர்வ எச்சரிக்கையோ உள்ளூர் மழை அளவீடோ அல்ல. மணிநேரத் தரவு துல்லிய தொடக்க/முடிவு நேரத்தை உறுதிசெய்யாது. தரவு பழையதானால் மீண்டும் சரிபார்க்கவும்."), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -271,6 +307,10 @@ private fun SimpleDisasterPanel(home: WeatherPlaceCandidate, gps: WeatherPlaceCa
                     TextButton(onClick = { website = report.url }) { Text(watchWords("View GDACS map & report", "GDACS வரைபடமும் அறிக்கையும்")) }
                 }
             }
+            HorizontalDivider()
+            Text(watchWords("Official local weather warnings", "அதிகாரப்பூர்வ உள்ளூர் வானிலை எச்சரிக்கைகள்"), style = MaterialTheme.typography.titleMedium)
+            Text(watchWords("IMD rain/thunderstorm warnings are not automatically imported here. No matching GDACS report does not mean no IMD warning. Open the official source below and check affected district, issuer, issue time and valid-until time. An expired advisory is not a current warning.",
+                "IMD மழை/இடி எச்சரிக்கைகள் இங்கு தானாக இறக்குமதி செய்யப்படவில்லை. GDACS அறிக்கை இல்லாததால் IMD எச்சரிக்கை இல்லை என்பதல்ல. கீழே அதிகாரப்பூர்வ மூலத்தைத் திறந்து மாவட்டம், வழங்குநர், வெளியீட்டு நேரம், செல்லுபடிக் காலத்தைச் சரிபார்க்கவும். காலாவதியான அறிக்கை தற்போதைய எச்சரிக்கை அல்ல."), style = MaterialTheme.typography.bodySmall)
             Text(watchWords("Regional reports are not local impact warnings. GDACS Green is not an all-clear for your place.", "பிராந்திய அறிக்கை உள்ளூர் பாதிப்பு எச்சரிக்கை அல்ல. GDACS பச்சை என்பது உங்கள் இடத்தில் அபாயம் இல்லை என்பதல்ல."), style = MaterialTheme.typography.bodySmall)
             FlowRow {
                 TextButton(onClick = { website = "https://www.gdacs.org/" }) { Text(watchWords("GDACS map", "GDACS வரைபடம்")) }
