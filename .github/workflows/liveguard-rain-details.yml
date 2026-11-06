@@ -25,6 +25,16 @@ jobs:
           python3 tools/verify_apps_localization.py
       - name: Release JVM, lint and test-only Android assembly
         run: gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleDebug :cleaner:assembleDebugAndroidTest --no-daemon --stacktrace
+      - name: New timeline regressions all executed
+        run: |
+          python3 - <<'PYTEST'
+          from pathlib import Path
+          import xml.etree.ElementTree as E
+          reports=list(Path('cleaner/build/test-results/testReleaseUnitTest').glob('*RainForecastDetailsTest.xml'))
+          assert len(reports)==1
+          root=E.parse(reports[0]).getroot()
+          assert int(root.get('tests'))==4 and int(root.get('failures'))==0 and int(root.get('errors'))==0 and int(root.get('skipped','0'))==0
+          PYTEST
       - run: sudo chmod a+rw /dev/kvm
       - name: Actual English Tamil 100 and 200 percent rain detail UI
         uses: reactivecircus/android-emulator-runner@v2
@@ -42,7 +52,7 @@ jobs:
             adb shell am instrument -w -r -e class com.universalrp.cleansweep.RainForecastDetailsNativeTest com.universalrp.cleansweep.test/androidx.test.runner.AndroidJUnitRunner > rain-native.txt
             cat rain-native.txt
             grep -F 'OK (1 test)' rain-native.txt
-            '! grep -E "FAILURES|INSTRUMENTATION_FAILED|Process crashed" rain-native.txt'
+            ! grep -E "FAILURES|INSTRUMENTATION_FAILED|Process crashed" rain-native.txt
       - name: Readable bounded failure diagnostics
         if: failure()
         run: |

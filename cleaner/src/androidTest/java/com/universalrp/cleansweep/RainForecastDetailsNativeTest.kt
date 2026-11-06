@@ -5,6 +5,8 @@ import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -60,7 +62,7 @@ class RainForecastDetailsNativeTest {
                             val density = LocalDensity.current.density
                             CompositionLocalProvider(LocalDensity provides Density(density, scale)) {
                                 MaterialTheme {
-                                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                                    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())) {
                                         RainForecastDetailPanel(snapshot, at, SimpleWeatherStore.HOME)
                                     }
                                 }
