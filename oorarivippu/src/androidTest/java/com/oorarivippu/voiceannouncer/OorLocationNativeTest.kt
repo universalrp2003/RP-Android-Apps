@@ -76,7 +76,7 @@ class OorLocationNativeTest {
                 val match = nodes().firstOrNull { node ->
                     val bounds = Rect().also { node.getBoundsInScreen(it) }
                     (node.text?.toString()?.contains(label) == true || node.contentDescription?.toString() == label) &&
-                        !bounds.isEmpty && Rect.intersects(bounds, screen)
+                        node.isVisibleToUser && !bounds.isEmpty && screen.contains(bounds.centerX(), bounds.centerY())
                 }
                 if (match != null) return match
                 if (scroll && !screen.isEmpty) {
@@ -94,8 +94,13 @@ class OorLocationNativeTest {
             var node: AccessibilityNodeInfo? = find(label, scroll)
             while (node != null && !node.isClickable) node = node.parent
             assertNotNull("Clickable actual control: $label", node)
-            assertTrue("Click actual control: $label", node!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
-            SystemClock.sleep(200)
+            val hit = Rect().also { node!!.getBoundsInScreen(it) }
+            val screen = Rect().also { automation.rootInActiveWindow?.getBoundsInScreen(it) }
+            assertTrue("Actual control must intersect viewport: $label", hit.intersect(screen))
+            // Real touch, not an accessibility action on a possibly recycled Compose node ID.
+            // Subsequent mandatory state assertions must still prove that this control opened.
+            ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input tap ${hit.centerX()} ${hit.centerY()}")).use { it.readBytes() }
+            SystemClock.sleep(350)
         }
         fun back() {
             assertTrue(automation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK))
@@ -120,6 +125,8 @@ class OorLocationNativeTest {
                         // Return to the actual home top, then locate and close the same control.
                         repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
+                        val inactiveStatus = if (tamil) "பயணத்தைத் தொடங்கவும்" else "Start a trip to observe GNSS"
+                        assertFalse("Closing diagnostics must actually remove receiver content", nodes().any { it.text?.toString()?.contains(inactiveStatus) == true })
                         find(if (tamil) "சமீபத்திய ஊர் அறிவிப்புகள்" else "Recent Voice Announcements", true)
                         // Return the single home scroll owner to its start before the next pass.
                         repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
