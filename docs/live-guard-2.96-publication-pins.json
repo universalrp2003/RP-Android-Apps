@@ -1,0 +1,18 @@
+{
+  "publication_authorized": true,
+  "only_app": "cleaner",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_authorization": "Ok go finish all",
+  "source": "ae3983cdb08be4f94d6db5103ea75fd0f97925c1",
+  "run_id": 42192308574,
+  "job_id": 127807050049,
+  "artifact_id": 13491031759,
+  "archive_sha256": "3cc8fb2c565e5bbf3e2852334b8bb1f750aa6938bbc20072bf93279b4c41bada",
+  "apk_sha256": "92c7b0ffb4a2d714fe8dbcab190161558c06b7cb086754b1cbf61d30b2da384c",
+  "bytes": 14771791,
+  "required_jvm_tests": 927,
+  "required_suites": 90,
+  "required_android35_native_tests": 10
+}
