@@ -86,7 +86,7 @@ class OorLocationNativeTest {
                     val clippedAbove = all.any { node ->
                         val bounds = Rect().also { node.getBoundsInScreen(it) }
                         (node.text?.toString()?.contains(label) == true || node.contentDescription?.toString() == label) &&
-                            bounds.height() < minimumVisible && bounds.top < screen.top + screen.height() / 3
+                            node.isVisibleToUser && !bounds.isEmpty && bounds.height() < minimumVisible && bounds.top < screen.top + screen.height() / 3
                     }
                     val start = if(clippedAbove) 4 else 7
                     val end = if(clippedAbove) 7 else 4
