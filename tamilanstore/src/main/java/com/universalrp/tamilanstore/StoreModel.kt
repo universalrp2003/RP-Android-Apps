@@ -215,7 +215,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
                             failureStage = TransferFailure.APK
                             val source = managed.file(saved)
                             verifyGate(source.length() == app.size, TransferFailure.SIZE)
-                            source.inputStream().use { input -> part.outputStream().use { output ->
+                            managed.openCompleted(saved).use { input -> part.outputStream().use { output ->
                                 val buffer = ByteArray(64 * 1024)
                                 var total = 0L
                                 while (true) {

@@ -43,9 +43,11 @@ class BackgroundDownloadTest {
             assertTrue("Screen-off download did not complete", completed)
             assertFalse(device.isScreenOn)
             assertEquals(app.size, managed.file(recovered).length())
+            val downloaded = managed.openCompleted(recovered).use { it.readBytes() }
+            assertEquals("Provider descriptor exact size", app.size, downloaded.size.toLong())
             val transportHash = java.security.MessageDigest.getInstance("SHA-256")
-                .digest(managed.file(recovered).readBytes()).joinToString("") { "%02x".format(it.toInt() and 255) }
-            assertEquals("Actual system-downloaded bytes", app.sha256, transportHash)
+                .digest(downloaded).joinToString("") { "%02x".format(it.toInt() and 255) }
+            assertEquals("Actual provider-owned system-downloaded bytes", app.sha256, transportHash)
             device.wakeUp()
             val holder = AtomicReference<StoreModel>()
             instrumentation.runOnMainSync { holder.set(StoreModel(context)) }

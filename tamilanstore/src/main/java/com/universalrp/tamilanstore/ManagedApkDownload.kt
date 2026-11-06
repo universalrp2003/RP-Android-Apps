@@ -61,6 +61,11 @@ internal class ManagedApkDownload(private val context: Context) {
     fun file(saved: Saved): File = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
         ?: error("Download storage unavailable"), saved.fileName)
 
+    // Read the system-owned completed request through its provider descriptor, not a
+    // second external-storage/FUSE path view. The caller still checks size/hash/signer.
+    fun openCompleted(saved: Saved): java.io.InputStream =
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(manager.openDownloadedFile(saved.id))
+
     fun completed(saved: Saved) {
         // First persist recovery of the private verified copy, then discard untrusted transport.
         check(prefs.edit().putLong("id", -1).commit())

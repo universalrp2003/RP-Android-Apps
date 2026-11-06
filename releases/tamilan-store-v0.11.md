@@ -2,7 +2,7 @@
 
 Refresh catalog can explicitly retry the public feed. Metadata transport bypasses stale caches with a per-request nonce and no-cache headers, without device identifiers or extra automatic polling. Report success, unavailable online checks and rejected catalogs separately; retain the last good list on failure. Package identities, no rollback, same-version content immutability, APK hash/signer verification and explicit Android installation approval remain enforced.
 
-The owner reported an old catalog despite a newer installed Oor app. This improves recovery and diagnosis; it does not claim the exact cause on that phone was established. Browser downloads stuck at100% are outside Store control. System-owned background downloads, verification and installer handoff must pass their existing native gates before promotion.
+The owner reported an old catalog despite a newer installed Oor app. This improves recovery and diagnosis; it does not claim the exact cause on that phone was established. Browser downloads stuck at100% are outside Store control. Completed system downloads are copied through Android DownloadManager’s provider-owned file descriptor rather than a separate external-storage path view; exact size, SHA-256, package, version and signer checks remain required before installation. System-owned background downloads, verification and installer handoff must pass their existing native gates before promotion.
 
 Install over the same-key Store0.10; do not uninstall or clear local data. No new permissions, silent installs, warning bypass or Google/OEM/Doze guarantee. Final bytes are not installed on a phone independently.
 

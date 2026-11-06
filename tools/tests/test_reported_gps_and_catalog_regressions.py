@@ -26,3 +26,11 @@ class ReportedPhoneRegressions(unittest.TestCase):
         self.assertIn('model.refreshCatalog()',ui)
         self.assertIn('catalogMessage = "rejected"',model)
         self.assertIn('LiveCatalog.validate(text, apps)',model)
+    def test_system_download_uses_provider_descriptor_and_keeps_integrity_checks(self):
+        base=ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore'
+        self.assertIn('manager.openDownloadedFile(saved.id)',(base/'ManagedApkDownload.kt').read_text())
+        model=(base/'StoreModel.kt').read_text()
+        self.assertIn('managed.openCompleted(saved).use',model)
+        self.assertIn('verifyGate(total == app.size, TransferFailure.SIZE)',model)
+        self.assertIn('verify(app, part)',model)
+        self.assertIn('hex(digest.digest()) == app.sha256',model)
