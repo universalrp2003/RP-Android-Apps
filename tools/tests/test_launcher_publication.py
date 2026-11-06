@@ -69,7 +69,7 @@ class LauncherPublicationTests(unittest.TestCase):
             ('voicenotes', '1.3.4', '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a')):
             self.assertEqual((apps[name]['version'], apps[name]['sha256']), (version, digest))
         pages = (ROOT/'.github/workflows/pages.yml').read_text()
-        self.assertIn('6b19a94be83e47e54093f9f73f9b4798d736857fc4cd16e4e7f10c7424350bab', pages)
+        self.assertIn('d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b', pages)
         self.assertIn('"elderly-launcher-v1.7"', pages)  # the current launcher stays mirrored
         # 1.5 and older are still public release assets; only current builds are mirrored now.
         self.assertNotIn('"elderly-launcher-v1.5"', pages)

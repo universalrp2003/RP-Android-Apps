@@ -1,0 +1,15 @@
+{
+  "publication_authorized": true,
+  "scope": "Tamilan Store0.10/code12 only; promote exact owner-tested candidate without rebuilding",
+  "owner_reports_background_download_working": true,
+  "installed_phone_hash_independently_verified": false,
+  "source": "d887aad0f9309b387472861502c44312e74bbfae",
+  "candidate_run": 42060013559,
+  "native_run": 42060013507,
+  "background_run": 42060013567,
+  "artifact_id": 13431762396,
+  "archive_sha256": "27abbe985d6fc4a32cd77a374a022d587d5b88be196bebf3319e205be91705fc",
+  "archive_bytes": 18039161,
+  "apk_sha256": "d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b",
+  "bytes": 19476375
+}

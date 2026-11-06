@@ -235,7 +235,7 @@ class MainActivity : ComponentActivity() {
                                     }, style = MaterialTheme.typography.titleSmall)
                                     if (current != null) Text(if (tamil) current.tamilName else current.name, style = MaterialTheme.typography.bodySmall)
                                     if (transfer.busy) LinearProgressIndicator(progress = { current?.let { (transfer.bytes.toFloat() / it.size).coerceIn(0f, 1f) } ?: 0f }, modifier = Modifier.fillMaxWidth())
-                                    if (batch.stage == BatchStage.PAUSED) Text(bi("ரத்து, அனுமதி மறுப்பு, செயலி மறைவு அல்லது தோல்வியில் வரிசை நிற்கும். தொடர அழுத்தும் வரை அடுத்த நிறுவல் வராது.", "Cancellation, permission denial, leaving Store or a failure pauses the queue. No next prompt until you Resume."), style = MaterialTheme.typography.bodySmall)
+                                    if (batch.stage == BatchStage.PAUSED) Text(bi("ரத்து, அனுமதி மறுப்பு அல்லது தோல்வியில் வரிசை நிற்கும். தொடர அழுத்தும் வரை அடுத்த நிறுவல் வராது.", "Cancellation, permission denial or a failure pauses the queue. No next prompt until you Resume."), style = MaterialTheme.typography.bodySmall)
                                     if (transfer.failed) Text((transfer.failure ?: TransferFailure.DOWNLOAD).message(tamil), style = MaterialTheme.typography.bodySmall)
                                     FlowRow {
                                         if (batch.stage == BatchStage.PAUSED) {
@@ -327,6 +327,7 @@ class MainActivity : ComponentActivity() {
                                                     scope.launch {
                                                         try {
                                                             val file = model.verifiedFile(app)
+                                                            if (!foreground) return@launch
                                                             if (!packageManager.canRequestPackageInstalls()) {
                                                                 startActivity(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:$packageName")))
                                                                 message = bi("அனுமதித்தால் திரும்பி வந்து நிறுவு அழுத்தவும். பாதுகாப்புச் சோதனையை அணைக்க வேண்டாம்.", "If you allow this source, return and tap Install. Never disable Play Protect.")

@@ -10,8 +10,7 @@ import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.File
-import java.net.HttpURLConnection
-import java.net.URL
+import android.app.DownloadManager
 import java.security.MessageDigest
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,7 +67,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         }
     }
     fun startBatch(plan: List<StoreApp>) {
-        if (batch.active || _transfer.value.busy || refreshing) return
+        if (batch.active || _transfer.value.busy || job?.isActive == true || refreshing) return
         // Bind consent to the reviewed immutable catalog entries, not arbitrary supplied URLs.
         val eligible = plan.distinctBy { it.id }.filter { it in apps && InstalledStatus.resolve(installed(it), it.version) == AppStatus.UPDATE_AVAILABLE }
         if (eligible.isEmpty()) return
@@ -104,6 +103,7 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
                 delay(250)
             }
             if (batch.stage != BatchStage.INSTALLING || batch.index != index) return@launch
+            managed.cancel()
             File(directory, "${app.id}.apk").delete()
             _transfer.value = Transfer()
             batch = batch.returned(updated)
@@ -112,21 +112,22 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     }
     fun pauseBatch() {
         if (!batch.active) return
-        batch = batch.pause(); job?.cancel()
+        batch = batch.pause(); cancelTransport()
     }
     fun resumeBatch() {
         if (batch.stage != BatchStage.PAUSED || job?.isActive == true) return
         batch = batch.resume(); startNextBatch()
     }
     fun cancelBatch() {
-        batch = UpdateBatchState(); batchApps = emptyList(); job?.cancel()
+        batch = UpdateBatchState(); batchApps = emptyList(); cancelTransport()
         if (job?.isActive != true) { directory.listFiles()?.forEach { it.delete() }; _transfer.value = Transfer() }
     }
     fun hidden() {
-        if (batch.stage == BatchStage.DOWNLOADING || batch.stage == BatchStage.READY) pauseBatch()
+        // Screen-off/backgrounding never cancels user-requested transport. Installer handoff is
+        // separately gated by MainActivity.foreground; no new batch approval survives process death.
     }
     fun refreshCatalog() {
-        if (refreshing || _transfer.value.busy || batch.active) return
+        if (refreshing || _transfer.value.appId.isNotBlank() || batch.active) return
         refreshing = true
         viewModelScope.launch {
             try {
@@ -152,41 +153,94 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     val transfer = _transfer.asStateFlow()
     private var job: Job? = null
     private val directory = File(application.cacheDir, "verified-apks").apply { mkdirs() }
-    init { directory.listFiles()?.forEach { it.delete() } }
+    private val managed = ManagedApkDownload(application)
+    init {
+        managed.restore()?.let { saved ->
+            // Restore exactly the immutable release the user chose, not a newly refreshed version.
+            apps = apps.map { if (it.id == saved.app.id) saved.app else it }
+            downloadInternal(saved.app, saved)
+        }
+    }
     fun installed(app: StoreApp): InstalledApp? = StoreInventory.inspect(getApplication(), app)
-    fun cancel() { if (batch.active) pauseBatch() else job?.cancel() }
+    private fun cancelTransport() {
+        val previous = job
+        job = viewModelScope.launch {
+            // Wait for any copy/verification to stop before deleting files or allowing a new ID.
+            withContext(NonCancellable) {
+                previous?.cancelAndJoin()
+                withContext(Dispatchers.IO) {
+                    managed.cancel()
+                    directory.listFiles()?.forEach { it.delete() }
+                }
+                _transfer.value = Transfer()
+            }
+        }
+    }
+    fun cancel() { if (batch.active) pauseBatch() else cancelTransport() }
     fun download(app: StoreApp) {
-        if (_transfer.value.busy || batch.active) return
+        if (_transfer.value.busy || batch.active || job?.isActive == true || refreshing) return
         val status = InstalledStatus.resolve(installed(app), app.version)
         if (status != AppStatus.NOT_INSTALLED && status != AppStatus.UPDATE_AVAILABLE) return
         downloadInternal(app)
     }
-    private fun downloadInternal(app: StoreApp) {
+    private fun downloadInternal(app: StoreApp, recovered: ManagedApkDownload.Saved? = null) {
         expectedBatchCode = null
         _transfer.value = Transfer(app.id, busy = true)
         job = viewModelScope.launch {
             var failureStage = TransferFailure.DOWNLOAD
             try {
                 withContext(Dispatchers.IO) {
-                    directory.listFiles()?.forEach { it.delete() }
+                    if (recovered == null) directory.listFiles()?.forEach { it.delete() }
+                    val saved = recovered ?: managed.begin(app, apps)
+                    val ready = File(directory, "${app.id}.apk")
                     val part = File(directory, "${app.id}.pending.apk")
                     try {
-                        withTimeout(180_000) { fetch(app, part) }
-                        failureStage = TransferFailure.APK
-                        verify(app, part)
-                        currentCoroutineContext().ensureActive()
-                        failureStage = TransferFailure.STORAGE
-                        verifyGate(part.renameTo(File(directory, "${app.id}.apk")), TransferFailure.STORAGE)
+                        if (ready.exists() && recovered != null && saved.id < 0) {
+                            verify(app, ready)
+                            if (saved.id >= 0) managed.completed(saved)
+                        } else {
+                            check(saved.id >= 0) { "Verified copy no longer exists" }
+                            while (true) {
+                                currentCoroutineContext().ensureActive()
+                                val progress = managed.progress(saved)
+                                _transfer.value = Transfer(app.id, progress.bytes, busy = true)
+                                verifyGate(progress.bytes <= app.size, TransferFailure.SIZE)
+                                if (progress.status == DownloadManager.STATUS_SUCCESSFUL) break
+                                check(progress.status != DownloadManager.STATUS_FAILED) { "System download failed" }
+                                delay(500)
+                            }
+                            failureStage = TransferFailure.APK
+                            val source = managed.file(saved)
+                            verifyGate(source.length() == app.size, TransferFailure.SIZE)
+                            source.inputStream().use { input -> part.outputStream().use { output ->
+                                val buffer = ByteArray(64 * 1024)
+                                var total = 0L
+                                while (true) {
+                                    currentCoroutineContext().ensureActive()
+                                    val count = input.read(buffer)
+                                    if (count < 0) break
+                                    total += count
+                                    verifyGate(total <= app.size, TransferFailure.SIZE)
+                                    output.write(buffer, 0, count)
+                                }
+                                verifyGate(total == app.size, TransferFailure.SIZE)
+                            } }
+                            verify(app, part)
+                            currentCoroutineContext().ensureActive()
+                            failureStage = TransferFailure.STORAGE
+                            verifyGate(part.renameTo(ready), TransferFailure.STORAGE)
+                            managed.completed(saved)
+                        }
                     } finally { part.delete() }
                 }
                 _transfer.value = Transfer(app.id, bytes = app.size, verified = true)
                 if (batch.stage == BatchStage.DOWNLOADING && batch.currentId == app.id) batch = batch.ready()
             } catch (e: CancellationException) {
-                File(directory, "${app.id}.apk").delete()
-                _transfer.value = if (e is TimeoutCancellationException) Transfer(app.id, failed = true, failure = TransferFailure.DOWNLOAD) else Transfer(app.id)
-                if (batch.active) batch = batch.pause()
+                // ViewModel disposal is not download cancellation. The persisted system ID and
+                // private verified copy survive; only explicit Cancel removes them.
                 throw e
             } catch (error: Exception) {
+                managed.cancel()
                 File(directory, "${app.id}.apk").delete()
                 if (batch.active) batch = batch.pause()
                 _transfer.value = Transfer(app.id, failed = true,
@@ -202,44 +256,6 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         }
         if (batch.stage == BatchStage.READY && batch.currentId == app.id) expectedBatchCode = code
         return file
-    }
-    private suspend fun fetch(app: StoreApp, destination: File) {
-        var next = URL(app.url)
-        repeat(6) {
-            currentCoroutineContext().ensureActive()
-            require(next.protocol == "https" && Catalog.allowedDownloadHost(next.host) && next.userInfo == null)
-            val connection = next.openConnection() as HttpURLConnection
-            connection.instanceFollowRedirects = false
-            connection.connectTimeout = 15_000
-            connection.readTimeout = 15_000
-            try {
-                val code = connection.responseCode
-                if (code in listOf(301, 302, 303, 307, 308)) {
-                    next = URL(next, connection.getHeaderField("Location") ?: error("Missing redirect"))
-                } else {
-                    check(code == 200)
-                    if (connection.contentLengthLong >= 0) verifyGate(connection.contentLengthLong == app.size, TransferFailure.SIZE)
-                    connection.inputStream.use { input ->
-                        destination.outputStream().use { output ->
-                            val buffer = ByteArray(64 * 1024)
-                            var total = 0L
-                            while (true) {
-                                currentCoroutineContext().ensureActive()
-                                val count = input.read(buffer)
-                                if (count < 0) break
-                                total += count
-                                verifyGate(total <= app.size, TransferFailure.SIZE)
-                                output.write(buffer, 0, count)
-                                _transfer.value = Transfer(app.id, total, busy = true)
-                            }
-                            verifyGate(total == app.size, TransferFailure.SIZE)
-                        }
-                    }
-                    return
-                }
-            } finally { connection.disconnect() }
-        }
-        error("Too many redirects")
     }
     @Suppress("DEPRECATION")
     internal fun verify(app: StoreApp, file: File): Long {

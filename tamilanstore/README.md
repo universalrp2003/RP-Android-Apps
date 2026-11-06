@@ -1,18 +1,14 @@
-# தமிழன் / Tamilan Store — 0.9 release-key candidate source
+# தமிழன் / Tamilan Store — 0.10
 
-**Unpublished redesign candidate `0.9-rc1`, versionCode 10.** Compact bilingual app cards, expandable
-screenshots, the restored local Tamil Nadu landscape, automatic foreground metadata checks,
-brief update notices and an explicit, verified sequential **Update all** queue.
-See [design, safety boundaries and test status](../docs/tamilan-store-0.9-redesign.md).
+**Current stable:0.10/code12.** [Download the exact verified APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.10/Tamilan-Store-v0.10.apk). [Verification and limits](../docs/tamilan-store-0.10-background-download.md).
 
-Use the new `tamilanstore-signed-candidate.yml` workflow for a release-key **0.8 → 0.9-rc1** upgrade candidate (no publication). See [the upgrade/signing report](../docs/tamilan-store-0.9-upgrade.md).
+User-started downloads use Android DownloadManager and recover after screen-off or model recreation. Android may defer transport for power/network/storage restrictions. The current immutable selection is recovered; batch installation approvals are not persisted after process death. Every installation still needs size/hash/package/version/SDK/signer checks and Android confirmation. No new permissions. The owner reports background downloading works; no independent phone hash, all-OEM or Google approval is claimed.
 
-The separate preview workflow produces debug-key CI artifacts, **not same-key upgrades for an owner's
-release installation**. Do not uninstall a working app or erase records to try that artifact.
-The public download, directory and immutable release remain **0.8**. Its reported Play Protect
-**harmful-app block is unresolved**; this redesign is not a clearance or a bypass.
+Update0.9 normally without uninstalling or clearing data. Debug artifacts cannot update release installations. Do not bypass Play Protect or erase records as a workaround. Existing galleries are earlier-version screenshots; no new owner images were required for0.10.
 
-## Last published release — 0.8
+## Historical0.8 evidence (not the current download)
+
+
 
 
 **Published:** [exact verified Store0.8 APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.8/Tamilan-Store-v0.8.apk). [Publication receipt and test limits](../docs/tamilan-store-0.8-verification.md). The signed candidate was promoted without rebuilding or replacing an older release.
