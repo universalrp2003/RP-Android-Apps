@@ -87,7 +87,11 @@ class OorLocationNativeTest {
                 }
                 SystemClock.sleep(180)
             }
-            fail("Missing actual Oor About/Guide label: $label")
+            val observed = nodes().filter { !it.text.isNullOrBlank() || !it.contentDescription.isNullOrBlank() }.take(60).joinToString(" | ") {
+                val bounds = Rect().also { r -> it.getBoundsInScreen(r) }
+                "${it.text ?: it.contentDescription} visible=${it.isVisibleToUser} bounds=$bounds"
+            }
+            fail("Missing actual Oor About/Guide label: $label; actual synthetic-emulator nodes: $observed")
             throw AssertionError(label)
         }
         fun click(label: String, scroll: Boolean = false) {
@@ -127,6 +131,9 @@ class OorLocationNativeTest {
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
                         val inactiveStatus = if (tamil) "பயணத்தைத் தொடங்கவும்" else "Start a trip to observe GNSS"
                         assertFalse("Closing diagnostics must actually remove receiver content", nodes().any { it.text?.toString()?.contains(inactiveStatus) == true })
+                        // Collapse changes the scroll range. Search history from a known top,
+                        // not the old expanded-panel offset (which can now be below its title).
+                        repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
                         find(if (tamil) "சமீபத்திய ஊர் அறிவிப்புகள்" else "Recent Voice Announcements", true)
                         // Return the single home scroll owner to its start before the next pass.
                         repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
