@@ -4,7 +4,7 @@ Expand View rain details for the selected place to see available forecast sample
 
 Official IMD rain/thunderstorm warnings are not automatically imported. The official-source links and guidance identify the issuer, affected district, issue time and validity period to check; no matching GDACS report is not an all-clear. Forecasts are not official warnings or local measurements. No invented exact start/end time, probabilities or rainfall totals. No extra provider endpoint, polling, permissions, diagnostic uploads or changes to voice eligibility, quiet hours, deduplication or existing accepted controls.
 
-Update over the same-key public2.95 app without uninstalling or clearing data. Android decides installation. Release checks must include exact signed upgrade/data/preferences/restart preservation, full JVM/lint/permission/signature and preserved native gates plus English/Tamil100%/200% rain detail rendering. Final bytes are not installed on a phone independently. No physical-phone, weather accuracy, audible output, all-OEM or Google clearance claim.
+Update over the same-key public2.95 app without uninstalling or clearing local data. Android decides installation. Release checks must include exact signed upgrade/data/preferences/restart preservation, full JVM/lint/permission/signature and preserved native gates plus English/Tamil100%/200% rain detail rendering. Final bytes are not installed on a phone independently. No physical-phone, weather accuracy, audible output, all-OEM or Google clearance claim.
 
 ## தமிழ்
 

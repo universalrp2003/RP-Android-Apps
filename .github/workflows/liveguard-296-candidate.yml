@@ -3,7 +3,7 @@ name: Live Guard 2.96 bilingual rain detail and full preserved-feature regressio
 on:
   push:
     branches: ["arena/1d166a3f-rp-android-apps"]
-    paths: ["cleaner/**", "shared/**", "tools/inspect_liveguard_296_candidate.py", "tools/liveguard_283_native_smoke.py", "tools/verify_liveguard_296_installed.py", "tools/run_liveguard_296_native.py", "tools/verify_liveguard_296_native.py", ".github/workflows/liveguard-296-candidate.yml"]
+    paths: ["releases/live-guard-v2.96.md", "cleaner/**", "shared/**", "tools/inspect_liveguard_296_candidate.py", "tools/liveguard_283_native_smoke.py", "tools/verify_liveguard_296_installed.py", "tools/run_liveguard_296_native.py", "tools/verify_liveguard_296_native.py", ".github/workflows/liveguard-296-candidate.yml"]
 permissions:
   contents: read
 concurrency:
