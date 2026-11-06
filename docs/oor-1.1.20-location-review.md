@@ -1,0 +1,9 @@
+# Oor1.1.20 / code25 — retained, honestly aged GPS report
+
+Owner authorization: “Go fix all.” The last satellite counts/rows remain while the diagnostic dialog is foreground/open, including receiver stops and report gaps. Age and not-live labeling prevent treating a retained report as current. Close/background/disposal clears it. The extra GPS request remains bounded to30seconds; no new permissions, diagnostic persistence or uploads.
+
+Exact source `09250a8aafdec9d5f4bea6bf47044283bc8fce14`; [candidate42181037341](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/42181037341), job127770467355, artifact13486060859. Android35 release/lint/JVM, public1.1.19 same-key/same-UID update, preferences/private data/encrypted-family fixture and Keystore decryption, consent, restart, exact installed APK, bilingual100%/200% home/history/diagnostics, four native tests including actual30-second deadline and pause/destroy cleanup passed. Retained-report behavior also has source-boundary regression guards; this is not physical GNSS proof.
+
+[Publisher42182257081](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/42182257081), job127774341959, published exact bytes without rebuilding: release436223513 / APK716334026 at2026-11-06T07:39:35Z. **12,924,720 bytes**, SHA256 `cf92399ca366e6ceb106cfa276579b7d6bf6980e2014f0af8e3f247de9ced19f`; established signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`. Prior public release assets unchanged. [Receipt](oor-location-1.1.20-publication-receipt.json).
+
+No independent physical-phone installed hash, GNSS accuracy, reboot cure, audible output, all-OEM or Google/Play Protect clearance. Update over the existing same-key app; do not uninstall, clear data or bypass warnings. Website/catalog/ZIP availability still requires successful main Pages deployment and strict live verification.

@@ -21,11 +21,11 @@ class OorLocationQualityContracts(unittest.TestCase):
             self.assertNotIn(x,s)
     def test_current_public_links_match_exact_authorized_receipt(self):
         self.assertIn('versionName = "1.1.20"',(R/'oorarivippu/build.gradle.kts').read_text())
-        self.assertIn('publishedVersion = "1.1.19"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
-        self.assertIn('Oor-Arivippu-v1.1.19.apk',(R/'site/index.html').read_text())
+        self.assertIn('publishedVersion = "1.1.20"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
+        self.assertIn('Oor-Arivippu-v1.1.20.apk',(R/'site/index.html').read_text())
         inspector=(R/'tools/inspect_oor_location_candidate.py').read_text()
         self.assertIn("'1.1.20', 25",inspector)
-        self.assertIn('f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02',inspector)
+        self.assertIn('f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02',inspector)  # immutable public1.1.19 upgrade baseline
     def test_authorized_foreground_probe_has_bounded_duration_and_cleanup(self):
         p=(S/'GpsDiagnosticProbe.kt').read_text()
         for value in ('DURATION_MS = 30_000L','setDurationMillis(DURATION_MS)','removeUpdates(listener)','removeCallbacks(deadline)','ACCESS_FINE_LOCATION'):
@@ -53,6 +53,6 @@ class OorLocationQualityContracts(unittest.TestCase):
         self.assertIn('lifecycleOwner.lifecycle.removeObserver(observer)',ui)
     def test_native_upgrade_version_assertions_match_selected_120_and_119(self):
         s=(R/'oorarivippu/src/androidTest/java/com/oorarivippu/voiceannouncer/OorLocationNativeTest.kt').read_text()
-        for x in ('assertEquals("1.1.19", version)','assertEquals("1.1.20", version)','Version: 1.1.20'):
+        for x in ('assertEquals("1.1.20", version)','assertEquals("1.1.20", version)','Version: 1.1.20'):
             self.assertIn(x,s)
         self.assertNotIn('1.1.18',s)

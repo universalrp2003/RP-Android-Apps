@@ -30,10 +30,10 @@ class StoreCertificateRegression(unittest.TestCase):
         self.assertEqual(live['liveguard']['sha256'], receipt['apk_sha256'])
         self.assertEqual(live['liveguard']['size'], receipt['bytes'])
         self.assertEqual(live['liveguard']['url'], receipt['url'])
-        oor = json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())
+        oor = json.loads((ROOT/'docs/oor-location-1.1.20-publication-receipt.json').read_text())
         self.assertEqual((old['oorarivippu']['version'], old['oorarivippu']['sha256']),
             ('1.1.10', '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa'))
-        self.assertEqual(live['oorarivippu']['version'], '1.1.19')
+        self.assertEqual(live['oorarivippu']['version'], '1.1.20')
         for key, field in [('sha256','apk_sha256'),('size','bytes'),('url','url')]:
             self.assertEqual(live['oorarivippu'][key], oor[field])
         ledger = (ROOT/'docs/published-release-digests.md').read_text()
@@ -41,30 +41,30 @@ class StoreCertificateRegression(unittest.TestCase):
 
     def test_published_store_matches_the_exact_verified_release(self):
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.10", publishedVersion = "0.10"', text)
+        self.assertIn('tagPrefix = "tamilan-store", version = "0.11", publishedVersion = "0.11"', text)
         site = (ROOT/'site/index.html').read_text()
-        self.assertIn('tamilan-store-v0.10/Tamilan-Store-v0.10.apk', site)
-        self.assertIn('d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b', site)
+        self.assertIn('tamilan-store-v0.11/Tamilan-Store-v0.11.apk', site)
+        self.assertIn('1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b', site)
         mirrors = (ROOT/'.github/workflows/pages.yml').read_text()
         # Only the current Store build stays mirrored; 0.9 and older remain public release assets.
-        self.assertIn('d359a17252551a5503cd5814f89da132e3f307205a24f2302436b457c25f488b', mirrors)
+        self.assertIn('1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b', mirrors)
         self.assertNotIn('3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474', mirrors)
-        receipt = json.loads((ROOT/'docs/tamilan-store-0.10-publication-receipt.json').read_text())
-        approved = json.loads((ROOT/'docs/approved-store-0.10-candidate.json').read_text())
+        receipt = json.loads((ROOT/'docs/tamilan-store-0.11-publication-receipt.json').read_text())
+        approved = json.loads((ROOT/'docs/approved-store-0.11-candidate.json').read_text())
         for key, value in approved.items():
             self.assertEqual(receipt[key], value, key)
         self.assertEqual((receipt['release_id'], receipt['asset_id'], receipt['publisher_run']),
-                         (435432949, 714002527, 42063138056))
+                         (436230267, 716355266, 42183336391))
         self.assertFalse(receipt['rebuilt'])
         self.assertTrue(receipt['prior_public_assets_unchanged'])
         dates = json.loads((ROOT/'site/release-dates.json').read_text())
-        self.assertEqual(dates['releases']['tamilan-store-v0.10'], receipt['published_at'])
+        self.assertEqual(dates['releases']['tamilan-store-v0.11'], receipt['published_at'])
         self.assertIn(receipt['published_at'], site)
-        self.assertIn('("tamilan-store-v0.10", "Tamilan-Store-v0.10.apk", 19476375, "' + receipt['apk_sha256'] + '")', mirrors)
+        self.assertIn('("tamilan-store-v0.11", "Tamilan-Store-v0.11.apk", 19476379, "' + receipt['apk_sha256'] + '")', mirrors)
         self.assertNotIn('("tamilan-store-v0.9",', mirrors)
         verifier = (ROOT/'tools/verify_live_three_releases.py').read_text()
-        self.assertIn("('Tamilan-Store-v0.10.apk',", verifier)
-        self.assertIn('tamilan-store-0.10-publication-receipt.json', verifier)
+        self.assertIn("('Tamilan-Store-v0.11.apk',", verifier)
+        self.assertIn('tamilan-store-0.11-publication-receipt.json', verifier)
 
 
     def test_installer_handoff_keeps_uri_read_only_and_failures_typed(self):

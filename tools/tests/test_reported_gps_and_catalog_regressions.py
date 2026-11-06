@@ -34,3 +34,19 @@ class ReportedPhoneRegressions(unittest.TestCase):
         self.assertIn('verifyGate(total == app.size, TransferFailure.SIZE)',model)
         self.assertIn('verify(app, part)',model)
         self.assertIn('hex(digest.digest()) == app.sha256',model)
+    def test_published_store_pins_only_the_final_verified_source(self):
+        import json
+        from unittest.mock import patch
+        import promote_verified_store_011 as publisher
+        p=json.loads((ROOT/'docs/approved-store-0.11-candidate.json').read_text())
+        r=json.loads((ROOT/'docs/tamilan-store-0.11-publication-receipt.json').read_text())
+        self.assertEqual(p['source'],'29083446beb03d6d428c3f681fa3283f75a9394d')
+        self.assertEqual(p['background_run'],42182208056)
+        self.assertEqual((p['apk_sha256'],p['bytes']),(r['sha256'],r['bytes']))
+        self.assertFalse(r['owner_reports_background_download_working'])
+        self.assertTrue(r['prior_public_assets_unchanged'])
+        # A successful but older candidate cannot be substituted for the tested final source.
+        stale=dict(head_sha='09250a8aafdec9d5f4bea6bf47044283bc8fce14',head_branch=publisher.BRANCH,
+                   status='completed',conclusion='success',path='.github/workflows/tamilanstore-signed-candidate.yml')
+        with patch.object(publisher,'api',return_value=stale),self.assertRaises(AssertionError):
+            publisher.verify_candidate_gates(p)

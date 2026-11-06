@@ -1,10 +1,10 @@
-# தமிழன் / Tamilan Store — 0.10
+# தமிழன் / Tamilan Store — 0.11
 
-**Current stable:0.10/code12.** [Download the exact verified APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.10/Tamilan-Store-v0.10.apk). [Verification and limits](../docs/tamilan-store-0.10-background-download.md).
+**Current stable:0.11/code13.** [Download the exact verified APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.11/Tamilan-Store-v0.11.apk). [Verification and limits](../docs/tamilan-store-0.11-catalog-recovery.md).
 
-User-started downloads use Android DownloadManager and recover after screen-off or model recreation. Android may defer transport for power/network/storage restrictions. The current immutable selection is recovered; batch installation approvals are not persisted after process death. Every installation still needs size/hash/package/version/SDK/signer checks and Android confirmation. No new permissions. The owner reports background downloading works; no independent phone hash, all-OEM or Google approval is claimed.
+Use **Refresh catalog** to retry official metadata with a fresh, cache-safe request. Checking, success, unavailable and rejected responses are distinct; the last good list survives a failure. Refresh never starts an APK download or installation. Package/URL, no-rollback, same-version immutability, hash, signer and explicit Android approval safeguards remain mandatory.
 
-Update0.9 normally without uninstalling or clearing data. Debug artifacts cannot update release installations. Do not bypass Play Protect or erase records as a workaround. Existing galleries are earlier-version screenshots; no new owner images were required for0.10.
+User-started downloads remain system-owned and recover after screen-off/model recreation. Completed requests are read using DownloadManager's provider file descriptor, then copied and fully verified privately before installer handoff. Android may still defer network/power/storage access. Update0.10 normally without uninstalling or clearing data; do not bypass warnings. No new permissions, independent phone-hash, all-OEM, Brave-browser fix or Google clearance is claimed. Earlier gallery images remain historical.
 
 ## Historical0.8 evidence (not the current download)
 
