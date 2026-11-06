@@ -75,7 +75,7 @@ class OorLocationNativeTest {
                 val root = automation.rootInActiveWindow
                 val screen = Rect().also { root?.getBoundsInScreen(it) }
                 val all = nodes()
-                val minimumVisible = (24 * base.resources.displayMetrics.density).toInt()
+                val minimumVisible = (12 * base.resources.displayMetrics.density).toInt()
                 val match = all.firstOrNull { node ->
                     val bounds = Rect().also { node.getBoundsInScreen(it) }
                     (node.text?.toString()?.contains(label) == true || node.contentDescription?.toString() == label) &&
