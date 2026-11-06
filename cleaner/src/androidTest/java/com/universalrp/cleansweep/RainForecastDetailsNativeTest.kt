@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -79,8 +80,10 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
                             val density = LocalDensity.current.density
                             CompositionLocalProvider(LocalDensity provides Density(density, scale)) {
                                 MaterialTheme {
-                                    Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())) {
-                                        RainForecastDetailPanel(snapshot, at, SimpleWeatherStore.HOME)
+                                    key(lang, scale) {
+                                        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())) {
+                                            RainForecastDetailPanel(snapshot, at, SimpleWeatherStore.HOME)
+                                        }
                                     }
                                 }
                             }
@@ -91,7 +94,7 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
                     find("0.40 mm/h")
                     find(if (lang == AppLang.EN) "Rain rate is not accumulated rainfall" else "மழை வீதம் மொத்த மழை")
                     find(if (lang == AppLang.EN) "Forecast, not an official warning" else "முன்னறிவிப்பு மட்டுமே")
-                } finally { i.runOnMainSync { activity.finish() } }
+                } finally { i.runOnMainSync { activity.finish() }; i.waitForIdleSync() }
             }
         } finally {
             runBlocking { repo.setLang(AppLang.fromId(originalId)) }
