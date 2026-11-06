@@ -116,6 +116,9 @@ class OorLocationNativeTest {
                         find(if (tamil) "நேரக் கணிப்பு கிடைக்கவில்லை" else "Estimate unavailable", true)
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
                         find(if (tamil) "பயணத்தைத் தொடங்கவும்" else "Start a trip to observe GNSS", true)
+                        // At 200% font the status can scroll its toggle above the viewport.
+                        // Return to the actual home top, then locate and close the same control.
+                        repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
                         find(if (tamil) "சமீபத்திய ஊர் அறிவிப்புகள்" else "Recent Voice Announcements", true)
                         // Return the single home scroll owner to its start before the next pass.
