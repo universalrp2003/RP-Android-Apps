@@ -60,7 +60,7 @@ import kotlin.coroutines.resume
  * 2. Monitors GPS ON/OFF status: if GPS is turned off, stops voice announcements immediately.
  * 3. Detects Bike/Car movement & distance threshold so staying at a routine place produces 0 announcements.
  * 4. Reverse-geocodes coordinates into:
- *    - City / Town / Village (`locality` / `subAdminArea`)
+ *    - City / Town / Village (`locality`, finer `subLocality` for local announcements only)
  *    - Same-City Next Place / Neighborhood (`subLocality` / `thoroughfare`)
  * 5. Announces place names in Tamil (default) or English depending on user setting,
  *    respecting the "Same-City Next Place Announcement" ON/OFF toggle.

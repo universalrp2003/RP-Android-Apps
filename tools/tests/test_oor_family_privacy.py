@@ -17,7 +17,9 @@ class FamilyPrivacyContracts(unittest.TestCase):
         self.assertNotIn('Log.',s)
     def test_only_geocoder_town_and_district_in_publish_call(self):
         s=(SRC/'LocationAnnouncementService.kt').read_text()
-        self.assertIn('FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage, resolved.district, location)',s)
+        self.assertIn('FamilyRepository.publish(this@LocationAnnouncementService, resolved.familyLocality, resolved.district, location)',s)
+        self.assertIn('familyLocality = PlaceDataPolicy.resolvedLocality(address.locality, null, address.subAdminArea)',s)
+        self.assertNotIn('FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage,',s)
         s=(SRC/'family/FamilyProtocol.kt').read_text()
         self.assertIn('put("town",clean(town.town))',s)
         for field in ('latitude','longitude','subArea','speed','address','postcode'):
