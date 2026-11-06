@@ -69,7 +69,7 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
             for (lang in listOf(AppLang.EN, AppLang.TA)) for (scale in listOf(1f, 2f)) {
                 // Seed the real durable language source before MainViewModel starts its
                 // collector; changing only Lang.current races the saved-language restore.
-                runBlocking { repo.setLang(lang.id) }
+                runBlocking { repo.setLang(lang) }
                 prefs.edit().putString(Lang.KEY, lang.id).commit()
                 val activity = i.startActivitySync(Intent(i.targetContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) as MainActivity
                 try {
@@ -94,7 +94,7 @@ class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
                 } finally { i.runOnMainSync { activity.finish() } }
             }
         } finally {
-            runBlocking { repo.setLang(originalId) }
+            runBlocking { repo.setLang(AppLang.fromId(originalId)) }
             prefs.edit().apply { if (originalMirror == null) remove(Lang.KEY) else putString(Lang.KEY, originalMirror) }.commit()
             i.runOnMainSync { Lang.set(original) }
         }
