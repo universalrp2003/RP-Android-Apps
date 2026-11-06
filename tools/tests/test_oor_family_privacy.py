@@ -17,7 +17,9 @@ class FamilyPrivacyContracts(unittest.TestCase):
         self.assertNotIn('Log.',s)
     def test_only_geocoder_town_and_district_in_publish_call(self):
         s=(SRC/'LocationAnnouncementService.kt').read_text()
-        self.assertIn('FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage, resolved.district, location)',s)
+        self.assertIn('FamilyRepository.publish(this@LocationAnnouncementService, resolved.familyLocality, resolved.district, location)',s)
+        self.assertIn('familyLocality = PlaceDataPolicy.resolvedLocality(address.locality, null, address.subAdminArea)',s)
+        self.assertNotIn('FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage,',s)
         s=(SRC/'family/FamilyProtocol.kt').read_text()
         self.assertIn('put("town",clean(town.town))',s)
         for field in ('latitude','longitude','subArea','speed','address','postcode'):
@@ -37,7 +39,7 @@ class FamilyPrivacyContracts(unittest.TestCase):
         self.assertIn('FamilyRepository.pauseTrip(this)',(SRC/'LocationAnnouncementService.kt').read_text())
     def test_ui_has_no_automatic_enable_and_explicit_offline_warning(self):
         s=(SRC/'family/FamilyPanel.kt').read_text()
-        for text in ('sharing stays OFF','Stop all my family sharing','15-minute expiry','not a live location','No recent town update','FamilyRepository.confirm','FamilyRepository.setSharing'):
+        for text in ('sharing stays OFF','Stop all my family sharing','15-minute expiry','not a live location','No recent incoming town update','FamilyRepository.confirm','FamilyRepository.setSharing'):
             self.assertIn(text,s)
         self.assertNotIn('rememberSaveable',s)
         self.assertIn('Lifecycle.State.RESUMED',s)

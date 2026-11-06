@@ -38,10 +38,10 @@ class ExactAboutRelease(unittest.TestCase):
         receipt=json.loads((ROOT/'docs/oor-about-guide-1.1.16-publication-receipt.json').read_text())
         self.assertFalse(receipt['rebuilt']);self.assertTrue(receipt['prior_public_assets_unchanged'])
         self.assertEqual((receipt['release_id'],receipt['asset_id']),(433392185,707716347))
-        current=json.loads((ROOT/'docs/oor-trip-1.1.17-publication-receipt.json').read_text())
+        current=json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())
         for name in ('catalog.json','catalog-v2.json'):
             app=next(a for a in json.loads((ROOT/'site'/name).read_text())['apps'] if a['id']=='oorarivippu')
-            self.assertEqual(app['version'],'1.1.17')
+            self.assertEqual(app['version'],'1.1.19')
             self.assertEqual((app['sha256'],app['size'],app['url']),(current['apk_sha256'],current['bytes'],current['url']))
         pages=(ROOT/'.github/workflows/pages.yml').read_text()
         live=(ROOT/'tools/verify_live_three_releases.py').read_text()

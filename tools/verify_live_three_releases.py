@@ -78,6 +78,7 @@ def main():
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
               ('CleanSweep-v2.82.apk', health['apps']['cleaner']),
               ('Elderly-Launcher-v1.7.apk', json.loads((ROOT/'docs/launcher-1.7-publication.json').read_text()))]
+    checks.append(('Oor-Arivippu-v1.1.19.apk', json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())))
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000
         validate_apk(get_bounded('apks/' + name, pin['bytes']), pin['bytes'], pin['apk_sha256'])

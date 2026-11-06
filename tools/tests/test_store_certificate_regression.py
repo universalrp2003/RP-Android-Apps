@@ -30,10 +30,10 @@ class StoreCertificateRegression(unittest.TestCase):
         self.assertEqual(live['liveguard']['sha256'], receipt['apk_sha256'])
         self.assertEqual(live['liveguard']['size'], receipt['bytes'])
         self.assertEqual(live['liveguard']['url'], receipt['url'])
-        oor = json.loads((ROOT/'docs/oor-trip-1.1.17-publication-receipt.json').read_text())
+        oor = json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())
         self.assertEqual((old['oorarivippu']['version'], old['oorarivippu']['sha256']),
             ('1.1.10', '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa'))
-        self.assertEqual(live['oorarivippu']['version'], '1.1.17')
+        self.assertEqual(live['oorarivippu']['version'], '1.1.19')
         for key, field in [('sha256','apk_sha256'),('size','bytes'),('url','url')]:
             self.assertEqual(live['oorarivippu'][key], oor[field])
         ledger = (ROOT/'docs/published-release-digests.md').read_text()

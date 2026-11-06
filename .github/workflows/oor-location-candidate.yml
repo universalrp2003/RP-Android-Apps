@@ -1,0 +1,78 @@
+name: Oor 1.1.19 locality, GNSS and resource-safety candidate (no publication)
+on:
+  push:
+    branches: ["arena/cbff1d80-rp-android-apps"]
+    paths: ["oorarivippu/**", "tools/*oor_location*", ".github/workflows/oor-location-candidate.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: oor-location-candidate
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Source contracts and existing configured service
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+          python3 - <<'PY'
+          import json,os
+          p=json.load(open('docs/oor-family-native-verification-pins.json'))
+          assert p['service_url']=='https://oor-family-relay.universalrp2003.workers.dev'
+          with open(os.environ['GITHUB_ENV'],'a') as f: f.write('ORG_GRADLE_PROJECT_oorFamilyServiceUrl='+p['service_url']+'\n')
+          PY
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Unit tests, release lint and signed target/native assembly
+        run: |
+          set -o pipefail
+          gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease :oorarivippu:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/oor-trip-build.log
+      - name: Compare actual package, established signer and complete permissions to public 1.1.18
+        run: python3 tools/inspect_oor_location_candidate.py
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Exact public update, encrypted fixture and bilingual home at font 100 and 200 percent
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell wm dismiss-keyguard
+            python3 tools/oor_location_upgrade_smoke.py
+            python3 tools/run_oor_location_native.py
+      - name: Bounded failure diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as E
+          for p in Path('oorarivippu/build').rglob('TEST-*.xml'):
+              for f in E.parse(p).getroot().iter('failure'):
+                  print('::error::'+(f.text or '')[:4000].replace('\n','%0A'))
+          p=Path('/tmp/oor-trip-build.log')
+          if p.exists():
+              for line in p.read_text(errors='replace').splitlines():
+                  if line.startswith('e: '): print('::error::'+line)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Oor-1.1.19-location-candidate
+          path: ${{ runner.temp }}/health-oorarivippu/
+          retention-days: 14
