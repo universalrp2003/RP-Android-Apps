@@ -23,3 +23,6 @@ class RainReleasePromotion(unittest.TestCase):
                           ('restart_passed',False),('final_installed_apk_sha256','c'*64),('added_permissions',['extra'])]:
             r,p=self.fixtures();r=copy.deepcopy(r);r[key]=value
             with self.subTest(key=key),self.assertRaises(AssertionError):validate_receipt(r,p)
+    def test_current_source_identity_and_required_count_guard_runs(self):
+        import verify_cleaner_next_update_source as source_guard
+        source_guard.main()
