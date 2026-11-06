@@ -1,0 +1,42 @@
+name: Publish owner-authorized Oor 1.1.18 (exact configured tested bytes only)
+on:
+  push:
+    branches: ["arena/cbff1d80-rp-android-apps"]
+    paths: ["docs/oor-location-1.1.18-publication-pins.json"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-exact-oor-1-1-18
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v6
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v6
+        with: {node-version: '22'}
+      - name: Source boundaries and current isolated service check
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          node --test oorarivippu/family-relay/test/policy.test.mjs
+          node oorarivippu/family-relay/test/http-smoke.mjs https://oor-family-relay.universalrp2003.workers.dev
+          python3 -m py_compile tools/promote_verified_oor_118.py
+      - name: Verify pinned artifact and publish Oor only, no rebuild or asset overwrite
+        run: python3 tools/promote_verified_oor_118.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: oor118-exact-publication-receipt
+          path: ${{ runner.temp }}/oor118-publication-receipt.json
+          retention-days: 30
+          if-no-files-found: warn

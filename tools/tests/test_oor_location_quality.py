@@ -39,3 +39,7 @@ class OorLocationQualityContracts(unittest.TestCase):
         self.assertIn('Last known straight-line remaining',progress)
         self.assertIn('Fix age:',progress)
         self.assertIn('takeIf { fresh }',progress)
+    def test_exact_publisher_cannot_select_old_pre_probe_artifact(self):
+        s=(R/'tools/promote_verified_oor_118.py').read_text()
+        for x in ("r['native_trip_tests']==3", "r['gps_probe_timeout_and_cleanup_verified'] is True", "assert not existing", "parse_badging(badging) == parse_badging(previous)", "for tag, old in prior.items(): assert after[tag] == old", "git', 'diff', '--exit-code'"):
+            self.assertIn(x,s)
