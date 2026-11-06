@@ -65,7 +65,7 @@ import java.util.Date
                         onCheckedChange={if(it)run{FamilyRepository.setSharing(c,row.id,true)} else try{FamilyRepository.stop(c,row.id);onChanged();if(!busy)run{}}catch(_:Exception){error=true}})
                 }
                 Text(if(row.pending) words("Stopped locally · online confirmation pending; old report expires within 15 minutes", "இந்தக் கைப்பேசியில் நிறுத்தம் · இணைய உறுதி காத்திருக்கிறது; பழைய அறிக்கை 15 நிமிடத்தில் காலாவதியாகும்") else if(!row.sharing) words("Sharing OFF", "பகிர்வு அணைப்பு") else if(row.uploading)
-                    words("Sharing ON · uploading during trip", "பகிர்வு ஆன் · பயணத்தில் அனுப்புகிறது") else
+                    words("Your outgoing sharing ON · trip uploads enabled", "உங்கள் பகிர்வு ஆன் · பயணப் பதிவேற்றம் இயக்கம்") else
                     words("Sharing ON · waiting for trip / connection", "பகிர்வு ஆன் · பயணம் / இணைப்புக்குக் காத்திருக்கிறது"),style=MaterialTheme.typography.bodySmall)
 
 
@@ -132,7 +132,7 @@ import java.util.Date
         Text(listOf(town.town,town.district).filter{it.isNotBlank()}.distinct().joinToString(" · "))
         Text(words("Last reported (not live): ","கடைசியாகத் தெரிவித்த ஊர் (நேரலை அல்ல): ")+DateFormat.getDateTimeInstance(DateFormat.SHORT,DateFormat.SHORT).format(Date(town.at)),style=MaterialTheme.typography.bodySmall)
         if(row.unavailable) Text(words("Offline / unavailable · showing the last unexpired report","இணையம் இல்லை / கிடைக்கவில்லை · காலாவதியாகாத கடைசி அறிக்கை"),style=MaterialTheme.typography.bodySmall)
-    } else if(row.confirmed) Text(words("No recent town update","புதிய ஊர் தகவல் இல்லை"), fontSize=13.sp)
+    } else if(row.confirmed) Text(words("No recent incoming town update","புதிய பெறப்பட்ட ஊர் தகவல் இல்லை"), fontSize=13.sp)
 }
 
 @Composable private fun FamilySharingControl(row: FamilyRepository.View,tamil: Boolean,busy: Boolean,onEnable: ()->Unit,onDisable: ()->Unit) {

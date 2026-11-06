@@ -17,7 +17,7 @@ class OorLocationQualityContracts(unittest.TestCase):
         s=(S/'LocationDiagnostics.kt').read_text()
         for x in ('Lifecycle.State.RESUMED','unregisterGnssStatusCallback','onDispose','usedInFix','coerceAtMost(256)','take(24)','SatellitePolicy.fresh','getHistoricalProcessExitReasons','Close diagnostics','heightIn(max=480.dp)','not a diagnosis of a whole-phone restart'):
             self.assertIn(x,s)
-        for x in ('requestLocationUpdates','HttpURLConnection','OkHttp','putString','requestPermissions'):
+        for x in ('HttpURLConnection','OkHttp','putString','requestPermissions'):
             self.assertNotIn(x,s)
     def test_current_public_links_are_not_advanced(self):
         self.assertIn('versionName = "1.1.18"',(R/'oorarivippu/build.gradle.kts').read_text())
@@ -26,3 +26,16 @@ class OorLocationQualityContracts(unittest.TestCase):
         inspector=(R/'tools/inspect_oor_location_candidate.py').read_text()
         self.assertIn("'1.1.18', 23",inspector)
         self.assertIn('7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f',inspector)
+    def test_authorized_foreground_probe_has_bounded_duration_and_cleanup(self):
+        p=(S/'GpsDiagnosticProbe.kt').read_text()
+        for value in ('DURATION_MS = 30_000L','setDurationMillis(DURATION_MS)','removeUpdates(listener)','removeCallbacks(deadline)','ACCESS_FINE_LOCATION'):
+            self.assertIn(value,p)
+        for value in ('AppPreferences','FamilyRepository','HttpURLConnection'):
+            self.assertNotIn(value,p)
+        ui=(S/'LocationDiagnostics.kt').read_text()
+        for value in ('if (!open || !resumed || !allowed) probe.stop()', 'onDispose { probe.stop() }','Check GPS now','REASON_USER_REQUESTED'):
+            self.assertIn(value,ui)
+        progress=(S/'TripProgress.kt').read_text()
+        self.assertIn('Last known straight-line remaining',progress)
+        self.assertIn('Fix age:',progress)
+        self.assertIn('takeIf { fresh }',progress)

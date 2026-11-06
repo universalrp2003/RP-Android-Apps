@@ -281,7 +281,7 @@ fun OorArivippuScreen(
     }
     var showGuide by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
-    var destinationLookupMessage by remember { mutableStateOf("") }
+    var destinationLookupMessage by remember(state.appLanguage) { mutableStateOf("") }
     var isResolvingDestination by remember { mutableStateOf(false) }
     var destinationCandidates by remember { mutableStateOf<List<DestinationCandidate>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
@@ -455,7 +455,7 @@ fun OorArivippuScreen(
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = ui.appTitle,
+                        text = if (oorIsTamil) "ஊர் அறிவிப்பு" else "Oor Arivippu",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
@@ -700,7 +700,7 @@ fun OorArivippuScreen(
                             modifier = Modifier.weight(1f)
                         )
                         Text(
-                            text = "${state.currentSpeedKmh.toInt()} km/h",
+                            text = tripSpeedText(state, oorIsTamil),
                             color = Color(0xFF0F766E),
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.5.sp
@@ -1094,10 +1094,9 @@ private fun OorSettingsFullDialog(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(inner)
-                    .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // 1. Voice Speed & Volume (Auto HD Male/Female online + Auto System Male/Female offline)
                 Card(
@@ -1106,8 +1105,8 @@ private fun OorSettingsFullDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             text = if (oorIsTamil) "🎙️ குரல் வேகம் & ஒலியளவு" else "🎙️ Voice Speed & Volume",
@@ -1228,8 +1227,8 @@ private fun OorSettingsFullDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         SettingToggleItem(
                             icon = Icons.Default.LocationCity,
@@ -1325,7 +1324,7 @@ private fun OorSettingsFullDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(10.dp),
                         verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
                         Text(ui.aboutSectionTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -1377,7 +1376,7 @@ private fun OorSettingsFullDialog(
                             Text(if (oorIsTamil) "இணைய வழிகாட்டி & மறைக்கப்பட்ட படங்கள்" else "Web guide & redacted screenshots")
                         }
                         Divider(color = Color(0xFFE2E8F0))
-                        Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Text((if(oorIsTamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas apps") + " (${com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu").size})", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                         // Use the suite's verified public versions, never a second stale tag list.
                         val releaseLinks = com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu")
                         releaseLinks.forEach { (label, url) ->
@@ -1558,7 +1557,7 @@ private fun SettingToggleItem(
     ) {
         Row(
             modifier = Modifier.weight(1f).padding(end = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(
                 imageVector = icon,

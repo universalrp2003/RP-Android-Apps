@@ -8,15 +8,15 @@ installed=subprocess.check_output(['adb','shell','pm','path',r['package']],text=
 data=subprocess.check_output(['adb','exec-out','cat',installed])
 assert len(data)==r['bytes'] and hashlib.sha256(data).hexdigest()==r['sha256']
 command=['adb','shell','am','instrument','-w','-r','-e','class',
- 'com.oorarivippu.voiceannouncer.OorLocationNativeTest#bilingualTripHomeAndPreservedFamilyFixture',
+ 'com.oorarivippu.voiceannouncer.OorLocationNativeTest,com.oorarivippu.voiceannouncer.GpsProbeNativeTest',
  '-e','expectedHash',r['sha256'],'com.oorarivippu.voiceannouncer.test/androidx.test.runner.AndroidJUnitRunner']
 result=subprocess.run(command,capture_output=True,text=True,timeout=600)
 raw=result.stdout+result.stderr;(root/'trip-native.txt').write_text(raw)
-if result.returncode or 'OK (1 test)' not in raw or 'INSTRUMENTATION_STATUS_CODE: 0' not in raw:
+if result.returncode or 'OK (3 tests)' not in raw or 'INSTRUMENTATION_STATUS_CODE: 0' not in raw:
  print('::error title=Oor trip native::'+raw[-12000:].replace('%','%25').replace('\n','%0A').replace('\r','%0D'),flush=True)
  raise AssertionError('Actual native UI test failed')
 assert 'INSTRUMENTATION_CODE: -1' in raw and 'FAILURES' not in raw
-r.update(native_trip_tests=1,bilingual_home_history_rendered=True,font100_and200_rendered=True,
+r.update(native_trip_tests=3,bilingual_home_history_rendered=True,font100_and200_rendered=True,
  encrypted_family_fixture_decrypted_after_upgrade=True,exact_installed_apk_verified=True)
 p.write_text(json.dumps(r,indent=2)+'\n')
 print('::notice title=Oor trip native passed::'+json.dumps(r),flush=True)

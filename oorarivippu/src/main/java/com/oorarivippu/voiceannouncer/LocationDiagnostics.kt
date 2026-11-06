@@ -33,7 +33,7 @@ internal object SatellitePolicy {
     }
 }
 
-/** No new permissions, no extra location requests, no persisted/uploaded satellite or exit records. */
+/** No new permissions; explicit bounded foreground GPS check; no persisted/uploaded satellite or exit records. */
 @SuppressLint("MissingPermission")
 @Composable internal fun LocationDiagnostics(state: AppStateSnapshot, tamil: Boolean) {
     fun words(en: String, ta: String) = if(tamil) ta else en
@@ -43,10 +43,17 @@ internal object SatellitePolicy {
     var details by remember { mutableStateOf(false) }
     var snapshot by remember { mutableStateOf<SatelliteSnapshot?>(null) }
     var status by remember { mutableStateOf("") }
+    var sampling by remember { mutableStateOf(false) }
+    var sampleFinished by remember { mutableStateOf(false) }
+    val probe = remember(context) { GpsDiagnosticProbe(context) { sampling = false; sampleFinished = true } }
     var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     val resumed = lifecycle.isAtLeast(Lifecycle.State.RESUMED)
     val allowed = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    DisposableEffect(open, resumed, state.isTrackingEnabled, state.isGpsEnabled, allowed, tamil) {
+    LaunchedEffect(open, resumed, allowed) {
+        if (!open || !resumed || !allowed) probe.stop()
+    }
+    DisposableEffect(probe) { onDispose { probe.stop() } }
+    DisposableEffect(open, resumed, allowed, tamil) {
         val manager = context.getSystemService(LocationManager::class.java)
         var active = true
         var registered = false
@@ -54,8 +61,7 @@ internal object SatellitePolicy {
         snapshot = null
         status = when {
             !allowed -> words("Precise location permission is not granted", "துல்லிய இருப்பிட அனுமதி இல்லை")
-            !state.isTrackingEnabled -> words("Start a trip to observe GNSS; no extra location requests are made", "GNSS தகவலுக்குப் பயணத்தைத் தொடங்கவும்; கூடுதல் இருப்பிடக் கோரிக்கை இல்லை")
-            !state.isGpsEnabled -> words("GPS is off", "GPS அணைந்துள்ளது")
+            !state.isTrackingEnabled -> words("GPS check works while walking or stationary; no trip required", "நடக்கும்போதும் நின்றபடியும் GPS சோதிக்கலாம்; பயணம் தேவையில்லை")
             else -> words("Waiting for receiver status · not reported yet", "பெறுநர் தகவலுக்குக் காத்திருக்கிறது · இன்னும் கிடைக்கவில்லை")
         }
         val callback = object : GnssStatus.Callback() {
@@ -72,7 +78,7 @@ internal object SatellitePolicy {
                 snapshot = SatelliteSnapshot(rows, value.satelliteCount, elapsed)
             }
         }
-        if(open && resumed && allowed && state.isTrackingEnabled && state.isGpsEnabled) {
+        if(open && resumed && allowed) {
             try {
                 registered = manager?.registerGnssStatusCallback(callback, Handler(Looper.getMainLooper())) == true
                 if(!registered) status = words("GNSS status unavailable on this device", "இந்தச் சாதனத்தில் GNSS தகவல் கிடைக்கவில்லை")
@@ -92,11 +98,22 @@ internal object SatellitePolicy {
         Text(words("Satellite / app diagnostics", "செயற்கைக்கோள் / செயலி விவரங்கள்"))
     }
     if(open) AlertDialog(
-        onDismissRequest={open = false},
+        onDismissRequest={probe.stop(); open = false},
         title={Text(words("Satellite / app diagnostics", "செயற்கைக்கோள் / செயலி விவரங்கள்"))},
-        confirmButton={TextButton(onClick={open = false}) { Text(words("Close diagnostics", "விவரங்களை மூடு")) }},
+        confirmButton={TextButton(onClick={probe.stop(); open = false}) { Text(words("Close diagnostics", "விவரங்களை மூடு")) }},
         text={Column(Modifier.fillMaxWidth().heightIn(max=480.dp).verticalScroll(rememberScrollState()),
             verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                if(sampling) {
+                    Text(words("GPS check running · up to 30 seconds", "GPS சோதனை இயங்குகிறது · அதிகபட்சம் 30 வினாடிகள்"))
+                    TextButton(onClick={probe.stop()}) { Text(words("Stop GPS check", "GPS சோதனையை நிறுத்து")) }
+                } else {
+                    Button(enabled=resumed && allowed, onClick={
+                        sampleFinished = false
+                        sampling = probe.start()
+                        if(!sampling) status = words("Cannot start GPS check. Enable GPS and existing precise-location permission.", "GPS சோதனையைத் தொடங்க இயலவில்லை. GPS மற்றும் துல்லிய இருப்பிட அனுமதியைச் சரிபார்க்கவும்.")
+                    }) { Text(words("Check GPS now · 30 seconds", "இப்போது GPS சோதி · 30 வினாடிகள்")) }
+                    if(sampleFinished) Text(words("GPS check stopped · no ongoing diagnostic location request", "GPS சோதனை நின்றது · இருப்பிடக் கோரிக்கை தொடரவில்லை"))
+                }
                 val current = snapshot?.takeIf { SatellitePolicy.fresh(it.atMs, now) }
                 if(current == null) Text(if(snapshot != null) words("Receiver status is stale · counts unavailable", "பெறுநர் தகவல் பழையது · எண்ணிக்கை கிடைக்கவில்லை") else status)
                 else {
@@ -109,13 +126,14 @@ internal object SatellitePolicy {
                         Text("${row.system} ${row.id} · $strength · " + if(row.used) words("used", "பயன்பட்டது") else words("not used", "பயன்படவில்லை"), style=MaterialTheme.typography.bodySmall)
                     }
                 }
-                Text(words("Satellites broadcast signals; ‘used’ is Android's latest GNSS receiver fix, not a network connection. A fused location can also use other sources. Android does not expose exact satellite weights for our displayed location/distance. No new location requests; details remain on this phone.",
-                    "செயற்கைக்கோள்கள் சமிக்ஞை அனுப்புகின்றன; ‘பயன்பட்டது’ என்பது Android GNSS பெறுநரின் கடைசிக் கணிப்பு, இணைய இணைப்பு அல்ல. கலப்பு இருப்பிடம் பிற மூலங்களையும் பயன்படுத்தலாம். காட்டும் இடம்/தொலைவிற்கான துல்லிய செயற்கைக்கோள் பங்கை Android தராது. கூடுதல் இருப்பிடக் கோரிக்கை இல்லை; விவரங்கள் இந்தக் கைப்பேசியில் மட்டும்."), style=MaterialTheme.typography.bodySmall)
+                Text(words("Satellites broadcast signals; ‘used’ is Android's latest GNSS receiver fix, not a network connection. A fused location can also use other sources. Android does not expose exact satellite weights for our displayed location/distance. Only Check GPS now starts an extra GPS request, for at most 30 seconds. Closing or backgrounding stops it. No trip or vehicle is required. Details remain on this phone.",
+                    "செயற்கைக்கோள்கள் சமிக்ஞை அனுப்புகின்றன; ‘பயன்பட்டது’ என்பது Android GNSS பெறுநரின் கடைசிக் கணிப்பு, இணைய இணைப்பு அல்ல. கலப்பு இருப்பிடம் பிற மூலங்களையும் பயன்படுத்தலாம். காட்டும் இடம்/தொலைவிற்கான துல்லிய செயற்கைக்கோள் பங்கை Android தராது. GPS சோதனை பொத்தானால் மட்டும் அதிகபட்சம் 30 வினாடி கூடுதல் GPS கோரிக்கை தொடங்கும். மூடினாலோ பின்னணிக்குச் சென்றாலோ நின்றுவிடும். வாகனம் தேவையில்லை; விவரங்கள் கைப்பேசியில் மட்டும்."), style=MaterialTheme.typography.bodySmall)
                 val reason = when(exitReason) {
                     ApplicationExitInfo.REASON_CRASH, ApplicationExitInfo.REASON_CRASH_NATIVE -> words("app crash", "செயலி முறிவு")
                     ApplicationExitInfo.REASON_ANR -> words("app not responding", "செயலி பதிலளிக்கவில்லை")
                     ApplicationExitInfo.REASON_LOW_MEMORY -> words("system low-memory termination", "நினைவகக் குறைவால் செயலி நிறுத்தம்")
                     ApplicationExitInfo.REASON_EXCESSIVE_RESOURCE_USAGE -> words("system resource-usage termination", "வளப் பயன்பாட்டால் செயலி நிறுத்தம்")
+                    ApplicationExitInfo.REASON_USER_REQUESTED -> words("user-requested app stop (10), not proof of a crash", "பயனர் கோரிய செயலி நிறுத்தம் (10), முறிவுக்கான சான்றல்ல")
                     null -> words("not available", "கிடைக்கவில்லை")
                     else -> words("other / user / system stop ($exitReason)", "பிற / பயனர் / கணினி நிறுத்தம் ($exitReason)")
                 }

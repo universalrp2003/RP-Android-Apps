@@ -82,6 +82,10 @@ data class AppStateSnapshot(
 
 object AppPreferences {
     fun updateTripFix(latitude: Double, longitude: Double, elapsedMs: Long, speedKmh: Float?) {
+        if (elapsedMs < 0L || !latitude.isFinite() || latitude !in -90.0..90.0 || !longitude.isFinite() || longitude !in -180.0..180.0) {
+            _state.value = _state.value.copy(tripSpeedKmh = null)
+            return // Keep last good coordinates and their ORIGINAL age; never promote a bad fix.
+        }
         _state.value = _state.value.copy(tripLatitude = latitude, tripLongitude = longitude,
             tripFixElapsedMs = elapsedMs, tripSpeedKmh = speedKmh)
     }
