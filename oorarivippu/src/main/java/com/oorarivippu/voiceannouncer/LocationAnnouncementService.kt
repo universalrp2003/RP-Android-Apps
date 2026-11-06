@@ -836,7 +836,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                 if (com.oorarivippu.voiceannouncer.family.FamilyStore.active(this@LocationAnnouncementService) > 0) {
                     serviceScope.launch {
                         try {
-                            com.oorarivippu.voiceannouncer.family.FamilyRepository.publish(this@LocationAnnouncementService, cityOrVillage, resolved.district, location)
+                            com.oorarivippu.voiceannouncer.family.FamilyRepository.publish(this@LocationAnnouncementService, resolved.familyLocality, resolved.district, location)
                         } catch(cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                         catch(_:Exception) { /* Family/storage failure never breaks accepted trip announcements. */ }
                     }
@@ -1106,7 +1106,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         val cityOrVillage: String,
         val subArea: String,
         val district: String,
-        val highwayLandmark: String?
+        val highwayLandmark: String?,
+        val familyLocality: String
     )
 
     @Suppress("DEPRECATION")
@@ -1170,7 +1171,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             cityOrVillage = cityOrVillage,
             subArea = rawSubArea,
             district = district,
-            highwayLandmark = highwayLandmark
+            highwayLandmark = highwayLandmark,
+            // Family sharing must never inherit the finer announcement-only subLocality.
+            familyLocality = PlaceDataPolicy.resolvedLocality(address.locality, null, address.subAdminArea)
         )
     }
 

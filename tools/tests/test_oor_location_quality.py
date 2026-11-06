@@ -7,6 +7,8 @@ class OorLocationQualityContracts(unittest.TestCase):
     def test_no_admin_fallback_and_bounded_resources(self):
         s=(S/'LocationAnnouncementService.kt').read_text()
         self.assertNotIn('listOf(address.locality, address.subAdminArea)',s)
+        self.assertIn('FamilyRepository.publish(this@LocationAnnouncementService, resolved.familyLocality, resolved.district, location)',s)
+        self.assertIn('familyLocality = PlaceDataPolicy.resolvedLocality(address.locality, null, address.subAdminArea)',s)
         for x in ('PlaceDataPolicy.resolvedLocality','DestinationFixPolicy.usable','withTimeoutOrNull(15_000L)','neuralWorkCount.incrementAndGet() > 6','neuralExecutor.shutdownNow()','RejectedExecutionException'):
             self.assertIn(x,s)
     def test_satellite_lifecycle_and_honest_unavailable(self):

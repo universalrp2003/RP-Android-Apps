@@ -44,7 +44,7 @@ internal object SatellitePolicy {
     var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     val resumed = lifecycle.isAtLeast(Lifecycle.State.RESUMED)
     val allowed = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
-    DisposableEffect(open, resumed, state.isTrackingEnabled, state.isGpsEnabled, allowed) {
+    DisposableEffect(open, resumed, state.isTrackingEnabled, state.isGpsEnabled, allowed, tamil) {
         val manager = context.getSystemService(LocationManager::class.java)
         var active = true
         var registered = false
