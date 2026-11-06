@@ -30,6 +30,7 @@ internal class GpsDiagnosticProbe(private val context: Context, private val life
     }
     @SuppressLint("MissingPermission")
     fun start(): Boolean {
+        if (lifecycle != null && !lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) return false
         if (running || context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return false
         return try {
             if (manager?.isProviderEnabled(LocationManager.GPS_PROVIDER) != true) return false

@@ -43,3 +43,11 @@ class OorLocationQualityContracts(unittest.TestCase):
         s=(R/'tools/promote_verified_oor_118.py').read_text()
         for x in ("r['native_trip_tests']==3", "r['gps_probe_timeout_and_cleanup_verified'] is True", "assert not existing", "parse_badging(badging) == parse_badging(previous)", "for tag, old in prior.items(): assert after[tag] == old", "git', 'diff', '--exit-code'"):
             self.assertIn(x,s)
+    def test_background_cleanup_is_synchronous_not_dependent_on_recomposition(self):
+        p=(S/'GpsDiagnosticProbe.kt').read_text()
+        for x in ('LifecycleEventObserver','ON_PAUSE','ON_STOP','ON_DESTROY','lifecycle?.addObserver(observer)','lifecycle?.removeObserver(observer)','!lifecycle.currentState.isAtLeast'):
+            self.assertIn(x,p)
+        ui=(S/'LocationDiagnostics.kt').read_text()
+        self.assertIn('GpsDiagnosticProbe(context, lifecycleOwner.lifecycle)',ui)
+        self.assertIn('{ probe.stop(); unregister() }',ui)
+        self.assertIn('lifecycleOwner.lifecycle.removeObserver(observer)',ui)
