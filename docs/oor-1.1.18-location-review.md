@@ -1,4 +1,6 @@
-# Oor1.1.18 — owner-authorized final GPS/locality release
+# Oor1.1.18 — historical GPS/locality release
+
+Superseded by1.1.19, which adds synchronous lifecycle cleanup without relying on Compose frames. The1.1.18 APK/receipts remain immutable; use the latest1.1.19 download.
 
 Private owner screenshots are reference-only; no new private screenshots, names or places are published. The owner explicitly authorized necessary fixes, a manual30-second GPS check, verification and publication, without requiring another phone test.
 

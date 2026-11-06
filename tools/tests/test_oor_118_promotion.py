@@ -30,12 +30,12 @@ class FinalGpsPublication(unittest.TestCase):
             r,p=self.fixtures();r=copy.deepcopy(r);r[key]=value
             with self.subTest(key=key),self.assertRaises(AssertionError):validate_receipt(r,p)
     def test_both_feeds_and_historical_mirrors_keep_exact_public_bytes(self):
-        pub=json.loads((ROOT/'docs/oor-location-1.1.18-publication-receipt.json').read_text())
+        pub=json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())
         for filename in ('catalog.json','catalog-v2.json'):
             app=next(a for a in json.loads((ROOT/'site'/filename).read_text())['apps'] if a['id']=='oorarivippu')
-            self.assertEqual((app['version'],app['sha256'],app['size'],app['url']),('1.1.18',pub['apk_sha256'],pub['bytes'],pub['url']))
+            self.assertEqual((app['version'],app['sha256'],app['size'],app['url']),('1.1.19',pub['apk_sha256'],pub['bytes'],pub['url']))
         pages=(ROOT/'.github/workflows/pages.yml').read_text()
         live=(ROOT/'tools/verify_live_three_releases.py').read_text()
-        for version in ('1.1.15','1.1.16','1.1.17','1.1.18'):
+        for version in ('1.1.15','1.1.16','1.1.17','1.1.19'):
             self.assertIn('Oor-Arivippu-v'+version+'.apk',pages)
             self.assertIn('Oor-Arivippu-v'+version+'.apk',live)

@@ -21,8 +21,8 @@ class OorLocationQualityContracts(unittest.TestCase):
             self.assertNotIn(x,s)
     def test_current_public_links_match_exact_authorized_receipt(self):
         self.assertIn('versionName = "1.1.19"',(R/'oorarivippu/build.gradle.kts').read_text())
-        self.assertIn('publishedVersion = "1.1.18"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
-        self.assertIn('Oor-Arivippu-v1.1.18.apk',(R/'site/index.html').read_text())
+        self.assertIn('publishedVersion = "1.1.19"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
+        self.assertIn('Oor-Arivippu-v1.1.19.apk',(R/'site/index.html').read_text())
         inspector=(R/'tools/inspect_oor_location_candidate.py').read_text()
         self.assertIn("'1.1.19', 24",inspector)
         self.assertIn('e224ed2a9db1494c480c14e616821b24fbc73bd2ec48fea05390f401281ef0da',inspector)

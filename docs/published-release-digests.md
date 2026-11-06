@@ -560,3 +560,7 @@ Published2026-11-05T16:19:25Z, release435432949/asset714002527. APK **19,476,375
 ## Oor Arivippu1.1.18 — 6 November2026
 
 Exact GPS-verified APK **12,924,720B**, SHA-256 `e224ed2a9db1494c480c14e616821b24fbc73bd2ec48fea05390f401281ef0da`, source02e98aad51e4f72ee8e44c622243d47c61934abd, candidate42163141442/artifact13477479675, publisher42164167011. Release436107627/asset715932949. No rebuild; all previous public assets unchanged. Same signer/complete permissions, saved-data/Keystore upgrade, bilingual100%/200% and three native UI/deadline/cleanup tests passed. Owner explicitly authorized scoped fixes and publication without another phone test. No physical GNSS, reboot-cure or Google-clearance claim.
+
+## Oor Arivippu1.1.19 — synchronous lifecycle guard
+
+12,924,720B, SHA-256 `f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02`, source10f7d339b5451020bfb5fcb9fbba352ea38bdec1, candidate42169463061, publisher42170377449, release436142996/asset716068902. Four actual native tests, including no-frame pause/destroy cleanup, exact public1.1.18 data/Keystore update and bilingual100%/200% controls. No rebuild/overwrite; earlier public assets unchanged. No physical GNSS/reboot-cure/Google claim.
