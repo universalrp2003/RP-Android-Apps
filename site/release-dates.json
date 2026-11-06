@@ -1,7 +1,6 @@
 {
   "source": "GitHub Releases published_at (UTC)",
   "releases": {
-    "live-guard-v2.95": "2026-11-04T05:11:21Z",
     "ramesh-radio-v1.31": "2026-10-31T13:53:48Z",
     "pulseeq-v1.11": "2026-10-29T12:01:26Z",
     "rp-vocal-remover-studio-v0.1.16": "2026-10-29T12:11:23Z",
@@ -14,6 +13,7 @@
     "daily-vault-v0.5": "2026-10-30T17:37:40Z",
     "sms-guard-v1.1.17": "2026-11-04T12:21:13Z",
     "oor-arivippu-v1.1.20": "2026-11-06T07:39:35Z",
-    "tamilan-store-v0.11": "2026-11-06T07:49:17Z"
+    "tamilan-store-v0.11": "2026-11-06T07:49:17Z",
+    "live-guard-v2.96": "2026-11-06T09:19:58Z"
   }
 }

@@ -704,7 +704,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.17"',
-            'tagPrefix = "live-guard"', 'version = "2.95"',
+            'tagPrefix = "live-guard"', 'version = "2.96"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
@@ -1021,8 +1021,6 @@ def verify_module_versions_match_sister_apps() -> int:
                 "module %s (namespace %s) has a versionName but no SisterApps entry"
                 % (gradle.parent.name, pkg.group(1))
             )
-        if gradle.parent.name == "cleaner" and ver.group(1) == "2.96" and by_package[pkg.group(1)] == "2.95":
-            continue  # Unpublished candidate; public pointers move only after exact promotion.
         if by_package[pkg.group(1)] != ver.group(1):
             raise ValueError(
                 "module %s is version %s but SisterApps advertises %s for %s"
