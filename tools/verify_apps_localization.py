@@ -1238,16 +1238,10 @@ def verify_site_versions_match_downloads() -> int:
     optional_tags = {sister_id_tags[app_id] for app_id in optional_ids}
     if len(table_tags & optional_tags) != optional_count or len(table_tags - optional_tags) != non_store_count:
         raise ValueError("Latest Releases table does not match the website's non-Store/optional grouping.")
-    expected_badge = (
-        f"{expected_apps} apps ({non_store_count} non-Store + {optional_count} optional: "
-        "Tamilan Store)"
-    )
     expected_intro = (
         f"({non_store_count} non-Store apps + {optional_count} optional: "
         "Tamilan Store)"
     )
-    if expected_badge not in site:
-        raise ValueError("Website header must state the current total/non-Store/optional counts and name the optional Tamilan Store.")
     if expected_intro not in site:
         raise ValueError("Website intro must match the header grouping and keep DailyVault among regular apps.")
 

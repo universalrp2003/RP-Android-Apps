@@ -63,7 +63,6 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual(expected_total, 14)
         self.assertEqual(expected_non_store, 13)
 
-        self.assertIn(f'{expected_total} apps ({expected_non_store} non-Store + {expected_optional} optional: Tamilan Store)', self.source)
         self.assertIn(f'Fourteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store)', self.source)
         self.assertNotIn('13 non-Store + optional Tamilan Store', self.source)
         self.assertNotIn('13 non-Store apps + optional Tamilan Store', self.source)
@@ -126,10 +125,10 @@ class WebsiteRequestsTest(unittest.TestCase):
         tickers = [a for tag, a in self.parser.elements if tag == 'section' and 'data-trust-ticker' in a]
         self.assertEqual(len(tickers), 1)
         first = self.source.index('<section class="trust-ticker" data-trust-ticker')
-        badge = self.source.index('<span class="badge">')
-        migration = self.source.index('<section class="migration-notice"')
-        self.assertLess(first, badge)
-        self.assertLess(first, migration)
+        heading = self.source.index('<h1>')
+        self.assertLess(first, heading)
+        self.assertNotIn('Open-Source Android Suite · 14 apps', self.source)
+        self.assertNotIn('<section class="migration-notice"', self.source)
         self.assertNotIn('class="trust-ticker trust-ticker--hero"', self.source)
 
         english = (
@@ -172,15 +171,11 @@ class WebsiteRequestsTest(unittest.TestCase):
         stale_tamil_count = self.source.replace('அனைத்து 14 RP Ideas செயலிகள்',
                                                 'அனைத்து 7 RP Ideas செயலிகள்', 1)
         self.assert_site_rejected(stale_tamil_count)
-        stale_header = self.source.replace(
-            '14 apps (13 non-Store + 1 optional: Tamilan Store)',
-            '14 apps (12 non-Store + 2 optional: Tamilan Store &amp; DailyVault)',
-        )
-        self.assert_site_rejected(stale_header)
         stale_intro = self.source.replace(
             '(13 non-Store apps + 1 optional: Tamilan Store)',
             '(12 non-Store apps + 2 optional: Tamilan Store and DailyVault)',
         )
+        self.assertNotEqual(stale_intro, self.source)
         self.assert_site_rejected(stale_intro)
         missing_optional_name = self.source.replace(
             '1 optional: Tamilan Store',
