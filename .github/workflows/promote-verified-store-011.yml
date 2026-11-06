@@ -1,0 +1,41 @@
+name: Publish authorized Store0.11 exact tested bytes
+on:
+  push:
+    branches: ["arena/ce358216-rp-android-apps"]
+    paths:
+      - "docs/approved-store-0.11-candidate.json"
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-exact-store-011-2026-11-05
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Signing, security and exact-promotion gates
+        run: |
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          python3 -m unittest discover -s tools/tests -p test_store_exact_promotion.py -v
+          python3 -m py_compile tools/promote_verified_store_011.py
+      - name: Promote only the pinned exact tested Store APK, preserve old releases
+        run: python3 tools/promote_verified_store_011.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: store011-exact-publication-receipt
+          path: ${{ runner.temp }}/store011-publication-receipt.json
+          retention-days: 30
+          if-no-files-found: warn
