@@ -529,10 +529,9 @@ fun OorArivippuScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .imePadding()
-                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             // 1. Active Rain / Storm / Cyclone Banner ONLY when active (hidden completely when clear!)
             if (oorWeather.bannerSeverity != null) {
@@ -926,6 +925,7 @@ fun OorArivippuScreen(
                     }
                 }
             }
+                LocationDiagnostics(state, oorIsTamil)
                 // 4. Recent Voice Announcements History Card
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -984,7 +984,7 @@ fun OorArivippuScreen(
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(10.dp))
                                         .background(Color(0xFFF1F5F9))
-                                        .padding(10.dp)
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -1008,7 +1008,7 @@ fun OorArivippuScreen(
                                             softWrap = false
                                         )
                                     }
-                                    Text(
+                                    if (!PlaceDataPolicy.samePlaceName(item.title, item.spokenText.trim().trimEnd('.', '。'))) Text(
                                         text = item.spokenText,
                                         fontSize = 13.sp,
                                         color = Color(0xFF334155)

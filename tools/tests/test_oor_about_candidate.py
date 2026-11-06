@@ -4,7 +4,8 @@ ROOT=Path(__file__).resolve().parents[2]
 class OorAboutCandidateContracts(unittest.TestCase):
     def test_unique_version_and_owner_authorized_published_metadata(self):
         gradle=(ROOT/'oorarivippu/build.gradle.kts').read_text()
-        self.assertIn('versionCode = 22',gradle);self.assertIn('versionName = "1.1.17"',gradle)
+        self.assertIn('versionCode = 23',gradle);self.assertIn('versionName = "1.1.18"',gradle)
+        # Candidate only: public directory remains on the immutable accepted1.1.17.
         sister=(ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
         self.assertIn('version = "1.1.17",\n            publishedVersion = "1.1.17"',sister)
     def test_inspection_pins_accepted_previous_public_bytes(self):

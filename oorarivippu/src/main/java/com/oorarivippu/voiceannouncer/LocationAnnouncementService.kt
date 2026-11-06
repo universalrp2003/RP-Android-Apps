@@ -806,7 +806,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         val requestToken = ++geocodeRequestToken
         reverseGeocodeJob = serviceScope.launch {
             try {
-                val resolved = reverseGeocodePlace(location, snap.voiceLanguage) ?: return@launch
+                val resolved = kotlinx.coroutines.withTimeoutOrNull(15_000L) {
+                    reverseGeocodePlace(location, snap.voiceLanguage)
+                } ?: return@launch
                 val currentAfterLookup = AppPreferences.state.value
                 if (!currentAfterLookup.isTrackingEnabled ||
                     currentAfterLookup.isInternetAvailable != true ||
@@ -978,6 +980,10 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
     }
 
     private fun processDestinationProximity(location: Location) {
+        // Do not advance arrival/milestone state from stale, invalid or coarse fixes.
+        if (!DestinationFixPolicy.usable(location.latitude, location.longitude,
+                if (location.hasAccuracy()) location.accuracy else null,
+                location.elapsedRealtimeNanos / 1_000_000L, SystemClock.elapsedRealtime())) return
         val snapshot = AppPreferences.state.value
         val name = snapshot.destinationName
         val latitude = snapshot.destinationLatitude
@@ -1144,7 +1150,7 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         // Extract Village / Town / City name reliably across rural and urban India
         val cityOrVillage = PlaceDataPolicy.cleanCityOrVillage(
             // The state (adminArea) is never announced as a town.
-            listOf(address.locality, address.subAdminArea)
+            listOf(PlaceDataPolicy.resolvedLocality(address.locality, address.subLocality, address.subAdminArea))
         )
 
         // Prefer a geocoder's named feature (e.g. a hospital or bus stand) to its road field.
@@ -1368,8 +1374,12 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
             speakingRequiresInternet = requiresInternet
             latestSpeakingRequest = speech
             val mainHandler = Handler(Looper.getMainLooper())
-            neuralWorkCount.incrementAndGet()
-            neuralExecutor.execute {
+            if (neuralWorkCount.incrementAndGet() > 6) {
+                neuralWorkCount.decrementAndGet()
+                logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.SKIPPED)
+                return // Bound running + queued work; never retain unlimited stale speech requests.
+            }
+            try { neuralExecutor.execute {
                 try {
                 if (neuralGeneration.get() != myGen) return@execute
                 val mp3 = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeProfileToFileOrNull(
@@ -1464,6 +1474,9 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
                     monitorCallModeDuringSpeech(engine)
                 }
                 } finally {neuralWorkCount.decrementAndGet()}
+            } } catch (_: java.util.concurrent.RejectedExecutionException) {
+                neuralWorkCount.decrementAndGet()
+                logDelivery(speech.logTitle, speech.text, AnnouncementDeliveryReport.Outcome.SKIPPED)
             }
             return
         }
@@ -1756,6 +1769,8 @@ class LocationAnnouncementService : Service(), TextToSpeech.OnInitListener {
         callWaitJob?.cancel()
         AppPreferences.setCallAudioPaused(false)
         stopVoiceImmediately()
+        isTtsReady = false
+        neuralWorkCount.addAndGet(-neuralExecutor.shutdownNow().size)
         try {
             tts?.shutdown()
         } catch (_: Exception) {}

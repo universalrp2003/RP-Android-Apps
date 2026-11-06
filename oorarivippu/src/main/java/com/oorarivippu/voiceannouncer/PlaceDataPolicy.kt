@@ -75,6 +75,20 @@ internal object PlaceDataPolicy {
             genericRoadOnly.matches(trimmed)
     }
 
+    /** Administrative areas are context, never a fallback town. Prefer a finer locality when supplied.
+     * Geocoder locality alone still cannot prove a taluk boundary or an actual town arrival.
+     */
+    fun resolvedLocality(locality: String?, subLocality: String?, district: String?): String {
+        val admin = cleanPlaceName(district).orEmpty()
+        return listOf(subLocality, locality).firstNotNullOfOrNull { raw ->
+            cleanPlaceName(raw)?.takeUnless { value ->
+                isRegionName(value) ||
+                    (admin.isNotBlank() && samePlaceName(withoutDistrictSuffix(admin), value)) ||
+                    Regex("(?i)\\b(?:district|taluk|taluka|tehsil)\\b|மாவட்டம்|தாலுகா|வட்டம்").containsMatchIn(value)
+            }
+        }.orEmpty()
+    }
+
     fun cleanCityOrVillage(candidates: Iterable<String?>): String =
         candidates.firstNotNullOfOrNull { candidate ->
             cleanPlaceName(candidate)?.takeUnless(::isRegionName)

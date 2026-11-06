@@ -57,12 +57,18 @@ import java.util.Date
     // This panel is placed directly above the trip-status card on the main screen.
     rows.filter{it.confirmed}.forEach { row ->
         Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(14.dp),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.padding(horizontal=10.dp,vertical=6.dp),verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 Text(row.name,style=MaterialTheme.typography.titleSmall)
-                FamilyLastReport(row,tick,tamil)
-                FamilySharingControl(row,tamil,busy,
-                    onEnable={run{FamilyRepository.setSharing(c,row.id,true)}},
-                    onDisable={try{FamilyRepository.stop(c,row.id);onChanged();if(!busy)run{}}catch(_:Exception){error=true}})
+                Row(Modifier.fillMaxWidth(),verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f)) { FamilyLastReport(row,tick,tamil) }
+                    Switch(checked=row.sharing,enabled=row.sharing || (!busy && !row.pending && !row.unavailable),
+                        onCheckedChange={if(it)run{FamilyRepository.setSharing(c,row.id,true)} else try{FamilyRepository.stop(c,row.id);onChanged();if(!busy)run{}}catch(_:Exception){error=true}})
+                }
+                Text(if(row.pending) words("Stopped locally · online confirmation pending; old report expires within 15 minutes", "இந்தக் கைப்பேசியில் நிறுத்தம் · இணைய உறுதி காத்திருக்கிறது; பழைய அறிக்கை 15 நிமிடத்தில் காலாவதியாகும்") else if(!row.sharing) words("Sharing OFF", "பகிர்வு அணைப்பு") else if(row.uploading)
+                    words("Sharing ON · uploading during trip", "பகிர்வு ஆன் · பயணத்தில் அனுப்புகிறது") else
+                    words("Sharing ON · waiting for trip / connection", "பகிர்வு ஆன் · பயணம் / இணைப்புக்குக் காத்திருக்கிறது"),style=MaterialTheme.typography.bodySmall)
+
+
             }
         }
     }
