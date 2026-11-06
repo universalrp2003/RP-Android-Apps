@@ -1,0 +1,18 @@
+{
+  "source": "02e98aad51e4f72ee8e44c622243d47c61934abd",
+  "run_id": 42163141442,
+  "job_id": 127713690474,
+  "artifact_id": 13477479675,
+  "archive_sha256": "be3a087715b21d2358b5474a98bc343124fff76fb4ecd390e61c71e51e6df251",
+  "bytes": 12924720,
+  "apk_sha256": "e224ed2a9db1494c480c14e616821b24fbc73bd2ec48fea05390f401281ef0da",
+  "publication_authorized": true,
+  "only_app": "oorarivippu",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "required_android35_native_tests": 3,
+  "owner_acceptance": "Ok do it nessary work fix verify and publish i accept your click button display 30 second gps ok do it best",
+  "physical_phone_tested": false,
+  "publication_attempt": 1
+}
