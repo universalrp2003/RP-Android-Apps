@@ -105,7 +105,16 @@ class OorLocationNativeTest {
                     val command = "input swipe ${screen.centerX()} ${screen.top + screen.height() * start / 10} ${screen.centerX()} ${screen.top + screen.height() * end / 10} 650"
                     // Slow overlapping drags, NOT short high-velocity flings that can skip
                     // multiline Tamil controls after a previously matched label leaves view.
-                    ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command)).use { it.readBytes() }
+                    val scroller = all.filter { it.isScrollable }.maxByOrNull {
+                        val bounds = Rect().also { r -> it.getBoundsInScreen(r) }
+                        bounds.width().toLong() * bounds.height()
+                    }
+                    val action = if(clippedAbove || backwards) AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD else AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
+                    // Scroll the real exposed scroll owner; clicks below still require real
+                    // label-centred touch and the retained actual-screen state assertions.
+                    if(scroller?.performAction(action) != true) {
+                        ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command)).use { it.readBytes() }
+                    }
                 }
                 SystemClock.sleep(650) // Wait for the actual drag/fling to settle before coordinates are read.
             }
