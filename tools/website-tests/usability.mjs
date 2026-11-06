@@ -74,7 +74,10 @@ try {
       await page.selectOption('#site-language', lang);
       assert.equal(await page.locator('html').getAttribute('lang'), lang);
       assert.equal(await page.locator(`#install-help p[data-content-lang="${lang}"]:visible`).count(), 1);
-      assert.ok(await page.locator(`.migration-notice p[data-content-lang="${lang}"]:visible`).count() >= 1);
+      assert.equal(await page.locator('.migration-notice').count(), 0);
+      assert.equal(await page.locator('#signing-limitation').getAttribute('open'), null);
+      await page.locator('#signing-limitation summary').click();
+      assert.equal(await page.locator(`#signing-limitation p[data-content-lang="${lang}"]:visible`).count(), 1);
       assert.equal(await page.locator(`[data-content-lang="${lang === 'ta' ? 'en' : 'ta'}"]:visible`).count(), 0);
       await page.reload();
       assert.equal(await page.locator('#site-language').inputValue(), lang);
@@ -154,7 +157,10 @@ try {
     await page.goto(base);
     assert.equal(await count(page), 14);
     assert.equal(await page.locator('.site-tools').isVisible(), false);
-    assert.equal(await page.locator('.migration-notice p:visible').count(), 3);
+    assert.equal(await page.locator('.migration-notice').count(), 0);
+    assert.equal(await page.locator('#signing-limitation p:visible').count(), 0);
+    await page.locator('#signing-limitation summary').click();
+    assert.equal(await page.locator('#signing-limitation p:visible').count(), 2);
     assert.equal(await page.locator('.latest tbody tr').count(), 14);
     await page.locator('a[href="#app-live-guard"]').first().click();
     await page.waitForURL('**/#app-live-guard');

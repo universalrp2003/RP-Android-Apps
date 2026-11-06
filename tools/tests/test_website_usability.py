@@ -88,7 +88,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertIn('Earlier feature history', self.source)
         self.assertIn('this exact APK was not phone-tested before publication', self.source)
         self.assertIn('same-key', self.source)
-        self.assertIn('do not uninstall it', self.source)
+        self.assertIn('not for an ordinary same-key update', self.source)
         self.assertIn('Copying a hash does not verify a downloaded file.', self.source)
         self.assertIn('not security approval', self.source)
 

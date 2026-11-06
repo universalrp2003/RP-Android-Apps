@@ -8,10 +8,10 @@ ROOT = Path(__file__).resolve().parents[2]
 class FreshInstallMigrationTest(unittest.TestCase):
     def test_site_warns_before_uninstall_in_english_and_tamil(self):
         site = (ROOT / 'site/index.html').read_text()
-        self.assertIn('class="migration-notice"', site)
-        self.assertIn('Replacement-key APKs are now available below.', site)
+        self.assertNotIn('class="migration-notice"', site)
+        self.assertIn('id="signing-limitation"', site)
+        self.assertIn('href="#signing-limitation"', site)
         self.assertIn('Uninstalling may erase local data.', site)
-        self.assertIn('புதிய கையொப்ப APK-கள் கீழே கிடைக்கின்றன.', site)
         self.assertIn('Play Protect எச்சரித்தால் நிறுத்துங்கள்', site)
         self.assertIn('docs/fresh-install-signing-migration.md', site)
 
