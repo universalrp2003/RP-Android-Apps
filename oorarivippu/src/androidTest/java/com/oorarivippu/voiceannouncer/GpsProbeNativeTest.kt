@@ -45,4 +45,27 @@ class GpsProbeNativeTest {
             }
         } finally { i.runOnMainSync { probe.stop() } }
     }
+    @Test fun backgroundStopsSynchronouslyWithoutCompositionOrFrame() {
+        val i = InstrumentationRegistry.getInstrumentation()
+        val c = exactContext()
+        val count = java.util.concurrent.atomic.AtomicInteger()
+        i.runOnMainSync {
+            val owner = object : androidx.lifecycle.LifecycleOwner {
+                val registry = androidx.lifecycle.LifecycleRegistry(this)
+                override val lifecycle: androidx.lifecycle.Lifecycle get() = registry
+            }
+            owner.registry.currentState = androidx.lifecycle.Lifecycle.State.RESUMED
+            val probe = GpsDiagnosticProbe(c, owner.lifecycle) { count.incrementAndGet() }
+            try {
+                assertTrue(probe.start())
+                owner.registry.currentState = androidx.lifecycle.Lifecycle.State.STARTED
+                assertFalse(probe.running); assertEquals(1, count.get())
+                assertFalse(probe.start())
+                owner.registry.currentState = androidx.lifecycle.Lifecycle.State.RESUMED
+                assertTrue(probe.start())
+                owner.registry.currentState = androidx.lifecycle.Lifecycle.State.DESTROYED
+                assertFalse(probe.running); assertEquals(2, count.get())
+            } finally { probe.stop() }
+        }
+    }
 }

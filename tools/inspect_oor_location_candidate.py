@@ -3,8 +3,8 @@ import json, os
 from pathlib import Path
 import inspect_battery_voice_candidate as inspector
 inspector.APPS['oorarivippu'] = (
-    'com.oorarivippu.voiceannouncer', '1.1.18', 23, 'oor-arivippu-v1.1.17',
-    'Oor-Arivippu-v1.1.17.apk', '7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f',
+    'com.oorarivippu.voiceannouncer', '1.1.19', 24, 'oor-arivippu-v1.1.18',
+    'Oor-Arivippu-v1.1.17.apk', 'e224ed2a9db1494c480c14e616821b24fbc73bd2ec48fea05390f401281ef0da',
     'Oor-Arivippu-v1.1.18.apk')
 inspector.main('oorarivippu')
 p = Path(os.environ['RUNNER_TEMP'])/'health-oorarivippu'/'verification.json'

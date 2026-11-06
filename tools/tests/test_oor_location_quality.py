@@ -20,12 +20,12 @@ class OorLocationQualityContracts(unittest.TestCase):
         for x in ('HttpURLConnection','OkHttp','putString','requestPermissions'):
             self.assertNotIn(x,s)
     def test_current_public_links_match_exact_authorized_receipt(self):
-        self.assertIn('versionName = "1.1.18"',(R/'oorarivippu/build.gradle.kts').read_text())
+        self.assertIn('versionName = "1.1.19"',(R/'oorarivippu/build.gradle.kts').read_text())
         self.assertIn('publishedVersion = "1.1.18"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
         self.assertIn('Oor-Arivippu-v1.1.18.apk',(R/'site/index.html').read_text())
         inspector=(R/'tools/inspect_oor_location_candidate.py').read_text()
-        self.assertIn("'1.1.18', 23",inspector)
-        self.assertIn('7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f',inspector)
+        self.assertIn("'1.1.19', 24",inspector)
+        self.assertIn('e224ed2a9db1494c480c14e616821b24fbc73bd2ec48fea05390f401281ef0da',inspector)
     def test_authorized_foreground_probe_has_bounded_duration_and_cleanup(self):
         p=(S/'GpsDiagnosticProbe.kt').read_text()
         for value in ('DURATION_MS = 30_000L','setDurationMillis(DURATION_MS)','removeUpdates(listener)','removeCallbacks(deadline)','ACCESS_FINE_LOCATION'):

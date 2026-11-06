@@ -38,14 +38,15 @@ internal object SatellitePolicy {
 @Composable internal fun LocationDiagnostics(state: AppStateSnapshot, tamil: Boolean) {
     fun words(en: String, ta: String) = if(tamil) ta else en
     val context = LocalContext.current
-    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycle by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     var open by remember { mutableStateOf(false) }
     var details by remember { mutableStateOf(false) }
     var snapshot by remember { mutableStateOf<SatelliteSnapshot?>(null) }
     var status by remember { mutableStateOf("") }
     var sampling by remember { mutableStateOf(false) }
     var sampleFinished by remember { mutableStateOf(false) }
-    val probe = remember(context) { GpsDiagnosticProbe(context) { sampling = false; sampleFinished = true } }
+    val probe = remember(context, lifecycleOwner) { GpsDiagnosticProbe(context, lifecycleOwner.lifecycle) { sampling = false; sampleFinished = true } }
     var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
     val resumed = lifecycle.isAtLeast(Lifecycle.State.RESUMED)
     val allowed = context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -53,7 +54,7 @@ internal object SatellitePolicy {
         if (!open || !resumed || !allowed) probe.stop()
     }
     DisposableEffect(probe) { onDispose { probe.stop() } }
-    DisposableEffect(open, resumed, allowed, tamil) {
+    DisposableEffect(open, allowed, tamil, lifecycleOwner) {
         val manager = context.getSystemService(LocationManager::class.java)
         var active = true
         var registered = false
@@ -78,13 +79,32 @@ internal object SatellitePolicy {
                 snapshot = SatelliteSnapshot(rows, value.satelliteCount, elapsed)
             }
         }
-        if(open && resumed && allowed) {
+        fun unregister() {
+            active = false
+            snapshot = null
+            if(registered) runCatching { manager?.unregisterGnssStatusCallback(callback) }
+            registered = false
+        }
+        fun registerIfVisible() {
+            if(!open || registered || !lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) ||
+                context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return
+            active = true
             try {
                 registered = manager?.registerGnssStatusCallback(callback, Handler(Looper.getMainLooper())) == true
                 if(!registered) status = words("GNSS status unavailable on this device", "இந்தச் சாதனத்தில் GNSS தகவல் கிடைக்கவில்லை")
             } catch(_: Exception) { status = words("GNSS status unavailable", "GNSS தகவல் கிடைக்கவில்லை") }
         }
-        onDispose { active = false; if(registered) runCatching { manager?.unregisterGnssStatusCallback(callback) } }
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when(event) {
+                Lifecycle.Event.ON_RESUME -> registerIfVisible()
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP, Lifecycle.Event.ON_DESTROY -> { probe.stop(); unregister() }
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        registerIfVisible()
+        onDispose { unregister(); lifecycleOwner.lifecycle.removeObserver(observer) }
+
     }
     LaunchedEffect(open, resumed) {
         while(open && resumed) { now = SystemClock.elapsedRealtime(); delay(2_000) }

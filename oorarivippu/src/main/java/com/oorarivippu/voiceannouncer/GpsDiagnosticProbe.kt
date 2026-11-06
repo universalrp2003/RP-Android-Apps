@@ -12,13 +12,16 @@ import android.os.Handler
 import android.os.Looper
 
 /** Explicit foreground-only sample. Never changes trip, family, destination or saved location data. */
-internal class GpsDiagnosticProbe(private val context: Context, private val ended: () -> Unit) {
+internal class GpsDiagnosticProbe(private val context: Context, private val lifecycle: androidx.lifecycle.Lifecycle? = null, private val ended: () -> Unit) {
     companion object { const val DURATION_MS = 30_000L }
     private val manager = context.getSystemService(LocationManager::class.java)
     private val handler = Handler(Looper.getMainLooper())
     var running = false
         private set
     private val deadline = Runnable { stop() }
+    private val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+        if (event == androidx.lifecycle.Lifecycle.Event.ON_PAUSE || event == androidx.lifecycle.Lifecycle.Event.ON_STOP || event == androidx.lifecycle.Lifecycle.Event.ON_DESTROY) stop()
+    }
     private val listener = object : LocationListener {
         override fun onLocationChanged(location: Location) { /* Receiver observation only; no storage/upload. */ }
         override fun onProviderDisabled(provider: String) { stop() }
@@ -37,12 +40,14 @@ internal class GpsDiagnosticProbe(private val context: Context, private val ende
             } else {
                 manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1_000L, 0f, listener, Looper.getMainLooper())
             }
+            lifecycle?.addObserver(observer)
             handler.postDelayed(deadline, DURATION_MS)
             true
         } catch (_: Exception) { stop(); false }
     }
     fun stop() {
         handler.removeCallbacks(deadline)
+        lifecycle?.removeObserver(observer)
         runCatching { manager?.removeUpdates(listener) }
         val wasRunning = running
         running = false
