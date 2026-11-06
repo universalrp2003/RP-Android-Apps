@@ -12,10 +12,16 @@ jobs:
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
         with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
       - uses: gradle/actions/setup-gradle@v6
         with: {gradle-version: '8.14.3'}
       - name: Source and bilingual gates
@@ -24,7 +30,7 @@ jobs:
           python3 tools/verify_cleaner_localization.py
           python3 tools/verify_apps_localization.py
       - name: Release JVM, lint and test-only Android assembly
-        run: gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleDebug :cleaner:assembleDebugAndroidTest --no-daemon --stacktrace
+        run: gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace
       - name: New timeline regressions all executed
         run: |
           python3 - <<'PYTEST'
@@ -45,11 +51,11 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
-            adb install cleaner/build/outputs/apk/debug/cleaner-debug.apk
-            adb install cleaner/build/outputs/apk/androidTest/debug/cleaner-debug-androidTest.apk
+            adb install cleaner/build/outputs/apk/release/cleaner-release.apk
+            adb install cleaner/build/outputs/apk/androidTest/release/cleaner-release-androidTest.apk
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell wm dismiss-keyguard
-            adb shell am instrument -w -r -e class com.universalrp.cleansweep.RainForecastDetailsNativeTest com.universalrp.cleansweep.test/androidx.test.runner.AndroidJUnitRunner > rain-native.txt
+            adb shell am instrument -w -r -e expectedCandidateSha256 $(sha256sum cleaner/build/outputs/apk/release/cleaner-release.apk | cut -d " " -f 1) -e class com.universalrp.cleansweep.RainForecastDetailsNativeTest com.universalrp.cleansweep.test/androidx.test.runner.AndroidJUnitRunner > rain-native.txt
             cat rain-native.txt
             grep -F 'OK (1 test)' rain-native.txt
             ! grep -E "FAILURES|INSTRUMENTATION_FAILED|Process crashed" rain-native.txt

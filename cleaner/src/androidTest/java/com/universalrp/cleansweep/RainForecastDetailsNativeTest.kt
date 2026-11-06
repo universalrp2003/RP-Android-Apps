@@ -26,7 +26,7 @@ import org.junit.runner.RunWith
 
 /** Synthetic presentation only; no provider, warning, audible output or phone accuracy claim. */
 @RunWith(AndroidJUnit4::class)
-class RainForecastDetailsNativeTest {
+class RainForecastDetailsNativeTest : ExactCandidateNativeTest() {
     @Test fun actualBilingualDetailsRemainReadableAtNormalAndDoubleFont() {
         val i = InstrumentationRegistry.getInstrumentation()
         val automation = i.uiAutomation
