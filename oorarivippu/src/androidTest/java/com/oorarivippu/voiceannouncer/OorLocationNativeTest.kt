@@ -74,14 +74,23 @@ class OorLocationNativeTest {
                 automation.waitForIdle(220, 5000)
                 val root = automation.rootInActiveWindow
                 val screen = Rect().also { root?.getBoundsInScreen(it) }
-                val match = nodes().firstOrNull { node ->
+                val all = nodes()
+                val minimumVisible = (24 * base.resources.displayMetrics.density).toInt()
+                val match = all.firstOrNull { node ->
                     val bounds = Rect().also { node.getBoundsInScreen(it) }
                     (node.text?.toString()?.contains(label) == true || node.contentDescription?.toString() == label) &&
-                        node.isVisibleToUser && !bounds.isEmpty && screen.contains(bounds.centerX(), bounds.centerY())
+                        node.isVisibleToUser && bounds.height() >= minimumVisible && screen.contains(bounds.centerX(), bounds.centerY())
                 }
                 if (match != null) return match
                 if (scroll && !screen.isEmpty) {
-                    val command = "input swipe ${screen.centerX()} ${screen.top + screen.height() * 7 / 10} ${screen.centerX()} ${screen.top + screen.height() * 4 / 10} 650"
+                    val clippedAbove = all.any { node ->
+                        val bounds = Rect().also { node.getBoundsInScreen(it) }
+                        (node.text?.toString()?.contains(label) == true || node.contentDescription?.toString() == label) &&
+                            bounds.height() < minimumVisible && bounds.top < screen.top + screen.height() / 3
+                    }
+                    val start = if(clippedAbove) 4 else 7
+                    val end = if(clippedAbove) 7 else 4
+                    val command = "input swipe ${screen.centerX()} ${screen.top + screen.height() * start / 10} ${screen.centerX()} ${screen.top + screen.height() * end / 10} 650"
                     // Slow overlapping drags, NOT short high-velocity flings that can skip
                     // multiline Tamil controls after a previously matched label leaves view.
                     ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand(command)).use { it.readBytes() }
@@ -102,6 +111,7 @@ class OorLocationNativeTest {
             val hit = Rect().also { node!!.getBoundsInScreen(it) }
             val screen = Rect().also { automation.rootInActiveWindow?.getBoundsInScreen(it) }
             assertTrue("Actual control must intersect viewport: $label", hit.intersect(screen))
+            assertTrue("Actual touch target must not be a clipped sliver: $label", hit.height() >= (24 * base.resources.displayMetrics.density).toInt())
             // Real touch, not an accessibility action on a possibly recycled Compose node ID.
             // Subsequent mandatory state assertions must still prove that this control opened.
             ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input tap ${hit.centerX()} ${hit.centerY()}")).use { it.readBytes() }
