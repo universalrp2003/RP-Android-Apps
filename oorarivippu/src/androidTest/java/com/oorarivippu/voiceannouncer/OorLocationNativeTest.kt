@@ -125,10 +125,8 @@ class OorLocationNativeTest {
                         find(if (tamil) "நேரக் கணிப்பு கிடைக்கவில்லை" else "Estimate unavailable", true)
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
                         find(if (tamil) "பயணத்தைத் தொடங்கவும்" else "Start a trip to observe GNSS", true)
-                        // At 200% font the status can scroll its toggle above the viewport.
-                        // Return to the actual home top, then locate and close the same control.
-                        repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
-                        click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
+                        // The dialog has a persistent close control, independent of text scroll.
+                        click(if (tamil) "விவரங்களை மூடு" else "Close diagnostics")
                         val inactiveStatus = if (tamil) "பயணத்தைத் தொடங்கவும்" else "Start a trip to observe GNSS"
                         assertFalse("Closing diagnostics must actually remove receiver content", nodes().any { it.text?.toString()?.contains(inactiveStatus) == true })
                         // Collapse changes the scroll range. Search history from a known top,

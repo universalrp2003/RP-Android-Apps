@@ -15,7 +15,7 @@ class OorLocationQualityContracts(unittest.TestCase):
             self.assertIn(x,s)
     def test_satellite_lifecycle_and_honest_unavailable(self):
         s=(S/'LocationDiagnostics.kt').read_text()
-        for x in ('Lifecycle.State.RESUMED','unregisterGnssStatusCallback','onDispose','usedInFix','coerceAtMost(256)','take(24)','SatellitePolicy.fresh','getHistoricalProcessExitReasons','not a diagnosis of a whole-phone restart'):
+        for x in ('Lifecycle.State.RESUMED','unregisterGnssStatusCallback','onDispose','usedInFix','coerceAtMost(256)','take(24)','SatellitePolicy.fresh','getHistoricalProcessExitReasons','Close diagnostics','heightIn(max=480.dp)','not a diagnosis of a whole-phone restart'):
             self.assertIn(x,s)
         for x in ('requestLocationUpdates','HttpURLConnection','OkHttp','putString','requestPermissions'):
             self.assertNotIn(x,s)

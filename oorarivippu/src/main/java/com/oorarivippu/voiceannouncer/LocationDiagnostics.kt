@@ -12,6 +12,8 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -86,12 +88,15 @@ internal object SatellitePolicy {
             context.getSystemService(ActivityManager::class.java)?.getHistoricalProcessExitReasons(context.packageName, 0, 1)?.firstOrNull()?.reason
         }.getOrNull() else null
     }
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(horizontal=10.dp, vertical=4.dp), verticalArrangement=Arrangement.spacedBy(2.dp)) {
-            TextButton(onClick={open = !open}, contentPadding=PaddingValues(0.dp)) {
-                Text(words("Satellite / app diagnostics", "செயற்கைக்கோள் / செயலி விவரங்கள்") + if(open) " −" else " +")
-            }
-            if(open) {
+    OutlinedButton(onClick={open = true}, modifier=Modifier.fillMaxWidth()) {
+        Text(words("Satellite / app diagnostics", "செயற்கைக்கோள் / செயலி விவரங்கள்"))
+    }
+    if(open) AlertDialog(
+        onDismissRequest={open = false},
+        title={Text(words("Satellite / app diagnostics", "செயற்கைக்கோள் / செயலி விவரங்கள்"))},
+        confirmButton={TextButton(onClick={open = false}) { Text(words("Close diagnostics", "விவரங்களை மூடு")) }},
+        text={Column(Modifier.fillMaxWidth().heightIn(max=480.dp).verticalScroll(rememberScrollState()),
+            verticalArrangement=Arrangement.spacedBy(4.dp)) {
                 val current = snapshot?.takeIf { SatellitePolicy.fresh(it.atMs, now) }
                 if(current == null) Text(if(snapshot != null) words("Receiver status is stale · counts unavailable", "பெறுநர் தகவல் பழையது · எண்ணிக்கை கிடைக்கவில்லை") else status)
                 else {
@@ -115,7 +120,6 @@ internal object SatellitePolicy {
                     else -> words("other / user / system stop ($exitReason)", "பிற / பயனர் / கணினி நிறுத்தம் ($exitReason)")
                 }
                 Text(words("Last Android-recorded app exit: $reason. This is not a diagnosis of a whole-phone restart.", "Android பதிவு செய்த கடைசி செயலி நிறுத்தம்: $reason. இது கைப்பேசி மறுதொடக்கத்திற்கான காரணச் சான்றல்ல."), style=MaterialTheme.typography.bodySmall)
-            }
-        }
-    }
+        }}
+    )
 }
