@@ -26,6 +26,15 @@ VERIFIED_ASSETS = set(re.findall(r"\('([\w.\-]+\.apk)',\s*(?:json\.loads|store|h
 
 
 class SiteMirrorBudgetTest(unittest.TestCase):
+    def test_deployment_window_leaves_time_for_strict_live_checks(self):
+        deploy = PAGES.split('\n  deploy:\n', 1)[1]
+        job_minutes = int(re.search(r'timeout-minutes: (\d+)', deploy).group(1))
+        action_ms = int(re.search(r'uses: actions/deploy-pages@v5\s+with:\s+timeout: (\d+)', deploy).group(1))
+        self.assertEqual(action_ms, 1_200_000)
+        self.assertGreaterEqual(job_minutes * 60_000 - action_ms, 600_000)
+        self.assertIn('run: python3 tools/verify_live_three_releases.py', deploy)
+        self.assertNotIn('continue-on-error:', deploy)
+
     def test_mirror_set_is_current_releases_plus_byte_checked_history(self):
         self.assertGreaterEqual(len(MIRROR), 14)
         self.assertEqual(len(MIRROR), len({tag for tag, _, _, _ in MIRROR}), 'duplicate mirrored tag')
