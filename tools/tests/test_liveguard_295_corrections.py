@@ -113,12 +113,12 @@ class ServingCellTests(unittest.TestCase):
 
 class ReleaseGateTests(unittest.TestCase):
     def test_publisher_pins_the_current_complete_test_set(self):
-        s = (ROOT / 'tools/promote_verified_liveguard_296.py').read_text()
-        for text in ("p['required_jvm_tests'] == 927", "p['required_suites'] == 90", "== 10"):
+        s = (ROOT / 'tools/promote_verified_liveguard_297.py').read_text()
+        for text in ("p['required_jvm_tests'] == 940", "p['required_suites'] == 92", "== 12"):
             self.assertIn(text, s)
         expected = runpy.run_path(str(ROOT / 'tools/verify_cleaner_regressions.py'))['EXPECTED']
-        self.assertEqual(927, sum(expected.values()))
-        self.assertEqual(90, len(expected))
+        self.assertEqual(940, sum(expected.values()))
+        self.assertEqual(92, len(expected))
         self.assertNotIn('assembleRelease', s)
 
     def test_candidate_gate_keeps_installed_bytes_before_instrumentation(self):

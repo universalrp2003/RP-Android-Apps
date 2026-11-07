@@ -193,20 +193,25 @@ class WeatherWatchWorker(
                         if (Announcer.speakWeatherAndWait(ctx, decision.englishSpeech, decision.tamilSpeech,
                                 decision.bypassQuietHours, stillRelevant = relevant)) memory = decision.updatedMemory
                     }
-                    if (!stillSelected()) continue
-                    com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, snapshot, memory)
-                    if (id == com.universalrp.cleansweep.data.SimpleWeatherStore.HOME) {
-                        // The primary snapshot is always HOME; moving GPS cannot overwrite its label or history.
-                        WeatherAlertStore.saveEvaluation(ctx, com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
-                            place.name, place.details, snapshot, decision.copy(updatedMemory = memory))
-                        homeDecision = decision
-                    } else if (id != com.universalrp.cleansweep.data.SimpleWeatherStore.GPS) {
-                        SavedRainWatches.save(ctx, id, memory, WeatherAlertPolicy.format12HourClock(snapshot.fetchedAtMs) + " · " + snapshot.source.name)
+                    synchronized(WeatherAlertStore) {
+                        if (stillSelected()) {
+                            com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, snapshot, memory)
+                            if (id == com.universalrp.cleansweep.data.SimpleWeatherStore.HOME) {
+                                // The primary snapshot is always HOME; moving GPS cannot overwrite its label or history.
+                                WeatherAlertStore.saveEvaluation(ctx, com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
+                                    place.name, place.details, snapshot, decision.copy(updatedMemory = memory))
+                                homeDecision = decision
+                            } else if (id != com.universalrp.cleansweep.data.SimpleWeatherStore.GPS) {
+                                SavedRainWatches.save(ctx, id, memory, WeatherAlertPolicy.format12HourClock(snapshot.fetchedAtMs) + " · " + snapshot.source.name)
+                            }
+                        }
                     }
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) {
                     cancelPlaceAlert(ctx, id)
-                    if (stillSelected()) com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, null, before)
+                    synchronized(WeatherAlertStore) {
+                        if (stillSelected()) com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, null, before)
+                    }
                 }
             }
             return homeDecision
