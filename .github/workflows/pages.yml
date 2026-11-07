@@ -51,7 +51,7 @@ jobs:
               # Retention rule: the current release of every app, plus the historical builds that
               # the live verifier below byte-checks. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
-              ("live-guard-v2.96", "CleanSweep-v2.96.apk", 14771791, "92c7b0ffb4a2d714fe8dbcab190161558c06b7cb086754b1cbf61d30b2da384c"),
+              ("live-guard-v2.97", "CleanSweep-v2.97.apk", 14784299, "121b2c757996910849c76b70f8aa980548e65a84f5fc1e8e0bd6ffda793e92fe"),
               ("live-guard-v2.94", "CleanSweep-v2.94.apk", 14762179, "c26de0c09022ea5d05169c238f91308de367dc2e0ccb16c902699d17de34c195"),
               ("live-guard-v2.93", "CleanSweep-v2.93.apk", 14747343, "9f8e7936ae98ed5fb43e9087acf6a6de87dc5837fd66c9a97faa0216aa55f012"),
               ("tamilan-store-v0.11", "Tamilan-Store-v0.11.apk", 19476379, "1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b"),
@@ -106,8 +106,8 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
-          test -s site/apks/CleanSweep-v2.96.apk
-          test -s site/apks/CleanSweep-v2.96.zip
+          test -s site/apks/CleanSweep-v2.97.apk
+          test -s site/apks/CleanSweep-v2.97.zip
           test -s site/apks/CleanSweep-v2.94.apk
           test -s site/apks/CleanSweep-v2.94.zip
           test -s site/apks/CleanSweep-v2.93.apk

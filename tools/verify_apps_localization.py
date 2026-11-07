@@ -704,7 +704,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.17"',
-            'tagPrefix = "live-guard"', 'version = "2.96"',
+            'tagPrefix = "live-guard"', 'version = "2.97"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
@@ -1014,13 +1014,6 @@ def verify_module_versions_match_sister_apps() -> int:
             # Stable0.11 is public from the exact signed/native-tested artifact; older assets stay immutable.
             if by_package.get(pkg.group(1)) != "0.11":
                 raise ValueError("Tamilan published directory must match the verified public stable0.11")
-            continue
-        # Unpublished 2.97 candidate must not advertise a nonexistent public download.
-        # Remove this exact transition exception when the tested bytes are promoted.
-        if (gradle.parent.name == "cleaner" and pkg.group(1) == "com.universalrp.cleansweep"
-                and ver.group(1) == "2.97" and "versionCode = 102" in body
-                and by_package.get(pkg.group(1)) == "2.96"):
-            checked += 1
             continue
         checked += 1
         if pkg.group(1) not in by_package:
