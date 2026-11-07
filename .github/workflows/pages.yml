@@ -165,7 +165,9 @@ jobs:
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build
-    timeout-minutes: 15
+    # The verified APK/ZIP mirror can take more than the action's default 10 minutes
+    # to process. Leave a separate window for strict post-deployment byte checks.
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -175,6 +177,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          timeout: 1200000 # 20 minutes, bounded; do not skip live checks on timeout.
       - name: Verify deployed metadata, nine exact public APK/ZIP downloads and safe Launcher screenshots
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
