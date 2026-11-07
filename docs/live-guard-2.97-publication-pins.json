@@ -1,0 +1,18 @@
+{
+  "publication_authorized": true,
+  "only_app": "cleaner",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_authorization": "Rain alert cant remove saved home, also no option for save as home current GPS place; fix it build publish update",
+  "source": "7d532c29bf37d76abbbba56508e156237b6640b9",
+  "run_id": 42378243860,
+  "job_id": 128420199094,
+  "artifact_id": 13577480015,
+  "archive_sha256": "826f6dcb1cdbab1f6c8ce07931f847ea1002eb7e22867f6c6678d2074e19757d",
+  "apk_sha256": "121b2c757996910849c76b70f8aa980548e65a84f5fc1e8e0bd6ffda793e92fe",
+  "bytes": 14784299,
+  "required_jvm_tests": 940,
+  "required_suites": 92,
+  "required_android35_native_tests": 14
+}

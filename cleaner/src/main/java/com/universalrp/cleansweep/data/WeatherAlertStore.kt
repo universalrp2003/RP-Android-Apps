@@ -138,7 +138,9 @@ object WeatherAlertStore {
         return false
     }
 
+    @Synchronized
     fun savePlace(context: Context, candidate: WeatherPlaceCandidate) {
+        if (savedPlace(context) != candidate) clearSavedPlace(context)
         prefs(context).edit()
             .putString(KEY_SAVED_NAME, candidate.name)
             .putString(KEY_SAVED_DETAILS, candidate.details)
@@ -151,8 +153,19 @@ object WeatherAlertStore {
         runCatching { com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(context.applicationContext) }
     }
 
+    @Synchronized
     fun clearSavedPlace(context: Context) {
-        prefs(context).edit()
+        // Drop only home-derived state; keep API key, voice choices, GPS and other watches.
+        val editor = prefs(context).edit()
+        listOf(KEY_EPISODE_ACTIVE, KEY_HIGHEST_RANK, KEY_DRY_SINCE_MS, KEY_LAST_RAIN_MS,
+            KEY_LAST_SEVERE_MS, KEY_NEXT_CHECK_AFTER_MS, KEY_LAST_CHECKED_MS, KEY_LAST_SEVERITY,
+            KEY_LAST_PLACE_NAME, KEY_LAST_PLACE_DETAILS, KEY_LAST_LOC_MODE, KEY_LAST_MINS_TO_RAIN,
+            KEY_LAST_TEMP_C, KEY_LAST_PEAK_PRECIP, KEY_LAST_PEAK_GUST, KEY_LAST_SOURCE,
+            KEY_LAST_CLOUD, KEY_LAST_CUR_PRECIP, KEY_LAST_CUR_GUST, KEY_LAST_CUR_CODE,
+            KEY_LAST_TIMELINE, KEY_LAST_CYCLONE).forEach { editor.remove(it) }
+        SimpleWeatherStore.clear(context, SimpleWeatherStore.HOME)
+        com.universalrp.cleansweep.work.WeatherWatchWorker.cancelPlaceAlert(context, SimpleWeatherStore.HOME)
+        editor
             .remove(KEY_SAVED_NAME)
             .remove(KEY_SAVED_DETAILS)
             .remove(KEY_SAVED_PIN)
