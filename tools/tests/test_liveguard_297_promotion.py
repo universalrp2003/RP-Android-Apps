@@ -7,7 +7,7 @@ class RainReleasePromotion(unittest.TestCase):
         p=dict(source='a'*40,apk_sha256='b'*64,bytes=123)
         r=dict(source=p['source'],package='com.universalrp.cleansweep',version='2.97',code=102,
                sha256=p['apk_sha256'],bytes=p['bytes'],signer=SIGNER,final_installed_apk_sha256=p['apk_sha256'],
-               required_android35_native_tests=12,added_permissions=[],removed_permissions=[],
+               required_android35_native_tests=14,added_permissions=[],removed_permissions=[],
                baseline_tag=OLD_TAG,baseline_sha256=OLD_SHA,physical_phone_tested=False,play_protect_tested=False)
         for gate in ('same_uid','data_preserved','preferences_preserved','restart_passed','native_283_settings_smoke',
                      'native_288_feature_notice_smoke','native_289_named_security_smoke','native_292_top_read_and_opt_in_smoke',

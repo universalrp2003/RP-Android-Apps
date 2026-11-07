@@ -114,7 +114,7 @@ class ServingCellTests(unittest.TestCase):
 class ReleaseGateTests(unittest.TestCase):
     def test_publisher_pins_the_current_complete_test_set(self):
         s = (ROOT / 'tools/promote_verified_liveguard_297.py').read_text()
-        for text in ("p['required_jvm_tests'] == 940", "p['required_suites'] == 92", "== 12"):
+        for text in ("p['required_jvm_tests'] == 940", "p['required_suites'] == 92", "== 14"):
             self.assertIn(text, s)
         expected = runpy.run_path(str(ROOT / 'tools/verify_cleaner_regressions.py'))['EXPECTED']
         self.assertEqual(940, sum(expected.values()))

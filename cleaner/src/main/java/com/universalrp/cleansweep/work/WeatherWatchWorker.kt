@@ -189,7 +189,9 @@ class WeatherWatchWorker(
                     // Co-located home/GPS/saved watches share one fetch and never speak twice in this check.
                     if (shared == null && speakIfTriggered && decision.shouldAnnounce && relevant() &&
                         (decision.bypassQuietHours || !Announcer.inQuietHours(ctx))) {
-                        postAlertNotification(ctx, decision, tamil, NOTIF_ID_WEATHER + kotlin.math.abs(id.hashCode() % 100_000))
+                        synchronized(WeatherAlertStore) {
+                            if (relevant()) postAlertNotification(ctx, decision, tamil, NOTIF_ID_WEATHER + kotlin.math.abs(id.hashCode() % 100_000))
+                        }
                         if (Announcer.speakWeatherAndWait(ctx, decision.englishSpeech, decision.tamilSpeech,
                                 decision.bypassQuietHours, stillRelevant = relevant)) memory = decision.updatedMemory
                     }

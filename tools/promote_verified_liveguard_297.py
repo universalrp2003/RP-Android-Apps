@@ -33,7 +33,7 @@ def validate_receipt(r, p):
     for gate in ('same_uid', 'data_preserved', 'preferences_preserved', 'restart_passed', 'native_283_settings_smoke', 'native_288_feature_notice_smoke', 'native_289_named_security_smoke', 'native_292_top_read_and_opt_in_smoke', 'native_295_compact_pill_and_signal_recency', 'native_tests_assert_installed_sha256', 'native_296_bilingual_rain_details', 'native_297_home_management'):
         assert r[gate] is True, gate
     assert r['final_installed_apk_sha256'] == p['apk_sha256']
-    assert r['required_android35_native_tests'] == 12
+    assert r['required_android35_native_tests'] == 14
     assert r['added_permissions'] == r['removed_permissions'] == []
     assert r['baseline_tag'] == OLD_TAG and r['baseline_sha256'] == OLD_SHA
     assert r['physical_phone_tested'] is False and r['play_protect_tested'] is False
@@ -53,7 +53,7 @@ def main():
     for key in ('source',): assert re.fullmatch('[a-f0-9]{40}', p[key])
     for key in ('apk_sha256', 'archive_sha256'): assert re.fullmatch('[a-f0-9]{64}', p[key])
     assert p['required_jvm_tests'] == 940 and p['required_suites'] == 92
-    assert p['required_android35_native_tests'] == 12
+    assert p['required_android35_native_tests'] == 14
     source = p['source']
     subprocess.run(['git', 'merge-base', '--is-ancestor', source, 'HEAD'], check=True)
     subprocess.run(['git', 'diff', '--exit-code', source, 'HEAD', '--', 'cleaner/', 'shared/', 'gradle/',
@@ -83,7 +83,7 @@ def main():
             assert not stat.S_ISLNK(item.external_attr >> 16)
         assert [n for n in z.namelist() if n.endswith('.apk')] == [NAME]
         receipt = json.loads(z.read('verification.json')); validate_receipt(receipt, p)
-        assert receipt['required_android35_native_tests'] == 12
+        assert receipt['required_android35_native_tests'] == 14
         candidate = root/NAME; candidate.write_bytes(z.read(NAME))
     assert sha(candidate) == p['apk_sha256'] and candidate.stat().st_size == p['bytes']
     tools = sorted((Path(os.environ['ANDROID_HOME'])/'build-tools').iterdir(), key=lambda d: tuple(int(n) for n in re.findall(r'\d+', d.name)))[-1]

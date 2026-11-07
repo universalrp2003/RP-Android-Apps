@@ -56,9 +56,11 @@ class HomePlaceNativeTest : ExactCandidateNativeTest() {
         assertTrue(n!!.performAction(AccessibilityNodeInfo.ACTION_CLICK))
         i.waitForIdleSync()
     }
-    private fun forEachLayout(run: (Boolean) -> Unit) {
+    private fun forEachLayout(current: Boolean = true, location: ResolvedWeatherLocation = fix, run: (Boolean) -> Unit) {
         val repo = SettingsRepo(c)
-        val lang = runBlocking { repo.lang.first() }
+        val originalLanguage = Lang.current
+        val lang = AppLang.fromId(runBlocking { repo.lang.first() })
+        val mirror = c.getSharedPreferences(Lang.PREFS, 0).getString(Lang.KEY, null)
         val oldHome = WeatherAlertStore.savedPlace(c)
         try {
             shell("pm grant ${c.packageName} android.permission.ACCESS_COARSE_LOCATION")
@@ -79,19 +81,23 @@ class HomePlaceNativeTest : ExactCandidateNativeTest() {
                                     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())) {
                                         HomePlaceActions(home, onSave = { WeatherAlertStore.savePlace(c, it); home = it },
                                             onRemove = { WeatherAlertStore.clearSavedPlace(c); home = null },
-                                            resolve = { _, _ -> fix }, isCurrent = { _, _ -> true })
+                                            resolve = { _, _ -> location }, isCurrent = { _, _ -> current })
                                     }
                                 }
                             }
                         }
                     }
+                    SystemClock.sleep(1000)
                     i.waitForIdleSync()
                     run(language == AppLang.TA)
                 } finally { i.runOnMainSync { activity.finish() } }
             }
         } finally {
-            runBlocking { repo.setLang(lang) }; Lang.set(lang)
-            c.getSharedPreferences(Lang.PREFS, 0).edit().putString(Lang.KEY, lang.id).commit()
+            runBlocking { repo.setLang(lang) }
+            i.runOnMainSync { Lang.set(originalLanguage) }
+            c.getSharedPreferences(Lang.PREFS, 0).edit().apply {
+                if (mirror == null) remove(Lang.KEY) else putString(Lang.KEY, mirror)
+            }.commit()
             if (oldHome == null) WeatherAlertStore.clearSavedPlace(c) else WeatherAlertStore.savePlace(c, oldHome)
         }
     }
@@ -117,4 +123,19 @@ class HomePlaceNativeTest : ExactCandidateNativeTest() {
         click(button); click(if (ta) "வழக்கமான இடமாகச் சேமி" else "Save as home")
         assertEquals(HomePlacePolicy.candidate(fix), WeatherAlertStore.savedPlace(c))
     }
+    @Test fun expiredOrMovedGpsFixCannotReplaceHome() = forEachLayout(current = false) { ta ->
+        click(if (ta) "தற்போதைய GPS இடத்தை வழக்கமான இடமாகச் சேமி" else "Save current GPS place as home")
+        click(if (ta) "வழக்கமான இடமாகச் சேமி" else "Save as home")
+        assertEquals(original, WeatherAlertStore.savedPlace(c))
+        node(if (ta) "இருப்பிடம் மாறிவிட்டது அல்லது காலாவதியானது. தற்போதைய இடத்தை மீண்டும் தேடவும்." else "Location changed or expired. Find your current location again.")
+    }
+    @Test fun failedGpsLookupNeverCopiesSavedHomeAndCanRetry() = forEachLayout(location = fix.copy(mode = LocationResolutionMode.NEEDS_SAVED_PLACE)) { ta ->
+        val button = if (ta) "தற்போதைய GPS இடத்தை வழக்கமான இடமாகச் சேமி" else "Save current GPS place as home"
+        repeat(2) {
+            click(button)
+            node(if (ta) "புதிய GPS ஊர் விவரம் கிடைக்கவில்லை. இருப்பிடத்தை இயக்கி மீண்டும் முயலவும் அல்லது ஊரைத் தேடவும்." else "No fresh named GPS location. Turn on Location and try again, or search for your town.")
+            assertEquals(original, WeatherAlertStore.savedPlace(c))
+        }
+    }
+
 }
