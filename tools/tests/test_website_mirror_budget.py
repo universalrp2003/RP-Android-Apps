@@ -30,7 +30,7 @@ class SiteMirrorBudgetTest(unittest.TestCase):
         deploy = PAGES.split('\n  deploy:\n', 1)[1]
         job_minutes = int(re.search(r'timeout-minutes: (\d+)', deploy).group(1))
         action_ms = int(re.search(r'uses: actions/deploy-pages@v5\s+with:\s+timeout: (\d+)', deploy).group(1))
-        self.assertEqual(action_ms, 1_200_000)
+        self.assertEqual(action_ms, 600_000)
         self.assertGreaterEqual(job_minutes * 60_000 - action_ms, 600_000)
         self.assertIn('run: python3 tools/verify_live_three_releases.py', deploy)
         self.assertNotIn('continue-on-error:', deploy)
