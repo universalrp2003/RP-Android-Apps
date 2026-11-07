@@ -4,6 +4,8 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -67,14 +69,14 @@ fun HomePlaceActions(home: WeatherPlaceCandidate?, onSave: (WeatherPlaceCandidat
     if (removing && home != null) AlertDialog(onDismissRequest = { removing = false },
         title = { Text(words("Remove saved home?", "சேமித்த வழக்கமான இடத்தை அகற்றவா?")) },
         text = { Text(NamedWeatherPlace.label(home) + "\n" + words("Home forecasts and alerts will stop until you choose a home again. Other saved places, your key and settings are kept.",
-            "மீண்டும் வழக்கமான இடத்தைத் தேர்வு செய்யும் வரை அதற்கான முன்னறிவிப்பும் அறிவிப்பும் நிற்கும். மற்ற இடங்கள், விசை, அமைப்புகள் நீக்கப்படாது.")) },
+            "மீண்டும் வழக்கமான இடத்தைத் தேர்வு செய்யும் வரை அதற்கான முன்னறிவிப்பும் அறிவிப்பும் நிற்கும். மற்ற இடங்கள், விசை, அமைப்புகள் நீக்கப்படாது."), Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState())) },
         confirmButton = { TextButton(onClick = { removing = false; candidate = null; onRemove() }) { Text(words("Remove", "அகற்று")) } },
         dismissButton = { TextButton(onClick = { removing = false }) { Text(words("Cancel", "ரத்து")) } })
     candidate?.let { place ->
         AlertDialog(onDismissRequest = { candidate = null },
             title = { Text(words("Save this place as home?", "இந்த இடத்தை வழக்கமான இடமாகச் சேமிக்கவா?")) },
             text = { Text(NamedWeatherPlace.label(place) + "\n" + words("This replaces only your saved home. Following GPS remains a separate setting.",
-                "சேமித்த வழக்கமான இடம் மட்டும் மாறும். GPS பின்தொடர்தல் தனி அமைப்பாகவே இருக்கும்.")) },
+                "சேமித்த வழக்கமான இடம் மட்டும் மாறும். GPS பின்தொடர்தல் தனி அமைப்பாகவே இருக்கும்."), Modifier.heightIn(max = 220.dp).verticalScroll(rememberScrollState())) },
             confirmButton = { TextButton(onClick = {
                 candidate = null
                 if (isCurrent(context, place)) onSave(place)
