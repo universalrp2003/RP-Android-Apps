@@ -20,8 +20,8 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 25
-        versionName = "1.1.20"
+        versionCode = 26
+        versionName = "1.1.21"
         // Configured only after the separate family service passes its real HTTPS checks.
         val familyUrl = providers.gradleProperty("oorFamilyServiceUrl").orElse("").get()
         require(familyUrl.isEmpty() || familyUrl.matches(Regex("https://oor-family-relay\\.[a-z0-9-]+\\.workers\\.dev")))
