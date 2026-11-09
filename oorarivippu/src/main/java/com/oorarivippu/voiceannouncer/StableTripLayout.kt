@@ -30,7 +30,7 @@ internal fun StableTripField(label: String, value: String, tamil: Boolean) {
             Text(label, modifier, color = Color(0xFF64748B), fontSize = 13.sp, lineHeight = 19.sp)
         }
         @Composable fun reading(modifier: Modifier = Modifier) {
-            Text(value, modifier.clickable(role = Role.Button,
+            Text(value, modifier.heightIn(min = 48.dp).clickable(role = Role.Button,
                 onClickLabel = if (tamil) "முழு விவரத்தைப் பார்" else "View full value",
                 onClick = { expanded = true }),
                 color = Color(0xFF0F172A), fontWeight = FontWeight.SemiBold,
