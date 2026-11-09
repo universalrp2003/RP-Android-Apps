@@ -699,79 +699,41 @@ fun OorArivippuScreen(
                             fontSize = 14.5.sp,
                             modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = tripSpeedText(state, oorIsTamil),
-                            color = Color(0xFF0F766E),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.5.sp
-                        )
                     }
 
-                    InfoRow(
-                        label = ui.currentCityLabel,
-                        value = state.currentCityOrVillage.ifBlank { ui.unknownPlace }
-                    )
-                    InfoRow(
-                        label = ui.currentSubAreaLabel,
-                        value = state.currentSubArea.ifBlank { ui.unknownPlace }
-                    )
-                    if (state.currentDistrict.isNotBlank()) {
-                        InfoRow(
-                            label = ui.currentDistrictLabel,
-                            value = state.currentDistrict
-                        )
-                    }
+                    StableTripField(if (oorIsTamil) "வேகம்" else "Speed", tripSpeedText(state, oorIsTamil), oorIsTamil)
+                    StableTripField(ui.currentCityLabel, state.currentCityOrVillage.ifBlank { ui.unknownPlace }, oorIsTamil)
+                    StableTripField(ui.currentSubAreaLabel, state.currentSubArea.ifBlank { ui.unknownPlace }, oorIsTamil)
+                    // Keep the district slot even before a district is available.
+                    StableTripField(ui.currentDistrictLabel, state.currentDistrict.ifBlank { ui.unknownPlace }, oorIsTamil)
 
                     // Highlighted Current Session Traveled Distance (km) Box
                     val sessionKm = state.sessionTraveledMeters / 1000f
                     val sessionKmText = String.format(Locale.US, "%.2f km", sessionKm)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color(0xFFCCFBF1).copy(alpha = 0.55f))
                             .border(1.dp, Color(0xFF0F766E).copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp, vertical = 9.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (oorIsTamil) "இந்தப் பயணத்தில் கடந்த தூரம்" else "Session Traveled Distance",
-                                fontSize = 12.sp,
-                                color = Color(0xFF134E4A),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = if (oorIsTamil) "புதிய தொடக்கத்தில் தானாக 0.00 km ஆகும்" else "Auto-resets to 0.00 km when started",
-                                fontSize = 10.5.sp,
-                                color = Color(0xFF0F766E)
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = sessionKmText,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFF0F766E)
-                            )
-                            if (state.sessionTraveledMeters > 0f) {
-                                IconButton(
-                                    onClick = { AppPreferences.resetSessionDistance() },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = if (oorIsTamil) "பூஜ்ஜியமாக்கு" else "Reset distance",
-                                        tint = Color(0xFF0F766E),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                        Text(if (oorIsTamil) "இந்தப் பயணத்தில் கடந்த தூரம்" else "Session Traveled Distance",
+                            fontSize = 12.sp, color = Color(0xFF134E4A), fontWeight = FontWeight.SemiBold)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(sessionKmText, Modifier.weight(1f), fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold, color = Color(0xFF0F766E),
+                                minLines = 2, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            // The reset control always reserves its space, including at zero.
+                            IconButton(onClick = { AppPreferences.resetSessionDistance() },
+                                enabled = state.sessionTraveledMeters > 0f) {
+                                Icon(Icons.Default.Refresh,
+                                    contentDescription = if (oorIsTamil) "பூஜ்ஜியமாக்கு" else "Reset distance",
+                                    tint = Color(0xFF0F766E))
                             }
                         }
+                        Text(if (oorIsTamil) "புதிய தொடக்கத்தில் தானாக 0.00 km ஆகும்" else "Auto-resets to 0.00 km when started",
+                            fontSize = 10.5.sp, color = Color(0xFF0F766E))
                     }
                 }
             }
@@ -882,12 +844,7 @@ fun OorArivippuScreen(
                     val destinationLon = state.destinationLongitude
                     if (state.destinationName.isNotBlank() && destinationCandidates.isEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = "${ui.destinationFieldLabel}: ${state.destinationName}",
-                                color = Color(0xFF0F766E),
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            )
+                            StableTripField(ui.destinationFieldLabel, state.destinationName, oorIsTamil)
                             if (state.destinationDetails.isNotBlank()) {
                                 Text(
                                     text = state.destinationDetails,
@@ -1512,31 +1469,6 @@ private fun openMap(context: android.content.Context, latitude: Double, longitud
         )
     }.onFailure {
         openExternalLink(context, "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude")
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(0.4f),
-            color = Color(0xFF64748B),
-            fontSize = 13.sp,
-            lineHeight = 17.sp
-        )
-        Text(
-            text = value,
-            modifier = Modifier.weight(0.6f),
-            color = Color(0xFF0F172A),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-            lineHeight = 17.sp,
-            textAlign = TextAlign.End
-        )
     }
 }
 

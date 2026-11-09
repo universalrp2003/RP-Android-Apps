@@ -36,8 +36,8 @@ class OorLocationQualityContracts(unittest.TestCase):
         for value in ('if (!open || !resumed || !allowed) probe.stop()', 'onDispose { probe.stop() }','Check GPS now','REASON_USER_REQUESTED'):
             self.assertIn(value,ui)
         progress=(S/'TripProgress.kt').read_text()
-        self.assertIn('Last known straight-line remaining',progress)
-        self.assertIn('Fix age:',progress)
+        self.assertIn('Last known: ',progress)
+        self.assertIn('StableTripField(words("Fix age"',progress)
         self.assertIn('takeIf { fresh }',progress)
     def test_exact_publisher_cannot_select_old_pre_probe_artifact(self):
         s=(R/'tools/promote_verified_oor_118.py').read_text()

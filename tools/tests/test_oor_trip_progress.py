@@ -7,7 +7,9 @@ class TripProgressContracts(unittest.TestCase):
     def test_local_session_only_progress_and_home_history(self):
         ui = (SRC/'TripProgress.kt').read_text()
         self.assertIn('Straight-line remaining', ui)
-        self.assertIn('Estimate unavailable', ui)
+        self.assertIn('Time at current speed', ui)
+        self.assertIn('Requires a fresh fix and reliable moving speed', ui)
+        self.assertIn('?: words("Unavailable"', ui)
         self.assertIn('Lifecycle.State.RESUMED', ui)
         self.assertNotIn('requestLocationUpdates', ui)
         service = (SRC/'LocationAnnouncementService.kt').read_text()
