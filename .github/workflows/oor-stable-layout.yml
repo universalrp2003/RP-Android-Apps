@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
+      ORG_GRADLE_PROJECT_oorFamilyServiceUrl: https://oor-family-relay.universalrp2003.workers.dev
       RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
