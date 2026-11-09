@@ -37,6 +37,10 @@ jobs:
             cat background-results/native.txt
             grep -F 'OK (3 tests)' background-results/native.txt
             grep -F 'INSTRUMENTATION_CODE: -1' background-results/native.txt
+            adb shell am instrument -w -r -e class com.universalrp.tamilanstore.CatalogRefreshRecoveryTest com.universalrp.tamilanstore.test/androidx.test.runner.AndroidJUnitRunner > background-results/refresh.txt
+            cat background-results/refresh.txt
+            grep -F 'OK (1 test)' background-results/refresh.txt
+            grep -F 'INSTRUMENTATION_CODE: -1' background-results/refresh.txt
       - name: Bounded actual native failures
         if: failure()
         run: |

@@ -1,5 +1,8 @@
 # RP-Android-Apps (RP Ideas) — Official Open-Source Tamil & English Android Apps
 
+Tamilan Store **0.12** fixes catalog refresh blocked by failed downloads. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.12); install over the current Store without uninstalling or clearing data.
+
+
 Oor Arivippu **1.1.21**: fixed live title/value positions, readable large text and full-value dialogs. [Release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.21). Signed build/lint/unit and bilingual normal/double-font emulator layout checks passed; no physical-phone install claimed.
 
 

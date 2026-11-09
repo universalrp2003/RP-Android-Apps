@@ -216,7 +216,7 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                         item {
-                            TextButton(enabled = !model.refreshing && transfer.appId.isBlank() && !model.batch.active,
+                            TextButton(enabled = model.canRefreshCatalog,
                                 onClick = { model.refreshCatalog() }) {
                                 Text(bi("செயலிப் பட்டியலை மீண்டும் பெறு", "Refresh catalog"))
                             }
