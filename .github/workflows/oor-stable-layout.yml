@@ -2,7 +2,7 @@ name: Oor stable layout checks (no publication)
 on:
   push:
     branches: ["arena/ae58b18b-rp-android-apps"]
-    paths: ["oorarivippu/**", "tools/tests/test_oor*.py", ".github/workflows/oor-stable-layout.yml"]
+    paths: ["oorarivippu/**", "shared/**", "releases/oor-arivippu-*.md", "tools/tests/test_oor*.py", ".github/workflows/oor-stable-layout.yml"]
 permissions:
   contents: read
 concurrency:
