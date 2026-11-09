@@ -7,7 +7,7 @@ class StableOorLayout(unittest.TestCase):
     def test_value_slots_do_not_autosize_or_expand_with_content(self):
         s=(SRC/'StableTripLayout.kt').read_text()
         for text in ('Modifier.weight(.44f)', 'Modifier.weight(.56f)', 'minLines = 2, maxLines = 2',
-                     'LocalDensity.current.fontScale', 'SelectionContainer', 'verticalScroll', 'View full value'):
+                     'density.fontScale', 'SelectionContainer', 'verticalScroll', 'View full value', 'modifier.height(slotHeight)', 'rememberTextMeasurer'):
             self.assertIn(text,s)
         self.assertNotIn('TextAlign.End',s)
         self.assertNotIn('autoSize',s)

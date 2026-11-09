@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -23,18 +25,28 @@ import androidx.compose.ui.unit.sp
 @Composable
 internal fun StableTripField(label: String, value: String, tamil: Boolean) {
     var expanded by remember(label) { mutableStateOf(false) }
-    val largeText = LocalDensity.current.fontScale > 1.3f
+    val density = LocalDensity.current
+    val largeText = density.fontScale > 1.3f
+    val valueStyle = LocalTextStyle.current.copy(fontSize = 13.sp, lineHeight = 19.sp,
+        fontWeight = FontWeight.SemiBold, color = Color(0xFF0F172A))
+    val measurer = rememberTextMeasurer()
+    // Tamil fallback glyph metrics can be taller than Latin, even with the same sp
+    // and line count. Reserve the larger two-line height before any live value arrives.
+    val slotHeight = remember(density, valueStyle, measurer) {
+        val pixels = listOf("Ag 0123456789\nAg 0123456789", "ஊர் நகரம் மாவட்டம்\nஊர் நகரம் மாவட்டம்")
+            .maxOf { measurer.measure(AnnotatedString(it), style = valueStyle, maxLines = 2).size.height }
+        maxOf(48.dp, with(density) { pixels.toDp() })
+    }
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val stacked = largeText || maxWidth < 280.dp
         @Composable fun title(modifier: Modifier = Modifier) {
             Text(label, modifier, color = Color(0xFF64748B), fontSize = 13.sp, lineHeight = 19.sp)
         }
         @Composable fun reading(modifier: Modifier = Modifier) {
-            Text(value, modifier.heightIn(min = 48.dp).clickable(role = Role.Button,
+            Text(value, modifier.height(slotHeight).clickable(role = Role.Button,
                 onClickLabel = if (tamil) "முழு விவரத்தைப் பார்" else "View full value",
                 onClick = { expanded = true }),
-                color = Color(0xFF0F172A), fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp, lineHeight = 19.sp,
+                style = valueStyle,
                 minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
         if (stacked) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
