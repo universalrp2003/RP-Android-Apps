@@ -1,5 +1,8 @@
 # RP-Android-Apps (RP Ideas) — Official Open-Source Tamil & English Android Apps
 
+Oor Arivippu **1.1.21**: fixed live title/value positions, readable large text and full-value dialogs. [Release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.21). Signed build/lint/unit and bilingual normal/double-font emulator layout checks passed; no physical-phone install claimed.
+
+
 Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**[universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/)**) for thirteen regular non-Store open-source Android apps (including DailyVault), plus separate optional Tamilan Store in **தமிழ் (Tamil)** and **English**: utilities including (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / தமிழன் வானொலி**, **PulseEQ**, **RP Vocal Remover Studio**, **Oor Arivippu / ஊர் அறிவிப்பு**, **Vasanthi AI / என்னைச் சுற்றி**) plus **Secret Message**, a separately published app that is not independently security-reviewed. Developed by **Rameshprathap R (`@universalrp2003`)** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. Current minimum Android versions and signed GitHub Release APKs are listed below; device-dependent features are described honestly in each app's documentation.
 
 ## 13 regular apps + separate optional Tamilan Store

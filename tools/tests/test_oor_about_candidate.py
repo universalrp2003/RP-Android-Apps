@@ -7,7 +7,7 @@ class OorAboutCandidateContracts(unittest.TestCase):
         self.assertIn('versionCode = 26',gradle);self.assertIn('versionName = "1.1.21"',gradle)
         # Lifecycle candidate: public directory now matches verified1.1.20.
         sister=(ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('version = "1.1.21",\n            publishedVersion = "1.1.20"',sister)
+        self.assertIn('version = "1.1.21",\n            publishedVersion = "1.1.21"',sister)
     def test_inspection_pins_accepted_previous_public_bytes(self):
         source=(ROOT/'tools/inspect_oor_family_candidate.py').read_text()
         for value in ("'1.1.16', 21",'oor-arivippu-v1.1.15','ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5','Oor-Arivippu-v1.1.16-about-guide-candidate.apk'):

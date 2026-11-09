@@ -21,8 +21,8 @@ class OorLocationQualityContracts(unittest.TestCase):
             self.assertNotIn(x,s)
     def test_current_public_links_match_exact_authorized_receipt(self):
         self.assertIn('versionName = "1.1.21"',(R/'oorarivippu/build.gradle.kts').read_text())
-        self.assertIn('publishedVersion = "1.1.20"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
-        self.assertIn('Oor-Arivippu-v1.1.20.apk',(R/'site/index.html').read_text())
+        self.assertIn('publishedVersion = "1.1.21"',(R/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text())
+        self.assertIn('Oor-Arivippu-v1.1.21.apk',(R/'site/index.html').read_text())
         inspector=(R/'tools/inspect_oor_location_candidate.py').read_text()
         self.assertIn("'1.1.20', 25",inspector)
         self.assertIn('f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02',inspector)  # immutable public1.1.19 upgrade baseline
