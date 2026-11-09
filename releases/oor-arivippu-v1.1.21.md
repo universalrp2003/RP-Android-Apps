@@ -6,7 +6,7 @@ GPS freshness rules, trip arithmetic, announcements and optional family sharing 
 
 Automated validation: release unit tests/lint and Android35 real Compose geometry checks in English/Tamil at normal and double font, using synthetic changing values. This does not claim physical-phone GPS, audible announcements or Play Protect clearance.
 
-Final release bytes are not installed on a phone.
+Final release bytes are not installed on a phone. Owner authorized publication without a separate debug-APK test.
 
 ## தமிழ்
 
