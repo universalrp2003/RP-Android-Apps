@@ -77,7 +77,7 @@ def main():
               ('Elderly-Launcher-v1.7.apk', json.loads((ROOT/'docs/launcher-1.7-publication.json').read_text()))]
     checks.append(('Oor-Arivippu-v1.1.19.apk', json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.20.apk', json.loads((ROOT/'docs/oor-location-1.1.20-publication-receipt.json').read_text())))
-    checks.append(('Tamilan-Store-v0.11.apk', json.loads((ROOT/'docs/tamilan-store-0.11-publication-receipt.json').read_text())))
+    checks.append(('Tamilan-Store-v0.12.apk', json.loads((ROOT/'docs/tamilan-store-0.12-publication-receipt.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.21.apk', json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())))
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000
