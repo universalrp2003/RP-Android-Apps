@@ -48,9 +48,10 @@ class OorGuideTests(unittest.TestCase):
     def test_catalogs_and_live_verifier_pin_exact_public_receipt(self):
         receipt=json.loads((ROOT/'docs/oor-location-1.1.20-publication-receipt.json').read_text())
         self.assertFalse(receipt['rebuilt']);self.assertTrue(receipt['prior_public_assets_unchanged'])
+        receipt=json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())
         for filename in ('catalog.json','catalog-v2.json'):
             app=next(a for a in json.loads((ROOT/'site'/filename).read_text())['apps'] if a['id']=='oorarivippu')
-            self.assertEqual(app['version'],'1.1.20')
+            self.assertEqual(app['version'],'1.1.21')
             for field,key in [('sha256','apk_sha256'),('size','bytes'),('url','url')]:
                 self.assertEqual(app[field],receipt[key])
         live=(ROOT/'tools/verify_live_three_releases.py').read_text()

@@ -33,7 +33,7 @@ import java.util.Locale
     val fresh = TripProgressPolicy.fresh(state.isTrackingEnabled, state.isGpsEnabled, state.tripFixElapsedMs, now)
     val speed = state.tripSpeedKmh.takeIf { fresh }
     Column {
-        Text(words("Speed: ", "வேகம்: ") + tripSpeedText(state, tamil), fontSize = 13.sp)
+        StableTripField(words("Speed", "வேகம்"), tripSpeedText(state, tamil), tamil)
         if (state.destinationName.isNotBlank()) {
             val lat = state.tripLatitude
             val lon = state.tripLongitude
@@ -44,12 +44,20 @@ import java.util.Locale
                 Location.distanceBetween(lat, lon, targetLat, targetLon, result)
                 result[0]
             } else null
-            Text((if(fresh) words("Straight-line remaining: ", "நேர்கோட்டு மீதித் தொலைவு: ") else words("Last known straight-line remaining: ", "கடைசியாக அறிந்த நேர்கோட்டு மீதித் தொலைவு: ")) +
-                (meters?.let { String.format(Locale.ROOT, "%.2f km", it / 1000) } ?: words("Unavailable", "கிடைக்கவில்லை")), fontSize = 13.sp)
-            if(meters != null) Text(words("Fix age: ", "இருப்பிடத் தகவல் வயது: ") + "${((now - state.tripFixElapsedMs) / 1000).coerceAtLeast(0)} " + words("seconds", "வினாடிகள்"), fontSize=12.sp)
+            val distance = meters?.let { String.format(Locale.ROOT, "%.2f km", it / 1000) }
+                ?: words("Unavailable", "கிடைக்கவில்லை")
+            StableTripField(words("Straight-line remaining", "நேர்கோட்டு மீதித் தொலைவு"),
+                if (fresh || meters == null) distance else words("Last known: ", "கடைசியாக அறிந்தது: ") + distance, tamil)
+            // A missing fix must not remove this row and move all subsequent controls.
+            StableTripField(words("Fix age", "இருப்பிடத் தகவல் வயது"),
+                meters?.let { "${((now - state.tripFixElapsedMs) / 1000).coerceAtLeast(0)} " + words("seconds", "வினாடிகள்") }
+                    ?: words("Unavailable", "கிடைக்கவில்லை"), tamil)
             val minutes = meters?.takeIf { fresh }?.let { TripProgressPolicy.estimateMinutes(it, speed) }
-            Text(minutes?.let { words("Approx. $it min at current speed · not road/traffic ETA", "தற்போதைய வேகத்தில் சுமார் $it நிமிடம் · சாலை / போக்குவரத்துக் கணிப்பு அல்ல") }
-                ?: words("Estimate unavailable · no reliable moving-speed measurement", "நேரக் கணிப்பு கிடைக்கவில்லை · நம்பகமான நகரும் வேக அளவீடு இல்லை"), fontSize = 12.sp)
+            StableTripField(words("Time at current speed", "தற்போதைய வேகத்தில் நேரம்"),
+                minutes?.let { words("Approx. $it min", "சுமார் $it நிமிடம்") }
+                    ?: words("Unavailable", "கிடைக்கவில்லை"), tamil)
+            Text(words("Straight-line estimate only, not road/traffic ETA. Requires a fresh fix and reliable moving speed.",
+                "நேர்கோட்டு நேரக் கணிப்பு மட்டுமே; சாலை / போக்குவரத்துக் கணிப்பு அல்ல. புதிய இருப்பிடத் தகவலும் நம்பகமான நகரும் வேகமும் தேவை."), fontSize = 12.sp)
         }
     }
 }

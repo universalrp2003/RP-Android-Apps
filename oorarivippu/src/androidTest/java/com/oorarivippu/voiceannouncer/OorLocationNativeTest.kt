@@ -159,8 +159,9 @@ class OorLocationNativeTest {
                         ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("settings put system font_scale $scale")).use { it.readBytes() }
                         SystemClock.sleep(700)
                         find(if (tamil) "பயணம் தொடங்கு" else "TURN ON VOICE ANNOUNCER", true)
-                        find(if (tamil) "வேகம்:" else "Speed:", true)
-                        find(if (tamil) "நேரக் கணிப்பு கிடைக்கவில்லை" else "Estimate unavailable", true)
+                        find(if (tamil) "வேகம்" else "Speed", true)
+                        find(if (tamil) "தற்போதைய வேகத்தில் நேரம்" else "Time at current speed", true)
+                        find(if (tamil) "கிடைக்கவில்லை" else "Unavailable", true)
                         click(if (tamil) "செயற்கைக்கோள் / செயலி விவரங்கள்" else "Satellite / app diagnostics", true)
                         find(if (tamil) "இப்போது GPS சோதி" else "Check GPS now", true)
                         if(!tamil && scale == "1.0") {

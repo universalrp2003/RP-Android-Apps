@@ -1,0 +1,13 @@
+{
+  "tag": "oor-arivippu-v1.1.21",
+  "release_id": 439077106,
+  "asset_id": 727317040,
+  "bytes": 12924720,
+  "published_at": "2026-11-09T11:56:55Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.21/Oor-Arivippu-v1.1.21.apk",
+  "physical_phone_tested": false,
+  "native_run": 42611582857,
+  "apk_sha256": "e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258",
+  "publisher_run": 42612605769,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+}

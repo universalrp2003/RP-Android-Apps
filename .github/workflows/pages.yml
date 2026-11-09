@@ -53,7 +53,6 @@ jobs:
               # builds stay on their GitHub release page instead of being mirrored a second time.
               ("live-guard-v2.97", "CleanSweep-v2.97.apk", 14784299, "121b2c757996910849c76b70f8aa980548e65a84f5fc1e8e0bd6ffda793e92fe"),
               ("live-guard-v2.94", "CleanSweep-v2.94.apk", 14762179, "c26de0c09022ea5d05169c238f91308de367dc2e0ccb16c902699d17de34c195"),
-              ("live-guard-v2.93", "CleanSweep-v2.93.apk", 14747343, "9f8e7936ae98ed5fb43e9087acf6a6de87dc5837fd66c9a97faa0216aa55f012"),
               ("tamilan-store-v0.11", "Tamilan-Store-v0.11.apk", 19476379, "1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b"),
               ("live-guard-v2.82", "CleanSweep-v2.82.apk", 14505867, "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
@@ -65,6 +64,7 @@ jobs:
               ("oor-arivippu-v1.1.16", "Oor-Arivippu-v1.1.16.apk", 12891948, "3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee"),
               ("oor-arivippu-v1.1.17", "Oor-Arivippu-v1.1.17.apk", 12908336, "7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f"),
               ("oor-arivippu-v1.1.19", "Oor-Arivippu-v1.1.19.apk", 12924720, "f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02"),
+              ("oor-arivippu-v1.1.21", "Oor-Arivippu-v1.1.21.apk", 12924720, "e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258"),
               ("oor-arivippu-v1.1.20", "Oor-Arivippu-v1.1.20.apk", 12924720, "cf92399ca366e6ceb106cfa276579b7d6bf6980e2014f0af8e3f247de9ced19f"),
               ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
               ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
@@ -110,8 +110,6 @@ jobs:
           test -s site/apks/CleanSweep-v2.97.zip
           test -s site/apks/CleanSweep-v2.94.apk
           test -s site/apks/CleanSweep-v2.94.zip
-          test -s site/apks/CleanSweep-v2.93.apk
-          test -s site/apks/CleanSweep-v2.93.zip
           test -s site/apks/Tamilan-Store-v0.11.apk
           test -s site/apks/Tamilan-Store-v0.11.zip
           test -s site/apks/CleanSweep-v2.82.apk
@@ -134,6 +132,8 @@ jobs:
           test -s site/apks/Oor-Arivippu-v1.1.17.zip
           test -s site/apks/Oor-Arivippu-v1.1.19.apk
           test -s site/apks/Oor-Arivippu-v1.1.19.zip
+          test -s site/apks/Oor-Arivippu-v1.1.21.apk
+          test -s site/apks/Oor-Arivippu-v1.1.21.zip
           test -s site/apks/Oor-Arivippu-v1.1.20.apk
           test -s site/apks/Oor-Arivippu-v1.1.20.zip
           test -s site/apks/Tamil-Podcast-Player-v1.6.apk
