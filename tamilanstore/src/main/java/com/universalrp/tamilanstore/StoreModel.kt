@@ -126,8 +126,13 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
         // Screen-off/backgrounding never cancels user-requested transport. Installer handoff is
         // separately gated by MainActivity.foreground; no new batch approval survives process death.
     }
+    val canRefreshCatalog: Boolean
+        get() = _transfer.value.let { transfer ->
+            CatalogRefreshPolicy.allowed(refreshing, batch.active, transfer.busy,
+                transfer.verified, transfer.appId.isNotBlank(), transfer.failed)
+        }
     fun refreshCatalog() {
-        if (refreshing || _transfer.value.appId.isNotBlank() || batch.active) return
+        if (!canRefreshCatalog) return
         refreshing = true
         catalogMessage = "checking"
         viewModelScope.launch {
