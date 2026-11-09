@@ -112,8 +112,9 @@ class OorTripNativeTest {
                         ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("settings put system font_scale $scale")).use { it.readBytes() }
                         SystemClock.sleep(700)
                         find(if (tamil) "பயணம் தொடங்கு" else "TURN ON VOICE ANNOUNCER", true)
-                        find(if (tamil) "வேகம்:" else "Speed:", true)
-                        find(if (tamil) "நேரக் கணிப்பு கிடைக்கவில்லை" else "Estimate unavailable", true)
+                        find(if (tamil) "வேகம்" else "Speed", true)
+                        find(if (tamil) "தற்போதைய வேகத்தில் நேரம்" else "Time at current speed", true)
+                        find(if (tamil) "கிடைக்கவில்லை" else "Unavailable", true)
                         find(if (tamil) "சமீபத்திய ஊர் அறிவிப்புகள்" else "Recent Voice Announcements", true)
                         // Return the single home scroll owner to its start before the next pass.
                         repeat(12) { ParcelFileDescriptor.AutoCloseInputStream(automation.executeShellCommand("input swipe 250 400 250 950 250")).use { it.readBytes() } }
