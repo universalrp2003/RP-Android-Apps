@@ -41,7 +41,7 @@ def main():
     assert os.environ['GITHUB_EVENT_NAME']=='push'
     pin=json.loads(Path('docs/approved-store-0.12-candidate.json').read_text())
     assert pin['publication_authorized'] is True
-    assert pin['catalog_refresh_fix_authorized'] is True and pin['background_native_tests'] == 3
+    assert pin['catalog_refresh_fix_authorized'] is True and pin['background_native_tests'] == 3 and pin['refresh_native_tests'] == 1
     source=pin['source']; assert re.fullmatch('[a-f0-9]{40}',source)
     subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'],check=True)
     compiled=['tamilanstore/','shared/','gradle/','build.gradle.kts','settings.gradle.kts','gradle.properties','gradlew','gradlew.bat']
