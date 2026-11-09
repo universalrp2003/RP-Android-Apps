@@ -2,7 +2,7 @@
 
 Titles and values now have reserved positions. Speed has its own field; district, fix age and reset controls keep their space when readings are unavailable. Values do not automatically shrink. Large text uses stacked fields; tap a long value to read and select it in full. Tamil and Latin font metrics are both reserved to prevent changing row heights.
 
-GPS freshness rules, trip arithmetic, announcements and optional family sharing are unchanged. No permissions added. Update over the existing app without uninstalling or clearing local data.
+GPS freshness rules, trip arithmetic, announcements and optional family sharing are unchanged. No permissions added. Existing optional family service configuration retained. Update over the existing app without uninstalling or clearing local data.
 
 Automated validation: release unit tests/lint and Android35 real Compose geometry checks in English/Tamil at normal and double font, using synthetic changing values. This does not claim physical-phone GPS, audible announcements or Play Protect clearance.
 
