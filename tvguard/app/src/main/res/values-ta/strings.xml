@@ -52,6 +52,11 @@
     <string name="btn_set_launcher">முதன்மை முகப்பாக மாற்று</string>
     <string name="btn_grant_storage">சேமிப்பக அனுமதி வழங்கு</string>
 
+    <string name="running_apps_title">இயங்கும் செயலிகள் &amp; நினைவகம்</string>
+    <string name="running_apps_subtitle">நேரடி நினைவக பயன்பாடு</string>
+    <string name="btn_close_all_running">அனைத்து பின்னணி செயலிகளையும் மூடு</string>
+    <string name="btn_close_app">மூடு</string>
+
     <string name="category_safe">நீக்க பாதுகாப்பானது (தேவையற்றவை)</string>
     <string name="category_caution">பயனர் முடிவு (கருவிகள்)</string>
     <string name="category_core">கணினி முதன்மை செயலி (பாதுகாக்கப்பட்டது)</string>

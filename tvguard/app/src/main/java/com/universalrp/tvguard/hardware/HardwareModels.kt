@@ -41,7 +41,30 @@ data class StorageEvidence(
     val partitions: List<PartitionEntry>,
     val isStorageSpoofed: Boolean,
     val storageSpoofReason: String
-)
+) {
+    /**
+     * Real physical eMMC chip capacity (e.g. 15.8 GB on SK hynix chip).
+     */
+    val realTotalFlashBytes: Long
+        get() = blockDeviceBytes ?: (systemTotalBytes + vendorTotalBytes + cacheTotalBytes + dataTotalBytes)
+
+    /**
+     * Estimated actual used flash storage.
+     */
+    val estimatedUsedBytes: Long
+        get() = ((dataTotalBytes - dataFreeBytes).coerceAtLeast(0L) + systemTotalBytes + vendorTotalBytes + cacheTotalBytes)
+
+    /**
+     * Ground-truth free storage derived from true physical chip size minus used space,
+     * debunking vendor-spoofed 25.4 GB claims.
+     */
+    val realFreeStorageBytes: Long
+        get() = if (blockDeviceBytes != null && blockDeviceBytes > estimatedUsedBytes) {
+            blockDeviceBytes - estimatedUsedBytes
+        } else {
+            dataFreeBytes
+        }
+}
 
 data class OsEvidence(
     val reportedRelease: String,
