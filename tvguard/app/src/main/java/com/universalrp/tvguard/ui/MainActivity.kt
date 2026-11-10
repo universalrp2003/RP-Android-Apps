@@ -1973,7 +1973,7 @@ fun AdbGuideDialog(
                 )
             }
             Spacer(modifier = Modifier.height(14.dp))
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.End) {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                 TvFocusButton(
                     text = "Close",
                     onClick = onDismiss,
