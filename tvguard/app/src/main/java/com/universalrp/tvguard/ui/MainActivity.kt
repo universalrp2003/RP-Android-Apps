@@ -23,6 +23,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -80,13 +82,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -148,7 +149,7 @@ class MainActivity : ComponentActivity() {
 
 enum class TvNavTab(val titleRes: Int, val icon: ImageVector) {
     HOME(R.string.tab_home, Icons.Default.Home),
-    AUDIT(R.string.tab_audit, Icons.Default.Security),
+    TOOLS(R.string.tab_tools, Icons.Default.Build),
     DEBLOAT(R.string.tab_debloat, Icons.Default.CleaningServices),
     SHARE(R.string.tab_share, Icons.Default.Wifi),
     NETWORK(R.string.tab_network, Icons.Default.Speed)
@@ -184,8 +185,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
     var isRefreshing by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var showAdbGuide by remember { mutableStateOf(false) }
-    var testedAllocatedMb by remember { mutableStateOf<Int?>(null) }
-    var isTestingAlloc by remember { mutableStateOf(false) }
     var isServerRunning by remember { mutableStateOf(LocalWebTransferServer.isRunning) }
 
     fun refreshDownloads() {
@@ -293,7 +292,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // --- NAVIGATION TABS (D-Pad Fluent Remote Navigation with High-Contrast Focus) ---
+            // --- NAVIGATION TABS ---
             TvTabBar(
                 currentTab = currentTab,
                 onTabSelected = { currentTab = it }
@@ -306,8 +305,21 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 when (currentTab) {
                     TvNavTab.HOME -> {
                         TvHomeView(
-                            report = report,
                             apps = installedApps,
+                            onLaunchApp = { pkg ->
+                                TvAppCatalog.launchApp(context, pkg)
+                            },
+                            onToggleFavorite = { pkg ->
+                                TvAppCatalog.toggleFavorite(context, pkg)
+                                installedApps = TvAppCatalog.loadApps(context)
+                            },
+                            onOpenTools = { currentTab = TvNavTab.TOOLS }
+                        )
+                    }
+
+                    TvNavTab.TOOLS -> {
+                        TvToolsView(
+                            report = report,
                             runningApps = runningApps,
                             onRamBoost = {
                                 val res = MemoryTrimmer.trim(context)
@@ -316,8 +328,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
                             },
                             onTakeScreenshot = { takeScreenshot(false) },
                             onOpenShare = { currentTab = TvNavTab.SHARE },
-                            onOpenAudit = { currentTab = TvNavTab.AUDIT },
                             onOpenDebloat = { currentTab = TvNavTab.DEBLOAT },
+                            onOpenNetwork = { currentTab = TvNavTab.NETWORK },
                             onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
                             onGrantStorage = { promptStoragePermission(context) },
                             onOpenSettings = {
@@ -326,13 +338,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 } catch (_: Throwable) {
                                     toastMessage = "Unable to open Settings"
                                 }
-                            },
-                            onToggleFavorite = { pkg ->
-                                TvAppCatalog.toggleFavorite(context, pkg)
-                                installedApps = TvAppCatalog.loadApps(context)
-                            },
-                            onLaunchApp = { pkg ->
-                                TvAppCatalog.launchApp(context, pkg)
                             },
                             onCloseApp = { pkg ->
                                 RunningAppsManager.closeApp(context, pkg)
@@ -343,34 +348,9 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 val closed = RunningAppsManager.closeAllBackgroundApps(context)
                                 toastMessage = "Closed $closed background processes"
                                 refreshAll()
-                            }
+                            },
+                            onRefreshAudit = { refreshAll() }
                         )
-                    }
-
-                    TvNavTab.AUDIT -> {
-                        if (report != null) {
-                            TvAuditView(
-                                report = report,
-                                testedAllocMb = testedAllocatedMb,
-                                isTestingAlloc = isTestingAlloc,
-                                onRunAllocTest = {
-                                    scope.launch {
-                                        isTestingAlloc = true
-                                        val alloc = withContext(Dispatchers.IO) {
-                                            HardwareAuditor.runSafeMemoryCeilingTest(2048)
-                                        }
-                                        testedAllocatedMb = alloc
-                                        isTestingAlloc = false
-                                        toastMessage = "Physical Allocation Limit Tested: $alloc MB"
-                                    }
-                                },
-                                onRefreshAudit = { refreshAll() }
-                            )
-                        } else {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator(color = Color(0xFF00E5FF))
-                            }
-                        }
                     }
 
                     TvNavTab.DEBLOAT -> {
@@ -468,10 +448,10 @@ fun TopStatusBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // App Title & Tagline
+        // App Title & Time
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
-                imageVector = Icons.Default.Security,
+                imageVector = Icons.Default.Tv,
                 contentDescription = null,
                 tint = Color(0xFF00E5FF),
                 modifier = Modifier.size(28.dp)
@@ -495,7 +475,7 @@ fun TopStatusBar(
         // Status Pills with Real Ground Truth Hardware Details
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             if (report != null) {
-                // 1. Real RAM Pill (Debunking fake 4 GB claim)
+                // 1. Real RAM Pill
                 val totalGb = report.ram.kernelMemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
                 val freeGb = report.ram.kernelMemAvailableBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
                 val usedPercent = ((totalGb - freeGb) / totalGb * 100).toInt().coerceIn(0, 100)
@@ -512,7 +492,7 @@ fun TopStatusBar(
                     color = if (report.ram.isRamSpoofed) Color(0xFFFF5252) else if (usedPercent > 85) Color(0xFFFF9800) else Color(0xFF00E676)
                 )
 
-                // 2. Real Flash Storage Pill (Debunking fake 25.4 GB Free / 32 GB claim)
+                // 2. Real Flash Storage Pill
                 val storage = report.storage
                 val storageLabel = if (storage.isStorageSpoofed || storage.blockDeviceBytes != null) {
                     val realTotalGb = storage.realTotalFlashBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
@@ -529,7 +509,7 @@ fun TopStatusBar(
                     color = if (storage.isStorageSpoofed) Color(0xFFFF5252) else Color(0xFF00E5FF)
                 )
 
-                // 3. Root Status Pill (Acknowledging /system/xbin/su presence on Synovo/budget boxes)
+                // 3. Root Status Pill
                 val (rootLabel, rootColor) = when {
                     report.root.canExecuteRoot -> "Root: Active (UID 0)" to Color(0xFF00E676)
                     report.root.isSuPresent -> "Root: Ready (${report.root.suPathsFound.firstOrNull() ?: "/system/xbin/su"})" to Color(0xFFFFD600)
@@ -605,29 +585,7 @@ fun TvTabBar(
     onTabSelected: (TvNavTab) -> Unit
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .onPreviewKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown) {
-                    when (event.nativeKeyEvent.keyCode) {
-                        KeyEvent.KEYCODE_DPAD_LEFT -> {
-                            val prevIdx = currentTab.ordinal - 1
-                            if (prevIdx >= 0) {
-                                onTabSelected(TvNavTab.values()[prevIdx])
-                                return@onPreviewKeyEvent true
-                            }
-                        }
-                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                            val nextIdx = currentTab.ordinal + 1
-                            if (nextIdx < TvNavTab.values().size) {
-                                onTabSelected(TvNavTab.values()[nextIdx])
-                                return@onPreviewKeyEvent true
-                            }
-                        }
-                    }
-                }
-                false
-            },
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         TvNavTab.values().forEach { tab ->
@@ -649,24 +607,23 @@ fun TvTabButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
 
-    // High-contrast TV palette:
-    // FOCUSED: Glowing Electric Cyan fill (Color(0xFF00E5FF)) with JET BLACK text!
-    // SELECTED (Active view, but focus is below): Oceanic Deep Blue with Cyan border and Cyan bottom line!
-    // UNSELECTED & UNFOCUSED: Dark Slate (#111827) with muted gray text.
     val bg = when {
-        isFocused -> Color(0xFF00E5FF)       // Ultra-bright neon cyan!
+        isFocused -> Color(0xFF00E5FF)       // Solid vibrant electric neon cyan
         isSelected -> Color(0xFF0C2D48)      // Active tab dark navy
         else -> Color(0xFF111827)            // Inactive tab
     }
     val borderCol = when {
-        isFocused -> Color.White             // 3.5dp bright white outline around cyan!
+        isFocused -> Color.White             // 3.5dp bright white outline around cyan
         isSelected -> Color(0xFF00E5FF)      // 2dp cyan outline
         else -> Color(0xFF1F2937)            // Muted dark border
     }
     val contentCol = when {
-        isFocused -> Color(0xFF070B14)       // Bold jet black text on bright cyan background!
+        isFocused -> Color(0xFF070B14)       // Bold jet black text on bright cyan background
         isSelected -> Color(0xFF00E5FF)      // Electric cyan text
         else -> Color(0xFF94A3B8)            // Muted slate gray
     }
@@ -677,14 +634,19 @@ fun TvTabButton(
             .scale(if (isFocused) 1.08f else 1.0f)
             .background(bg, RoundedCornerShape(12.dp))
             .border(if (isFocused) 3.5.dp else if (isSelected) 2.dp else 1.dp, borderCol, RoundedCornerShape(12.dp))
-            .focusable()
-            .onFocusChanged {
-                isFocused = it.isFocused
-                if (it.isFocused) {
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+                if (state.isFocused) {
                     onClick()
                 }
             }
-            .clickable { onClick() },
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -736,41 +698,345 @@ fun TvTabButton(
     }
 }
 
-// --- TAB 1: HOME / LAUNCHER ---
+// --- TAB 1: CLEAN TV LAUNCHER & APPS ---
 
 @Composable
 fun TvHomeView(
-    report: FullHardwareReport?,
     apps: List<LaunchableApp>,
+    onLaunchApp: (String) -> Unit,
+    onToggleFavorite: (String) -> Unit,
+    onOpenTools: () -> Unit
+) {
+    val favorites = apps.filter { it.isFavorite }
+    val nonFavorites = apps.filter { !it.isFavorite }
+    val firstItemFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        try {
+            firstItemFocusRequester.requestFocus()
+        } catch (_: Throwable) {}
+    }
+
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 145.dp),
+        modifier = Modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Quick Tools & Settings Tile
+        item {
+            TvQuickToolsTile(
+                onClick = onOpenTools,
+                focusRequester = if (favorites.isEmpty() && apps.isEmpty()) firstItemFocusRequester else null
+            )
+        }
+
+        // Section 1: Favorites Shelf (if any)
+        if (favorites.isNotEmpty()) {
+            items(favorites) { app ->
+                TvAppCard(
+                    app = app,
+                    onLaunch = { onLaunchApp(app.packageName) },
+                    onToggleFav = { onToggleFavorite(app.packageName) },
+                    focusRequester = if (app == favorites.first()) firstItemFocusRequester else null
+                )
+            }
+        }
+
+        // Section 2: All Installed Applications
+        items(if (favorites.isNotEmpty()) nonFavorites else apps) { app ->
+            TvAppCard(
+                app = app,
+                onLaunch = { onLaunchApp(app.packageName) },
+                onToggleFav = { onToggleFavorite(app.packageName) },
+                focusRequester = if (favorites.isEmpty() && app == apps.firstOrNull()) firstItemFocusRequester else null
+            )
+        }
+    }
+}
+
+@Composable
+fun TvQuickToolsTile(
+    onClick: () -> Unit,
+    focusRequester: FocusRequester? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
+
+    val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF111827)
+    val borderCol = if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937)
+    val borderWidth = if (isFocused) 4.dp else 1.dp
+    val scale = if (isFocused) 1.10f else 1.0f
+
+    val baseMod = if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
+
+    Box(
+        modifier = baseMod
+            .fillMaxWidth()
+            .height(138.dp)
+            .scale(scale)
+            .background(bg, RoundedCornerShape(14.dp))
+            .border(borderWidth, borderCol, RoundedCornerShape(14.dp))
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onClick()
+            }
+            .padding(10.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isFocused) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFF00E5FF), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "SYSTEM",
+                            color = Color(0xFF070B14),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
+                }
+
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = null,
+                    tint = if (isFocused) Color.White else Color(0xFF64748B),
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Icon(
+                imageVector = Icons.Default.Build,
+                contentDescription = null,
+                tint = if (isFocused) Color.White else Color(0xFF00E5FF),
+                modifier = Modifier.size(54.dp)
+            )
+
+            Text(
+                text = stringResource(R.string.tools_tile_title),
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+@Composable
+fun TvAppCard(
+    app: LaunchableApp,
+    onLaunch: () -> Unit,
+    onToggleFav: () -> Unit,
+    modifier: Modifier = Modifier,
+    focusRequester: FocusRequester? = null
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
+
+    val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF111827)
+    val borderCol = if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937)
+    val borderWidth = if (isFocused) 4.dp else 1.dp
+    val scale = if (isFocused) 1.10f else 1.0f
+
+    val baseModifier = if (focusRequester != null) modifier.focusRequester(focusRequester) else modifier
+
+    Box(
+        modifier = baseModifier
+            .fillMaxWidth()
+            .height(138.dp)
+            .scale(scale)
+            .background(bg, RoundedCornerShape(14.dp))
+            .border(borderWidth, borderCol, RoundedCornerShape(14.dp))
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onLaunch()
+            }
+            .padding(10.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Top row: focus indicator badge + favorite star
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (isFocused) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color(0xFF00E5FF), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "OPEN",
+                            color = Color(0xFF070B14),
+                            fontSize = 9.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                } else {
+                    Spacer(modifier = Modifier.width(1.dp))
+                }
+
+                Icon(
+                    imageVector = if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
+                    contentDescription = null,
+                    tint = if (app.isFavorite) Color(0xFFFFD600) else if (isFocused) Color.White.copy(alpha = 0.7f) else Color(0xFF334155),
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onToggleFav() }
+                )
+            }
+
+            // Big, clean, beautiful App Icon: 56.dp
+            AppIcon(
+                drawable = app.icon,
+                modifier = Modifier.size(56.dp)
+            )
+
+            // App Label
+            Text(
+                text = app.appName,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+fun AppIcon(
+    drawable: Drawable?,
+    modifier: Modifier = Modifier
+) {
+    if (drawable == null) {
+        Icon(
+            imageVector = Icons.Default.Tv,
+            contentDescription = null,
+            tint = Color(0xFF00E5FF),
+            modifier = modifier
+        )
+        return
+    }
+
+    val bitmap = remember(drawable) {
+        drawableToBitmap(drawable)
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            modifier = modifier,
+            contentScale = ContentScale.Fit
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Default.Tv,
+            contentDescription = null,
+            tint = Color(0xFF00E5FF),
+            modifier = modifier
+        )
+    }
+}
+
+fun drawableToBitmap(drawable: Drawable): Bitmap? {
+    return try {
+        if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            return drawable.bitmap
+        }
+        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
+        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
+        val bmp = Bitmap.createBitmap(
+            width.coerceIn(32, 256),
+            height.coerceIn(32, 256),
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bmp)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        bmp
+    } catch (_: Throwable) {
+        null
+    }
+}
+
+// --- TAB 2: TOOLS & SETTINGS SECTION ---
+
+@Composable
+fun TvToolsView(
+    report: FullHardwareReport?,
     runningApps: List<RunningAppInfo>,
     onRamBoost: () -> Unit,
     onTakeScreenshot: () -> Unit,
     onOpenShare: () -> Unit,
-    onOpenAudit: () -> Unit,
     onOpenDebloat: () -> Unit,
+    onOpenNetwork: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
     onGrantStorage: () -> Unit,
     onOpenSettings: () -> Unit,
-    onToggleFavorite: (String) -> Unit,
-    onLaunchApp: (String) -> Unit,
     onCloseApp: (String) -> Unit,
-    onCloseAllRunning: () -> Unit
+    onCloseAllRunning: () -> Unit,
+    onRefreshAudit: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        // Quick Tools Header
+        // 1. Quick System Actions & Preferences (2 rows of 4 cards)
         item {
             Text(
-                text = "Quick Tools",
+                text = "System Tools & Preferences",
                 color = Color(0xFF00E5FF),
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Row 1: Primary System Tools
+            // Row 1: Memory, Screen, Wi-Fi Hub, Settings
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -800,18 +1066,18 @@ fun TvHomeView(
                     modifier = Modifier.weight(1f)
                 )
                 TvActionCard(
-                    title = stringResource(R.string.hardware_audit_title),
-                    subtitle = stringResource(R.string.hardware_audit_subtitle),
-                    icon = Icons.Default.Security,
-                    accentColor = if (report?.hasHardwareSpoofing == true) Color(0xFFFF5252) else Color(0xFF00E5FF),
-                    onClick = onOpenAudit,
+                    title = stringResource(R.string.settings_title),
+                    subtitle = stringResource(R.string.settings_subtitle),
+                    icon = Icons.Default.Settings,
+                    accentColor = Color(0xFF94A3B8),
+                    onClick = onOpenSettings,
                     modifier = Modifier.weight(1f)
                 )
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Row 2: Setup and Utilities
+            // Row 2: Debloat, Launcher, Storage, Network
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -841,17 +1107,17 @@ fun TvHomeView(
                     modifier = Modifier.weight(1f)
                 )
                 TvActionCard(
-                    title = stringResource(R.string.settings_title),
-                    subtitle = stringResource(R.string.settings_subtitle),
-                    icon = Icons.Default.Settings,
-                    accentColor = Color(0xFF94A3B8),
-                    onClick = onOpenSettings,
+                    title = stringResource(R.string.network_title),
+                    subtitle = stringResource(R.string.network_subtitle),
+                    icon = Icons.Default.Speed,
+                    accentColor = Color(0xFF34D399),
+                    onClick = onOpenNetwork,
                     modifier = Modifier.weight(1f)
                 )
             }
         }
 
-        // --- ACTIVE RUNNING APPS & PROCESS RAM CONSUMERS ---
+        // 2. Active Running Apps & RAM Consumers
         if (runningApps.isNotEmpty()) {
             item {
                 Row(
@@ -861,14 +1127,14 @@ fun TvHomeView(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Running Apps & RAM Usage",
+                            text = "Running Applications & Process Memory",
                             color = Color(0xFF00E5FF),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "(${runningApps.size} processes)",
+                            text = "(${runningApps.size} active)",
                             color = Color(0xFF94A3B8),
                             fontSize = 12.sp
                         )
@@ -880,7 +1146,7 @@ fun TvHomeView(
                         color = Color(0xFF00E676)
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
@@ -894,66 +1160,137 @@ fun TvHomeView(
             }
         }
 
-        // Favorites Row (if any)
-        val favorites = apps.filter { it.isFavorite }
-        if (favorites.isNotEmpty()) {
+        // 3. Hardware Ground Truth Evidence
+        if (report != null) {
             item {
                 Text(
-                    text = stringResource(R.string.favorite_apps),
+                    text = "Hardware Ground Truth Evidence",
                     color = Color(0xFF00E5FF),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(favorites) { app ->
-                        TvAppTile(
-                            app = app,
-                            onLaunch = { onLaunchApp(app.packageName) },
-                            onToggleFav = { onToggleFavorite(app.packageName) }
-                        )
+            }
+
+            // Alerts Banners
+            if (report.overallAlerts.isNotEmpty()) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        report.overallAlerts.forEach { alert ->
+                            AlertCard(alert = alert)
+                        }
                     }
                 }
-            }
-        }
-
-        // All Installed Apps Section
-        item {
-            Text(
-                text = stringResource(R.string.all_apps),
-                color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        item {
-            val nonFavs = apps.filter { !it.isFavorite }
-            if (nonFavs.isEmpty() && favorites.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.no_apps_found),
-                    color = Color(0xFF94A3B8),
-                    fontSize = 14.sp
-                )
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(4),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(380.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                item {
+                    GenuineCard(text = stringResource(R.string.verdict_genuine))
+                }
+            }
+
+            // Section 1: RAM Truth
+            item {
+                val totalGb = report.ram.kernelMemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val reportedGb = report.ram.reportedTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+
+                TvDetailSection(
+                    title = "1. Memory (RAM) Truth Evidence",
+                    icon = Icons.Default.Memory,
+                    isSpoofed = report.ram.isRamSpoofed
                 ) {
-                    items(apps) { app ->
-                        TvAppGridCard(
-                            app = app,
-                            onLaunch = { onLaunchApp(app.packageName) },
-                            onToggleFav = { onToggleFavorite(app.packageName) }
-                        )
-                    }
+                    DetailRow("Android API Reported RAM", "${String.format(Locale.US, "%.2f", reportedGb)} GB" + if (report.ram.isRamSpoofed) "  [SPOOFED BY VENDOR]" else "")
+                    DetailRow("Linux Kernel MemTotal (/proc/meminfo)", "${String.format(Locale.US, "%.2f", totalGb)} GB (${report.ram.kernelMemTotalKb} kB)  [GROUND TRUTH]")
+                    DetailRow("Available Memory", "${report.ram.kernelMemAvailableKb / 1024} MB")
+                    DetailRow("Free Memory", "${report.ram.kernelMemFreeKb / 1024} MB")
+                    DetailRow("Cached Disk Cache", "${report.ram.cachedKb / 1024} MB")
+                    DetailRow("Kernel Buffers", "${report.ram.buffersKb / 1024} MB")
+                    DetailRow("ZRAM Swap Total / Free", "${report.ram.swapTotalKb / 1024} MB / ${report.ram.swapFreeKb / 1024} MB")
+                }
+            }
+
+            // Section 2: Storage Truth
+            item {
+                val sectors = report.storage.blockDeviceSectors
+                val emmcGb = report.storage.blockDeviceBytes?.let { it.toDouble() / (1024.0 * 1024.0 * 1024.0) }
+                val realTotalGb = report.storage.realTotalFlashBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val realFreeGb = report.storage.realFreeStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val dataTotalGb = report.storage.dataTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val dataFreeGb = report.storage.dataFreeBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+                val reportedTotalGb = report.storage.reportedStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+
+                TvDetailSection(
+                    title = "2. Flash Storage Truth Evidence",
+                    icon = Icons.Default.Storage,
+                    isSpoofed = report.storage.isStorageSpoofed
+                ) {
+                    DetailRow(
+                        "Physical Flash Block Device",
+                        emmcGb?.let { "${String.format(Locale.US, "%.2f", it)} GB ($sectors sectors) [GROUND TRUTH]" } ?: "Internal Flash Bus"
+                    )
+                    DetailRow(
+                        "Real Calculated Flash Capacity",
+                        "${String.format(Locale.US, "%.1f", realTotalGb)} GB Total  |  ${String.format(Locale.US, "%.1f", realFreeGb)} GB Free"
+                    )
+                    DetailRow(
+                        "Vendor Partition Claim (/data)",
+                        "Total: ${String.format(Locale.US, "%.2f", dataTotalGb)} GB  |  Free: ${String.format(Locale.US, "%.2f", dataFreeGb)} GB" + if (report.storage.isStorageSpoofed) "  [SPOOFED BY 2x]" else ""
+                    )
+                    DetailRow("Reported Total Storage (Partitions Sum)", "${String.format(Locale.US, "%.2f", reportedTotalGb)} GB")
+                    DetailRow("System Partition (/system)", "${String.format(Locale.US, "%.2f", report.storage.systemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
+                    DetailRow("Vendor Partition (/vendor)", "${String.format(Locale.US, "%.2f", report.storage.vendorTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
+                    DetailRow("Cache Partition (/cache)", "${String.format(Locale.US, "%.2f", report.storage.cacheTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
+                    DetailRow("Partitions Found in /proc/partitions", "${report.storage.partitions.size} partitions")
+                }
+            }
+
+            // Section 3: Android OS & Framework API Level
+            item {
+                TvDetailSection(
+                    title = "3. Operating System & API Level Evidence",
+                    icon = Icons.Default.Build,
+                    isSpoofed = report.os.isOsSpoofed
+                ) {
+                    DetailRow("Reported Android Version (build.prop)", "Android ${report.os.reportedRelease}")
+                    DetailRow("Ground Truth Base Framework", report.os.detectedBaseOs)
+                    DetailRow("Underlying SDK API Level", "API ${report.os.apiLevel}")
+                    DetailRow("Kernel Release (/proc/version)", report.os.kernelRelease)
+                    DetailRow("Build Timestamp", report.os.buildTimestamp)
+                }
+            }
+
+            // Section 4: Processor & Silicon
+            item {
+                TvDetailSection(
+                    title = "4. Processor & Silicon Profile",
+                    icon = Icons.Default.Memory,
+                    isSpoofed = false
+                ) {
+                    DetailRow("Identified Chipset", report.soc.likelyChipset)
+                    DetailRow("CPU Cores & Architecture", "${report.soc.cpuCores} cores, ${report.soc.cpuArchitecture}")
+                    DetailRow("GPU Hardware Accelerator", report.soc.gpuRenderer)
+                    DetailRow("Board Platform", report.soc.boardPlatform)
+                }
+            }
+
+            // Section 5: Root Access & Security
+            item {
+                TvDetailSection(
+                    title = "5. Root Access & Security Status",
+                    icon = Icons.Default.Security,
+                    isSpoofed = false
+                ) {
+                    DetailRow("su Binary Present", if (report.root.isSuPresent) "Yes (${report.root.suPathsFound.joinToString()})" else "No")
+                    DetailRow("Root Execution (su -c id)", if (report.root.canExecuteRoot) "Active (UID 0 root granted)" else if (report.root.isSuPresent) "Ready (${report.root.suPathsFound.firstOrNull() ?: "/system/xbin/su"})" else "Inactive")
+                    DetailRow("SELinux Mode", report.root.selinuxMode)
+                }
+            }
+
+            // Refresh Audit Button
+            item {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TvFocusButton(
+                        text = stringResource(R.string.btn_run_audit),
+                        onClick = onRefreshAudit,
+                        color = Color(0xFF00E5FF)
+                    )
                 }
             }
         }
@@ -965,7 +1302,10 @@ fun TvRunningAppCard(
     app: RunningAppInfo,
     onCloseApp: () -> Unit
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
 
     Box(
         modifier = Modifier
@@ -978,11 +1318,13 @@ fun TvRunningAppCard(
             )
             .border(
                 if (isFocused) 3.5.dp else 1.dp,
-                if (isFocused) Color.White else Color(0xFF1F2937),
+                if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937),
                 RoundedCornerShape(12.dp)
             )
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
             .padding(12.dp)
     ) {
         Column(
@@ -1052,7 +1394,10 @@ fun TvActionCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
 
     val bg = if (isFocused) accentColor else Color(0xFF111827)
     val titleCol = if (isFocused) Color(0xFF070B14) else Color.White
@@ -1066,9 +1411,16 @@ fun TvActionCard(
             .scale(if (isFocused) 1.08f else 1.0f)
             .background(bg, RoundedCornerShape(12.dp))
             .border(if (isFocused) 3.5.dp else 1.dp, borderCol, RoundedCornerShape(12.dp))
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
-            .clickable { onClick() }
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onClick()
+            }
             .padding(12.dp)
     ) {
         Column(
@@ -1108,377 +1460,6 @@ fun TvActionCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
-        }
-    }
-}
-
-@Composable
-fun TvAppTile(
-    app: LaunchableApp,
-    onLaunch: () -> Unit,
-    onToggleFav: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF111827)
-    val borderCol = if (isFocused) Color.White else Color(0xFF1F2937)
-
-    Box(
-        modifier = Modifier
-            .width(180.dp)
-            .height(115.dp)
-            .scale(if (isFocused) 1.08f else 1.0f)
-            .background(bg, RoundedCornerShape(12.dp))
-            .border(if (isFocused) 3.5.dp else 1.dp, borderCol, RoundedCornerShape(12.dp))
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
-            .clickable { onLaunch() }
-            .padding(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                AppIcon(
-                    drawable = app.icon,
-                    modifier = Modifier.size(36.dp)
-                )
-                Icon(
-                    imageVector = Icons.Default.Star,
-                    contentDescription = null,
-                    tint = Color(0xFFFFD600),
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clickable { onToggleFav() }
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (isFocused) {
-                    Text(
-                        text = "▶ ",
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-                Text(
-                    text = app.appName,
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun TvAppGridCard(
-    app: LaunchableApp,
-    onLaunch: () -> Unit,
-    onToggleFav: () -> Unit
-) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF111827)
-    val borderCol = if (isFocused) Color.White else Color(0xFF1F2937)
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(84.dp)
-            .scale(if (isFocused) 1.06f else 1.0f)
-            .background(bg, RoundedCornerShape(10.dp))
-            .border(if (isFocused) 3.5.dp else 1.dp, borderCol, RoundedCornerShape(10.dp))
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
-            .clickable { onLaunch() }
-            .padding(10.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                AppIcon(
-                    drawable = app.icon,
-                    modifier = Modifier.size(36.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (isFocused) {
-                            Text(
-                                text = "▶ ",
-                                color = Color.White,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.ExtraBold
-                            )
-                        }
-                        Text(
-                            text = app.appName,
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    Text(
-                        text = app.packageName,
-                        color = if (isFocused) Color(0xFFE2E8F0) else Color(0xFF64748B),
-                        fontSize = 10.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-            }
-            Icon(
-                imageVector = if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
-                contentDescription = null,
-                tint = if (app.isFavorite) Color(0xFFFFD600) else (if (isFocused) Color.White else Color(0xFF334155)),
-                modifier = Modifier
-                    .size(20.dp)
-                    .clickable { onToggleFav() }
-            )
-        }
-    }
-}
-
-@Composable
-fun AppIcon(
-    drawable: Drawable?,
-    modifier: Modifier = Modifier
-) {
-    if (drawable == null) {
-        Icon(
-            imageVector = Icons.Default.Tv,
-            contentDescription = null,
-            tint = Color(0xFF00E5FF),
-            modifier = modifier
-        )
-        return
-    }
-
-    val bitmap = remember(drawable) {
-        drawableToBitmap(drawable)
-    }
-
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap.asImageBitmap(),
-            contentDescription = null,
-            modifier = modifier,
-            contentScale = ContentScale.Fit
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Default.Tv,
-            contentDescription = null,
-            tint = Color(0xFF00E5FF),
-            modifier = modifier
-        )
-    }
-}
-
-fun drawableToBitmap(drawable: Drawable): Bitmap? {
-    return try {
-        if (drawable is BitmapDrawable && drawable.bitmap != null) {
-            return drawable.bitmap
-        }
-        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
-        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
-        val bmp = Bitmap.createBitmap(
-            width.coerceIn(32, 256),
-            height.coerceIn(32, 256),
-            Bitmap.Config.ARGB_8888
-        )
-        val canvas = Canvas(bmp)
-        drawable.setBounds(0, 0, canvas.width, canvas.height)
-        drawable.draw(canvas)
-        bmp
-    } catch (_: Throwable) {
-        null
-    }
-}
-
-// --- TAB 2: HARDWARE TRUTH AUDITOR ---
-
-@Composable
-fun TvAuditView(
-    report: FullHardwareReport,
-    testedAllocMb: Int?,
-    isTestingAlloc: Boolean,
-    onRunAllocTest: () -> Unit,
-    onRefreshAudit: () -> Unit
-) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        // Overall Alerts Banners
-        if (report.overallAlerts.isNotEmpty()) {
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    report.overallAlerts.forEach { alert ->
-                        AlertCard(alert = alert)
-                    }
-                }
-            }
-        } else {
-            item {
-                GenuineCard(text = stringResource(R.string.verdict_genuine))
-            }
-        }
-
-        // Section 1: Memory (RAM) Truth
-        item {
-            val totalGb = report.ram.kernelMemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-            val reportedGb = report.ram.reportedTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-
-            TvDetailSection(
-                title = "1. Memory (RAM) Truth Evidence",
-                icon = Icons.Default.Memory,
-                isSpoofed = report.ram.isRamSpoofed
-            ) {
-                DetailRow("Android API Reported RAM", "${String.format(Locale.US, "%.2f", reportedGb)} GB" + if (report.ram.isRamSpoofed) "  [SPOOFED BY VENDOR]" else "")
-                DetailRow("Linux Kernel MemTotal (/proc/meminfo)", "${String.format(Locale.US, "%.2f", totalGb)} GB (${report.ram.kernelMemTotalKb} kB)  [GROUND TRUTH]")
-                DetailRow("Available Memory", "${report.ram.kernelMemAvailableKb / 1024} MB")
-                DetailRow("Free Memory", "${report.ram.kernelMemFreeKb / 1024} MB")
-                DetailRow("Cached Disk Cache", "${report.ram.cachedKb / 1024} MB")
-                DetailRow("Kernel Buffers", "${report.ram.buffersKb / 1024} MB")
-                DetailRow("ZRAM Swap Total / Free", "${report.ram.swapTotalKb / 1024} MB / ${report.ram.swapFreeKb / 1024} MB")
-
-                Spacer(modifier = Modifier.height(10.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Physical RAM Allocation Limit Test",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Safely probes allocatable RAM ceiling in 32MB chunks",
-                            color = Color(0xFF94A3B8),
-                            fontSize = 11.sp
-                        )
-                    }
-
-                    if (isTestingAlloc) {
-                        CircularProgressIndicator(color = Color(0xFF00E5FF), modifier = Modifier.size(24.dp))
-                    } else {
-                        TvFocusButton(
-                            text = testedAllocMb?.let { "$it MB (Verified)" } ?: "Run Test",
-                            onClick = onRunAllocTest,
-                            color = if (testedAllocMb != null) Color(0xFF00E676) else Color(0xFF00E5FF)
-                        )
-                    }
-                }
-            }
-        }
-
-        // Section 2: Storage Truth (Debunking fake 32GB / 25.4GB Free)
-        item {
-            val sectors = report.storage.blockDeviceSectors
-            val emmcGb = report.storage.blockDeviceBytes?.let { it.toDouble() / (1024.0 * 1024.0 * 1024.0) }
-            val realTotalGb = report.storage.realTotalFlashBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-            val realFreeGb = report.storage.realFreeStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-            val dataTotalGb = report.storage.dataTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-            val dataFreeGb = report.storage.dataFreeBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-            val reportedTotalGb = report.storage.reportedStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-
-            TvDetailSection(
-                title = "2. Flash Storage Truth Evidence",
-                icon = Icons.Default.Storage,
-                isSpoofed = report.storage.isStorageSpoofed
-            ) {
-                DetailRow(
-                    "Physical eMMC Block Device (/sys/block/mmcblk0)",
-                    emmcGb?.let { "${String.format(Locale.US, "%.2f", it)} GB ($sectors sectors) [GROUND TRUTH]" } ?: "Not Exposed (Virtual/UFS)"
-                )
-                DetailRow(
-                    "Real Calculated Flash Capacity",
-                    "${String.format(Locale.US, "%.1f", realTotalGb)} GB Total  |  ${String.format(Locale.US, "%.1f", realFreeGb)} GB Free"
-                )
-                DetailRow(
-                    "Vendor Partition Claim (/data)",
-                    "Total: ${String.format(Locale.US, "%.2f", dataTotalGb)} GB  |  Free: ${String.format(Locale.US, "%.2f", dataFreeGb)} GB  [SPOOFED BY 2x]"
-                )
-                DetailRow("Reported Total Storage (Partitions Sum)", "${String.format(Locale.US, "%.2f", reportedTotalGb)} GB")
-                DetailRow("System Partition (/system)", "${String.format(Locale.US, "%.2f", report.storage.systemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
-                DetailRow("Vendor Partition (/vendor)", "${String.format(Locale.US, "%.2f", report.storage.vendorTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
-                DetailRow("Cache Partition (/cache)", "${String.format(Locale.US, "%.2f", report.storage.cacheTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
-                DetailRow("Partitions Found in /proc/partitions", "${report.storage.partitions.size} partitions")
-            }
-        }
-
-        // Section 3: Android OS & API Level
-        item {
-            TvDetailSection(
-                title = "3. Operating System & API Level Evidence",
-                icon = Icons.Default.Build,
-                isSpoofed = report.os.isOsSpoofed
-            ) {
-                DetailRow("Reported Android Version (build.prop)", "Android ${report.os.reportedRelease}")
-                DetailRow("Ground Truth Base Framework", report.os.detectedBaseOs)
-                DetailRow("Underlying SDK API Level", "API ${report.os.apiLevel}")
-                DetailRow("Kernel Release (/proc/version)", report.os.kernelRelease)
-                DetailRow("Build Timestamp", report.os.buildTimestamp)
-            }
-        }
-
-        // Section 4: Processor & Silicon
-        item {
-            TvDetailSection(
-                title = "4. Processor & Silicon Profile",
-                icon = Icons.Default.Memory,
-                isSpoofed = false
-            ) {
-                DetailRow("Identified Chipset", report.soc.likelyChipset)
-                DetailRow("CPU Cores & Architecture", "${report.soc.cpuCores} cores, ${report.soc.cpuArchitecture}")
-                DetailRow("GPU Renderer", report.soc.gpuRenderer)
-                DetailRow("Board Platform", report.soc.boardPlatform)
-            }
-        }
-
-        // Section 5: Root Status & SELinux
-        item {
-            TvDetailSection(
-                title = "5. Root Access & Security Status",
-                icon = Icons.Default.Security,
-                isSpoofed = false
-            ) {
-                DetailRow("su Binary Present", if (report.root.isSuPresent) "Yes (${report.root.suPathsFound.joinToString()})" else "No")
-                DetailRow("Root Execution (su -c id)", if (report.root.canExecuteRoot) "Active (UID 0 root granted)" else if (report.root.isSuPresent) "Ready (${report.root.suPathsFound.firstOrNull() ?: "/system/xbin/su"})" else "Inactive")
-                DetailRow("SELinux Mode", report.root.selinuxMode)
-            }
-        }
-
-        // Refresh Audit Button
-        item {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                TvFocusButton(
-                    text = stringResource(R.string.btn_run_audit),
-                    onClick = onRefreshAudit,
-                    color = Color(0xFF00E5FF)
-                )
-            }
         }
     }
 }
@@ -1759,7 +1740,10 @@ fun TvShareView(
                 val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
                 val dateStr = sdf.format(Date(file.lastModified()))
 
-                var isFocused by remember { mutableStateOf(false) }
+                val interactionSource = remember { MutableInteractionSource() }
+                val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+                var isFocusedByCallback by remember { mutableStateOf(false) }
+                val isFocused = isFocusedBySource || isFocusedByCallback
 
                 Box(
                     modifier = Modifier
@@ -1768,11 +1752,13 @@ fun TvShareView(
                         .background(if (isFocused) Color(0xFF0284C7) else Color(0xFF111827), RoundedCornerShape(10.dp))
                         .border(
                             if (isFocused) 3.5.dp else 1.dp,
-                            if (isFocused) Color.White else Color(0xFF1F2937),
+                            if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937),
                             RoundedCornerShape(10.dp)
                         )
-                        .focusable()
-                        .onFocusChanged { isFocused = it.isFocused }
+                        .onFocusChanged { state ->
+                            isFocusedByCallback = state.isFocused || state.hasFocus
+                        }
+                        .focusable(interactionSource = interactionSource)
                         .padding(12.dp)
                 ) {
                     Row(
@@ -2030,7 +2016,10 @@ fun DebloatRowItem(
     onIntentRemove: () -> Unit,
     isProtected: Boolean = false
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
 
     Box(
         modifier = Modifier
@@ -2038,12 +2027,14 @@ fun DebloatRowItem(
             .scale(if (isFocused) 1.04f else 1.0f)
             .background(if (isFocused) Color(0xFF0F2B48) else Color(0xFF111827), RoundedCornerShape(10.dp))
             .border(
-                if (isFocused) 3.dp else 1.dp,
+                if (isFocused) 3.5.dp else 1.dp,
                 if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937),
                 RoundedCornerShape(10.dp)
             )
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
             .padding(12.dp)
     ) {
         Row(
@@ -2122,7 +2113,10 @@ fun TvFocusButton(
     color: Color = Color(0xFF00E5FF),
     modifier: Modifier = Modifier
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
 
     Box(
         modifier = modifier
@@ -2130,9 +2124,16 @@ fun TvFocusButton(
             .scale(if (isFocused) 1.10f else 1.0f)
             .background(if (isFocused) color else color.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
             .border(if (isFocused) 3.dp else 1.dp, if (isFocused) Color.White else color, RoundedCornerShape(8.dp))
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
-            .clickable { onClick() }
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onClick()
+            }
             .padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -2151,7 +2152,10 @@ fun TvFocusIconButton(
     onClick: () -> Unit,
     tooltip: String? = null
 ) {
-    var isFocused by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
 
     Box(
         modifier = Modifier
@@ -2163,9 +2167,16 @@ fun TvFocusIconButton(
                 if (isFocused) Color.White else Color(0xFF334155),
                 CircleShape
             )
-            .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
-            .clickable { onClick() },
+            .onFocusChanged { state ->
+                isFocusedByCallback = state.isFocused || state.hasFocus
+            }
+            .focusable(interactionSource = interactionSource)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onClick()
+            },
         contentAlignment = Alignment.Center
     ) {
         Icon(

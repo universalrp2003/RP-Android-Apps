@@ -3,10 +3,14 @@
     <string name="app_name">Android TV Guard</string>
     <string name="tv_tagline">Hardware Truth Auditor, Debloater, and Clean TV Launcher</string>
     <string name="tab_home">Home</string>
+    <string name="tab_tools">Tools &amp; Settings</string>
     <string name="tab_audit">Hardware Truth</string>
     <string name="tab_debloat">Debloater</string>
     <string name="tab_share">Wi-Fi Hub</string>
     <string name="tab_network">Network &amp; Speed</string>
+
+    <string name="tools_tile_title">Tools &amp; Settings</string>
+    <string name="tools_tile_desc">RAM boost, hardware audit, and TV settings</string>
 
     <string name="ram_boost_title">RAM Boost</string>
     <string name="ram_boost_subtitle">Trim background processes</string>
