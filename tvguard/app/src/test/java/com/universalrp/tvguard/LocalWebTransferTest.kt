@@ -20,4 +20,9 @@ class LocalWebTransferTest {
         assertTrue(url.startsWith("http://"))
         assertTrue(url.contains(":"))
     }
+
+    @Test
+    fun testDefaultPort() {
+        assertTrue(LocalWebTransferServer.activePort >= 8000)
+    }
 }

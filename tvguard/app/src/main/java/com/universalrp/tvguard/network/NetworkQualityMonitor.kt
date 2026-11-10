@@ -19,6 +19,7 @@ data class NetworkStatus(
     val localIp: String?,
     val gatewayPingMs: Long?,
     val internetPingMs: Long?,
+    val jitterMs: Long?,
     val qualityRating: String // "Excellent", "Good", "Fair", "Poor", "Offline"
 )
 
@@ -62,13 +63,33 @@ object NetworkQualityMonitor {
 
         val localIp = com.universalrp.tvguard.debloat.DebloatEngine.getLocalIpAddress()
 
-        // Measure Internet ping to Cloudflare DNS (1.1.1.1:53) and Google DNS (8.8.8.8:53)
-        val internetPing = measureTcpLatency("1.1.1.1", 53, 2000)
-            ?: measureTcpLatency("8.8.8.8", 53, 2000)
+        // Measure Real Internet ping samples to Cloudflare DNS (1.1.1.1:53) and Google DNS (8.8.8.8:53)
+        val sample1 = measureTcpLatency("1.1.1.1", 53, 1500)
+        val sample2 = measureTcpLatency("1.1.1.1", 53, 1500)
+        val sample3 = measureTcpLatency("8.8.8.8", 53, 1500)
 
-        // Gateway ping
+        val validSamples = listOfNotNull(sample1, sample2, sample3)
+        val internetPing: Long?
+        val jitterMs: Long?
+
+        if (validSamples.isNotEmpty()) {
+            internetPing = validSamples.average().toLong()
+            jitterMs = if (validSamples.size >= 2) {
+                val min = validSamples.minOrNull() ?: internetPing
+                val max = validSamples.maxOrNull() ?: internetPing
+                max - min
+            } else {
+                0L
+            }
+        } else {
+            internetPing = null
+            jitterMs = null
+        }
+
+        // Gateway ping (local router)
         val gatewayPing = measureTcpLatency("192.168.1.1", 80, 1000)
             ?: measureTcpLatency("192.168.0.1", 80, 1000)
+            ?: measureTcpLatency("192.168.10.1", 80, 1000)
 
         val quality = when {
             !isConnected -> "Offline"
@@ -89,6 +110,7 @@ object NetworkQualityMonitor {
             localIp = localIp,
             gatewayPingMs = gatewayPing,
             internetPingMs = internetPing,
+            jitterMs = jitterMs,
             qualityRating = quality
         )
     }

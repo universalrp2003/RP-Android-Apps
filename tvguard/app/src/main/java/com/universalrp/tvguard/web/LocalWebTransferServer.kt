@@ -15,13 +15,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
-import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.InputStream
-import java.io.InputStreamReader
 import java.io.OutputStream
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -171,6 +169,32 @@ object LocalWebTransferServer {
                     sendJsonResponse(output, 200, "{\"success\":$ok}")
                 }
 
+                (method == "POST" || method == "GET") && path == "/api/key" -> {
+                    val code = queryParams["code"]?.toIntOrNull() ?: 0
+                    if (code > 0) {
+                        val ok = sendKeyEvent(code)
+                        sendJsonResponse(output, 200, "{\"success\":$ok,\"code\":$code}")
+                    } else {
+                        sendJsonResponse(output, 400, "{\"error\":\"Missing or invalid code\"}")
+                    }
+                }
+
+                (method == "POST" || method == "GET") && path == "/api/text" -> {
+                    val text = queryParams["text"] ?: ""
+                    if (text.isNotBlank()) {
+                        val ok = sendTextToTv(text)
+                        sendJsonResponse(output, 200, "{\"success\":$ok}")
+                    } else {
+                        sendJsonResponse(output, 400, "{\"error\":\"Empty text\"}")
+                    }
+                }
+
+                (method == "POST" || method == "GET") && path == "/api/launch" -> {
+                    val app = queryParams["app"] ?: ""
+                    val ok = launchAppByName(context, app)
+                    sendJsonResponse(output, 200, "{\"success\":$ok,\"app\":\"$app\"}")
+                }
+
                 (method == "POST" || method == "GET") && path == "/delete" -> {
                     val filename = queryParams["file"] ?: ""
                     deleteFile(filename)
@@ -222,10 +246,78 @@ object LocalWebTransferServer {
         return dir
     }
 
+    private fun findFile(rawFilename: String): File? {
+        val filename = sanitizeFilename(rawFilename)
+        val screenshotFile = File(ScreenCaptureManager.getScreenshotDir(), filename)
+        if (screenshotFile.exists() && screenshotFile.isFile) return screenshotFile
+
+        val downloadFile = File(getDownloadsDir(), filename)
+        if (downloadFile.exists() && downloadFile.isFile) return downloadFile
+
+        return null
+    }
+
+    fun sendKeyEvent(keyCode: Int): Boolean {
+        val rootRes = DebloatEngine.executeRootCommand("input keyevent $keyCode")
+        if (rootRes.isSuccess) return true
+        return try {
+            Runtime.getRuntime().exec(arrayOf("input", "keyevent", keyCode.toString()))
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    fun sendTextToTv(text: String): Boolean {
+        // Android 'input text' interprets spaces as %s
+        val formatted = text.replace(" ", "%s").replace("\"", "\\\"").replace("'", "\\'")
+        val rootRes = DebloatEngine.executeRootCommand("input text \"$formatted\"")
+        if (rootRes.isSuccess) return true
+        return try {
+            Runtime.getRuntime().exec(arrayOf("input", "text", formatted))
+            true
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    fun launchAppByName(context: Context, appNameOrPkg: String): Boolean {
+        val pm = context.packageManager
+        val lower = appNameOrPkg.lowercase(Locale.ROOT)
+        if (lower == "settings") {
+            return try {
+                val intent = Intent(android.provider.Settings.ACTION_SETTINGS).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(intent)
+                true
+            } catch (_: Throwable) { false }
+        }
+
+        val targetPkgs = when (lower) {
+            "smarttube", "smart tube" -> listOf("org.smarttube.stable", "com.teamsmart.videomanager.tv")
+            "youtube" -> listOf("com.google.android.youtube.tv", "com.google.android.youtube")
+            "browser", "duckduckgo" -> listOf("com.duckduckgo.mobile.android", "org.mozilla.tv.firefox", "com.android.chrome")
+            else -> listOf(appNameOrPkg)
+        }
+
+        for (pkg in targetPkgs) {
+            val launchIntent = pm.getLaunchIntentForPackage(pkg)
+                ?: pm.getLeanbackLaunchIntentForPackage(pkg)
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(launchIntent)
+                return true
+            }
+        }
+        return false
+    }
+
     private fun serveDashboard(context: Context, out: OutputStream) {
-        val downloads = getDownloadsDir()
-        val allFiles = downloads.listFiles()?.toList() ?: emptyList()
-        val sortedFiles = allFiles.sortedByDescending { it.lastModified() }
+        val screenshots = ScreenCaptureManager.listScreenshots()
+        val downloads = getDownloadsDir().listFiles { f ->
+            f.isFile && !f.name.startsWith("TvGuard_Screenshot_")
+        }?.sortedByDescending { it.lastModified() } ?: emptyList()
 
         val model = "${Build.MANUFACTURER} ${Build.MODEL}"
         val ip = getLocalIp()
@@ -238,15 +330,15 @@ object LocalWebTransferServer {
             append(":root { --bg: #0B0F19; --card: #131B2B; --border: #1E293B; --cyan: #00E5FF; --text: #F8FAFC; --muted: #94A3B8; --green: #00E676; --danger: #FF5252; }")
             append("* { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }")
             append("body { background: var(--bg); color: var(--text); padding: 20px; }")
-            append(".container { max-width: 900px; margin: 0 auto; }")
+            append(".container { max-width: 920px; margin: 0 auto; }")
             append("header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 16px; margin-bottom: 24px; }")
             append(".logo { font-size: 22px; font-weight: bold; color: var(--cyan); display: flex; align-items: center; gap: 8px; }")
             append(".device-pill { background: #1E293B; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: var(--muted); }")
             append(".grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }")
             append("@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }")
-            append(".card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }")
+            append(".card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-bottom: 20px; }")
             append(".card h3 { font-size: 16px; color: var(--cyan); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }")
-            append(".btn { display: inline-block; background: var(--cyan); color: #0B0F19; border: none; font-weight: bold; padding: 10px 18px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.2s; }")
+            append(".btn { display: inline-block; background: var(--cyan); color: #0B0F19; border: none; font-weight: bold; padding: 10px 18px; border-radius: 8px; cursor: pointer; text-decoration: none; font-size: 14px; transition: 0.15s; }")
             append(".btn:hover { opacity: 0.9; transform: scale(1.02); }")
             append(".btn-danger { background: var(--danger); color: white; }")
             append(".btn-outline { background: transparent; border: 1px solid var(--cyan); color: var(--cyan); }")
@@ -257,6 +349,10 @@ object LocalWebTransferServer {
             append("th { color: var(--muted); font-size: 12px; text-transform: uppercase; }")
             append(".action-links a, .action-links button { margin-right: 8px; font-size: 12px; text-decoration: none; color: var(--cyan); background: transparent; border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; cursor: pointer; }")
             append(".action-links a:hover, .action-links button:hover { border-color: var(--cyan); }")
+            append(".remote-btn { background: #1E293B; color: var(--text); border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.15s; user-select: none; touch-action: manipulation; }")
+            append(".remote-btn:active { background: var(--cyan); color: #0B0F19; transform: scale(0.95); }")
+            append(".remote-btn-ok { background: var(--cyan); color: #0B0F19; min-width: 54px; }")
+            append(".remote-btn-power { background: rgba(255, 82, 82, 0.2); color: var(--danger); border-color: var(--danger); }")
             append("</style></head><body>")
             append("<div class=\"container\">")
             append("<header>")
@@ -268,7 +364,7 @@ object LocalWebTransferServer {
             append("<div class=\"grid\">")
 
             // Card 1: Upload
-            append("<div class=\"card\">")
+            append("<div class=\"card\" style=\"margin-bottom:0;\">")
             append("<h3>📥 Upload APK or Files to TV</h3>")
             append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 12px;\">Send APKs, videos, or files directly to TV Download folder without any USB drive or cable.</p>")
             append("<form action=\"/upload\" method=\"POST\" enctype=\"multipart/form-data\">")
@@ -281,10 +377,10 @@ object LocalWebTransferServer {
             append("</form>")
             append("</div>")
 
-            // Card 2: Remote TV Actions
-            append("<div class=\"card\">")
-            append("<h3>📸 Remote TV Actions</h3>")
-            append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 16px;\">Control TV functions and capture clean screenshots remotely from this browser.</p>")
+            // Card 2: Remote TV Quick Actions
+            append("<div class=\"card\" style=\"margin-bottom:0;\">")
+            append("<h3>📸 Quick TV Maintenance</h3>")
+            append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 16px;\">Control TV maintenance and capture screenshots remotely from your phone.</p>")
             append("<div style=\"display: flex; gap: 10px; flex-direction: column;\">")
             append("<button onclick=\"triggerScreenshot()\" class=\"btn btn-outline\" style=\"width: 100%; text-align: center;\">📸 Take TV Screenshot Now</button>")
             append("<button onclick=\"triggerBoost()\" class=\"btn btn-outline\" style=\"width: 100%; text-align: center;\">⚡ Boost TV RAM Remotely</button>")
@@ -294,29 +390,110 @@ object LocalWebTransferServer {
 
             append("</div>") // End grid
 
-            // Card 3: Files Table
+            // Card 3: Mobile Virtual Remote Control & Touchpad / Keyboard
             append("<div class=\"card\">")
-            append("<h3>📁 TV Downloads & Screenshots (").append(sortedFiles.size).append(" files)</h3>")
-            if (sortedFiles.isEmpty()) {
-                append("<p style=\"color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center;\">No files found in TV Downloads folder.</p>")
+            append("<h3>🎮 Mobile Virtual TV Remote & Keyboard</h3>")
+            append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 14px;\">Control TV D-Pad navigation, volume, apps, and send typed phone text to the TV.</p>")
+            append("<div style=\"display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; align-items: flex-start;\">")
+
+            // D-Pad
+            append("<div style=\"display: flex; flex-direction: column; align-items: center; gap: 6px;\">")
+            append("<div style=\"font-size: 11px; color: var(--muted); text-transform: uppercase; margin-bottom: 4px;\">D-Pad Directional</div>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(19)\" style=\"width: 54px;\">▲</button>")
+            append("<div style=\"display: flex; gap: 6px;\">")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(21)\" style=\"width: 54px;\">◀</button>")
+            append("<button class=\"remote-btn remote-btn-ok\" onclick=\"sendKey(23)\">OK</button>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(22)\" style=\"width: 54px;\">▶</button>")
+            append("</div>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(20)\" style=\"width: 54px;\">▼</button>")
+            append("</div>")
+
+            // Navigation & Volume
+            append("<div style=\"display: flex; flex-direction: column; gap: 8px; min-width: 140px;\">")
+            append("<div style=\"font-size: 11px; color: var(--muted); text-transform: uppercase;\">System Keys</div>")
+            append("<div style=\"display: grid; grid-template-columns: 1fr 1fr; gap: 8px;\">")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(4)\">↩ Back</button>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(3)\">🏠 Home</button>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(82)\">☰ Menu</button>")
+            append("<button class=\"remote-btn remote-btn-power\" onclick=\"sendKey(26)\">⏻ Sleep</button>")
+            append("</div>")
+            append("<div style=\"font-size: 11px; color: var(--muted); text-transform: uppercase; margin-top: 6px;\">Volume</div>")
+            append("<div style=\"display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;\">")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(24)\">🔊 +</button>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(25)\">🔉 -</button>")
+            append("<button class=\"remote-btn\" onclick=\"sendKey(164)\">🔇</button>")
+            append("</div>")
+            append("</div>")
+
+            // Quick App Launchers
+            append("<div style=\"display: flex; flex-direction: column; gap: 8px; min-width: 150px;\">")
+            append("<div style=\"font-size: 11px; color: var(--muted); text-transform: uppercase;\">Quick App Launch</div>")
+            append("<button class=\"remote-btn\" style=\"text-align: left; padding: 8px 12px;\" onclick=\"launchApp('smarttube')\">📺 SmartTube</button>")
+            append("<button class=\"remote-btn\" style=\"text-align: left; padding: 8px 12px;\" onclick=\"launchApp('youtube')\">▶ YouTube</button>")
+            append("<button class=\"remote-btn\" style=\"text-align: left; padding: 8px 12px;\" onclick=\"launchApp('browser')\">🌐 DuckDuckGo</button>")
+            append("<button class=\"remote-btn\" style=\"text-align: left; padding: 8px 12px;\" onclick=\"launchApp('settings')\">⚙️ TV Settings</button>")
+            append("</div>")
+
+            // Phone Keyboard Input
+            append("<div style=\"display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 220px;\">")
+            append("<div style=\"font-size: 11px; color: var(--muted); text-transform: uppercase;\">Phone Keyboard to TV</div>")
+            append("<input type=\"text\" id=\"tvTextInput\" placeholder=\"Type search, URL, or text here...\" style=\"background: #0B0F19; border: 1px solid var(--border); color: var(--text); padding: 10px; border-radius: 8px; font-size: 14px;\" onkeydown=\"if(event.key==='Enter') sendText()\">")
+            append("<div style=\"display: flex; gap: 8px;\">")
+            append("<button class=\"btn\" style=\"flex: 1;\" onclick=\"sendText()\">⌨️ Send to TV</button>")
+            append("<button class=\"btn btn-outline\" onclick=\"sendKey(67)\">⌫ Del</button>")
+            append("</div>")
+            append("<div id=\"remoteFeedback\" style=\"font-size: 12px; color: var(--green); height: 16px; margin-top: 4px;\"></div>")
+            append("</div>")
+
+            append("</div>") // End remote flex
+            append("</div>") // End Remote Card
+
+            // Card 4: Screenshots Table (saved in /sdcard/Download/Screenshots/)
+            append("<div class=\"card\">")
+            append("<h3>📸 TV Screenshots (/sdcard/Download/Screenshots/) (").append(screenshots.size).append(" files)</h3>")
+            if (screenshots.isEmpty()) {
+                append("<p style=\"color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center;\">No screenshots saved yet. Click 'Take TV Screenshot Now' above or press Remote Screenshot key.</p>")
             } else {
-                append("<table><thead><tr><th>File Name</th><th>Size</th><th>Date</th><th>Actions</th></tr></thead><tbody>")
+                append("<table><thead><tr><th>Screenshot Name</th><th>Size</th><th>Date</th><th>Actions</th></tr></thead><tbody>")
                 val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
-                for (file in sortedFiles) {
-                    val isApk = file.name.endsWith(".apk", ignoreCase = true)
-                    val isImage = file.name.endsWith(".png", ignoreCase = true) || file.name.endsWith(".jpg", ignoreCase = true)
+                for (file in screenshots) {
                     val sizeMb = String.format(Locale.US, "%.2f MB", file.length().toDouble() / (1024.0 * 1024.0))
                     val dateStr = sdf.format(Date(file.lastModified()))
 
                     append("<tr>")
-                    append("<td>").append(if (isImage) "🖼️ " else if (isApk) "📦 " else "📄 ").append(file.name).append("</td>")
+                    append("<td>🖼️ ").append(file.name).append("</td>")
                     append("<td>").append(sizeMb).append("</td>")
                     append("<td>").append(dateStr).append("</td>")
                     append("<td class=\"action-links\">")
                     append("<a href=\"/download?file=").append(file.name).append("\">Download</a>")
-                    if (isImage) {
-                        append("<a href=\"/view?file=").append(file.name).append("\" target=\"_blank\">View</a>")
-                    }
+                    append("<a href=\"/view?file=").append(file.name).append("\" target=\"_blank\">View</a>")
+                    append("<a href=\"/delete?file=").append(file.name).append("\" style=\"color: var(--danger);\">Delete</a>")
+                    append("</td>")
+                    append("</tr>")
+                }
+                append("</tbody></table>")
+            }
+            append("</div>")
+
+            // Card 5: Downloads & APKs Table (saved in /sdcard/Download/)
+            append("<div class=\"card\">")
+            append("<h3>📦 TV Downloads & Uploaded APKs (/sdcard/Download/) (").append(downloads.size).append(" files)</h3>")
+            if (downloads.isEmpty()) {
+                append("<p style=\"color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center;\">No uploaded files or APKs in /sdcard/Download.</p>")
+            } else {
+                append("<table><thead><tr><th>File Name</th><th>Size</th><th>Date</th><th>Actions</th></tr></thead><tbody>")
+                val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                for (file in downloads) {
+                    val isApk = file.name.endsWith(".apk", ignoreCase = true)
+                    val sizeMb = String.format(Locale.US, "%.2f MB", file.length().toDouble() / (1024.0 * 1024.0))
+                    val dateStr = sdf.format(Date(file.lastModified()))
+
+                    append("<tr>")
+                    append("<td>").append(if (isApk) "📦 " else "📄 ").append(file.name).append("</td>")
+                    append("<td>").append(sizeMb).append("</td>")
+                    append("<td>").append(dateStr).append("</td>")
+                    append("<td class=\"action-links\">")
+                    append("<a href=\"/download?file=").append(file.name).append("\">Download</a>")
                     if (isApk) {
                         append("<button onclick=\"installApk('").append(file.name).append("')\">Install on TV</button>")
                     }
@@ -340,7 +517,7 @@ object LocalWebTransferServer {
             append("function triggerScreenshot() {")
             append("  const res = document.getElementById('actionResult'); res.innerText = 'Capturing TV screenshot...'; res.style.color = '#00E5FF';")
             append("  fetch('/api/screenshot', { method: 'POST' }).then(r => r.json()).then(d => {")
-            append("    if(d.success) { res.innerText = '✅ Screenshot saved: ' + d.filename; res.style.color = '#00E676'; setTimeout(() => location.reload(), 1500); }")
+            append("    if(d.success) { res.innerText = '✅ Screenshot saved: ' + d.filename; res.style.color = '#00E676'; setTimeout(() => location.reload(), 1200); }")
             append("    else { res.innerText = '❌ Failed: ' + (d.error || 'Unknown error'); res.style.color = '#FF5252'; }")
             append("  }).catch(e => { res.innerText = '❌ Error: ' + e; res.style.color = '#FF5252'; });")
             append("}")
@@ -356,6 +533,28 @@ object LocalWebTransferServer {
             append("  fetch('/api/install?file=' + encodeURIComponent(name), { method: 'POST' }).then(r => r.json()).then(d => {")
             append("    alert(d.success ? 'Install prompt opened on TV!' : 'Could not launch installer');")
             append("  });")
+            append("}")
+            append("function sendKey(code) {")
+            append("  const fb = document.getElementById('remoteFeedback');")
+            append("  fetch('/api/key?code=' + code, { method: 'POST' }).then(r => r.json()).then(d => {")
+            append("    if (fb) { fb.innerText = 'Sent key: ' + code; setTimeout(() => { fb.innerText = ''; }, 1500); }")
+            append("  }).catch(e => { if (fb) fb.innerText = 'Error sending key'; });")
+            append("}")
+            append("function sendText() {")
+            append("  const input = document.getElementById('tvTextInput');")
+            append("  const text = input.value;")
+            append("  if (!text) return;")
+            append("  const fb = document.getElementById('remoteFeedback');")
+            append("  fetch('/api/text?text=' + encodeURIComponent(text), { method: 'POST' }).then(r => r.json()).then(d => {")
+            append("    if (fb) { fb.innerText = 'Sent text to TV: \"' + text + '\"'; setTimeout(() => { fb.innerText = ''; }, 2000); }")
+            append("    input.value = '';")
+            append("  }).catch(e => { if (fb) fb.innerText = 'Error sending text'; });")
+            append("}")
+            append("function launchApp(name) {")
+            append("  const fb = document.getElementById('remoteFeedback');")
+            append("  fetch('/api/launch?app=' + encodeURIComponent(name), { method: 'POST' }).then(r => r.json()).then(d => {")
+            append("    if (fb) { fb.innerText = d.success ? 'Launched ' + name : 'App not found'; setTimeout(() => { fb.innerText = ''; }, 2000); }")
+            append("  }).catch(e => { if (fb) fb.innerText = 'Launch error'; });")
             append("}")
             append("</script>")
 
@@ -373,13 +572,13 @@ object LocalWebTransferServer {
     }
 
     private fun serveFileDownload(rawFilename: String, out: OutputStream, asAttachment: Boolean) {
-        val filename = sanitizeFilename(rawFilename)
-        val file = File(getDownloadsDir(), filename)
-        if (!file.exists() || !file.isFile) {
+        val file = findFile(rawFilename)
+        if (file == null || !file.exists() || !file.isFile) {
             send404(out)
             return
         }
 
+        val filename = file.name
         val mimeType = when {
             filename.endsWith(".png", ignoreCase = true) -> "image/png"
             filename.endsWith(".jpg", ignoreCase = true) || filename.endsWith(".jpeg", ignoreCase = true) -> "image/jpeg"
@@ -470,7 +669,6 @@ object LocalWebTransferServer {
         FileOutputStream(targetFile).use { fos ->
             val buf = ByteArray(32768)
             var n: Int
-            // Stream until end or next boundary
             while (input.read(buf).also { n = it } != -1) {
                 fos.write(buf, 0, n)
             }
@@ -487,31 +685,28 @@ object LocalWebTransferServer {
     private fun trimBoundaryFromFile(file: File, boundaryBytes: ByteArray) {
         if (!file.exists() || file.length() < boundaryBytes.size + 10) return
         try {
-            val raf = java.io.RandomAccessFile(file, "rw")
-            val len = raf.length()
-            val checkSize = (boundaryBytes.size + 128).coerceAtMost(len.toInt())
+            val length = file.length()
+            val checkSize = (boundaryBytes.size * 3).coerceAtMost(length.toInt())
             val buffer = ByteArray(checkSize)
-            raf.seek(len - checkSize)
-            raf.readFully(buffer)
 
-            val idx = indexOfSubarray(buffer, boundaryBytes)
-            if (idx >= 0) {
-                // Also strip preceding \r\n
-                var cutPos = len - checkSize + idx
-                if (cutPos >= 2) {
-                    raf.seek(cutPos - 2)
-                    if (raf.read() == 0x0D && raf.read() == 0x0A) {
-                        cutPos -= 2
-                    }
+            java.io.RandomAccessFile(file, "rw").use { raf ->
+                raf.seek(length - checkSize)
+                raf.readFully(buffer)
+
+                val boundaryPos = indexOfBytes(buffer, boundaryBytes)
+                if (boundaryPos != -1) {
+                    val truncateTo = (length - checkSize) + boundaryPos
+                    // Strip preceding \r\n if present
+                    val finalLen = if (truncateTo >= 2) truncateTo - 2 else truncateTo
+                    raf.setLength(finalLen)
                 }
-                raf.setLength(cutPos)
             }
-            raf.close()
         } catch (_: Throwable) {}
     }
 
-    private fun indexOfSubarray(source: ByteArray, target: ByteArray): Int {
-        for (i in 0..(source.size - target.size)) {
+    private fun indexOfBytes(source: ByteArray, target: ByteArray): Int {
+        if (target.isEmpty() || source.size < target.size) return -1
+        for (i in 0..source.size - target.size) {
             var match = true
             for (j in target.indices) {
                 if (source[i + j] != target[j]) {
@@ -525,7 +720,7 @@ object LocalWebTransferServer {
     }
 
     private fun handleApiScreenshot(context: Context, out: OutputStream) {
-        val dir = getDownloadsDir()
+        val dir = ScreenCaptureManager.getScreenshotDir()
         val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
         val filename = "TvGuard_Screenshot_$timeStamp.png"
         val targetFile = File(dir, filename)
@@ -541,9 +736,8 @@ object LocalWebTransferServer {
     }
 
     private fun triggerApkInstall(context: Context, rawFilename: String): Boolean {
-        val filename = sanitizeFilename(rawFilename)
-        val file = File(getDownloadsDir(), filename)
-        if (!file.exists() || !file.isFile) return false
+        val file = findFile(rawFilename)
+        if (file == null || !file.exists() || !file.isFile) return false
 
         return try {
             val uri: Uri = FileProvider.getUriForFile(
@@ -563,9 +757,8 @@ object LocalWebTransferServer {
     }
 
     private fun deleteFile(rawFilename: String) {
-        val filename = sanitizeFilename(rawFilename)
-        val file = File(getDownloadsDir(), filename)
-        if (file.exists() && file.isFile) {
+        val file = findFile(rawFilename)
+        if (file != null && file.exists() && file.isFile) {
             file.delete()
         }
     }
