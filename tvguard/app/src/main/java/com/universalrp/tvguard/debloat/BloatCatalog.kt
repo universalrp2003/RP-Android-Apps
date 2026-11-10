@@ -43,6 +43,16 @@ object BloatCatalog {
         "com.airtel.thanks" to "Airtel Thanks Promo Client",
         "com.wynk.music" to "Wynk Music (Preloaded music app)",
 
+        // Xiaomi / Mi TV / PatchWall Bloatware & Ad Services
+        "com.mitv.tvhome" to "Xiaomi PatchWall Launcher (Ad-heavy home screen)",
+        "com.xiaomi.mitv.upgrade" to "Mi TV System Upgrade & Promo Service",
+        "com.xiaomi.mitv.advertise" to "Mi TV Ad Client & Push Service",
+        "com.xiaomi.mitv.adengine" to "Mi TV Ad Engine",
+        "com.mitv.gallery" to "Mi TV Gallery (Preloaded photo app)",
+        "com.xiaomi.mitv.shop" to "Mi TV App Store (Proprietary market)",
+        "com.xiaomi.mitv.analytics" to "Xiaomi Telemetry & Usage Analytics",
+        "com.xiaomi.devicelist" to "Xiaomi Smart Home Device Hub",
+
         // Jio Set Top Box / JioAirFiber Carrier Bloatware
         "com.jio.media.stb.ondemand" to "JioCinema / JioTV+ (Preloaded OTT platform)",
         "com.jio.jioplay.tv" to "JioPlay TV Client",
@@ -56,7 +66,12 @@ object BloatCatalog {
         "com.jio.httpupdate" to "Jio Background Firmware Updater",
         "com.jio.usbupdate" to "Jio USB Firmware Updater",
         "com.jio.home" to "JioHome / Operator Launcher",
-        "com.jio.stblauncher" to "Jio STB Launcher"
+        "com.jio.stblauncher" to "Jio STB Launcher",
+
+        // Tata Play Binge & Dish TV STB Bloatware
+        "com.tatasky.binge" to "Tata Play Binge STB Operator Launcher & Bloat",
+        "com.dishtv.smart" to "Dish SMRT Hub Operator Launcher",
+        "com.d2h.magic" to "d2h Magic Operator Client"
     )
 
     val UTILITY_WATCHLIST = mapOf(

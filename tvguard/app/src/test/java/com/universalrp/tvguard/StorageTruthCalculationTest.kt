@@ -46,4 +46,47 @@ class StorageTruthCalculationTest {
         assertTrue(realFreeGb < 9.0) // Must be ~7.8 GB, NOT 25.4 GB!
         assertTrue(realFreeGb > 6.0)
     }
+
+    @Test
+    fun testGenuineBoxProfilesNotFlaggedAsSpoofed() {
+        // Genuine 8GB Xiaomi / Airtel Xstream / Jio STB
+        val physical8Gb = 8_000_000_000L
+        val dataTotal8Gb = 5_000_000_000L
+        val dataFree8Gb = 3_500_000_000L
+        val system8Gb = 2_000_000_000L
+
+        val genuine8Gb = StorageEvidence(
+            blockDeviceSectors = 15625000L,
+            blockDeviceBytes = physical8Gb,
+            reportedStorageBytes = 7_500_000_000L,
+            dataTotalBytes = dataTotal8Gb,
+            dataFreeBytes = dataFree8Gb,
+            systemTotalBytes = system8Gb,
+            vendorTotalBytes = 300_000_000L,
+            cacheTotalBytes = 200_000_000L,
+            partitions = listOf(PartitionEntry(179, 0, 7812500L, "mmcblk0")),
+            isStorageSpoofed = false,
+            storageSpoofReason = ""
+        )
+        assertEquals(false, genuine8Gb.isStorageSpoofed)
+        assertEquals(physical8Gb, genuine8Gb.realTotalFlashBytes)
+
+        // Genuine 16GB Sony Bravia / Mi TV
+        val physical16Gb = 16_000_000_000L
+        val genuine16Gb = StorageEvidence(
+            blockDeviceSectors = 31250000L,
+            blockDeviceBytes = physical16Gb,
+            reportedStorageBytes = 15_200_000_000L,
+            dataTotalBytes = 12_000_000_000L,
+            dataFreeBytes = 8_000_000_000L,
+            systemTotalBytes = 2_500_000_000L,
+            vendorTotalBytes = 500_000_000L,
+            cacheTotalBytes = 200_000_000L,
+            partitions = listOf(PartitionEntry(179, 0, 15625000L, "mmcblk0")),
+            isStorageSpoofed = false,
+            storageSpoofReason = ""
+        )
+        assertEquals(false, genuine16Gb.isStorageSpoofed)
+        assertEquals(physical16Gb, genuine16Gb.realTotalFlashBytes)
+    }
 }
