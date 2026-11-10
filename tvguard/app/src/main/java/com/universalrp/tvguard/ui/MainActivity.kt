@@ -54,6 +54,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
@@ -112,8 +113,10 @@ import com.universalrp.tvguard.memory.RunningAppInfo
 import com.universalrp.tvguard.memory.RunningAppsManager
 import com.universalrp.tvguard.network.NetworkQualityMonitor
 import com.universalrp.tvguard.network.NetworkStatus
+import com.universalrp.tvguard.voice.TvVoiceAssistant
 import com.universalrp.tvguard.web.LocalWebTransferServer
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -150,9 +153,13 @@ class MainActivity : ComponentActivity() {
 enum class TvNavTab(val titleRes: Int, val icon: ImageVector) {
     HOME(R.string.tab_home, Icons.Default.Home),
     TOOLS(R.string.tab_tools, Icons.Default.Build),
-    DEBLOAT(R.string.tab_debloat, Icons.Default.CleaningServices),
-    SHARE(R.string.tab_share, Icons.Default.Wifi),
-    NETWORK(R.string.tab_network, Icons.Default.Speed)
+    SHARE(R.string.tab_share, Icons.Default.Wifi)
+}
+
+enum class ToolsSubView {
+    OVERVIEW,
+    DEBLOAT,
+    NETWORK
 }
 
 @Composable
@@ -175,6 +182,10 @@ fun TvGuardMainScreen(activity: MainActivity) {
     val scope = rememberCoroutineScope()
 
     var currentTab by remember { mutableStateOf(TvNavTab.HOME) }
+    var toolsSubView by remember { mutableStateOf(ToolsSubView.OVERVIEW) }
+    var voiceDialogPrompt by remember { mutableStateOf<String?>(null) }
+    var voiceIsListening by remember { mutableStateOf(false) }
+
     var hardwareReport by remember { mutableStateOf<FullHardwareReport?>(null) }
     var networkStatus by remember { mutableStateOf<NetworkStatus?>(null) }
     var installedApps by remember { mutableStateOf<List<LaunchableApp>>(emptyList()) }
@@ -188,8 +199,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
     var isServerRunning by remember { mutableStateOf(LocalWebTransferServer.isRunning) }
 
     fun refreshDownloads() {
-        val dir = ScreenCaptureManager.getScreenshotDir()
-        downloadedFiles = dir.listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList()
+        downloadedFiles = ScreenCaptureManager.listScreenshots()
     }
 
     fun refreshAll() {
@@ -216,7 +226,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 },
                 onComplete = { res ->
                     if (res.isSuccess) {
-                        toastMessage = "📸 Saved: Download/${res.getOrNull()?.name}"
+                        toastMessage = "📸 Saved: Download/Screenshots/${res.getOrNull()?.name}"
                         refreshDownloads()
                     } else {
                         toastMessage = "Screenshot failed: ${res.exceptionOrNull()?.message}"
@@ -226,13 +236,44 @@ fun TvGuardMainScreen(activity: MainActivity) {
         } else {
             ScreenCaptureManager.captureScreen(activity) { res ->
                 if (res.isSuccess) {
-                    toastMessage = "📸 Saved: Download/${res.getOrNull()?.name}"
+                    toastMessage = "📸 Saved: Download/Screenshots/${res.getOrNull()?.name}"
                     refreshDownloads()
                 } else {
                     toastMessage = "Screenshot failed: ${res.exceptionOrNull()?.message}"
                 }
             }
         }
+    }
+
+    fun triggerVoiceAssistant() {
+        TvVoiceAssistant.startListening(activity, object : TvVoiceAssistant.VoiceCallback {
+            override fun onListeningStateChanged(isListening: Boolean, prompt: String) {
+                voiceIsListening = isListening
+                voiceDialogPrompt = prompt
+            }
+
+            override fun onCommandRecognized(commandText: String, actionResult: String) {
+                voiceIsListening = false
+                voiceDialogPrompt = "🗣️ \"$commandText\"\n$actionResult"
+                toastMessage = actionResult
+                scope.launch {
+                    delay(2800L)
+                    if (voiceDialogPrompt?.startsWith("🗣️") == true) {
+                        voiceDialogPrompt = null
+                    }
+                }
+                refreshAll()
+            }
+
+            override fun onError(error: String) {
+                voiceIsListening = false
+                voiceDialogPrompt = "❌ $error"
+                scope.launch {
+                    delay(2800L)
+                    voiceDialogPrompt = null
+                }
+            }
+        })
     }
 
     // Auto-start web hub server on launch for convenience
@@ -242,18 +283,36 @@ fun TvGuardMainScreen(activity: MainActivity) {
         refreshAll()
     }
 
-    // Remote shortcut listener for quick tab cycling
-    DisposableEffect(currentTab) {
+    // Remote shortcut listener for quick tab cycling and Voice Assistant
+    DisposableEffect(currentTab, toolsSubView, voiceDialogPrompt) {
         activity.onRemoteKey = { keyCode ->
             when (keyCode) {
+                KeyEvent.KEYCODE_BACK -> {
+                    if (voiceDialogPrompt != null) {
+                        TvVoiceAssistant.stopListening()
+                        voiceDialogPrompt = null
+                        true
+                    } else if (currentTab == TvNavTab.TOOLS && toolsSubView != ToolsSubView.OVERVIEW) {
+                        toolsSubView = ToolsSubView.OVERVIEW
+                        true
+                    } else {
+                        false
+                    }
+                }
+                KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_SEARCH -> {
+                    triggerVoiceAssistant()
+                    true
+                }
                 KeyEvent.KEYCODE_PAGE_DOWN, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
                     val nextIndex = (currentTab.ordinal + 1) % TvNavTab.values().size
                     currentTab = TvNavTab.values()[nextIndex]
+                    toolsSubView = ToolsSubView.OVERVIEW
                     true
                 }
                 KeyEvent.KEYCODE_PAGE_UP, KeyEvent.KEYCODE_CHANNEL_DOWN, KeyEvent.KEYCODE_MEDIA_REWIND -> {
                     val prevIndex = if (currentTab.ordinal - 1 < 0) TvNavTab.values().size - 1 else currentTab.ordinal - 1
                     currentTab = TvNavTab.values()[prevIndex]
+                    toolsSubView = ToolsSubView.OVERVIEW
                     true
                 }
                 else -> false
@@ -286,6 +345,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             TopStatusBar(
                 report = report,
                 network = networkStatus,
+                onVoiceClick = { triggerVoiceAssistant() },
                 onTakeScreenshot = { takeScreenshot(false) },
                 onRefreshClick = { refreshAll() }
             )
@@ -295,7 +355,10 @@ fun TvGuardMainScreen(activity: MainActivity) {
             // --- NAVIGATION TABS ---
             TvTabBar(
                 currentTab = currentTab,
-                onTabSelected = { currentTab = it }
+                onTabSelected = {
+                    currentTab = it
+                    toolsSubView = ToolsSubView.OVERVIEW
+                }
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -313,64 +376,127 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 TvAppCatalog.toggleFavorite(context, pkg)
                                 installedApps = TvAppCatalog.loadApps(context)
                             },
-                            onOpenTools = { currentTab = TvNavTab.TOOLS }
+                            onOpenTools = {
+                                currentTab = TvNavTab.TOOLS
+                                toolsSubView = ToolsSubView.OVERVIEW
+                            }
                         )
                     }
 
                     TvNavTab.TOOLS -> {
-                        TvToolsView(
-                            report = report,
-                            runningApps = runningApps,
-                            onRamBoost = {
-                                val res = MemoryTrimmer.trim(context)
-                                toastMessage = "RAM Boost: Freed ${res.freedMb} MB" + if (res.droppedKernelCaches) " (Kernel caches dropped)" else ""
-                                refreshAll()
-                            },
-                            onTakeScreenshot = { takeScreenshot(false) },
-                            onOpenShare = { currentTab = TvNavTab.SHARE },
-                            onOpenDebloat = { currentTab = TvNavTab.DEBLOAT },
-                            onOpenNetwork = { currentTab = TvNavTab.NETWORK },
-                            onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
-                            onGrantStorage = { promptStoragePermission(context) },
-                            onOpenSettings = {
-                                try {
-                                    context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                                } catch (_: Throwable) {
-                                    toastMessage = "Unable to open Settings"
-                                }
-                            },
-                            onCloseApp = { pkg ->
-                                RunningAppsManager.closeApp(context, pkg)
-                                toastMessage = "Stopped process: $pkg"
-                                refreshAll()
-                            },
-                            onCloseAllRunning = {
-                                val closed = RunningAppsManager.closeAllBackgroundApps(context)
-                                toastMessage = "Closed $closed background processes"
-                                refreshAll()
-                            },
-                            onRefreshAudit = { refreshAll() }
-                        )
-                    }
+                        when (toolsSubView) {
+                            ToolsSubView.OVERVIEW -> {
+                                TvToolsView(
+                                    report = report,
+                                    runningApps = runningApps,
+                                    onRamBoost = {
+                                        val res = MemoryTrimmer.trim(context)
+                                        toastMessage = "RAM Boost: Freed ${res.freedMb} MB" + if (res.droppedKernelCaches) " (Kernel caches dropped)" else ""
+                                        refreshAll()
+                                    },
+                                    onTakeScreenshot = { takeScreenshot(false) },
+                                    onOpenShare = { currentTab = TvNavTab.SHARE },
+                                    onOpenDebloat = { toolsSubView = ToolsSubView.DEBLOAT },
+                                    onOpenNetwork = { toolsSubView = ToolsSubView.NETWORK },
+                                    onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
+                                    onGrantStorage = { promptStoragePermission(context) },
+                                    onOpenSettings = {
+                                        try {
+                                            context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                                        } catch (_: Throwable) {
+                                            toastMessage = "Unable to open Settings"
+                                        }
+                                    },
+                                    onCloseApp = { pkg ->
+                                        RunningAppsManager.closeApp(context, pkg)
+                                        toastMessage = "Stopped process: $pkg"
+                                        refreshAll()
+                                    },
+                                    onCloseAllRunning = {
+                                        val closed = RunningAppsManager.closeAllBackgroundApps(context)
+                                        toastMessage = "Closed $closed background processes"
+                                        refreshAll()
+                                    },
+                                    onRefreshAudit = { refreshAll() }
+                                )
+                            }
 
-                    TvNavTab.DEBLOAT -> {
-                        TvDebloatView(
-                            items = debloatItems,
-                            isRooted = report?.root?.canExecuteRoot == true,
-                            onRootUninstall = { pkg ->
-                                val res = DebloatEngine.removeWithRoot(pkg)
-                                if (res.isSuccess) {
-                                    toastMessage = res.getOrNull()
-                                    debloatItems = DebloatEngine.scanInstalledApps(context)
-                                } else {
-                                    toastMessage = res.exceptionOrNull()?.message ?: "Uninstall failed"
+                            ToolsSubView.DEBLOAT -> {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        TvFocusButton(
+                                            text = "← Back to Tools & Settings",
+                                            onClick = { toolsSubView = ToolsSubView.OVERVIEW },
+                                            color = Color(0xFF00E5FF)
+                                        )
+                                        Text(
+                                            text = "TV Debloater & System Cleaner",
+                                            color = Color(0xFF94A3B8),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    TvDebloatView(
+                                        items = debloatItems,
+                                        isRooted = report?.root?.canExecuteRoot == true,
+                                        onRootUninstall = { pkg ->
+                                            val res = DebloatEngine.removeWithRoot(pkg)
+                                            if (res.isSuccess) {
+                                                toastMessage = res.getOrNull()
+                                                debloatItems = DebloatEngine.scanInstalledApps(context)
+                                            } else {
+                                                toastMessage = res.exceptionOrNull()?.message ?: "Uninstall failed"
+                                            }
+                                        },
+                                        onIntentUninstall = { pkg ->
+                                            DebloatEngine.launchUninstallIntent(context, pkg)
+                                        },
+                                        onShowAdbGuide = { showAdbGuide = true }
+                                    )
                                 }
-                            },
-                            onIntentUninstall = { pkg ->
-                                DebloatEngine.launchUninstallIntent(context, pkg)
-                            },
-                            onShowAdbGuide = { showAdbGuide = true }
-                        )
+                            }
+
+                            ToolsSubView.NETWORK -> {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        TvFocusButton(
+                                            text = "← Back to Tools & Settings",
+                                            onClick = { toolsSubView = ToolsSubView.OVERVIEW },
+                                            color = Color(0xFF00E5FF)
+                                        )
+                                        Text(
+                                            text = "Network Diagnostics & Real Latency/Jitter",
+                                            color = Color(0xFF94A3B8),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    TvNetworkView(
+                                        network = networkStatus,
+                                        onRetest = {
+                                            scope.launch {
+                                                networkStatus = withContext(Dispatchers.IO) { NetworkQualityMonitor.probe(context) }
+                                                toastMessage = "Network latency updated"
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     TvNavTab.SHARE -> {
@@ -399,21 +525,21 @@ fun TvGuardMainScreen(activity: MainActivity) {
                             onRefreshFiles = { refreshDownloads() }
                         )
                     }
-
-                    TvNavTab.NETWORK -> {
-                        TvNetworkView(
-                            network = networkStatus,
-                            onRetest = {
-                                scope.launch {
-                                    networkStatus = withContext(Dispatchers.IO) { NetworkQualityMonitor.probe(context) }
-                                    toastMessage = "Network latency updated"
-                                }
-                            }
-                        )
-                    }
                 }
             }
         }
+    }
+
+    // Voice Assistant Overlay Dialog
+    if (voiceDialogPrompt != null) {
+        VoiceAssistantDialog(
+            prompt = voiceDialogPrompt ?: "",
+            isListening = voiceIsListening,
+            onDismiss = {
+                TvVoiceAssistant.stopListening()
+                voiceDialogPrompt = null
+            }
+        )
     }
 
     // ADB Instructions Dialog
@@ -431,12 +557,21 @@ fun TvGuardMainScreen(activity: MainActivity) {
 fun TopStatusBar(
     report: FullHardwareReport?,
     network: NetworkStatus?,
+    onVoiceClick: () -> Unit,
     onTakeScreenshot: () -> Unit,
     onRefreshClick: () -> Unit
 ) {
-    val currentTime = remember {
+    var currentTime by remember {
         val sdf = SimpleDateFormat("hh:mm a  |  EEE, dd MMM", Locale.getDefault())
-        sdf.format(Date())
+        mutableStateOf(sdf.format(Date()))
+    }
+
+    LaunchedEffect(Unit) {
+        val sdf = SimpleDateFormat("hh:mm a  |  EEE, dd MMM", Locale.getDefault())
+        while (true) {
+            currentTime = sdf.format(Date())
+            delay(1000L)
+        }
     }
 
     Row(
@@ -448,7 +583,7 @@ fun TopStatusBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // App Title & Time
+        // App Title & Live Updating Time
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Tv,
@@ -472,18 +607,18 @@ fun TopStatusBar(
             }
         }
 
-        // Status Pills with Real Ground Truth Hardware Details
+        // Status Pills with Compact Symbols (RAM, Flash, Real Internet Ping)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             if (report != null) {
-                // 1. Real RAM Pill
+                // 1. Compact Real RAM Symbol Pill
                 val totalGb = report.ram.kernelMemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
                 val freeGb = report.ram.kernelMemAvailableBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
                 val usedPercent = ((totalGb - freeGb) / totalGb * 100).toInt().coerceIn(0, 100)
 
                 val ramLabel = if (report.ram.isRamSpoofed) {
-                    "Real RAM: ${String.format(Locale.US, "%.1f", freeGb)}G Free of ${String.format(Locale.US, "%.1f", totalGb)}G [Fake 4G]"
+                    "⚡ ${String.format(Locale.US, "%.1f", freeGb)}G / ${String.format(Locale.US, "%.1f", totalGb)}G [Fake 4G]"
                 } else {
-                    "RAM: ${String.format(Locale.US, "%.1f", freeGb)}G Free (${usedPercent}% Used)"
+                    "⚡ ${String.format(Locale.US, "%.1f", freeGb)}G Free / ${String.format(Locale.US, "%.1f", totalGb)}G (${usedPercent}%)"
                 }
 
                 StatusPill(
@@ -492,15 +627,15 @@ fun TopStatusBar(
                     color = if (report.ram.isRamSpoofed) Color(0xFFFF5252) else if (usedPercent > 85) Color(0xFFFF9800) else Color(0xFF00E676)
                 )
 
-                // 2. Real Flash Storage Pill
+                // 2. Compact Real Flash Storage Symbol Pill
                 val storage = report.storage
                 val storageLabel = if (storage.isStorageSpoofed || storage.blockDeviceBytes != null) {
                     val realTotalGb = storage.realTotalFlashBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
                     val realFreeGb = storage.realFreeStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-                    "Real Flash: ${String.format(Locale.US, "%.1f", realFreeGb)}G Free of ${String.format(Locale.US, "%.0f", realTotalGb)}G [Fake 32G]"
+                    "💾 ${String.format(Locale.US, "%.1f", realFreeGb)}G / ${String.format(Locale.US, "%.0f", realTotalGb)}G [Fake 32G]"
                 } else {
                     val freeGb = storage.dataFreeBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-                    "Storage: ${String.format(Locale.US, "%.1f", freeGb)}G Free"
+                    "💾 ${String.format(Locale.US, "%.1f", freeGb)}G Free"
                 }
 
                 StatusPill(
@@ -508,22 +643,9 @@ fun TopStatusBar(
                     label = storageLabel,
                     color = if (storage.isStorageSpoofed) Color(0xFFFF5252) else Color(0xFF00E5FF)
                 )
-
-                // 3. Root Status Pill
-                val (rootLabel, rootColor) = when {
-                    report.root.canExecuteRoot -> "Root: Active (UID 0)" to Color(0xFF00E676)
-                    report.root.isSuPresent -> "Root: Ready (${report.root.suPathsFound.firstOrNull() ?: "/system/xbin/su"})" to Color(0xFFFFD600)
-                    else -> "Unrooted (ADB Mode)" to Color(0xFF94A3B8)
-                }
-
-                StatusPill(
-                    icon = Icons.Default.Build,
-                    label = rootLabel,
-                    color = rootColor
-                )
             }
 
-            // Wi-Fi Pill
+            // 3. Compact Real Ping & Jitter Quality Pill
             if (network != null) {
                 val netColor = when (network.qualityRating) {
                     "Excellent" -> Color(0xFF00E676)
@@ -531,18 +653,31 @@ fun TopStatusBar(
                     "Fair" -> Color(0xFFFFD600)
                     else -> Color(0xFFFF5252)
                 }
+
+                val pingText = network.internetPingMs?.let {
+                    val jitterText = network.jitterMs?.let { j -> " (±${j}ms)" } ?: ""
+                    "📶 ${it}ms$jitterText"
+                } ?: "📶 ${network.qualityRating}"
+
                 StatusPill(
                     icon = Icons.Default.Wifi,
-                    label = "${network.transportType} ${network.internetPingMs?.let { "$it ms" } ?: network.qualityRating}",
+                    label = pingText,
                     color = netColor
                 )
             }
+
+            // Voice Assistant Mic Button
+            TvFocusIconButton(
+                icon = Icons.Default.Mic,
+                onClick = onVoiceClick,
+                tooltip = "Voice Assistant (USB Mic / Remote)"
+            )
 
             // Take Screenshot Icon Button
             TvFocusIconButton(
                 icon = Icons.Default.CameraAlt,
                 onClick = onTakeScreenshot,
-                tooltip = "Take Screenshot to /sdcard/Download"
+                tooltip = "Take Screenshot to /sdcard/Download/Screenshots"
             )
 
             // Refresh Button
@@ -576,6 +711,136 @@ fun StatusPill(icon: ImageVector, label: String, color: Color) {
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold
         )
+    }
+}
+
+@Composable
+fun VoiceAssistantDialog(
+    prompt: String,
+    isListening: Boolean,
+    onDismiss: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.75f))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .width(520.dp)
+                .background(Color(0xFF111827), RoundedCornerShape(16.dp))
+                .border(2.dp, if (isListening) Color(0xFF00E5FF) else Color(0xFF334155), RoundedCornerShape(16.dp))
+                .clickable(enabled = false) {}
+                .padding(24.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Header with mic icon
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(40.dp)
+                                .background(if (isListening) Color(0xFF00E5FF) else Color(0xFF1E293B), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = null,
+                                tint = if (isListening) Color(0xFF0B0F19) else Color(0xFF00E5FF),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "TV Guard Voice Assistant",
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (isListening) "USB Microphone Active" else "Ready",
+                                color = if (isListening) Color(0xFF00E676) else Color(0xFF94A3B8),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    TvFocusIconButton(
+                        icon = Icons.Default.Close,
+                        onClick = onDismiss,
+                        tooltip = "Close"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                // Prompt Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF0B0F19), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0xFF1E293B), RoundedCornerShape(10.dp))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = prompt,
+                        color = Color(0xFFF8FAFC),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Voice Command Hints
+                Text(
+                    text = "💡 Spoken Voice Commands Supported:",
+                    color = Color(0xFF00E5FF),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text("• \"Open SmartTube\" / \"Open YouTube\" / \"Open DuckDuckGo\"", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                    Text("• \"Boost RAM\" / \"Free memory\" (runs root RAM trimmer)", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                    Text("• \"Take Screenshot\" (saves to Download/Screenshots)", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                    Text("• \"Open Settings\" / \"Turn Off TV\" (puts screen to sleep)", color = Color(0xFF94A3B8), fontSize = 12.sp)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Cloud AI Note
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF1E293B), RoundedCornerShape(8.dp))
+                        .padding(10.dp)
+                ) {
+                    Text(
+                        text = "🤖 Free Cloud AI (Gemini / Groq API): Fully supported for general voice Q&A! Built-in commands execute offline instantly.",
+                        color = Color(0xFF00E5FF),
+                        fontSize = 11.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -1028,12 +1293,31 @@ fun TvToolsView(
     ) {
         // 1. Quick System Actions & Preferences (2 rows of 4 cards)
         item {
-            Text(
-                text = "System Tools & Preferences",
-                color = Color(0xFF00E5FF),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "System Tools & Preferences",
+                    color = Color(0xFF00E5FF),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                if (report != null) {
+                    val (rootLabel, rootColor) = when {
+                        report.root.canExecuteRoot -> "Root: Active (UID 0)" to Color(0xFF00E676)
+                        report.root.isSuPresent -> "Root: Ready (${report.root.suPathsFound.firstOrNull() ?: "/system/xbin/su"})" to Color(0xFFFFD600)
+                        else -> "Unrooted (ADB Mode)" to Color(0xFF94A3B8)
+                    }
+                    StatusPill(
+                        icon = Icons.Default.Security,
+                        label = rootLabel,
+                        color = rootColor
+                    )
+                }
+            }
             Spacer(modifier = Modifier.height(10.dp))
 
             // Row 1: Memory, Screen, Wi-Fi Hub, Settings
@@ -1654,7 +1938,7 @@ fun TvShareView(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = "Open this link on any phone, tablet, or PC connected to the same Wi-Fi. Upload APKs directly or download TV screenshots with zero USB flash drives or cables!",
+                            text = "Open this link on any phone or browser on the same Wi-Fi. Features Mobile Virtual TV Remote Control with D-Pad & Keyboard, APK file upload, and one-click screenshot downloads!",
                             color = Color(0xFF94A3B8),
                             fontSize = 13.sp
                         )
@@ -1677,7 +1961,7 @@ fun TvShareView(
             ) {
                 TvActionCard(
                     title = stringResource(R.string.btn_take_screenshot),
-                    subtitle = "Instantly save clean picture to /sdcard/Download",
+                    subtitle = "Instantly save clean picture to /sdcard/Download/Screenshots",
                     icon = Icons.Default.CameraAlt,
                     accentColor = Color(0xFF00E5FF),
                     onClick = onTakeScreenshotNow,
@@ -1694,8 +1978,8 @@ fun TvShareView(
                 )
 
                 TvActionCard(
-                    title = "Refresh Downloads",
-                    subtitle = "Scan /sdcard/Download for new files",
+                    title = "Refresh Screenshots",
+                    subtitle = "Scan /sdcard/Download/Screenshots",
                     icon = Icons.Default.Refresh,
                     accentColor = Color(0xFF00E676),
                     onClick = onRefreshFiles,
@@ -1707,7 +1991,7 @@ fun TvShareView(
         // TV Downloaded Files and Screenshots Section
         item {
             Text(
-                text = "TV Downloads & Screenshots (${files.size} files in /sdcard/Download)",
+                text = "TV Screenshots (${files.size} files in /sdcard/Download/Screenshots)",
                 color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold

@@ -26,7 +26,8 @@ import java.util.Locale
 object ScreenCaptureManager {
 
     fun getScreenshotDir(): File {
-        val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val dir = File(downloads, "Screenshots")
         if (!dir.exists()) {
             dir.mkdirs()
         }
@@ -34,16 +35,24 @@ object ScreenCaptureManager {
     }
 
     fun listScreenshots(): List<File> {
-        val dir = getScreenshotDir()
-        if (!dir.exists() || !dir.isDirectory) return emptyList()
+        val screenshotDir = getScreenshotDir()
+        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val list = mutableListOf<File>()
 
-        val files = dir.listFiles { file ->
-            val name = file.name.lowercase(Locale.ROOT)
-            (name.startsWith("tvguard_") || name.contains("screenshot")) &&
-                    (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg"))
-        } ?: emptyArray()
+        fun scan(dir: File) {
+            if (dir.exists() && dir.isDirectory) {
+                dir.listFiles { file ->
+                    val name = file.name.lowercase(Locale.ROOT)
+                    (name.startsWith("tvguard_") || name.contains("screenshot")) &&
+                            (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg"))
+                }?.let { list.addAll(it) }
+            }
+        }
 
-        return files.sortedByDescending { it.lastModified() }
+        scan(screenshotDir)
+        scan(downloadsDir)
+
+        return list.distinctBy { it.name }.sortedByDescending { it.lastModified() }
     }
 
     private fun generateScreenshotFile(): File {
