@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Android TV Guard</string>
+    <string name="tv_tagline">Hardware Truth Auditor, Debloater, and Clean TV Launcher</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_audit">Hardware Truth</string>
+    <string name="tab_debloat">Debloater</string>
+    <string name="tab_network">Network &amp; Speed</string>
+
+    <string name="ram_boost_title">RAM Boost</string>
+    <string name="ram_boost_subtitle">Trim background processes</string>
+    <string name="hardware_audit_title">Hardware Truth</string>
+    <string name="hardware_audit_subtitle">Detect fake RAM and storage</string>
+    <string name="debloat_title">TV Debloater</string>
+    <string name="debloat_subtitle">Remove bloatware and adware</string>
+    <string name="network_title">Internet Quality</string>
+    <string name="network_subtitle">Live ping and Wi-Fi signal</string>
+    <string name="settings_title">TV Settings</string>
+    <string name="settings_subtitle">Open system preferences</string>
+
+    <string name="favorite_apps">Favorite Apps</string>
+    <string name="all_apps">Installed Apps</string>
+    <string name="no_apps_found">No apps found</string>
+
+    <string name="verdict_spoofed_ram">Spoofed RAM Detected</string>
+    <string name="verdict_spoofed_storage">Spoofed Storage Detected</string>
+    <string name="verdict_spoofed_os">Spoofed Android Version Detected</string>
+    <string name="verdict_genuine">No obvious hardware spoofing detected</string>
+
+    <string name="root_status_active">Root Active (UID 0)</string>
+    <string name="root_status_none">Unrooted (ADB Mode Available)</string>
+
+    <string name="btn_run_audit">Refresh Hardware Audit</string>
+    <string name="btn_run_alloc_test">Test Allocatable RAM Limit</string>
+    <string name="btn_boost_ram">Boost RAM Now</string>
+    <string name="btn_uninstall">Remove</string>
+    <string name="btn_uninstall_root">One-Click Root Remove</string>
+    <string name="btn_adb_guide">Show ADB Wireless Commands</string>
+
+    <string name="category_safe">Safe to Remove (Bloat / Adware)</string>
+    <string name="category_caution">User Discretion (Utilities)</string>
+    <string name="category_core">Core System (Protected)</string>
+</resources>

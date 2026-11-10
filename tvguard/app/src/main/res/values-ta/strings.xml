@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">தொலைக்காட்சி காவலன்</string>
+    <string name="tv_tagline">வன்பொருள் உண்மை தணிக்கையாளர், தேவையற்றவை நீக்கம் மற்றும் தூய டிவி முகப்பு</string>
+    <string name="tab_home">முகப்பு</string>
+    <string name="tab_audit">வன்பொருள் உண்மை</string>
+    <string name="tab_debloat">செயலி நீக்கி</string>
+    <string name="tab_network">இணைய தரம்</string>
+
+    <string name="ram_boost_title">நினைவக வேகம்</string>
+    <string name="ram_boost_subtitle">பின்னணி செயலிகளை அகற்றி நினைவகம் மீட்டல்</string>
+    <string name="hardware_audit_title">வன்பொருள் உண்மை</string>
+    <string name="hardware_audit_subtitle">போலி ரேம் மற்றும் சேமிப்பகம் கண்டறிதல்</string>
+    <string name="debloat_title">செயலி நீக்கி</string>
+    <string name="debloat_subtitle">தேவையற்ற விளம்பர செயலிகளை அகற்றுதல்</string>
+    <string name="network_title">இணைய தரம்</string>
+    <string name="network_subtitle">நேரடி பிங் மற்றும் வைஃபை சிக்னல்</string>
+    <string name="settings_title">டிவி அமைப்புகள்</string>
+    <string name="settings_subtitle">கணினி அமைப்புகளைத் திறக்கவும்</string>
+
+    <string name="favorite_apps">விருப்பமான செயலிகள்</string>
+    <string name="all_apps">நிறுவப்பட்ட செயலிகள்</string>
+    <string name="no_apps_found">செயலிகள் ஏதுமில்லை</string>
+
+    <string name="verdict_spoofed_ram">போலி ரேம் கண்டறியப்பட்டது</string>
+    <string name="verdict_spoofed_storage">போலி சேமிப்பகம் கண்டறியப்பட்டது</string>
+    <string name="verdict_spoofed_os">போலி ஆண்ட்ராய்டு பதிப்பு கண்டறியப்பட்டது</string>
+    <string name="verdict_genuine">போலி வன்பொருள் மாற்றம் எதுவும் இல்லை</string>
+
+    <string name="root_status_active">ரூட் அனுமதி செயல்பாட்டில் உள்ளது (UID 0)</string>
+    <string name="root_status_none">ரூட் இல்லை (ADB முறை பயன்படுத்தலாம்)</string>
+
+    <string name="btn_run_audit">மீண்டும் ஆய்வு செய்</string>
+    <string name="btn_run_alloc_test">அதிகபட்ச நினைவக வரம்பு சோதனை</string>
+    <string name="btn_boost_ram">நினைவகத்தை மீட்டெடு</string>
+    <string name="btn_uninstall">நீக்கு</string>
+    <string name="btn_uninstall_root">ரூட் மூலம் உடனடியாக நீக்கு</string>
+    <string name="btn_adb_guide">ADB வயர்லெஸ் கட்டளைகளைக் காட்டு</string>
+
+    <string name="category_safe">நீக்க பாதுகாப்பானது (தேவையற்றவை)</string>
+    <string name="category_caution">பயனர் முடிவு (கருவிகள்)</string>
+    <string name="category_core">கணினி முதன்மை செயலி (பாதுகாக்கப்பட்டது)</string>
+</resources>

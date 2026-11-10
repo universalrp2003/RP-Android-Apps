@@ -32,3 +32,8 @@ include(":tamilanstore")
 
 // Private manual daily-spend and information vault; isolated preview.
 include(":dailyvault")
+
+// Android TV Guard: Hardware truth auditor, TV debloater, and clean home launcher
+include(":tvguard")
+project(":tvguard").projectDir = file("tvguard/app")
+
