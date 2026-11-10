@@ -31,6 +31,13 @@
     <string name="settings_title">டிவி அமைப்புகள்</string>
     <string name="settings_subtitle">கணினி அமைப்புகளைத் திறக்கவும்</string>
 
+    <string name="hidden_apps_title">மறைக்கப்பட்ட செயலிகள்</string>
+    <string name="hidden_apps_subtitle">முகப்புத் திரையில் மீட்டெடுங்கள்</string>
+    <string name="action_open_app">செயலியைத் திறக்கவும்</string>
+    <string name="action_app_info">செயலி விவரங்கள் &amp; அனுமதிகள்</string>
+    <string name="action_hide_app">செயலியை மறைக்கவும்</string>
+    <string name="action_unhide_app">மறைப்பை நீக்கு</string>
+
     <string name="favorite_apps">விருப்பமான செயலிகள்</string>
     <string name="all_apps">நிறுவப்பட்ட செயலிகள்</string>
     <string name="no_apps_found">செயலிகள் ஏதுமில்லை</string>
