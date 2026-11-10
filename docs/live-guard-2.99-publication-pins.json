@@ -1,0 +1,18 @@
+{
+  "publication_authorized": true,
+  "only_app": "cleaner",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_authorization": "Ok go finish \u2014 publish the voice rotation fix and recover website/Store update",
+  "source": "5434c4ab05586a621642dbd181eac7783a7d6f34",
+  "run_id": 42758830731,
+  "job_id": 129639443316,
+  "artifact_id": 13738090372,
+  "archive_sha256": "17b4a3cbf22069b84803c4d7cc040ed34ffd5fd39f7001f76fe83043b2860f31",
+  "apk_sha256": "d11818d1539d10061bf76060874e84a4bdfc4628c1dee1a5389dd0f89fd88b05",
+  "bytes": 14785431,
+  "required_jvm_tests": 943,
+  "required_suites": 92,
+  "required_android35_native_tests": 16
+}
