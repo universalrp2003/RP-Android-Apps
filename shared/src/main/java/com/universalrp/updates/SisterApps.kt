@@ -54,7 +54,7 @@ object SisterApps {
             name = "Live Guard",
             tamilName = "கைபேசி காவலன்",
             tagPrefix = "live-guard",
-            version = "2.98",
+            version = "2.99",
             publishedVersion = "2.98",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
