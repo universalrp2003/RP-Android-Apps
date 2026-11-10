@@ -28,6 +28,20 @@ class BloatCatalogTest {
 
         val (levelSystemUi, _) = BloatCatalog.classifyPackage("com.android.systemui", true)
         assertEquals(BloatSafetyLevel.CORE_SYSTEM_PROTECTED, levelSystemUi)
+
+        val (levelLock, _) = BloatCatalog.classifyPackage("com.rjio.lockunlock", true)
+        assertEquals(BloatSafetyLevel.CORE_SYSTEM_PROTECTED, levelLock)
+    }
+
+    @Test
+    fun testAirtelAndJioBloatware() {
+        val (levelAirtel, descAirtel) = BloatCatalog.classifyPackage("com.airtel.tv", true)
+        assertEquals(BloatSafetyLevel.SAFE_TO_REMOVE, levelAirtel)
+        assertTrue(descAirtel.contains("Airtel"))
+
+        val (levelJio, descJio) = BloatCatalog.classifyPackage("com.jio.jiogames", true)
+        assertEquals(BloatSafetyLevel.SAFE_TO_REMOVE, levelJio)
+        assertTrue(descJio.contains("JioGames"))
     }
 
     @Test
