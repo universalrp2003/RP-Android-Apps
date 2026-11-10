@@ -146,7 +146,8 @@ def main():
     seek('Data budget & history')
     click('Details')
     screen('WEATHER')
-    seek('Choose your default place first')
+    seek('Current location weather · no saved home')
+    seek('Check now')
     seek('Town / PIN code')
     # Supply a synthetic home on this disposable emulator, without network/place search.
     adb('shell','am','force-stop',PKG)
@@ -184,7 +185,7 @@ def main():
     receipt['native_289_named_security_smoke']=True
     receipt['native_283_settings_smoke']=True
     receipt['native_292_top_read_and_opt_in_smoke']=True
-    receipt['native_283_scope']='Synthetic English top Read/full-width headline controls, quiet no-signal Not now retains OFF, compact home/Details,  optional security history Not now preserves OFF, app signer detail expansion, Advanced battery opt-in/threshold persistence, default-place-first setup, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
+    receipt['native_283_scope']='Synthetic English top Read/full-width headline controls, quiet no-signal Not now retains OFF, compact home/Details,  optional security history Not now preserves OFF, app signer detail expansion, Advanced battery opt-in/threshold persistence, no-home current-location weather and explicit retry controls, fixed home, lead time, saved-place history and screen-only disaster section with native compact website window, GDACS/IMD/Tomorrow.io tabs, Expand/Compact and page zoom menu; no live API, rendered-map accuracy, speech or phone accuracy claim'
     (ROOT/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('::notice title=Live Guard 2.89 native settings::'+receipt['native_283_scope'])
 
