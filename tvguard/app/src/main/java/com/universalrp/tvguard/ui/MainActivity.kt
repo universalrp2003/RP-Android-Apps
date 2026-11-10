@@ -1,16 +1,23 @@
 package com.universalrp.tvguard.ui
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.Settings
+import android.view.KeyEvent
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,27 +43,25 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Computer
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.NetworkCheck
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -64,6 +69,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,7 +81,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -84,7 +95,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import com.universalrp.tvguard.R
+import com.universalrp.tvguard.capture.ScreenCaptureManager
 import com.universalrp.tvguard.debloat.AppDebloatItem
 import com.universalrp.tvguard.debloat.BloatSafetyLevel
 import com.universalrp.tvguard.debloat.DebloatEngine
@@ -95,21 +108,38 @@ import com.universalrp.tvguard.launcher.TvAppCatalog
 import com.universalrp.tvguard.memory.MemoryTrimmer
 import com.universalrp.tvguard.network.NetworkQualityMonitor
 import com.universalrp.tvguard.network.NetworkStatus
+import com.universalrp.tvguard.web.LocalWebTransferServer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+
+    var onRemoteKey: ((Int) -> Boolean)? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             TvGuardTheme {
-                TvGuardMainScreen()
+                TvGuardMainScreen(activity = this)
             }
         }
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        if (onRemoteKey?.invoke(keyCode) == true) {
+            return true
+        }
+        return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        LocalWebTransferServer.stop()
     }
 }
 
@@ -117,7 +147,8 @@ enum class TvNavTab(val titleRes: Int, val icon: ImageVector) {
     HOME(R.string.tab_home, Icons.Default.Home),
     AUDIT(R.string.tab_audit, Icons.Default.Security),
     DEBLOAT(R.string.tab_debloat, Icons.Default.CleaningServices),
-    NETWORK(R.string.tab_network, Icons.Default.Wifi)
+    SHARE(R.string.tab_share, Icons.Default.Wifi),
+    NETWORK(R.string.tab_network, Icons.Default.Speed)
 }
 
 @Composable
@@ -135,7 +166,7 @@ fun TvGuardTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun TvGuardMainScreen() {
+fun TvGuardMainScreen(activity: MainActivity) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -144,12 +175,19 @@ fun TvGuardMainScreen() {
     var networkStatus by remember { mutableStateOf<NetworkStatus?>(null) }
     var installedApps by remember { mutableStateOf<List<LaunchableApp>>(emptyList()) }
     var debloatItems by remember { mutableStateOf<List<AppDebloatItem>>(emptyList()) }
+    var downloadedFiles by remember { mutableStateOf<List<File>>(emptyList()) }
 
     var isRefreshing by remember { mutableStateOf(false) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
     var showAdbGuide by remember { mutableStateOf(false) }
     var testedAllocatedMb by remember { mutableStateOf<Int?>(null) }
     var isTestingAlloc by remember { mutableStateOf(false) }
+    var isServerRunning by remember { mutableStateOf(LocalWebTransferServer.isRunning) }
+
+    fun refreshDownloads() {
+        val dir = ScreenCaptureManager.getScreenshotDir()
+        downloadedFiles = dir.listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList()
+    }
 
     fun refreshAll() {
         scope.launch {
@@ -158,12 +196,68 @@ fun TvGuardMainScreen() {
             networkStatus = withContext(Dispatchers.IO) { NetworkQualityMonitor.probe(context) }
             installedApps = withContext(Dispatchers.IO) { TvAppCatalog.loadApps(context) }
             debloatItems = withContext(Dispatchers.IO) { DebloatEngine.scanInstalledApps(context) }
+            refreshDownloads()
             isRefreshing = false
         }
     }
 
+    fun takeScreenshot(delayed: Boolean) {
+        if (delayed) {
+            toastMessage = "Capturing screen in 3 seconds..."
+            ScreenCaptureManager.captureScreenDelayed(
+                activity = activity,
+                delaySeconds = 3,
+                onTick = { sec ->
+                    if (sec > 0) toastMessage = "Screenshot in $sec..."
+                },
+                onComplete = { res ->
+                    if (res.isSuccess) {
+                        toastMessage = "📸 Saved: Download/${res.getOrNull()?.name}"
+                        refreshDownloads()
+                    } else {
+                        toastMessage = "Screenshot failed: ${res.exceptionOrNull()?.message}"
+                    }
+                }
+            )
+        } else {
+            ScreenCaptureManager.captureScreen(activity) { res ->
+                if (res.isSuccess) {
+                    toastMessage = "📸 Saved: Download/${res.getOrNull()?.name}"
+                    refreshDownloads()
+                } else {
+                    toastMessage = "Screenshot failed: ${res.exceptionOrNull()?.message}"
+                }
+            }
+        }
+    }
+
+    // Auto-start web hub server on launch for convenience
     LaunchedEffect(Unit) {
+        LocalWebTransferServer.start(context)
+        isServerRunning = LocalWebTransferServer.isRunning
         refreshAll()
+    }
+
+    // Remote shortcut listener for quick tab cycling
+    DisposableEffect(currentTab) {
+        activity.onRemoteKey = { keyCode ->
+            when (keyCode) {
+                KeyEvent.KEYCODE_PAGE_DOWN, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                    val nextIndex = (currentTab.ordinal + 1) % TvNavTab.values().size
+                    currentTab = TvNavTab.values()[nextIndex]
+                    true
+                }
+                KeyEvent.KEYCODE_PAGE_UP, KeyEvent.KEYCODE_CHANNEL_DOWN, KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                    val prevIndex = if (currentTab.ordinal - 1 < 0) TvNavTab.values().size - 1 else currentTab.ordinal - 1
+                    currentTab = TvNavTab.values()[prevIndex]
+                    true
+                }
+                else -> false
+            }
+        }
+        onDispose {
+            activity.onRemoteKey = null
+        }
     }
 
     LaunchedEffect(toastMessage) {
@@ -182,24 +276,25 @@ fun TvGuardMainScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .padding(horizontal = 24.dp, vertical = 14.dp)
         ) {
             // --- TOP STATUS BAR ---
             TopStatusBar(
                 report = report,
                 network = networkStatus,
+                onTakeScreenshot = { takeScreenshot(false) },
                 onRefreshClick = { refreshAll() }
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // --- NAVIGATION TABS (D-Pad Friendly) ---
+            // --- NAVIGATION TABS (D-Pad Fluent Remote Navigation) ---
             TvTabBar(
                 currentTab = currentTab,
                 onTabSelected = { currentTab = it }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // --- TAB CONTENT ---
             Box(modifier = Modifier.weight(1f)) {
@@ -213,8 +308,12 @@ fun TvGuardMainScreen() {
                                 toastMessage = "RAM Boost: Freed ${res.freedMb} MB" + if (res.droppedKernelCaches) " (Kernel caches dropped)" else ""
                                 refreshAll()
                             },
+                            onTakeScreenshot = { takeScreenshot(false) },
+                            onOpenShare = { currentTab = TvNavTab.SHARE },
                             onOpenAudit = { currentTab = TvNavTab.AUDIT },
                             onOpenDebloat = { currentTab = TvNavTab.DEBLOAT },
+                            onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
+                            onGrantStorage = { promptStoragePermission(context) },
                             onOpenSettings = {
                                 try {
                                     context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -278,6 +377,33 @@ fun TvGuardMainScreen() {
                         )
                     }
 
+                    TvNavTab.SHARE -> {
+                        TvShareView(
+                            isServerRunning = isServerRunning,
+                            serverUrl = LocalWebTransferServer.getServerUrl(),
+                            files = downloadedFiles,
+                            onToggleServer = { shouldStart ->
+                                if (shouldStart) {
+                                    LocalWebTransferServer.start(context)
+                                } else {
+                                    LocalWebTransferServer.stop()
+                                }
+                                isServerRunning = LocalWebTransferServer.isRunning
+                            },
+                            onTakeScreenshotNow = { takeScreenshot(false) },
+                            onTakeScreenshotDelayed = { takeScreenshot(true) },
+                            onInstallApk = { file ->
+                                installLocalApk(context, file)
+                            },
+                            onDeleteFile = { file ->
+                                file.delete()
+                                refreshDownloads()
+                                toastMessage = "Deleted: ${file.name}"
+                            },
+                            onRefreshFiles = { refreshDownloads() }
+                        )
+                    }
+
                     TvNavTab.NETWORK -> {
                         TvNetworkView(
                             network = networkStatus,
@@ -309,6 +435,7 @@ fun TvGuardMainScreen() {
 fun TopStatusBar(
     report: FullHardwareReport?,
     network: NetworkStatus?,
+    onTakeScreenshot: () -> Unit,
     onRefreshClick: () -> Unit
 ) {
     val currentTime = remember {
@@ -348,7 +475,7 @@ fun TopStatusBar(
             }
         }
 
-        // Status Pills
+        // Status Pills and Actions
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             // RAM Pill
             if (report != null) {
@@ -392,10 +519,18 @@ fun TopStatusBar(
                 )
             }
 
+            // Take Screenshot Icon Button
+            TvFocusIconButton(
+                icon = Icons.Default.CameraAlt,
+                onClick = onTakeScreenshot,
+                tooltip = "Take Screenshot to /sdcard/Download"
+            )
+
             // Refresh Button
             TvFocusIconButton(
                 icon = Icons.Default.Refresh,
-                onClick = onRefreshClick
+                onClick = onRefreshClick,
+                tooltip = "Refresh Status"
             )
         }
     }
@@ -431,8 +566,30 @@ fun TvTabBar(
     onTabSelected: (TvNavTab) -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .onPreviewKeyEvent { event ->
+                if (event.type == KeyEventType.KeyDown) {
+                    when (event.nativeKeyEvent.keyCode) {
+                        KeyEvent.KEYCODE_DPAD_LEFT -> {
+                            val prevIdx = currentTab.ordinal - 1
+                            if (prevIdx >= 0) {
+                                onTabSelected(TvNavTab.values()[prevIdx])
+                                return@onPreviewKeyEvent true
+                            }
+                        }
+                        KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                            val nextIdx = currentTab.ordinal + 1
+                            if (nextIdx < TvNavTab.values().size) {
+                                onTabSelected(TvNavTab.values()[nextIdx])
+                                return@onPreviewKeyEvent true
+                            }
+                        }
+                    }
+                }
+                false
+            },
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         TvNavTab.values().forEach { tab ->
             val isSelected = tab == currentTab
@@ -462,17 +619,23 @@ fun TvTabButton(
     }
     val borderCol = when {
         isFocused -> Color(0xFF00E5FF)
-        isSelected -> Color(0xFF00E5FF).copy(alpha = 0.6f)
+        isSelected -> Color(0xFF00E5FF).copy(alpha = 0.7f)
         else -> Color.Transparent
     }
 
     Box(
         modifier = modifier
             .height(48.dp)
+            .scale(if (isFocused) 1.04f else 1.0f)
             .background(bg, RoundedCornerShape(10.dp))
             .border(if (isFocused) 2.5.dp else 1.dp, borderCol, RoundedCornerShape(10.dp))
             .focusable()
-            .onFocusChanged { isFocused = it.isFocused }
+            .onFocusChanged {
+                isFocused = it.isFocused
+                if (it.isFocused) {
+                    onClick()
+                }
+            }
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
@@ -501,17 +664,21 @@ fun TvHomeView(
     report: FullHardwareReport?,
     apps: List<LaunchableApp>,
     onRamBoost: () -> Unit,
+    onTakeScreenshot: () -> Unit,
+    onOpenShare: () -> Unit,
     onOpenAudit: () -> Unit,
     onOpenDebloat: () -> Unit,
+    onSetDefaultLauncher: () -> Unit,
+    onGrantStorage: () -> Unit,
     onOpenSettings: () -> Unit,
     onToggleFavorite: (String) -> Unit,
     onLaunchApp: (String) -> Unit
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Fast Action Cards Row
+        // Quick Tools Header
         item {
             Text(
                 text = "Quick Tools",
@@ -520,9 +687,11 @@ fun TvHomeView(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
+
+            // Row 1: Primary System Tools
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 TvActionCard(
                     title = stringResource(R.string.ram_boost_title),
@@ -533,6 +702,22 @@ fun TvHomeView(
                     modifier = Modifier.weight(1f)
                 )
                 TvActionCard(
+                    title = stringResource(R.string.screenshot_title),
+                    subtitle = stringResource(R.string.screenshot_subtitle),
+                    icon = Icons.Default.CameraAlt,
+                    accentColor = Color(0xFF00E5FF),
+                    onClick = onTakeScreenshot,
+                    modifier = Modifier.weight(1f)
+                )
+                TvActionCard(
+                    title = stringResource(R.string.share_quick_title),
+                    subtitle = stringResource(R.string.share_quick_subtitle),
+                    icon = Icons.Default.Wifi,
+                    accentColor = Color(0xFF38BDF8),
+                    onClick = onOpenShare,
+                    modifier = Modifier.weight(1f)
+                )
+                TvActionCard(
                     title = stringResource(R.string.hardware_audit_title),
                     subtitle = stringResource(R.string.hardware_audit_subtitle),
                     icon = Icons.Default.Security,
@@ -540,12 +725,37 @@ fun TvHomeView(
                     onClick = onOpenAudit,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Row 2: Setup and Utilities
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
                 TvActionCard(
                     title = stringResource(R.string.debloat_title),
                     subtitle = stringResource(R.string.debloat_subtitle),
                     icon = Icons.Default.CleaningServices,
                     accentColor = Color(0xFFFFD600),
                     onClick = onOpenDebloat,
+                    modifier = Modifier.weight(1f)
+                )
+                TvActionCard(
+                    title = stringResource(R.string.launcher_quick_title),
+                    subtitle = stringResource(R.string.launcher_quick_subtitle),
+                    icon = Icons.Default.Home,
+                    accentColor = Color(0xFFA78BFA),
+                    onClick = onSetDefaultLauncher,
+                    modifier = Modifier.weight(1f)
+                )
+                TvActionCard(
+                    title = stringResource(R.string.storage_quick_title),
+                    subtitle = stringResource(R.string.storage_quick_subtitle),
+                    icon = Icons.Default.Folder,
+                    accentColor = Color(0xFFF59E0B),
+                    onClick = onGrantStorage,
                     modifier = Modifier.weight(1f)
                 )
                 TvActionCard(
@@ -571,7 +781,7 @@ fun TvHomeView(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(favorites) { app ->
                         TvAppTile(
@@ -638,11 +848,12 @@ fun TvActionCard(
 
     Box(
         modifier = modifier
-            .height(96.dp)
+            .height(88.dp)
+            .scale(if (isFocused) 1.03f else 1.0f)
             .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), RoundedCornerShape(12.dp))
             .border(
                 if (isFocused) 3.dp else 1.dp,
-                if (isFocused) accentColor else Color(0xFF334155),
+                if (isFocused) accentColor else Color(0xFF1E293B),
                 RoundedCornerShape(12.dp)
             )
             .focusable()
@@ -650,21 +861,34 @@ fun TvActionCard(
             .clickable { onClick() }
             .padding(12.dp)
     ) {
-        Column(verticalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxSize()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(imageVector = icon, contentDescription = null, tint = accentColor, modifier = Modifier.size(24.dp))
-                if (isFocused) {
-                    Text(text = "OK", color = accentColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                }
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
-            Column {
-                Text(text = title, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(text = subtitle, color = Color(0xFF94A3B8), fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            }
+            Text(
+                text = subtitle,
+                color = Color(0xFF94A3B8),
+                fontSize = 11.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
     }
 }
@@ -680,7 +904,8 @@ fun TvAppTile(
     Box(
         modifier = Modifier
             .width(180.dp)
-            .height(110.dp)
+            .height(115.dp)
+            .scale(if (isFocused) 1.04f else 1.0f)
             .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), RoundedCornerShape(12.dp))
             .border(
                 if (isFocused) 3.dp else 1.dp,
@@ -701,18 +926,16 @@ fun TvAppTile(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Computer,
-                    contentDescription = null,
-                    tint = Color(0xFF00E5FF),
-                    modifier = Modifier.size(28.dp)
+                AppIcon(
+                    drawable = app.icon,
+                    modifier = Modifier.size(36.dp)
                 )
                 Icon(
                     imageVector = Icons.Default.Star,
                     contentDescription = null,
                     tint = Color(0xFFFFD600),
                     modifier = Modifier
-                        .size(18.dp)
+                        .size(20.dp)
                         .clickable { onToggleFav() }
                 )
             }
@@ -740,6 +963,7 @@ fun TvAppGridCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(82.dp)
+            .scale(if (isFocused) 1.03f else 1.0f)
             .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), RoundedCornerShape(10.dp))
             .border(
                 if (isFocused) 3.dp else 1.dp,
@@ -760,13 +984,11 @@ fun TvAppGridCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.Default.Computer,
-                    contentDescription = null,
-                    tint = if (isFocused) Color(0xFF00E5FF) else Color(0xFF94A3B8),
-                    modifier = Modifier.size(24.dp)
+                AppIcon(
+                    drawable = app.icon,
+                    modifier = Modifier.size(36.dp)
                 )
-                Spacer(modifier = Modifier.width(10.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Column {
                     Text(
                         text = app.appName,
@@ -788,12 +1010,69 @@ fun TvAppGridCard(
             Icon(
                 imageVector = if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
                 contentDescription = null,
-                tint = if (app.isFavorite) Color(0xFFFFD600) else Color(0xFF475569),
+                tint = if (app.isFavorite) Color(0xFFFFD600) else Color(0xFF334155),
                 modifier = Modifier
                     .size(20.dp)
                     .clickable { onToggleFav() }
             )
         }
+    }
+}
+
+@Composable
+fun AppIcon(
+    drawable: Drawable?,
+    modifier: Modifier = Modifier
+) {
+    if (drawable == null) {
+        Icon(
+            imageVector = Icons.Default.Tv,
+            contentDescription = null,
+            tint = Color(0xFF00E5FF),
+            modifier = modifier
+        )
+        return
+    }
+
+    val bitmap = remember(drawable) {
+        drawableToBitmap(drawable)
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            modifier = modifier,
+            contentScale = ContentScale.Fit
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Default.Tv,
+            contentDescription = null,
+            tint = Color(0xFF00E5FF),
+            modifier = modifier
+        )
+    }
+}
+
+fun drawableToBitmap(drawable: Drawable): Bitmap? {
+    return try {
+        if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            return drawable.bitmap
+        }
+        val width = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 96
+        val height = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 96
+        val bmp = Bitmap.createBitmap(
+            width.coerceIn(32, 256),
+            height.coerceIn(32, 256),
+            Bitmap.Config.ARGB_8888
+        )
+        val canvas = Canvas(bmp)
+        drawable.setBounds(0, 0, canvas.width, canvas.height)
+        drawable.draw(canvas)
+        bmp
+    } catch (_: Throwable) {
+        null
     }
 }
 
@@ -858,18 +1137,19 @@ fun TvAuditView(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = testedAllocMb?.let { "Committed safely: $it MB (Consistent with 2GB DDR3)" }
-                                ?: "Safely probes allocatable RAM ceiling in 32MB chunks",
+                            text = "Safely probes allocatable RAM ceiling in 32MB chunks",
                             color = Color(0xFF94A3B8),
                             fontSize = 11.sp
                         )
                     }
+
                     if (isTestingAlloc) {
                         CircularProgressIndicator(color = Color(0xFF00E5FF), modifier = Modifier.size(24.dp))
                     } else {
                         TvFocusButton(
-                            text = stringResource(R.string.btn_run_alloc_test),
-                            onClick = onRunAllocTest
+                            text = testedAllocMb?.let { "$it MB (Verified)" } ?: "Run Test",
+                            onClick = onRunAllocTest,
+                            color = if (testedAllocMb != null) Color(0xFF00E676) else Color(0xFF00E5FF)
                         )
                     }
                 }
@@ -878,46 +1158,50 @@ fun TvAuditView(
 
         // Section 2: Storage Truth
         item {
+            val sectors = report.storage.blockDeviceSectors
+            val emmcGb = report.storage.blockDeviceBytes?.let { it.toDouble() / (1024.0 * 1024.0 * 1024.0) }
+            val dataTotalGb = report.storage.dataTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+            val dataFreeGb = report.storage.dataFreeBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+            val reportedTotalGb = report.storage.reportedStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+
             TvDetailSection(
                 title = "2. Flash Storage Truth Evidence",
                 icon = Icons.Default.Storage,
                 isSpoofed = report.storage.isStorageSpoofed
             ) {
-                val blockGb = report.storage.blockDeviceBytes?.let { it.toDouble() / 1e9 }
                 DetailRow(
                     "Physical eMMC Block Device (/sys/block/mmcblk0)",
-                    blockGb?.let { "${String.format(Locale.US, "%.2f", it)} GB (${report.storage.blockDeviceSectors} sectors)" }
-                        ?: "Cannot read block device size directly"
+                    emmcGb?.let { "${String.format(Locale.US, "%.2f", it)} GB ($sectors sectors)" } ?: "Not Exposed (Virtual/UFS)"
                 )
-                DetailRow("Reported Total Storage (Partitions Sum)", "${String.format(Locale.US, "%.2f", report.storage.reportedStorageBytes.toDouble() / 1e9)} GB")
-                DetailRow("User Data Partition (/data)", "Total: ${formatGb(report.storage.dataTotalBytes)} | Free: ${formatGb(report.storage.dataFreeBytes)}")
-                DetailRow("System Partition (/system)", formatGb(report.storage.systemTotalBytes))
-                DetailRow("Vendor Partition (/vendor)", formatGb(report.storage.vendorTotalBytes))
-                DetailRow("Cache Partition (/cache)", formatGb(report.storage.cacheTotalBytes))
+                DetailRow("Reported Total Storage (Partitions Sum)", "${String.format(Locale.US, "%.2f", reportedTotalGb)} GB")
+                DetailRow("User Data Partition (/data)", "Total: ${String.format(Locale.US, "%.2f", dataTotalGb)} GB  |  Free: ${String.format(Locale.US, "%.2f", dataFreeGb)} GB")
+                DetailRow("System Partition (/system)", "${String.format(Locale.US, "%.2f", report.storage.systemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
+                DetailRow("Vendor Partition (/vendor)", "${String.format(Locale.US, "%.2f", report.storage.vendorTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
+                DetailRow("Cache Partition (/cache)", "${String.format(Locale.US, "%.2f", report.storage.cacheTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
                 DetailRow("Partitions Found in /proc/partitions", "${report.storage.partitions.size} partitions")
             }
         }
 
-        // Section 3: OS & Framework Truth
+        // Section 3: Android OS & API Level
         item {
             TvDetailSection(
                 title = "3. Operating System & API Level Evidence",
-                icon = Icons.Default.Computer,
+                icon = Icons.Default.Build,
                 isSpoofed = report.os.isOsSpoofed
             ) {
                 DetailRow("Reported Android Version (build.prop)", "Android ${report.os.reportedRelease}")
                 DetailRow("Ground Truth Base Framework", report.os.detectedBaseOs)
                 DetailRow("Underlying SDK API Level", "API ${report.os.apiLevel}")
                 DetailRow("Kernel Release (/proc/version)", report.os.kernelRelease)
-                DetailRow("Build Timestamp", report.os.buildTimestamp + if (report.os.isFutureBuildDate) " ⚠️ (Future date detected!)" else "")
+                DetailRow("Build Timestamp", report.os.buildTimestamp)
             }
         }
 
-        // Section 4: SoC & Hardware
+        // Section 4: Processor & Silicon
         item {
             TvDetailSection(
                 title = "4. Processor & Silicon Profile",
-                icon = Icons.Default.Build,
+                icon = Icons.Default.Memory,
                 isSpoofed = false
             ) {
                 DetailRow("Identified Chipset", report.soc.likelyChipset)
@@ -927,130 +1211,33 @@ fun TvAuditView(
             }
         }
 
-        // Section 5: Root & Security
+        // Section 5: Root Status & SELinux
         item {
             TvDetailSection(
                 title = "5. Root Access & Security Status",
                 icon = Icons.Default.Security,
                 isSpoofed = false
             ) {
-                DetailRow("su Binary Present", if (report.root.isSuPresent) "Yes (${report.root.suPathsFound.joinToString(", ")})" else "No")
-                DetailRow("Root Execution (su -c id)", if (report.root.canExecuteRoot) "Active (uid=0 root confirmed)" else "Inactive")
+                DetailRow("su Binary Present", if (report.root.isSuPresent) "Yes (${report.root.suPathsFound.joinToString()})" else "No")
+                DetailRow("Root Execution (su -c id)", if (report.root.canExecuteRoot) "Active (UID 0 root granted)" else "Inactive")
                 DetailRow("SELinux Mode", report.root.selinuxMode)
             }
         }
-    }
-}
 
-@Composable
-fun AlertCard(alert: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF3B1219), RoundedCornerShape(10.dp))
-            .border(1.5.dp, Color(0xFFFF5252), RoundedCornerShape(10.dp))
-            .padding(14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(imageVector = Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFF5252), modifier = Modifier.size(28.dp))
-        Spacer(modifier = Modifier.width(12.dp))
-        Column {
-            Text(text = "HARDWARE DISCREPANCY DETECTED", color = Color(0xFFFF5252), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-            Text(text = alert, color = Color.White, fontSize = 13.sp)
-        }
-    }
-}
-
-@Composable
-fun GenuineCard(text: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF0F2B1D), RoundedCornerShape(10.dp))
-            .border(1.dp, Color(0xFF00E676), RoundedCornerShape(10.dp))
-            .padding(12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(imageVector = Icons.Default.CheckCircle, contentDescription = null, tint = Color(0xFF00E676), modifier = Modifier.size(24.dp))
-        Spacer(modifier = Modifier.width(10.dp))
-        Text(text = text, color = Color(0xFF00E676), fontSize = 13.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-fun TvDetailSection(
-    title: String,
-    icon: ImageVector,
-    isSpoofed: Boolean,
-    content: @Composable () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF131B2B), RoundedCornerShape(12.dp))
-            .border(
-                1.dp,
-                if (isSpoofed) Color(0xFFFF5252).copy(alpha = 0.6f) else Color(0xFF334155),
-                RoundedCornerShape(12.dp)
-            )
-            .padding(16.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (isSpoofed) Color(0xFFFF5252) else Color(0xFF00E5FF),
-                    modifier = Modifier.size(22.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = title,
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            if (isSpoofed) {
-                Text(
-                    text = "SPOOFED",
-                    color = Color(0xFFFF5252),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
+        // Refresh Audit Button
+        item {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                TvFocusButton(
+                    text = stringResource(R.string.btn_run_audit),
+                    onClick = onRefreshAudit,
+                    color = Color(0xFF00E5FF)
                 )
             }
         }
-        Spacer(modifier = Modifier.height(12.dp))
-        content()
     }
 }
 
-@Composable
-fun DetailRow(label: String, value: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(text = label, color = Color(0xFF94A3B8), fontSize = 12.sp, modifier = Modifier.weight(1f))
-        Text(
-            text = value,
-            color = Color.White,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.End,
-            fontFamily = FontFamily.Monospace,
-            modifier = Modifier.weight(1.3f)
-        )
-    }
-}
-
-// --- TAB 3: TV DEBLOATER ---
+// --- TAB 3: DEBLOATER ---
 
 @Composable
 fun TvDebloatView(
@@ -1060,126 +1247,549 @@ fun TvDebloatView(
     onIntentUninstall: (String) -> Unit,
     onShowAdbGuide: () -> Unit
 ) {
-    val safeItems = items.filter { it.safetyLevel == BloatSafetyLevel.SAFE_TO_REMOVE }
+    val safeToRemove = items.filter { it.safetyLevel == BloatSafetyLevel.SAFE_TO_REMOVE }
     val cautionItems = items.filter { it.safetyLevel == BloatSafetyLevel.CAUTION_USER_CHOICE }
+    val coreItems = items.filter { it.safetyLevel == BloatSafetyLevel.CORE_SYSTEM_PROTECTED }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Debloater Mode Banner
+        // Mode Header Card
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(Color(0xFF131B2B), RoundedCornerShape(12.dp))
-                    .border(1.dp, Color(0xFF334155), RoundedCornerShape(12.dp))
-                    .padding(14.dp),
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column {
                     Text(
-                        text = if (isRooted) "Root Debloat Engine Ready" else "Standard / ADB Debloat Mode",
+                        text = if (isRooted) "Root Debloat Mode Active" else "Standard / ADB Debloat Mode",
                         color = if (isRooted) Color(0xFF00E676) else Color(0xFF00E5FF),
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (isRooted)
-                            "Root privileges active. You can safely remove vendor bloatware with one click."
+                            "Direct silent uninstallation enabled for carrier and system bloatware."
                         else
                             "Device is unrooted. Sideloaded apps can be uninstalled via dialog; system bloat can be removed via Wireless ADB.",
                         color = Color(0xFF94A3B8),
                         fontSize = 12.sp
                     )
                 }
-                Spacer(modifier = Modifier.width(12.dp))
-                TvFocusButton(
-                    text = stringResource(R.string.btn_adb_guide),
-                    onClick = onShowAdbGuide
-                )
+
+                if (!isRooted) {
+                    TvFocusButton(
+                        text = stringResource(R.string.btn_adb_guide),
+                        onClick = onShowAdbGuide,
+                        color = Color(0xFF00E5FF)
+                    )
+                }
             }
         }
 
-        // Section: Safe to Remove
-        item {
-            Text(
-                text = "${stringResource(R.string.category_safe)} (${safeItems.size})",
-                color = Color(0xFF00E676),
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-
-        if (safeItems.isEmpty()) {
+        // Section 1: Safe to Remove
+        if (safeToRemove.isNotEmpty()) {
             item {
                 Text(
-                    text = "No obvious known bloatware or adware detected.",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 13.sp
+                    text = "${stringResource(R.string.category_safe)} (${safeToRemove.size})",
+                    color = Color(0xFF00E676),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
-        } else {
-            items(safeItems) { item ->
-                DebloatItemCard(
+            items(safeToRemove) { item ->
+                DebloatRowItem(
                     item = item,
                     isRooted = isRooted,
-                    onRootUninstall = { onRootUninstall(item.packageName) },
-                    onIntentUninstall = { onIntentUninstall(item.packageName) }
+                    onRootRemove = { onRootUninstall(item.packageName) },
+                    onIntentRemove = { onIntentUninstall(item.packageName) }
                 )
             }
         }
 
-        // Section: Caution / User Choice
+        // Section 2: User Discretion (Utilities)
+        if (cautionItems.isNotEmpty()) {
+            item {
+                Text(
+                    text = "${stringResource(R.string.category_caution)} (${cautionItems.size})",
+                    color = Color(0xFFFFD600),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            items(cautionItems) { item ->
+                DebloatRowItem(
+                    item = item,
+                    isRooted = isRooted,
+                    onRootRemove = { onRootUninstall(item.packageName) },
+                    onIntentRemove = { onIntentUninstall(item.packageName) }
+                )
+            }
+        }
+
+        // Section 3: Core System (Protected)
+        if (coreItems.isNotEmpty()) {
+            item {
+                Text(
+                    text = "${stringResource(R.string.category_core)} (${coreItems.size})",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            items(coreItems) { item ->
+                DebloatRowItem(
+                    item = item,
+                    isRooted = isRooted,
+                    onRootRemove = {},
+                    onIntentRemove = {},
+                    isProtected = true
+                )
+            }
+        }
+    }
+}
+
+// --- TAB 4: LOCAL WI-FI WEB TRANSFER HUB ---
+
+@Composable
+fun TvShareView(
+    isServerRunning: Boolean,
+    serverUrl: String,
+    files: List<File>,
+    onToggleServer: (Boolean) -> Unit,
+    onTakeScreenshotNow: () -> Unit,
+    onTakeScreenshotDelayed: () -> Unit,
+    onInstallApk: (File) -> Unit,
+    onDeleteFile: (File) -> Unit,
+    onRefreshFiles: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Big Server Banner Card
         item {
-            Spacer(modifier = Modifier.height(10.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xFF131B2B), RoundedCornerShape(14.dp))
+                    .border(
+                        2.dp,
+                        if (isServerRunning) Color(0xFF00E5FF) else Color(0xFF334155),
+                        RoundedCornerShape(14.dp)
+                    )
+                    .padding(20.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(12.dp)
+                                    .background(if (isServerRunning) Color(0xFF00E676) else Color(0xFFFF5252), CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = if (isServerRunning) "Local Wi-Fi File Hub: Active" else "Web Server Stopped",
+                                color = if (isServerRunning) Color(0xFF00E676) else Color(0xFF94A3B8),
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        TvFocusButton(
+                            text = if (isServerRunning) stringResource(R.string.btn_stop_server) else stringResource(R.string.btn_start_server),
+                            onClick = { onToggleServer(!isServerRunning) },
+                            color = if (isServerRunning) Color(0xFFFF5252) else Color(0xFF00E5FF)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    if (isServerRunning) {
+                        Text(
+                            text = serverUrl,
+                            color = Color(0xFF00E5FF),
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "Open this link on any phone, tablet, or PC connected to the same Wi-Fi. Upload APKs directly or download TV screenshots with zero USB flash drives or cables!",
+                            color = Color(0xFF94A3B8),
+                            fontSize = 13.sp
+                        )
+                    } else {
+                        Text(
+                            text = "Start the web server to enable wireless transfer over your local Wi-Fi.",
+                            color = Color(0xFF94A3B8),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // Remote Screenshot & Trigger Actions
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                TvActionCard(
+                    title = stringResource(R.string.btn_take_screenshot),
+                    subtitle = "Instantly save clean picture to /sdcard/Download",
+                    icon = Icons.Default.CameraAlt,
+                    accentColor = Color(0xFF00E5FF),
+                    onClick = onTakeScreenshotNow,
+                    modifier = Modifier.weight(1f)
+                )
+
+                TvActionCard(
+                    title = stringResource(R.string.btn_take_screenshot_3s),
+                    subtitle = "3-second countdown to switch screens",
+                    icon = Icons.Default.Timer,
+                    accentColor = Color(0xFFFFD600),
+                    onClick = onTakeScreenshotDelayed,
+                    modifier = Modifier.weight(1f)
+                )
+
+                TvActionCard(
+                    title = "Refresh Downloads",
+                    subtitle = "Scan /sdcard/Download for new files",
+                    icon = Icons.Default.Refresh,
+                    accentColor = Color(0xFF00E676),
+                    onClick = onRefreshFiles,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        // TV Downloaded Files and Screenshots Section
+        item {
             Text(
-                text = "${stringResource(R.string.category_caution)} (${cautionItems.size})",
-                color = Color(0xFFFFD600),
+                text = "TV Downloads & Screenshots (${files.size} files in /sdcard/Download)",
+                color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
-        items(cautionItems) { item ->
-            DebloatItemCard(
-                item = item,
-                isRooted = isRooted,
-                onRootUninstall = { onRootUninstall(item.packageName) },
-                onIntentUninstall = { onIntentUninstall(item.packageName) }
+        if (files.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF131B2B), RoundedCornerShape(10.dp))
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No files found in TV Downloads folder yet.\nTake a screenshot or upload an APK from your phone/PC browser above!",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+        } else {
+            items(files) { file ->
+                val isApk = file.name.endsWith(".apk", ignoreCase = true)
+                val isImage = file.name.endsWith(".png", ignoreCase = true) || file.name.endsWith(".jpg", ignoreCase = true)
+                val sizeMb = String.format(Locale.US, "%.2f MB", file.length().toDouble() / (1024.0 * 1024.0))
+                val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
+                val dateStr = sdf.format(Date(file.lastModified()))
+
+                var isFocused by remember { mutableStateOf(false) }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .scale(if (isFocused) 1.02f else 1.0f)
+                        .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), RoundedCornerShape(10.dp))
+                        .border(
+                            if (isFocused) 2.dp else 1.dp,
+                            if (isFocused) Color(0xFF00E5FF) else Color(0xFF1E293B),
+                            RoundedCornerShape(10.dp)
+                        )
+                        .focusable()
+                        .onFocusChanged { isFocused = it.isFocused }
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            Icon(
+                                imageVector = if (isImage) Icons.Default.CameraAlt else if (isApk) Icons.Default.Build else Icons.Default.Folder,
+                                contentDescription = null,
+                                tint = if (isImage) Color(0xFF00E5FF) else if (isApk) Color(0xFF00E676) else Color(0xFF94A3B8),
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = file.name,
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "$sizeMb  •  $dateStr",
+                                    color = Color(0xFF94A3B8),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (isApk) {
+                                TvFocusButton(
+                                    text = "Install",
+                                    onClick = { onInstallApk(file) },
+                                    color = Color(0xFF00E676)
+                                )
+                            }
+                            TvFocusButton(
+                                text = "Delete",
+                                onClick = { onDeleteFile(file) },
+                                color = Color(0xFFFF5252)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// --- TAB 5: NETWORK & SPEED ---
+
+@Composable
+fun TvNetworkView(
+    network: NetworkStatus?,
+    onRetest: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            TvDetailSection(
+                title = "Internet & Local Wi-Fi Diagnostics",
+                icon = Icons.Default.Wifi,
+                isSpoofed = false
+            ) {
+                DetailRow("Connection Transport", network?.transportType ?: "Checking...")
+                DetailRow("Wi-Fi Network Name (SSID)", network?.ssid ?: "Ethernet / Hidden")
+                DetailRow("Wi-Fi Frequency", network?.frequencyGhz?.let { "${String.format(Locale.US, "%.1f", it)} GHz (${if (it > 3.0) "5 GHz Band" else "2.4 GHz Band"})" } ?: "Ethernet")
+                DetailRow("Signal Strength (RSSI)", network?.signalDbm?.let { "$it dBm (${network.qualityRating})" } ?: "Ethernet")
+                DetailRow("Link Negotiation Speed", network?.linkSpeedMbps?.let { "$it Mbps" } ?: "1000 Mbps")
+                DetailRow("Local TV Box IP Address", network?.localIp ?: "Detecting...")
+                DetailRow("Local Gateway Latency (Router)", network?.gatewayPingMs?.let { "$it ms" } ?: "Unreachable")
+                DetailRow("Internet Ping Latency (Cloudflare/Google)", network?.internetPingMs?.let { "$it ms (${network.qualityRating})" } ?: "Measuring...")
+            }
+        }
+
+        item {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                TvFocusButton(
+                    text = "Retest Network Quality",
+                    onClick = onRetest,
+                    color = Color(0xFF00E5FF)
+                )
+            }
+        }
+    }
+}
+
+// --- DETAIL SECTION HELPERS ---
+
+@Composable
+fun TvDetailSection(
+    title: String,
+    icon: ImageVector,
+    isSpoofed: Boolean,
+    content: @Composable () -> Unit
+) {
+    val borderColor = if (isSpoofed) Color(0xFFFF5252) else Color(0xFF1E293B)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF131B2B), RoundedCornerShape(12.dp))
+            .border(if (isSpoofed) 2.dp else 1.dp, borderColor, RoundedCornerShape(12.dp))
+            .padding(18.dp)
+    ) {
+        Column {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSpoofed) Color(0xFFFF5252) else Color(0xFF00E5FF),
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = title,
+                        color = Color.White,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                if (isSpoofed) {
+                    Text(
+                        text = "SPOOFED",
+                        color = Color(0xFFFF5252),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        modifier = Modifier
+                            .background(Color(0xFFFF5252).copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+            Divider(color = Color(0xFF1E293B))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            content()
+        }
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 5.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            color = Color(0xFF94A3B8),
+            fontSize = 12.sp,
+            modifier = Modifier.weight(0.55f)
+        )
+        Text(
+            text = value,
+            color = Color.White,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(0.45f)
+        )
+    }
+}
+
+@Composable
+fun AlertCard(alert: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFFF5252).copy(alpha = 0.12f), RoundedCornerShape(10.dp))
+            .border(1.5.dp, Color(0xFFFF5252), RoundedCornerShape(10.dp))
+            .padding(14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                tint = Color(0xFFFF5252),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Column {
+                Text(
+                    text = "HARDWARE DISCREPANCY DETECTED",
+                    color = Color(0xFFFF5252),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold
+                )
+                Text(
+                    text = alert,
+                    color = Color.White,
+                    fontSize = 12.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun GenuineCard(text: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF00E676).copy(alpha = 0.12f), RoundedCornerShape(10.dp))
+            .border(1.5.dp, Color(0xFF00E676), RoundedCornerShape(10.dp))
+            .padding(14.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.Security,
+                contentDescription = null,
+                tint = Color(0xFF00E676),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = text,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }
 }
 
 @Composable
-fun DebloatItemCard(
+fun DebloatRowItem(
     item: AppDebloatItem,
     isRooted: Boolean,
-    onRootUninstall: () -> Unit,
-    onIntentUninstall: () -> Unit
+    onRootRemove: () -> Unit,
+    onIntentRemove: () -> Unit,
+    isProtected: Boolean = false
 ) {
     var isFocused by remember { mutableStateOf(false) }
-
-    val badgeColor = when (item.safetyLevel) {
-        BloatSafetyLevel.SAFE_TO_REMOVE -> Color(0xFF00E676)
-        BloatSafetyLevel.CAUTION_USER_CHOICE -> Color(0xFFFFD600)
-        BloatSafetyLevel.CORE_SYSTEM_PROTECTED -> Color(0xFFFF5252)
-    }
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .scale(if (isFocused) 1.02f else 1.0f)
             .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), RoundedCornerShape(10.dp))
             .border(
-                if (isFocused) 2.5.dp else 1.dp,
-                if (isFocused) Color(0xFF00E5FF) else Color(0xFF334155),
+                if (isFocused) 2.dp else 1.dp,
+                if (isFocused) Color(0xFF00E5FF) else Color(0xFF1E293B),
                 RoundedCornerShape(10.dp)
             )
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
-            .padding(14.dp)
+            .padding(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1191,17 +1801,20 @@ fun DebloatItemCard(
                     Text(
                         text = item.appName,
                         color = Color.White,
-                        fontSize = 14.sp,
+                        fontSize = 13.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = if (item.isSystemApp) "SYSTEM" else "USER",
-                        color = badgeColor,
-                        fontSize = 10.sp,
+                        color = if (item.isSystemApp) Color(0xFFFF5252) else Color(0xFF00E676),
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
-                            .background(badgeColor.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                            .background(
+                                (if (item.isSystemApp) Color(0xFFFF5252) else Color(0xFF00E676)).copy(alpha = 0.2f),
+                                RoundedCornerShape(4.dp)
+                            )
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                 }
@@ -1214,24 +1827,22 @@ fun DebloatItemCard(
                 Text(
                     text = item.description,
                     color = Color(0xFF94A3B8),
-                    fontSize = 11.sp
+                    fontSize = 10.sp
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (!isProtected) {
                 if (isRooted) {
                     TvFocusButton(
-                        text = "Root Remove",
-                        color = Color(0xFFFF5252),
-                        onClick = onRootUninstall
+                        text = stringResource(R.string.btn_uninstall_root),
+                        onClick = onRootRemove,
+                        color = Color(0xFFFF5252)
                     )
-                } else {
+                } else if (!item.isSystemApp) {
                     TvFocusButton(
-                        text = "Uninstall",
-                        color = Color(0xFFFFD600),
-                        onClick = onIntentUninstall
+                        text = stringResource(R.string.btn_uninstall),
+                        onClick = onIntentRemove,
+                        color = Color(0xFFFFD600)
                     )
                 }
             }
@@ -1239,69 +1850,7 @@ fun DebloatItemCard(
     }
 }
 
-// --- TAB 4: NETWORK QUALITY ---
-
-@Composable
-fun TvNetworkView(
-    network: NetworkStatus?,
-    onRetest: () -> Unit
-) {
-    if (network == null) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = Color(0xFF00E5FF))
-        }
-        return
-    }
-
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item {
-            TvDetailSection(
-                title = "Internet & Local Wi-Fi Diagnostics",
-                icon = Icons.Default.Wifi,
-                isSpoofed = false
-            ) {
-                DetailRow("Connection Transport", network.transportType)
-                if (network.ssid != null) {
-                    DetailRow("Wi-Fi Network Name (SSID)", network.ssid)
-                }
-                if (network.frequencyGhz != null) {
-                    DetailRow("Wi-Fi Frequency", "${String.format(Locale.US, "%.1f", network.frequencyGhz)} GHz")
-                }
-                if (network.signalDbm != null) {
-                    DetailRow("Signal Strength (RSSI)", "${network.signalDbm} dBm")
-                }
-                if (network.linkSpeedMbps != null) {
-                    DetailRow("Link Negotiation Speed", "${network.linkSpeedMbps} Mbps")
-                }
-                DetailRow("Local TV Box IP Address", network.localIp ?: "Unavailable")
-                DetailRow(
-                    "Local Gateway Latency (Router)",
-                    network.gatewayPingMs?.let { "$it ms" } ?: "Host unreachable"
-                )
-                DetailRow(
-                    "Internet Ping Latency (Cloudflare/Google)",
-                    network.internetPingMs?.let { "$it ms (${network.qualityRating})" } ?: "No internet route"
-                )
-
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TvFocusButton(
-                        text = "Retest Latency",
-                        onClick = onRetest
-                    )
-                }
-            }
-        }
-    }
-}
-
-// --- HELPER COMPOSABLES ---
+// --- HELPER COMPOSABLES & SYSTEM LAUNCHERS ---
 
 @Composable
 fun TvFocusButton(
@@ -1315,6 +1864,7 @@ fun TvFocusButton(
     Box(
         modifier = modifier
             .height(38.dp)
+            .scale(if (isFocused) 1.05f else 1.0f)
             .background(if (isFocused) color else color.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
             .border(if (isFocused) 2.dp else 1.dp, color, RoundedCornerShape(8.dp))
             .focusable()
@@ -1335,18 +1885,20 @@ fun TvFocusButton(
 @Composable
 fun TvFocusIconButton(
     icon: ImageVector,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    tooltip: String? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
             .size(36.dp)
-            .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), RoundedCornerShape(8.dp))
+            .scale(if (isFocused) 1.08f else 1.0f)
+            .background(if (isFocused) Color(0xFF1E293B) else Color(0xFF131B2B), CircleShape)
             .border(
                 if (isFocused) 2.dp else 1.dp,
                 if (isFocused) Color(0xFF00E5FF) else Color(0xFF334155),
-                RoundedCornerShape(8.dp)
+                CircleShape
             )
             .focusable()
             .onFocusChanged { isFocused = it.isFocused }
@@ -1355,9 +1907,9 @@ fun TvFocusIconButton(
     ) {
         Icon(
             imageVector = icon,
-            contentDescription = null,
+            contentDescription = tooltip,
             tint = if (isFocused) Color(0xFF00E5FF) else Color.White,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(18.dp)
         )
     }
 }
@@ -1421,13 +1973,87 @@ fun AdbGuideDialog(
                 )
             }
             Spacer(modifier = Modifier.height(14.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TvFocusButton(text = "Close", onClick = onDismiss)
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                TvFocusButton(
+                    text = "Close",
+                    onClick = onDismiss,
+                    color = Color(0xFF00E5FF)
+                )
             }
         }
     }
 }
 
-private fun formatGb(bytes: Long): String {
-    return String.format(Locale.US, "%.2f GB", bytes.toDouble() / (1024.0 * 1024.0 * 1024.0))
+fun promptSetDefaultLauncher(context: Context) {
+    val homeSettingsIntent = Intent(Settings.ACTION_HOME_SETTINGS).apply {
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    if (context.packageManager.resolveActivity(homeSettingsIntent, 0) != null) {
+        try {
+            context.startActivity(homeSettingsIntent)
+            return
+        } catch (_: Throwable) {}
+    }
+
+    val homeIntent = Intent(Intent.ACTION_MAIN).apply {
+        addCategory(Intent.CATEGORY_HOME)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    try {
+        context.startActivity(Intent.createChooser(homeIntent, "Select TV Guard as Default Home").apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        })
+    } catch (_: Throwable) {
+        try {
+            context.startActivity(homeIntent)
+        } catch (_: Throwable) {}
+    }
+}
+
+fun promptStoragePermission(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (!Environment.isExternalStorageManager()) {
+            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                data = Uri.parse("package:${context.packageName}")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            try {
+                context.startActivity(intent)
+                return
+            } catch (_: Throwable) {
+                val fallbackIntent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                try {
+                    context.startActivity(fallbackIntent)
+                    return
+                } catch (_: Throwable) {}
+            }
+        }
+    }
+
+    val appSettings = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        data = Uri.parse("package:${context.packageName}")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    try {
+        context.startActivity(appSettings)
+    } catch (_: Throwable) {}
+}
+
+fun installLocalApk(context: Context, file: File) {
+    try {
+        val uri: Uri = FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            file
+        )
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(uri, "application/vnd.android.package-archive")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+    } catch (_: Throwable) {
+        Toast.makeText(context, "Could not open installer for ${file.name}", Toast.LENGTH_SHORT).show()
+    }
 }

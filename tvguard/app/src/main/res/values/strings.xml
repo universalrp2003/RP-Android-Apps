@@ -5,10 +5,19 @@
     <string name="tab_home">Home</string>
     <string name="tab_audit">Hardware Truth</string>
     <string name="tab_debloat">Debloater</string>
+    <string name="tab_share">Wi-Fi Hub</string>
     <string name="tab_network">Network &amp; Speed</string>
 
     <string name="ram_boost_title">RAM Boost</string>
     <string name="ram_boost_subtitle">Trim background processes</string>
+    <string name="screenshot_title">Take Screenshot</string>
+    <string name="screenshot_subtitle">Capture TV screen to Downloads</string>
+    <string name="share_quick_title">Wi-Fi File Hub</string>
+    <string name="share_quick_subtitle">Zero-USB phone to TV transfer</string>
+    <string name="launcher_quick_title">Default Launcher</string>
+    <string name="launcher_quick_subtitle">Set TV Guard as home screen</string>
+    <string name="storage_quick_title">Storage Access</string>
+    <string name="storage_quick_subtitle">Grant full access to Downloads</string>
     <string name="hardware_audit_title">Hardware Truth</string>
     <string name="hardware_audit_subtitle">Detect fake RAM and storage</string>
     <string name="debloat_title">TV Debloater</string>
@@ -33,9 +42,15 @@
     <string name="btn_run_audit">Refresh Hardware Audit</string>
     <string name="btn_run_alloc_test">Test Allocatable RAM Limit</string>
     <string name="btn_boost_ram">Boost RAM Now</string>
+    <string name="btn_take_screenshot">Take Screenshot Now</string>
+    <string name="btn_take_screenshot_3s">Capture in 3s</string>
     <string name="btn_uninstall">Remove</string>
     <string name="btn_uninstall_root">One-Click Root Remove</string>
     <string name="btn_adb_guide">Show ADB Wireless Commands</string>
+    <string name="btn_start_server">Start Wi-Fi Server</string>
+    <string name="btn_stop_server">Stop Wi-Fi Server</string>
+    <string name="btn_set_launcher">Set as Default Home</string>
+    <string name="btn_grant_storage">Grant Storage Access</string>
 
     <string name="category_safe">Safe to Remove (Bloat / Adware)</string>
     <string name="category_caution">User Discretion (Utilities)</string>

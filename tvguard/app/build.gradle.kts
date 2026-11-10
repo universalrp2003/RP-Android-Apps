@@ -61,7 +61,7 @@ android {
     lint {
         textReport = true
         xmlReport = true
-        disable += listOf("QueryAllPackagesPermission")
+        disable += listOf("QueryAllPackagesPermission", "ScopedStorage")
     }
 }
 
