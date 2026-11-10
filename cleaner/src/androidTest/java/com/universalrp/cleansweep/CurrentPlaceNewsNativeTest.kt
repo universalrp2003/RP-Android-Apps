@@ -37,19 +37,21 @@ class CurrentPlaceNewsNativeTest : ExactCandidateNativeTest() {
             val bounds = android.graphics.Rect().also { i.uiAutomation.rootInActiveWindow?.getBoundsInScreen(it) }
             shell("input swipe ${bounds.centerX()} ${bounds.top+bounds.height()*3/10} ${bounds.centerX()} ${bounds.top+bounds.height()*8/10} 150")
         }
-        repeat(25) {
+        val observed = linkedSetOf<String>()
+        repeat(50) {
             i.waitForIdleSync()
             fun has(n: android.view.accessibility.AccessibilityNodeInfo?): Boolean {
                 if (n == null) return false
+                n.text?.toString()?.let { observed.add(it) }
                 if (n.isVisibleToUser && n.text?.toString()?.contains(text) == true) return true
                 return (0 until n.childCount).any { has(n.getChild(it)) }
             }
             if (has(i.uiAutomation.rootInActiveWindow)) return
             val bounds = android.graphics.Rect().also { i.uiAutomation.rootInActiveWindow?.getBoundsInScreen(it) }
-            shell("input swipe ${bounds.centerX()} ${bounds.top+bounds.height()*8/10} ${bounds.centerX()} ${bounds.top+bounds.height()*3/10} 250")
+            shell("input swipe ${bounds.centerX()} ${bounds.top+bounds.height()*7/10} ${bounds.centerX()} ${bounds.top+bounds.height()*5/10} 250")
             SystemClock.sleep(250)
         }
-        fail("Missing native current-place/news control: $text")
+        fail("Missing native current-place/news control: $text; observed=$observed")
     }
     private fun layouts(news: Boolean, check: (Boolean) -> Unit) {
         val repo = SettingsRepo(c)
@@ -83,7 +85,9 @@ class CurrentPlaceNewsNativeTest : ExactCandidateNativeTest() {
                         }
                     }
                     SystemClock.sleep(1200)
-                    check(lang==AppLang.TA)
+                    try { check(lang==AppLang.TA) } catch (e: AssertionError) {
+                        throw AssertionError("language=${lang.id} fontScale=$scale news=$news: ${e.message}",e)
+                    }
                     assertNull("Viewing current weather must never save GPS as home",WeatherAlertStore.savedPlace(c))
                 } finally { i.runOnMainSync { activity.finish() } }
             }
