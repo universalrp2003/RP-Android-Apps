@@ -5,18 +5,20 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.os.StatFs
+import com.universalrp.tvguard.R
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
 import java.io.InputStreamReader
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 object HardwareAuditor {
 
     fun audit(context: Context): FullHardwareReport {
         val ram = auditRam(context)
         val storage = auditStorage(context)
-        val os = auditOs()
+        val os = auditOs(context)
         val soc = auditSoc()
         val root = auditRoot()
 
@@ -60,13 +62,14 @@ object HardwareAuditor {
         var isSpoofed = false
         var reason = ""
 
-        // If reported RAM is >= 3.5 GB (claiming 4 GB) but kernel reports <= 2.2 GB (2 GB physical)
-        if (reportedGb >= 3.5 && kernelGb < 2.5) {
+        // A discrepancy between system reports is not a measurement of the physical chip.
+        if ((reportedGb >= 3.5 && kernelGb < 2.5) || (reportedGb >= 1.8 && kernelGb < 1.2)) {
             isSpoofed = true
-            reason = "Reported ${String.format(Locale.US, "%.1f", reportedGb)} GB RAM, but Linux kernel MemTotal is only ${String.format(Locale.US, "%.2f", kernelGb)} GB (2 GB physical DDR3 chip)."
-        } else if (reportedGb >= 1.8 && kernelGb < 1.2) {
-            isSpoofed = true
-            reason = "Reported ${String.format(Locale.US, "%.1f", reportedGb)} GB RAM, but Linux kernel MemTotal is only ${String.format(Locale.US, "%.2f", kernelGb)} GB (1 GB physical chip)."
+            reason = context.getString(
+                R.string.ram_issue_mismatch,
+                String.format(Locale.US, "%.2f", reportedGb),
+                String.format(Locale.US, "%.2f", kernelGb)
+            )
         }
 
         return RamEvidence(
@@ -112,15 +115,18 @@ object HardwareAuditor {
     }
 
     fun auditStorage(context: Context): StorageEvidence {
-        val blockSectors = readMmcBlockSectors()
-        val blockDeviceBytes = blockSectors?.times(512L)
+        val blockDevice = readCandidateBlockDevice()
+        val blockSectors = blockDevice?.first
+        val blockDeviceBytes = blockSectors?.let { sectors ->
+            if (sectors <= Long.MAX_VALUE / 512L) sectors * 512L else null
+        }
 
         val partitions = parseProcPartitions()
 
         val dataPath = Environment.getDataDirectory()
-        val dataStats = StatFs(dataPath.path)
-        val dataTotal = dataStats.blockSizeLong * dataStats.blockCountLong
-        val dataFree = dataStats.blockSizeLong * dataStats.availableBlocksLong
+        val dataStats = try { StatFs(dataPath.path) } catch (_: Exception) { null }
+        val dataTotal = dataStats?.totalBytes?.takeIf { it > 0 } ?: 0L
+        val dataFree = dataStats?.availableBytes?.takeIf { it >= 0 } ?: -1L
 
         val systemTotal = getPartitionSize("/system")
         val vendorTotal = getPartitionSize("/vendor")
@@ -129,21 +135,17 @@ object HardwareAuditor {
         // Sum up known partition sizes
         val totalAllocatedStorage = dataTotal + systemTotal + vendorTotal + cacheTotal
 
-        var isSpoofed = false
-        var reason = ""
-
-        if (blockDeviceBytes != null) {
-            val physicalGb = blockDeviceBytes.toDouble() / (1000.0 * 1000.0 * 1000.0) // Decimal GB
-            // If physical eMMC/flash is ~16 GB (under 18 GB), but Android claims 32 GB or 64 GB
-            if (physicalGb <= 17.0 && totalAllocatedStorage > 20L * 1000L * 1000L * 1000L) {
-                isSpoofed = true
-                reason = "Flash block device is only ${String.format(Locale.US, "%.1f", physicalGb)} GB (16 GB chip), but system claims ${String.format(Locale.US, "%.1f", totalAllocatedStorage.toDouble() / 1e9)} GB storage."
-            } else if (physicalGb <= 9.0 && totalAllocatedStorage > 11L * 1000L * 1000L * 1000L) {
-                // If physical eMMC is ~8 GB (under 9 GB), but Android claims 16 GB, 32 GB, or 64 GB
-                isSpoofed = true
-                reason = "Flash block device is only ${String.format(Locale.US, "%.1f", physicalGb)} GB (8 GB chip), but system claims ${String.format(Locale.US, "%.1f", totalAllocatedStorage.toDouble() / 1e9)} GB storage."
-            }
-        }
+        // Compare /data alone: summing /system, /vendor and /cache can double
+        // count shared mounts. The candidate disk may not actually back /data.
+        val isSpoofed = StorageVerification.isSizeMismatch(blockDeviceBytes, dataTotal)
+        val reason = if (isSpoofed) {
+            context.getString(
+                R.string.storage_issue_mismatch,
+                String.format(Locale.US, "%.2f", dataTotal / 1e9),
+                blockDevice?.second ?: context.getString(R.string.evidence_unavailable),
+                String.format(Locale.US, "%.2f", (blockDeviceBytes ?: 0L) / 1e9)
+            )
+        } else ""
 
         return StorageEvidence(
             blockDeviceSectors = blockSectors,
@@ -156,39 +158,29 @@ object HardwareAuditor {
             cacheTotalBytes = cacheTotal,
             partitions = partitions,
             isStorageSpoofed = isSpoofed,
-            storageSpoofReason = reason
+            storageSpoofReason = reason,
+            blockDeviceSource = blockDevice?.second
         )
     }
 
-    fun auditOs(): OsEvidence {
+    fun auditOs(context: Context): OsEvidence {
         val reportedRelease = Build.VERSION.RELEASE ?: "Unknown"
         val apiLevel = Build.VERSION.SDK_INT
-        val detectedBase = probeBaseOs(apiLevel)
+        val hasAndroid14Marker = hasFrameworkClass("android.app.GrammaticalInflectionManager")
+        val detectedBase = probeFrameworkMarkers(context, hasAndroid14Marker)
 
         val kernelRelease = readProcVersion()
         val fingerprint = Build.FINGERPRINT ?: ""
         val buildTime = Build.TIME
 
-        var isFuture = false
-        // Detect future build dates (e.g. beyond current real date)
-        if (buildTime > 1767225600000L) { // Year 2026+
-            isFuture = true
-        }
-
-        var isSpoofed = false
-        var reason = ""
-
-        // Check if Android 14/13/12 is claimed, but base API is <= 29 (Android 10) or 30 (Android 11)
-        val claimedNum = reportedRelease.filter { it.isDigit() }.toIntOrNull() ?: 0
-        if (claimedNum >= 14 && apiLevel < 34) {
-            isSpoofed = true
-            reason = "Claims Android $reportedRelease, but framework base is API $apiLevel ($detectedBase)."
-        } else if (claimedNum >= 13 && apiLevel < 33) {
-            isSpoofed = true
-            reason = "Claims Android $reportedRelease, but framework base is API $apiLevel ($detectedBase)."
-        } else if (claimedNum >= 12 && apiLevel < 31) {
-            isSpoofed = true
-            reason = "Claims Android $reportedRelease, but framework base is API $apiLevel ($detectedBase)."
+        val isFuture = buildTime > System.currentTimeMillis() + 24L * 60L * 60L * 1000L
+        val mismatch = OsVerification.mismatch(reportedRelease, apiLevel, hasAndroid14Marker)
+        val reason = when (mismatch) {
+            is OsMismatch.ApiTooLow -> context.getString(
+                R.string.os_issue_api, reportedRelease, apiLevel, mismatch.major, mismatch.minimumApi
+            )
+            OsMismatch.Android14MarkerUnavailable -> context.getString(R.string.os_issue_marker, reportedRelease, apiLevel)
+            null -> ""
         }
 
         return OsEvidence(
@@ -199,48 +191,34 @@ object HardwareAuditor {
             buildFingerprint = fingerprint,
             buildTimestamp = Build.TIME.toString(),
             isFutureBuildDate = isFuture,
-            isOsSpoofed = isSpoofed,
+            isOsSpoofed = mismatch != null,
             osSpoofReason = reason
         )
     }
 
-    private fun probeBaseOs(apiLevel: Int): String {
-        val hasAndroid14 = try {
-            Class.forName("android.app.GrammaticalInflectionManager")
-            true
-        } catch (_: Throwable) { false }
+    fun readCpuTimes(): CpuTimes? = try {
+        CpuUsage.parse(File("/proc/stat").bufferedReader().use { it.readLine().orEmpty() })
+    } catch (_: Exception) {
+        null
+    }
 
-        val hasAndroid13 = try {
-            Class.forName("android.window.OnBackInvokedCallback")
-            true
-        } catch (_: Throwable) { false }
+    private fun hasFrameworkClass(name: String): Boolean = try {
+        Class.forName(name)
+        true
+    } catch (_: Throwable) {
+        false
+    }
 
-        val hasAndroid12 = try {
-            Class.forName("android.window.SplashScreen")
-            true
-        } catch (_: Throwable) { false }
-
-        val hasAndroid11 = try {
-            Class.forName("android.view.WindowInsetsController")
-            true
-        } catch (_: Throwable) { false }
-
-        val hasAndroid10 = try {
-            Class.forName("android.media.AudioPlaybackCaptureConfiguration")
-            true
-        } catch (_: Throwable) { false }
-
-        return when {
-            hasAndroid14 -> "Android 14 (UpsideDownCake, API 34)"
-            hasAndroid13 -> "Android 13 (Tiramisu, API 33)"
-            hasAndroid12 -> "Android 12 (SnowCone, API 31/32)"
-            hasAndroid11 -> "Android 11 (RedVelvet, API 30)"
-            hasAndroid10 -> "Android 10 (QueenCake, API 29)"
-            apiLevel == 28 -> "Android 9 (Pie, API 28)"
-            apiLevel == 27 -> "Android 8.1 (Oreo, API 27)"
-            apiLevel == 26 -> "Android 8.0 (Oreo, API 26)"
-            else -> "Android API $apiLevel"
+    private fun probeFrameworkMarkers(context: Context, hasAndroid14: Boolean): String {
+        val resource = when {
+            hasAndroid14 -> R.string.os_marker_14
+            hasFrameworkClass("android.window.OnBackInvokedCallback") -> R.string.os_marker_13
+            hasFrameworkClass("android.window.SplashScreen") -> R.string.os_marker_12
+            hasFrameworkClass("android.view.WindowInsetsController") -> R.string.os_marker_11
+            hasFrameworkClass("android.media.AudioPlaybackCaptureConfiguration") -> R.string.os_marker_10
+            else -> R.string.os_marker_none
         }
+        return context.getString(resource)
     }
 
     fun auditSoc(): SocEvidence {
@@ -350,32 +328,15 @@ object HardwareAuditor {
             val candidates = mutableListOf("su")
             candidates.addAll(foundPaths)
 
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(6)
             for (bin in candidates.distinct()) {
-                // Method 1: stdin pipe
-                try {
-                    val proc = Runtime.getRuntime().exec(bin)
-                    proc.outputStream.bufferedWriter().use { writer ->
-                        writer.write("id\nexit\n")
-                        writer.flush()
-                    }
-                    val out = proc.inputStream.bufferedReader().readText()
-                    proc.waitFor()
-                    if (out.contains("uid=0")) {
-                        canExecRoot = true
-                        break
-                    }
-                } catch (_: Throwable) {}
-
-                // Method 2: -c flag
-                try {
-                    val proc = Runtime.getRuntime().exec(arrayOf(bin, "-c", "id"))
-                    val out = proc.inputStream.bufferedReader().readText()
-                    proc.waitFor()
-                    if (out.contains("uid=0")) {
-                        canExecRoot = true
-                        break
-                    }
-                } catch (_: Throwable) {}
+                if (tryRootId(bin, interactive = true, deadline = deadline) ||
+                    tryRootId(bin, interactive = false, deadline = deadline)
+                ) {
+                    canExecRoot = true
+                    break
+                }
+                if (System.nanoTime() >= deadline) break
             }
         }
 
@@ -387,6 +348,37 @@ object HardwareAuditor {
             canExecuteRoot = canExecRoot,
             selinuxMode = selinux
         )
+    }
+
+    /** Bound root probes so a denied or unanswered OEM prompt cannot hang an audit forever. */
+    private fun tryRootId(binary: String, interactive: Boolean, deadline: Long): Boolean {
+        val remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
+        if (remainingMs <= 0) return false
+        var process: Process? = null
+        try {
+            val command = if (interactive) arrayOf(binary) else arrayOf(binary, "-c", "id")
+            process = ProcessBuilder(*command).redirectErrorStream(true).start()
+            if (interactive) {
+                process.outputStream.bufferedWriter().use { writer ->
+                    writer.write("id\nexit\n")
+                    writer.flush()
+                }
+            }
+            if (!process.waitFor(minOf(remainingMs, 3_000L), TimeUnit.MILLISECONDS)) return false
+            val stream = process.inputStream
+            val size = stream.available().coerceAtMost(16_384)
+            val buffer = ByteArray(size)
+            val read = if (size > 0) stream.read(buffer) else 0
+            val output = if (read > 0) String(buffer, 0, read) else ""
+            return process.exitValue() == 0 && output.contains("uid=0")
+        } catch (interrupted: InterruptedException) {
+            // runInterruptible propagates cancellation when expert audit is switched off.
+            throw interrupted
+        } catch (_: Exception) {
+            return false
+        } finally {
+            process?.destroyForcibly()
+        }
     }
 
     // --- Low-Level Kernel / Proc Parsers ---
@@ -413,7 +405,8 @@ object HardwareAuditor {
         return map
     }
 
-    fun readMmcBlockSectors(): Long? {
+    /** Candidate whole-disk size and source. It may be removable or not back /data. */
+    fun readCandidateBlockDevice(): Pair<Long, String>? {
         val possiblePaths = listOf(
             "/sys/block/mmcblk0/size",
             "/sys/class/block/mmcblk0/size",
@@ -423,30 +416,21 @@ object HardwareAuditor {
             "/sys/block/sdb/size"
         )
         for (path in possiblePaths) {
-            val file = File(path)
-            if (file.exists() && file.canRead()) {
-                try {
-                    val text = file.readText().trim()
-                    val sectors = text.toLongOrNull()
-                    if (sectors != null && sectors > 0) return sectors
-                } catch (_: Throwable) {}
-            }
+            try {
+                val sectors = File(path).readText().trim().toLongOrNull()
+                if (sectors != null && sectors > 0) return sectors to path
+            } catch (_: Exception) { /* Try the next readable source. */ }
         }
 
-        // Fallback: Check /proc/partitions for whole disk devices
-        try {
-            val partitions = parseProcPartitions()
-            val mainDisk = partitions.firstOrNull {
-                it.name == "mmcblk0" || it.name == "sda" || (it.minor == 0 && (it.major == 179 || it.major == 8 || it.major == 259))
-            }
-            if (mainDisk != null && mainDisk.blocks > 0) {
-                // In /proc/partitions, blocks are 1024 bytes (equivalent to 2 sectors of 512 bytes)
-                return mainDisk.blocks * 2L
-            }
-        } catch (_: Throwable) {}
-
-        return null
+        val mainDisk = parseProcPartitions().firstOrNull {
+            (it.name == "mmcblk0" || it.name == "sda" ||
+                (it.minor == 0 && (it.major == 179 || it.major == 8 || it.major == 259))) &&
+                it.blocks > 0 && it.blocks <= Long.MAX_VALUE / 2L
+        }
+        return mainDisk?.let { it.blocks * 2L to "/proc/partitions (${it.name})" }
     }
+
+    fun readMmcBlockSectors(): Long? = readCandidateBlockDevice()?.first
 
     fun parseProcPartitions(): List<PartitionEntry> {
         val list = mutableListOf<PartitionEntry>()

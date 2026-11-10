@@ -8,14 +8,24 @@ import android.provider.Settings
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import com.universalrp.tvguard.R
 import com.universalrp.tvguard.capture.ScreenCaptureManager
 import com.universalrp.tvguard.debloat.DebloatEngine
+import com.universalrp.tvguard.hardware.FullHardwareReport
 import com.universalrp.tvguard.launcher.TvAppCatalog
 import com.universalrp.tvguard.memory.MemoryTrimmer
+import com.universalrp.tvguard.settings.TvFeature
 import java.util.Locale
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 
 object TvVoiceAssistant {
-
     interface VoiceCallback {
         fun onListeningStateChanged(isListening: Boolean, prompt: String)
         fun onCommandRecognized(commandText: String, actionResult: String)
@@ -23,168 +33,178 @@ object TvVoiceAssistant {
     }
 
     private var speechRecognizer: SpeechRecognizer? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var isTtsReady = false
+    private var ttsGeneration = 0
+    private var session = 0
+    private var processing: Job? = null
+    private val conversation = TvAssistantConversation()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
     var isListening: Boolean = false
         private set
 
-    fun startListening(context: Context, callback: VoiceCallback) {
-        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            callback.onError("Speech recognition not ready on this box. Ensure speech services are enabled or enter command via Phone Web Remote.")
-            return
-        }
-
-        (context as? Activity)?.runOnUiThread {
-            try {
-                speechRecognizer?.destroy()
-                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context).apply {
-                    setRecognitionListener(object : RecognitionListener {
-                        override fun onReadyForSpeech(params: Bundle?) {
-                            isListening = true
-                            callback.onListeningStateChanged(true, "🎤 Listening via USB mic... Say 'Open SmartTube', 'Boost RAM', or 'Turn Off'")
-                        }
-
-                        override fun onBeginningOfSpeech() {}
-                        override fun onRmsChanged(rmsdB: Float) {}
-                        override fun onBufferReceived(buffer: ByteArray?) {}
-                        override fun onEndOfSpeech() {
-                            isListening = false
-                            callback.onListeningStateChanged(false, "Processing voice command...")
-                        }
-
-                        override fun onError(error: Int) {
-                            isListening = false
-                            val msg = when (error) {
-                                SpeechRecognizer.ERROR_NO_MATCH -> "No speech matched. Try speaking closer to the USB mic."
-                                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "Voice timeout."
-                                SpeechRecognizer.ERROR_AUDIO -> "Audio recording issue. Verify USB mic connection."
-                                else -> "Voice error (Code $error)"
-                            }
-                            callback.onError(msg)
-                        }
-
-                        override fun onResults(results: Bundle?) {
-                            isListening = false
-                            val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                            val command = matches?.firstOrNull()?.trim() ?: ""
-                            if (command.isNotBlank()) {
-                                val resultMsg = processCommand(context, command)
-                                callback.onCommandRecognized(command, resultMsg)
-                            } else {
-                                callback.onError("No command heard")
-                            }
-                        }
-
-                        override fun onPartialResults(partialResults: Bundle?) {}
-                        override fun onEvent(eventType: Int, params: Bundle?) {}
-                    })
-                }
-
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                    putExtra(RecognizerIntent.EXTRA_PROMPT, "Say a command: Open SmartTube, Boost RAM, Screenshot, Turn off")
-                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-                }
-
-                speechRecognizer?.startListening(intent)
-            } catch (e: Throwable) {
-                isListening = false
-                callback.onError(e.message ?: "Failed to start speech recognizer")
+    fun initTts(context: Context) {
+        if (textToSpeech != null) return
+        val generation = ++ttsGeneration
+        textToSpeech = TextToSpeech(context.applicationContext) { status ->
+            if (generation == ttsGeneration && status == TextToSpeech.SUCCESS) {
+                isTtsReady = true
             }
         }
     }
 
-    enum class VoiceCommandType {
-        SLEEP,
-        RAM_BOOST,
-        SCREENSHOT,
-        SETTINGS,
-        OPEN_APP,
-        INFO,
-        UNKNOWN
-    }
-
-    fun classifyCommand(command: String): VoiceCommandType {
-        val lower = command.lowercase(Locale.ROOT)
-        return when {
-            lower.contains("turn off") || lower.contains("sleep") || lower.contains("standby") || lower.contains("power off") -> VoiceCommandType.SLEEP
-            lower.contains("boost") || lower.contains("clean ram") || lower.contains("free ram") -> VoiceCommandType.RAM_BOOST
-            lower.contains("screenshot") || lower.contains("capture screen") -> VoiceCommandType.SCREENSHOT
-            lower.contains("settings") || lower.contains("preferences") -> VoiceCommandType.SETTINGS
-            lower.contains("open ") || lower.contains("launch ") || lower.contains("start ") -> VoiceCommandType.OPEN_APP
-            lower.contains("who are you") || lower.contains("time") -> VoiceCommandType.INFO
-            else -> VoiceCommandType.UNKNOWN
+    fun speak(text: String) {
+        if (!isTtsReady || text.isBlank()) return
+        val engine = textToSpeech ?: return
+        // Do not speak Tamil using an English voice when the TV lacks Tamil TTS.
+        val language = if (text.any { it in '\u0B80'..'\u0BFF' }) Locale.forLanguageTag("ta-IN") else Locale.getDefault()
+        if (engine.setLanguage(language) >= TextToSpeech.LANG_AVAILABLE) {
+            engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tvguard_speech")
         }
     }
 
-    fun stopListening() {
+    fun shutdownTts() {
+        ttsGeneration++
+        isTtsReady = false
+        runCatching { textToSpeech?.stop() }
+        runCatching { textToSpeech?.shutdown() }
+        textToSpeech = null
+    }
+
+    /** Must be called on the main thread after the microphone permission is granted. */
+    fun startListening(
+        activity: Activity,
+        report: () -> FullHardwareReport?,
+        featureEnabled: (TvFeature) -> Boolean,
+        callback: VoiceCallback
+    ) {
+        stopListening()
+        if (!featureEnabled(TvFeature.VOICE_HELPER)) return
+        initTts(activity)
+        val currentSession = session
+        if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
+            callback.onError(activity.getString(R.string.voice_no_recognizer))
+            return
+        }
+        isListening = true
+        callback.onListeningStateChanged(true, activity.getString(R.string.voice_starting))
         try {
-            speechRecognizer?.stopListening()
-            speechRecognizer?.destroy()
-            speechRecognizer = null
-        } catch (_: Throwable) {}
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity).apply {
+                setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        if (currentSession == session) callback.onListeningStateChanged(true, activity.getString(R.string.voice_starting))
+                    }
+                    override fun onBeginningOfSpeech() = Unit
+                    override fun onRmsChanged(rmsdB: Float) = Unit
+                    override fun onBufferReceived(buffer: ByteArray?) = Unit
+                    override fun onEndOfSpeech() {
+                        if (currentSession != session) return
+                        isListening = false
+                        callback.onListeningStateChanged(false, activity.getString(R.string.voice_processing))
+                    }
+                    override fun onError(error: Int) {
+                        if (currentSession != session) return
+                        isListening = false
+                        callback.onError(activity.getString(R.string.voice_error, error))
+                    }
+                    override fun onResults(results: Bundle?) {
+                        if (currentSession != session) return
+                        isListening = false
+                        val command = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.trim().orEmpty()
+                        if (command.isBlank()) {
+                            callback.onError(activity.getString(R.string.voice_no_speech))
+                            return
+                        }
+                        processing = scope.launch {
+                            val answer = try {
+                                processCommand(activity, command, report(), featureEnabled)
+                            } catch (cancelled: CancellationException) {
+                                throw cancelled
+                            } catch (_: Exception) {
+                                activity.getString(R.string.voice_result_error)
+                            }
+                            if (currentSession == session) {
+                                speak(answer)
+                                callback.onCommandRecognized(command, answer)
+                            }
+                        }
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) = Unit
+                    override fun onEvent(eventType: Int, params: Bundle?) = Unit
+                })
+            }
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault().toLanguageTag())
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            }
+            speechRecognizer?.startListening(intent)
+        } catch (_: Exception) {
+            isListening = false
+            callback.onError(activity.getString(R.string.voice_start_error))
+        }
+    }
+
+    /** Forget follow-up context when the assistant is closed or Home is pressed. */
+    fun resetConversation() = conversation.reset()
+
+    /** Cancels recognition/response so a late callback cannot reopen a dialog after Home. */
+    fun stopListening() {
+        session++
+        processing?.cancel()
+        processing = null
+        runCatching { speechRecognizer?.cancel() }
+        runCatching { speechRecognizer?.destroy() }
+        speechRecognizer = null
+        runCatching { textToSpeech?.stop() }
         isListening = false
     }
 
-    fun processCommand(context: Context, command: String): String {
-        val lower = command.lowercase(Locale.ROOT)
-
-        // 1. Turn off / Sleep / Standby
-        if (lower.contains("turn off") || lower.contains("sleep") || lower.contains("standby") || lower.contains("power off")) {
-            val rootRes = DebloatEngine.executeRootCommand("input keyevent 26")
-            return if (rootRes.isSuccess) "TV screen put into standby." else "Triggered standby mode."
-        }
-
-        // 2. RAM Boost / Clean memory
-        if (lower.contains("boost") || lower.contains("clean ram") || lower.contains("free ram")) {
-            val res = MemoryTrimmer.trim(context)
-            return "RAM Boosted! Freed ${res.freedMb} MB."
-        }
-
-        // 3. Screenshot
-        if (lower.contains("screenshot") || lower.contains("capture screen")) {
-            val dir = ScreenCaptureManager.getScreenshotDir()
-            val file = java.io.File(dir, "TvGuard_Screenshot_${System.currentTimeMillis()}.png")
-            DebloatEngine.executeRootCommand("screencap -p '${file.absolutePath}'")
-            return "Screenshot captured to Download/Screenshots/"
-        }
-
-        // 4. Open Settings
-        if (lower.contains("settings") || lower.contains("preferences")) {
-            try {
+    private suspend fun processCommand(
+        context: Activity,
+        command: String,
+        report: FullHardwareReport?,
+        featureEnabled: (TvFeature) -> Boolean
+    ): String {
+        val action = TvVoiceCommands.classify(command)
+        val required = TvVoiceCommands.requiredFeature(action)
+        if (required != null && !featureEnabled(required)) return context.getString(R.string.voice_feature_disabled)
+        return when (action) {
+            TvVoiceCommand.SLEEP -> runInterruptible(Dispatchers.IO) {
+                val result = DebloatEngine.executeRootCommand("input keyevent 26")
+                context.getString(if (result.isSuccess) R.string.voice_sleep_sent else R.string.voice_sleep_failed)
+            }
+            TvVoiceCommand.RAM_BOOST -> runInterruptible(Dispatchers.IO) {
+                val result = MemoryTrimmer.trim(context)
+                context.getString(R.string.voice_ram_result, result.memoryBeforeMb, result.memoryAfterMb)
+            }
+            TvVoiceCommand.SCREENSHOT -> {
+                val result = ScreenCaptureManager.captureScreen(context)
+                context.getString(if (result.isSuccess) R.string.voice_screenshot_saved else R.string.voice_screenshot_failed)
+            }
+            TvVoiceCommand.SETTINGS -> try {
                 context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                return "Opening TV Settings..."
-            } catch (_: Throwable) {}
+                context.getString(R.string.voice_settings_open)
+            } catch (_: Exception) { context.getString(R.string.voice_settings_failed) }
+            TvVoiceCommand.OPEN_APP -> {
+                val query = TvVoiceCommands.appQuery(command).orEmpty()
+                val installed = runInterruptible(Dispatchers.IO) { TvAppCatalog.loadApps(context) }
+                val match = installed.firstOrNull {
+                    it.appName.lowercase(Locale.ROOT) == query || it.packageName.lowercase(Locale.ROOT) == query
+                }
+                if (match == null) context.getString(R.string.voice_app_not_found, query)
+                else try {
+                    context.getString(
+                        if (TvAppCatalog.launchApp(context, match.packageName)) R.string.voice_app_open else R.string.voice_app_failed,
+                        match.appName
+                    )
+                } catch (_: Exception) { context.getString(R.string.voice_app_failed, match.appName) }
+            }
+            TvVoiceCommand.QUESTION -> conversation.answer(
+                command, report,
+                tamil = Locale.getDefault().language == "ta" || command.any { it in '\u0B80'..'\u0BFF' }
+            )
         }
-
-        // 5. Open Apps (SmartTube, YouTube, DuckDuckGo, Tapo, Netflix, Cx File Explorer, etc.)
-        val installedApps = TvAppCatalog.loadApps(context)
-        val query = lower.removePrefix("open ").removePrefix("launch ").removePrefix("start ").trim()
-
-        val matchedApp = installedApps.firstOrNull { app ->
-            val name = app.appName.lowercase(Locale.ROOT)
-            val pkg = app.packageName.lowercase(Locale.ROOT)
-            name.contains(query) ||
-                    (query.contains("smart") && (name.contains("smarttube") || pkg.contains("smarttube"))) ||
-                    (query.contains("tube") && (name.contains("tube") || pkg.contains("youtube"))) ||
-                    (query.contains("browser") && (name.contains("duck") || name.contains("browser"))) ||
-                    (query.contains("file") && (name.contains("cx") || name.contains("file"))) ||
-                    (query.contains("store") && (name.contains("play") || name.contains("store")))
-        }
-
-        if (matchedApp != null) {
-            TvAppCatalog.launchApp(context, matchedApp.packageName)
-            return "Launching ${matchedApp.appName}..."
-        }
-
-        // 6. Built-in Smart TV Knowledge Responses
-        if (lower.contains("who are you") || lower.contains("what is this")) {
-            return "I am Android TV Guard Voice Assistant. I can open any app, boost RAM, or capture screenshots!"
-        }
-        if (lower.contains("time")) {
-            val time = java.text.SimpleDateFormat("hh:mm a", Locale.getDefault()).format(java.util.Date())
-            return "Current time is $time"
-        }
-
-        return "Command '$command' received. Try saying 'Open SmartTube', 'Boost RAM', or 'Turn Off TV'."
     }
 }

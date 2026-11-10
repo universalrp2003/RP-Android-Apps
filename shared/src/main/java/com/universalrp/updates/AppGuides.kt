@@ -923,4 +923,46 @@ object AppGuides {
             topic("About and updates", "செயலி விவரமும் புதுப்பிப்பும்", "About & update lists other apps and official project links. A read-only release-metadata check runs at most once per day when opened or resumed; a newer stable version shows an in-app notice and opens its official website section in the browser. The launcher does not download or install APKs. Checks depend on connectivity and available release metadata. Stop if Play Protect warns; the reported classification remains unresolved.", "இந்தச் செயலி மற்றும் புதுப்பிப்பு பக்கத்தில் மற்ற செயலிகளும் அதிகாரப்பூர்வ இணைப்புகளும் உள்ளன. திறக்கும்போது அல்லது முன்வரும்போது நாளுக்கு ஒருமுறை பொதுப் பதிப்பு விவரங்களை மட்டும் சரிபார்க்கும். புதிய நிலையான பதிப்புக்கான அறிவிப்பு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறக்கும். செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. இணைப்பு மற்றும் வெளியீட்டு விவரங்கள் கிடைப்பதைச் சரிபார்ப்பு பொறுத்தது. Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதன் காரணம் இன்னும் உறுதியாகவில்லை."),
         ),
     )
+    // Android TV Guard: keep the TV guide in the same shared bilingual directory.
+    val tvGuard = GuideContent(
+        intro = "Choose a topic with the remote and press OK to expand it.",
+        introTa = "ரிமோட்டில் தலைப்பைத் தேர்ந்தெடுத்து OK அழுத்தி விரிவாக்குங்கள்.",
+        topics = listOf(
+            topic(
+                "Home and default launcher", "முகப்பும் இயல்புநிலை முகப்பு செயலியும்",
+                "In Tools & Settings choose Default Launcher and select TV Guard in Android. Home should return from other apps, tools and dialogs to the first available app tile. When there are no apps, the Tools tile is focused. Home routing depends on the TV system and its default-home setting.",
+                "கருவிகள் & அமைப்புகளில் இயல்புநிலை முகப்பைத் தேர்ந்தெடுத்து Android-இல் TV Guard-ஐ அமைக்கவும். Home அழுத்தினால் பிற செயலி, கருவி அல்லது சாளரத்திலிருந்து முகப்பின் முதல் செயலிக்கு வர வேண்டும். செயலி இல்லாவிட்டால் கருவிகள் பெட்டி தேர்வாகும். இது டிவி அமைப்பையும் இயல்புநிலை முகப்பையும் பொறுத்தது."
+            ),
+            topic(
+                "Lightweight and Expert settings", "எளிய முகப்பும் நிபுணர் அமைப்புகளும்",
+                "TV Guard starts with only the launcher and basic settings. Open Tools & Settings → Expert settings, turn Expert on, and press OK on each optional switch you want. Turning Expert off pauses all extras but keeps your choices and launcher data. Turning it on again restores those choices and can restart a previously enabled file hub. CPU, RAM, storage and network pills need the top status bar; browser controls need the file hub. Memory savings depend on the device.",
+                "முதலில் முகப்பும் அடிப்படை அமைப்புகளும் மட்டும் இயங்கும். கருவிகள் & அமைப்புகள் → நிபுணர் அமைப்புகளில் நிபுணர் முறையை இயக்கி, தேவையான ஒவ்வொரு வசதியிலும் OK அழுத்துங்கள். நிபுணர் முறையை நிறுத்தினால் கூடுதல் வசதிகள் நிற்கும்; தேர்வுகளும் முகப்புத் தகவல்களும் அழியாது. மீண்டும் இயக்கினால் தேர்வுகள் திரும்பும்; முன்பு இயக்கிய கோப்பு மையமும் தொடங்கலாம். CPU, RAM, சேமிப்பகம், இணையக் காட்டிகளுக்கு மேல் நிலைப் பட்டி தேவை; உலாவி ரிமோட்டுக்குக் கோப்பு மையம் தேவை. நினைவகச் சேமிப்பு சாதனத்தைப் பொறுத்தது."
+            ),
+            topic(
+                "App options and remote", "செயலி விருப்பங்களும் ரிமோட்டும்",
+                "Move with the D-pad and press OK to open a tile. Hold OK on an app or press Menu for its options. The arrow keys move among the dialog actions; Back closes the dialog or returns to the previous tools screen.",
+                "திசைப் பொத்தான்களால் நகர்ந்து OK அழுத்தித் திறக்கவும். செயலியில் OK-ஐ அழுத்திப் பிடிக்கவும் அல்லது Menu அழுத்தவும்; விருப்பங்கள் திறக்கும். அம்புப் பொத்தான்கள் சாளரத்திலுள்ள செயல்களுக்கு நகரும். Back சாளரத்தை மூடும் அல்லது முந்தைய கருவித் திரைக்குத் திரும்பும்."
+            ),
+            topic(
+                "Voice helper and privacy", "குரல் உதவியும் தனியுரிமையும்",
+                "First enable Voice helper in Expert settings. Use its Tools button, a delivered voice/search key, or hold OK on the Home tab. Allow microphone access when asked. Some TVs reserve physical Home long-press and voice keys for Android, so those keys may not reach this app. Speech and text-to-speech services may use the internet. Basic TV answers need Hardware audit and are not general AI; screenshot and RAM boost need their own switches. Enable System assistant separately for an installed external assistant; its privacy policy applies.",
+                "முதலில் நிபுணர் அமைப்பில் குரல் உதவியை இயக்குங்கள். கருவிகள் பொத்தான், டிவி அனுப்பும் குரல் விசை அல்லது முகப்பு தாவலில் OK-ஐ அழுத்திப் பிடிப்பதைப் பயன்படுத்தலாம். ஒலிவாங்கி அனுமதி தேவை. சில டிவிகள் Home நீண்ட அழுத்தத்தையும் குரல் விசைகளையும் Android-க்கே ஒதுக்குவதால் செயலிக்கு வராமல் போகலாம். பேச்சறிதலும் குரல் இயந்திரமும் இணையத்தைப் பயன்படுத்தலாம். அடிப்படை டிவி பதில்களுக்கு வன்பொருள் சோதனை தேவை; இது பொதுவான AI அல்ல. திரைப் படத்திற்கும் RAM பூஸ்டுக்கும் தனி சுவிட்சுகள் தேவை. நிறுவப்பட்ட வெளி உதவியாளருக்கான சுவிட்சைத் தனியாக இயக்கவும்; அதன் தனியுரிமை விதிகள் பொருந்தும்."
+            ),
+            topic(
+                "Storage and Android evidence", "சேமிப்பகமும் ஆண்ட்ராய்டு சான்றுகளும்",
+                "Enable Hardware audit in Expert settings; Tools then shows the candidate disk, reported data sizes, a rough accounting remainder and version/class probes. A mismatch is a warning, not proof of spoofing; the disk may be different or the firmware may change the readings. The remainder is not measured writable space. GB and GiB use different units. Do not fill the drive as a test without a backup.",
+                "நிபுணர் அமைப்பில் வன்பொருள் சோதனையை இயக்கினால் கருவிகள் பகுதியில் கண்டறிந்த வட்டு, data அளவுகள், தோராய மீதி மற்றும் பதிப்பு/வகுப்புச் சோதனைகள் தெரியும். முரண்பாடு ஒரு எச்சரிக்கை மட்டுமே; வேறு வட்டாக இருக்கலாம் அல்லது firmware தகவலை மாற்றியிருக்கலாம். தோராய மீதி எழுதக்கூடிய காலி இடத்தின் அளவீடு அல்ல. GB மற்றும் GiB வெவ்வேறு அலகுகள். காப்பு இல்லாமல் சோதனைக்காக வட்டை நிரப்ப வேண்டாம்."
+            ),
+            topic(
+                "CPU indicator", "செயலி பயன்பாட்டுக் காட்டி",
+                "Enable the top status bar and CPU pill in Expert settings. The CPU pill samples Linux counters only while TV Guard is visible. A dash means the reading is unavailable. The percentage is not the one-minute load average.",
+                "நிபுணர் அமைப்பில் மேல் நிலைப் பட்டியையும் CPU காட்டியையும் இயக்குங்கள். TV Guard திரையில் இருக்கும்போது மட்டும் லினக்ஸ் CPU எண்ணிக்கைகளின் மாற்றத்தை அளக்கும். கோடு காட்டினால் தகவல் கிடைக்கவில்லை. இது ஒரு நிமிட load average அல்ல."
+            ),
+            topic(
+                "Wi-Fi file hub", "வைஃபை கோப்பு மையம்",
+                "The file hub is off by default. Enabling it starts a local server while the activity exists; stop it from Wi-Fi Hub or Expert settings. It has no password or encryption: anyone on the local network may view, upload or delete Downloads and saved screenshots. Use only a trusted network. Browser remote actions are a separate switch; review files before installing. Re-enabling Expert can restart a saved hub choice.",
+                "கோப்பு மையம் முதலில் நிறுத்தத்தில் இருக்கும். அதை இயக்கினால் செயலி இருக்கும் வரை உள்ளூர் சேவையகம் தொடங்கும்; வைஃபை மையம் அல்லது நிபுணர் அமைப்பில் நிறுத்தலாம். கடவுச்சொல்லோ குறியாக்கமோ இல்லை: உள்ளூர் வலையமைப்பில் யாரும் Downloads மற்றும் பழைய படங்களைப் பார்க்க, பதிவேற்ற அல்லது நீக்கலாம். நம்பகமான வலையமைப்பில் மட்டும் பயன்படுத்துங்கள். உலாவி ரிமோட் தனி சுவிட்சு; நிறுவுமுன் கோப்பைச் சரிபார்க்கவும். நிபுணர் முறையை மீண்டும் இயக்கினால் சேமித்த கோப்பு மையத் தேர்வும் தொடங்கலாம்."
+            )
+        )
+    )
 }

@@ -8,9 +8,14 @@ val stableKeystore = rootProject.file("ci-keystore/release.p12")
 val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
+    // Reuse the suite's single official links and sister-app directory.
+    sourceSets.getByName("main").java.srcDir(
+        rootProject.file("shared/src/main/java/com/universalrp/updates"),
+    )
     namespace = "com.universalrp.tvguard"
     compileSdk = 36
-    testBuildType = "release"
+    // Keep the release-test default; allow a disposable emulator to use a debug app.
+    testBuildType = (project.findProperty("tvguardTestBuildType") as? String) ?: "release"
 
     defaultConfig {
         applicationId = "com.universalrp.tvguard"
@@ -71,6 +76,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.15.0")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 
     val composeBom = platform("androidx.compose:compose-bom:2025.08.00")
     implementation(composeBom)
@@ -82,6 +88,12 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+
+    // D-pad/Home integration tests run only when connectedAndroidTest is requested.
+    androidTestImplementation(composeBom)
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")

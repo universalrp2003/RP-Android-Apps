@@ -45,6 +45,7 @@ object RunningAppsManager {
         val list = mutableListOf<RunningAppInfo>()
 
         for (proc in runningProcesses) {
+            if (Thread.currentThread().isInterrupted) throw InterruptedException()
             val pkg = proc.pkgList?.firstOrNull() ?: proc.processName
             if (pkg == context.packageName) continue // Skip TV Guard itself
 

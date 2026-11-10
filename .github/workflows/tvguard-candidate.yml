@@ -67,3 +67,79 @@ jobs:
           name: tvguard-test-reports
           path: tvguard/app/build/reports/
           retention-days: 14
+
+  # Manual only: a disposable Android TV emulator, not a release or OEM-device test.
+  tv-focus:
+    name: Exercise D-pad navigation on Android TV
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Run focus and opt-in service tests on a disposable TV
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: android-tv
+          arch: x86
+          profile: tv_1080p
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            set -euo pipefail
+            [[ "$(adb get-serialno)" == emulator-* ]]
+            adb shell input keyevent KEYCODE_WAKEUP
+            adb shell wm dismiss-keyguard
+            gradle -PtvguardTestBuildType=debug :tvguard:connectedDebugAndroidTest --no-daemon --stacktrace
+      - name: Require every TV focus test to run and pass
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          roots = [ET.parse(p).getroot() for p in Path('tvguard/app/build/outputs/androidTest-results/connected').rglob('*.xml')]
+          cases = [c for root in roots for c in root.iter('testcase') if c.get('classname', '').endswith('TvRemoteFocusTest')]
+          expected = {
+              'appOptionsDirectionsStayInDialogAndHomeResetsEvenWhileAlreadyHome',
+              'expertSwitchesNavigateWithDpadAndRevokeAndRestoreHub',
+              'downFromDebloaterHeaderEntersItsControlsAndHomeReturnsToFirstApp',
+              'networkAndAboutHeadersLeadIntoTheirOwnContent',
+          }
+          assert len(cases) == len(expected) and {c.get('name') for c in cases} == expected, 'Missing or duplicate TV focus tests'
+          assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A TV focus test failed or was skipped'
+          print('PASS: all four required Android TV focus and feature tests ran')
+          PY
+      - name: Surface TV test failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for path in Path('tvguard/app/build/outputs/androidTest-results').rglob('*.xml'):
+              try: root = ET.parse(path).getroot()
+              except ET.ParseError: continue
+              for case in root.iter('testcase'):
+                  for kind in ('failure', 'error'):
+                      failure = case.find(kind)
+                      if failure is not None:
+                          text = case.get('name', '') + '\n' + failure.get('message', '') + '\n' + (failure.text or '')
+                          print('::error title=TV focus test::' + text[:10000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tvguard-tv-focus-reports
+          path: |
+            tvguard/app/build/reports/androidTests/
+            tvguard/app/build/outputs/androidTest-results/
+          retention-days: 14
+          if-no-files-found: warn

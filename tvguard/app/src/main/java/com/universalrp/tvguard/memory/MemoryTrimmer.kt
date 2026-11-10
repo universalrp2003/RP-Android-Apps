@@ -3,6 +3,7 @@ package com.universalrp.tvguard.memory
 import android.app.ActivityManager
 import android.content.Context
 import com.universalrp.tvguard.hardware.HardwareAuditor
+import java.util.concurrent.TimeUnit
 
 data class TrimResult(
     val memoryBeforeMb: Long,
@@ -39,11 +40,17 @@ object MemoryTrimmer {
         var droppedCaches = false
         val root = HardwareAuditor.auditRoot()
         if (root.canExecuteRoot) {
+            var proc: Process? = null
             try {
-                val proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"))
-                proc.waitFor()
-                droppedCaches = true
-            } catch (_: Throwable) {}
+                proc = Runtime.getRuntime().exec(arrayOf("su", "-c", "sync && echo 3 > /proc/sys/vm/drop_caches"))
+                droppedCaches = proc.waitFor(5, TimeUnit.SECONDS) && proc.exitValue() == 0
+            } catch (interrupted: InterruptedException) {
+                throw interrupted
+            } catch (_: Exception) {
+                // Report that caches were not dropped.
+            } finally {
+                proc?.destroyForcibly()
+            }
         }
 
         val infoAfter = ActivityManager.MemoryInfo()

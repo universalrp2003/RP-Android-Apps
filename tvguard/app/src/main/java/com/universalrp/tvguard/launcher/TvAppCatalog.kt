@@ -78,6 +78,7 @@ object TvAppCatalog {
         }
         val tvResolve = pm.queryIntentActivities(tvIntent, 0)
         for (ri in tvResolve) {
+            if (Thread.currentThread().isInterrupted) throw InterruptedException()
             val pkg = ri.activityInfo.packageName
             if (pkg == context.packageName) continue
             val label = ri.loadLabel(pm).toString()
@@ -95,6 +96,7 @@ object TvAppCatalog {
         }
         val stdResolve = pm.queryIntentActivities(standardIntent, 0)
         for (ri in stdResolve) {
+            if (Thread.currentThread().isInterrupted) throw InterruptedException()
             val pkg = ri.activityInfo.packageName
             if (pkg == context.packageName) continue
             if (!appMap.containsKey(pkg)) {
@@ -114,14 +116,15 @@ object TvAppCatalog {
         )
     }
 
-    fun launchApp(context: Context, packageName: String) {
+    /** Returns false if the package no longer exposes a launchable activity. */
+    fun launchApp(context: Context, packageName: String): Boolean {
         val pm = context.packageManager
         val intent = pm.getLeanbackLaunchIntentForPackage(packageName)
             ?: pm.getLaunchIntentForPackage(packageName)
-        if (intent != null) {
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-        }
+            ?: return false
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        return true
     }
 
     fun openAppDetails(context: Context, packageName: String) {
