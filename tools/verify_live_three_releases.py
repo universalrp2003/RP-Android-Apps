@@ -69,7 +69,6 @@ def main():
               ('SMS-Guard-v1.1.17.apk', json.loads((ROOT/'docs/sms-guard-1.1.17-publication-receipt.json').read_text())),
               ('SMS-Guard-v1.1.16.apk', json.loads((ROOT/'docs/sms-guard-1.1.16-historical-mirror.json').read_text())),
               ('CleanSweep-v2.97.apk', json.loads((ROOT/'docs/live-guard-2.97-publication-receipt.json').read_text())),
-              ('CleanSweep-v2.94.apk', json.loads((ROOT/'docs/live-guard-2.94-publication-receipt.json').read_text())),
               ('Oor-Arivippu-v1.1.16.apk', json.loads((ROOT/'docs/oor-about-guide-1.1.16-publication-receipt.json').read_text())),
               ('Oor-Arivippu-v1.1.15.apk', json.loads((ROOT/'docs/oor-family-1.1.15-publication-receipt.json').read_text())),
               ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
@@ -79,6 +78,7 @@ def main():
     checks.append(('Oor-Arivippu-v1.1.20.apk', json.loads((ROOT/'docs/oor-location-1.1.20-publication-receipt.json').read_text())))
     checks.append(('Tamilan-Store-v0.12.apk', json.loads((ROOT/'docs/tamilan-store-0.12-publication-receipt.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.21.apk', json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())))
+    checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000
         validate_apk(get_bounded('apks/' + name, pin['bytes']), pin['bytes'], pin['apk_sha256'])
