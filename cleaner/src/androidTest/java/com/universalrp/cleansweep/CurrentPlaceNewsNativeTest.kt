@@ -47,7 +47,7 @@ class CurrentPlaceNewsNativeTest : ExactCandidateNativeTest() {
     }
     private fun layouts(news: Boolean, check: (Boolean) -> Unit) {
         val repo = SettingsRepo(c)
-        val oldLang = runBlocking { repo.lang.first() }
+        val oldLang = AppLang.fromId(runBlocking { repo.lang.first() })
         val oldGlobal = Lang.current
         val oldHome = WeatherAlertStore.savedPlace(c)
         val oldLocationMode = android.provider.Settings.Secure.getInt(c.contentResolver,"location_mode",3)
