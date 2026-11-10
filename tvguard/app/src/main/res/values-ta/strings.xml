@@ -3,10 +3,14 @@
     <string name="app_name">தொலைக்காட்சி காவலன்</string>
     <string name="tv_tagline">வன்பொருள் உண்மை தணிக்கையாளர், தேவையற்றவை நீக்கம் மற்றும் தூய டிவி முகப்பு</string>
     <string name="tab_home">முகப்பு</string>
+    <string name="tab_tools">கருவிகள் &amp; அமைப்புகள்</string>
     <string name="tab_audit">வன்பொருள் உண்மை</string>
     <string name="tab_debloat">செயலி நீக்கி</string>
     <string name="tab_share">வைஃபை பகிர்வு</string>
     <string name="tab_network">இணைய தரம்</string>
+
+    <string name="tools_tile_title">கருவிகள் &amp; அமைப்புகள்</string>
+    <string name="tools_tile_desc">நினைவக பெருக்கம், வன்பொருள் தணிக்கை மற்றும் அமைப்புகள்</string>
 
     <string name="ram_boost_title">நினைவக வேகம்</string>
     <string name="ram_boost_subtitle">பின்னணி செயலிகளை அகற்றி நினைவகம் மீட்டல்</string>
