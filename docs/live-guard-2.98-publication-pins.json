@@ -1,0 +1,18 @@
+{
+  "publication_authorized": true,
+  "only_app": "cleaner",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_authorization": "Yes do it please \u2014 build and publish Live Guard 2.98 and update website and Store download links",
+  "source": "a867ffa690ea715e3882dd762c3490618020f6c1",
+  "run_id": 42747891309,
+  "job_id": 129604275648,
+  "artifact_id": 13733395119,
+  "archive_sha256": "2d5db3271acb4bd34c9c091f933c7690f4b5f37215c05e6d8c3bc7f9067edf56",
+  "apk_sha256": "cab58416b8bbe40f8800b8250b05045d04001055c648ff71ff5b1db112498d44",
+  "bytes": 14785591,
+  "required_jvm_tests": 943,
+  "required_suites": 92,
+  "required_android35_native_tests": 16
+}
