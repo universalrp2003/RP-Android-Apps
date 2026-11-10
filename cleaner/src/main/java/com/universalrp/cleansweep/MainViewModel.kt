@@ -3622,6 +3622,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         refreshWeatherUiState()
+        if (com.universalrp.weather.WeatherPlaceResolver.hasLocationPermission(ctx) && com.universalrp.weather.WeatherPlaceResolver.isDeviceLocationTurnedOn(ctx)) checkWeatherNow()
     }
 
     fun saveTomorrowApiKey(rawKey: String) {

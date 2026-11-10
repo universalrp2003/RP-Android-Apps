@@ -44,6 +44,9 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
     var gps by remember { mutableStateOf(SavedRainWatches.currentEnabled(context)) }
     LaunchedEffect(Unit) { vm.refreshWeatherUiState(); while (true) { kotlinx.coroutines.delay(2_000); revision++ } }
     val home = remember(revision, state.weather.savedPlaceName) { WeatherAlertStore.savedPlace(context) }
+    LaunchedEffect(home) {
+        if (home == null && WeatherPlaceResolver.hasLocationPermission(context) && WeatherPlaceResolver.isDeviceLocationTurnedOn(context)) vm.checkWeatherNow()
+    }
     val extras = remember(revision) { SavedRainWatches.read(context) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { grants ->
         gps = grants.values.any { it }; SavedRainWatches.setCurrentEnabled(context, gps)
@@ -59,7 +62,12 @@ fun WeatherAlertScreen(state: UiState, vm: MainViewModel) {
             HomePlaceActions(home, onSave = { vm.selectWeatherPlace(it); revision++ },
                 onRemove = { vm.clearWeatherPlace(); editingHome = false; revision++ })
             if (home == null || !NamedWeatherPlace.usable(home)) {
-                Text(watchWords("Choose your default place first", "முதலில் உங்கள் வழக்கமான இடத்தைத் தேர்ந்தெடுக்கவும்"), style = MaterialTheme.typography.titleMedium)
+                Text(watchWords("Current location weather · no saved home", "தற்போதைய இடத்தின் வானிலை · வீடு சேமிக்கப்படவில்லை"), style = MaterialTheme.typography.titleMedium)
+                Text(watchWords("With existing location permission and GPS on, weather uses your current place without saving it as home. Otherwise enable location or choose a town below.", "ஏற்கெனவே இருப்பிட அனுமதி இருந்து GPS இயங்கினால் தற்போதைய இடத்தின் வானிலை தெரியும். அது வீடாகச் சேமிக்கப்படாது. இல்லையெனில் இருப்பிடத்தை இயக்கவும் அல்லது கீழே ஊரைத் தேர்ந்தெடுக்கவும்."))
+                PlaceForecastCard(SimpleWeatherStore.GPS, null, revision)
+                Button(onClick = { refresh() }, enabled = !state.weather.checkingNow) {
+                    Text(if (state.weather.checkingNow) watchWords("Checking…", "சரிபார்க்கிறது…") else watchWords("Check now", "இப்போது சரிபார்"))
+                }
                 Text(watchWords("Confirm your town and district for rain and disaster reports. A street address is not needed; GPS never overwrites this saved place.", "மழை, பேரிடர் அறிக்கைகளுக்கு ஊர், மாவட்டத்தை உறுதிப்படுத்தவும். தெரு முகவரி தேவையில்லை; GPS இந்தச் சேமித்த இடத்தை மாற்றாது."))
                 PlaceSearch(onSelect = { vm.selectWeatherPlace(it); revision++ })
             } else {

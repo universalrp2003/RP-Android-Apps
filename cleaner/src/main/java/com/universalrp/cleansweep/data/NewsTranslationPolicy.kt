@@ -3,7 +3,7 @@ package com.universalrp.cleansweep.data
 /** Conservative mechanical guardrails; model review is additional evidence, not proof of fidelity. */
 object NewsTranslationPolicy {
     data class Protected(val source: String, val masked: String, val anchors: List<String>)
-    private val span = Regex("[+-]?\\d+(?:[.,:/-]\\d+)*(?:\\s?(?:%|km|kg|MB|GB|°C|million|billion))?|\\b[A-Z][A-Za-z.-]*(?:[ \\t]+[A-Z][A-Za-z.-]*)*\\b")
+    private val span = Regex("[+-]?\\d+(?:[.,:/-]\\d+)*(?:\\s?(?:%|km|kg|MB|GB|°C|million|billion))?|\\b[A-Z]{2,}(?:[.-][A-Z]+)*\\b")
     private val ordinary = setOf("New", "Scientists", "Researchers", "Study", "Research", "The", "A", "An", "How", "Why", "Government", "Police", "Warning", "Report", "Satellite", "Climate", "Forest", "Mobile")
     private val marker = Regex("\\[\\[P(\\d+)]]")
     private val numbers = Regex("\\d+(?:[.,:/-]\\d+)*")
@@ -33,7 +33,14 @@ object NewsTranslationPolicy {
         if (rest.contains(Regex("https?://|[<>`]|\\n\\s*[-*]"))) return null
         if (uncertainty.containsMatchIn(input.source) &&
             listOf("கூடும்", "வாய்ப்பு", "இருக்கலாம்", "முதற்கட்ட", "சாத்திய", "தெரிவிக்கிறது", "சுட்டிக்காட்ட").none { rest.contains(it) }) return null
-        val restored = marker.replace(translation) { input.anchors[it.groupValues[1].toInt()] }.trim()
+        val restored = marker.replace(translation) {
+            val anchor = input.anchors[it.groupValues[1].toInt()]
+            // Keep the numeric value exact, but don't force English magnitude/unit words into speech.
+            anchor.replace(Regex("\\s*million$"), " மில்லியன்")
+                .replace(Regex("\\s*billion$"), " பில்லியன்")
+                .replace(Regex("\\s*km$"), " கி.மீ.")
+                .replace(Regex("\\s*kg$"), " கிலோ")
+        }.trim()
         if (numbers.findAll(input.source).map { it.value }.toList().sorted() != numbers.findAll(restored).map { it.value }.toList().sorted()) return null
         if (!NewsSpeechSanitizer.isCompleteSpeakableHeadline(restored, true)) return null
         return restored

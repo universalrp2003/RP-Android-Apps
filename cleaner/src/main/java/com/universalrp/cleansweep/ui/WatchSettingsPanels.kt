@@ -24,7 +24,7 @@ fun NewsTopicSettings(onChange: () -> Unit) {
     Text(watchWords("All topics are selected by default. Customise your topics below; up to eight fresh stories per bulletin, never filler. Unavailable categories may be empty.",
         "இயல்பில் எல்லாத் தலைப்புகளும் தேர்வு செய்யப்படும். கீழே விருப்பத் தலைப்புகளை மாற்றலாம்; ஒரு வாசிப்பில் எட்டு புதிய செய்திகள் வரை; நிரப்புச் செய்தி இல்லை. கிடைக்காத தலைப்பு காலியாக இருக்கலாம்."))
     FlowRow(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-        BalancedNewsPolicy.Category.values().forEach { category ->
+        NewsPreferences.allCategories().forEach { category ->
             FilterChip(selected=category in topics,onClick={
                 onChange(); topics=if(category in topics && topics.size > 1) topics-category else topics+category
                 NewsPreferences.save(context,topics,language)
@@ -46,8 +46,8 @@ fun NewsTopicSettings(onChange: () -> Unit) {
             FilterChip(selected=language==value,onClick={onChange();language=value;NewsPreferences.save(context,topics,language)},label={Text(label)})
         }
     }
-    Text(watchWords("Translation needs your configured AI provider. Failed or unverifiable translations are skipped. Humour is labelled separately; job stories are reports, not verified vacancies—check the official notice and never pay to apply through a news link.",
-        "மொழிபெயர்ப்பிற்கு நீங்கள் அமைத்த AI சேவை தேவை. ஏற்க முடியாத மொழிபெயர்ப்புகள் தவிர்க்கப்படும். நகைச்சுவை தனியாகக் குறிக்கப்படும். வேலைச் செய்திகள் உறுதியான காலிப்பணியிடச் சான்றல்ல; அதிகாரப்பூர்வ அறிவிப்பைச் சரிபார்க்கவும்; செய்தி இணைப்பில் பணம் செலுத்த வேண்டாம்."))
+    Text(watchWords("Translation needs your configured AI provider. Failed or unverifiable translations are skipped. Job stories are reports, not verified vacancies—check the official notice and never pay to apply through a news link.",
+        "மொழிபெயர்ப்பிற்கு நீங்கள் அமைத்த AI சேவை தேவை. ஏற்க முடியாத மொழிபெயர்ப்புகள் தவிர்க்கப்படும். வேலைச் செய்திகள் உறுதியான காலிப்பணியிடச் சான்றல்ல; அதிகாரப்பூர்வ அறிவிப்பைச் சரிபார்க்கவும்; செய்தி இணைப்பில் பணம் செலுத்த வேண்டாம்."))
     Text(editing,style=MaterialTheme.typography.bodySmall)
 }
 

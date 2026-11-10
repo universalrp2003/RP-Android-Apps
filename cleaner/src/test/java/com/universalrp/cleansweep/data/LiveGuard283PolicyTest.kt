@@ -53,7 +53,7 @@ class LiveGuard283PolicyTest {
             "Cinema producers confirm film release dates for upcoming festival season",
             "Humour columnist shares a joke about a surprisingly talkative parrot")
         val items=titles.mapIndexed {i,title -> NewsHeadline("Top News",title,"BBC",now-1000,"https://example.org/$i")}
-        val enabled=BalancedNewsPolicy.Category.values().toSet()
+        val enabled=BalancedNewsPolicy.Category.values().filter { it != BalancedNewsPolicy.Category.HUMOUR }.toSet()
         fun choose(rotation:Int,topics:Set<BalancedNewsPolicy.Category>) = BalancedNewsPolicy.select(items,emptySet(),emptyList(),false,now,java.time.ZoneId.of("UTC"),rotation,enabled=topics)
         val sports=choose(0,setOf(BalancedNewsPolicy.Category.SPORTS))
         assertEquals(1,sports.size)
