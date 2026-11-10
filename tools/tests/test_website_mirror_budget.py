@@ -49,7 +49,9 @@ class SiteMirrorBudgetTest(unittest.TestCase):
             self.assertTrue(tag in current or asset in VERIFIED_ASSETS,
                             f'{tag} is neither the current release of an app nor a byte-checked historical pin')
         # Every app's current download must be mirrored, otherwise its APK/.ZIP buttons break.
-        self.assertTrue(current.issubset(mirrored_tags), current - mirrored_tags)
+        self.assertEqual(current, mirrored_tags)
+        self.assertIn("if name not in current_names:", VERIFIER)
+        self.assertIn("validate_apk(data, pin['bytes'], pin['apk_sha256'])", VERIFIER)
 
     def test_presence_checks_match_the_mirror_list_exactly(self):
         checked = re.findall(r'test -s site/apks/(\S+)', PAGES)

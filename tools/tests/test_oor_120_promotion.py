@@ -37,5 +37,6 @@ class FinalLifecyclePublication(unittest.TestCase):
         pages=(ROOT/'.github/workflows/pages.yml').read_text()
         live=(ROOT/'tools/verify_live_three_releases.py').read_text()
         for version in ('1.1.15','1.1.16','1.1.17','1.1.20'):
-            self.assertIn('Oor-Arivippu-v'+version+'.apk',pages)
+            self.assertNotIn('Oor-Arivippu-v'+version+'.apk',pages)  # retained at immutable GitHub URL
+            self.assertIn("validate_apk(data, pin['bytes'], pin['apk_sha256'])",live)
             self.assertIn('Oor-Arivippu-v'+version+'.apk',live)

@@ -48,24 +48,16 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
-              # Retention rule: the current release of every app, plus the historical builds that
-              # the live verifier below byte-checks. The Pages artifact is capped at 1 GB, so older
+              # Retention rule: the current release of every app. Historical releases are
+              # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
               ("live-guard-v2.98", "CleanSweep-v2.98.apk", 14785591, "cab58416b8bbe40f8800b8250b05045d04001055c648ff71ff5b1db112498d44"),
-              ("live-guard-v2.97", "CleanSweep-v2.97.apk", 14784299, "121b2c757996910849c76b70f8aa980548e65a84f5fc1e8e0bd6ffda793e92fe"),
               ("tamilan-store-v0.12", "Tamilan-Store-v0.12.apk", 19476375, "29ad4b2a8b3dc575ef2e6707bc81e27dcfc0541a69bfef350f1a83ddd4298cce"),
-              ("live-guard-v2.82", "CleanSweep-v2.82.apk", 14505867, "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
-              ("sms-guard-v1.1.16", "SMS-Guard-v1.1.16.apk", 12824500, "db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df"),
               ("sms-guard-v1.1.17", "SMS-Guard-v1.1.17.apk", 12840884, "b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd"),
               ("vasanthi-ai-v1.1.5", "Vasanthi-AI-v1.1.5.apk", 45777962, "4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6"),
-              ("oor-arivippu-v1.1.15", "Oor-Arivippu-v1.1.15.apk", 12891952, "ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5"),
-              ("oor-arivippu-v1.1.16", "Oor-Arivippu-v1.1.16.apk", 12891948, "3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee"),
-              ("oor-arivippu-v1.1.17", "Oor-Arivippu-v1.1.17.apk", 12908336, "7b7ad216bc2b5cdbb4c2d1e6323bcd637c49a6365b804e62fa9bd9d1998c708f"),
-              ("oor-arivippu-v1.1.19", "Oor-Arivippu-v1.1.19.apk", 12924720, "f00fefa61f8b0c3282746749a32cf9c17d2b9a62b38477a783573b6de9b3bb02"),
               ("oor-arivippu-v1.1.21", "Oor-Arivippu-v1.1.21.apk", 12924720, "e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258"),
-              ("oor-arivippu-v1.1.20", "Oor-Arivippu-v1.1.20.apk", 12924720, "cf92399ca366e6ceb106cfa276579b7d6bf6980e2014f0af8e3f247de9ced19f"),
               ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
               ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
               ("expense-tracker-v1.2", "Expense-Tracker-v1.2.apk", 11564299, "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108"),
@@ -108,34 +100,18 @@ jobs:
           test -f site/robots.txt
           test -s site/apks/CleanSweep-v2.98.apk
           test -s site/apks/CleanSweep-v2.98.zip
-          test -s site/apks/CleanSweep-v2.97.apk
-          test -s site/apks/CleanSweep-v2.97.zip
           test -s site/apks/Tamilan-Store-v0.12.apk
           test -s site/apks/Tamilan-Store-v0.12.zip
-          test -s site/apks/CleanSweep-v2.82.apk
-          test -s site/apks/CleanSweep-v2.82.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk
           test -s site/apks/Voice-Notes-v1.3.4.zip
           test -s site/apks/Secret-Message-v1.1.3.apk
           test -s site/apks/Secret-Message-v1.1.3.zip
-          test -s site/apks/SMS-Guard-v1.1.16.apk
-          test -s site/apks/SMS-Guard-v1.1.16.zip
           test -s site/apks/SMS-Guard-v1.1.17.apk
           test -s site/apks/SMS-Guard-v1.1.17.zip
           test -s site/apks/Vasanthi-AI-v1.1.5.apk
           test -s site/apks/Vasanthi-AI-v1.1.5.zip
-          test -s site/apks/Oor-Arivippu-v1.1.15.apk
-          test -s site/apks/Oor-Arivippu-v1.1.15.zip
-          test -s site/apks/Oor-Arivippu-v1.1.16.apk
-          test -s site/apks/Oor-Arivippu-v1.1.16.zip
-          test -s site/apks/Oor-Arivippu-v1.1.17.apk
-          test -s site/apks/Oor-Arivippu-v1.1.17.zip
-          test -s site/apks/Oor-Arivippu-v1.1.19.apk
-          test -s site/apks/Oor-Arivippu-v1.1.19.zip
           test -s site/apks/Oor-Arivippu-v1.1.21.apk
           test -s site/apks/Oor-Arivippu-v1.1.21.zip
-          test -s site/apks/Oor-Arivippu-v1.1.20.apk
-          test -s site/apks/Oor-Arivippu-v1.1.20.zip
           test -s site/apks/Tamil-Podcast-Player-v1.6.apk
           test -s site/apks/Tamil-Podcast-Player-v1.6.zip
           test -s site/apks/DailyVault-v0.5.apk

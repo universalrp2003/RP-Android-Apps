@@ -79,8 +79,20 @@ def main():
     checks.append(('Tamilan-Store-v0.12.apk', json.loads((ROOT/'docs/tamilan-store-0.12-publication-receipt.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.21.apk', json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())))
     checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
+    current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
+    current_names.add('Tamilan-Store-v0.12.apk')
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000
+        if name not in current_names:
+            # Retain immutable historical releases, but not duplicate Pages mirrors.
+            historical_tags = {'SMS-Guard-v1.1.16.apk': 'sms-guard-v1.1.16', 'CleanSweep-v2.82.apk': 'live-guard-v2.82'}
+            url = pin.get('url') or ('https://github.com/universalrp2003/RP-Android-Apps/releases/download/' + historical_tags[name] + '/' + name)
+            assert url and url.startswith('https://github.com/universalrp2003/RP-Android-Apps/releases/download/') and url.endswith('/'+name)
+            with urllib.request.urlopen(url, timeout=60) as response:
+                data = response.read(pin['bytes'] + 1)
+            validate_apk(data, pin['bytes'], pin['apk_sha256'])
+            print(f'PASS: immutable historical GitHub APK {name}', flush=True)
+            continue
         validate_apk(get_bounded('apks/' + name, pin['bytes']), pin['bytes'], pin['apk_sha256'])
         validate_zip(get_bounded('apks/' + name[:-4] + '.zip', 40_000_000), name, pin['bytes'], pin['apk_sha256'])
         print(f'PASS: live APK and ZIP {name}: {pin["bytes"]}B SHA256 {pin["apk_sha256"]}', flush=True)
