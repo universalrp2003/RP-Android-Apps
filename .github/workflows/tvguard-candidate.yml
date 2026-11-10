@@ -120,11 +120,10 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
-            set -euo pipefail
-            [[ "$(adb get-serialno)" == emulator-* ]]
+            case "$(adb get-serialno)" in emulator-*) ;; *) echo 'Expected a disposable emulator'; exit 1 ;; esac
             adb shell input keyevent KEYCODE_WAKEUP
             adb shell wm dismiss-keyguard
-            gradle -PtvguardTestBuildType=debug :tvguard:connectedDebugAndroidTest --no-daemon --stacktrace
+            bash -o pipefail -c 'gradle -PtvguardTestBuildType=debug :tvguard:connectedDebugAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/tvguard-android-test.log"'
       - name: Require every TV focus test to run and pass
         run: |
           python3 - <<'PY'
@@ -148,6 +147,8 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import xml.etree.ElementTree as ET
+          import os
+          failures = 0
           for path in Path('tvguard/app/build/outputs/androidTest-results').rglob('*.xml'):
               try: root = ET.parse(path).getroot()
               except ET.ParseError: continue
@@ -155,8 +156,13 @@ jobs:
                   for kind in ('failure', 'error'):
                       failure = case.find(kind)
                       if failure is not None:
+                          failures += 1
                           text = case.get('name', '') + '\n' + failure.get('message', '') + '\n' + (failure.text or '')
                           print('::error title=TV focus test::' + text[:10000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          log = Path(os.environ['RUNNER_TEMP'], 'tvguard-android-test.log')
+          if not failures and log.exists():
+              text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
+              print('::error title=TV emulator diagnostic::' + text[-12000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
