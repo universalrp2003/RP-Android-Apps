@@ -32,7 +32,29 @@ object BloatCatalog {
         "com.rockchip.devicetest" to "Rockchip Factory Test Tool",
         "com.live.streamz" to "Live Streamz (Adware/pirated stream)",
         "com.beetv.android" to "BeeTV (Ad-supported streaming APK)",
-        "com.cinema.hd" to "Cinema HD (Ad-supported streaming APK)"
+        "com.cinema.hd" to "Cinema HD (Ad-supported streaming APK)",
+
+        // Airtel Xstream Smart Box Carrier Bloatware
+        "com.airtel.tv" to "Airtel Xstream TV (Operator launcher, ads, and recharge banner)",
+        "com.uei.uas.airtel" to "Airtel UAS Remote Telemetry",
+        "com.airtel.fti" to "Airtel First Time Install Setup Bloat",
+        "com.airtel.thanks" to "Airtel Thanks Promo Client",
+        "com.wynk.music" to "Wynk Music (Preloaded music app)",
+
+        // Jio Set Top Box / JioAirFiber Carrier Bloatware
+        "com.jio.media.stb.ondemand" to "JioCinema / JioTV+ (Preloaded OTT platform)",
+        "com.jio.jioplay.tv" to "JioPlay TV Client",
+        "com.jio.jiogames" to "JioGames (Heavy preloaded game store)",
+        "com.jio.jiostore" to "JioStore (Proprietary locked app market)",
+        "com.jio.photos" to "JioPhotos Preload",
+        "com.jio.jiopages" to "JioPages Browser",
+        "com.jio.saavn.tv" to "JioSaavn TV (Preloaded music player)",
+        "com.jio.join" to "JioJoin Telephony Client",
+        "com.jio.tr069client" to "Jio TR-069 Carrier Remote Management Service",
+        "com.jio.httpupdate" to "Jio Background Firmware Updater",
+        "com.jio.usbupdate" to "Jio USB Firmware Updater",
+        "com.jio.home" to "JioHome / Operator Launcher",
+        "com.jio.stblauncher" to "Jio STB Launcher"
     )
 
     val UTILITY_WATCHLIST = mapOf(
@@ -59,7 +81,9 @@ object BloatCatalog {
         "com.android.packageinstaller",
         "com.google.android.packageinstaller",
         "com.android.providers.settings",
-        "com.android.keychain"
+        "com.android.keychain",
+        "com.rjio.lockunlock",
+        "com.rjio.slc"
     )
 
     fun classifyPackage(packageName: String, isSystemApp: Boolean): Pair<BloatSafetyLevel, String> {
