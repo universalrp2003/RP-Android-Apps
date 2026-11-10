@@ -2,39 +2,6 @@
 
 ## Kotlin / resource errors
 ```
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1161:46 Unresolved reference 'emmcSectors'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1162:39 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1162:39 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1162:43 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1165:50 Unresolved reference 'reportedPartitionsSumBytes'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1172:17 Inapplicable candidate(s): fun DetailRow(label: String, value: String): Unit
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1174:29 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1174:29 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1174:29 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1174:33 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1174:105 Inapplicable candidate(s): fun <K> ELVIS_CALL(x: K?, y: K): K
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1181:85 Unresolved reference 'partitionsFound'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1192:89 Unresolved reference 'reportedAndroidVersion'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1193:79 Unresolved reference 'actualAndroidVersion'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1193:114 Unresolved reference 'actualCodeName'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1193:147 Unresolved reference 'underlyingSdkApiLevel'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1194:72 Unresolved reference 'underlyingSdkApiLevel'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1196:56 Unresolved reference 'buildTimeEpoch'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1600:65 Unresolved reference 'wifiSsid'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:17 Inapplicable candidate(s): fun DetailRow(label: String, value: String): Unit
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:55 Unresolved reference 'wifiFrequencyMhz'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:73 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:73 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:77 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:98 'operator' modifier is required on 'fun <T> Comparable<T>.compareTo(other: T): Int'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1601:144 Inapplicable candidate(s): fun <K> ELVIS_CALL(x: K?, y: K): K
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1602:17 Inapplicable candidate(s): fun DetailRow(label: String, value: String): Unit
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1602:62 Unresolved reference 'wifiRssiDbm'.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1602:75 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1602:75 Cannot infer type for type parameter 'R'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1602:79 Cannot infer type for type parameter 'T'. Specify it explicitly.
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1602:120 Inapplicable candidate(s): fun <K> ELVIS_CALL(x: K?, y: K): K
-e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1604:63 Unresolved reference 'localIpAddress'.
 e: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/tvguard/app/src/main/java/com/universalrp/tvguard/ui/MainActivity.kt:1976:72 Argument type mismatch: actual type is 'Alignment.Horizontal', but 'Alignment' was expected.
 ```
 
@@ -61,8 +28,8 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD FAILED in 44s
-977 actionable tasks: 459 executed, 518 from cache
+BUILD FAILED in 1m 10s
+1096 actionable tasks: 513 executed, 583 from cache
 ```
 (no failing tests in 261 result file(s))
 
