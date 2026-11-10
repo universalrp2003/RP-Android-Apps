@@ -1158,11 +1158,11 @@ fun TvAuditView(
 
         // Section 2: Storage Truth
         item {
-            val emmcSectors = report.storage.emmcSectors
-            val emmcGb = emmcSectors?.let { (it * 512.0) / (1024.0 * 1024.0 * 1024.0) }
+            val sectors = report.storage.blockDeviceSectors
+            val emmcGb = report.storage.blockDeviceBytes?.let { it.toDouble() / (1024.0 * 1024.0 * 1024.0) }
             val dataTotalGb = report.storage.dataTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
             val dataFreeGb = report.storage.dataFreeBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
-            val partitionsSumGb = report.storage.reportedPartitionsSumBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
+            val reportedTotalGb = report.storage.reportedStorageBytes.toDouble() / (1024.0 * 1024.0 * 1024.0)
 
             TvDetailSection(
                 title = "2. Flash Storage Truth Evidence",
@@ -1171,14 +1171,14 @@ fun TvAuditView(
             ) {
                 DetailRow(
                     "Physical eMMC Block Device (/sys/block/mmcblk0)",
-                    emmcGb?.let { "${String.format(Locale.US, "%.2f", it)} GB ($emmcSectors sectors)" } ?: "Not Exposed (Virtual/UFS)"
+                    emmcGb?.let { "${String.format(Locale.US, "%.2f", it)} GB ($sectors sectors)" } ?: "Not Exposed (Virtual/UFS)"
                 )
-                DetailRow("Reported Total Storage (Partitions Sum)", "${String.format(Locale.US, "%.2f", partitionsSumGb)} GB")
+                DetailRow("Reported Total Storage (Partitions Sum)", "${String.format(Locale.US, "%.2f", reportedTotalGb)} GB")
                 DetailRow("User Data Partition (/data)", "Total: ${String.format(Locale.US, "%.2f", dataTotalGb)} GB  |  Free: ${String.format(Locale.US, "%.2f", dataFreeGb)} GB")
                 DetailRow("System Partition (/system)", "${String.format(Locale.US, "%.2f", report.storage.systemTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
                 DetailRow("Vendor Partition (/vendor)", "${String.format(Locale.US, "%.2f", report.storage.vendorTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
                 DetailRow("Cache Partition (/cache)", "${String.format(Locale.US, "%.2f", report.storage.cacheTotalBytes.toDouble() / (1024.0 * 1024.0 * 1024.0))} GB")
-                DetailRow("Partitions Found in /proc/partitions", "${report.storage.partitionsFound.size} partitions")
+                DetailRow("Partitions Found in /proc/partitions", "${report.storage.partitions.size} partitions")
             }
         }
 
@@ -1189,11 +1189,11 @@ fun TvAuditView(
                 icon = Icons.Default.Build,
                 isSpoofed = report.os.isOsSpoofed
             ) {
-                DetailRow("Reported Android Version (build.prop)", "Android ${report.os.reportedAndroidVersion}")
-                DetailRow("Ground Truth Base Framework", "Android ${report.os.actualAndroidVersion} (${report.os.actualCodeName}, API ${report.os.underlyingSdkApiLevel})")
-                DetailRow("Underlying SDK API Level", "API ${report.os.underlyingSdkApiLevel}")
+                DetailRow("Reported Android Version (build.prop)", "Android ${report.os.reportedRelease}")
+                DetailRow("Ground Truth Base Framework", report.os.detectedBaseOs)
+                DetailRow("Underlying SDK API Level", "API ${report.os.apiLevel}")
                 DetailRow("Kernel Release (/proc/version)", report.os.kernelRelease)
-                DetailRow("Build Timestamp", report.os.buildTimeEpoch.toString())
+                DetailRow("Build Timestamp", report.os.buildTimestamp)
             }
         }
 
