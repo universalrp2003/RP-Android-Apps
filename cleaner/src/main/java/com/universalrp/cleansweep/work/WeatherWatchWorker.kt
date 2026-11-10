@@ -152,11 +152,12 @@ class WeatherWatchWorker(
         private suspend fun executePlaces(context: Context, speakIfTriggered: Boolean): WeatherAlertDecision? {
             val ctx = context.applicationContext
             val tamil = Lang.languageIn(ctx) == AppLang.TA
-            val home = WeatherAlertStore.savedPlace(ctx)?.takeIf { com.universalrp.cleansweep.data.NamedWeatherPlace.usable(it) } ?: return null // Confirm a fixed place first.
+            val home = WeatherAlertStore.savedPlace(ctx)?.takeIf { com.universalrp.cleansweep.data.NamedWeatherPlace.usable(it) }
             data class Target(val id: String, val place: com.universalrp.weather.WeatherPlaceCandidate)
-            val targets = mutableListOf(Target(com.universalrp.cleansweep.data.SimpleWeatherStore.HOME, home))
+            val targets = mutableListOf<Target>()
+            if (home != null) targets += Target(com.universalrp.cleansweep.data.SimpleWeatherStore.HOME, home)
             targets += SavedRainWatches.read(ctx).filter { it.enabled }.map { Target(it.id, it.place) }
-            if (SavedRainWatches.currentEnabled(ctx)) {
+            if (SavedRainWatches.currentEnabled(ctx) || home == null) {
                 val gps = WeatherPlaceResolver.resolveActiveLocationSuspend(ctx, "", "", Double.NaN, Double.NaN, tamil, gpsOnly = true)
                 if (gps.hasCoordinates && gps.mode == com.universalrp.weather.LocationResolutionMode.GPS_AUTOMATIC) {
                     targets += Target(com.universalrp.cleansweep.data.SimpleWeatherStore.GPS,
@@ -169,7 +170,7 @@ class WeatherWatchWorker(
                 if (!com.universalrp.cleansweep.data.NamedWeatherPlace.usable(place)) continue
                 fun stillSelected(): Boolean = when (id) {
                     com.universalrp.cleansweep.data.SimpleWeatherStore.HOME -> WeatherAlertStore.savedPlace(ctx) == place
-                    com.universalrp.cleansweep.data.SimpleWeatherStore.GPS -> SavedRainWatches.currentEnabled(ctx) &&
+                    com.universalrp.cleansweep.data.SimpleWeatherStore.GPS -> (SavedRainWatches.currentEnabled(ctx) || WeatherAlertStore.savedPlace(ctx) == null) &&
                         com.universalrp.cleansweep.data.SimpleWeatherStore.gpsStillAt(ctx, place)
                     else -> SavedRainWatches.read(ctx).any { it.id == id && it.enabled && it.place == place }
                 }
@@ -198,9 +199,11 @@ class WeatherWatchWorker(
                     synchronized(WeatherAlertStore) {
                         if (stillSelected()) {
                             com.universalrp.cleansweep.data.SimpleWeatherStore.save(ctx, id, place, snapshot, memory)
-                            if (id == com.universalrp.cleansweep.data.SimpleWeatherStore.HOME) {
+                            if (id == com.universalrp.cleansweep.data.SimpleWeatherStore.HOME ||
+                                (id == com.universalrp.cleansweep.data.SimpleWeatherStore.GPS && WeatherAlertStore.savedPlace(ctx) == null)) {
                                 // The primary snapshot is always HOME; moving GPS cannot overwrite its label or history.
-                                WeatherAlertStore.saveEvaluation(ctx, com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
+                                WeatherAlertStore.saveEvaluation(ctx, if (id == com.universalrp.cleansweep.data.SimpleWeatherStore.GPS)
+                                    com.universalrp.weather.LocationResolutionMode.GPS_AUTOMATIC else com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
                                     place.name, place.details, snapshot, decision.copy(updatedMemory = memory))
                                 homeDecision = decision
                             } else if (id != com.universalrp.cleansweep.data.SimpleWeatherStore.GPS) {

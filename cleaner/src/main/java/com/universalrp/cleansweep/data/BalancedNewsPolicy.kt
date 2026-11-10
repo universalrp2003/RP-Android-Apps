@@ -38,7 +38,7 @@ object BalancedNewsPolicy {
     )
     fun trustedAggregatedPublisher(source: String): Boolean = source.trim().lowercase(Locale.ROOT) in trustedAggregatedPublishers
 
-    fun isJunk(title: String): Boolean = junk.containsMatchIn(title) ||
+    fun isJunk(title: String): Boolean = Regex("(?i)\\b(jokes?|humou?r|comedy)\\b|நகைச்சுவை").containsMatchIn(title) || junk.containsMatchIn(title) ||
         title.count { it == '|' } >= 2 || title.contains("…") || title.contains("...") ||
         title.trim().endsWith("?")
 
@@ -52,7 +52,7 @@ object BalancedNewsPolicy {
         if (has(text, listOf("government announcement", "gazette", "government order", "அரசாணை", "அரசு அறிவிப்பு"))) return Category.GOVERNMENT
         if (has(text, listOf("artificial intelligence", "machine learning", "செயற்கை நுண்ணறிவு"))) return Category.AI
         if (has(text, listOf("cricket", "football", "olympic", "sports", "கிரிக்கெட்", "விளையாட்டு", "கால்பந்து"))) return Category.SPORTS
-        if (has(text, listOf("joke", "humour", "நகைச்சுவை"))) return Category.HUMOUR
+        if (has(text, listOf("joke", "humour", "comedy", "நகைச்சுவை"))) return null
         if (has(text, listOf("cinema", "film release", "திரைப்படம்", "சினிமா"))) return Category.ENTERTAINMENT
         if (has(text, listOf("weather", "rain forecast", "meteorological", "வானிலை", "மழை முன்னறிவிப்பு"))) return Category.WEATHER
         if (has(text, environment)) return Category.ENVIRONMENT

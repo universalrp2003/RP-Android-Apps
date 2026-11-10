@@ -29,4 +29,16 @@ class NewsTranslationPolicyTest {
     @Test fun malformedMarkerIsRejected() { assertNull(NewsTranslationPolicy.restore(protected, good.replace("[[P1]]", "[[Pone]]"))) }
     @Test fun repeatedSourceNamesKeepSeparateOccurrences() { val p = NewsTranslationPolicy.protect("NASA says NASA may launch 2 satellites"); assertEquals(listOf("NASA", "NASA", "2"), p.anchors) }
     @Test fun ordinarySentenceOpenersAreNotNamedEntities() { assertFalse(NewsTranslationPolicy.protect("Researchers discover new material").anchors.contains("Researchers")) }
+    @Test fun ordinaryCapitalisedPlaceNamesRemainAvailableForTamilTransliteration() {
+        val p = NewsTranslationPolicy.protect("Kochi Corporation plans water security assessment")
+        assertTrue(p.anchors.isEmpty())
+        assertEquals("Kochi Corporation plans water security assessment", p.masked)
+    }
+    @Test fun magnitudeIsReadableTamilWithoutChangingTheNumericClaim() {
+        val p = NewsTranslationPolicy.protect("SEGA exposes 2.2 million email addresses")
+        val result = NewsTranslationPolicy.restore(p, "[[P0]] நிறுவனத்தின் [[P1]] மின்னஞ்சல் முகவரிகள் கசிந்துள்ளன")
+        assertNotNull(result)
+        assertTrue(result!!.contains("2.2 மில்லியன்"))
+        assertFalse(result.contains("million"))
+    }
 }
