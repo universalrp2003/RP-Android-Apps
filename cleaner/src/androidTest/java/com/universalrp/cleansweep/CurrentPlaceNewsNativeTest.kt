@@ -40,6 +40,19 @@ class CurrentPlaceNewsNativeTest : ExactCandidateNativeTest() {
         val observed = linkedSetOf<String>()
         repeat(50) {
             i.waitForIdleSync()
+            // Emulator-only OS warning caused by this fixture disabling location.
+            // Dismiss Close, never grant permissions or turn location back on here.
+            fun find(n: android.view.accessibility.AccessibilityNodeInfo?, value: String): android.view.accessibility.AccessibilityNodeInfo? {
+                if (n == null) return null
+                if (n.text?.toString() == value) return n
+                for (j in 0 until n.childCount) find(n.getChild(j), value)?.let { return it }
+                return null
+            }
+            val root = i.uiAutomation.rootInActiveWindow
+            if (find(root, "No location access") != null) {
+                find(root, "Close")?.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+                SystemClock.sleep(250)
+            }
             fun has(n: android.view.accessibility.AccessibilityNodeInfo?): Boolean {
                 if (n == null) return false
                 n.text?.toString()?.let { observed.add(it) }
