@@ -1,6 +1,6 @@
 # RP-Android-Apps (RP Ideas) — Official Open-Source Tamil & English Android Apps
 
-Live Guard **2.98**: clearer Tamil news instructions, no-home current-GPS weather and removal of humour topics. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.98). Update over2.97 without uninstalling or clearing data.
+Live Guard **2.99**: persistent male/female HD voice rotation across process restarts; prior news/weather fixes preserved. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.99). Update over2.98 without uninstalling or clearing data.
 
 
 Tamilan Store **0.12** fixes catalog refresh blocked by failed downloads. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.12); install over the current Store without uninstalling or clearing data.

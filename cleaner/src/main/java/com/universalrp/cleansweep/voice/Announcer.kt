@@ -211,11 +211,8 @@ object Announcer {
     }
     private val malePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
     private val femalePreviewCursor = java.util.concurrent.atomic.AtomicInteger(-1)
-    // RANDOM announcement rotation: flip gender every announcement and step to the NEXT Ultra-HD
-    // voice inside that gender, so two announcements in a row never share the same voice.
-    private val randomGenderFlip = java.util.concurrent.atomic.AtomicBoolean(false)
-    private val randomMaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
-    private val randomFemaleCursor = java.util.concurrent.atomic.AtomicInteger(-1)
+    // Persist rotation across process death (background bulletins may start a fresh process).
+    private const val KEY_STUDIO_ROTATION = "voice_studio_rotation_v1"
     // Offline system-TTS rotation within the chosen gender (RANDOM mode fallback path).
     @Volatile private var activeMediaPlayer: android.media.MediaPlayer? = null
     @Volatile private var active: Request? = null
@@ -896,14 +893,17 @@ object Announcer {
      * that gender's pool — male, then female, then the next male, and so on, never the same voice
      * twice in a row.
      */
-    private fun nextRandomStudioVoice(): com.universalrp.voice.CuratedNeuralVoiceProfile {
+    @Synchronized
+    private fun nextRandomStudioVoice(context: Context): com.universalrp.voice.CuratedNeuralVoiceProfile {
         val engine = com.universalrp.voice.SharedNeuralVoiceEngine
-        val female = randomGenderFlip.getAndSet(!randomGenderFlip.get())
-        return if (female) {
-            engine.FEMALE_VOICES[Math.floorMod(randomFemaleCursor.incrementAndGet(), engine.FEMALE_VOICES.size)]
-        } else {
-            engine.MALE_VOICES[Math.floorMod(randomMaleCursor.incrementAndGet(), engine.MALE_VOICES.size)]
-        }
+        val p = prefs(context)
+        val turn = p.getInt(KEY_STUDIO_ROTATION, 0).coerceAtLeast(0)
+        val pool = if (turn % 2 == 1) engine.FEMALE_VOICES else engine.MALE_VOICES
+        val profile = pool[(turn / 2) % pool.size]
+        // Synchronous small preference write before synthesis: a killed process must not
+        // restart at male 1. A failed synthesis may consume a turn, never a news checkpoint.
+        p.edit().putInt(KEY_STUDIO_ROTATION, if (turn == Int.MAX_VALUE) 0 else turn + 1).commit()
+        return profile
     }
 
     /**
@@ -933,7 +933,7 @@ object Announcer {
         return when (voiceGenderMode(context)) {
             VoiceGenderMode.FEMALE -> stableStudioVoice(context, female = true)
             VoiceGenderMode.MALE -> stableStudioVoice(context, female = false)
-            VoiceGenderMode.RANDOM -> nextRandomStudioVoice()
+            VoiceGenderMode.RANDOM -> nextRandomStudioVoice(context)
         }
     }
 
