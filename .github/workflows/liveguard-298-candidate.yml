@@ -3,7 +3,7 @@ name: Live Guard 2.98 home/GPS controls and full preserved-feature regressions (
 on:
   push:
     branches: ["arena/4dfa3a21-rp-android-apps"]
-    paths: ["releases/live-guard-v2.98.md", "cleaner/**", "shared/**", "tools/inspect_liveguard_298_candidate.py", "tools/liveguard_283_native_smoke.py", "tools/verify_liveguard_298_installed.py", "tools/run_liveguard_298_native.py", "tools/verify_liveguard_298_native.py", ".github/workflows/liveguard-298-candidate.yml"]
+    paths: ["releases/live-guard-v2.98.md", "cleaner/**", "shared/**", "tools/inspect_liveguard_298_candidate.py", "tools/liveguard_298_native_smoke.py", "tools/verify_liveguard_298_installed.py", "tools/run_liveguard_298_native.py", "tools/verify_liveguard_298_native.py", ".github/workflows/liveguard-298-candidate.yml"]
 permissions:
   contents: read
 concurrency:
@@ -88,7 +88,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
             python3 tools/battery_voice_update_smoke.py cleaner
-            python3 tools/liveguard_283_native_smoke.py
+            python3 tools/liveguard_298_native_smoke.py
             adb shell appops set com.universalrp.cleansweep SYSTEM_ALERT_WINDOW allow
             python3 tools/verify_liveguard_298_installed.py
             bash -o pipefail -c 'python3 tools/run_liveguard_298_native.py 2>&1 | tee "$RUNNER_TEMP/liveguard-native.log"'

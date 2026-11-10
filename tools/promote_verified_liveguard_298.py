@@ -59,7 +59,7 @@ def main():
     subprocess.run(['git', 'diff', '--exit-code', source, 'HEAD', '--', 'cleaner/', 'shared/', 'gradle/',
                     'build.gradle.kts', 'settings.gradle.kts', 'gradle.properties', 'gradlew', 'gradlew.bat',
                     'tools/verify_cleaner_regressions.py', 'tools/inspect_liveguard_298_candidate.py',
-                    'tools/liveguard_283_native_smoke.py', 'tools/verify_liveguard_298_installed.py', 'tools/run_liveguard_298_native.py', 'tools/verify_liveguard_298_native.py', '.github/workflows/liveguard-298-candidate.yml'], check=True)
+                    'tools/liveguard_298_native_smoke.py', 'tools/verify_liveguard_298_installed.py', 'tools/run_liveguard_298_native.py', 'tools/verify_liveguard_298_native.py', '.github/workflows/liveguard-298-candidate.yml'], check=True)
     info = api(f'actions/runs/{p["run_id"]}')
     assert (info['head_sha'], info['head_branch'], info['status'], info['conclusion'], info['path']) == (
         source, BRANCH, 'completed', 'success', '.github/workflows/liveguard-298-candidate.yml')
