@@ -31,6 +31,12 @@ class CurrentPlaceNewsNativeTest : ExactCandidateNativeTest() {
     private val c get() = i.targetContext
     private fun shell(command: String) { ParcelFileDescriptor.AutoCloseInputStream(i.uiAutomation.executeShellCommand(command)).use { it.readBytes() } }
     private fun visible(text: String) {
+        // Each assertion starts at the top: an earlier lookup may have scrolled the
+        // 200% layout. Search downward only after resetting the viewport.
+        repeat(6) {
+            val bounds = android.graphics.Rect().also { i.uiAutomation.rootInActiveWindow?.getBoundsInScreen(it) }
+            shell("input swipe ${bounds.centerX()} ${bounds.top+bounds.height()*3/10} ${bounds.centerX()} ${bounds.top+bounds.height()*8/10} 150")
+        }
         repeat(25) {
             i.waitForIdleSync()
             fun has(n: android.view.accessibility.AccessibilityNodeInfo?): Boolean {
