@@ -81,6 +81,7 @@ def main():
     checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
     current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
     current_names.add('Tamilan-Store-v0.12.apk')
+    checks.append(('CleanSweep-v2.99.apk', json.loads((ROOT/'docs/live-guard-2.99-publication-receipt.json').read_text())))
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000
         if name not in current_names:
