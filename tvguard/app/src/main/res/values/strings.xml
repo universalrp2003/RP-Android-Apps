@@ -31,6 +31,13 @@
     <string name="settings_title">TV Settings</string>
     <string name="settings_subtitle">Open system preferences</string>
 
+    <string name="hidden_apps_title">Manage Hidden Apps</string>
+    <string name="hidden_apps_subtitle">Unhide apps on home screen</string>
+    <string name="action_open_app">Open Application</string>
+    <string name="action_app_info">Application Info &amp; Permissions</string>
+    <string name="action_hide_app">Hide Application</string>
+    <string name="action_unhide_app">Unhide Application</string>
+
     <string name="favorite_apps">Favorite Apps</string>
     <string name="all_apps">Installed Apps</string>
     <string name="no_apps_found">No apps found</string>

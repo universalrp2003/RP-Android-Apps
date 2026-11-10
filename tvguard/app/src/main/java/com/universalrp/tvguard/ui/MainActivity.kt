@@ -18,10 +18,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -47,12 +49,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
@@ -64,6 +68,8 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tv
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.CircularProgressIndicator
@@ -86,6 +92,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -159,7 +166,8 @@ enum class TvNavTab(val titleRes: Int, val icon: ImageVector) {
 enum class ToolsSubView {
     OVERVIEW,
     DEBLOAT,
-    NETWORK
+    NETWORK,
+    HIDDEN_APPS
 }
 
 @Composable
@@ -185,10 +193,12 @@ fun TvGuardMainScreen(activity: MainActivity) {
     var toolsSubView by remember { mutableStateOf(ToolsSubView.OVERVIEW) }
     var voiceDialogPrompt by remember { mutableStateOf<String?>(null) }
     var voiceIsListening by remember { mutableStateOf(false) }
+    var selectedAppForOptions by remember { mutableStateOf<LaunchableApp?>(null) }
 
     var hardwareReport by remember { mutableStateOf<FullHardwareReport?>(null) }
     var networkStatus by remember { mutableStateOf<NetworkStatus?>(null) }
     var installedApps by remember { mutableStateOf<List<LaunchableApp>>(emptyList()) }
+    var allAppsIncludingHidden by remember { mutableStateOf<List<LaunchableApp>>(emptyList()) }
     var debloatItems by remember { mutableStateOf<List<AppDebloatItem>>(emptyList()) }
     var runningApps by remember { mutableStateOf<List<RunningAppInfo>>(emptyList()) }
     var downloadedFiles by remember { mutableStateOf<List<File>>(emptyList()) }
@@ -207,7 +217,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
             isRefreshing = true
             hardwareReport = withContext(Dispatchers.IO) { HardwareAuditor.audit(context) }
             networkStatus = withContext(Dispatchers.IO) { NetworkQualityMonitor.probe(context) }
-            installedApps = withContext(Dispatchers.IO) { TvAppCatalog.loadApps(context) }
+            installedApps = withContext(Dispatchers.IO) { TvAppCatalog.loadApps(context, includeHidden = false) }
+            allAppsIncludingHidden = withContext(Dispatchers.IO) { TvAppCatalog.loadApps(context, includeHidden = true) }
             debloatItems = withContext(Dispatchers.IO) { DebloatEngine.scanInstalledApps(context) }
             runningApps = withContext(Dispatchers.IO) { RunningAppsManager.getRunningApps(context) }
             refreshDownloads()
@@ -283,12 +294,15 @@ fun TvGuardMainScreen(activity: MainActivity) {
         refreshAll()
     }
 
-    // Remote shortcut listener for quick tab cycling and Voice Assistant
-    DisposableEffect(currentTab, toolsSubView, voiceDialogPrompt) {
+    // Remote shortcut listener for quick tab cycling, Back dismissal, and Voice Assistant
+    DisposableEffect(currentTab, toolsSubView, voiceDialogPrompt, selectedAppForOptions) {
         activity.onRemoteKey = { keyCode ->
             when (keyCode) {
                 KeyEvent.KEYCODE_BACK -> {
-                    if (voiceDialogPrompt != null) {
+                    if (selectedAppForOptions != null) {
+                        selectedAppForOptions = null
+                        true
+                    } else if (voiceDialogPrompt != null) {
                         TvVoiceAssistant.stopListening()
                         voiceDialogPrompt = null
                         true
@@ -373,8 +387,13 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 TvAppCatalog.launchApp(context, pkg)
                             },
                             onToggleFavorite = { pkg ->
-                                TvAppCatalog.toggleFavorite(context, pkg)
-                                installedApps = TvAppCatalog.loadApps(context)
+                                val isFav = TvAppCatalog.toggleFavorite(context, pkg)
+                                installedApps = TvAppCatalog.loadApps(context, includeHidden = false)
+                                allAppsIncludingHidden = TvAppCatalog.loadApps(context, includeHidden = true)
+                                toastMessage = if (isFav) "Added to favorites" else "Removed from favorites"
+                            },
+                            onShowAppOptions = { app ->
+                                selectedAppForOptions = app
                             },
                             onOpenTools = {
                                 currentTab = TvNavTab.TOOLS
@@ -389,6 +408,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 TvToolsView(
                                     report = report,
                                     runningApps = runningApps,
+                                    hiddenAppsCount = allAppsIncludingHidden.count { it.isHidden },
                                     onRamBoost = {
                                         val res = MemoryTrimmer.trim(context)
                                         toastMessage = "RAM Boost: Freed ${res.freedMb} MB" + if (res.droppedKernelCaches) " (Kernel caches dropped)" else ""
@@ -398,6 +418,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onOpenShare = { currentTab = TvNavTab.SHARE },
                                     onOpenDebloat = { toolsSubView = ToolsSubView.DEBLOAT },
                                     onOpenNetwork = { toolsSubView = ToolsSubView.NETWORK },
+                                    onOpenHiddenApps = { toolsSubView = ToolsSubView.HIDDEN_APPS },
                                     onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
                                     onGrantStorage = { promptStoragePermission(context) },
                                     onOpenSettings = {
@@ -496,6 +517,40 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     )
                                 }
                             }
+
+                            ToolsSubView.HIDDEN_APPS -> {
+                                Column(modifier = Modifier.fillMaxSize()) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 12.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        TvFocusButton(
+                                            text = "← Back to Tools & Settings",
+                                            onClick = { toolsSubView = ToolsSubView.OVERVIEW },
+                                            color = Color(0xFF00E5FF)
+                                        )
+                                        Text(
+                                            text = "Manage Hidden Applications",
+                                            color = Color(0xFF94A3B8),
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    TvHiddenAppsView(
+                                        hiddenApps = allAppsIncludingHidden.filter { it.isHidden },
+                                        onUnhideApp = { pkg ->
+                                            TvAppCatalog.unhideApp(context, pkg)
+                                            installedApps = TvAppCatalog.loadApps(context, includeHidden = false)
+                                            allAppsIncludingHidden = TvAppCatalog.loadApps(context, includeHidden = true)
+                                            toastMessage = "Restored app to home launcher"
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -528,6 +583,52 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 }
             }
         }
+    }
+
+    // App Context / Options Dialog (on long-press or Menu button)
+    if (selectedAppForOptions != null) {
+        val app = selectedAppForOptions!!
+        AppOptionsDialog(
+            app = app,
+            onDismiss = { selectedAppForOptions = null },
+            onLaunch = {
+                selectedAppForOptions = null
+                TvAppCatalog.launchApp(context, app.packageName)
+            },
+            onOpenInfo = {
+                selectedAppForOptions = null
+                TvAppCatalog.openAppDetails(context, app.packageName)
+            },
+            onToggleFavorite = {
+                val isFav = TvAppCatalog.toggleFavorite(context, app.packageName)
+                installedApps = TvAppCatalog.loadApps(context, includeHidden = false)
+                allAppsIncludingHidden = TvAppCatalog.loadApps(context, includeHidden = true)
+                selectedAppForOptions = null
+                toastMessage = if (isFav) "Added to favorites" else "Removed from favorites"
+            },
+            onHideApp = {
+                TvAppCatalog.toggleHideApp(context, app.packageName)
+                installedApps = TvAppCatalog.loadApps(context, includeHidden = false)
+                allAppsIncludingHidden = TvAppCatalog.loadApps(context, includeHidden = true)
+                selectedAppForOptions = null
+                toastMessage = "Hidden ${app.appName} from launcher"
+            },
+            onUninstall = {
+                selectedAppForOptions = null
+                val isRooted = report?.root?.canExecuteRoot == true
+                if (isRooted) {
+                    val res = DebloatEngine.removeWithRoot(app.packageName)
+                    if (res.isSuccess) {
+                        toastMessage = "Uninstalled ${app.appName}"
+                        refreshAll()
+                    } else {
+                        DebloatEngine.launchUninstallIntent(context, app.packageName)
+                    }
+                } else {
+                    DebloatEngine.launchUninstallIntent(context, app.packageName)
+                }
+            }
+        )
     }
 
     // Voice Assistant Overlay Dialog
@@ -845,6 +946,268 @@ fun VoiceAssistantDialog(
 }
 
 @Composable
+fun AppOptionsDialog(
+    app: LaunchableApp,
+    onDismiss: () -> Unit,
+    onLaunch: () -> Unit,
+    onOpenInfo: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onHideApp: () -> Unit,
+    onUninstall: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.75f))
+            .clickable { onDismiss() },
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .width(480.dp)
+                .background(Color(0xFF111827), RoundedCornerShape(16.dp))
+                .border(2.dp, Color(0xFF00E5FF), RoundedCornerShape(16.dp))
+                .clickable(enabled = false) {}
+                .padding(22.dp)
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        AppIcon(drawable = app.icon, modifier = Modifier.size(46.dp))
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = app.appName,
+                                color = Color.White,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = app.packageName,
+                                color = Color(0xFF94A3B8),
+                                fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                    TvFocusIconButton(icon = Icons.Default.Close, onClick = onDismiss, tooltip = "Close")
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Action Buttons
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    TvDialogActionButton(
+                        icon = Icons.Default.PlayArrow,
+                        label = stringResource(R.string.action_open_app),
+                        color = Color(0xFF00E5FF),
+                        onClick = onLaunch
+                    )
+
+                    TvDialogActionButton(
+                        icon = Icons.Default.Info,
+                        label = stringResource(R.string.action_app_info),
+                        color = Color(0xFF38BDF8),
+                        onClick = onOpenInfo
+                    )
+
+                    TvDialogActionButton(
+                        icon = if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
+                        label = if (app.isFavorite) "Remove from Favorites" else "Add to Favorites",
+                        color = Color(0xFFFFD600),
+                        onClick = onToggleFavorite
+                    )
+
+                    TvDialogActionButton(
+                        icon = Icons.Default.VisibilityOff,
+                        label = stringResource(R.string.action_hide_app),
+                        color = Color(0xFFF59E0B),
+                        onClick = onHideApp
+                    )
+
+                    TvDialogActionButton(
+                        icon = Icons.Default.Delete,
+                        label = stringResource(R.string.btn_uninstall),
+                        color = Color(0xFFFF5252),
+                        onClick = onUninstall
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun TvDialogActionButton(
+    icon: ImageVector,
+    label: String,
+    color: Color,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
+    var isFocusedByCallback by remember { mutableStateOf(false) }
+    val isFocused = isFocusedBySource || isFocusedByCallback
+
+    val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF1E293B)
+    val borderCol = if (isFocused) Color(0xFF00E5FF) else Color(0xFF334155)
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .scale(if (isFocused) 1.04f else 1.0f)
+            .background(bg, RoundedCornerShape(10.dp))
+            .border(if (isFocused) 3.dp else 1.dp, borderCol, RoundedCornerShape(10.dp))
+            .onFocusChanged { state -> isFocusedByCallback = state.isFocused || state.hasFocus }
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.nativeKeyEvent.action == KeyEvent.ACTION_UP &&
+                    (keyEvent.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                     keyEvent.nativeKeyEvent.keyCode == KeyEvent.KEYCODE_ENTER)
+                ) {
+                    onClick()
+                    true
+                } else false
+            }
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) { onClick() }
+            .padding(horizontal = 14.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (isFocused) Color.White else color,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = label,
+                color = Color.White,
+                fontSize = 13.sp,
+                fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun TvHiddenAppsView(
+    hiddenApps: List<LaunchableApp>,
+    onUnhideApp: (String) -> Unit
+) {
+    if (hiddenApps.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(32.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Default.CheckCircle,
+                    contentDescription = null,
+                    tint = Color(0xFF00E676),
+                    modifier = Modifier.size(54.dp)
+                )
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(
+                    text = "No Hidden Applications",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "To hide an app from the home launcher grid, long press OK on its tile or press Menu on your remote.",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            item {
+                Text(
+                    text = "Hidden Applications (${hiddenApps.size} apps)",
+                    color = Color(0xFF00E5FF),
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "These apps are hidden from the main home launcher grid. Click Unhide to restore them.",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            items(hiddenApps) { app ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFF111827), RoundedCornerShape(10.dp))
+                        .border(1.dp, Color(0xFF1F2937), RoundedCornerShape(10.dp))
+                        .padding(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                            AppIcon(drawable = app.icon, modifier = Modifier.size(40.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = app.appName,
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = app.packageName,
+                                    color = Color(0xFF94A3B8),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+
+                        TvFocusButton(
+                            text = "👁️ " + stringResource(R.string.action_unhide_app),
+                            onClick = { onUnhideApp(app.packageName) },
+                            color = Color(0xFF00E676)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun TvTabBar(
     currentTab: TvNavTab,
     onTabSelected: (TvNavTab) -> Unit
@@ -970,6 +1333,7 @@ fun TvHomeView(
     apps: List<LaunchableApp>,
     onLaunchApp: (String) -> Unit,
     onToggleFavorite: (String) -> Unit,
+    onShowAppOptions: (LaunchableApp) -> Unit,
     onOpenTools: () -> Unit
 ) {
     val favorites = apps.filter { it.isFavorite }
@@ -1003,6 +1367,7 @@ fun TvHomeView(
                     app = app,
                     onLaunch = { onLaunchApp(app.packageName) },
                     onToggleFav = { onToggleFavorite(app.packageName) },
+                    onShowOptions = { onShowAppOptions(app) },
                     focusRequester = if (app == favorites.first()) firstItemFocusRequester else null
                 )
             }
@@ -1014,6 +1379,7 @@ fun TvHomeView(
                 app = app,
                 onLaunch = { onLaunchApp(app.packageName) },
                 onToggleFav = { onToggleFavorite(app.packageName) },
+                onShowOptions = { onShowAppOptions(app) },
                 focusRequester = if (favorites.isEmpty() && app == apps.firstOrNull()) firstItemFocusRequester else null
             )
         }
@@ -1047,7 +1413,17 @@ fun TvQuickToolsTile(
             .onFocusChanged { state ->
                 isFocusedByCallback = state.isFocused || state.hasFocus
             }
-            .focusable(interactionSource = interactionSource)
+            .onKeyEvent { keyEvent ->
+                val native = keyEvent.nativeKeyEvent
+                if (native.action == KeyEvent.ACTION_UP &&
+                    (native.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                     native.keyCode == KeyEvent.KEYCODE_ENTER ||
+                     native.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER)
+                ) {
+                    onClick()
+                    true
+                } else false
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null
@@ -1111,11 +1487,13 @@ fun TvQuickToolsTile(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TvAppCard(
     app: LaunchableApp,
     onLaunch: () -> Unit,
     onToggleFav: () -> Unit,
+    onShowOptions: () -> Unit,
     modifier: Modifier = Modifier,
     focusRequester: FocusRequester? = null
 ) {
@@ -1123,6 +1501,8 @@ fun TvAppCard(
     val isFocusedBySource by interactionSource.collectIsFocusedAsState()
     var isFocusedByCallback by remember { mutableStateOf(false) }
     val isFocused = isFocusedBySource || isFocusedByCallback
+
+    var isLongPressed by remember { mutableStateOf(false) }
 
     val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF111827)
     val borderCol = if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937)
@@ -1141,13 +1521,39 @@ fun TvAppCard(
             .onFocusChanged { state ->
                 isFocusedByCallback = state.isFocused || state.hasFocus
             }
-            .focusable(interactionSource = interactionSource)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null
-            ) {
-                onLaunch()
+            .onKeyEvent { keyEvent ->
+                val native = keyEvent.nativeKeyEvent
+                if (native.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+                    native.keyCode == KeyEvent.KEYCODE_ENTER ||
+                    native.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+                ) {
+                    if (native.action == KeyEvent.ACTION_DOWN) {
+                        if (native.isLongPress || native.repeatCount > 0) {
+                            isLongPressed = true
+                            onShowOptions()
+                            return@onKeyEvent true
+                        }
+                    } else if (native.action == KeyEvent.ACTION_UP) {
+                        if (isLongPressed) {
+                            isLongPressed = false
+                            return@onKeyEvent true
+                        } else {
+                            onLaunch()
+                            return@onKeyEvent true
+                        }
+                    }
+                } else if (native.keyCode == KeyEvent.KEYCODE_MENU && native.action == KeyEvent.ACTION_UP) {
+                    onShowOptions()
+                    return@onKeyEvent true
+                }
+                false
             }
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = { onLaunch() },
+                onLongClick = { onShowOptions() }
+            )
             .padding(10.dp)
     ) {
         Column(
@@ -1182,12 +1588,7 @@ fun TvAppCard(
                     imageVector = if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
                     contentDescription = null,
                     tint = if (app.isFavorite) Color(0xFFFFD600) else if (isFocused) Color.White.copy(alpha = 0.7f) else Color(0xFF334155),
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) { onToggleFav() }
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
@@ -1275,11 +1676,13 @@ fun drawableToBitmap(drawable: Drawable): Bitmap? {
 fun TvToolsView(
     report: FullHardwareReport?,
     runningApps: List<RunningAppInfo>,
+    hiddenAppsCount: Int,
     onRamBoost: () -> Unit,
     onTakeScreenshot: () -> Unit,
     onOpenShare: () -> Unit,
     onOpenDebloat: () -> Unit,
     onOpenNetwork: () -> Unit,
+    onOpenHiddenApps: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
     onGrantStorage: () -> Unit,
     onOpenSettings: () -> Unit,
@@ -1361,7 +1764,7 @@ fun TvToolsView(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            // Row 2: Debloat, Launcher, Storage, Network
+            // Row 2: Debloat, Network, Hidden Apps, Launcher
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -1375,27 +1778,27 @@ fun TvToolsView(
                     modifier = Modifier.weight(1f)
                 )
                 TvActionCard(
-                    title = stringResource(R.string.launcher_quick_title),
-                    subtitle = stringResource(R.string.launcher_quick_subtitle),
-                    icon = Icons.Default.Home,
-                    accentColor = Color(0xFFA78BFA),
-                    onClick = onSetDefaultLauncher,
-                    modifier = Modifier.weight(1f)
-                )
-                TvActionCard(
-                    title = stringResource(R.string.storage_quick_title),
-                    subtitle = stringResource(R.string.storage_quick_subtitle),
-                    icon = Icons.Default.Folder,
-                    accentColor = Color(0xFFF59E0B),
-                    onClick = onGrantStorage,
-                    modifier = Modifier.weight(1f)
-                )
-                TvActionCard(
                     title = stringResource(R.string.network_title),
                     subtitle = stringResource(R.string.network_subtitle),
                     icon = Icons.Default.Speed,
                     accentColor = Color(0xFF34D399),
                     onClick = onOpenNetwork,
+                    modifier = Modifier.weight(1f)
+                )
+                TvActionCard(
+                    title = stringResource(R.string.hidden_apps_title),
+                    subtitle = if (hiddenAppsCount > 0) "$hiddenAppsCount apps hidden" else stringResource(R.string.hidden_apps_subtitle),
+                    icon = Icons.Default.VisibilityOff,
+                    accentColor = Color(0xFFF59E0B),
+                    onClick = onOpenHiddenApps,
+                    modifier = Modifier.weight(1f)
+                )
+                TvActionCard(
+                    title = stringResource(R.string.launcher_quick_title),
+                    subtitle = stringResource(R.string.launcher_quick_subtitle),
+                    icon = Icons.Default.Home,
+                    accentColor = Color(0xFFA78BFA),
+                    onClick = onSetDefaultLauncher,
                     modifier = Modifier.weight(1f)
                 )
             }
