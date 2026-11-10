@@ -134,10 +134,14 @@ object HardwareAuditor {
 
         if (blockDeviceBytes != null) {
             val physicalGb = blockDeviceBytes.toDouble() / (1000.0 * 1000.0 * 1000.0) // Decimal GB
-            // If physical eMMC is ~16 GB (under 18 GB), but Android claims 32 GB or 64 GB
+            // If physical eMMC/flash is ~16 GB (under 18 GB), but Android claims 32 GB or 64 GB
             if (physicalGb <= 17.0 && totalAllocatedStorage > 20L * 1000L * 1000L * 1000L) {
                 isSpoofed = true
-                reason = "Flash block device mmcblk0 is only ${String.format(Locale.US, "%.1f", physicalGb)} GB (16 GB eMMC), but system claims ${String.format(Locale.US, "%.1f", totalAllocatedStorage.toDouble() / 1e9)} GB storage."
+                reason = "Flash block device is only ${String.format(Locale.US, "%.1f", physicalGb)} GB (16 GB chip), but system claims ${String.format(Locale.US, "%.1f", totalAllocatedStorage.toDouble() / 1e9)} GB storage."
+            } else if (physicalGb <= 9.0 && totalAllocatedStorage > 11L * 1000L * 1000L * 1000L) {
+                // If physical eMMC is ~8 GB (under 9 GB), but Android claims 16 GB, 32 GB, or 64 GB
+                isSpoofed = true
+                reason = "Flash block device is only ${String.format(Locale.US, "%.1f", physicalGb)} GB (8 GB chip), but system claims ${String.format(Locale.US, "%.1f", totalAllocatedStorage.toDouble() / 1e9)} GB storage."
             }
         }
 
@@ -174,9 +178,12 @@ object HardwareAuditor {
         var isSpoofed = false
         var reason = ""
 
-        // Check if Android 14 is claimed, but base API is <= 29 (Android 10) or 30 (Android 11)
+        // Check if Android 14/13/12 is claimed, but base API is <= 29 (Android 10) or 30 (Android 11)
         val claimedNum = reportedRelease.filter { it.isDigit() }.toIntOrNull() ?: 0
         if (claimedNum >= 14 && apiLevel < 34) {
+            isSpoofed = true
+            reason = "Claims Android $reportedRelease, but framework base is API $apiLevel ($detectedBase)."
+        } else if (claimedNum >= 13 && apiLevel < 33) {
             isSpoofed = true
             reason = "Claims Android $reportedRelease, but framework base is API $apiLevel ($detectedBase)."
         } else if (claimedNum >= 12 && apiLevel < 31) {
@@ -246,22 +253,79 @@ object HardwareAuditor {
         val board = Build.BOARD ?: ""
 
         val likelyChipset = when {
+            // Allwinner (Generic TV boxes)
             hardware.contains("sun50i", ignoreCase = true) || platform.contains("sun50i", ignoreCase = true) ||
                     hardware.contains("h313", ignoreCase = true) || hardware.contains("h616", ignoreCase = true) ->
-                "Allwinner H313 / H616 (Quad-Core Cortex-A53, Mali-G31 GPU)"
+                "Allwinner H313 / H616 Quad-Core Cortex-A53"
+            hardware.contains("sun4i", ignoreCase = true) || hardware.contains("sun7i", ignoreCase = true) ||
+                    hardware.contains("h6", ignoreCase = true) || hardware.contains("h618", ignoreCase = true) ->
+                "Allwinner H6 / H618 Quad-Core"
+
+            // Rockchip
             hardware.contains("rk3318", ignoreCase = true) || hardware.contains("rk3528", ignoreCase = true) ->
                 "Rockchip RK3318 / RK3528 Quad-Core"
+            hardware.contains("rk3328", ignoreCase = true) || hardware.contains("rk3399", ignoreCase = true) ->
+                "Rockchip RK3328 / RK3399"
+
+            // Amlogic (Common in Xiaomi Mi Box, Jio STB, Airtel Xstream Box)
+            hardware.contains("g12a", ignoreCase = true) || platform.contains("g12a", ignoreCase = true) ||
+                    hardware.contains("u202", ignoreCase = true) || board.contains("u202", ignoreCase = true) ->
+                "Amlogic S905X2 Quad-Core Cortex-A53 (Airtel / Jio / Mi)"
+            hardware.contains("sm1", ignoreCase = true) || platform.contains("sm1", ignoreCase = true) ->
+                "Amlogic S905X3 Quad-Core Cortex-A55"
+            hardware.contains("sc2", ignoreCase = true) || platform.contains("sc2", ignoreCase = true) ->
+                "Amlogic S905X4 Quad-Core Cortex-A55 (AV1 Hardware Decode)"
+            hardware.contains("g12b", ignoreCase = true) || platform.contains("g12b", ignoreCase = true) ->
+                "Amlogic S922X Hexa-Core"
             hardware.contains("meson", ignoreCase = true) || hardware.contains("gxl", ignoreCase = true) ||
-                    hardware.contains("p281", ignoreCase = true) ->
+                    hardware.contains("p281", ignoreCase = true) || hardware.contains("p212", ignoreCase = true) ->
                 "Amlogic S905W / S905X Quad-Core"
+
+            // MediaTek (Common in Sony Bravia, Xiaomi Mi TV, OnePlus TV)
+            hardware.contains("mt9611", ignoreCase = true) || platform.contains("mt9611", ignoreCase = true) ||
+                    hardware.contains("mt5895", ignoreCase = true) ->
+                "MediaTek MT9611 / MT5895 Quad-Core (Sony / Mi TV)"
+            hardware.contains("mt5893", ignoreCase = true) || hardware.contains("ur2", ignoreCase = true) ->
+                "MediaTek MT5893 Quad-Core (Sony Bravia 4K)"
+            hardware.contains("mt8695", ignoreCase = true) || hardware.contains("mt8696", ignoreCase = true) ->
+                "MediaTek MT8695 / MT8696 (Fire TV / Smart TV Stick)"
+            hardware.contains("mt", ignoreCase = true) || platform.contains("mt", ignoreCase = true) ->
+                "MediaTek TV SoC (${if (platform.isNotBlank()) platform else hardware})"
+
+            // Realtek (Common in Jio STB RTD series)
+            hardware.contains("rtd1319", ignoreCase = true) || platform.contains("rtd1319", ignoreCase = true) ->
+                "Realtek RTD1319 Quad-Core (Jio STB)"
+            hardware.contains("rtd1395", ignoreCase = true) || platform.contains("rtd1395", ignoreCase = true) ->
+                "Realtek RTD1395 Quad-Core (Jio STB)"
+            hardware.contains("rtd", ignoreCase = true) ->
+                "Realtek Smart TV SoC"
+
+            // Broadcom
+            hardware.contains("bcm", ignoreCase = true) || platform.contains("bcm", ignoreCase = true) ->
+                "Broadcom BCM72180 / BCM7268 STB SoC"
+
+            // Marvell Armada (Jio STB)
+            hardware.contains("armada", ignoreCase = true) || platform.contains("berlin", ignoreCase = true) ->
+                "Marvell Armada 1500 (Jio STB)"
+
             else -> "$hardware / $board ($cores cores)"
+        }
+
+        val gpu = when {
+            File("/sys/class/misc/mali0").exists() || File("/dev/mali0").exists() -> "ARM Mali GPU (Hardware Accelerated)"
+            File("/dev/pvr_sync").exists() || File("/sys/module/pvrsrvkm").exists() -> "PowerVR Rogue GPU"
+            File("/dev/kgsl-3d0").exists() -> "Qualcomm Adreno GPU"
+            likelyChipset.contains("Amlogic S905X4") -> "ARM Mali-G31 MP2 (Vulkan & OpenGL ES)"
+            likelyChipset.contains("Amlogic") -> "ARM Mali-450 / Mali-G31 GPU"
+            likelyChipset.contains("MediaTek") -> "ARM Mali-G52 / Mali-G57 GPU"
+            else -> "Hardware GPU Accelerator (OpenGL ES)"
         }
 
         return SocEvidence(
             cpuHardware = hardware,
             cpuCores = cores,
             cpuArchitecture = arch,
-            gpuRenderer = "ARM Mali-G31 (OpenGL ES)",
+            gpuRenderer = gpu,
             boardPlatform = platform,
             likelyChipset = likelyChipset
         )
@@ -353,7 +417,10 @@ object HardwareAuditor {
         val possiblePaths = listOf(
             "/sys/block/mmcblk0/size",
             "/sys/class/block/mmcblk0/size",
-            "/sys/block/mmcblk1/size"
+            "/sys/block/mmcblk1/size",
+            "/sys/block/sda/size",
+            "/sys/class/block/sda/size",
+            "/sys/block/sdb/size"
         )
         for (path in possiblePaths) {
             val file = File(path)
@@ -365,6 +432,19 @@ object HardwareAuditor {
                 } catch (_: Throwable) {}
             }
         }
+
+        // Fallback: Check /proc/partitions for whole disk devices
+        try {
+            val partitions = parseProcPartitions()
+            val mainDisk = partitions.firstOrNull {
+                it.name == "mmcblk0" || it.name == "sda" || (it.minor == 0 && (it.major == 179 || it.major == 8 || it.major == 259))
+            }
+            if (mainDisk != null && mainDisk.blocks > 0) {
+                // In /proc/partitions, blocks are 1024 bytes (equivalent to 2 sectors of 512 bytes)
+                return mainDisk.blocks * 2L
+            }
+        } catch (_: Throwable) {}
+
         return null
     }
 
