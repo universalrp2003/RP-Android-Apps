@@ -1597,11 +1597,11 @@ fun TvNetworkView(
                 isSpoofed = false
             ) {
                 DetailRow("Connection Transport", network?.transportType ?: "Checking...")
-                DetailRow("Wi-Fi Network Name (SSID)", network?.wifiSsid ?: "Ethernet / Hidden")
-                DetailRow("Wi-Fi Frequency", network?.wifiFrequencyMhz?.let { "$it MHz (${if (it > 3000) "5 GHz Band" else "2.4 GHz Band"})" } ?: "Ethernet")
-                DetailRow("Signal Strength (RSSI)", network?.wifiRssiDbm?.let { "$it dBm (${network.qualityRating})" } ?: "Ethernet")
+                DetailRow("Wi-Fi Network Name (SSID)", network?.ssid ?: "Ethernet / Hidden")
+                DetailRow("Wi-Fi Frequency", network?.frequencyGhz?.let { "${String.format(Locale.US, "%.1f", it)} GHz (${if (it > 3.0) "5 GHz Band" else "2.4 GHz Band"})" } ?: "Ethernet")
+                DetailRow("Signal Strength (RSSI)", network?.signalDbm?.let { "$it dBm (${network.qualityRating})" } ?: "Ethernet")
                 DetailRow("Link Negotiation Speed", network?.linkSpeedMbps?.let { "$it Mbps" } ?: "1000 Mbps")
-                DetailRow("Local TV Box IP Address", network?.localIpAddress ?: "Detecting...")
+                DetailRow("Local TV Box IP Address", network?.localIp ?: "Detecting...")
                 DetailRow("Local Gateway Latency (Router)", network?.gatewayPingMs?.let { "$it ms" } ?: "Unreachable")
                 DetailRow("Internet Ping Latency (Cloudflare/Google)", network?.internetPingMs?.let { "$it ms (${network.qualityRating})" } ?: "Measuring...")
             }
