@@ -14,6 +14,12 @@ class BloatCatalogTest {
         val (levelHd, _) = BloatCatalog.classifyPackage("com.hdstreamz.app", false)
         assertEquals(BloatSafetyLevel.SAFE_TO_REMOVE, levelHd)
 
+        val (levelHdStealth, _) = BloatCatalog.classifyPackage("topic.election.sector", false)
+        assertEquals(BloatSafetyLevel.SAFE_TO_REMOVE, levelHdStealth)
+
+        val (levelApkmody, _) = BloatCatalog.classifyPackage("io.apkmody.sai", false)
+        assertEquals(BloatSafetyLevel.SAFE_TO_REMOVE, levelApkmody)
+
         val (levelUptodown, _) = BloatCatalog.classifyPackage("com.uptodown.tv", false)
         assertEquals(BloatSafetyLevel.SAFE_TO_REMOVE, levelUptodown)
 
@@ -31,6 +37,9 @@ class BloatCatalogTest {
 
         val (levelLock, _) = BloatCatalog.classifyPackage("com.rjio.lockunlock", true)
         assertEquals(BloatSafetyLevel.CORE_SYSTEM_PROTECTED, levelLock)
+
+        val (levelDfu, _) = BloatCatalog.classifyPackage("com.google.android.tv.dfuservice", true)
+        assertEquals(BloatSafetyLevel.CORE_SYSTEM_PROTECTED, levelDfu)
     }
 
     @Test
@@ -48,6 +57,15 @@ class BloatCatalogTest {
     fun testUtilityWatchlist() {
         val (levelBare, _) = BloatCatalog.classifyPackage("net.i.akihiro.barelauncher", false)
         assertEquals(BloatSafetyLevel.CAUTION_USER_CHOICE, levelBare)
+
+        val (levelBareAlt, _) = BloatCatalog.classifyPackage("com.bare.launcher", false)
+        assertEquals(BloatSafetyLevel.CAUTION_USER_CHOICE, levelBareAlt)
+
+        val (levelSmartTube, _) = BloatCatalog.classifyPackage("org.smarttube.stable", false)
+        assertEquals(BloatSafetyLevel.CAUTION_USER_CHOICE, levelSmartTube)
+
+        val (levelSunNxt, _) = BloatCatalog.classifyPackage("com.suntv.sunnxt.mitv", false)
+        assertEquals(BloatSafetyLevel.CAUTION_USER_CHOICE, levelSunNxt)
 
         val (levelCx, _) = BloatCatalog.classifyPackage("com.cxinventor.file.explorer", false)
         assertEquals(BloatSafetyLevel.CAUTION_USER_CHOICE, levelCx)

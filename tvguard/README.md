@@ -51,15 +51,27 @@ Budget Android TV boxes (Allwinner H313/H616, Rockchip RK3318/RK3528, Amlogic S9
 
 ### 3. Clean TV Home Launcher Mode
 - Optional Leanback default home launcher (`CATEGORY_LEANBACK_LAUNCHER` & `CATEGORY_HOME`).
+- Direct **"Set Default Launcher"** action prompt for simple one-click home replacement.
 - High-contrast digital clock, date, and live status pills:
   - Live RAM usage (`%.1f GB Free (xx% Used)`).
   - Live Flash Storage free space.
   - Live Wi-Fi signal and ping latency.
-  - Live Root state badge.
+  - Live Root state badge (`Root: Active` / `Unrooted`).
 - One-click **RAM Boost** (trims background app caches and drops kernel page caches if root is active).
+- **Take Screenshot:** Direct screenshot button saving clean PNG captures to `/sdcard/Download` (instant and 3-second delay modes) using silent root `screencap -p` or high-fidelity PixelCopy.
+- **Original App Icons:** Renders original, authentic high-resolution application icons for all installed apps in favorites row and app grid.
 - D-pad friendly favorites row and clean installed apps grid. Zero ads, zero background tracking, $< 30\text{ MB}$ memory footprint.
 
-### 4. Internet & Wi-Fi Quality Monitor
+### 4. Local Wi-Fi File Hub (Zero-USB Transfer)
+- Embedded lightweight HTTP server on port `8080` (e.g. `http://192.168.10.104:8080`).
+- Allows transferring APKs and files directly from any phone, laptop, or tablet on the same Wi-Fi network without USB flash drives or cables.
+- Web dashboard features:
+  - **APK & File Upload:** Drag-and-drop file upload directly to `/sdcard/Download` with one-click TV package installation prompt.
+  - **TV Screenshots Explorer:** Browse and download TV screenshots directly to phone or laptop.
+  - **Remote TV Actions:** Trigger TV screenshot capture or RAM Boost directly from your browser.
+  - **Storage Permission:** One-click helper for granting Android All Files Access (`MANAGE_EXTERNAL_STORAGE`).
+
+### 5. Internet & Wi-Fi Quality Monitor
 - Active connection interface (Wi-Fi 5GHz / 2.4GHz or Ethernet).
 - Signal strength (RSSI dBm), link negotiation speed (Mbps), local IP, and gateway route.
 - Live TCP latency probe to Google DNS (`8.8.8.8`) and Cloudflare DNS (`1.1.1.1`).
@@ -73,5 +85,7 @@ Budget Android TV boxes (Allwinner H313/H616, Rockchip RK3318/RK3528, Amlogic S9
 
 - **வன்பொருள் உண்மை தணிக்கை:** போலி ரேம் (RAM), போலி சேமிப்பகம் (Storage), போலி ஆண்ட்ராய்டு பதிப்பு ஆகியவற்றை லினக்ஸ் கர்னல் மற்றும் இஎம்எம்சி (eMMC) தொகுதி அளவுகள் மூலம் துல்லியமாகக் கண்டறிந்து உண்மை விவரங்களை வெளிப்படுத்துகிறது.
 - **தேவையற்ற செயலிகள் நீக்கம் (Debloater):** முன்கூட்டியே நிறுவப்பட்ட ஆபத்தான விளம்பர செயலிகள், தேவையற்ற ஸ்ட்ரீமிங் செயலிகளை ரூட் (Root) அல்லது வயர்லெஸ் ஏடிபி (Wireless ADB) மூலம் எளிதாக நீக்க உதவுகிறது.
-- **தூய டிவி முகப்பு (Clean Launcher):** குறைந்த நினைவக பயன்பாடு, நேரடி ரேம் மற்றும் சேமிப்பக தகவல், இணைய பிங் தரம் மற்றும் ரிமோட் மூலம் எளிதாக இயக்கக்கூடிய வண்ணக் குறியீடுகள் கொண்ட முகப்புத் திரை.
+- **தூய டிவி முகப்பு (Clean Launcher):** குறைந்த நினைவக பயன்பாடு, நேரடி ரேம் மற்றும் சேமிப்பக தகவல், இணைய பிங் தரம், அனைத்து செயலிகளின் அசல் சின்னங்கள் (Original Icons) மற்றும் ரிமோட் மூலம் எளிதாக இயக்கக்கூடிய வண்ணக் குறியீடுகள் கொண்ட முகப்புத் திரை.
+- **திரைப்படம் எடுத்தல் (Screenshot):** டிவி திரையை நேரடியாக `/sdcard/Download` கோப்புறையில் சேமிக்கும் வசதி (உடனடி மற்றும் 3 நொடி தாமத முறை).
+- **வைஃபை கோப்பு மையம் (Wi-Fi File Hub):** யூ.எஸ்.பி கேபிள் அல்லது பென்டிரைவ் இன்றி, அதே வைஃபை நெட்வொர்க்கில் உள்ள போன் அல்லது கணினி மூலம் டிவிக்கு ஏபிகே (APK) கோப்புகளை அனுப்பவும், டிவியின் ஸ்கிரீன்ஷாட்களை பதிவிறக்கவும் எளிய இணைய சேவையகம்.
 - **இணைய வேகத் தணிக்கை:** வைஃபை சிக்னல் வலிமை (RSSI), இணைப்பு வேகம் மற்றும் நேரடி தாமத (Ping) சோதனை.

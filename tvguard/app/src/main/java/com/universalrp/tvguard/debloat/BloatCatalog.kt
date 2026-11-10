@@ -20,10 +20,12 @@ object BloatCatalog {
     val KNOWN_BLOATWARE = mapOf(
         "com.hdstreamz.app" to "HD Streamz (Pirated stream player, known ad injection/mining risk)",
         "com.hdstreamz" to "HD Streamz (Pirated stream player)",
+        "topic.election.sector" to "HD Streamz (Pirated stream player with disguised package name)",
         "com.uptodown" to "Uptodown App Store (Third-party untrusted APK market)",
         "com.uptodown.tv" to "Uptodown TV (Third-party untrusted APK market)",
         "com.xapks.installer" to "XAPKS Installer (Ad-heavy sideloading tool)",
         "com.xapks" to "XAPKS Installer",
+        "io.apkmody.sai" to "XAPKS Installer (Modded third-party installer with adware risk)",
         "com.apkpure.aegon" to "APKPure (Ad-supported third-party store)",
         "com.adups.fota" to "Adups FOTA (Known firmware backdoor / telemetry service)",
         "com.adups.fota.sysoper" to "Adups System Operator (Telemetry backdoor)",
@@ -59,11 +61,18 @@ object BloatCatalog {
 
     val UTILITY_WATCHLIST = mapOf(
         "net.i.akihiro.barelauncher" to "Bare Launcher (Lightweight third-party launcher)",
+        "com.bare.launcher" to "Bare Launcher (Minimalist TV launcher)",
         "net.aisup.simpletvlauncher" to "Simple TV Launcher (Alternative clean launcher)",
+        "org.cosinus.launchertv" to "Simple TV Launcher (Alternative clean TV launcher)",
         "com.cxinventor.file.explorer" to "Cx File Explorer (Third-party file manager)",
         "com.duckduckgo.mobile.android" to "DuckDuckGo Browser (Privacy browser)",
         "com.tplink.iot" to "Tapo (TP-Link smart camera utility)",
         "com.teamsmart.videomanager.tv" to "SmartTube (Ad-free TV YouTube client)",
+        "org.smarttube.stable" to "SmartTube (Ad-free TV YouTube client)",
+        "com.suntv.sunnxt.mitv" to "Sun NXT TV (Indian OTT streaming client)",
+        "com.google.android.apps.bard" to "Google Gemini AI Assistant",
+        "notrack.ai" to "NoTrack AI Privacy Utility",
+        "com.droidlogic.allapps" to "DroidLogic TV App Drawer",
         "org.schabi.newpipe" to "NewPipe (YouTube client)"
     )
 
@@ -75,6 +84,7 @@ object BloatCatalog {
         "com.google.android.gms",
         "com.android.vending",
         "com.google.android.gsf",
+        "com.google.android.tv.dfuservice",
         "com.android.inputmethod.latin",
         "com.google.android.inputmethod.latin",
         "com.google.android.katniss",

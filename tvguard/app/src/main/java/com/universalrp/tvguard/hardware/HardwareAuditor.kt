@@ -283,16 +283,35 @@ object HardwareAuditor {
 
         var canExecRoot = false
         if (isSuPresent) {
-            try {
-                val process = Runtime.getRuntime().exec(arrayOf("su", "-c", "id"))
-                val reader = BufferedReader(InputStreamReader(process.inputStream))
-                val output = reader.readLine() ?: ""
-                process.waitFor()
-                if (output.contains("uid=0(root)")) {
-                    canExecRoot = true
-                }
-            } catch (_: Throwable) {
-                canExecRoot = false
+            val candidates = mutableListOf("su")
+            candidates.addAll(foundPaths)
+
+            for (bin in candidates.distinct()) {
+                // Method 1: stdin pipe
+                try {
+                    val proc = Runtime.getRuntime().exec(bin)
+                    proc.outputStream.bufferedWriter().use { writer ->
+                        writer.write("id\nexit\n")
+                        writer.flush()
+                    }
+                    val out = proc.inputStream.bufferedReader().readText()
+                    proc.waitFor()
+                    if (out.contains("uid=0")) {
+                        canExecRoot = true
+                        break
+                    }
+                } catch (_: Throwable) {}
+
+                // Method 2: -c flag
+                try {
+                    val proc = Runtime.getRuntime().exec(arrayOf(bin, "-c", "id"))
+                    val out = proc.inputStream.bufferedReader().readText()
+                    proc.waitFor()
+                    if (out.contains("uid=0")) {
+                        canExecRoot = true
+                        break
+                    }
+                } catch (_: Throwable) {}
             }
         }
 

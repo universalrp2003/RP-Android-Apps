@@ -5,10 +5,19 @@
     <string name="tab_home">முகப்பு</string>
     <string name="tab_audit">வன்பொருள் உண்மை</string>
     <string name="tab_debloat">செயலி நீக்கி</string>
+    <string name="tab_share">வைஃபை பகிர்வு</string>
     <string name="tab_network">இணைய தரம்</string>
 
     <string name="ram_boost_title">நினைவக வேகம்</string>
     <string name="ram_boost_subtitle">பின்னணி செயலிகளை அகற்றி நினைவகம் மீட்டல்</string>
+    <string name="screenshot_title">திரைப்படம் எடு</string>
+    <string name="screenshot_subtitle">டிவி திரையை பதிவிறக்க கோப்புறையில் சேமி</string>
+    <string name="share_quick_title">வைஃபை கோப்பு மையம்</string>
+    <string name="share_quick_subtitle">யூஎஸ்பி இன்றி போனில் இருந்து டிவிக்கு அனுப்பு</string>
+    <string name="launcher_quick_title">முதன்மை முகப்பு</string>
+    <string name="launcher_quick_subtitle">டிவி கார்டை முகப்பாக மாற்று</string>
+    <string name="storage_quick_title">சேமிப்பக அனுமதி</string>
+    <string name="storage_quick_subtitle">பதிவிறக்க கோப்புறையை முழுமையாக அணுகு</string>
     <string name="hardware_audit_title">வன்பொருள் உண்மை</string>
     <string name="hardware_audit_subtitle">போலி ரேம் மற்றும் சேமிப்பகம் கண்டறிதல்</string>
     <string name="debloat_title">செயலி நீக்கி</string>
@@ -33,9 +42,15 @@
     <string name="btn_run_audit">மீண்டும் ஆய்வு செய்</string>
     <string name="btn_run_alloc_test">அதிகபட்ச நினைவக வரம்பு சோதனை</string>
     <string name="btn_boost_ram">நினைவகத்தை மீட்டெடு</string>
+    <string name="btn_take_screenshot">இப்போதே திரைப்பிடி எடு</string>
+    <string name="btn_take_screenshot_3s">3 நொடியில் எடு</string>
     <string name="btn_uninstall">நீக்கு</string>
     <string name="btn_uninstall_root">ரூட் மூலம் உடனடியாக நீக்கு</string>
     <string name="btn_adb_guide">ADB வயர்லெஸ் கட்டளைகளைக் காட்டு</string>
+    <string name="btn_start_server">வைஃபை சேவையகத்தைத் தொடங்கு</string>
+    <string name="btn_stop_server">சேவையகத்தை நிறுத்து</string>
+    <string name="btn_set_launcher">முதன்மை முகப்பாக மாற்று</string>
+    <string name="btn_grant_storage">சேமிப்பக அனுமதி வழங்கு</string>
 
     <string name="category_safe">நீக்க பாதுகாப்பானது (தேவையற்றவை)</string>
     <string name="category_caution">பயனர் முடிவு (கருவிகள்)</string>

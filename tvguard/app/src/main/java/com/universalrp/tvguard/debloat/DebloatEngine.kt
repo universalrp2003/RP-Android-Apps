@@ -48,28 +48,68 @@ object DebloatEngine {
     }
 
     /**
+     * Executes root command trying both stdin pipe and -c across known su paths.
+     */
+    fun executeRootCommand(command: String): Result<String> {
+        val suPaths = listOf(
+            "su",
+            "/system/xbin/su",
+            "/system/bin/su",
+            "/vendor/bin/su",
+            "/sbin/su"
+        ).filter { it == "su" || java.io.File(it).exists() }
+
+        var lastError = ""
+
+        for (binary in suPaths) {
+            // Method 1: Interactive stdin
+            try {
+                val proc = Runtime.getRuntime().exec(binary)
+                proc.outputStream.bufferedWriter().use { writer ->
+                    writer.write(command)
+                    writer.write("\nexit\n")
+                    writer.flush()
+                }
+                val out = proc.inputStream.bufferedReader().readText().trim()
+                val err = proc.errorStream.bufferedReader().readText().trim()
+                proc.waitFor()
+                if (out.contains("Success", ignoreCase = true) || proc.exitValue() == 0) {
+                    return Result.success(out.ifBlank { "Executed via $binary: $command" })
+                }
+                if (err.isNotBlank()) lastError = err
+            } catch (e: Throwable) {
+                lastError = e.message ?: "Failed"
+            }
+
+            // Method 2: -c flag
+            try {
+                val proc = Runtime.getRuntime().exec(arrayOf(binary, "-c", command))
+                val out = proc.inputStream.bufferedReader().readText().trim()
+                val err = proc.errorStream.bufferedReader().readText().trim()
+                proc.waitFor()
+                if (out.contains("Success", ignoreCase = true) || (err.isBlank() && proc.exitValue() == 0)) {
+                    return Result.success(out.ifBlank { "Executed via $binary -c: $command" })
+                }
+                if (err.isNotBlank()) lastError = err
+            } catch (e: Throwable) {
+                lastError = e.message ?: "Failed"
+            }
+        }
+
+        return Result.failure(Exception(lastError.ifBlank { "Root command failed: $command" }))
+    }
+
+    /**
      * Executes root uninstall for current user: `pm uninstall -k --user 0 <package>`
      * This works on both system apps and user apps even when /system is mounted read-only!
      */
     fun removeWithRoot(packageName: String): Result<String> {
-        return try {
-            val cmd = "pm uninstall -k --user 0 $packageName"
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = reader.readText().trim()
-            val errorReader = BufferedReader(InputStreamReader(process.errorStream))
-            val error = errorReader.readText().trim()
-            process.waitFor()
-
-            if (output.contains("Success", ignoreCase = true)) {
-                Result.success("Uninstalled: $packageName")
-            } else if (error.isNotBlank()) {
-                Result.failure(Exception("Root error: $error"))
-            } else {
-                Result.success(output.ifBlank { "Executed $cmd" })
-            }
-        } catch (e: Throwable) {
-            Result.failure(e)
+        val cmd = "pm uninstall -k --user 0 $packageName"
+        val res = executeRootCommand(cmd)
+        return if (res.isSuccess) {
+            Result.success("Uninstalled: $packageName")
+        } else {
+            res
         }
     }
 
@@ -77,15 +117,12 @@ object DebloatEngine {
      * Freezes/disables package via root: `pm disable-user --user 0 <package>`
      */
     fun disableWithRoot(packageName: String): Result<String> {
-        return try {
-            val cmd = "pm disable-user --user 0 $packageName"
-            val process = Runtime.getRuntime().exec(arrayOf("su", "-c", cmd))
-            val reader = BufferedReader(InputStreamReader(process.inputStream))
-            val output = reader.readText().trim()
-            process.waitFor()
-            Result.success("Disabled: $packageName ($output)")
-        } catch (e: Throwable) {
-            Result.failure(e)
+        val cmd = "pm disable-user --user 0 $packageName"
+        val res = executeRootCommand(cmd)
+        return if (res.isSuccess) {
+            Result.success("Disabled: $packageName")
+        } else {
+            res
         }
     }
 
