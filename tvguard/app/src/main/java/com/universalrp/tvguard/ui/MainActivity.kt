@@ -1,6 +1,7 @@
 package com.universalrp.tvguard.ui
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -222,6 +223,9 @@ class MainActivity : ComponentActivity() {
             onRemoteKey?.invoke(event.keyCode) == true
     }
 
+    // This overrides Activity's public key-dispatch contract; AndroidX marks its
+    // intermediate override restricted even though Activity dispatch is the entry point.
+    @SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =
         if (handleRemoteKey(event)) true else super.dispatchKeyEvent(event)
 

@@ -37,6 +37,20 @@ jobs:
         run: |
           gradle :tvguard:testDebugUnitTest :tvguard:lintDebug :tvguard:assembleDebug --no-daemon --stacktrace 2>&1 | tee tvguard-build.log
 
+      - name: Verify required unit tests actually ran
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          roots = [ET.parse(p).getroot() for p in Path('tvguard/app/build/test-results/testDebugUnitTest').glob('TEST-*.xml')]
+          cases = [c for root in roots for c in root.iter('testcase')]
+          classes = {c.get('classname', '').rsplit('.', 1)[-1] for c in cases}
+          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest'}
+          assert len(cases) >= 33 and required <= classes, 'Required TV Guard unit tests did not run'
+          assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A TV Guard unit test failed or was skipped'
+          print(f'::notice title=TV Guard unit tests::{len(cases)} unit tests passed, including feature, transfer, hardware and voice checks')
+          PY
+
       - name: Expose actionable compiler and lint errors
         if: failure()
         run: |
@@ -53,6 +67,16 @@ jobs:
           for line in found[:35]:
               text = line.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
               print("::error title=TV Guard build diagnostic::" + text)
+          import xml.etree.ElementTree as ET
+          for path in Path('tvguard/app/build/test-results').rglob('TEST-*.xml'):
+              try: root = ET.parse(path).getroot()
+              except ET.ParseError: continue
+              for case in root.iter('testcase'):
+                  for kind in ('failure', 'error'):
+                      failure = case.find(kind)
+                      if failure is not None:
+                          text = case.get('classname', '') + '.' + case.get('name', '') + '\n' + (failure.text or '')
+                          print('::error title=TV Guard unit test::' + text[:10000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           PYDIAG
 
       - uses: actions/upload-artifact@v4
