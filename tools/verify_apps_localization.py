@@ -1245,13 +1245,21 @@ def verify_site_versions_match_downloads() -> int:
     if expected_intro not in site:
         raise ValueError("Website intro must match the header grouping and keep DailyVault among regular apps.")
 
-    regular = re.search(r'<section class="grid" aria-label="13 regular Android applications">(.*?)</section>', site, re.S)
+    regular = re.search(
+        rf'<section class="grid" aria-label="{non_store_count} regular Android applications">(.*?)</section>',
+        site, re.S,
+    )
     optional = re.search(r'<section class="grid" aria-label="Optional Tamilan Store">(.*?)</section>', site, re.S)
     if not regular or not optional:
-        raise ValueError("Website must separate the thirteen regular app cards from optional Store.")
+        raise ValueError(f"Website must separate the {non_store_count} regular app cards from optional Store.")
     ids = re.findall(r'<h2 id="(app-[^"]+)"', regular[1])
-    if len(ids) != 13 or ids[-1] != "app-daily-vault" or "app-tamilan-store" in ids:
-        raise ValueError("DailyVault must be the thirteenth regular non-Store app card.")
+    # The count is derived from SisterApps.kt; the last regular card is whichever app is listed
+    # just before the Store there, so adding an app does not silently mislabel the section.
+    last_regular = "app-" + re.findall(r'id = "([^"]+)"', sister_source)[-2].replace("tvguard", "tv-guard")
+    if len(ids) != non_store_count or ids[-1] != last_regular or "app-tamilan-store" in ids:
+        raise ValueError(
+            f"The regular apps section must hold exactly {non_store_count} non-Store cards, ending with {last_regular}."
+        )
     if re.findall(r'<h2 id="(app-[^"]+)"', optional[1]) != ["app-tamilan-store"]:
         raise ValueError("Only Tamilan Store belongs in the separate optional section.")
 

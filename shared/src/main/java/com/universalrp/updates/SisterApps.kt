@@ -164,15 +164,15 @@ object SisterApps {
             packageName = "com.universalrp.dailyvault", aboutLabel = "தினக்கணக்கு / DailyVault — GitHub release",
         ),
         SisterApp(
-            id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.12", publishedVersion = "0.12",
-            packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
-        ),
-        SisterApp(
             id = "tvguard", name = "Android TV Guard (டிவி காவலன்)", tamilName = "டிவி காவலன்",
             tagPrefix = "tvguard", version = "1.5.1", publishedVersion = "1.5.1",
             packageName = "com.universalrp.tvguard",
             aboutLabel = "Android TV Guard (டிவி காவலன்) — Android TV release",
+        ),
+        SisterApp(
+            id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
+            tagPrefix = "tamilan-store", version = "0.12", publishedVersion = "0.12",
+            packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
 
