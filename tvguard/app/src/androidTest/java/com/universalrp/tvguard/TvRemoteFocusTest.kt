@@ -239,7 +239,7 @@ class TvRemoteFocusTest {
             }
             current = tag
         }
-        press(current, DpadTraversalFeatures.last(), DpadTraversalFeatures.last())
+        press(current, Key.DirectionDown, "feature-${DpadTraversalFeatures.last().key}")
         for (feature in DpadTraversalFeatures.dropLast(1).asReversed()) {
             val tag = "feature-${feature.key}"
             press(current, Key.DirectionUp, tag)
