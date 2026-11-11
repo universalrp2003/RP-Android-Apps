@@ -17,10 +17,10 @@ import android.os.StatFs
  * /data as 32 GiB total with 25.9 GiB available on a 14.68 GiB chip. 25.9 GiB is smaller than
  * 32 GiB, so a self-consistency check sees nothing wrong.
  *
- * The only figure that cannot be inflated is the physical device size, read from
- * /sys/block/*/size and /proc/partitions, which the audit screen already cross-checks. Free
- * space is therefore capped by that: a remounted filesystem can claim any size, the hardware
- * cannot.
+ * The only figure that cannot be inflated is the physical device size, read from the per-disk
+ * size files under /sys/block and /proc/partitions, which the audit screen already
+ * cross-checks. Free space is therefore capped by that: a remounted filesystem can claim any
+ * size, the hardware cannot.
  */
 object StorageTruth {
 

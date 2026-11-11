@@ -1979,17 +1979,19 @@ fun TvToolsView(
                     // The figure the pill shows: free space after the physical-disk check. Stated
                     // separately so a filesystem that overstates its own size is visible here
                     // rather than silently capped in one place and not the other.
-                    DetailRow(
-                        stringResource(R.string.storage_honest_free),
-                        com.universalrp.tvguard.hardware.StorageTruth.honestFreeSpace(context)?.let {
-                            stringResource(
-                                R.string.storage_honest_free_value,
-                                gib(it.freeBytes),
-                                gib(it.totalBytes),
-                                if (it.capped) stringResource(R.string.storage_capped_note) else ""
-                            )
-                        } ?: stringResource(R.string.evidence_unavailable)
-                    )
+                    val honest = com.universalrp.tvguard.hardware.StorageTruth.honestFreeSpace(context)
+                    val honestText: String = if (honest == null) {
+                        stringResource(R.string.evidence_unavailable)
+                    } else {
+                        val note = if (honest.capped) stringResource(R.string.storage_capped_note) else ""
+                        stringResource(
+                            R.string.storage_honest_free_value,
+                            gib(honest.freeBytes),
+                            gib(honest.totalBytes),
+                            note
+                        )
+                    }
+                    DetailRow(stringResource(R.string.storage_honest_free), honestText)
                     DetailRow(stringResource(R.string.storage_system), capacity(storage.systemTotalBytes))
                     DetailRow(stringResource(R.string.storage_vendor), capacity(storage.vendorTotalBytes))
                     DetailRow(stringResource(R.string.storage_cache), capacity(storage.cacheTotalBytes))
