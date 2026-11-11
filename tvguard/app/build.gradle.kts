@@ -35,7 +35,9 @@ android {
         // increase this code and use the same signing identity. Code 3 adds the status
         // overlay and the optional AI assistant; it must update over code 2 in place.
         versionCode = if (upgradeFixture) 1 else 3
-        versionName = "1.1"
+        // The upgrade fixture deliberately impersonates the older 1.0 / code 1 install so a
+        // same-signer in-place upgrade can be exercised; only the real candidate moves on.
+        versionName = if (upgradeFixture) "1.0" else "1.1"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
