@@ -40,6 +40,9 @@ jobs:
         with:
           gradle-version: '8.14.3'
 
+      - name: Check TV Guard string resources before building
+        run: python3 tools/verify_tvguard_resources.py
+
       - name: Test and assemble TV Guard
         shell: bash
         run: |
@@ -235,6 +238,7 @@ jobs:
           set -euo pipefail
           work="$RUNNER_TEMP/tvguard-signed-candidate"
           mkdir -p "$work"
+          python3 tools/verify_tvguard_resources.py
           python3 -m unittest discover -s tvguard/tools -p 'test_*.py' -v
           python3 tools/verify_apps_localization.py
           gradle -PtvguardRequireStableSigner=true -PtvguardSignedUpgradeFixture=true :tvguard:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$work/fixture-build.log"

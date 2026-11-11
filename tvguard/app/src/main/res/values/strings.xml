@@ -225,7 +225,7 @@
     <string name="overlay_notification_title">Status overlay is on</string>
     <string name="overlay_notification_text">Showing free CPU, RAM, storage and network quality over other apps.</string>
     <string name="feature_status_overlay">Status pill over other apps</string>
-    <string name="feature_status_overlay_desc">Draws the four readings on top of whatever is on screen, at about 50% transparency. Needs "Display over other apps" and the top status bar. Secure or system screens may hide it.</string>
+    <string name="feature_status_overlay_desc">Draws the four readings on top of whatever is on screen, at about 50%% transparency. Needs "Display over other apps" and the top status bar. Secure or system screens may hide it.</string>
     <string name="overlay_permission_needed">Allow "display over other apps" to use the overlay.</string>
     <string name="overlay_permission_grant">Open overlay permission</string>
     <string name="overlay_blocked_note">Android hides overlays over secure or system screens such as DRM video and some dialogs. There is no supported workaround, so the pill may not appear there.</string>
@@ -249,7 +249,7 @@
     <string name="ai_model_load">Load models</string>
     <string name="ai_model_loading">Loading models…</string>
     <string name="ai_models_from_provider">Models reported by your provider (%1$d). Select one, or type an id.</string>
-    <string name="ai_models_none">The provider did not return a model list. Type the model id yourself and check the provider's documentation.</string>
+    <string name="ai_models_none">The provider did not return a model list. Type the model id yourself and check the provider\'s documentation.</string>
     <string name="ai_api_key">API key</string>
     <string name="ai_api_key_saved">A key is saved and encrypted on this TV.</string>
     <string name="ai_api_key_placeholder">Paste the key on this TV only</string>
