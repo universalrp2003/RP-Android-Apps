@@ -241,7 +241,9 @@ object LocalWebTransferServer {
                 (method == "POST" || method == "GET") && path == "/api/launch" -> {
                     val app = queryParams["app"] ?: ""
                     val ok = launchAppByName(context, app)
-                    sendJsonResponse(output, 200, "{\"success\":$ok,\"app\":\"$app\"}")
+                    // The browser already knows the requested name; do not splice
+                    // untrusted query text into JSON (quotes or newlines break it).
+                    sendJsonResponse(output, 200, "{\"success\":$ok}")
                 }
 
                 (method == "POST" || method == "GET") && path == "/delete" -> {
@@ -360,12 +362,16 @@ object LocalWebTransferServer {
         }
 
         for (pkg in targetPkgs) {
-            val launchIntent = pm.getLaunchIntentForPackage(pkg)
-                ?: pm.getLeanbackLaunchIntentForPackage(pkg)
-            if (launchIntent != null) {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(launchIntent)
-                return true
+            try {
+                val launchIntent = pm.getLaunchIntentForPackage(pkg)
+                    ?: pm.getLeanbackLaunchIntentForPackage(pkg)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(launchIntent)
+                    return true
+                }
+            } catch (_: Exception) {
+                // An app can disappear or reject the launch after it was queried.
             }
         }
         return false

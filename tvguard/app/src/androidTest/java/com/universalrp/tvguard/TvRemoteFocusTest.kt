@@ -24,8 +24,11 @@ import com.universalrp.tvguard.settings.TvFeatureSettings
 import com.universalrp.tvguard.ui.MainActivity
 import com.universalrp.tvguard.web.LocalWebTransferServer
 import java.net.Socket
+import java.net.URLEncoder
+import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -96,12 +99,14 @@ class TvRemoteFocusTest {
         compose.waitUntil(timeoutMillis = 10_000) { LocalWebTransferServer.isRunning == running }
     }
 
-    private fun hubStatus(path: String): String = Socket("127.0.0.1", LocalWebTransferServer.activePort).use { socket ->
+    private fun hubResponse(path: String): String = Socket("127.0.0.1", LocalWebTransferServer.activePort).use { socket ->
         socket.soTimeout = 3_000
         socket.getOutputStream().write("GET $path HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n".toByteArray())
         socket.getOutputStream().flush()
-        socket.getInputStream().bufferedReader().readLine()
+        socket.getInputStream().bufferedReader().readText()
     }
+
+    private fun hubStatus(path: String): String = hubResponse(path).substringBefore("\r\n")
 
     private fun sendLauncherHomeIntent() {
         val activity = compose.activity
@@ -171,6 +176,13 @@ class TvRemoteFocusTest {
                     assertEquals("HTTP/1.1 400 Bad Request", hubStatus("/api/key?code=0"))
                     assertEquals("HTTP/1.1 403 Forbidden", hubStatus("/api/screenshot"))
                     assertEquals("HTTP/1.1 403 Forbidden", hubStatus("/api/boost"))
+                    val untrusted = URLEncoder.encode("invalid.package\",\"injected\":true,\"tail\":\"", "UTF-8")
+                    val response = hubResponse("/api/launch?app=$untrusted")
+                    assertEquals("HTTP/1.1 200 OK", response.substringBefore("\r\n"))
+                    val body = JSONObject(response.substringAfter("\r\n\r\n"))
+                    assertFalse(body.getBoolean("success"))
+                    assertFalse(body.has("injected"))
+                    assertFalse(body.has("app"))
                 }
                 else -> Unit
             }
