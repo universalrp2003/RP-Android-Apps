@@ -1,7 +1,10 @@
 package com.universalrp.tvguard
 
+import android.content.Intent
 import android.view.KeyEvent
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasTestTag
@@ -11,6 +14,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.pressKey
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.universalrp.tvguard.launcher.TvAppCatalog
 import com.universalrp.tvguard.settings.TvFeaturePreferences
 import com.universalrp.tvguard.settings.TvFeatureSettings
 import com.universalrp.tvguard.ui.MainActivity
@@ -44,12 +48,53 @@ class TvLongPressOptionsTest {
         previousSettings = preferences.load()
         preferences.save(TvFeatureSettings())
         compose.activityRule.scenario.recreate()
-        awaitFocus("home-first-app")
+        awaitHomeStart()
     }
 
     @After
     fun restoreSettings() {
         previousSettings?.let { TvFeaturePreferences(compose.activity).save(it) }
+    }
+
+    /**
+     * Startup waits for the first grid tile. When that never happens the bare assertion is a
+     * 30 s Compose timeout with no explanation, so dump what the app actually rendered: every
+     * test tag in the tree, which tag holds focus, and what the package manager reported as
+     * launchable. That distinguishes "no launchable app on this emulator" from "focus landed
+     * somewhere else" instead of guessing.
+     */
+    private fun awaitHomeStart() {
+        try {
+            awaitFocus("home-first-app")
+        } catch (timeout: Throwable) {
+            val activity = compose.activity
+            val visible = compose.onAllNodes(hasTestTag("home-first-app")).fetchSemanticsNodes().size
+            val tags = runCatching {
+                compose.onAllNodes(SemanticsMatcher("has a test tag") { node ->
+                    node.config.getOrNull(SemanticsProperties.TestTag) != null
+                }).fetchSemanticsNodes().mapNotNull { node ->
+                    node.config.getOrNull(SemanticsProperties.TestTag)
+                }
+            }.getOrElse { listOf("dump failed: " + it) }
+            fun query(category: String) = runCatching {
+                activity.packageManager.queryIntentActivities(
+                    Intent(Intent.ACTION_MAIN).addCategory(category), 0
+                ).map { it.activityInfo.packageName }.distinct()
+            }.getOrElse { listOf("threw: " + it) }
+            val catalog = runCatching {
+                TvAppCatalog.loadApps(activity).map { it.packageName }
+            }.getOrElse { listOf("threw: " + it) }
+            throw AssertionError(
+                "home-first-app never gained focus." +
+                    " self=" + activity.packageName +
+                    " taggedNodes=" + visible +
+                    " tags=" + tags +
+                    " leanback=" + query(Intent.CATEGORY_LEANBACK_LAUNCHER) +
+                    " launcher=" + query(Intent.CATEGORY_LAUNCHER) +
+                    " catalog=" + catalog +
+                    " cause=" + timeout.message
+            )
+        }
     }
 
     private fun awaitFocus(tag: String) {
