@@ -29,6 +29,14 @@ def verify(text: str, expected_class: str, expected_tests: set[str]) -> None:
             elif code == "0":
                 finishes[name] += 1
             else:
+                # Include the recorded stack so a Compose timeout names the failing
+                # expectation instead of just the test method.
+                detail = status.get("stack", "").strip()
+                if detail:
+                    first = "\n".join(detail.splitlines()[:8])
+                    raise ValueError(
+                        f"Instrumentation test {name} failed or was skipped (status {code})\n{first}"
+                    )
                 raise ValueError(f"Instrumentation test {name} failed or was skipped (status {code})")
             status = {}
         elif line.startswith("INSTRUMENTATION_CODE: "):
