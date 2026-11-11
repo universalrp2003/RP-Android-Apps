@@ -1961,6 +1961,15 @@ fun TvAppCard(
                             onLaunch()
                             true
                         }
+                        // A hold that produced no auto-repeat is only known to be long when
+                        // the key comes back up, so the menu opens here. Without this branch
+                        // the remote's single DOWN/UP pair opened nothing and launched
+                        // nothing, which is exactly what the user saw on the TV.
+                        AppTileKeyPolicy.Outcome.OPEN_OPTIONS -> {
+                            onShowOptions()
+                            true
+                        }
+                        // CONSUMED: the menu already opened during the hold; swallow the release.
                         else -> true
                     }
                     else -> false
