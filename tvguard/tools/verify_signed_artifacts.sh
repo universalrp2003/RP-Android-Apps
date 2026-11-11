@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Fail closed before offering any APK: verify package, version, signer and build type.
-set -euo pipefail
+set -Eeuo pipefail
+trap 'echo "::error title=TV artifact verification::A check failed at line $LINENO; inspect the candidate diagnostics."' ERR
 : "${RUNNER_TEMP:?RUNNER_TEMP must name the CI scratch directory}"
 work="$RUNNER_TEMP/tvguard-signed-candidate"
 old="$RUNNER_TEMP/tvguard-old-debug/tvguard-debug.apk"
@@ -42,7 +43,10 @@ grep -Fq "package: name='com.universalrp.tvguard' versionCode='2' versionName='1
 grep -Fq "package: name='com.universalrp.tvguard' versionCode='1' versionName='1.0'" "$work/fixture-badging.txt"
 grep -Fq "package: name='com.universalrp.tvguard' versionCode='1' versionName='1.0'" "$work/old-debug-badging.txt"
 grep -Fq "package: name='com.universalrp.tvguard.test'" "$work/androidTest-badging.txt"
-grep -Fq "targetPackage='com.universalrp.tvguard'" "$work/androidTest-badging.txt"
+# aapt badging does not list instrumentation on every build-tools version.
+"$tools/aapt" dump xmltree "$test_apk" AndroidManifest.xml >"$work/androidTest-manifest.txt"
+grep -Eq 'android:targetPackage[^=]*="com\.universalrp\.tvguard"' "$work/androidTest-manifest.txt"
+grep -Eq 'android:name[^=]*="androidx\.test\.runner\.AndroidJUnitRunner"' "$work/androidTest-manifest.txt"
 grep -Fq 'application-debuggable' "$work/old-debug-badging.txt"
 if grep -Fq 'application-debuggable' "$work/candidate-badging.txt"; then
   echo 'Refusing to offer a debuggable release candidate.' >&2
