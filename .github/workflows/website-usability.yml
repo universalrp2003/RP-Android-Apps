@@ -39,8 +39,23 @@ jobs:
       - name: Install development-only test dependencies
         working-directory: tools/website-tests
         run: |
+          set -uo pipefail
           npm ci --ignore-scripts
-          npx playwright install-deps chromium
+          # The browser itself ships inside @sparticuz/chromium, so this step only needs the
+          # system libraries. `playwright install-deps` drives apt itself and has started
+          # failing on newer runner images (Ubuntu 26 rollout), which stopped the run before
+          # a single check executed. Try it, then fall back to the libraries directly, and
+          # never let library setup be the thing that silently reports a site failure.
+          if npx playwright install-deps chromium; then
+            echo "playwright install-deps: ok"
+          else
+            echo "::warning title=Playwright system libraries::install-deps failed; installing the libraries directly"
+            sudo apt-get update -qq || true
+            sudo apt-get install -y -qq libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 \
+              libcups2t64 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 \
+              libxrandr2 libgbm1 libpango-1.0-0 libcairo2 libasound2t64 \
+              || echo "::warning title=Playwright system libraries::direct install also failed; the browser check below will report what is missing"
+          fi
       - name: Browser, keyboard, mobile, checksum and accessibility checks
         shell: bash
         run: |
