@@ -183,6 +183,8 @@ class TvRemoteFocusTest {
      * exist yet. Newly added switches get their own scrolled test instead, below.
      */
     private val DpadTraversalFeatures = listOf(
+        // Same order as the switches on screen: the header switch first, then the pill.
+        TvFeature.STATUS_BAR,
         TvFeature.STATUS_OVERLAY,
         TvFeature.SCREENSHOT,
         TvFeature.FILE_HUB,
