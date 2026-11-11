@@ -86,3 +86,6 @@ html[data-site-language="both"] #tv-guard-card .pillar .ta-heading { display: bl
 
 /* The card list is ordered by release date, and the page says so. */
 .list-order { margin: -4px 0 14px; font-size: .85rem; color: var(--muted, #9fb3c0); }
+
+/* Each card states its own release date, so the newest-first order is visible. */
+.card-date { font-size: .78rem; color: var(--muted, #9fb3c0); white-space: nowrap; align-self: center; }

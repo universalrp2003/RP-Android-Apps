@@ -1072,9 +1072,15 @@ def verify_newest_first(site: str, regular_ids: list[str]) -> None:
             f"Newest-first order is {sorted(by_card, reverse=True)}; found {by_card}."
         )
 
-    row_order = re.findall(r'data-release-tag="([^"]+)"', site)
+    tbody = site.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
+    row_order = re.findall(r'data-release-tag="([^"]+)"', tbody)
+    if len(row_order) != 15:
+        raise ValueError(f"The latest-releases table must name 15 releases, found {len(row_order)}.")
     if row_order != sorted(row_order, key=lambda tag: table[tag], reverse=True):
-        raise ValueError("The latest-releases table must list the newest release first.")
+        raise ValueError(
+            "The latest-releases table must list the newest release first. "
+            f"Newest-first is {sorted(row_order, key=lambda tag: table[tag], reverse=True)}."
+        )
 
 
 def verify_site_versions_match_downloads() -> int:
