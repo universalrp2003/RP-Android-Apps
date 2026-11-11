@@ -4,6 +4,8 @@ import android.os.Environment
 import android.os.StatFs
 import androidx.test.core.app.ApplicationProvider
 import com.universalrp.tvguard.hardware.StorageTruth
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,6 +23,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class StorageTruthTest {
+
+    private val GIB = 1024.0 * 1024.0 * 1024.0
+
 
     private val context get() = ApplicationProvider.getApplicationContext<android.content.Context>()
 
@@ -66,6 +71,49 @@ class StorageTruthTest {
                 best.availableBytes <= best.totalBytes
             )
         }
+    }
+
+    @Test
+    fun theTvsOwnNumbersAreCappedByItsPhysicalChip() {
+        // Taken from the TV itself: /data reports 32.00 GiB total with 25.90 GiB available,
+        // while the physical disk is 15.76 GB (14.68 GiB). The old guard passed this because
+        // 25.9 fits inside a fake 32 GiB, so the pill still printed 25.9 GB. The figure must be
+        // scaled down to what the hardware can actually hold.
+        val result = StorageTruth.cap(
+            freeBytes = (25.90 * GIB).toLong(),
+            totalBytes = (32.00 * GIB).toLong(),
+            physicalBytes = (15.76 * 1_000_000_000L),
+        )
+        assertTrue("the figure must be flagged as capped", result.capped)
+        assertTrue(
+            "the shown free space must not exceed the physical disk, was ${result.freeBytes}",
+            result.freeBytes <= (15.76 * 1_000_000_000L)
+        )
+        // The proportion is preserved: 25.9 of 32 is about 81%, so about 12.8 GB of 15.76 GB.
+        assertTrue("proportion should be preserved, was ${result.freeGb} GiB", result.freeGb in 11.0..13.5)
+        assertTrue("percent free should still read ~81%", result.percentFree in 78..84)
+    }
+
+    @Test
+    fun aTruthfulFilesystemIsLeftAlone() {
+        val result = StorageTruth.cap(
+            freeBytes = 40L * 1024 * 1024 * 1024,
+            totalBytes = 100L * 1024 * 1024 * 1024,
+            physicalBytes = 128L * 1024 * 1024 * 1024,
+        )
+        assertTrue("nothing to cap here", !result.capped)
+        assertEquals(40L * 1024 * 1024 * 1024, result.freeBytes)
+    }
+
+    @Test
+    fun withoutAPhysicalSizeTheFigureIsUncorroboratedNotFaked() {
+        val result = StorageTruth.cap(
+            freeBytes = 26L * 1024 * 1024 * 1024,
+            totalBytes = 32L * 1024 * 1024 * 1024,
+            physicalBytes = null,
+        )
+        assertTrue("nothing was capped, because there was nothing to check against", !result.capped)
+        assertNull("no physical size may be invented", result.physical)
     }
 
     @Test

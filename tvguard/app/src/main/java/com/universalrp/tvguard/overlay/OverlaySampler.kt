@@ -96,17 +96,17 @@ object OverlaySampler {
 
     /** Free space on the data filesystem, as reported by StatFs. */
     fun storage(context: Context): OverlayMetric {
-        // The data partition alone is not "free storage" on a TV: it is one small slice of the
-        // drive, and using it produced an impossible "26.0 GB free" on a 16 GB set. The honest
-        // figure comes from the roomiest real volume this app can measure.
-        val volume = com.universalrp.tvguard.hardware.StorageTruth.bestFreeSpace(context)
+        // Two layers of honesty, because this TV defeated the first one:
+        //  - /data is a partition, not the drive, so reading it alone produced 26 GB on a 16 GB set;
+        //  - the filesystem itself overstates its size (32 GiB on a 14.68 GiB chip), so comparing
+        //    free space against the volume's own capacity also passes.
+        // StorageTruth therefore caps the figure by the physical disk size.
+        val free = com.universalrp.tvguard.hardware.StorageTruth.honestFreeSpace(context)
             ?: return OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
-        val gib = volume.freeGb
-        val percent = StatusThresholds.percent(volume.availableBytes, volume.totalBytes)
         return OverlayMetric(
             "Storage",
-            String.format(Locale.US, "%.1f GB", gib),
-            StatusThresholds.storage(percent),
+            String.format(Locale.US, "%.1f GB", free.freeGb),
+            StatusThresholds.storage(free.percentFree),
             true,
         )
     }

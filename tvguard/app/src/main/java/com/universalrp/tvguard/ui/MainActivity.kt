@@ -738,7 +738,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                         }
                                     },
                                     onRefreshAudit = { auditRefreshVersion++ },
-                                    needsStorageAccess = !hasAllFilesAccess()
+                                    needsStorageAccess = !hasAllFilesAccess(),
+                                    context = context
                                 )
                             }
 
@@ -1724,7 +1725,8 @@ fun TvToolsView(
     onCloseApp: (String) -> Unit,
     onCloseAllRunning: () -> Unit,
     onRefreshAudit: () -> Unit,
-    needsStorageAccess: Boolean
+    needsStorageAccess: Boolean,
+    context: android.content.Context
 ) {
     // The Tools screen is taller than the TV, and Compose could not always find a focus target
     // below the status-pill placement buttons, so Down appeared to do nothing and the hardware
@@ -1973,6 +1975,20 @@ fun TvToolsView(
                         if (storage.dataTotalBytes > 0 && storage.dataFreeBytes in 0L..storage.dataTotalBytes) {
                             stringResource(R.string.storage_gib_value, gib(storage.dataTotalBytes - storage.dataFreeBytes))
                         } else stringResource(R.string.evidence_unavailable)
+                    )
+                    // The figure the pill shows: free space after the physical-disk check. Stated
+                    // separately so a filesystem that overstates its own size is visible here
+                    // rather than silently capped in one place and not the other.
+                    DetailRow(
+                        stringResource(R.string.storage_honest_free),
+                        com.universalrp.tvguard.hardware.StorageTruth.honestFreeSpace(context)?.let {
+                            stringResource(
+                                R.string.storage_honest_free_value,
+                                gib(it.freeBytes),
+                                gib(it.totalBytes),
+                                if (it.capped) stringResource(R.string.storage_capped_note) else ""
+                            )
+                        } ?: stringResource(R.string.evidence_unavailable)
                     )
                     DetailRow(stringResource(R.string.storage_system), capacity(storage.systemTotalBytes))
                     DetailRow(stringResource(R.string.storage_vendor), capacity(storage.vendorTotalBytes))

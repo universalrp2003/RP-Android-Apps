@@ -192,4 +192,7 @@
     <string name="btn_close">Close</string>
     <string name="btn_install">Install</string>
     <string name="btn_delete">Delete</string>
+    <string name="storage_honest_free">Free space shown in the pill</string>
+    <string name="storage_honest_free_value">%1$s GiB free of %2$s GiB%3$s</string>
+    <string name="storage_capped_note"> (limited to the physical disk; the filesystem claims more)</string>
 </resources>

@@ -192,4 +192,7 @@
     <string name="btn_close">மூடு</string>
     <string name="btn_install">நிறுவு</string>
     <string name="btn_delete">நீக்கு</string>
+    <string name="storage_honest_free">பில்லில் காட்டப்படும் இடம்</string>
+    <string name="storage_honest_free_value">%2$s GiB இல் %1$s GiB இலவசம்%3$s</string>
+    <string name="storage_capped_note"> (இயற்பியல் வட்டுக்கு வரம்பிடப்பட்டது; கோப்பு முறைமை அதிகமாகக் கூறுகிறது)</string>
 </resources>
