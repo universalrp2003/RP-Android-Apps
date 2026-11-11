@@ -260,7 +260,7 @@ jobs:
           mapfile -t candidate < <(find tvguard/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f)
           mapfile -t test_apk < <(find tvguard/app/build/outputs/apk/androidTest/release -maxdepth 1 -name '*.apk' -type f)
           test "${#candidate[@]}" -eq 1 && test "${#test_apk[@]}" -eq 1
-          cp "${candidate[0]}" "$work/Android-TV-Guard-1.1-signed-candidate.apk"
+          cp "${candidate[0]}" "$work/Android-TV-Guard-1.2-signed-candidate.apk"
           cp "${test_apk[0]}" "$work/tvguard-release-androidTest.apk"
       - name: Verify release unit tests and exact APK identities
         shell: bash
@@ -298,17 +298,17 @@ jobs:
           sys.path.insert(0, 'tools')
           from prepare_release_signing import EXPECTED_SIGNER
           work = Path(os.environ['RUNNER_TEMP'], 'tvguard-signed-candidate')
-          apk = work / 'Android-TV-Guard-1.1-signed-candidate.apk'
+          apk = work / 'Android-TV-Guard-1.2-signed-candidate.apk'
           sha = hashlib.file_digest(apk.open('rb'), 'sha256').hexdigest()
-          assert (work / 'Android-TV-Guard-1.1-signed-candidate.sha256').read_text().split()[0] == sha
+          assert (work / 'Android-TV-Guard-1.2-signed-candidate.sha256').read_text().split()[0] == sha
           receipt = {
-              'package': 'com.universalrp.tvguard', 'versionName': '1.1', 'versionCode': 3,
+              'package': 'com.universalrp.tvguard', 'versionName': '1.2', 'versionCode': 4,
               'signerSha256': EXPECTED_SIGNER, 'apkSha256': sha, 'apkBytes': apk.stat().st_size,
               'sourceCommit': os.environ['GITHUB_SHA'], 'workflowRun': os.environ['GITHUB_RUN_ID'],
               'exactCandidateInstalledAndTested': True, 'published': False,
               'tests': ['release unit tests and lint', 'API 34 Android TV focus tests',
                         'different-signer replacement rejected without deleting old data',
-                        'synthetic same-signer code 1 to code 3 update preserves favorites, hidden apps, feature choices and a private file'],
+                        'synthetic same-signer code 1 to code 4 update preserves favorites, hidden apps, feature choices and a private file'],
               'limitations': 'Disposable emulator only; physical TV, remote, voice, root and screenshot behavior are not verified.'
           }
           (work / 'verification.json').write_text(json.dumps(receipt, indent=2) + '\n')
@@ -317,10 +317,10 @@ jobs:
       - name: Offer only the exact tested candidate
         uses: actions/upload-artifact@v4
         with:
-          name: tvguard-1.1-stable-signed-tested-candidate
+          name: tvguard-1.2-stable-signed-tested-candidate
           path: |
-            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.1-signed-candidate.apk
-            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.1-signed-candidate.sha256
+            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.2-signed-candidate.apk
+            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.2-signed-candidate.sha256
             ${{ runner.temp }}/tvguard-signed-candidate/verification.json
           retention-days: 30
           if-no-files-found: error

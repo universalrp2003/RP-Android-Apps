@@ -6,7 +6,7 @@ set -euo pipefail
 work="$RUNNER_TEMP/tvguard-signed-candidate"
 old="$RUNNER_TEMP/tvguard-old-debug/tvguard-debug.apk"
 fixture="$work/synthetic-older-same-key.apk"
-candidate="$work/Android-TV-Guard-1.1-signed-candidate.apk"
+candidate="$work/Android-TV-Guard-1.2-signed-candidate.apk"
 test_apk="$work/tvguard-release-androidTest.apk"
 package=com.universalrp.tvguard
 runner=com.universalrp.tvguard.test/androidx.test.runner.AndroidJUnitRunner
