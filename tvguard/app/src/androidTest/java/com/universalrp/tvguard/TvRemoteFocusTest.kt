@@ -347,7 +347,10 @@ class TvRemoteFocusTest {
         compose.onNodeWithTag("expert-master").assertIsOn()
         awaitHub(true)
         current = "expert-master"
-        for (feature in TvFeature.entries.takeWhile { it != TvFeature.WEB_REMOTE }) {
+        // Walk the drawn order, not the enum order: the two differ now that the header switch
+        // sits above the pill, and following the enum walked focus onto rows that were not
+        // where the D-pad was pointing.
+        for (feature in DpadTraversalFeatures) {
             val tag = "feature-${feature.key}"
             press(current, Key.DirectionDown, tag)
             current = tag
