@@ -402,8 +402,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
- The opt-in file hub remains available while the
-    // activity exists; turning it or Expert off closes the listener and clients.
+    // Sampling is foreground-only. The opt-in file hub remains available while the activity
+    // exists; turning it or Expert off closes the listener and clients.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
