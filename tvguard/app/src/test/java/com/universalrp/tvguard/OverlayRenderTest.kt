@@ -1,15 +1,12 @@
 package com.universalrp.tvguard
 
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.Color
-import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.test.core.app.ApplicationProvider
 import com.universalrp.tvguard.overlay.OVERLAY_METRICS
 import com.universalrp.tvguard.overlay.buildPill
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,132 +15,115 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * Renders the real status pill to a bitmap and inspects the pixels.
+ * Measures the real status pill after a real layout pass.
  *
  * This exists because 1.2 passed every assertion while drawing five vertical columns of
- * one-character lines on a 1080p TV. The view built here is the same [buildPill] the overlay
- * service puts on screen, laid out at the same width the service asks for, so a layout that
- * would break on the TV fails here first.
+ * one-character lines on a 1080p TV: the cells were WRAP_CONTENT, one longer reading squeezed
+ * the others, and Android wrapped them a character per line.
+ *
+ * The check here is deliberately about geometry rather than screenshots. Drawing to a bitmap
+ * under Robolectric produced empty canvases even in native graphics mode, and an empty canvas
+ * would make any pixel assertion pass for the wrong reason. What the TV failure really was is
+ * text that did not fit its cell, and that is measured directly: every cell must end up one
+ * line with no ellipsis, and the text must fit inside the cell it was given.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], qualifiers = "w1920dp-h1080dp-xhdpi")
-// Without native graphics Robolectric's canvas silently draws nothing, so a pixel check would
-// pass no matter how broken the layout was. Real Skia rendering is required here.
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
 class OverlayRenderTest {
 
-    private fun fill(pill: LinearLayout, values: List<String>) {
-        assertEquals("the pill must have one cell per reading", OVERLAY_METRICS.size, pill.childCount)
-        for (i in 0 until pill.childCount) {
-            (pill.getChildAt(i) as TextView).text = values[i]
-            // The service paints each reading by band; green/good here is the common case.
-            (pill.getChildAt(i) as TextView).setTextColor(Color.rgb(0, 230, 118))
-        }
-    }
-
-    private fun layout(pill: View, width: Int) {
-        pill.measure(
-            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
-            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-        )
-        pill.layout(0, 0, pill.measuredWidth, pill.measuredHeight)
-    }
-
-    private fun draw(pill: View, width: Int): Bitmap {
-        layout(pill, width)
-        val bitmap = Bitmap.createBitmap(width, pill.measuredHeight, Bitmap.Config.ARGB_8888)
-        pill.draw(Canvas(bitmap))
-        // Guard against a no-op canvas: an empty bitmap would make every pixel assertion below
-        // vacuously true, which is exactly the failure mode this test exists to prevent.
-        var drawn = 0
-        for (x in 0 until bitmap.width step 3) {
-            for (y in 0 until bitmap.height step 2) {
-                if (Color.alpha(bitmap.getPixel(x, y)) > 0) drawn++
-            }
-        }
-        assertTrue("the test canvas drew nothing, so it cannot verify the layout", drawn > 100)
-        return bitmap
-    }
-
     private val screenWidth = 1920
 
-    @Test
-    fun theRealPillIsOneShortRow() {
-        val (pill, rowHeight) = buildPill(ApplicationProvider.getApplicationContext())
-        fill(pill, listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
-        draw(pill, screenWidth)
+    /** The width the overlay service asks for: six tenths of the screen. */
+    private val pillWidth = screenWidth * 6 / 10
 
-        assertTrue("the row height must be the fixed one", rowHeight in 60..200)
-        assertTrue("the pill must be one short row, was ${pill.measuredHeight}px", pill.measuredHeight <= rowHeight + 8)
+    private fun pill(values: List<String>): LinearLayout {
+        val (container, _) = buildPill(ApplicationProvider.getApplicationContext())
+        assertEquals("one cell per reading", OVERLAY_METRICS.size, container.childCount)
+        for (i in 0 until container.childCount) {
+            (container.getChildAt(i) as TextView).text = values[i]
+        }
+        container.measure(
+            android.view.View.MeasureSpec.makeMeasureSpec(pillWidth, android.view.View.MeasureSpec.EXACTLY),
+            android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED)
+        )
+        container.layout(0, 0, container.measuredWidth, container.measuredHeight)
+        return container
+    }
+
+    private fun cell(pill: LinearLayout, index: Int) = pill.getChildAt(index) as TextView
+
+    private fun assertEveryCellFits(pill: LinearLayout) {
         for (i in 0 until pill.childCount) {
-            val cell = pill.getChildAt(i) as TextView
-            assertEquals("cell $i must be a single line of text", 1, cell.lineCount)
-            assertTrue("cell $i must not be squeezed to nothing", cell.measuredWidth > screenWidth / 12)
+            val cell = cell(pill, i)
+            // A laid-out TextView exposes its Layout; one line and no ellipsis means the text
+            // fits exactly as drawn, which is what the TV needed and did not get in 1.2.
+            val layout = cell.layout ?: error("cell $i was never laid out")
+            assertEquals("cell $i wrapped onto ${layout.lineCount} lines", 1, layout.lineCount)
+            assertEquals("cell $i had to be truncated", 0, layout.getEllipsisCount(0))
+            val available = cell.width - cell.paddingLeft - cell.paddingRight
+            assertTrue(
+                "cell $i text is ${layout.getLineWidth(0)}px but only ${available}px is available",
+                layout.getLineWidth(0) <= available + 1f
+            )
         }
     }
 
     @Test
-    fun theFiveReadingsSitAcrossTheScreenNotInAColumn() {
-        val (pill, _) = buildPill(ApplicationProvider.getApplicationContext())
-        fill(pill, listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
-        val bitmap = draw(pill, screenWidth)
-
-        // Split the bitmap into vertical bands and record which bands contain lit pixels. Five
-        // readings side by side light bands across the whole width; the rejected rendering lit
-        // only the right-hand edge.
-        val bandCount = 10
-        val lit = BooleanArray(bandCount)
-        for (x in 0 until bitmap.width) {
-            for (y in 0 until bitmap.height) {
-                if (Color.alpha(bitmap.getPixel(x, y)) > 60) {
-                    lit[(x * bandCount) / bitmap.width] = true
-                    break
-                }
-            }
+    fun theRealPillIsOneShortRowWithEveryReadingVisible() {
+        val container = pill(listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
+        assertEveryCellFits(container)
+        // One row, not five stacked readings.
+        assertTrue("the pill must be one short row, was ${container.measuredHeight}px", container.measuredHeight < 200)
+        for (i in 0 until container.childCount) {
+            assertTrue("cell $i must be visible", cell(container, i).visibility == android.view.View.VISIBLE)
         }
-        val litBands = lit.count { it }
-        assertTrue(
-            "readings must be spread across the row, only $litBands of $bandCount bands had text",
-            litBands >= 4
-        )
+    }
+
+    @Test
+    fun theFiveReadingsSitSideBySideAcrossTheRow() {
+        val container = pill(listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
+        // Each cell must start where the previous one ended: that is "side by side", and it is
+        // the opposite of the rejected rendering, which stacked the readings in one column.
+        val lefts = (0 until container.childCount).map { cell(container, it).left }
+        val rights = (0 until container.childCount).map { cell(container, it).right }
+        assertTrue("cells must be ordered left to right, got $lefts", lefts == lefts.sorted())
+        assertTrue("cells must be laid out in one row, got $rights", rights.distinct().size == rights.size)
+        for (i in 1 until lefts.size) {
+            assertTrue("cell $i must begin after cell ${i - 1} ends", lefts[i] >= rights[i - 1] - 1)
+        }
+        // And the readings must actually spread across the strip, not huddle at one edge.
+        assertTrue("the last cell must reach into the right half", rights.last() > pillWidth / 2)
     }
 
     @Test
     fun everyCellKeepsOneLineEvenWithALongReading() {
-        // This is the exact case that collapsed the neighbours on the TV.
-        val (pill, _) = buildPill(ApplicationProvider.getApplicationContext())
-        fill(pill, listOf("62%", "832 MB", "26.0 GB free", "50.3 °C", "unavailable"))
-        layout(pill, screenWidth)
-
-        val widths = (0 until pill.childCount).map { pill.getChildAt(it).measuredWidth }.distinct()
+        // The exact case that collapsed the neighbours on the TV: one cell much longer than the
+        // rest. Nothing may wrap, and every cell must keep an equal share of the width.
+        val container = pill(listOf("62%", "832 MB", "26.0 GB free", "50.3 °C", "unavailable"))
+        val widths = (0 until container.childCount).map { cell(container, it).width }.distinct()
         assertEquals("all five cells must share the width equally, got $widths", 1, widths.size)
-        for (i in 0 until pill.childCount) {
-            assertEquals("cell $i wrapped onto a new line", 1, (pill.getChildAt(i) as TextView).lineCount)
-        }
+        assertEveryCellFits(container)
     }
 
     @Test
     fun thePillPaintsNoBackgroundPanel() {
-        val (pill, _) = buildPill(ApplicationProvider.getApplicationContext())
-        fill(pill, listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
-        // Direct check first: neither the row nor any cell may carry a background drawable.
-        assertTrue("the strip must have no background", pill.background == null)
-        for (i in 0 until pill.childCount) {
-            assertTrue("cell $i must have no background", pill.getChildAt(i).background == null)
+        val container = pill(listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
+        assertNull("the strip must have no background", container.background)
+        for (i in 0 until container.childCount) {
+            assertNull("cell $i must have no background", cell(container, i).background)
         }
-        val bitmap = draw(pill, screenWidth)
+    }
 
-        var opaque = 0
-        var sampled = 0
-        for (x in 0 until bitmap.width step 7) {
-            for (y in 0 until bitmap.height step 3) {
-                sampled++
-                if (Color.alpha(bitmap.getPixel(x, y)) > 200) opaque++
-            }
+    @Test
+    fun theTextIsReadableAtTVDistance() {
+        val container = pill(listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
+        // 15sp on a 1080p panel: the readings must not shrink below a legible size.
+        for (i in 0 until container.childCount) {
+            val cell = cell(container, i)
+            assertTrue("cell $i text is too small", cell.textSize >= 30f)
+            // A shadow, not a panel, is what keeps it readable over bright video.
+            assertTrue("cell $i needs a shadow to stay readable", cell.shadowRadius > 0f)
         }
-        assertTrue(
-            "the strip must not paint a background, $opaque of $sampled pixels were opaque",
-            opaque * 100 / sampled < 40
-        )
     }
 }
