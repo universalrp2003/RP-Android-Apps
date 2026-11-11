@@ -15,6 +15,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * Renders the real status pill to a bitmap and inspects the pixels.
@@ -26,6 +27,9 @@ import org.robolectric.annotation.Config
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33], qualifiers = "w1920dp-h1080dp-xhdpi")
+// Without native graphics Robolectric's canvas silently draws nothing, so a pixel check would
+// pass no matter how broken the layout was. Real Skia rendering is required here.
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
 class OverlayRenderTest {
 
     private fun fill(pill: LinearLayout, values: List<String>) {
@@ -49,6 +53,15 @@ class OverlayRenderTest {
         layout(pill, width)
         val bitmap = Bitmap.createBitmap(width, pill.measuredHeight, Bitmap.Config.ARGB_8888)
         pill.draw(Canvas(bitmap))
+        // Guard against a no-op canvas: an empty bitmap would make every pixel assertion below
+        // vacuously true, which is exactly the failure mode this test exists to prevent.
+        var drawn = 0
+        for (x in 0 until bitmap.width step 3) {
+            for (y in 0 until bitmap.height step 2) {
+                if (Color.alpha(bitmap.getPixel(x, y)) > 0) drawn++
+            }
+        }
+        assertTrue("the test canvas drew nothing, so it cannot verify the layout", drawn > 100)
         return bitmap
     }
 
@@ -113,6 +126,11 @@ class OverlayRenderTest {
     fun thePillPaintsNoBackgroundPanel() {
         val (pill, _) = buildPill(ApplicationProvider.getApplicationContext())
         fill(pill, listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
+        // Direct check first: neither the row nor any cell may carry a background drawable.
+        assertTrue("the strip must have no background", pill.background == null)
+        for (i in 0 until pill.childCount) {
+            assertTrue("cell $i must have no background", pill.getChildAt(i).background == null)
+        }
         val bitmap = draw(pill, screenWidth)
 
         var opaque = 0
