@@ -90,7 +90,7 @@ class WebsiteRequestsTest(unittest.TestCase):
             self.source,
         )
         cards = re.findall(
-            r'<article class="card">.*?data-apk="apks/([A-Za-z0-9._-]+\.apk)"'
+            r'<article class="card"[^>]*>.*?data-apk="apks/([A-Za-z0-9._-]+\.apk)"'
             r'[^>]*href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1"',
             self.source, re.S,
         )
@@ -196,7 +196,7 @@ if __name__ == '__main__':
 class RealApplicationImageCoverageTest(unittest.TestCase):
     def test_all_fifteen_app_cards_have_real_local_images(self):
         site=(ROOT/'site/index.html').read_text()
-        cards=re.findall(r'<article class="card">(.*?)</article>',site,re.S)
+        cards=re.findall(r'<article class="card"[^>]*>(.*?)</article>',site,re.S)
         app_cards=[c for c in cards if re.search(r'<h2[^>]+id="app-',c)]
         self.assertEqual(len(app_cards),15)
         for card in app_cards:
