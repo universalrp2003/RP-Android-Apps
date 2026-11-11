@@ -118,4 +118,8 @@ The focused Android integration tests use a **disposable TV emulator** and inclu
 ./gradlew -PtvguardTestBuildType=debug :tvguard:connectedDebugAndroidTest
 ```
 
-The manually dispatched TV Guard candidate workflow also runs these tests on an API 34 Android TV emulator. They exercise D-pad movement and an explicitly delivered Home intent; they do **not** establish that a physical TV remote or OEM system forwards Home/assistant keys. The normal build checks are `:tvguard:testDebugUnitTest :tvguard:lintDebug :tvguard:assembleDebug`. A debug APK is for a disposable test device and is not a signed public release.
+The manually dispatched TV Guard candidate workflow also runs these tests on an API 34 Android TV emulator. They exercise D-pad movement and an explicitly delivered Home intent; they do **not** establish that a physical TV remote or OEM system forwards Home/assistant keys. The normal build checks are `:tvguard:testDebugUnitTest :tvguard:lintDebug :tvguard:assembleDebug`.
+
+The ordinary CI debug APK is **emulator-only**: its temporary signing key can change between runs, so it cannot reliably update an existing installation. A manually requested `signed_candidate` run instead requires the existing pinned signing identity and is designed to verify the exact non-debuggable candidate on an emulator, including a synthetic same-key update that preserves favorites, hidden apps, optional choices and a private file. The synthetic older fixture is never offered as a candidate. A successful run is an **unpublished test candidate**, not physical-TV or publication approval.
+
+The signed candidate keeps package `com.universalrp.tvguard`, version name `1.0`, and version code `2`. Future updates must use the **same signing key** and a higher version code; an older APK signed with a different temporary debug key cannot be updated in place by this candidate. Uninstalling such a copy deletes its private app data, including favorites and settings.

@@ -6,6 +6,15 @@ plugins {
 
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
 val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
+// Only CI's disposable-emulator upgrade fixture uses the older code. Never ship it.
+val upgradeFixture = providers.gradleProperty("tvguardSignedUpgradeFixture").orNull == "true"
+val requireStableSigner = providers.gradleProperty("tvguardRequireStableSigner").orNull == "true"
+if (upgradeFixture && !requireStableSigner) {
+    throw GradleException("The disposable upgrade fixture requires the stable signer")
+}
+if (requireStableSigner && (!stableKeystore.exists() || releaseStorePassword.isNullOrBlank())) {
+    throw GradleException("The stable TV Guard signing identity is required for this candidate")
+}
 
 android {
     // Reuse the suite's single official links and sister-app directory.
@@ -22,7 +31,9 @@ android {
         minSdk = 26
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        versionCode = 1
+        // The signed 1.0 test candidate is code 2; later public updates must
+        // increase this code and use the same signing identity.
+        versionCode = if (upgradeFixture) 1 else 2
         versionName = "1.0"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
