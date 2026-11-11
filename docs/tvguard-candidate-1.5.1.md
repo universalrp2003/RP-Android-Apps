@@ -34,9 +34,11 @@ not pretend to be an installer store.
 | Signer | the same stable key as 1.2 – 1.5; no new key, no migration |
 | Minimum | Android TV 8.0 (API 26) |
 
-The APK's SHA-256 and byte count are recorded in the workflow receipt and reported to the owner with
-the download link; they are not written here in advance, because this file would then be a claim
-about a file that had not been built yet.
+**Built candidate**, run `43012300628`, artifact `tvguard-1.5.1-stable-signed-tested-candidate`:
+
+- `Android-TV-Guard-1.5.1-signed-candidate.apk`, 11,254,309 bytes
+- SHA-256 `aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b`
+- versionName 1.5.1 / versionCode 8, same signer, installs over 1.5 in place
 
 ## What this build does and does not prove
 
