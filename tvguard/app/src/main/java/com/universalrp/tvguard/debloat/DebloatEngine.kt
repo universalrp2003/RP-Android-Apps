@@ -9,6 +9,7 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.Inet4Address
 import java.net.NetworkInterface
+import java.util.concurrent.TimeUnit
 
 object DebloatEngine {
 
@@ -18,6 +19,7 @@ object DebloatEngine {
         val list = mutableListOf<AppDebloatItem>()
 
         for (app in packages) {
+            if (Thread.currentThread().isInterrupted) throw InterruptedException()
             val pkgName = app.packageName
             // Skip our own app
             if (pkgName == context.packageName) continue
@@ -47,56 +49,54 @@ object DebloatEngine {
         )
     }
 
-    /**
-     * Executes root command trying both stdin pipe and -c across known su paths.
-     */
+    /** Bounded root execution; interruption destroys the process instead of leaving an idle su. */
     fun executeRootCommand(command: String): Result<String> {
-        val suPaths = listOf(
-            "su",
-            "/system/xbin/su",
-            "/system/bin/su",
-            "/vendor/bin/su",
-            "/sbin/su"
-        ).filter { it == "su" || java.io.File(it).exists() }
-
-        var lastError = ""
+        val suPaths = listOf("su", "/system/xbin/su", "/system/bin/su", "/vendor/bin/su", "/sbin/su")
+            .filter { it == "su" || java.io.File(it).exists() }
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(8)
+        var lastError = "Root command unavailable"
 
         for (binary in suPaths) {
-            // Method 1: Interactive stdin
-            try {
-                val proc = Runtime.getRuntime().exec(binary)
-                proc.outputStream.bufferedWriter().use { writer ->
-                    writer.write(command)
-                    writer.write("\nexit\n")
-                    writer.flush()
+            for (interactive in listOf(true, false)) {
+                if (Thread.currentThread().isInterrupted) throw InterruptedException()
+                val remainingMs = TimeUnit.NANOSECONDS.toMillis(deadline - System.nanoTime())
+                if (remainingMs <= 0) return Result.failure(Exception("Root command timed out"))
+                var process: Process? = null
+                try {
+                    val args = if (interactive) arrayOf(binary) else arrayOf(binary, "-c", command)
+                    process = ProcessBuilder(*args).redirectErrorStream(true).start()
+                    if (interactive) {
+                        process.outputStream.bufferedWriter().use { writer ->
+                            writer.write(command)
+                            writer.write("\nexit\n")
+                            writer.flush()
+                        }
+                    }
+                    if (!process.waitFor(minOf(remainingMs, 4_000L), TimeUnit.MILLISECONDS)) {
+                        lastError = "Root command timed out"
+                        continue
+                    }
+                    // Commands here normally emit only a short status. Do not block on
+                    // a pipe inherited by a child process after the shell has exited.
+                    val stream = process.inputStream
+                    val count = stream.available().coerceAtMost(16_384)
+                    val buffer = ByteArray(count)
+                    val read = if (count > 0) stream.read(buffer) else 0
+                    val output = if (read > 0) String(buffer, 0, read).trim() else ""
+                    if (process.exitValue() == 0 && !output.contains("Failure", ignoreCase = true)) {
+                        return Result.success(output.ifBlank { "Command completed" })
+                    }
+                    lastError = output.ifBlank { "Root command failed" }
+                } catch (interrupted: InterruptedException) {
+                    throw interrupted
+                } catch (e: Exception) {
+                    lastError = e.message ?: "Root command failed"
+                } finally {
+                    process?.destroyForcibly()
                 }
-                val out = proc.inputStream.bufferedReader().readText().trim()
-                val err = proc.errorStream.bufferedReader().readText().trim()
-                proc.waitFor()
-                if (out.contains("Success", ignoreCase = true) || proc.exitValue() == 0) {
-                    return Result.success(out.ifBlank { "Executed via $binary: $command" })
-                }
-                if (err.isNotBlank()) lastError = err
-            } catch (e: Throwable) {
-                lastError = e.message ?: "Failed"
-            }
-
-            // Method 2: -c flag
-            try {
-                val proc = Runtime.getRuntime().exec(arrayOf(binary, "-c", command))
-                val out = proc.inputStream.bufferedReader().readText().trim()
-                val err = proc.errorStream.bufferedReader().readText().trim()
-                proc.waitFor()
-                if (out.contains("Success", ignoreCase = true) || (err.isBlank() && proc.exitValue() == 0)) {
-                    return Result.success(out.ifBlank { "Executed via $binary -c: $command" })
-                }
-                if (err.isNotBlank()) lastError = err
-            } catch (e: Throwable) {
-                lastError = e.message ?: "Failed"
             }
         }
-
-        return Result.failure(Exception(lastError.ifBlank { "Root command failed: $command" }))
+        return Result.failure(Exception(lastError))
     }
 
     /**

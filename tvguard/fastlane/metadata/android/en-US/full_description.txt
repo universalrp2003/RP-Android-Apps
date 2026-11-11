@@ -1,0 +1,27 @@
+Android TV Guard is a launcher and toolkit for Android TV, built for a remote, not a touchscreen.
+
+FIVE READINGS ON ONE LINE
+A status pill shows processor load, free RAM, free storage, temperature and internet quality at the top of the screen, over other apps. One short line, no panel behind it, and it can be moved with the remote. Values are real readings; anything that cannot be measured says so instead of guessing.
+
+HONEST STORAGE
+Android TV boxes often report free space that cannot be true, because the filesystem overstates its own size. Android TV Guard cross-checks the visible figure against the physical disk and never prints more free space than the device can hold. The hardware screen shows both numbers side by side with an explanation.
+
+A LAUNCHER FOR A REMOTE
+Favourite apps first, big readable tiles, D-pad focus that is always visible. Hide apps you do not want and keep the rest.
+
+WIRELESS FILE HUB
+Open a page on your phone and upload an APK or a file straight to the TV, then install it from the TV. No USB drive, no cable, no second file manager. Also take screenshots and control the TV from the same page.
+
+HARDWARE TRUTH
+Reports what Android says, what the kernel says, and where they disagree: RAM, storage, Android version, boot properties and root status.
+
+TV DEBLOATER
+Review installed apps by risk and remove the ones you choose. Nothing is removed without a confirmation.
+
+ENGLISH AND TAMIL
+Every label and message exists in both languages. On Android 13 and later, switch the app language from system settings.
+
+PRIVACY
+No account, no analytics, no ads. The Wi-Fi hub runs only while you turn it on, on your own network. Hardware readings stay on the device.
+
+Requirements: Android TV 8.0 or later. Some readings (temperature, and writing to a USB drive) depend on what your TV exposes to apps, and the app says so when a reading is unavailable.

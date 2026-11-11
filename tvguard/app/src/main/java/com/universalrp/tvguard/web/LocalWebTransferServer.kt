@@ -10,15 +10,20 @@ import com.universalrp.tvguard.capture.ScreenCaptureManager
 import com.universalrp.tvguard.debloat.DebloatEngine
 import com.universalrp.tvguard.memory.MemoryTrimmer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.io.EOFException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.Inet4Address
@@ -30,11 +35,34 @@ import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 
 object LocalWebTransferServer {
 
-    private var serverSocket: ServerSocket? = null
-    private var serverJob: Job? = null
+    @Volatile private var serverSocket: ServerSocket? = null
+    @Volatile private var serverJob: Job? = null
+    @Volatile private var features: HubFeatures = HubFeatures()
+    private val clients = ConcurrentHashMap<Socket, Job>()
+
+    @Synchronized
+    fun configure(features: HubFeatures) {
+        val previous = this.features
+        this.features = features
+        // Abort in-flight requests as well as rejecting future ones when a control
+        // is revoked. The file hub itself remains available if it is still enabled.
+        if ((previous.remote && !features.remote) ||
+            (previous.screenshot && !features.screenshot) ||
+            (previous.ramBoost && !features.ramBoost)
+        ) closeClients()
+    }
+
+    private fun closeClients() {
+        clients.forEach { (socket, job) ->
+            job.cancel()
+            runCatching { socket.close() }
+        }
+    }
     var activePort: Int = 8080
         private set
 
@@ -68,7 +96,7 @@ object LocalWebTransferServer {
         for (p in portsToTry) {
             try {
                 serverSocket = ServerSocket(p)
-                activePort = p
+                activePort = serverSocket!!.localPort
                 break
             } catch (_: Throwable) {
                 serverSocket = null
@@ -76,16 +104,31 @@ object LocalWebTransferServer {
         }
 
         val s = serverSocket ?: return false
-
-        serverJob = CoroutineScope(Dispatchers.IO).launch {
-            while (isRunning && !s.isClosed) {
-                try {
-                    val client = s.accept()
-                    CoroutineScope(Dispatchers.IO).launch {
-                        handleClient(context.applicationContext, client)
+        // Set the parent before launching so isRunning cannot race the accept loop.
+        val parent = SupervisorJob()
+        serverJob = parent
+        CoroutineScope(Dispatchers.IO + parent).launch {
+            try {
+                while (isActive && !s.isClosed) {
+                    val client = try { s.accept() } catch (_: Exception) { break }
+                    // Lazy start lets completion close the socket even if its parent
+                    // is cancelled just before the handler has a chance to run.
+                    val job = launch(start = CoroutineStart.LAZY) {
+                        try { runInterruptible(Dispatchers.IO) { handleClient(context.applicationContext, client) } }
+                        catch (_: Exception) { /* Disconnected, revoked or stopped. */ }
                     }
-                } catch (_: Throwable) {
-                    break
+                    clients[client] = job
+                    job.invokeOnCompletion {
+                        clients.remove(client, job)
+                        runCatching { client.close() }
+                    }
+                    job.start()
+                }
+            } finally {
+                runCatching { s.close() }
+                parent.cancel()
+                synchronized(this@LocalWebTransferServer) {
+                    if (serverSocket === s) { serverSocket = null; serverJob = null }
                 }
             }
         }
@@ -94,10 +137,10 @@ object LocalWebTransferServer {
 
     @Synchronized
     fun stop() {
-        try {
-            serverSocket?.close()
-        } catch (_: Throwable) {}
+        features = HubFeatures()
         serverJob?.cancel()
+        runCatching { serverSocket?.close() }
+        closeClients()
         serverSocket = null
         serverJob = null
     }
@@ -121,6 +164,12 @@ object LocalWebTransferServer {
             val path = fullUri.substringBefore("?")
             val query = if (fullUri.contains("?")) fullUri.substringAfter("?") else ""
             val queryParams = parseQueryParams(query)
+
+            // Hiding a dashboard button is not enough: reject direct requests too.
+            if (!isRunning || !features.allows(path)) {
+                sendJsonResponse(output, 403, "{\"success\":false,\"error\":\"Feature disabled\"}")
+                return
+            }
 
             // Extract headers
             val headersMap = mutableMapOf<String, String>()
@@ -192,7 +241,9 @@ object LocalWebTransferServer {
                 (method == "POST" || method == "GET") && path == "/api/launch" -> {
                     val app = queryParams["app"] ?: ""
                     val ok = launchAppByName(context, app)
-                    sendJsonResponse(output, 200, "{\"success\":$ok,\"app\":\"$app\"}")
+                    // The browser already knows the requested name; do not splice
+                    // untrusted query text into JSON (quotes or newlines break it).
+                    sendJsonResponse(output, 200, "{\"success\":$ok}")
                 }
 
                 (method == "POST" || method == "GET") && path == "/delete" -> {
@@ -215,6 +266,7 @@ object LocalWebTransferServer {
             val b = input.read()
             if (b == -1) break
             baos.write(b)
+            if (baos.size() > 16_384) return "" // Reject unbounded request/part headers.
             lastFour = (lastFour shl 8) or (b and 0xFF)
             if (lastFour == 0x0D0A0D0A) break // \r\n\r\n
         }
@@ -246,38 +298,62 @@ object LocalWebTransferServer {
         return dir
     }
 
+    /** The hosted app store page. A web update adds an app; no APK needs to change. */
+    private val STORE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"
+
+    /**
+     * The store card shown above the remote control. Kept as its own function so a unit test can
+     * check the link and the promise it makes without standing up the HTTP server.
+     */
+    internal fun storeCardHtml(): String = buildString {
+        append("<div class=\"card\">")
+        append("<h3>\uD83E\uDDED RP App Store</h3>")
+        append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 14px;\">Browse every RP app, download an APK, or open the install prompt that appears in the file list above.</p>")
+        append("<a class=\"btn btn-outline\" style=\"display:block; text-align:center; text-decoration:none;\" href=\"" + STORE_URL + "\" target=\"_blank\" rel=\"noopener\">Open the RP App Store</a>")
+        append("<p style=\"font-size: 12px; color: var(--muted); margin-top: 10px;\">The store is a web page, so it always lists the newest apps. Nothing needs reinstalling to see a new one.</p>")
+        append("</div>")
+    }
+
+    private fun isTemporaryUpload(filename: String): Boolean =
+        filename.startsWith(".tvguard-upload-") && filename.endsWith(".part")
+
     private fun findFile(rawFilename: String): File? {
-        val filename = sanitizeFilename(rawFilename)
-        val screenshotFile = File(ScreenCaptureManager.getScreenshotDir(), filename)
-        if (screenshotFile.exists() && screenshotFile.isFile) return screenshotFile
-
-        val downloadFile = File(getDownloadsDir(), filename)
-        if (downloadFile.exists() && downloadFile.isFile) return downloadFile
-
+        val filename = existingHubFileName(rawFilename) ?: return null
+        if (isTemporaryUpload(filename)) return null
+        for (directory in listOf(ScreenCaptureManager.getScreenshotDir(), getDownloadsDir())) {
+            val file = File(directory, filename)
+            // Do not follow a shared-storage symlink out of the advertised folders.
+            val insideDirectory = try { file.canonicalFile.parentFile == directory.canonicalFile } catch (_: Exception) { false }
+            if (insideDirectory && file.isFile) return file
+        }
         return null
     }
 
     fun sendKeyEvent(keyCode: Int): Boolean {
         val rootRes = DebloatEngine.executeRootCommand("input keyevent $keyCode")
-        if (rootRes.isSuccess) return true
-        return try {
-            Runtime.getRuntime().exec(arrayOf("input", "keyevent", keyCode.toString()))
-            true
-        } catch (_: Throwable) {
-            false
-        }
+        return rootRes.isSuccess || executeInput("keyevent", keyCode.toString())
     }
 
     fun sendTextToTv(text: String): Boolean {
         // Android 'input text' interprets spaces as %s
-        val formatted = text.replace(" ", "%s").replace("\"", "\\\"").replace("'", "\\'")
-        val rootRes = DebloatEngine.executeRootCommand("input text \"$formatted\"")
-        if (rootRes.isSuccess) return true
-        return try {
-            Runtime.getRuntime().exec(arrayOf("input", "text", formatted))
-            true
-        } catch (_: Throwable) {
-            false
+        val formatted = text.replace(" ", "%s")
+        // Treat browser text as data, not a root shell expression (including $ and backticks).
+        val rootRes = DebloatEngine.executeRootCommand("input text ${shellQuote(formatted)}")
+        return rootRes.isSuccess || executeInput("text", formatted)
+    }
+
+    /** Starting a process does not prove Android accepted its input event. */
+    private fun executeInput(vararg arguments: String): Boolean {
+        var process: Process? = null
+        try {
+            process = ProcessBuilder(listOf("input") + arguments).redirectErrorStream(true).start()
+            return process.waitFor(4, TimeUnit.SECONDS) && process.exitValue() == 0
+        } catch (interrupted: InterruptedException) {
+            throw interrupted
+        } catch (_: Exception) {
+            return false
+        } finally {
+            process?.destroyForcibly()
         }
     }
 
@@ -302,21 +378,26 @@ object LocalWebTransferServer {
         }
 
         for (pkg in targetPkgs) {
-            val launchIntent = pm.getLaunchIntentForPackage(pkg)
-                ?: pm.getLeanbackLaunchIntentForPackage(pkg)
-            if (launchIntent != null) {
-                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                context.startActivity(launchIntent)
-                return true
+            try {
+                val launchIntent = pm.getLaunchIntentForPackage(pkg)
+                    ?: pm.getLeanbackLaunchIntentForPackage(pkg)
+                if (launchIntent != null) {
+                    launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(launchIntent)
+                    return true
+                }
+            } catch (_: Exception) {
+                // An app can disappear or reject the launch after it was queried.
             }
         }
         return false
     }
 
     private fun serveDashboard(context: Context, out: OutputStream) {
+        val policy = features
         val screenshots = ScreenCaptureManager.listScreenshots()
         val downloads = getDownloadsDir().listFiles { f ->
-            f.isFile && !f.name.startsWith("TvGuard_Screenshot_")
+            f.isFile && !f.name.startsWith("TvGuard_Screenshot_") && !isTemporaryUpload(f.name)
         }?.sortedByDescending { it.lastModified() } ?: emptyList()
 
         val model = "${Build.MANUFACTURER} ${Build.MODEL}"
@@ -357,7 +438,7 @@ object LocalWebTransferServer {
             append("<div class=\"container\">")
             append("<header>")
             append("<div class=\"logo\">🛡️ Android TV Guard <span style=\"font-size: 13px; color: var(--muted); font-weight: normal;\">Wi-Fi File Hub</span></div>")
-            append("<div class=\"device-pill\">📺 ").append(model).append(" (").append(ip).append(")</div>")
+            append("<div class=\"device-pill\">📺 ").append(htmlEscape(model)).append(" (").append(htmlEscape(ip)).append(")</div>")
             append("</header>")
 
             // Grid Cards
@@ -377,20 +458,28 @@ object LocalWebTransferServer {
             append("</form>")
             append("</div>")
 
-            // Card 2: Remote TV Quick Actions
+            // Card 2: only actions explicitly enabled in Expert settings.
+            if (policy.remote && (policy.screenshot || policy.ramBoost)) {
             append("<div class=\"card\" style=\"margin-bottom:0;\">")
             append("<h3>📸 Quick TV Maintenance</h3>")
             append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 16px;\">Control TV maintenance and capture screenshots remotely from your phone.</p>")
             append("<div style=\"display: flex; gap: 10px; flex-direction: column;\">")
-            append("<button onclick=\"triggerScreenshot()\" class=\"btn btn-outline\" style=\"width: 100%; text-align: center;\">📸 Take TV Screenshot Now</button>")
-            append("<button onclick=\"triggerBoost()\" class=\"btn btn-outline\" style=\"width: 100%; text-align: center;\">⚡ Boost TV RAM Remotely</button>")
+            if (policy.screenshot) append("<button onclick=\"triggerScreenshot()\" class=\"btn btn-outline\" style=\"width: 100%; text-align: center;\">📸 Take TV Screenshot Now</button>")
+            if (policy.ramBoost) append("<button onclick=\"triggerBoost()\" class=\"btn btn-outline\" style=\"width: 100%; text-align: center;\">⚡ Boost TV RAM Remotely</button>")
             append("</div>")
             append("<div id=\"actionResult\" style=\"margin-top: 14px; font-size: 13px; font-weight: bold;\"></div>")
             append("</div>")
+            }
 
             append("</div>") // End grid
 
-            // Card 3: Mobile Virtual Remote Control & Touchpad / Keyboard
+            // Card 3: the app store page, opened from this hub so the phone never has to
+            // remember an address. The store is a hosted web page, so adding an app is a
+            // web update, not a new APK.
+            append(storeCardHtml())
+
+            // Card 4: Mobile Virtual Remote Control & Touchpad / Keyboard
+            if (policy.remote) {
             append("<div class=\"card\">")
             append("<h3>🎮 Mobile Virtual TV Remote & Keyboard</h3>")
             append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 14px;\">Control TV D-Pad navigation, volume, apps, and send typed phone text to the TV.</p>")
@@ -447,12 +536,13 @@ object LocalWebTransferServer {
 
             append("</div>") // End remote flex
             append("</div>") // End Remote Card
+            }
 
-            // Card 4: Screenshots Table (saved in /sdcard/Download/Screenshots/)
+            // Card 5: Screenshots Table (saved in /sdcard/Download/Screenshots/)
             append("<div class=\"card\">")
             append("<h3>📸 TV Screenshots (/sdcard/Download/Screenshots/) (").append(screenshots.size).append(" files)</h3>")
             if (screenshots.isEmpty()) {
-                append("<p style=\"color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center;\">No screenshots saved yet. Click 'Take TV Screenshot Now' above or press Remote Screenshot key.</p>")
+                append("<p style=\"color: var(--muted); font-size: 13px; padding: 14px 0; text-align: center;\">No screenshots saved yet.</p>")
             } else {
                 append("<table><thead><tr><th>Screenshot Name</th><th>Size</th><th>Date</th><th>Actions</th></tr></thead><tbody>")
                 val sdf = SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault())
@@ -460,14 +550,15 @@ object LocalWebTransferServer {
                     val sizeMb = String.format(Locale.US, "%.2f MB", file.length().toDouble() / (1024.0 * 1024.0))
                     val dateStr = sdf.format(Date(file.lastModified()))
 
+                    val encodedName = hubUrlComponent(file.name)
                     append("<tr>")
-                    append("<td>🖼️ ").append(file.name).append("</td>")
+                    append("<td>🖼️ ").append(htmlEscape(file.name)).append("</td>")
                     append("<td>").append(sizeMb).append("</td>")
                     append("<td>").append(dateStr).append("</td>")
                     append("<td class=\"action-links\">")
-                    append("<a href=\"/download?file=").append(file.name).append("\">Download</a>")
-                    append("<a href=\"/view?file=").append(file.name).append("\" target=\"_blank\">View</a>")
-                    append("<a href=\"/delete?file=").append(file.name).append("\" style=\"color: var(--danger);\">Delete</a>")
+                    append("<a href=\"/download?file=").append(encodedName).append("\">Download</a>")
+                    append("<a href=\"/view?file=").append(encodedName).append("\" target=\"_blank\">View</a>")
+                    append("<a href=\"/delete?file=").append(encodedName).append("\" style=\"color: var(--danger);\">Delete</a>")
                     append("</td>")
                     append("</tr>")
                 }
@@ -475,7 +566,7 @@ object LocalWebTransferServer {
             }
             append("</div>")
 
-            // Card 5: Downloads & APKs Table (saved in /sdcard/Download/)
+            // Card 6: Downloads & APKs Table (saved in /sdcard/Download/)
             append("<div class=\"card\">")
             append("<h3>📦 TV Downloads & Uploaded APKs (/sdcard/Download/) (").append(downloads.size).append(" files)</h3>")
             if (downloads.isEmpty()) {
@@ -488,16 +579,18 @@ object LocalWebTransferServer {
                     val sizeMb = String.format(Locale.US, "%.2f MB", file.length().toDouble() / (1024.0 * 1024.0))
                     val dateStr = sdf.format(Date(file.lastModified()))
 
+                    val encodedName = hubUrlComponent(file.name)
                     append("<tr>")
-                    append("<td>").append(if (isApk) "📦 " else "📄 ").append(file.name).append("</td>")
+                    append("<td>").append(if (isApk) "📦 " else "📄 ").append(htmlEscape(file.name)).append("</td>")
                     append("<td>").append(sizeMb).append("</td>")
                     append("<td>").append(dateStr).append("</td>")
                     append("<td class=\"action-links\">")
-                    append("<a href=\"/download?file=").append(file.name).append("\">Download</a>")
-                    if (isApk) {
-                        append("<button onclick=\"installApk('").append(file.name).append("')\">Install on TV</button>")
+                    append("<a href=\"/download?file=").append(encodedName).append("\">Download</a>")
+                    if (isApk && policy.remote) {
+                        append("<button data-file=\"").append(encodedName)
+                            .append("\" onclick=\"installApk(decodeURIComponent(this.dataset.file))\">Install on TV</button>")
                     }
-                    append("<a href=\"/delete?file=").append(file.name).append("\" style=\"color: var(--danger);\">Delete</a>")
+                    append("<a href=\"/delete?file=").append(encodedName).append("\" style=\"color: var(--danger);\">Delete</a>")
                     append("</td>")
                     append("</tr>")
                 }
@@ -537,7 +630,7 @@ object LocalWebTransferServer {
             append("function sendKey(code) {")
             append("  const fb = document.getElementById('remoteFeedback');")
             append("  fetch('/api/key?code=' + code, { method: 'POST' }).then(r => r.json()).then(d => {")
-            append("    if (fb) { fb.innerText = 'Sent key: ' + code; setTimeout(() => { fb.innerText = ''; }, 1500); }")
+            append("    if (fb) { fb.innerText = d.success ? 'Sent key: ' + code : 'TV did not accept the key'; setTimeout(() => { fb.innerText = ''; }, 1500); }")
             append("  }).catch(e => { if (fb) fb.innerText = 'Error sending key'; });")
             append("}")
             append("function sendText() {")
@@ -546,8 +639,8 @@ object LocalWebTransferServer {
             append("  if (!text) return;")
             append("  const fb = document.getElementById('remoteFeedback');")
             append("  fetch('/api/text?text=' + encodeURIComponent(text), { method: 'POST' }).then(r => r.json()).then(d => {")
-            append("    if (fb) { fb.innerText = 'Sent text to TV: \"' + text + '\"'; setTimeout(() => { fb.innerText = ''; }, 2000); }")
-            append("    input.value = '';")
+            append("    if (fb) { fb.innerText = d.success ? 'Sent text to TV: \"' + text + '\"' : 'TV did not accept the text'; setTimeout(() => { fb.innerText = ''; }, 2000); }")
+            append("    if (d.success) input.value = '';")
             append("  }).catch(e => { if (fb) fb.innerText = 'Error sending text'; });")
             append("}")
             append("function launchApp(name) {")
@@ -588,9 +681,11 @@ object LocalWebTransferServer {
             else -> "application/octet-stream"
         }
 
-        val disposition = if (asAttachment) "attachment; filename=\"$filename\"" else "inline"
+        val asciiName = sanitizeFilename(filename).take(180).ifBlank { "download" }
+        val disposition = if (asAttachment) "attachment; filename=\"$asciiName\"; filename*=UTF-8''${hubUrlComponent(filename)}" else "inline"
         val header = "HTTP/1.1 200 OK\r\n" +
                 "Content-Type: $mimeType\r\n" +
+                "X-Content-Type-Options: nosniff\r\n" +
                 "Content-Length: ${file.length()}\r\n" +
                 "Content-Disposition: $disposition\r\n" +
                 "Connection: close\r\n\r\n"
@@ -606,6 +701,7 @@ object LocalWebTransferServer {
         out.flush()
     }
 
+    /** Upload to a temporary file first: a stopped hub must not truncate an existing file. */
     private fun handleUpload(
         context: Context,
         input: InputStream,
@@ -614,124 +710,94 @@ object LocalWebTransferServer {
         contentLength: Long,
         queryParams: Map<String, String>
     ) {
+        var temp: File? = null
         try {
-            var targetFileName = queryParams["filename"] ?: queryParams["file"]
-
-            if (contentType.contains("multipart/form-data")) {
-                val boundary = contentType.substringAfter("boundary=").trim()
-                if (boundary.isNotEmpty()) {
-                    parseMultipart(input, boundary, context, output)
-                    return
-                }
+            require(contentLength > 0) { "Content-Length required" }
+            val limited = ContentLengthInputStream(input, contentLength)
+            var filename = queryParams["filename"] ?: queryParams["file"] ?: "upload_${System.currentTimeMillis()}"
+            val multipart = contentType.contains("multipart/form-data", ignoreCase = true)
+            val boundary = if (multipart) contentType.substringAfter("boundary=", "").trim().trim('"') else ""
+            if (multipart) {
+                require(boundary.isNotBlank() && boundary.length <= 200) { "Invalid multipart boundary" }
+                val headers = readHeaderString(limited)
+                require(headers.startsWith("--$boundary\r\n")) { "Invalid multipart header" }
+                filename = "filename=\"([^\"]+)\"".toRegex().find(headers)?.groupValues?.get(1) ?: filename
             }
-
-            // Direct binary stream upload
-            val filename = sanitizeFilename(targetFileName ?: "uploaded_${System.currentTimeMillis()}")
-            val targetFile = File(getDownloadsDir(), filename)
-
-            FileOutputStream(targetFile).use { fos ->
-                val buf = ByteArray(32768)
-                var bytesLeft = contentLength
-                while (bytesLeft > 0) {
-                    val toRead = buf.size.toLong().coerceAtMost(bytesLeft).toInt()
-                    val n = input.read(buf, 0, toRead)
-                    if (n == -1) break
-                    fos.write(buf, 0, n)
-                    bytesLeft -= n
+            filename = sanitizeFilename(filename).take(180).takeUnless { it.isBlank() || it == "." || it == ".." }
+                ?: "upload_${System.currentTimeMillis()}"
+            temp = File.createTempFile(".tvguard-upload-", ".part", getDownloadsDir())
+            FileOutputStream(temp).use { fileOutput ->
+                val buffer = ByteArray(32_768)
+                var n: Int
+                while (limited.read(buffer).also { n = it } != -1) {
+                    if (Thread.currentThread().isInterrupted) throw InterruptedException("Upload cancelled")
+                    fileOutput.write(buffer, 0, n)
                 }
-                fos.flush()
+                fileOutput.flush()
             }
-
-            ScreenCaptureManager.notifyMediaScanner(context, targetFile)
+            if (Thread.currentThread().isInterrupted) throw InterruptedException("Upload cancelled")
+            if (multipart) trimMultipartEnding(temp, boundary)
+            val saved = SafeUploadStorage.publish(temp, getDownloadsDir(), filename)
+            try { android.media.MediaScannerConnection.scanFile(context.applicationContext, arrayOf(saved.absolutePath), null, null) }
+            catch (_: Exception) { }
             sendRedirect(output, "/")
-        } catch (e: Throwable) {
-            sendJsonResponse(output, 500, "{\"success\":false,\"error\":\"${e.message}\"}")
+        } catch (_: Exception) {
+            // A disconnect or a feature switch may have closed the socket.
+            runCatching { sendJsonResponse(output, 400, "{\"success\":false,\"error\":\"Upload incomplete\"}") }
+        } finally {
+            temp?.delete()
         }
     }
 
-    private fun parseMultipart(
-        input: InputStream,
-        boundary: String,
-        context: Context,
-        output: OutputStream
-    ) {
-        val boundaryBytes = ("--$boundary").toByteArray(StandardCharsets.ISO_8859_1)
-        val partHeader = readHeaderString(input)
-
-        var filename = "upload_${System.currentTimeMillis()}"
-        val fnMatch = "filename=\"([^\"]+)\"".toRegex().find(partHeader)
-        if (fnMatch != null) {
-            filename = fnMatch.groupValues[1]
-        }
-        filename = sanitizeFilename(filename)
-        val targetFile = File(getDownloadsDir(), filename)
-
-        FileOutputStream(targetFile).use { fos ->
-            val buf = ByteArray(32768)
-            var n: Int
-            while (input.read(buf).also { n = it } != -1) {
-                fos.write(buf, 0, n)
-            }
-            fos.flush()
+    /** Stops at the declared length instead of waiting for the browser to close. */
+    private class ContentLengthInputStream(private val source: InputStream, private var remaining: Long) : InputStream() {
+        override fun read(): Int {
+            if (remaining == 0L) return -1
+            val value = source.read()
+            if (value == -1) throw EOFException("Incomplete upload")
+            remaining--
+            return value
         }
 
-        // Clean trailing boundary bytes if any
-        trimBoundaryFromFile(targetFile, boundaryBytes)
-
-        ScreenCaptureManager.notifyMediaScanner(context, targetFile)
-        sendRedirect(output, "/")
+        override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+            if (length == 0) return 0
+            if (remaining == 0L) return -1
+            val count = source.read(buffer, offset, minOf(length.toLong(), remaining).toInt())
+            if (count == -1) throw EOFException("Incomplete upload")
+            remaining -= count
+            return count
+        }
     }
 
-    private fun trimBoundaryFromFile(file: File, boundaryBytes: ByteArray) {
-        if (!file.exists() || file.length() < boundaryBytes.size + 10) return
-        try {
-            val length = file.length()
-            val checkSize = (boundaryBytes.size * 3).coerceAtMost(length.toInt())
-            val buffer = ByteArray(checkSize)
-
-            java.io.RandomAccessFile(file, "rw").use { raf ->
-                raf.seek(length - checkSize)
-                raf.readFully(buffer)
-
-                val boundaryPos = indexOfBytes(buffer, boundaryBytes)
-                if (boundaryPos != -1) {
-                    val truncateTo = (length - checkSize) + boundaryPos
-                    // Strip preceding \r\n if present
-                    val finalLen = if (truncateTo >= 2) truncateTo - 2 else truncateTo
-                    raf.setLength(finalLen)
-                }
-            }
-        } catch (_: Throwable) {}
-    }
-
-    private fun indexOfBytes(source: ByteArray, target: ByteArray): Int {
-        if (target.isEmpty() || source.size < target.size) return -1
-        for (i in 0..source.size - target.size) {
-            var match = true
-            for (j in target.indices) {
-                if (source[i + j] != target[j]) {
-                    match = false
-                    break
-                }
-            }
-            if (match) return i
+    /** Accept the one-file form used by the dashboard and remove its closing delimiter. */
+    private fun trimMultipartEnding(file: File, boundary: String) {
+        val marker = "\r\n--$boundary--\r\n".toByteArray(StandardCharsets.ISO_8859_1)
+        java.io.RandomAccessFile(file, "rw").use { raf ->
+            require(raf.length() >= marker.size) { "Incomplete multipart body" }
+            val tail = ByteArray(marker.size)
+            raf.seek(raf.length() - marker.size)
+            raf.readFully(tail)
+            require(tail.contentEquals(marker)) { "Invalid multipart ending" }
+            raf.setLength(raf.length() - marker.size)
         }
-        return -1
     }
 
     private fun handleApiScreenshot(context: Context, out: OutputStream) {
-        val dir = ScreenCaptureManager.getScreenshotDir()
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        val filename = "TvGuard_Screenshot_$timeStamp.png"
-        val targetFile = File(dir, filename)
-        val targetPath = targetFile.absolutePath
-
-        val res = DebloatEngine.executeRootCommand("screencap -p '$targetPath' && chmod 664 '$targetPath'")
-        if (res.isSuccess && targetFile.exists() && targetFile.length() > 1024) {
-            ScreenCaptureManager.notifyMediaScanner(context, targetFile)
-            sendJsonResponse(out, 200, "{\"success\":true,\"filename\":\"$filename\"}")
-        } else {
-            sendJsonResponse(out, 500, "{\"success\":false,\"error\":\"Root screencap unavailable from web daemon\"}")
+        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+        val targetFile = File.createTempFile("TvGuard_Screenshot_${timestamp}_", ".png", ScreenCaptureManager.getScreenshotDir())
+        var saved = false
+        try {
+            val path = shellQuote(targetFile.absolutePath)
+            val result = DebloatEngine.executeRootCommand("screencap -p $path && chmod 664 $path")
+            if (result.isSuccess && targetFile.length() > 1024) {
+                saved = true
+                ScreenCaptureManager.notifyMediaScanner(context, targetFile)
+                sendJsonResponse(out, 200, "{\"success\":true,\"filename\":\"${targetFile.name}\"}")
+            } else {
+                sendJsonResponse(out, 500, "{\"success\":false,\"error\":\"Root screencap unavailable from web daemon\"}")
+            }
+        } finally {
+            if (!saved) targetFile.delete()
         }
     }
 
@@ -765,7 +831,7 @@ object LocalWebTransferServer {
 
     private fun sendJsonResponse(out: OutputStream, code: Int, json: String) {
         val bytes = json.toByteArray(StandardCharsets.UTF_8)
-        val statusText = if (code == 200) "OK" else "Internal Error"
+        val statusText = when (code) { 200 -> "OK"; 400 -> "Bad Request"; 403 -> "Forbidden"; else -> "Internal Server Error" }
         val header = "HTTP/1.1 $code $statusText\r\n" +
                 "Content-Type: application/json; charset=UTF-8\r\n" +
                 "Content-Length: ${bytes.size}\r\n" +

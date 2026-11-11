@@ -40,29 +40,31 @@ data class StorageEvidence(
     val cacheTotalBytes: Long,
     val partitions: List<PartitionEntry>,
     val isStorageSpoofed: Boolean,
-    val storageSpoofReason: String
+    val storageSpoofReason: String,
+    // This is a candidate disk, not proof that /data is backed by this device.
+    val blockDeviceSource: String? = null
 ) {
     /**
-     * Real physical eMMC chip capacity (e.g. 15.8 GB on SK hynix chip).
+     * Rough accounting only: subtract reported data usage and the listed filesystem
+     * capacities from a candidate device size. It omits other partitions/reserved
+     * blocks and can double-count shared mounts or use falsified filesystem stats.
+     * It is not the writable free space and must never be shown as a measurement.
      */
-    val realTotalFlashBytes: Long
-        get() = blockDeviceBytes ?: (systemTotalBytes + vendorTotalBytes + cacheTotalBytes + dataTotalBytes)
-
-    /**
-     * Estimated actual used flash storage.
-     */
-    val estimatedUsedBytes: Long
-        get() = ((dataTotalBytes - dataFreeBytes).coerceAtLeast(0L) + systemTotalBytes + vendorTotalBytes + cacheTotalBytes)
-
-    /**
-     * Ground-truth free storage derived from true physical chip size minus used space,
-     * debunking vendor-spoofed 25.4 GB claims.
-     */
-    val realFreeStorageBytes: Long
-        get() = if (blockDeviceBytes != null && blockDeviceBytes > estimatedUsedBytes) {
-            blockDeviceBytes - estimatedUsedBytes
-        } else {
-            dataFreeBytes
+    val estimatedPhysicalRemainderBytes: Long?
+        get() {
+            val device = blockDeviceBytes?.takeIf { it > 0 } ?: return null
+            // A zero filesystem capacity represents an unavailable probe in the
+            // auditor, not proof that the partition uses no space.
+            if (dataTotalBytes <= 0 || dataFreeBytes < 0 || dataFreeBytes > dataTotalBytes ||
+                systemTotalBytes <= 0 || vendorTotalBytes <= 0 || cacheTotalBytes <= 0
+            ) return null
+            val used = try {
+                listOf(dataTotalBytes - dataFreeBytes, systemTotalBytes, vendorTotalBytes, cacheTotalBytes)
+                    .fold(0L) { sum, value -> Math.addExact(sum, value) }
+            } catch (_: ArithmeticException) {
+                return null
+            }
+            return if (used <= device) device - used else null
         }
 }
 

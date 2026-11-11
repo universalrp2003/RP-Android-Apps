@@ -10,7 +10,7 @@
     <string name="tab_network">இணைய தரம்</string>
 
     <string name="tools_tile_title">கருவிகள் &amp; அமைப்புகள்</string>
-    <string name="tools_tile_desc">நினைவக பெருக்கம், வன்பொருள் தணிக்கை மற்றும் அமைப்புகள்</string>
+    <string name="tools_tile_desc">முகப்பு, விருப்ப வசதிகள் மற்றும் அமைப்புகள்</string>
 
     <string name="ram_boost_title">நினைவக வேகம்</string>
     <string name="ram_boost_subtitle">பின்னணி செயலிகளை அகற்றி நினைவகம் மீட்டல்</string>
@@ -45,7 +45,7 @@
     <string name="verdict_spoofed_ram">போலி ரேம் கண்டறியப்பட்டது</string>
     <string name="verdict_spoofed_storage">போலி சேமிப்பகம் கண்டறியப்பட்டது</string>
     <string name="verdict_spoofed_os">போலி ஆண்ட்ராய்டு பதிப்பு கண்டறியப்பட்டது</string>
-    <string name="verdict_genuine">போலி வன்பொருள் மாற்றம் எதுவும் இல்லை</string>
+    <string name="verdict_genuine">கிடைத்த சோதனைகளில் முரண்பாடு இல்லை; இதனால் சாதனத்தை உறுதிப்படுத்த முடியாது.</string>
 
     <string name="root_status_active">ரூட் அனுமதி செயல்பாட்டில் உள்ளது (UID 0)</string>
     <string name="root_status_none">ரூட் இல்லை (ADB முறை பயன்படுத்தலாம்)</string>
@@ -71,4 +71,128 @@
     <string name="category_safe">நீக்க பாதுகாப்பானது (தேவையற்றவை)</string>
     <string name="category_caution">பயனர் முடிவு (கருவிகள்)</string>
     <string name="category_core">கணினி முதன்மை செயலி (பாதுகாக்கப்பட்டது)</string>
+
+    <string name="about_title">பற்றி &amp; எமது செயலிகள்</string>
+    <string name="about_subtitle">இணையதளம், ஸ்டோர், மற்றும் எமது செயலிகள்</string>
+    <string name="about_heading">தொலைக்காட்சி காவலன் &amp; எமது செயலிகள் பற்றி</string>
+
+    <string name="back_to_tools">← கருவிகள் &amp; அமைப்புகளுக்குத் திரும்பு</string>
+    <string name="about_version">பதிப்பு %1$s</string>
+    <string name="about_description">விருப்ப வன்பொருள் சோதனை, செயலி நீக்கி மற்றும் கோப்பு மையம் கொண்ட எளிய டிவி முகப்பு.</string>
+    <string name="about_credit_developer">உருவாக்குநர்: Ramesh prathap .R (universalrp2003@gmail.com)</string>
+    <string name="about_credit_assistance">மென்பொருள் உதவி: Arena.ai Agent Mode</string>
+    <string name="about_website">அதிகாரப்பூர்வ இணையதளம்</string>
+    <string name="about_repository">GitHub களஞ்சியம்</string>
+    <string name="about_no_browser">இணைப்பைத் திறக்க செயலி இல்லை.</string>
+    <string name="about_sister_apps">RP Ideas செயலிகள் &amp; தமிழன் ஸ்டோர்</string>
+    <string name="about_sister_apps_hint">செயலியின் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கத்தை உலாவியில் திறக்கத் தேர்ந்தெடுக்கவும்.</string>
+    <string name="possible_mismatch">சாத்தியமான முரண்பாடு</string>
+    <string name="storage_evidence_title">2. சேமிப்பகச் சான்றுகள்</string>
+    <string name="storage_candidate_disk">கண்டறிந்த தொகுதி சாதனம்</string>
+    <string name="storage_disk_value">%1$s GB (%2$s GiB), %3$d செக்டர்கள்\n%4$s</string>
+    <string name="storage_data_report">அறிக்கையிடப்பட்ட /data கோப்பு அமைப்பு</string>
+    <string name="storage_data_value">மொத்தம் %1$s GiB · காலி %2$s GiB</string>
+    <string name="storage_used_data">அறிக்கைப்படி /data பயன்பாடு (மொத்தம் − காலி)</string>
+    <string name="storage_system">/system கோப்பு அமைப்பு கொள்ளளவு</string>
+    <string name="storage_vendor">/vendor கோப்பு அமைப்பு கொள்ளளவு</string>
+    <string name="storage_cache">/cache கோப்பு அமைப்பு கொள்ளளவு</string>
+    <string name="storage_estimated_remainder">தோராய மீதி (உறுதியான காலி இடம் அல்ல)</string>
+    <string name="storage_gib_value">%1$s GiB</string>
+    <string name="evidence_unavailable">தகவல் இல்லை</string>
+    <string name="storage_evidence_explanation">GB என்பது பத்து மடங்கு அலகு; GiB என்பது 1024 மடங்கு அலகு. 16 GB சிப் பகிர்வுகளுக்கு முன் சுமார் 14.9 GiB. சாதன அளவிலிருந்து அறிக்கையிட்ட பயன்பாட்டையும் காட்டிய கோப்பு அமைப்புகளின் கொள்ளளவையும் கழித்து தோராய மீதி கணக்கிடப்படுகிறது. மற்ற பகிர்வுகள், ஒதுக்கிய இடம், பகிரப்பட்ட மவுண்ட்கள், வேறு வட்டு அல்லது மாற்றப்பட்ட அறிக்கைகளால் இது தவறாகலாம். இது எழுதக்கூடிய காலி இடத்தின் அளவீடு அல்ல; தனியாகத் தரவை அழிக்காத சாதன ஆய்வு தேவை.</string>
+    <string name="os_evidence_title">3. ஆண்ட்ராய்டு பதிப்புச் சான்றுகள்</string>
+    <string name="os_reported_release">அறிக்கையிட்ட ஆண்ட்ராய்டு பதிப்பு</string>
+    <string name="os_framework_marker">ஃப்ரேம்வொர்க் வகுப்புச் சோதனை</string>
+    <string name="os_reported_sdk">அறிக்கையிட்ட SDK API</string>
+    <string name="os_kernel">கர்னல் பதிப்பு</string>
+    <string name="os_build_timestamp">பில்ட் நேரம் (மில்லி விநாடிகள்)</string>
+    <string name="os_evidence_explanation">ஆண்ட்ராய்டு 14 பொதுவாக API 34 அல்லது அதற்குப் பிந்தையதை அறிக்கையிடும்; சோதித்த ஆண்ட்ராய்டு 14 வகுப்பும் இருக்கும். முரண்பாடு மாற்றப்பட்ட அல்லது தனிப்பயனாக்கப்பட்ட அமைப்பைக் குறிக்கலாம். பதிப்பு, SDK, கர்னல் ஆகியவையும் மாற்றப்படலாம்; இச்சோதனைகள் உண்மையான அடிப்படைப் பதிப்பை உறுதிப்படுத்தாது.</string>
+    <string name="close_dialog">மூடு</string>
+    <string name="action_add_favorite">விருப்பங்களில் சேர்</string>
+    <string name="action_remove_favorite">விருப்பங்களிலிருந்து நீக்கு</string>
+    <string name="guide_title">வழிகாட்டி — தலைப்பைத் தேர்ந்தெடுங்கள்</string>
+    <string name="hardware_evidence_header">வன்பொருள் அறிக்கைகளும் சாத்தியமான முரண்பாடுகளும்</string>
+    <string name="hardware_warning_header">சான்றுகளில் சாத்தியமான முரண்பாடு</string>
+    <string name="ram_issue_mismatch">Android %1$s GiB RAM எனவும் கர்னல் %2$s GiB எனவும் தெரிவிக்கின்றன. காரணமும் நினைவகச் சிப்பின் உண்மை அளவும் உறுதிப்படுத்தப்படவில்லை.</string>
+    <string name="storage_issue_mismatch">சேமிப்பகத்தில் சாத்தியமான முரண்பாடு: /data %1$s GB என்றும் %2$s சாதனம் %3$s GB என்றும் தெரிவிக்கின்றன. இந்த வட்டுதான் /data-ஐ வழங்குகிறதா எனச் சரிபார்க்கவும்; firmware தகவல்களையும் மாற்றியிருக்கலாம்.</string>
+    <string name="os_issue_api">Android %1$s என்று தெரிவிக்கிறது; ஆனால் SDK API %2$d. Android %3$d-க்கு பொதுவாக API %4$d அல்லது அதற்குப் பிந்தையது தேவை.</string>
+    <string name="os_issue_marker">Android %1$s மற்றும் API %2$d எனத் தெரிவிக்கிறது; ஆனால் Android 14 framework வகுப்புச் சோதனை கிடைக்கவில்லை. Framework முரண்பட்டதாகவோ தனிப்பயனாக்கப்பட்டதாகவோ இருக்கலாம்.</string>
+    <string name="os_marker_14">Android 14 API குறியீடு உள்ளது (புதிய பதிப்புகளிலும் உள்ளது)</string>
+    <string name="os_marker_13">Android 13 API குறியீடு உள்ளது</string>
+    <string name="os_marker_12">Android 12 API குறியீடு உள்ளது</string>
+    <string name="os_marker_11">Android 11 API குறியீடு உள்ளது</string>
+    <string name="os_marker_10">Android 10 API குறியீடு உள்ளது</string>
+    <string name="os_marker_none">சோதித்த framework குறியீடு எதுவும் கிடைக்கவில்லை</string>
+    <!-- Opt-in lightweight / Expert settings. -->
+    <string name="tools_overview_title">முகப்பு கருவிகளும் அமைப்புகளும்</string>
+    <string name="launcher_only_active">முகப்பு மட்டும்</string>
+    <string name="expert_active">நிபுணர் கட்டுப்பாடுகள் இயக்கத்தில்</string>
+    <string name="expert_settings_title">நிபுணர் அமைப்புகள்</string>
+    <string name="expert_settings_subtitle">விருப்ப வசதிகளைத் தேர்வுசெய்</string>
+    <string name="expert_master_title">நிபுணர் முறை</string>
+    <string name="expert_master_description">நிறுத்தினால் முகப்பு மட்டும். இயக்கினால் தனி வசதி சுவிட்சுகள் தெரியும். மீண்டும் இயக்கும்போது சேமித்த தேர்வுகள் திரும்பும்; முன்பு இயக்கிய கோப்பு மையமும் தானாகத் தொடங்கலாம்.</string>
+    <string name="expert_intro">ஒவ்வொரு சுவிட்சிலும் OK அழுத்துங்கள். வசதியை நிறுத்தினால் அதற்கான வேலை முடிந்தவரை நிறுத்தப்படும். நினைவகச் சேமிப்பு சாதனத்தைப் பொறுத்தது; குறிப்பிட்ட அளவு உறுதி இல்லை.</string>
+    <string name="expert_waiting_for_parent">இயக்கத்தில் உள்ளது; எக்ஸ்பர்ட் பயன்முறையை இயக்கும் வரை நிறுத்தத்தில் இருக்கும்.</string>
+    <string name="feature_on">இயக்கு</string>
+    <string name="feature_off">நிறுத்து</string>
+    <string name="feature_status_bar">மேல் நிலைப் பட்டியும் கடிகாரமும்</string>
+    <string name="feature_status_bar_desc">ஆப்-க்குள் இருக்கும் தலைப்பு மற்றும் கடிகாரத்தைக் காட்டும். மிதக்கும் நிலைப் பட்டையை இது பாதிக்காது; அதற்குத் தனி சுவிட்ச் உள்ளது.</string>
+    <string name="feature_screenshot">திரைப் படம்</string>
+    <string name="feature_screenshot_desc">தேவைக்கேற்ப திரைப் படம் எடுக்க அனுமதி. நிறுத்தினால் பழைய படங்கள் அழியாது; கோப்பு மையம் இயக்கத்தில் இருந்தால் அவற்றைப் பகிரலாம்.</string>
+    <string name="feature_file_hub">வைஃபை கோப்பு மையம்</string>
+    <string name="feature_file_hub_desc">TV Guard திரை செயலி இருக்கும் வரை உள்ளூர் சேவையகத்தைத் தொடங்கும். Downloads மற்றும் சேமித்த படங்கள் தெரியலாம்; மேலுள்ள எச்சரிக்கையைப் படிக்கவும். நிபுணர் முறையை மீண்டும் இயக்கினால் இதுவும் தொடங்கலாம்.</string>
+    <string name="feature_web_remote">உலாவி ரிமோட் கட்டுப்பாடுகள்</string>
+    <string name="feature_web_remote_desc">உலாவியிலிருந்து விசை, உரை, செயலி திறப்பு மற்றும் நிறுவல் கோரிக்கைகளை அனுமதி. கோப்பு மையம் தேவை. தொலைவிலிருந்து படம் மற்றும் பூஸ்டுக்கு அவற்றின் சுவிட்சுகளும் தேவை.</string>
+    <string name="feature_hardware_audit">வன்பொருள் சோதனை</string>
+    <string name="feature_hardware_audit_desc">இயக்கும்போதோ புதுப்பிக்கும்போதோ வன்பொருள் மற்றும் ரூட் சான்றுகளைச் சோதிக்கும். ரூட் அனுமதி கேட்கப்படலாம்; காட்டப்படும் அளவுகள் சாதனத்தின் உண்மையை உறுதிப்படுத்தாது.</string>
+    <string name="feature_debloater">டிவி தேவையற்ற செயலி நீக்கி</string>
+    <string name="feature_debloater_desc">இந்தத் திரை திறந்திருக்கும் போது மட்டும் தொகுப்புகளையும் ரூட்டையும் சோதிக்கும். ரூட் அனுமதி கேட்கப்படலாம். எதையும் நீக்குமுன் சரிபார்க்கவும்.</string>
+    <string name="feature_network_tools">இணையச் சோதனைகள்</string>
+    <string name="feature_network_tools_desc">சோதனைத் திரை திறக்கும்போதோ மீண்டும் சோதிக்கும்போதோ இணைய மற்றும் வழக்கமான ரவுட்டர் முகவரிகளைச் சோதிக்கும்.</string>
+    <string name="feature_ram_boost">RAM பூஸ்ட்</string>
+    <string name="feature_ram_boost_desc">தேவைக்கேற்ப பின்னணி செயலிகளை நிறுத்த முயலும்; ரூட் இருந்தால் கர்னல் கேஷையும் காலிசெய்யலாம். முடிவு மாறுபடும்.</string>
+    <string name="feature_running_apps">இயங்கும் செயலிகள் பட்டியல்</string>
+    <string name="feature_running_apps_desc">கருவிகள் முகப்பில் இருக்கும்போது செயல்முறைகளைப் படிக்கும். சிலவற்றை Android மறைக்கலாம்.</string>
+    <string name="optional_share_title">படங்களும் கோப்பு மையமும்</string>
+    <string name="optional_share_short">இயக்கிய பகிர்வுக் கருவிகளைத் திற</string>
+    <string name="hardware_audit_safe_subtitle">காட்டப்பட்ட சான்றுகளைப் பார்</string>
+    <string name="hidden_apps_count">%1$d செயலிகள் மறைக்கப்பட்டுள்ளன</string>
+    <string name="debloat_rescan">செயலிப் பட்டியலைப் புதுப்பி</string>
+    <string name="network_retest">இணையத்தை மீண்டும் சோதி</string>
+    <string name="hub_security_warning">எச்சரிக்கை: கோப்பு மையத்தில் கடவுச்சொல்லோ குறியாக்கமோ இல்லை. உள்ளூர் வலையமைப்பில் உள்ள யாரும் Downloads மற்றும் சேமித்த படங்களைப் பார்க்க, பதிவேற்ற அல்லது நீக்க முடியும்; ரிமோட் இயக்கப்பட்டால் டிவியையும் கட்டுப்படுத்தலாம். நம்பகமான வலையமைப்பில் மட்டும் பயன்படுத்தி முடிந்ததும் நிறுத்தவும்.</string>
+    <string name="hub_active">உள்ளூர் வைஃபை கோப்பு மையம்: இயக்கத்தில்</string>
+    <string name="hub_start_failed">கோப்பு மையத்தைத் தொடங்க முடியவில்லை</string>
+    <string name="hub_retry_hint">போர்ட் மற்றும் சேமிப்பக அனுமதியைச் சரிபார்க்கவும்; அல்லது நிபுணர் அமைப்பில் கோப்பு மையத்தை நிறுத்தவும்.</string>
+    <string name="hub_disabled_hint">கோப்பு பகிர்வு நிறுத்தப்பட்டுள்ளது. தேவைப்பட்டால் நிபுணர் அமைப்பில் கோப்பு மையத்தை இயக்குங்கள்.</string>
+    <!-- Status overlay over other apps -->
+    <string name="overlay_notification_channel">நிலை மேலடுக்கு</string>
+    <string name="overlay_notification_title">நிலை மேலடுக்கு இயக்கத்தில் உள்ளது</string>
+    <string name="overlay_notification_text">மற்ற ஆப்களின் மேல் காலி CPU, RAM, சேமிப்பகம், நெட்வொர்க் தரம் காட்டப்படுகிறது.</string>
+    <string name="feature_status_overlay">மற்ற ஆப்களின் மேல் நிலைக் காட்டி</string>
+    <string name="feature_status_overlay_desc">திரையின் மேலே ஒரே வரியில் ஐந்து அளவுகளைக் காட்டும்: செயலி சுமை, இலவச RAM, இலவச சேமிப்பு, வெப்பநிலை மற்றும் இணையத் தரம். "மற்ற ஆப்களுக்கு மேல் காட்டு" அனுமதி தேவை.</string>
+    <string name="overlay_permission_needed">மேலடுக்குக்கு "மற்ற ஆப்களின் மேல் காட்ட" அனுமதி தேவை.</string>
+    <string name="overlay_permission_grant">மேலடுக்கு அனுமதியைத் திற</string>
+    <string name="overlay_blocked_note">DRM வீடியோ மற்றும் சில அமைப்பு உரையாடல்கள் போன்ற பாதுகாப்பான திரைகளில் ஆண்ட்ராய்டு மேலடுக்குகளை மறைக்கும். இதற்கு ஆதரவான தீர்வு இல்லை, எனவே அவற்றில் காட்டி தெரியாமல் போகலாம்.</string>
+
+    <!-- AI assistant -->
+    <!-- Temperature -->
+    <string name="debloater_screen_title">டிவி பிளோட் நீக்கி &amp; சிஸ்டம் கிளீனர்</string>
+    <string name="network_screen_title">நெட்வொர்க் பரிசோதனை மற்றும் உண்மையான தாமதம்</string>
+    <string name="hidden_apps_heading">செயலிகளைக் காட்டு அல்லது மறை</string>
+    <string name="hidden_apps_help">ஒரு செயலியை மறைக்க அதைத் தேர்ந்தெடுக்கவும்; மீண்டும் காட்ட தேர்வை நீக்கவும்.</string>
+    <string name="hidden_apps_now">இப்போது மறைக்கப்பட்டவை: %1$d.</string>
+    <string name="hidden_apps_empty">நிறுவப்பட்ட செயலிகள் எதுவும் கிடைக்கவில்லை. பட்டியல் ஏற்றிய பிறகு இந்தத் திரையை மீண்டும் திறக்கவும்.</string>
+    <string name="running_heading">சமீபத்தில் பயன்படுத்திய செயலிகள்</string>
+    <string name="running_active_count">%1$d பட்டியலில்</string>
+    <string name="running_close_all">பின்னணி செயலிகளை மூடு</string>
+    <string name="hub_files_heading">கோப்புகள் (பதிவிறக்கம் மற்றும் திரைப்படங்களில் %1$d)</string>
+    <string name="hub_files_empty">இன்னும் கோப்புகள் இல்லை. திரைப்படம் எடுக்கவும் அல்லது உங்கள் தொலைபேசி/கணினி உலாவியில் இருந்து APK பதிவேற்றவும்.</string>
+    <string name="adb_guide_title">வயர்லெஸ் ADB பிளோட் வழிகாட்டி (ரூட் தேவையில்லை)</string>
+    <string name="pill_position_short">பில்: %1$s</string>
+    <string name="btn_close">மூடு</string>
+    <string name="btn_install">நிறுவு</string>
+    <string name="btn_delete">நீக்கு</string>
+    <string name="storage_honest_free">பில்லில் காட்டப்படும் இடம்</string>
+    <string name="storage_honest_free_value">%2$s GiB இல் %1$s GiB இலவசம் %3$s</string>
+    <string name="storage_capped_note"> (இயற்பியல் வட்டுக்கு வரம்பிடப்பட்டது; கோப்பு முறைமை அதிகமாகக் கூறுகிறது)</string>
 </resources>

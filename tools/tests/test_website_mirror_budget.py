@@ -36,11 +36,11 @@ class SiteMirrorBudgetTest(unittest.TestCase):
         self.assertNotIn('continue-on-error:', deploy)
 
     def test_mirror_set_is_current_releases_plus_byte_checked_history(self):
-        self.assertGreaterEqual(len(MIRROR), 14)
+        self.assertGreaterEqual(len(MIRROR), 15)
         self.assertEqual(len(MIRROR), len({tag for tag, _, _, _ in MIRROR}), 'duplicate mirrored tag')
         self.assertEqual(len(MIRROR), len({asset for _, asset, _, _ in MIRROR}), 'duplicate mirrored asset')
         current = set(re.findall(r'data-release-tag="([^"]+)"', SITE))
-        self.assertEqual(len(current), 14, 'the site no longer names one release per app')
+        self.assertEqual(len(current), 15, 'the site no longer names one release per app')
         self.assertGreaterEqual(len(VERIFIED_ASSETS), 10, 'the live verifier pins fewer assets than expected')
         mirrored_tags = {tag for tag, _, _, _ in MIRROR}
         for tag, asset, size, digest in MIRROR:

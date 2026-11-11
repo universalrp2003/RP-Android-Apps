@@ -22,7 +22,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         cls.css = (ROOT / 'site/site-controls.css').read_text()
 
     def test_every_release_has_a_matching_real_timestamp(self):
-        self.assertEqual(dates.check(self.source, self.evidence), 14)
+        self.assertEqual(dates.check(self.source, self.evidence), 15)
         for value in self.evidence['releases'].values():
             self.assertIsNotNone(datetime.fromisoformat(value.replace('Z', '+00:00')).tzinfo)
 
@@ -58,7 +58,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
             with self.assertRaises(ValueError):
                 dates.refresh(self.source, lambda tag: release)
 
-    def test_all_fourteen_static_app_anchors_and_download_names_exist(self):
+    def test_all_fifteen_static_app_anchors_and_download_names_exist(self):
         cards = re.findall(r'<article class="card">.*?</article>', self.source, re.S)
         anchors = set()
         for card in cards:
@@ -67,7 +67,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
             anchors.add(anchor)
             self.assertIn(f'href="#{anchor}"', self.source)
             self.assertRegex(card, r'data-apk="[^"]+"[^>]*aria-label="Download APK · [^"]+"')
-        self.assertEqual(len(anchors), 14)
+        self.assertEqual(len(anchors), 15)
 
     def test_features_are_progressive_local_and_accessibly_labelled(self):
         self.assertIn('<option value="both">', self.source)
@@ -83,8 +83,8 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertLess(self.source.index('</style>'), self.source.index('href="site-controls.css'))
 
     def test_current_release_disclosures_are_not_hidden_as_technical_history(self):
-        self.assertEqual(self.source.count('class="release-brief"'), 14)
-        self.assertEqual(self.source.count('class="testing-status"'), 14)
+        self.assertEqual(self.source.count('class="release-brief"'), 15)
+        self.assertEqual(self.source.count('class="testing-status"'), 15)
         self.assertIn('Earlier feature history', self.source)
         self.assertIn('this exact APK was not phone-tested before publication', self.source)
         self.assertIn('same-key', self.source)

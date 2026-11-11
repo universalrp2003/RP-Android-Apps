@@ -5,195 +5,171 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.media.MediaScannerConnection
-import android.os.Build
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.view.PixelCopy
-import android.view.Window
 import com.universalrp.tvguard.debloat.DebloatEngine
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.universalrp.tvguard.web.shellQuote
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 
 object ScreenCaptureManager {
-
     fun getScreenshotDir(): File {
         val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        val dir = File(downloads, "Screenshots")
-        if (!dir.exists()) {
-            dir.mkdirs()
-        }
-        return dir
+        return File(downloads, "Screenshots").apply { if (!exists()) mkdirs() }
     }
 
     fun listScreenshots(): List<File> {
         val screenshotDir = getScreenshotDir()
         val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
         val list = mutableListOf<File>()
-
         fun scan(dir: File) {
             if (dir.exists() && dir.isDirectory) {
                 dir.listFiles { file ->
                     val name = file.name.lowercase(Locale.ROOT)
                     (name.startsWith("tvguard_") || name.contains("screenshot")) &&
-                            (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg"))
+                        (name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg"))
                 }?.let { list.addAll(it) }
             }
         }
-
         scan(screenshotDir)
         scan(downloadsDir)
-
         return list.distinctBy { it.name }.sortedByDescending { it.lastModified() }
     }
 
-    private fun generateScreenshotFile(): File {
-        val dir = getScreenshotDir()
-        val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-        return File(dir, "TvGuard_Screenshot_$timestamp.png")
+    /**
+     * Everything the Wi-Fi hub can serve: screenshots and uploads from Downloads.
+     *
+     * The share screen used to list only screenshots, so an APK uploaded through the browser
+     * page never appeared and could not be installed from the TV. Uploads land in the public
+     * Downloads folder, so they are listed here too, newest first.
+     */
+    fun listHubFiles(): List<File> {
+        val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val files = mutableListOf<File>()
+        fun scan(dir: File) {
+            if (!dir.exists() || !dir.isDirectory) return
+            dir.listFiles()?.forEach { file ->
+                val name = file.name.lowercase(Locale.ROOT)
+                if (!file.isFile || name.startsWith(".tvguard-upload-")) return@forEach
+                val isPicture = name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")
+                val isInstallable = name.endsWith(".apk")
+                if (isPicture || isInstallable) files.add(file)
+            }
+        }
+        scan(getScreenshotDir())
+        scan(downloads)
+        return files.distinctBy { it.name }.sortedByDescending { it.lastModified() }
     }
 
     /**
-     * Attempts root capture first (screencap -p captures the whole TV screen).
-     * If root is unavailable or fails, falls back to in-app window PixelCopy capture.
+     * Owned by the caller's coroutine, not a detached background scope. Cancellation
+     * interrupts the bounded root attempt and discards incomplete files; a PixelCopy
+     * callback which arrives after cancellation cannot start a new save.
      */
-    fun captureScreen(
-        activity: Activity,
-        onComplete: (Result<File>) -> Unit
-    ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val targetFile = generateScreenshotFile()
-            val targetPath = targetFile.absolutePath
-
-            // 1. Root attempt (works on rooted TV boxes, Synovo Q1 PLUS, Allwinner, Rockchip)
-            val rootRes = DebloatEngine.executeRootCommand("screencap -p '$targetPath' && chmod 664 '$targetPath'")
-            if (rootRes.isSuccess && targetFile.exists() && targetFile.length() > 1024) {
-                notifyMediaScanner(activity, targetFile)
-                withContext(Dispatchers.Main) {
-                    onComplete(Result.success(targetFile))
-                }
-                return@launch
-            }
-
-            // 2. PixelCopy window capture fallback (API 26+)
-            withContext(Dispatchers.Main) {
-                captureWindow(activity, activity.window, targetFile, onComplete)
-            }
-        }
-    }
-
-    /**
-     * Delayed capture allows user to dismiss menus or view specific content before capture.
-     */
-    fun captureScreenDelayed(
-        activity: Activity,
-        delaySeconds: Int = 3,
-        onTick: (Int) -> Unit = {},
-        onComplete: (Result<File>) -> Unit
-    ) {
-        CoroutineScope(Dispatchers.Main).launch {
-            for (i in delaySeconds downTo 1) {
-                onTick(i)
-                delay(1000)
-            }
-            onTick(0)
-            captureScreen(activity, onComplete)
-        }
-    }
-
-    private fun captureWindow(
-        context: Context,
-        window: Window,
-        targetFile: File,
-        onComplete: (Result<File>) -> Unit
-    ) {
+    suspend fun captureScreen(activity: Activity): Result<File> {
+        var target: File? = null
+        var completed = false
         try {
-            val decorView = window.decorView
-            val width = decorView.width.coerceAtLeast(1280)
-            val height = decorView.height.coerceAtLeast(720)
-            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                PixelCopy.request(
-                    window,
-                    bitmap,
-                    { copyResult ->
-                        if (copyResult == PixelCopy.SUCCESS) {
-                            saveBitmapToFile(context, bitmap, targetFile, onComplete)
-                        } else {
-                            // Fallback to Canvas draw
-                            captureViaCanvas(context, window, targetFile, onComplete)
+            withContext(Dispatchers.IO) {
+                currentCoroutineContext().ensureActive()
+                val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
+                // Assign inside the IO block so prompt cancellation on returning to
+                // the caller cannot lose the file before the finally block sees it.
+                target = File.createTempFile("TvGuard_Screenshot_${timestamp}_", ".png", getScreenshotDir())
+            }
+            val file = checkNotNull(target)
+            val rootResult = runInterruptible(Dispatchers.IO) {
+                val path = shellQuote(file.absolutePath)
+                DebloatEngine.executeRootCommand("screencap -p $path && chmod 664 $path")
+            }
+            currentCoroutineContext().ensureActive()
+            if (!(rootResult.isSuccess && file.length() > 1024)) {
+                // Keep the bitmap inside this context so it is recycled even if
+                // returning from withContext is cancelled before delivery.
+                withContext(Dispatchers.Main) {
+                    val bitmap = captureWindowBitmap(activity)
+                    try {
+                        withContext(Dispatchers.IO) {
+                            currentCoroutineContext().ensureActive()
+                            FileOutputStream(file).use { out ->
+                                check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)) { "PNG encoding failed" }
+                                out.flush()
+                            }
+                            currentCoroutineContext().ensureActive()
                         }
-                    },
-                    Handler(Looper.getMainLooper())
-                )
-            } else {
-                captureViaCanvas(context, window, targetFile, onComplete)
+                    } finally {
+                        bitmap.recycle()
+                    }
+                }
             }
-        } catch (e: Throwable) {
-            captureViaCanvas(context, window, targetFile, onComplete)
+            currentCoroutineContext().ensureActive()
+            notifyMediaScanner(activity, file)
+            completed = true
+            return Result.success(file)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (e: Exception) {
+            return Result.failure(e)
+        } finally {
+            if (!completed) target?.delete()
         }
     }
 
-    private fun captureViaCanvas(
-        context: Context,
-        window: Window,
-        targetFile: File,
-        onComplete: (Result<File>) -> Unit
-    ) {
-        try {
-            val view = window.decorView
-            val width = view.width.coerceAtLeast(1280)
-            val height = view.height.coerceAtLeast(720)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun captureWindowBitmap(activity: Activity): Bitmap = suspendCancellableCoroutine { continuation ->
+        fun deliver(bitmap: Bitmap) {
+            continuation.resume(bitmap) { bitmap.recycle() }
+        }
+        val view = activity.window.decorView
+        val width = view.width.coerceAtLeast(1)
+        val height = view.height.coerceAtLeast(1)
+
+        fun drawFallback(): Bitmap {
             val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(bitmap)
-            view.draw(canvas)
-            saveBitmapToFile(context, bitmap, targetFile, onComplete)
-        } catch (e: Throwable) {
-            onComplete(Result.failure(e))
+            view.draw(Canvas(bitmap))
+            return bitmap
         }
-    }
 
-    private fun saveBitmapToFile(
-        context: Context,
-        bitmap: Bitmap,
-        targetFile: File,
-        onComplete: (Result<File>) -> Unit
-    ) {
-        CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             try {
-                FileOutputStream(targetFile).use { out ->
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
-                    out.flush()
-                }
-                notifyMediaScanner(context, targetFile)
-                withContext(Dispatchers.Main) {
-                    onComplete(Result.success(targetFile))
-                }
-            } catch (e: Throwable) {
-                withContext(Dispatchers.Main) {
-                    onComplete(Result.failure(e))
-                }
+                PixelCopy.request(activity.window, bitmap, { result ->
+                    if (!continuation.isActive) {
+                        bitmap.recycle()
+                    } else if (result == PixelCopy.SUCCESS) {
+                        deliver(bitmap)
+                    } else {
+                        bitmap.recycle()
+                        try { deliver(drawFallback()) }
+                        catch (e: Exception) { continuation.resumeWithException(e) }
+                    }
+                }, Handler(Looper.getMainLooper()))
+            } catch (e: Exception) {
+                bitmap.recycle()
+                if (continuation.isActive) deliver(drawFallback())
             }
+        } catch (e: Exception) {
+            if (continuation.isActive) continuation.resumeWithException(e)
         }
     }
 
     fun notifyMediaScanner(context: Context, file: File) {
         try {
-            MediaScannerConnection.scanFile(
-                context.applicationContext,
-                arrayOf(file.absolutePath),
-                arrayOf("image/png"),
-                null
-            )
-        } catch (_: Throwable) {}
+            MediaScannerConnection.scanFile(context.applicationContext, arrayOf(file.absolutePath), arrayOf("image/png"), null)
+        } catch (_: Exception) { }
     }
 }

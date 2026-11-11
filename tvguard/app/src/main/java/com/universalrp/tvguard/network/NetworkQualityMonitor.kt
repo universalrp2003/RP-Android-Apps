@@ -4,7 +4,9 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -115,15 +117,18 @@ object NetworkQualityMonitor {
         )
     }
 
-    private fun measureTcpLatency(host: String, port: Int, timeoutMs: Int): Long? {
+    private suspend fun measureTcpLatency(host: String, port: Int, timeoutMs: Int): Long? {
         return try {
-            val start = System.currentTimeMillis()
-            Socket().use { socket ->
-                socket.connect(InetSocketAddress(host, port), timeoutMs)
+            runInterruptible(Dispatchers.IO) {
+                val start = System.currentTimeMillis()
+                Socket().use { socket ->
+                    socket.connect(InetSocketAddress(host, port), timeoutMs)
+                }
+                System.currentTimeMillis() - start
             }
-            val elapsed = System.currentTimeMillis() - start
-            elapsed
-        } catch (_: Throwable) {
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
             null
         }
     }
