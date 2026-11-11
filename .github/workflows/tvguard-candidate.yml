@@ -7,16 +7,9 @@ on:
       - "tvguard/**"
       - ".github/workflows/tvguard-candidate.yml"
   workflow_dispatch:
-    inputs:
-      signing_audit:
-        description: 'Inspect prior test APK signing certificates only'
-        type: boolean
-        default: false
-        required: false
 
 permissions:
   contents: write
-  actions: read
 
 concurrency:
   group: tvguard-candidate-${{ github.ref }}
@@ -24,7 +17,6 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_dispatch' || inputs.signing_audit == false
     name: Build, test, and package Android TV Guard
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -183,49 +175,3 @@ jobs:
             tvguard/app/build/outputs/androidTest-results/
           retention-days: 14
           if-no-files-found: warn
-
-  signing-audit:
-    name: Compare previous TV Guard test APK signatures
-    if: github.event_name == 'workflow_dispatch' && inputs.signing_audit == true
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: tvguard-debug-apk
-          path: prior-42820128729
-          run-id: 42820128729
-          github-token: ${{ github.token }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: tvguard-debug-apk
-          path: prior-42929761872
-          run-id: 42929761872
-          github-token: ${{ github.token }}
-      - uses: actions/download-artifact@v4
-        with:
-          name: tvguard-debug-apk
-          path: prior-42930753694
-          run-id: 42930753694
-          github-token: ${{ github.token }}
-      - name: Read package identities and public certificate fingerprints
-        shell: bash
-        run: |
-          set -euo pipefail
-          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          echo "::notice title=TV signing tools::$tools"
-          for id in 42820128729 42929761872 42930753694; do
-            mapfile -t apks < <(find "prior-$id" -name '*.apk' -type f)
-            echo "::notice title=TV audit files::$id count=${#apks[@]} files=${apks[*]}"
-            test "${#apks[@]}" -eq 1
-            if ! "$tools/aapt" dump badging "${apks[0]}" > /tmp/tv-badging.txt 2>/tmp/tv-audit-error; then
-              echo "::error title=TV badging error::$(cat /tmp/tv-audit-error)"; exit 1
-            fi
-            if ! "$tools/apksigner" verify --print-certs "${apks[0]}" > /tmp/tv-signer.txt 2>/tmp/tv-audit-error; then
-              echo "::error title=TV signer error::$(cat /tmp/tv-audit-error)"; exit 1
-            fi
-            info="$(sed -n '1p' /tmp/tv-badging.txt)"
-            signer="$(sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/tv-signer.txt | sed -n '1p')"
-            if [ -z "$signer" ]; then echo "::error title=TV signer output::$(tr '\n' '|' </tmp/tv-signer.txt | head -c 2000)"; exit 1; fi
-            echo "::notice title=TV APK signing audit::$id $info signer-SHA256=$signer"
-          done
