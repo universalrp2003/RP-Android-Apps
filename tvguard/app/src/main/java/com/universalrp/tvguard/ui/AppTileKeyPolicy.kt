@@ -39,10 +39,10 @@ object AppTileKeyPolicy {
 
     /** Mutable hold state for one tile. */
     class State {
-        var downTime: Long? = null
-            private set
-        var longPressFired: Boolean = false
-            private set
+        // Mutable so the sibling policy functions in this file can drive it; the UI only
+        // reads isHeld and the test asserts the transitions.
+        internal var downTime: Long? = null
+        internal var longPressFired: Boolean = false
 
         val isHeld: Boolean get() = downTime != null
     }

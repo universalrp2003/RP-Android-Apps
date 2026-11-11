@@ -460,6 +460,50 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
+    /**
+     * Opens the AI question screen. Declining silently is deliberate: if the feature is off
+     * the microphone key falls back to the local helper instead of pretending to be AI.
+     */
+    fun triggerAiAssistant() {
+        if (!TvAiAssistant.isEnabled(context)) return
+        aiDialogOpen = true
+        aiAnswer = null
+        aiEngine = null
+        aiBusy = false
+        selectedAppForOptions = null
+        showAdbGuide = false
+    }
+
+    fun askAi(question: String) {
+        if (question.isBlank()) return
+        aiQuestionJob?.cancel()
+        aiBusy = true
+        aiAnswer = null
+        aiEngine = null
+        aiQuestionJob = scope.launch {
+            val outcome = TvAiAssistant.ask(context, question) {
+                // Only reached when the feature is off; keeps the old helper available.
+                com.universalrp.tvguard.voice.TvAssistantAnswers.answer(question, hardwareReport)
+            }
+            aiBusy = false
+            when (outcome) {
+                is TvAiAssistant.Outcome.Answer -> {
+                    aiAnswer = outcome.text
+                    aiEngine = outcome.engine
+                }
+                is TvAiAssistant.Outcome.Local -> {
+                    aiAnswer = outcome.text
+                    aiEngine = null
+                }
+                is TvAiAssistant.Outcome.Error -> {
+                    aiAnswer = outcome.message
+                    aiEngine = null
+                }
+                TvAiAssistant.Outcome.Disabled -> Unit
+            }
+        }
+    }
+
     fun startVoiceListening() {
         if (!featureSettings.enabled(TvFeature.VOICE_HELPER)) return
         TvVoiceAssistant.startListening(
@@ -545,50 +589,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
             catch (_: Exception) {
                 pendingVoicePermission = false
                 voiceDialogPrompt = context.getString(R.string.voice_permission_denied)
-            }
-        }
-    }
-
-    /**
-     * Opens the AI question screen. Declining silently is deliberate: if the feature is off
-     * the microphone key falls back to the local helper instead of pretending to be AI.
-     */
-    fun triggerAiAssistant() {
-        if (!TvAiAssistant.isEnabled(context)) return
-        aiDialogOpen = true
-        aiAnswer = null
-        aiEngine = null
-        aiBusy = false
-        selectedAppForOptions = null
-        showAdbGuide = false
-    }
-
-    fun askAi(question: String) {
-        if (question.isBlank()) return
-        aiQuestionJob?.cancel()
-        aiBusy = true
-        aiAnswer = null
-        aiEngine = null
-        aiQuestionJob = scope.launch {
-            val outcome = TvAiAssistant.ask(context, question) {
-                // Only reached when the feature is off; keeps the old helper available.
-                com.universalrp.tvguard.voice.TvAssistantAnswers.answer(question, hardwareReport)
-            }
-            aiBusy = false
-            when (outcome) {
-                is TvAiAssistant.Outcome.Answer -> {
-                    aiAnswer = outcome.text
-                    aiEngine = outcome.engine
-                }
-                is TvAiAssistant.Outcome.Local -> {
-                    aiAnswer = outcome.text
-                    aiEngine = null
-                }
-                is TvAiAssistant.Outcome.Error -> {
-                    aiAnswer = outcome.message
-                    aiEngine = null
-                }
-                TvAiAssistant.Outcome.Disabled -> Unit
             }
         }
     }

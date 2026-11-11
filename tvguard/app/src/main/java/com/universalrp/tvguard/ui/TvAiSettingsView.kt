@@ -66,7 +66,8 @@ fun TvAiSettingsView(
     var model by remember { mutableStateOf(initial.model) }
     var key by remember { mutableStateOf("") }
     var baseUrl by remember { mutableStateOf(initial.baseUrl) }
-    var language by remember { mutableStateOf(TvAiSettings.answerLanguage(LocalContext.current)) }
+    val appContext = LocalContext.current
+    var language by remember { mutableStateOf(TvAiSettings.answerLanguage(appContext)) }
 
     // A key typed here belongs to the currently selected provider only. If the user
     // switches provider without typing a key, nothing is written to that provider's slot.
@@ -103,7 +104,7 @@ fun TvAiSettingsView(
             items(TvAiProvider.entries, key = { it.id }) { entry ->
                 SelectRow(
                     label = entry.label,
-                    selected = provider == entry.id,
+                    selected = provider == entry,
                     detail = entry.note,
                     tag = "ai-provider-${entry.id}",
                     onClick = {
@@ -204,7 +205,7 @@ fun TvAiSettingsView(
                             label,
                             onClick = {
                                 language = value
-                                TvAiSettings.setAnswerLanguage(LocalContext.current, value)
+                                TvAiSettings.setAnswerLanguage(appContext, value)
                             },
                             color = if (language == value) Color(0xFF00E5FF) else Color(0xFF475569),
                             modifier = Modifier.testTag("ai-lang-$value")
