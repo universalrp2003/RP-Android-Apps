@@ -79,4 +79,7 @@ details .body { overflow-wrap: anywhere; }
 #tv-guard-card details.release-brief .rb { border: 0; padding: 0; background: none; font-size: .86rem; }
 #tv-guard-card details.release-brief .rb .testing-status { display: block; margin-top: 8px; }
 @media (max-width: 620px) { #tv-guard-card .tagline { font-size: .95rem; } }
-#tv-guard-card .pillar .ta-heading { display: block; font-size: .84rem; margin-top: 2px; color: #8fd6e6; }
+/* Only in bilingual mode does the Tamil heading need its own line; in Tamil-only
+   or English-only mode the site-wide language rule must keep it hidden, so this
+   override is scoped to the 'both' state. */
+html[data-site-language="both"] #tv-guard-card .pillar .ta-heading { display: block; font-size: .84rem; margin-top: 2px; color: #8fd6e6; }
