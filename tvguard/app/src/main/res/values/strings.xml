@@ -136,7 +136,7 @@
     <string name="feature_on">ON</string>
     <string name="feature_off">OFF</string>
     <string name="feature_status_bar">Top status bar and clock</string>
-    <string name="feature_status_bar_desc">Show the top header and clock. The individual status pills below need this switch.</string>
+    <string name="feature_status_bar_desc">Show the in-app header and clock on the Home and Tools screens. It does not affect the floating status pill, which has its own switch.</string>
     <string name="feature_screenshot">Screenshots</string>
     <string name="feature_screenshot_desc">Allow on-demand captures. Turning this off does not delete saved screenshots; an enabled file hub can still share them.</string>
     <string name="feature_file_hub">Wi-Fi file hub</string>
@@ -169,7 +169,7 @@
     <string name="overlay_notification_title">Status overlay is on</string>
     <string name="overlay_notification_text">Showing free CPU, RAM, storage and network quality over other apps.</string>
     <string name="feature_status_overlay">Status pill over other apps</string>
-    <string name="feature_status_overlay_desc">Draws the four readings on top of whatever is on screen, at about 50%% transparency. Needs "Display over other apps" and the top status bar. Secure or system screens may hide it.</string>
+    <string name="feature_status_overlay_desc">Draws the five readings on one line at the top of the screen: processor load, free RAM, free storage, temperature and internet quality. Needs "Display over other apps". Secure or system screens may hide it.</string>
     <string name="overlay_permission_needed">Allow "display over other apps" to use the overlay.</string>
     <string name="overlay_permission_grant">Open overlay permission</string>
     <string name="overlay_blocked_note">Android hides overlays over secure or system screens such as DRM video and some dialogs. There is no supported workaround, so the pill may not appear there.</string>
@@ -193,6 +193,6 @@
     <string name="btn_install">Install</string>
     <string name="btn_delete">Delete</string>
     <string name="storage_honest_free">Free space shown in the pill</string>
-    <string name="storage_honest_free_value">%1$s GiB free of %2$s GiB%3$s</string>
+    <string name="storage_honest_free_value">%1$s GiB free of %2$s GiB %3$s</string>
     <string name="storage_capped_note"> (limited to the physical disk; the filesystem claims more)</string>
 </resources>

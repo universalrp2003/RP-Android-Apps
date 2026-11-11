@@ -136,7 +136,7 @@
     <string name="feature_on">இயக்கு</string>
     <string name="feature_off">நிறுத்து</string>
     <string name="feature_status_bar">மேல் நிலைப் பட்டியும் கடிகாரமும்</string>
-    <string name="feature_status_bar_desc">மேல் தலைப்பையும் கடிகாரத்தையும் காட்டு. கீழுள்ள தனித்தனி நிலைக் காட்டிகளுக்கு இது தேவை.</string>
+    <string name="feature_status_bar_desc">ஆப்-க்குள் இருக்கும் தலைப்பு மற்றும் கடிகாரத்தைக் காட்டும். மிதக்கும் நிலைப் பட்டையை இது பாதிக்காது; அதற்குத் தனி சுவிட்ச் உள்ளது.</string>
     <string name="feature_screenshot">திரைப் படம்</string>
     <string name="feature_screenshot_desc">தேவைக்கேற்ப திரைப் படம் எடுக்க அனுமதி. நிறுத்தினால் பழைய படங்கள் அழியாது; கோப்பு மையம் இயக்கத்தில் இருந்தால் அவற்றைப் பகிரலாம்.</string>
     <string name="feature_file_hub">வைஃபை கோப்பு மையம்</string>
@@ -169,7 +169,7 @@
     <string name="overlay_notification_title">நிலை மேலடுக்கு இயக்கத்தில் உள்ளது</string>
     <string name="overlay_notification_text">மற்ற ஆப்களின் மேல் காலி CPU, RAM, சேமிப்பகம், நெட்வொர்க் தரம் காட்டப்படுகிறது.</string>
     <string name="feature_status_overlay">மற்ற ஆப்களின் மேல் நிலைக் காட்டி</string>
-    <string name="feature_status_overlay_desc">திரையில் இருப்பதன் மேல் நான்கு அளவுகளையும் சுமார் 50%% ஒளிபுகாநிலையில் காட்டும். "மற்ற ஆப்களின் மேல் காட்ட" அனுமதியும் மேல் நிலைப் பட்டியும் தேவை. பாதுகாப்பான அல்லது அமைப்புத் திரைகளில் இது மறையலாம்.</string>
+    <string name="feature_status_overlay_desc">திரையின் மேலே ஒரே வரியில் ஐந்து அளவுகளைக் காட்டும்: செயலி சுமை, இலவச RAM, இலவச சேமிப்பு, வெப்பநிலை மற்றும் இணையத் தரம். "மற்ற ஆப்களுக்கு மேல் காட்டு" அனுமதி தேவை.</string>
     <string name="overlay_permission_needed">மேலடுக்குக்கு "மற்ற ஆப்களின் மேல் காட்ட" அனுமதி தேவை.</string>
     <string name="overlay_permission_grant">மேலடுக்கு அனுமதியைத் திற</string>
     <string name="overlay_blocked_note">DRM வீடியோ மற்றும் சில அமைப்பு உரையாடல்கள் போன்ற பாதுகாப்பான திரைகளில் ஆண்ட்ராய்டு மேலடுக்குகளை மறைக்கும். இதற்கு ஆதரவான தீர்வு இல்லை, எனவே அவற்றில் காட்டி தெரியாமல் போகலாம்.</string>
@@ -193,6 +193,6 @@
     <string name="btn_install">நிறுவு</string>
     <string name="btn_delete">நீக்கு</string>
     <string name="storage_honest_free">பில்லில் காட்டப்படும் இடம்</string>
-    <string name="storage_honest_free_value">%2$s GiB இல் %1$s GiB இலவசம்%3$s</string>
+    <string name="storage_honest_free_value">%2$s GiB இல் %1$s GiB இலவசம் %3$s</string>
     <string name="storage_capped_note"> (இயற்பியல் வட்டுக்கு வரம்பிடப்பட்டது; கோப்பு முறைமை அதிகமாகக் கூறுகிறது)</string>
 </resources>

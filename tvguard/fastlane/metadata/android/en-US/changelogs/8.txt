@@ -1,0 +1,1 @@
+Copy fixes only. The storage figure no longer runs into its note, and the Expert switches now describe five readings instead of four, without claiming the pill needs the top status bar. No behaviour, permission or storage-calculation change.

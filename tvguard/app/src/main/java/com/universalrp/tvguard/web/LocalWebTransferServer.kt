@@ -298,6 +298,22 @@ object LocalWebTransferServer {
         return dir
     }
 
+    /** The hosted app store page. A web update adds an app; no APK needs to change. */
+    private val STORE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"
+
+    /**
+     * The store card shown above the remote control. Kept as its own function so a unit test can
+     * check the link and the promise it makes without standing up the HTTP server.
+     */
+    internal fun storeCardHtml(): String = buildString {
+        append("<div class=\"card\">")
+        append("<h3>\uD83E\uDDED RP App Store</h3>")
+        append("<p style=\"font-size: 13px; color: var(--muted); margin-bottom: 14px;\">Browse every RP app, download an APK, or open the install prompt that appears in the file list above.</p>")
+        append("<a class=\"btn btn-outline\" style=\"display:block; text-align:center; text-decoration:none;\" href=\"" + STORE_URL + "\" target=\"_blank\" rel=\"noopener\">Open the RP App Store</a>")
+        append("<p style=\"font-size: 12px; color: var(--muted); margin-top: 10px;\">The store is a web page, so it always lists the newest apps. Nothing needs reinstalling to see a new one.</p>")
+        append("</div>")
+    }
+
     private fun isTemporaryUpload(filename: String): Boolean =
         filename.startsWith(".tvguard-upload-") && filename.endsWith(".part")
 
@@ -457,7 +473,12 @@ object LocalWebTransferServer {
 
             append("</div>") // End grid
 
-            // Card 3: Mobile Virtual Remote Control & Touchpad / Keyboard
+            // Card 3: the app store page, opened from this hub so the phone never has to
+            // remember an address. The store is a hosted web page, so adding an app is a
+            // web update, not a new APK.
+            append(storeCardHtml())
+
+            // Card 4: Mobile Virtual Remote Control & Touchpad / Keyboard
             if (policy.remote) {
             append("<div class=\"card\">")
             append("<h3>🎮 Mobile Virtual TV Remote & Keyboard</h3>")
@@ -517,7 +538,7 @@ object LocalWebTransferServer {
             append("</div>") // End Remote Card
             }
 
-            // Card 4: Screenshots Table (saved in /sdcard/Download/Screenshots/)
+            // Card 5: Screenshots Table (saved in /sdcard/Download/Screenshots/)
             append("<div class=\"card\">")
             append("<h3>📸 TV Screenshots (/sdcard/Download/Screenshots/) (").append(screenshots.size).append(" files)</h3>")
             if (screenshots.isEmpty()) {
@@ -545,7 +566,7 @@ object LocalWebTransferServer {
             }
             append("</div>")
 
-            // Card 5: Downloads & APKs Table (saved in /sdcard/Download/)
+            // Card 6: Downloads & APKs Table (saved in /sdcard/Download/)
             append("<div class=\"card\">")
             append("<h3>📦 TV Downloads & Uploaded APKs (/sdcard/Download/) (").append(downloads.size).append(" files)</h3>")
             if (downloads.isEmpty()) {
