@@ -83,4 +83,4 @@ test "${#installed_paths[@]}" -eq 1
 installed_sha="$(adb shell sha256sum "${installed_paths[0]}" | tr -d '\r' | awk '{print $1}')"
 candidate_sha="$(sha256sum "$candidate" | awk '{print $1}')"
 test "$installed_sha" = "$candidate_sha"
-echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key code 1 to code 3 update preserved synthetic favorites, hidden apps, feature choices and a private file; four TV focus tests and four real key-down/hold/up long-press tests passed on the exact candidate APK."
+echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key update preserved synthetic favorites, hidden apps, feature choices and a private file; five TV focus tests and five real key-down/hold/up long-press tests (including a remote that never auto-repeats) passed on the exact candidate APK."
