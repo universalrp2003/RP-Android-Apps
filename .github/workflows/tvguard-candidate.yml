@@ -13,6 +13,11 @@ on:
         type: boolean
         default: false
         required: false
+      inspect_failed_run:
+        description: 'Inspect a previous signed candidate diagnostic artifact only'
+        type: string
+        default: ''
+        required: false
 
 permissions:
   contents: read
@@ -24,7 +29,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_dispatch' || inputs.signed_candidate == false
+    if: github.event_name != 'workflow_dispatch' || (inputs.signed_candidate == false && inputs.inspect_failed_run == '')
     name: Build, test, and package Android TV Guard
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -106,7 +111,7 @@ jobs:
   # Manual only: a disposable Android TV emulator, not a release or OEM-device test.
   tv-focus:
     name: Exercise D-pad navigation on Android TV
-    if: github.event_name == 'workflow_dispatch' && inputs.signed_candidate == false
+    if: github.event_name == 'workflow_dispatch' && inputs.signed_candidate == false && inputs.inspect_failed_run == ''
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -190,7 +195,7 @@ jobs:
   # This is an unpublished candidate. The keystore is available only inside this job.
   signed-candidate:
     name: Verify a stable-signed TV candidate and update continuity
-    if: github.event_name == 'workflow_dispatch' && inputs.signed_candidate == true
+    if: github.event_name == 'workflow_dispatch' && inputs.signed_candidate == true && inputs.inspect_failed_run == ''
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
@@ -325,3 +330,27 @@ jobs:
       - name: Remove temporary signing material
         if: always()
         run: rm -f ci-keystore/release.p12
+
+  inspect-signed-diagnostics:
+    name: Inspect signed candidate diagnostics
+    if: github.event_name == 'workflow_dispatch' && inputs.inspect_failed_run != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tvguard-signed-candidate-diagnostics
+          path: signed-diagnostics
+          run-id: ${{ inputs.inspect_failed_run }}
+          github-token: ${{ github.token }}
+      - name: Surface public signer and manifest checks
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for path in sorted(Path('signed-diagnostics').rglob('*')):
+              if not path.is_file() or not path.name.endswith(('-signer.txt', '-badging.txt')): continue
+              text = path.read_text(errors='replace')
+              selected = [line for line in text.splitlines() if 'SHA-256 digest:' in line or line.startswith(('package:', 'instrumentation:', 'application-debuggable'))]
+              summary = path.name + ' ' + ' | '.join(selected)
+              print('::notice title=Signed TV diagnostic::' + summary[:3500].replace('%', '%25').replace('\n', '%0A'))
+          PY
