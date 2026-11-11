@@ -82,7 +82,7 @@ class StorageTruthTest {
         val result = StorageTruth.cap(
             freeBytes = (25.90 * GIB).toLong(),
             totalBytes = (32.00 * GIB).toLong(),
-            physicalBytes = (15.76 * 1_000_000_000L),
+            physicalBytes = (15.76 * 1_000_000_000.0).toLong(),
         )
         assertTrue("the figure must be flagged as capped", result.capped)
         assertTrue(
