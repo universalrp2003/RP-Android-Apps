@@ -1033,6 +1033,50 @@ def verify_module_versions_match_sister_apps() -> int:
     return checked
 
 
+
+def verify_newest_first(site: str, regular_ids: list[str]) -> None:
+    """The listing opens with the most recently released app.
+
+    Each card links to its own release tag; the latest-releases table carries the ISO
+    release timestamp for that tag. Both the card list and the table are checked,
+    because a stale order is worse than no order at all.
+    """
+    table = dict(
+        (tag, when)
+        for when, tag in re.findall(
+            r'<time datetime="([^"]+)" data-release-tag="([^"]+)"', site
+        )
+    )
+    if len(table) != 15 or len(set(table.values())) != 15:
+        raise ValueError("Every release-table row needs its own ISO release timestamp.")
+
+    stamps = {}
+    for chunk in site.split('<h2 id="app-')[1:]:
+        card = "app-" + chunk.split('"', 1)[0]
+        # Stop at the card's own closing tag so a duplicated block cannot borrow a
+        # neighbour's release link, and so one card cannot supply two dates.
+        if "</article>" in chunk:
+            chunk = chunk[: chunk.index("</article>")]
+        tags = [t for t in re.findall(r"/releases/download/([a-z0-9.-]+)/", chunk) if t in table]
+        if len(set(tags)) != 1:
+            raise ValueError(f"{card} must name exactly one release tag, found {sorted(set(tags))}.")
+        stamps[card] = table[tags[0]]
+    missing = [card for card in regular_ids if card not in stamps]
+    if missing:
+        raise ValueError(f"Cards without a release date: {missing}")
+
+    by_card = [stamps[card] for card in regular_ids]
+    if by_card != sorted(by_card, reverse=True):
+        raise ValueError(
+            "The regular apps section must list the most recently released app first. "
+            f"Newest-first order is {sorted(by_card, reverse=True)}; found {by_card}."
+        )
+
+    row_order = re.findall(r'data-release-tag="([^"]+)"', site)
+    if row_order != sorted(row_order, key=lambda tag: table[tag], reverse=True):
+        raise ValueError("The latest-releases table must list the newest release first.")
+
+
 def verify_site_versions_match_downloads() -> int:
     """Every version the website states must be the version it actually downloads.
 
@@ -1256,13 +1300,12 @@ def verify_site_versions_match_downloads() -> int:
     if not regular or not optional:
         raise ValueError(f"Website must separate the {non_store_count} regular app cards from optional Store.")
     ids = re.findall(r'<h2 id="(app-[^"]+)"', regular[1])
-    # The count is derived from SisterApps.kt; the last regular card is whichever app is listed
-    # just before the Store there, so adding an app does not silently mislabel the section.
-    last_regular = "app-" + re.findall(r'id = "([^"]+)"', sister_source)[-2].replace("tvguard", "tv-guard")
-    if len(ids) != non_store_count or ids[-1] != last_regular or "app-tamilan-store" in ids:
+    if len(ids) != non_store_count or "app-tamilan-store" in ids:
         raise ValueError(
-            f"The regular apps section must hold exactly {non_store_count} non-Store cards, ending with {last_regular}."
+            f"The regular apps section must hold exactly {non_store_count} non-Store cards."
         )
+    # Order is a promise to the reader, so it is checked rather than trusted.
+    verify_newest_first(site, ids)
     if re.findall(r'<h2 id="(app-[^"]+)"', optional[1]) != ["app-tamilan-store"]:
         raise ValueError("Only Tamilan Store belongs in the separate optional section.")
 

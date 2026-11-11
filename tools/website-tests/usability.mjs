@@ -36,6 +36,16 @@ try {
     assert.equal(await page.locator('a[data-apk][aria-label]').count(), 30);
     assert.equal(await page.locator('[data-copy-sha]').count(), 15);
   });
+  await test('cards and release table are ordered newest release first', async page => {
+    await page.goto(base);
+    const dates = await page.locator('article.card time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
+    assert.equal(dates.length, 15);
+    assert.deepEqual([...dates].sort().reverse(), dates, 'cards run newest first');
+    const rows = await page.locator('.latest tbody time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
+    assert.equal(rows.length, 15);
+    assert.deepEqual([...rows].sort().reverse(), rows, 'release table runs newest first');
+    assert.equal(await page.locator('#list-order').innerText().then(t => /Most recently updated first/.test(t) || /சமீபத்தில்/.test(t)), true);
+  });
   for (const width of [320, 390, 768]) {
     await test(`all 30 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
       await page.setViewportSize({ width, height: 844 });

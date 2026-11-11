@@ -69,6 +69,36 @@ class WebsiteUsabilityTest(unittest.TestCase):
             self.assertRegex(card, r'data-apk="[^"]+"[^>]*aria-label="Download APK · [^"]+"')
         self.assertEqual(len(anchors), 15)
 
+    def test_card_order_is_newest_release_first(self):
+        """The page promises the newest release first, so a stale order must fail the gate."""
+        site = self.source
+        import sys
+        from pathlib import Path as _P
+        sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
+        import verify_apps_localization as localization
+        regular = re.search(
+            r'aria-label="14 regular Android applications">(.*?)</section>', site, re.S
+        )[1]
+        ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
+        self.assertEqual(len(ids), 14)
+        localization.verify_newest_first(site, ids)
+        self.assertEqual(ids[0], 'app-tv-guard')
+
+        # Moving the oldest card to the front must be rejected.
+        oldest = site.index('        <!-- Secret Message -->')
+        end = site.index('</article>', oldest) + len('</article>')
+        block = site[oldest:end]
+        shuffled = site[:oldest] + site[end:]
+        first = shuffled.index('        <!-- Android TV Guard')
+        shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
+        shuffled_ids = re.findall(
+            r'<h2 id="(app-[^"]+)"',
+            re.search(r'aria-label="14 regular Android applications">(.*?)</section>', shuffled, re.S)[1],
+        )
+        self.assertEqual(shuffled_ids[0], 'app-secret-message')
+        with self.assertRaises(ValueError):
+            localization.verify_newest_first(shuffled, shuffled_ids)
+
     def test_features_are_progressive_local_and_accessibly_labelled(self):
         self.assertIn('<option value="both">', self.source)
         self.assertIn('aria-label="App categories"', self.source)
