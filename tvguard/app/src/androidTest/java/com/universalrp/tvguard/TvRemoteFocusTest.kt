@@ -109,6 +109,20 @@ class TvRemoteFocusTest {
         }
     }
 
+    /**
+     * Scrolls a lazy Expert row into view and waits for it to be composed.
+     *
+     * performScrollToNode runs immediately, so when the list has just been rebuilt (for example
+     * right after the master switch turns Expert on) it can still be showing only the three
+     * header items and report "no node found". Retrying is what makes the wait real.
+     */
+    private fun scrollExpertTo(tag: String) {
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
+    }
+
     private fun awaitFocus(tag: String) {
         compose.waitUntil(timeoutMillis = 30_000) {
             compose.onAllNodes(hasTestTag(tag) and isFocused()).fetchSemanticsNodes().isNotEmpty()
@@ -137,7 +151,7 @@ class TvRemoteFocusTest {
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOn()
         val featureTag = "feature-${feature.key}"
-        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(featureTag))
+        scrollExpertTo(featureTag)
         compose.onNodeWithTag(featureTag).assertIsOff().performClick().assertIsOn()
         compose.onNodeWithTag("expert-back").performClick()
     }
@@ -188,20 +202,20 @@ class TvRemoteFocusTest {
 
         for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.AI_ASSISTANT)) {
             val tag = "feature-${feature.key}"
-            compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
+            scrollExpertTo(tag)
             compose.onNodeWithTag(tag).assertIsOff().performClick().assertIsOn()
             // A dependent switch stays paused until its parent is on.
             if (feature == TvFeature.STATUS_OVERLAY) {
-                compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("feature-status_bar"))
+                scrollExpertTo("feature-status_bar")
                 compose.onNodeWithTag("feature-status_bar").assertIsOff()
             }
         }
 
         // Turning Expert off must stop both without erasing the saved choices.
-        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("expert-master"))
+        scrollExpertTo("expert-master")
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOff()
-        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("feature-ai_assistant"))
+        scrollExpertTo("feature-ai_assistant")
         compose.onNodeWithTag("feature-ai_assistant").assertIsOn()
     }
 
