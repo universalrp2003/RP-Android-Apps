@@ -191,7 +191,14 @@ jobs:
                           print('::error title=TV focus test::' + summary[:3800].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           log = Path(os.environ['RUNNER_TEMP'], 'tvguard-android-test.log')
           if not failures and log.exists():
-              text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
+              lines = log.read_text(errors='replace').splitlines()
+              # A compile error or a task failure scrolls off the tail behind a Gradle stack
+              # trace, so keep the diagnostic lines from anywhere in the log and only then add
+              # the tail. Without this the annotation only says 'sh exited with code 1'.
+              cues = ('e: ', 'error:', 'warning: ', 'What went wrong', 'Execution failed for task',
+                      'FAILED', '> Task', 'Caused by:', 'Could not', 'No connected devices')
+              picked = [line for line in lines if any(cue in line for cue in cues)]
+              text = '\n'.join(picked[-120:] + ['--- tail ---'] + lines[-40:])
               print('::error title=TV emulator diagnostic::' + text[-12000:].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           PY
       - uses: actions/upload-artifact@v4
