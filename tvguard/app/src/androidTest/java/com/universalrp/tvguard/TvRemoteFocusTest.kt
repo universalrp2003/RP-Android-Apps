@@ -313,7 +313,9 @@ class TvRemoteFocusTest {
             }
             current = tag
         }
-        press(current, Key.DirectionDown, "feature-${DpadTraversalFeatures.last().key}")
+        // No extra press here: the forward walk already stands on the last traversed row, and
+        // the row below it is a real target (the appended switches), so pressing Down again
+        // could not leave focus on that same row.
         for (feature in DpadTraversalFeatures.dropLast(1).asReversed()) {
             val tag = "feature-${feature.key}"
             press(current, Key.DirectionUp, tag)
