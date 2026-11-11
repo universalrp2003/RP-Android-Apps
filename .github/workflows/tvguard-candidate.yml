@@ -7,9 +7,15 @@ on:
       - "tvguard/**"
       - ".github/workflows/tvguard-candidate.yml"
   workflow_dispatch:
+    inputs:
+      diagnostics_from_run:
+        description: 'Optional: inspect a previous TV focus report only'
+        required: false
+        type: string
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: tvguard-candidate-${{ github.ref }}
@@ -17,6 +23,7 @@ concurrency:
 
 jobs:
   build:
+    if: github.event_name != 'workflow_dispatch' || inputs.diagnostics_from_run == ''
     name: Build, test, and package Android TV Guard
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -173,3 +180,37 @@ jobs:
             tvguard/app/build/outputs/androidTest-results/
           retention-days: 14
           if-no-files-found: warn
+
+  prior-tv-diagnostics:
+    if: github.event_name == 'workflow_dispatch' && inputs.diagnostics_from_run != ''
+    name: Inspect prior TV focus report
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tvguard-tv-focus-reports
+          path: prior-tv-report
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.diagnostics_from_run }}
+      - name: Summarize every prior test result
+        run: |
+          python3 - <<'PYDIAG'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          def notice(title, text):
+              print('::notice title=' + title + '::' + text[:3800].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          paths = list(Path('prior-tv-report').rglob('*.xml'))
+          notice('TV report XML paths', '\n'.join(map(str, paths)))
+          for path in paths:
+              try: root = ET.parse(path).getroot()
+              except ET.ParseError: continue
+              for case in root.iter('testcase'):
+                  failures = case.findall('failure') + case.findall('error')
+                  skipped = case.findall('skipped')
+                  notice('TV case', case.get('name', '') + ' failures=' + str(len(failures)) + ' skipped=' + str(len(skipped)))
+                  for failure in failures:
+                      text = failure.get('message', '') + '\n' + (failure.text or '')
+                      notice('TV failure start', text[:3500])
+                      notice('TV failure end', text[-3500:])
+          PYDIAG
