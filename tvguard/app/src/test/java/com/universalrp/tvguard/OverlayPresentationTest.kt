@@ -41,29 +41,24 @@ class OverlayPresentationTest {
     @Test
     fun movingRightMovesThePillRightInEveryCorner() {
         val step = OverlayPlacement.STEP_DP
+        val left = OverlayPlacement.TOP_LEFT.copy(xDp = 200)
+        val right = OverlayPlacement.TOP_RIGHT.copy(xDp = 200)
         // Left-anchored: the inset from the left edge grows.
-        assertEquals(
-            OverlayPlacement.TOP_LEFT.xDp + step,
-            OverlayPlacement.TOP_LEFT.nudged(step, 0).xDp
-        )
+        assertEquals(left.xDp + step, left.nudged(step, 0).xDp)
         // Right-anchored: the inset from the right edge shrinks, which looks like moving right.
-        assertEquals(
-            OverlayPlacement.TOP_RIGHT.xDp - step,
-            OverlayPlacement.TOP_RIGHT.nudged(step, 0).xDp
-        )
+        assertEquals(right.xDp - step, right.nudged(step, 0).xDp)
     }
 
     @Test
     fun movingDownMovesThePillDownInEveryCorner() {
         val step = OverlayPlacement.STEP_DP
-        assertEquals(
-            OverlayPlacement.TOP_LEFT.yDp + step,
-            OverlayPlacement.TOP_LEFT.nudged(0, step).yDp
-        )
-        assertEquals(
-            OverlayPlacement.BOTTOM_LEFT.yDp - step,
-            OverlayPlacement.BOTTOM_LEFT.nudged(0, step).yDp
-        )
+        // Start away from the edge: a nudge from the minimum inset is clamped, which the
+        // off-screen test below covers deliberately.
+        val top = OverlayPlacement.TOP_LEFT.copy(yDp = 200)
+        val bottom = OverlayPlacement.BOTTOM_LEFT.copy(yDp = 200)
+        assertEquals(top.yDp + step, top.nudged(0, step).yDp)
+        // Bottom-anchored: the inset from the bottom edge shrinks, which looks like moving down.
+        assertEquals(bottom.yDp - step, bottom.nudged(0, step).yDp)
     }
 
     @Test
