@@ -30,7 +30,8 @@ try {
     await page.goto(base);
     assert.equal(await page.locator('#site-language').inputValue(), 'both');
     assert.equal(await count(page), 15);
-    assert.equal(await page.locator('time[data-release-tag]').count(), 15);
+    assert.equal(await page.locator('.latest tbody time[data-release-tag]').count(), 15);
+    assert.equal(await page.locator('.card-date').count(), 15);
     assert.equal(await page.locator('.trust-ticker').count(), 1);
     assert.equal(await page.locator('.release-brief').count(), 15);
     assert.equal(await page.locator('a[data-apk][aria-label]').count(), 30);
