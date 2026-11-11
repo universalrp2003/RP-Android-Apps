@@ -57,7 +57,7 @@ try {
   }
   await test('filters and table agree, and jump reveals/focuses a hidden app', async page => {
     await page.goto(base);
-    for (const [category, expected] of [['security',3],['media',4],['productivity',3],['utility',4]]) {
+    for (const [category, expected] of [['security',3],['media',4],['productivity',3],['utility',5]]) {
       await page.locator(`[data-category-filter="${category}"]`).click();
       assert.equal(await count(page), expected);
       assert.equal(await page.locator('.latest tbody tr:visible').count(), expected);
