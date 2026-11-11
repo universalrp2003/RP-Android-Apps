@@ -61,6 +61,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckCircle
@@ -1418,7 +1419,7 @@ fun TopStatusBar(
                 if (settings.enabled(TvFeature.TEMP_PILL)) {
                     val reading = temperature
                     StatusPill(
-                        Icons.Default.Thermostat,
+                        Icons.Outlined.Thermostat,
                         label = reading?.format() ?: stringResource(R.string.pill_temp_unavailable),
                         color = when (com.universalrp.tvguard.overlay.StatusThresholds.temperature(reading?.celsius)) {
                             com.universalrp.tvguard.overlay.Band.GOOD -> Color(0xFF00E676)
