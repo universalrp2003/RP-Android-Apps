@@ -161,6 +161,9 @@ class TvRemoteFocusTest {
         var current = "expert-master"
         for (feature in TvFeature.entries) {
             val tag = "feature-${feature.key}"
+            // The Expert list is lazy. A feature added at the end is not composed until it
+            // is scrolled into view, so asking the D-pad to focus it would never succeed.
+            compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
             press(current, Key.DirectionDown, tag)
             compose.onNodeWithTag(tag).assertIsOff()
             when (feature) {
@@ -191,6 +194,7 @@ class TvRemoteFocusTest {
         press(current, Key.DirectionDown, current)
         for (feature in TvFeature.entries.dropLast(1).asReversed()) {
             val tag = "feature-${feature.key}"
+            compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
             press(current, Key.DirectionUp, tag)
             current = tag
         }
