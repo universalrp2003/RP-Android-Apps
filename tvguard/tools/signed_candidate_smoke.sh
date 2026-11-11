@@ -6,7 +6,7 @@ set -euo pipefail
 work="$RUNNER_TEMP/tvguard-signed-candidate"
 old="$RUNNER_TEMP/tvguard-old-debug/tvguard-debug.apk"
 fixture="$work/synthetic-older-same-key.apk"
-candidate="$work/Android-TV-Guard-1.0-signed-candidate.apk"
+candidate="$work/Android-TV-Guard-1.1-signed-candidate.apk"
 test_apk="$work/tvguard-release-androidTest.apk"
 package=com.universalrp.tvguard
 runner=com.universalrp.tvguard.test/androidx.test.runner.AndroidJUnitRunner
@@ -61,6 +61,17 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-focus.log" \
   --test expertSwitchesNavigateWithDpadAndRevokeAndRestoreHub \
   --test downFromDebloaterHeaderEntersItsControlsAndHomeReturnsToFirstApp \
   --test networkAndAboutHeadersLeadIntoTheirOwnContent
+# The long-press regression: real key-down / hold / key-up, then D-pad into the menu.
+adb shell am instrument -w -r \
+  -e class com.universalrp.tvguard.TvLongPressOptionsTest "$runner" |
+  tr -d '\r' | tee "$work/tv-longpress.log"
+python3 tvguard/tools/verify_instrumentation.py "$work/tv-longpress.log" \
+  --class-name com.universalrp.tvguard.TvLongPressOptionsTest \
+  --test longPressOpensOptionsAndReleaseDoesNotLaunchOrClose \
+  --test shortPressStillLaunchesOrKeepsFocusOnTheLauncher \
+  --test dismissingOptionsRestoresFocusToTheTile \
+  --test afterTheMenuClosesAShortPressLaunchesAgain
+
 # Also check that the focus tests restored the synthetic choices.
 run_probe verify
 
@@ -70,4 +81,4 @@ test "${#installed_paths[@]}" -eq 1
 installed_sha="$(adb shell sha256sum "${installed_paths[0]}" | tr -d '\r' | awk '{print $1}')"
 candidate_sha="$(sha256sum "$candidate" | awk '{print $1}')"
 test "$installed_sha" = "$candidate_sha"
-echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key code 1 to code 2 update preserved synthetic favorites, hidden apps, feature choices and a private file; four TV focus tests passed on the exact candidate APK."
+echo "::notice title=Signed TV Guard emulator checks::Different-signature replacement rejected; same-key code 1 to code 3 update preserved synthetic favorites, hidden apps, feature choices and a private file; four TV focus tests and four real key-down/hold/up long-press tests passed on the exact candidate APK."

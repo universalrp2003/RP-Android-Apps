@@ -145,6 +145,11 @@ import com.universalrp.tvguard.memory.RunningAppInfo
 import com.universalrp.tvguard.memory.RunningAppsManager
 import com.universalrp.tvguard.network.NetworkQualityMonitor
 import com.universalrp.tvguard.network.NetworkStatus
+import com.universalrp.tvguard.ai.MicHotkeyPolicy
+import com.universalrp.tvguard.ai.TvAiConfig
+import com.universalrp.tvguard.ai.TvAiSettings
+import com.universalrp.tvguard.ai.TvAiAssistant
+import com.universalrp.tvguard.overlay.StatusOverlayService
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
 import com.universalrp.tvguard.settings.TvFeatureSettings
@@ -168,6 +173,10 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
     var onRemoteKey: ((Int) -> Boolean)? = null
     var onLongPressHome: (() -> Unit)? = null
+    /** Set by the composition; returns true when the key opened the microphone. */
+    var onMicShortcut: ((Int) -> Boolean)? = null
+    /** Every key seen while the Expert key test is open, for honest hardware discovery. */
+    var onKeyProbe: ((Int) -> Unit)? = null
 
     // State rather than a callback, so a Home intent arriving before composition
     // is installed is not lost. Android normally handles HOME itself and sends the
@@ -176,6 +185,8 @@ class MainActivity : ComponentActivity() {
         private set
     private var homeDownTime: Long? = null
     private var homeLongPressHandled = false
+    private var menuDownTime: Long? = null
+    private var menuShortcutFired = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -195,6 +206,30 @@ class MainActivity : ComponentActivity() {
 
     /** Also used by our dialog windows, whose key events bypass Activity dispatch. */
     fun handleRemoteKey(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN) onKeyProbe?.invoke(event.keyCode)
+
+        // Microphone shortcut. The policy decides whether this event qualifies: Menu needs
+        // a hold so a short Menu press still opens the tile's options menu, while dedicated
+        // voice/info keys fire on the first press. Only keys the TV actually delivers reach
+        // here, which is why the Expert screen invites the user to test their own remote.
+        if (event.keyCode == KeyEvent.KEYCODE_MENU) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) menuDownTime = event.eventTime
+            val longPress = menuDownTime?.let { event.eventTime - it >= AppTileKeyPolicy.LONG_PRESS_MS } == true
+            val shortcut = MicHotkeyPolicy.isMicShortcut(
+                event.keyCode, event.action, event.repeatCount, longPress
+            )
+            if (shortcut && !menuShortcutFired && onMicShortcut?.invoke(event.keyCode) == true) {
+                menuShortcutFired = true
+                return true
+            }
+            if (event.action == KeyEvent.ACTION_UP) {
+                menuDownTime = null
+                menuShortcutFired = false
+            }
+            return false
+        }
+        val shortcut = MicHotkeyPolicy.isMicShortcut(event.keyCode, event.action, event.repeatCount, false)
+        if (shortcut && onMicShortcut?.invoke(event.keyCode) == true) return true
         if (event.keyCode == KeyEvent.KEYCODE_HOME) {
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
@@ -250,7 +285,8 @@ enum class ToolsSubView {
     NETWORK,
     HIDDEN_APPS,
     ABOUT,
-    EXPERT
+    EXPERT,
+    AI_SETTINGS
 }
 
 /** Lazy items and Dialog windows can attach after the first composition. */
@@ -290,6 +326,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
     val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
     val featurePreferences = remember { TvFeaturePreferences(context) }
+    val initialAiConfig = remember { TvAiSettings.load(context) }
     var featureSettings by remember { mutableStateOf(featurePreferences.load()) }
 
     var currentTab by remember { mutableStateOf(TvNavTab.HOME) }
@@ -299,6 +336,20 @@ fun TvGuardMainScreen(activity: MainActivity) {
     var pendingVoicePermission by remember { mutableStateOf(false) }
     var selectedAppForOptions by remember { mutableStateOf<LaunchableApp?>(null) }
     var homeFocusRequestCounter by remember { mutableStateOf(0) }
+
+    // Overlay + AI are both optional and off by default.
+    var overlayPermissionNeeded by remember { mutableStateOf(false) }
+    var aiDialogOpen by remember { mutableStateOf(false) }
+    var aiAnswer by remember { mutableStateOf<String?>(null) }
+    var aiEngine by remember { mutableStateOf<String?>(null) }
+    var aiBusy by remember { mutableStateOf(false) }
+    var aiLastKeyLabel by remember { mutableStateOf<String?>(null) }
+    var aiQuestionJob by remember { mutableStateOf<Job?>(null) }
+    var aiPendingVoice by remember { mutableStateOf(false) }
+    var aiModels by remember { mutableStateOf<List<String>>(emptyList()) }
+    var aiLoadingModels by remember { mutableStateOf(false) }
+    var aiStorageFailed by remember { mutableStateOf(false) }
+    var aiConfig by remember { mutableStateOf(initialAiConfig) }
 
     var hardwareReport by remember { mutableStateOf<FullHardwareReport?>(null) }
     var ramPill by remember { mutableStateOf<RamEvidence?>(null) }
@@ -347,6 +398,15 @@ fun TvGuardMainScreen(activity: MainActivity) {
         featureSettings = settings
         featurePreferences.save(settings) // Separate from favorites/hidden-app data.
         syncHub(settings) // Revoke routes and close sockets as soon as a switch changes.
+        // The overlay starts only when explicitly enabled and permitted; otherwise it stops.
+        // sync() is a no-op stop when the service is not running.
+        StatusOverlayService.sync(context)
+        if (!settings.enabled(TvFeature.STATUS_OVERLAY)) overlayPermissionNeeded = false
+        if (!settings.enabled(TvFeature.AI_ASSISTANT)) {
+            aiQuestionJob?.cancel()
+            aiDialogOpen = false
+            aiAnswer = null
+        }
         if (!settings.enabled(TvFeature.VOICE_HELPER)) {
             pendingVoicePermission = false
             TvVoiceAssistant.stopListening()
@@ -413,10 +473,18 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 }
                 override fun onCommandRecognized(commandText: String, actionResult: String) {
                     voiceIsListening = false
-                    voiceDialogPrompt = "🗣️ \"$commandText\"\n$actionResult"
+                    if (aiPendingVoice) {
+                        // A spoken AI question: keep the AI screen open and answer there.
+                        aiPendingVoice = false
+                        aiDialogOpen = true
+                        askAi(commandText)
+                    } else {
+                        voiceDialogPrompt = "🗣️ \"$commandText\"\n$actionResult"
+                    }
                 }
                 override fun onError(error: String) {
                     voiceIsListening = false
+                    aiPendingVoice = false
                     voiceDialogPrompt = error
                 }
             }
@@ -432,6 +500,33 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 voiceDialogPrompt = context.getString(R.string.voice_permission_denied)
             }
         } else pendingVoicePermission = false
+    }
+
+    // "Display over other apps" is granted in system Settings, not by a normal dialog.
+    // We start the activity for result and reconcile on return.
+    val overlayPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        if (Settings.canDrawOverlays(context)) {
+            overlayPermissionNeeded = false
+            StatusOverlayService.sync(context)
+        } else if (featureSettings.enabled(TvFeature.STATUS_OVERLAY)) {
+            overlayPermissionNeeded = true
+        }
+    }
+
+    fun requestOverlayPermission() {
+        overlayPermissionNeeded = true
+        try {
+            overlayPermissionLauncher.launch(
+                Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + context.packageName)
+                )
+            )
+        } catch (_: Exception) {
+            toastMessage = context.getString(R.string.overlay_permission_needed)
+        }
     }
 
     fun triggerVoiceAssistant() {
@@ -454,8 +549,54 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
+    /**
+     * Opens the AI question screen. Declining silently is deliberate: if the feature is off
+     * the microphone key falls back to the local helper instead of pretending to be AI.
+     */
+    fun triggerAiAssistant() {
+        if (!TvAiAssistant.isEnabled(context)) return
+        aiDialogOpen = true
+        aiAnswer = null
+        aiEngine = null
+        aiBusy = false
+        selectedAppForOptions = null
+        showAdbGuide = false
+    }
+
+    fun askAi(question: String) {
+        if (question.isBlank()) return
+        aiQuestionJob?.cancel()
+        aiBusy = true
+        aiAnswer = null
+        aiEngine = null
+        aiQuestionJob = scope.launch {
+            val outcome = TvAiAssistant.ask(context, question) {
+                // Only reached when the feature is off; keeps the old helper available.
+                com.universalrp.tvguard.voice.TvAssistantAnswers.answer(question, hardwareReport)
+            }
+            aiBusy = false
+            when (outcome) {
+                is TvAiAssistant.Outcome.Answer -> {
+                    aiAnswer = outcome.text
+                    aiEngine = outcome.engine
+                }
+                is TvAiAssistant.Outcome.Local -> {
+                    aiAnswer = outcome.text
+                    aiEngine = null
+                }
+                is TvAiAssistant.Outcome.Error -> {
+                    aiAnswer = outcome.message
+                    aiEngine = null
+                }
+                TvAiAssistant.Outcome.Disabled -> Unit
+            }
+        }
+    }
+
     fun triggerPreferredAssistant(): Boolean {
         return when {
+            // A configured AI assistant answers real questions, so it goes first.
+            featureSettings.enabled(TvFeature.AI_ASSISTANT) -> { triggerAiAssistant(); true }
             featureSettings.enabled(TvFeature.VOICE_HELPER) -> { triggerVoiceAssistant(); true }
             featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) -> {
                 if (!openSystemVoiceAssistant(context)) toastMessage = context.getString(R.string.voice_system_assistant_unavailable)
@@ -470,6 +611,13 @@ fun TvGuardMainScreen(activity: MainActivity) {
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
+                Lifecycle.Event.ON_START -> {
+                    // Permission may have been granted while we were away.
+                    StatusOverlayService.sync(context)
+                    if (featureSettings.enabled(TvFeature.STATUS_OVERLAY) && !Settings.canDrawOverlays(context)) {
+                        overlayPermissionNeeded = true
+                    }
+                }
                 Lifecycle.Event.ON_STOP -> {
                     cpuUsage = null
                     ramPill = null
@@ -667,9 +815,32 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 else -> false
             }
         }
+        // Only the keys that are actually delivered reach here, which is what makes the
+        // Expert key test honest: it reports what this TV really sends, not what it should.
+        activity.onKeyProbe = { keyCode -> aiLastKeyLabel = MicHotkeyPolicy.label(keyCode) }
+        activity.onMicShortcut = { keyCode ->
+            // MicHotkeyPolicy has already decided the event qualifies; this only opens the
+            // right screen, and only when the AI feature is actually switched on.
+            val asksForAi = keyCode == KeyEvent.KEYCODE_MENU ||
+                keyCode == KeyEvent.KEYCODE_INFO ||
+                keyCode == KeyEvent.KEYCODE_PROG_RED
+            when {
+                asksForAi && TvAiAssistant.isEnabled(context) -> {
+                    triggerAiAssistant()
+                    true
+                }
+                !asksForAi && featureSettings.enabled(TvFeature.VOICE_HELPER) -> {
+                    triggerVoiceAssistant()
+                    true
+                }
+                else -> false
+            }
+        }
         onDispose {
             activity.onRemoteKey = null
             activity.onLongPressHome = null
+            activity.onMicShortcut = null
+            activity.onKeyProbe = null
         }
     }
 
@@ -754,6 +925,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     runningApps = runningApps,
                                     hiddenAppsCount = allAppsIncludingHidden.count { it.isHidden },
                                     onOpenExpert = { toolsSubView = ToolsSubView.EXPERT },
+                                    onOpenAiSettings = { toolsSubView = ToolsSubView.AI_SETTINGS },
                                     onVoice = { triggerVoiceAssistant() },
                                     onSystemAssistant = {
                                         if (featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) && !openSystemVoiceAssistant(context))
@@ -958,6 +1130,40 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onBack = { toolsSubView = ToolsSubView.OVERVIEW }
                                 )
                             }
+
+                            ToolsSubView.AI_SETTINGS -> {
+                                TvAiSettingsView(
+                                    initial = aiConfig,
+                                    models = aiModels,
+                                    loadingModels = aiLoadingModels,
+                                    storageFailed = aiStorageFailed,
+                                    lastKeyLabel = aiLastKeyLabel,
+                                    onBack = { toolsSubView = ToolsSubView.OVERVIEW },
+                                    onSave = { config, writeKey ->
+                                        val stored = TvAiSettings.save(context, config, updateKey = writeKey)
+                                        aiStorageFailed = !stored && writeKey
+                                        aiConfig = TvAiSettings.load(context)
+                                        toastMessage = context.getString(
+                                            if (!aiStorageFailed) R.string.ai_saved
+                                            else R.string.ai_api_key_storage_failed
+                                        )
+                                    },
+                                    onLoadModels = { config ->
+                                        aiLoadingModels = true
+                                        aiConfig = config
+                                        scope.launch {
+                                            aiModels = TvAiAssistant.availableModels(context, config)
+                                            aiLoadingModels = false
+                                            if (aiModels.isEmpty()) toastMessage = context.getString(R.string.ai_models_none)
+                                        }
+                                    },
+                                    onForgetKey = {
+                                        TvAiSettings.forgetKey(context, aiConfig.provider)
+                                        aiConfig = TvAiSettings.load(context)
+                                        toastMessage = context.getString(R.string.ai_key_forget)
+                                    },
+                                )
+                            }
                         }
                     }
 
@@ -987,6 +1193,29 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 }
             }
         }
+    }
+
+    // AI question screen. Rendered above everything; it only exists when the user opens it.
+    if (aiDialogOpen) {
+        TvAiDialog(
+            answer = aiAnswer,
+            engine = aiEngine,
+            busy = aiBusy,
+            enabled = TvAiAssistant.isEnabled(context),
+            notice = null,
+            onAsk = { question -> askAi(question) },
+            onSpeak = {
+                // Reuse the existing recogniser, but keep the AI screen open so the answer
+                // lands in it. The recognised question goes through askAi().
+                aiPendingVoice = true
+                triggerVoiceAssistant()
+            },
+            onDismiss = {
+                aiDialogOpen = false
+                aiQuestionJob?.cancel()
+                aiBusy = false
+            },
+        )
     }
 
     // App Context / Options Dialog (on long-press or Menu button)
@@ -1134,16 +1363,26 @@ fun TopStatusBar(
                     )
                 }
                 if (settings.enabled(TvFeature.STORAGE_PILL)) {
+                    // The usable figure is always shown when the filesystem reading is valid.
+                    // A cautious mismatch warning is appended as a separate note and never
+                    // replaces the number the user asked to see.
+                    val usable = storage != null &&
+                        storage.dataTotalBytes > 0 &&
+                        storage.dataFreeBytes in 0L..storage.dataTotalBytes
                     val free = (storage?.dataFreeBytes ?: 0L).toDouble() / 1_073_741_824.0
                     StatusPill(
                         Icons.Default.Storage,
                         label = when {
-                            storage == null -> stringResource(R.string.pill_storage_unavailable)
-                            storage.isStorageSpoofed -> stringResource(R.string.storage_pill_mismatch)
-                            storage.dataTotalBytes <= 0 || storage.dataFreeBytes !in 0L..storage.dataTotalBytes -> stringResource(R.string.pill_storage_unavailable)
+                            !usable -> stringResource(R.string.pill_storage_unavailable)
+                            storage.isStorageSpoofed ->
+                                stringResource(R.string.storage_pill_reported_warning, String.format(Locale.US, "%.1f", free))
                             else -> stringResource(R.string.storage_pill_reported, String.format(Locale.US, "%.1f", free))
                         },
-                        color = if (storage?.isStorageSpoofed == true) Color(0xFFFF9800) else Color(0xFF00E5FF),
+                        color = when {
+                            !usable -> Color(0xFF94A3B8)
+                            storage.isStorageSpoofed -> Color(0xFFFF9800)
+                            else -> Color(0xFF00E5FF)
+                        },
                         modifier = Modifier.testTag("pill-storage")
                     )
                 }
@@ -1881,6 +2120,13 @@ fun TvAppCard(
 
     val baseModifier = if (focusRequester != null) modifier.focusRequester(focusRequester) else modifier
 
+    // Physical OK is tracked here instead of via combinedClickable: a long press must open
+    // the options menu without the release also launching the app. See AppTileKeyPolicy.
+    val pressState = remember { AppTileKeyPolicy.State() }
+    DisposableEffect(Unit) {
+        onDispose { AppTileKeyPolicy.cancel(pressState) }
+    }
+
     Box(
         modifier = baseModifier
             .fillMaxWidth()
@@ -1890,20 +2136,36 @@ fun TvAppCard(
             .border(borderWidth, borderCol, RoundedCornerShape(14.dp))
             .onFocusChanged { state ->
                 isFocusedByCallback = state.isFocused || state.hasFocus
+                // Losing focus mid-press must not leave a stuck timer or fire a stale launch.
+                if (!state.isFocused && !state.hasFocus) AppTileKeyPolicy.cancel(pressState)
             }
             .onPreviewKeyEvent { keyEvent ->
                 val native = keyEvent.nativeKeyEvent
                 if (native.keyCode == KeyEvent.KEYCODE_MENU && native.action == KeyEvent.ACTION_UP) {
                     onShowOptions()
-                    true
-                } else false
+                    return@onPreviewKeyEvent true
+                }
+                if (!AppTileKeyPolicy.isActivationKey(native.keyCode)) return@onPreviewKeyEvent false
+                when (native.action) {
+                    KeyEvent.ACTION_DOWN -> when (AppTileKeyPolicy.onKeyDown(pressState, native.eventTime)) {
+                        AppTileKeyPolicy.Outcome.OPEN_OPTIONS -> {
+                            onShowOptions()
+                            true
+                        }
+                        // Swallow the initial down so no click gesture can be synthesised
+                        // underneath this handler; the decision is made above.
+                        else -> true
+                    }
+                    KeyEvent.ACTION_UP -> when (AppTileKeyPolicy.onKeyUp(pressState, native.eventTime)) {
+                        AppTileKeyPolicy.Outcome.LAUNCH -> {
+                            onLaunch()
+                            true
+                        }
+                        else -> true
+                    }
+                    else -> false
+                }
             }
-            .combinedClickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = { onLaunch() },
-                onLongClick = { onShowOptions() }
-            )
             .padding(10.dp)
     ) {
         Column(
@@ -2029,6 +2291,7 @@ fun TvToolsView(
     runningApps: List<RunningAppInfo>,
     hiddenAppsCount: Int,
     onOpenExpert: () -> Unit,
+    onOpenAiSettings: () -> Unit,
     onVoice: () -> Unit,
     onSystemAssistant: () -> Unit,
     onRamBoost: () -> Unit,
@@ -2060,6 +2323,10 @@ fun TvToolsView(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TvActionCard(stringResource(R.string.expert_settings_title), stringResource(R.string.expert_settings_subtitle),
                     Icons.Default.Settings, Color(0xFF00E5FF), onOpenExpert, Modifier.weight(1f).testTag("tools-expert"))
+                if (settings.enabled(TvFeature.AI_ASSISTANT)) {
+                    TvActionCard(stringResource(R.string.ai_title), stringResource(R.string.ai_provider),
+                        Icons.Default.Star, Color(0xFF7DD3FC), onOpenAiSettings, Modifier.weight(1f).testTag("tools-ai-settings"))
+                }
                 TvActionCard(stringResource(R.string.about_title), stringResource(R.string.about_subtitle),
                     Icons.Default.Info, Color(0xFF00E5FF), onOpenAbout, Modifier.weight(1f).testTag("tools-about"))
                 TvActionCard(stringResource(R.string.settings_title), stringResource(R.string.settings_subtitle),

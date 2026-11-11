@@ -89,6 +89,7 @@
     <string name="cpu_pill">CPU %1$s · %2$d cores</string>
     <string name="storage_pill_mismatch">Storage mismatch</string>
     <string name="storage_pill_reported">%1$s GiB free (reported)</string>
+    <string name="storage_pill_reported_warning">%1$s GiB free (reported) · check note</string>
     <string name="possible_mismatch">POSSIBLE MISMATCH</string>
     <string name="storage_evidence_title">2. Storage evidence</string>
     <string name="storage_candidate_disk">Candidate block device</string>
@@ -218,4 +219,54 @@
     <string name="hub_retry_hint">Check available ports and storage access, or turn the file hub off in Expert settings.</string>
     <string name="hub_disabled_hint">File sharing is off. Turn on the file hub in Expert settings if needed.</string>
     <string name="voice_feature_disabled">That tool is off. Enable it separately in Expert settings first.</string>
+
+    <!-- Status overlay over other apps -->
+    <string name="overlay_notification_channel">Status overlay</string>
+    <string name="overlay_notification_title">Status overlay is on</string>
+    <string name="overlay_notification_text">Showing free CPU, RAM, storage and network quality over other apps.</string>
+    <string name="feature_status_overlay">Status pill over other apps</string>
+    <string name="feature_status_overlay_desc">Draws the four readings on top of whatever is on screen, at about 50% transparency. Needs "Display over other apps" and the top status bar. Secure or system screens may hide it.</string>
+    <string name="overlay_permission_needed">Allow "display over other apps" to use the overlay.</string>
+    <string name="overlay_permission_grant">Open overlay permission</string>
+    <string name="overlay_blocked_note">Android hides overlays over secure or system screens such as DRM video and some dialogs. There is no supported workaround, so the pill may not appear there.</string>
+
+    <!-- AI assistant -->
+    <string name="feature_ai_assistant">AI assistant</string>
+    <string name="feature_ai_assistant_desc">Answers general questions using a provider you choose. Off by default. Your question and, if you speak it, your speech text are sent to that provider, and their charges may apply.</string>
+    <string name="ai_title">AI assistant</string>
+    <string name="ai_hint_typed">Type a question and press Ask. The D-pad can move between the field and the buttons.</string>
+    <string name="ai_ask">Ask</string>
+    <string name="ai_listen">Speak</string>
+    <string name="ai_close">Close</string>
+    <string name="ai_waiting">Thinking…</string>
+    <string name="ai_empty_question">Please type or say a question first.</string>
+    <string name="ai_not_configured">No key or model is set for %1$s. Open AI settings to choose a provider.</string>
+    <string name="ai_request_failed">The AI request failed. Check the connection and provider settings.</string>
+    <string name="ai_disabled_note">The AI assistant is off. Only the built-in local TV helper will answer.</string>
+    <string name="ai_privacy_notice">Questions are sent from this TV to the provider you choose. Provider charges may apply. Nothing is sent while the feature is off.</string>
+    <string name="ai_provider">Provider</string>
+    <string name="ai_model">Model</string>
+    <string name="ai_model_load">Load models</string>
+    <string name="ai_model_loading">Loading models…</string>
+    <string name="ai_models_from_provider">Models reported by your provider (%1$d). Select one, or type an id.</string>
+    <string name="ai_models_none">The provider did not return a model list. Type the model id yourself and check the provider's documentation.</string>
+    <string name="ai_api_key">API key</string>
+    <string name="ai_api_key_saved">A key is saved and encrypted on this TV.</string>
+    <string name="ai_api_key_placeholder">Paste the key on this TV only</string>
+    <string name="ai_api_key_storage_failed">The key could not be encrypted on this TV, so it was not saved.</string>
+    <string name="ai_key_forget">Forget key</string>
+    <string name="ai_base_url">Server address (Custom)</string>
+    <string name="ai_answer_language">Answer language</string>
+    <string name="ai_speak_answers">Speak answers aloud</string>
+    <string name="ai_on">On</string>
+    <string name="ai_off">Off</string>
+    <string name="ai_save">Save</string>
+    <string name="ai_saved">AI settings saved.</string>
+    <string name="ai_free_note">The free option needs no key. It uses shared community endpoints that are rate limited and can stop working at any time; it is not a guarantee.</string>
+    <string name="ai_key_never_shared">TV Guard has no key of its own and no proxy. Your key stays on this TV, encrypted, and is sent only to the provider you chose.</string>
+    <string name="ai_mic_shortcut">Microphone shortcut</string>
+    <string name="ai_mic_shortcut_desc">While TV Guard is on screen, holding the Menu key opens the microphone. Home and Back are reserved by the system and are not used.</string>
+    <string name="ai_mic_test">Press a remote key to test</string>
+    <string name="ai_mic_test_result">Last key received: %1$s</string>
+    <string name="ai_mic_test_none">No key received yet.</string>
 </resources>

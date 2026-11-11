@@ -30,6 +30,11 @@
         android:name="android.permission.QUERY_ALL_PACKAGES"
         tools:ignore="QueryAllPackagesPermission" />
 
+    <!-- Optional status overlay over other apps. The user must also grant it in Settings. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <application
         android:name=".TvGuardApp"
         android:allowBackup="false"
@@ -65,6 +70,16 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- Always-on-top status pill; started only when the user switches the feature on. -->
+        <service
+            android:name=".overlay.StatusOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Displays the user's own CPU, RAM, storage and network readings over other apps while enabled." />
+        </service>
 
         <!-- FileProvider for APK install and Screenshot sharing -->
         <provider

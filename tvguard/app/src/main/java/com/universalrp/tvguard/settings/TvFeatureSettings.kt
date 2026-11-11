@@ -16,7 +16,13 @@ enum class TvFeature(val key: String) {
     DEBLOATER("debloater"),
     NETWORK_TOOLS("network_tools"),
     RAM_BOOST("ram_boost"),
-    RUNNING_APPS("running_apps")
+    RUNNING_APPS("running_apps"),
+
+    /** Draws the same four readings over other apps; needs "Display over other apps". */
+    STATUS_OVERLAY("status_overlay"),
+
+    /** Optional general-purpose AI questions. Off by default; needs a provider. */
+    AI_ASSISTANT("ai_assistant")
 }
 
 /**
@@ -35,6 +41,8 @@ data class TvFeatureSettings(
             TvFeature.CPU_PILL, TvFeature.RAM_PILL, TvFeature.STORAGE_PILL, TvFeature.NETWORK_PILL ->
                 selected(TvFeature.STATUS_BAR)
             TvFeature.WEB_REMOTE -> selected(TvFeature.FILE_HUB)
+            // The overlay reuses the status bar's pills, so it needs the parent feature too.
+            TvFeature.STATUS_OVERLAY -> selected(TvFeature.STATUS_BAR)
             else -> true
         }
     }

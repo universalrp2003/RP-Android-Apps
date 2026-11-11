@@ -32,9 +32,10 @@ android {
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // The signed 1.0 test candidate is code 2; later public updates must
-        // increase this code and use the same signing identity.
-        versionCode = if (upgradeFixture) 1 else 2
-        versionName = "1.0"
+        // increase this code and use the same signing identity. Code 3 adds the status
+        // overlay and the optional AI assistant; it must update over code 2 in place.
+        versionCode = if (upgradeFixture) 1 else 3
+        versionName = "1.1"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }

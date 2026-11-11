@@ -1,0 +1,172 @@
+package com.universalrp.tvguard
+
+import android.view.KeyEvent
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.universalrp.tvguard.settings.TvFeaturePreferences
+import com.universalrp.tvguard.settings.TvFeatureSettings
+import com.universalrp.tvguard.ui.MainActivity
+import org.junit.After
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+
+/**
+ * The reported bug, tested the way it was reported: hold OK, release, then try to navigate.
+ *
+ * These tests inject a genuine key-down, hold and key-up through the Activity's dispatch,
+ * not a semantic OnLongClick. That matters because the old implementation used
+ * `combinedClickable`, whose gesture detector accepted the release as a click and launched
+ * the app, so the menu closed immediately.
+ *
+ * Requires a disposable TV emulator. A real remote can send a long hold more slowly than
+ * the emulator; that timing is covered by the JVM policy tests instead.
+ */
+@OptIn(ExperimentalTestApi::class)
+@RunWith(AndroidJUnit4::class)
+class TvLongPressOptionsTest {
+    @get:Rule val compose = createAndroidComposeRule<MainActivity>()
+    private var previousSettings: TvFeatureSettings? = null
+
+    @Before
+    fun resetSettings() {
+        val preferences = TvFeaturePreferences(compose.activity)
+        previousSettings = preferences.load()
+        preferences.save(TvFeatureSettings())
+        compose.activityRule.scenario.recreate()
+        awaitFocus("home-first-app")
+    }
+
+    @After
+    fun restoreSettings() {
+        previousSettings?.let { TvFeaturePreferences(compose.activity).save(it) }
+    }
+
+    private fun awaitFocus(tag: String) {
+        compose.waitUntil(timeoutMillis = 30_000) {
+            compose.onAllNodes(hasTestTag(tag) and isFocused()).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    private fun sendKey(action: Int, downTime: Long, eventTime: Long, repeat: Int = 0) {
+        val activity = compose.activity
+        val event = KeyEvent(
+            downTime, eventTime, action, KeyEvent.KEYCODE_DPAD_CENTER, repeat
+        )
+        compose.runOnUiThread { activity.dispatchKeyEvent(event) }
+        compose.waitForIdle()
+    }
+
+    /**
+     * Dispatches a short press. Both edges are sent so the tile can decide on the release.
+     */
+    private fun shortPress(tag: String) {
+        compose.onNodeWithTag(tag).assertIsFocused()
+        val base = android.os.SystemClock.uptimeMillis()
+        sendKey(KeyEvent.ACTION_DOWN, base, base)
+        sendKey(KeyEvent.ACTION_UP, base, base + 80)
+    }
+
+    /**
+     * Holds OK for [holdMs] with the auto-repeat events a real remote sends, then releases.
+     * Returns nothing; assertions follow in the test body.
+     */
+    private fun holdOk(holdMs: Long) {
+        val base = android.os.SystemClock.uptimeMillis()
+        sendKey(KeyEvent.ACTION_DOWN, base, base)
+        // Real remotes repeat roughly every 50-100 ms while held.
+        var t = 100L
+        var repeat = 1
+        while (t < holdMs) {
+            sendKey(KeyEvent.ACTION_DOWN, base, base + t, repeat)
+            t += 100L
+            repeat++
+        }
+        sendKey(KeyEvent.ACTION_UP, base, base + holdMs)
+    }
+
+    @Test
+    fun longPressOpensOptionsAndReleaseDoesNotLaunchOrClose() {
+        // Focus the first app tile on Home.
+        awaitFocus("home-first-app")
+
+        // Hold OK well past the long-press threshold, then release.
+        holdOk(holdMs = 1_200)
+
+        // The options menu must be open and focused, and the app must NOT have launched.
+        awaitFocus("option-0")
+        compose.onNodeWithTag("option-0").assertIsFocused()
+
+        // The reported complaint: being unable to move down. Prove the D-pad still works.
+        compose.onNodeWithTag("option-0").performKeyInput { pressKey(Key.DirectionDown) }
+        awaitFocus("option-1")
+        compose.onNodeWithTag("option-1").assertIsFocused()
+
+        compose.onNodeWithTag("option-1").performKeyInput { pressKey(Key.DirectionDown) }
+        awaitFocus("option-2")
+        compose.onNodeWithTag("option-2").assertIsFocused()
+    }
+
+    @Test
+    fun shortPressStillLaunchesOrKeepsFocusOnTheLauncher() {
+        awaitFocus("home-first-app")
+        val before = compose.activity.homeRequestId
+        shortPress("home-first-app")
+        // A short press must not open the options menu.
+        compose.waitForIdle()
+        assertTrue(
+            "a short press must not open the options dialog",
+            compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
+        )
+        // The launch path may start the fixture app; focus must return to the launcher.
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(hasTestTag("home-first-app") and isFocused()).fetchSemanticsNodes().isNotEmpty()
+        }
+        // Sanity: the activity is still the launcher's.
+        assertTrue(compose.activity.homeRequestId >= before)
+    }
+
+    @Test
+    fun dismissingOptionsRestoresFocusToTheTile() {
+        awaitFocus("home-first-app")
+        holdOk(holdMs = 900)
+        awaitFocus("option-0")
+
+        // Back closes the dialog; focus must come back to the tile that opened it.
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
+        }
+        awaitFocus("home-first-app")
+    }
+
+    @Test
+    fun afterTheMenuClosesAShortPressLaunchesAgain() {
+        awaitFocus("home-first-app")
+        holdOk(holdMs = 900)
+        awaitFocus("option-0")
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        awaitFocus("home-first-app")
+
+        // The press state must have been reset, so a fresh short press behaves normally and
+        // must not be swallowed by leftover "long press already fired" state.
+        shortPress("home-first-app")
+        compose.waitForIdle()
+        assertTrue(
+            "options must not reopen from a stale long-press state",
+            compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
+        )
+    }
+}

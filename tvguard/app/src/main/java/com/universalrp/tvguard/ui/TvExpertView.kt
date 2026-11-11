@@ -145,6 +145,8 @@ private fun featureTitle(feature: TvFeature): Int = when (feature) {
     TvFeature.NETWORK_TOOLS -> R.string.feature_network_tools
     TvFeature.RAM_BOOST -> R.string.feature_ram_boost
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps
+    TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay
+    TvFeature.AI_ASSISTANT -> R.string.feature_ai_assistant
 }
 
 private fun featureDescription(feature: TvFeature): Int = when (feature) {
@@ -163,4 +165,6 @@ private fun featureDescription(feature: TvFeature): Int = when (feature) {
     TvFeature.NETWORK_TOOLS -> R.string.feature_network_tools_desc
     TvFeature.RAM_BOOST -> R.string.feature_ram_boost_desc
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps_desc
+    TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay_desc
+    TvFeature.AI_ASSISTANT -> R.string.feature_ai_assistant_desc
 }

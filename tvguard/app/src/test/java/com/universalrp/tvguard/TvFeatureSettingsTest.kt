@@ -47,4 +47,24 @@ class TvFeatureSettingsTest {
         assertFalse(settings.enabled(TvFeature.WEB_REMOTE))
         assertTrue(settings.selected(TvFeature.WEB_REMOTE))
     }
+
+    @Test
+    fun overlayAndAiAreOffByDefaultAndNeedExpertMode() {
+        val fresh = TvFeatureSettings()
+        assertFalse(fresh.enabled(TvFeature.STATUS_OVERLAY))
+        assertFalse(fresh.enabled(TvFeature.AI_ASSISTANT))
+
+        // Selecting them without the master switch changes nothing.
+        val selectedOnly = TvFeatureSettings()
+            .withFeature(TvFeature.STATUS_OVERLAY, true)
+            .withFeature(TvFeature.AI_ASSISTANT, true)
+        assertFalse(selectedOnly.enabled(TvFeature.STATUS_OVERLAY))
+        assertFalse(selectedOnly.enabled(TvFeature.AI_ASSISTANT))
+
+        val expert = selectedOnly.copy(expertMode = true)
+        assertTrue(expert.enabled(TvFeature.AI_ASSISTANT))
+        // The overlay still needs the status bar, which supplies its readings.
+        assertFalse(expert.enabled(TvFeature.STATUS_OVERLAY))
+        assertTrue(expert.withFeature(TvFeature.STATUS_BAR, true).enabled(TvFeature.STATUS_OVERLAY))
+    }
 }
