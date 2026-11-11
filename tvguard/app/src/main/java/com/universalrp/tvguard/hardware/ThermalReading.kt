@@ -66,17 +66,22 @@ object ThermalReader {
     }
 
     /**
-     * Kernel thermal zones report milli-degrees. Accept a plain degree value only when it
-     * already looks like a believable temperature, and never guess between the two scales
-     * for an ambiguous small number.
+     * Kernel thermal zones report milli-degrees Celsius (`45000` = 45 °C), but a handful of
+     * vendor kernels write plain degrees (`45` = 45 °C). The scale is inferred from the
+     * magnitude, which is unambiguous in practice:
+     *
+     *  - `>= 1000` in magnitude can only be milli-degrees, because no real sensor sits at
+     *    1000 °C. Divide by 1000.
+     *  - anything smaller can only be a plain degree reading, because a milli-degree value
+     *    below 1000 would describe a TV at under 1 °C.
+     *
+     * `0` is treated as a sentinel meaning "not calibrated" rather than 0 °C, and anything
+     * outside the plausible human range is rejected instead of clamped.
      */
     internal fun normalise(raw: Long?): Double? {
-        if (raw == null) return null
-        val milli = raw / 1000.0
-        if (milli in MIN_PLAUSIBLE_C..MAX_PLAUSIBLE_C) return milli
-        val plain = raw.toDouble()
-        if (plain in MIN_PLAUSIBLE_C..MAX_PLAUSIBLE_C) return plain
-        return null
+        if (raw == null || raw == 0L) return null
+        val celsius = if (raw >= 1000L || raw <= -1000L) raw / 1000.0 else raw.toDouble()
+        return if (celsius in MIN_PLAUSIBLE_C..MAX_PLAUSIBLE_C) celsius else null
     }
 
     data class ZoneSample(val name: String, val rawValue: Long?)
