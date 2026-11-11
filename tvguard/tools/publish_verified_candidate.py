@@ -23,6 +23,7 @@ ARTIFACT = "tvguard-1.5.1-stable-signed-tested-candidate"
 APK_SHA = "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b"
 APK_BYTES = 11_254_309
 TAG = "tvguard-v1.5.1"
+INNER = "Android-TV-Guard-1.5.1-signed-candidate.apk"
 NAME = "Android-TV-Guard-v1.5.1.apk"
 SIDECAR = "Android-TV-Guard-v1.5.1.apk.sha256"
 PACKAGE = "com.universalrp.tvguard"
@@ -91,11 +92,11 @@ def main():
         for item in z.infolist():
             assert not Path(item.filename).is_absolute() and ".." not in Path(item.filename).parts
             assert not (item.external_attr >> 16) & 0o170000 == 0o120000, "No symlinks in the artifact"
-        assert NAME in z.namelist(), z.namelist()
+        assert INNER in z.namelist(), z.namelist()
         candidate = work / NAME
-        candidate.write_bytes(z.read("Android-TV-Guard-1.5.1-signed-candidate.apk"))
+        candidate.write_bytes(z.read(INNER))
         receipt = json.loads(z.read("verification.json"))
-        assert z.read("Android-TV-Guard-1.5.1-signed-candidate.sha256").split()[0].decode() == APK_SHA
+        assert z.read(INNER + ".sha256").split()[0].decode() == APK_SHA
 
     # 2. The bytes must be exactly the ones the owner tested.
     assert sha(candidate) == APK_SHA and candidate.stat().st_size == APK_BYTES
