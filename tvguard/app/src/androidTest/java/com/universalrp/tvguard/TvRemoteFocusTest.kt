@@ -349,8 +349,9 @@ class TvRemoteFocusTest {
         current = "expert-master"
         // Walk the drawn order, not the enum order: the two differ now that the header switch
         // sits above the pill, and following the enum walked focus onto rows that were not
-        // where the D-pad was pointing.
-        for (feature in DpadTraversalFeatures) {
+        // where the D-pad was pointing. Stop one row short, because the next press moves onto
+        // the last row explicitly.
+        for (feature in DpadTraversalFeatures.dropLast(1)) {
             val tag = "feature-${feature.key}"
             press(current, Key.DirectionDown, tag)
             current = tag
