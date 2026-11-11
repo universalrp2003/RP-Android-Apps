@@ -7,6 +7,16 @@
 
 # Verified published Android APK digests
 
+## Android TV Guard 1.5.1 — first TV release, owner-installed
+
+Public [Android-TV-Guard-v1.5.1.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.1/Android-TV-Guard-v1.5.1.apk): **11,797,331 bytes**, SHA256 `aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b`. Published by [run 43016497454](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43016497454); release `441634493`, asset `735368182`, public `2026-11-11T12:00:01Z`.
+
+No rebuild: candidate [run 43012300628](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43012300628), artifact `tvguard-1.5.1-stable-signed-tested-candidate`, source `c72d40f`. The publisher re-downloaded the draft and then the public asset and hashed both, and confirmed that every earlier release's assets were unchanged. Package `com.universalrp.tvguard`, code 8, version 1.5.1, non-debuggable, established signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`, no new permissions versus 1.5.
+
+72 release unit tests, five TV D-pad focus tests on the exact APK, a synthetic same-key code 1 to code 8 update that preserved favourites, hidden apps, feature choices and a private file, and a different-signer install rejected without deleting the old app's data. **The owner reports installing this exact build on a Sony Bravia and reports it working**, with the strip reading `78% / 996 MB / 11.9 GB / 46.0 °C / good` and the storage audit line reading `11.87 GiB free of 14.68 GiB (limited to the physical disk…)`. The on-TV hash was not read back independently, and there is no Play Protect clearance or any claim about other TV models.
+
+Byte-count note: 11,254,309 was the size of the *artifact ZIP*, not the APK. The publisher now takes the APK size from the signed candidate receipt and keeps the SHA-256 as the hard pin, so a swapped artifact still cannot pass.
+
 ## Live Guard2.93 — owner-authorized dBm, About and widget correction
 
 Exact source663521675a7bb3a7b5a67eda1489b1de77ee4079, [candidate41574228784](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41574228784)/job125713908983, artifact13202943297. 876 executed JVM tests/83suites,352 Python checks, build/lint/signer/full permission equality, exact public2.89 same-key/same-UID/saved-data update and all5 Android35 native tests passed. This includes real widget report/control bounds at400×250dp and explicit missing-report state at400×165dp.
