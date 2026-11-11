@@ -21,12 +21,12 @@ class ThermalReaderTest {
     @Test
     fun milliDegreeValuesAreConverted() {
         // 45_000 milli-degrees is 45 °C, the common Linux convention.
-        assertEquals(45.0, ThermalReader.normalise(45_000), 0.001)
+        assertEquals(45.0, ThermalReader.normalise(45_000)!!, 0.001)
     }
 
     @Test
     fun plainDegreeValuesAreAlsoAccepted() {
-        assertEquals(47.0, ThermalReader.normalise(47), 0.001)
+        assertEquals(47.0, ThermalReader.normalise(47)!!, 0.001)
     }
 
     @Test
