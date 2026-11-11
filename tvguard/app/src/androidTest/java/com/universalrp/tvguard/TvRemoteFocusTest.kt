@@ -183,21 +183,15 @@ class TvRemoteFocusTest {
      * exist yet. Newly added switches get their own scrolled test instead, below.
      */
     private val DpadTraversalFeatures = listOf(
-        TvFeature.STATUS_BAR,
-        TvFeature.CPU_PILL,
-        TvFeature.RAM_PILL,
-        TvFeature.STORAGE_PILL,
-        TvFeature.NETWORK_PILL,
-        TvFeature.VOICE_HELPER,
-        TvFeature.SYSTEM_ASSISTANT,
+        TvFeature.STATUS_OVERLAY,
         TvFeature.SCREENSHOT,
         TvFeature.FILE_HUB,
         TvFeature.WEB_REMOTE,
     )
 
     /**
-     * The switches appended after WEB_REMOTE are reachable, can be scrolled to, and are off
-     * by default. This is the honest coverage for a lazy list: scrolling first, then acting.
+     * The last rows in the Expert list are reachable, scrollable and off by default. The five
+     * per-reading switches were removed, so this checks the pill switch and one feature switch.
      */
     @Test
     fun appendedExpertSwitchesAreReachableScrolledAndOffByDefault() {
@@ -205,34 +199,46 @@ class TvRemoteFocusTest {
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOn()
 
-        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.TEMP_PILL)) {
+        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.RUNNING_APPS)) {
             val tag = "feature-${feature.key}"
             scrollExpertTo(tag)
             compose.onNodeWithTag(tag).assertIsOff().performClick().assertIsOn()
-            // A dependent switch stays paused until its parent is on.
-            if (feature == TvFeature.STATUS_OVERLAY) {
-                scrollExpertTo("feature-status_bar")
-                compose.onNodeWithTag("feature-status_bar").assertIsOff()
-            }
         }
 
-        // Turning Expert off must stop both. The feature rows are removed from the lazy list,
-        // so the saved choices are checked after Expert is switched back on below rather than
-        // by looking for a row that is deliberately gone.
+        // A per-reading switch must no longer exist: the pill covers all five readings.
+        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("expert-master"))
+        for (gone in listOf("feature-cpu_pill", "feature-temp_pill", "feature_voice", "feature_ai")) {
+            compose.onNodeWithTag(gone).assertDoesNotExist()
+        }
+
+        // Turning Expert off pauses everything; the saved choices come back when it is on again.
         scrollExpertTo("expert-master")
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOff()
-
-        // Re-enabling Expert restores the saved selections without reactivating anything.
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOn()
-        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.TEMP_PILL)) {
+        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.RUNNING_APPS)) {
             scrollExpertTo("feature-${feature.key}")
             compose.onNodeWithTag("feature-${feature.key}").assertIsOn()
         }
-        // A child that was switched on without its parent must still be paused and off.
-        scrollExpertTo("feature-status_bar")
-        compose.onNodeWithTag("feature-status_bar").assertIsOff()
+    }
+
+    /** Opens the tile options the way the remote does now: the Menu key on the focused tile. */
+    private fun openTileOptions() {
+        compose.activityRule.scenario.onActivity { activity ->
+            val down = android.view.KeyEvent(
+                android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_MENU
+            )
+            val up = android.view.KeyEvent(
+                android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_MENU
+            )
+            activity.dispatchKeyEvent(down)
+            activity.dispatchKeyEvent(up)
+        }
+        compose.waitForIdle()
+        // Inside the dialog the first option must be focused; use the app's own D-pad helpers
+        // so the assertion matches how a remote actually drives this screen.
+        awaitFocus("option-0")
     }
 
     private fun sendLauncherHomeIntent() {
@@ -261,7 +267,10 @@ class TvRemoteFocusTest {
     @Test
     fun appOptionsDirectionsStayInDialogAndHomeResetsEvenWhileAlreadyHome() {
         repeat(2) {
-            compose.onNodeWithTag("home-first-app").performSemanticsAction(SemanticsActions.OnLongClick)
+            // Long press on OK was removed at the user's request: the Menu key opens the
+            // options now, and the D-pad inside the dialog is checked the same way as before.
+            awaitFocus("home-first-app")
+            openTileOptions()
             awaitFocus("option-0")
             press("option-0", Key.DirectionDown, "option-1")
             press("option-1", Key.DirectionRight, "option-2")

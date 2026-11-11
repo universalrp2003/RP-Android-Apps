@@ -17,10 +17,10 @@ class TvFeatureSettingsTest {
     @Test
     fun expertModeStopsExtrasWithoutErasingTheirChoices() {
         val enabled = TvFeatureSettings(expertMode = true)
-            .withFeature(TvFeature.VOICE_HELPER, true)
+            .withFeature(TvFeature.HARDWARE_AUDIT, true)
             .withFeature(TvFeature.FILE_HUB, true)
             .withFeature(TvFeature.WEB_REMOTE, true)
-        assertTrue(enabled.enabled(TvFeature.VOICE_HELPER))
+        assertTrue(enabled.enabled(TvFeature.HARDWARE_AUDIT))
         assertTrue(enabled.enabled(TvFeature.FILE_HUB))
         assertTrue(enabled.enabled(TvFeature.WEB_REMOTE))
         val stopped = enabled.copy(expertMode = false)
@@ -31,17 +31,11 @@ class TvFeatureSettingsTest {
     }
 
     @Test
-    fun statusPillsAndRemoteNeedTheirParentFeatures() {
+    fun remoteNeedsItsParentFeature() {
         var settings = TvFeatureSettings(expertMode = true)
-            .withFeature(TvFeature.CPU_PILL, true)
-            .withFeature(TvFeature.NETWORK_PILL, true)
             .withFeature(TvFeature.WEB_REMOTE, true)
-        assertFalse(settings.enabled(TvFeature.CPU_PILL))
-        assertFalse(settings.enabled(TvFeature.NETWORK_PILL))
         assertFalse(settings.enabled(TvFeature.WEB_REMOTE))
-        settings = settings.withFeature(TvFeature.STATUS_BAR, true).withFeature(TvFeature.FILE_HUB, true)
-        assertTrue(settings.enabled(TvFeature.CPU_PILL))
-        assertTrue(settings.enabled(TvFeature.NETWORK_PILL))
+        settings = settings.withFeature(TvFeature.FILE_HUB, true)
         assertTrue(settings.enabled(TvFeature.WEB_REMOTE))
         settings = settings.withFeature(TvFeature.FILE_HUB, false)
         assertFalse(settings.enabled(TvFeature.WEB_REMOTE))
@@ -49,18 +43,37 @@ class TvFeatureSettingsTest {
     }
 
     @Test
-    fun overlayAndAiAreOffByDefaultAndNeedExpertMode() {
+    fun thePillSwitchDoesNotDependOnTheInAppHeader() {
+        // Turning the in-app status bar off used to switch the floating pill off as well,
+        // because the pill was tied to it. The pill has its own switch now.
+        val expert = TvFeatureSettings(expertMode = true)
+            .withFeature(TvFeature.STATUS_OVERLAY, true)
+        assertTrue("the pill must work with the header off", expert.enabled(TvFeature.STATUS_OVERLAY))
+        val withHeaderOn = expert.withFeature(TvFeature.STATUS_BAR, true)
+        assertTrue(withHeaderOn.enabled(TvFeature.STATUS_OVERLAY))
+        val headerOffAgain = withHeaderOn.withFeature(TvFeature.STATUS_BAR, false)
+        assertTrue("turning the header off must not disable the pill", headerOffAgain.enabled(TvFeature.STATUS_OVERLAY))
+        // And the rest of the app is unaffected by the header switch.
+        assertTrue(headerOffAgain.withFeature(TvFeature.RAM_BOOST, true).enabled(TvFeature.RAM_BOOST))
+    }
+
+    @Test
+    fun theRemovedFeaturesNoLongerExist() {
+        // AI, voice and the five per-reading switches were removed completely, so their keys
+        // must not be selectable any more. An old saved key is simply ignored on load.
+        val keys = TvFeature.entries.map { it.key }.toSet()
+        for (gone in listOf("voice_helper", "system_assistant", "cpu_pill", "ram_pill", "storage_pill", "network_pill", "temp_pill")) {
+            assertFalse("$gone must be gone", gone in keys)
+        }
+        assertTrue("status_overlay" in keys)
+    }
+
+    @Test
+    fun overlayIsOffByDefaultAndNeedsExpertMode() {
         val fresh = TvFeatureSettings()
         assertFalse(fresh.enabled(TvFeature.STATUS_OVERLAY))
-
-        // Selecting them without the master switch changes nothing.
-        val selectedOnly = TvFeatureSettings()
-            .withFeature(TvFeature.STATUS_OVERLAY, true)
+        val selectedOnly = TvFeatureSettings().withFeature(TvFeature.STATUS_OVERLAY, true)
         assertFalse(selectedOnly.enabled(TvFeature.STATUS_OVERLAY))
-
-        val expert = selectedOnly.copy(expertMode = true)
-        // The overlay still needs the status bar, which supplies its readings.
-        assertFalse(expert.enabled(TvFeature.STATUS_OVERLAY))
-        assertTrue(expert.withFeature(TvFeature.STATUS_BAR, true).enabled(TvFeature.STATUS_OVERLAY))
+        assertTrue(selectedOnly.copy(expertMode = true).enabled(TvFeature.STATUS_OVERLAY))
     }
 }

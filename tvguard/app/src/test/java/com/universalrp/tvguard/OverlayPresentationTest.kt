@@ -25,17 +25,32 @@ class OverlayPresentationTest {
     }
 
     @Test
-    fun availableMetricShowsValueAndWord() {
-        val metric = OverlayMetric("CPU", "CPU 56% free", StatusThresholds.cpu(44), true)
-        assertEquals("CPU 56% free good", OverlaySampler.pillText(metric))
+    fun pillTextIsTheValueAloneWithNoTrailingWords() {
+        // One short item per reading: the value carries its own unit and nothing is appended,
+        // which is what keeps the strip on a single line.
+        val metric = OverlayMetric("CPU", "56%", StatusThresholds.cpu(44), true)
+        assertEquals("56%", OverlaySampler.pillText(metric))
+        assertEquals("512 MB", OverlaySampler.pillText(OverlayMetric("RAM", "512 MB", Band.GOOD, true)))
+        assertEquals("12.4 GB", OverlaySampler.pillText(OverlayMetric("Storage", "12.4 GB", Band.GOOD, true)))
+        assertEquals("41.0 °C", OverlaySampler.pillText(OverlayMetric("Temp", "41.0 °C", Band.GOOD, true)))
+    }
+
+    @Test
+    fun internetQualityIsASingleShortWord() {
+        // The colour is carried by the band; the text must never be a sentence.
+        assertEquals("good", OverlaySampler.pillText(OverlayMetric("Net", "good", Band.GOOD, true)))
+        assertEquals("offline", OverlaySampler.pillText(OverlayMetric("Net", "offline", Band.BAD, true)))
+        for (word in listOf("good", "medium", "bad")) {
+            assertTrue("$word should be one short word", word.length <= 6)
+        }
     }
 
     @Test
     fun unavailableMetricIsNotDecoratedWithAFakeBand() {
-        val metric = OverlayMetric("Storage", "Storage --", Band.UNAVAILABLE, false)
-        // The explanation stands alone; appending "unavailable" would be redundant and the
+        val metric = OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
+        // The placeholder stands alone; appending "unavailable" would be redundant and the
         // value must never be invented.
-        assertEquals("Storage --", OverlaySampler.pillText(metric))
+        assertEquals("-- GB", OverlaySampler.pillText(metric))
     }
 
     @Test

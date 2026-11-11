@@ -3,12 +3,6 @@ package com.universalrp.tvguard.settings
 /** Optional features are opt-in. Keys remain stable across app updates. */
 enum class TvFeature(val key: String) {
     STATUS_BAR("status_bar"),
-    CPU_PILL("cpu_pill"),
-    RAM_PILL("ram_pill"),
-    STORAGE_PILL("storage_pill"),
-    NETWORK_PILL("network_pill"),
-    VOICE_HELPER("voice_helper"),
-    SYSTEM_ASSISTANT("system_assistant"),
     SCREENSHOT("screenshot"),
     FILE_HUB("file_hub"),
     WEB_REMOTE("web_remote"),
@@ -18,13 +12,11 @@ enum class TvFeature(val key: String) {
     RAM_BOOST("ram_boost"),
     RUNNING_APPS("running_apps"),
 
-    /** Draws the same four readings over other apps; needs "Display over other apps". */
-    STATUS_OVERLAY("status_overlay"),
-
-    /** Optional general-purpose AI questions. Off by default; needs a provider. */
-
-    /** SoC temperature reading. Off by default; shows unavailable where unsupported. */
-    TEMP_PILL("temp_pill")
+    /**
+     * The single floating status strip over other apps: processor load, free RAM, free
+     * storage, temperature and internet quality. Needs "Display over other apps".
+     */
+    STATUS_OVERLAY("status_overlay")
 }
 
 /**
@@ -40,12 +32,9 @@ data class TvFeatureSettings(
     fun enabled(feature: TvFeature): Boolean {
         if (!expertMode || !selected(feature)) return false
         return when (feature) {
-            TvFeature.CPU_PILL, TvFeature.RAM_PILL, TvFeature.STORAGE_PILL,
-            TvFeature.NETWORK_PILL, TvFeature.TEMP_PILL ->
-                selected(TvFeature.STATUS_BAR)
             TvFeature.WEB_REMOTE -> selected(TvFeature.FILE_HUB)
-            // The overlay reuses the status bar's pills, so it needs the parent feature too.
-            TvFeature.STATUS_OVERLAY -> selected(TvFeature.STATUS_BAR)
+            // The pill has its own switch. Tying it to the in-app header meant turning the
+            // header off silently switched the pill off as well.
             else -> true
         }
     }

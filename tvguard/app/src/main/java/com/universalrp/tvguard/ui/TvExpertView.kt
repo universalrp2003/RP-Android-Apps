@@ -79,7 +79,9 @@ fun TvExpertView(settings: TvFeatureSettings, onChange: (TvFeatureSettings) -> U
                 )
             }
             if (settings.expertMode) {
-                items(TvFeature.entries, key = { it.key }) { feature ->
+                // Only real choices are listed. The five readings are drawn by the single
+                // status-pill switch, so separate switches for them were redundant.
+                items(USER_SWITCHES, key = { it.key }) { feature ->
                     val waiting = settings.selected(feature) && !settings.enabled(feature)
                     TvFeatureSwitch(
                         title = stringResource(featureTitle(feature)),
@@ -88,7 +90,7 @@ fun TvExpertView(settings: TvFeatureSettings, onChange: (TvFeatureSettings) -> U
                         checked = settings.selected(feature),
                         onCheckedChange = { onChange(settings.withFeature(feature, it)) },
                         modifier = Modifier.testTag("feature-${feature.key}").focusProperties {
-                            if (feature == TvFeature.entries.last()) down = FocusRequester.Cancel
+                            if (feature == USER_SWITCHES.last()) down = FocusRequester.Cancel
                         }
                     )
                 }
@@ -129,14 +131,22 @@ private fun TvFeatureSwitch(
     }
 }
 
+/** One switch per user-facing feature; the pill covers all five readings. */
+internal val USER_SWITCHES: List<TvFeature> = listOf(
+    TvFeature.STATUS_BAR,
+    TvFeature.STATUS_OVERLAY,
+    TvFeature.SCREENSHOT,
+    TvFeature.FILE_HUB,
+    TvFeature.WEB_REMOTE,
+    TvFeature.HARDWARE_AUDIT,
+    TvFeature.DEBLOATER,
+    TvFeature.NETWORK_TOOLS,
+    TvFeature.RAM_BOOST,
+    TvFeature.RUNNING_APPS,
+)
+
 private fun featureTitle(feature: TvFeature): Int = when (feature) {
     TvFeature.STATUS_BAR -> R.string.feature_status_bar
-    TvFeature.CPU_PILL -> R.string.feature_cpu_pill
-    TvFeature.RAM_PILL -> R.string.feature_ram_pill
-    TvFeature.STORAGE_PILL -> R.string.feature_storage_pill
-    TvFeature.NETWORK_PILL -> R.string.feature_network_pill
-    TvFeature.VOICE_HELPER -> R.string.feature_voice
-    TvFeature.SYSTEM_ASSISTANT -> R.string.feature_system_ai
     TvFeature.SCREENSHOT -> R.string.feature_screenshot
     TvFeature.FILE_HUB -> R.string.feature_file_hub
     TvFeature.WEB_REMOTE -> R.string.feature_web_remote
@@ -146,17 +156,10 @@ private fun featureTitle(feature: TvFeature): Int = when (feature) {
     TvFeature.RAM_BOOST -> R.string.feature_ram_boost
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps
     TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay
-    TvFeature.TEMP_PILL -> R.string.feature_temp_pill
 }
 
 private fun featureDescription(feature: TvFeature): Int = when (feature) {
     TvFeature.STATUS_BAR -> R.string.feature_status_bar_desc
-    TvFeature.CPU_PILL -> R.string.feature_cpu_pill_desc
-    TvFeature.RAM_PILL -> R.string.feature_ram_pill_desc
-    TvFeature.STORAGE_PILL -> R.string.feature_storage_pill_desc
-    TvFeature.NETWORK_PILL -> R.string.feature_network_pill_desc
-    TvFeature.VOICE_HELPER -> R.string.feature_voice_desc
-    TvFeature.SYSTEM_ASSISTANT -> R.string.feature_system_ai_desc
     TvFeature.SCREENSHOT -> R.string.feature_screenshot_desc
     TvFeature.FILE_HUB -> R.string.feature_file_hub_desc
     TvFeature.WEB_REMOTE -> R.string.feature_web_remote_desc
@@ -166,5 +169,4 @@ private fun featureDescription(feature: TvFeature): Int = when (feature) {
     TvFeature.RAM_BOOST -> R.string.feature_ram_boost_desc
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps_desc
     TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay_desc
-    TvFeature.TEMP_PILL -> R.string.feature_temp_pill_desc
 }

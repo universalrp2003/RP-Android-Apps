@@ -51,6 +51,31 @@ object ScreenCaptureManager {
     }
 
     /**
+     * Everything the Wi-Fi hub can serve: screenshots and uploads from Downloads.
+     *
+     * The share screen used to list only screenshots, so an APK uploaded through the browser
+     * page never appeared and could not be installed from the TV. Uploads land in the public
+     * Downloads folder, so they are listed here too, newest first.
+     */
+    fun listHubFiles(): List<File> {
+        val downloads = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+        val files = mutableListOf<File>()
+        fun scan(dir: File) {
+            if (!dir.exists() || !dir.isDirectory) return
+            dir.listFiles()?.forEach { file ->
+                val name = file.name.lowercase(Locale.ROOT)
+                if (!file.isFile || name.startsWith(".tvguard-upload-")) return@forEach
+                val isPicture = name.endsWith(".png") || name.endsWith(".jpg") || name.endsWith(".jpeg")
+                val isInstallable = name.endsWith(".apk")
+                if (isPicture || isInstallable) files.add(file)
+            }
+        }
+        scan(getScreenshotDir())
+        scan(downloads)
+        return files.distinctBy { it.name }.sortedByDescending { it.lastModified() }
+    }
+
+    /**
      * Owned by the caller's coroutine, not a detached background scope. Cancellation
      * interrupts the bounded root attempt and discards incomplete files; a PixelCopy
      * callback which arrives after cancellation cannot start a new save.

@@ -36,16 +36,13 @@ data class OverlayMetric(
 object OverlaySampler {
 
     /**
-     * The short form shown in the always-on-top pill: a value plus a plain-language band word,
-     * for example "CPU 56% free medium". The user asked for no background panel and for the
-     * condition to be readable as a word, so the band is spelled out instead of relying on
-     * colour alone (colour is kept as a secondary cue only).
+     * The short form shown in the always-on-top pill.
+     *
+     * Exactly one short item per reading: "62%", "832 MB", "26.0 GB", "50.3 °C" and a single
+     * word for internet quality. Nothing is appended - the earlier version added a band word
+     * such as "free good", which made the strip long, and the colour already carries the band.
      */
-    fun pillText(metric: OverlayMetric): String {
-        if (!metric.available) return metric.value
-        val word = StatusThresholds.bandWord(metric.band)
-        return metric.value + " " + word
-    }
+    fun pillText(metric: OverlayMetric): String = metric.value
 
     private var previousCpu: CpuTimes? = null
 
@@ -60,12 +57,12 @@ object OverlaySampler {
         val usage = CpuUsage.percentage(previousCpu, current)
         previousCpu = current
         if (usage == null) {
-            OverlayMetric("CPU", "CPU --", Band.UNAVAILABLE, false)
+            OverlayMetric("CPU", "--%", Band.UNAVAILABLE, false)
         } else {
             val free = (100 - usage).coerceIn(0, 100)
             OverlayMetric(
                 "CPU",
-                "CPU $free% free",
+                "$free%",
                 StatusThresholds.cpu(usage),
                 true,
             )
@@ -78,21 +75,21 @@ object OverlaySampler {
      */
     fun ram(context: Context): OverlayMetric {
         val am = context.applicationContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-            ?: return OverlayMetric("RAM", "RAM --", Band.UNAVAILABLE, false)
+            ?: return OverlayMetric("RAM", "-- MB", Band.UNAVAILABLE, false)
         val info = ActivityManager.MemoryInfo()
         try {
             am.getMemoryInfo(info)
         } catch (_: Exception) {
-            return OverlayMetric("RAM", "RAM --", Band.UNAVAILABLE, false)
+            return OverlayMetric("RAM", "-- MB", Band.UNAVAILABLE, false)
         }
         if (info.totalMem <= 0 || info.availMem < 0 || info.availMem > info.totalMem) {
-            return OverlayMetric("RAM", "RAM --", Band.UNAVAILABLE, false)
+            return OverlayMetric("RAM", "-- MB", Band.UNAVAILABLE, false)
         }
         val availableMb = info.availMem / (1024L * 1024L)
         val percent = StatusThresholds.percent(info.availMem, info.totalMem)
         return OverlayMetric(
             "RAM",
-            "RAM $availableMb MB free",
+            "$availableMb MB",
             StatusThresholds.ram(percent),
             true,
         )
@@ -105,19 +102,19 @@ object OverlaySampler {
             val available = stat.availableBytes
             val total = stat.totalBytes
             if (total <= 0 || available < 0 || available > total) {
-                OverlayMetric("Storage", "Storage --", Band.UNAVAILABLE, false)
+                OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
             } else {
                 val gib = available.toDouble() / (1024.0 * 1024.0 * 1024.0)
                 val percent = StatusThresholds.percent(available, total)
                 OverlayMetric(
                     "Storage",
-                    String.format(Locale.US, "Storage %.1f GB free", gib),
+                    String.format(Locale.US, "%.1f GB", gib),
                     StatusThresholds.storage(percent),
                     true,
                 )
             }
         } catch (_: Exception) {
-            OverlayMetric("Storage", "Storage --", Band.UNAVAILABLE, false)
+            OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
         }
     }
 
@@ -175,13 +172,14 @@ object OverlaySampler {
         } catch (_: Exception) {
             null
         }
-        if (status == null) return OverlayMetric("Net", "Net --", Band.UNAVAILABLE, false)
-        if (!status.isConnected) return OverlayMetric("Net", "Net offline", Band.BAD, true)
+        if (status == null) return OverlayMetric("Net", "--", Band.UNAVAILABLE, false)
+        if (!status.isConnected) return OverlayMetric("Net", "offline", Band.BAD, true)
         val ping = status.internetPingMs
-            ?: return OverlayMetric("Net", "Net unreachable", Band.UNAVAILABLE, false)
+            ?: return OverlayMetric("Net", "--", Band.UNAVAILABLE, false)
         return OverlayMetric(
             "Net",
-            "Net ${ping}ms",
+            // Internet quality is the colour-coded word alone, as requested.
+            StatusThresholds.bandWord(StatusThresholds.network(ping)),
             StatusThresholds.network(ping),
             true,
         )
@@ -194,11 +192,11 @@ object OverlaySampler {
     suspend fun temperature(): OverlayMetric = withContextIo {
         val reading = com.universalrp.tvguard.hardware.ThermalReader.read()
         if (!reading.available) {
-            OverlayMetric("Temp", "Temp --", Band.UNAVAILABLE, false)
+            OverlayMetric("Temp", "-- °C", Band.UNAVAILABLE, false)
         } else {
             OverlayMetric(
                 "Temp",
-                reading.format(),
+                String.format(Locale.US, "%.1f °C", reading.celsius),
                 StatusThresholds.temperature(reading.celsius),
                 true,
             )

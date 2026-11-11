@@ -86,10 +86,6 @@
     <string name="about_no_browser">இணைப்பைத் திறக்க செயலி இல்லை.</string>
     <string name="about_sister_apps">RP Ideas செயலிகள் &amp; தமிழன் ஸ்டோர்</string>
     <string name="about_sister_apps_hint">செயலியின் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கத்தை உலாவியில் திறக்கத் தேர்ந்தெடுக்கவும்.</string>
-    <string name="cpu_pill">CPU %1$s · %2$d கருக்கள்</string>
-    <string name="storage_pill_mismatch">சேமிப்பக முரண்பாடு</string>
-    <string name="storage_pill_reported">%1$s GiB காலி</string>
-    <string name="storage_pill_reported_warning">%1$s GiB காலி · எச்சரிக்கை</string>
     <string name="possible_mismatch">சாத்தியமான முரண்பாடு</string>
     <string name="storage_evidence_title">2. சேமிப்பகச் சான்றுகள்</string>
     <string name="storage_candidate_disk">கண்டறிந்த தொகுதி சாதனம்</string>
@@ -111,27 +107,9 @@
     <string name="os_kernel">கர்னல் பதிப்பு</string>
     <string name="os_build_timestamp">பில்ட் நேரம் (மில்லி விநாடிகள்)</string>
     <string name="os_evidence_explanation">ஆண்ட்ராய்டு 14 பொதுவாக API 34 அல்லது அதற்குப் பிந்தையதை அறிக்கையிடும்; சோதித்த ஆண்ட்ராய்டு 14 வகுப்பும் இருக்கும். முரண்பாடு மாற்றப்பட்ட அல்லது தனிப்பயனாக்கப்பட்ட அமைப்பைக் குறிக்கலாம். பதிப்பு, SDK, கர்னல் ஆகியவையும் மாற்றப்படலாம்; இச்சோதனைகள் உண்மையான அடிப்படைப் பதிப்பை உறுதிப்படுத்தாது.</string>
-    <string name="voice_title">டிவி கார்டு குரல் உதவியாளர்</string>
-    <string name="voice_listening">ஒலிவாங்கி செயல்படுகிறது</string>
-    <string name="voice_ready">தயார்</string>
-    <string name="voice_hints">கிடைக்கும் டிவி தகவல்களைக் கேளுங்கள் அல்லது “YouTube-ஐத் திற” என்று சொல்லுங்கள். வன்பொருள் பதில்களுக்கும் விருப்ப செயல்களுக்கும் தனித்தனி நிபுணர் சுவிட்சுகள் தேவை.</string>
-    <string name="voice_privacy">சாதனத்தின் பேச்சறிதல் மற்றும் குரல் உருவாக்கச் சேவைகள் இணையத்தைப் பயன்படுத்தலாம். வன்பொருள் பதில்கள் உள்ளூர் தகவல்களைப் பயன்படுத்துகின்றன; இது பொதுவான AI மாதிரி அல்ல.</string>
-    <string name="voice_retry">மீண்டும் கேள்</string>
-    <string name="voice_close">உதவியாளரை மூடு</string>
-    <string name="voice_permission">குரல் கட்டளைகளுக்கு ஒலிவாங்கி அனுமதி தேவை.</string>
-    <string name="voice_permission_denied">ஒலிவாங்கி அனுமதி மறுக்கப்பட்டது. செயலி அமைப்புகளில் அனுமதியை இயக்கவும்.</string>
     <string name="close_dialog">மூடு</string>
     <string name="action_add_favorite">விருப்பங்களில் சேர்</string>
     <string name="action_remove_favorite">விருப்பங்களிலிருந்து நீக்கு</string>
-    <string name="voice_no_recognizer">இந்த டிவியில் பேச்சறிதல் சேவை இல்லை.</string>
-    <string name="voice_starting">கேட்கிறேன்… டிவி பற்றி கேளுங்கள் அல்லது கட்டளை சொல்லுங்கள்.</string>
-    <string name="voice_processing">பேச்சைச் செயலாக்குகிறது…</string>
-    <string name="voice_error">பேச்சறிதல் தோல்வி (குறியீடு %1$d). மீண்டும் முயற்சிக்கவும்.</string>
-    <string name="voice_no_speech">பேச்சு புரியவில்லை. மீண்டும் முயற்சிக்கவும்.</string>
-    <string name="voice_start_error">பேச்சறிதல் சேவையைத் தொடங்க முடியவில்லை.</string>
-    <string name="voice_result_error">கோரிக்கையை முடிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.</string>
-    <string name="ram_pill">RAM %1$s GiB கிடைக்கிறது</string>
-    <string name="ram_pill_mismatch">RAM முரண்பாடு</string>
     <string name="guide_title">வழிகாட்டி — தலைப்பைத் தேர்ந்தெடுங்கள்</string>
     <string name="hardware_evidence_header">வன்பொருள் அறிக்கைகளும் சாத்தியமான முரண்பாடுகளும்</string>
     <string name="hardware_warning_header">சான்றுகளில் சாத்தியமான முரண்பாடு</string>
@@ -145,20 +123,6 @@
     <string name="os_marker_11">Android 11 API குறியீடு உள்ளது</string>
     <string name="os_marker_10">Android 10 API குறியீடு உள்ளது</string>
     <string name="os_marker_none">சோதித்த framework குறியீடு எதுவும் கிடைக்கவில்லை</string>
-    <string name="voice_sleep_sent">காத்திருப்பு கட்டளை அனுப்பப்பட்டது.</string>
-    <string name="voice_sleep_failed">காத்திருப்பு கட்டளையை அனுப்ப முடியவில்லை. அதற்கு பதில் power பொத்தானைப் பயன்படுத்தவும்.</string>
-    <string name="voice_ram_result">சுத்தம் செய்யக் கோரப்பட்டது. முன்பு %1$d MB நினைவகம் கிடைத்தது; பின்பு %2$d MB கிடைத்தது.</string>
-    <string name="voice_screenshot_saved">திரைப்படம் Downloads/Screenshots-இல் சேமிக்கப்பட்டது.</string>
-    <string name="voice_screenshot_failed">திரைப்படம் எடுக்க முடியவில்லை. திரைப்படப் பொத்தானை முயற்சிக்கவும்.</string>
-    <string name="voice_settings_open">டிவி அமைப்புகளைத் திறக்கிறது.</string>
-    <string name="voice_settings_failed">டிவி அமைப்புகளைத் திறக்க முடியவில்லை.</string>
-    <string name="voice_app_not_found">%1$s என்ற நிறுவப்பட்ட செயலி கிடைக்கவில்லை.</string>
-    <string name="voice_app_open">%1$s திறக்கப்படுகிறது.</string>
-    <string name="voice_app_failed">%1$s திறக்க முடியவில்லை.</string>
-    <string name="voice_system_assistant">கணினி உதவியாளரை முயற்சி</string>
-    <string name="voice_system_assistant_hint">பொதுக் கேள்விகளுக்கு நிறுவப்பட்ட கணினி உதவியாளரைத் திறக்கலாம். அதன் தனியுரிமை விதிகள் பொருந்தும்; கிடைப்பது டிவியைப் பொறுத்தது.</string>
-    <string name="voice_system_assistant_unavailable">இந்த டிவியில் கணினி உதவியாளரைத் திறக்க முடியவில்லை.</string>
-
     <!-- Opt-in lightweight / Expert settings. -->
     <string name="tools_overview_title">முகப்பு கருவிகளும் அமைப்புகளும்</string>
     <string name="launcher_only_active">முகப்பு மட்டும்</string>
@@ -168,23 +132,11 @@
     <string name="expert_master_title">நிபுணர் முறை</string>
     <string name="expert_master_description">நிறுத்தினால் முகப்பு மட்டும். இயக்கினால் தனி வசதி சுவிட்சுகள் தெரியும். மீண்டும் இயக்கும்போது சேமித்த தேர்வுகள் திரும்பும்; முன்பு இயக்கிய கோப்பு மையமும் தானாகத் தொடங்கலாம்.</string>
     <string name="expert_intro">ஒவ்வொரு சுவிட்சிலும் OK அழுத்துங்கள். வசதியை நிறுத்தினால் அதற்கான வேலை முடிந்தவரை நிறுத்தப்படும். நினைவகச் சேமிப்பு சாதனத்தைப் பொறுத்தது; குறிப்பிட்ட அளவு உறுதி இல்லை.</string>
-    <string name="expert_waiting_for_parent">சேமித்த தேர்வு ON; தேவையான முதன்மை சுவிட்சை இயக்கும்வரை நிறுத்தத்தில் இருக்கும்.</string>
+    <string name="expert_waiting_for_parent">இயக்கத்தில் உள்ளது; எக்ஸ்பர்ட் பயன்முறையை இயக்கும் வரை நிறுத்தத்தில் இருக்கும்.</string>
     <string name="feature_on">இயக்கு</string>
     <string name="feature_off">நிறுத்து</string>
     <string name="feature_status_bar">மேல் நிலைப் பட்டியும் கடிகாரமும்</string>
     <string name="feature_status_bar_desc">மேல் தலைப்பையும் கடிகாரத்தையும் காட்டு. கீழுள்ள தனித்தனி நிலைக் காட்டிகளுக்கு இது தேவை.</string>
-    <string name="feature_cpu_pill">CPU பயன்பாட்டுக் காட்டி</string>
-    <string name="feature_cpu_pill_desc">திரையில் இருக்கும்போது சுமார் 2.5 நொடிக்கு ஒருமுறை CPU எண்ணிக்கைகளை அளக்கும். மேல் நிலைப் பட்டி தேவை.</string>
-    <string name="feature_ram_pill">RAM காட்டி</string>
-    <string name="feature_ram_pill_desc">திரையில் இருக்கும்போது சுமார் 10 நொடிக்கு ஒருமுறை கிடைக்கும் நினைவகத்தை அளக்கும். மேல் நிலைப் பட்டி தேவை.</string>
-    <string name="feature_storage_pill">சேமிப்பகக் காட்டி</string>
-    <string name="feature_storage_pill_desc">திரையில் இருக்கும்போது சுமார் 30 நொடிக்கு ஒருமுறை காட்டப்படும் சேமிப்பக அளவைப் படிக்கும். மேல் நிலைப் பட்டி தேவை.</string>
-    <string name="feature_network_pill">இணையத் தரக் காட்டி</string>
-    <string name="feature_network_pill_desc">திரையில் இருக்கும்போது இணைய மற்றும் வழக்கமான ரவுட்டர் முகவரிகளை அவ்வப்போது சோதிக்கும். மேல் நிலைப் பட்டி தேவை.</string>
-    <string name="feature_voice">குரல் உதவி</string>
-    <string name="feature_voice_desc">தேவைக்கேற்ப பேச்சறிதல் மற்றும் அடிப்படை டிவி கேள்விகள். ஒலிவாங்கி அனுமதியும் நிறுவப்பட்ட பேச்சறிதல் சேவையும் தேவை. வன்பொருள் பதில்களுக்கு வன்பொருள் சோதனையும், ஸ்கிரீன்ஷாட் மற்றும் பூஸ்ட் கட்டளைகளுக்கு அவற்றின் சுவிட்சுகளும் தேவை.</string>
-    <string name="feature_system_ai">Android உதவியாளர் / AI</string>
-    <string name="feature_system_ai_desc">பொதுக் கேள்விகளுக்கு நிறுவப்பட்ட Android உதவியாளரைத் திறக்க அனுமதி. அது கிடைப்பதும் அதன் தனியுரிமையும் சேவையைப் பொறுத்தது; TV Guard உரையாடல் உரையை அதற்கு அனுப்பாது.</string>
     <string name="feature_screenshot">திரைப் படம்</string>
     <string name="feature_screenshot_desc">தேவைக்கேற்ப திரைப் படம் எடுக்க அனுமதி. நிறுத்தினால் பழைய படங்கள் அழியாது; கோப்பு மையம் இயக்கத்தில் இருந்தால் அவற்றைப் பகிரலாம்.</string>
     <string name="feature_file_hub">வைஃபை கோப்பு மையம்</string>
@@ -201,25 +153,17 @@
     <string name="feature_ram_boost_desc">தேவைக்கேற்ப பின்னணி செயலிகளை நிறுத்த முயலும்; ரூட் இருந்தால் கர்னல் கேஷையும் காலிசெய்யலாம். முடிவு மாறுபடும்.</string>
     <string name="feature_running_apps">இயங்கும் செயலிகள் பட்டியல்</string>
     <string name="feature_running_apps_desc">கருவிகள் முகப்பில் இருக்கும்போது செயல்முறைகளைப் படிக்கும். சிலவற்றை Android மறைக்கலாம்.</string>
-    <string name="optional_voice_short">குரலும் உள்ளூர் டிவி கேள்விகளும்</string>
-    <string name="optional_ai_title">Android உதவியாளர் / AI</string>
-    <string name="optional_ai_short">நிறுவப்பட்ட உதவியாளரைத் திற</string>
     <string name="optional_share_title">படங்களும் கோப்பு மையமும்</string>
     <string name="optional_share_short">இயக்கிய பகிர்வுக் கருவிகளைத் திற</string>
     <string name="hardware_audit_safe_subtitle">காட்டப்பட்ட சான்றுகளைப் பார்</string>
     <string name="hidden_apps_count">%1$d செயலிகள் மறைக்கப்பட்டுள்ளன</string>
     <string name="debloat_rescan">செயலிப் பட்டியலைப் புதுப்பி</string>
     <string name="network_retest">இணையத்தை மீண்டும் சோதி</string>
-    <string name="pill_ram_unavailable">RAM தகவல் இல்லை</string>
-    <string name="pill_storage_unavailable">சேமிப்பகத் தகவல் இல்லை</string>
-    <string name="pill_network_unavailable">இணையத் தகவல் இல்லை</string>
     <string name="hub_security_warning">எச்சரிக்கை: கோப்பு மையத்தில் கடவுச்சொல்லோ குறியாக்கமோ இல்லை. உள்ளூர் வலையமைப்பில் உள்ள யாரும் Downloads மற்றும் சேமித்த படங்களைப் பார்க்க, பதிவேற்ற அல்லது நீக்க முடியும்; ரிமோட் இயக்கப்பட்டால் டிவியையும் கட்டுப்படுத்தலாம். நம்பகமான வலையமைப்பில் மட்டும் பயன்படுத்தி முடிந்ததும் நிறுத்தவும்.</string>
     <string name="hub_active">உள்ளூர் வைஃபை கோப்பு மையம்: இயக்கத்தில்</string>
     <string name="hub_start_failed">கோப்பு மையத்தைத் தொடங்க முடியவில்லை</string>
     <string name="hub_retry_hint">போர்ட் மற்றும் சேமிப்பக அனுமதியைச் சரிபார்க்கவும்; அல்லது நிபுணர் அமைப்பில் கோப்பு மையத்தை நிறுத்தவும்.</string>
     <string name="hub_disabled_hint">கோப்பு பகிர்வு நிறுத்தப்பட்டுள்ளது. தேவைப்பட்டால் நிபுணர் அமைப்பில் கோப்பு மையத்தை இயக்குங்கள்.</string>
-    <string name="voice_feature_disabled">அந்தக் கருவி நிறுத்தப்பட்டுள்ளது. முதலில் நிபுணர் அமைப்பில் அதைத் தனியாக இயக்குங்கள்.</string>
-
     <!-- Status overlay over other apps -->
     <string name="overlay_notification_channel">நிலை மேலடுக்கு</string>
     <string name="overlay_notification_title">நிலை மேலடுக்கு இயக்கத்தில் உள்ளது</string>
@@ -232,9 +176,6 @@
 
     <!-- AI assistant -->
     <!-- Temperature -->
-    <string name="feature_temp_pill">வெப்பநிலைக் காட்டி</string>
-    <string name="feature_temp_pill_desc">திரையில் இருக்கும்போது சுமார் 20 நொடிக்கு ஒருமுறை டிவி செயலியின் வெப்பநிலையைப் படிக்கும். மேல் நிலைப் பட்டி தேவை. பல டிவிகளில் உணரி இல்லை; அப்போது யூகிக்காமல் "தகவல் இல்லை" என்று காட்டும்.</string>
-    <string name="pill_temp_unavailable">வெப்பநிலை தெரியவில்லை</string>
     <string name="storage_permission_title">சேமிப்பு அணுகல்</string>
     <string name="storage_permission_reason">முழு சேமிப்பு அணுகல் கோப்பு பரிமாற்றம், திரைப்படங்கள் மற்றும் Downloads-க்கு மட்டுமே தேவை. இது இல்லாமல் ஆண்ட்ராய்டு தரும் சேமிப்பு அளவுகளை மட்டும் காட்ட முடியும், கோப்புகளை பட்டியலிட முடியாது. எதுவும் வெளியே அனுப்பப்படவில்லை.</string>
     <string name="storage_permission_open">சிஸ்டம் அமைப்புகளைத் திற</string>

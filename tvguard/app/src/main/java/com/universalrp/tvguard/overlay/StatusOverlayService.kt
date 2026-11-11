@@ -31,7 +31,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * Draws the four readings over other apps while the user has it switched on.
+ * Draws the five readings over other apps while the user has it switched on.
  *
  * Deliberate properties:
  *  - The window is NOT_FOCUSABLE, so remote keys never reach it. D-pad navigation in the
@@ -98,43 +98,38 @@ class StatusOverlayService : Service() {
     private fun isStillWanted(): Boolean {
         if (!Settings.canDrawOverlays(this)) return false
         val settings = TvFeaturePreferences(this).load()
-        return settings.enabled(TvFeature.STATUS_OVERLAY) && settings.enabled(TvFeature.STATUS_BAR)
+        return settings.enabled(TvFeature.STATUS_OVERLAY)
     }
 
     private fun showOverlay() {
         val wm = getSystemService(Context.WINDOW_SERVICE) as? WindowManager ?: return
         windowManager = wm
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(10), dp(4), dp(10), dp(4))
-            // No panel and no opaque box: the text sits directly over whatever is on screen,
-            // which is what was asked for. A thin dark outline keeps it legible on bright
-            // content without behaving like a background.
-        }
-        OVERLAY_METRICS.forEach { key ->
-            val label = TextView(this).apply {
-                setTextColor(Color.WHITE)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
-                text = "…"
-                setPadding(dp(5), 0, dp(5), 0)
-                // A soft shadow reads well over light and dark video without a background.
-                setShadowLayer(4f, 0f, 1f, Color.argb(230, 0, 0, 0))
-            }
-            rows[key] = label
-            container.addView(label)
+
+        // One fixed-height row, one short cell per reading, no panel behind it. The builder is
+        // shared with OverlayRenderTest, which draws these very views to a bitmap: 1.2 passed
+        // every assertion while drawing five vertical columns, so the layout is now checked as
+        // pixels rather than only as source.
+        val (container, rowHeight) = buildPill(this)
+        // Wire the update map from the cells the builder created, in reading order.
+        rows.clear()
+        for (i in 0 until container.childCount) {
+            val cell = container.getChildAt(i)
+            val key = cell.tag as? String ?: continue
+            rows[key] = cell as TextView
         }
         root = container
+
         val saved = OverlayPosition.load(this)
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            WindowManager.LayoutParams.WRAP_CONTENT,
-            // TYPE_APPLICATION_OVERLAY is the only type allowed to apps targeting O+.
+            // Explicit pixel width so no cell can be squeezed to nothing.
+            (resources.displayMetrics.widthPixels * 6 / 10).coerceAtMost(resources.displayMetrics.widthPixels),
+            rowHeight,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+                WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = saved.gravity
@@ -189,7 +184,7 @@ class StatusOverlayService : Service() {
                     throw cancelled
                 } catch (_: Exception) {
                     // Keep the overlay alive with an honest unavailable label.
-                    update("net", OverlayMetric("Net", "Net --", Band.UNAVAILABLE, false))
+                    update("net", OverlayMetric("Net", "--", Band.UNAVAILABLE, false))
                 }
                 delay(CPU_INTERVAL_MS)
             }
@@ -212,7 +207,7 @@ class StatusOverlayService : Service() {
 
     private fun update(key: String, metric: OverlayMetric) {
         val view = rows[key] ?: return
-        view.text = OverlaySampler.pillText(metric)
+        view.text = metric.value
         view.setTextColor(
             when (metric.band) {
                 Band.GOOD -> Color.rgb(0, 230, 118)
@@ -273,9 +268,6 @@ class StatusOverlayService : Service() {
     }
 
     companion object {
-        /** Exactly the five readings asked for; Wi-Fi strength is deliberately absent. */
-        private val OVERLAY_METRICS = listOf("cpu", "ram", "storage", "temp", "net")
-
         const val ACTION_MOVE = "com.universalrp.tvguard.overlay.MOVE"
 
         private const val CHANNEL_ID = "tvguard_overlay"
@@ -290,7 +282,7 @@ class StatusOverlayService : Service() {
         /** True only when the saved settings ask for the overlay; the caller checks permission. */
         fun wanted(context: Context): Boolean {
             val settings = TvFeaturePreferences(context).load()
-            return settings.enabled(TvFeature.STATUS_OVERLAY) && settings.enabled(TvFeature.STATUS_BAR)
+            return settings.enabled(TvFeature.STATUS_OVERLAY)
         }
 
         fun start(context: Context) {
@@ -331,3 +323,44 @@ class StatusOverlayService : Service() {
         }
     }
 }
+
+/** Exactly the five readings asked for; Wi-Fi strength is deliberately absent. */
+// Left to right, exactly the order the readings were asked for.
+internal val OVERLAY_METRICS = listOf("cpu", "ram", "storage", "temp", "net")
+
+/**
+ * Builds the pill: one fixed-height row, one weight-shared single-line cell per reading.
+ *
+ * Kept out of the service so it can be rendered off-device. The failure this guards against
+ * is real: with WRAP_CONTENT cells, one long reading squeezed the rest until Android wrapped
+ * them one character per line, which is what appeared on the TV.
+ */
+internal fun buildPill(context: Context): Pair<LinearLayout, Int> {
+    val density = context.resources.displayMetrics.density
+    fun px(dp: Int) = (dp * density).toInt()
+    val rowHeight = px(30)
+    val container = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(px(10), px(2), px(10), px(2))
+    }
+    OVERLAY_METRICS.forEach { key ->
+        val label = TextView(context).apply {
+            setTextColor(Color.WHITE)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            text = "…"
+            maxLines = 1
+            isSingleLine = true
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER
+            setPadding(px(8), 0, px(8), 0)
+            layoutParams = LinearLayout.LayoutParams(0, rowHeight, 1f)
+            // A shadow keeps it readable over bright video without a background panel.
+            setShadowLayer(6f, 0f, 1f, Color.argb(255, 0, 0, 0))
+        }
+        label.tag = key
+        container.addView(label)
+    }
+    return container to rowHeight
+}
+

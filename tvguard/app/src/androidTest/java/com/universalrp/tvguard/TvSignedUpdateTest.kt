@@ -53,7 +53,7 @@ class TvSignedUpdateTest {
             .putBoolean("expert_mode", false)
             .putBoolean(TvFeature.FILE_HUB.key, true)
             .putBoolean(TvFeature.WEB_REMOTE.key, true)
-            .putBoolean(TvFeature.RAM_PILL.key, true)
+            .putBoolean(TvFeature.STATUS_OVERLAY.key, true)
             .commit())
         File(target.filesDir, markerName).writeText(markerText)
         verify()
@@ -66,7 +66,7 @@ class TvSignedUpdateTest {
         assertFalse(settings.expertMode)
         assertTrue(settings.selected(TvFeature.FILE_HUB))
         assertTrue(settings.selected(TvFeature.WEB_REMOTE))
-        assertTrue(settings.selected(TvFeature.RAM_PILL))
+        assertTrue(settings.selected(TvFeature.STATUS_OVERLAY))
         assertFalse(settings.enabled(TvFeature.FILE_HUB))
         assertEquals(markerText, File(target.filesDir, markerName).readText())
     }

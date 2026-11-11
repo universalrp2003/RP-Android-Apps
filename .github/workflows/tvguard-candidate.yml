@@ -56,14 +56,14 @@ jobs:
           roots = [ET.parse(p).getroot() for p in Path('tvguard/app/build/test-results/testDebugUnitTest').glob('TEST-*.xml')]
           cases = [c for root in roots for c in root.iter('testcase')]
           classes = {c.get('classname', '').rsplit('.', 1)[-1] for c in cases}
-          # New coverage: the long-press fix (including a remote that never auto-repeats),
-          # overlay thresholds and pill wording, and thermal readings. All required.
-          # The AI client and microphone-shortcut tests were removed with the AI feature, so
-          # the floor dropped from 70 to the 64 cases that remain.
-          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest', 'AppTileKeyPolicyTest', 'StatusThresholdsTest', 'OverlayPresentationTest', 'ThermalReaderTest'}
-          assert len(cases) >= 64 and required <= classes, 'Required TV Guard unit tests did not run'
+          # New coverage for 1.3: the pill is rendered to a real bitmap (OverlayRenderTest)
+          # and its layout rules are asserted (OverlayLayoutContractTest), because 1.2 passed
+          # assertions while drawing vertical columns on the TV. The AI, long-press and
+          # per-reading pill tests went away with those features: 68 cases remain, four of which render or inspect the pill.
+          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'OverlayLayoutContractTest', 'OverlayRenderTest', 'StatusThresholdsTest', 'OverlayPresentationTest', 'ThermalReaderTest'}
+          assert len(cases) >= 68 and required <= classes, 'Required TV Guard unit tests did not run'
           assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A TV Guard unit test failed or was skipped'
-          print(f'::notice title=TV Guard unit tests::{len(cases)} unit tests passed, including feature, transfer, hardware and voice checks')
+          print(f'::notice title=TV Guard unit tests::{len(cases)} unit tests passed, including feature, transfer, hardware and pill-rendering checks')
           PY
 
       - name: Expose actionable compiler and lint errors
@@ -158,19 +158,13 @@ jobs:
               'appendedExpertSwitchesAreReachableScrolledAndOffByDefault',
           }
           assert len(cases) == len(expected) and {c.get('name') for c in cases} == expected, 'Missing or duplicate TV focus tests'
-          # The long-press regression tests must also run, and all four of them.
+          # The held-OK long press was removed at the user's request, so its tests must be gone
+          # rather than silently skipped: a stale class would mean the feature came back.
           press_cases = [c for c in all_cases if c.get('classname', '').endswith('TvLongPressOptionsTest')]
-          expected_press = {
-              'longPressOpensOptionsAndReleaseDoesNotLaunchOrClose',
-              'shortPressStillLaunchesOrKeepsFocusOnTheLauncher',
-              'aRemoteThatAutoRepeatsAlsoOpensTheMenuExactlyOnce',
-              'dismissingOptionsRestoresFocusToTheTile',
-              'afterTheMenuClosesAShortPressLaunchesAgain',
-          }
-          assert len(press_cases) == len(expected_press) and {c.get('name') for c in press_cases} == expected_press, 'Missing or duplicate long-press regression tests'
-          combined = cases + press_cases
+          assert not press_cases, 'The removed long-press feature must not be tested any more'
+          combined = cases
           assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in combined), 'A TV focus test failed or was skipped'
-          print(f'::notice title=Android TV focus tests::{len(combined)} Android TV tests passed, including real key-down/hold/up long-press checks')
+          print(f'::notice title=Android TV focus tests::{len(combined)} Android TV tests passed, with the options opened by the Menu key')
           PY
       - name: Surface TV test failures
         if: failure()
@@ -260,7 +254,7 @@ jobs:
           mapfile -t candidate < <(find tvguard/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f)
           mapfile -t test_apk < <(find tvguard/app/build/outputs/apk/androidTest/release -maxdepth 1 -name '*.apk' -type f)
           test "${#candidate[@]}" -eq 1 && test "${#test_apk[@]}" -eq 1
-          cp "${candidate[0]}" "$work/Android-TV-Guard-1.2-signed-candidate.apk"
+          cp "${candidate[0]}" "$work/Android-TV-Guard-1.3-signed-candidate.apk"
           cp "${test_apk[0]}" "$work/tvguard-release-androidTest.apk"
       - name: Verify release unit tests and exact APK identities
         shell: bash
@@ -272,8 +266,8 @@ jobs:
           roots = [ET.parse(p).getroot() for p in Path('tvguard/app/build/test-results/testReleaseUnitTest').glob('TEST-*.xml')]
           cases = [c for root in roots for c in root.iter('testcase')]
           classes = {c.get('classname', '').rsplit('.', 1)[-1] for c in cases}
-          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest', 'AppTileKeyPolicyTest', 'StatusThresholdsTest', 'OverlayPresentationTest', 'ThermalReaderTest'}
-          assert len(cases) >= 64 and required <= classes, 'Required release unit tests did not run'
+          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'OverlayLayoutContractTest', 'OverlayRenderTest', 'StatusThresholdsTest', 'OverlayPresentationTest', 'ThermalReaderTest'}
+          assert len(cases) >= 68 and required <= classes, 'Required release unit tests did not run'
           assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A release unit test failed or was skipped'
           print(f'::notice title=TV Guard release unit tests::{len(cases)} release unit tests passed')
           PY
@@ -298,11 +292,11 @@ jobs:
           sys.path.insert(0, 'tools')
           from prepare_release_signing import EXPECTED_SIGNER
           work = Path(os.environ['RUNNER_TEMP'], 'tvguard-signed-candidate')
-          apk = work / 'Android-TV-Guard-1.2-signed-candidate.apk'
+          apk = work / 'Android-TV-Guard-1.3-signed-candidate.apk'
           sha = hashlib.file_digest(apk.open('rb'), 'sha256').hexdigest()
-          assert (work / 'Android-TV-Guard-1.2-signed-candidate.sha256').read_text().split()[0] == sha
+          assert (work / 'Android-TV-Guard-1.3-signed-candidate.sha256').read_text().split()[0] == sha
           receipt = {
-              'package': 'com.universalrp.tvguard', 'versionName': '1.2', 'versionCode': 4,
+              'package': 'com.universalrp.tvguard', 'versionName': '1.3', 'versionCode': 5,
               'signerSha256': EXPECTED_SIGNER, 'apkSha256': sha, 'apkBytes': apk.stat().st_size,
               'sourceCommit': os.environ['GITHUB_SHA'], 'workflowRun': os.environ['GITHUB_RUN_ID'],
               'exactCandidateInstalledAndTested': True, 'published': False,
@@ -317,10 +311,10 @@ jobs:
       - name: Offer only the exact tested candidate
         uses: actions/upload-artifact@v4
         with:
-          name: tvguard-1.2-stable-signed-tested-candidate
+          name: tvguard-1.3-stable-signed-tested-candidate
           path: |
-            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.2-signed-candidate.apk
-            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.2-signed-candidate.sha256
+            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.3-signed-candidate.apk
+            ${{ runner.temp }}/tvguard-signed-candidate/Android-TV-Guard-1.3-signed-candidate.sha256
             ${{ runner.temp }}/tvguard-signed-candidate/verification.json
           retention-days: 30
           if-no-files-found: error

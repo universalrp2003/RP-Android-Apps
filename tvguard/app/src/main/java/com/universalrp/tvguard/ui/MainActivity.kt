@@ -1,11 +1,9 @@
 package com.universalrp.tvguard.ui
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -25,13 +23,10 @@ import androidx.activity.compose.setContent
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -40,7 +35,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -61,12 +55,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -75,7 +67,6 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Security
@@ -85,11 +76,9 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Storage
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.Wifi
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -119,7 +108,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -127,7 +115,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -158,7 +145,6 @@ import com.universalrp.tvguard.overlay.StatusOverlayService
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
 import com.universalrp.tvguard.settings.TvFeatureSettings
-import com.universalrp.tvguard.voice.TvVoiceAssistant
 import com.universalrp.tvguard.web.HubFeatures
 import com.universalrp.tvguard.web.LocalWebTransferServer
 import com.universalrp.updates.AppGuides
@@ -177,7 +163,6 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     var onRemoteKey: ((Int) -> Boolean)? = null
-    var onLongPressHome: (() -> Unit)? = null
     /** Set by the composition; returns true when the key opened the microphone. */
     /** Every key seen while the Expert key test is open, for honest hardware discovery. */
 
@@ -186,8 +171,6 @@ class MainActivity : ComponentActivity() {
     // default launcher an ACTION_MAIN/CATEGORY_HOME intent instead of a key event.
     var homeRequestId by mutableIntStateOf(0)
         private set
-    private var homeDownTime: Long? = null
-    private var homeLongPressHandled = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -208,27 +191,9 @@ class MainActivity : ComponentActivity() {
     /** Also used by our dialog windows, whose key events bypass Activity dispatch. */
     fun handleRemoteKey(event: KeyEvent): Boolean {
         if (event.keyCode == KeyEvent.KEYCODE_HOME) {
-            when (event.action) {
-                KeyEvent.ACTION_DOWN -> {
-                    if (event.repeatCount == 0) {
-                        homeDownTime = event.downTime
-                        homeLongPressHandled = false
-                        requestHome() // No need to wait for the button to be released.
-                    } else if (!homeLongPressHandled && homeDownTime != null &&
-                        event.eventTime - homeDownTime!! >= 2000L
-                    ) {
-                        homeLongPressHandled = true
-                        onLongPressHome?.invoke()
-                    }
-                }
-                KeyEvent.ACTION_UP -> {
-                    if (!event.isCanceled && !homeLongPressHandled && homeDownTime != null &&
-                        event.eventTime - homeDownTime!! >= 2000L
-                    ) onLongPressHome?.invoke()
-                    homeDownTime = null
-                    homeLongPressHandled = false
-                }
-            }
+            // HOME goes straight to the home screen. The old two-second hold opened the voice
+            // assistant; that feature no longer exists, so no timer is needed.
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) requestHome()
             return true
         }
         return event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 &&
@@ -242,9 +207,6 @@ class MainActivity : ComponentActivity() {
         if (handleRemoteKey(event)) true else super.dispatchKeyEvent(event)
 
     override fun onDestroy() {
-        TvVoiceAssistant.stopListening()
-        TvVoiceAssistant.shutdownTts()
-        TvVoiceAssistant.resetConversation()
         LocalWebTransferServer.stop()
         super.onDestroy()
     }
@@ -306,9 +268,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
 
     var currentTab by remember { mutableStateOf(TvNavTab.HOME) }
     var toolsSubView by remember { mutableStateOf(ToolsSubView.OVERVIEW) }
-    var voiceDialogPrompt by remember { mutableStateOf<String?>(null) }
-    var voiceIsListening by remember { mutableStateOf(false) }
-    var pendingVoicePermission by remember { mutableStateOf(false) }
     var selectedAppForOptions by remember { mutableStateOf<LaunchableApp?>(null) }
     var homeFocusRequestCounter by remember { mutableStateOf(0) }
 
@@ -370,14 +329,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
         StatusOverlayService.sync(context)
         StatusOverlayService.move(context)
         if (!settings.enabled(TvFeature.STATUS_OVERLAY)) overlayPermissionNeeded = false
-        if (!settings.enabled(TvFeature.VOICE_HELPER)) {
-            pendingVoicePermission = false
-            TvVoiceAssistant.stopListening()
-            TvVoiceAssistant.shutdownTts()
-            TvVoiceAssistant.resetConversation()
-            voiceIsListening = false
-            voiceDialogPrompt = null
-        }
         if (!settings.enabled(TvFeature.SCREENSHOT)) screenshotJob?.cancel()
         if (!settings.enabled(TvFeature.RAM_BOOST)) maintenanceJob?.cancel()
         if (!settings.enabled(TvFeature.DEBLOATER)) {
@@ -391,7 +342,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             runningActionJob?.cancel()
             runningApps = emptyList()
         }
-        if (!settings.enabled(TvFeature.TEMP_PILL)) tempPill = null
+        if (!settings.enabled(TvFeature.STATUS_OVERLAY)) tempPill = null
         if (!settings.enabled(TvFeature.HARDWARE_AUDIT)) hardwareReport = null
         if (!settings.enabled(TvFeature.NETWORK_TOOLS) && toolsSubView == ToolsSubView.NETWORK) {
             toolsSubView = ToolsSubView.OVERVIEW
@@ -424,41 +375,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
-    fun startVoiceListening() {
-        if (!featureSettings.enabled(TvFeature.VOICE_HELPER)) return
-        TvVoiceAssistant.startListening(
-            activity,
-            report = { hardwareReport.takeIf { featureSettings.enabled(TvFeature.HARDWARE_AUDIT) } },
-            featureEnabled = { featureSettings.enabled(it) },
-            callback = object : TvVoiceAssistant.VoiceCallback {
-                override fun onListeningStateChanged(isListening: Boolean, prompt: String) {
-                    voiceIsListening = isListening
-                    voiceDialogPrompt = prompt
-                }
-                override fun onCommandRecognized(commandText: String, actionResult: String) {
-                    voiceIsListening = false
-                    voiceDialogPrompt = "🗣️ \"$commandText\"\n$actionResult"
-                }
-                override fun onError(error: String) {
-                    voiceIsListening = false
-                    voiceDialogPrompt = error
-                }
-            }
-        )
-    }
 
-    val microphonePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (pendingVoicePermission && featureSettings.enabled(TvFeature.VOICE_HELPER)) {
-            pendingVoicePermission = false
-            if (granted) startVoiceListening()
-            else {
-                voiceIsListening = false
-                voiceDialogPrompt = context.getString(R.string.voice_permission_denied)
-            }
-        } else pendingVoicePermission = false
-    }
-
-    // "Display over other apps" is granted in system Settings, not by a normal dialog.
     // We start the activity for result and reconcile on return.
     val overlayPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -485,38 +402,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
-    fun triggerVoiceAssistant() {
-        if (!featureSettings.enabled(TvFeature.VOICE_HELPER)) return
-        if (voiceDialogPrompt == null) TvVoiceAssistant.resetConversation()
-        selectedAppForOptions = null
-        showAdbGuide = false
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            startVoiceListening()
-        } else {
-            TvVoiceAssistant.stopListening()
-            voiceIsListening = false
-            voiceDialogPrompt = context.getString(R.string.voice_permission)
-            pendingVoicePermission = true
-            try { microphonePermission.launch(Manifest.permission.RECORD_AUDIO) }
-            catch (_: Exception) {
-                pendingVoicePermission = false
-                voiceDialogPrompt = context.getString(R.string.voice_permission_denied)
-            }
-        }
-    }
-
-    fun triggerPreferredAssistant(): Boolean {
-        return when {
-            featureSettings.enabled(TvFeature.VOICE_HELPER) -> { triggerVoiceAssistant(); true }
-            featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) -> {
-                if (!openSystemVoiceAssistant(context)) toastMessage = context.getString(R.string.voice_system_assistant_unavailable)
-                true
-            }
-            else -> false
-        }
-    }
-
-    // Sampling is foreground-only. The opt-in file hub remains available while the
+ The opt-in file hub remains available while the
     // activity exists; turning it or Expert off closes the listener and clients.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -538,11 +424,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
                     debloaterHasRoot = false
                     runningApps = emptyList()
                     downloadedFiles = emptyList()
-                    TvVoiceAssistant.stopListening()
-                    TvVoiceAssistant.shutdownTts()
-                    TvVoiceAssistant.resetConversation()
-                    voiceIsListening = false
-                    if (!pendingVoicePermission) voiceDialogPrompt = null
                 }
                 else -> Unit
             }
@@ -604,11 +485,14 @@ fun TvGuardMainScreen(activity: MainActivity) {
     LaunchedEffect(lifecycleOwner, currentTab, shareVisible, filesRefreshVersion) {
         if (currentTab != TvNavTab.SHARE || !shareVisible) downloadedFiles = emptyList()
         else lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            downloadedFiles = runInterruptible(Dispatchers.IO) { ScreenCaptureManager.listScreenshots() }
+            // Screenshots plus uploaded files, so an APK sent from the browser shows up here.
+            downloadedFiles = runInterruptible(Dispatchers.IO) { ScreenCaptureManager.listHubFiles() }
         }
     }
 
-    val cpuEnabled = featureSettings.enabled(TvFeature.CPU_PILL)
+    // One switch for every reading; the per-reading switches are gone.
+    val pillEnabled = featureSettings.enabled(TvFeature.STATUS_OVERLAY)
+    val cpuEnabled = pillEnabled
     LaunchedEffect(lifecycleOwner, cpuEnabled) {
         cpuUsage = null
         if (cpuEnabled) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -621,7 +505,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             }
         }
     }
-    val ramEnabled = featureSettings.enabled(TvFeature.RAM_PILL)
+    val ramEnabled = pillEnabled
     LaunchedEffect(lifecycleOwner, ramEnabled) {
         ramPill = null
         if (ramEnabled) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -631,7 +515,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             }
         }
     }
-    val storageEnabled = featureSettings.enabled(TvFeature.STORAGE_PILL)
+    val storageEnabled = pillEnabled
     LaunchedEffect(lifecycleOwner, storageEnabled) {
         storagePill = null
         if (storageEnabled) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -641,7 +525,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             }
         }
     }
-    val tempEnabled = featureSettings.enabled(TvFeature.TEMP_PILL)
+    val tempEnabled = pillEnabled
     LaunchedEffect(lifecycleOwner, tempEnabled) {
         tempPill = null
         if (tempEnabled) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -653,7 +537,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             }
         }
     }
-    val networkPillEnabled = featureSettings.enabled(TvFeature.NETWORK_PILL)
+    val networkPillEnabled = pillEnabled
     val networkVisible = featureSettings.enabled(TvFeature.NETWORK_TOOLS) &&
         currentTab == TvNavTab.TOOLS && toolsSubView == ToolsSubView.NETWORK
     LaunchedEffect(lifecycleOwner, networkPillEnabled, networkVisible, networkRefreshVersion) {
@@ -675,20 +559,12 @@ fun TvGuardMainScreen(activity: MainActivity) {
     // BackHandler for TV Remote Back button
     BackHandler(
         enabled = selectedAppForOptions != null ||
-                  voiceDialogPrompt != null ||
                   showAdbGuide ||
                   (currentTab == TvNavTab.TOOLS && toolsSubView != ToolsSubView.OVERVIEW) ||
                   currentTab != TvNavTab.HOME
     ) {
         when {
             selectedAppForOptions != null -> selectedAppForOptions = null
-            voiceDialogPrompt != null -> {
-                TvVoiceAssistant.stopListening()
-                TvVoiceAssistant.shutdownTts()
-                TvVoiceAssistant.resetConversation()
-                pendingVoicePermission = false
-                voiceDialogPrompt = null
-            }
             showAdbGuide -> showAdbGuide = false
             currentTab == TvNavTab.TOOLS && toolsSubView != ToolsSubView.OVERVIEW -> {
                 toolsSubView = ToolsSubView.OVERVIEW
@@ -702,13 +578,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
     // A Home intent also arrives when returning from an external activity or
     // while an in-app Dialog owns window focus.
     LaunchedEffect(activity.homeRequestId) {
-        TvVoiceAssistant.stopListening()
-        TvVoiceAssistant.shutdownTts()
-        TvVoiceAssistant.resetConversation()
-        pendingVoicePermission = false
         selectedAppForOptions = null
-        voiceDialogPrompt = null
-        voiceIsListening = false
         showAdbGuide = false
         toolsSubView = ToolsSubView.OVERVIEW
         currentTab = TvNavTab.HOME
@@ -718,11 +588,10 @@ fun TvGuardMainScreen(activity: MainActivity) {
     val visibleTabs = if (shareVisible) listOf(TvNavTab.HOME, TvNavTab.TOOLS, TvNavTab.SHARE)
         else listOf(TvNavTab.HOME, TvNavTab.TOOLS)
     DisposableEffect(activity, shareVisible) {
-        activity.onLongPressHome = { triggerPreferredAssistant() }
+        // Voice is gone: neither a long HOME press nor the remote's mic key does anything now,
+        // so those keys fall through to the system instead of opening an assistant.
         activity.onRemoteKey = { keyCode ->
             when (keyCode) {
-                KeyEvent.KEYCODE_VOICE_ASSIST, KeyEvent.KEYCODE_SEARCH, KeyEvent.KEYCODE_ASSIST ->
-                    triggerPreferredAssistant()
                 KeyEvent.KEYCODE_PAGE_DOWN, KeyEvent.KEYCODE_CHANNEL_UP, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
                     val next = (visibleTabs.indexOf(currentTab).coerceAtLeast(0) + 1) % visibleTabs.size
                     currentTab = visibleTabs[next]
@@ -740,8 +609,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
         onDispose {
             activity.onRemoteKey = null
-            activity.onLongPressHome = null
-        }
+            }
     }
 
     LaunchedEffect(toastMessage) {
@@ -762,17 +630,12 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 .fillMaxSize()
                 .padding(horizontal = 24.dp, vertical = 14.dp)
         ) {
+            // The in-app readings row is gone: the floating pill is the single place the user
+            // asked for. Only the header itself (name, clock, action icons) still depends on
+            // the status-bar switch, and turning it off must not affect the pill.
             if (featureSettings.enabled(TvFeature.STATUS_BAR)) {
                 TopStatusBar(
                     settings = featureSettings,
-                    ram = ramPill,
-                    storage = storagePill,
-                    temperature = tempPill,
-                    network = networkStatus,
-                    cpuUsage = cpuUsage,
-                    cpuCores = cpuCores,
-                    onVoiceClick = { triggerVoiceAssistant() },
-                    onTakeScreenshot = { takeScreenshot(false) },
                     onRefreshClick = { auditRefreshVersion++ }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -782,8 +645,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
             TvTabBar(
                 currentTab = currentTab,
                 tabs = visibleTabs,
-                onHomeLongPress = if (featureSettings.enabled(TvFeature.VOICE_HELPER) || featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT))
-                    { { triggerPreferredAssistant(); Unit } } else null,
                 onTabSelected = {
                     currentTab = it
                     toolsSubView = ToolsSubView.OVERVIEW
@@ -822,11 +683,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     runningApps = runningApps,
                                     hiddenAppsCount = allAppsIncludingHidden.count { it.isHidden },
                                     onOpenExpert = { toolsSubView = ToolsSubView.EXPERT },
-                                    onVoice = { triggerVoiceAssistant() },
-                                    onSystemAssistant = {
-                                        if (featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) && !openSystemVoiceAssistant(context))
-                                            toastMessage = context.getString(R.string.voice_system_assistant_unavailable)
-                                    },
                                     onRamBoost = {
                                         if (featureSettings.enabled(TvFeature.RAM_BOOST)) {
                                             maintenanceJob?.cancel()
@@ -1147,33 +1003,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
     }
 
     // Voice Assistant Overlay Dialog
-    if (voiceDialogPrompt != null) {
-        VoiceAssistantDialog(
-            prompt = voiceDialogPrompt ?: "",
-            isListening = voiceIsListening,
-            systemAssistantEnabled = featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT),
-            onTryAgain = { triggerVoiceAssistant() },
-            onSystemAssistant = {
-                TvVoiceAssistant.stopListening()
-                TvVoiceAssistant.resetConversation()
-                pendingVoicePermission = false
-                voiceIsListening = false
-                TvVoiceAssistant.shutdownTts()
-                voiceDialogPrompt = if (featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) && openSystemVoiceAssistant(context)) null
-                    else context.getString(R.string.voice_system_assistant_unavailable)
-            },
-            onRemoteKey = activity::handleRemoteKey,
-            onDismiss = {
-                TvVoiceAssistant.stopListening()
-                TvVoiceAssistant.shutdownTts()
-                TvVoiceAssistant.resetConversation()
-                pendingVoicePermission = false
-                voiceDialogPrompt = null
-            }
-        )
-    }
 
-    // ADB Instructions Dialog
     if (showAdbGuide) {
         AdbGuideDialog(
             items = debloatItems.filter { it.safetyLevel == BloatSafetyLevel.SAFE_TO_REMOVE },
@@ -1189,14 +1019,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
 @Composable
 fun TopStatusBar(
     settings: TvFeatureSettings,
-    ram: RamEvidence?,
-    storage: StorageEvidence?,
-    temperature: ThermalReading?,
-    network: NetworkStatus?,
-    cpuUsage: Int?,
-    cpuCores: Int,
-    onVoiceClick: () -> Unit,
-    onTakeScreenshot: () -> Unit,
     onRefreshClick: () -> Unit
 ) {
     var currentTime by remember { mutableStateOf("") }
@@ -1211,110 +1033,26 @@ fun TopStatusBar(
         }
     }
 
-    Column(
+    // Title and clock only. All readings live in the floating pill, and the microphone and
+    // camera shortcuts are not part of this app any more.
+    Row(
         modifier = Modifier.fillMaxWidth().testTag("status-bar")
             .background(Color(0xFF111827), RoundedCornerShape(12.dp))
             .border(1.dp, Color(0xFF1F2937), RoundedCornerShape(12.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Tv, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(28.dp))
-                Spacer(Modifier.width(10.dp))
-                Column {
-                    Text(stringResource(R.string.app_name), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                    Text(currentTime, color = Color(0xFF94A3B8), fontSize = 12.sp)
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (settings.enabled(TvFeature.VOICE_HELPER))
-                    TvFocusIconButton(Icons.Default.Mic, onVoiceClick, stringResource(R.string.voice_title))
-                if (settings.enabled(TvFeature.SCREENSHOT))
-                    TvFocusIconButton(Icons.Default.CameraAlt, onTakeScreenshot, stringResource(R.string.screenshot_title))
-                if (settings.enabled(TvFeature.HARDWARE_AUDIT))
-                    TvFocusIconButton(Icons.Default.Refresh, onRefreshClick, stringResource(R.string.btn_run_audit))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Default.Tv, contentDescription = null, tint = Color(0xFF00E5FF), modifier = Modifier.size(28.dp))
+            Spacer(Modifier.width(10.dp))
+            Column {
+                Text(stringResource(R.string.app_name), color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(currentTime, color = Color(0xFF94A3B8), fontSize = 12.sp)
             }
         }
-        val pills = listOf(TvFeature.RAM_PILL, TvFeature.STORAGE_PILL, TvFeature.CPU_PILL, TvFeature.NETWORK_PILL, TvFeature.TEMP_PILL)
-        if (pills.any { settings.enabled(it) }) {
-            Spacer(Modifier.height(8.dp))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (settings.enabled(TvFeature.RAM_PILL)) {
-                    val total = (ram?.kernelMemTotalBytes ?: 0L).toDouble() / 1_073_741_824.0
-                    val available = (ram?.kernelMemAvailableBytes ?: 0L).toDouble() / 1_073_741_824.0
-                    val used = if (total > 0) ((total - available) / total * 100).toInt().coerceIn(0, 100) else 0
-                    StatusPill(
-                        Icons.Default.Memory,
-                        label = when {
-                            ram == null || total <= 0 -> stringResource(R.string.pill_ram_unavailable)
-                            ram.isRamSpoofed -> stringResource(R.string.ram_pill_mismatch)
-                            else -> stringResource(R.string.ram_pill, String.format(Locale.US, "%.1f", available))
-                        },
-                        color = if (ram?.isRamSpoofed == true || used > 85) Color(0xFFFF9800) else Color(0xFF00E676),
-                        modifier = Modifier.testTag("pill-ram")
-                    )
-                }
-                if (settings.enabled(TvFeature.STORAGE_PILL)) {
-                    // The usable figure is always shown when the filesystem reading is valid.
-                    // A cautious mismatch warning is appended as a separate note and never
-                    // replaces the number the user asked to see.
-                    val usable = storage != null &&
-                        storage.dataTotalBytes > 0 &&
-                        storage.dataFreeBytes in 0L..storage.dataTotalBytes
-                    val free = (storage?.dataFreeBytes ?: 0L).toDouble() / 1_073_741_824.0
-                    StatusPill(
-                        Icons.Default.Storage,
-                        label = when {
-                            !usable -> stringResource(R.string.pill_storage_unavailable)
-                            storage.isStorageSpoofed ->
-                                stringResource(R.string.storage_pill_reported_warning, String.format(Locale.US, "%.1f", free))
-                            else -> stringResource(R.string.storage_pill_reported, String.format(Locale.US, "%.1f", free))
-                        },
-                        color = when {
-                            !usable -> Color(0xFF94A3B8)
-                            storage.isStorageSpoofed -> Color(0xFFFF9800)
-                            else -> Color(0xFF00E5FF)
-                        },
-                        modifier = Modifier.testTag("pill-storage")
-                    )
-                }
-                if (settings.enabled(TvFeature.CPU_PILL)) {
-                    val color = when {
-                        cpuUsage == null -> Color(0xFF94A3B8)
-                        cpuUsage > 80 -> Color(0xFFFF5252)
-                        cpuUsage > 50 -> Color(0xFFFF9800)
-                        else -> Color(0xFF00E676)
-                    }
-                    StatusPill(Icons.Default.Speed, stringResource(R.string.cpu_pill, cpuUsage?.let { "$it%" } ?: "--", cpuCores), color,
-                        Modifier.testTag("pill-cpu"))
-                }
-                if (settings.enabled(TvFeature.TEMP_PILL)) {
-                    val reading = temperature
-                    StatusPill(
-                        Icons.Outlined.Thermostat,
-                        label = reading?.format() ?: stringResource(R.string.pill_temp_unavailable),
-                        color = when (com.universalrp.tvguard.overlay.StatusThresholds.temperature(reading?.celsius)) {
-                            com.universalrp.tvguard.overlay.Band.GOOD -> Color(0xFF00E676)
-                            com.universalrp.tvguard.overlay.Band.WARN -> Color(0xFFFFD600)
-                            com.universalrp.tvguard.overlay.Band.BAD -> Color(0xFFFF5252)
-                            com.universalrp.tvguard.overlay.Band.UNAVAILABLE -> Color(0xFF94A3B8)
-                        },
-                        modifier = Modifier.testTag("pill-temp")
-                    )
-                }
-                if (settings.enabled(TvFeature.NETWORK_PILL)) {
-                    val color = when (network?.qualityRating) {
-                        "Excellent" -> Color(0xFF00E676)
-                        "Good" -> Color(0xFF00E5FF)
-                        "Fair" -> Color(0xFFFFD600)
-                        null -> Color(0xFF94A3B8)
-                        else -> Color(0xFFFF5252)
-                    }
-                    val label = if (network == null) stringResource(R.string.pill_network_unavailable)
-                        else "${network.transportType} ${network.internetPingMs?.let { "${it}ms" } ?: network.qualityRating}"
-                    StatusPill(Icons.Default.Wifi, label, color, Modifier.testTag("pill-network"))
-                }
-            }
+        if (settings.enabled(TvFeature.HARDWARE_AUDIT)) {
+            TvFocusIconButton(Icons.Default.Refresh, onRefreshClick, stringResource(R.string.btn_run_audit))
         }
     }
 }
@@ -1336,68 +1074,7 @@ fun StatusPill(icon: ImageVector, label: String, color: Color, modifier: Modifie
 
 /** Dialog windows receive their own key events; ordinary D-pad stays inside. */
 private fun isDialogRemoteShortcut(event: KeyEvent): Boolean =
-    event.keyCode == KeyEvent.KEYCODE_HOME || event.keyCode == KeyEvent.KEYCODE_VOICE_ASSIST ||
-        event.keyCode == KeyEvent.KEYCODE_SEARCH || event.keyCode == KeyEvent.KEYCODE_ASSIST
-
-@Composable
-fun VoiceAssistantDialog(
-    prompt: String,
-    isListening: Boolean,
-    systemAssistantEnabled: Boolean,
-    onDismiss: () -> Unit,
-    onTryAgain: () -> Unit,
-    onSystemAssistant: () -> Unit,
-    onRemoteKey: (KeyEvent) -> Boolean = { false }
-) {
-    val actionFocus = remember { FocusRequester() }
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        LaunchedEffect(Unit) {
-            focusWhenReady(actionFocus)
-        }
-        Box(
-            modifier = Modifier.fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.80f))
-                .onPreviewKeyEvent { isDialogRemoteShortcut(it.nativeKeyEvent) && onRemoteKey(it.nativeKeyEvent) },
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                modifier = Modifier.width(520.dp)
-                    .background(Color(0xFF111827), RoundedCornerShape(16.dp))
-                    .border(2.dp, if (isListening) Color(0xFF00E5FF) else Color(0xFF334155), RoundedCornerShape(16.dp))
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.voice_title), color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                        Text(stringResource(if (isListening) R.string.voice_listening else R.string.voice_ready),
-                            color = Color(0xFF94A3B8), fontSize = 12.sp)
-                    }
-                    TvFocusIconButton(Icons.Default.Close, onDismiss, stringResource(R.string.voice_close))
-                }
-                Spacer(Modifier.height(16.dp))
-                Text(prompt, color = Color.White, fontSize = 15.sp, modifier = Modifier.fillMaxWidth())
-                Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.voice_hints), color = Color(0xFF00E5FF), fontSize = 12.sp)
-                Spacer(Modifier.height(8.dp))
-                Text(stringResource(R.string.voice_privacy), color = Color(0xFF94A3B8), fontSize = 11.sp)
-                Spacer(Modifier.height(16.dp))
-                TvFocusButton(
-                    text = stringResource(if (isListening) R.string.voice_close else R.string.voice_retry),
-                    onClick = if (isListening) onDismiss else onTryAgain,
-                    modifier = Modifier.focusRequester(actionFocus)
-                )
-                if (systemAssistantEnabled) {
-                    Spacer(Modifier.height(10.dp))
-                    TvFocusButton(stringResource(R.string.voice_system_assistant), onClick = onSystemAssistant)
-                    Spacer(Modifier.height(6.dp))
-                    Text(stringResource(R.string.voice_system_assistant_hint), color = Color(0xFF94A3B8), fontSize = 11.sp)
-                }
-            }
-        }
-    }
-}
+    event.keyCode == KeyEvent.KEYCODE_HOME
 
 @Composable
 fun AppOptionsDialog(
@@ -1721,8 +1398,7 @@ fun TvAboutView(onBack: () -> Unit) {
 fun TvTabBar(
     currentTab: TvNavTab,
     tabs: List<TvNavTab>,
-    onTabSelected: (TvNavTab) -> Unit,
-    onHomeLongPress: (() -> Unit)? = null
+    onTabSelected: (TvNavTab) -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -1734,20 +1410,17 @@ fun TvTabBar(
                 tab = tab,
                 isSelected = isSelected,
                 onClick = { onTabSelected(tab) },
-                onLongClick = if (tab == TvNavTab.HOME) onHomeLongPress else null,
                 modifier = Modifier.weight(1f).testTag("tab-${tab.name.lowercase(Locale.ROOT)}")
             )
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TvTabButton(
     tab: TvNavTab,
     isSelected: Boolean,
     onClick: () -> Unit,
-    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -1780,11 +1453,10 @@ fun TvTabButton(
             .onFocusChanged { state ->
                 isFocusedByCallback = state.isFocused || state.hasFocus
             }
-            .combinedClickable(
+            .clickable(
                 interactionSource = interactionSource,
                 indication = null,
-                onClick = onClick,
-                onLongClick = onLongClick
+                onClick = onClick
             ),
         contentAlignment = Alignment.Center
     ) {
@@ -1898,7 +1570,6 @@ fun TvHomeView(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TvAppCard(
     app: LaunchableApp,
@@ -1920,13 +1591,6 @@ fun TvAppCard(
 
     val baseModifier = if (focusRequester != null) modifier.focusRequester(focusRequester) else modifier
 
-    // Physical OK is tracked here instead of via combinedClickable: a long press must open
-    // the options menu without the release also launching the app. See AppTileKeyPolicy.
-    val pressState = remember { AppTileKeyPolicy.State() }
-    DisposableEffect(Unit) {
-        onDispose { AppTileKeyPolicy.cancel(pressState) }
-    }
-
     Box(
         modifier = baseModifier
             .fillMaxWidth()
@@ -1934,65 +1598,25 @@ fun TvAppCard(
             .scale(scale)
             .background(bg, RoundedCornerShape(14.dp))
             .border(borderWidth, borderCol, RoundedCornerShape(14.dp))
-            .onFocusChanged { state ->
-                isFocusedByCallback = state.isFocused || state.hasFocus
-                // Losing focus mid-press must not leave a stuck timer or fire a stale launch.
-                if (!state.isFocused && !state.hasFocus) AppTileKeyPolicy.cancel(pressState)
-            }
+            .onFocusChanged { state -> isFocusedByCallback = state.isFocused || state.hasFocus }
             .onPreviewKeyEvent { keyEvent ->
                 val native = keyEvent.nativeKeyEvent
+                // MENU is the only way into the options: focus the tile with the D-pad, then
+                // press Menu. The held-OK long press was removed at the user's request because
+                // on this TV it still launched the app instead of opening anything.
                 if (native.keyCode == KeyEvent.KEYCODE_MENU && native.action == KeyEvent.ACTION_UP) {
                     onShowOptions()
                     return@onPreviewKeyEvent true
                 }
-                if (!AppTileKeyPolicy.isActivationKey(native.keyCode)) return@onPreviewKeyEvent false
-                when (native.action) {
-                    KeyEvent.ACTION_DOWN -> when (AppTileKeyPolicy.onKeyDown(pressState, native.eventTime)) {
-                        AppTileKeyPolicy.Outcome.OPEN_OPTIONS -> {
-                            onShowOptions()
-                            true
-                        }
-                        // Swallow the initial down so no click gesture can be synthesised
-                        // underneath this handler; the decision is made above.
-                        else -> true
-                    }
-                    KeyEvent.ACTION_UP -> when (AppTileKeyPolicy.onKeyUp(pressState, native.eventTime)) {
-                        AppTileKeyPolicy.Outcome.LAUNCH -> {
-                            onLaunch()
-                            true
-                        }
-                        // A hold that produced no auto-repeat is only known to be long when
-                        // the key comes back up, so the menu opens here. Without this branch
-                        // the remote's single DOWN/UP pair opened nothing and launched
-                        // nothing, which is exactly what the user saw on the TV.
-                        AppTileKeyPolicy.Outcome.OPEN_OPTIONS -> {
-                            onShowOptions()
-                            true
-                        }
-                        // CONSUMED: the menu already opened during the hold; swallow the release.
-                        else -> true
-                    }
-                    else -> false
-                }
+                false
             }
-            // Replacing combinedClickable removed the only focusable modifier, which left every
-            // app tile unable to take D-pad focus at all. clickable restores focusability, the
-            // touch/accessibility click, and focus-source tracking. It cannot re-create the
-            // original bug: the preview handler above consumes both the D-pad down and up, so
-            // the click gesture never sees the pair and launching stays owned by AppTileKeyPolicy.
+            // clickable supplies focusability, the touch/accessibility click and focus-source
+            // tracking, so D-pad focus on every tile keeps working.
             .clickable(
                 interactionSource = interactionSource,
                 indication = null
             ) {
                 onLaunch()
-            }
-            // combinedClickable also supplied the long-click accessibility action; the custom
-            // key handling above replaces it for the remote, so expose it explicitly.
-            .semantics {
-                onLongClick(label = "App options") {
-                    onShowOptions()
-                    true
-                }
             }
             .padding(10.dp)
     ) {
@@ -2119,8 +1743,6 @@ fun TvToolsView(
     runningApps: List<RunningAppInfo>,
     hiddenAppsCount: Int,
     onOpenExpert: () -> Unit,
-    onVoice: () -> Unit,
-    onSystemAssistant: () -> Unit,
     onRamBoost: () -> Unit,
     onTakeScreenshot: () -> Unit,
     onOpenShare: () -> Unit,
@@ -2203,14 +1825,7 @@ fun TvToolsView(
                     if (hiddenAppsCount > 0) stringResource(R.string.hidden_apps_count, hiddenAppsCount) else stringResource(R.string.hidden_apps_subtitle),
                     Icons.Default.VisibilityOff, Color(0xFFF59E0B), onOpenHiddenApps, Modifier.weight(1f).testTag("tools-hidden")
                 )
-                if (settings.enabled(TvFeature.VOICE_HELPER))
-                    TvActionCard(stringResource(R.string.voice_title), stringResource(R.string.optional_voice_short),
-                        Icons.Default.Mic, Color(0xFF00E5FF), onVoice, Modifier.weight(1f).testTag("tools-voice"))
-                else Spacer(Modifier.weight(1f))
-                if (settings.enabled(TvFeature.SYSTEM_ASSISTANT))
-                    TvActionCard(stringResource(R.string.optional_ai_title), stringResource(R.string.optional_ai_short),
-                        Icons.Default.Info, Color(0xFFA78BFA), onSystemAssistant, Modifier.weight(1f).testTag("tools-ai"))
-                else Spacer(Modifier.weight(1f))
+                // No microphone and no "AI" card: both were removed at the user's request.
                 if (settings.enabled(TvFeature.FILE_HUB) || settings.enabled(TvFeature.SCREENSHOT))
                     TvActionCard(stringResource(R.string.optional_share_title), stringResource(R.string.optional_share_short),
                         Icons.Default.Wifi, Color(0xFF38BDF8), onOpenShare, Modifier.weight(1f).testTag("tools-share"))
@@ -3484,19 +3099,6 @@ fun AdbGuideDialog(
             }
         }
     }
-}
-
-/** No transcript is passed: Android chooses an installed assistant for this explicit action. */
-fun openSystemVoiceAssistant(context: Context): Boolean {
-    for (action in listOf(Intent.ACTION_VOICE_COMMAND, Intent.ACTION_ASSIST)) {
-        try {
-            context.startActivity(Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            return true
-        } catch (_: Exception) {
-            // Try the next platform intent; TVs need not have an assistant installed.
-        }
-    }
-    return false
 }
 
 fun promptSetDefaultLauncher(context: Context) {

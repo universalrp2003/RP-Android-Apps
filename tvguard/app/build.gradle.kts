@@ -26,19 +26,26 @@ android {
     // Keep the release-test default; allow a disposable emulator to use a debug app.
     testBuildType = (project.findProperty("tvguardTestBuildType") as? String) ?: "release"
 
+    testOptions {
+        // Robolectric needs the merged resources/manifest to inflate real Android views.
+        unitTests.isIncludeAndroidResources = true
+    }
+
     defaultConfig {
         applicationId = "com.universalrp.tvguard"
         minSdk = 26
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // The signed 1.0 test candidate is code 2; later public updates must
-        // increase this code and use the same signing identity. Code 3 added the status
-        // overlay; code 4 fixes the long press on remotes that send no auto-repeat, makes the
-        // overlay plain and movable, and removes the AI feature. It updates code 3 in place.
-        versionCode = if (upgradeFixture) 1 else 4
+        // The signed 1.0 test candidate is code 2; later public updates must increase this
+        // code and use the same signing identity. Code 5 is the redesign: the pill is one short
+        // top strip with exact values, the in-app duplicate row, the AI/voice feature, the
+        // per-reading switches and the long-press menu are gone, the pill switch no longer
+        // depends on the in-app header, and uploaded files appear in the hub. It updates the
+        // rejected code 4 install in place.
+        versionCode = if (upgradeFixture) 1 else 5
         // The upgrade fixture deliberately impersonates the older 1.0 / code 1 install so a
         // same-signer in-place upgrade can be exercised; only the real candidate moves on.
-        versionName = if (upgradeFixture) "1.0" else "1.2"
+        versionName = if (upgradeFixture) "1.0" else "1.3"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
@@ -111,5 +118,8 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.6.2")
 
     testImplementation("junit:junit:4.13.2")
+    // Renders the pill to a real bitmap so a broken layout cannot pass on assertions alone.
+    testImplementation("org.robolectric:robolectric:4.13")
+    testImplementation("androidx.test:core:1.6.1")
     testImplementation("org.json:json:20240303")
 }
