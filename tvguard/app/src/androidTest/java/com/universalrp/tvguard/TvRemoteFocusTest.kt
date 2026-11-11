@@ -105,16 +105,25 @@ class TvRemoteFocusTest {
 
     private fun sendLauncherHomeIntent() {
         val activity = compose.activity
+        val originalIntent = Intent(activity.intent)
         val previous = activity.homeRequestId
-        compose.runOnUiThread {
-            activity.startActivity(Intent(activity, MainActivity::class.java).apply {
-                action = Intent.ACTION_MAIN
-                addCategory(Intent.CATEGORY_HOME)
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            })
+        try {
+            compose.runOnUiThread {
+                activity.startActivity(Intent(activity, MainActivity::class.java).apply {
+                    action = Intent.ACTION_MAIN
+                    addCategory(Intent.CATEGORY_HOME)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                })
+            }
+            compose.waitUntil(timeoutMillis = 10_000) { activity.homeRequestId != previous }
+            awaitFocus("home-first-app")
+        } finally {
+            // ActivityScenario matches lifecycle events against the launch intent. The
+            // real onNewIntent correctly calls setIntent(homeIntent), so put back the
+            // test's launch intent after observing the Home effect; otherwise scenario
+            // teardown ignores DESTROYED and reports a false lifecycle timeout.
+            compose.runOnUiThread { activity.setIntent(originalIntent) }
         }
-        compose.waitUntil(timeoutMillis = 10_000) { activity.homeRequestId != previous }
-        awaitFocus("home-first-app")
     }
 
     @Test

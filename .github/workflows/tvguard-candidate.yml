@@ -7,15 +7,9 @@ on:
       - "tvguard/**"
       - ".github/workflows/tvguard-candidate.yml"
   workflow_dispatch:
-    inputs:
-      diagnostics_from_run:
-        description: 'Optional: inspect a previous TV focus report only'
-        required: false
-        type: string
 
 permissions:
   contents: write
-  actions: read
 
 concurrency:
   group: tvguard-candidate-${{ github.ref }}
@@ -23,7 +17,6 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'workflow_dispatch' || inputs.diagnostics_from_run == ''
     name: Build, test, and package Android TV Guard
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -146,7 +139,7 @@ jobs:
           }
           assert len(cases) == len(expected) and {c.get('name') for c in cases} == expected, 'Missing or duplicate TV focus tests'
           assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A TV focus test failed or was skipped'
-          print('PASS: all four required Android TV focus and feature tests ran')
+          print('::notice title=Android TV focus tests::All four required Android TV focus and feature tests ran and passed')
           PY
       - name: Surface TV test failures
         if: failure()
@@ -161,11 +154,13 @@ jobs:
               except ET.ParseError: continue
               for case in root.iter('testcase'):
                   for kind in ('failure', 'error'):
-                      failure = case.find(kind)
-                      if failure is not None:
+                      for failure in case.findall(kind):
                           failures += 1
-                          text = case.get('name', '') + '\n' + failure.get('message', '') + '\n' + (failure.text or '')
-                          print('::error title=TV focus test::' + text[:10000].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+                          name = case.get('name', '')
+                          text = failure.get('message', '') + '\n' + (failure.text or '')
+                          details = '\n'.join(line for line in text.splitlines() if 'Caused by:' in line or 'TvRemoteFocusTest.kt:' in line)
+                          summary = name + '\n' + text[:2600] + ('\n' + details if details else '')
+                          print('::error title=TV focus test::' + summary[:3800].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           log = Path(os.environ['RUNNER_TEMP'], 'tvguard-android-test.log')
           if not failures and log.exists():
               text = '\n'.join(log.read_text(errors='replace').splitlines()[-100:])
@@ -180,37 +175,3 @@ jobs:
             tvguard/app/build/outputs/androidTest-results/
           retention-days: 14
           if-no-files-found: warn
-
-  prior-tv-diagnostics:
-    if: github.event_name == 'workflow_dispatch' && inputs.diagnostics_from_run != ''
-    name: Inspect prior TV focus report
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: tvguard-tv-focus-reports
-          path: prior-tv-report
-          github-token: ${{ github.token }}
-          run-id: ${{ inputs.diagnostics_from_run }}
-      - name: Summarize every prior test result
-        run: |
-          python3 - <<'PYDIAG'
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-          def notice(title, text):
-              print('::notice title=' + title + '::' + text[:3800].replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
-          paths = list(Path('prior-tv-report').rglob('*.xml'))
-          notice('TV report XML paths', '\n'.join(map(str, paths)))
-          for path in paths:
-              try: root = ET.parse(path).getroot()
-              except ET.ParseError: continue
-              for case in root.iter('testcase'):
-                  failures = case.findall('failure') + case.findall('error')
-                  skipped = case.findall('skipped')
-                  notice('TV case', case.get('name', '') + ' failures=' + str(len(failures)) + ' skipped=' + str(len(skipped)))
-                  for failure in failures:
-                      text = failure.get('message', '') + '\n' + (failure.text or '')
-                      notice('TV failure start', text[:3500])
-                      notice('TV failure end', text[-3500:])
-          PYDIAG
