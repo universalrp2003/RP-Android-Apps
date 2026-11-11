@@ -21,7 +21,9 @@ BRANCH = "arena/60062a79-rp-android-apps"
 RUN_ID = 43012300628
 ARTIFACT = "tvguard-1.5.1-stable-signed-tested-candidate"
 APK_SHA = "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b"
-APK_BYTES = 11_254_309
+# The APK byte count comes from the signed candidate receipt; the SHA-256 above is the
+# pin, so a swapped artifact still cannot pass.
+APK_BYTES = None
 TAG = "tvguard-v1.5.1"
 INNER = "Android-TV-Guard-1.5.1-signed-candidate.apk"
 NAME = "Android-TV-Guard-v1.5.1.apk"
@@ -100,8 +102,10 @@ def main():
         assert z.read(sidecar_name).split()[0].decode() == APK_SHA
 
     # 2. The bytes must be exactly the ones the owner tested.
-    assert sha(candidate) == APK_SHA and candidate.stat().st_size == APK_BYTES
-    assert receipt["apkSha256"] == APK_SHA and receipt["apkBytes"] == APK_BYTES
+    assert sha(candidate) == APK_SHA, "The artifact does not contain the tested APK"
+    assert candidate.stat().st_size == receipt["apkBytes"], (candidate.stat().st_size, receipt["apkBytes"])
+    assert receipt["apkSha256"] == APK_SHA
+    apk_bytes = receipt["apkBytes"]
     assert (receipt["package"], receipt["versionName"], receipt["versionCode"]) == (PACKAGE, "1.5.1", 8)
     assert receipt["exactCandidateInstalledAndTested"] is True and receipt["published"] is False
 
@@ -143,7 +147,7 @@ def main():
     asset = next(a for a in draft["assets"] if a["name"] == NAME)
     for _ in range(12):
         asset = next(a for a in api(f"releases/{draft['id']}")["assets"] if a["name"] == NAME)
-        if asset.get("digest") == f"sha256:{APK_SHA}" and asset["size"] == APK_BYTES:
+        if asset.get("digest") == f"sha256:{APK_SHA}" and asset["size"] == apk_bytes:
             break
         time.sleep(2)
     else:
@@ -157,7 +161,7 @@ def main():
             subprocess.run(["gh", "api", f"repos/{REPO}/releases/assets/{asset['id']}",
                             "-H", "Accept: application/octet-stream"], stdout=stream, check=True)
         assert sha(directory / NAME) == APK_SHA
-        assert (directory / NAME).stat().st_size == APK_BYTES
+        assert (directory / NAME).stat().st_size == apk_bytes
         if phase == "draft":
             subprocess.run(["gh", "release", "edit", TAG, "--draft=false", "--latest=false"], check=True)
 
@@ -169,7 +173,7 @@ def main():
         time.sleep(2)
     else:
         raise AssertionError("Published state not verified; do not rerun publication blindly")
-    assert asset["digest"] == f"sha256:{APK_SHA}" and asset["size"] == APK_BYTES
+    assert asset["digest"] == f"sha256:{APK_SHA}" and asset["size"] == apk_bytes
 
     after = {r["tag_name"]: snapshot(r) for r in pages("releases") if not r["draft"]}
     for tag, old in prior.items():
@@ -178,7 +182,7 @@ def main():
     result = {
         "app": "Android TV Guard", "package": PACKAGE, "tag": TAG, "versionName": "1.5.1", "versionCode": 8,
         "sourceCommit": source, "workflowRun": RUN_ID, "artifact": ARTIFACT,
-        "apkSha256": APK_SHA, "apkBytes": APK_BYTES, "signerSha256": EXPECTED_SIGNER,
+        "apkSha256": APK_SHA, "apkBytes": apk_bytes, "signerSha256": EXPECTED_SIGNER,
         "releaseId": public["id"], "assetId": asset["id"], "publishedAt": public["published_at"],
         "url": asset["browser_download_url"], "rebuilt": False, "priorPublicAssetsUnchanged": True,
         "ownerReportedInstalledOnPhysicalTv": True,
