@@ -26,7 +26,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.Focusable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -1742,19 +1741,17 @@ fun TvToolsView(
         // A focus landing point between the status-pill placement buttons and the cards. It is
         // plain text, not a button, so it never competes with the readings.
         item {
-            Focusable {
-                Text(
-                    text = stringResource(R.string.tab_home),
-                    color = Color(0xFF64748B),
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .testTag("tools-section-home")
-                        .focusRequester(glanceDown)
-                        .focusable()
-                        .focusProperties { down = FocusRequester.Default }
-                )
-            }
+            Text(
+                text = stringResource(R.string.tab_home),
+                color = Color(0xFF64748B),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .testTag("tools-section-home")
+                    .focusRequester(glanceDown)
+                    .focusable()
+                    .focusProperties { down = FocusRequester.Default }
+            )
         }
         // Essential launcher settings remain available in lightweight mode.
         item {
@@ -1784,7 +1781,7 @@ fun TvToolsView(
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = stringResource(R.string.pill_position_short, overlayPlacement.presetName(overlayPlacement)),
+                        text = stringResource(R.string.pill_position_short, OverlayPlacement.presetName(overlayPlacement)),
                         color = Color(0xFF94A3B8), fontSize = 12.sp,
                         modifier = Modifier.align(Alignment.CenterVertically).weight(1f),
                         maxLines = 1

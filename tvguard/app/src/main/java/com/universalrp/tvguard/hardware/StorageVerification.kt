@@ -1,10 +1,8 @@
 package com.universalrp.tvguard.hardware
 
 import android.content.Context
-import android.os.Build
 import android.os.Environment
 import android.os.StatFs
-import android.os.storage.StorageManager
 
 /**
  * How much room the user actually has.
@@ -14,8 +12,8 @@ import android.os.storage.StorageManager
  * free space. A 16 GB TV reported "26.0 GB free" this way, which is not merely imprecise, it is
  * impossible, and it is what the user spotted on the pill.
  *
- * This measures every volume the public StorageManager exposes and prefers the roomiest real
- * one, so the number is a figure that can actually be true.
+ * This measures every volume the app can see - internal storage plus any USB drive or SD card -
+ * and prefers the roomiest real one, so the number is a figure that can actually be true.
  */
 object StorageTruth {
 
@@ -28,42 +26,44 @@ object StorageTruth {
     }
 
     /**
-     * Every measurable volume, largest total first, plus the data partition when the platform
-     * does not already list it.
+     * Every volume this app can measure, largest first.
      *
-     * Removable cards are included: on a TV they are often the roomiest thing the user has, and
-     * leaving them out is part of why the shown figure looked wrong.
+     * Deliberately built from APIs that have been stable for years - the app's own external
+     * files directories (one per mounted volume, including a USB drive or SD card) and the data
+     * directory - rather than from StorageManager.getStorageVolume(StorageVolume), whose volume
+     * path accessor only exists on Android 11+. Measured over guessed, and nothing here needs a
+     * permission the app does not already hold.
      */
     fun volumes(context: Context): List<Volume> {
         val found = mutableListOf<Volume>()
-        val sm = context.applicationContext.getSystemService(Context.STORAGE_SERVICE) as? StorageManager
-        if (sm != null) {
-            try {
-                for (info in sm.storageVolumes) {
-                    val dir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        sm.getStorageVolume(info)?.directory
-                    } else null
-                    val path = dir?.absolutePath ?: continue
-                    val stat = try { StatFs(path) } catch (_: Exception) { continue }
-                    val volume = Volume(info.getDescription(context), stat.availableBytes, stat.totalBytes)
-                    if (volume.usable) found.add(volume)
-                }
-            } catch (_: Throwable) {
-                // Some TV firmware throws from storageVolumes(); fall back to /data below.
-            }
+        val dirs = try {
+            context.getExternalFilesDirs(null).filterNotNull()
+        } catch (_: Throwable) {
+            emptyList()
         }
-        val data = dataPartition(context)
-        if (data != null && found.none { it.totalBytes == data.totalBytes }) found.add(data)
+        for (dir in dirs) {
+            // getExternalFilesDirs gives .../Android/data/<pkg>/files; the volume root is its
+            // third parent up. StatFs reports the whole volume from any path inside it.
+            val root = dir.parentFile?.parentFile?.parentFile ?: dir
+            val volume = measure(root.absolutePath, root.absolutePath)
+            if (volume != null) found.add(volume)
+        }
+        dataPartition(context)?.let { data ->
+            if (found.none { it.totalBytes == data.totalBytes }) found.add(data)
+        }
         return found.sortedByDescending { it.totalBytes }
     }
 
-    /** Free space on the data partition alone, for comparison and for the audit screen. */
-    fun dataPartition(context: Context): Volume? = try {
-        val stat = StatFs(Environment.getDataDirectory().absolutePath)
-        Volume("Internal", stat.availableBytes, stat.totalBytes).takeIf { it.usable }
+    private fun measure(path: String, label: String): Volume? = try {
+        val stat = StatFs(path)
+        Volume(label, stat.availableBytes, stat.totalBytes).takeIf { it.usable }
     } catch (_: Exception) {
         null
     }
+
+    /** Free space on the data partition alone, for comparison and for the audit screen. */
+    fun dataPartition(context: Context): Volume? =
+        measure(Environment.getDataDirectory().absolutePath, "Internal")
 
     /**
      * The best available "free space" answer, or null when nothing can be measured.

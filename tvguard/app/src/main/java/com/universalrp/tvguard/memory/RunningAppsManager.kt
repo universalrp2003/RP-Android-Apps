@@ -127,9 +127,10 @@ object RunningAppsManager {
         }
         if (lastUsed.isEmpty()) return emptyList()
 
-        val memInfo = am.memoryInfo
-        val totalMb = ((memInfo?.totalMem ?: 0L) / (1024L * 1024L)).toInt()
-        val freeMb = ((memInfo?.availMem ?: 0L) / (1024L * 1024L)).toInt()
+        val memInfo = ActivityManager.MemoryInfo()
+        try { am.getMemoryInfo(memInfo) } catch (_: Throwable) { /* figures stay zero */ }
+        val totalMb = (memInfo.totalMem / (1024L * 1024L)).toInt()
+        val freeMb = (memInfo.availMem / (1024L * 1024L)).toInt()
         // Shared across the listed apps, as a best-effort figure. It is deliberately coarse:
         // per-app memory for other packages is not readable without privileged access.
         val shareMb = ((totalMb - freeMb).coerceAtLeast(0) / lastUsed.size.coerceAtLeast(1))
