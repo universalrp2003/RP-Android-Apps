@@ -1610,7 +1610,21 @@ jobs:
               tail -40 verify.log
               echo '```'
             fi
+            # The store-art step has its own log; without this, an icon or font failure
+            # showed only "exit code 1" with no reason anywhere the owner could read.
+            if [ -f store-art.log ]; then
+              echo ""
+              echo "### Store artwork"
+              echo '```'
+              tail -30 store-art.log
+              echo '```'
+            fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          if [ -f store-art.log ]; then
+            grep -iE '^(ERROR|SKIP)|error:' store-art.log | head -8 | while IFS= read -r line; do
+              echo "::error title=Store artwork::$line"
+            done
+          fi
           if [ -f verify.log ]; then
             grep '^FAIL:' verify.log | head -8 | while IFS= read -r line; do
               echo "::error title=APK verification::$line"
