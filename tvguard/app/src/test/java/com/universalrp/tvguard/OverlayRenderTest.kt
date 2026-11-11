@@ -101,8 +101,12 @@ class OverlayRenderTest {
         // The exact case that collapsed the neighbours on the TV: one cell much longer than the
         // rest. Nothing may wrap, and every cell must keep an equal share of the width.
         val container = pill(listOf("62%", "832 MB", "26.0 GB free", "50.3 °C", "unavailable"))
-        val widths = (0 until container.childCount).map { cell(container, it).width }.distinct()
-        assertEquals("all five cells must share the width equally, got $widths", 1, widths.size)
+        val widths = (0 until container.childCount).map { cell(container, it).width }
+        // Equal shares, allowing the single pixel that integer rounding leaves over.
+        assertTrue(
+            "all five cells must share the width equally, got $widths",
+            widths.max() - widths.min() <= 1
+        )
         assertEveryCellFits(container)
     }
 
