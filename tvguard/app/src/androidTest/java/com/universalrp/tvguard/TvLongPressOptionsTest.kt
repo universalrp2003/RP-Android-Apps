@@ -100,6 +100,13 @@ class TvLongPressOptionsTest {
      * and detaches its compose hierarchy. Asking for nodes then throws, so answer the only
      * question that matters: is the launcher still on screen with its tile focused?
      */
+    /** True when the options menu is not showing. A launched app removes the hierarchy. */
+    private fun optionsMenuAbsent(): Boolean = try {
+        compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
+    } catch (detached: IllegalStateException) {
+        true
+    }
+
     private fun launcherStillVisibleAndFocused(): Boolean = try {
         compose.onAllNodes(hasTestTag("home-first-app") and isFocused()).fetchSemanticsNodes().isNotEmpty()
     } catch (detached: IllegalStateException) {
@@ -178,10 +185,7 @@ class TvLongPressOptionsTest {
         shortPress("home-first-app")
         // A short press must not open the options menu.
         compose.waitForIdle()
-        assertTrue(
-            "a short press must not open the options dialog",
-            compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
-        )
+        assertTrue("a short press must not open the options dialog", optionsMenuAbsent())
         // Either the tile launched an app (the launcher goes to the background, which is the
         // behaviour the report asked for) or the tile could not launch and simply kept focus.
         // Both are correct; reopening the options menu is not.
@@ -202,9 +206,7 @@ class TvLongPressOptionsTest {
         // Back closes the dialog; focus must come back to the tile that opened it.
         compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
         compose.waitForIdle()
-        compose.waitUntil(timeoutMillis = 10_000) {
-            compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
-        }
+        compose.waitUntil(timeoutMillis = 10_000) { optionsMenuAbsent() }
         awaitFocus("home-first-app")
     }
 
@@ -223,11 +225,6 @@ class TvLongPressOptionsTest {
         compose.waitForIdle()
         // A launch removes the hierarchy; that is not a reopened menu.
         val stillHome = launcherStillVisibleAndFocused()
-        if (stillHome) {
-            assertTrue(
-                "options must not reopen from a stale long-press state",
-                compose.onAllNodes(hasTestTag("option-0")).fetchSemanticsNodes().isEmpty()
-            )
-        }
+        assertTrue("options must not reopen from a stale long-press state", optionsMenuAbsent())
     }
 }
