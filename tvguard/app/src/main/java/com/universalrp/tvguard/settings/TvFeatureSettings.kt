@@ -22,7 +22,6 @@ enum class TvFeature(val key: String) {
     STATUS_OVERLAY("status_overlay"),
 
     /** Optional general-purpose AI questions. Off by default; needs a provider. */
-    AI_ASSISTANT("ai_assistant"),
 
     /** SoC temperature reading. Off by default; shows unavailable where unsupported. */
     TEMP_PILL("temp_pill")

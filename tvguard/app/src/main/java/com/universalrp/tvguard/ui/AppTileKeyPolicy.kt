@@ -12,7 +12,8 @@ import android.view.KeyEvent
  *
  * This state machine therefore owns both decisions explicitly:
  *  - short press  -> [Outcome.LAUNCH]  (only ever on key-up, so release cannot double-fire)
- *  - long press   -> [Outcome.OPEN_OPTIONS], emitted exactly once while the key is still held
+ *  - long press   -> [Outcome.OPEN_OPTIONS], either from an auto-repeat while still held or,
+ *                    for remotes that send no repeat, when the key is finally released
  *  - after a long press, key-up emits [Outcome.CONSUMED] so no launch happens
  *
  * It is deliberately free of Android/Compose state so JVM unit tests can drive a real
@@ -64,15 +65,27 @@ object AppTileKeyPolicy {
         return Outcome.NONE
     }
 
+    /**
+     * The decisive rule for a TV remote.
+     *
+     * Many remotes (Sony BRAVIA ones included) send a single ACTION_DOWN and then nothing until
+     * ACTION_UP: there is no auto-repeat while the key is held. Relying on a repeating key-down
+     * to notice a long press therefore worked on the emulator - whose injected events do repeat -
+     * and never fired on the real remote, so releasing OK launched the app instead of opening
+     * the menu. The hold length must be measured when the key is released.
+     */
     fun onKeyUp(state: State, eventTime: Long): Outcome {
         val down = state.downTime
         val fired = state.longPressFired
         state.downTime = null
         state.longPressFired = false
         if (down == null) return Outcome.CONSUMED
-        // A long press already opened the menu: releasing must not launch or close it.
+        // A long press already fired from an auto-repeat: releasing must not launch or close it.
         if (fired) return Outcome.CONSUMED
-        return if (eventTime - down >= LONG_PRESS_MS) Outcome.CONSUMED else Outcome.LAUNCH
+        // No repeat arrived, but the key was held long enough: this is still a long press, and
+        // it must open the menu on release rather than launch the app.
+        if (eventTime - down >= LONG_PRESS_MS) return Outcome.OPEN_OPTIONS
+        return Outcome.LAUNCH
     }
 
     /** Pause/resume or focus loss while held: forget the press without firing anything. */

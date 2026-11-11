@@ -88,8 +88,8 @@
     <string name="about_sister_apps_hint">செயலியின் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கத்தை உலாவியில் திறக்கத் தேர்ந்தெடுக்கவும்.</string>
     <string name="cpu_pill">CPU %1$s · %2$d கருக்கள்</string>
     <string name="storage_pill_mismatch">சேமிப்பக முரண்பாடு</string>
-    <string name="storage_pill_reported">%1$s GiB காலி (அறிக்கை)</string>
-    <string name="storage_pill_reported_warning">%1$s GiB காலி (அறிக்கை) · குறிப்பைப் பார்க்கவும்</string>
+    <string name="storage_pill_reported">%1$s GiB காலி</string>
+    <string name="storage_pill_reported_warning">%1$s GiB காலி · எச்சரிக்கை</string>
     <string name="possible_mismatch">சாத்தியமான முரண்பாடு</string>
     <string name="storage_evidence_title">2. சேமிப்பகச் சான்றுகள்</string>
     <string name="storage_candidate_disk">கண்டறிந்த தொகுதி சாதனம்</string>
@@ -231,46 +231,12 @@
     <string name="overlay_blocked_note">DRM வீடியோ மற்றும் சில அமைப்பு உரையாடல்கள் போன்ற பாதுகாப்பான திரைகளில் ஆண்ட்ராய்டு மேலடுக்குகளை மறைக்கும். இதற்கு ஆதரவான தீர்வு இல்லை, எனவே அவற்றில் காட்டி தெரியாமல் போகலாம்.</string>
 
     <!-- AI assistant -->
-    <string name="feature_ai_assistant">AI உதவியாளர்</string>
-    <string name="feature_ai_assistant_desc">நீங்கள் தேர்ந்தெடுக்கும் வழங்குநரைப் பயன்படுத்தி பொதுக் கேள்விகளுக்கு பதில் தரும். இயல்பாகவே அணைந்திருக்கும். உங்கள் கேள்வியும், பேசினால் பேச்சு உரையும் அந்த வழங்குநருக்கு அனுப்பப்படும்; அவர்களின் கட்டணம் பொருந்தலாம்.</string>
-    <string name="ai_title">AI உதவியாளர்</string>
-    <string name="ai_hint_typed">கேள்வியைத் தட்டச்சு செய்து Ask அழுத்துங்கள். D-pad மூலம் புலத்திற்கும் பொத்தான்களுக்கும் நகரலாம்.</string>
-    <string name="ai_ask">கேள்</string>
-    <string name="ai_listen">பேசு</string>
-    <string name="ai_close">மூடு</string>
-    <string name="ai_waiting">சிந்திக்கிறது…</string>
-    <string name="ai_empty_question">முதலில் ஒரு கேள்வியைத் தட்டச்சு செய்யுங்கள் அல்லது பேசுங்கள்.</string>
-    <string name="ai_not_configured">%1$s க்கு விசை அல்லது மாதிரி அமைக்கப்படவில்லை. AI அமைப்புகளைத் திறந்து வழங்குநரைத் தேர்ந்தெடுங்கள்.</string>
-    <string name="ai_request_failed">AI கோரிக்கை தோல்வியடைந்தது. இணைப்பையும் வழங்குநர் அமைப்புகளையும் சரிபார்க்கவும்.</string>
-    <string name="ai_disabled_note">AI உதவியாளர் அணைந்துள்ளது. உள்ளூர் டிவி உதவியாளர் மட்டுமே பதில் தரும்.</string>
-    <string name="ai_privacy_notice">கேள்விகள் இந்த டிவியிலிருந்து நீங்கள் தேர்ந்தெடுத்த வழங்குநருக்கு அனுப்பப்படும். வழங்குநர் கட்டணம் பொருந்தலாம். அம்சம் அணைந்திருக்கும்போது எதுவும் அனுப்பப்படாது.</string>
-    <string name="ai_provider">வழங்குநர்</string>
-    <string name="ai_model">மாதிரி</string>
-    <string name="ai_model_load">மாதிரிகளை ஏற்று</string>
-    <string name="ai_model_loading">மாதிரிகள் ஏற்றப்படுகின்றன…</string>
-    <string name="ai_models_from_provider">உங்கள் வழங்குநர் தெரிவிக்கும் மாதிரிகள் (%1$d). ஒன்றைத் தேர்ந்தெடுக்கவும் அல்லது ஐடியைத் தட்டச்சு செய்யவும்.</string>
-    <string name="ai_models_none">வழங்குநர் மாதிரிப் பட்டியலைத் தரவில்லை. மாதிரி ஐடியை நீங்களே தட்டச்சு செய்து வழங்குநர் ஆவணத்தைப் பார்க்கவும்.</string>
-    <string name="ai_api_key">API விசை</string>
-    <string name="ai_api_key_saved">இந்த டிவியில் ஒரு விசை மறையாக்கப்பட்டு சேமிக்கப்பட்டுள்ளது.</string>
-    <string name="ai_api_key_placeholder">விசையை இந்த டிவியில் மட்டும் ஒட்டுங்கள்</string>
-    <string name="ai_api_key_storage_failed">இந்த டிவியில் விசையை மறையாக்க முடியவில்லை, எனவே சேமிக்கப்படவில்லை.</string>
-    <string name="ai_key_forget">விசையை நீக்கு</string>
-    <string name="ai_base_url">சேவையக முகவரி (Custom)</string>
-    <string name="ai_answer_language">பதில் மொழி</string>
-    <string name="ai_speak_answers">பதில்களைப் பேசிச் சொல்</string>
-    <string name="ai_on">இயக்கத்தில்</string>
-    <string name="ai_off">அணைந்துள்ளது</string>
-    <string name="ai_save">சேமி</string>
-    <string name="ai_saved">AI அமைப்புகள் சேமிக்கப்பட்டன.</string>
-    <string name="ai_free_note">இலவச வழி விசை தேவையில்லை. பகிரப்பட்ட சமூக முனைகளைப் பயன்படுத்துகிறது; விகித வரம்பு உண்டு, எப்போது வேண்டுமானாலும் நிற்கலாம். இது உறுதி அல்ல.</string>
-    <string name="ai_key_never_shared">TV Guard க்கு சொந்த விசை இல்லை, இடைநிலை சேவையகமும் இல்லை. உங்கள் விசை இந்த டிவியில் மறையாகவே இருக்கும், நீங்கள் தேர்ந்தெடுத்த வழங்குநருக்கு மட்டுமே அனுப்பப்படும்.</string>
-    <string name="ai_mic_shortcut">ஒலிவாங்கி குறுக்குவழி</string>
-    <string name="ai_mic_shortcut_desc">TV Guard திரையில் இருக்கும்போது, Menu விசையை அழுத்திப் பிடித்தால் ஒலிவாங்கி திறக்கும். Home மற்றும் Back அமைப்பால் ஒதுக்கப்பட்டவை, அவை பயன்படுத்தப்படுவதில்லை.</string>
-    <string name="ai_mic_test">சோதிக்க ரிமோட் விசையை அழுத்துங்கள்</string>
-    <string name="ai_mic_test_result">கடைசியாக வந்த விசை: %1$s</string>
-    <string name="ai_mic_test_none">இன்னும் விசை வரவில்லை.</string>
     <!-- Temperature -->
     <string name="feature_temp_pill">வெப்பநிலைக் காட்டி</string>
     <string name="feature_temp_pill_desc">திரையில் இருக்கும்போது சுமார் 20 நொடிக்கு ஒருமுறை டிவி செயலியின் வெப்பநிலையைப் படிக்கும். மேல் நிலைப் பட்டி தேவை. பல டிவிகளில் உணரி இல்லை; அப்போது யூகிக்காமல் "தகவல் இல்லை" என்று காட்டும்.</string>
     <string name="pill_temp_unavailable">வெப்பநிலை தெரியவில்லை</string>
+    <string name="storage_permission_title">சேமிப்பு அணுகல்</string>
+    <string name="storage_permission_reason">முழு சேமிப்பு அணுகல் கோப்பு பரிமாற்றம், திரைப்படங்கள் மற்றும் Downloads-க்கு மட்டுமே தேவை. இது இல்லாமல் ஆண்ட்ராய்டு தரும் சேமிப்பு அளவுகளை மட்டும் காட்ட முடியும், கோப்புகளை பட்டியலிட முடியாது. எதுவும் வெளியே அனுப்பப்படவில்லை.</string>
+    <string name="storage_permission_open">சிஸ்டம் அமைப்புகளைத் திற</string>
+    <string name="storage_permission_cancel">இப்போது வேண்டாம்</string>
 </resources>

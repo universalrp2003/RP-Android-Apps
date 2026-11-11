@@ -10,7 +10,6 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import com.universalrp.tvguard.R
-import com.universalrp.tvguard.ai.TvAiAssistant
 import com.universalrp.tvguard.capture.ScreenCaptureManager
 import com.universalrp.tvguard.debloat.DebloatEngine
 import com.universalrp.tvguard.hardware.FullHardwareReport
@@ -203,20 +202,13 @@ object TvVoiceAssistant {
                 } catch (_: Exception) { context.getString(R.string.voice_app_failed, match.appName) }
             }
             TvVoiceCommand.QUESTION -> {
-                // A spoken question uses the real AI provider when the user has switched the
-                // AI feature on. Otherwise it falls back to the local rule-based helper and
-                // the caller's UI says which one answered.
-                when (val outcome = TvAiAssistant.ask(context, command) {
-                    conversation.answer(
-                        command, report,
-                        tamil = Locale.getDefault().language == "ta" || command.any { it in '\u0B80'..'\u0BFF' }
-                    )
-                }) {
-                    is TvAiAssistant.Outcome.Answer -> outcome.text
-                    is TvAiAssistant.Outcome.Local -> outcome.text
-                    is TvAiAssistant.Outcome.Error -> outcome.message
-                    TvAiAssistant.Outcome.Disabled -> context.getString(R.string.voice_feature_disabled)
-                }
+                // Local, on-device answers only. There is no cloud AI provider in this app:
+                // questions never leave the TV and are answered from the device's own
+                // readings by TvAssistantAnswers.
+                conversation.answer(
+                    command, report,
+                    tamil = Locale.getDefault().language == "ta" || command.any { it in '\u0B80'..'\u0BFF' }
+                )
             }
         }
     }

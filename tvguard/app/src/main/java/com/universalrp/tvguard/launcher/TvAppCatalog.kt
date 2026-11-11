@@ -60,6 +60,16 @@ object TvAppCatalog {
         return isNowHidden
     }
 
+    /**
+     * Sets the hidden state explicitly. A checkbox must reflect what the user ticked even if the
+     * list is stale or the same row is pressed twice, so this is not a blind toggle.
+     */
+    fun setHidden(context: Context, packageName: String, hidden: Boolean) {
+        val current = getHiddenApps(context).toMutableSet()
+        if (hidden) current.add(packageName) else current.remove(packageName)
+        getPrefs(context).edit().putStringSet(KEY_HIDDEN, current).apply()
+    }
+
     fun unhideApp(context: Context, packageName: String) {
         val current = getHiddenApps(context).toMutableSet()
         current.remove(packageName)

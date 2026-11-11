@@ -8,7 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.IBinder
 import android.os.SystemClock
@@ -53,6 +52,9 @@ class StatusOverlayService : Service() {
     private var sampler: Job? = null
     private var windowManager: WindowManager? = null
     private var root: LinearLayout? = null
+
+    /** Live layout params so a move takes effect without recreating the window. */
+    private var position: WindowManager.LayoutParams? = null
     private val rows = linkedMapOf<String, TextView>()
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -71,7 +73,25 @@ class StatusOverlayService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
+        // ACTION_MOVE carries a new saved position so the pill moves without a restart.
+        if (intent?.action == ACTION_MOVE) applySavedPosition()
         return START_STICKY
+    }
+
+    /** Re-reads the saved placement and moves the existing window to it. */
+    private fun applySavedPosition() {
+        val wm = windowManager ?: return
+        val view = root ?: return
+        val params = position ?: return
+        val saved = OverlayPosition.load(this)
+        params.gravity = saved.gravity
+        params.x = dp(saved.xDp)
+        params.y = dp(saved.yDp)
+        try {
+            wm.updateViewLayout(view, params)
+        } catch (_: Exception) {
+            // Window already gone; the sampler loop will stop the service.
+        }
     }
 
     /** The user's saved choice, the Expert master switch and the permission all still hold. */
@@ -87,24 +107,25 @@ class StatusOverlayService : Service() {
         val container = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(14), dp(7), dp(14), dp(7))
-            background = GradientDrawable().apply {
-                cornerRadius = dp(22).toFloat()
-                setColor(Color.argb(128, 17, 24, 39)) // ~50% opaque
-                setStroke(dp(1), Color.argb(150, 148, 163, 184))
-            }
+            setPadding(dp(10), dp(4), dp(10), dp(4))
+            // No panel and no opaque box: the text sits directly over whatever is on screen,
+            // which is what was asked for. A thin dark outline keeps it legible on bright
+            // content without behaving like a background.
         }
-        listOf("cpu", "ram", "storage", "temp", "wifi", "net").forEach { key ->
+        OVERLAY_METRICS.forEach { key ->
             val label = TextView(this).apply {
                 setTextColor(Color.WHITE)
-                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                 text = "…"
-                setPadding(dp(6), 0, dp(6), 0)
+                setPadding(dp(5), 0, dp(5), 0)
+                // A soft shadow reads well over light and dark video without a background.
+                setShadowLayer(4f, 0f, 1f, Color.argb(230, 0, 0, 0))
             }
             rows[key] = label
             container.addView(label)
         }
         root = container
+        val saved = OverlayPosition.load(this)
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -116,10 +137,11 @@ class StatusOverlayService : Service() {
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             android.graphics.PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.TOP or Gravity.START
-            x = dp(18)
-            y = dp(12)
+            gravity = saved.gravity
+            x = dp(saved.xDp)
+            y = dp(saved.yDp)
         }
+        position = params
         try {
             wm.addView(container, params)
         } catch (_: Exception) {
@@ -160,7 +182,6 @@ class StatusOverlayService : Service() {
                         lastTemp = now
                         update("temp", temperatureMetric)
                     }
-                    update("wifi", OverlaySampler.wifi(this@StatusOverlayService))
                     // The network probe is the expensive one; keep it to the same cadence as
                     // the in-app pill rather than every CPU tick.
                     if (networkDue()) update("net", OverlaySampler.network(this@StatusOverlayService))
@@ -191,7 +212,7 @@ class StatusOverlayService : Service() {
 
     private fun update(key: String, metric: OverlayMetric) {
         val view = rows[key] ?: return
-        view.text = metric.value
+        view.text = OverlaySampler.pillText(metric)
         view.setTextColor(
             when (metric.band) {
                 Band.GOOD -> Color.rgb(0, 230, 118)
@@ -252,6 +273,11 @@ class StatusOverlayService : Service() {
     }
 
     companion object {
+        /** Exactly the five readings asked for; Wi-Fi strength is deliberately absent. */
+        private val OVERLAY_METRICS = listOf("cpu", "ram", "storage", "temp", "net")
+
+        const val ACTION_MOVE = "com.universalrp.tvguard.overlay.MOVE"
+
         private const val CHANNEL_ID = "tvguard_overlay"
         private const val NOTIFICATION_ID = 4211
         private const val CPU_INTERVAL_MS = 2_500L
@@ -275,6 +301,16 @@ class StatusOverlayService : Service() {
                 else context.startService(intent)
             } catch (_: Exception) {
                 // Background start restrictions: the user can open the app to retry.
+            }
+        }
+
+        /** Moves a running overlay to the freshly saved placement; harmless when stopped. */
+        fun move(context: Context) {
+            if (!Settings.canDrawOverlays(context)) return
+            try {
+                context.startService(Intent(context, StatusOverlayService::class.java).setAction(ACTION_MOVE))
+            } catch (_: Exception) {
+                // Service is not running; the position is applied next time it starts.
             }
         }
 

@@ -35,6 +35,18 @@ data class OverlayMetric(
  */
 object OverlaySampler {
 
+    /**
+     * The short form shown in the always-on-top pill: a value plus a plain-language band word,
+     * for example "CPU 56% free medium". The user asked for no background panel and for the
+     * condition to be readable as a word, so the band is spelled out instead of relying on
+     * colour alone (colour is kept as a secondary cue only).
+     */
+    fun pillText(metric: OverlayMetric): String {
+        if (!metric.available) return metric.value
+        val word = StatusThresholds.bandWord(metric.band)
+        return metric.value + " " + word
+    }
+
     private var previousCpu: CpuTimes? = null
 
     /** CPU free capacity, i.e. 100 - utilisation. */

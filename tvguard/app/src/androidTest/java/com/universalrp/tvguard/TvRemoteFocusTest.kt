@@ -141,6 +141,9 @@ class TvRemoteFocusTest {
     }
 
     private fun openExpert() {
+        // The home grid has no Tools tile any more, so the tab bar is the way in. Click the
+        // tab rather than assuming how many D-pad steps it is from the grid.
+        awaitFocus("home-first-app")
         compose.onNodeWithTag("tab-tools").performClick()
         compose.onNodeWithTag("tools-expert").performClick()
         awaitFocus("expert-back")
@@ -202,7 +205,7 @@ class TvRemoteFocusTest {
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOn()
 
-        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.AI_ASSISTANT)) {
+        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.TEMP_PILL)) {
             val tag = "feature-${feature.key}"
             scrollExpertTo(tag)
             compose.onNodeWithTag(tag).assertIsOff().performClick().assertIsOn()
@@ -223,7 +226,7 @@ class TvRemoteFocusTest {
         // Re-enabling Expert restores the saved selections without reactivating anything.
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOn()
-        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.AI_ASSISTANT)) {
+        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.TEMP_PILL)) {
             scrollExpertTo("feature-${feature.key}")
             compose.onNodeWithTag("feature-${feature.key}").assertIsOn()
         }

@@ -46,12 +46,23 @@ class AppTileKeyPolicyTest {
     }
 
     @Test
-    fun longPressDeliveredOnlyOnReleaseStillOpensOptions() {
-        // Some remotes do not auto-repeat. The policy must still treat a long hold as a
-        // long press rather than launching.
+    fun longPressWithNoAutoRepeatOpensOptionsOnRelease() {
+        // The Sony BRAVIA remote sends one ACTION_DOWN, no repeat, then ACTION_UP. The previous
+        // policy only noticed a long press from a repeating key-down, so on the real TV the
+        // menu never opened and the release launched the app - exactly what was reported.
         val state = State()
         assertEquals(Outcome.NONE, AppTileKeyPolicy.onKeyDown(state, 10_000))
-        assertEquals(Outcome.CONSUMED, AppTileKeyPolicy.onKeyUp(state, 10_800))
+        // No events in between at all: this is the whole sequence a real remote delivers.
+        assertEquals(Outcome.OPEN_OPTIONS, AppTileKeyPolicy.onKeyUp(state, 10_800))
+        assertFalse(state.isHeld)
+    }
+
+    @Test
+    fun holdJustUnderTheThresholdStillLaunches() {
+        // The fix must not turn an ordinary press into a menu.
+        val state = State()
+        assertEquals(Outcome.NONE, AppTileKeyPolicy.onKeyDown(state, 30_000))
+        assertEquals(Outcome.LAUNCH, AppTileKeyPolicy.onKeyUp(state, 30_000 + AppTileKeyPolicy.LONG_PRESS_MS - 1))
     }
 
     @Test

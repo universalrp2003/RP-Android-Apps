@@ -58,8 +58,8 @@ jobs:
           classes = {c.get('classname', '').rsplit('.', 1)[-1] for c in cases}
           # New coverage: the long-press fix, overlay thresholds, the AI client and the
           # microphone shortcut policy. These are required, not optional.
-          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest', 'AppTileKeyPolicyTest', 'StatusThresholdsTest', 'TvAiClientTest', 'MicHotkeyPolicyTest', 'ThermalReaderTest'}
-          assert len(cases) >= 70 and required <= classes, 'Required TV Guard unit tests did not run'
+          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest', 'AppTileKeyPolicyTest', 'StatusThresholdsTest', 'OverlayPresentationTest', 'ThermalReaderTest'}
+          assert len(cases) >= 76 and required <= classes, 'Required TV Guard unit tests did not run'
           assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A TV Guard unit test failed or was skipped'
           print(f'::notice title=TV Guard unit tests::{len(cases)} unit tests passed, including feature, transfer, hardware and voice checks')
           PY
@@ -161,6 +161,7 @@ jobs:
           expected_press = {
               'longPressOpensOptionsAndReleaseDoesNotLaunchOrClose',
               'shortPressStillLaunchesOrKeepsFocusOnTheLauncher',
+              'aRemoteThatAutoRepeatsAlsoOpensTheMenuExactlyOnce',
               'dismissingOptionsRestoresFocusToTheTile',
               'afterTheMenuClosesAShortPressLaunchesAgain',
           }
@@ -269,8 +270,8 @@ jobs:
           roots = [ET.parse(p).getroot() for p in Path('tvguard/app/build/test-results/testReleaseUnitTest').glob('TEST-*.xml')]
           cases = [c for root in roots for c in root.iter('testcase')]
           classes = {c.get('classname', '').rsplit('.', 1)[-1] for c in cases}
-          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest', 'AppTileKeyPolicyTest', 'StatusThresholdsTest', 'TvAiClientTest', 'MicHotkeyPolicyTest', 'ThermalReaderTest'}
-          assert len(cases) >= 70 and required <= classes, 'Required release unit tests did not run'
+          required = {'TvFeatureSettingsTest', 'HubFeaturesTest', 'HubFileNamesTest', 'SafeUploadStorageTest', 'HardwareVerificationTest', 'VoiceAssistantTest', 'AppTileKeyPolicyTest', 'StatusThresholdsTest', 'OverlayPresentationTest', 'ThermalReaderTest'}
+          assert len(cases) >= 76 and required <= classes, 'Required release unit tests did not run'
           assert all(all(c.find(kind) is None for kind in ('failure', 'error', 'skipped')) for c in cases), 'A release unit test failed or was skipped'
           print(f'::notice title=TV Guard release unit tests::{len(cases)} release unit tests passed')
           PY

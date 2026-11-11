@@ -142,10 +142,23 @@ class TvLongPressOptionsTest {
      * Holds OK for [holdMs] with the auto-repeat events a real remote sends, then releases.
      * Returns nothing; assertions follow in the test body.
      */
+    /**
+     * Holds OK the way the user's Sony remote actually reports it: ONE key-down, nothing while
+     * held, then key-up. No auto-repeat events are injected on purpose - the earlier version of
+     * this test synthesised repeats, which is why it passed here while the real TV launched the
+     * app instead of opening the menu.
+     */
     private fun holdOk(holdMs: Long) {
         val base = android.os.SystemClock.uptimeMillis()
         sendKey(KeyEvent.ACTION_DOWN, base, base)
-        // Real remotes repeat roughly every 50-100 ms while held.
+        Thread.sleep(holdMs)
+        sendKey(KeyEvent.ACTION_UP, base, base + holdMs)
+    }
+
+    /** A remote that *does* auto-repeat must still open the menu exactly once. */
+    private fun holdOkWithRepeats(holdMs: Long) {
+        val base = android.os.SystemClock.uptimeMillis()
+        sendKey(KeyEvent.ACTION_DOWN, base, base)
         var t = 100L
         var repeat = 1
         while (t < holdMs) {
@@ -195,6 +208,19 @@ class TvLongPressOptionsTest {
             !stillHome || compose.activity.homeRequestId >= before
         )
         if (stillHome) compose.onNodeWithTag("home-first-app").assertIsFocused()
+    }
+
+    @Test
+    fun aRemoteThatAutoRepeatsAlsoOpensTheMenuExactlyOnce() {
+        awaitFocus("home-first-app")
+        holdOkWithRepeats(holdMs = 900)
+        awaitFocus("option-0")
+        // The release after a repeat-driven long press must not launch the app either.
+        compose.onNodeWithTag("option-0").assertIsFocused()
+        compose.activityRule.scenario.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        compose.waitUntil(timeoutMillis = 10_000) { optionsMenuAbsent() }
+        awaitFocus("home-first-app")
     }
 
     @Test

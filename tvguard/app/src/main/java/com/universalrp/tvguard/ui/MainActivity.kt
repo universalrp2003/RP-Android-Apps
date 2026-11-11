@@ -64,6 +64,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckBox
+import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Close
@@ -150,10 +152,8 @@ import com.universalrp.tvguard.memory.RunningAppInfo
 import com.universalrp.tvguard.memory.RunningAppsManager
 import com.universalrp.tvguard.network.NetworkQualityMonitor
 import com.universalrp.tvguard.network.NetworkStatus
-import com.universalrp.tvguard.ai.MicHotkeyPolicy
-import com.universalrp.tvguard.ai.TvAiConfig
-import com.universalrp.tvguard.ai.TvAiSettings
-import com.universalrp.tvguard.ai.TvAiAssistant
+import com.universalrp.tvguard.overlay.OverlayPlacement
+import com.universalrp.tvguard.overlay.OverlayPosition
 import com.universalrp.tvguard.overlay.StatusOverlayService
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
@@ -179,9 +179,7 @@ class MainActivity : ComponentActivity() {
     var onRemoteKey: ((Int) -> Boolean)? = null
     var onLongPressHome: (() -> Unit)? = null
     /** Set by the composition; returns true when the key opened the microphone. */
-    var onMicShortcut: ((Int) -> Boolean)? = null
     /** Every key seen while the Expert key test is open, for honest hardware discovery. */
-    var onKeyProbe: ((Int) -> Unit)? = null
 
     // State rather than a callback, so a Home intent arriving before composition
     // is installed is not lost. Android normally handles HOME itself and sends the
@@ -190,8 +188,6 @@ class MainActivity : ComponentActivity() {
         private set
     private var homeDownTime: Long? = null
     private var homeLongPressHandled = false
-    private var menuDownTime: Long? = null
-    private var menuShortcutFired = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -211,30 +207,6 @@ class MainActivity : ComponentActivity() {
 
     /** Also used by our dialog windows, whose key events bypass Activity dispatch. */
     fun handleRemoteKey(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN) onKeyProbe?.invoke(event.keyCode)
-
-        // Microphone shortcut. The policy decides whether this event qualifies: Menu needs
-        // a hold so a short Menu press still opens the tile's options menu, while dedicated
-        // voice/info keys fire on the first press. Only keys the TV actually delivers reach
-        // here, which is why the Expert screen invites the user to test their own remote.
-        if (event.keyCode == KeyEvent.KEYCODE_MENU) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) menuDownTime = event.eventTime
-            val longPress = menuDownTime?.let { event.eventTime - it >= AppTileKeyPolicy.LONG_PRESS_MS } == true
-            val shortcut = MicHotkeyPolicy.isMicShortcut(
-                event.keyCode, event.action, event.repeatCount, longPress
-            )
-            if (shortcut && !menuShortcutFired && onMicShortcut?.invoke(event.keyCode) == true) {
-                menuShortcutFired = true
-                return true
-            }
-            if (event.action == KeyEvent.ACTION_UP) {
-                menuDownTime = null
-                menuShortcutFired = false
-            }
-            return false
-        }
-        val shortcut = MicHotkeyPolicy.isMicShortcut(event.keyCode, event.action, event.repeatCount, false)
-        if (shortcut && onMicShortcut?.invoke(event.keyCode) == true) return true
         if (event.keyCode == KeyEvent.KEYCODE_HOME) {
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
@@ -290,8 +262,7 @@ enum class ToolsSubView {
     NETWORK,
     HIDDEN_APPS,
     ABOUT,
-    EXPERT,
-    AI_SETTINGS
+    EXPERT
 }
 
 /** Lazy items and Dialog windows can attach after the first composition. */
@@ -331,7 +302,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
     val scope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
     val featurePreferences = remember { TvFeaturePreferences(context) }
-    val initialAiConfig = remember { TvAiSettings.load(context) }
     var featureSettings by remember { mutableStateOf(featurePreferences.load()) }
 
     var currentTab by remember { mutableStateOf(TvNavTab.HOME) }
@@ -344,17 +314,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
 
     // Overlay + AI are both optional and off by default.
     var overlayPermissionNeeded by remember { mutableStateOf(false) }
-    var aiDialogOpen by remember { mutableStateOf(false) }
-    var aiAnswer by remember { mutableStateOf<String?>(null) }
-    var aiEngine by remember { mutableStateOf<String?>(null) }
-    var aiBusy by remember { mutableStateOf(false) }
-    var aiLastKeyLabel by remember { mutableStateOf<String?>(null) }
-    var aiQuestionJob by remember { mutableStateOf<Job?>(null) }
-    var aiPendingVoice by remember { mutableStateOf(false) }
-    var aiModels by remember { mutableStateOf<List<String>>(emptyList()) }
-    var aiLoadingModels by remember { mutableStateOf(false) }
-    var aiStorageFailed by remember { mutableStateOf(false) }
-    var aiConfig by remember { mutableStateOf(initialAiConfig) }
+    var overlayPlacement by remember { mutableStateOf(OverlayPosition.load(context)) }
+    var askStorageAccess by remember { mutableStateOf(false) }
 
     var hardwareReport by remember { mutableStateOf<FullHardwareReport?>(null) }
     var ramPill by remember { mutableStateOf<RamEvidence?>(null) }
@@ -407,12 +368,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
         // The overlay starts only when explicitly enabled and permitted; otherwise it stops.
         // sync() is a no-op stop when the service is not running.
         StatusOverlayService.sync(context)
+        StatusOverlayService.move(context)
         if (!settings.enabled(TvFeature.STATUS_OVERLAY)) overlayPermissionNeeded = false
-        if (!settings.enabled(TvFeature.AI_ASSISTANT)) {
-            aiQuestionJob?.cancel()
-            aiDialogOpen = false
-            aiAnswer = null
-        }
         if (!settings.enabled(TvFeature.VOICE_HELPER)) {
             pendingVoicePermission = false
             TvVoiceAssistant.stopListening()
@@ -467,50 +424,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
-    /**
-     * Opens the AI question screen. Declining silently is deliberate: if the feature is off
-     * the microphone key falls back to the local helper instead of pretending to be AI.
-     */
-    fun triggerAiAssistant() {
-        if (!TvAiAssistant.isEnabled(context)) return
-        aiDialogOpen = true
-        aiAnswer = null
-        aiEngine = null
-        aiBusy = false
-        selectedAppForOptions = null
-        showAdbGuide = false
-    }
-
-    fun askAi(question: String) {
-        if (question.isBlank()) return
-        aiQuestionJob?.cancel()
-        aiBusy = true
-        aiAnswer = null
-        aiEngine = null
-        aiQuestionJob = scope.launch {
-            val outcome = TvAiAssistant.ask(context, question) {
-                // Only reached when the feature is off; keeps the old helper available.
-                com.universalrp.tvguard.voice.TvAssistantAnswers.answer(question, hardwareReport)
-            }
-            aiBusy = false
-            when (outcome) {
-                is TvAiAssistant.Outcome.Answer -> {
-                    aiAnswer = outcome.text
-                    aiEngine = outcome.engine
-                }
-                is TvAiAssistant.Outcome.Local -> {
-                    aiAnswer = outcome.text
-                    aiEngine = null
-                }
-                is TvAiAssistant.Outcome.Error -> {
-                    aiAnswer = outcome.message
-                    aiEngine = null
-                }
-                TvAiAssistant.Outcome.Disabled -> Unit
-            }
-        }
-    }
-
     fun startVoiceListening() {
         if (!featureSettings.enabled(TvFeature.VOICE_HELPER)) return
         TvVoiceAssistant.startListening(
@@ -524,18 +437,10 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 }
                 override fun onCommandRecognized(commandText: String, actionResult: String) {
                     voiceIsListening = false
-                    if (aiPendingVoice) {
-                        // A spoken AI question: keep the AI screen open and answer there.
-                        aiPendingVoice = false
-                        aiDialogOpen = true
-                        askAi(commandText)
-                    } else {
-                        voiceDialogPrompt = "🗣️ \"$commandText\"\n$actionResult"
-                    }
+                    voiceDialogPrompt = "🗣️ \"$commandText\"\n$actionResult"
                 }
                 override fun onError(error: String) {
                     voiceIsListening = false
-                    aiPendingVoice = false
                     voiceDialogPrompt = error
                 }
             }
@@ -602,8 +507,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
 
     fun triggerPreferredAssistant(): Boolean {
         return when {
-            // A configured AI assistant answers real questions, so it goes first.
-            featureSettings.enabled(TvFeature.AI_ASSISTANT) -> { triggerAiAssistant(); true }
             featureSettings.enabled(TvFeature.VOICE_HELPER) -> { triggerVoiceAssistant(); true }
             featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) -> {
                 if (!openSystemVoiceAssistant(context)) toastMessage = context.getString(R.string.voice_system_assistant_unavailable)
@@ -835,32 +738,9 @@ fun TvGuardMainScreen(activity: MainActivity) {
                 else -> false
             }
         }
-        // Only the keys that are actually delivered reach here, which is what makes the
-        // Expert key test honest: it reports what this TV really sends, not what it should.
-        activity.onKeyProbe = { keyCode -> aiLastKeyLabel = MicHotkeyPolicy.label(keyCode) }
-        activity.onMicShortcut = { keyCode ->
-            // MicHotkeyPolicy has already decided the event qualifies; this only opens the
-            // right screen, and only when the AI feature is actually switched on.
-            val asksForAi = keyCode == KeyEvent.KEYCODE_MENU ||
-                keyCode == KeyEvent.KEYCODE_INFO ||
-                keyCode == KeyEvent.KEYCODE_PROG_RED
-            when {
-                asksForAi && TvAiAssistant.isEnabled(context) -> {
-                    triggerAiAssistant()
-                    true
-                }
-                !asksForAi && featureSettings.enabled(TvFeature.VOICE_HELPER) -> {
-                    triggerVoiceAssistant()
-                    true
-                }
-                else -> false
-            }
-        }
         onDispose {
             activity.onRemoteKey = null
             activity.onLongPressHome = null
-            activity.onMicShortcut = null
-            activity.onKeyProbe = null
         }
     }
 
@@ -929,10 +809,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
                             },
                             onShowAppOptions = { app ->
                                 selectedAppForOptions = app
-                            },
-                            onOpenTools = {
-                                currentTab = TvNavTab.TOOLS
-                                toolsSubView = ToolsSubView.OVERVIEW
                             }
                         )
                     }
@@ -946,7 +822,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     runningApps = runningApps,
                                     hiddenAppsCount = allAppsIncludingHidden.count { it.isHidden },
                                     onOpenExpert = { toolsSubView = ToolsSubView.EXPERT },
-                                    onOpenAiSettings = { toolsSubView = ToolsSubView.AI_SETTINGS },
                                     onVoice = { triggerVoiceAssistant() },
                                     onSystemAssistant = {
                                         if (featureSettings.enabled(TvFeature.SYSTEM_ASSISTANT) && !openSystemVoiceAssistant(context))
@@ -972,7 +847,14 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onOpenHiddenApps = { toolsSubView = ToolsSubView.HIDDEN_APPS },
                                     onOpenAbout = { toolsSubView = ToolsSubView.ABOUT },
                                     onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
-                                    onGrantStorage = { promptStoragePermission(context) },
+                                    // Ask before opening a system screen, and explain why.
+                                    onGrantStorage = { askStorageAccess = true },
+                                    overlayPlacement = overlayPlacement,
+                                    onMoveOverlay = { placement ->
+                                        overlayPlacement = placement
+                                        OverlayPosition.save(context, placement)
+                                        StatusOverlayService.move(context)
+                                    },
                                     onOpenSettings = {
                                         try {
                                             context.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -1115,12 +997,12 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                             onClick = { toolsSubView = ToolsSubView.OVERVIEW },
                                             color = Color(0xFF00E5FF),
                                             modifier = Modifier.focusRequester(backFocusRequester).testTag("hidden-back")
-                                                .focusProperties {
-                                                    down = if (allAppsIncludingHidden.any { it.isHidden }) firstHiddenFocusRequester else FocusRequester.Cancel
-                                                }
+                                                // The list always contains every app now, so Down
+                                                // must always be able to reach it.
+                                                .focusProperties { down = firstHiddenFocusRequester }
                                         )
                                         Text(
-                                            text = "Manage Hidden Applications",
+                                            text = "Show or hide apps",
                                             color = Color(0xFF94A3B8),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
@@ -1128,13 +1010,13 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     }
 
                                     TvHiddenAppsView(
+                                        allApps = allAppsIncludingHidden,
                                         hiddenApps = allAppsIncludingHidden.filter { it.isHidden },
                                         firstFocusRequester = firstHiddenFocusRequester,
-                                        backFocusRequester = backFocusRequester,
-                                        onUnhideApp = { pkg ->
-                                            TvAppCatalog.unhideApp(context, pkg)
+                                        onSetHidden = { pkg, hide ->
+                                            TvAppCatalog.setHidden(context, pkg, hide)
                                             refreshCatalog()
-                                            toastMessage = "Restored app to home launcher"
+                                            toastMessage = if (hide) "Hidden from home grid" else "Shown on home grid"
                                         }
                                     )
                                 }
@@ -1152,39 +1034,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                 )
                             }
 
-                            ToolsSubView.AI_SETTINGS -> {
-                                TvAiSettingsView(
-                                    initial = aiConfig,
-                                    models = aiModels,
-                                    loadingModels = aiLoadingModels,
-                                    storageFailed = aiStorageFailed,
-                                    lastKeyLabel = aiLastKeyLabel,
-                                    onBack = { toolsSubView = ToolsSubView.OVERVIEW },
-                                    onSave = { config, writeKey ->
-                                        val stored = TvAiSettings.save(context, config, updateKey = writeKey)
-                                        aiStorageFailed = !stored && writeKey
-                                        aiConfig = TvAiSettings.load(context)
-                                        toastMessage = context.getString(
-                                            if (!aiStorageFailed) R.string.ai_saved
-                                            else R.string.ai_api_key_storage_failed
-                                        )
-                                    },
-                                    onLoadModels = { config ->
-                                        aiLoadingModels = true
-                                        aiConfig = config
-                                        scope.launch {
-                                            aiModels = TvAiAssistant.availableModels(context, config)
-                                            aiLoadingModels = false
-                                            if (aiModels.isEmpty()) toastMessage = context.getString(R.string.ai_models_none)
-                                        }
-                                    },
-                                    onForgetKey = {
-                                        TvAiSettings.forgetKey(context, aiConfig.provider)
-                                        aiConfig = TvAiSettings.load(context)
-                                        toastMessage = context.getString(R.string.ai_key_forget)
-                                    },
-                                )
-                            }
                         }
                     }
 
@@ -1216,27 +1065,48 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
-    // AI question screen. Rendered above everything; it only exists when the user opens it.
-    if (aiDialogOpen) {
-        TvAiDialog(
-            answer = aiAnswer,
-            engine = aiEngine,
-            busy = aiBusy,
-            enabled = TvAiAssistant.isEnabled(context),
-            notice = null,
-            onAsk = { question -> askAi(question) },
-            onSpeak = {
-                // Reuse the existing recogniser, but keep the AI screen open so the answer
-                // lands in it. The recognised question goes through askAi().
-                aiPendingVoice = true
-                triggerVoiceAssistant()
-            },
-            onDismiss = {
-                aiDialogOpen = false
-                aiQuestionJob?.cancel()
-                aiBusy = false
-            },
-        )
+    // Storage access is requested from here, with an explanation first. The user asked for no
+    // separate settings-icon shortcut to this system screen: this dialog is the only entry
+    // point, and it opens the system page only if they confirm.
+    if (askStorageAccess) {
+        Dialog(
+            onDismissRequest = { askStorageAccess = false },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Column(
+                modifier = Modifier
+                    .background(Color(0xFF0F172A), RoundedCornerShape(18.dp))
+                    .border(2.dp, Color(0xFF00E5FF), RoundedCornerShape(18.dp))
+                    .padding(24.dp)
+                    .focusGroup(),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(R.string.storage_permission_title),
+                    color = Color(0xFF00E5FF), fontSize = 20.sp, fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = stringResource(R.string.storage_permission_reason),
+                    color = Color(0xFFCBD5E1), fontSize = 14.sp
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    TvFocusButton(
+                        text = stringResource(R.string.storage_permission_open),
+                        onClick = {
+                            askStorageAccess = false
+                            promptStoragePermission(context)
+                        },
+                        modifier = Modifier.weight(1f).testTag("storage-permission-open")
+                    )
+                    TvFocusButton(
+                        text = stringResource(R.string.storage_permission_cancel),
+                        onClick = { askStorageAccess = false },
+                        color = Color(0xFF94A3B8),
+                        modifier = Modifier.weight(1f).testTag("storage-permission-cancel")
+                    )
+                }
+            }
+        }
     }
 
     // App Context / Options Dialog (on long-press or Menu button)
@@ -1653,109 +1523,98 @@ fun TvDialogActionButton(
 
 @Composable
 fun TvHiddenAppsView(
+    allApps: List<LaunchableApp>,
     hiddenApps: List<LaunchableApp>,
     firstFocusRequester: FocusRequester,
-    backFocusRequester: FocusRequester,
-    onUnhideApp: (String) -> Unit
+    onSetHidden: (String, Boolean) -> Unit
 ) {
-    if (hiddenApps.isEmpty()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(32.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Icon(
-                    imageVector = Icons.Default.CheckCircle,
-                    contentDescription = null,
-                    tint = Color(0xFF00E676),
-                    modifier = Modifier.size(54.dp)
-                )
-                Spacer(modifier = Modifier.height(14.dp))
+    // One list of every installed app, each row a switch: tick to hide, untick to show. That is
+    // the "very easy" flow that was asked for, and it works even if long press misbehaves on a
+    // particular remote.
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        item {
+            Column {
                 Text(
-                    text = "No Hidden Applications",
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "To hide an app from the home launcher grid, long press OK on its tile or press Menu on your remote.",
-                    color = Color(0xFF94A3B8),
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            item {
-                Text(
-                    text = "Hidden Applications (${hiddenApps.size} apps)",
+                    text = "Show or hide apps",
                     color = Color(0xFF00E5FF),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "These apps are hidden from the main home launcher grid. Click Unhide to restore them.",
+                    text = "Tick an app to hide it from the home grid; untick it to show it again. " +
+                        "Hidden now: ${hiddenApps.size}.",
                     color = Color(0xFF94A3B8),
                     fontSize = 12.sp
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(Modifier.height(8.dp))
             }
-
-            items(hiddenApps) { app ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xFF111827), RoundedCornerShape(10.dp))
-                        .border(1.dp, Color(0xFF1F2937), RoundedCornerShape(10.dp))
-                        .padding(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                            AppIcon(drawable = app.icon, modifier = Modifier.size(40.dp))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    text = app.appName,
-                                    color = Color.White,
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = app.packageName,
-                                    color = Color(0xFF94A3B8),
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
-
-                        TvFocusButton(
-                            text = "👁️ " + stringResource(R.string.action_unhide_app),
-                            onClick = { onUnhideApp(app.packageName) },
-                            color = Color(0xFF00E676),
-                            modifier = (if (app == hiddenApps.first()) Modifier.focusRequester(firstFocusRequester).testTag("hidden-first") else Modifier)
-                                .focusProperties {
-                                    if (app == hiddenApps.first()) up = backFocusRequester
-                                    if (app == hiddenApps.last()) down = FocusRequester.Cancel
-                                }
-                        )
+        }
+        if (allApps.isEmpty()) {
+            item {
+                Text(
+                    text = "No installed applications were reported. Open this screen again after the app list loads.",
+                    color = Color(0xFF94A3B8),
+                    fontSize = 13.sp
+                )
+            }
+        }
+        items(allApps) { app ->
+            val isHidden = app.isHidden
+            val interaction = remember { MutableInteractionSource() }
+            val focused by interaction.collectIsFocusedAsState()
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("hide-row-${app.packageName}")
+                    .background(
+                        if (focused) Color(0xFF0F2B48) else Color(0xFF111827),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .border(
+                        if (focused) 3.dp else 1.dp,
+                        if (focused) Color(0xFF00E5FF) else Color(0xFF1F2937),
+                        RoundedCornerShape(10.dp)
+                    )
+                    .clickable(interactionSource = interaction, indication = null) {
+                        // Ticking hides, unticking shows: one key press, no submenu.
+                        onSetHidden(app.packageName, !isHidden)
                     }
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    AppIcon(drawable = app.icon, modifier = Modifier.size(34.dp))
+                    Spacer(Modifier.width(12.dp))
+                    Column {
+                        Text(text = app.appName, color = Color.White, fontSize = 14.sp)
+                        Text(text = app.packageName, color = Color(0xFF64748B), fontSize = 11.sp)
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = if (isHidden) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
+                        contentDescription = if (isHidden) "Hidden" else "Shown",
+                        tint = if (isHidden) Color(0xFF00E676) else Color(0xFF64748B),
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (isHidden) "Hidden" else "Shown",
+                        color = if (isHidden) Color(0xFF00E676) else Color(0xFF94A3B8),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun TvAboutView(onBack: () -> Unit) {
@@ -1986,8 +1845,7 @@ fun TvHomeView(
     homeFocusTrigger: Int = 0,
     onLaunchApp: (String) -> Unit,
     onToggleFavorite: (String) -> Unit,
-    onShowAppOptions: (LaunchableApp) -> Unit,
-    onOpenTools: () -> Unit
+    onShowAppOptions: (LaunchableApp) -> Unit
 ) {
     val favorites = apps.filter { it.isFavorite }
     val nonFavorites = apps.filter { !it.isFavorite }
@@ -1996,8 +1854,10 @@ fun TvHomeView(
 
     val firstApp = favorites.firstOrNull() ?: nonFavorites.firstOrNull()
     LaunchedEffect(homeFocusTrigger, firstApp?.packageName) {
-        // Wait until the target is composed and the dialog window has closed.
-        gridState.scrollToItem(if (firstApp == null) 0 else 1)
+        // Wait until the target is composed and the dialog window has closed. The tiles are
+        // the only focusable items now that the Tools tile has been removed, so the first
+        // app is item 0.
+        gridState.scrollToItem(0)
         focusWhenReady(firstItemFocusRequester)
     }
 
@@ -2008,14 +1868,6 @@ fun TvHomeView(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Quick Tools & Settings Tile
-        item {
-            TvQuickToolsTile(
-                onClick = onOpenTools,
-                focusRequester = if (favorites.isEmpty() && apps.isEmpty()) firstItemFocusRequester else null
-            )
-        }
-
         // Section 1: Favorites Shelf (if any)
         if (favorites.isNotEmpty()) {
             items(favorites) { app ->
@@ -2024,6 +1876,8 @@ fun TvHomeView(
                     onLaunch = { onLaunchApp(app.packageName) },
                     onToggleFav = { onToggleFavorite(app.packageName) },
                     onShowOptions = { onShowAppOptions(app) },
+                    // The first tile is the test anchor. It is also the first thing the grid
+                    // focuses now that the Tools tile has been removed from the home screen.
                     modifier = if (app == favorites.first()) Modifier.testTag("home-first-app") else Modifier,
                     focusRequester = if (app == favorites.first()) firstItemFocusRequester else null
                 )
@@ -2039,96 +1893,6 @@ fun TvHomeView(
                 onShowOptions = { onShowAppOptions(app) },
                 modifier = if (favorites.isEmpty() && app == apps.firstOrNull()) Modifier.testTag("home-first-app") else Modifier,
                 focusRequester = if (favorites.isEmpty() && app == apps.firstOrNull()) firstItemFocusRequester else null
-            )
-        }
-    }
-}
-
-@Composable
-fun TvQuickToolsTile(
-    onClick: () -> Unit,
-    focusRequester: FocusRequester? = null
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    val isFocusedBySource by interactionSource.collectIsFocusedAsState()
-    var isFocusedByCallback by remember { mutableStateOf(false) }
-    val isFocused = isFocusedBySource || isFocusedByCallback
-
-    val bg = if (isFocused) Color(0xFF0284C7) else Color(0xFF111827)
-    val borderCol = if (isFocused) Color(0xFF00E5FF) else Color(0xFF1F2937)
-    val borderWidth = if (isFocused) 4.dp else 1.dp
-    val scale = if (isFocused) 1.10f else 1.0f
-
-    val baseMod = if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
-
-    Box(
-        modifier = baseMod
-            .fillMaxWidth()
-            .height(138.dp)
-            .scale(scale)
-            .background(bg, RoundedCornerShape(14.dp))
-            .border(borderWidth, borderCol, RoundedCornerShape(14.dp))
-            .onFocusChanged { state ->
-                isFocusedByCallback = state.isFocused || state.hasFocus
-            }
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null
-            ) {
-                onClick()
-            }
-            .padding(10.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (isFocused) {
-                    Box(
-                        modifier = Modifier
-                            .background(Color(0xFF00E5FF), RoundedCornerShape(4.dp))
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "SYSTEM",
-                            color = Color(0xFF070B14),
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.ExtraBold
-                        )
-                    }
-                } else {
-                    Spacer(modifier = Modifier.width(1.dp))
-                }
-
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = null,
-                    tint = if (isFocused) Color.White else Color(0xFF64748B),
-                    modifier = Modifier.size(18.dp)
-                )
-            }
-
-            Icon(
-                imageVector = Icons.Default.Build,
-                contentDescription = null,
-                tint = if (isFocused) Color.White else Color(0xFF00E5FF),
-                modifier = Modifier.size(54.dp)
-            )
-
-            Text(
-                text = stringResource(R.string.tools_tile_title),
-                color = Color.White,
-                fontSize = 13.sp,
-                fontWeight = if (isFocused) FontWeight.ExtraBold else FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
             )
         }
     }
@@ -2346,7 +2110,6 @@ fun TvToolsView(
     runningApps: List<RunningAppInfo>,
     hiddenAppsCount: Int,
     onOpenExpert: () -> Unit,
-    onOpenAiSettings: () -> Unit,
     onVoice: () -> Unit,
     onSystemAssistant: () -> Unit,
     onRamBoost: () -> Unit,
@@ -2358,6 +2121,8 @@ fun TvToolsView(
     onOpenAbout: () -> Unit,
     onSetDefaultLauncher: () -> Unit,
     onGrantStorage: () -> Unit,
+    overlayPlacement: OverlayPlacement,
+    onMoveOverlay: (OverlayPlacement) -> Unit,
     onOpenSettings: () -> Unit,
     onCloseApp: (String) -> Unit,
     onCloseAllRunning: () -> Unit,
@@ -2378,16 +2143,49 @@ fun TvToolsView(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TvActionCard(stringResource(R.string.expert_settings_title), stringResource(R.string.expert_settings_subtitle),
                     Icons.Default.Settings, Color(0xFF00E5FF), onOpenExpert, Modifier.weight(1f).testTag("tools-expert"))
-                if (settings.enabled(TvFeature.AI_ASSISTANT)) {
-                    TvActionCard(stringResource(R.string.ai_title), stringResource(R.string.ai_provider),
-                        Icons.Default.Star, Color(0xFF7DD3FC), onOpenAiSettings, Modifier.weight(1f).testTag("tools-ai-settings"))
-                }
                 TvActionCard(stringResource(R.string.about_title), stringResource(R.string.about_subtitle),
                     Icons.Default.Info, Color(0xFF00E5FF), onOpenAbout, Modifier.weight(1f).testTag("tools-about"))
                 TvActionCard(stringResource(R.string.settings_title), stringResource(R.string.settings_subtitle),
                     Icons.Default.Settings, Color(0xFF94A3B8), onOpenSettings, Modifier.weight(1f))
                 TvActionCard(stringResource(R.string.launcher_quick_title), stringResource(R.string.launcher_quick_subtitle),
                     Icons.Default.Home, Color(0xFFA78BFA), onSetDefaultLauncher, Modifier.weight(1f))
+            }
+            if (settings.enabled(TvFeature.STATUS_OVERLAY)) {
+                // A remote has no pointer, so the pill is positioned from here: pick a corner,
+                // then nudge it. The choice is saved and applied immediately.
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "Status pill position: " + OverlayPlacement.presetName(overlayPlacement),
+                    color = Color(0xFF94A3B8), fontSize = 13.sp
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    listOf(
+                        "Top left" to OverlayPlacement.TOP_LEFT,
+                        "Top right" to OverlayPlacement.TOP_RIGHT,
+                        "Bottom left" to OverlayPlacement.BOTTOM_LEFT,
+                        "Bottom right" to OverlayPlacement.BOTTOM_RIGHT,
+                    ).forEach { (label, preset) ->
+                        TvActionCard(
+                            label, "Corner", Icons.Default.Settings, Color(0xFF38BDF8),
+                            { onMoveOverlay(preset) },
+                            Modifier.weight(1f).testTag("overlay-corner-" + OverlayPlacement.presetName(preset))
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val step = OverlayPlacement.STEP_DP
+                    // Plain text buttons: an icon set is not guaranteed to contain arrow glyphs.
+                    TvFocusButton("◀ Move left", { onMoveOverlay(overlayPlacement.nudged(-step, 0)) },
+                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-left"))
+                    TvFocusButton("Move right ▶", { onMoveOverlay(overlayPlacement.nudged(step, 0)) },
+                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-right"))
+                    TvFocusButton("▲ Move up", { onMoveOverlay(overlayPlacement.nudged(0, -step)) },
+                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-up"))
+                    TvFocusButton("▼ Move down", { onMoveOverlay(overlayPlacement.nudged(0, step)) },
+                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-down"))
+                }
             }
             Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {

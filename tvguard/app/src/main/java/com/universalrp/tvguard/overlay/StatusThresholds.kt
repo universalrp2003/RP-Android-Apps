@@ -17,6 +17,17 @@ enum class Band { GOOD, WARN, BAD, UNAVAILABLE }
 
 object StatusThresholds {
 
+    /**
+     * The plain word shown next to a value in the pill. Colour is a secondary cue: the word is
+     * what the user reads, and it stays truthful when a reading is unavailable.
+     */
+    fun bandWord(band: Band): String = when (band) {
+        Band.GOOD -> "good"
+        Band.WARN -> "medium"
+        Band.BAD -> "bad"
+        Band.UNAVAILABLE -> "unavailable"
+    }
+
     /** CPU: percentage of total processor time spent non-idle since the previous sample. */
     fun cpu(usagePercent: Int?): Band = when {
         usagePercent == null -> Band.UNAVAILABLE

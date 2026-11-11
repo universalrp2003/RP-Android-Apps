@@ -70,6 +70,7 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-longpress.log" \
   --class-name com.universalrp.tvguard.TvLongPressOptionsTest \
   --test longPressOpensOptionsAndReleaseDoesNotLaunchOrClose \
   --test shortPressStillLaunchesOrKeepsFocusOnTheLauncher \
+  --test aRemoteThatAutoRepeatsAlsoOpensTheMenuExactlyOnce \
   --test dismissingOptionsRestoresFocusToTheTile \
   --test afterTheMenuClosesAShortPressLaunchesAgain
 
