@@ -225,7 +225,7 @@ jobs:
               echo "::error title=TV signer error::$(cat /tmp/tv-audit-error)"; exit 1
             fi
             info="$(sed -n '1p' /tmp/tv-badging.txt)"
-            signer="$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/tv-signer.txt)"
-            if [ -z "$signer" ]; then echo "::error title=TV signer output::$(head -c 2000 /tmp/tv-signer.txt)"; exit 1; fi
+            signer="$(sed -n 's/^.*certificate SHA-256 digest: //p' /tmp/tv-signer.txt | sed -n '1p')"
+            if [ -z "$signer" ]; then echo "::error title=TV signer output::$(tr '\n' '|' </tmp/tv-signer.txt | head -c 2000)"; exit 1; fi
             echo "::notice title=TV APK signing audit::$id $info signer-SHA256=$signer"
           done
