@@ -236,27 +236,48 @@ jobs:
 
       - name: Make the store icons
         run: |
-          set -e
           # The apps draw their launcher marks as vectors, and stores want PNGs (F-Droid:
           # 512x512 icon plus a 1024x500 feature graphic). The icons are rasterised by pure
-          # Python, so they work anywhere; the graphics need ImageMagick, which is installed
-          # here if the runner does not already have it.
+          # Python, so they work anywhere; the graphics need ImageMagick.
+          #
+          # The icons are the gate. ImageMagick is a convenience: on 11 Nov 2026 this step
+          # started failing during `apt-get install imagemagick` on the newer runner image,
+          # which stopped the whole APK build before a single source check ran. A missing
+          # drawing tool must not be able to block a release, so a graphics failure is now
+          # recorded in store-art.log and reported, while the icons still have to succeed.
           set -x
           python3 --version
           command -v convert identify || true
           convert -version 2>/dev/null | head -2 || true
-          if ! command -v convert >/dev/null || ! command -v identify >/dev/null; then
-            echo "Installing ImageMagick and a font for the feature graphics..."
-            sudo apt-get update -qq
-            sudo apt-get install -y -qq imagemagick fonts-dejavu-core
-          fi
           set +x
           # tee, so the output lands in store-art.log and the failure report can quote it:
           # the Actions log endpoint is not always readable from outside.
           {
+            set -o pipefail
             python3 tools/make_store_assets.py icons
-            bash tools/make_feature_graphics.sh
+
+            graphics_ok=0
+            if ! command -v convert >/dev/null || ! command -v identify >/dev/null; then
+              echo "Installing ImageMagick and a font for the feature graphics..."
+              if ( set -e; sudo apt-get update -qq; sudo apt-get install -y -qq imagemagick fonts-dejavu-core ); then
+                echo "ImageMagick installed"
+              else
+                echo "GRAPHICS-SKIPPED: ImageMagick could not be installed; using the committed feature graphics"
+              fi
+            fi
+            if command -v convert >/dev/null && command -v identify >/dev/null; then
+              if bash tools/make_feature_graphics.sh; then
+                graphics_ok=1
+              else
+                echo "GRAPHICS-SKIPPED: feature graphics could not be rendered; the committed ones are used as-is"
+              fi
+            fi
+            if [ "$graphics_ok" -eq 0 ]; then
+              echo "::warning title=Store feature graphics::skipped this run; the committed PNGs are used"
+            fi
           } 2>&1 | tee store-art.log
+          # The icon step must have succeeded even when the graphics were skipped.
+          grep -q '^wrote .*icon.png' store-art.log
 
       - name: Check Cleaner source contracts and localization
         run: |
@@ -1610,7 +1631,21 @@ jobs:
               tail -40 verify.log
               echo '```'
             fi
+            # The store-art step has its own log; without this, an icon or font failure
+            # showed only "exit code 1" with no reason anywhere the owner could read.
+            if [ -f store-art.log ]; then
+              echo ""
+              echo "### Store artwork"
+              echo '```'
+              tail -30 store-art.log
+              echo '```'
+            fi
           } >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+          if [ -f store-art.log ]; then
+            grep -iE '^(ERROR|SKIP)|error:' store-art.log | head -8 | while IFS= read -r line; do
+              echo "::error title=Store artwork::$line"
+            done
+          fi
           if [ -f verify.log ]; then
             grep '^FAIL:' verify.log | head -8 | while IFS= read -r line; do
               echo "::error title=APK verification::$line"

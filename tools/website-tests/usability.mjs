@@ -30,11 +30,23 @@ try {
     await page.goto(base);
     assert.equal(await page.locator('#site-language').inputValue(), 'both');
     assert.equal(await count(page), 15);
-    assert.equal(await page.locator('time[data-release-tag]').count(), 15);
+    assert.equal(await page.locator('.latest tbody time[data-release-tag]').count(), 15);
+    assert.equal(await page.locator('.card-date').count(), 15);
     assert.equal(await page.locator('.trust-ticker').count(), 1);
     assert.equal(await page.locator('.release-brief').count(), 15);
     assert.equal(await page.locator('a[data-apk][aria-label]').count(), 30);
     assert.equal(await page.locator('[data-copy-sha]').count(), 15);
+  });
+  await test('cards and release table are ordered newest release first', async page => {
+    await page.goto(base);
+    // The optional Store has its own section and its own date, so this checks the 14 regular cards.
+    const dates = await page.locator('section[aria-label="14 regular Android applications"] article.card time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
+    assert.equal(dates.length, 14);
+    assert.deepEqual([...dates].sort().reverse(), dates, 'cards run newest first');
+    const rows = await page.locator('.latest tbody time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
+    assert.equal(rows.length, 15);
+    assert.deepEqual([...rows].sort().reverse(), rows, 'release table runs newest first');
+    assert.equal(await page.locator('#list-order').innerText().then(t => /Most recently updated first/.test(t) || /சமீபத்தில்/.test(t)), true);
   });
   for (const width of [320, 390, 768]) {
     await test(`all 30 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {

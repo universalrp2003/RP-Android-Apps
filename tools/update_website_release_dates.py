@@ -40,6 +40,13 @@ def check(source, metadata):
         raise ValueError('Release date evidence and website releases differ; refresh dates after publication.')
     if metadata['source'] != 'GitHub Releases published_at (UTC)':
         raise ValueError('Release date source must be explicit.')
+
+    # Every card date must be the same evidence the table uses, or the newest-first
+    # promise above the grid would rest on a different fact than the downloads do.
+    for card in re.finditer(r'<time class="card-date" datetime="([^"]+)" data-release-tag="([^"]+)">([^<]*)</time>', source):
+        value, tag, label = card.groups()
+        if metadata['releases'].get(tag) != value or date_label(value) != label:
+            raise ValueError('Card date does not match pinned release evidence: ' + tag)
     return len(tags)
 
 
@@ -61,6 +68,16 @@ def refresh(source, load_release):
             raise ValueError('Expected one date field per pinned release: ' + tag)
         return TIME.sub(lambda _: value, row)
     updated = re.sub(r'<tr>.*?</tr>', replace, source, flags=re.S)
+    # Cards state their own release date too; refresh those with the same evidence so the
+    # newest-first order a reader sees cannot drift from the table.
+    def replace_card(match):
+        tag = match.group(2)
+        if tag not in evidence:
+            raise ValueError('Card names a release that is not pinned in the table: ' + tag)
+        value = evidence[tag]
+        return f'{match.group(1)}{value}" data-release-tag="{tag}">{date_label(value)}</time>'
+    updated = re.sub(r'(<time class="card-date" datetime=")[^"]*" data-release-tag="([^"]+)">[^<]*</time>',
+                     replace_card, updated)
     metadata = {'source': 'GitHub Releases published_at (UTC)', 'releases': evidence}
     check(updated, metadata)  # Never write a partial or stale refresh.
     return updated, metadata

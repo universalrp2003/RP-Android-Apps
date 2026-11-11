@@ -26,6 +26,17 @@ class WebsiteUsabilityTest(unittest.TestCase):
         for value in self.evidence['releases'].values():
             self.assertIsNotNone(datetime.fromisoformat(value.replace('Z', '+00:00')).tzinfo)
 
+    def test_every_card_states_its_own_release_date(self):
+        dates_on_cards = [(m.group(1), m.group(2)) for m in re.finditer(
+            r'<time class="card-date" datetime="([^"]+)" data-release-tag="([^"]+)">', self.source)]
+        self.assertEqual(len(dates_on_cards), 15)
+        for value, tag in dates_on_cards:
+            self.assertEqual(self.evidence['releases'][tag], value)
+        # and the visible label is a readable date, not a raw timestamp
+        labels = re.findall(r'<time class="card-date"[^>]*>([^<]+)</time>', self.source)
+        for label in labels:
+            self.assertRegex(label, r'^\d{2} [A-Z][a-z]{2} \d{4}$')
+
     def test_changed_tag_and_stale_date_are_rejected(self):
         stamp = self.evidence['releases']['live-guard-v2.99']
         for stale in [self.source.replace('datetime="' + stamp + '"', 'datetime="2025-01-01T01:00:00Z"', 1),
@@ -47,10 +58,26 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertEqual(evidence, self.evidence)
 
     def test_refresh_repairs_date_tag_after_a_pinned_release_changes(self):
-        stale = self.source.replace('data-release-tag="live-guard-v2.99"', 'data-release-tag="old-version"')
+        # Corrupt the table row's tag only; the download link still names the release, so
+        # refresh can recover the date from real evidence.
+        head, table = self.source.split('<tbody>', 1)
+        row, tail = table.split('</tr>', 1)
+        stale = head + '<tbody>' + row.replace('data-release-tag="tvguard-v1.5.1"', 'data-release-tag="old-version"') + '</tr>' + tail
+        self.assertNotEqual(stale, self.source)
         source, evidence = dates.refresh(stale, lambda tag: {'tag_name': tag, 'published_at': self.evidence['releases'][tag]})
         self.assertEqual(source, self.source)
         self.assertEqual(evidence, self.evidence)
+
+    def test_a_card_naming_an_unknown_release_is_rejected(self):
+        """A card's own date cannot be invented: it must come from a pinned release."""
+        stale = self.source.replace(
+            '<time class="card-date" datetime="2026-11-11T12:00:01Z" data-release-tag="tvguard-v1.5.1">',
+            '<time class="card-date" datetime="2026-11-11T12:00:01Z" data-release-tag="not-a-release">',
+            1,
+        )
+        self.assertNotEqual(stale, self.source)
+        with self.assertRaises(ValueError):
+            dates.refresh(stale, lambda tag: {'tag_name': tag, 'published_at': self.evidence['releases'][tag]})
 
     def test_unpublished_release_cannot_supply_a_date(self):
         for release in [{'tag_name': 'not-the-tag', 'published_at': '2026-10-30T00:00:00Z'},
@@ -68,6 +95,36 @@ class WebsiteUsabilityTest(unittest.TestCase):
             self.assertIn(f'href="#{anchor}"', self.source)
             self.assertRegex(card, r'data-apk="[^"]+"[^>]*aria-label="Download APK · [^"]+"')
         self.assertEqual(len(anchors), 15)
+
+    def test_card_order_is_newest_release_first(self):
+        """The page promises the newest release first, so a stale order must fail the gate."""
+        site = self.source
+        import sys
+        from pathlib import Path as _P
+        sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
+        import verify_apps_localization as localization
+        regular = re.search(
+            r'aria-label="14 regular Android applications">(.*?)</section>', site, re.S
+        )[1]
+        ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
+        self.assertEqual(len(ids), 14)
+        localization.verify_newest_first(site, ids)
+        self.assertEqual(ids[0], 'app-tv-guard')
+
+        # Moving the oldest card to the front must be rejected.
+        oldest = site.index('        <!-- Secret Message -->')
+        end = site.index('</article>', oldest) + len('</article>')
+        block = site[oldest:end]
+        shuffled = site[:oldest] + site[end:]
+        first = shuffled.index('        <!-- Android TV Guard')
+        shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
+        shuffled_ids = re.findall(
+            r'<h2 id="(app-[^"]+)"',
+            re.search(r'aria-label="14 regular Android applications">(.*?)</section>', shuffled, re.S)[1],
+        )
+        self.assertEqual(shuffled_ids[0], 'app-secret-message')
+        with self.assertRaises(ValueError):
+            localization.verify_newest_first(shuffled, shuffled_ids)
 
     def test_features_are_progressive_local_and_accessibly_labelled(self):
         self.assertIn('<option value="both">', self.source)

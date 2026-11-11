@@ -339,6 +339,9 @@ APPS = [
     dict(module="equalizer", name="PulseEQ", accent="#34D399", bg="#05070F",
          vector="equalizer/src/main/res/drawable/ic_launcher_foreground.xml",
          locales=["en-US"], legacy_pngs=False),
+    dict(module="tvguard", name="Android TV Guard", accent="#38BDF8", bg="#06121C",
+         vector="tvguard/app/src/main/res/drawable/ic_tvguard_launcher.xml",
+         locales=["en-US", "ta-IN"], legacy_pngs=False),
 ]
 
 LAUNCHER_SIZES = [("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192)]

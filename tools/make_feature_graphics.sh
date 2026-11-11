@@ -29,6 +29,31 @@ pick_font() { # $1..: candidates in order of preference
 FONT_TITLE="$(pick_font DejaVu-Sans-Bold DejaVu-Sans Liberation-Sans-Bold Nimbus-Sans-Bold)"
 FONT_BODY="$(pick_font DejaVu-Sans DejaVu-Sans-Book Liberation-Sans Nimbus-Sans)"
 echo "fonts: title='${FONT_TITLE:-none}' body='${FONT_BODY:-none}'"
+# `convert -list font` is empty on newer runners even when fonts are installed (ImageMagick
+# builds without a type-*.xml cache, and IM7 names the binary `magick`). Fall back to a real
+# font FILE, which ImageMagick accepts for -font, and only then give up.
+if [ -z "$FONT_TITLE" ] || [ -z "$FONT_BODY" ]; then
+  echo "convert -list font is empty; resolving a font file directly"
+  font_file() { # $1..: fontconfig patterns, most specific first
+    local want
+    for want in "$@"; do
+      command -v fc-match >/dev/null || continue
+      local f
+      f="$(fc-match -f '%{file}' "$want" 2>/dev/null || true)"
+      if [ -n "$f" ] && [ -f "$f" ]; then printf '%s' "$f"; return 0; fi
+    done
+    return 1
+  }
+  FONT_TITLE="$(font_file 'DejaVu Sans:style=Bold' 'DejaVu Sans' 'sans-serif:style=Bold' || true)"
+  FONT_BODY="$(font_file 'DejaVu Sans' 'Liberation Sans' 'sans-serif' || true)"
+  echo "font files: title='${FONT_TITLE:-none}' body='${FONT_BODY:-none}'"
+fi
+# Without a font, label: cannot render and the graphic silently degrades to a flat
+# rectangle. Fail here, where the reason is obvious, instead of shipping blank art.
+if [ -z "$FONT_TITLE" ] || [ -z "$FONT_BODY" ]; then
+  echo "ERROR: no usable font found (neither convert -list font nor fc-match). Install fonts-dejavu-core." >&2
+  exit 1
+fi
 
 render_text() { # $1=font $2=pointsize $3=text $4=out  -> prints width, 0 on failure
   local font="$1" size="$2" text="$3" out="$4"
@@ -87,6 +112,7 @@ sub_of() { tr -d '\n' < "$1/fastlane/metadata/android/en-US/short_description.tx
 build cleaner   "CleanSweep"     "#070D1A" "#22D3EE"
 build radio     "Ramesh Radio"   "#0B0713" "#FF8A3D"
 build equalizer "PulseEQ"        "#05070F" "#34D399"
+build tvguard   "Android TV Guard" "#06121C" "#38BDF8"
 
 echo
 for f in */fastlane/metadata/android/*/images/featureGraphic.png; do
