@@ -96,7 +96,8 @@ def main():
         candidate = work / NAME
         candidate.write_bytes(z.read(INNER))
         receipt = json.loads(z.read("verification.json"))
-        assert z.read(INNER + ".sha256").split()[0].decode() == APK_SHA
+        sidecar_name = "Android-TV-Guard-1.5.1-signed-candidate.sha256"
+        assert z.read(sidecar_name).split()[0].decode() == APK_SHA
 
     # 2. The bytes must be exactly the ones the owner tested.
     assert sha(candidate) == APK_SHA and candidate.stat().st_size == APK_BYTES
