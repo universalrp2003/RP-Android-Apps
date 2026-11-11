@@ -110,17 +110,19 @@ class TvRemoteFocusTest {
     }
 
     /**
-     * Scrolls a lazy Expert row into view and waits for it to be composed.
+     * Scrolls a lazy Expert row into view.
      *
-     * performScrollToNode runs immediately, so when the list has just been rebuilt (for example
-     * right after the master switch turns Expert on) it can still be showing only the three
-     * header items and report "no node found". Retrying is what makes the wait real.
+     * The list is lazy, so an off-screen row is not in the semantics tree at all: waiting for it
+     * to "exist" first can never succeed. Scroll first and only then wait for it to be composed.
+     * performScrollToNode can still run before the list has been rebuilt after the master switch
+     * turns Expert on, in which case it scrolls through the header items only, so scroll twice.
      */
     private fun scrollExpertTo(tag: String) {
+        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
+        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
         compose.waitUntil(timeoutMillis = 10_000) {
             compose.onAllNodes(hasTestTag(tag)).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
     }
 
     private fun awaitFocus(tag: String) {
@@ -211,12 +213,23 @@ class TvRemoteFocusTest {
             }
         }
 
-        // Turning Expert off must stop both without erasing the saved choices.
+        // Turning Expert off must stop both. The feature rows are removed from the lazy list,
+        // so the saved choices are checked after Expert is switched back on below rather than
+        // by looking for a row that is deliberately gone.
         scrollExpertTo("expert-master")
         toggleFocused("expert-master")
         compose.onNodeWithTag("expert-master").assertIsOff()
-        scrollExpertTo("feature-ai_assistant")
-        compose.onNodeWithTag("feature-ai_assistant").assertIsOn()
+
+        // Re-enabling Expert restores the saved selections without reactivating anything.
+        toggleFocused("expert-master")
+        compose.onNodeWithTag("expert-master").assertIsOn()
+        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.AI_ASSISTANT)) {
+            scrollExpertTo("feature-${feature.key}")
+            compose.onNodeWithTag("feature-${feature.key}").assertIsOn()
+        }
+        // A child that was switched on without its parent must still be paused and off.
+        scrollExpertTo("feature-status_bar")
+        compose.onNodeWithTag("feature-status_bar").assertIsOff()
     }
 
     private fun sendLauncherHomeIntent() {
