@@ -329,7 +329,7 @@
           "softwareVersion": "1.5.1",
           "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/Android-TV-Guard-v1.5.1.apk",
           "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.1",
-          "description": "Android TV launcher with a movable five-reading status strip, honest free storage cross-checked against the physical disk, and a Wi-Fi file hub that installs an APK uploaded from a phone. English and Tamil. Owner-tested on a Sony Bravia.",
+          "description": "Free open-source debloater and clean launcher for Android TV boxes: remove preinstalled junk over root or wireless ADB, replace the vendor home screen, share files and control the TV over Wi-Fi from a phone, plus a movable five-reading status strip and honest storage checked against the physical disk. English and Tamil. Owner-tested on a Sony Bravia.",
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -582,9 +582,9 @@
       border-radius: 12px;
       padding: 9px 12px;
     }
-    details.benefit, details.trust, details.news, details.gallery { margin-top: 8px; }
+    details.benefit, details.trust, details.news, details.gallery, details.release-brief { margin-top: 8px; }
     details.feat > summary, details.news > summary, details.benefit > summary,
-    details.trust > summary, details.gallery > summary {
+    details.trust > summary, details.gallery > summary, details.release-brief > summary {
       cursor: pointer;
       font-weight: 700;
       font-size: 0.87rem;
@@ -596,14 +596,14 @@
     }
     details.feat > summary::-webkit-details-marker, details.news > summary::-webkit-details-marker,
     details.benefit > summary::-webkit-details-marker, details.trust > summary::-webkit-details-marker,
-    details.gallery > summary::-webkit-details-marker { display: none; }
+    details.gallery > summary::-webkit-details-marker, details.release-brief > summary::-webkit-details-marker { display: none; }
     details.feat > summary::after, details.news > summary::after, details.benefit > summary::after,
-    details.trust > summary::after, details.gallery > summary::after {
+    details.trust > summary::after, details.gallery > summary::after, details.release-brief > summary::after {
       content: "▾"; margin-left: auto; color: var(--muted); font-size: 0.8rem;
     }
     details[open].feat > summary::after, details[open].news > summary::after,
     details[open].benefit > summary::after, details[open].trust > summary::after,
-    details[open].gallery > summary::after { content: "▴"; }
+    details[open].gallery > summary::after, details[open].release-brief > summary::after { content: "▴"; }
     details .body { margin-top: 9px; }
     details .body ul { margin: 0; padding-left: 17px; }
     details .body li { font-size: 0.85rem; color: var(--text); margin-bottom: 6px; line-height: 1.45; }
@@ -1812,26 +1812,44 @@
         </article>
 
         <!-- Android TV Guard -->
-        <article class="card">
+        <article class="card" id="tv-guard-card">
           <div class="card-top">
             <div class="card-header">
               <h2 id="app-tv-guard" tabindex="-1"><span class="emoji">📺</span>Android TV Guard <span class="ta-name">(டிவி காவலன்)</span></h2>
               <span class="ver">v1.5.1 · Android TV 8.0+</span>
             </div>
-            <div class="release-brief"><p data-content-lang="en">Copy fixes for the two text defects visible in the 1.5 screenshots: the storage figure no longer runs into its "limited to the physical disk" note, and the Expert switches no longer claim the pill needs the top status bar or draws four readings. The pill switches are independent, and the reading is now described as five. No behaviour, permission or storage-calculation change.</p><p data-content-lang="ta" lang="ta">1.5 திரைப்படங்களில் தெரிந்த இரண்டு உரைப் பிழைகள் சரிசெய்யப்பட்டன: சேமிப்பு எண்ணும் அதன் குறிப்பும் இடைவெளியுடன் தெரிகின்றன; Expert சுவிட்சுகள் இனி மேல் நிலைப் பட்டையைச் சார்ந்ததாகவோ நான்கு அளவுகள் என்றோ கூறாது. இயக்கம், அனுமதி, சேமிப்புக் கணக்கு மாறவில்லை.</p><p class="testing-status"><span data-content-lang="en">The owner installed 1.3 and 1.5 on a physical Sony Bravia and confirmed the launcher, the status strip, the D-pad focus, the file hub and the Tamil and English screens. 1.5.1 changes only strings, so it keeps 1.5's storage figure and behaviour; the owner still has to install it before this line can claim more. Emulator coverage: 69 unit tests and five D-pad tests on a disposable Android TV, same-key update with favourites and hidden apps preserved. Not a Play Protect clearance, and not verified on every TV model.</span><span data-content-lang="ta" lang="ta">உரிமையாளர் 1.3 மற்றும் 1.5 பதிப்புகளை Sony Bravia டிவியில் நிறுவி, லாஞ்சர், நிலைப் பட்டை, D-pad focus, கோப்பு ஹப், தமிழ் மற்றும் ஆங்கிலத் திரைகளை உறுதிப்படுத்தினார். 1.5.1 உரைகளை மட்டுமே மாற்றுகிறது; நிறுவல் உறுதி இன்னும் உரிமையாளரிடமே உள்ளது. எமுலேட்டரில் 69 unit சோதனைகளும் ஐந்து D-pad சோதனைகளும் தேர்ச்சி. அனைத்து டிவி மாடல்களுக்கும் உத்தரவாதம் அல்ல.</span></p></div>
-            <p class="tagline" data-content-lang="en">A launcher, a movable live status strip and a Wi-Fi file hub — <strong>built for a remote, not a touchscreen</strong>.</p>
-            <p class="tagline ta" data-content-lang="ta" lang="ta">லாஞ்சர், நகர்த்தக்கூடிய நேரடி நிலைப் பட்டை, வயர்லெஸ் கோப்பு ஹப் — <strong>ரிமோட்டுக்காக வடிவமைக்கப்பட்டது</strong>.</p>
+            <p class="tagline" data-content-lang="en"><strong>Give a cheap Android TV box its speed back.</strong> Remove the preinstalled junk that ships with the box, replace the slow vendor home screen with a clean launcher your remote can drive, and move files over Wi-Fi from your phone — no USB stick, no second file manager. Free, open, no ads, no account.</p>
+            <p class="tagline ta" data-content-lang="ta" lang="ta"><strong>மலிவான ஆண்ட்ராய்டு டிவி பெட்டிக்கு வேகத்தைத் திருப்பித் தாருங்கள்.</strong> பெட்டியுடன் வரும் தேவையற்ற செயலிகளை நீக்குங்கள்; மெதுவான விற்பனையாளர் முகப்பை நீக்கி, ரிமோட்டால் இயக்கக்கூடிய சுத்தமான லாஞ்சரைப் பயன்படுத்துங்கள்; தொலைபேசியிலிருந்து வைஃபை வழியே கோப்புகளை அனுப்புங்கள் — USB தேவையில்லை. இலவசம், திறந்த மூலம், விளம்பரமில்லை.</p>
+            <div class="flagship-pillars">
+              <div class="pillar">
+                <h3><span aria-hidden="true">🧹</span> <span data-content-lang="en">Debloater — the main job</span><span data-content-lang="ta" lang="ta">தேவையற்ற செயலி நீக்கம் — முதன்மை வேலை</span></h3>
+                <p data-content-lang="en">Lists what came preinstalled and sorts it into <strong>safe to remove</strong> (pirate streaming players, third-party stores, ad-heavy installers, vendor telemetry and updater services), <strong>your call</strong> (browsers, extra launchers, file managers) and <strong>protected core</strong> (system UI, TV settings, Play services, keyboard — never offered for removal). Remove on a rooted box with one OK press, or on the usual unrooted box by sending the ready-made <code>adb</code> command it prints. Every removal is confirmed first, so a wrong tap cannot uninstall anything.</p>
+                <p data-content-lang="ta" lang="ta">முன்கூட்டியே நிறுவப்பட்ட செயலிகளைப் பட்டியலிட்டு மூன்றாகப் பிரிக்கிறது: <strong>நீக்கலாம்</strong> (திருட்டு ஸ்ட்ரீமிங், மூன்றாம் தரப்பு ஸ்டோர்கள், விளம்பர நிறுவிகள், விற்பனையாளர் telemetry), <strong>உங்கள் முடிவு</strong>, <strong>பாதுகாக்கப்பட்ட முக்கியப் பகுதி</strong> (system UI, TV settings, Play services, விசைப்பலகை). ரூட் இருந்தால் ஒரே OK அழுத்தல்; இல்லாவிட்டால் தயாராகத் தரப்படும் <code>adb</code> கட்டளையை அனுப்புங்கள். ஒவ்வொரு நீக்கத்துக்கும் உறுதி கேட்கப்படும்.</p>
+              </div>
+              <div class="pillar">
+                <h3><span aria-hidden="true">🚀</span> <span data-content-lang="en">Clean, light launcher</span><span data-content-lang="ta" lang="ta">சுத்தமான, இலகுவான லாஞ்சர்</span></h3>
+                <p data-content-lang="en">Set it as Home and the box boots into your apps instead of the vendor home screen. Real app icons, favourites first, big tiles, and a focus ring you can always see from the sofa. Hide the apps you never open, keep the rest, and turn on the extras you want — the app starts with everything off, and nothing of its own runs in the background until you switch the status strip on.</p>
+                <p data-content-lang="ta" lang="ta">Home ஆக அமைத்தால், விற்பனையாளர் முகப்புக்குப் பதிலாக உங்கள் செயலிகளுடன் பெட்டி தொடங்கும். உண்மையான ஐகான்கள், பிடித்தவை முதலில், பெரிய ஓடுகள், சோஃபாவிலிருந்து தெரியும் focus வளையம். பயன்படுத்தாத செயலிகளை மறைத்து மற்றதை வைத்திருங்கள்; கூடுதல் வசதிகள் இயல்பாக அணைந்தே இருக்கும்.</p>
+              </div>
+              <div class="pillar">
+                <h3><span aria-hidden="true">📲</span> <span data-content-lang="en">File sharing and phone remote</span><span data-content-lang="ta" lang="ta">கோப்புப் பங்கீடு, தொலைபேசி ரிமோட்</span></h3>
+                <p data-content-lang="en">Turn on the hub and open the address it shows in any phone browser — no app on the phone, no cable. Drag an APK or any file straight onto the TV and install it from the TV's own list, browse and download the TV's screenshots, and use the phone as a remote: type text into TV search boxes, press direction and OK keys, take a screenshot, or free memory. It listens only while you leave it on, and only on your own network.</p>
+                <p data-content-lang="ta" lang="ta">ஹப்பை இயக்கி, காட்டப்படும் முகவரியைத் தொலைபேசி உலாவியில் திறக்கவும் — போனில் செயலி தேவையில்லை, கேபிள் தேவையில்லை. APK அல்லது எந்தக் கோப்பையும் டிவிக்கு நேரடியாக இழுத்துப் போட்டு, டிவியின் பட்டியலிலிருந்து நிறுவுங்கள்; டிவி திரைப்படங்களைப் பதிவிறக்குங்கள்; தொலைபேசியை ரிமோட்டாகப் பயன்படுத்தி தேடல் பெட்டியில் எழுத்து தட்டச்சு செய்யுங்கள், திசை/OK விசைகளை அனுப்புங்கள், திரைப்படம் எடுங்கள். நீங்கள் இயக்கும் வரை மட்டுமே, உங்கள் வலையில் மட்டுமே.</p>
+              </div>
+            </div>
             <div class="opts">
-              <span class="opt">📊 Five readings, one line</span>
+              <span class="opt">🧹 Debloater: root or wireless ADB</span>
+              <span class="opt">🚀 Clean launcher, set as Home</span>
+              <span class="opt">📲 Wi-Fi file hub + phone remote</span>
+              <span class="opt">📊 Five readings on one movable line</span>
               <span class="opt">💾 Honest free storage</span>
-              <span class="opt">📤 Upload and install from your phone</span>
               <span class="opt">🔍 Hardware truth check</span>
               <span class="opt">🌐 English &amp; தமிழ்</span>
             </div>
             <figure class="shot has-img">
               <img loading="lazy" src="images/tv-guard/5.png" alt="Android TV Guard 1.5.1 on a Sony Bravia — Tools and Settings with the five-reading status strip at the top of the screen">
             </figure>
-            <p class="small"><a href="tv-guard-guide.html">Full guide and all ten screenshots · முழு வழிகாட்டி</a></p>
+            <p class="small"><a href="tv-guard-guide.html">Screenshots and the full guide · முழு வழிகாட்டி</a></p>
             <p class="small" data-content-lang="en">Owner screens from the app's own screenshot button, 1920×1080, English interface; no personal data appears.</p>
             <p class="small ta" data-content-lang="ta" lang="ta">ஆப்-இன் திரைப்படக் கருவியால் எடுக்கப்பட்ட உரிமையாளர் திரைகள்; தனிப்பட்ட தகவல் இல்லை.</p>
             <details class="gallery">
@@ -1848,16 +1866,18 @@
             <details class="feat">
               <summary><span class="feat-icon">⚙️</span> What it does and what it cannot do · என்ன செய்கிறது, என்ன செய்யாது</summary>
               <div class="body"><ul>
-                <li><strong>The strip is 5 readings on one line:</strong> processor load, free RAM in MB, free storage in GB, temperature in °C, and internet quality as a green / yellow / red colour. No background panel, no labels, no Wi-Fi row.</li>
-                <li><strong>It can be moved</strong> with the remote, so it does not have to stay over the channel banner. It sits at the top by default.</li>
-                <li><strong>Free storage is cross-checked against the physical disk.</strong> The 1.5 screenshots show this TV reporting a 32 GB /data partition on a 14.68 GiB chip; the pill now shows 11.9 GB, which is what is actually free.</li>
-                <li><strong>One switch for the strip.</strong> Turning the status bar or clock off does not disable the strip or anything below it.</li>
-                <li><strong>Options open with the Menu key.</strong> There is no long-press menu and no pointer needed; every control is reachable with the D-pad.</li>
-                <li><strong>Upload from a phone</strong> to <code>http://&lt;tv-ip&gt;:8080</code>, then install the APK from the TV's own file list — no separate file manager.</li>
-                <li><strong>Not a security product.</strong> It reports what Android and the hardware expose; it cannot see inside other apps, and it cannot make a dishonest firmware report the truth to other apps.</li>
+                <li><strong>The strip is 5 readings on one line:</strong> processor load, free RAM in MB, free storage in GB, temperature in °C, and internet quality as a green / yellow / red colour, over whatever is playing. No background panel and no Wi-Fi row.</li>
+                <li><strong>It can be moved</strong> with the remote; it sits at the top by default.</li>
+                <li><strong>Free storage is cross-checked against the physical disk.</strong> This TV reports a 32 GB /data partition on a 14.68 GiB chip, so the strip shows the 11.9 GB that is really free instead of the number the filesystem claims.</li>
+                <li><strong>Options open with the Menu key.</strong> No long-press menu, no pointer; every control is reachable with the D-pad.</li>
+                <li><strong>Hidden apps</strong> live in Tools, listing every installed app with a tick box.</li>
+                <li><strong>The hub has no password or encryption.</strong> Anyone on your Wi-Fi who has the address can see, upload or delete files in Downloads and saved screenshots while it is on. Use it on a network you trust and switch it off afterwards. Review a file before installing it.</li>
+                <li><strong>Not a security product or an antivirus.</strong> It reports what Android, the kernel and the hardware expose; it cannot see inside other apps, and it cannot make a dishonest firmware tell the truth — it can only show you that the firmware disagrees with itself.</li>
+                <li><strong>Removal needs root or ADB, because Android requires it.</strong> On a box with neither, Debloater can only open the standard uninstall dialog for apps you installed yourself. Nothing is removed without your confirmation.</li>
               </ul></div>
             </details>
             <details class="trust"><summary>File checksum / கோப்பு சரிபார்ப்பு</summary><div class="body"><p>SHA-256: aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b</p><p data-content-lang="en">A matching checksum confirms the file matches the published hash; it does not prove the app is safe. Do not bypass device warnings. This build was installed by the owner on a Sony Bravia; the hash on the TV was not read back independently.</p><p data-content-lang="ta" lang="ta">சரிபார்ப்பு மதிப்பு பொருந்துவது கோப்பின் அடையாளத்தை மட்டுமே காட்டும்; செயலி பாதுகாப்பானது என்பதற்கான சான்றல்ல. பாதுகாப்பு எச்சரிக்கையை மீற வேண்டாம். உரிமையாளர் இதை Sony Bravia டிவியில் நிறுவினார்; டிவியில் உள்ள hash தனியாக ஒப்பிடப்படவில்லை.</p></div></details>
+            <details class="release-brief"><summary>📋 What changed in 1.5.1 · 1.5.1-இல் என்ன மாறியது</summary><div class="body rb"><p data-content-lang="en">Only two text defects from the 1.5 screenshots were fixed: the storage figure no longer runs into its "limited to the physical disk" note, and the Expert switches no longer claim the strip needs the top status bar or draws four readings — the switches are independent and the reading is now described as five. No behaviour, permission or storage-calculation change.</p><p data-content-lang="ta" lang="ta">1.5 திரைப்படங்களில் தெரிந்த இரண்டு உரைப் பிழைகள் மட்டுமே சரிசெய்யப்பட்டன: சேமிப்பு எண்ணும் அதன் குறிப்பும் இடைவெளியுடன் தெரிகின்றன; Expert சுவிட்சுகள் இனி மேல் நிலைப் பட்டையைச் சார்ந்ததாகவோ நான்கு அளவுகள் என்றோ கூறாது. இயக்கம், அனுமதி, சேமிப்புக் கணக்கு மாறவில்லை.</p><p class="testing-status"><span data-content-lang="en">The owner installed this exact 1.5.1 build on a physical Sony Bravia and reported it working: the strip read 78% / 996 MB / 11.9 GB / 46.0 °C / good. 1.3 and 1.5 were confirmed there too — launcher, strip, D-pad focus, file hub, Tamil and English. Emulator coverage: unit tests and five TV D-pad tests on a disposable Android TV, plus a same-key update that kept favourites, hidden apps and saved choices. The on-TV hash was not read back, this is not a Play Protect clearance, and no other TV model was tested.</span><span data-content-lang="ta" lang="ta">உரிமையாளர் இந்த 1.5.1 கோப்பையே Sony Bravia டிவியில் நிறுவி வேலை செய்வதாகத் தெரிவித்தார். 1.3, 1.5-உம் அங்கு உறுதிசெய்யப்பட்டன. எமுலேட்டரில் unit சோதனைகளும் ஐந்து TV D-pad சோதனைகளும், அதே கையொப்பப் புதுப்பிப்பில் பிடித்தவையும் மறைந்த செயலிகளும் தக்கவைக்கப்பட்டன. டிவியில் hash தனியாகப் படிக்கப்படவில்லை; Google ஒப்புதல் அல்ல; மற்ற டிவி மாடல்கள் சோதிக்கப்படவில்லை.</span></p><a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.1">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div></details>
             <div class="hero-links">
               <a class="btn btn-zip" download="Android-TV-Guard-v1.5.1.zip" href="apks/Android-TV-Guard-v1.5.1.zip">📦 Download .ZIP</a>
               <a class="btn btn-primary" data-apk="apks/Android-TV-Guard-v1.5.1.apk" data-name="Android-TV-Guard-v1.5.1.apk" data-sha="aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b" data-status="st-tvguard" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.1/Android-TV-Guard-v1.5.1.apk" aria-label="Download APK · Android-TV-Guard-v1.5.1.apk">APK · v1.5.1</a>

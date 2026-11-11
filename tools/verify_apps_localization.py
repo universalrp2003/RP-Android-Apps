@@ -1188,7 +1188,8 @@ def verify_site_versions_match_downloads() -> int:
     if len(table_assets) != expected_apps or table_assets != ld_assets or table_tags != expected_tags:
         raise ValueError("Latest Releases table and JSON-LD do not list the same unique app releases.")
 
-    cards = site.split('<article class="card">')[1:]
+    cards = re.split(r'(?=<article class="card"[ >])', site)[1:]
+    cards = [card for card in cards if card.startswith('<article class="card"')]
     if len(cards) != expected_apps:
         raise ValueError(
             f"site/index.html has {len(cards)} app cards, but SisterApps.kt lists {expected_apps} apps."

@@ -59,7 +59,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
                 dates.refresh(self.source, lambda tag: release)
 
     def test_all_fifteen_static_app_anchors_and_download_names_exist(self):
-        cards = re.findall(r'<article class="card">.*?</article>', self.source, re.S)
+        cards = re.findall(r'<article class="card"[^>]*>.*?</article>', self.source, re.S)
         anchors = set()
         for card in cards:
             anchor = re.search(r'<h2 id="(app-[a-z-]+)" tabindex="-1">', card).group(1)

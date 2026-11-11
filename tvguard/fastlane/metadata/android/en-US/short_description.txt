@@ -1,1 +1,1 @@
-Android TV launcher, live status pill, Wi-Fi file hub and hardware truth check.
+Debloat your Android TV box, clean remote-first launcher, Wi-Fi file sharing and phone remote.

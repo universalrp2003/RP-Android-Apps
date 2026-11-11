@@ -52,3 +52,30 @@ html[data-site-language="ta"] .testing-status span + span::before { content: "";
 .release-table { overflow-x: auto; }
 .card a:not(.btn) { color: #67e8f9; }
 details .body { overflow-wrap: anywhere; }
+
+/* Android TV Guard is the flagship app: it gets the full row and its own
+   three-column explanation, because its purpose (debloat, launcher, file
+   sharing + phone remote) cannot be told in a one-line tagline. */
+#tv-guard-card { grid-column: 1 / -1; }
+#tv-guard-card::before { height: 4px; background: linear-gradient(90deg, #29d3e8, #a78bfa, #f59e0b); }
+#tv-guard-card .tagline { font-size: 1rem; }
+#tv-guard-card .flagship-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin: 6px 0 2px;
+}
+#tv-guard-card .pillar {
+  background: #10263a;
+  border: 1px solid #1e4055;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+#tv-guard-card .pillar h3 { font-size: .92rem; margin: 0 0 6px; color: #e6f7fb; }
+#tv-guard-card .pillar p { font-size: .84rem; line-height: 1.55; margin: 0; color: var(--text-muted, #b9c9d4); }
+#tv-guard-card .pillar code { font-size: .8rem; }
+#tv-guard-card details.release-brief { margin: 4px 0 0; }
+#tv-guard-card details.release-brief .body { max-width: 78ch; }
+#tv-guard-card details.release-brief .rb { border: 0; padding: 0; background: none; font-size: .86rem; }
+#tv-guard-card details.release-brief .rb .testing-status { display: block; margin-top: 8px; }
+@media (max-width: 620px) { #tv-guard-card .tagline { font-size: .95rem; } }
