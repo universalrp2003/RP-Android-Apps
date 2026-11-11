@@ -938,11 +938,13 @@ def verify_readme_app_table() -> int:
             "README.md lists %s more than once in its release table. A duplicated row tells the "
             "reader two different current versions for one app." % ", ".join(duplicates)
         )
-    # The legacy module-release gates above cover twelve core apps. DailyVault is now
-    # the normal thirteenth non-Store app; Store has its own separate download section.
+    # The legacy module-release gates above cover twelve core apps. DailyVault, then the Android TV
+    # Guard, are normal non-Store apps; Store has its own separate download section.
     if "DailyVault (தினக்கணக்கு)" not in names or any("Tamilan Store" in n for n in names):
         raise ValueError("README must list DailyVault among regular apps, with Store separate.")
-    expected = len(RELEASE_TAG_PREFIX) + 1
+    if not any("Android TV Guard" in n for n in names):
+        raise ValueError("README must list the Android TV Guard among the regular apps.")
+    expected = len(RELEASE_TAG_PREFIX) + 2
     if len(names) != expected:
         raise ValueError(
             "README.md release table has %d rows but %d apps have published releases. A missing row "
