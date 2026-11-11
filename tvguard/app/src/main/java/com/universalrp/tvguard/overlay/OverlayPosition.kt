@@ -18,9 +18,20 @@ data class OverlayPlacement(
     val xDp: Int,
     val yDp: Int,
 ) {
-    /** True when the pill is anchored on the right or bottom half. */
-    val isRight: Boolean get() = gravity and Gravity.RIGHT != 0
-    val isBottom: Boolean get() = gravity and Gravity.BOTTOM != 0
+    /**
+     * True when the pill is anchored to the right / bottom edge.
+     *
+     * These compare the whole horizontal/vertical field instead of testing a single bit.
+     * Gravity packs the horizontal and vertical halves into one int, and LEFT/TOP (0x03) share
+     * low bits with RIGHT/BOTTOM (0x05), so a naive bit test reports every corner as
+     * top-left-anchored - which made every nudge move the wrong way.
+     */
+    val isRight: Boolean
+        get() = gravity and Gravity.HORIZONTAL_GRAVITY_MASK == Gravity.RIGHT ||
+            gravity and Gravity.HORIZONTAL_GRAVITY_MASK == Gravity.END
+
+    val isBottom: Boolean
+        get() = gravity and Gravity.VERTICAL_GRAVITY_MASK == Gravity.BOTTOM
 
     /**
      * Moves the pill by one step. Positive dx moves right and positive dy moves down regardless
