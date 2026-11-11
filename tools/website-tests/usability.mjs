@@ -33,11 +33,11 @@ try {
     assert.equal(await page.locator('time[data-release-tag]').count(), 15);
     assert.equal(await page.locator('.trust-ticker').count(), 1);
     assert.equal(await page.locator('.release-brief').count(), 15);
-    assert.equal(await page.locator('a[data-apk][aria-label]').count(), 28);
+    assert.equal(await page.locator('a[data-apk][aria-label]').count(), 30);
     assert.equal(await page.locator('[data-copy-sha]').count(), 15);
   });
   for (const width of [320, 390, 768]) {
-    await test(`all 28 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
+    await test(`all 30 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(base);
       const buttons = await page.locator('a[data-apk]').evaluateAll(nodes => nodes.map(a => ({
@@ -45,7 +45,7 @@ try {
         wraps: getComputedStyle(a).whiteSpace,
         clipped: a.scrollWidth > a.clientWidth + 1,
       })));
-      assert.equal(buttons.length, 28);
+      assert.equal(buttons.length, 30);
       for (const button of buttons) {
         const version = button.apk.match(/-v([0-9.]+)\.apk$/)[1];
         assert.equal(button.label, `APK · v${version}`);
