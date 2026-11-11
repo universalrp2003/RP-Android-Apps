@@ -117,6 +117,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -2198,6 +2200,25 @@ fun TvAppCard(
                         else -> true
                     }
                     else -> false
+                }
+            }
+            // Replacing combinedClickable removed the only focusable modifier, which left every
+            // app tile unable to take D-pad focus at all. clickable restores focusability, the
+            // touch/accessibility click, and focus-source tracking. It cannot re-create the
+            // original bug: the preview handler above consumes both the D-pad down and up, so
+            // the click gesture never sees the pair and launching stays owned by AppTileKeyPolicy.
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) {
+                onLaunch()
+            }
+            // combinedClickable also supplied the long-click accessibility action; the custom
+            // key handling above replaces it for the remote, so expose it explicitly.
+            .semantics {
+                onLongClick(label = "App options") {
+                    onShowOptions()
+                    true
                 }
             }
             .padding(10.dp)

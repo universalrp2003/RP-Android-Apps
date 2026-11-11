@@ -75,6 +75,9 @@ class TvRemoteFocusTest {
     private fun awaitHomeStart() {
         try {
             awaitFocus("home-first-app")
+            // A tile only has a click/focus action when it is focusable. Removing the tile's
+            // clickable modifier broke reachability without breaking compilation, so assert it.
+            compose.onNodeWithTag("home-first-app").assert(SemanticsMatcher.keyIsDefined(SemanticsActions.OnClick))
         } catch (timeout: Throwable) {
             val activity = compose.activity
             val visible = compose.onAllNodes(hasTestTag("home-first-app")).fetchSemanticsNodes().size
