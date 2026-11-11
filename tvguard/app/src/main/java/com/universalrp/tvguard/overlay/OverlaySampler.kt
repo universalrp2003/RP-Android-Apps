@@ -6,7 +6,6 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.Build
-import android.os.Environment
 import android.os.StatFs
 import com.universalrp.tvguard.hardware.CpuTimes
 import com.universalrp.tvguard.hardware.CpuUsage
@@ -96,26 +95,20 @@ object OverlaySampler {
     }
 
     /** Free space on the data filesystem, as reported by StatFs. */
-    fun storage(): OverlayMetric {
-        return try {
-            val stat = StatFs(Environment.getDataDirectory().absolutePath)
-            val available = stat.availableBytes
-            val total = stat.totalBytes
-            if (total <= 0 || available < 0 || available > total) {
-                OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
-            } else {
-                val gib = available.toDouble() / (1024.0 * 1024.0 * 1024.0)
-                val percent = StatusThresholds.percent(available, total)
-                OverlayMetric(
-                    "Storage",
-                    String.format(Locale.US, "%.1f GB", gib),
-                    StatusThresholds.storage(percent),
-                    true,
-                )
-            }
-        } catch (_: Exception) {
-            OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
-        }
+    fun storage(context: Context): OverlayMetric {
+        // The data partition alone is not "free storage" on a TV: it is one small slice of the
+        // drive, and using it produced an impossible "26.0 GB free" on a 16 GB set. The honest
+        // figure comes from the roomiest real volume this app can measure.
+        val volume = com.universalrp.tvguard.hardware.StorageTruth.bestFreeSpace(context)
+            ?: return OverlayMetric("Storage", "-- GB", Band.UNAVAILABLE, false)
+        val gib = volume.freeGb
+        val percent = StatusThresholds.percent(volume.availableBytes, volume.totalBytes)
+        return OverlayMetric(
+            "Storage",
+            String.format(Locale.US, "%.1f GB", gib),
+            StatusThresholds.storage(percent),
+            true,
+        )
     }
 
     /**

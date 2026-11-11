@@ -168,7 +168,7 @@ class StatusOverlayService : Service() {
                         update("ram", ramMetric)
                     }
                     if (storageMetric == null || now - lastStorage >= STORAGE_INTERVAL_MS) {
-                        storageMetric = OverlaySampler.storage()
+                        storageMetric = OverlaySampler.storage(this@StatusOverlayService)
                         lastStorage = now
                         update("storage", storageMetric)
                     }

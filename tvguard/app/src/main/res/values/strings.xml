@@ -176,8 +176,20 @@
 
     <!-- AI assistant -->
     <!-- Temperature -->
-    <string name="storage_permission_title">Storage access</string>
-    <string name="storage_permission_reason">Full storage access is only needed for the file hub, screenshots and Downloads. Without it the app shows the storage figures Android reports and cannot list files. Nothing is uploaded anywhere.</string>
-    <string name="storage_permission_open">Open system settings</string>
-    <string name="storage_permission_cancel">Not now</string>
+    <string name="debloater_screen_title">TV Debloater &amp; System Cleaner</string>
+    <string name="network_screen_title">Network diagnostics and real latency</string>
+    <string name="hidden_apps_heading">Show or hide apps</string>
+    <string name="hidden_apps_help">Tick an app to hide it from the home grid; untick it to show it again.</string>
+    <string name="hidden_apps_now">Hidden now: %1$d.</string>
+    <string name="hidden_apps_empty">No installed applications were reported. Open this screen again after the app list loads.</string>
+    <string name="running_heading">Recently used applications</string>
+    <string name="running_active_count">%1$d listed</string>
+    <string name="running_close_all">Close background apps</string>
+    <string name="hub_files_heading">Files (%1$d in Downloads and Screenshots)</string>
+    <string name="hub_files_empty">No files yet. Take a screenshot or upload an APK from your phone or computer browser.</string>
+    <string name="adb_guide_title">Wireless ADB debloat guide (no root)</string>
+    <string name="pill_position_short">Pill: %1$s</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_install">Install</string>
+    <string name="btn_delete">Delete</string>
 </resources>

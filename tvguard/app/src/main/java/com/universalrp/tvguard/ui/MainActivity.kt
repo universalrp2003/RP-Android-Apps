@@ -22,11 +22,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Focusable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -62,7 +62,6 @@ import androidx.compose.material.icons.filled.CheckBoxOutlineBlank
 import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
@@ -108,7 +107,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -274,7 +272,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
     // Overlay + AI are both optional and off by default.
     var overlayPermissionNeeded by remember { mutableStateOf(false) }
     var overlayPlacement by remember { mutableStateOf(OverlayPosition.load(context)) }
-    var askStorageAccess by remember { mutableStateOf(false) }
 
     var hardwareReport by remember { mutableStateOf<FullHardwareReport?>(null) }
     var ramPill by remember { mutableStateOf<RamEvidence?>(null) }
@@ -636,7 +633,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
             if (featureSettings.enabled(TvFeature.STATUS_BAR)) {
                 TopStatusBar(
                     settings = featureSettings,
-                    onRefreshClick = { auditRefreshVersion++ }
+                    onRefreshClick = { auditRefreshVersion++ },
+                    onTakeScreenshot = { takeScreenshot(false) }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -704,7 +702,9 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                     onOpenAbout = { toolsSubView = ToolsSubView.ABOUT },
                                     onSetDefaultLauncher = { promptSetDefaultLauncher(context) },
                                     // Ask before opening a system screen, and explain why.
-                                    onGrantStorage = { askStorageAccess = true },
+                                    // One tap goes straight to the system page: the extra
+                                    // explanation dialog was removed as an unwanted step.
+                                    onGrantStorage = { promptStoragePermission(context) },
                                     overlayPlacement = overlayPlacement,
                                     onMoveOverlay = { placement ->
                                         overlayPlacement = placement
@@ -738,7 +738,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                             }
                                         }
                                     },
-                                    onRefreshAudit = { auditRefreshVersion++ }
+                                    onRefreshAudit = { auditRefreshVersion++ },
+                                    needsStorageAccess = !hasAllFilesAccess()
                                 )
                             }
 
@@ -764,7 +765,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                                 .focusProperties { down = firstControlFocusRequester }
                                         )
                                         Text(
-                                            text = "TV Debloater & System Cleaner",
+                                            text = stringResource(R.string.debloater_screen_title),
                                             color = Color(0xFF94A3B8),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
@@ -818,7 +819,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                                 .focusProperties { down = retestFocusRequester }
                                         )
                                         Text(
-                                            text = "Network Diagnostics & Real Latency/Jitter",
+                                            text = stringResource(R.string.network_screen_title),
                                             color = Color(0xFF94A3B8),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
@@ -858,7 +859,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                                                 .focusProperties { down = firstHiddenFocusRequester }
                                         )
                                         Text(
-                                            text = "Show or hide apps",
+                                            text = stringResource(R.string.hidden_apps_heading),
                                             color = Color(0xFF94A3B8),
                                             fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold
@@ -921,50 +922,6 @@ fun TvGuardMainScreen(activity: MainActivity) {
         }
     }
 
-    // Storage access is requested from here, with an explanation first. The user asked for no
-    // separate settings-icon shortcut to this system screen: this dialog is the only entry
-    // point, and it opens the system page only if they confirm.
-    if (askStorageAccess) {
-        Dialog(
-            onDismissRequest = { askStorageAccess = false },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Column(
-                modifier = Modifier
-                    .background(Color(0xFF0F172A), RoundedCornerShape(18.dp))
-                    .border(2.dp, Color(0xFF00E5FF), RoundedCornerShape(18.dp))
-                    .padding(24.dp)
-                    .focusGroup(),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.storage_permission_title),
-                    color = Color(0xFF00E5FF), fontSize = 20.sp, fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = stringResource(R.string.storage_permission_reason),
-                    color = Color(0xFFCBD5E1), fontSize = 14.sp
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    TvFocusButton(
-                        text = stringResource(R.string.storage_permission_open),
-                        onClick = {
-                            askStorageAccess = false
-                            promptStoragePermission(context)
-                        },
-                        modifier = Modifier.weight(1f).testTag("storage-permission-open")
-                    )
-                    TvFocusButton(
-                        text = stringResource(R.string.storage_permission_cancel),
-                        onClick = { askStorageAccess = false },
-                        color = Color(0xFF94A3B8),
-                        modifier = Modifier.weight(1f).testTag("storage-permission-cancel")
-                    )
-                }
-            }
-        }
-    }
-
     // App Context / Options Dialog (on long-press or Menu button)
     if (selectedAppForOptions != null) {
         val app = selectedAppForOptions!!
@@ -1019,7 +976,8 @@ fun TvGuardMainScreen(activity: MainActivity) {
 @Composable
 fun TopStatusBar(
     settings: TvFeatureSettings,
-    onRefreshClick: () -> Unit
+    onRefreshClick: () -> Unit,
+    onTakeScreenshot: () -> Unit
 ) {
     var currentTime by remember { mutableStateOf("") }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -1033,8 +991,9 @@ fun TopStatusBar(
         }
     }
 
-    // Title and clock only. All readings live in the floating pill, and the microphone and
-    // camera shortcuts are not part of this app any more.
+    // Title, clock and a small set of actions. All readings live in the floating pill. The
+    // camera button is back because taking a screenshot from the home bar was asked for; the
+    // microphone is not, because the AI feature was removed.
     Row(
         modifier = Modifier.fillMaxWidth().testTag("status-bar")
             .background(Color(0xFF111827), RoundedCornerShape(12.dp))
@@ -1051,8 +1010,11 @@ fun TopStatusBar(
                 Text(currentTime, color = Color(0xFF94A3B8), fontSize = 12.sp)
             }
         }
-        if (settings.enabled(TvFeature.HARDWARE_AUDIT)) {
-            TvFocusIconButton(Icons.Default.Refresh, onRefreshClick, stringResource(R.string.btn_run_audit))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (settings.enabled(TvFeature.SCREENSHOT))
+                TvFocusIconButton(Icons.Default.CameraAlt, onTakeScreenshot, stringResource(R.string.screenshot_title))
+            if (settings.enabled(TvFeature.HARDWARE_AUDIT))
+                TvFocusIconButton(Icons.Default.Refresh, onRefreshClick, stringResource(R.string.btn_run_audit))
         }
     }
 }
@@ -1138,7 +1100,7 @@ fun AppOptionsDialog(
                 Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     TvDialogActionButton(Icons.Default.PlayArrow, stringResource(R.string.action_open_app), Color(0xFF00E5FF), onLaunch, actionModifier(0))
                     TvDialogActionButton(Icons.Default.Info, stringResource(R.string.action_app_info), Color(0xFF38BDF8), onOpenInfo, actionModifier(1))
-                    TvDialogActionButton(if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
+                    TvDialogActionButton(Icons.Default.Star,
                         stringResource(if (app.isFavorite) R.string.action_remove_favorite else R.string.action_add_favorite),
                         Color(0xFFFFD600), onToggleFavorite, actionModifier(2))
                     TvDialogActionButton(Icons.Default.VisibilityOff, stringResource(R.string.action_hide_app), Color(0xFFF59E0B), onHideApp, actionModifier(3))
@@ -1215,15 +1177,15 @@ fun TvHiddenAppsView(
         item {
             Column {
                 Text(
-                    text = "Show or hide apps",
+                    text = stringResource(R.string.hidden_apps_heading),
                     color = Color(0xFF00E5FF),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "Tick an app to hide it from the home grid; untick it to show it again. " +
-                        "Hidden now: ${hiddenApps.size}.",
+                    text = stringResource(R.string.hidden_apps_help) + " " +
+                        stringResource(R.string.hidden_apps_now, hiddenApps.size),
                     color = Color(0xFF94A3B8),
                     fontSize = 12.sp
                 )
@@ -1233,7 +1195,7 @@ fun TvHiddenAppsView(
         if (allApps.isEmpty()) {
             item {
                 Text(
-                    text = "No installed applications were reported. Open this screen again after the app list loads.",
+                    text = stringResource(R.string.hidden_apps_empty),
                     color = Color(0xFF94A3B8),
                     fontSize = 13.sp
                 )
@@ -1648,12 +1610,17 @@ fun TvAppCard(
                     Spacer(modifier = Modifier.width(1.dp))
                 }
 
-                Icon(
-                    imageVector = if (app.isFavorite) Icons.Default.Star else Icons.Default.Favorite,
-                    contentDescription = null,
-                    tint = if (app.isFavorite) Color(0xFFFFD600) else if (isFocused) Color.White.copy(alpha = 0.7f) else Color(0xFF334155),
-                    modifier = Modifier.size(20.dp)
-                )
+                // No heart on every tile: it was decoration, and it made every app look
+                // favourited on a screen with no pointer to explain it. The star in the options
+                // menu and the Favourites row are the real indicators.
+                if (app.isFavorite) {
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = null,
+                        tint = Color(0xFFFFD600),
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
 
             // Big, clean, beautiful App Icon: 56.dp
@@ -1757,12 +1724,38 @@ fun TvToolsView(
     onOpenSettings: () -> Unit,
     onCloseApp: (String) -> Unit,
     onCloseAllRunning: () -> Unit,
-    onRefreshAudit: () -> Unit
+    onRefreshAudit: () -> Unit,
+    needsStorageAccess: Boolean
 ) {
+    // The Tools screen is taller than the TV, and Compose could not always find a focus target
+    // below the status-pill placement buttons, so Down appeared to do nothing and the hardware
+    // section was unreachable with the remote. The chain below is explicit:
+    //   placement buttons -> a section anchor -> the audit and storage cards.
+    // Text only, never a big card, so nothing pulls the eye away from the readings.
+    val placementDown = remember { FocusRequester() }
+    val glanceDown = remember { FocusRequester() }
+
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
+        // A focus landing point between the status-pill placement buttons and the cards. It is
+        // plain text, not a button, so it never competes with the readings.
+        item {
+            Focusable {
+                Text(
+                    text = stringResource(R.string.tab_home),
+                    color = Color(0xFF64748B),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .testTag("tools-section-home")
+                        .focusRequester(glanceDown)
+                        .focusable()
+                        .focusProperties { down = FocusRequester.Default }
+                )
+            }
+        }
         // Essential launcher settings remain available in lightweight mode.
         item {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -1782,40 +1775,31 @@ fun TvToolsView(
                     Icons.Default.Home, Color(0xFFA78BFA), onSetDefaultLauncher, Modifier.weight(1f))
             }
             if (settings.enabled(TvFeature.STATUS_OVERLAY)) {
-                // A remote has no pointer, so the pill is positioned from here: pick a corner,
-                // then nudge it. The choice is saved and applied immediately.
+                // A remote has no pointer, so the pill is positioned from here.
+                //
+                // This used to be four big corner cards plus four nudge buttons, which made the
+                // screen taller than the TV and left Down with nowhere to go. It is now one
+                // compact line of small buttons, and the last one hands focus to the next
+                // section explicitly.
                 Spacer(Modifier.height(10.dp))
-                Text(
-                    text = "Status pill position: " + OverlayPlacement.presetName(overlayPlacement),
-                    color = Color(0xFF94A3B8), fontSize = 13.sp
-                )
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    listOf(
-                        "Top left" to OverlayPlacement.TOP_LEFT,
-                        "Top right" to OverlayPlacement.TOP_RIGHT,
-                        "Bottom left" to OverlayPlacement.BOTTOM_LEFT,
-                        "Bottom right" to OverlayPlacement.BOTTOM_RIGHT,
-                    ).forEach { (label, preset) ->
-                        TvActionCard(
-                            label, "Corner", Icons.Default.Settings, Color(0xFF38BDF8),
-                            { onMoveOverlay(preset) },
-                            Modifier.weight(1f).testTag("overlay-corner-" + OverlayPlacement.presetName(preset))
-                        )
-                    }
-                }
-                Spacer(Modifier.height(8.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.pill_position_short, overlayPlacement.presetName(overlayPlacement)),
+                        color = Color(0xFF94A3B8), fontSize = 12.sp,
+                        modifier = Modifier.align(Alignment.CenterVertically).weight(1f),
+                        maxLines = 1
+                    )
                     val step = OverlayPlacement.STEP_DP
-                    // Plain text buttons: an icon set is not guaranteed to contain arrow glyphs.
-                    TvFocusButton("◀ Move left", { onMoveOverlay(overlayPlacement.nudged(-step, 0)) },
-                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-left"))
-                    TvFocusButton("Move right ▶", { onMoveOverlay(overlayPlacement.nudged(step, 0)) },
-                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-right"))
-                    TvFocusButton("▲ Move up", { onMoveOverlay(overlayPlacement.nudged(0, -step)) },
-                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-up"))
-                    TvFocusButton("▼ Move down", { onMoveOverlay(overlayPlacement.nudged(0, step)) },
-                        Color(0xFF94A3B8), Modifier.weight(1f).testTag("overlay-down"))
+                    TvFocusButton("◀", { onMoveOverlay(overlayPlacement.nudged(-step, 0)) },
+                        Color(0xFF94A3B8), Modifier.testTag("overlay-left"))
+                    TvFocusButton("▶", { onMoveOverlay(overlayPlacement.nudged(step, 0)) },
+                        Color(0xFF94A3B8), Modifier.testTag("overlay-right"))
+                    TvFocusButton("▲", { onMoveOverlay(overlayPlacement.nudged(0, -step)) },
+                        Color(0xFF94A3B8), Modifier.testTag("overlay-up"))
+                    TvFocusButton("▼", { onMoveOverlay(overlayPlacement.nudged(0, step)) },
+                        Color(0xFF94A3B8),
+                        Modifier.testTag("overlay-down").focusRequester(placementDown)
+                            .focusProperties { down = placementDown })
                 }
             }
             Spacer(Modifier.height(10.dp))
@@ -1859,7 +1843,11 @@ fun TvToolsView(
                         TvActionCard(stringResource(R.string.hardware_audit_title), stringResource(R.string.hardware_audit_safe_subtitle),
                             Icons.Default.Memory, Color(0xFF00E5FF), onRefreshAudit, Modifier.weight(1f).testTag("tools-audit"))
                     else Spacer(Modifier.weight(1f))
-                    if (settings.enabled(TvFeature.FILE_HUB) || settings.enabled(TvFeature.SCREENSHOT))
+                    // Only when access is genuinely missing. With it granted there is nothing
+                    // to ask for, so the card disappears instead of sitting there confusingly.
+                    if (needsStorageAccess &&
+                        (settings.enabled(TvFeature.FILE_HUB) || settings.enabled(TvFeature.SCREENSHOT))
+                    )
                         TvActionCard(stringResource(R.string.storage_quick_title), stringResource(R.string.storage_quick_subtitle),
                             Icons.Default.Storage, Color(0xFF38BDF8), onGrantStorage, Modifier.weight(1f))
                     else Spacer(Modifier.weight(1f))
@@ -1878,21 +1866,21 @@ fun TvToolsView(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Running Applications & Process Memory",
+                            text = stringResource(R.string.running_heading),
                             color = Color(0xFF00E5FF),
                             fontSize = 15.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "(${runningApps.size} active)",
+                            text = stringResource(R.string.running_active_count, runningApps.size),
                             color = Color(0xFF94A3B8),
                             fontSize = 12.sp
                         )
                     }
 
                     TvFocusButton(
-                        text = "Close All Background Apps",
+                        text = stringResource(R.string.running_close_all),
                         onClick = onCloseAllRunning,
                         color = Color(0xFF00E676)
                     )
@@ -2156,7 +2144,7 @@ fun TvRunningAppCard(
                 )
 
                 TvFocusButton(
-                    text = "Close",
+                    text = stringResource(R.string.btn_close),
                     onClick = onCloseApp,
                     color = Color(0xFFFF5252)
                 )
@@ -2517,7 +2505,7 @@ fun TvShareView(
         // TV Downloaded Files and Screenshots Section
         item {
             Text(
-                text = "TV Screenshots (${files.size} files in /sdcard/Download/Screenshots)",
+                text = stringResource(R.string.hub_files_heading, files.size),
                 color = Color.White,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Bold
@@ -2535,7 +2523,7 @@ fun TvShareView(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "No files found in TV Downloads folder yet.\nTake a screenshot or upload an APK from your phone/PC browser above!",
+text = stringResource(R.string.hub_files_empty),
                         color = Color(0xFF94A3B8),
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
@@ -2612,13 +2600,13 @@ fun TvShareView(
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (isApk) {
                                 TvFocusButton(
-                                    text = "Install",
+                                    text = stringResource(R.string.btn_install),
                                     onClick = { onInstallApk(file) },
                                     color = Color(0xFF00E676)
                                 )
                             }
                             TvFocusButton(
-                                text = "Delete",
+                                text = stringResource(R.string.btn_delete),
                                 onClick = { onDeleteFile(file) },
                                 color = Color(0xFFFF5252)
                             )
@@ -3058,7 +3046,7 @@ fun AdbGuideDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Wireless ADB Debloat Guide (Unrooted)",
+                        text = stringResource(R.string.adb_guide_title),
                         color = Color(0xFF00E5FF),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -3090,7 +3078,7 @@ fun AdbGuideDialog(
                 Spacer(modifier = Modifier.height(14.dp))
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
                     TvFocusButton(
-                        text = "Close",
+                        text = stringResource(R.string.btn_close),
                         onClick = onDismiss,
                         color = Color(0xFF00E5FF),
                         modifier = Modifier.focusRequester(closeFocusRequester)
@@ -3126,6 +3114,10 @@ fun promptSetDefaultLauncher(context: Context) {
         } catch (_: Throwable) {}
     }
 }
+
+/** True when this Android version lets us read Downloads without a special grant. */
+fun hasAllFilesAccess(): Boolean =
+    Build.VERSION.SDK_INT < Build.VERSION_CODES.R || Environment.isExternalStorageManager()
 
 fun promptStoragePermission(context: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

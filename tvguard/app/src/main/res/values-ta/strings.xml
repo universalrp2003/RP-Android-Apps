@@ -176,8 +176,20 @@
 
     <!-- AI assistant -->
     <!-- Temperature -->
-    <string name="storage_permission_title">சேமிப்பு அணுகல்</string>
-    <string name="storage_permission_reason">முழு சேமிப்பு அணுகல் கோப்பு பரிமாற்றம், திரைப்படங்கள் மற்றும் Downloads-க்கு மட்டுமே தேவை. இது இல்லாமல் ஆண்ட்ராய்டு தரும் சேமிப்பு அளவுகளை மட்டும் காட்ட முடியும், கோப்புகளை பட்டியலிட முடியாது. எதுவும் வெளியே அனுப்பப்படவில்லை.</string>
-    <string name="storage_permission_open">சிஸ்டம் அமைப்புகளைத் திற</string>
-    <string name="storage_permission_cancel">இப்போது வேண்டாம்</string>
+    <string name="debloater_screen_title">டிவி பிளோட் நீக்கி &amp; சிஸ்டம் கிளீனர்</string>
+    <string name="network_screen_title">நெட்வொர்க் பரிசோதனை மற்றும் உண்மையான தாமதம்</string>
+    <string name="hidden_apps_heading">செயலிகளைக் காட்டு அல்லது மறை</string>
+    <string name="hidden_apps_help">ஒரு செயலியை மறைக்க அதைத் தேர்ந்தெடுக்கவும்; மீண்டும் காட்ட தேர்வை நீக்கவும்.</string>
+    <string name="hidden_apps_now">இப்போது மறைக்கப்பட்டவை: %1$d.</string>
+    <string name="hidden_apps_empty">நிறுவப்பட்ட செயலிகள் எதுவும் கிடைக்கவில்லை. பட்டியல் ஏற்றிய பிறகு இந்தத் திரையை மீண்டும் திறக்கவும்.</string>
+    <string name="running_heading">சமீபத்தில் பயன்படுத்திய செயலிகள்</string>
+    <string name="running_active_count">%1$d பட்டியலில்</string>
+    <string name="running_close_all">பின்னணி செயலிகளை மூடு</string>
+    <string name="hub_files_heading">கோப்புகள் (பதிவிறக்கம் மற்றும் திரைப்படங்களில் %1$d)</string>
+    <string name="hub_files_empty">இன்னும் கோப்புகள் இல்லை. திரைப்படம் எடுக்கவும் அல்லது உங்கள் தொலைபேசி/கணினி உலாவியில் இருந்து APK பதிவேற்றவும்.</string>
+    <string name="adb_guide_title">வயர்லெஸ் ADB பிளோட் வழிகாட்டி (ரூட் தேவையில்லை)</string>
+    <string name="pill_position_short">பில்: %1$s</string>
+    <string name="btn_close">மூடு</string>
+    <string name="btn_install">நிறுவு</string>
+    <string name="btn_delete">நீக்கு</string>
 </resources>

@@ -42,10 +42,10 @@ android {
         // per-reading switches and the long-press menu are gone, the pill switch no longer
         // depends on the in-app header, and uploaded files appear in the hub. It updates the
         // rejected code 4 install in place.
-        versionCode = if (upgradeFixture) 1 else 5
+        versionCode = if (upgradeFixture) 1 else 6
         // The upgrade fixture deliberately impersonates the older 1.0 / code 1 install so a
         // same-signer in-place upgrade can be exercised; only the real candidate moves on.
-        versionName = if (upgradeFixture) "1.0" else "1.3"
+        versionName = if (upgradeFixture) "1.0" else "1.4"
         vectorDrawables.useSupportLibrary = true
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
