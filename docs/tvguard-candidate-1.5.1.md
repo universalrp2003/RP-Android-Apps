@@ -19,11 +19,16 @@ place in the app that still printed a doubled percent sign.
 
 ## New in the phone hub
 
-The Wi-Fi hub page now has a **RP App Store** card (between the maintenance actions and the remote
-control) that opens <https://universalrp2003.github.io/RP-Android-Apps/>. The store is a web page,
-so the app list can grow without shipping a new APK. The card says plainly that it opens the store
-and that installs still happen from the file list, where Android asks the user to confirm — it does
-not pretend to be an installer store.
+The Wi-Fi hub page now has an **RP App Store** card (between the maintenance actions and the remote
+control) that opens <https://universalrp2003.github.io/RP-Android-Apps/>. It is a shortcut to the
+official download page from the phone already paired to the TV, so nobody has to remember an
+address. It changes no install behaviour: the APK is opened from the hub's file list and Android
+asks the user to confirm. The card's wording was deliberately left as built — it names the file
+list rather than promising an install — because changing a string now would change the candidate's
+hash after the owner had been given it.
+
+The Tamilan Store model is **unchanged** — a new app still means a new Tamilan Store APK. See
+[store-model-decision.md](store-model-decision.md).
 
 ## Identities
 
