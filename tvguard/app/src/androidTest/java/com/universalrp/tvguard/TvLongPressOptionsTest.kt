@@ -39,6 +39,12 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalTestApi::class)
 @RunWith(AndroidJUnit4::class)
 class TvLongPressOptionsTest {
+
+    private companion object {
+        /** Small enough that the frame pump happens often during a held key. */
+        const val HOLD_POLL_MS = 50L
+    }
+
     @get:Rule val compose = createAndroidComposeRule<MainActivity>()
     private var previousSettings: TvFeatureSettings? = null
 
@@ -151,7 +157,14 @@ class TvLongPressOptionsTest {
     private fun holdOk(holdMs: Long) {
         val base = android.os.SystemClock.uptimeMillis()
         sendKey(KeyEvent.ACTION_DOWN, base, base)
-        Thread.sleep(holdMs)
+        // Wait out the hold while letting Compose keep rendering, but send NO key events in
+        // between: that is the whole point, because a real remote sends no auto-repeat.
+        var waited = 0L
+        while (waited < holdMs) {
+            Thread.sleep(HOLD_POLL_MS)
+            waited += HOLD_POLL_MS
+            compose.waitForIdle()
+        }
         sendKey(KeyEvent.ACTION_UP, base, base + holdMs)
     }
 
