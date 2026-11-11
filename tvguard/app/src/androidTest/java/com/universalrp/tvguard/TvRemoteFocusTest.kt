@@ -3,8 +3,8 @@ package com.universalrp.tvguard
 import android.content.Intent
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.printToString
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsOff
@@ -78,13 +78,11 @@ class TvRemoteFocusTest {
         } catch (timeout: Throwable) {
             val activity = compose.activity
             val visible = compose.onAllNodes(hasTestTag("home-first-app")).fetchSemanticsNodes().size
-            val tags = runCatching {
-                compose.onAllNodes(SemanticsMatcher("has a test tag") { node ->
-                    node.config.getOrNull(SemanticsProperties.TestTag) != null
-                }).fetchSemanticsNodes().mapNotNull { node ->
-                    node.config.getOrNull(SemanticsProperties.TestTag)
-                }
-            }.getOrElse { listOf("dump failed: " + it) }
+            val tree: String = try {
+                compose.onRoot().printToString()
+            } catch (dumpFailure: Throwable) {
+                "tree dump failed: " + dumpFailure
+            }
             fun query(category: String) = runCatching {
                 activity.packageManager.queryIntentActivities(
                     Intent(Intent.ACTION_MAIN).addCategory(category), 0
@@ -97,7 +95,7 @@ class TvRemoteFocusTest {
                 "home-first-app never gained focus." +
                     " self=" + activity.packageName +
                     " taggedNodes=" + visible +
-                    " tags=" + tags +
+                    " tree=" + tree +
                     " leanback=" + query(Intent.CATEGORY_LEANBACK_LAUNCHER) +
                     " launcher=" + query(Intent.CATEGORY_LAUNCHER) +
                     " catalog=" + catalog +
