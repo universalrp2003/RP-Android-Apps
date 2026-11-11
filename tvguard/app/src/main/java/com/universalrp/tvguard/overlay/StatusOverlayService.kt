@@ -94,7 +94,7 @@ class StatusOverlayService : Service() {
                 setStroke(dp(1), Color.argb(150, 148, 163, 184))
             }
         }
-        listOf("cpu", "ram", "storage", "wifi", "net").forEach { key ->
+        listOf("cpu", "ram", "storage", "temp", "wifi", "net").forEach { key ->
             val label = TextView(this).apply {
                 setTextColor(Color.WHITE)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
@@ -135,6 +135,8 @@ class StatusOverlayService : Service() {
             var lastRam = 0L
             var storageMetric: OverlayMetric? = null
             var ramMetric: OverlayMetric? = null
+            var temperatureMetric: OverlayMetric? = null
+            var lastTemp = 0L
             while (isActive) {
                 if (!isStillWanted()) {
                     stopSelf()
@@ -152,6 +154,11 @@ class StatusOverlayService : Service() {
                         storageMetric = OverlaySampler.storage()
                         lastStorage = now
                         update("storage", storageMetric)
+                    }
+                    if (temperatureMetric == null || now - lastTemp >= TEMP_INTERVAL_MS) {
+                        temperatureMetric = OverlaySampler.temperature()
+                        lastTemp = now
+                        update("temp", temperatureMetric)
                     }
                     update("wifi", OverlaySampler.wifi(this@StatusOverlayService))
                     // The network probe is the expensive one; keep it to the same cadence as
@@ -250,6 +257,8 @@ class StatusOverlayService : Service() {
         private const val CPU_INTERVAL_MS = 2_500L
         private const val RAM_INTERVAL_MS = 10_000L
         private const val STORAGE_INTERVAL_MS = 30_000L
+        // Temperature changes slowly; there is no value in reading it more often.
+        private const val TEMP_INTERVAL_MS = 20_000L
         private const val NETWORK_INTERVAL_MS = 15_000L
 
         /** True only when the saved settings ask for the overlay; the caller checks permission. */

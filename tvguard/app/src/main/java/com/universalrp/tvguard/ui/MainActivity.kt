@@ -137,6 +137,8 @@ import com.universalrp.tvguard.hardware.CpuUsage
 import com.universalrp.tvguard.hardware.FullHardwareReport
 import com.universalrp.tvguard.hardware.HardwareAuditor
 import com.universalrp.tvguard.hardware.RamEvidence
+import com.universalrp.tvguard.hardware.ThermalReading
+import com.universalrp.tvguard.hardware.ThermalReader
 import com.universalrp.tvguard.hardware.StorageEvidence
 import com.universalrp.tvguard.launcher.LaunchableApp
 import com.universalrp.tvguard.launcher.TvAppCatalog
@@ -354,6 +356,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
     var hardwareReport by remember { mutableStateOf<FullHardwareReport?>(null) }
     var ramPill by remember { mutableStateOf<RamEvidence?>(null) }
     var storagePill by remember { mutableStateOf<StorageEvidence?>(null) }
+    var tempPill by remember { mutableStateOf<ThermalReading?>(null) }
     var cpuUsage by remember { mutableStateOf<Int?>(null) }
     val cpuCores = remember { Runtime.getRuntime().availableProcessors().coerceAtLeast(1) }
     var networkStatus by remember { mutableStateOf<NetworkStatus?>(null) }
@@ -428,6 +431,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
             runningActionJob?.cancel()
             runningApps = emptyList()
         }
+        if (!settings.enabled(TvFeature.TEMP_PILL)) tempPill = null
         if (!settings.enabled(TvFeature.HARDWARE_AUDIT)) hardwareReport = null
         if (!settings.enabled(TvFeature.NETWORK_TOOLS) && toolsSubView == ToolsSubView.NETWORK) {
             toolsSubView = ToolsSubView.OVERVIEW
@@ -622,6 +626,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                     cpuUsage = null
                     ramPill = null
                     storagePill = null
+                    tempPill = null
                     networkStatus = null
                     debloatItems = emptyList()
                     debloaterHasRoot = false
@@ -727,6 +732,18 @@ fun TvGuardMainScreen(activity: MainActivity) {
             while (true) {
                 storagePill = sampleOrNull { HardwareAuditor.auditStorage(context) }
                 delay(30_000L)
+            }
+        }
+    }
+    val tempEnabled = featureSettings.enabled(TvFeature.TEMP_PILL)
+    LaunchedEffect(lifecycleOwner, tempEnabled) {
+        tempPill = null
+        if (tempEnabled) lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                // A TV SoC exposes temperature only on some vendors; null is reported as
+                // unavailable rather than being replaced by a guess.
+                tempPill = sampleOrNull { ThermalReader.read() }
+                delay(20_000L)
             }
         }
     }
@@ -867,6 +884,7 @@ fun TvGuardMainScreen(activity: MainActivity) {
                     settings = featureSettings,
                     ram = ramPill,
                     storage = storagePill,
+                    temperature = tempPill,
                     network = networkStatus,
                     cpuUsage = cpuUsage,
                     cpuCores = cpuCores,
@@ -1300,6 +1318,7 @@ fun TopStatusBar(
     settings: TvFeatureSettings,
     ram: RamEvidence?,
     storage: StorageEvidence?,
+    temperature: ThermalReading?,
     network: NetworkStatus?,
     cpuUsage: Int?,
     cpuCores: Int,
@@ -1343,7 +1362,7 @@ fun TopStatusBar(
                     TvFocusIconButton(Icons.Default.Refresh, onRefreshClick, stringResource(R.string.btn_run_audit))
             }
         }
-        val pills = listOf(TvFeature.RAM_PILL, TvFeature.STORAGE_PILL, TvFeature.CPU_PILL, TvFeature.NETWORK_PILL)
+        val pills = listOf(TvFeature.RAM_PILL, TvFeature.STORAGE_PILL, TvFeature.CPU_PILL, TvFeature.NETWORK_PILL, TvFeature.TEMP_PILL)
         if (pills.any { settings.enabled(it) }) {
             Spacer(Modifier.height(8.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1395,6 +1414,20 @@ fun TopStatusBar(
                     }
                     StatusPill(Icons.Default.Speed, stringResource(R.string.cpu_pill, cpuUsage?.let { "$it%" } ?: "--", cpuCores), color,
                         Modifier.testTag("pill-cpu"))
+                }
+                if (settings.enabled(TvFeature.TEMP_PILL)) {
+                    val reading = temperature
+                    StatusPill(
+                        Icons.Default.Thermostat,
+                        label = reading?.format() ?: stringResource(R.string.pill_temp_unavailable),
+                        color = when (com.universalrp.tvguard.overlay.StatusThresholds.temperature(reading?.celsius)) {
+                            com.universalrp.tvguard.overlay.Band.GOOD -> Color(0xFF00E676)
+                            com.universalrp.tvguard.overlay.Band.WARN -> Color(0xFFFFD600)
+                            com.universalrp.tvguard.overlay.Band.BAD -> Color(0xFFFF5252)
+                            com.universalrp.tvguard.overlay.Band.UNAVAILABLE -> Color(0xFF94A3B8)
+                        },
+                        modifier = Modifier.testTag("pill-temp")
+                    )
                 }
                 if (settings.enabled(TvFeature.NETWORK_PILL)) {
                     val color = when (network?.qualityRating) {

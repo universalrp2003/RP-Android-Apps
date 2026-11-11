@@ -269,4 +269,8 @@
     <string name="ai_mic_test">சோதிக்க ரிமோட் விசையை அழுத்துங்கள்</string>
     <string name="ai_mic_test_result">கடைசியாக வந்த விசை: %1$s</string>
     <string name="ai_mic_test_none">இன்னும் விசை வரவில்லை.</string>
+    <!-- Temperature -->
+    <string name="feature_temp_pill">வெப்பநிலைக் காட்டி</string>
+    <string name="feature_temp_pill_desc">திரையில் இருக்கும்போது சுமார் 20 நொடிக்கு ஒருமுறை டிவி செயலியின் வெப்பநிலையைப் படிக்கும். மேல் நிலைப் பட்டி தேவை. பல டிவிகளில் உணரி இல்லை; அப்போது யூகிக்காமல் "தகவல் இல்லை" என்று காட்டும்.</string>
+    <string name="pill_temp_unavailable">வெப்பநிலை தெரியவில்லை</string>
 </resources>

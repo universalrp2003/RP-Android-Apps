@@ -147,6 +147,7 @@ private fun featureTitle(feature: TvFeature): Int = when (feature) {
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps
     TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay
     TvFeature.AI_ASSISTANT -> R.string.feature_ai_assistant
+    TvFeature.TEMP_PILL -> R.string.feature_temp_pill
 }
 
 private fun featureDescription(feature: TvFeature): Int = when (feature) {
@@ -167,4 +168,5 @@ private fun featureDescription(feature: TvFeature): Int = when (feature) {
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps_desc
     TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay_desc
     TvFeature.AI_ASSISTANT -> R.string.feature_ai_assistant_desc
+    TvFeature.TEMP_PILL -> R.string.feature_temp_pill_desc
 }

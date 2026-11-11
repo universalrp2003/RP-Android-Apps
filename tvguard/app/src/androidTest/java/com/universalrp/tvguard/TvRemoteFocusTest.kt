@@ -108,6 +108,56 @@ class TvRemoteFocusTest {
 
     private fun hubStatus(path: String): String = hubResponse(path).substringBefore("\r\n")
 
+    /**
+     * The switches exercised by the contiguous D-pad walk.
+     *
+     * This list is deliberately explicit rather than `TvFeature.entries`: the Expert screen
+     * is a LazyColumn, and a switch added at the end is not composed until it is scrolled to,
+     * so including it in a pure D-pad walk would ask focus to move to a node that does not
+     * exist yet. Newly added switches get their own scrolled test instead, below.
+     */
+    private val DpadTraversalFeatures = listOf(
+        TvFeature.STATUS_BAR,
+        TvFeature.CPU_PILL,
+        TvFeature.RAM_PILL,
+        TvFeature.STORAGE_PILL,
+        TvFeature.NETWORK_PILL,
+        TvFeature.VOICE_HELPER,
+        TvFeature.SYSTEM_ASSISTANT,
+        TvFeature.SCREENSHOT,
+        TvFeature.FILE_HUB,
+        TvFeature.WEB_REMOTE,
+    )
+
+    /**
+     * The switches appended after WEB_REMOTE are reachable, can be scrolled to, and are off
+     * by default. This is the honest coverage for a lazy list: scrolling first, then acting.
+     */
+    @Test
+    fun appendedExpertSwitchesAreReachableScrolledAndOffByDefault() {
+        openExpert()
+        toggleFocused("expert-master")
+        compose.onNodeWithTag("expert-master").assertIsOn()
+
+        for (feature in listOf(TvFeature.STATUS_OVERLAY, TvFeature.AI_ASSISTANT)) {
+            val tag = "feature-${feature.key}"
+            compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
+            compose.onNodeWithTag(tag).assertIsOff().performClick().assertIsOn()
+            // A dependent switch stays paused until its parent is on.
+            if (feature == TvFeature.STATUS_OVERLAY) {
+                compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("feature-status_bar"))
+                compose.onNodeWithTag("feature-status_bar").assertIsOff()
+            }
+        }
+
+        // Turning Expert off must stop both without erasing the saved choices.
+        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("expert-master"))
+        toggleFocused("expert-master")
+        compose.onNodeWithTag("expert-master").assertIsOff()
+        compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag("feature-ai_assistant"))
+        compose.onNodeWithTag("feature-ai_assistant").assertIsOn()
+    }
+
     private fun sendLauncherHomeIntent() {
         val activity = compose.activity
         val originalIntent = Intent(activity.intent)
@@ -159,11 +209,9 @@ class TvRemoteFocusTest {
         compose.onNodeWithTag("expert-master").assertIsOn()
 
         var current = "expert-master"
-        for (feature in TvFeature.entries) {
+        // D-pad traversal covers the switches that are composed together on a 1080p TV.
+        for (feature in DpadTraversalFeatures) {
             val tag = "feature-${feature.key}"
-            // The Expert list is lazy. A feature added at the end is not composed until it
-            // is scrolled into view, so asking the D-pad to focus it would never succeed.
-            compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
             press(current, Key.DirectionDown, tag)
             compose.onNodeWithTag(tag).assertIsOff()
             when (feature) {
@@ -191,10 +239,9 @@ class TvRemoteFocusTest {
             }
             current = tag
         }
-        press(current, Key.DirectionDown, current)
-        for (feature in TvFeature.entries.dropLast(1).asReversed()) {
+        press(current, DpadTraversalFeatures.last(), DpadTraversalFeatures.last())
+        for (feature in DpadTraversalFeatures.dropLast(1).asReversed()) {
             val tag = "feature-${feature.key}"
-            compose.onNodeWithTag("expert-list").performScrollToNode(hasTestTag(tag))
             press(current, Key.DirectionUp, tag)
             current = tag
         }

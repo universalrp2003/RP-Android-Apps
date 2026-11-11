@@ -175,6 +175,24 @@ object OverlaySampler {
         )
     }
 
+    /**
+     * SoC temperature. Reading /sys/class/thermal is a small file read, but it is still done
+     * off the main thread and on a slow cadence. Unavailable is shown as unavailable.
+     */
+    suspend fun temperature(): OverlayMetric = withContextIo {
+        val reading = com.universalrp.tvguard.hardware.ThermalReader.read()
+        if (!reading.available) {
+            OverlayMetric("Temp", "Temp --", Band.UNAVAILABLE, false)
+        } else {
+            OverlayMetric(
+                "Temp",
+                reading.format(),
+                StatusThresholds.temperature(reading.celsius),
+                true,
+            )
+        }
+    }
+
     /** Call when the overlay stops so the next start does not compute a bogus CPU delta. */
     fun resetCpuBaseline() {
         previousCpu = null

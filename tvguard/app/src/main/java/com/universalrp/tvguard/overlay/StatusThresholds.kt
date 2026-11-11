@@ -72,6 +72,21 @@ object StatusThresholds {
     }
 
     /**
+     * SoC temperature in degrees Celsius.
+     *
+     * Bands are advisory: the TV's own thermal governor is authoritative and will throttle
+     * before these are reached. Below 70 °C is normal for a TV box under load; a TV that is
+     * sustained above 85 °C is worth investigating for airflow.
+     */
+    fun temperature(celsius: Double?): Band = when {
+        celsius == null -> Band.UNAVAILABLE
+        celsius < -10.0 || celsius > 150.0 -> Band.UNAVAILABLE
+        celsius < 70.0 -> Band.GOOD
+        celsius < 85.0 -> Band.WARN
+        else -> Band.BAD
+    }
+
+    /**
      * Percentage helper that refuses to invent a number from nonsense input, e.g. a free
      * value larger than the total or a zero total.
      */

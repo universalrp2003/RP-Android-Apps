@@ -269,4 +269,8 @@
     <string name="ai_mic_test">Press a remote key to test</string>
     <string name="ai_mic_test_result">Last key received: %1$s</string>
     <string name="ai_mic_test_none">No key received yet.</string>
+    <!-- Temperature -->
+    <string name="feature_temp_pill">Temperature pill</string>
+    <string name="feature_temp_pill_desc">While visible, read the TV processor temperature about every 20 seconds. Requires the top status bar. Many TVs do not expose a sensor; it shows unavailable rather than a guess.</string>
+    <string name="pill_temp_unavailable">Temp unavailable</string>
 </resources>

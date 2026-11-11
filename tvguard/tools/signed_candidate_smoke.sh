@@ -60,7 +60,8 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-focus.log" \
   --test appOptionsDirectionsStayInDialogAndHomeResetsEvenWhileAlreadyHome \
   --test expertSwitchesNavigateWithDpadAndRevokeAndRestoreHub \
   --test downFromDebloaterHeaderEntersItsControlsAndHomeReturnsToFirstApp \
-  --test networkAndAboutHeadersLeadIntoTheirOwnContent
+  --test networkAndAboutHeadersLeadIntoTheirOwnContent \
+  --test appendedExpertSwitchesAreReachableScrolledAndOffByDefault
 # The long-press regression: real key-down / hold / key-up, then D-pad into the menu.
 adb shell am instrument -w -r \
   -e class com.universalrp.tvguard.TvLongPressOptionsTest "$runner" |

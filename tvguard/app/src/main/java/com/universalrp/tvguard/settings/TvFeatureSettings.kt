@@ -22,7 +22,10 @@ enum class TvFeature(val key: String) {
     STATUS_OVERLAY("status_overlay"),
 
     /** Optional general-purpose AI questions. Off by default; needs a provider. */
-    AI_ASSISTANT("ai_assistant")
+    AI_ASSISTANT("ai_assistant"),
+
+    /** SoC temperature reading. Off by default; shows unavailable where unsupported. */
+    TEMP_PILL("temp_pill")
 }
 
 /**
@@ -38,7 +41,8 @@ data class TvFeatureSettings(
     fun enabled(feature: TvFeature): Boolean {
         if (!expertMode || !selected(feature)) return false
         return when (feature) {
-            TvFeature.CPU_PILL, TvFeature.RAM_PILL, TvFeature.STORAGE_PILL, TvFeature.NETWORK_PILL ->
+            TvFeature.CPU_PILL, TvFeature.RAM_PILL, TvFeature.STORAGE_PILL,
+            TvFeature.NETWORK_PILL, TvFeature.TEMP_PILL ->
                 selected(TvFeature.STATUS_BAR)
             TvFeature.WEB_REMOTE -> selected(TvFeature.FILE_HUB)
             // The overlay reuses the status bar's pills, so it needs the parent feature too.

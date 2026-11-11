@@ -24,6 +24,7 @@ by Android for a long-running overlay. Dismissing the notification does not affe
 | `CPU n% free` | `/proc/stat` aggregate counters, sampled about every 2.5 s | Percentage of processor **time**, not clock speed. It is the whole device, not one app. |
 | `RAM n MB free` | `ActivityManager.MemoryInfo` | What Android reports as available. Some of it is reclaimable cache, so the TV can free more than this under pressure. |
 | `Storage n GB free` | `StatFs` on the data filesystem | Free space the filesystem reports. It does not include space reserved by the system or lost to a hidden partition. |
+| `Temp n.n °C` | `/sys/class/thermal/thermal_zone*` (hottest readable zone) | **Not every TV exposes a sensor.** Many OEM builds expose none to an unprivileged app, and some report `0`, which means uncalibrated rather than 0 °C. In those cases the pill says `Temp --`. This is the SoC sensor, not room temperature. |
 | `Wi-Fi -n dBm` | `WifiManager` RSSI | **Radio signal strength only.** A strong signal says nothing about internet speed. Shows `n/a` when the TV is on Ethernet or mobile data, because those have no RSSI. |
 | `Net n ms` | TCP connect to public DNS | **Actual internet round-trip latency**, sampled about every 15 s. This is the number that reflects real connection quality. It is latency, not download speed. |
 
@@ -43,6 +44,7 @@ are never a mystery.
 | Storage (free) | ≥ 15 % | 7–14 % | < 7 % |
 | Network (`Net` latency) | ≤ 60 ms | 61–150 ms | > 150 ms |
 | Wi-Fi signal (RSSI) | ≥ −67 dBm | −68 to −75 dBm | < −75 dBm |
+| Temperature | < 70 °C | 70–85 °C | > 85 °C |
 
 Grey means unavailable: the reading could not be obtained, or the value was implausible
 (for example free space larger than the total). Grey is never used to mean "fine".
@@ -63,11 +65,13 @@ Grey means unavailable: the reading could not be obtained, or the value was impl
   obscuring permission prompts.
 - **Some TV manufacturers restrict overlays** altogether, or require the app to be granted
   the permission again after an update.
+- **Temperature bands are advisory.** The TV's own thermal governor throttles on its own
+  schedule; these colours are for noticing a trend, not for predicting a shutdown.
 - The overlay can only be drawn while the permission is held. Revoking it stops the service
   at the next check rather than leaving a stale window.
 
 ## Cost when idle
 
 Sampling only happens while the service is running. CPU is sampled every 2.5 s, RAM every
-10 s, storage every 30 s and the network probe every 15 s. Stopping the overlay cancels the
+10 s, storage every 30 s, temperature every 20 s and the network probe every 15 s. Stopping the overlay cancels the
 sampling job and clears the CPU baseline, so nothing continues in the background.
