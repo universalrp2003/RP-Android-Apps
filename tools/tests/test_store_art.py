@@ -41,6 +41,17 @@ class StoreArtContractTest(unittest.TestCase):
         self.assertIn('store-art.log', summary.split('ci-build-failure.md', 1)[0])
         self.assertIn('Store artwork', summary)
 
+    def test_a_missing_drawing_tool_cannot_block_the_apk_build(self):
+        """ImageMagick is a convenience; the pure-Python icons are the gate."""
+        workflow = (ROOT / '.github/workflows/build-apk.yml').read_text()
+        step = workflow.split('- name: Make the store icons', 1)[1].split('- name: Check Cleaner', 1)[0]
+        self.assertIn('GRAPHICS-SKIPPED', step)
+        # Installing ImageMagick must not be fatal...
+        self.assertRegex(step, r'if \( set -e; sudo apt-get')
+        # ...and the icons still have to have been written.
+        self.assertIn("grep -q '^wrote .*icon.png' store-art.log", step)
+        self.assertNotIn('set -e\n          # The apps draw', workflow)
+
     def test_no_font_failure_can_be_silent_in_the_artwork_step(self):
         workflow = (ROOT / '.github/workflows/build-apk.yml').read_text()
         step = workflow.split('- name: Make the store icons', 1)[1].split('- name: Check Cleaner', 1)[0]
