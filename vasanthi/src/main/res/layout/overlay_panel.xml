@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The panel the bubble opens.
+
+  The order is the design decision, and it changed in 1.1.1:
+
+    1. பேச்சு - what somebody just said, in Tamil. First, and by far the biggest thing here.
+    2. the two switches - ஒலி and பேச்சு, one function each.
+    3. the room - what sound is happening and how loud it is. Hidden entirely by default.
+
+  The room used to come first, and the owner's complaint was that the panel was mostly things he
+  did not ask for. Speech is what he asked for - "just touch view other person voice to tamil" -
+  so it is what the panel leads with, and the sound and loudness blocks sit at the bottom behind a
+  switch that is off unless he turns it on.
+
+  The two toggles are separate on purpose: sound naming and speech recognition compete for one
+  microphone, and turning sound naming off gives the recogniser the microphone outright, which is
+  both more accurate and reaches further.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/panel_root"
+    android:layout_width="320dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_panel"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <!-- Header: the name, and the two ways out. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/panel_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/app_name"
+            android:textColor="#FF4ADE80"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/panel_open_app"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/open_full_screen"
+            android:padding="8dp"
+            android:src="@drawable/ic_open_full" />
+
+        <ImageButton
+            android:id="@+id/panel_close"
+            android:layout_width="34dp"
+            android:layout_height="34dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:contentDescription="@string/close_panel"
+            android:padding="8dp"
+            android:src="@drawable/ic_close" />
+    </LinearLayout>
+
+    <!-- 1. What somebody said. First, and the biggest thing on the panel. -->
+    <TextView
+        android:id="@+id/panel_speech_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/what_was_said"
+        android:textColor="#80FFFFFF"
+        android:textSize="10sp" />
+
+    <ScrollView
+        android:id="@+id/panel_speech_scroll"
+        android:layout_width="match_parent"
+        android:layout_height="170dp"
+        android:layout_marginTop="1dp">
+
+        <TextView
+            android:id="@+id/panel_speech"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/nothing_said_yet"
+            android:textColor="#FFFFFFFF"
+            android:textSize="22sp" />
+    </ScrollView>
+
+    <!-- 2. The two switches. One function each. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/panel_sound_toggle"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:textSize="13sp" />
+
+        <Button
+            android:id="@+id/panel_voice_toggle"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:textSize="13sp" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/panel_mode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:textColor="#66FFFFFF"
+        android:textSize="10sp" />
+
+    <!-- 3. The room. Everything from here down is hidden until sound naming is turned on. -->
+    <TextView
+        android:id="@+id/panel_now_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:text="@string/what_is_happening_now"
+        android:textColor="#80FFFFFF"
+        android:textSize="10sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/panel_sound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:minLines="1"
+        android:text="@string/nothing_heard_yet"
+        android:textColor="#FFFFFFFF"
+        android:textSize="19sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <ProgressBar
+        android:id="@+id/panel_confidence"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="5dp"
+        android:max="100"
+        android:progressDrawable="@drawable/bg_bar_fill"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/panel_confidence_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:textColor="#66FFFFFF"
+        android:textSize="10sp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/panel_level_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="9dp"
+        android:text="@string/room_loudness"
+        android:textColor="#80FFFFFF"
+        android:textSize="10sp"
+        android:visibility="gone" />
+
+    <ProgressBar
+        android:id="@+id/panel_level"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="3dp"
+        android:max="100"
+        android:progressDrawable="@drawable/bg_bar_fill"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/panel_level_note"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:textColor="#66FFFFFF"
+        android:textSize="10sp"
+        android:visibility="gone" />
+</LinearLayout>

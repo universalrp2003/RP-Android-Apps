@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="tv_bg">#0B0F19</color>
+    <color name="tv_card">#161E2E</color>
+    <color name="tv_card_focused">#1F2A40</color>
+    <color name="tv_accent">#00E5FF</color>
+    <color name="tv_text_primary">#FFFFFF</color>
+    <color name="tv_text_secondary">#94A3B8</color>
+    <color name="tv_safe">#00E676</color>
+    <color name="tv_warning">#FFD600</color>
+    <color name="tv_danger">#FF5252</color>
+</resources>

@@ -252,8 +252,8 @@ object SmsVoiceAnnouncer {
     }
 
     /**
-     * 1. High-Quality Online Neural Voice FIRST (with automatic daily Male <-> Female alternation)
-     * 2. Instant automatic fallback to Installed System TTS whenever there is no internet or offline!
+     * HD neural voice requires current explicit consent and Internet access.
+     * Otherwise only a non-network installed voice is permitted; no voice means silence.
      */
     private fun speakSingleBlocking(
         context: Context,
@@ -262,7 +262,8 @@ object SmsVoiceAnnouncer {
         overrideOnlineVoiceId: String?,
     ) {
         val prefs = GuardSettingsStore.ensureLoaded(context)
-        val useTamil = resolveTargetTamilFlag(prefs, text)
+        val safeText = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(text) ?: return
+        val useTamil = resolveTargetTamilFlag(prefs, safeText)
         val activeProfile = overrideOnlineVoiceId
             ?.let { id -> NeuralCloudVoiceEngine.CURATED_VOICES.firstOrNull { it.id == id } }
             ?: NeuralCloudVoiceEngine.resolveActiveOnlineProfile(
@@ -271,13 +272,18 @@ object SmsVoiceAnnouncer {
                 today = LocalDate.now(),
             )
 
-        val onlineAvailable = prefs.internetEnabled && SmsRepository.hasValidatedInternet(context)
+        fun networkStillAllowed(): Boolean {
+            val current = GuardSettingsStore.state.value
+            return playbackEpoch.get() == epoch && com.universalrp.smsguard.engine.SpeechPrivacy.cloudAllowed(
+                current.internetEnabled, current.cloudSpeechConsent, SmsRepository.hasValidatedInternet(context))
+        }
+        val onlineAvailable = networkStillAllowed()
         if (onlineAvailable && !isPinnedToSystemAndroidVoice(prefs, overrideOnlineVoiceId)) {
-            val neuralId = if (useTamil && containsTamilScript(text)) {
+            val neuralId = if (useTamil && containsTamilScript(safeText)) {
                 activeProfile.tamilNeuralId
-            } else if (!containsTamilScript(text) && prefs.voiceLanguageMode == 1) {
+            } else if (!containsTamilScript(safeText) && prefs.voiceLanguageMode == 1) {
                 activeProfile.tamilNeuralId
-            } else if (containsTamilScript(text)) {
+            } else if (containsTamilScript(safeText)) {
                 activeProfile.tamilNeuralId
             } else {
                 activeProfile.englishNeuralId
@@ -285,9 +291,10 @@ object SmsVoiceAnnouncer {
 
             val mp3File: File? = NeuralCloudVoiceEngine.synthesizeToFileOrNull(
                 cacheDir = context.cacheDir,
-                text = text,
+                text = safeText,
                 neuralVoiceName = neuralId,
                 speechRateMode = prefs.speechRateMode,
+                networkAllowed = ::networkStillAllowed,
             )
             if (mp3File != null && playbackEpoch.get() == epoch) {
                 _activeVoiceStatus.value = if (prefs.tamil) activeProfile.titleTa else activeProfile.titleEn
@@ -305,11 +312,11 @@ object SmsVoiceAnnouncer {
             }
             speakViaSystemTtsBlocking(
                 context = context,
-                text = text,
+                text = safeText,
                 prefs = prefs,
                 useTamil = useTamil,
                 desiredGender = activeProfile.gender,
-                isOnline = onlineAvailable,
+                isOnline = networkStillAllowed(),
                 epoch = epoch,
             )
         }
@@ -392,38 +399,22 @@ object SmsVoiceAnnouncer {
         val targetLocale = if (useTamil) Locale.forLanguageTag("ta-IN") else Locale.forLanguageTag("en-IN")
         runCatching { engine.language = targetLocale }
 
-        var matchedGenderDistinctly = false
-        runCatching {
-            val voices = engine.voices?.toList().orEmpty().filterNotNull()
-            val explicitSystemVoice = if (!prefs.autoDailyGenderSwap && prefs.preferredVoiceName.isNotBlank()) {
-                voices.firstOrNull { it.name == prefs.preferredVoiceName }
-            } else {
-                null
-            }
-
-            if (explicitSystemVoice != null) {
-                engine.voice = explicitSystemVoice
-                matchedGenderDistinctly = true
-            } else {
-                val langFiltered = voices.filter { v ->
-                    v.locale?.language?.equals(targetLocale.language, ignoreCase = true) == true &&
-                        (isOnline || !v.isNetworkConnectionRequired)
-                }
-                val genderMatched = langFiltered.filter { v ->
-                    if (desiredGender == VoiceGender.MALE) voiceLooksMale(v) else voiceLooksFemale(v)
-                }
-                val chosen = (genderMatched.ifEmpty { langFiltered })
-                    .sortedWith(
-                        compareByDescending<Voice> { isOnline && it.isNetworkConnectionRequired }
-                            .thenByDescending { it.quality },
-                    )
-                    .firstOrNull()
-                if (chosen != null) {
-                    engine.voice = chosen
-                    matchedGenderDistinctly = genderMatched.isNotEmpty()
-                }
-            }
+        val networkAllowed = isOnline && GuardSettingsStore.state.value.cloudSpeechConsent
+        val candidates = runCatching { engine.voices?.toList().orEmpty().filter { v ->
+            v.locale.language.equals(targetLocale.language, ignoreCase = true) &&
+                (networkAllowed || !v.isNetworkConnectionRequired)
+        } }.getOrDefault(emptyList())
+        val explicit = candidates.firstOrNull { it.name == prefs.preferredVoiceName }
+        val genderMatches = candidates.filter { if (desiredGender == VoiceGender.MALE) voiceLooksMale(it) else voiceLooksFemale(it) }
+        val chosen = explicit ?: genderMatches.ifEmpty { candidates }.maxByOrNull { it.quality }
+        if (chosen == null) {
+            _activeVoiceStatus.value = if (prefs.tamil) "போனில் தமிழ்/ஆங்கில உள்ளூர் குரலை நிறுவுங்கள்; மேகக் குரல் அனுமதி இல்லை அல்லது இணையம் கிடைக்கவில்லை."
+                else "Install an on-device Tamil/English voice; cloud speech is not allowed or internet is unavailable."
+            return
         }
+        val matchedGenderDistinctly = explicit != null || genderMatches.isNotEmpty()
+        if (runCatching { engine.voice = chosen }.isFailure) return
+        if (!networkAllowed && engine.voice?.isNetworkConnectionRequired != false) return
 
         // Subtle natural vocal pitch tuning when device ships only 1 offline voice so daily Male <-> Female still feels distinct!
         val pitch = if (matchedGenderDistinctly) {

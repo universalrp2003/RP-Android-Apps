@@ -114,7 +114,10 @@ read -r SCREEN_W SCREEN_H < <("$ADB" shell wm size | tr -d '\r' | sed -n 's/^Phy
 dump_ui() {
   local attempt
   for attempt in 1 2 3 4 5; do
-    if "$ADB" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 \
+    # Some uiautomator failures exit zero without writing a file. Never reuse
+    # an earlier viewport's XML as evidence for the current assertion.
+    if "$ADB" shell rm -f /sdcard/window.xml >/dev/null 2>&1 \
+      && "$ADB" shell uiautomator dump /sdcard/window.xml >/dev/null 2>&1 \
       && "$ADB" shell cat /sdcard/window.xml > "$UI_XML" 2>/dev/null \
       && grep -q '<hierarchy' "$UI_XML"; then
       return 0
@@ -126,20 +129,25 @@ dump_ui() {
 
 # Print "x y" for the first node whose attribute equals (or, with "contains", includes) the value.
 find_node() {
-  python3 - "$UI_XML" "$1" "$2" "${3:-equals}" <<'PY'
+  python3 - "$UI_XML" "$1" "$2" "${3:-equals}" "$SCREEN_W" "$SCREEN_H" <<'PY'
 import re
 import sys
 import xml.etree.ElementTree as ET
 
 path, attribute, value, mode = sys.argv[1:5]
+width, height = map(int, sys.argv[5:7])
 for node in ET.parse(path).getroot().iter("node"):
     actual = node.get(attribute, "")
     if actual == value or (mode == "contains" and value in actual):
-        match = re.match(r"\[(\d+),(\d+)\]\[(\d+),(\d+)\]", node.get("bounds", ""))
+        match = re.match(r"\[(-?\d+),(-?\d+)\]\[(-?\d+),(-?\d+)\]", node.get("bounds", ""))
         if match:
             x1, y1, x2, y2 = map(int, match.groups())
-            print((x1 + x2) // 2, (y1 + y2) // 2)
-            sys.exit(0)
+            # Compose can retain offscreen/zero-area semantics. They cannot prove
+            # visibility or provide a safe tap coordinate; keep searching.
+            x1, y1, x2, y2 = max(0, x1), max(0, y1), min(width, x2), min(height, y2)
+            if x2 > x1 and y2 > y1:
+                print((x1 + x2) // 2, (y1 + y2) // 2)
+                sys.exit(0)
 sys.exit(1)
 PY
 }
@@ -152,12 +160,24 @@ visible_text() {
   grep -o 'text="[^"]*"' "$UI_XML" 2>/dev/null | head -n 50 | tr '\n' ' '
 }
 
+LAUNCHER_RECOVERY_USED=false
 wait_for() {
   local attribute="$1" value="$2" mode="${3:-equals}" seconds="${4:-20}" waited=0
   while (( waited < seconds )); do
     app_alive || fail "The app process is not running while waiting for: $value"
     if dump_ui && find_node "$attribute" "$value" "$mode" >/dev/null; then
       return 0
+    fi
+    # A fresh hosted emulator can leave Pixel Launcher's own startup ANR over the
+    # healthy target app. Recover ONLY that system launcher, once, only at startup
+    # on a GitHub emulator. Target-app crashes/ANRs and every UI assertion still fail.
+    if [[ "$STEP" == "start screen in Tamil, then English" && "$LAUNCHER_RECOVERY_USED" == false
+          && "${CI:-}" == true && "${GITHUB_ACTIONS:-}" == true ]] &&
+       [[ "$("$ADB" get-serialno)" == emulator-* ]] &&
+       grep -Fq "Pixel Launcher isn't responding" "$UI_XML"; then
+      LAUNCHER_RECOVERY_USED=true
+      "$ADB" shell am force-stop com.google.android.apps.nexuslauncher
+      echo '::notice title=Emulator startup recovery::Closed the system Pixel Launcher ANR; target app remains running and startup assertions are retried.'
     fi
     sleep 1
     waited=$((waited + 1))
@@ -176,18 +196,23 @@ scroll() {
   sleep 1
 }
 
-# Scroll down until a node matches (at most 12 swipes), for the long settings screen.
+# Search either side of the current viewport, including after returning from Guide.
+# Do not assume every preceding target leaves the screen above the next target.
+# Bound both directions; missing controls and dead app processes still fail.
 scroll_until() {
-  local attribute="$1" value="$2" mode="${3:-equals}" swipes=0
-  while (( swipes < 12 )); do
-    app_alive || fail "The app process is not running while looking for: $value"
-    if dump_ui && find_node "$attribute" "$value" "$mode" >/dev/null; then
-      return 0
-    fi
-    scroll down
-    swipes=$((swipes + 1))
+  local attribute="$1" value="$2" mode="${3:-equals}" direction swipes
+  for direction in down up; do
+    for ((swipes=0; swipes<=12; swipes++)); do
+      app_alive || fail "The app process is not running while looking for: $value"
+      if dump_ui && find_node "$attribute" "$value" "$mode" >/dev/null; then
+        return 0
+      fi
+      if (( swipes < 12 )); then
+        scroll "$direction"
+      fi
+    done
   done
-  fail "Could not find $attribute '$value' after scrolling. Visible text: $(visible_text)"
+  fail "Could not find visible $attribute '$value' after bounded down/up scrolling. Visible text: $(visible_text)"
 }
 
 tap() {
@@ -243,7 +268,7 @@ wait_for text "Recipient view timer"
 # The app's wording replaces the preview's ("This preview cannot deliver messages …").
 wait_for text "It starts on both phones when the other person views your message." contains
 scroll_until text "About Secret Message"
-wait_for text "has not been independently security-reviewed" contains
+scroll_until text "has not been independently security-reviewed" contains
 
 STEP="app settings (1.1.0): ready for chats, this phone, guide and About"
 scroll_until text "Ready for chats"
@@ -260,10 +285,15 @@ wait_for text "1. Start a chat with a new phone" equals 15
 wait_for text "தமிழ்"
 "$ADB" shell input keyevent 4
 sleep 1
-# About lists the links first and the verified updater last (the helper only scrolls down).
+# About explains the read-only release-metadata check and offers the official website in a browser;
+# the app never downloads or installs APKs. Keep the smoke test aligned with the current UI.
 scroll_until text "Source code — InternetRadio"
-scroll_until text "Verified GitHub APK updates"
-scroll_until text "Check for updates"
+scroll_until text "A read-only check fetches public release metadata" contains
+wait_for text "The official website opens in your browser." contains
+wait_for text "This app never downloads or installs APKs." contains
+scroll_until text "Open official website"
+scroll_until text "Do not bypass an Android security warning." contains
+# About remains part of the settings screen; a single Back press returns to the chat screen.
 "$ADB" shell input keyevent 4
 sleep 1
 wait_for text "Start a chat"
@@ -273,4 +303,4 @@ app_alive || fail "The app exited during the smoke test"
 if "$ADB" logcat -d -b crash 2>/dev/null | grep -q "$PACKAGE"; then
   fail "The crash buffer contains an entry for $PACKAGE"
 fi
-echo "PASS: $PACKAGE launched on API 35, showed its start screen in Tamil and switched to English, showed the not-reviewed note, hosted a chat through the deployed Internet relay (connected over TLS) and on the same Wi-Fi, stopped waiting on request each time, created its Keystore-wrapped identity, loaded the MLS engine (secretmessage-wifi-chat/1), opened settings with ready mode, this phone, the guide and About with the verified updater, and did not crash."
+echo "PASS: $PACKAGE launched on API 35, showed its start screen in Tamil and switched to English, showed the not-reviewed note, hosted a chat through the deployed Internet relay (connected over TLS) and on the same Wi-Fi, stopped waiting on request each time, created its Keystore-wrapped identity, loaded the MLS engine (secretmessage-wifi-chat/1), opened settings with ready mode, this phone, the guide and About with a read-only release-metadata explanation and an official website browser link that does not download or install APKs, and did not crash."

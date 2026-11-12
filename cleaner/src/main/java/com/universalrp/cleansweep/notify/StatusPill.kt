@@ -116,7 +116,7 @@ class NetworkLedMeterView(context: Context) : View(context) {
  * Features:
  * - Real-time mobile data (cleanly hidden if on Wi-Fi / Unlimited 5G per user choice)
  * - Watts ONLY while a charger is connected; data and D/U meter automatically return on unplug
- * - Animated D & U LED meter bars while unplugged
+ * - Restored three-segment D & U LED meter bars while unplugged
  * - Move, drag, and resize controls
  * - Landscape transparent touch-through behavior
  */
@@ -127,6 +127,7 @@ object StatusPill {
     const val KEY_DY = "pill_dy"
     const val KEY_AUTO = "pill_auto"
     const val KEY_SCALE = "pill_scale"
+    const val KEY_SIGNAL_MODE = "pill_signal_mode"
     const val KEY_HIDE_DATA_ON_WIFI = "pill_hide_data_on_wifi"
 
     private val main = Handler(Looper.getMainLooper())
@@ -142,6 +143,7 @@ object StatusPill {
         val rxSpeed: Long,
         val txSpeed: Long,
         val showNetworkMeter: Boolean,
+        val simSignals: List<PillSignalPolicy.Sample>,
     )
     private var lastReading: Reading? = null
 
@@ -164,6 +166,14 @@ object StatusPill {
         val app = context.applicationContext
         prefs(app).edit().putFloat(KEY_SCALE, newScale.coerceIn(0.7f, 1.5f)).apply()
         redraw(app)
+    }
+
+    fun signalMode(context: Context): PillSignalPolicy.Mode =
+        PillSignalPolicy.mode(prefs(context).getString(KEY_SIGNAL_MODE, null))
+
+    fun setSignalMode(context: Context, mode: PillSignalPolicy.Mode) {
+        prefs(context).edit().putString(KEY_SIGNAL_MODE, mode.name).apply()
+        redraw(context.applicationContext)
     }
 
     fun isHideDataOnWifi(context: Context): Boolean =
@@ -275,6 +285,7 @@ object StatusPill {
         context: Context,
         reading: Reading,
     ) {
+        val signalLabels = if (reading.showNetworkMeter) PillSignalPolicy.labels(reading.simSignals, signalMode(context)) else emptyList()
         val rawText = reading.text
         val currentScale = scale(context)
         root.setPadding(
@@ -288,7 +299,7 @@ object StatusPill {
         meter.layoutParams = (meter.layoutParams as LinearLayout.LayoutParams).apply {
             width = (dp(context, 34) * currentScale).toInt()
             height = (dp(context, 14) * currentScale).toInt()
-            marginStart = if (rawText.isNotBlank() && reading.showNetworkMeter) {
+            marginStart = if ((rawText.isNotBlank() || signalLabels.isNotEmpty()) && reading.showNetworkMeter) {
                 (dp(context, 5) * currentScale).toInt()
             } else 0
         }
@@ -316,12 +327,22 @@ object StatusPill {
             (strokeAlpha shl 24) or 0x38BDF8,
         )
 
-        if (rawText.isBlank()) {
+        if (rawText.isBlank() && signalLabels.isEmpty()) {
             tv.visibility = View.GONE
         } else {
             tv.visibility = View.VISIBLE
             val sb = SpannableStringBuilder(rawText)
-            sb.setSpan(ForegroundColorSpan(textColor), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            if (sb.isNotEmpty()) sb.setSpan(ForegroundColorSpan(textColor), 0, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            signalLabels.forEach { label ->
+                if (sb.isNotEmpty()) sb.append("  ")
+                val start = sb.length
+                sb.append(label.text)
+                // The SIM percentages are counts, not verdicts. They used to be red/amber/green;
+                // the owner asked on 12 November 2026 for "no warning red color on pill just show
+                // count only", so every reading now uses the same steady colour as the text.
+                val color = "#E8FBFF"
+                sb.setSpan(ForegroundColorSpan(Color.parseColor(color)), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
             tv.text = sb
             tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9.8f * currentScale)
         }
@@ -332,6 +353,10 @@ object StatusPill {
         meter.isUploadActive = reading.txSpeed > 200L
         meter.qualityGrade = reading.qualityGrade
         meter.animStep = animCounter
+        fun rate(value: Long) = if (value < 0) {
+            if (com.universalrp.cleansweep.data.Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA) "கிடைக்கவில்லை" else "unavailable"
+        } else "$value B/s"
+        meter.contentDescription = "D: ${rate(reading.rxSpeed)}; U: ${rate(reading.txSpeed)}"
         if (reading.showNetworkMeter) meter.invalidate()
         root.requestLayout()
     }
@@ -344,6 +369,7 @@ object StatusPill {
         rxSpeed: Long = 0L,
         txSpeed: Long = 0L,
         showNetworkMeter: Boolean = true,
+        simSignals: List<PillSignalPolicy.Sample> = emptyList(),
         stillCurrent: () -> Boolean = { true },
     ) {
         if (!canDraw(context)) {
@@ -351,7 +377,7 @@ object StatusPill {
             return
         }
         val app = context.applicationContext
-        val reading = Reading(text.orEmpty(), packPercent, qualityGrade, rxSpeed, txSpeed, showNetworkMeter)
+        val reading = Reading(text.orEmpty(), packPercent, qualityGrade, rxSpeed, txSpeed, showNetworkMeter, simSignals)
         main.post {
             // The service can be stopped or a newer plug event can arrive BETWEEN the
             // worker's last check and this UI frame. Never resurrect a cancelled refresh.

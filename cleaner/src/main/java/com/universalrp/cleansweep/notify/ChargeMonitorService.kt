@@ -54,7 +54,9 @@ class ChargeMonitorService : Service() {
         running = this
         AutomaticAlerts.start(applicationContext, "monitor")
         ChargeNotifier.channel(this)
-        startForeground(ChargeNotifier.NOTIFICATION_ID, initialNotification())
+        RoutineStatus.acquire(this, RoutineStatus.MONITOR)
+        startForeground(RoutineStatus.ID, initialNotification())
+        RoutineStatus.removeLegacy(this)
         try {
             registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         } catch (e: Exception) {
@@ -115,7 +117,7 @@ class ChargeMonitorService : Service() {
             coroutineContext.ensureActive()
             val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             try {
-                manager.notify(ChargeNotifier.NOTIFICATION_ID, notification)
+                RoutineStatus.publish(this@ChargeMonitorService)
             } catch (e: Exception) {
                 // If notifications were switched off, there is nothing to show.
             }
@@ -135,11 +137,12 @@ class ChargeMonitorService : Service() {
         }
         scope.cancel()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            stopForeground(STOP_FOREGROUND_DETACH)
         } else {
             @Suppress("DEPRECATION")
-            stopForeground(true)
+            stopForeground(false)
         }
+        RoutineStatus.release(this, RoutineStatus.MONITOR)
         super.onDestroy()
     }
 

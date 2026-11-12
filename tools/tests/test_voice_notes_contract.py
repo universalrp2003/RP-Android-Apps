@@ -1,0 +1,86 @@
+from pathlib import Path
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+MAIN = (ROOT / "voicenotes/src/main/java/com/universalrp/voicenotes/MainActivity.kt").read_text(encoding="utf-8")
+SPEAKER = (ROOT / "voicenotes/src/main/java/com/universalrp/voicenotes/VoiceNoteSpeaker.kt").read_text(encoding="utf-8")
+
+
+class VoiceNotesContractTest(unittest.TestCase):
+    def test_first_hd_playback_requires_clear_network_disclosure(self):
+        self.assertIn("if (showVoicePrivacy)", MAIN)
+        self.assertIn("Only this note's text will be sent to an online service", MAIN)
+        self.assertIn("இந்தக் குறிப்பின் உரை மட்டும் HD குரல்", MAIN)
+        self.assertIn('"hd_voice_disclosure_acknowledged"', MAIN)
+
+    def test_hd_voice_remains_the_only_playback_and_never_silently_falls_back(self):
+        self.assertIn("speaker.speak(note.text, voiceId, pitch)", MAIN)
+        self.assertIn("No robotic voice fallback is used.", MAIN)
+        self.assertNotIn("android.speech.tts.TextToSpeech", MAIN)
+        self.assertIn("NoteHdVoice.synthesize", SPEAKER)
+        policy = (ROOT / "voicenotes/src/main/java/com/universalrp/voicenotes/NoteHdVoice.kt").read_text()
+        self.assertIn("SharedNeuralVoiceEngine.synthesizeRawMp3", policy)
+        self.assertIn("timeoutMs = TIMEOUT_MS", policy)
+        self.assertIn("attemptTimeoutMs = ATTEMPT_MS", policy)
+
+    def test_owner_requested_search_removed_but_edit_preserves_ids(self):
+        self.assertNotIn("searchQuery", MAIN)
+        self.assertNotIn('"Search notes"', MAIN)
+        self.assertIn("items(notes, key = { it.id })", MAIN)
+        self.assertLess(MAIN.index("// ---------------------------------------------------------------- microphone"), MAIN.index("// ---------------------------------------------------------------- the notes"))
+        self.assertIn("NoteStore.update(notes, note.id, editText)", MAIN)
+        self.assertIn("onEdit =", MAIN)
+
+    def test_failed_note_write_is_reported_and_temp_file_is_used(self):
+        self.assertIn("voice-notes.json.tmp", MAIN)
+        self.assertIn("StandardCopyOption.ATOMIC_MOVE", MAIN)
+        self.assertIn("Could not save the note.", MAIN)
+
+    def test_recognition_provider_is_not_misrepresented_as_local(self):
+        self.assertIn("audio handling depends on that provider", MAIN)
+        self.assertIn("அதன் தரவு கையாளுதல் வழங்குநரைப் பொறுத்தது", MAIN)
+
+
+if __name__ == "__main__":
+    unittest.main()
+
+
+class DailyWebsiteUpdateNoticeTest(unittest.TestCase):
+    def test_check_runs_once_per_day_on_open_or_resume_and_only_opens_site(self):
+        notice = (ROOT / "shared/src/main/java/com/universalrp/updates/DailyWebsiteUpdateNotice.kt").read_text()
+        self.assertIn("UpdateReminderPolicy.shouldCheck(enabled = true", notice)
+        self.assertIn("Lifecycle.Event.ON_RESUME", notice)
+        self.assertIn("LaunchedEffect(lifecycleOwner)", notice)
+        self.assertIn("snapshotFlow { resumeToken }.collect", notice)
+        self.assertNotIn("LaunchedEffect(resumeToken)", notice)
+        self.assertIn("catalog-v2.json", notice)
+        self.assertIn('requestMethod = "GET"', notice)
+        self.assertIn("doOutput = false", notice)
+        self.assertIn("updateVersion = latest", notice)
+        self.assertIn("StoreUpdateRouter.openWebsite(context, appId)", notice)
+        self.assertIn("does not download or install APKs", notice)
+        self.assertNotIn("REQUEST_INSTALL_PACKAGES", notice)
+        self.assertNotIn("ACTION_INSTALL_PACKAGE", notice)
+        self.assertNotIn("WorkManager", notice)
+
+class PlaybackControlSourceTest(unittest.TestCase):
+    def test_active_button_stops_and_other_note_replaces_request(self):
+        self.assertIn('if (speaking) Icons.Filled.Stop else Icons.Filled.PlayArrow', MAIN)
+        self.assertIn('Stop playback', MAIN)
+        self.assertIn('val wasPlaying = speakingId == note.id', MAIN)
+        self.assertIn('playbackJob?.cancel()', MAIN)
+        self.assertIn('request == playbackRequest', MAIN)
+        self.assertNotIn('if (speakingId != null) return', MAIN)
+        self.assertIn('runInterruptible(Dispatchers.IO)', SPEAKER)
+        self.assertIn('playbackMutex.withLock', SPEAKER)
+        self.assertIn('generation.get() != requestGeneration', SPEAKER)
+
+class NewNoteVisibilityTest(unittest.TestCase):
+    def test_prepend_reveals_new_note_without_edit_delete_scroll_jumps(self):
+        self.assertIn('val notesListState = rememberLazyListState()', MAIN)
+        self.assertIn('state = notesListState', MAIN)
+        self.assertIn('LaunchedEffect(newlyAddedNoteId)', MAIN)
+        self.assertIn('notesListState.scrollToItem(0)', MAIN)
+        self.assertIn('notes.firstOrNull()?.id == added', MAIN)
+        self.assertEqual(1, MAIN.count('newlyAddedNoteId = note.id'))
+        self.assertIn('persist(NoteStore.add(notes, note))\n                newlyAddedNoteId = note.id', MAIN)

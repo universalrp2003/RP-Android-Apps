@@ -120,12 +120,28 @@ object BillReminderEngine {
     // "Oct 25, 2026" / "October 25 2026"
     private val DATE_MONY = Regex("\\b([A-Za-z]{3,12})\\.?\\s+([0-9]{1,2})(?:st|nd|rd|th)?,?\\s+([0-9]{4})\\b")
 
-    // A due/last-date/pay-by keyword that anchors the actionable due date.
+    // A payment deadline, not causal language ("declined due to INVALID CARD").
+    // Expiry/valid-until/standalone "before" are not evidence of money owed.
     private val ANCHOR_KEYWORD = Regex(
-        "(?:due\\s+(?:date|on|by)?|last\\s+date(?:\\s+to\\s+pay)?|pay\\s+(?:by|before)|" +
-            "before|valid\\s+(?:till|until)|payable\\s+(?:by|on)|expiry|due)",
+        "\\b(?:due(?!\\s+to\\b)(?:\\s+(?:date|on|by|before))?|" +
+            "last\\s+date(?:\\s+(?:to\\s+pay|for\\s+payment))?|pay\\s+(?:by|before)|" +
+            "payable\\s+(?:by|on)|overdue\\s+(?:since|from))\\b",
         RegexOption.IGNORE_CASE,
     )
+    private val DEADLINE_SEPARATOR = Regex("[\\s:=–—-]*(?:(?:is|on|by)\\s+)?", RegexOption.IGNORE_CASE)
+    private val TRANSACTION_OUTCOME = Regex(
+        "\\b(?:declined|failed|failure|unsuccessful|invalid\\s+card|reversed|refunded|refund|debited|credited|successful)\\b",
+        RegexOption.IGNORE_CASE,
+    )
+
+    /**
+     * Narrow, non-destructive protection for false reminders saved by older versions. Retain
+     * the record for review; never delete the SMS, mark it paid or alter manual reminders.
+     * A failed payment can still leave a genuine bill owing, so a separate dated obligation wins.
+     */
+    fun needsReview(reminder: BillReminder): Boolean = reminder.isFromSms &&
+        reminder.sourceBody.isNotBlank() && TRANSACTION_OUTCOME.containsMatchIn(reminder.sourceBody) &&
+        extractDueDate(reminder.sourceBody.take(2000)) == null
 
     /**
      * Attempts to parse [body] (from a verified, non-promotional official DLT [sender]) into a bill
@@ -148,7 +164,7 @@ object BillReminderEngine {
         val safeBody = if (body.length > 2000) body.substring(0, 2000) else body
         val today = java.time.Instant.ofEpochMilli(nowMs).atZone(zoneId).toLocalDate()
 
-        val dueDate = extractDueDate(safeBody, today) ?: return null
+        val dueDate = extractDueDate(safeBody) ?: return null
         // Reject clearly mis-parsed dates (e.g. a stray reference number) that land far from any bill cycle.
         val days = java.time.temporal.ChronoUnit.DAYS.between(today, dueDate)
         if (days < -OVERDUE_GRACE_DAYS || days > 400) return null
@@ -195,7 +211,7 @@ object BillReminderEngine {
     ): BillAnnouncementPlan {
         val todayEpochDay = today.toEpochDay()
         val order = compareBy<BillReminder> { it.dueEpochDay }.thenBy { it.billerEn }
-        val unpaid = reminders.filter { !it.isPaid }
+        val unpaid = reminders.filter { !it.isPaid && !needsReview(it) }
 
         val urgent = unpaid
             .filter { isUrgent(it.dueDate, today) && it.lastAnnouncedEpochDay != todayEpochDay }
@@ -285,51 +301,34 @@ object BillReminderEngine {
 
     // --- Parsers -----------------------------------------------------------------------------------
 
-    private fun extractDueDate(body: String, today: LocalDate): LocalDate? {
-        // Strongest: a date appearing shortly AFTER a due/last-date/pay-by keyword.
-        // (Search the original body case-insensitively so indices never drift from lowercasing.)
-        val anchor = ANCHOR_KEYWORD.find(body)
-        if (anchor != null) {
-            val tail = body.substring(anchor.range.last.coerceAtMost(body.length - 1))
-            parseFirstDate(tail, today)?.let { return it }
-        }
-        // Fallback: exactly one unambiguous date anywhere in a bill message.
-        val all = findAllDates(body)
-        if (all.size == 1) return all.first()
-        // If multiple dates, prefer the earliest one that is today or in the future (the actionable due date).
-        return all.filter { !it.isBefore(today) }.minOrNull()
-    }
-
-    private fun findAllDates(body: String): List<LocalDate> {
-        val out = ArrayList<LocalDate>()
-        fun add(d: LocalDate?) { if (d != null && out.none { it == d }) out.add(d) }
-        for (m in DATE_DMY.findAll(body)) {
-            add(buildDmy(m.groupValues[1], m.groupValues[2], m.groupValues[3]))
-        }
-        for (m in DATE_DMONY.findAll(body)) {
-            val mon = monthNumber(m.groupValues[2]) ?: continue
-            add(buildDmy(m.groupValues[1], mon.toString(), m.groupValues[3]))
-        }
-        for (m in DATE_MONY.findAll(body)) {
-            val mon = monthNumber(m.groupValues[1]) ?: continue
-            add(buildYmd(m.groupValues[3], mon, m.groupValues[2]))
-        }
-        return out
-    }
-
-    private fun parseFirstDate(text: String, today: LocalDate): LocalDate? {
-        DATE_DMY.find(text)?.let { m ->
-            buildDmy(m.groupValues[1], m.groupValues[2], m.groupValues[3])?.let { return it }
-        }
-        DATE_DMONY.find(text)?.let { m ->
-            val mon = monthNumber(m.groupValues[2]) ?: return@let
-            buildDmy(m.groupValues[1], mon.toString(), m.groupValues[3])?.let { return it }
-        }
-        DATE_MONY.find(text)?.let { m ->
-            val mon = monthNumber(m.groupValues[1]) ?: return@let
-            buildYmd(m.groupValues[3], mon, m.groupValues[2])?.let { return it }
+    private fun extractDueDate(body: String): LocalDate? {
+        // Do not borrow an unrelated transaction / statement date elsewhere in the SMS.
+        // Try every deadline anchor: "amount due Rs... payment due date ..." is common.
+        for (anchor in ANCHOR_KEYWORD.findAll(body)) {
+            val start = anchor.range.last + 1
+            val tail = body.substring(start, minOf(body.length, start + 80))
+            firstDatedValue(tail)?.let { return it }
         }
         return null
+    }
+
+    /** Earliest valid date in source order, irrespective of which date format it uses. */
+    private fun firstDatedValue(text: String): LocalDate? {
+        val dates = ArrayList<Pair<Int, LocalDate>>()
+        fun add(index: Int, date: LocalDate?) { if (date != null) dates.add(index to date) }
+        for (m in DATE_DMY.findAll(text)) {
+            add(m.range.first, buildDmy(m.groupValues[1], m.groupValues[2], m.groupValues[3]))
+        }
+        for (m in DATE_DMONY.findAll(text)) {
+            val month = monthNumber(m.groupValues[2]) ?: continue
+            add(m.range.first, buildDmy(m.groupValues[1], month.toString(), m.groupValues[3]))
+        }
+        for (m in DATE_MONY.findAll(text)) {
+            val month = monthNumber(m.groupValues[1]) ?: continue
+            add(m.range.first, buildYmd(m.groupValues[3], month, m.groupValues[2]))
+        }
+        return dates.filter { (index, _) -> DEADLINE_SEPARATOR.matches(text.substring(0, index)) }
+            .minByOrNull { it.first }?.second
     }
 
     private fun buildDmy(dayStr: String, monStr: String, yearStr: String): LocalDate? {

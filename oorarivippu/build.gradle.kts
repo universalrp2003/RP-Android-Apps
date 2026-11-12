@@ -6,28 +6,36 @@ plugins {
 
 // Match the established RP Ideas release signer so verified updates can be installed.
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
     namespace = "com.oorarivippu.voiceannouncer"
     compileSdk = 36
 
+    testBuildType = "release"
+
     defaultConfig {
         applicationId = "com.oorarivippu.voiceannouncer"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         minSdk = 26
         targetSdk = 36
-        versionCode = 14
-        versionName = "1.1.9"
+        versionCode = 26
+        versionName = "1.1.21"
+        // Configured only after the separate family service passes its real HTTPS checks.
+        val familyUrl = providers.gradleProperty("oorFamilyServiceUrl").orElse("").get()
+        require(familyUrl.isEmpty() || familyUrl.matches(Regex("https://oor-family-relay\\.[a-z0-9-]+\\.workers\\.dev")))
+        buildConfigField("String", "FAMILY_SERVICE_URL", "\"$familyUrl\"")
         vectorDrawables.useSupportLibrary = true
     }
 
     signingConfigs {
-        if (stableKeystore.exists()) {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
             create("stable") {
                 storeFile = stableKeystore
-                storePassword = "cleansweep-ci"
+                storePassword = releaseStorePassword
                 keyAlias = "cleansweep"
-                keyPassword = "cleansweep-ci"
+                keyPassword = releaseStorePassword
                 storeType = "PKCS12"
             }
         }
@@ -36,12 +44,13 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
     }
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
@@ -67,6 +76,8 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:okhttp:4.12.0")

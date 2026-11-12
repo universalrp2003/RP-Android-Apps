@@ -6,6 +6,45 @@ import sys
 import xml.etree.ElementTree as ET
 
 EXPECTED = {
+    "com.universalrp.cleansweep.data.HomePlacePolicyTest": 6,
+    "com.universalrp.cleansweep.data.HomePlacePreferencesTest": 7,
+    "com.universalrp.cleansweep.weather.RainForecastDetailsTest": 4,
+    "com.universalrp.cleansweep.data.ServingSignalPolicyTest": 18,
+    "com.universalrp.cleansweep.notify.PillSignalPolicyTest": 11,
+    "com.universalrp.cleansweep.data.NewsLanguageDefaultTest": 4,
+    "com.universalrp.cleansweep.ui.LiveGuardAboutPolicyTest": 4,
+    "com.universalrp.cleansweep.data.SimSignalPolicyTest": 12,
+    "com.universalrp.cleansweep.data.RainNoticePolicyTest": 6,
+    "com.universalrp.cleansweep.notify.NoSignalPolicyTest": 8,
+    "com.universalrp.cleansweep.notify.NoSignalBeepTest": 6,
+    "com.universalrp.cleansweep.widget.DisasterWidgetCacheTest": 15,
+    "com.universalrp.cleansweep.data.NetworkSplitDayTest": 8,
+    "com.universalrp.cleansweep.ui.HomeCompactPolicyTest": 4,
+    "com.universalrp.cleansweep.notify.DisasterUpdateNotifierTest": 14,
+    "com.universalrp.cleansweep.data.NetworkActivityPolicyTest": 8,
+    "com.universalrp.cleansweep.data.OfficialCyclonePolicyTest": 21,
+    "com.universalrp.cleansweep.notify.RoutineStatusTest": 12,
+    "com.universalrp.cleansweep.data.NamedWeatherPlaceTest": 10,
+    "com.universalrp.cleansweep.data.SecurityIdentityPolicyTest": 12,
+    "com.universalrp.cleansweep.data.FeatureDiscoveryTest": 29,
+    "com.universalrp.cleansweep.data.NewsDisasterPolicyTest": 34,
+    "com.universalrp.cleansweep.data.NewsDisasterUpdatesTest": 41,
+    "com.universalrp.cleansweep.data.NewsSpeechFormattingTest": 12,
+    "com.universalrp.cleansweep.ui.DisasterWebPolicyTest": 12,
+    "com.universalrp.cleansweep.voice.StableNetworkWindowTest": 6,
+    "com.universalrp.cleansweep.data.SimpleWeatherPolicyTest": 13,
+    "com.universalrp.cleansweep.data.DisasterReportsTest": 5,
+    "com.universalrp.cleansweep.data.SimpleWeatherPreferencesTest": 6,
+    "com.universalrp.cleansweep.data.LiveGuard283PolicyTest": 7,
+    "com.universalrp.cleansweep.data.SavedRainWatchPreferencesTest": 5,
+    "com.universalrp.cleansweep.weather.LiveGuard283ForecastTest": 7,
+    "com.universalrp.cleansweep.voice.NewsPlaybackPlanTest": 8,
+    "com.universalrp.cleansweep.voice.NewsTimingPolicyTest": 14,
+    "com.universalrp.cleansweep.voice.NewsAutoScheduleTest": 19,
+    "com.universalrp.cleansweep.data.NewsTranslationPolicyTest": 24,
+    "com.universalrp.cleansweep.voice.NewsTranslatorTest": 8,
+    "com.universalrp.cleansweep.data.BalancedNewsPolicyTest": 27,
+    "com.universalrp.cleansweep.voice.NewsBulletinEditorTest": 12,
     "com.universalrp.cleansweep.notify.StatusPillContentTest": 7,
     "com.universalrp.cleansweep.data.SecuritySettingsRoutesTest": 14,
     "com.universalrp.cleansweep.ai.SecurityAiPromptTest": 9,
@@ -15,16 +54,17 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.BatteryValuePolicyTest": 11,
     "com.universalrp.cleansweep.ai.AssistantEvidencePolicyTest": 10,
     "com.universalrp.cleansweep.widget.WidgetReadingPolicyTest": 12,
-    "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 15,
+    "com.universalrp.cleansweep.voice.HdVoiceExplainerTest": 6,
+    "com.universalrp.cleansweep.voice.VoiceDeliveryPolicyTest": 17,
     "com.universalrp.cleansweep.data.PlanPolicyTest": 27,
     "com.universalrp.cleansweep.data.PlanReadingPolicyTest": 9,
     "com.universalrp.cleansweep.data.CompatibilityReportTest": 4,
-    "com.universalrp.cleansweep.data.SecurityHistoryPolicyTest": 12,
+    "com.universalrp.cleansweep.data.SecurityHistoryPolicyTest": 17,
     "com.universalrp.cleansweep.data.ChargeHistoryPolicyTest": 14,
     "com.universalrp.cleansweep.data.DataBudgetPolicyTest": 14,
     "com.universalrp.cleansweep.data.MobileCounterPolicyTest": 8,
     "com.universalrp.cleansweep.data.PermissionObservationPolicyTest": 6,
-    "com.universalrp.cleansweep.data.InsightsJsonTest": 6,
+    "com.universalrp.cleansweep.data.InsightsJsonTest": 8,
     "com.universalrp.cleansweep.ai.ActionChecklistTest": 12,
     "com.universalrp.cleansweep.ai.AiRequestPolicyTest": 8,
     "com.universalrp.cleansweep.ai.ProductEvidencePolicyTest": 12,
@@ -35,7 +75,6 @@ EXPECTED = {
     "com.universalrp.cleansweep.data.PermissionReviewSummaryTest": 8,
     "com.universalrp.cleansweep.data.LocalizedTextTest": 4,
     "com.universalrp.cleansweep.voice.AnswerVoicePolicyTest": 12,
-    "com.universalrp.cleansweep.updates.UpdatePolicyTest": 14,
     # The reader itself is gone from production (2.40 core removal). Its historical pure
     # policy now lives in the TEST source set, so these 12 cases still run.
     "com.universalrp.cleansweep.notifications.NotificationReadingPolicyTest": 12,
@@ -67,12 +106,21 @@ EXPECTED = {
     "com.universalrp.cleansweep.weather.WeatherAlertAndPlacePolicyTest": 7,
     "com.universalrp.cleansweep.weather.WeatherUpgradeAndBannerTest": 3,
     "com.universalrp.cleansweep.voice.NeuralCloudVoiceEngineTest": 5,
+    # 2.76: eight-headline bulletins must survive the shared HD text cap as ordered parts.
+    "com.universalrp.cleansweep.data.NewsBulletinHdPipelineTest": 9,
+    # 2.77: prepare every news part before playback; bounded patient synthesis budgets.
+    "com.universalrp.cleansweep.voice.NewsVoicePreparationPolicyTest": 7,
+    # 2.95: the opening minute starts no feed fetch, Home's heavy readings are rate-limited, and the
+    # serving-cell fallback counts physical slots instead of OEM list entries.
+    "com.universalrp.cleansweep.data.NewsStartupPolicyTest": 5,
+    "com.universalrp.cleansweep.data.SimAttributionPolicyTest": 4,
+    "com.universalrp.cleansweep.ui.HomeRefreshPolicyTest": 5,
 }
 
 
-def verify(results_root: Path) -> list[str]:
+def verify(results_root: Path, variants=("Debug", "Release")) -> list[str]:
     summaries = []
-    for variant in ("Debug", "Release"):
+    for variant in variants:
         directory = results_root / f"test{variant}UnitTest"
         reports = [ET.parse(path).getroot() for path in sorted(directory.glob("TEST-*.xml"))]
         if not reports:

@@ -1,0 +1,99 @@
+{
+  "owner_authorized": true,
+  "review_date": "2026-11-03",
+  "scope": "Use previously uploaded Oor screenshots with partially hidden names and locations; originals remain private.",
+  "method": "Pixel-only solid opaque masks flattened into RGB PNG; no blur or generative edits. Only initial character(s) retained for names/towns. Report date/time hidden. Phone status/navigation bars cropped; dialogs cropped to exclude underlying personal content. No EXIF/text metadata. Original files never copied into repository.",
+  "visual_review_completed": true,
+  "apk_rebuilt": false,
+  "store_apk_changed": false,
+  "app_store_submission": false,
+  "images": [
+    {
+      "website": "images/oor-arivippu-v1.1.15/1-family-town.png",
+      "caption": "Main screen with a latest reported town and sharing ON",
+      "width": 1080,
+      "height": 2078,
+      "bytes": 353733,
+      "sha256": "55866158df35626f4b5e61ccc4c05709bb8e3490e420a1b8af0578f6881ec63e",
+      "opaque_masks": [
+        [
+          125,
+          370,
+          503,
+          435
+        ],
+        [
+          114,
+          464,
+          503,
+          511
+        ],
+        [
+          455,
+          539,
+          817,
+          581
+        ]
+      ]
+    },
+    {
+      "website": "images/oor-arivippu-v1.1.15/2-no-fresh-town.png",
+      "caption": "Main screen with no fresh report and sharing ON",
+      "width": 1080,
+      "height": 2078,
+      "bytes": 359676,
+      "sha256": "da8ba89cd4e25a5ea8b9b6699c9a713d26eb153689ff2d7a597c63388b2cb384",
+      "opaque_masks": [
+        [
+          125,
+          370,
+          503,
+          435
+        ],
+        [
+          879,
+          1300,
+          1019,
+          1353
+        ]
+      ]
+    },
+    {
+      "website": "images/oor-arivippu-v1.1.15/3-sharing-explanation.png",
+      "caption": "Family sharing explanation and stop-all control",
+      "width": 880,
+      "height": 2003,
+      "bytes": 361604,
+      "sha256": "f33d5212193cf2060177c15175a4a9a614725c44de324c11e304868af5e1ca20",
+      "opaque_masks": []
+    },
+    {
+      "website": "images/oor-arivippu-v1.1.15/4-family-controls.png",
+      "caption": "Invitation controls and per-member sharing switch",
+      "width": 880,
+      "height": 2003,
+      "bytes": 254041,
+      "sha256": "eab98c7858b894dd124e803be0aa4169d8413e4e86b9ab2a5023a8247a9e4a67",
+      "opaque_masks": [
+        [
+          143,
+          659,
+          371,
+          711
+        ],
+        [
+          113,
+          1365,
+          450,
+          1418
+        ]
+      ]
+    }
+  ],
+  "artwork_archive": {
+    "website": "images/oor-arivippu-v1.1.15/oor-arivippu-1.1.15-redacted-screenshots.zip",
+    "bytes": 1295733,
+    "sha256": "e1d0a3f5b00925411464ddf06b1b27cf971ae31498b915010c0cbc2572ca1f00"
+  },
+  "opaque_masks_verified": true
+}

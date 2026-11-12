@@ -122,6 +122,7 @@ class MainActivity : ComponentActivity() {
             val isDefaultSms by vm.isDefaultSms.collectAsState()
             val hasReadSms by vm.hasReadSms.collectAsState()
             val hasMoreMessages by vm.hasMoreMessages.collectAsState()
+            val isInboxLoading by vm.isLoading.collectAsState()
             val sims by vm.sims.collectAsState()
             val statusBanner by vm.statusBanner.collectAsState()
             val manualScanResult by vm.manualScanResult.collectAsState()
@@ -173,12 +174,24 @@ class MainActivity : ComponentActivity() {
             ) {
                 SmsRepository.clearContactCache()
                 vm.refreshAll(scanUncheckedLinksOnline = true)
-                if (!SmsRepository.isDefaultSmsApp(this@MainActivity)) {
-                    // On custom OEM skins (e.g. HyperOS / MIUI), open Default Apps settings directly as fallback
-                    runCatching {
-                        startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
-                    }
-                }
+                // Cancellation is a valid choice: never force-open Settings afterward.
+            }
+
+            val sendPermissionNeeded by vm.sendPermissionNeeded.collectAsState()
+            val sendPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+                vm.clearSendPermissionRequest()
+                vm.postBanner(if (prefs.tamil) "வரைவு பாதுகாக்கப்பட்டது; அனுப்ப மீண்டும் Send அழுத்துங்கள்." else "Draft kept. Tap Send again if you want to send it.")
+            }
+            LaunchedEffect(sendPermissionNeeded) {
+                if (sendPermissionNeeded) sendPermissionLauncher.launch(Manifest.permission.SEND_SMS)
+            }
+
+            var showCloudSpeechDisclosure by remember { mutableStateOf(false) }
+            var showSmsReadDisclosure by remember { mutableStateOf(false) }
+            if (!prefs.cloudSpeechChoiceMade || showCloudSpeechDisclosure) {
+                com.universalrp.smsguard.ui.CloudSpeechDisclosure(prefs.tamil,
+                    onChoice = { vm.setCloudSpeechConsent(it); showCloudSpeechDisclosure = false },
+                    onDismiss = { vm.setCloudSpeechConsent(false); showCloudSpeechDisclosure = false })
             }
 
             val permissionsLauncher = rememberLauncherForActivityResult(
@@ -208,12 +221,19 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            var pendingFinanceLockDisable by remember { mutableStateOf(false) }
+            fun finishFinanceAuthentication() {
+                vm.unlockFinanceSession()
+                if (pendingFinanceLockDisable) {
+                    vm.setFinanceLockEnabled(false)
+                    pendingFinanceLockDisable = false
+                }
+            }
             val deviceCredentialLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.StartActivityForResult(),
             ) { res ->
-                if (res.resultCode == RESULT_OK) {
-                    vm.unlockFinanceSession()
-                }
+                if (res.resultCode == RESULT_OK) finishFinanceAuthentication()
+                pendingFinanceLockDisable = false
             }
 
             fun requestFinanceBiometricUnlock() {
@@ -222,6 +242,19 @@ class MainActivity : ComponentActivity() {
                     "கைரேகை அல்லது போன் திரை பூட்டைப் பயன்படுத்தவும்"
                 } else {
                     "Verify your fingerprint, face, or phone screen lock"
+                }
+                // Android 8/9 cannot combine framework biometrics with device credentials.
+                // Use the secure phone credential screen so PIN-only phones are not stranded.
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    val keyguard = getSystemService(KeyguardManager::class.java)
+                    if (keyguard != null && keyguard.isDeviceSecure) {
+                        @Suppress("DEPRECATION")
+                        val credential = keyguard.createConfirmDeviceCredentialIntent(title, subtitle)
+                        if (credential != null) {
+                            deviceCredentialLauncher.launch(credential)
+                            return
+                        }
+                    }
                 }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                     val launched = runCatching {
@@ -241,14 +274,17 @@ class MainActivity : ComponentActivity() {
                             builder.setNegativeButton(
                                 if (prefs.tamil) "கடவுச்சொல் உள்ளிடு" else "Use Password",
                                 mainExecutor,
-                            ) { _, _ -> }
+                            ) { _, _ -> pendingFinanceLockDisable = false }
                         }
                         builder.build().authenticate(
                             CancellationSignal(),
                             mainExecutor,
                             object : BiometricPrompt.AuthenticationCallback() {
                                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-                                    vm.unlockFinanceSession()
+                                    finishFinanceAuthentication()
+                                }
+                                override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                                    pendingFinanceLockDisable = false
                                 }
                             },
                         )
@@ -264,45 +300,71 @@ class MainActivity : ComponentActivity() {
                         return
                     }
                 }
+                pendingFinanceLockDisable = false
                 vm.postBanner(
                     if (prefs.tamil) {
-                        "போன் கைரேகை அமைக்கப்படவில்லை — கீழே வரவு-செலவு கடவுச்சொல் அமைத்துத் திறக்கவும்."
+                        "போன் திரைப் பூட்டை அமைத்து மீண்டும் முயலுங்கள். ஏற்கெனவே உள்ள வரவு-செலவு கடவுச்சொல்லால் கணக்கைப் பார்க்கலாம்."
                     } else {
-                        "No phone screen lock detected — set or enter a Finance password below."
+                        "Set up a phone screen lock and retry. An existing Finance password can still unlock the summary."
                     },
                 )
             }
 
+            var showSmsOnlyDefaultDisclosure by remember { mutableStateOf(false) }
+
             fun requestDefaultSmsRole() {
-                GuardSettingsStore.savePreviousDefaultSmsPackage(
-                    this@MainActivity,
-                    SmsRepository.currentSystemDefaultSmsPackage(this@MainActivity),
-                )
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val rm = getSystemService(RoleManager::class.java)
-                    if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS) && !rm.isRoleHeld(RoleManager.ROLE_SMS)) {
-                        roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_SMS))
-                        return
-                    }
+                val ctx = this@MainActivity
+                val settings = GuardSettingsStore.ensureLoaded(ctx)
+                val manager = if (Build.VERSION.SDK_INT >= 29) getSystemService(RoleManager::class.java) else null
+                val roleAvailable = Build.VERSION.SDK_INT >= 29 && manager?.isRoleAvailable(RoleManager.ROLE_SMS) == true
+                val step = com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.next(
+                    SmsRepository.isDefaultSmsApp(ctx), settings.smsOnlyDefaultAcknowledged,
+                    Build.VERSION.SDK_INT, roleAvailable)
+                if (step == com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.DISCLOSE_MMS_LIMIT) {
+                    showSmsOnlyDefaultDisclosure = true
+                    return
                 }
-                val legacyIntent = Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT).apply {
-                    putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
+                if (step == com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.ALREADY_DEFAULT) {
+                    vm.refreshAll()
+                    return
                 }
-                roleLauncher.launch(legacyIntent)
+                GuardSettingsStore.savePreviousDefaultSmsPackage(ctx, SmsRepository.currentSystemDefaultSmsPackage(ctx))
+                val request = when (step) {
+                    com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.REQUEST_ROLE -> if (Build.VERSION.SDK_INT >= 29 && manager != null)
+                        manager.createRequestRoleIntent(RoleManager.ROLE_SMS) else Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                    com.universalrp.smsguard.engine.DefaultSmsSetupPolicy.Step.LEGACY_REQUEST -> Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT)
+                        .putExtra(Telephony.Sms.Intents.EXTRA_PACKAGE_NAME, packageName)
+                    else -> Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)
+                }
+                runCatching { roleLauncher.launch(request) }.onFailure {
+                    vm.postBanner(if (settings.tamil) "Android இயல்புநிலைத் தேர்வைத் திறக்க முடியவில்லை. Settings → Apps → Default apps → SMS-ல் தேர்ந்தெடுக்கலாம்."
+                        else "Could not open Android's chooser. Use Settings → Apps → Default apps → SMS.")
+                }
             }
 
-            fun requestCompanionSmsPermissions() {
-                val perms = buildList {
-                    add(Manifest.permission.READ_SMS)
-                    add(Manifest.permission.RECEIVE_SMS)
-                    add(Manifest.permission.SEND_SMS)
-                    add(Manifest.permission.READ_PHONE_STATE)
-                    add(Manifest.permission.READ_CONTACTS)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        add(Manifest.permission.POST_NOTIFICATIONS)
-                    }
-                }.toTypedArray()
-                permissionsLauncher.launch(perms)
+            if (showSmsOnlyDefaultDisclosure) {
+                com.universalrp.smsguard.ui.SmsOnlyDefaultDisclosure(prefs.tamil,
+                    onDismiss = { showSmsOnlyDefaultDisclosure = false },
+                    onAccept = {
+                        GuardSettingsStore.acknowledgeSmsOnlyDefault(this@MainActivity)
+                        showSmsOnlyDefaultDisclosure = false
+                        requestDefaultSmsRole()
+                    })
+            }
+
+            fun requestCompanionSmsPermissions() { showSmsReadDisclosure = true }
+            if (showSmsReadDisclosure) {
+                com.universalrp.smsguard.ui.SmsReadDisclosure(prefs.tamil,
+                    onDismiss = { showSmsReadDisclosure = false },
+                    onAccept = {
+                        showSmsReadDisclosure = false
+                        val requested = mutableListOf(Manifest.permission.READ_SMS, Manifest.permission.RECEIVE_SMS)
+                        if (Build.VERSION.SDK_INT >= 33) requested += Manifest.permission.POST_NOTIFICATIONS
+                        val missing = requested.filter {
+                            androidx.core.content.ContextCompat.checkSelfPermission(this@MainActivity, it) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                        }
+                        if (missing.isNotEmpty()) permissionsLauncher.launch(missing.toTypedArray()) else vm.refreshAll(true)
+                    })
             }
 
             fun openAppInfoForRestrictedSettings() {
@@ -586,6 +648,8 @@ class MainActivity : ComponentActivity() {
                                         isDefaultSms = isDefaultSms,
                                         hasReadSms = hasReadSms,
                                         hasMoreMessages = hasMoreMessages,
+                                        isLoading = isInboxLoading,
+                                        loadedMessageCount = allMessages.size,
                                         sims = sims,
                                         onRequestDefaultSms = ::requestDefaultSmsRole,
                                         onOpenAppInfoRestricted = ::openAppInfoForRestrictedSettings,
@@ -628,6 +692,16 @@ class MainActivity : ComponentActivity() {
                                     )
                                     MainTab.CONTROLS -> ControlsTab(
                                         vm = vm,
+                                        onCloudSpeechChoice = { showCloudSpeechDisclosure = true },
+                                        onRequestContacts = { permissionsLauncher.launch(arrayOf(Manifest.permission.READ_CONTACTS)) },
+                                        onRequestSimInfo = { permissionsLauncher.launch(arrayOf(Manifest.permission.READ_PHONE_STATE)) },
+                                        onFinanceLockChange = { enabled ->
+                                            if (enabled) vm.setFinanceLockEnabled(true)
+                                            else {
+                                                pendingFinanceLockDisable = true
+                                                requestFinanceBiometricUnlock()
+                                            }
+                                        },
                                         prefs = prefs,
                                         palette = palette,
                                         ui = ui,

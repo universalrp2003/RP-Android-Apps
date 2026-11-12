@@ -1,0 +1,16 @@
+{
+  "publication_authorized": true,
+  "only_app": "cleaner",
+  "default_on_notice_authorized": true,
+  "all_topics_default_authorized": true,
+  "new_phone_test_required": false,
+  "source": "ec25204b64fdce2e83ed83e3e50c7a66caf9c882",
+  "run_id": 41414340270,
+  "job_id": 125174416840,
+  "artifact_id": 13127658323,
+  "archive_sha256": "adb33b4aa7026d127f911b0719d37c2062360d7288838bf5b0920a3dd6326ccf",
+  "apk_sha256": "87be21168e9f7d619ee8709163f632ebfd79b1a731d2b45e8b4d6618ca43a70c",
+  "bytes": 14680987,
+  "required_jvm_tests": 689,
+  "required_suites": 69
+}

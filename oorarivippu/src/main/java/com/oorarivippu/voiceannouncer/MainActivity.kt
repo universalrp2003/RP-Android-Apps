@@ -193,6 +193,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onPause() {
+        com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible=false
+        super.onPause()
+    }
+
     override fun onStop() {
         OorWeatherMonitor.onWindowStop()
         internetMonitor?.stop()
@@ -209,6 +214,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible=true
         AppPreferences.updateLiveStatus(
             isGpsEnabled = GpsStateReceiver.isGpsProviderEnabled(this)
         )
@@ -275,7 +281,7 @@ fun OorArivippuScreen(
     }
     var showGuide by remember { mutableStateOf(false) }
     var showSettings by rememberSaveable { mutableStateOf(false) }
-    var destinationLookupMessage by remember { mutableStateOf("") }
+    var destinationLookupMessage by remember(state.appLanguage) { mutableStateOf("") }
     var isResolvingDestination by remember { mutableStateOf(false) }
     var destinationCandidates by remember { mutableStateOf<List<DestinationCandidate>>(emptyList()) }
     val coroutineScope = rememberCoroutineScope()
@@ -449,7 +455,7 @@ fun OorArivippuScreen(
                         modifier = Modifier.size(22.dp)
                     )
                     Text(
-                        text = ui.appTitle,
+                        text = if (oorIsTamil) "ஊர் அறிவிப்பு" else "Oor Arivippu",
                         color = Color.White,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
@@ -523,10 +529,9 @@ fun OorArivippuScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .imePadding()
-                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             // 1. Active Rain / Storm / Cyclone Banner ONLY when active (hidden completely when clear!)
             if (oorWeather.bannerSeverity != null) {
@@ -541,6 +546,12 @@ fun OorArivippuScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
+
+            com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil, onChanged = onSettingsChanged, onFamilyUpdates = {
+                if(com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible) runCatching {
+                    context.startService(Intent(context,LocationAnnouncementService::class.java).setAction(LocationAnnouncementService.ACTION_FAMILY_UPDATES))
+                }
+            })
 
             // Permission Banner (shown only until granted)
             if (!hasPermissions) {
@@ -654,7 +665,7 @@ fun OorArivippuScreen(
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = if (state.isTrackingEnabled) ui.masterTurnOff else ui.masterTurnOn,
-                            fontSize = 16.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -688,79 +699,41 @@ fun OorArivippuScreen(
                             fontSize = 14.5.sp,
                             modifier = Modifier.weight(1f)
                         )
-                        Text(
-                            text = "${state.currentSpeedKmh.toInt()} km/h",
-                            color = Color(0xFF0F766E),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.5.sp
-                        )
                     }
 
-                    InfoRow(
-                        label = ui.currentCityLabel,
-                        value = state.currentCityOrVillage.ifBlank { ui.unknownPlace }
-                    )
-                    InfoRow(
-                        label = ui.currentSubAreaLabel,
-                        value = state.currentSubArea.ifBlank { ui.unknownPlace }
-                    )
-                    if (state.currentDistrict.isNotBlank()) {
-                        InfoRow(
-                            label = ui.currentDistrictLabel,
-                            value = state.currentDistrict
-                        )
-                    }
+                    StableTripField(if (oorIsTamil) "வேகம்" else "Speed", tripSpeedText(state, oorIsTamil), oorIsTamil)
+                    StableTripField(ui.currentCityLabel, state.currentCityOrVillage.ifBlank { ui.unknownPlace }, oorIsTamil)
+                    StableTripField(ui.currentSubAreaLabel, state.currentSubArea.ifBlank { ui.unknownPlace }, oorIsTamil)
+                    // Keep the district slot even before a district is available.
+                    StableTripField(ui.currentDistrictLabel, state.currentDistrict.ifBlank { ui.unknownPlace }, oorIsTamil)
 
                     // Highlighted Current Session Traveled Distance (km) Box
                     val sessionKm = state.sessionTraveledMeters / 1000f
                     val sessionKmText = String.format(Locale.US, "%.2f km", sessionKm)
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
                             .background(Color(0xFFCCFBF1).copy(alpha = 0.55f))
                             .border(1.dp, Color(0xFF0F766E).copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp, vertical = 9.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = if (oorIsTamil) "இந்தப் பயணத்தில் கடந்த தூரம்" else "Session Traveled Distance",
-                                fontSize = 12.sp,
-                                color = Color(0xFF134E4A),
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                text = if (oorIsTamil) "புதிய தொடக்கத்தில் தானாக 0.00 km ஆகும்" else "Auto-resets to 0.00 km when started",
-                                fontSize = 10.5.sp,
-                                color = Color(0xFF0F766E)
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Text(
-                                text = sessionKmText,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = Color(0xFF0F766E)
-                            )
-                            if (state.sessionTraveledMeters > 0f) {
-                                IconButton(
-                                    onClick = { AppPreferences.resetSessionDistance() },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Refresh,
-                                        contentDescription = if (oorIsTamil) "பூஜ்ஜியமாக்கு" else "Reset distance",
-                                        tint = Color(0xFF0F766E),
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
+                        Text(if (oorIsTamil) "இந்தப் பயணத்தில் கடந்த தூரம்" else "Session Traveled Distance",
+                            fontSize = 12.sp, color = Color(0xFF134E4A), fontWeight = FontWeight.SemiBold)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(sessionKmText, Modifier.weight(1f), fontSize = 18.sp,
+                                fontWeight = FontWeight.ExtraBold, color = Color(0xFF0F766E),
+                                minLines = 2, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            // The reset control always reserves its space, including at zero.
+                            IconButton(onClick = { AppPreferences.resetSessionDistance() },
+                                enabled = state.sessionTraveledMeters > 0f) {
+                                Icon(Icons.Default.Refresh,
+                                    contentDescription = if (oorIsTamil) "பூஜ்ஜியமாக்கு" else "Reset distance",
+                                    tint = Color(0xFF0F766E))
                             }
                         }
+                        Text(if (oorIsTamil) "புதிய தொடக்கத்தில் தானாக 0.00 km ஆகும்" else "Auto-resets to 0.00 km when started",
+                            fontSize = 10.5.sp, color = Color(0xFF0F766E))
                     }
                 }
             }
@@ -866,16 +839,12 @@ fun OorArivippuScreen(
                             onCancel = { destinationCandidates = emptyList() }
                         )
                     }
+                    TripProgress(state, oorIsTamil)
                     val destinationLat = state.destinationLatitude
                     val destinationLon = state.destinationLongitude
                     if (state.destinationName.isNotBlank() && destinationCandidates.isEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                text = "${ui.destinationFieldLabel}: ${state.destinationName}",
-                                color = Color(0xFF0F766E),
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 13.sp
-                            )
+                            StableTripField(ui.destinationFieldLabel, state.destinationName, oorIsTamil)
                             if (state.destinationDetails.isNotBlank()) {
                                 Text(
                                     text = state.destinationDetails,
@@ -913,6 +882,124 @@ fun OorArivippuScreen(
                     }
                 }
             }
+                LocationDiagnostics(state, oorIsTamil)
+                // 4. Recent Voice Announcements History Card
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = ui.historySectionTitle,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp
+                            )
+                            if (state.history.isNotEmpty()) {
+                                TextButton(onClick = { AppPreferences.clearHistory() }) {
+                                    Text(text = ui.clearHistoryButton)
+                                }
+                            }
+                        }
+                        if (state.history.isEmpty()) {
+                            Text(
+                                text = ui.emptyHistoryText,
+                                color = Color(0xFF64748B),
+                                fontSize = 13.sp
+                            )
+                        } else {
+                            val summary = AnnouncementDeliveryReport.summarize(state.history)
+                            Text(
+                                text = String.format(
+                                    ui.deliverySummaryFormat,
+                                    summary.spoken,
+                                    summary.total
+                                ),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF0F766E)
+                            )
+                            Text(
+                                text = String.format(
+                                    ui.deliveryPlacesFormat,
+                                    summary.distinctPlaces
+                                ),
+                                fontSize = 12.sp,
+                                color = Color(0xFF64748B)
+                            )
+                            state.history.forEach { item ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(Color(0xFFF1F5F9))
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Text(
+                                            text = item.title,
+                                            modifier = Modifier.weight(1f),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF0F766E),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = item.timestamp,
+                                            fontSize = 11.sp,
+                                            color = Color(0xFF64748B),
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
+                                    if (!PlaceDataPolicy.samePlaceName(item.title, item.spokenText.trim().trimEnd('.', '。'))) Text(
+                                        text = item.spokenText,
+                                        fontSize = 13.sp,
+                                        color = Color(0xFF334155)
+                                    )
+                                    val outcome = AnnouncementDeliveryReport.outcomeOf(item)
+                                    val outcomeLabel = when (outcome) {
+                                        AnnouncementDeliveryReport.Outcome.SPOKEN -> ui.outcomeSpoken
+                                        AnnouncementDeliveryReport.Outcome.QUEUED_CALL -> ui.outcomeQueuedCall
+                                        AnnouncementDeliveryReport.Outcome.NO_INTERNET -> ui.outcomeNoInternet
+                                        AnnouncementDeliveryReport.Outcome.NO_GPS -> ui.outcomeNoGps
+                                        AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE -> ui.outcomeVoiceUnavailable
+                                        AnnouncementDeliveryReport.Outcome.SKIPPED -> ui.outcomeSkipped
+                                    }
+                                    Text(
+                                        text = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
+                                            "\u2713 " + outcomeLabel
+                                        } else {
+                                            "\u26A0 " + outcomeLabel
+                                        },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
+                                            Color(0xFF15803D)
+                                        } else {
+                                            Color(0xFFB45309)
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+
         }
     }
 }
@@ -964,10 +1051,9 @@ private fun OorSettingsFullDialog(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(inner)
-                    .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 // 1. Voice Speed & Volume (Auto HD Male/Female online + Auto System Male/Female offline)
                 Card(
@@ -976,8 +1062,8 @@ private fun OorSettingsFullDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        modifier = Modifier.padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Text(
                             text = if (oorIsTamil) "🎙️ குரல் வேகம் & ஒலியளவு" else "🎙️ Voice Speed & Volume",
@@ -1098,8 +1184,8 @@ private fun OorSettingsFullDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        modifier = Modifier.padding(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         SettingToggleItem(
                             icon = Icons.Default.LocationCity,
@@ -1188,122 +1274,6 @@ private fun OorSettingsFullDialog(
                     }
                 }
 
-                // 4. Recent Voice Announcements History Card
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(14.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = ui.historySectionTitle,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 15.sp
-                            )
-                            if (state.history.isNotEmpty()) {
-                                TextButton(onClick = { AppPreferences.clearHistory() }) {
-                                    Text(text = ui.clearHistoryButton)
-                                }
-                            }
-                        }
-                        if (state.history.isEmpty()) {
-                            Text(
-                                text = ui.emptyHistoryText,
-                                color = Color(0xFF64748B),
-                                fontSize = 13.sp
-                            )
-                        } else {
-                            val summary = AnnouncementDeliveryReport.summarize(state.history)
-                            Text(
-                                text = String.format(
-                                    ui.deliverySummaryFormat,
-                                    summary.spoken,
-                                    summary.total
-                                ),
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = Color(0xFF0F766E)
-                            )
-                            Text(
-                                text = String.format(
-                                    ui.deliveryPlacesFormat,
-                                    summary.distinctPlaces
-                                ),
-                                fontSize = 12.sp,
-                                color = Color(0xFF64748B)
-                            )
-                            state.history.forEach { item ->
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(Color(0xFFF1F5F9))
-                                        .padding(10.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.Top
-                                    ) {
-                                        Text(
-                                            text = item.title,
-                                            modifier = Modifier.weight(1f),
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = Color(0xFF0F766E),
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = item.timestamp,
-                                            fontSize = 11.sp,
-                                            color = Color(0xFF64748B),
-                                            maxLines = 1,
-                                            softWrap = false
-                                        )
-                                    }
-                                    Text(
-                                        text = item.spokenText,
-                                        fontSize = 13.sp,
-                                        color = Color(0xFF334155)
-                                    )
-                                    val outcome = AnnouncementDeliveryReport.outcomeOf(item)
-                                    val outcomeLabel = when (outcome) {
-                                        AnnouncementDeliveryReport.Outcome.SPOKEN -> ui.outcomeSpoken
-                                        AnnouncementDeliveryReport.Outcome.QUEUED_CALL -> ui.outcomeQueuedCall
-                                        AnnouncementDeliveryReport.Outcome.NO_INTERNET -> ui.outcomeNoInternet
-                                        AnnouncementDeliveryReport.Outcome.NO_GPS -> ui.outcomeNoGps
-                                        AnnouncementDeliveryReport.Outcome.VOICE_UNAVAILABLE -> ui.outcomeVoiceUnavailable
-                                        AnnouncementDeliveryReport.Outcome.SKIPPED -> ui.outcomeSkipped
-                                    }
-                                    Text(
-                                        text = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
-                                            "\u2713 " + outcomeLabel
-                                        } else {
-                                            "\u26A0 " + outcomeLabel
-                                        },
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = if (outcome == AnnouncementDeliveryReport.Outcome.SPOKEN) {
-                                            Color(0xFF15803D)
-                                        } else {
-                                            Color(0xFFB45309)
-                                        }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // 5. About, Guide & Verified Updates
                 Card(
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -1311,7 +1281,7 @@ private fun OorSettingsFullDialog(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(10.dp),
                         verticalArrangement = Arrangement.spacedBy(7.dp)
                     ) {
                         Text(ui.aboutSectionTitle, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -1334,16 +1304,38 @@ private fun OorSettingsFullDialog(
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("🔗 " + ui.sourceRepositoryLabel) }
                         Divider(color = Color(0xFFE2E8F0))
-                        Text(ui.otherAppsTitle, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        val releaseLinks = listOf(
-                            ui.smsGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.8",
-                            ui.liveGuardReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.72",
-                            ui.radioReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/ramesh-radio-v1.26",
-                            ui.pulseEqReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/pulseeq-v1.9",
-                            ui.vocalRemoverReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/rp-vocal-remover-studio-v0.1.15",
-                            ui.oorArivippuReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9",
-                            ui.secretMessageReleaseLabel to "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3"
+                        Text(
+                            if (oorIsTamil)
+                                "குடும்ப ஊர் பகிர்வு விருப்பமானது. இருவரும் உறுதிப்படுத்த வேண்டும்; காத்திருக்கும் அழைப்புகள் உட்பட ஆறு இணைப்புகள் வரை. ஒவ்வொருவருக்கும் உங்கள் பகிர்வைத் தனியாக இயக்கவும்/அணைக்கவும்."
+                            else
+                                "Family town sharing is optional. Both people confirm; up to six connections including pending invitations. Control your sharing separately for each person.",
+                            fontSize = 13.sp
                         )
+                        Text(
+                            if (oorIsTamil)
+                                "பயணத்தை நிறுத்தினால் பதிவேற்றம் இடைநிறுத்தப்படும்; பகிர்வின் இயக்கத் தேர்வு நினைவில் இருக்கும். கடைசி மறையாக்கிய ஊர் அறிக்கை 15 நிமிடத்திற்குள் காலாவதியாகும். குடும்பக் குரல் கைப்பேசியில் மட்டும்; இது நேரலை அல்லது அவசரக் கண்காணிப்பு அல்ல."
+                            else
+                                "Stopping a trip pauses uploads, not your saved sharing switch. The latest encrypted town report expires within 15 minutes. Family speech is on-device only; this is not live or emergency tracking.",
+                            fontSize = 13.sp
+                        )
+                        // The live app section stays current after future releases; a build-time
+                        // publishedVersion would otherwise permanently link to its predecessor.
+                        TextButton(
+                            onClick = { openExternalLink(context, com.universalrp.updates.SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (oorIsTamil) "ஊர் அறிவிப்பின் சமீபத்திய பொதுப் பதிப்பு" else "Latest public Oor release")
+                        }
+                        TextButton(
+                            onClick = { openExternalLink(context, "https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html") },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(if (oorIsTamil) "இணைய வழிகாட்டி & மறைக்கப்பட்ட படங்கள்" else "Web guide & redacted screenshots")
+                        }
+                        Divider(color = Color(0xFFE2E8F0))
+                        Text((if(oorIsTamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas apps") + " (${com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu").size})", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        // Use the suite's verified public versions, never a second stale tag list.
+                        val releaseLinks = com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu")
                         releaseLinks.forEach { (label, url) ->
                             TextButton(
                                 onClick = { openExternalLink(context, url) },
@@ -1360,7 +1352,7 @@ private fun OorSettingsFullDialog(
                                 fontWeight = FontWeight.SemiBold
                             )
                         }
-                        AppUpdates.Control("Oor-Arivippu")
+                        com.universalrp.updates.BrowserReleaseUpdates("Oor-Arivippu")
                     }
                 }
             }
@@ -1481,31 +1473,6 @@ private fun openMap(context: android.content.Context, latitude: Double, longitud
 }
 
 @Composable
-private fun InfoRow(label: String, value: String) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.weight(0.4f),
-            color = Color(0xFF64748B),
-            fontSize = 13.sp,
-            lineHeight = 17.sp
-        )
-        Text(
-            text = value,
-            modifier = Modifier.weight(0.6f),
-            color = Color(0xFF0F172A),
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-            lineHeight = 17.sp,
-            textAlign = TextAlign.End
-        )
-    }
-}
-
-@Composable
 private fun SettingToggleItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
@@ -1522,7 +1489,7 @@ private fun SettingToggleItem(
     ) {
         Row(
             modifier = Modifier.weight(1f).padding(end = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Icon(
                 imageVector = icon,

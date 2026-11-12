@@ -6,6 +6,7 @@ import androidx.media3.common.audio.BaseAudioProcessor
 import java.nio.ByteBuffer
 
 /** PCM-stage balance remains available even when the device has no effect engine. */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class BalanceProcessor : BaseAudioProcessor() {
     override fun onConfigure(inputAudioFormat: AudioFormat): AudioFormat =
         if (inputAudioFormat.channelCount == 2 && inputAudioFormat.encoding == C.ENCODING_PCM_16BIT) inputAudioFormat else AudioFormat.NOT_SET

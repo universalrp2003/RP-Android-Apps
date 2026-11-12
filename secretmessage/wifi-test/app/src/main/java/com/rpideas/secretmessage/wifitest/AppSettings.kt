@@ -53,7 +53,7 @@ internal data class AppSettingsInfo(
 
 /**
  * The app's sections below the product settings (owner requests for 1.1.0): language, ready for
- * chats, this phone (report, reset, forget), the guide, and About with the verified updater and
+ * chats, this phone (report, reset, forget), the guide, and About with the official website update link and
  * the other RP Ideas apps, as in Oor Arivippu.
  */
 @Composable
@@ -164,7 +164,7 @@ private fun AboutSection(versionLabel: String, context: Context) {
         Text(tr("RP Ideas apps"), color = Ink, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
         OTHER_APPS.forEach { (label, url) -> LinkButton(tr(label), url, context) }
         HorizontalDivider(color = Muted.copy(alpha = 0.3f))
-        AppUpdates.Control("Secret-Message")
+        com.universalrp.updates.BrowserReleaseUpdates("Secret-Message", tamil = Tr.tamil)
     }
 }
 

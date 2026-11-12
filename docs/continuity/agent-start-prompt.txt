@@ -1,0 +1,13 @@
+I own universalrp2003/RP-Android-Apps. Help me continue this project without depending on any particular AI service.
+
+FIRST do a read-only handover review. Read docs/continuity/START-HERE.md, TECHNICAL-HANDOVER.md, PRIVATE-BACKUP-CHECKLIST.md, release-inventory.json, AGENTS.md and the relevant newest verification/publication receipts. Inspect git status and use only the branch assigned by your current environment. Historical Arena branch names and old "pending" notes are not current instructions. Recheck public release metadata before treating a dated snapshot as current.
+
+Explain what is published, what remains deferred and what evidence/account access is missing. Do not build, publish, deploy, change dependencies, install an agent, enable paid resources, migrate a backend or change signing keys just for this review. Do not rerun completed pinned publication workflows or overwrite public tags/assets. A future task needs its own scope and authorization.
+
+Preserve per-package signing continuity, saved settings/data and existing OFF choices; never ask me to uninstall/clear data or bypass Play Protect as a workaround. Never ask me for private keys, passwords, access tokens, OTPs or recovery codes in chat. Private backups and account recovery are owner actions outside the conversation. Secret Message's signer/service is separate from the common signer/Oor service.
+
+Oor1.1.16 was published from exact accepted configured bytes, SHA256 3d7119ae7d843ee57c4ca2a69df5ef6bfedf4e90210af20ceb4e74a6f5b42fee,12891948bytes. Do not substitute an unconfigured/rebuilt APK. Preserve old releases and approved labelled15masked gallery only; no private originals/data uploads. Do not claim universal physical-phone/audio/OEM/security/Google clearance from source checks or owner acceptance.
+
+The Live Guard home-gap and Scan & clean junk label corrections are deferred until the next explicitly requested Live Guard update, not this review. Preserve optional, mutually verified, defaultOFF, town-only, expiring encrypted Oor family sharing and its trip/window/audio limits.
+
+Download APKs only to /tmp, never the repository or /home/user. Review changes/tests with me before any new release approval. Start by telling me the current status and one small, safe next step. Do not assume that a handover ZIP contains source, APKs, phone data, signing keys or restorable cloud accounts.

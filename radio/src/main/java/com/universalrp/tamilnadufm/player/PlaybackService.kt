@@ -21,6 +21,7 @@ import com.universalrp.tamilnadufm.widget.RadioWidgetProvider
  * audio session, which is why the 10-band EQ applies to both the online stations
  * and the local files the app plays.
  */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class PlaybackService : MediaSessionService() {
 
     private var mediaSession: MediaSession? = null
@@ -69,6 +70,11 @@ class PlaybackService : MediaSessionService() {
 
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             mediaItem?.let {
+                val local = it.mediaId.startsWith("content:") || it.mediaId.startsWith("file:")
+                val prefs = getSharedPreferences("local_playback_modes", MODE_PRIVATE)
+                player?.pauseAtEndOfMediaItems = local && !prefs.getBoolean("continuous", true)
+                player?.shuffleModeEnabled = local && prefs.getBoolean("shuffle", false)
+                player?.repeatMode = if (local) prefs.getInt("repeat", Player.REPEAT_MODE_OFF).coerceIn(0, 2) else Player.REPEAT_MODE_OFF
                 getSharedPreferences("last_session", MODE_PRIVATE).edit()
                     .putString("uri", it.mediaId).putString("title", it.mediaMetadata.title?.toString()).apply()
             }
@@ -102,8 +108,16 @@ class PlaybackService : MediaSessionService() {
         }
         val http = androidx.media3.datasource.DefaultHttpDataSource.Factory()
             .setConnectTimeoutMs(12000).setReadTimeoutMs(12000).setAllowCrossProtocolRedirects(true)
-        val sources = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(
-            androidx.media3.datasource.DefaultDataSource.Factory(this, http))
+        val guarded = androidx.media3.datasource.ResolvingDataSource.Factory(
+            androidx.media3.datasource.DefaultDataSource.Factory(this, http),
+            androidx.media3.datasource.ResolvingDataSource.Resolver { spec ->
+                if (!com.universalrp.tamilnadufm.data.RadioStreamPolicy.canPlay(spec.uri.toString())) {
+                    throw java.io.IOException("Provider stream held for content review; choose another station")
+                }
+                spec
+            },
+        )
+        val sources = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(guarded)
         val exo = ExoPlayer.Builder(this, renderers)
             .setMediaSourceFactory(sources)
             .setAudioAttributes(
@@ -202,7 +216,7 @@ class PlaybackService : MediaSessionService() {
             playQueueAt(player, urls, queue.second, at)
             return
         }
-        if (url == null) return
+        if (url == null || !com.universalrp.tamilnadufm.data.RadioStreamPolicy.canPlay(url)) return
         val name = prefs.getString("last_name", null) ?: "Ramesh Radio"
         val favicon = prefs.getString("last_favicon", null)
         player.setMediaItem(

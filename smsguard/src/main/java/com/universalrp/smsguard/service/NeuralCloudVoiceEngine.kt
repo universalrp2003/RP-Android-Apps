@@ -1,5 +1,6 @@
 package com.universalrp.smsguard.service
 
+import com.universalrp.voice.NeuralVoiceFailover
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -22,6 +23,7 @@ import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.floor
 
@@ -53,9 +55,9 @@ object NeuralCloudVoiceEngine {
         CuratedOnlineVoiceProfile(
             id = "online_male_1",
             gender = VoiceGender.MALE,
-            titleEn = "👨 Male HD 1 · Valluvar / Prabhat (India Studio)",
-            titleTa = "👨 ஆண் குரல் 1 · வள்ளுவர் / பிரபாத் (இந்திய HD)",
-            tamilNeuralId = "ta-IN-ValluvarNeural",
+            titleEn = "👨 Male HD 1 · Surya / Prabhat (HD Studio)",
+            titleTa = "👨 ஆண் குரல் 1 · சூர்யா / பிரபாத் (உயர்தரக் குரல்)",
+            tamilNeuralId = "ta-MY-SuryaNeural",
             englishNeuralId = "en-IN-PrabhatNeural",
         ),
         CuratedOnlineVoiceProfile(
@@ -199,7 +201,7 @@ object NeuralCloudVoiceEngine {
 
     /**
      * Synthesizes natural 24kHz 48kbps MP3 speech audio from cloud neural voice, with optional disk caching.
-     * Returns null swiftly on any network issue so the caller immediately falls back to on-device system TTS.
+     * Returns null swiftly on any network issue so the caller can report HD unavailability without a robotic substitute.
      */
     fun synthesizeToFileOrNull(
         cacheDir: File?,
@@ -207,33 +209,40 @@ object NeuralCloudVoiceEngine {
         neuralVoiceName: String,
         speechRateMode: Int,
         timeoutMs: Long = 3800L,
+        networkAllowed: () -> Boolean,
     ): File? {
-        val trimmed = text.trim().take(1200)
-        if (trimmed.isEmpty()) return null
+        val trimmed = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(text)?.take(1200) ?: return null
+        if (trimmed.isEmpty() || !networkAllowed()) return null
 
-        val cacheKey = sha256Hex("v1|$neuralVoiceName|$speechRateMode|$trimmed")
-        val targetDir = cacheDir?.let { File(it, "smsguard_neural_tts").apply { mkdirs() } }
-        val cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        var cacheKey = sha256Hex("v2|$neuralVoiceName|$speechRateMode|$trimmed")
+        val targetDir = cacheDir?.let { File(it, "smsguard_neural_tts_v2").apply { mkdirs() } }
+        var cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 256L) {
             return cachedFile
         }
 
+        var selectedVoice = neuralVoiceName
         val mp3Bytes = synthesizeRawMp3(
             text = trimmed,
             voiceName = neuralVoiceName,
             rate = ratePercentString(speechRateMode),
             timeoutMs = timeoutMs,
+            onVoiceSelected = { selectedVoice = it },
+            networkAllowed = networkAllowed,
         ) ?: return null
 
-        if (mp3Bytes.size < 256) return null
+        if (mp3Bytes.size < 256 || !networkAllowed()) return null
+        cacheKey = sha256Hex("v2|$selectedVoice|$speechRateMode|$trimmed")
+        cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        val outputFile = cachedFile
 
-        return if (targetDir != null && cachedFile != null) {
+        return if (targetDir != null && outputFile != null) {
             runCatching {
                 pruneCacheIfNeeded(targetDir)
                 val tmp = File(targetDir, "$cacheKey.tmp")
                 tmp.writeBytes(mp3Bytes)
-                tmp.renameTo(cachedFile)
-                if (cachedFile.exists() && cachedFile.length() > 256L) cachedFile else tmp
+                tmp.renameTo(outputFile)
+                if (outputFile.exists() && outputFile.length() > 256L) outputFile else tmp
             }.getOrNull()
         } else {
             val temp = File.createTempFile("smsguard_tts_", ".mp3")
@@ -253,10 +262,23 @@ object NeuralCloudVoiceEngine {
         voiceName: String,
         rate: String = "+0%",
         timeoutMs: Long = 4000L,
+        diagnostic: ((String) -> Unit)? = null,
+        allowVoiceFallback: Boolean = true,
+        onVoiceSelected: ((String) -> Unit)? = null,
+        networkAllowed: () -> Boolean,
     ): ByteArray? {
-        val firstAttempt = streamWebSocketOnce(text, voiceName, rate, timeoutMs)
-        if (firstAttempt != null && firstAttempt.size >= 256) return firstAttempt
-        return null
+        val safeText = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(text) ?: return null
+        if (!networkAllowed()) return null
+        return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
+            onSelected = { selected ->
+                diagnostic?.invoke("HD_VOICE_SELECTED=$selected")
+                onVoiceSelected?.invoke(selected)
+            }) { candidate, budget ->
+            diagnostic?.invoke("HD_VOICE_ATTEMPT=$candidate budgetMs=$budget")
+            val serverVoice = com.universalrp.voice.SharedNeuralVoiceEngine.formatServerVoiceName(candidate)
+            if (!networkAllowed()) null else streamWebSocketOnce(safeText, serverVoice, rate, budget,
+                diagnostic = diagnostic, networkAllowed = networkAllowed)
+        }
     }
 
     private fun streamWebSocketOnce(
@@ -264,8 +286,11 @@ object NeuralCloudVoiceEngine {
         voiceName: String,
         rate: String,
         timeoutMs: Long,
-        allowClockRetry: Boolean = true,
+        diagnostic: ((String) -> Unit)? = null,
+        networkAllowed: () -> Boolean,
     ): ByteArray? {
+        if (!networkAllowed()) return null
+        val attemptStarted = System.nanoTime()
         val escaped = sanitizeSsmlText(text)
         if (escaped.isEmpty()) return null
 
@@ -295,11 +320,18 @@ object NeuralCloudVoiceEngine {
         val doneLatch = CountDownLatch(1)
         val saw403ServerDate = AtomicReference<String?>(null)
         val completedCleanly = AtomicBoolean(false)
+        // Close code and audio-frame counters exist so a failed probe says WHY it failed instead of
+        // only "null": 1011 is the service's transient overload answer and is the one repeatable case.
+        val lastCloseCode = AtomicInteger(0)
+        val audioFrames = AtomicInteger(0)
+        val firstAudioNanos = AtomicReference(0L)
 
         val ws = wsClient.newWebSocket(
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    if (!networkAllowed()) { webSocket.cancel(); doneLatch.countDown(); return }
+                    diagnostic?.invoke("OPEN HTTP=${response.code}")
                     val ts = jsUtcDateString()
                     val configMsg =
                         "X-Timestamp:$ts\r\n" +
@@ -321,7 +353,7 @@ object NeuralCloudVoiceEngine {
                             "Path:ssml\r\n\r\n" +
                             ssml
                     webSocket.send(configMsg)
-                    webSocket.send(ssmlMsg)
+                    if (networkAllowed()) webSocket.send(ssmlMsg) else { webSocket.cancel(); doneLatch.countDown() }
                 }
 
                 override fun onMessage(webSocket: WebSocket, text: String) {
@@ -340,6 +372,12 @@ object NeuralCloudVoiceEngine {
                     if (audioStart <= raw.size) {
                         val headerText = String(raw, 2, headerLen.coerceAtMost(raw.size - 2), Charsets.ISO_8859_1)
                         if (headerText.contains("Path:audio") && raw.size > audioStart) {
+                            if (firstAudioNanos.compareAndSet(0L, System.nanoTime())) {
+                                diagnostic?.invoke(
+                                    "FIRST_AUDIO_MS=" + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
+                                )
+                            }
+                            audioFrames.incrementAndGet()
                             synchronized(audioBuffer) {
                                 audioBuffer.write(raw, audioStart, raw.size - audioStart)
                             }
@@ -348,37 +386,73 @@ object NeuralCloudVoiceEngine {
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    // Categories only: never disclose text, URL/query tokens, headers or exception messages.
+                    val category = when (t) {
+                        is java.net.UnknownHostException -> "DNS_FAILURE"
+                        is javax.net.ssl.SSLException -> "TLS_FAILURE"
+                        is java.net.SocketTimeoutException -> "SOCKET_TIMEOUT"
+                        else -> "WEBSOCKET_FAILURE"
+                    }
+                    diagnostic?.invoke("$category HTTP=${response?.code ?: 0}")
                     if (response?.code == 403) {
                         saw403ServerDate.set(response.header("Date"))
                     }
                     doneLatch.countDown()
                 }
 
+                override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    lastCloseCode.set(code)
+                    diagnostic?.invoke("PEER_CLOSING CODE=$code")
+                    runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
+                    doneLatch.countDown()
+                }
+
                 override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+                    if (lastCloseCode.get() == 0) lastCloseCode.set(code)
+                    diagnostic?.invoke("CLOSED CODE=$code")
                     doneLatch.countDown()
                 }
             },
         )
 
-        val finished = runCatching { doneLatch.await(timeoutMs, TimeUnit.MILLISECONDS) }.getOrDefault(false)
+        val waitBudget = (timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)).coerceAtLeast(0L)
+        val finished = try { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }
+        catch (_: InterruptedException) { Thread.currentThread().interrupt(); false }
         if (!finished) {
+            diagnostic?.invoke("DEADLINE_EXCEEDED")
             runCatching { ws.cancel() }
         }
 
         // Automatic clock-skew self-healing if user's phone clock is slightly off!
         val serverDateHeader = saw403ServerDate.get()
-        if (allowClockRetry && serverDateHeader != null) {
+        if (serverDateHeader != null) {
             val parsedEpoch = runCatching {
                 ZonedDateTime.parse(serverDateHeader, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond().toDouble()
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                return streamWebSocketOnce(text, voiceName, rate, timeoutMs, allowClockRetry = false)
+                // The next DISTINCT HD voice uses the corrected clock. No same-voice retry.
             }
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
-        return if (completedCleanly.get() && out.size >= 256) out else null
+        val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)
+        diagnostic?.invoke(
+            "COMPLETE=${completedCleanly.get()} BYTES=${out.size} FRAMES=${audioFrames.get()} ELAPSED_MS=$elapsedMs"
+        )
+        if (completedCleanly.get() && out.size >= 256) return out
+        // Issue #49: the same source passed and failed this probe. Evidence is what was missing, so
+        // the attempt now reports the close code and how far it got; the failure reason is a peer
+        // answer (1011 internal error, 403 throttle, timeout or a close before turn.end), never
+        // "null" with no cause. The single-voice policy stays as pinned: no same-voice retry.
+        if (!completedCleanly.get()) {
+            val closeCode = lastCloseCode.get()
+            diagnostic?.invoke(
+                if (closeCode == 0) "NO_TURN_END BYTES=${out.size} ELAPSED_MS=$elapsedMs"
+                else "NO_TURN_END CLOSE=$closeCode BYTES=${out.size} ELAPSED_MS=$elapsedMs"
+            )
+        }
+        return null
     }
 
     private fun sha256Hex(s: String): String =

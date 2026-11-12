@@ -1,0 +1,91 @@
+/* Progressive controls: the complete bilingual catalogue remains readable without JS. */
+[hidden] { display: none !important; }
+.js-only { display: none; }
+.has-js .js-only { display: block; }
+html[data-site-language="ta"] [data-content-lang="en"],
+html[data-site-language="en"] [data-content-lang="ta"] { display: none; }
+html { scroll-padding-top: 24px; }
+:focus-visible { outline: 3px solid #fbbf24; outline-offset: 4px; }
+h2[id], #install-help { scroll-margin-top: 24px; }
+.site-tools, .install-help { border: 1px solid #33516d; border-radius: 16px; padding: 18px; margin-bottom: 22px; background: #0e1b29; }
+.site-tools a, .install-help a, .release-brief a, .latest .lname a { color: #67e8f9; }
+.tool-row, .filter-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.tool-row { margin-bottom: 16px; }
+.tool-row label { color: #c7dae9; font-size: .85rem; }
+.tool-row select { max-width: 100%; min-height: 44px; border-radius: 8px; border: 1px solid #41627e; background: #071019; color: #eef6fc; padding: 8px; font: inherit; }
+.filter-row button, .copy-sha { border: 1px solid #41627e; border-radius: 24px; background: #11263a; color: #eef6fc; padding: 10px 14px; min-height: 44px; font: inherit; font-size: .82rem; cursor: pointer; }
+.filter-row button[aria-pressed="true"] { background: #29d3e8; color: #062229; border-color: #29d3e8; }
+.filter-row [data-filter-count] { display: inline-block; min-width: 1.5em; font-weight: 700; }
+#filter-status { color: #b2c7d9; margin-top: 12px; font-size: .85rem; }
+.release-brief { border-left: 3px solid #29d3e8; padding: 10px 12px; margin: 12px 0; background: #102334; font-size: .85rem; }
+.release-brief p + p { margin-top: 8px; }
+.release-brief .testing-status { color: #fcd778; font-size: .8rem; }
+.release-brief .testing-status span + span::before { content: " · "; }
+html[data-site-language="ta"] .testing-status span + span::before { content: ""; }
+.release-brief a { display: inline-block; margin-top: 10px; }
+.latest .ldate { font-size: .72rem; color: #b2c7d9; white-space: nowrap; }
+.filename-alias { color: #b2c7d9; font-weight: normal; }
+.copy-sha { margin: 10px 8px 0 0; }
+.copy-feedback { display: block; margin-top: 8px; color: #d6e4ee; }
+.manual-hash { display: block; width: 100%; padding: 10px; color: #eef6fc; background: #071019; overflow-wrap: anywhere; }
+.install-help h2 { font-size: 1.2rem; margin-bottom: 12px; }
+.install-help p { margin: 10px 0; }
+.install-help details { border-top: 1px solid #33516d; padding: 14px 0; }
+.install-help summary { cursor: pointer; min-height: 44px; padding: 8px 0; color: #c4f4fb; }
+/* Keep descriptive controls usable without sideways page scrolling. */
+@media (max-width: 620px) {
+  .latest .ldate, .latest .lsize { display: none; }
+  .latest { padding: 14px 12px; }
+  .latest .lname { overflow-wrap: anywhere; }
+  .latest .ldl .btn { white-space: nowrap; max-width: none; min-height: 44px; }
+  .tool-row { align-items: stretch; }
+  .tool-row label, .tool-row select { width: 100%; }
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  .site-tools, .install-help { padding: 14px; }
+  .filter-row { gap: 8px; }
+}
+
+.card-header { flex-wrap: wrap; }
+.card-header h2 { min-width: 0; overflow-wrap: anywhere; }
+.trust .body { overflow-wrap: anywhere; }
+
+.release-table { overflow-x: auto; }
+.card a:not(.btn) { color: #67e8f9; }
+details .body { overflow-wrap: anywhere; }
+
+/* Android TV Guard is the flagship app: it gets the full row and its own
+   three-column explanation, because its purpose (debloat, launcher, file
+   sharing + phone remote) cannot be told in a one-line tagline. */
+#tv-guard-card { grid-column: 1 / -1; }
+#tv-guard-card::before { height: 4px; background: linear-gradient(90deg, #29d3e8, #a78bfa, #f59e0b); }
+#tv-guard-card .tagline { font-size: 1rem; }
+#tv-guard-card .flagship-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin: 6px 0 2px;
+}
+#tv-guard-card .pillar {
+  background: #10263a;
+  border: 1px solid #1e4055;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+#tv-guard-card .pillar h3 { font-size: .92rem; margin: 0 0 6px; color: #e6f7fb; }
+#tv-guard-card .pillar p { font-size: .84rem; line-height: 1.55; margin: 0; color: var(--text-muted, #b9c9d4); }
+#tv-guard-card .pillar code { font-size: .8rem; }
+#tv-guard-card details.release-brief { margin: 4px 0 0; }
+#tv-guard-card details.release-brief .body { max-width: 78ch; }
+#tv-guard-card details.release-brief .rb { border: 0; padding: 0; background: none; font-size: .86rem; }
+#tv-guard-card details.release-brief .rb .testing-status { display: block; margin-top: 8px; }
+@media (max-width: 620px) { #tv-guard-card .tagline { font-size: .95rem; } }
+/* Only in bilingual mode does the Tamil heading need its own line; in Tamil-only
+   or English-only mode the site-wide language rule must keep it hidden, so this
+   override is scoped to the 'both' state. */
+html[data-site-language="both"] #tv-guard-card .pillar .ta-heading { display: block; font-size: .84rem; margin-top: 2px; color: #8fd6e6; }
+
+/* The card list is ordered by release date, and the page says so. */
+.list-order { margin: -4px 0 14px; font-size: .85rem; color: var(--muted, #9fb3c0); }
+
+/* Each card states its own release date, so the newest-first order is visible. */
+.card-date { font-size: .78rem; color: var(--muted, #9fb3c0); white-space: nowrap; align-self: center; }

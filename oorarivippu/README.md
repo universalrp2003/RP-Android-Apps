@@ -1,17 +1,20 @@
 # Oor Arivippu — Tamil/English place announcer
 
-**Current stable release:** 1.1.7 / code 12
+**Current stable release:** 1.1.20 / code 25
 
 **Package:** `com.oorarivippu.voiceannouncer`
 
 **Minimum Android:** 8.0 / API 26
 
-Oor Arivippu is a bilingual Tamil & English GPS village/town voice announcer with 10 default-ON Studio Ultra-HD voices (daily Male ↔ Female rotation + instant offline system TTS fallback) and 1-minute rain & cyclone route alerts. It is part of the seven-app **RP Ideas** open-source suite at [universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/).
+Oor Arivippu is a bilingual Tamil & English GPS village/town voice announcer with travel announcements, optional family-town sharing and active-trip weather checks. Voice/network availability and weather coverage are limited; no delivery or safety guarantee. It is part of the 13-app **RP Ideas** open-source suite at [universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/).
 
 ## Download the stable release
 
-- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [RP-Android-Apps release (`oor-arivippu-v1.1.9`)](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.9) — primary updater source.
-- [Release notes](../releases/oor-arivippu-v1.1.9.md) · [published APK size and SHA-256 ledger](../docs/published-release-digests.md) · [all 7 RP Ideas apps](../README.md).
+Current1.1.20: [official signed APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.20/Oor-Arivippu-v1.1.20.apk), 12,924,720B, SHA-256 `cf92399ca366e6ceb106cfa276579b7d6bf6980e2014f0af8e3f247de9ced19f`. [Verification/publication](../docs/oor-1.1.20-location-review.md). Explicit30-second GPS check works without a trip, stops on close/background, uses existing permission only, and does not save/upload diagnostics. Last-known distance has an age; speed and unavailable ETA are honest. Install over the existing same-key app; do not uninstall or clear data. No new physical-phone/GNSS/reboot/Google claim.
+
+
+- [Official Website Hub](https://universalrp2003.github.io/RP-Android-Apps/) · [RP-Android-Apps release (`oor-arivippu-v1.1.20`)](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.20) — primary updater source.
+- [Release notes](../releases/oor-arivippu-v1.1.20.md) · [published APK size and SHA-256 ledger](../docs/published-release-digests.md) · [RP Ideas apps](../README.md).
 - The earlier 1.1.0, 1.0.2, 1.0.1 and 1.0.0 releases remain available unchanged on both repositories as the updater's fallback.
 
 `Oor-Arivippu-v1.1.1.apk`, 12,228,161 bytes, SHA-256 `5fe6899685858cbd6a552aa303d7218b10f72af1190da6c72f9b8c054ca9343d`. Standalone release [run 39268547086](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/39268547086) passed the release unit tests, lint, signed build and package/version/minimum-SDK/signature checks, then re-read its own public release and verified the asset name, size and SHA-256. The owner reports installing this update on his phone and using it; that is an owner report, not a hash-matched device record. The older `InternetRadio` releases are unchanged.

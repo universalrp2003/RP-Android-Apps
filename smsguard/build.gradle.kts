@@ -6,6 +6,7 @@ plugins {
 
 // Match the established RP Ideas release signer so verified updates install seamlessly.
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
@@ -16,18 +17,18 @@ android {
         applicationId = "com.universalrp.smsguard"
         minSdk = 26
         targetSdk = 36
-        versionCode = 14
-        versionName = "1.1.8"
+        versionCode = 23
+        versionName = "1.1.17"
         vectorDrawables.useSupportLibrary = true
     }
 
     signingConfigs {
-        if (stableKeystore.exists()) {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
             create("stable") {
                 storeFile = stableKeystore
-                storePassword = "cleansweep-ci"
+                storePassword = releaseStorePassword
                 keyAlias = "cleansweep"
-                keyPassword = "cleansweep-ci"
+                keyPassword = releaseStorePassword
                 storeType = "PKCS12"
             }
         }
@@ -35,11 +36,11 @@ android {
 
     buildTypes {
         debug {
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
         release {
             isMinifyEnabled = false
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
     }
 
@@ -76,6 +77,7 @@ dependencies {
 
     implementation(platform("androidx.compose:compose-bom:2025.08.00"))
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.activity:activity-compose:1.10.1")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
@@ -85,4 +87,32 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+}
+
+// Keep external-service availability separate from deterministic regression tests.
+// The live assertion is unchanged and still fails its dedicated task when synthesis fails.
+val liveSmsVoiceMethod = "com.universalrp.smsguard.SmsGuardEngineTest.liveOnlineNeuralStreamingSynthesizesRealMp3WhenNetworkAvailable"
+val hdFailoverMethod = "com.universalrp.smsguard.SmsGuardEngineTest.liveHdVoiceFailoverSynthesizesWithinProductionDeadline"
+tasks.withType<Test>().configureEach {
+    if (name != "testLiveSmsVoice") filter { excludeTestsMatching(liveSmsVoiceMethod) }
+    if (name != "testHdVoiceFailover") filter { excludeTestsMatching(hdFailoverMethod) }
+}
+tasks.register<Test>("testLiveSmsVoice") {
+    group = "verification"
+    description = "External neural voice availability probe; not a deterministic release test."
+    dependsOn("testReleaseUnitTest")
+    filter { includeTestsMatching(liveSmsVoiceMethod) }
+    // Lazy providers are resolved before Gradle's NO-SOURCE check (doFirst is too late).
+    testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
+    classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
+}
+
+// Live application-level recovery is separate from the intentionally strict direct-voice probe.
+tasks.register<Test>("testHdVoiceFailover") {
+    group = "verification"
+    description = "Real HD alternatives within the unchanged production deadline; no publication."
+    dependsOn("testReleaseUnitTest")
+    filter { includeTestsMatching(hdFailoverMethod) }
+    testClassesDirs = files(provider { tasks.named<Test>("testReleaseUnitTest").get().testClassesDirs })
+    classpath = files(provider { tasks.named<Test>("testReleaseUnitTest").get().classpath })
 }

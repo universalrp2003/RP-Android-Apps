@@ -1,0 +1,18 @@
+{
+  "publication_authorized": true,
+  "scope": "Tamilan Store0.11/code13 only; exact signed/native-verified catalog recovery fix",
+  "owner_acceptance": "Go fix all",
+  "catalog_refresh_fix_authorized": true,
+  "background_native_tests": 3,
+  "owner_reports_background_download_working": false,
+  "installed_phone_hash_independently_verified": false,
+  "source": "29083446beb03d6d428c3f681fa3283f75a9394d",
+  "candidate_run": 42182208173,
+  "native_run": 42182208025,
+  "background_run": 42182208056,
+  "artifact_id": 13486167797,
+  "archive_sha256": "fe83241aab0189734787cdeede18b8fb6544861d1f6412393ef0bc087c4becf9",
+  "archive_bytes": 18040217,
+  "apk_sha256": "1bee9ec8f12bf14e295aae3df05544700d58a88f450d263673fbcf0bfa57655b",
+  "bytes": 19476379
+}

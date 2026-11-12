@@ -1,0 +1,60 @@
+name: Oor stable layout checks (no publication)
+on:
+  push:
+    branches: ["arena/ae58b18b-rp-android-apps"]
+    paths: ["oorarivippu/**", "shared/**", "releases/oor-arivippu-*.md", "tools/tests/test_oor*.py", ".github/workflows/oor-stable-layout.yml"]
+permissions:
+  contents: read
+concurrency:
+  group: oor-stable-layout-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  layout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      ORG_GRADLE_PROJECT_oorFamilyServiceUrl: https://oor-family-relay.universalrp2003.workers.dev
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v6
+        with: {gradle-version: '8.14.3'}
+      - name: Source and bilingual contracts
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+      - name: Compile actual app and native tests, unit tests and lint
+        run: |
+          set -o pipefail
+          gradle :oorarivippu:testReleaseUnitTest :oorarivippu:lintRelease :oorarivippu:assembleRelease :oorarivippu:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee /tmp/oor-layout-build.log
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Real Compose field geometry at normal and double font in both languages
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            adb install oorarivippu/build/outputs/apk/release/oorarivippu-release.apk
+            adb install $(find oorarivippu/build/outputs/apk/androidTest/release -name '*.apk' -print -quit)
+            python3 -c 'import subprocess; r=subprocess.run(["adb","shell","am","instrument","-w","-r","-e","class","com.oorarivippu.voiceannouncer.StableTripLayoutNativeTest","com.oorarivippu.voiceannouncer.test/androidx.test.runner.AndroidJUnitRunner"],capture_output=True,text=True,timeout=300); print(r.stdout); print("::notice title=Oor layout native output::"+r.stdout[-12000:].replace("%","%25").replace("\n","%0A")); assert r.returncode==0 and "OK (1 test)" in r.stdout, r.stderr; print("::notice title=Oor native geometry::English/Tamil normal/double font field top, height, left and width remain stable across short, long and unavailable synthetic values. No GPS or audible accuracy claim.")'
+      - name: Surface build and instrumentation failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/oor-layout-build.log')
+          if p.exists():
+              lines=p.read_text(errors='replace').splitlines()
+              errors=[s for s in lines if s.startswith('e: ') or 'error:' in s.lower() or ' FAILED' in s]
+              print('::error title=Oor layout diagnostic::'+'\n'.join(errors or lines[-45:])[-12000:].replace('%','%25').replace('\n','%0A'))
+          PY

@@ -56,6 +56,7 @@ data class AppRow(
     val apkPath: String?,
     val permissionsObserved: Boolean = true,
     val unavailablePermissionChecks: Set<String> = emptySet(),
+    val identity: PackageIdentity? = null,
 ) {
     val totalBytes: Long get() = if (dataBytes > 0L) dataBytes + cacheBytes else apkBytes + cacheBytes
     val isUnused: Boolean get() = lastUsedMs == null || lastUsedMs < System.currentTimeMillis() - 30L * 24 * 3600 * 1000
@@ -93,14 +94,13 @@ object BloatRules {
         "com.netflix.partner.activation",
     )
 
-    /** Installers that mean "came from an app store" rather than a file. */
-    private val TRUSTED_INSTALLER_HINTS = listOf(
-        "vending", "packageinstaller", "galaxyapps", "appstore", "appstore",
-        "market", "appgallery", "getapps", "microsoft", "android",
-        // v2.11: same stores the security scanner trusts — F-Droid installs are
-        // not "sideloaded", and Xiaomi's store reports as com.xiaomi.discover.
-        "fdroid", "xiaomi", "aurora", "amazon", "aptoide", "samsung",
-        "miui", "coloros", "vivo", "huawei",
+    /** Recognised installer IDs for a heuristic; system installers can also install local APKs. */
+    // Recognised identifiers only, NOT authenticated store identities or safety verdicts.
+    private val RECOGNISED_INSTALLERS = setOf(
+        "com.android.vending", "com.android.packageinstaller", "com.google.android.packageinstaller",
+        "com.samsung.android.packageinstaller", "com.sec.android.app.samsungapps", "com.xiaomi.discover",
+        "com.miui.packageinstaller", "com.heytap.market", "com.oppo.market", "com.bbk.appstore",
+        "com.huawei.appmarket", "org.fdroid.fdroid", "com.aurora.store", "com.amazon.venezia"
     )
 
     /** Permissions that deserve a second look, with a plain-language label. */
@@ -136,12 +136,26 @@ object BloatRules {
 
     fun isTrustedInstaller(installer: String?): Boolean {
         if (installer == null) return false
-        val lower = installer.lowercase()
-        return TRUSTED_INSTALLER_HINTS.any { lower.contains(it) }
+        return installer in RECOGNISED_INSTALLERS
     }
 }
 
 object AppInventoryLoader {
+
+    @Suppress("DEPRECATION")
+    private fun signingIdentity(info: PackageInfo): PackageIdentity? = runCatching {
+        fun hashes(signatures: Array<android.content.pm.Signature>?): Set<String> = signatures.orEmpty().map {
+            java.security.MessageDigest.getInstance("SHA-256").digest(it.toByteArray()).joinToString("") { b -> "%02x".format(b.toInt() and 255) }
+        }.toSet()
+        val current: Set<String>; val history: Set<String>; val multiple: Boolean
+        if (Build.VERSION.SDK_INT >= 28) {
+            val signing = info.signingInfo ?: return null
+            multiple = signing.hasMultipleSigners()
+            current = hashes(signing.apkContentsSigners)
+            history = if (multiple) current else hashes(signing.signingCertificateHistory)
+        } else { current = hashes(info.signatures); history = current; multiple = current.size > 1 }
+        PackageIdentity(current, history, multiple).takeIf { it.valid() }
+    }.getOrNull()
 
     suspend fun load(
         context: Context,
@@ -155,7 +169,7 @@ object AppInventoryLoader {
 
         val packages: List<PackageInfo> = try {
             @Suppress("DEPRECATION")
-            pm.getInstalledPackages(PackageManager.GET_PERMISSIONS)
+            pm.getInstalledPackages(PackageManager.GET_PERMISSIONS or if (Build.VERSION.SDK_INT >= 28) PackageManager.GET_SIGNING_CERTIFICATES else PackageManager.GET_SIGNATURES)
         } catch (e: Exception) {
             emptyList()
         }
@@ -257,6 +271,7 @@ object AppInventoryLoader {
                     apkPath = ai.sourceDir,
                     permissionsObserved = permissionsObserved,
                     unavailablePermissionChecks = permissionReading.unavailableChecks,
+                    identity = signingIdentity(info),
                 )
             )
         }

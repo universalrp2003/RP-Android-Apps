@@ -1,0 +1,19 @@
+# Oor Arivippu 1.1.15 / code20 — tested family home-card candidate
+
+**Not a public release. No physical-device or physical-audio test of this version.** Owner screenshots establish limited 1.1.14 connection/town display, not this version's audio, all-OEM/background reliability or security audit.
+
+[Download the tested ZIP](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/41644644026/artifacts/13234478573) — may require GitHub sign-in; expires3December2026. Extract `Oor-Arivippu-v1.1.15-family-candidate.apk`. APK12,891,952B/SHA-256 `ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5`. Update in place; **do not uninstall, clear data or use an installation bypass**. Stop if Android reports a signer mismatch. Older/unconfigured/canceled/intermediate artifacts are not this final candidate.
+
+## Owner-requested behavior
+
+- Verified member's local name, latest unexpired town/district and **Last reported (not live)** time appear directly above the main trip-status card. Offline/unavailable/expired is not an all-clear. No Maps/coordinates/route history.
+- Each verified member has **My sharing ON/OFF**. This controls sending **your** town to that member, never their consent. No duration selection. ON is remembered until OFF, subject to a still-valid approved connection. Stopping an Oor trip pauses uploads, without forgetting ON. A later user-started trip renews a bounded server lease. Viewing does not require sharing your own town.
+- Existing names/pairing keys remain. Old timed grants migrate **OFF**, not silently to persistent consent; turn ON once for each desired person after updating. No new invitation should be needed for an unexpired, unrevoked connection.
+- New received reports get at most one on-device speech attempt: local member name + last-reported town. Durable per-member timestamp prevents refresh/reopen/restart replay. No family details sent to online HD voice or ordinary travel/speech history. Calls, silent/vibrate/DND, mute, another announcement, focus denial or absent device voices can delay/prevent speech. Audibility/pronunciation is not verified on physical phones.
+- Checks happen while the app window is resumed, or during the existing visible foreground trip service. There is no new always-on receiver/service or permission. Closed app + no running Oor trip does **not** continuously poll/announce family updates. Android/geocoder/internet restrictions still apply.
+- Latest report only is locally encrypted and checked against freshness and report expiry. Existing isolated relay retains its town-only encrypted observation-based fifteen-minute expiry. No server redeployment, Secret Message change, account upgrade or public app/site promotion.
+- Explicit OFF is local/durable before networking. Per-recipient revision rechecks prevent the rest of a pending upload batch from ignoring OFF; an already in-flight request/remote stop can still be delayed. Offline old reports may remain until expiry. This is not emergency tracking.
+
+## Verification
+
+Final CI41644644026/job125947282795 passed30family JVM/19backend/360repository Python checks,2real Android35 native tests, live HTTPS, release lint/build, stable signer/full merged permission continuity, exact installed APK hash, same-UID public1.1.10 update with selected settings/private file/restart, bilingual consent UI, actual main-window synthetic name/town/checked switch and OFF click, persistent ON pause/resume, old timed-grant migration OFF and speech dedup ledger. Verbatim real AndroidJUnitRunner synthetic-test evidence is in the artifact. Two logical stores on one emulator, not two physical phones/GPS/audio proof. Exact physical1.1.14→1.1.15 upgrade was not separately executed; unchanged signer/keystore alias and row migration preserve compatibility by design. See the JSON receipt for provenance and limitations.

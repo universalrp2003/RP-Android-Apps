@@ -1,0 +1,26 @@
+{
+  "owner_authorized": true,
+  "review_date": "2026-11-01",
+  "method": "Pixel-only crops: contacts panels and status/navigation bars excluded; no generative edits; EXIF removed.",
+  "store_current_apk_unchanged": true,
+  "images": [
+    {
+      "website": "images/elderly-launcher-v1.7/1-home.jpg",
+      "store": "launcher-1.7-1.jpg",
+      "sha256": "d22ae5742091f140f747e4dd03eccb9cb5de7fba484a4677bafc078965af6368",
+      "bytes": 69637
+    },
+    {
+      "website": "images/elderly-launcher-v1.7/2-apps.jpg",
+      "store": "launcher-1.7-2.jpg",
+      "sha256": "ebbd962d7aadb39bddc7336cdf68b94449ee630277a951b3e5eadec31c41bebe",
+      "bytes": 34561
+    },
+    {
+      "website": "images/elderly-launcher-v1.7/3-confirm.jpg",
+      "store": "launcher-1.7-3.jpg",
+      "sha256": "dc26ce435f805e0ae0bb914f4594438e9f0819a2610910f60e719bea1b818a2d",
+      "bytes": 62610
+    }
+  ]
+}

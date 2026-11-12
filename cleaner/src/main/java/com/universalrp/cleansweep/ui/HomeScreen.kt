@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -71,6 +72,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -156,10 +158,13 @@ fun HomeScreen(
             while (isActive) {
                 vm.refreshDashboardReadings()
                 vm.expireNewsForLocalDay()
-                if (newsTick++ % 4 == 0) vm.loadTamilInfoStrip()
+                if (newsTick++ % 4 == 0) { vm.loadTamilInfoStrip(); vm.loadMobile() }
                 delay(15_000)
             }
         }
+    }
+    LaunchedEffect(state.usageAccess) {
+        if (state.usageAccess && System.currentTimeMillis() - state.appCachesReadAtMs > 5 * 60_000L) vm.loadAppCaches()
     }
     Column(
         Modifier
@@ -228,16 +233,31 @@ fun HomeScreen(
                     modifier = Modifier.size(19.dp),
                 )
             }
-            // 2.53 — the speaker opens the volume slider itself, over this page, exactly as the
-            // owner asked. It used to navigate to the whole Voice screen to reach one slider; the
-            // Voice screen is still in Settings and the menu for voices, alarms and languages.
-            IconButton(
-                onClick = { showVolume = true },
-                modifier = Modifier.size(38.dp),
+            // One voice symbol, one tap. The owner asked for exactly this: a single button on the
+            // home screen that turns spoken announcements on and off, rather than an icon that
+            // merely reports the state and opens a page to change it.
+            //
+            // The icon already showed on/off through its shape and colour, so it is now the
+            // control rather than an indicator. A long press still opens the volume slider, which
+            // is the master level and stays reachable without burying the toggle.
+            Box(
+                modifier = Modifier
+                    .size(38.dp)
+                    .pointerInput(state.voiceOn) {
+                        detectTapGestures(
+                            onTap = { vm.setVoiceOn(!state.voiceOn) },
+                            onLongPress = { showVolume = true },
+                        )
+                    },
+                contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     if (state.voiceOn) Icons.Outlined.VolumeUp else Icons.Outlined.VolumeOff,
-                    contentDescription = tr("Announcement volume"),
+                    contentDescription = if (state.voiceOn) {
+                        tr("Voice announcements on. Tap to turn off")
+                    } else {
+                        tr("Voice announcements off. Tap to turn on")
+                    },
                     tint = if (state.voiceOn) AccentCyan else TextSecondary,
                     modifier = Modifier.size(20.dp),
                 )
@@ -255,7 +275,16 @@ fun HomeScreen(
             }
         }
 
-        LedBar(Modifier.fillMaxWidth().padding(horizontal = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp))
+        // 2.95 — the running/glowing LED sweep that sat above the news card is gone: it repainted
+        // every frame for decoration and was the heaviest thing on Home. A plain static rule keeps
+        // the same spacing and the same visual separation, with no animation at all.
+        HorizontalDivider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = HomeLayoutPolicy.SCREEN_HORIZONTAL_DP.dp),
+            thickness = 1.dp,
+            color = OutlineC,
+        )
 
         if (state.tamilInfoVisible) {
             TamilInfoStrip(
@@ -268,9 +297,12 @@ fun HomeScreen(
                 onTogglePause = { vm.toggleTamilInfoPause() },
                 onHide = { vm.toggleTamilInfoVisibility() },
                 onRefresh = { vm.loadTamilInfoStrip(force = true) },
+                startupPending = state.newsStartupPending,
                 onSpeak = { text -> vm.speakTamilText(text) },
                 onReadTopNews = { vm.readTodaysNewsNow() },
                 onStopSpeaking = { vm.stopSpeakingNow() },
+                newsVoiceBusy = state.newsVoiceBusy,
+                voiceSpeaking = state.voiceSpeaking,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
@@ -321,24 +353,23 @@ fun HomeScreen(
             // Every section is keyed, so the restored scroll position still points at the
             // same card when a conditional card (setup prompt, health, last clean) appears
             // or disappears between visits.
-            if (!state.hasAllFilesAccess) {
-                item(key = "setup") { SetupCard(vm) }
-            }
-
-            item(key = "published_update") { LiveGuardUpdateCard(compact = true) }
+            // Keep an empty permission summary out of the LazyColumn spacing rhythm.
 
             // 2.52 — the first screen now answers three questions and nothing else: what the
             // phone has, the one action that frees space, and the plan. Everything else is
             // grouped into tap-to-open sections below, so the page is short until asked.
-            item(key = "hero") { HomeHeroCard(state, vm) }
+            item(key = "hero") {
+                Column {
+                    HomePermissionSummary(state, vm)
+                    HomeHeroCard(state, vm)
+                }
+            }
 
             item(key = "mobile_data_window") { HomeMobileDataCard(state, vm) }
 
             item(key = "weather_alert") { HomeWeatherAlertCard(state, vm) }
 
-            if (!state.legacyStorageOk) {
-                item(key = "legacy") { LegacyStorageCard(vm) }
-            }
+
 
             item(key = "group_cleaning") {
                 HomeSectionHeader(
@@ -611,6 +642,10 @@ fun TamilInfoStrip(
     onRefresh: () -> Unit, onSpeak: (String) -> Unit,
     onReadTopNews: () -> Unit = {},
     onStopSpeaking: () -> Unit = {},
+    newsVoiceBusy: Boolean = false,
+    voiceSpeaking: Boolean = false,
+    /** 2.95: the opening minute holds the saved headlines and starts no feed fetch. */
+    startupPending: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var currentKey by remember { mutableStateOf<String?>(null) }
@@ -631,6 +666,7 @@ fun TamilInfoStrip(
     val headline = items.firstOrNull { it.key == currentKey }
     val empty = when {
         loading && items.isEmpty() -> "Fetching today's headlines…"
+        startupPending && items.isEmpty() -> "Saved headlines appear here; fresh news is checked a minute after opening."
         items.isNotEmpty() -> "You're caught up with today's headlines. Tap to review."
         outcome == com.universalrp.cleansweep.data.TamilInfoStripRepo.Outcome.OFFLINE -> "Offline: no dated headlines from today are available."
         outcome == com.universalrp.cleansweep.data.TamilInfoStripRepo.Outcome.FEEDS_UNAVAILABLE -> "News feeds unavailable. No old news substituted."
@@ -648,9 +684,17 @@ fun TamilInfoStrip(
                 ) {
                     Button(
                         onClick = onReadTopNews,
+                        enabled = !newsVoiceBusy,
                         colors = ButtonDefaults.buttonColors(containerColor = AccentCyan, contentColor = Color(0xFF03202B)),
                     ) {
-                        Text(tr("Read today's news"), maxLines = 1, softWrap = false)
+                        Text(
+                            tr(when {
+                                newsVoiceBusy && voiceSpeaking -> "Reading news…"
+                                newsVoiceBusy -> "Preparing news audio…"
+                                else -> "Read today's news"
+                            }),
+                            maxLines = 1, softWrap = false,
+                        )
                     }
                     androidx.compose.material3.OutlinedButton(onClick = onStopSpeaking) {
                         Text(tr("Stop reading"), maxLines = 1, softWrap = false)
@@ -676,24 +720,25 @@ fun TamilInfoStrip(
     )
     Surface(modifier = modifier.clickable { showHeadlines = true }, shape = RoundedCornerShape(12.dp), color = SurfaceHigh,
         border = androidx.compose.foundation.BorderStroke(1.dp, OutlineC)) {
-        Row(Modifier.fillMaxWidth().padding(start = 12.dp, top = 6.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            // Owner requested headlines only: no publisher/category ribbon and no static security-tip filler.
+        Column(Modifier.fillMaxWidth().padding(start = 12.dp, end = 4.dp, bottom = 8.dp)) {
+            // A separate top control row leaves the complete width for headline text.
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onReadTopNews, enabled = !newsVoiceBusy,
+                    contentPadding = PaddingValues(horizontal = 6.dp)) {
+                    Text(watchWords("Read", "வாசி"), style = MaterialTheme.typography.labelSmall)
+                }
+                IconButton(onClick = onTogglePause) {
+                    Icon(if (isPaused) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
+                        contentDescription = tr(if (isPaused) "Resume headlines" else "Pause headlines"), tint = TextSecondary,
+                        modifier = Modifier.size(18.dp))
+                }
+                IconButton(onClick = onRefresh, enabled = !loading) {
+                    if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = AccentCyan, strokeWidth = 2.dp)
+                    else Icon(Icons.Outlined.Refresh, contentDescription = tr("Refresh today's headlines"), tint = AccentCyan, modifier = Modifier.size(18.dp))
+                }
+            }
             Text(headline?.title ?: tr(empty), style = MaterialTheme.typography.bodySmall, color = TextPrimary,
-                maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-            IconButton(onClick = onReadTopNews) {
-                Icon(Icons.Outlined.VolumeUp,
-                    contentDescription = tr("Read today's news"), tint = AccentCyan,
-                    modifier = Modifier.size(18.dp))
-            }
-            IconButton(onClick = onTogglePause) {
-                Icon(if (isPaused) Icons.Outlined.PlayArrow else Icons.Outlined.Pause,
-                    contentDescription = tr(if (isPaused) "Resume headlines" else "Pause headlines"), tint = TextSecondary,
-                    modifier = Modifier.size(18.dp))
-            }
-            IconButton(onClick = onRefresh, enabled = !loading) {
-                if (loading) CircularProgressIndicator(Modifier.size(18.dp), color = AccentCyan, strokeWidth = 2.dp)
-                else Icon(Icons.Outlined.Refresh, contentDescription = tr("Refresh today's headlines"), tint = AccentCyan, modifier = Modifier.size(18.dp))
-            }
+                modifier = Modifier.fillMaxWidth().padding(end = 8.dp))
         }
     }
 }
@@ -745,187 +790,62 @@ private fun HomeMobileDataCard(state: UiState, vm: MainViewModel) {
     val isUnlimited = pack?.isUnlimited5g == true
     var showQuotaDialog by remember { mutableStateOf(false) }
     var showResetDialog by remember { mutableStateOf(false) }
-
+    var detailsOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
     PanelCard(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(HomeLayoutPolicy.CARD_PADDING_DP.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.Outlined.SignalCellularAlt,
-                    contentDescription = null,
-                    tint = AccentCyan,
-                    modifier = Modifier.size(22.dp),
-                )
-                Spacer(Modifier.width(10.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        tr("Mobile & Data Pack"),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        if (isUnlimited) tr("Unlimited 5G mode • Counters hidden (user-set)") else tr("Today & Pack quota tracking"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                    )
+        Column(Modifier.padding(HomeLayoutPolicy.COMPACT_CARD_PADDING_DP.dp)) {
+            HomeMobileSignal(state, vm)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(tr("Mobile & Data Pack"), style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                TextButton(onClick = { detailsOpen = !detailsOpen }) {
+                    Text(watchWords("Details", "விவரங்கள்"), style = MaterialTheme.typography.labelSmall)
+                    Icon(if (detailsOpen) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null)
                 }
-                IconButton(onClick = { vm.loadUsage() }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Outlined.Refresh, contentDescription = tr("Refresh"), tint = TextSecondary, modifier = Modifier.size(18.dp))
+                IconButton(onClick = { vm.loadUsage(); vm.loadMobile() }) {
+                    Icon(Icons.Outlined.Refresh, contentDescription = tr("Refresh"), tint = AccentCyan, modifier = Modifier.size(18.dp))
                 }
             }
-
-            Spacer(Modifier.height(10.dp))
-            Text(tr("Android usage is an estimate, not the carrier's balance. Unlimited 5G is a user-set preference."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-            if (pack != null) Text(tr("Last checked %s", readingTime(pack.capturedAtMs)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-            if (pack?.isPartial == true) Text(tr("Partial observed mobile counter; full-period history may be unavailable."), style = MaterialTheme.typography.labelSmall, color = WarnAmber)
-            TextButton(onClick = { vm.openInsights(InsightsTab.DATA_BUDGET) }) { Text(tr("Data budget & history")) }
-
-            // Unlimited 5G Toggle Row
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(SurfaceHigh)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(
-                        tr("Unlimited 5G Pack"),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimary,
-                    )
-                    Text(
-                        tr("Hide daily limit & quota countdown on unlimited plans"),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                    )
-                }
-                Switch(
-                    checked = isUnlimited,
-                    onCheckedChange = { vm.setUnlimited5g(it) },
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = AccentCyan,
-                        checkedTrackColor = AccentCyan.copy(alpha = 0.35f),
-                    ),
-                )
-            }
-
-            if (!isUnlimited) {
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SurfaceHigh)
-                            .padding(12.dp)
-                    ) {
-                        Text(tr("Mobile data (Today)"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            pack?.formattedToday ?: tr("Not measured"),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentViolet,
-                        )
-                    }
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(SurfaceHigh)
-                            .padding(12.dp)
-                    ) {
-                        Text(tr("Pack balance left"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                        Spacer(Modifier.height(2.dp))
-                        Text(
-                            (pack?.formattedRemaining ?: tr("Not measured")),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = GoodGreen,
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = SurfaceHigh,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(Modifier.padding(12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                tr("Pack Plan: ") + (pack?.formattedPackTotal ?: tr("Not measured")) + " / " + (pack?.formattedPackLimit ?: tr("Not loaded")),
-                                style = MaterialTheme.typography.bodySmall,
-                                fontWeight = FontWeight.Bold,
-                                color = AccentCyan,
-                                modifier = Modifier.weight(1f),
-                            )
-                            Text(
-                                tr("Strict Mobile Only"),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = TextSecondary,
-                            )
-                        }
-
-                        // Progress Bar
-                        val progress = pack?.progressRatio ?: 0f
-                        Spacer(Modifier.height(6.dp))
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .height(6.dp)
-                                .clip(RoundedCornerShape(3.dp))
-                                .background(Color(0xFF1E293B))
-                        ) {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth(progress)
-                                    .height(6.dp)
-                                    .clip(RoundedCornerShape(3.dp))
-                                    .background(if (progress >= 0.9f) DangerRed else AccentCyan)
-                            )
-                        }
-
-                        Spacer(Modifier.height(10.dp))
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Button(
-                                onClick = { showQuotaDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = SurfaceHigh.copy(alpha = 0.6f),
-                                    contentColor = AccentCyan,
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(tr("Set Pack Size"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                            }
-                            Button(
-                                onClick = { showResetDialog = true },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AccentViolet.copy(alpha = 0.25f),
-                                    contentColor = AccentViolet,
-                                ),
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                Text(tr("Reset Recharge"), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                            }
-                        }
-                    }
-                }
+            if (isUnlimited) {
+                Text(tr("Unlimited 5G mode • Counters hidden (user-set)"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
             } else {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (pack?.readingAvailable == true) Column(Modifier.weight(1f)) {
+                        Text(tr("Mobile data (Today)"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Text(pack.formattedToday, style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold, color = AccentCyan)
+                    }
+                    if (pack?.readingAvailable == true && com.universalrp.cleansweep.data.DataUsageTracker.hasConfiguredPlan(androidx.compose.ui.platform.LocalContext.current)) Column(Modifier.weight(1f)) {
+                        Text(tr("Pack balance left"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Text(pack.formattedRemaining, style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold, color = AccentViolet)
+                    }
+                }
+            }
+            if (detailsOpen) {
                 Spacer(Modifier.height(8.dp))
-                Text(
-                    tr("Unlimited 5G is a user setting, not a verified carrier entitlement. Quota countdown and pack warnings are hidden."),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = AccentCyan,
-                )
+                Text(tr("Android usage is an estimate, not the carrier's balance. Unlimited 5G is a user-set preference."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                if (pack != null) Text(tr("Last checked %s", readingTime(pack.capturedAtMs)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                if (pack?.isPartial == true) Text(tr("Partial observed mobile counter; full-period history may be unavailable."), style = MaterialTheme.typography.labelSmall, color = WarnAmber)
+                TextButton(onClick = { vm.openInsights(InsightsTab.DATA_BUDGET) }) { Text(tr("Data budget & history")) }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(tr("Unlimited 5G Pack"), style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
+                    Switch(checked = isUnlimited, onCheckedChange = { vm.setUnlimited5g(it) })
+                }
+                if (!isUnlimited) {
+                    if (pack?.readingAvailable == true && com.universalrp.cleansweep.data.DataUsageTracker.hasConfiguredPlan(androidx.compose.ui.platform.LocalContext.current)) {
+                        Text(tr("Pack Plan: ") + pack.formattedPackTotal + " / " + pack.formattedPackLimit,
+                            style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        LinearProgressIndicator(progress = { pack.progressRatio }, modifier = Modifier.fillMaxWidth(),
+                            color = AccentCyan, trackColor = SurfaceHigh)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = { showQuotaDialog = true }, modifier = Modifier.weight(1f)) { Text(tr("Set Pack Size")) }
+                        TextButton(onClick = { showResetDialog = true }, modifier = Modifier.weight(1f)) { Text(tr("Reset Recharge")) }
+                    }
+                } else {
+                    Text(tr("Unlimited 5G is a user setting, not a verified carrier entitlement. Quota countdown and pack warnings are hidden."),
+                        style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                }
             }
         }
     }
@@ -1317,7 +1237,7 @@ private fun HomeHeroCard(state: UiState, vm: MainViewModel) {
                 HeroChip(
                     icon = Icons.Outlined.Speed,
                     value = quality?.pingMs?.let { "$it ms" } ?: tr("—"),
-                    label = tr("Signal"),
+                    label = watchWords("Latency", "தாமதம்"),
                     tone = when (quality?.grade) {
                         com.universalrp.cleansweep.data.LiveNetworkQuality.QualityGrade.BAD_QUALITY -> DangerRed
                         com.universalrp.cleansweep.data.LiveNetworkQuality.QualityGrade.MEDIUM_QUALITY -> WarnAmber
@@ -1328,9 +1248,27 @@ private fun HomeHeroCard(state: UiState, vm: MainViewModel) {
                 )
             }
 
+            Spacer(Modifier.height(10.dp))
+            Surface(shape = RoundedCornerShape(10.dp), color = SurfaceHigh) {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(Modifier.weight(1f).clickable { if (state.report != null) vm.navigate(Screen.RESULTS) else vm.startScan() }) {
+                        Text(watchWords("Junk · last scan", "குப்பை · கடைசி ஆய்வு"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Text(HomeCompactPolicy.mb(state.report?.totalBytes) ?: watchWords("Not checked", "சரிபார்க்கவில்லை"),
+                            style = MaterialTheme.typography.bodyMedium, color = AccentCyan)
+                    }
+                    Column(Modifier.weight(1f).clickable { vm.navigate(Screen.APP_CACHE); vm.loadAppCaches() }) {
+                        Text(watchWords("App cache · observed", "செயலி கேச் · கண்டறிந்தது"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Text(HomeCompactPolicy.mb(HomeCompactPolicy.observedCacheBytes(state.usageAccess, state.appCachesReadAtMs,
+                            state.appCaches.map { it.cacheBytes })) ?: watchWords("Not checked", "சரிபார்க்கவில்லை"),
+                            style = MaterialTheme.typography.bodyMedium, color = AccentViolet)
+                    }
+                }
+            }
             Spacer(Modifier.height(14.dp))
             GradientButton(
                 text = if (state.report != null) tr("Scan again") else tr("Scan & clean junk"),
+                compact = true,
                 icon = Icons.Outlined.AutoFixHigh,
                 onClick = { vm.startScan() },
                 modifier = Modifier.fillMaxWidth(),
@@ -1432,6 +1370,72 @@ private fun HomeSectionHeader(
                 tint = AccentCyan,
                 modifier = Modifier.size(22.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun HomeMobileSignal(state: UiState, vm: MainViewModel) {
+    val mobile = state.mobile
+    val percent = com.universalrp.cleansweep.data.SimSignalPolicy.percent(mobile?.signalDbm, mobile?.signalKind)
+    val operator = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(mobile?.operatorName)
+    val network = com.universalrp.cleansweep.data.ServingSignalPolicy.displayText(mobile?.networkType)
+    if (operator == null && network == null && percent == null) return
+    val tone = when (com.universalrp.cleansweep.data.SimSignalPolicy.tone(percent)) {
+        0 -> DangerRed; 1 -> WarnAmber; 2 -> GoodGreen; else -> TextSecondary
+    }
+    Row(Modifier.fillMaxWidth().clickable { vm.navigate(Screen.MOBILE); vm.loadMobile() }
+        .padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(operator ?: watchWords("SIM signal", "சிம் சிக்னல்"),
+            style = MaterialTheme.typography.bodySmall, maxLines = 1,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        if (percent != null) Text("≈$percent%", style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold, color = tone)
+        Text(listOfNotNull(network, mobile?.signalDbm?.let { "$it dBm" })
+            .joinToString(" · "),
+            style = MaterialTheme.typography.labelSmall, color = TextSecondary, modifier = Modifier.weight(1.5f))
+    }
+}
+
+@Composable
+private fun HomePermissionSummary(state: UiState, vm: MainViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val phoneGrant = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vm.onPhonePermissionResult() }
+    val storageGrant = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vm.refresh() }
+    val notifications = androidx.core.app.NotificationManagerCompat.from(context).areNotificationsEnabled()
+    // Only enabled features: disabled GPS, Wi-Fi details and nearby towers must never nag here.
+    val missing = buildList<Pair<String, () -> Unit>> {
+        if (android.os.Build.VERSION.SDK_INT >= 30 && !state.hasAllFilesAccess)
+            add(watchWords("File access", "கோப்பு அணுகல்") to { vm.requestAllFilesAccess() })
+        if (!state.legacyStorageOk) add(watchWords("Storage permission", "சேமிப்பக அனுமதி") to { storageGrant.launch(vm.legacyStoragePermissions()) })
+        if (!vm.phonePermissionGranted()) add(watchWords("Mobile signal", "மொபைல் சிக்னல்") to { phoneGrant.launch(vm.phonePermissions()) })
+        if (!state.usageAccess) add(watchWords("Usage access", "பயன்பாட்டு அணுகல்") to { vm.requestUsageAccess() })
+        if (state.statusPill && !state.statusPillAllowed)
+            add(watchWords("Status pill overlay", "நிலை குறிக்கான மேலடுக்கு") to { vm.setStatusPill(true) })
+        if ((state.chargeMonitor || state.persistentMonitor || com.universalrp.cleansweep.data.NetworkSplit.separateEnabled(context) ||
+            com.universalrp.cleansweep.data.NetworkSplit.announceEnabled(context) ||
+            com.universalrp.cleansweep.notify.DisasterUpdateNotifier.enabled(context) ||
+            com.universalrp.cleansweep.notify.NoSignalBeep.enabled(context)) && !notifications)
+            add(watchWords("Notifications", "அறிவிப்புகள்") to {
+                context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, context.packageName))
+            })
+        if (com.universalrp.cleansweep.data.SavedRainWatches.currentEnabled(context) && !com.universalrp.weather.WeatherPlaceResolver.hasLocationPermission(context))
+            add(watchWords("Current-location weather", "தற்போதைய இருப்பிட வானிலை") to { vm.navigate(Screen.WEATHER) })
+    }
+    if (missing.isEmpty()) return
+    var expanded by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    Column(Modifier.padding(bottom = 8.dp)) {
+        TextButton(onClick = { expanded = !expanded }, contentPadding = PaddingValues(horizontal = 4.dp)) {
+            Icon(Icons.Outlined.Security, contentDescription = null, tint = WarnAmber, modifier = Modifier.size(16.dp))
+            Spacer(Modifier.width(6.dp))
+            Text(if (Lang.isTamil) "${missing.size} அனுமதிகள் தேவை" else "${missing.size} permissions needed",
+                style = MaterialTheme.typography.labelSmall, color = WarnAmber)
+            Icon(if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore, contentDescription = null)
+        }
+        if (expanded) missing.forEach { (label, action) ->
+            TextButton(onClick = action) { Text(label, style = MaterialTheme.typography.bodySmall) }
         }
     }
 }

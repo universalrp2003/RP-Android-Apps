@@ -20,13 +20,13 @@ object StationOrdering {
     )
 
     private val popularComparator =
-        compareByDescending<RadioStation> { it.verified }
+        compareByDescending<RadioStation> { it.verified && RadioStreamPolicy.canPlay(it.url) }
             .thenByDescending { it.votes.coerceAtLeast(0) }
             .thenBy { it.name.trim().lowercase() }
             .thenBy { it.url.lowercase() }
 
     private val tamilFirstComparator =
-        compareByDescending<RadioStation> { it.verified }
+        compareByDescending<RadioStation> { it.verified && RadioStreamPolicy.canPlay(it.url) }
             .thenByDescending { isTamil(it) }
             .thenByDescending { it.votes.coerceAtLeast(0) }
             .thenBy { it.name.trim().lowercase() }

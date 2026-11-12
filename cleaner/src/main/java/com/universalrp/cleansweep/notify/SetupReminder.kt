@@ -20,6 +20,8 @@ object SetupReminder {
         val p = FeatureSetupPrefs.prefs(context); val now = System.currentTimeMillis()
         val pending = FeatureSetupPolicy.pending(features).size
         if (!FeatureSetupPolicy.remind(FeatureSetupPrefs.reminders(context), FeatureDirectory.notificationPermission(context), pending, p.getLong("last_reminder", 0), now)) return
+        if (android.os.Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(
+                context, android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) return
         val language = Lang.languageIn(context)
         fun text(key: String, vararg args: Any) = Lang.translate(language, key, *args)
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager ?: return

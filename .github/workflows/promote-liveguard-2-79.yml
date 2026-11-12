@@ -1,0 +1,144 @@
+name: Promote approved Live Guard 2.79 candidate (no rebuild)
+on:
+  push:
+    branches: ["arena/9f65a36c-rp-android-apps"]
+    paths: [".github/workflows/promote-liveguard-2-79.yml"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: promote-approved-liveguard-2-79
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE: 8bd7cf95393cd4f33e21aa005ed650a4c32a921d
+      EXPECTED_SHA: 95a050510786f1e4a34746cb0b3dcf5d3a3a032ec61052a94745d8f7719941ac
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify owner approval, successful candidate provenance and unchanged compiled inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          gh api repos/$GH_REPO/actions/runs/41049481796 > /tmp/run.json
+          gh api repos/$GH_REPO/actions/artifacts/12974397087 > /tmp/artifact.json
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          source = os.environ['SOURCE']
+          run = json.load(open('/tmp/run.json')); artifact = json.load(open('/tmp/artifact.json'))
+          assert (run['head_sha'], run['conclusion'], run['status'], run['path']) == (source, 'success', 'completed', '.github/workflows/build-apk.yml')
+          assert artifact['id'] == 12974397087 and artifact['name'] == 'cleansweep-apk' and not artifact['expired']
+          assert artifact['workflow_run']['id'] == 41049481796 and artifact['workflow_run']['head_sha'] == source
+          approval = pathlib.Path('docs/live-guard-2.79-owner-acceptance.md').read_text()
+          assert source in approval and os.environ['EXPECTED_SHA'] in approval and 'Publication authorized: yes' in approval
+          paths = subprocess.check_output(['git','diff','--name-only',source,'HEAD'], text=True).splitlines()
+          forbidden = [p for p in paths if p.startswith(('cleaner/','shared/','gradle/','ci-keystore/')) or p in {'build.gradle.kts','settings.gradle.kts','gradle.properties'}]
+          assert not forbidden, 'Compiled inputs changed: ' + repr(forbidden)
+          PY
+          # Resume only this exact immutable draft/public receipt; never upload over existing assets.
+          gh api --paginate repos/$GH_REPO/releases?per_page=100 --jq '.[] | select(.tag_name=="live-guard-v2.79")' > /tmp/existing-release
+          python3 - <<'PYEXISTING'
+          import json, os, pathlib
+          text = pathlib.Path('/tmp/existing-release').read_text().strip()
+          state = 'absent'
+          if text:
+              release = json.loads(text)
+              assert release['id'] == 428979540 and release['target_commitish'] == os.environ['SOURCE']
+              assert not release['prerelease']
+              assets = [a for a in release['assets'] if a['name'] == 'CleanSweep-v2.79.apk']
+              assert len(assets) == 1 and assets[0]['size'] == 14479951 and assets[0]['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+              state = 'draft' if release['draft'] else 'public'
+          with open(os.environ['GITHUB_ENV'], 'a') as output:
+              output.write('EXISTING_RELEASE_STATE=' + state + '\n')
+          PYEXISTING
+          gh api --paginate repos/$GH_REPO/tags?per_page=100 --jq '.[] | select(.name=="live-guard-v2.79") | .commit.sha' > /tmp/tag-target
+          if [ -s /tmp/tag-target ]; then test "$(cat /tmp/tag-target)" = "$SOURCE"; fi
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: 41049481796
+          artifact-ids: '12974397087'
+          merge-multiple: true
+          path: accepted-liveguard
+      - name: Verify immutable APK, signer and built permission delta; publish only Live Guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t candidates < <(find accepted-liveguard -type f -name 'CleanSweep-v2.79.apk')
+          test "${#candidates[@]}" -eq 1
+          apk="${candidates[0]}"
+          test "$(stat -c %s "$apk")" = 14479951
+          test "$(sha256sum "$apk" | cut -d ' ' -f1)" = "$EXPECTED_SHA"
+          tools="$(find "${ANDROID_HOME:-$ANDROID_SDK_ROOT}/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt2" dump badging "$apk" > /tmp/candidate-badging
+          grep -Fq "package: name='com.universalrp.cleansweep' versionCode='84' versionName='2.79'" /tmp/candidate-badging
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/candidate-badging
+          if grep -q application-debuggable /tmp/candidate-badging; then exit 1; fi
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/candidate-signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/candidate-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          mkdir /tmp/previous-liveguard
+          gh release download live-guard-v2.75 --pattern CleanSweep-v2.75.apk --dir /tmp/previous-liveguard
+          echo '2e7ccf2123695e990c74eeda082109bd3d5ce7a916bb3ecf0465f8098137fcbf  /tmp/previous-liveguard/CleanSweep-v2.75.apk' | sha256sum --check
+          "$tools/aapt2" dump badging /tmp/previous-liveguard/CleanSweep-v2.75.apk > /tmp/previous-badging
+          python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/candidate-badging --previous-badging /tmp/previous-badging | tee /tmp/permission-delta
+          grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/permission-delta
+          printf '%s  CleanSweep-v2.79.apk\n' "$EXPECTED_SHA" > accepted-liveguard/CleanSweep-v2.79.sha256
+          if [ "$EXISTING_RELEASE_STATE" = absent ]; then
+            gh release create live-guard-v2.79 --draft "$apk" accepted-liveguard/CleanSweep-v2.79.sha256 --target "$SOURCE" --title 'Live Guard 2.79 — balanced Tamil news and checked specialist translation' --notes-file releases/live-guard-v2.79.md
+          fi
+          python3 - <<'PYVERIFY'
+          import json, os, subprocess, time
+          for attempt in range(12):
+              releases = json.loads(subprocess.check_output(['gh','api',f"repos/{os.environ['GH_REPO']}/releases?per_page=100"], text=True))
+              matches = [r for r in releases if r['tag_name'] == 'live-guard-v2.79']
+              assert len(matches) == 1 and not matches[0]['prerelease']
+              assets = [a for a in matches[0]['assets'] if a['name'] == 'CleanSweep-v2.79.apk']
+              if len(assets) == 1 and assets[0].get('digest') == 'sha256:' + os.environ['EXPECTED_SHA']:
+                  assert assets[0]['size'] == 14479951
+                  url = assets[0]['browser_download_url']
+                  assert url.startswith(f"https://github.com/{os.environ['GH_REPO']}/releases/download/") and url.endswith('/CleanSweep-v2.79.apk')
+                  break
+              time.sleep(2)
+          else:
+              raise SystemExit('Draft asset receipt did not verify; nothing made public.')
+          PYVERIFY
+          if [ "$EXISTING_RELEASE_STATE" != public ]; then gh release edit live-guard-v2.79 --draft=false; fi
+          mkdir /tmp/published-liveguard
+          gh release download live-guard-v2.79 --pattern CleanSweep-v2.79.apk --dir /tmp/published-liveguard
+          test "$(stat -c %s /tmp/published-liveguard/CleanSweep-v2.79.apk)" = 14479951
+          test "$(sha256sum /tmp/published-liveguard/CleanSweep-v2.79.apk | cut -d ' ' -f1)" = "$EXPECTED_SHA"
+          gh api repos/$GH_REPO/releases/tags/live-guard-v2.79 > /tmp/public-release.json
+          python3 - <<'PYPUBLIC'
+          import json, os
+          release = json.load(open('/tmp/public-release.json'))
+          assert not release['draft'] and not release['prerelease']
+          asset = next(a for a in release['assets'] if a['name'] == 'CleanSweep-v2.79.apk')
+          assert asset['size'] == 14479951 and asset['digest'] == 'sha256:' + os.environ['EXPECTED_SHA']
+          assert asset['browser_download_url'] == f"https://github.com/{os.environ['GH_REPO']}/releases/download/live-guard-v2.79/CleanSweep-v2.79.apk"
+          PYPUBLIC
+          echo 'Exact approved Live Guard 2.79 APK published and re-downloaded for verification; no rebuild. Existing backup-repository assets remain unchanged.'
+      - name: Surface bounded public verification diagnostics
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          for name in ('candidate-badging', 'candidate-signer', 'permission-delta'):
+              path = pathlib.Path('/tmp') / name
+              if not path.exists():
+                  print('::error title=Promotion checkpoint::No ' + name + ' was produced; stopped before this checkpoint.')
+                  continue
+              lines = path.read_text(errors='replace').splitlines()
+              if name == 'candidate-badging':
+                  lines = [line for line in lines if line.startswith('package:') or any(key in line for key in ('sdkVersion','minSdkVersion','targetSdkVersion','application-debuggable'))]
+              for line in lines[:12]:
+                  escaped = line[:900].replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+                  print('::error title=' + name + '::' + escaped)
+          PY

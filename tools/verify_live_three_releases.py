@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""Post-deployment read-only proof of the authorized public releases and privacy-reviewed Launcher gallery on Pages.
+
+Only fixed official paths; no owner data, external submissions or release mutation.
+Run in main Pages deploy after the checked artifact is actually deployed.
+"""
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import time
+import urllib.request
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE = 'https://universalrp2003.github.io/RP-Android-Apps/'
+
+
+def get_bounded(relative, limit):
+    # Caller supplies only checked-in metadata names or pinned canonical APK names.
+    assert relative and '..' not in relative and not relative.startswith('/') and ':' not in relative
+    url = BASE + relative + '?verified=' + os.environ.get('GITHUB_SHA', 'local-check')
+    request = urllib.request.Request(url, headers={'User-Agent': 'RP-Pages-Release-Verification', 'Cache-Control': 'no-cache'})
+    with urllib.request.urlopen(request, timeout=60) as response:
+        data = response.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError('Oversized official response: ' + relative)
+    return data
+
+
+def validate_apk(data, size, digest):
+    if len(data) != size or hashlib.sha256(data).hexdigest() != digest:
+        raise ValueError('Live APK bytes do not match the exact published candidate')
+
+
+def validate_zip(data, name, size, digest):
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        if archive.namelist() != [name] or archive.getinfo(name).file_size != size:
+            raise ValueError('Unexpected mirrored ZIP contents or expansion size')
+        validate_apk(archive.read(name), size, digest)
+
+
+def check_metadata():
+    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json'):
+        data = get_bounded(name, 2_000_000)
+        local = (ROOT / 'site' / name).read_bytes()
+        matches = data == local if name.endswith('.html') else json.loads(data) == json.loads(local)
+        if not matches:
+            raise ValueError('Live metadata is not the tested current source: ' + name)
+    print('PASS: live HTML, actual release dates, legacy12-app and current13-app feeds match tested source', flush=True)
+
+
+def main():
+    assert os.environ.get('GITHUB_ACTIONS') == 'true' and os.environ.get('GITHUB_REF') == 'refs/heads/main'
+    assert os.environ['PAGES_URL'].rstrip('/') + '/' == BASE
+    # Allow bounded CDN propagation; do not accept stale pages or weaken hash checks.
+    for attempt in range(8):
+        try:
+            check_metadata()
+            break
+        except (OSError, ValueError) as error:
+            if attempt == 7:
+                raise
+            print(f'Waiting for current deployed metadata ({attempt + 1}/8): {error}', flush=True)
+            time.sleep(10)
+    health = json.loads((ROOT / 'docs/approved-health-candidates.json').read_text())
+    checks = [('Oor-Arivippu-v1.1.17.apk', json.loads((ROOT/'docs/oor-trip-1.1.17-publication-receipt.json').read_text())),
+              ('SMS-Guard-v1.1.17.apk', json.loads((ROOT/'docs/sms-guard-1.1.17-publication-receipt.json').read_text())),
+              ('SMS-Guard-v1.1.16.apk', json.loads((ROOT/'docs/sms-guard-1.1.16-historical-mirror.json').read_text())),
+              ('CleanSweep-v2.97.apk', json.loads((ROOT/'docs/live-guard-2.97-publication-receipt.json').read_text())),
+              ('Oor-Arivippu-v1.1.16.apk', json.loads((ROOT/'docs/oor-about-guide-1.1.16-publication-receipt.json').read_text())),
+              ('Oor-Arivippu-v1.1.15.apk', json.loads((ROOT/'docs/oor-family-1.1.15-publication-receipt.json').read_text())),
+              ('Voice-Notes-v1.3.4.apk', health['apps']['voicenotes']),
+              ('CleanSweep-v2.82.apk', health['apps']['cleaner']),
+              ('Elderly-Launcher-v1.7.apk', json.loads((ROOT/'docs/launcher-1.7-publication.json').read_text()))]
+    checks.append(('Oor-Arivippu-v1.1.19.apk', json.loads((ROOT/'docs/oor-location-1.1.19-publication-receipt.json').read_text())))
+    checks.append(('Oor-Arivippu-v1.1.20.apk', json.loads((ROOT/'docs/oor-location-1.1.20-publication-receipt.json').read_text())))
+    checks.append(('Tamilan-Store-v0.12.apk', json.loads((ROOT/'docs/tamilan-store-0.12-publication-receipt.json').read_text())))
+    checks.append(('Oor-Arivippu-v1.1.21.apk', json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())))
+    checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
+    current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
+    current_names.add('Tamilan-Store-v0.12.apk')
+    checks.append(('CleanSweep-v2.99.apk', json.loads((ROOT/'docs/live-guard-2.99-publication-receipt.json').read_text())))
+    for name, pin in checks:
+        assert 0 < pin['bytes'] < 40_000_000
+        if name not in current_names:
+            # Retain immutable historical releases, but not duplicate Pages mirrors.
+            historical_tags = {'SMS-Guard-v1.1.16.apk': 'sms-guard-v1.1.16', 'CleanSweep-v2.82.apk': 'live-guard-v2.82'}
+            url = pin.get('url') or ('https://github.com/universalrp2003/RP-Android-Apps/releases/download/' + historical_tags[name] + '/' + name)
+            assert url and url.startswith('https://github.com/universalrp2003/RP-Android-Apps/releases/download/') and url.endswith('/'+name)
+            with urllib.request.urlopen(url, timeout=60) as response:
+                data = response.read(pin['bytes'] + 1)
+            validate_apk(data, pin['bytes'], pin['apk_sha256'])
+            print(f'PASS: immutable historical GitHub APK {name}', flush=True)
+            continue
+        validate_apk(get_bounded('apks/' + name, pin['bytes']), pin['bytes'], pin['apk_sha256'])
+        validate_zip(get_bounded('apks/' + name[:-4] + '.zip', 40_000_000), name, pin['bytes'], pin['apk_sha256'])
+        print(f'PASS: live APK and ZIP {name}: {pin["bytes"]}B SHA256 {pin["apk_sha256"]}', flush=True)
+    gallery = json.loads((ROOT/'docs/launcher-1.7-gallery-review.json').read_text())
+    for image in gallery['images']:
+        data = get_bounded(image['website'], 1_000_000)
+        validate_apk(data, image['bytes'], image['sha256'])
+        print('PASS: live privacy-reviewed Launcher screenshot ' + image['website'], flush=True)
+    oor_gallery=json.loads((ROOT/'docs/oor-family-1.1.15-gallery-review.json').read_text())
+    for image in oor_gallery['images']+[oor_gallery['artwork_archive']]:
+        data=get_bounded(image['website'],2_000_000)
+        validate_apk(data,image['bytes'],image['sha256'])
+    print('::notice title=Live redacted Oor gallery::Four reviewed masked screenshots and artwork ZIP match pinned bytes on the live website; originals are not published.',flush=True)
+    print(f'PASS: main Pages serves all {len(checks)} exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        import traceback
+        print('::error title=Live Pages byte verification::'+traceback.format_exc()[-6000:].replace('%','%25').replace('\n','%0A'), flush=True)
+        raise

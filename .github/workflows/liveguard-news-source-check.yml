@@ -1,0 +1,26 @@
+name: Live Guard news sources (monitoring only)
+
+on:
+  push:
+    branches: ['arena/**']
+    paths:
+      - 'tools/probe_liveguard_news_sources.py'
+      - '.github/workflows/liveguard-news-source-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check public RSS availability and dated entries
+        run: python3 tools/probe_liveguard_news_sources.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: liveguard-news-source-probe
+          path: liveguard-news-source-probe.json
+          retention-days: 7

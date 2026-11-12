@@ -17,12 +17,13 @@ on:
       - ".github/workflows/oorarivippu-test-apk.yml"
       - ".github/workflows/smsguard-release.yml"
       - ".github/workflows/smsguard-test-apk.yml"
+      - "vasanthi/**"
   workflow_dispatch:
     inputs:
       publish:
         description: "Publish the verified APK after the build (switch off to build a candidate only)"
         required: false
-        default: true
+        default: false
         type: boolean
 
 permissions:
@@ -34,15 +35,23 @@ concurrency:
 
 jobs:
   build-verify-publish:
-    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[publish-oorarivippu]') }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     name: Test, sign, verify, and optionally publish Oor Arivippu
     runs-on: ubuntu-latest
     env:
       PUBLISH_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[publish-oorarivippu]')) }}
+      ORG_GRADLE_PROJECT_oorFamilyServiceUrl: https://oor-family-relay.universalrp2003.workers.dev
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 45
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
 
       - name: Verify bilingual UI and About links
         run: python3 tools/verify_apps_localization.py
@@ -92,7 +101,7 @@ jobs:
           expected_code="$(sed -n 's/^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*\([0-9][0-9]*\).*/\1/p' oorarivippu/build.gradle.kts | head -n 1)"
           [[ -n "$expected_version" && -n "$expected_code" ]] || { echo "::error::Failed to parse versionName/versionCode from oorarivippu/build.gradle.kts"; exit 1; }
           expected_package="com.oorarivippu.voiceannouncer"
-          expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+          expected_signer="7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
           tag="oor-arivippu-v${expected_version}"
           asset="Oor-Arivippu-v${expected_version}.apk"
 
@@ -131,7 +140,7 @@ jobs:
             echo "::error::Release APK minSdk is not API 26."
             exit 1
           fi
-          keytool -exportcert -keystore ci-keystore/release.p12 -storepass cleansweep-ci \
+          keytool -exportcert -keystore ci-keystore/release.p12 -storepass:env RP_RELEASE_KEYSTORE_PASSWORD \
             -alias cleansweep -file "$RUNNER_TEMP/project-certificate.der"
           expected_cert="$(sha256sum "$RUNNER_TEMP/project-certificate.der" | cut -d ' ' -f 1)"
           if [[ "$expected_cert" != "$expected_signer" ]]; then
@@ -220,6 +229,25 @@ jobs:
           echo "Destination branch: $destination_branch"
           echo "destination_branch=$destination_branch" >> "$GITHUB_ENV"
 
+      # A commit message that merely *talks about* the publish marker must not publish anything.
+      # This is not hypothetical: a commit that added a release workflow described the marker in
+      # its own body, contains() matched the prose, and that app was published by accident. The
+      # marker is therefore only honoured on the subject line, and anything else fails closed.
+      - name: Refuse to publish unless the marker is on the subject line
+        if: ${{ env.PUBLISH_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          subject="$(git log -1 --format=%s)"
+          if printf '%s' "$subject" | grep -qF '[publish-oorarivippu]'; then
+            echo "OK: the publish marker is on the subject line, so this run publishes."
+          else
+            echo "::error::The publish marker appears only in the commit body, not the subject line."
+            echo "::error::Reword the commit so the marker is at the end of the subject, or drop it."
+            echo "::error::Nothing was published."
+            exit 1
+          fi
+
       - name: Create both draft releases and upload the exact verified APK bytes
         if: ${{ env.PUBLISH_REQUESTED == 'true' }}
         env:
@@ -247,11 +275,13 @@ jobs:
             echo "::error::$TAG is already published; refusing to overwrite it."
             exit 1
           fi
+          python3 tools/verify_release_signing_policy.py --fresh-install
           GH_TOKEN="$TARGET_TOKEN" gh release create "$TAG" --repo "$TARGET_REPO" \
             --target "$destination_branch" --draft --title "$title" --notes-file "$notes"
           GH_TOKEN="$TARGET_TOKEN" gh release upload "$TAG" "$APK" --repo "$TARGET_REPO"
 
           if [[ "${SOURCE_ENABLED:-false}" == "true" ]]; then
+            python3 tools/verify_release_signing_policy.py --fresh-install
             GH_TOKEN="$SOURCE_TOKEN" gh release create "$TAG" --repo "$SOURCE_REPO" \
               --target "$GITHUB_SHA" --draft --title "$title" --notes-file "$notes"
             GH_TOKEN="$SOURCE_TOKEN" gh release upload "$TAG" "$APK" --repo "$SOURCE_REPO"

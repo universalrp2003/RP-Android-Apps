@@ -1,0 +1,386 @@
+{
+  "run": 41201343767,
+  "sourceSha256": "8630cb7c12d2fd9f099309d8b9b35e16c5960797515baaeab194e7482442545c",
+  "checkedAt": "2026-10-31T12:31:38.844056+00:00",
+  "summary": {
+    "run": 41201343767,
+    "sourceSha256": "8630cb7c12d2fd9f099309d8b9b35e16c5960797515baaeab194e7482442545c",
+    "shippedChecked": 504,
+    "audioReachable": 462,
+    "unavailable": 42,
+    "providerReview": 13,
+    "newProbePassed": 39,
+    "newUniqueAdded": 28,
+    "duplicateDiscoveriesSkipped": 11,
+    "contentReviewed": false
+  },
+  "directoryErrors": [],
+  "unavailable": [
+    {
+      "id": "361f8fff-fcea-40b8-bee3-c5023b6e5db3",
+      "name": "Vaigai FM",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "10a6ff92-8c61-4f47-a5c6-327d38127582",
+      "name": "sstamilradio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "ad41f6bb-4131-4988-8d07-424d76f7858c",
+      "name": "vaigai-fm",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "48c6c8e3-2c19-447a-a79b-2b9d595bfe09",
+      "name": "Thaalam FM",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "6d08dd60-ff26-434b-a74d-2b6ddf61af01",
+      "name": "Magesh online radio 24/7",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "5f17f08b-646f-4205-89eb-c31de21f9bee",
+      "name": "nellai-tamil-fm",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "3d2a3386-d041-465f-887c-fd2ca5ec5522",
+      "name": "Annai FM",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "5680fd3b-99c3-4922-bb58-2b740d04186e",
+      "name": "CMR FM Tamil HD",
+      "detail": "gaierror"
+    },
+    {
+      "id": "6ea782da-cc61-49c7-a173-2e6687141ada",
+      "name": "AIR Tiruchirappalli AM",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "3d50c01d-3bbd-4641-be8b-d1071bf05705",
+      "name": "a1tamilradio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "f331f83a-4299-4a36-9423-963f424a5677",
+      "name": "erode-city-fm",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "859d7b59-ad97-4e2d-9b0e-6c9a48de8662",
+      "name": "cmr-tamil-hd-radio",
+      "detail": "gaierror"
+    },
+    {
+      "id": "b5f7e5e5-5c6a-440e-b1db-0c495f486018",
+      "name": "rajini-radio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "8a2c6077-d964-428c-a456-caf385b259a7",
+      "name": "radio-petti-5-1",
+      "detail": "gaierror"
+    },
+    {
+      "id": "6480cdfa-7b43-4cbb-be57-8d4e28e5aca5",
+      "name": "gvprakashradio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "d1f9d08f-f32e-4c1a-9789-b91c0f0d44ef",
+      "name": "radiomadurai",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "9f1c89f0-4ccc-4476-b22d-f83c1877e979",
+      "name": "radio-mist-ooty",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "f4fd6dbc-a2c6-435c-a366-7ec795a4ce23",
+      "name": "fmrainbowcoimbatore",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "815d6dcd-f50d-4b8e-8458-986aa077fdd7",
+      "name": "CIRV-HD3 88.9 \"Thaalam FM\"(Tamil Stream) Toronto, ON",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "2678ea0b-0d6e-4f6d-8352-52a39f91a652",
+      "name": "AIR Raagam",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "d4465cfe-0f0d-471c-9195-aae4f43ff4fc",
+      "name": "Anow Radio Hd+ Tamil",
+      "detail": "gaierror"
+    },
+    {
+      "id": "c324bd6e-5776-4f32-b7ef-25a0d6dad5e7",
+      "name": "Hand Of Jesus - TAMIL",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "df6fd1af-734b-4d51-b446-ebd1c8d29a57",
+      "name": "Punnagai Radio",
+      "detail": "gaierror"
+    },
+    {
+      "id": "2714fa21-ab03-4827-a3a7-736a399b5b7f",
+      "name": "Siragugal Fm Tamil Srilanka",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "f5c095e7-6517-4175-9203-5b9e907fb821",
+      "name": "AIR News 24/7",
+      "detail": "TimeoutExpired"
+    },
+    {
+      "id": "1c6030bd-0bae-4cbf-b842-ca95a26e9387",
+      "name": "AIR DELHI FM GOLD",
+      "detail": "TimeoutExpired"
+    },
+    {
+      "id": "7ed302e2-ca82-4613-9ad0-0d646be3f363",
+      "name": "AIR DELHI INDRAPRASTHA",
+      "detail": "TimeoutExpired"
+    },
+    {
+      "id": "53c13dee-e203-4afd-b282-2f46f8fc0621",
+      "name": "AIR Indore",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "def1acdc-828b-4d71-a0fc-081a1fffa34c",
+      "name": "印度德里广播电台",
+      "detail": "TimeoutExpired"
+    },
+    {
+      "id": "590c5917-fdda-411f-8a13-221879fb5a4d",
+      "name": "AIR Madikeri",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "33d17f6d-df26-4524-8e55-79acfc796ac7",
+      "name": "BBC Afrique Radio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "fc4319aa-3c6a-4111-9529-dee11d079981",
+      "name": "BBC Arabic Radio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "14b6c684-bb7c-4926-b2a3-fd5a02bf7867",
+      "name": "BBC World Service",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "3e1ea4e1-aac3-4617-93e3-b35b67b1ff86",
+      "name": "BBC World Service",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "300556e2-faf8-4b2e-b24d-7525185430c1",
+      "name": "AIR Delhi FM Gold",
+      "detail": "TimeoutExpired"
+    },
+    {
+      "id": "9b70e005-d5fb-4996-bb40-f52945da1091",
+      "name": "BBC Somali Radio",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "e7b40950-831b-4b9a-a7bc-da64a148d377",
+      "name": "MAX FM DERBY 92.2",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "348dfc58-ce8c-413b-b264-0384f816344b",
+      "name": "WALM HD",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "64bb1467-2585-4454-a96f-34cfbc864d41",
+      "name": "WALM 2 HD",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "2ce23ee2-95c5-407d-9df8-54c3cdde2825",
+      "name": "Adroit Jazz Underground HD Opus",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "24e3676a-8de5-474c-8ed2-288fbb66d447",
+      "name": "Christmas Vinyl HD Opus",
+      "detail": "probe/decode failed"
+    },
+    {
+      "id": "6ce8da92-859f-4f96-a5e4-503c1ddfbfbf",
+      "name": "Classic Vinyl HD Opus",
+      "detail": "probe/decode failed"
+    }
+  ],
+  "added": [
+    {
+      "id": "041b6c66-9938-4892-9a87-b846e07977fc",
+      "name": "leaderfm",
+      "url": "https://stream.zeno.fm/wg4b845c2wzuv"
+    },
+    {
+      "id": "64860ac8-1979-482b-a2e8-0a493d501581",
+      "name": "sivan-radio",
+      "url": "https://sivanradio.radioca.st/stream"
+    },
+    {
+      "id": "ce810b5c-7682-43a8-9f59-604e689dd8b6",
+      "name": "mazhai-fm",
+      "url": "https://stream.zeno.fm/yu4c9ms3h2zuv"
+    },
+    {
+      "id": "f2712079-f302-4c3c-987b-9a1cd52be412",
+      "name": "anbu-fm",
+      "url": "https://stream.zeno.fm/c2p4f1np4bruv"
+    },
+    {
+      "id": "51c22bbb-24c8-450a-9d1a-4e612cb58410",
+      "name": "njsunriseradio",
+      "url": "https://njsunrise.out.airtime.pro/njsunrise_a"
+    },
+    {
+      "id": "50e5a27d-090a-400d-9469-7f34d34443b1",
+      "name": "arumbufm",
+      "url": "https://stream.zeno.fm/22db1xmde2zuv"
+    },
+    {
+      "id": "5ddf671f-9be4-4061-86a3-56ac051bfaec",
+      "name": "inbathamiloli",
+      "url": "https://usa7.fastcast4u.com/proxy/ozmediae?mp=/1"
+    },
+    {
+      "id": "9549a3a1-b2df-4011-8725-132bbb902c1d",
+      "name": "mukil-fm",
+      "url": "https://stream.zeno.fm/9s8119m1rzzuv"
+    },
+    {
+      "id": "5bc1cc61-b288-43b7-94f2-16ba53e8bc2a",
+      "name": "nesaganam",
+      "url": "https://usa9.fastcast4u.com/proxy/nesaganam?mp=/1"
+    },
+    {
+      "id": "3dd07b22-57ec-4816-9f74-d73b50df0845",
+      "name": "life-fm",
+      "url": "https://stream.zeno.fm/37tsftts91zuv"
+    },
+    {
+      "id": "153a5414-4e2f-4b21-a213-c191c87a9af8",
+      "name": "nakshatraradio",
+      "url": "https://playerservices.streamtheworld.com/api/livestream-redirect/NAKSHATRA_S01AAC_SC"
+    },
+    {
+      "id": "688e1ec2-140f-4a7b-b436-cc44fa38e803",
+      "name": "the-leader-fm",
+      "url": "https://stream.zeno.fm/whwy245c2wzuv"
+    },
+    {
+      "id": "434f79a0-9e7d-4821-90e5-9276ac6890e9",
+      "name": "a9radionewhits",
+      "url": "https://a9newhits-a9media.radioca.st/stream"
+    },
+    {
+      "id": "81a83cc7-f141-4d7e-bbb7-abd24ebe8c91",
+      "name": "megazonesouth",
+      "url": "https://vm65162.streamerr.co/listen/megazone_south/radio.mp3"
+    },
+    {
+      "id": "ed291b34-31c1-44fc-a47a-7112a8bb3ce4",
+      "name": "mukil-fm-radio",
+      "url": "https://stream.zeno.fm/phv06yfkwzzuv"
+    },
+    {
+      "id": "c2f682dc-d6fc-4c2f-92ba-8b0273eabcea",
+      "name": "muthamilradio",
+      "url": "https://ec2.yesstreaming.net:2540/stream"
+    },
+    {
+      "id": "b6748608-5c72-4495-be56-7fc10936e440",
+      "name": "thambifm",
+      "url": "https://stream.zeno.fm/r1m0u429e2zuv"
+    },
+    {
+      "id": "07edde5a-9535-473c-ab8f-2ae43ad25364",
+      "name": "roobamfm",
+      "url": "https://s3.radio.co/sadfae7495/listen"
+    },
+    {
+      "id": "c6841e8d-8dbd-4c28-b4f3-3f0fed435407",
+      "name": "dharisanam-fm",
+      "url": "https://stream.zeno.fm/b741tfumhm8uv"
+    },
+    {
+      "id": "b509afa7-adea-43b6-ab61-63386b78952b",
+      "name": "time-fm",
+      "url": "https://neramfm.com:8000/stream"
+    },
+    {
+      "id": "6dd26fb9-be21-4ca1-951f-111b9b232d1d",
+      "name": "yugamradio",
+      "url": "https://s6.yesstreaming.net:19012/stream;"
+    },
+    {
+      "id": "91a49c37-f4ae-4cec-ae96-0c938d96a2ec",
+      "name": "ajithfm",
+      "url": "https://stream.zeno.fm/ntkhu40k17zuv"
+    },
+    {
+      "id": "29b6c376-7180-4a79-96ef-fe258a73e258",
+      "name": "eastcoastradio",
+      "url": "https://ecrfm-prabak78.radioca.st/stream"
+    },
+    {
+      "id": "99746bb4-74aa-4a78-aa5e-6b44baf0e310",
+      "name": "mtrfm",
+      "url": "https://radio.mediacp.eu/stream/mtr-fm/stream"
+    },
+    {
+      "id": "9bc9dea5-7a01-4d7a-b744-770bcf5c8fc3",
+      "name": "Karaikal",
+      "url": "https://air.pc.cdn.bitgravity.com/air/live/pbaudio050/playlist.m3u8"
+    },
+    {
+      "id": "3b29629b-1035-41dd-bc44-41e25a5771f1",
+      "name": "Sweety FM",
+      "url": "https://centova71.instainternet.com/proxy/sweetyfm?mp=/stream2"
+    },
+    {
+      "id": "fcfb0919-27a6-46cd-9cef-55f48833b077",
+      "name": "AR RADIO",
+      "url": "https://free.rcast.net/200660"
+    },
+    {
+      "id": "f8de03cb-35bc-4afa-b068-e3ab82162057",
+      "name": "Shiva Tattvam",
+      "url": "https://radio.shaivam.org/listen/shiva-tattvam/radio.mp3"
+    }
+  ],
+  "skippedDuplicateDiscoveries": [
+    "Vividh Bharati Chennai",
+    "AIR KODAI FM",
+    "AIR Madurai FM",
+    "AIR PUDUCHERRY FM",
+    "AIR Nagercoil",
+    "AIT Tirunelveli FM",
+    "Radio Paramankurichi",
+    "thambi-fm",
+    "fm-gold-chennai",
+    "yugam-radio",
+    "Shaiva Lahari"
+  ],
+  "limits": "Bounded single-location audio-metadata probe, not full listening/content review, regional guarantee, ASR or provider restriction bypass. Initial hosts screened; this is not a complete redirect/HLS/DNS-rebinding sandbox."
+}

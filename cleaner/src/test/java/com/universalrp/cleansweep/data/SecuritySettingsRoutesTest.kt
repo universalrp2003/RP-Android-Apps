@@ -12,6 +12,7 @@ class SecuritySettingsRoutesTest {
             "accessibility", "notification_listeners", "device_admin", "install_other_apps",
             "usage_access", "overlay", "sideloaded", "sms_readers", "banking_sms_readers",
             "facebook_stubs", "odd_installer", "no_lock", "developer_options", "old_patch", "root_tools",
+            "access_combo_overlay", "access_combo_installer",
         )
         for (sdk in listOf(26, 29, 30, 33, 36)) {
             for (id in ids) {

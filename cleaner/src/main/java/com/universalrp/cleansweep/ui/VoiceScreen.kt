@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.Thunderstorm
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -43,12 +44,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import com.universalrp.cleansweep.MainViewModel
 import com.universalrp.cleansweep.UiState
 import com.universalrp.cleansweep.data.tr
@@ -142,11 +148,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     )
                 }
                 Text(
-                    tr(
-                        "Speaking uses Android's own text-to-speech engine. If your phone has a Tamil " +
-                            "voice installed, Tamil text is spoken in Tamil; otherwise the English " +
-                            "wording is spoken instead of reading Tamil in an English accent."
-                    ),
+                    watchWords("HD neural speech needs internet. Tamil and English use the selected language; there is no automatic Android system-voice fallback.",
+                        "HD நரம்பியல் குரலுக்கு இணையம் தேவை. தமிழ், ஆங்கிலம் தேர்ந்தெடுத்த மொழியில் பேசும்; ஆண்ட்ராய்டு கணினிக் குரலுக்கு தானாக மாறாது."),
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondary,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -165,7 +168,7 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                             )
                             Text(
-                                tr("Reads up to 5 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
+                                tr("Reads up to 8 new clean headlines ONLY when screen is OFF, not on call/media, and between 6 AM – 10 PM. Never repeats already read headlines."),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = TextSecondary,
                             )
@@ -193,17 +196,28 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        val newsLabel = tr(when {
+                            state.newsVoiceBusy && state.voiceSpeaking -> "Reading news…"
+                            state.newsVoiceBusy -> "Preparing news audio…"
+                            else -> "Read today's news"
+                        })
                         VoiceChip(
-                            label = tr("Read today's news"),
+                            label = newsLabel,
                             icon = Icons.Outlined.PlayArrow,
+                            enabled = !state.newsVoiceBusy,
                             onClick = { vm.readTodaysNewsNow() },
                         )
                         androidx.compose.material3.OutlinedButton(onClick = { vm.stopSpeakingNow() }) {
                             Text(tr("Stop reading"), maxLines = 1, softWrap = false)
                         }
                     }
+                    NewsBulletinStatus()
+                    NewsTopicSettings { vm.stopSpeakingNow() }
+                    NewsDisasterSettings()
                 }
             }
+
+            BatteryIntakeSettings()
 
             // ------------------------------------------------- Announcer voice (v2.68, simple choice)
             PanelCard(Modifier.fillMaxWidth()) {
@@ -295,6 +309,59 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
             // for the network and is then spoken in HD.
             PanelCard(Modifier.fillMaxWidth()) {
               Column(Modifier.fillMaxWidth()) {
+                // A3: one-time explainer for the switch that 2.71 removed. Shown until the owner
+                // dismisses it, then never again.
+                var hdExplainerSeen by remember {
+                    androidx.compose.runtime.mutableStateOf(
+                        com.universalrp.cleansweep.voice.HdVoiceExplainer.seen(context)
+                    )
+                }
+                if (!hdExplainerSeen) {
+                    Surface(
+                        color = AccentViolet.copy(alpha = 0.12f),
+                        shape = MaterialTheme.shapes.medium,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                    ) {
+                        Column(Modifier.padding(14.dp)) {
+                            Text(
+                                tr("What changed with your voice"),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                tr("Live Guard used to have a switch here that chose between the HD neural voice and the phone's own built-in voice. That switch is gone, and this is why."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                tr("The HD neural voice is now the only voice Live Guard has. It speaks Tamil and English properly, it never sounds like a robot, and only the words being spoken leave the phone — never a file, never a message. The phone's built-in voice was removed entirely, so there is nothing left to switch to."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.size(6.dp))
+                            Text(
+                                tr("One thing to know: with no internet the voice stops completely instead of falling back to the robot voice. The announcement waits for the network and is then spoken in HD, so nothing is ever dropped — it is only later."),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.size(10.dp))
+                            Text(
+                                tr("Got it"),
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                color = AccentViolet,
+                                modifier = Modifier.clickable {
+                                    com.universalrp.cleansweep.voice.HdVoiceExplainer.markSeen(context)
+                                    hdExplainerSeen = true
+                                },
+                            )
+                        }
+                    }
+                }
                 Text(
                     tr("HD voice only"),
                     style = MaterialTheme.typography.bodyMedium,
@@ -315,14 +382,14 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 // 2.72: if the HD voice has been unreachable for a sustained period, say so
                 // here too. The notification card only appears after 30 seconds of outage,
                 // but this screen should not need the owner to wait for it.
-                val hdWaiting =
-                    automatic.stage == com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET ||
-                        delivery.stage == com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.Stage.NO_INTERNET
+                // Last automatic status is historical evidence, not the current HD state.
+                // A later successful manual request must clear the warning as well.
+                val hdWaiting = com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.hdWaiting(delivery.stage)
                 if (hdWaiting) {
                     Text(
                         "\u23F3 " + tr(
-                            "HD voice is waiting for the internet; announcements are paused, " +
-                                "not dropped."
+                            "The last HD voice request could not finish; unread news is kept " +
+                                "for retry. No phone voice was substituted."
                         ),
                         style = MaterialTheme.typography.labelSmall,
                         color = WarnAmber,
@@ -575,16 +642,28 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 )
                 VoiceSwitch(
                     title = tr("Battery low"),
-                    subtitle = tr("Under %s%%, while the phone is running on the battery.")
-                        .format(Announcer.LOW_PERCENT),
+                    subtitle = tr("At or below %s%%, while running on battery.").format(state.voiceLowPercent),
                     icon = Icons.Outlined.BatteryAlert,
                     tint = DangerRed,
                     checked = state.voiceBatteryLow,
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.BATTERY_LOW, it) },
                 )
+                var lowSlider by remember(state.voiceLowPercent) { mutableStateOf(state.voiceLowPercent.toFloat()) }
+                Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                    Text(tr("Low-battery warning: %s%%").format(lowSlider.toInt()), style = MaterialTheme.typography.bodyMedium)
+                    androidx.compose.material3.Slider(
+                        value = lowSlider,
+                        onValueChange = { lowSlider = kotlin.math.round(it) },
+                        onValueChangeFinished = { vm.setVoiceLowPercent(lowSlider.toInt()) },
+                        valueRange = 10f..40f, steps = 29,
+                        modifier = Modifier.fillMaxWidth().semantics {
+                            contentDescription = tr("Low-battery warning threshold, 10 to 40 percent")
+                        },
+                    )
+                }
                 VoiceSwitch(
                     title = tr("Battery full"),
-                    subtitle = tr("When the charge reaches 100% — a reminder to unplug."),
+                    subtitle = watchWords("Choose percentage-only notice or sustained low-intake estimate above. Confirmed, estimated and unverified are different messages.", "மேலே சதவீத அறிவிப்பு அல்லது நீடித்த குறைந்த மின்னோட்ட மதிப்பீட்டைத் தேர்வு செய்யவும். உறுதியானது, மதிப்பீடு, உறுதியாகாதது தனித்தனி அறிவிப்புகள்."),
                     icon = Icons.Outlined.BatteryFull,
                     tint = GoodGreen,
                     checked = state.voiceBatteryFull,
@@ -592,8 +671,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                 )
                 VoiceSwitch(
                     title = tr("Running hot"),
-                    subtitle = tr("Battery above %s°C or the processor above %s°C.")
-                        .format(Announcer.HOT_BATTERY_C.toInt(), Announcer.HOT_CPU_C.toInt()),
+                    subtitle = tr("Battery at or above %s°C. Processor-temperature speech is disabled.")
+                        .format(Announcer.HOT_BATTERY_C.toInt()),
                     icon = Icons.Outlined.Thermostat,
                     tint = WarnAmber,
                     checked = state.voiceOverheat,
@@ -624,9 +703,8 @@ fun VoiceScreen(state: UiState, vm: MainViewModel) {
                     onCheckedChange = { vm.setVoiceEvent(Announcer.Event.STORAGE_LOW, it) },
                 )
                 VoiceSwitch(
-                    title = tr("Charger removed early"),
-                    subtitle = tr("Unplugged below %s%%, and only after the hour you set below.")
-                        .format(Announcer.UNPLUG_BEFORE_PERCENT),
+                    title = watchWords("Charger removed — current battery level", "சார்ஜர் அகற்றப்பட்டது — தற்போதைய பேட்டரி அளவு"),
+                    subtitle = watchWords("Announces at any battery level. Early-removal reminders are separate.", "எந்த பேட்டரி அளவிலும் அறிவிக்கும். முன்கூட்டியே அகற்றிய நினைவூட்டல் தனியானது."),
                     icon = Icons.Outlined.PowerOff,
                     tint = WarnAmber,
                     checked = state.voiceUnplugged,
@@ -808,8 +886,9 @@ private fun VoiceChip(
     label: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     onClick: () -> Unit,
+    enabled: Boolean = true,
 ) {
-    TextButton(onClick = onClick) {
+    TextButton(onClick = onClick, enabled = enabled) {
         Icon(icon, contentDescription = null, tint = AccentCyan, modifier = Modifier.size(18.dp))
         Spacer(Modifier.size(6.dp))
         Text(label, color = AccentCyan, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)

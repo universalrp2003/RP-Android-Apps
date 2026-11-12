@@ -8,6 +8,7 @@ on:
       - "shared/src/main/java/**"
       - "tools/verify_apps_localization.py"
       - "tools/build_fdroid_repo.py"
+      - "tools/report_failing_tests.py"
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle/**"
@@ -21,6 +22,7 @@ on:
       - "shared/src/main/java/**"
       - "tools/verify_apps_localization.py"
       - "tools/build_fdroid_repo.py"
+      - "tools/report_failing_tests.py"
       - "settings.gradle.kts"
       - "build.gradle.kts"
       - "gradle/**"
@@ -41,10 +43,18 @@ jobs:
   build-signed-test-apk:
     name: Test, lint, sign & verify SMS Guard Test APK (no public release)
     runs-on: ubuntu-latest
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 35
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
 
       - name: Run repository static & bilingual localization gates
         run: |
@@ -77,6 +87,9 @@ jobs:
         if: failure()
         shell: bash
         run: |
+          python3 tools/report_failing_tests.py | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error::$line"
+          done
           {
             grep -E "^e: |FAILED$|AssertionError" smsguard-build.log || true
             for r in smsguard/build/reports/lint-results-*.txt; do
@@ -99,7 +112,7 @@ jobs:
             exit 1
           fi
           expected_package="com.universalrp.smsguard"
-          expected_signer="9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+          expected_signer="7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
           asset="SMS-Guard-v${expected_version}.apk"
 
           mapfile -t built_apks < <(find smsguard/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print)
@@ -179,10 +192,58 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Fetch immutable public 1.1.16 upgrade baseline
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/sms-baseline
+          gh release download sms-guard-v1.1.16 --pattern SMS-Guard-v1.1.16.apk --dir /tmp/sms-baseline
+          echo 'db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df  /tmp/sms-baseline/SMS-Guard-v1.1.16.apk' | sha256sum --check
+
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+
+      - name: Exercise exact signed APK default-SMS consent, chooser, cancellation and receive path
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            mkdir -p smsguard-role-results
+            python3 smsguard/tools/default-role-smoke.py "${{ steps.apk.outputs.path }}" /tmp/sms-baseline/SMS-Guard-v1.1.16.apk > smsguard-role-results/smoke.log 2>&1 || { tail -30 smsguard-role-results/smoke.log; exit 1; }
+
+      - name: Surface bounded emulator failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          if [ -f smsguard-role-results/smoke.log ]; then
+            tail -25 smsguard-role-results/smoke.log | while IFS= read -r line; do
+              echo "::error title=SMS emulator::$line"
+            done
+          else
+            echo '::error title=SMS emulator::Emulator action failed before running the smoke script.'
+          fi
+
+      - name: Upload synthetic default-role emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SMS-Guard-default-role-emulator-evidence
+          path: smsguard-role-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Verify emulator exercised unchanged selected APK
+        run: echo '${{ steps.apk.outputs.sha256 }}  ${{ steps.apk.outputs.path }}' | sha256sum --check
+
       - name: Upload signed SMS Guard Test APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: SMS-Guard-v1.1.0-test-apk
+          name: SMS-Guard-signed-candidate
           path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
           retention-days: 30

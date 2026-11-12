@@ -50,6 +50,7 @@ import com.universalrp.cleansweep.data.SpeedProgress
 import com.universalrp.cleansweep.data.SpeedResult
 import com.universalrp.cleansweep.data.UsageStats
 import com.universalrp.cleansweep.data.tr
+import com.universalrp.cleansweep.ui.HomeRefreshPolicy
 import com.universalrp.cleansweep.data.NetworkReport
 import com.universalrp.cleansweep.data.NetworkScanner
 import com.universalrp.cleansweep.data.SecurityReport
@@ -102,6 +103,8 @@ enum class Screen {
     HEALTH, APPS, SECURITY, NETWORK, MOBILE, AI_SETTINGS, AI_REPORT, VOICE, INSIGHTS, FEATURE_SETUP, MY_PLAN,
     /** 2.53 — the user guide itself; the menu's "Guide" row used to open FEATURE_SETUP by mistake. */
     GUIDE,
+    /** Dedicated, OS-backed explanations and controls for every declared permission. */
+    PERMISSIONS,
     /** 2.57 — 30-min rain head-start + severe heavy rain & cyclone voice alert screen. */
     WEATHER
 }
@@ -140,6 +143,7 @@ data class UiState(
     // App cache screen
     val usageAccess: Boolean = false,
     val appsLoading: Boolean = false,
+    val appCachesReadAtMs: Long = 0L,
     val includeSystemApps: Boolean = MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM,
     val appCaches: List<AppCacheInfo> = emptyList(),
     val pendingManualApps: Int = 0,
@@ -197,8 +201,8 @@ data class UiState(
     // 2.42: the ongoing status-bar charging meter defaults ON (opt-out). MonitorDefaultsPolicy
     // is the single owner of that default, shared with the DataStore flow and the prefs mirror.
     val chargeMonitor: Boolean = MonitorDefaultsPolicy.CHARGE_CARD,
-    // Status-bar watt reading: CleanSweep draws it itself (needs "Display over other apps")
-    val statusPill: Boolean = false,
+    // Screenshot-matching default ON; drawing still waits for the user's Android overlay grant.
+    val statusPill: Boolean = MonitorDefaultsPolicy.STATUS_PILL,
     val statusPillAllowed: Boolean = false,
     /** Independent, optional button that opens Android's native media-volume panel. */
     val floatingVolumeButton: Boolean = false,
@@ -263,6 +267,7 @@ data class UiState(
     /** True while an HD announcement is actually playing, for the global stop button. */
     val voiceSpeaking: Boolean = false,
     val voiceBatteryLow: Boolean = true,
+    val voiceLowPercent: Int = Announcer.LOW_PERCENT,
     val voiceBatteryFull: Boolean = true,
     val voiceOverheat: Boolean = true,
     val voiceCharging: Boolean = true,
@@ -305,10 +310,13 @@ data class UiState(
     val newsShown: Set<String> = emptySet(),
     val newsLoading: Boolean = false,
     val newsOutcome: TamilInfoStripRepo.Outcome = TamilInfoStripRepo.Outcome.NO_TODAY_NEWS,
+    /** 2.95: nothing saved yet and the startup delay still holds, so no "no news today" claim. */
+    val newsStartupPending: Boolean = false,
     val tamilInfoVisible: Boolean = true,
     val tamilInfoPaused: Boolean = false,
     val newsVoiceEnabled: Boolean = true,
     val newsVoiceIntervalMin: Int = 180,
+    val newsVoiceBusy: Boolean = false,
     val autoWifiScanOnOpen: Boolean = true,
     val bgWifiScanEnabled: Boolean = false,
     val verifiedWifiMacs: Set<String> = emptySet(),
@@ -356,7 +364,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private var securityJob: Job? = null
     private var securityRevision = 0L
     private var newsJob: Job? = null
+    private var newsReadingJob: Job? = null
     private var homeReadingJob: Job? = null
+    /** 2.95: when this process opened, so automatic news fetching can wait one minute. */
+    private val openedAtElapsedMs = android.os.SystemClock.elapsedRealtime()
+    private var lastHealthReadMs = 0L
+    private var lastNetworkReadMs = 0L
     private var phoneAgeCalculatedOn: String? = null
     private var healthReadingJob: Job? = null
     private var currentSettings = ScanSettings()
@@ -398,7 +411,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         // saved theme here too; MainActivity applies it before the first composition.
         val resolvedTheme = com.universalrp.cleansweep.ui.theme.ThemeStore.currentId(ctx)
         com.universalrp.cleansweep.ui.theme.Palette.apply(resolvedTheme)
-        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnThreeHours(ctx)
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.ensureDefaultOnTwoHours(ctx)
         mutate { it.copy(lang = resolvedLang,
             themeId = resolvedTheme,
             voiceOn = Announcer.enabled(ctx),
@@ -577,28 +590,54 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Runs only while Home is visible, not a new background service. All reads/probes are off the UI thread. */
+    /**
+     * 2.95 — one owner, rate-limited readings. Home still ticks every 15 s, but the battery/storage/
+     * RAM read runs at most every 30 s and the latency probe plus NetworkStats query at most every
+     * 60 s (HomeRefreshPolicy). Previously all of it — including a charge-history disk write — ran
+     * on every tick, which is the overlapping startup/periodic load the OPPO could not sustain.
+     */
     fun refreshDashboardReadings() {
         if (homeReadingJob?.isActive == true) return
+        val now = android.os.SystemClock.elapsedRealtime()
+        val healthDue = HomeRefreshPolicy.due(now, lastHealthReadMs, HomeRefreshPolicy.HEALTH_INTERVAL_MS)
+        val networkDue = HomeRefreshPolicy.due(now, lastNetworkReadMs, HomeRefreshPolicy.NETWORK_INTERVAL_MS)
+        if (!healthDue && !networkDue) return
         homeReadingJob = viewModelScope.launch {
             val today = java.time.LocalDate.now().toString()
-            val age = if (_state.value.phoneAge == null || phoneAgeCalculatedOn != today) {
+            val health = if (healthDue) {
+                lastHealthReadMs = android.os.SystemClock.elapsedRealtime()
+                withContext(Dispatchers.IO) {
+                    runCatching {
+                        DeviceHealthReader.read(ctx).also { runCatching { ChargeHistoryRepo.record(ctx, it.battery) } }
+                    }.getOrNull()
+                }
+            } else null
+            val networkAndPack = if (networkDue) {
+                lastNetworkReadMs = android.os.SystemClock.elapsedRealtime()
+                withContext(Dispatchers.IO) {
+                    runCatching { LiveNetworkQuality.measure(ctx) }.getOrNull() to
+                        runCatching { DataUsageTracker.getUsageInfo(ctx) }.getOrNull()
+                }
+            } else null
+            val age = if (healthDue && (_state.value.phoneAge == null || phoneAgeCalculatedOn != today)) {
                 withContext(Dispatchers.IO) {
                     runCatching { PhoneAgeEstimator.estimateAge() }.getOrElse { PhoneAgeEstimator.unavailable() }
                 }.also { phoneAgeCalculatedOn = today }
             } else _state.value.phoneAge
-            val values = withContext(Dispatchers.IO) {
-                val health = runCatching { DeviceHealthReader.read(ctx) }.getOrNull()
-                health?.battery?.let { runCatching { ChargeHistoryRepo.record(ctx, it) } }
-                val network = runCatching { LiveNetworkQuality.measure(ctx) }.getOrNull()
-                val pack = runCatching { DataUsageTracker.getUsageInfo(ctx) }.getOrNull()
-                Triple(health, network, pack)
+            mutate {
+                it.copy(
+                    health = health ?: it.health,
+                    storage = health?.storage ?: it.storage,
+                    liveNetworkQuality = networkAndPack?.first ?: it.liveNetworkQuality,
+                    dataPackInfo = networkAndPack?.second ?: it.dataPackInfo,
+                    phoneAge = age ?: it.phoneAge,
+                )
             }
-            mutate { it.copy(health = values.first ?: it.health, storage = values.first?.storage ?: it.storage,
-                liveNetworkQuality = values.second ?: it.liveNetworkQuality, dataPackInfo = values.third ?: it.dataPackInfo,
-                phoneAge = age ?: it.phoneAge) }
-            rebuildChecklist()
+            if (healthDue) rebuildChecklist()
         }
     }
+
+    fun refreshFeatureChoices() { viewModelScope.launch { savedInsights() } }
 
     fun openInsights(tab: InsightsTab = InsightsTab.COMPATIBILITY) {
         mutate { it.copy(insightsTab = tab) }
@@ -871,6 +910,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             Screen.AI_REPORT -> Screen.HEALTH
             Screen.AI_SETTINGS -> Screen.SETTINGS
             Screen.VOICE -> Screen.SETTINGS
+            Screen.PERMISSIONS -> Screen.SETTINGS
             Screen.MOBILE -> Screen.HOME
             Screen.MY_PLAN -> Screen.MOBILE
             else -> Screen.HOME
@@ -1060,7 +1100,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val mine = ++cacheRevision
         cacheJob?.cancel()
         if (!AppCacheRepo.hasUsageAccess(ctx)) {
-            mutate { it.copy(usageAccess = false, appsLoading = false) }
+            mutate { it.copy(usageAccess = false, appsLoading = false, appCachesReadAtMs = 0L) }
             return
         }
         val include = _state.value.includeSystemApps
@@ -1070,7 +1110,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 val list = AppCacheRepo.load(ctx, include).map { it.copy(selected = selected[it.pkg] ?: false) }
                 ensureActive()
-                if (mine == cacheRevision) mutate { it.copy(appCaches = list) }
+                if (mine == cacheRevision) mutate { it.copy(appCaches = list, appCachesReadAtMs = System.currentTimeMillis()) }
             } catch (cancelled: CancellationException) { throw cancelled } catch (_: Exception) { if (mine == cacheRevision) mutate { it.copy(message = "Cache refresh failed. Previous readings have not been replaced.") } } finally { if (mine == cacheRevision) mutate { it.copy(appsLoading = false) } }
         }
     }
@@ -1526,6 +1566,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate { it.copy(voiceOn = on) }
     }
 
+    fun setVoiceLowPercent(value: Int) {
+        Announcer.setLowPercent(ctx, value)
+        mutate { it.copy(voiceLowPercent = Announcer.lowPercent(ctx)) }
+    }
+
     fun setVoiceEvent(event: Announcer.Event, on: Boolean) {
         Announcer.setAllows(ctx, event, on)
         // v2.7: muting the answers is also the Stop button — anything being read out halts
@@ -1544,6 +1589,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             it.copy(
                 voiceOn = Announcer.enabled(ctx),
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
+                voiceLowPercent = Announcer.lowPercent(ctx),
                 voiceBatteryFull = Announcer.allows(ctx, Announcer.Event.BATTERY_FULL),
                 voiceOverheat = Announcer.allows(ctx, Announcer.Event.OVERHEAT),
                 voiceCharging = Announcer.allows(ctx, Announcer.Event.CHARGING),
@@ -1669,8 +1715,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      * next request.
      */
     fun stopVoice() {
+        newsReadingJob?.cancel()
+        newsReadingJob = null
         Announcer.stop()
-        mutate { it.copy(voiceSpeaking = false) }
+        mutate { it.copy(voiceSpeaking = false, newsVoiceBusy = false) }
     }
 
     fun setDailyScanOn(on: Boolean) {
@@ -1719,6 +1767,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 silentPlaceSlots = Announcer.silentPlaceSlots(ctx),
                 voiceSpeaking = Announcer.speaking.value,
                 voiceBatteryLow = Announcer.allows(ctx, Announcer.Event.BATTERY_LOW),
+                voiceLowPercent = Announcer.lowPercent(ctx),
                 voiceBatteryFull = Announcer.allows(ctx, Announcer.Event.BATTERY_FULL),
                 voiceOverheat = Announcer.allows(ctx, Announcer.Event.OVERHEAT),
                 voiceCharging = Announcer.allows(ctx, Announcer.Event.CHARGING),
@@ -2288,33 +2337,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                         mutate { it.copy(aiDeviceResult = tr("Local scan complete. Review provider setup and network-sharing consent before AI identification.")) }
                         return@withTimeoutOrNull true
                     }
-            val listing = buildString {
-                // The network name is deliberately left out: it is the one detail the user
-                // asked never to show, and it is not needed to identify a device.
-                appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
-                appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
-                report.devices.forEach { device ->
-                    appendLine(
-                        "- ${device.ip}" +
-                            (if (device.isSelf) " (this phone)" else "") +
-                            (if (device.isGateway) " (router)" else "") +
-                            " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
-                            "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
-                            device.identity.type
+                    val listing = buildString {
+                        // The network name is deliberately left out: it is the one detail the user
+                        // asked never to show, and it is not needed to identify a device.
+                        appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
+                        appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
+                        report.devices.forEach { device ->
+                            appendLine(
+                                "- ${device.ip}" +
+                                    (if (device.isSelf) " (this phone)" else "") +
+                                    (if (device.isGateway) " (router)" else "") +
+                                    " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
+                                    "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
+                                    device.identity.type
+                            )
+                        }
+                    }
+                    val (result, fallbackNote, elapsedMs) = askWithFallback(
+                        systemPrompt = """
+                            You identify devices on a home Wi-Fi network from the evidence given.
+                            For each line say what the device probably is (phone, laptop, desktop, tablet,
+                            smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
+                            you are, and what else would confirm it. Never invent a brand the evidence does
+                            not support. Then add a short section on anything that looks unusual for a home
+                            network. Keep it under 300 words, bullet points, plain language.
+                        """.trimIndent() + "\n" + answerLanguageRule(),
+                        userPrompt = listing, config = config, allowSearch = false,
                     )
-                }
-            }
-            val (result, fallbackNote, elapsedMs) = askWithFallback(
-                systemPrompt = """
-                    You identify devices on a home Wi-Fi network from the evidence given.
-                    For each line say what the device probably is (phone, laptop, desktop, tablet,
-                    smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
-                    you are, and what else would confirm it. Never invent a brand the evidence does
-                    not support. Then add a short section on anything that looks unusual for a home
-                    network. Keep it under 300 words, bullet points, plain language.
-                """.trimIndent() + "\n" + answerLanguageRule(),
-                userPrompt = listing, config = config, allowSearch = false,
-            )
                     ensureActive(); if (mine != deviceAiRevision) return@withTimeoutOrNull false
                     mutate { it.copy(aiDeviceResult = if (result.ok) result.text + "\n\n— " + answerMeta(result, elapsedMs, fallbackNote)
                         else tr(AiFailurePolicy.message(result.error))) }
@@ -2734,10 +2783,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 tamilInfoItems = emptyList(),
                 newsShown = emptySet(),
                 newsLoading = true,
-                message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “லைவ் கார்டு”" else "Language: English",
+                message = if (lang == AppLang.TA) "மொழி: தமிழ் — ஆப் பெயர் “கைபேசி காவலன்”" else "Language: English",
             )
         }
-        loadTamilInfoStrip(force = false)
+        // A language switch is a user action: it may fetch in the new language at once.
+        loadTamilInfoStrip(userInitiated = true)
         refreshAssistantWelcome()
         ChargeMonitorService.refreshIfRunning()
         com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
@@ -2783,8 +2833,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         if (_state.value.mobileBusy) return
         mutate { it.copy(mobileBusy = true, screen = _state.value.screen) }
         viewModelScope.launch {
-            val snapshot = runCatching { MobileNet.snapshot(ctx) }.getOrNull()
-            val usage = runCatching { UsageStats.read(ctx) }.getOrNull()
+            val snapshot = withContext(Dispatchers.IO) { runCatching { MobileNet.snapshot(ctx) }.getOrNull() }
+            val usage = withContext(Dispatchers.IO) { runCatching { UsageStats.read(ctx) }.getOrNull() }
             mutate {
                 it.copy(
                     mobileBusy = false,
@@ -3142,33 +3192,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         deviceAiJob = viewModelScope.launch {
             try {
                 val completed = withTimeoutOrNull(90_000) {
-            val listing = buildString {
-                // The network name is deliberately left out: it is the one detail the user
-                // asked never to show, and it is not needed to identify a device.
-                appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
-                appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
-                report.devices.forEach { device ->
-                    appendLine(
-                        "- ${device.ip}" +
-                            (if (device.isSelf) " (this phone)" else "") +
-                            (if (device.isGateway) " (router)" else "") +
-                            " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
-                            "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
-                            device.identity.type
+                    val listing = buildString {
+                        // The network name is deliberately left out: it is the one detail the user
+                        // asked never to show, and it is not needed to identify a device.
+                        appendLine("Wi-Fi network name: not sent (CleanSweep never shares it)")
+                        appendLine("Devices that answered (ip | hostname | MAC vendor | open ports | CleanSweep guess):")
+                        report.devices.forEach { device ->
+                            appendLine(
+                                "- ${device.ip}" +
+                                    (if (device.isSelf) " (this phone)" else "") +
+                                    (if (device.isGateway) " (router)" else "") +
+                                    " | ${device.hostname ?: "-"} | ${device.vendor ?: "-"} | " +
+                                    "${device.openPorts.joinToString(",").ifBlank { "-" }} | " +
+                                    device.identity.type
+                            )
+                        }
+                    }
+                    val (result, fallbackNote, elapsedMs) = askWithFallback(
+                        systemPrompt = """
+                            You identify devices on a home Wi-Fi network from the evidence given.
+                            For each line say what the device probably is (phone, laptop, desktop, tablet,
+                            smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
+                            you are, and what else would confirm it. Never invent a brand the evidence does
+                            not support. Then add a short section on anything that looks unusual for a home
+                            network. Keep it under 300 words, bullet points, plain language.
+                        """.trimIndent() + "\n" + answerLanguageRule(),
+                        userPrompt = listing, config = config, allowSearch = false,
                     )
-                }
-            }
-            val (result, fallbackNote, elapsedMs) = askWithFallback(
-                systemPrompt = """
-                    You identify devices on a home Wi-Fi network from the evidence given.
-                    For each line say what the device probably is (phone, laptop, desktop, tablet,
-                    smart TV, IP camera, printer, router, NAS, smart-home device) and how confident
-                    you are, and what else would confirm it. Never invent a brand the evidence does
-                    not support. Then add a short section on anything that looks unusual for a home
-                    network. Keep it under 300 words, bullet points, plain language.
-                """.trimIndent() + "\n" + answerLanguageRule(),
-                userPrompt = listing, config = config, allowSearch = false,
-            )
                     ensureActive(); if (mine != deviceAiRevision) return@withTimeoutOrNull false
                     mutate { it.copy(aiDeviceResult = if (result.ok) result.text + "\n\n— " + answerMeta(result, elapsedMs, fallbackNote)
                         else tr(AiFailurePolicy.message(result.error))) }
@@ -3214,13 +3264,23 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // -------------------------------------------------------- Tamil info strip
 
-    fun loadTamilInfoStrip(force: Boolean = false) {
+    /**
+     * 2.95 — the startup rule (NewsStartupPolicy): an automatic pass in the first minute shows the
+     * saved headlines and touches no feed. A later automatic pass, or any Read/Refresh tap
+     * ([force] / [userInitiated]), fetches exactly as before. Only one pass may run at a time, so a
+     * language switch, the date-change broadcast and the Home tick can never stack jobs.
+     */
+    fun loadTamilInfoStrip(force: Boolean = false, userInitiated: Boolean = false) {
         if (newsJob?.isActive == true) return
+        val elapsed = android.os.SystemClock.elapsedRealtime() - openedAtElapsedMs
+        val allowNetwork = NewsStartupPolicy.allowNetwork(force, userInitiated, elapsed)
         newsJob = viewModelScope.launch {
             mutate { it.copy(newsLoading = true) }
             try {
                 val isTa = Lang.languageIn(ctx) == AppLang.TA
-                val result = TamilInfoStripRepo.getItemsForLanguage(ctx, forceRefresh = force, tamil = isTa)
+                val result = TamilInfoStripRepo.getItemsForLanguage(
+                    ctx, forceRefresh = force, tamil = isTa, allowNetwork = allowNetwork,
+                )
                 val valid = com.universalrp.cleansweep.data.NewsPolicy.todayForLanguage(
                     result.items,
                     System.currentTimeMillis(),
@@ -3233,6 +3293,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                         tamilInfoItems = valid,
                         newsShown = shown,
                         newsOutcome = if (valid.isEmpty() && result.items.isNotEmpty()) TamilInfoStripRepo.Outcome.NO_TODAY_NEWS else result.outcome,
+                        // Never say "no news today" while the startup delay still holds.
+                        newsStartupPending = !allowNetwork && valid.isEmpty(),
                         newsLoading = false,
                     )
                 }
@@ -3269,7 +3331,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun speakTamilText(text: String) {
         val cleaned = com.universalrp.cleansweep.data.NewsSpeechSanitizer.cleanHeadline(text)
         if (cleaned.isNotBlank()) {
-            Announcer.speakNow(ctx, cleaned, Lang.languageIn(ctx))
+            Announcer.speakNewsNow(ctx, cleaned, Lang.languageIn(ctx))
         }
     }
 
@@ -3285,24 +3347,42 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun readTodaysNewsNow() {
-        viewModelScope.launch {
-            val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
-            if (count <= 0) {
-                mutate {
-                    it.copy(
-                        message = if (Lang.isTamil) {
-                            "இன்றைய செய்தித் தலைப்புகள் இன்னும் கிடைக்கவில்லை — புதுப்பித்து முயற்சிக்கவும்."
-                        } else {
-                            "No clean headlines from today are ready yet — tap refresh and try again."
-                        },
-                    )
+        if (newsReadingJob?.isActive == true) return
+        newsReadingJob = viewModelScope.launch {
+            mutate { it.copy(newsVoiceBusy = true) }
+            try {
+                val count = com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.readTodaysHeadlinesManually(ctx)
+                when {
+                    count < 0 -> mutate {
+                        it.copy(
+                            message = if (Lang.isTamil) {
+                                "HD குரல் சேவை முழு செய்தித் தொகுப்பையும் தயாரிக்க முடியவில்லை. செய்திகள் படித்ததாகக் குறிக்கப்படவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்."
+                            } else {
+                                "The HD voice service could not prepare the full bulletin. The headlines were not marked as read. Please try again later."
+                            },
+                        )
+                    }
+                    count == 0 -> mutate {
+                        it.copy(
+                            message = if (Lang.isTamil) {
+                                "இன்றைய புதிய, தெளிவான செய்திகள் தற்போது இல்லை. ஏற்கனவே படித்த அல்லது பழைய செய்திகள் மீண்டும் படிக்கப்படாது."
+                            } else {
+                                "No new, clean headlines from today are available. Already-read or old stories will not be replayed."
+                            },
+                        )
+                    }
                 }
+            } finally {
+                mutate { it.copy(newsVoiceBusy = false) }
             }
         }
     }
 
     fun stopSpeakingNow() {
+        newsReadingJob?.cancel()
+        newsReadingJob = null
         Announcer.stop()
+        mutate { it.copy(newsVoiceBusy = false, voiceSpeaking = false) }
     }
 
     // ---------------------------------------------------- Wi-Fi Verified Devices & Auto-Scan
@@ -3400,13 +3480,12 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             }
             val tamil = Lang.languageIn(ctx) == AppLang.TA
             val saved = WeatherAlertStore.savedPlace(ctx)
-            val resolved = com.universalrp.weather.WeatherPlaceResolver.resolveActiveLocation(
-                context = ctx,
-                savedName = saved?.name.orEmpty(),
-                savedDetails = saved?.details.orEmpty(),
-                savedLat = saved?.latitude ?: Double.NaN,
-                savedLon = saved?.longitude ?: Double.NaN,
-                tamil = tamil,
+            val resolved = com.universalrp.weather.ResolvedWeatherLocation(
+                mode = if (saved == null) com.universalrp.weather.LocationResolutionMode.NEEDS_SAVED_PLACE else com.universalrp.weather.LocationResolutionMode.SAVED_PLACE_FALLBACK,
+                gpsTurnedOn = com.universalrp.weather.WeatherPlaceResolver.isDeviceLocationTurnedOn(ctx),
+                permissionGranted = com.universalrp.weather.WeatherPlaceResolver.hasLocationPermission(ctx),
+                name = saved?.name.orEmpty(), details = saved?.details.orEmpty(),
+                latitude = saved?.latitude ?: Double.NaN, longitude = saved?.longitude ?: Double.NaN,
             )
             val current = _state.value.weather
             val fresh = WeatherAlertStore.readUiSnapshot(
@@ -3468,7 +3547,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                     val text = if (Lang.isTamil) decision.tamilSpeech else decision.englishSpeech
                     Announcer.speakNow(ctx, text)
                 } else {
-                    val sample = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+                    val sample = com.universalrp.cleansweep.data.RainNoticePolicy.formatSpeech(
                         severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
                         placeLabel = place ?: if (Lang.isTamil) "உங்கள் ஊர்" else "your location",
                         minutesUntilRain = 30,
@@ -3490,7 +3569,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         val place = _state.value.weather.activePlaceName.takeIf { it.isNotBlank() }
             ?: _state.value.weather.savedPlaceName.takeIf { it.isNotBlank() }
             ?: if (Lang.isTamil) "உங்கள் பகுதி" else "your area"
-        val sample = com.universalrp.weather.WeatherAlertPolicy.formatSpeech(
+        val sample = com.universalrp.cleansweep.data.RainNoticePolicy.formatSpeech(
             severity = com.universalrp.weather.WeatherSeverity.RAIN_SOON,
             placeLabel = place,
             minutesUntilRain = 30,
@@ -3566,6 +3645,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         }
         refreshWeatherUiState()
+        if (com.universalrp.weather.WeatherPlaceResolver.hasLocationPermission(ctx) && com.universalrp.weather.WeatherPlaceResolver.isDeviceLocationTurnedOn(ctx)) checkWeatherNow()
     }
 
     fun saveTomorrowApiKey(rawKey: String) {
@@ -3573,9 +3653,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         mutate {
             it.copy(
                 message = if (rawKey.isBlank()) {
-                    tr("Tomorrow.io key removed — using free built-in weather radar.")
+                    if (Lang.isTamil) "விசை அகற்றப்பட்டது; துல்லிய மழை அறிவிப்புகள் நிறுத்தப்பட்டன." else "Key removed; precise rain alerts paused."
                 } else if (ok) {
-                    tr("Tomorrow.io 1-minute rain key saved securely.")
+                    if (Lang.isTamil) "விசை பாதுகாப்பாகச் சேமிக்கப்பட்டது; அணுகலைச் சரிபார்க்கவும்." else "Key saved securely; check access now."
                 } else {
                     tr("Could not encrypt key in Android Keystore.")
                 }

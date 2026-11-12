@@ -5,17 +5,14 @@ on:
     branches:
       - main
       - "arena/**"
-    # Documentation-only files cannot change the deployed site: this workflow reads only
-    # site/** plus the published release assets it mirrors. A docs-only commit therefore
-    # has nothing to redeploy. Keep this list in step with build-apk.yml.
-    paths-ignore:
-      - "README.md"
-      - "CHANGELOG.md"
-      - "PUBLISHING.md"
-      - "docs/published-release-digests.md"
-      - "docs/live-guard-2.42-device-evidence.md"
-      # Release NOTES only — releases/latest-tag.txt is not a site input.
-      - "releases/*.md"
+    # Package only actual site inputs. APK/source/docs-only pushes otherwise create
+    # another ~1.46 GB Pages artifact without changing the website. Publication must
+    # still update the pinned site/workflow receipts; dispatch remains available.
+    paths:
+      - "site/**"
+      - "tools/build_store_catalog.py"
+      - "tamilanstore/src/main/assets/catalog.json"
+      - ".github/workflows/pages.yml"
   workflow_dispatch:
 
 permissions:
@@ -30,11 +27,18 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Fetch all 7 official signed APKs, verify SHA-256, and build .apk + .zip CDN mirrors
+      - name: Check website and catalog contracts before packaging
+        run: |
+          python3 -m unittest discover -s tools/tests -p 'test_website*.py' -v
+          python3 -m unittest discover -s tools/tests -p 'test_store_live_catalog.py' -v
+          python3 -m unittest discover -s tools/tests -p 'test_fresh_install_migration.py' -v
+
+      - name: Fetch official signed APKs, verify SHA-256, and build .apk + .zip CDN mirrors
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -44,13 +48,24 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
-              ("sms-guard-v1.1.8", "SMS-Guard-v1.1.8.apk", 12445281, "de9906eb2e444ccfd38ddb77c44c01a6ac6cfcc42a118114afaa99e743233582"),
-              ("live-guard-v2.72", "CleanSweep-v2.72.apk", 14413927, "e6664f5d14f7fe31a8a754b5d35bde62ba14d1b6ee894ba2b454f4ab7952fc0b"),
-              ("ramesh-radio-v1.26", "Ramesh-Radio-v1.26.apk", 15092964, "238dbc22c02bb064b617def1d6ceb8e51425243f4c05cf099dd81466d007fc13"),
-              ("oor-arivippu-v1.1.9", "Oor-Arivippu-v1.1.9.apk", 12794316, "6915d597faa0ca9c0665bab695863d02fa04f56675796babcd9ce6446e286679"),
-              ("pulseeq-v1.9", "PulseEQ-v1.9.apk", 12100805, "772880145d0f619f8dc6fd2b703f02186579b8c693d003485b66728a109c4ced"),
-              ("rp-vocal-remover-studio-v0.1.15", "RP-Vocal-Remover-Studio-v0.1.15.apk", 65032741, "16c8b5899f3af8e894c0a89317f84709acf2fa34ef2f129d938fa357176369d9"),
+              # Retention rule: the current release of every app. Historical releases are
+              # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
+              # builds stay on their GitHub release page instead of being mirrored a second time.
+              ("live-guard-v2.99", "CleanSweep-v2.99.apk", 14785431, "d11818d1539d10061bf76060874e84a4bdfc4628c1dee1a5389dd0f89fd88b05"),
+              ("tamilan-store-v0.12", "Tamilan-Store-v0.12.apk", 19476375, "29ad4b2a8b3dc575ef2e6707bc81e27dcfc0541a69bfef350f1a83ddd4298cce"),
+              ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
+              ("sms-guard-v1.1.17", "SMS-Guard-v1.1.17.apk", 12840884, "b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd"),
+              ("vasanthi-ai-v1.1.5", "Vasanthi-AI-v1.1.5.apk", 45777962, "4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6"),
+              ("oor-arivippu-v1.1.21", "Oor-Arivippu-v1.1.21.apk", 12924720, "e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258"),
+              ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
+              ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
+              ("expense-tracker-v1.2", "Expense-Tracker-v1.2.apk", 11564299, "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108"),
+              ("elderly-launcher-v1.7", "Elderly-Launcher-v1.7.apk", 11521755, "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec"),
+              ("ramesh-radio-v1.31", "Ramesh-Radio-v1.31.apk", 15179972, "fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22"),
+              ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
+              ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
+              ("tvguard-v1.5.1", "Android-TV-Guard-v1.5.1.apk", 11797331, "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -69,6 +84,13 @@ jobs:
               with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_STORED) as zf:
                   zf.writestr(apk_name, data)
               print(f"VERIFIED CDN MIRROR: {apk_name} ({expected_size:,} B) + {zip_name} ({zip_path.stat().st_size:,} B)")
+          # Each release is stored twice (the .apk and a byte-identical stored .zip), so the
+          # deploy size is roughly double. upload-pages-artifact compresses the archive and the
+          # hard limit is 1 GB, so hold the mirror well below it and prune instead of growing.
+          mirrored = 2 * sum((out_dir / apk_name).stat().st_size for _, apk_name, _, _ in RELEASES)
+          MIRROR_BUDGET = 800_000_000
+          assert mirrored <= MIRROR_BUDGET, f"Site mirror budget exceeded: {mirrored:,} B > {MIRROR_BUDGET:,} B; prune an older mirror"
+          print(f"Site mirror budget: {mirrored:,} B of {MIRROR_BUDGET:,} B across {len(RELEASES)} releases")
           PY
 
       - name: Verify Google Search Console meta tag, HTML file, CDN APKs/ZIPs & sitemap exist
@@ -77,28 +99,66 @@ jobs:
           test -f site/google07eb97f28234915c.html
           test -f site/sitemap.xml
           test -f site/robots.txt
-          test -s site/apks/SMS-Guard-v1.1.8.apk
-          test -s site/apks/SMS-Guard-v1.1.8.zip
-          test -s site/apks/CleanSweep-v2.72.apk
-          test -s site/apks/CleanSweep-v2.72.zip
-          test -s site/apks/Ramesh-Radio-v1.26.apk
-          test -s site/apks/Ramesh-Radio-v1.26.zip
-          test -s site/apks/Oor-Arivippu-v1.1.9.apk
-          test -s site/apks/Oor-Arivippu-v1.1.9.zip
+          test -s site/apks/CleanSweep-v2.99.apk
+          test -s site/apks/CleanSweep-v2.99.zip
+          test -s site/apks/Android-TV-Guard-v1.5.1.apk
+          test -s site/apks/Android-TV-Guard-v1.5.1.zip
+          test -s site/apks/Tamilan-Store-v0.12.apk
+          test -s site/apks/Tamilan-Store-v0.12.zip
+          test -s site/apks/Voice-Notes-v1.3.4.apk
+          test -s site/apks/Voice-Notes-v1.3.4.zip
+          test -s site/apks/Secret-Message-v1.1.3.apk
+          test -s site/apks/Secret-Message-v1.1.3.zip
+          test -s site/apks/SMS-Guard-v1.1.17.apk
+          test -s site/apks/SMS-Guard-v1.1.17.zip
+          test -s site/apks/Vasanthi-AI-v1.1.5.apk
+          test -s site/apks/Vasanthi-AI-v1.1.5.zip
+          test -s site/apks/Oor-Arivippu-v1.1.21.apk
+          test -s site/apks/Oor-Arivippu-v1.1.21.zip
+          test -s site/apks/Tamil-Podcast-Player-v1.6.apk
+          test -s site/apks/Tamil-Podcast-Player-v1.6.zip
+          test -s site/apks/DailyVault-v0.5.apk
+          test -s site/apks/DailyVault-v0.5.zip
+          test -s site/apks/Expense-Tracker-v1.2.apk
+          test -s site/apks/Expense-Tracker-v1.2.zip
+          test -s site/apks/Elderly-Launcher-v1.7.apk
+          test -s site/apks/Elderly-Launcher-v1.7.zip
+          test -s site/apks/Ramesh-Radio-v1.31.apk
+          test -s site/apks/Ramesh-Radio-v1.31.zip
+          test -s site/apks/PulseEQ-v1.11.apk
+          test -s site/apks/PulseEQ-v1.11.zip
+          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.16.apk
+          test -s site/apks/RP-Vocal-Remover-Studio-v0.1.16.zip
+
+      - name: Build live official Store catalog from public release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 tools/build_store_catalog.py
 
       - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./site
+          retention-days: 1
 
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: build
+    # deploy-pages enforces a 10-minute maximum. Reserve a separate 10-minute
+    # window for strict post-deployment metadata and signed-download checks.
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
+        with:
+          timeout: 600000 # Upstream maximum: 10 minutes; never skip checks on timeout.
+      - name: Verify deployed metadata, nine exact public APK/ZIP downloads and safe Launcher screenshots
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python3 tools/verify_live_three_releases.py

@@ -1,0 +1,150 @@
+name: Tamilan Store preview (no publication)
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "tamilanstore/**"
+      - ".github/workflows/tamilanstore-preview.yml"
+  pull_request:
+    paths:
+      - "tamilanstore/**"
+      - ".github/workflows/tamilanstore-preview.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: tamilan-preview-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.14.3'
+      - name: Test and compile preview
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :tamilanstore:testDebugUnitTest :tamilanstore:lintDebug :tamilanstore:assembleDebug --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/tamilan-store-preview.log"
+      - name: Prepare immutable public APK fixtures and instrumentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/store-fixtures" tamilanstore/src/androidTest/assets
+          for version in 0.3 0.4 0.5; do
+            curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+              "https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v$version/DailyVault-v$version.apk" \
+              -o "$RUNNER_TEMP/store-fixtures/DailyVault-v$version.apk"
+          done
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.29/Ramesh-Radio-v1.29.apk' \
+            -o "$RUNNER_TEMP/store-fixtures/Ramesh-Radio-v1.29.apk"
+          python3 - <<'PYFIXTURE'
+          import hashlib, os, pathlib
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'store-fixtures'
+          pins = {
+            '0.3': (12417577, 'aa35dca15be265146618c5e53748abc03e6022e4469ab7b6c523f655412043dd'),
+            '0.4': (12532289, '39ff7b7bcabb9f8a53b329d9f244b0d6e754d9a49159f5f3afac00469d5a0dc1'),
+            '0.5': (11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
+          }
+          for version, (size, digest) in pins.items():
+              data = (root / f'DailyVault-v{version}.apk').read_bytes()
+              assert len(data) == size and hashlib.sha256(data).hexdigest() == digest, version
+          data = (root / 'Ramesh-Radio-v1.29.apk').read_bytes()
+          assert len(data) == 15141600 and hashlib.sha256(data).hexdigest() == '11cdb90c4919a13ca23247cf9ba505a13b63b3185f78afa2a5568c79a1af210d'
+          PYFIXTURE
+          cp "$RUNNER_TEMP/store-fixtures/DailyVault-v0.5.apk" tamilanstore/src/androidTest/assets/
+          gradle :tamilanstore:assembleDebugAndroidTest --no-daemon --stacktrace
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Verify real archives and Android installer handoff on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          cores: 2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: >-
+            bash -o pipefail -c '
+            set -eu;
+            [[ "$CI" == true && "$GITHUB_ACTIONS" == true ]];
+            [[ "$(adb get-serialno)" == emulator-* ]];
+            [[ "$(adb shell getprop ro.kernel.qemu | tr -d "\r")" == 1 ]];
+            for attempt in 1 2 3 4 5; do
+            if timeout 20 adb root; then timeout 30 adb wait-for-device;
+            if [[ "$(adb shell id -u | tr -d "\r")" == 0 ]]; then break; fi; fi;
+            timeout 30 adb wait-for-device; sleep 2; done;
+            [[ "$(adb shell id -u | tr -d "\r")" == 0 ]];
+            bash tamilanstore/tools/emulator-install-smoke.sh
+            2>&1 | tee "$RUNNER_TEMP/store-emulator-console.log"'
+      - name: Upload bounded emulator evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: tamilan-store-emulator-evidence
+          path: ${{ runner.temp }}/store-emulator-evidence/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Surface bounded emulator diagnostics
+        if: failure()
+        shell: python
+        run: |
+          import os, pathlib
+          root = pathlib.Path(os.environ['RUNNER_TEMP'])
+          paths = [root/'store-emulator-console.log', *sorted((root/'store-emulator-evidence').glob('*.txt'))]
+          if not any(p.exists() for p in paths):
+              print('::error title=Emulator checkpoint::No harness output: failure occurred before the guarded archive/install phases produced evidence; no native test pass is claimed.')
+          for path in paths:
+              if path.exists():
+                  lines = path.read_text(errors='replace').splitlines()
+                  # AssumptionViolatedException is an expected skipped phase test, not a failure.
+                  # Emit the tail first and batch annotations: GitHub caps errors per step.
+                  markers = ('AssertionError', 'FAILURES!!!', 'Error:', 'INSTRUMENTATION_FAILED', 'Process crashed', 'shortMsg=', 'FATAL EXCEPTION')
+                  selected = set(range(max(0,len(lines)-18),len(lines)))
+                  for index,line in enumerate(lines):
+                      if any(marker in line for marker in markers):
+                          selected.update(range(max(0,index-3),min(len(lines),index+10)))
+                  chunks = [lines[index][-700:] for index in sorted(selected)]
+                  text = path.name + ': ' + '\n'.join(chunks)[-5500:]
+                  print('::error title=Emulator checkpoint::' + text.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+      - name: Surface bounded Gradle diagnostics
+        if: failure()
+        env:
+          LOG_PATH: ${{ runner.temp }}/tamilan-store-preview.log
+        run: |
+          python3 - <<'PY'
+          import os, pathlib
+          path = pathlib.Path(os.environ['LOG_PATH'])
+          lines = path.read_text(errors='replace').splitlines() if path.exists() else []
+          markers = ('e:', 'Execution failed for task', 'FAILURE: Build failed', ' FAILED', 'error:')
+          selected = [line for line in lines if any(marker in line for marker in markers)]
+          if not selected:
+              selected = lines[-30:]
+          for line in selected[-40:]:
+              text = line[-800:]
+              text = text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+              print('::error title=Tamilan Store preview::' + text)
+          PY
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tamilan-store-debug-emulator-only
+          path: tamilanstore/build/outputs/apk/debug/*.apk
+          retention-days: 30
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: tamilan-store-test-reports
+          path: tamilanstore/build/reports/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -1,0 +1,253 @@
+package com.universalrp.launcher
+
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
+import android.hardware.camera2.CameraManager
+import android.media.AudioManager
+import android.net.Uri
+import android.provider.Settings
+
+/**
+ * Everything a button does, in one place and without any Android UI types.
+ *
+ * Each function returns a plain result rather than throwing, because the caller is a screen that
+ * has to keep working when one button fails. A launcher that crashes when the camera app is missing
+ * is worse than no launcher at all: the phone becomes unusable.
+ */
+object LauncherActions {
+
+    /** What happened, so the screen can say something honest. */
+    sealed class Result {
+        object Done : Result()
+        data class Failed(val reasonRes: Int) : Result()
+    }
+
+    /** The phone's installed apps, launchable ones only, sorted by their label. */
+    fun installedApps(context: Context): List<AppEntry> {
+        val manager = context.packageManager
+        val intent = Intent(Intent.ACTION_MAIN, null).addCategory(Intent.CATEGORY_LAUNCHER)
+        return try {
+            manager.queryIntentActivities(intent, 0)
+                .asSequence()
+                .mapNotNull { resolve ->
+                    val info = resolve.activityInfo?.applicationInfo ?: return@mapNotNull null
+                    val label = runCatching { manager.getApplicationLabel(info).toString() }
+                        .getOrNull()
+                        ?: return@mapNotNull null
+                    AppEntry(
+                        label = label,
+                        packageName = info.packageName,
+                        isSystem = (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+                        // The launcher's own icon is not skipped. It used to be, which meant the
+                        // app was missing from the one list a person looks at while using it.
+                        icon = runCatching { manager.getApplicationIcon(info) }.getOrNull(),
+                    )
+                }
+                .distinctBy { it.packageName }
+                .sortedBy { it.label.lowercase() }
+                .toList()
+        } catch (error: Exception) {
+            emptyList()
+        }
+    }
+
+    /** Resolve only saved shortcuts on home; enumerate the whole inventory only in the picker. */
+    fun favouriteApp(context: Context, packageName: String): AppEntry? = runCatching {
+        val manager = context.packageManager
+        if (manager.getLaunchIntentForPackage(packageName) == null) return null
+        val info = manager.getApplicationInfo(packageName, 0)
+        AppEntry(manager.getApplicationLabel(info).toString(), packageName,
+            (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
+            runCatching { manager.getApplicationIcon(info) }.getOrNull())
+    }.getOrNull()
+
+    fun launchApp(context: Context, packageName: String): Result {
+        val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            ?: return Result.Failed(R.string.no_apps_found)
+        return try {
+            context.startActivity(intent)
+            Result.Done
+        } catch (error: ActivityNotFoundException) {
+            Result.Failed(R.string.no_apps_found)
+        } catch (error: Exception) {
+            Result.Failed(R.string.no_apps_found)
+        }
+    }
+
+    /** Opens the dialler. Does not dial anything: the owner picks the number. */
+    fun openDialer(context: Context): Result = start(
+        context,
+        Intent(Intent.ACTION_DIAL).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        R.string.big_phone,
+    )
+
+    fun openMessages(context: Context): Result {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (context.packageManager.queryIntentActivities(intent, 0).isNotEmpty()) {
+            return start(context, intent, R.string.big_messages)
+        }
+        // Some phones ship no messaging app that answers that category; the generic view is the
+        // fallback that exists on every one of them.
+        return start(
+            context,
+            Intent(Intent.ACTION_VIEW, Uri.parse("sms:")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            R.string.big_messages,
+        )
+    }
+
+    fun openCamera(context: Context): Result {
+        // MediaStore's still-image-camera action, not Intent.CATEGORY_APP_CAMERA - that constant
+        // does not exist, and this is the one that is answered by every phone's camera app.
+        val camera = Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (context.packageManager.queryIntentActivities(camera, 0).isNotEmpty()) {
+            return start(context, camera, R.string.big_camera)
+        }
+        return start(
+            context,
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_DEFAULT)
+                .setPackage(defaultCameraPackage(context))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            R.string.big_camera,
+        )
+    }
+
+    /** The package the system says handles the camera, or null. */
+    private fun defaultCameraPackage(context: Context): String? = try {
+        val intent = Intent(android.provider.MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
+        context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+            ?.activityInfo?.packageName
+    } catch (error: Exception) {
+        null
+    }
+
+    fun openContacts(context: Context): Result {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("content://contacts/people/"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        if (context.packageManager.queryIntentActivities(intent, 0).isNotEmpty()) {
+            return start(context, intent, R.string.big_contacts)
+        }
+        return start(
+            context,
+            Intent(Intent.ACTION_VIEW, Uri.parse("content://contacts"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            R.string.big_contacts,
+        )
+    }
+
+    fun openSettings(context: Context): Result = start(
+        context,
+        Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        R.string.big_settings,
+    )
+
+    /** Toggles the camera flash. Returns the new state. */
+    fun toggleTorch(context: Context, currentlyOn: Boolean): Pair<Result, Boolean> {
+        val manager = context.getSystemService(CameraManager::class.java)
+            ?: return Result.Failed(R.string.torch_unavailable) to currentlyOn
+        val cameraId = try {
+            manager.cameraIdList.firstOrNull { id ->
+                manager.getCameraCharacteristics(id)
+                    .get(android.hardware.camera2.CameraCharacteristics.FLASH_INFO_AVAILABLE) == true
+            }
+        } catch (error: Exception) {
+            null
+        } ?: return Result.Failed(R.string.torch_unavailable) to currentlyOn
+        return try {
+            manager.setTorchMode(cameraId, !currentlyOn)
+            Result.Done to !currentlyOn
+        } catch (error: Exception) {
+            // A torch that is already in use by another app cannot be taken; that is not a crash.
+            Result.Failed(R.string.torch_unavailable) to currentlyOn
+        }
+    }
+
+    /** Change the explicitly selected stream, not an OEM's suggested-volume UI delegate. */
+    fun nudgeVolume(context: Context, up: Boolean, stream: Int = AudioManager.STREAM_MUSIC): Result {
+        if (stream != AudioManager.STREAM_MUSIC && stream != AudioManager.STREAM_RING)
+            return Result.Failed(R.string.volume_unavailable)
+        val audio = context.getSystemService(AudioManager::class.java)
+            ?: return Result.Failed(R.string.volume_unavailable)
+        return try {
+            if (audio.isVolumeFixed) return Result.Failed(R.string.volume_unavailable)
+            // Never change silent/vibrate mode or cross the ring-silent boundary. Android
+            // and the user retain control of DND; no policy-access permission is requested.
+            if (stream == AudioManager.STREAM_RING && audio.ringerMode != AudioManager.RINGER_MODE_NORMAL)
+                return Result.Failed(R.string.volume_ring_boundary)
+            val current = audio.getStreamVolume(stream)
+            val minimum = if (android.os.Build.VERSION.SDK_INT >= 28) audio.getStreamMinVolume(stream) else 0
+            val maximum = audio.getStreamMaxVolume(stream)
+            if (maximum <= minimum) return Result.Failed(R.string.volume_unavailable)
+            val target = VolumeStep.target(current, minimum, maximum, up,
+                keepRingAudible = stream == AudioManager.STREAM_RING)
+                ?: return Result.Failed(R.string.volume_ring_boundary)
+            if (target != current) audio.setStreamVolume(stream, target, 0)
+            if (audio.getStreamVolume(stream) == target) Result.Done
+            else Result.Failed(R.string.volume_unavailable)
+        } catch (error: Exception) {
+            Result.Failed(R.string.volume_unavailable)
+        }
+    }
+
+    /**
+     * Places a call to an arbitrary number, directly.
+     *
+     * ACTION_CALL dials without a confirmation step, which needs CALL_PHONE and is what both the
+     * emergency button and the one-tap favourite buttons are for. If the permission has not been
+     * granted, or the dialler refuses, the dialler is opened with the number already filled in
+     * instead, so the button still does something useful rather than nothing.
+     */
+    fun placeDirectCall(context: Context, number: String): Result {
+        val call = Intent(Intent.ACTION_CALL, Uri.parse("tel:$number"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        val granted = context.checkSelfPermission(android.Manifest.permission.CALL_PHONE) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            return try {
+                context.startActivity(call)
+                Result.Done
+            } catch (error: Exception) {
+                openDialerWithNumber(context, number)
+            }
+        }
+        return openDialerWithNumber(context, number)
+    }
+
+    /** Dials the emergency number. A special case of a direct call, kept named for the caller. */
+    fun placeEmergencyCall(context: Context, number: String): Result =
+        placeDirectCall(context, number)
+
+    private fun openDialerWithNumber(context: Context, number: String): Result = start(
+        context,
+        Intent(Intent.ACTION_DIAL, Uri.parse("tel:$number"))
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        R.string.emergency_call,
+    )
+
+    private fun start(context: Context, intent: Intent, reasonRes: Int): Result = try {
+        context.startActivity(intent)
+        Result.Done
+    } catch (error: ActivityNotFoundException) {
+        Result.Failed(reasonRes)
+    } catch (error: Exception) {
+        Result.Failed(reasonRes)
+    }
+}
+
+/**
+ * One app on the phone, as the launcher's list shows it.
+ *
+ * The icon is carried because a list of names is not a list of apps: every other launcher on the
+ * phone shows artwork beside each name, and a name-only list is what the owner saw and called
+ * "not showing".
+ */
+data class AppEntry(
+    val label: String,
+    val packageName: String,
+    val isSystem: Boolean,
+    val icon: android.graphics.drawable.Drawable? = null,
+)

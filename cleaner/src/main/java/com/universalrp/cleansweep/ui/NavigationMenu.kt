@@ -201,6 +201,9 @@ fun LiveGuardMenu(vm: MainViewModel, current: Screen?, onClose: () -> Unit) {
             MenuRow(Icons.Outlined.CheckCircle, tr("Reviewed feature setup"), tr("What Live Guard may do"), current == Screen.FEATURE_SETUP) {
                 vm.navigate(Screen.FEATURE_SETUP); onClose()
             }
+            MenuRow(Icons.Outlined.Security, tr("Permissions & access"), tr("Why each access is needed"), current == Screen.PERMISSIONS) {
+                vm.navigate(Screen.PERMISSIONS); onClose()
+            }
             MenuRow(Icons.Outlined.Settings, tr("Settings & theme"), tr("Colours, language, permissions"), current == Screen.SETTINGS) {
                 vm.navigate(Screen.SETTINGS); onClose()
             }

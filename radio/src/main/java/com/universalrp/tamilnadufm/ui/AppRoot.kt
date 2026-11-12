@@ -91,28 +91,61 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             // made the tabs impossible to tap.
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        com.universalrp.weather.WeatherMiniAlertBanner(
-            severity = weather.bannerSeverity,
-            placeName = weather.activePlaceName.ifBlank { weather.savedPlaceName },
-            minutesUntilRain = weather.minutesUntilRain ?: 30,
-            tamil = isTamil,
-            isPreview = weather.previewSeverity != null,
-            onClick = { com.universalrp.tamilnadufm.RadioWeatherMonitor.openDialog(rootContext) },
-            onDismissPreview = { com.universalrp.tamilnadufm.RadioWeatherMonitor.dismissPreviewAnimation() },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 4.dp),
-            placeDetails = weather.activePlaceDetails.ifBlank { weather.savedPlaceDetails },
-        )
+        Box(Modifier.weight(1f)) {
+            when (state.tab) {
+                // v1.3: list states live in the ViewModel, so a tab switch keeps your place.
+                Tab.RADIO -> RadioScreen(vm, state, vm.radioListState)
+                Tab.NEWS -> NewsScreen(vm, state, vm.newsListState)
+                Tab.LOCAL -> LocalScreen(vm, state)
+                Tab.EQUALIZER -> EqualizerScreen(vm, state)
+                Tab.MORE -> MoreScreen(vm, state)
+            }
+        }
 
-        // A4: the owner's own places. One tap switches the rain/cyclone alerts to another town
-        // without searching for it again, and the long-press X forgets it.
-        //
-        // Shown from the very first place, not from the second: the owner reported that adding a
-        // place "just replaces" the one before it, and the only way to tell a growing list from a
-        // single changing place was to look at the weather card, which shows just the active one.
-        // A labelled row of chips makes the list itself visible, so growth is obvious and a real
-        // regression in the store would show up as one chip that changes name.
+        AnimatedVisibility(visible = state.message != null) {
+            state.message?.let { text ->
+                MessageBar(text) { vm.dismissMessage() }
+            }
+        }
+
+        if (state.tab != Tab.MORE || state.nowPlaying != null || state.playingLocalTitle != null) {
+            TransportBar(vm, state, playback.isPlaying, playback.isBuffering)
+        }
+
+        BottomNav(state.tab, state.navigationOrder) { vm.selectTab(it) }
+    }
+
+    if (state.showNowPlaying) {
+        NowPlayingSheet(vm, state)
+    }
+
+    if (state.showDirectory) {
+        DirectorySheet(vm, state)
+    }
+
+    if (showWeatherDialog) {
+        com.universalrp.weather.SharedWeatherControlDialog(
+            state = weather,
+            tamil = isTamil,
+            allowGps = false,
+            accentColor = Saffron,
+            ducksMusicNote = true,
+            onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
+            onSetEnabled = { on ->
+                com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, on)
+            },
+            onCheckNow = {
+                com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
+            },
+            onTestVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.testVoiceWithDuck(rootContext) },
+            onCyclePreviewAnimation = { com.universalrp.tamilnadufm.RadioWeatherMonitor.cyclePreviewAnimation() },
+            onSearchPlaces = { com.universalrp.tamilnadufm.RadioWeatherMonitor.searchPlaces(rootContext, it) },
+            onSelectPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.selectPlace(rootContext, it) },
+            onClearPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.clearPlace(rootContext) },
+            onSaveTomorrowKey = { com.universalrp.tamilnadufm.RadioWeatherMonitor.saveTomorrowKey(rootContext, it) },
+            onReadGuideAloud = { com.universalrp.tamilnadufm.RadioWeatherMonitor.readGuideAloud(rootContext, it) },
+            onStopVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.stopVoice() },
+            placesContent = {
         if (savedPlaces.isNotEmpty()) {
             Column(
                 modifier = Modifier
@@ -172,60 +205,7 @@ fun AppRoot(vm: MainViewModel, controller: MediaController?) {
             }
         }
 
-        Box(Modifier.weight(1f)) {
-            when (state.tab) {
-                // v1.3: list states live in the ViewModel, so a tab switch keeps your place.
-                Tab.RADIO -> RadioScreen(vm, state, vm.radioListState)
-                Tab.NEWS -> NewsScreen(vm, state, vm.newsListState)
-                Tab.LOCAL -> LocalScreen(vm, state)
-                Tab.EQUALIZER -> EqualizerScreen(vm, state)
-                Tab.MORE -> MoreScreen(vm, state)
-            }
-        }
-
-        AnimatedVisibility(visible = state.message != null) {
-            state.message?.let { text ->
-                MessageBar(text) { vm.dismissMessage() }
-            }
-        }
-
-        if (state.tab != Tab.MORE || state.nowPlaying != null || state.playingLocalTitle != null) {
-            TransportBar(vm, state, playback.isPlaying, playback.isBuffering)
-        }
-
-        BottomNav(state.tab) { vm.selectTab(it) }
-    }
-
-    if (state.showNowPlaying) {
-        NowPlayingSheet(vm, state)
-    }
-
-    if (state.showDirectory) {
-        DirectorySheet(vm, state)
-    }
-
-    if (showWeatherDialog) {
-        com.universalrp.weather.SharedWeatherControlDialog(
-            state = weather,
-            tamil = isTamil,
-            allowGps = false,
-            accentColor = Saffron,
-            ducksMusicNote = true,
-            onDismiss = { com.universalrp.tamilnadufm.RadioWeatherMonitor.closeDialog() },
-            onSetEnabled = { on ->
-                com.universalrp.tamilnadufm.RadioWeatherMonitor.setEnabled(rootContext, on)
             },
-            onCheckNow = {
-                com.universalrp.tamilnadufm.RadioWeatherMonitor.checkNow(rootContext, manual = true)
-            },
-            onTestVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.testVoiceWithDuck(rootContext) },
-            onCyclePreviewAnimation = { com.universalrp.tamilnadufm.RadioWeatherMonitor.cyclePreviewAnimation() },
-            onSearchPlaces = { com.universalrp.tamilnadufm.RadioWeatherMonitor.searchPlaces(rootContext, it) },
-            onSelectPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.selectPlace(rootContext, it) },
-            onClearPlace = { com.universalrp.tamilnadufm.RadioWeatherMonitor.clearPlace(rootContext) },
-            onSaveTomorrowKey = { com.universalrp.tamilnadufm.RadioWeatherMonitor.saveTomorrowKey(rootContext, it) },
-            onReadGuideAloud = { com.universalrp.tamilnadufm.RadioWeatherMonitor.readGuideAloud(rootContext, it) },
-            onStopVoice = { com.universalrp.tamilnadufm.RadioWeatherMonitor.stopVoice() },
         )
     }
 }
@@ -384,14 +364,20 @@ private fun TransportBar(
 }
 
 @Composable
-private fun BottomNav(current: Tab, onSelect: (Tab) -> Unit) {
+private fun BottomNav(current: Tab, order: List<String>, onSelect: (Tab) -> Unit) {
     Surface(color = SurfaceHigh, modifier = Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-            NavItem("Radio", Icons.Filled.Radio, current == Tab.RADIO) { onSelect(Tab.RADIO) }
-            NavItem("News", Icons.Filled.Newspaper, current == Tab.NEWS) { onSelect(Tab.NEWS) }
-            NavItem("Local", Icons.Filled.LibraryMusic, current == Tab.LOCAL) { onSelect(Tab.LOCAL) }
-            NavItem("EQ", Icons.Filled.Equalizer, current == Tab.EQUALIZER) { onSelect(Tab.EQUALIZER) }
-            NavItem("More", Icons.Filled.MoreHoriz, current == Tab.MORE) { onSelect(Tab.MORE) }
+            order.forEach { id ->
+                val tab = Tab.valueOf(id)
+                val (label, icon) = when (tab) {
+                    Tab.RADIO -> "Radio" to Icons.Filled.Radio
+                    Tab.NEWS -> "News" to Icons.Filled.Newspaper
+                    Tab.LOCAL -> "Local" to Icons.Filled.LibraryMusic
+                    Tab.EQUALIZER -> "EQ" to Icons.Filled.Equalizer
+                    Tab.MORE -> "More" to Icons.Filled.MoreHoriz
+                }
+                NavItem(label, icon, current == tab) { onSelect(tab) }
+            }
         }
     }
 }

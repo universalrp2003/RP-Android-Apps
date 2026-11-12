@@ -109,7 +109,7 @@ class HealthWatchWorker(
         val prefs = Announcer.prefs(ctx)
 
         // Battery low — only while it is actually running on the battery.
-        if (!battery.powerConnected && battery.percent in 0 until Announcer.LOW_PERCENT) {
+        if (com.universalrp.cleansweep.data.BatteryAlertPolicy.low(battery.percent, battery.powerConnected, Announcer.lowPercent(ctx))) {
             val last = prefs.getLong(Announcer.KEY_LAST_LOW, 0L)
             if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
                 Announcer.speakAndWait(
@@ -121,18 +121,8 @@ class HealthWatchWorker(
             }
         }
 
-        // Battery full — worth a word only while it is still on the cable.
-        if (battery.powerConnected && battery.percent >= 100) {
-            val last = prefs.getLong(Announcer.KEY_LAST_FULL, 0L)
-            if (com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, 6 * 60 * 60 * 1000L)) {
-                Announcer.speakAndWait(
-                    ctx, "",
-                    "பேட்டரி முழுமை அடைந்தது. சார்ஜரை அகற்றவும்.",
-                    Announcer.Event.BATTERY_FULL,
-                    onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_FULL, System.currentTimeMillis()).apply() },
-                )
-            }
-        }
+        // Full/percentage speech has a single per-connection owner in AutomaticAlerts.
+        // A second hourly-worker path would bypass the Advanced switch and deduplication.
 
         // Storage nearly full — the one warning that gets more painful the longer it waits.
         val storage = health?.storage
@@ -177,28 +167,19 @@ class HealthWatchWorker(
             }
         }
 
-        // Running hot — battery or CPU. 2.41: one owner-set policy (44 °C battery, unchanged
-        // 75 °C CPU zone) decides both the warning and its hush window, so the card, the
-        // plug-in line, the worker and the Settings text can never disagree.
-        val thermal = ThermalWarningPolicy.decide(
-            battery.temperatureC,
-            health?.batteryTempFromKernelC,
-            health?.cpuTempC,
-        )
-        val batteryHot = thermal.sensor == ThermalWarningPolicy.Sensor.BATTERY
-        val cpuHot = thermal.sensor == ThermalWarningPolicy.Sensor.CPU
+        // Only battery evidence may trigger automatic heat speech. Raw OEM CPU zones are
+        // informational, not a reliable portable sensor identity/temperature for an alarm.
+        val thermal = ThermalWarningPolicy.decide(battery.temperatureC, health?.batteryTempFromKernelC, null)
         if (thermal.warn) {
             val last = prefs.getLong(Announcer.KEY_LAST_HOT, 0L)
             val cooled = ThermalWarningPolicy.shouldAnnounce(last, now) &&
                 com.universalrp.cleansweep.voice.VoiceDeliveryPolicy.cooldownReady(now, last, ThermalWarningPolicy.HUSH_MS)
             if (cooled) {
-                val batteryText = (if (batteryHot) thermal.celsius else battery.temperatureC)?.let { "%.0f".format(it) } ?: "?"
-                val cpuText = (if (cpuHot) thermal.celsius else health?.cpuTempC)?.let { "%.0f".format(it) } ?: "?"
-                val whichTa = if (batteryHot && cpuHot) "பேட்டரி மற்றும் செயலி" else if (batteryHot) "பேட்டரி" else "செயலி"
+                val batteryText = thermal.celsius?.let { "%.0f".format(it) } ?: "?"
                 val plugWarning = if (battery.charging) " வேகமாக சார்ஜ் செய்வதைத் தவிர்க்கவும்." else ""
                 Announcer.speakAndWait(
                     ctx, "",
-                    "போன் அதிக வெப்பமாக உள்ளது: $whichTa ${if (batteryHot) batteryText else cpuText} டிகிரி.$plugWarning",
+                    "போன் அதிக வெப்பமாக உள்ளது: பேட்டரி $batteryText டிகிரி.$plugWarning",
                     Announcer.Event.OVERHEAT,
                     onStarted = { prefs.edit().putLong(Announcer.KEY_LAST_HOT, System.currentTimeMillis()).apply() },
                 )
@@ -266,12 +247,20 @@ class HealthWatchWorker(
                 "You are now on mobile data. This uses your data plan.",
                 "இப்போது மொபைல் டேட்டாவில் உள்ளீர்கள். இது உங்கள் தரவுத் திட்டத்தைப் பயன்படுத்தும்.",
                 Announcer.Event.NETWORK_CHANGE,
+                stillRelevant = {
+                    val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+                    active?.hasTransport(if (now == "wifi") NetworkCapabilities.TRANSPORT_WIFI else NetworkCapabilities.TRANSPORT_CELLULAR) == true
+                },
             )
             "wifi" -> Announcer.speakAndWait(
                 ctx,
                 "You are back on Wi-Fi.",
                 "நீங்கள் மீண்டும் வைஃபையில் உள்ளீர்கள்.",
                 Announcer.Event.NETWORK_CHANGE,
+                stillRelevant = {
+                    val active = connectivity.activeNetwork?.let { connectivity.getNetworkCapabilities(it) }
+                    active?.hasTransport(if (now == "wifi") NetworkCapabilities.TRANSPORT_WIFI else NetworkCapabilities.TRANSPORT_CELLULAR) == true
+                },
             )
         }
     }

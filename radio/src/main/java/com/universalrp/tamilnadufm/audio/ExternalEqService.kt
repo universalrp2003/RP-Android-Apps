@@ -13,6 +13,7 @@ import com.universalrp.tamilnadufm.MainActivity
 import com.universalrp.tamilnadufm.player.PlayerBus
 
 /** PulseEQ-style session effects embedded in Radio. No capture or claim of universal coverage. */
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class ExternalEqService : Service() {
     private val effects = mutableMapOf<Int, Equalizer>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)

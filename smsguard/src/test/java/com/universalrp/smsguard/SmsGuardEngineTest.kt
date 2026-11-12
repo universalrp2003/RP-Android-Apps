@@ -245,7 +245,8 @@ class SmsGuardEngineTest {
             settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true, shortEveryMessageEnabled = true, mutePromoVoice = true),
         )
         assertNotNull(offlineVoice)
-        assertTrue(offlineVoice!!.contains("cannot verify"))
+        assertTrue("Pending speech must not claim a completed verdict", offlineVoice!!.contains("cannot verify"))
+        assertFalse("Deferred online checks must not falsely claim loss of connectivity", offlineVoice.contains("No internet right now"))
 
         val afterReconnect = LinkSecurityScanner.scanSingleUrl(
             "https://bit.ly/parcel99",
@@ -262,7 +263,16 @@ class SmsGuardEngineTest {
             tamil = false,
         )
         assertNotNull(reconnectVoice)
-        assertTrue(reconnectVoice!!.contains("safe to open"))
+        assertTrue(reconnectVoice!!.contains("no threat detected"))
+        assertTrue(reconnectVoice.contains("not a safety guarantee"))
+        assertFalse(reconnectVoice.contains("safe to open"))
+        val tamilVoice = SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
+            postSender.spokenNameEn, postSender.spokenNameTa, listOf(afterReconnect), tamil = true)
+        assertNotNull(tamilVoice)
+        assertTrue(tamilVoice!!.contains("பாதுகாப்பு உத்தரவாதம் அல்ல"))
+        assertFalse(tamilVoice.contains("திறக்கலாம்"))
+        assertNull(SmsAnnouncementPlanner.buildReconnectedLinkAnnouncement(
+            postSender.spokenNameEn, postSender.spokenNameTa, listOf(whileOffline), tamil = false))
     }
 
     @Test
@@ -809,6 +819,60 @@ class SmsGuardEngineTest {
     }
 
     @Test
+    fun otpSenderAnnouncementIsExplicitOptInAndNeverContainsTheVerificationCode() {
+        val body = "Your ICICI Bank OTP is 482910. Do not share it."
+        val otp = OtpDetector.analyze(body)
+        assertTrue(otp.isOtp)
+        assertEquals("482910", otp.code)
+        val sender = SenderIdentityEngine.identify("AD-ICICIB-T", body)
+        val finance = FinanceLedgerEngine.parseSingleSms(8010L, 2L, body, sender, otp.isOtp)
+
+        val defaultSpeech = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = finance,
+            settings = AnnouncementSettingsSnapshot(tamil = false, voiceEnabled = true),
+        )
+        assertNull("OTP sender voice must be opt-in", defaultSpeech)
+
+        val english = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = finance,
+            settings = AnnouncementSettingsSnapshot(
+                tamil = false,
+                voiceEnabled = true,
+                announceOtpSenderOnly = true,
+            ),
+        )
+        assertNotNull(english)
+        val englishScript = requireNotNull(english)
+        assertTrue(englishScript.contains("ICICI", ignoreCase = true))
+        assertFalse("The verification digits must never enter the speech script", englishScript.contains("482910"))
+        assertFalse("OTP body must never be read", englishScript.contains("Do not share"))
+
+        val tamil = SmsAnnouncementPlanner.buildIncomingAnnouncement(
+            body = body,
+            sender = sender,
+            otp = otp,
+            links = emptyList(),
+            finance = finance,
+            settings = AnnouncementSettingsSnapshot(
+                tamil = true,
+                voiceEnabled = true,
+                announceOtpSenderOnly = true,
+            ),
+        )
+        assertNotNull(tamil)
+        val tamilScript = requireNotNull(tamil)
+        assertFalse("Tamil speech must also omit the verification digits", tamilScript.contains("482910"))
+    }
+
+    @Test
     fun serviceHeaderNamingABankCannotAnnounceFakeMoneyButTransactionalCan() {
         val body = "Federal Bank: Your A/c XX1234 credited Rs.500.00 on 23Oct26"
         val tHeader = SenderIdentityEngine.identify("XY-ZZWFT-T", body)
@@ -833,25 +897,89 @@ class SmsGuardEngineTest {
             java.net.InetAddress.getByName("speech.platform.bing.com")
             true
         }.getOrDefault(false)
-        if (!reachable) return // Offline sandbox environment safely skips live network check
+        assertTrue("Live probe DNS unavailable: synthesis was not executed; no successful audio claimed", reachable)
 
         val voicesToVerify = listOf(
-            "ta-IN-ValluvarNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",
+            "ta-MY-SuryaNeural" to "வணக்கம்! குறுஞ்செய்தி காவலன் தயாராக உள்ளது.",
             "ta-IN-PallaviNeural" to "ஸ்டேட் பேங்க் ஆஃப் இந்தியா. ரூபாய் 500 வரவு.",
             "en-IN-PrabhatNeural" to "State Bank of India. Rupees 500 received.",
             "en-IN-NeerjaNeural" to "SMS Guard online voice protection active.",
         )
+        val failedProfiles = mutableListOf<String>()
         for ((voiceId, sampleText) in voicesToVerify) {
+            val diagnostics = java.util.concurrent.CopyOnWriteArrayList<String>()
             val mp3 = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
+                networkAllowed = { true }, // Synthetic opt-in CI voice probe, no personal SMS.
                 text = sampleText,
                 voiceName = voiceId,
-                timeoutMs = 8000L,
+                timeoutMs = 20000L,
+                allowVoiceFallback = false,
+                diagnostic = { diagnostics.add(it) },
             )
-            assertTrue(
-                "Expected valid streaming MP3 audio (>1500 bytes) from $voiceId, got ${mp3?.size}",
-                mp3 != null && mp3.size > 1500,
-            )
+            // Issue #49: an intermittent null must name its upstream cause in the CI annotation.
+            val failureClass = liveFailureClass(diagnostics.toList(), mp3?.size ?: 0)
+            val result = "$voiceId class=$failureClass bytes=${mp3?.size ?: 0} " +
+                "diagnostics=${diagnostics.joinToString(" | ")}"
+            println("SMS_LIVE_PROFILE $result")
+            if (mp3 == null || mp3.size <= 1500) failedProfiles.add(result)
         }
+        // Attempt every required profile, but retain failure if ANY required voice fails.
+        assertTrue("Required live profiles failed: ${failedProfiles.joinToString(" ; ")}", failedProfiles.isEmpty())
+    }
+
+    /**
+     * Issue #49 evidence: classify the LAST attempt of a live profile from its own diagnostics, so a
+     * red probe says "peer closed 1011" / "HTTP 403 throttle" / "deadline" instead of only "null".
+     * The assertion itself is unchanged - real MP3 bytes are still required for every profile.
+     */
+    private fun liveFailureClass(diagnostics: List<String>, bytes: Int): String {
+        if (bytes > 1500) return "OK"
+        val text = diagnostics.joinToString(" | ")
+        return when {
+            text.contains("DNS_FAILURE") -> "DNS_FAILURE"
+            text.contains("TLS_FAILURE") -> "TLS_FAILURE"
+            text.contains("HTTP=403") -> "HTTP_403_THROTTLE"
+            text.contains("HTTP=429") -> "HTTP_429_THROTTLE"
+            Regex("HTTP=5\\d\\d").containsMatchIn(text) -> "HTTP_5XX"
+            text.contains("SOCKET_TIMEOUT") -> "SOCKET_TIMEOUT"
+            text.contains("DEADLINE_EXCEEDED") -> "DEADLINE_EXCEEDED"
+            text.contains("CLOSE=1011") || text.contains("CODE=1011") -> "PEER_1011"
+            text.contains("PEER_CLOSING CODE=") || text.contains("CLOSED CODE=") -> "PEER_CLOSED_EARLY"
+            text.contains("COMPLETE=false") -> "NO_TURN_END"
+            text.contains("WEBSOCKET_FAILURE") -> "WEBSOCKET_FAILURE"
+            else -> "UNKNOWN"
+        }
+    }
+
+    @Test
+    fun liveHdVoiceFailoverSynthesizesWithinProductionDeadline() {
+        val diagnostics = java.util.concurrent.CopyOnWriteArrayList<String>()
+        val audio = com.universalrp.smsguard.service.NeuralCloudVoiceEngine.synthesizeRawMp3(
+                networkAllowed = { true }, // Synthetic opt-in CI voice probe, no personal SMS.
+            text = "வணக்கம். உயர்தரக் குரல் தயாராக உள்ளது.",
+            voiceName = "ta-IN-ValluvarNeural", timeoutMs = 4200,
+            diagnostic = { diagnostics.add(it) },
+        )
+        println("SMS_LIVE_PROFILE FAILOVER bytes=${audio?.size ?: 0} diagnostics=${diagnostics.joinToString(" | ")}")
+        assertTrue("HD failover did not complete: ${diagnostics.joinToString(" | ")}", audio != null && audio.size > 1500)
+        assertFalse(diagnostics.any { it.startsWith("HD_VOICE_ATTEMPT=ta-IN-ValluvarNeural") })
+        assertTrue(diagnostics.any { it.startsWith("HD_VOICE_SELECTED=ta-") })
+        // Issue #49 remedy 1: the first voice must receive most of the single deadline (55 % of
+        // 4,200 ms = 2,310 ms) instead of an equal third, or a voice that answers at ~1.6 s is
+        // abandoned mid-flight and the caller sees null.
+        val firstBudget = diagnostics.first { it.startsWith("HD_VOICE_ATTEMPT=") }
+            .substringAfter("budgetMs=").toLong()
+        assertTrue("first voice got only ${firstBudget}ms of 4,200ms", firstBudget > 4200 / 2)
+        var selectedSharedVoice = ""
+        val sharedAudio = com.universalrp.voice.SharedNeuralVoiceEngine.synthesizeRawMp3(
+            text = "வணக்கம். உயர்தரக் குரல் தயாராக உள்ளது.",
+            voiceName = "ta-IN-ValluvarNeural", timeoutMs = 4200,
+            onVoiceSelected = { selectedSharedVoice = it },
+        )
+        println("SMS_LIVE_PROFILE SHARED_HD_RECOVERY bytes=${sharedAudio?.size ?: 0} selected=$selectedSharedVoice")
+        assertTrue("Shared HD engine did not recover within production deadline", sharedAudio != null && sharedAudio.size > 1500)
+        assertTrue(selectedSharedVoice.startsWith("ta-"))
+        assertFalse(selectedSharedVoice == "ta-IN-ValluvarNeural")
     }
 
     // --- Bill / payment-due reminders ---
@@ -941,6 +1069,64 @@ class SmsGuardEngineTest {
         val debit = "Your A/c XX4821 is debited by Rs.500.00 on 24-10-2026 Ref 629512349876 Avl Bal Rs.24800"
         val sbi = SenderIdentityEngine.identify("JT-SBIINB-T", debit)
         assertNull("A bank debit is a transaction, never a bill reminder", BillReminderEngine.parseBillSms(debit, sbi, false, billNowMs(), zone))
+    }
+
+    @Test
+    fun transactionReasonsAndUnrelatedDatesNeverCreateBills() {
+        // Synthetic data only: owner report was a declined SBI card, not an unpaid bill.
+        val messages = listOf(
+            "Transaction declined on 24-10-2026 due to INVALID CARD. -SBI",
+            "Your credit card transaction of Rs.500 on 24-10-2026 failed DUE TO insufficient funds.",
+            "Your payment failed due to technical reasons on 24-10-2026.",
+            "Your bill payment was reversed on 24-10-2026 due to a bank error.",
+            "Refund of Rs.500 on 24-10-2026 due to duplicate bill payment.",
+            "Credit card bill statement generated on 24-10-2026. Amount Rs.500.",
+            "Invoice Rs.500 generated on 24-10-2026; card valid until 01-11-2026.",
+            "Bill payment declined on 24-10-2026. Retry before 26-10-2026.",
+            "Amount due Rs.500. Transaction attempted on 24-10-2026.",
+            "Credit card bill due date unavailable. Statement generated on 24-10-2026.",
+        )
+        for (body in messages) {
+            val sender = SenderIdentityEngine.identify("JT-SBIINB-T", body)
+            assertNull(body, BillReminderEngine.parseBillSms(body, sender, false, billNowMs(), zone))
+        }
+    }
+
+    @Test
+    fun genuineDeadlinesSurviveFailedPaymentReasonsAndEarlierTransactionDates() {
+        val bodies = listOf(
+            "Payment failed on 24-10-2026 due to insufficient funds. Credit card bill Rs.500 remains unpaid. Pay by 27-10-2026.",
+            "Credit card statement dated 24-10-2026. Total amount due Rs.500. Payment due date: 27 Oct 2026.",
+            "Electricity bill Rs.500. Last date to pay is 27-10-2026.",
+            "Credit card bill Rs.500 overdue since 27-10-2026.",
+            "Electricity bill Rs.500 is due before 27-10-2026.",
+            "Electricity bill Rs.500 due date is 27-Oct-26.",
+        )
+        for (body in bodies) {
+            val sender = SenderIdentityEngine.identify("JT-SBIINB-T", body)
+            val parsed = BillReminderEngine.parseBillSms(body, sender, false, billNowMs(), zone)
+            assertNotNull(body, parsed)
+            assertEquals(body, LocalDate.of(2026, 10, 27), parsed!!.dueDate)
+        }
+    }
+
+    @Test
+    fun savedFalseRemindersAreRetainedForReviewButNeverPlannedAsDues() {
+        val body = "Credit card transaction declined on 24-10-2026 due to INVALID CARD."
+        val invalid = bill("false", billToday).copy(sourceMessageId = 123L, sourceBody = body)
+        val manual = invalid.copy(id = "manual", sourceMessageId = null)
+        val legacy = invalid.copy(id = "legacy", sourceBody = "")
+        val genuine = invalid.copy(id = "genuine", sourceBody = body + " Bill Rs.500 remains due on 27-10-2026.")
+        assertTrue(BillReminderEngine.needsReview(invalid))
+        assertFalse(BillReminderEngine.needsReview(manual))
+        assertFalse(BillReminderEngine.needsReview(legacy))
+        assertFalse(BillReminderEngine.needsReview(genuine))
+        val stored = listOf(invalid, manual, legacy, genuine)
+        val plan = BillReminderEngine.planDailyAnnouncements(stored, billToday, 0, 2)
+        assertEquals(setOf("manual", "legacy", "genuine"), plan.urgentBills.map { it.id }.toSet())
+        assertEquals(4, stored.size)
+        assertEquals(body, invalid.sourceBody)
+        assertFalse(invalid.isPaid)
     }
 
     @Test

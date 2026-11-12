@@ -1,0 +1,59 @@
+name: Clean up superseded Actions artifacts (storage hygiene)
+
+# Issue #67 recorded that the Arena integration cannot delete artifacts (403), and the repository had
+# accumulated thousands of packages because every `Build APK` run uploads five APK/bundle archives.
+# A workflow token *can* delete them, so this job prunes the dead weight on a schedule. It never
+# touches releases, tags, runs, logs or the website - only stored artifact packages.
+on:
+  schedule:
+    - cron: "17 */6 * * *"   # every six hours, off the hour to avoid the busy CI window
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List what would be deleted and delete nothing (scheduled runs always apply)"
+        type: boolean
+        default: true
+      keep_days:
+        description: "Keep every artifact younger than this many days"
+        default: "7"
+      max_deletes:
+        description: "Delete at most this many packages in one run (workflow tokens allow 1,000 requests/hour)"
+        default: "300"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: cleanup-artifacts
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Delete superseded artifact packages
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || 'false' }}
+          KEEP_DAYS: ${{ inputs.keep_days || '7' }}
+          MAX_DELETES: ${{ inputs.max_deletes || '300' }}
+        run: |
+          python3 tools/cleanup_actions_artifacts.py | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Explain the keep rules in the run summary
+        if: always()
+        run: |
+          {
+            echo ""
+            echo "Kept: anything younger than $KEEP_DAYS days, the newest package of every pipeline"
+            echo "and branch, a Pages package younger than 7 days, and every artifact id quoted in"
+            echo "\`docs/\` or \`releases/\`. Public release assets and workflow runs are never touched."
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          KEEP_DAYS: ${{ inputs.keep_days || '7' }}

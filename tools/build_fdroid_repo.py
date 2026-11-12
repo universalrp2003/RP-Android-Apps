@@ -10,13 +10,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
 import time
 from pathlib import Path
 
-EXPECTED_SIGNER = "9e30f4eab8afce5e4ab444ff9578fec354d6d1414d245253590a9703d5985d55"
+EXPECTED_SIGNER = "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
 
 
 def parse_badging(aapt_bin: str, apk_path: Path) -> dict:
@@ -48,7 +49,6 @@ def main() -> None:
     parser.add_argument("--out-dir", required=True, help="Output directory for fdroid/repo")
     parser.add_argument("--repo-url", default="https://universalrp2003.github.io/RP-Android-Apps/fdroid/repo")
     parser.add_argument("--keystore", default="ci-keystore/release.p12")
-    parser.add_argument("--storepass", default="cleansweep-ci")
     parser.add_argument("--alias", default="cleansweep")
     parser.add_argument("--aapt", required=True)
     args = parser.parse_args()
@@ -146,13 +146,15 @@ def main() -> None:
     index_json.write_text(json.dumps(index_payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     subprocess.check_call(["jar", "cf", str(index_jar), "-C", str(out_dir), "index-v1.json"])
+    if not os.environ.get("RP_RELEASE_KEYSTORE_PASSWORD"):
+        raise RuntimeError("RP_RELEASE_KEYSTORE_PASSWORD is required to sign the F-Droid repository index")
     subprocess.check_call(
         [
             "jarsigner",
             "-keystore",
             args.keystore,
-            "-storepass",
-            args.storepass,
+            "-storepass:env",
+            "RP_RELEASE_KEYSTORE_PASSWORD",
             "-sigalg",
             "SHA256withRSA",
             "-digestalg",

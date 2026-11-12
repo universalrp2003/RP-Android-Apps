@@ -91,7 +91,7 @@ data class RadioStation(
             votes = json.optInt("votes", 0),
             category = json.optString("category", Category.TAMIL),
             isCustom = custom || json.optBoolean("isCustom", false),
-            verified = json.optBoolean("verified", true),
+            verified = json.optBoolean("verified", true) && !RadioStreamPolicy.heldForReview(json.optString("url_resolved").ifBlank { json.optString("url") }),
         )
     }
 }

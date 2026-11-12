@@ -83,7 +83,7 @@ class RadioWatchService : Service() {
 
     companion object {
         private const val CHANNEL = "radio_watch"
-        private const val NOTIFICATION_ID = 4211
+        private const val NOTIFICATION_ID = RoutineStatus.ID
         private const val SAMPLE_MS = 3_000L
 
         /** A modem can flap for a few seconds; do not narrate every hop. */
@@ -105,7 +105,7 @@ class RadioWatchService : Service() {
 
         /** True when either split feature is on, i.e. the service has a reason to exist. */
         fun needed(context: Context): Boolean =
-            NetworkSplit.separateEnabled(context) || NetworkSplit.announceEnabled(context)
+            NetworkSplit.separateEnabled(context) || NetworkSplit.announceEnabled(context) || NoSignalBeep.enabled(context)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -126,8 +126,10 @@ class RadioWatchService : Service() {
     @Volatile
     private var lastAnnouncedNr: Boolean? = null
 
+    private val noSignal = NoSignalBeep()
     private val poll = object : Runnable {
         override fun run() {
+            runCatching { noSignal.sample(this@RadioWatchService) }
             runCatching { sample() }
             handler.postDelayed(this, SAMPLE_MS)
         }
@@ -136,7 +138,9 @@ class RadioWatchService : Service() {
     override fun onCreate() {
         super.onCreate()
         createChannel()
+        RoutineStatus.acquire(this, RoutineStatus.RADIO)
         startForeground(NOTIFICATION_ID, buildNotification("4G/5G watch is on"))
+        RoutineStatus.removeLegacy(this)
 
         // 2.56: earlier builds stored the 4G/5G announce toggle only under cleansweep_net_split
         // without setting Announcer.KEY_RADIO_CHANGE or turning on master voice output.
@@ -167,7 +171,10 @@ class RadioWatchService : Service() {
 
     override fun onDestroy() {
         handler.removeCallbacks(poll)
+        noSignal.close()
         unregisterRadioListener()
+        stopForeground(STOP_FOREGROUND_DETACH)
+        RoutineStatus.release(this, RoutineStatus.RADIO)
         super.onDestroy()
     }
 
@@ -193,16 +200,22 @@ class RadioWatchService : Service() {
     private fun todayMobileBytes(): Long = UsageStats.read(this).todayMobileBytes ?: 0L
 
     private fun sample() {
+        if (!NetworkSplit.separateEnabled(this) && !NetworkSplit.announceEnabled(this)) { refreshNotification(); return }
         ensureRadioListenerRegistered()
         NetworkSplit.resetDayIfNeeded(this)
         maybeAnnounce()
 
         val cumulative = todayMobileBytes()
-        if (cumulative <= 0) return
+        if (cumulative <= 0) {
+            // No mobile traffic is still a new-day reading, not a reason to retain yesterday's card.
+            refreshNotification()
+            return
+        }
 
         val last = NetworkSplit.lastCumulative(this)
         if (last < 0) {
             NetworkSplit.setLastCumulative(this, cumulative)
+            refreshNotification()
             return
         }
         val delta = cumulative - last
@@ -230,6 +243,8 @@ class RadioWatchService : Service() {
         val tm = telephonyForData() ?: return false
         val type = try {
             tm.dataNetworkType
+        } catch (e: SecurityException) {
+            TelephonyManager.NETWORK_TYPE_UNKNOWN
         } catch (e: Exception) {
             TelephonyManager.NETWORK_TYPE_UNKNOWN
         }
@@ -285,7 +300,7 @@ class RadioWatchService : Service() {
             }
             telephonyCallback = cb
             runCatching { tm.registerTelephonyCallback(mainExecutor, cb) }
-        } else {
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             @Suppress("DEPRECATION")
             val listener = object : PhoneStateListener() {
                 @Deprecated("Deprecated in Java")
@@ -344,7 +359,8 @@ class RadioWatchService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val body = if (!NetworkSplit.separateEnabled(this)) {
-            "Announcing 4G ⇄ 5G changes"
+            if (NetworkSplit.announceEnabled(this)) "Announcing 4G ⇄ 5G changes"
+            else if (com.universalrp.cleansweep.data.Lang.isTamil) "சிக்னல் இழப்பு ஒலி இயக்கத்தில்" else "No-signal beep enabled"
         } else {
             val limitMb = if (DataUsageTracker.hasConfiguredPlan(this))
                 DataUsageTracker.getPackLimitGb(this) * 1024.0 else 0.0
@@ -357,22 +373,12 @@ class RadioWatchService : Service() {
             else NetworkSplit.format(status.fiveGUsedMb) + " used"
             "4G $four · 5G $five"
         }
-        return NotificationCompat.Builder(this, CHANNEL)
-            // 2.53 — a launcher icon as a status-bar icon renders as a white square (Android only
-            // uses the alpha channel there). This is the same monochrome glyph the data notification uses.
-            .setSmallIcon(R.drawable.ic_stat_data)
-            .setContentTitle("Live Guard")
-            .setContentText(body)
-            .setStyle(NotificationCompat.BigTextStyle().bigText("$detail\n$body"))
-            .setOngoing(true)
-            .setOnlyAlertOnce(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
-            .setContentIntent(open)
-            .build()
+        RoutineStatus.update(this, RoutineStatus.RADIO, body.replace(" used", ""))
+        return RoutineStatus.build(this)
     }
 
     private fun refreshNotification() {
         val nm = getSystemService(NotificationManager::class.java)
-        nm.notify(NOTIFICATION_ID, buildNotification("4G/5G watch is on"))
+        buildNotification("4G/5G watch is on") // Coordinator posts only for a still-active owner.
     }
 }

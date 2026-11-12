@@ -21,3 +21,19 @@ include(":secretmessage")
 project(":secretmessage").projectDir = file("secretmessage/product")
 include(":oorarivippu")
 include(":smsguard")
+include(":voicenotes")
+include(":expensetracker")
+include(":vasanthi")
+include(":podcast")
+include(":launcher")
+
+// Isolated, owner-approved store preview; never part of existing releases.
+include(":tamilanstore")
+
+// Private manual daily-spend and information vault; isolated preview.
+include(":dailyvault")
+
+// Android TV Guard: Hardware truth auditor, TV debloater, and clean home launcher
+include(":tvguard")
+project(":tvguard").projectDir = file("tvguard/app")
+

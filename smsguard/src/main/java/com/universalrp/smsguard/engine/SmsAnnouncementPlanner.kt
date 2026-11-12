@@ -10,13 +10,14 @@ data class AnnouncementSettingsSnapshot(
     val shortEveryMessageEnabled: Boolean = false,
     val mutePromoVoice: Boolean = true,
     val muteServiceInfoVoice: Boolean = true,
+    val announceOtpSenderOnly: Boolean = false,
 )
 
 /**
  * Pure decision & script planner for SMS Guard voice announcements.
  *
  * Ironclad Rules:
- *  1. OTP messages NEVER speak aloud under ANY setting.
+ *  1. OTP codes and message bodies are NEVER spoken. Optional OTP sender-only announcements contain no code.
  *  2. Fake payment messages from personal numbers (+91...) ALWAYS warn clearly that NO money came from a bank.
  *  3. Dangerous scam links ALWAYS warn clearly NOT to touch the link.
  *  4. Offline / unverified links ALWAYS state honestly that verification is pending until internet returns.
@@ -44,9 +45,19 @@ object SmsAnnouncementPlanner {
         finance: FinanceParseResult,
         settings: AnnouncementSettingsSnapshot,
     ): String? {
-        // RULE 1: NEVER read OTP messages aloud!
-        if (!settings.voiceEnabled || otp.isOtp) {
-            return null
+        // OTP bodies/codes remain silent under every setting. An explicit opt-in can announce
+        // only the sender identity; this function deliberately never receives/extracts the code.
+        if (!settings.voiceEnabled) return null
+        if (otp.isOtp) {
+            if (!settings.announceOtpSenderOnly) return null
+            val name = if (settings.tamil) sender.spokenNameTa else sender.spokenNameEn
+            val safeName = name.filterNot { it.isISOControl() }.trim().take(80)
+            if (safeName.isBlank()) return null
+            return if (settings.tamil) {
+                "$safeName இடமிருந்து தனிப்பட்ட குறுஞ்செய்தி வந்துள்ளது. செய்தியின் உள்ளடக்கம் குரலில் சொல்லப்படாது."
+            } else {
+                "Private message from $safeName arrived. Message content will not be read aloud."
+            }
         }
 
         val hasUnsafeLink = links.any { it.verdict == LinkVerdict.UNSAFE }
@@ -90,9 +101,9 @@ object SmsAnnouncementPlanner {
         // RULE 6: Link Present while Offline or Internet Disabled — Honest Pending Notice
         if (hasPendingOffline) {
             return if (settings.tamil) {
-                "$senderName இடமிருந்து இணைப்புடன் செய்தி வந்துள்ளது. இப்போது இணையம் இல்லாததால் என்னால் சரிபார்க்க முடியவில்லை — தயவுசெய்து தொடாதீர்கள். இணையம் கிடைத்தவுடன் சரிபார்த்து உண்மையான தகவலைச் சொல்கிறேன்."
+                "$senderName இடமிருந்து இணைப்புடன் செய்தி வந்துள்ளது. சரிபார்ப்பு இன்னும் முடியவில்லை — தயவுசெய்து தொடாதீர்கள். இணைய அணுகல் கிடைக்கும்போது பின்னணிச் சோதனை நடைபெறும்."
             } else {
-                "Message with a link from $senderName. No internet right now, so I cannot verify this link yet — do not touch it. Once internet returns, I will verify and tell you the real details."
+                "Message with a link from $senderName. I cannot verify this link yet — do not touch it. Background checks run when internet access is available."
             }
         }
         if (hasPendingInternetOff) {
@@ -163,21 +174,22 @@ object SmsAnnouncementPlanner {
             return null
         }
 
+        val safeBody = SpeechPrivacy.prepare(body) ?: return null
         val textToSpeak = if (settings.readFullNormalSmsEnabled) {
-            cleanFullNormalBody(body, settings.tamil)
+            cleanFullNormalBody(safeBody, settings.tamil)
         } else {
-            conciseGist(body)
+            conciseGist(safeBody)
         }
 
         return if (settings.tamil) {
-            val linkPart = if (allLinksSafe) " இணைப்பு சரிபார்க்கப்பட்டது — பாதுகாப்பானது." else ""
+            val linkPart = if (allLinksSafe) " இணைப்புச் சோதனையில் அச்சுறுத்தல் தெரியவில்லை; பாதுகாப்பு உத்தரவாதம் அல்ல." else ""
             if (textToSpeak.isNotBlank()) {
                 "$senderName இடமிருந்து செய்தி: $textToSpeak.$linkPart"
             } else {
                 "$senderName இடமிருந்து புதிய குறுஞ்செய்தி வந்துள்ளது.$linkPart"
             }
         } else {
-            val linkPart = if (allLinksSafe) " Link verified safe to open." else ""
+            val linkPart = if (allLinksSafe) " No link threat detected; this is not a safety guarantee." else ""
             if (textToSpeak.isNotBlank()) {
                 "Message from $senderName: $textToSpeak.$linkPart"
             } else {
@@ -200,15 +212,15 @@ object SmsAnnouncementPlanner {
         val domain = results.first().displayDomain
         return if (anyUnsafe) {
             if (tamil) {
-                "எச்சரிக்கை! இணையம் இணைந்தது. $senderNameTa அனுப்பிய செய்தியின் இணைப்பு ($domain) ஆபத்தான போலி இணைப்பு என உறுதி செய்யப்பட்டது — தயவுசெய்து தொடாதீர்கள்!"
+                "எச்சரிக்கை! பின்னணிச் சோதனை முடிந்தது. $senderNameTa அனுப்பிய செய்தியின் இணைப்பு ($domain) ஆபத்தான போலி இணைப்பு என உறுதி செய்யப்பட்டது — தயவுசெய்து தொடாதீர்கள்!"
             } else {
-                "Danger alert! Internet reconnected. The link ($domain) in the message from $senderNameEn is unsafe and fraudulent — do not touch it!"
+                "Danger alert! Background check completed. The link ($domain) in the message from $senderNameEn is unsafe and fraudulent — do not touch it!"
             }
         } else {
             if (tamil) {
-                "இணையம் இணைந்தது. $senderNameTa அனுப்பிய செய்தியின் இணைப்பு ($domain) சரிபார்க்கப்பட்டது — பச்சை டிக் பாதுகாப்பானது, திறக்கலாம்."
+                "பின்னணிச் சோதனை முடிந்தது. $senderNameTa அனுப்பிய செய்தியின் இணைப்பு ($domain) சோதனையில் அச்சுறுத்தல் தெரியவில்லை; பாதுகாப்பு உத்தரவாதம் அல்ல."
             } else {
-                "Internet reconnected. The link ($domain) from $senderNameEn has been verified — safe to open."
+                "Background check completed. The link ($domain) from $senderNameEn has no threat detected by completed checks. This is not a safety guarantee."
             }
         }
     }

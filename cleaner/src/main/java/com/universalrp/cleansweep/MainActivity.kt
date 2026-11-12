@@ -61,9 +61,9 @@ class MainActivity : ComponentActivity() {
         // language before the first frame — see UiMode in theme/Theme.kt.
         com.universalrp.cleansweep.ui.theme.UiMode.setLanguage(Lang.current)
         // Sensitive permissions are explained and requested from reviewed setup, not silently on launch.
-        com.universalrp.cleansweep.updates.LiveGuardUpdates.checkOnLaunch(this)
         setContent {
             CleanSweepTheme {
+                com.universalrp.updates.AppUpdates.Control("CleanSweep", automatic = true, tamil = Lang.isTamil)
                 val vm: MainViewModel = viewModel()
 
                 // The widget's "Clean" button opens the app on the scanner (Android does not
@@ -103,6 +103,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 AppRoot(vm)
+                com.universalrp.cleansweep.ui.FeatureUpdatesNotice(onChanged = vm::refreshFeatureChoices)
             }
         }
     }
@@ -115,10 +116,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        com.universalrp.cleansweep.data.ForegroundSignalAccess.start()
+        com.universalrp.cleansweep.voice.NewsHeadlinesVoiceWatcher.syncSchedule(applicationContext)
         com.universalrp.cleansweep.notify.AutomaticAlerts.start(applicationContext, alertOwner)
     }
 
     override fun onStop() {
+        com.universalrp.cleansweep.data.ForegroundSignalAccess.stop()
+        com.universalrp.cleansweep.voice.NewsAutoSchedule.requestDueCheck(applicationContext, delayMs = 15_000L)
         com.universalrp.cleansweep.notify.AutomaticAlerts.stop(alertOwner)
         super.onStop()
     }

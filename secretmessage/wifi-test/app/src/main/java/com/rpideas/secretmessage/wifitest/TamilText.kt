@@ -1,7 +1,6 @@
 package com.rpideas.secretmessage.wifitest
 
-// Generated for Secret Message 1.1.0 from the app's English texts; the updater's Tamil is copied
-// unchanged from shared/src/main/java/com/universalrp/updates/AppLanguage.kt.
+// Generated from the app's current English texts; entries without a Tamil translation stay readable in English.
 
 /** Tamil for the app's English texts ([Tr]); a text without an entry stays in English. */
 internal object TamilText {
@@ -22,16 +21,8 @@ internal object TamilText {
             "Secret Message பற்றி",
         "Allow background use" to
             "பின்னணியில் இயங்க அனுமதி",
-        "Allow installation for this app" to
-            "இந்தப் பயன்பாட்டிற்கு நிறுவலை அனுமதி",
         "Android did not open its battery settings. Open Settings > Apps > Secret Message > Battery." to
             "Android பேட்டரி அமைப்புகளைத் திறக்கவில்லை. Settings > Apps > Secret Message > Battery என்பதைத் திறக்கவும்.",
-        "Android installer opened. Confirm installation there; Android and Play Protect control the result." to
-            "Android நிறுவி திறக்கப்பட்டது. அங்கே நிறுவலை உறுதிப்படுத்தவும்; முடிவை Android மற்றும் Play Protect தீர்மானிக்கும்.",
-        "Android needs per-app Install unknown apps access before the installer can open. Grant it in Settings only if you trust this update." to
-            "நிறுவி திறப்பதற்கு முன் Android-இல் இந்தப் பயன்பாட்டிற்கான ‘தெரியாத பயன்பாடுகளை நிறுவு’ அனுமதி தேவை. இந்தப் புதுப்பிப்பை நம்பினால் மட்டுமே அமைப்புகளில் அனுமதி அளிக்கவும்.",
-        "Android requires Install unknown apps permission for this app and its own confirmation for each install. Play Protect is not bypassed." to
-            "இந்தப் பயன்பாட்டிற்கு ‘தெரியாத பயன்பாடுகளை நிறுவு’ அனுமதியும் ஒவ்வொரு நிறுவலுக்கும் Android உறுதிப்படுத்தலும் தேவை. Play Protect தவிர்க்கப்படாது.",
         "Answer" to
             "பதிலளி",
         "App lock" to
@@ -66,14 +57,8 @@ internal object TamilText {
             "உரையாடல் திறந்துள்ளது",
         "Chat requests" to
             "உரையாடல் அழைப்புகள்",
-        "Check for updates" to
-            "புதுப்பிப்புகளைச் சரிபார்",
-        "Check for updates on app launch" to
-            "பயன்பாட்டைத் திறக்கும்போது புதுப்பிப்புகளைச் சரிபார்",
         "Checking…" to
             "சரிபார்க்கிறது…",
-        "Checks RP-Android-Apps first; InternetRadio remains as a grace-period fallback." to
-            "முதலில் RP-Android-Apps சரிபார்க்கப்படும்; இடைக்காலத்தில் InternetRadio மாற்று சேமிப்பகமாகத் தொடரும்.",
         "Clear" to
             "அழி",
         "Codes differ" to
@@ -104,8 +89,6 @@ internal object TamilText {
             "பங்களிப்பாளர்கள்",
         "Copy connection report" to
             "இணைப்பு அறிக்கையை நகலெடு",
-        "Could not check for updates. Check your connection and try again." to
-            "புதுப்பிப்புகளைச் சரிபார்க்க முடியவில்லை. இணைய இணைப்பைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.",
         "Could not reach the relay to call the other phone. Check that this phone is online." to
             "மற்ற தொலைபேசியை அழைக்க இணைப்புச் சேவையகத்தை அடைய முடியவில்லை. இந்தத் தொலைபேசி இணையத்தில் உள்ளதா எனப் பாருங்கள்.",
         "Creating a new key…" to
@@ -116,10 +99,6 @@ internal object TamilText {
             "சாதனம் {0}",
         "Device {0} uses the same key you verified before, so this phone confirmed it automatically. If the other phone asks, compare this code with it." to
             "சாதனம் {0} நீங்கள் முன்பு சரிபார்த்த அதே சாவியைப் பயன்படுத்துகிறது, எனவே இந்தத் தொலைபேசி தானாக உறுதிசெய்தது. மற்ற தொலைபேசி கேட்டால், இந்தக் குறியீட்டை அதனுடன் ஒப்பிடுங்கள்.",
-        "Download and verify APK" to
-            "APK-ஐப் பதிவிறக்கி சரிபார்",
-        "Downloading and verifying APK…" to
-            "APK-ஐப் பதிவிறக்கி சரிபார்க்கிறது…",
         "Draw a letter or word in any language, then insert it." to
             "எந்த மொழியிலும் ஒரு எழுத்தையோ சொல்லையோ வரைந்து, பிறகு சேர்க்கவும்.",
         "Draw a picture; it is sent on its own." to
@@ -170,8 +149,6 @@ internal object TamilText {
             "அடையாளம்: {0}.",
         "Ignore" to
             "புறக்கணி",
-        "Install with Android confirmation" to
-            "Android உறுதிப்படுத்தலுடன் நிறுவு",
         "Invite received" to
             "அழைப்பிதழ் வந்துள்ளது",
         "Invite received. Tap Join this chat." to
@@ -310,8 +287,6 @@ internal object TamilText {
             "இந்தத் தொலைபேசியின் சாவியை மீட்டமைக்கவா?",
         "Rising sweep from 1046 Hz to 1568 Hz" to
             "1046 Hz-இலிருந்து 1568 Hz வரை ஏறும் ஒலி",
-        "SHA-256, package name, newer version and signing certificate are checked before Android opens the installer." to
-            "Android நிறுவியைத் திறப்பதற்கு முன் SHA-256, தொகுப்புப் பெயர், புதிய பதிப்பு மற்றும் கையொப்பச் சான்றிதழ் சரிபார்க்கப்படும்.",
         "Safety code confirmed" to
             "பாதுகாப்புக் குறியீடு உறுதிசெய்யப்பட்டது",
         "Same Wi-Fi only: the other phone connects straight to this phone." to
@@ -342,8 +317,6 @@ internal object TamilText {
             "நீங்கள் நினைவில் வைத்த ஒருவர் உரையாட அழைக்கிறார். பதிலளிக்கத் தொடவும்.",
         "Source code — InternetRadio" to
             "மூலக் குறியீடு — InternetRadio",
-        "Stable releases are checked against the app package, version, SHA-256 and installed signing certificate. Downloads stay in the app; Android shows its installer and confirmation." to
-            "நிலையான வெளியீடுகள் பயன்பாட்டுத் தொகுப்பு, பதிப்பு, SHA-256 மற்றும் நிறுவிய கையொப்பச் சான்றிதழுடன் ஒப்பிடப்படும். பதிவிறக்கம் பயன்பாட்டிற்குள் இருக்கும்; நிறுவியையும் உறுதிப்படுத்தலையும் Android காட்டும்.",
         "Start a chat" to
             "உரையாடலைத் தொடங்கு",
         "Start a chat and send the invite; the other phone joins. Then you both compare a 20-digit safety code." to
@@ -492,12 +465,6 @@ internal object TamilText {
 
     /** Texts with numbers or names inside, which cannot be looked up whole. */
     fun patterned(english: String): String? {
-        UPDATE_NONE.matchEntire(english)?.let {
-            return "இந்தப் பயன்பாட்டிற்கான புதிய வெளியீடு கிடைக்கவில்லை. நிறுவிய பதிப்பு: ${it.groupValues[1]}."
-        }
-        UPDATE_FOUND.matchEntire(english)?.let {
-            return "புதுப்பிப்பு உள்ளது · ${it.groupValues[1]} (நிறுவியது: ${it.groupValues[2]})."
-        }
         CONNECTED.matchEntire(english)?.let {
             val how = if (it.groupValues[1] == "over the Internet relay") "இணைப்புச் சேவையகம் வழியாக" else "Wi-Fi வழியாக"
             val which = when (it.groupValues[2]) {
@@ -517,8 +484,6 @@ internal object TamilText {
         return null
     }
 
-    private val UPDATE_NONE = Regex("^No newer published release was found for this app\\. Installed: (.+)\\.$")
-    private val UPDATE_FOUND = Regex("^Update available · (.+) \\(installed: (.+)\\)\\.$")
     private val CONNECTED = Regex(
         "^Connected (over the Internet relay|over Wi-Fi) to (the remembered phone|the phone whose key changed|the new phone)" +
             "(?: \\(device (.+)\\))?\\.$",

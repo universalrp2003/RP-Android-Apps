@@ -137,8 +137,9 @@ enum class AiProvider(
         }
 
     companion object {
+        /** The screenshot-aligned first-run choice is the shared free/no-key provider. */
         fun fromId(id: String): AiProvider =
-            entries.firstOrNull { it.id == id } ?: GEMINI
+            if (id.isBlank()) FREE else entries.firstOrNull { it.id == id } ?: GEMINI
 
         /**
          * Which provider a pasted key obviously belongs to. Keys are prefixed by the

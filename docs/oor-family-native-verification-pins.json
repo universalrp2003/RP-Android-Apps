@@ -1,0 +1,9 @@
+{
+  "source": "cb7c8e307719b8f81c4f44e61aaf52eb224203c7",
+  "deployment_run": 41625797930,
+  "service_url": "https://oor-family-relay.universalrp2003.workers.dev",
+  "publication_authorized": false,
+  "physical_phone_tested": false,
+  "verification_attempt": 3,
+  "candidate_version": "1.1.16"
+}

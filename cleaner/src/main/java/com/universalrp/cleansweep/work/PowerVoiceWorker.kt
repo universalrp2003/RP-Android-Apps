@@ -28,9 +28,14 @@ class PowerVoiceWorker(context: Context, parameters: WorkerParameters) : Corouti
             "plug" -> if (battery.powerConnected) ChargeNotifier.announcePluggedIn(context, delayMs = 600)
             "unplug" -> {
                 val hour = java.time.LocalTime.now().hour
-                if (!battery.powerConnected && battery.percent in 1 until Announcer.UNPLUG_BEFORE_PERCENT && hour >= Announcer.unplugStartHour(context))
-                    Announcer.speakAndWait(context, "Charger removed at ${battery.percent} percent.",
-                        "சார்ஜர் அகற்றப்பட்டது: ${battery.percent} சதவீதம்.", event)
+                if (!battery.powerConnected && battery.percent in 0..100) {
+                    val early = com.universalrp.cleansweep.data.ChargeAnnouncementSettings.earlyReminder(context) &&
+                        battery.percent < Announcer.UNPLUG_BEFORE_PERCENT && hour >= Announcer.unplugStartHour(context)
+                    Announcer.speakAndWait(context, "Charger removed. Battery level is ${battery.percent} percent." +
+                        if (early) " Removed before ${Announcer.UNPLUG_BEFORE_PERCENT} percent." else "",
+                        "சார்ஜர் அகற்றப்பட்டது. பேட்டரி அளவு ${battery.percent} சதவீதம்." +
+                            if (early) " ${Announcer.UNPLUG_BEFORE_PERCENT} சதவீதத்திற்கு முன் அகற்றப்பட்டது." else "", event)
+                }
             }
             "idle" -> {
                 val current = battery.currentA

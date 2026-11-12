@@ -15,11 +15,8 @@ BASE = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.universalrp.cleansweep">
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application android:label="Live Guard">
-        <provider android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.updates.files"
-            android:exported="false" android:grantUriPermissions="true" />
+
     </application>
 </manifest>
 """
@@ -72,17 +69,14 @@ class CoreManifestTest(unittest.TestCase):
             "</receiver></application>")
         self.assertTrue(any("BIND_DEVICE_ADMIN" in item for item in problems(xml)))
 
-    def test_own_alert_permission_and_update_provider_stay_required(self):
+    def test_own_alerts_retained_and_retired_installer_rejected(self):
         without_notifications = BASE.replace('<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />', "")
         self.assertTrue(any("POST_NOTIFICATIONS" in item for item in problems(without_notifications)))
-        exported_provider = BASE.replace('android:exported="false"', 'android:exported="true"')
-        self.assertTrue(any("FileProvider must not be exported" in item for item in problems(exported_provider)))
-        no_provider = BASE.replace("</application>", "</application>").replace(
-            '<provider android:name="androidx.core.content.FileProvider"\n            android:authorities="${applicationId}.updates.files"\n            android:exported="false" android:grantUriPermissions="true" />', "")
-        self.assertTrue(any("FileProvider is missing" in item for item in problems(no_provider)))
-        # A real merged manifest has ${applicationId} substituted; that must still pass.
-        merged = BASE.replace("${applicationId}.updates.files", "com.universalrp.cleansweep.updates.files")
-        self.assertEqual(problems(merged), [])
+        installer = BASE.replace('<application', '<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/><application')
+        self.assertTrue(any("package-install" in item for item in problems(installer)))
+        for authority in ['${applicationId}.updates.files', 'com.universalrp.cleansweep.updates.files']:
+            provider = BASE.replace('</application>', '<provider android:authorities="' + authority + '"/></application>')
+            self.assertTrue(any("FileProvider" in item for item in problems(provider)))
 
     def test_retired_classes_are_rejected_in_compiled_dex(self):
         clean = {"cleaner.dex": b"\x00\x01\x02com/universalrp/cleansweep/MainActivity\x03"}

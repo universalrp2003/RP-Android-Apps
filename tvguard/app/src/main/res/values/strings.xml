@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Android TV Guard</string>
+    <string name="tv_tagline">Hardware Truth Auditor, Debloater, and Clean TV Launcher</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_tools">Tools &amp; Settings</string>
+    <string name="tab_audit">Hardware Truth</string>
+    <string name="tab_debloat">Debloater</string>
+    <string name="tab_share">Wi-Fi Hub</string>
+    <string name="tab_network">Network &amp; Speed</string>
+
+    <string name="tools_tile_title">Tools &amp; Settings</string>
+    <string name="tools_tile_desc">Launcher, optional features, and system settings</string>
+
+    <string name="ram_boost_title">RAM Boost</string>
+    <string name="ram_boost_subtitle">Trim background processes</string>
+    <string name="screenshot_title">Take Screenshot</string>
+    <string name="screenshot_subtitle">Capture TV screen to Downloads</string>
+    <string name="share_quick_title">Wi-Fi File Hub</string>
+    <string name="share_quick_subtitle">Zero-USB phone to TV transfer</string>
+    <string name="launcher_quick_title">Default Launcher</string>
+    <string name="launcher_quick_subtitle">Set TV Guard as home screen</string>
+    <string name="storage_quick_title">Storage Access</string>
+    <string name="storage_quick_subtitle">Grant full access to Downloads</string>
+    <string name="hardware_audit_title">Hardware Truth</string>
+    <string name="hardware_audit_subtitle">Detect fake RAM and storage</string>
+    <string name="debloat_title">TV Debloater</string>
+    <string name="debloat_subtitle">Remove bloatware and adware</string>
+    <string name="network_title">Internet Quality</string>
+    <string name="network_subtitle">Live ping and Wi-Fi signal</string>
+    <string name="settings_title">TV Settings</string>
+    <string name="settings_subtitle">Open system preferences</string>
+
+    <string name="hidden_apps_title">Manage Hidden Apps</string>
+    <string name="hidden_apps_subtitle">Unhide apps on home screen</string>
+    <string name="action_open_app">Open Application</string>
+    <string name="action_app_info">Application Info &amp; Permissions</string>
+    <string name="action_hide_app">Hide Application</string>
+    <string name="action_unhide_app">Unhide Application</string>
+
+    <string name="favorite_apps">Favorite Apps</string>
+    <string name="all_apps">Installed Apps</string>
+    <string name="no_apps_found">No apps found</string>
+
+    <string name="verdict_spoofed_ram">Spoofed RAM Detected</string>
+    <string name="verdict_spoofed_storage">Spoofed Storage Detected</string>
+    <string name="verdict_spoofed_os">Spoofed Android Version Detected</string>
+    <string name="verdict_genuine">No mismatch found in available checks; this does not authenticate the device.</string>
+
+    <string name="root_status_active">Root Active (UID 0)</string>
+    <string name="root_status_none">Unrooted (ADB Mode Available)</string>
+
+    <string name="btn_run_audit">Refresh Hardware Audit</string>
+    <string name="btn_run_alloc_test">Test Allocatable RAM Limit</string>
+    <string name="btn_boost_ram">Boost RAM Now</string>
+    <string name="btn_take_screenshot">Take Screenshot Now</string>
+    <string name="btn_take_screenshot_3s">Capture in 3s</string>
+    <string name="btn_uninstall">Remove</string>
+    <string name="btn_uninstall_root">One-Click Root Remove</string>
+    <string name="btn_adb_guide">Show ADB Wireless Commands</string>
+    <string name="btn_start_server">Start Wi-Fi Server</string>
+    <string name="btn_stop_server">Stop Wi-Fi Server</string>
+    <string name="btn_set_launcher">Set as Default Home</string>
+    <string name="btn_grant_storage">Grant Storage Access</string>
+
+    <string name="running_apps_title">Running Apps &amp; RAM</string>
+    <string name="running_apps_subtitle">Real-time memory consumers</string>
+    <string name="btn_close_all_running">Close All Background Apps</string>
+    <string name="btn_close_app">Close</string>
+
+    <string name="category_safe">Safe to Remove (Bloat / Adware)</string>
+    <string name="category_caution">User Discretion (Utilities)</string>
+    <string name="category_core">Core System (Protected)</string>
+
+    <string name="about_title">About &amp; RP Apps</string>
+    <string name="about_subtitle">Website, store, credits &amp; apps</string>
+    <string name="about_heading">About Android TV Guard &amp; RP Ideas Apps</string>
+
+    <string name="back_to_tools">← Back to Tools &amp; Settings</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_description">A lightweight TV launcher with optional hardware diagnostics, debloating and a local file hub.</string>
+    <string name="about_credit_developer">Developer: Ramesh prathap .R (universalrp2003@gmail.com)</string>
+    <string name="about_credit_assistance">Software assistance: Arena.ai Agent Mode</string>
+    <string name="about_website">Official website</string>
+    <string name="about_repository">GitHub repository</string>
+    <string name="about_no_browser">No app available to open this link.</string>
+    <string name="about_sister_apps">RP Ideas apps &amp; Tamilan Store</string>
+    <string name="about_sister_apps_hint">Select an app to open its official release page in a browser.</string>
+    <string name="possible_mismatch">POSSIBLE MISMATCH</string>
+    <string name="storage_evidence_title">2. Storage evidence</string>
+    <string name="storage_candidate_disk">Candidate block device</string>
+    <string name="storage_disk_value">%1$s GB (%2$s GiB), %3$d sectors\n%4$s</string>
+    <string name="storage_data_report">Reported /data filesystem</string>
+    <string name="storage_data_value">%1$s GiB total · %2$s GiB available</string>
+    <string name="storage_used_data">Reported /data used (total − available)</string>
+    <string name="storage_system">/system filesystem capacity</string>
+    <string name="storage_vendor">/vendor filesystem capacity</string>
+    <string name="storage_cache">/cache filesystem capacity</string>
+    <string name="storage_estimated_remainder">Rough remainder (not verified free)</string>
+    <string name="storage_gib_value">%1$s GiB</string>
+    <string name="evidence_unavailable">Unavailable</string>
+    <string name="storage_evidence_explanation">GB uses decimal units; GiB uses powers of 1024. A 16 GB chip is about 14.9 GiB before partitions. The rough remainder subtracts reported data use and listed filesystem capacities from the candidate disk size. Other partitions, reserved blocks, shared mounts, a different disk or altered reports can make it wrong. It is not a measurement of writable free space; an independent, non-destructive device check is needed.</string>
+    <string name="os_evidence_title">3. Android version evidence</string>
+    <string name="os_reported_release">Reported Android release</string>
+    <string name="os_framework_marker">Framework class probe</string>
+    <string name="os_reported_sdk">Reported SDK API</string>
+    <string name="os_kernel">Kernel release</string>
+    <string name="os_build_timestamp">Build timestamp (milliseconds)</string>
+    <string name="os_evidence_explanation">Android 14 normally reports API 34 or newer and contains the tested Android 14 class. A mismatch suggests an altered or customized system, but the release, SDK and kernel can also be modified. These checks cannot authenticate the exact Android base version.</string>
+    <string name="close_dialog">Close</string>
+    <string name="action_add_favorite">Add to Favorites</string>
+    <string name="action_remove_favorite">Remove from Favorites</string>
+    <string name="guide_title">Guide — select a topic</string>
+    <string name="hardware_evidence_header">Hardware reports and possible discrepancies</string>
+    <string name="hardware_warning_header">POSSIBLE EVIDENCE MISMATCH</string>
+    <string name="ram_issue_mismatch">Android reports %1$s GiB RAM, while the kernel reports %2$s GiB. The cause and physical chip size are not verified.</string>
+    <string name="storage_issue_mismatch">Possible storage mismatch: /data reports %1$s GB, while candidate %2$s reports %3$s GB. Check that this disk backs /data; firmware can also affect these readings.</string>
+    <string name="os_issue_api">Android %1$s is reported, but the reported SDK is API %2$d. Android %3$d normally requires API %4$d or newer.</string>
+    <string name="os_issue_marker">Android %1$s and API %2$d are reported, but the Android 14 framework class probe is unavailable. The framework may be inconsistent or customized.</string>
+    <string name="os_marker_14">Android 14 API marker present (also present in newer versions)</string>
+    <string name="os_marker_13">Android 13 API marker present</string>
+    <string name="os_marker_12">Android 12 API marker present</string>
+    <string name="os_marker_11">Android 11 API marker present</string>
+    <string name="os_marker_10">Android 10 API marker present</string>
+    <string name="os_marker_none">No tested framework marker available</string>
+    <!-- Opt-in lightweight / Expert settings. -->
+    <string name="tools_overview_title">Launcher tools and settings</string>
+    <string name="launcher_only_active">Launcher only</string>
+    <string name="expert_active">Expert controls enabled</string>
+    <string name="expert_settings_title">Expert settings</string>
+    <string name="expert_settings_subtitle">Choose optional features</string>
+    <string name="expert_master_title">Expert mode</string>
+    <string name="expert_master_description">Off: launcher only. On: show the individual switches. Turning Expert on again restores saved choices, so a previously enabled file hub may start automatically.</string>
+    <string name="expert_intro">Press OK on each switch. Turning a feature off stops its associated work where possible. Memory savings vary by device; no fixed saving is guaranteed.</string>
+    <string name="expert_waiting_for_parent">On, but paused until Expert mode is on.</string>
+    <string name="feature_on">ON</string>
+    <string name="feature_off">OFF</string>
+    <string name="feature_status_bar">Top status bar and clock</string>
+    <string name="feature_status_bar_desc">Show the in-app header and clock on the Home and Tools screens. It does not affect the floating status pill, which has its own switch.</string>
+    <string name="feature_screenshot">Screenshots</string>
+    <string name="feature_screenshot_desc">Allow on-demand captures. Turning this off does not delete saved screenshots; an enabled file hub can still share them.</string>
+    <string name="feature_file_hub">Wi-Fi file hub</string>
+    <string name="feature_file_hub_desc">Start the local listener while the TV Guard activity exists. It can expose Downloads and saved screenshots; the warning above applies. It can start again when Expert is restored.</string>
+    <string name="feature_web_remote">Browser remote controls</string>
+    <string name="feature_web_remote_desc">Allow browser keys, text, app launches and installation prompts. Requires the file hub. Remote screenshot and boost also require their own switches.</string>
+    <string name="feature_hardware_audit">Hardware audit</string>
+    <string name="feature_hardware_audit_desc">Run hardware and root evidence checks when enabled or refreshed. A root manager may prompt; reported readings cannot authenticate the device.</string>
+    <string name="feature_debloater">TV Debloater</string>
+    <string name="feature_debloater_desc">Scan packages and check for root only while its screen is open. A root manager may prompt. Review choices before removing anything.</string>
+    <string name="feature_network_tools">Network diagnostics</string>
+    <string name="feature_network_tools_desc">Probe internet and common router addresses when the diagnostics screen opens or is retested.</string>
+    <string name="feature_ram_boost">RAM boost</string>
+    <string name="feature_ram_boost_desc">Allow an on-demand attempt to stop background apps and, if root is available, drop kernel caches. Results vary.</string>
+    <string name="feature_running_apps">Running apps list</string>
+    <string name="feature_running_apps_desc">Scan processes while the Tools overview is open. Android may restrict which processes are visible.</string>
+    <string name="optional_share_title">Screenshots and file hub</string>
+    <string name="optional_share_short">Open enabled sharing tools</string>
+    <string name="hardware_audit_safe_subtitle">Review reported evidence</string>
+    <string name="hidden_apps_count">%1$d apps hidden</string>
+    <string name="debloat_rescan">Refresh app list</string>
+    <string name="network_retest">Retest network</string>
+    <string name="hub_security_warning">Warning: the file hub has no password or encryption. Anyone on the local network may view, upload or delete Downloads and saved screenshots; enabled remote controls can operate the TV. Use only a trusted network and turn it off when finished.</string>
+    <string name="hub_active">Local Wi-Fi file hub: active</string>
+    <string name="hub_start_failed">File hub could not start</string>
+    <string name="hub_retry_hint">Check available ports and storage access, or turn the file hub off in Expert settings.</string>
+    <string name="hub_disabled_hint">File sharing is off. Turn on the file hub in Expert settings if needed.</string>
+    <!-- Status overlay over other apps -->
+    <string name="overlay_notification_channel">Status overlay</string>
+    <string name="overlay_notification_title">Status overlay is on</string>
+    <string name="overlay_notification_text">Showing free CPU, RAM, storage and network quality over other apps.</string>
+    <string name="feature_status_overlay">Status pill over other apps</string>
+    <string name="feature_status_overlay_desc">Draws the five readings on one line at the top of the screen: processor load, free RAM, free storage, temperature and internet quality. Needs "Display over other apps". Secure or system screens may hide it.</string>
+    <string name="overlay_permission_needed">Allow "display over other apps" to use the overlay.</string>
+    <string name="overlay_permission_grant">Open overlay permission</string>
+    <string name="overlay_blocked_note">Android hides overlays over secure or system screens such as DRM video and some dialogs. There is no supported workaround, so the pill may not appear there.</string>
+
+    <!-- AI assistant -->
+    <!-- Temperature -->
+    <string name="debloater_screen_title">TV Debloater &amp; System Cleaner</string>
+    <string name="network_screen_title">Network diagnostics and real latency</string>
+    <string name="hidden_apps_heading">Show or hide apps</string>
+    <string name="hidden_apps_help">Tick an app to hide it from the home grid; untick it to show it again.</string>
+    <string name="hidden_apps_now">Hidden now: %1$d.</string>
+    <string name="hidden_apps_empty">No installed applications were reported. Open this screen again after the app list loads.</string>
+    <string name="running_heading">Recently used applications</string>
+    <string name="running_active_count">%1$d listed</string>
+    <string name="running_close_all">Close background apps</string>
+    <string name="hub_files_heading">Files (%1$d in Downloads and Screenshots)</string>
+    <string name="hub_files_empty">No files yet. Take a screenshot or upload an APK from your phone or computer browser.</string>
+    <string name="adb_guide_title">Wireless ADB debloat guide (no root)</string>
+    <string name="pill_position_short">Pill: %1$s</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_install">Install</string>
+    <string name="btn_delete">Delete</string>
+    <string name="storage_honest_free">Free space shown in the pill</string>
+    <string name="storage_honest_free_value">%1$s GiB free of %2$s GiB %3$s</string>
+    <string name="storage_capped_note"> (limited to the physical disk; the filesystem claims more)</string>
+</resources>

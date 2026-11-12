@@ -119,8 +119,7 @@ private val ENGLISH_GUIDE = listOf(
         "option avoids the Internet relay but does not make an untrusted Wi-Fi network safe. This app has not been " +
         "independently security-reviewed.",
     "7. Updates" to
-        "Settings > About > Check for updates. A download is checked (signing certificate, version and SHA-256) " +
-        "before Android asks you to install it.",
+        "A read-only check reads public stable-release metadata at most once per day when the app opens or resumes. If a newer stable version is found, an in-app notice opens the official website in your browser. Download there and follow Android's normal confirmation. This app never downloads or installs APKs. Checks depend on app use, connectivity and available metadata; they are not guaranteed. Stop if a security warning appears.",
 )
 
 private val TAMIL_GUIDE = listOf(
@@ -171,6 +170,5 @@ private val TAMIL_GUIDE = listOf(
         "தவிர்க்கும்; ஆனால் நம்பகமற்ற Wi-Fi-ஐப் பாதுகாப்பானதாக்காது. இந்தச் செயலி சுயாதீனப் பாதுகாப்பு மதிப்பாய்வு " +
         "செய்யப்படவில்லை.",
     "7. புதுப்பிப்புகள்" to
-        "அமைப்புகள் > செயலி விவரம் (About) > “புதுப்பிப்புகளைச் சரிபார்”. பதிவிறக்கம் கையொப்பச் சான்றிதழ், பதிப்பு, " +
-        "SHA-256 ஆகியவற்றுடன் சரிபார்க்கப்பட்ட பிறகே Android நிறுவக் கேட்கும்.",
+        "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது நாளுக்கு ஒருமுறை பொதுப் பதிப்பு விவரங்கள் மட்டும் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் அறிவிப்பு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறக்கும். அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. செயலியைத் திறப்பது, இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைச் சரிபார்ப்பு பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
 )

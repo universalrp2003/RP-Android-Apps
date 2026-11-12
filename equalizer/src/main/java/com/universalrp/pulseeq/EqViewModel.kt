@@ -51,6 +51,10 @@ data class EqUiState(
     val playerDurationMs: Long = 0L,
     val lastUri: String? = null,
     val lastTitle: String? = null,
+    val continuous: Boolean = true,
+    val randomMode: Boolean = false,
+    val repeatMode: Int = 0,
+    val queueSize: Int = 0,
     // diagnostics
     val engineInfo: String = "",
     val message: String? = null,
@@ -81,7 +85,10 @@ class EqViewModel(app: Application) : AndroidViewModel(app) {
     init {
         EqCore.refreshFromSettings(ctx)
         refresh()
-        player.onStateChanged = { st -> mutate { it.copy(playerState = st) } }
+        player.onStateChanged = { st ->
+            player.currentUri?.let { settings.lastUri = it.toString(); settings.lastTitle = player.title }
+            mutate { it.copy(playerState = st, lastUri = settings.lastUri, lastTitle = settings.lastTitle) }
+        }
         // A light ticker so the transport bar and status stay truthful.
         viewModelScope.launch {
             while (true) {
@@ -89,6 +96,10 @@ class EqViewModel(app: Application) : AndroidViewModel(app) {
                 mutate {
                     it.copy(
                         playerState = player.state,
+                        continuous = player.continuous,
+                        randomMode = player.randomMode,
+                        repeatMode = player.repeatMode,
+                        queueSize = player.queueSize,
                         playerTitle = player.title,
                         playerError = player.errorMessage,
                         playerPositionMs = player.positionMs,
@@ -277,6 +288,19 @@ class EqViewModel(app: Application) : AndroidViewModel(app) {
 
     // ----------------------------------------------------------------- player
 
+    fun playFiles(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        uris.forEach { uri -> runCatching { ctx.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) } }
+        EqService.start(ctx)
+        player.playQueue(uris.take(1000))
+        settings.lastUri = uris.first().toString()
+    }
+    fun toggleContinuous() { player.toggleContinuous(); mutate { it.copy(continuous = player.continuous) } }
+    fun toggleRandom() { player.toggleRandom(); mutate { it.copy(randomMode = player.randomMode) } }
+    fun cycleRepeat() { player.cycleRepeat(); mutate { it.copy(repeatMode = player.repeatMode) } }
+    fun nextTrack() { player.nextTrack() }
+    fun previousTrack() { player.previousTrack() }
+
     fun playFile(uri: Uri) {
         try {
             ctx.contentResolver.takePersistableUriPermission(
@@ -297,7 +321,7 @@ class EqViewModel(app: Application) : AndroidViewModel(app) {
     fun resumeLast() {
         val uri = _state.value.lastUri?.let { Uri.parse(it) } ?: return
         EqService.start(ctx)
-        player.play(uri)
+        if (!player.restoreQueue()) player.play(uri)
     }
 
     fun togglePlayPause() {

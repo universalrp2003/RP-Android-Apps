@@ -75,7 +75,7 @@ fun Chip(
             .background(if (selected) Saffron else SurfaceHigh)
             .border(1.dp, if (selected) Saffron else OutlineC, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
+            .padding(horizontal = 12.dp, vertical = 6.dp),
     )
 }
 

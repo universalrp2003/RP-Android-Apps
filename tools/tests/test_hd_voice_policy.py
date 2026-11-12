@@ -1,0 +1,84 @@
+"""Source regressions complement (not replace) executable Kotlin failover tests."""
+import unittest
+import xml.etree.ElementTree as ET
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[2]
+
+class HdVoicePolicyTest(unittest.TestCase):
+    def test_both_engines_use_one_shared_policy_without_recursive_same_voice_retry(self):
+        for relative in ['shared/src/main/java/com/universalrp/voice/SharedNeuralVoiceEngine.kt',
+                         'smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt']:
+            source = (ROOT / relative).read_text()
+            self.assertIn('NeuralVoiceFailover.synthesize(', source)
+            self.assertEqual(2, source.count('streamWebSocketOnce('), relative)
+            self.assertNotIn('TRANSIENT_SERVER_RETRY', source)
+            self.assertNotIn('NeuralRetryPolicy.remainingBudget', source)
+            self.assertIn('Thread.currentThread().interrupt()', source)
+            self.assertIn('$selectedVoice', source)
+            curated = source.split('tamilNeuralId =')[1:]
+            self.assertTrue(curated)
+            self.assertTrue(all(not p.lstrip().startswith('"ta-IN-ValluvarNeural"') for p in curated))
+
+    def test_probe_remains_direct_and_recovery_is_separately_excluded_from_unit_tasks(self):
+        source = (ROOT / 'smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt').read_text()
+        self.assertIn('allowVoiceFallback = false', source)
+        build = (ROOT / 'smsguard/build.gradle.kts').read_text()
+        self.assertIn('if (name != "testHdVoiceFailover") filter { excludeTestsMatching(hdFailoverMethod) }', build)
+        self.assertIn('includeTestsMatching(hdFailoverMethod)', build)
+
+    def test_expense_update_check_does_not_transmit_financial_data_or_install_apks(self):
+        main = (ROOT / 'expensetracker/src/main/java/com/universalrp/expensetracker/MainActivity.kt').read_text()
+        self.assertIn('AppUpdates.Control("Expense-Tracker", automatic = true)', main)
+        manifest = (ROOT / 'expensetracker/src/main/AndroidManifest.xml').read_text()
+        permissions = {p.get('{http://schemas.android.com/apk/res/android}name') for p in ET.fromstring(manifest).findall('uses-permission')}
+        self.assertIn('android.permission.INTERNET', permissions)
+        self.assertNotIn('android.permission.REQUEST_INSTALL_PACKAGES', permissions)
+        notice = (ROOT / 'shared/src/main/java/com/universalrp/updates/DailyWebsiteUpdateNotice.kt').read_text()
+        self.assertIn('catalog-v2.json', notice)
+        self.assertNotIn('sms', notice.lower())
+
+    def test_published_store_daily_links_and_website_integrity_failure_stop(self):
+        site = (ROOT/'site/index.html').read_text()
+        for anchor in ['st-tamilanstore','st-dailyvault']:
+            self.assertIn('id="'+anchor+'"',site)
+        self.assertNotIn('vasanthi-ai-v1.2.4',site)
+        self.assertIn("if (err.message === 'SHA-256 mismatch')",site)
+        self.assertIn('Integrity failure must never become an unchecked direct download',site)
+
+    def test_live_probe_names_the_upstream_cause_instead_of_a_bare_null(self):
+        # Issue #49: an intermittent service answer must be attributable from the CI annotation.
+        engine = (ROOT/'smsguard/src/main/java/com/universalrp/smsguard/service/NeuralCloudVoiceEngine.kt').read_text()
+        for marker in ('FIRST_AUDIO_MS=', 'FRAMES=', 'ELAPSED_MS=', 'NO_TURN_END CLOSE=', 'lastCloseCode'):
+            self.assertIn(marker, engine)
+        # Evidence must never carry speech text, URLs, headers or exception messages.
+        self.assertNotIn('response.header("Set-Cookie")', engine)
+        probe = (ROOT/'smsguard/src/test/java/com/universalrp/smsguard/SmsGuardEngineTest.kt').read_text()
+        self.assertIn('class=$failureClass', probe)
+        for cls in ('HTTP_403_THROTTLE', 'PEER_1011', 'DEADLINE_EXCEEDED', 'NO_TURN_END', 'SOCKET_TIMEOUT'):
+            self.assertIn(cls, probe)
+        # The strict success condition is unchanged: real bytes, direct voice, no fallback.
+        self.assertIn('mp3.size <= 1500', probe)
+        self.assertIn('allowVoiceFallback = false', probe)
+        self.assertTrue((ROOT/'docs/sms-voice-null-audio-issue-49.md').exists())
+
+    def test_one_deadline_is_shared_55_30_15_so_a_slow_first_voice_is_not_abandoned(self):
+        # Issue #49: equal thirds (1,400 ms each) were shorter than the service's own
+        # time-to-first-audio, so healthy attempts were thrown away and the caller saw null.
+        failover = (ROOT/'shared/src/main/java/com/universalrp/voice/NeuralVoiceFailover.kt').read_text()
+        policy = (ROOT/'shared/src/main/java/com/universalrp/voice/NeuralBudgetPolicy.kt').read_text()
+        self.assertIn('NeuralBudgetPolicy.share(', failover)
+        self.assertNotIn('remaining / (voices.size - index)', failover)
+        for weight in ('intArrayOf(55, 30, 15)', 'intArrayOf(65, 35)', 'intArrayOf(100)'):
+            self.assertIn(weight, policy)
+        self.assertIn('(index until voices).sumOf', policy)
+        # A patient caller still caps each attempt and is unaffected by the weighting.
+        clean = (ROOT/'cleaner/src/main/java/com/universalrp/cleansweep/voice/Announcer.kt').read_text()
+        self.assertIn('attemptTimeoutMs = NewsVoicePreparationPolicy.VOICE_ATTEMPT_TIMEOUT_MS', clean)
+
+    def test_optional_model_monitoring_is_direct_and_never_silently_passes_dns(self):
+        source = (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text()
+        self.assertIn('allowVoiceFallback = false',source)
+        self.assertNotIn('repeat(3)',source)
+        self.assertNotIn('if (!reachable) return',source)
+        reference = (ROOT/'tools/probe_edge_reference.py').read_text()
+        self.assertNotIn("('ta-IN-ValluvarNeural',",reference)

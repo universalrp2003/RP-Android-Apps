@@ -186,7 +186,9 @@ object AudioFx {
     private fun applyToEffects() {
         val s = settings
         val gains = effectiveGains()
-        runCatching { applyDynamics(gains, s) }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            runCatching { applyDynamics(gains, s) }
+        }
         runCatching { applyLegacy(gains, s) }
         runCatching {
             val boostDb = VolumeBoostPolicy.clamp(s.boostDb)

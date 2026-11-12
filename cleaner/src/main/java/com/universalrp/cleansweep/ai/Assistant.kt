@@ -255,7 +255,7 @@ object Assistant {
             q.matchesAny("protect", "exclude", "skip folder", "settings", "option", "hidden folder") ->
                 AssistantMessage(
                     false,
-                    "In Settings you can:\n\n• Add protected folders (type e.g. “WhatsApp” or “DCIM/Camera”) — they are never scanned or suggested\n• Scan hidden folders (off by default, slightly slower, finds more junk)\n• Tune duplicate minimum size, large-file threshold, old-download age and sound effects\n\nProtected folders are the safest way to say “never touch this”.",
+                    "In Settings you can:\n\n• Add protected folders (type e.g. “WhatsApp” or “DCIM/Camera”) — they are never scanned or suggested\n• Scan hidden folders (on by default, slightly slower, finds more junk)\n• Tune duplicate minimum size, large-file threshold, old-download age and sound effects\n\nProtected folders are the safest way to say “never touch this”.",
                     actionLabel = "Open settings",
                     action = AssistantAction.OPEN_SETTINGS,
                 )
@@ -279,7 +279,7 @@ object Assistant {
                 if (ctx.hasAllFilesAccess)
                     AssistantMessage(false, "File access is granted, so I can see and clean junk across your shared storage. If you ever revoke it in Android Settings, scanning switches off until you re-grant it.")
                 else
-                    AssistantMessage(false, "Android only lets an app scan your photos, downloads and other folders if you grant “All files access” — it is the switch that makes junk cleaning possible.\n\nGrant it and everything stays on this phone; there is no internet permission to worry about.", actionLabel = "Grant file access", action = AssistantAction.SCAN)
+                    AssistantMessage(false, "Android only lets an app scan your photos, downloads and other folders if you grant “All files access” — it is the switch that makes junk cleaning possible.\n\nGranting file access does not upload files. Separately, a daily update check reads public release metadata only; file contents are not included.", actionLabel = "Grant file access", action = AssistantAction.SCAN)
 
             q.matchesAny("usage access", "usage permission", "app cache permission") ->
                 if (ctx.usageAccess)

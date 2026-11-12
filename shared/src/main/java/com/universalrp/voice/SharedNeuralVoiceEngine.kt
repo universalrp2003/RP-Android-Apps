@@ -14,7 +14,6 @@ import okhttp3.WebSocketListener
 import okio.ByteString
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileInputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
@@ -49,11 +48,11 @@ data class CuratedNeuralVoiceProfile(
 
 /**
  * Shared Studio Ultra-HD Online Neural Voice synthesis & playback engine for RP Ideas apps:
- * - 10 curated Studio Ultra-HD voices (5 Male HD + 5 Female HD across all 4 official world Tamil
- *   studios ta-IN / ta-LK / ta-SG / ta-MY + 2026 flagship Multilingual & Expressive English studios)
+ * - 10 curated neural profiles (5 male + 5 female; regional Tamil models are shared across presets in
+ *   ta-IN / ta-LK / ta-SG / ta-MY, plus English neural models)
  * - Automatic Daily Male <-> Female voice rotation ON by default (Day 1 Male -> Day 2 Female ...)
  * - Local LRU MP3 disk cache for instant 0ms replay of repeated alerts & town announcements
- * - Fast bounded timeouts so offline / no-signal travel immediately falls back to System TTS.
+ * - Fast bounded timeouts with distinct same-language HD alternatives; no new device-TTS fallback.
  */
 object SharedNeuralVoiceEngine {
 
@@ -62,9 +61,9 @@ object SharedNeuralVoiceEngine {
         CuratedNeuralVoiceProfile(
             id = "online_male_1",
             gender = NeuralVoiceGender.MALE,
-            titleEn = "👨 Male HD 1 · Valluvar / Prabhat (India Studio Ultra-HD)",
-            titleTa = "👨 ஆண் குரல் 1 · வள்ளுவர் / பிரபாத் (இந்திய Ultra-HD)",
-            tamilNeuralId = "ta-IN-ValluvarNeural",
+            titleEn = "👨 Male HD 1 · Surya / Prabhat (Tamil / English HD)",
+            titleTa = "👨 ஆண் குரல் 1 · சூர்யா / பிரபாத் (தமிழ் / ஆங்கில உயர்தரம்)",
+            tamilNeuralId = "ta-MY-SuryaNeural",
             englishNeuralId = "en-IN-PrabhatNeural",
         ),
         CuratedNeuralVoiceProfile(
@@ -94,9 +93,9 @@ object SharedNeuralVoiceEngine {
         CuratedNeuralVoiceProfile(
             id = "online_male_5",
             gender = NeuralVoiceGender.MALE,
-            titleEn = "👨 Male HD 5 · Valluvar Bass / William HD (Rich FM Studio)",
-            titleTa = "👨 ஆண் குரல் 5 · வள்ளுவர் பேஸ் / வில்லியம் (இனிய FM HD)",
-            tamilNeuralId = "ta-IN-ValluvarNeural",
+            titleEn = "👨 Male HD 5 · Anbu Bass / William HD (Rich FM Studio)",
+            titleTa = "👨 ஆண் குரல் 5 · அன்பு பேஸ் / வில்லியம் (இனிய FM HD)",
+            tamilNeuralId = "ta-SG-AnbuNeural",
             englishNeuralId = "en-AU-WilliamNeural",
             pitchTa = "-4Hz",
             pitchEn = "+0Hz",
@@ -105,10 +104,10 @@ object SharedNeuralVoiceEngine {
         CuratedNeuralVoiceProfile(
             id = "online_female_1",
             gender = NeuralVoiceGender.FEMALE,
-            titleEn = "👩 Female HD 1 · Pallavi / Neerja Expressive (India Ultra-HD)",
+            titleEn = "👩 Female HD 1 · Pallavi / Neerja (India Ultra-HD)",
             titleTa = "👩 பெண் குரல் 1 · பல்லவி / நீரஜா (இந்திய Ultra-HD)",
             tamilNeuralId = "ta-IN-PallaviNeural",
-            englishNeuralId = "en-IN-NeerjaExpressiveNeural",
+            englishNeuralId = "en-IN-NeerjaNeural",
         ),
         CuratedNeuralVoiceProfile(
             id = "online_female_2",
@@ -321,6 +320,17 @@ object SharedNeuralVoiceEngine {
             .build()
     }
 
+    // Long-form preparation gets a patient read timeout and frequent pings. Short alerts keep
+    // the original fast client, so this does not make battery/security prompts wait longer.
+    private val patientWsClient: OkHttpClient by lazy {
+        OkHttpClient.Builder()
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(5, TimeUnit.SECONDS)
+            .pingInterval(5, TimeUnit.SECONDS)
+            .build()
+    }
+
     private val JS_UTC_FORMATTER: DateTimeFormatter =
         DateTimeFormatter.ofPattern("EEE MMM dd yyyy HH:mm:ss 'GMT+0000 (Coordinated Universal Time)'", Locale.US)
 
@@ -352,7 +362,7 @@ object SharedNeuralVoiceEngine {
 
     /**
      * Synthesizes a curated voice profile to cached 24kHz MP3, automatically falling back to
-     * primary India Neural voice if a regional edge model transiently hiccups.
+     * another HD voice in the same language within one total deadline.
      */
     fun synthesizeProfileToFileOrNull(
         cacheDir: File?,
@@ -361,37 +371,17 @@ object SharedNeuralVoiceEngine {
         useTamil: Boolean,
         ratePercent: Int = 98,
         timeoutMs: Long = 3800L,
+        attemptTimeoutMs: Long = 0L,
     ): File? {
         val primaryVoice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
         val primaryPitch = if (useTamil) profile.pitchTa else profile.pitchEn
         val rate = rateFromPercent(ratePercent)
 
-        synthesizeToFileOrNull(
-            cacheDir = cacheDir,
-            text = text,
-            neuralVoiceName = primaryVoice,
-            rate = rate,
-            pitch = primaryPitch,
-            timeoutMs = timeoutMs,
-        )?.let { return it }
-
-        val fallbackVoice = when {
-            useTamil && profile.gender == NeuralVoiceGender.FEMALE -> "ta-IN-PallaviNeural"
-            useTamil -> "ta-IN-ValluvarNeural"
-            profile.gender == NeuralVoiceGender.FEMALE -> "en-IN-NeerjaNeural"
-            else -> "en-IN-PrabhatNeural"
-        }
-        if (fallbackVoice != primaryVoice) {
-            return synthesizeToFileOrNull(
-                cacheDir = cacheDir,
-                text = text,
-                neuralVoiceName = fallbackVoice,
-                rate = rate,
-                pitch = primaryPitch,
-                timeoutMs = 2800L,
-            )
-        }
-        return null
+        return synthesizeToFileOrNull(
+            cacheDir = cacheDir, text = text, neuralVoiceName = primaryVoice,
+            rate = rate, pitch = primaryPitch, timeoutMs = timeoutMs,
+            attemptTimeoutMs = attemptTimeoutMs,
+        )
     }
 
     /**
@@ -409,7 +399,9 @@ object SharedNeuralVoiceEngine {
     ): File? {
         val voice = if (useTamil) profile.tamilNeuralId else profile.englishNeuralId
         val pitch = if (useTamil) profile.pitchTa else profile.pitchEn
-        return cachedFileOrNull(cacheDir, text, voice, rateFromPercent(ratePercent), pitch)
+        return NeuralVoiceFailover.candidates(voice).firstNotNullOfOrNull { candidate ->
+            cachedFileOrNull(cacheDir, text, candidate, rateFromPercent(ratePercent), pitch)
+        }
     }
 
     private fun cachedFileOrNull(
@@ -434,34 +426,41 @@ object SharedNeuralVoiceEngine {
         rate: String = "+0%",
         pitch: String = "+0Hz",
         timeoutMs: Long = 3800L,
+        attemptTimeoutMs: Long = 0L,
     ): File? {
         val trimmed = text.trim().take(1200)
         if (trimmed.isEmpty()) return null
 
-        val cacheKey = sha256Hex("v2|$neuralVoiceName|$rate|$pitch|$trimmed")
+        var cacheKey = sha256Hex("v2|$neuralVoiceName|$rate|$pitch|$trimmed")
         val targetDir = cacheDir?.let { File(it, "rp_neural_hd_tts").apply { mkdirs() } }
-        val cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        var cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
         if (cachedFile != null && cachedFile.exists() && cachedFile.length() > 256L) {
             return cachedFile
         }
 
+        var selectedVoice = neuralVoiceName
         val mp3Bytes = synthesizeRawMp3(
             text = trimmed,
             voiceName = neuralVoiceName,
             rate = rate,
             pitch = pitch,
             timeoutMs = timeoutMs,
+            onVoiceSelected = { selectedVoice = it },
+            attemptTimeoutMs = attemptTimeoutMs,
         ) ?: return null
 
         if (mp3Bytes.size < 256) return null
+        cacheKey = sha256Hex("v2|$selectedVoice|$rate|$pitch|$trimmed")
+        cachedFile = targetDir?.let { File(it, "$cacheKey.mp3") }
+        val outputFile = cachedFile
 
-        return if (targetDir != null && cachedFile != null) {
+        return if (targetDir != null && outputFile != null) {
             runCatching {
                 pruneCacheIfNeeded(targetDir)
                 val tmp = File(targetDir, "$cacheKey.tmp")
                 tmp.writeBytes(mp3Bytes)
-                tmp.renameTo(cachedFile)
-                if (cachedFile.exists() && cachedFile.length() > 256L) cachedFile else tmp
+                tmp.renameTo(outputFile)
+                if (outputFile.exists() && outputFile.length() > 256L) outputFile else tmp
             }.getOrNull()
         } else {
             val temp = File.createTempFile("rp_neural_hd_", ".mp3")
@@ -479,6 +478,7 @@ object SharedNeuralVoiceEngine {
         shouldStop: () -> Boolean = { false },
         activePlayerSink: ((MediaPlayer?) -> Unit)? = null,
         maxDurationMs: Long = 60_000L,
+        releasePlayerSink: ((MediaPlayer) -> Unit)? = null,
     ): Boolean {
         val done = CountDownLatch(1)
         val mp = MediaPlayer()
@@ -486,9 +486,9 @@ object SharedNeuralVoiceEngine {
         try {
             activePlayerSink?.invoke(mp)
             mp.setAudioAttributes(audioAttributes)
-            FileInputStream(file).use { fis ->
-                mp.setDataSource(fis.fd)
-            }
+            // Keep the data source valid through prepare(); a closed FileInputStream fd is
+            // not a safe MediaPlayer source on every Android implementation.
+            mp.setDataSource(file.absolutePath)
             val clampedVol = volumeScalar.coerceIn(0f, 1f)
             mp.setVolume(clampedVol, clampedVol)
             mp.setOnCompletionListener {
@@ -512,9 +512,10 @@ object SharedNeuralVoiceEngine {
         } catch (_: Throwable) {
             return false
         } finally {
-            activePlayerSink?.invoke(null)
             runCatching { mp.stop() }
             runCatching { mp.release() }
+            if (releasePlayerSink != null) releasePlayerSink.invoke(mp)
+            else activePlayerSink?.invoke(null)
         }
     }
 
@@ -530,15 +531,16 @@ object SharedNeuralVoiceEngine {
         rate: String = "+0%",
         pitch: String = "+0Hz",
         timeoutMs: Long = 4200L,
+        allowVoiceFallback: Boolean = true,
+        onVoiceSelected: ((String) -> Unit)? = null,
+        attemptTimeoutMs: Long = 0L,
+        diagnostic: (String) -> Unit = {},
     ): ByteArray? {
-        val firstAttempt = streamWebSocketOnce(
-            text = text,
-            voiceName = formatServerVoiceName(voiceName),
-            rate = rate,
-            pitch = pitch,
-            timeoutMs = timeoutMs,
-        )
-        return if (firstAttempt != null && firstAttempt.size >= 256) firstAttempt else null
+        return NeuralVoiceFailover.synthesize(voiceName, timeoutMs, allowVoiceFallback,
+            onSelected = onVoiceSelected ?: {}, attemptTimeoutMs = attemptTimeoutMs) { candidate, budget ->
+            diagnostic("HD_ATTEMPT=$candidate budgetMs=$budget")
+            streamWebSocketOnce(text, formatServerVoiceName(candidate), rate, pitch, budget, diagnostic = diagnostic)
+        }
     }
 
     private fun streamWebSocketOnce(
@@ -547,8 +549,10 @@ object SharedNeuralVoiceEngine {
         rate: String,
         pitch: String,
         timeoutMs: Long,
-        allowClockRetry: Boolean = true,
+        onPeerClosing: ((Int) -> Unit)? = null,
+        diagnostic: (String) -> Unit = {},
     ): ByteArray? {
+        val attemptStarted = System.nanoTime()
         val escaped = sanitizeSsmlText(text)
         if (escaped.isEmpty()) return null
 
@@ -579,10 +583,12 @@ object SharedNeuralVoiceEngine {
         val saw403ServerDate = AtomicReference<String?>(null)
         val completedCleanly = AtomicBoolean(false)
 
-        val ws = wsClient.newWebSocket(
+        val client = if (timeoutMs >= 10_000L) patientWsClient else wsClient
+        val ws = client.newWebSocket(
             request,
             object : WebSocketListener() {
                 override fun onOpen(webSocket: WebSocket, response: Response) {
+                    diagnostic("HD_OPEN=${response.code}")
                     val ts = jsUtcDateString()
                     val configMsg =
                         "X-Timestamp:$ts\r\n" +
@@ -631,9 +637,17 @@ object SharedNeuralVoiceEngine {
                 }
 
                 override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                    diagnostic("HD_FAILURE=${t.javaClass.simpleName} http=${response?.code ?: 0}")
                     if (response?.code == 403) {
                         saw403ServerDate.set(response.header("Date"))
                     }
+                    doneLatch.countDown()
+                }
+
+                override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                    diagnostic("HD_CLOSING=$code")
+                    onPeerClosing?.invoke(code)
+                    runCatching { webSocket.close(if (code == 1005) 1000 else code, null) }
                     doneLatch.countDown()
                 }
 
@@ -643,23 +657,26 @@ object SharedNeuralVoiceEngine {
             },
         )
 
-        val finished = runCatching { doneLatch.await(timeoutMs, TimeUnit.MILLISECONDS) }.getOrDefault(false)
+        val waitBudget = (timeoutMs - TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - attemptStarted)).coerceAtLeast(0L)
+        val finished = try { doneLatch.await(waitBudget, TimeUnit.MILLISECONDS) }
+        catch (_: InterruptedException) { Thread.currentThread().interrupt(); false }
         if (!finished) {
             runCatching { ws.cancel() }
         }
 
         val serverDateHeader = saw403ServerDate.get()
-        if (allowClockRetry && serverDateHeader != null) {
+        if (serverDateHeader != null) {
             val parsedEpoch = runCatching {
                 ZonedDateTime.parse(serverDateHeader, DateTimeFormatter.RFC_1123_DATE_TIME).toEpochSecond().toDouble()
             }.getOrNull()
             if (parsedEpoch != null) {
                 clockSkewSeconds = parsedEpoch - (System.currentTimeMillis() / 1000.0)
-                return streamWebSocketOnce(text, voiceName, rate, pitch, timeoutMs, allowClockRetry = false)
+                // The next DISTINCT HD voice uses the corrected clock. No same-voice retry.
             }
         }
 
         val out = synchronized(audioBuffer) { audioBuffer.toByteArray() }
+        diagnostic("HD_RESULT=completed:${completedCleanly.get()} finished:$finished bytes:${out.size}")
         return if (completedCleanly.get() && out.size >= 256) out else null
     }
 

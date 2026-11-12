@@ -5,6 +5,8 @@ package com.universalrp.updates
  *
  * Owner's wording, 19 October 2026: "all our 6 application have built in detailed tamil and
  * english guide ... like oor arivippu like click and expand show the info like text". So the
+ * guide now covers ten apps: the original six, plus Expense Tracker, Voice Notes and
+ * Vasanthi AI.
  * screen is a list of short topic titles; only the topic the user taps is open. Nothing is
  * longer than a few sentences, because a wall of text on a phone is never read.
  *
@@ -54,7 +56,7 @@ object AppGuides {
     val liveGuard = GuideContent(
         intro = "Live Guard watches your own phone: battery, storage, memory, data and heat. " +
             "Nothing here reads another app's messages or notifications. Tap a topic to open it.",
-        introTa = "லைவ் கார்டு உங்கள் போனையே கவனிக்கிறது: பேட்டரி, சேமிப்பு, நினைவகம், தரவு, வெப்பம். " +
+        introTa = "கைபேசி காவலன் உங்கள் போனையே கவனிக்கிறது: பேட்டரி, சேமிப்பு, நினைவகம், தரவு, வெப்பம். " +
             "மற்ற செயலிகளின் செய்திகளையோ அறிவிப்புகளையோ இது படிக்காது. ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
             topic(
@@ -85,9 +87,20 @@ object AppGuides {
                 "பேட்டரி மற்றும் வெப்பம்",
                 "The battery figure and the temperature come from the phone's own sensors. Some phones do not " +
                     "report every value, and then the app says it is unavailable instead of guessing. The 44 °C " +
-                    "warning is a warning only: it does not stop any app or start any cooling.",
+                    "warning is battery-only: unreliable OEM CPU zones never trigger speech. Set the low-battery " +
+                    "slider from 10 to 40% in Voice. Full-charge speech requires a working current counter " +
+                    "observed charging earlier in this connection, Android FULL, 100% and near-zero battery " +
+                    "current (within 20 mA) for 60 seconds. Zero-only or unavailable counters stay silent. " +
+                    "Keep monitoring active; interrupted observations must start again. This is not charger " +
+                    "input power. The warning does not stop any app or start cooling.",
                 "பேட்டரி அளவும் வெப்பநிலையும் போனின் சென்சார்களிலிருந்தே வருகின்றன. சில போன்கள் எல்லா மதிப்புகளையும் " +
                     "தருவதில்லை; அப்போது ஊகிக்காமல் 'கிடைக்கவில்லை' என்று காட்டும். 44 °C எச்சரிக்கை எச்சரிக்கை மட்டுமே: " +
+                    "பேட்டரிக்கு மட்டும். நம்பகமற்ற OEM செயலி சென்சாரால் குரல் எச்சரிக்கை வராது. குரல் பகுதியில் " +
+                    "பேட்டரி குறைவு அளவை 10 முதல் 40% வரை மாற்றலாம். இணைத்ததிலிருந்து முன்பு மின்னோட்டம் " +
+                    "இருந்ததை அளந்த செயல்படும் சென்சார், Android முழு சார்ஜ் நிலை, 100% மற்றும் 60 நொடிகள் " +
+                    "பூஜ்ஜியத்திற்கு அருகில் (20 mA வரம்பில்) பேட்டரி மின்னோட்டம் இருந்தால்தான் நிறைவு ஒலிக்கும். " +
+                    "எப்போதும் பூஜ்ஜியம் அல்லது அளவு கிடைக்காத சென்சாரில் ஒலிக்காது. கண்காணிப்பு செயலில் இருக்க " +
+                    "வேண்டும்; இடைநிறுத்தப்பட்ட அளவீடு மீண்டும் தொடங்கும். இது சார்ஜர் உள்ளீட்டு சக்தி அல்ல. " +
                     "எந்தச் செயலியையும் நிறுத்தாது, குளிர்விக்கவும் செய்யாது.",
             ),
             topic(
@@ -113,8 +126,14 @@ object AppGuides {
                 "மொபைல் → தரவு என்பதில் உங்கள் சிம் பார்க்கும் டவர்களைப் பட்டியலிடலாம்: பயன்பாட்டில் உள்ள செல், " +
                     "அதன் அண்டை செல்கள், PCI/TAC மற்றும் dBm உடன். அந்தப் பட்டியலை Android 'துல்லியமான' " +
                     "இருப்பிடம் உள்ள ஆப்களுக்கு மட்டுமே தரும் — தோராயமானது போதாது — சில நிறுவனங்கள் அதை " +
-                    "மறைக்கின்றன. அத்திரையிலேயே அனுமதி தாருங்கள்; திரை திறந்திருக்கும்போது மட்டுமே லைவ் கார்டு " +
+                    "மறைக்கின்றன. அத்திரையிலேயே அனுமதி தாருங்கள்; திரை திறந்திருக்கும்போது மட்டுமே கைபேசி காவலன் " +
                     "அதைப் படிக்கும், பின்னணியில் ஒருபோதும் படிக்காது, எதுவும் பதிவேற்றப்படுவதில்லை.",
+            ),
+            topic(
+                "SIM signal pill, news timing and steady startup",
+                "சிம் சிக்னல் பட்டி, செய்தி நேரம் மற்றும் நிலையான தொடக்கம்",
+                "Home → Phone, network & security → Status Bar Pill & LED Meter lets you choose First SIM (default), Both SIMs or Off for the signal text. The pill now shows coloured percentages only, left to right in physical-slot order, with no S1/S2 labels and no ≈: 46% then 76% means the first installed SIM, then the second. Each percentage is a rough estimate of where that subscription's own measured dBm sits inside its radio's range — not reception reliability, not Android's four bars, and not a speed promise. Android gives very poor readings the same small number, so read the colour (red low, yellow middle, green high) and the trend, not the last digit. Unavailable signal and mobile details are hidden, never shown as zero or an error. If the normal signal is missing, only the registered serving cell of the current query can replace it, never a stronger neighbour and never another SIM; that fallback needs an already-granted precise-location permission while the app is visible and exactly one active SIM, and a dated sample older than a minute is refused. Some phones never date a cell sample (or date it in a different unit); Live Guard then uses the registered cell from that same on-screen query and says so, instead of hiding a real reading forever. No new permission prompt, background cell poller or tower-identity storage/upload. Allow Phone permission and overlay permission yourself; ordinary per-SIM readings need no location. Charging keeps watts-only; unplugging restores data, signal and D/U activity, and your move/drag/resize and Wi-Fi hiding choices are unchanged. News: Home shows the headlines already saved on the phone as soon as it opens, and an automatic fresh fetch waits one minute after opening so a slow phone is not asked to open many feeds at once; Read and Refresh still work immediately. Voice → News language defaults to Tamil + English-to-Tamil translation when no language was saved; every explicit earlier choice is preserved. Translation needs a working provider and must not invent a result on failure.",
+                "முகப்பு → Phone, network & security → Status Bar Pill & LED Meter பகுதியில் முதல் சிம் (இயல்பு), இரு சிம்கள் அல்லது வேண்டாம் என்பதைத் தேர்ந்தெடுக்கலாம். பட்டியில் இப்போது நிறமுள்ள சதவீதங்கள் மட்டுமே, இடமிருந்து வலமாக சிம் இட வரிசையில்; S1/S2 குறியோ ≈ குறியோ இல்லை: 46% பின்னர் 76% என்றால் முதலில் பொருத்திய சிம், பிறகு இரண்டாவது. ஒவ்வொரு சதவீதமும் அந்த சிம்மின் அளந்த dBm அதன் ரேடியோ வரம்புக்குள் எங்கே உள்ளது என்பதன் தோராயம் — வரவேற்பு நம்பகத்தன்மையோ ஆண்ட்ராய்டின் நான்கு பட்டைகளோ வேக உறுதியோ அல்ல. மிக மோசமான அளவுகளுக்கும் ஆண்ட்ராய்டு சிறிய எண்ணையே தரும்; எனவே நிறத்தையும் (சிவப்பு குறைவு, மஞ்சள் நடுத்தரம், பச்சை அதிகம்) போக்கையும் பாருங்கள், கடைசி இலக்கத்தை அல்ல. கிடைக்காத சிக்னல்/மொபைல் விவரங்கள் பூஜ்ஜியம் அல்லது பிழையாகக் காட்டாமல் மறைக்கப்படும். வழக்கமான சிக்னல் இல்லாவிட்டால் இப்போது அளந்த இணைந்த செல் மட்டுமே மாற்றாகும்; வலுவான அண்டை டவர் அல்ல, வேறு சிம் அல்ல. அதற்கு ஏற்கனவே வழங்கிய துல்லிய இருப்பிட அனுமதி, திரையில் திறந்த செயலி, செயலில் ஒரே சிம் தேவை; ஒரு நிமிடத்துக்கு முற்பட்ட தேதியுள்ள அளவு நிராகரிக்கப்படும். சில போன்கள் செல் அளவுக்கு தேதியே தருவதில்லை (அல்லது வேறு அலகில் தரும்); அப்போது அதே திரை அளவீட்டின் இணைந்த செல்லைப் பயன்படுத்தி அதைத் தெளிவாகச் சொல்கிறோம் — உண்மையான அளவை என்றென்றும் மறைப்பதில்லை. புதிய அனுமதிக் கேள்வி, பின்னணி செல் சுழற்சி, டவர் அடையாளச் சேமிப்பு/பதிவேற்றம் இல்லை. தொலைபேசி மற்றும் மேலடுக்கு அனுமதிகளை நீங்களே வழங்க வேண்டும்; வழக்கமான தனிச் சிம் வாசிப்பிற்கு இருப்பிட அனுமதி தேவையில்லை. சார்ஜில் வாட்ஸ் மட்டும்; சார்ஜர் நீக்கியதும் தரவு, சிக்னல், D/U மீண்டும் வரும்; நகர்த்தல்/அளவு/Wi-Fi விருப்பங்கள் தொடரும். செய்திகள்: செயலி திறக்கும்போது போனில் சேமித்த செய்திகள் உடனே தெரியும்; தானியங்கி புதிய செய்தி சேகரிப்பு திறந்த ஒரு நிமிடம் கழித்துதான் தொடங்கும் — மெதுவான போனில் பல ஊட்டங்கள் ஒரே நேரத்தில் திறக்கப்படுவதைத் தவிர்க்க. வாசி/புதுப்பி உடனே வேலை செய்யும். குரல் → செய்தி மொழி பகுதியில் முன்பு மொழி சேமிக்காவிட்டால் தமிழ் + ஆங்கிலத்திலிருந்து தமிழாக்கம் இயல்பு; முன்பு தேர்ந்தெடுத்த மொழி மாறாது. மொழிபெயர்ப்பு சேவைக்கு இணைப்பு தேவை; தோல்வியில் கற்பனை மொழிபெயர்ப்பு வராது.",
             ),
             topic(
                 "My plan and the pill colours",
@@ -140,7 +159,7 @@ object AppGuides {
                     "that was active at that moment. Set a 5G plan as unlimited and only your 4G is counted. " +
                     "The Auto / On / Off buttons under the radio card decide whether the app identifies 4G and 5G " +
                     "at all; Off leaves one mobile total, as older versions did.",
-                "Android ஒரே மொபைல் கணக்கைத்தான் வைத்திருக்கிறது; எனவே லைவ் கார்டு அதை அளந்து, அந்த நேரத்தில் " +
+                "Android ஒரே மொபைல் கணக்கைத்தான் வைத்திருக்கிறது; எனவே கைபேசி காவலன் அதை அளந்து, அந்த நேரத்தில் " +
                     "இயங்கிய ரேடியோவின் கீழ் ஒவ்வொரு கூட்டத்தையும் சேர்க்கிறது. 5G திட்டம் வரம்பற்றது எனில் 4G மட்டும் " +
                     "கணக்கிடப்படும். ரேடியோ அட்டையின் கீழ் உள்ள Auto / On / Off 4G, 5G அடையாளத்தை முடக்கவும் இயக்கவும் உதவும்; " +
                     "Off எனில் பழைய பதிப்புகளைப் போல ஒரே மொபைல் மொத்தம்.",
@@ -149,13 +168,13 @@ object AppGuides {
                 "Voice announcements and calls",
                 "குரல் அறிவிப்புகள் மற்றும் அழைப்புகள்",
                 "Voice defaults ON with 10 Studio Ultra-HD online voices (5 Male + 5 Female) and automatic daily " +
-                    "Male ↔ Female rotation, falling back automatically to your phone's installed Android TTS " +
-                    "voice whenever offline. It can tell you about charging, heat, transport changes (Wi-Fi ⇄ " +
+                    "Male ↔ Female rotation. Only online HD voices are used; offline or service failures wait " +
+                    "without a robotic fallback. It can tell you about charging, battery heat, transport changes (Wi-Fi ⇄ " +
                     "mobile) and 4G ⇄ 5G hops in Tamil or English. Nothing is ever spoken during a phone call: " +
                     "announcements wait and show \"Blocked: phone call in progress\".",
                 "குரல் அறிவிப்பு இயல்பாகவே (Default ON) 10 ஸ்டுடியோ Ultra-HD ஆன்லைன் குரல்களுடன் (5 ஆண் + 5 பெண்) " +
-                    "தினமும் ஆண் ↔ பெண் தானியங்கி மாற்றத்துடன் இயங்கும்; இணையம் இல்லாதபோது போனின் சிஸ்டம் TTS " +
-                    "குரலுக்குத் தானாக மாறும். சார்ஜிங், வெப்பம், Wi-Fi ⇄ மொபைல் மற்றும் 4G ⇄ 5G மாற்றங்களைத் " +
+                    "தினமும் ஆண் ↔ பெண் தானியங்கி மாற்றத்துடன் இயங்கும். ஆன்லைன் HD குரல் மட்டுமே; இணையம் அல்லது " +
+                    "சேவை கிடைக்காதபோது இயந்திரக் குரலுக்கு மாறாமல் காத்திருக்கும். சார்ஜிங், பேட்டரி வெப்பம், Wi-Fi ⇄ மொபைல் மற்றும் 4G ⇄ 5G மாற்றங்களைத் " +
                     "தமிழ் அல்லது ஆங்கிலத்தில் கூறும். தொலைபேசி அழைப்பின்போது எதுவும் ஒலிக்காது (\"தடுக்கப்பட்டது: " +
                     "தொலைபேசி அழைப்பு நடைபெறுகிறது\").",
             ),
@@ -167,7 +186,7 @@ object AppGuides {
                     "very heavy rain and cyclone warnings speak at any hour (still muted during live phone calls). " +
                     "If phone GPS is on, location is automatic; if GPS is off, search your PIN code or village name " +
                     "(such as 622301 or alangudi 622301) and pick your exact town once.",
-                "இயக்கும்போது, தினசரி சாதாரண வானிலை தொந்தரவு இல்லாமல் மழை மற்றும் புயல் முன்னறிவிப்பை லைவ் கார்டு " +
+                "இயக்கும்போது, தினசரி சாதாரண வானிலை தொந்தரவு இல்லாமல் மழை மற்றும் புயல் முன்னறிவிப்பை கைபேசி காவலன் " +
                     "கண்காணிக்கும். சாதாரண 30 நிமிட மழை முன்னறிவிப்பு அமைதி நேரத்தில் ஒலிக்காது; ஆனால் மிகக் கனமழை " +
                     "மற்றும் புயல் எச்சரிக்கைகள் இரவு-பகல் எப்போதும் ஒலிக்கும் (தொலைபேசி அழைப்பின்போது மட்டும் காத்திருக்கும்). " +
                     "GPS இயக்கத்தில் இருந்தால் இடம் தானாகத் தேர்ந்தெடுக்கப்படும்; GPS அணைந்திருந்தால் உங்கள் PIN எண் " +
@@ -176,14 +195,8 @@ object AppGuides {
             topic(
                 "Updating Live Guard",
                 "லைவ் கார்டைப் புதுப்பித்தல்",
-                "Live Guard checks the official GitHub releases itself and offers only a newer stable version. " +
-                    "It checks the file size, SHA-256, package name, version and signing certificate before handing " +
-                    "the file to Android. Android still shows its own install screen, and you can cancel there. " +
-                    "The app never installs anything silently.",
-                "லைவ் கார்டு அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே " +
-                    "வழங்கும். கோப்பு அளவு, SHA-256, தொகுப்புப் பெயர், பதிப்பு, கையொப்பச் சான்றிதழ் ஆகியவற்றைச் " +
-                    "சரிபார்த்த பிறகே Android-க்கு அளிக்கும். நிறுவல் திரையை Android காட்டும்; அங்கே ரத்து செய்யலாம். " +
-                    "எதையும் அமைதியாக நிறுவாது.",
+                "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",
+                "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது, நாளுக்கு ஒருமுறை அதிகபட்சம் பொதுப் பதிப்பு விவரங்கள் மட்டும் தானாகச் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் செயலிக்குள் அறிவிப்பு வரும். அதைத் தொட்டு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறந்து, அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. சரிபார்ப்பு செயலியைத் திறப்பது, இணைய இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைப் பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
             topic(
                 "Smart news headlines reader & auto screen-off announcements",
@@ -209,7 +222,7 @@ object AppGuides {
                     "banners automatically once skies dry up or your town changes. When phone GPS is ON, live location " +
                     "is checked automatically; when GPS is OFF, your saved fallback PIN/village (e.g. 622301) is verified " +
                     "automatically in the background with both notification and voice alerts.",
-                "லைவ் கார்டு பின்னணியில் தானாகவே மழை மற்றும் புயல் நிலையைச் சரிபார்த்து, மழை நின்றவுடன் பழைய " +
+                "கைபேசி காவலன் பின்னணியில் தானாகவே மழை மற்றும் புயல் நிலையைச் சரிபார்த்து, மழை நின்றவுடன் பழைய " +
                     "அறிவிப்பைத் தானாகவே நீக்கும். போன் GPS இயக்கத்தில் இருந்தால் நேரடி இடமும், GPS அணைந்திருந்தால் " +
                     "நீங்கள் சேமித்த மாற்று ஊர்/PIN எண்ணும் (உதா: 622301) பின்னணியில் சரிபார்க்கப்பட்டு அறிவிப்பும் குரல் " +
                     "எச்சரிக்கையும் வழங்கப்படும்.",
@@ -217,10 +230,10 @@ object AppGuides {
             topic(
                 "The other RP Ideas apps",
                 "மற்ற RP Ideas செயலிகள்",
-                "About lists all seven RP Ideas apps with their official release pages and website links, so you can " +
+                "About lists our RP Ideas apps with their official release pages and website links, so you can " +
                     "read what changed or download a fresh copy. Tapping an app that is installed on this phone opens " +
                     "it; tapping one that is not opens its release page.",
-                "About பகுதியில் ஏழு RP Ideas செயலிகளும் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்களுடன் உள்ளன; என்ன மாறியது " +
+                "About பகுதியில் நமது செயலிகளின் அதிகாரப்பூர்வ வெளியீட்டுப் பக்கங்கள் உள்ளன; என்ன மாறியது " +
                     "என்பதைப் படிக்கலாம் அல்லது புதிய நகலைப் பதிவிறக்கலாம். நிறுவிய செயலியைத் தொட்டால் உடனே திறக்கும்.",
             ),
         ),
@@ -235,6 +248,7 @@ object AppGuides {
         introTa = "ரமேஷ் ரேடியோ இணையத்திலிருந்து தமிழ் FM நிலையங்களையும் உங்கள் சொந்த ஒலிக் கோப்புகளையும் " +
             "இயக்கும். ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
+            topic("Local continuous, random and repeat", "உள்ளூர் தொடர்ச்சி, சீரற்ற வரிசை, மீண்டும் இயக்கம்", "Choose a folder for a local queue. Continuous is on by default; turn it off to pause after the current track. Random uses the player shuffle order; Repeat is off, one or all. These settings are remembered for local files, not live radio stations.", "உள்ளூர் பாடல் வரிசைக்குக் கோப்புறையைத் தேர்ந்தெடுக்கவும். இயல்பாகத் தொடர்ச்சி இயக்கத்தில் இருக்கும்; அதை நிறுத்தினால் தற்போதைய பாடலுடன் இடைநிறுத்தப்படும். சீரற்ற வரிசை, ஒரு பாடலை மீண்டும் இயக்குதல், அனைத்தையும் மீண்டும் இயக்குதல் ஆகியவை உள்ளன. இவை உள்ளூர் கோப்புகளுக்கான சேமித்த அமைப்புகள்; நேரடி வானொலிக்கானவை அல்ல."),
             topic(
                 "Playing a live station",
                 "நேரடி நிலையம் இயக்குதல்",
@@ -321,14 +335,8 @@ object AppGuides {
             topic(
                 "Updating Ramesh Radio",
                 "ரமேஷ் ரேடியோவைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases and offers only a newer stable version, after " +
-                    "checking the file's size, SHA-256, package name, version and signing certificate. Android " +
-                    "shows its own install screen. If your phone blocks the update, it is usually the signer: " +
-                    "uninstall the older test build first, then install once.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைச் சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; கோப்பு அளவு, " +
-                    "SHA-256, தொகுப்புப் பெயர், பதிப்பு, கையொப்பச் சான்றிதழ் ஆகியவை சரிபார்க்கப்படும். நிறுவல் " +
-                    "திரையை Android காட்டும். போன் தடுத்தால் பெரும்பாலும் கையொப்பம் காரணம்: பழைய சோதனைப் பதிப்பை " +
-                    "முதலில் நீக்கி, பின்னர் ஒருமுறை நிறுவுங்கள்.",
+                "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",
+                "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது, நாளுக்கு ஒருமுறை அதிகபட்சம் பொதுப் பதிப்பு விவரங்கள் மட்டும் தானாகச் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் செயலிக்குள் அறிவிப்பு வரும். அதைத் தொட்டு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறந்து, அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. சரிபார்ப்பு செயலியைத் திறப்பது, இணைய இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைப் பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -342,6 +350,7 @@ object AppGuides {
         introTa = "பல்ஸ்இக்யூ தனக்குள் இயக்கும் ஒலியின் தன்மையை மாற்றும்; சில போன்களில் கணினி ஒலியையும் " +
             "சரிசெய்யும். ஒரு தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
+            topic("Continuous local playlist", "உள்ளூர் பாடல்களைத் தொடர்ந்து கேட்க", "Choose audio files supports multiple selection. Tracks play through the existing DSP in the selected order; Random visits each track once per cycle. Continuous off stops after the current track. Repeat is off, one or all while Continuous is on. Previous/Next change track. The queue and modes are saved; document access must still be valid and cloud files must be available offline.", "ஒலிக் கோப்புகளைத் தேர்ந்தெடு பொத்தானில் பல கோப்புகளைத் தேர்ந்தெடுக்கலாம். அவை ஒலி அமைப்புகள் வழியாகத் தொடர்ந்து இயங்கும். சீரற்ற வரிசையில் ஒரு சுற்றில் ஒவ்வொரு பாடலும் ஒருமுறை இயங்கும். தொடர்ச்சியை நிறுத்தினால் தற்போதைய பாடலுடன் நிற்கும். தொடர்ச்சி இயக்கத்தில் இருக்கும்போது ஒரு பாடலையோ அனைத்தையுமோ மீண்டும் இயக்கலாம். வரிசையும் அமைப்புகளும் சேமிக்கப்படும். கோப்பு அணுகல் செல்லுபடியாகவும் கோப்புகள் இணையமின்றிக் கிடைக்கவும் வேண்டும்."),
             topic(
                 "Choosing a file and playing it",
                 "கோப்பைத் தேர்ந்தெடுத்து இயக்குதல்",
@@ -401,12 +410,8 @@ object AppGuides {
             topic(
                 "Updating PulseEQ",
                 "பல்ஸ்இக்யூவைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases itself and offers only a newer stable version after " +
-                    "checking size, SHA-256, package, version and signing certificate. Android shows its own " +
-                    "install screen and you can cancel there.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; " +
-                    "அளவு, SHA-256, தொகுப்பு, பதிப்பு, கையொப்பம் சரிபார்க்கப்படும். நிறுவல் திரையை Android " +
-                    "காட்டும்; அங்கே ரத்து செய்யலாம்.",
+                "PulseEQ reads public stable-release metadata at most once per day when opened or resumed. A newer stable release shows an in-app notice; Update opens the official website in the browser. INTERNET is used only for this metadata check, which sends no audio. PulseEQ never downloads or installs APKs. Checks depend on app use, connectivity and available metadata. Stop if a security warning appears.",
+                "பல்ஸ்இக்யூ திறக்கும்போது அல்லது முன்வரும்போது நாளுக்கு ஒருமுறை பொதுப் பதிப்பு விவரங்களை மட்டும் சரிபார்க்கும். புதிய நிலையான பதிப்பு இருந்தால் அறிவிப்பு வரும்; புதுப்பிப்பு பொத்தான் அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறக்கும். இந்தச் சரிபார்ப்பிற்கே இணையம் பயன்படுத்தப்படும்; ஒலி அனுப்பப்படாது. APK-ஐ செயலி பதிவிறக்கவோ நிறுவவோ செய்யாது. சரிபார்ப்பு பயன்பாடு, இணைப்பு, வெளியீட்டு விவரங்களைப் பொறுத்தது. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -502,12 +507,8 @@ object AppGuides {
             topic(
                 "Updating Vocal Remover",
                 "வோக்கல் ரிமூவரைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases itself and offers only a newer stable version, after " +
-                    "checking the file's size, SHA-256, package, version and signing certificate. Android shows " +
-                    "its own install screen.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; " +
-                    "கோப்பின் அளவு, SHA-256, தொகுப்பு, பதிப்பு, கையொப்பம் சரிபார்க்கப்படும். நிறுவல் திரையை " +
-                    "Android காட்டும்.",
+                "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",
+                "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது, நாளுக்கு ஒருமுறை அதிகபட்சம் பொதுப் பதிப்பு விவரங்கள் மட்டும் தானாகச் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் செயலிக்குள் அறிவிப்பு வரும். அதைத் தொட்டு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறந்து, அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. சரிபார்ப்பு செயலியைத் திறப்பது, இணைய இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைப் பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -516,8 +517,8 @@ object AppGuides {
     // Oor Arivippu
     // ---------------------------------------------------------------------------------------
     val oorArivippu = GuideContent(
-        intro = "Oor Arivippu says the place and district you reach while you travel. Tap a topic to open it.",
-        introTa = "ஊர் அறிவிப்பு நீங்கள் பயணிக்கும்போது அடையும் ஊர் மற்றும் மாவட்டத்தைக் கூறும். ஒரு தலைப்பைத் " +
+        intro = "Oor Arivippu announces places while you travel and optionally shares encrypted last-reported towns with mutually confirmed family connections. Tap a topic to open it.",
+        introTa = "ஊர் அறிவிப்பு பயணத்தில் ஊரை அறிவிக்கும்; இருவரும் உறுதிப்படுத்திய குடும்ப இணைப்புகளுக்கு விருப்பமாக மறையாக்கிய கடைசி ஊரைப் பகிரலாம். ஒரு தலைப்பைத் " +
             "தொட்டு விரிவாக்குங்கள்.",
         topics = listOf(
             topic(
@@ -563,14 +564,38 @@ object AppGuides {
                 "சுருக்கமான முகப்புத் திரை, தமிழ் | ENG பொத்தான் & அமைப்புகள்",
                 "The compact Home screen gives you a clear Start / Stop (தொடங்கு / நிறுத்து) button, live rain banner " +
                     "(shown when Rain Alert is on and active), current City/Village card, current session distance " +
-                    "traveled in km, and destination proximity card. The top தமிழ் | ENG button switches both app UI " +
+                    "traveled in km, and destination proximity card. Verified family connections also have name/town/sharing cards above trip status. The top தமிழ் | ENG button switches both app UI " +
                     "and voice announcement language together with automatic daily Male ↔ Female Studio HD voices " +
                     "(and automatic Male/Female Android system voice fallback offline). All extra options live inside Settings (⚙️).",
                 "சுருக்கமான முகப்புத் திரையில் பெரிய தொடங்கு / நிறுத்து பொத்தான், மழை எச்சரிக்கைப் பட்டை, தற்போதைய " +
                     "ஊர்/பகுதி விவரம், இந்தப் பயணத்தில் கடந்த தூரம் (km) மற்றும் இலக்கு தூரப் பெட்டி ஆகியவை மட்டும் " +
-                    "தெளிவாக இருக்கும். மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் " +
+                    "தெளிவாக இருக்கும். உறுதிப்படுத்திய குடும்ப இணைப்புகளின் பெயர்/ஊர்/பகிர்வு அட்டைகளும் பயண நிலைக்கு மேலே இருக்கும். மேலே உள்ள தமிழ் | ENG பொத்தான் செயலி மொழியையும் குரல் மொழியையும் ஒருசேர மாற்றும் " +
                     "(ஆன்லைனில் தினசரி ஆண் ↔ பெண் HD குரல்களும், ஆஃப்லைனில் போனின் ஆண்/பெண் சிஸ்டம் குரலும் தானாக இயங்கும்). " +
                     "மற்ற அனைத்து விருப்பங்களும் அமைப்புகள் (⚙️) உள்ளே உள்ளன.",
+            ),
+            topic(
+                "Connecting family — up to six connections",
+                "குடும்ப இணைப்பு — ஆறு இணைப்புகள் வரை",
+                "Family town sharing is optional and starts OFF. A phone can have up to six connections, including pending invitations; a pending removal can still occupy a slot. Enter a local member label, create a private invitation and send it only to the intended person. It expires after ten minutes and connects one other phone. The recipient accepts the connection only, with sharing still OFF. Compare the code on both phones over a trusted channel, then both confirm only if it matches. Local labels stay on your phone. Each connection is separate, not automatic access for an entire family group.",
+                "குடும்ப ஊர் பகிர்வு விருப்பமானது; இயல்பாக அணைந்திருக்கும். காத்திருக்கும் அழைப்புகள் உட்பட ஆறு இணைப்புகள் வரை சேர்க்கலாம்; நீக்கம் நிறைவடையும் வரை அதுவும் இடத்தைப் பயன்படுத்தலாம். உள்ளூர் பெயரை உள்ளிட்டு தனிப்பட்ட அழைப்பை உருவாக்கி குறிப்பிட்ட நபருக்கு மட்டும் அனுப்பவும். அழைப்பு பத்து நிமிடத்தில் காலாவதியாகும்; ஒரு கைப்பேசி மட்டுமே இணையலாம். மற்றவர் இணைப்பை மட்டும் ஏற்ற பிறகும் பகிர்வு அணைந்தே இருக்கும். நம்பகமான வழியில் இரு கைப்பேசிக் குறியீடுகளையும் ஒப்பிட்டு பொருந்தினால் மட்டுமே இருவரும் உறுதிப்படுத்தவும். உள்ளூர் பெயர் உங்கள் கைப்பேசியில் மட்டும் இருக்கும். ஒரு இணைப்பு குடும்பத்தினர் அனைவருக்கும் தானாக அணுகலை வழங்காது.",
+            ),
+            topic(
+                "Remembered sharing ON/OFF and paused trips",
+                "நினைவில் இருக்கும் பகிர்வு இயக்கம்/அணைப்பு",
+                "My sharing controls YOUR outgoing town for that one person, not their sharing. ON stays remembered across trips until you turn it OFF or the connection becomes invalid; there are no 1/4/8-hour controls. Uploads require your user-started running Oor trip, fresh usable location, internet and a valid verified connection. Stopping the trip pauses uploads but keeps saved ON; a later trip can resume. OFF, Stop all my family sharing and Remove connection revoke your local intent; remote stopping can be delayed offline. An earlier report can remain until expiry. Existing connections remain saved on update, but old timed sharing migrates OFF and must be explicitly enabled again. Update without uninstalling or clearing data.",
+                "எனது பகிர்வு என்பது அந்த நபருக்கு உங்கள் ஊரை அனுப்பும் அனுமதி; அவருடைய பகிர்வை அது இயக்காது. நீங்கள் அணைக்கும் வரை அல்லது இணைப்பு செல்லாததாகும் வரை தேர்வு அடுத்த பயணங்களிலும் நினைவில் இருக்கும்; ஒன்று/நான்கு/எட்டு மணி கட்டுப்பாடுகள் இல்லை. நீங்கள் தொடங்கிய Oor பயணம், புதிய இடம், இணையம் மற்றும் உறுதிப்படுத்திய இணைப்பு தேவை. பயணத்தை நிறுத்தினால் பதிவேற்றம் இடைநிறுத்தப்படும்; இயக்கத் தேர்வு நினைவில் இருக்கும். அடுத்த பயணத்தில் மீண்டும் தொடங்கலாம். தனியாக அணைக்கலாம், அனைத்தையும் நிறுத்தலாம் அல்லது இணைப்பை நீக்கலாம். இணையமில்லாமல் தொலை நிறுத்தம் தாமதமாகலாம்; பழைய அறிக்கை காலாவதியாகும் வரை தெரியலாம். புதுப்பிப்பில் இணைப்புகள் இருக்கும்; பழைய நேரவரம்புப் பகிர்வு அணைந்தே தொடங்கும். விரும்பினால் மீண்டும் இயக்கவும். செயலியை நீக்கவோ தரவை அழிக்கவோ வேண்டாம்.",
+            ),
+            topic(
+                "Received towns, freshness and family speech",
+                "பெறப்பட்ட ஊர், காலாவதி மற்றும் குடும்பக் குரல்",
+                "The main family card shows a local member label, last-reported town and observation time above trip status. This is not a live position. Senders normally attempt updates no more often than every five minutes during their trip; usable reports expire within fifteen minutes. No fresh town shared is not an all-clear. Receiving needs the resumed app window or an existing visible Oor trip service; with the app closed and no trip running there is no continuous family polling. You do not need to share your own town to receive. Each new report gets at most one on-device speech attempt; reopening does not replay it. Family details are not sent to online HD voices or ordinary travel/speech history. Calls, silent/vibrate/DND, mute, busy audio, denied audio focus or missing device voices can prevent speech; unlike normal trip speech, do not assume a family report will play after a call. Contact the person directly when needed; this is not an emergency tracker.",
+                "முதன்மைக் குடும்ப அட்டை பயண நிலைக்கு மேலே உள்ளூர் பெயர், கடைசியாகத் தெரிவித்த ஊர் மற்றும் பதிவுநேரத்தைக் காட்டும்; அது நேரலை இடம் அல்ல. அனுப்புபவர் பயணத்தின்போது வழக்கமாக ஐந்து நிமிட இடைவெளியில் புதுப்பிக்க முயல்வார்; அறிக்கை பதினைந்து நிமிடத்திற்குள் காலாவதியாகும். புதிய ஊர் இல்லாதது பாதுகாப்பிற்கான உறுதி அல்ல. செயலித் திரை முன்வந்திருக்கும்போதோ அறிவிப்புடன் Oor பயணம் இயங்கும்போதோ அறிக்கைகள் பார்க்கப்படும்; இரண்டும் இல்லாவிட்டால் தொடர்ந்து பார்க்காது. பெறுவதற்கு உங்கள் ஊரைப் பகிர வேண்டியதில்லை. புதிய அறிக்கைக்கு அதிகபட்சம் ஒருமுறை கைப்பேசிக் குரல் முயற்சி; மீண்டும் திறந்தால் அதையே மீண்டும் பேசாது. குடும்ப விவரங்கள் இணைய HD குரலுக்கோ சாதாரண பயண/பேச்சு வரலாற்றுக்கோ அனுப்பப்படாது. அழைப்பு, அமைதி/அதிர்வு/தொந்தரவு செய்யாதே முறை, ஒலி அணைப்பு, வேறு ஒலி அல்லது சாதனக் குரல் இல்லாமை குரலைத் தடுக்கலாம். அழைப்புக்குப் பிறகு குடும்ப அறிக்கை பேசும் என்று கருத வேண்டாம். தேவையெனில் நேரடியாகத் தொடர்புகொள்ளவும்; இது அவசரக் கண்காணிப்பு அல்ல.",
+            ),
+            topic(
+                "Family privacy and the web guide",
+                "குடும்பத் தனியுரிமையும் இணைய வழிகாட்டியும்",
+                "Only end-to-end encrypted town, district and observation time go through the separate Oor relay. Family uploads do not include precise coordinates, address, roads, PIN, speed, contacts or route history. The relay/provider can see network metadata such as IP addresses and timing; this is not a promise that nothing leaves the phone or provider backups have no traces. Local labels, keys and the latest-report cache are encrypted on the phone, with expiry checked before use. Existing positioning/geocoding and ordinary online trip voices have separate provider boundaries. Source availability is not an independent audit or universal Android/background/audio guarantee. About includes Web guide & redacted screenshots for the full English/Tamil instructions and reviewed masked screenshots.",
+                "தனி Oor சேவைக்கு ஊர், மாவட்டம், பதிவுநேரம் மட்டும் முனையிலிருந்து முனை வரை மறையாக்கி அனுப்பப்படும். துல்லிய இடம், முகவரி, சாலை, அஞ்சல் குறியீடு, வேகம், தொடர்புகள் அல்லது பாதை வரலாறு குடும்பப் பதிவேற்றத்தில் இல்லை. சேவை/வழங்குநருக்கு IP முகவரி மற்றும் நேரம் போன்ற இணைய விவரங்கள் தெரியலாம்; எதுவும் வெளியே செல்லாது அல்லது வழங்குநர் காப்பில் தடயமே இல்லை என்ற உறுதி அல்ல. உள்ளூர் பெயர்கள், விசைகள் மற்றும் கடைசி அறிக்கை கைப்பேசியில் மறையாக்கப்படும்; பயன்படுத்தும் முன் காலாவதி பார்க்கப்படும். இடச் சேவை, ஊர் தேடல் மற்றும் சாதாரண இணையப் பயணக் குரல்களுக்கு தனி வழங்குநர் எல்லைகள் உள்ளன. திறந்த மூலக் குறியீடு தனிச் சுயாதீனத் தணிக்கையோ எல்லாச் சாதன/பின்னணி/ஒலி உறுதியோ அல்ல. செயலி விவரத்தில் இணைய வழிகாட்டி மற்றும் மறைக்கப்பட்ட படங்களுக்கான இணைப்பு உள்ளது.",
             ),
             topic(
                 "Travel and repeat settings",
@@ -603,37 +628,26 @@ object AppGuides {
                     "Geocoder வழங்குநர் தனது கொள்கைப்படி தேடலைச் செயலாக்கலாம்.",
             ),
             topic(
-                "Calls and the headset button",
+                "Trip calls and the headset button",
                 "அழைப்புகள் மற்றும் ஹெட்செட் பொத்தான்",
-                "Nothing is spoken while the phone is ringing or you are on a call: the announcement waits and " +
+                "Ordinary travel speech is held while the phone is ringing or you are on a call: the announcement waits and " +
                     "plays after the call ends. With a headset, its button asks \"Where am I?\" and you get the " +
                     "current place once.",
-                "போன் அடிக்கும்போதோ நீங்கள் அழைப்பில் இருக்கும்போதோ எதுவும் ஒலிக்காது: அறிவிப்பு காத்திருந்து " +
+                "சாதாரண பயணக் குரல் போன் அடிக்கும்போதோ நீங்கள் அழைப்பில் இருக்கும்போதோ ஒலிக்காது: அறிவிப்பு காத்திருந்து " +
                     "அழைப்பு முடிந்த பிறகு ஒலிக்கும். ஹெட்செட்டின் பொத்தான் \"நான் எங்கே இருக்கிறேன்?\" என்று " +
                     "கேட்கும்; தற்போதைய இடம் ஒருமுறை கூறப்படும்.",
             ),
             topic(
-                "30-minute rain & 24×7 cyclone voice alerts",
-                "30 நிமிட மழை & 24×7 புயல் குரல் எச்சரிக்கை",
-                "Tap the cloud button at the top (or the Rain & Cyclone card on the main screen). When phone " +
-                    "GPS is ON, alerts turn on automatically on update and follow your live travel route; when " +
-                    "GPS is OFF, your saved PIN/village (e.g. 622301) or saved destination is used automatically. " +
-                    "Normal rain stays silent during Quiet Hours (10 PM – 7 AM); heavy rain and cyclone warnings " +
-                    "announce 24×7 day or night, with an animated alert banner at the top and a free Tomorrow.io key guide.",
-                "மேலே உள்ள மேகப் பொத்தானை (அல்லது முகப்பு அட்டையை) தட்டவும். போன் GPS இயக்கத்தில் இருந்தால் " +
-                    "புதுப்பிப்பின்போது தானாக இயங்கி பயண வழியைப் பின்தொடரும்; GPS அணைந்தால் சேமித்த PIN/ஊர் (உதா: 622301) " +
-                    "பயன்படும். சாதாரண மழை இரவு (10 PM – 7 AM) ஒலிக்காது; மிகக் கனமழை & புயல் 24×7 ஒலிக்கும். " +
-                    "மேலே சிறிய அனிமேஷன் பட்டையும் இலவச Tomorrow.io விசை வழிகாட்டியும் உள்ளன.",
+                "Rain and cyclone alerts — active-session limits",
+                "மழை மற்றும் புயல் எச்சரிக்கை — இயங்கும் நேர வரம்புகள்",
+                "Open Settings > Rain & cyclone voice alert. Automatic checks need the Oor window open or your announcer/trip host active, the alert switch enabled and the scheduled check due; this is not a separate always-on 24×7 monitoring service. GPS can supply the place, otherwise a saved place or destination may be used; check the selected place. Explicitly saved OFF is preserved. Rain timing and warnings depend on the available provider data, freshness, internet, quota and coverage. A personal Tomorrow.io key needs suitable plan access; keyless evaluation and model fallback are not guaranteed minute-precise rain arrival, raw radar or verified landfall. Quiet hours and Android/audio restrictions can prevent announcements. No banner or speech is not an all-clear.",
+                "அமைப்புகளில் மழை & புயல் குரல் எச்சரிக்கையைத் திறக்கவும். தானியங்கிச் சோதனைக்கு Oor திரை திறந்திருத்தல் அல்லது பயண அறிவிப்பு இயங்குதல், எச்சரிக்கைத் தேர்வு இயக்கம் மற்றும் சோதனை நேரம் வந்திருத்தல் தேவை. இது தனியான எப்போதும் இயங்கும் கண்காணிப்புச் சேவை அல்ல. GPS இடம் அல்லது சேமித்த ஊர்/இலக்கு பயன்படுத்தப்படலாம்; தேர்ந்த இடத்தைச் சரிபார்க்கவும். நீங்கள் அணைத்த தேர்வு பாதுகாக்கப்படும். மழை நேரமும் எச்சரிக்கையும் வழங்குநர் தகவல், புதுமை, இணையம், பயன்பாட்டு வரம்பு மற்றும் பரப்பைப் பொறுத்தவை. தனிப்பட்ட Tomorrow.io விசைக்கு பொருத்தமான திட்ட அனுமதி தேவை; விசையில்லா மதிப்பீடு/மாதிரி முன்னறிவிப்பு துல்லிய நிமிட வருகை, நேரடி ரேடார் அல்லது உறுதியான கரைகடப்பைக் குறிக்காது. அமைதி நேரம் மற்றும் Android/ஒலி கட்டுப்பாடுகள் அறிவிப்பைத் தடுக்கலாம். பட்டை அல்லது குரல் இல்லாதது பாதுகாப்பு உறுதி அல்ல.",
             ),
             topic(
                 "Updating Oor Arivippu",
                 "ஊர் அறிவிப்பைப் புதுப்பித்தல்",
-                "The app checks the official GitHub releases itself and offers only a newer stable version after " +
-                    "checking size, SHA-256, package, version and signing certificate. Android shows its own " +
-                    "install screen.",
-                "அதிகாரப்பூர்வ GitHub வெளியீடுகளைத் தானே சரிபார்த்து, புதிய நிலையான பதிப்பை மட்டுமே வழங்கும்; " +
-                    "அளவு, SHA-256, தொகுப்பு, பதிப்பு, கையொப்பம் சரிபார்க்கப்படும். நிறுவல் திரையை Android " +
-                    "காட்டும்.",
+                "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",
+                "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது, நாளுக்கு ஒருமுறை அதிகபட்சம் பொதுப் பதிப்பு விவரங்கள் மட்டும் தானாகச் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் செயலிக்குள் அறிவிப்பு வரும். அதைத் தொட்டு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறந்து, அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. சரிபார்ப்பு செயலியைத் திறப்பது, இணைய இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைப் பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
     )
@@ -747,13 +761,208 @@ object AppGuides {
             topic(
                 "Verified Updates & Zero Message Upload Privacy",
                 "சரிபார்க்கப்பட்ட புதுப்பிப்பு & முழுத் தனியுரிமை",
-                "Your SMS messages, OTPs and finance numbers stay strictly on your phone — nothing is uploaded to any " +
-                    "cloud database. App updates check official GitHub Releases and verify APK size, SHA-256 and RP Ideas " +
-                    "signing certificate before opening Android's own install prompt.",
-                "உங்கள் குறுஞ்செய்திகள், OTP எண்கள் மற்றும் வரவு-செலவு விவரங்கள் உங்கள் போனிலேயே பாதுகாப்பாக இருக்கும் — " +
-                    "எந்த மேகச் சேவையகத்திற்கும் அனுப்பப்படாது. புதுப்பிப்புகள் அளவு, SHA-256 மற்றும் கையொப்பத்தைச் " +
-                    "சரிபார்த்த பிறகே Android நிறுவல் திரையைத் திறக்கும்.",
+                "A read-only check reads public stable-release metadata at most once per rolling 24 hours when the app opens or resumes. If a newer stable version is found, an in-app notice appears. Tap it to open this app’s section of the official website in your browser, then download there and follow Android’s normal confirmation. This app never downloads or installs APKs. Checks depend on opening the app, connectivity and available release metadata, so they are not guaranteed. Stop if a security warning appears.",
+                "செயலி திறக்கும்போது அல்லது மீண்டும் முன்வரும்போது, நாளுக்கு ஒருமுறை அதிகபட்சம் பொதுப் பதிப்பு விவரங்கள் மட்டும் தானாகச் சரிபார்க்கப்படும். புதிய நிலையான பதிப்பு இருந்தால் செயலிக்குள் அறிவிப்பு வரும். அதைத் தொட்டு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறந்து, அங்கே பதிவிறக்கி Android காட்டும் வழக்கமான உறுதிப்படுத்தலைப் பின்பற்றவும். இந்தச் செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. சரிபார்ப்பு செயலியைத் திறப்பது, இணைய இணைப்பு, வெளியீட்டு விவரங்கள் கிடைப்பதைப் பொறுத்தது; வெற்றி உறுதி இல்லை. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்.",
             ),
         ),
+    )
+    // ---------------------------------------------------------------------------------------
+    // Vasanthi AI (என்னைச் சுற்றி)
+    // ---------------------------------------------------------------------------------------
+    val vasanthi = GuideContent(
+        intro = "Vasanthi AI turns the sound around you into Tamil text. It names what it hears, " +
+            "writes down what somebody says, and keeps all of it so you can read it again. " +
+            "Tap any topic below to expand.",
+        introTa = "என்னைச் சுற்றி உங்கள் சுற்றியுள்ள ஒலியை தமிழ் எழுத்தாக காட்டுகிறது. கேட்கிறதைப் " +
+            "பெயர்படுத்துகிறது, யாரோ பேசினாரோ அதை எழுதிக் காட்டுகிறது, அனைத்தையும் " +
+            "சேமிக்கிறது. தலைப்பைத் தொட்டு விரிவாக்குங்கள்.",
+        topics = listOf(
+            topic(
+                "What Vasanthi AI does",
+                "என்னைச் சுற்றி என்ன செய்கிறது",
+                "It listens to the room and writes what it hears in Tamil. A sound gets a Tamil " +
+                    "name and a bar showing how sure the app is; the room gets a loudness bar and a " +
+                    "word; and what somebody says is written down as Tamil text, as it arrives.",
+                "அது அறையை கேட்கிறது, கேட்கியதை தமிழ் எழுத்தாக எழுதுகிறது. ஒலிக்கு ஒரு தமிழ் " +
+                    "பெயர் மற்றும் எவ்வளவு நம்பகத்திரும் கோடு காட்டுகிறது; அறைக்கு எதனை சத்தம் " +
+                    "மற்றும் ஒரு வார்த்தை காட்டுகிறது; யாரோ பேசினார்கல் அது தமிழ் எழுத்தாக " +
+                    "வருகிறது.",
+            ),
+            topic(
+                "The floating circle",
+                "மிதக்கும் வட்டு",
+                "A small circle floats over every app, so it is there while you are reading a " +
+                    "message or watching something. Drag it anywhere out of the way; tap it and the " +
+                    "panel opens. It stays over other apps because a service adds it to the window " +
+                    "manager, not a screen.",
+                "ஒரு சிறிய வட்டு எந்த செயலிட்டியும் மேலும் தோறும், உங்கள் ஒரு செய்தியை " +
+                    "படிக்கும்போது அங்கீட்டும் தெரியும். வேறு இடமைக்கு இழுத்து செல்லுங்கள்; " +
+                    "தட்டினால் படி திறக்கும். மற்ற செயலிக்கு மேலே இருக்கிறது, ஏனொரு திரையால் " +
+                    "அல்லது ஒரு சேவை சேர்த்துக் கொள்கிறது.",
+            ),
+            topic(
+                "The two switches",
+                "இரண்டு சுவிட்சுகள்",
+                "ஒலி names sounds and பேச்சு writes down speech. They are two switches because both " +
+                    "want the same microphone and only one of them can have it properly. பேச்சு is " +
+                    "on by default, because that is the one most people want. Turn ஒலி off and the " +
+                    "recogniser gets the microphone outright, which is both more accurate and " +
+                    "reaches further.",
+                "ஒலி ஒலிக்கு பெயர் சொல்லுகிறது, பேச்சு பேச்சை எழுதிக் காட்டுகிறது. " +
+                    "இரண்டுக்கும் இரண்டு சுவிட்சுகளாக இருக்கிறது, ஏனொரு மைக் தேவை ஒரு " +
+                    "மட்டுமே முழுவியாக வைக்க முடியாது. பேச்சு முன்னிருப்பாக உள்ளது, " +
+                    "அது பலர் விரும்பும். ஒலியை நிறுத்தியால் மைக் முழுவதாகக் கிடைக்கும், " +
+                    "அது துல்லியமாகவும் தொலைவிலேயே பேச்சையும் பிடிக்கும்.",
+            ),
+            topic(
+                "English becomes Tamil",
+                "ஆங்கிலம் தமிழாக வருகிறது",
+                "The recogniser is asked for Tamil and usually gives Tamil. When it does not - a " +
+                    "name, a word it knows only in English, or someone who actually spoke English - " +
+                    "those words are translated to Tamil on the phone before the line is written " +
+                    "down. The translation model is about thirty megabytes and downloads the first " +
+                    "time it is needed, so a phone that never hears English never downloads it.",
+                "அறிதலிடம் தமிழ் கேட்கப்படுகிறது, பொதுவாக தமிழ் கிடைக்கும். கிடாதது ஒரு " +
+                    "பெயர், ஆங்கிலத்தில் மட்டும் அறிந்த ஒரு வார்த்தை, அல்லது உண்மையாக ஆங்கிலம் " +
+                    "பேசிய ஒருவர் - அந்த வார்த்தைகள் எழுதப்படுக்கும் முன் தமிழாக " +
+                    "மாற்றப்படும். மாதிரி முப்பது மெகாபைட், தேவையான முறை " +
+                    "பதிவிறக்கப்படும்.",
+            ),
+            topic(
+                "The permanent notification",
+                "நிரந்தர அறிவிப்பு",
+                "The app keeps one notification for as long as it has been started, whether or not " +
+                    "it is listening. It carries தொடங்கு and நிறுத்து, so listening can be turned " +
+                    "on or off without opening the app, and மூடு closes it properly.",
+                "செயலி தொடங்கிய பிறகு ஒரு அறிவிப்பை எப்போதும் வைக்கிறது, கேட்கிறதா இல்லையா " +
+                    "என்பதைப் பொருட்படுத்தாமல். அதில் தொடங்கு மற்றும் நிறுத்து உள்ளன, " +
+                    "அதனால் செயலியைத் திறக்காமலே கேட்பதை ஆன் ஆஃப் செய்யலாம், மூடு " +
+                    "செயலியை முழுவதுமாக மூடும்.",
+            ),
+            topic(
+                "Saved history",
+                "சேமித்த விவரம்",
+                "Every line of speech and every named sound is kept, newest first, and can be read " +
+                    "again later. The list can be filtered to show only sounds or only speech, and " +
+                    "cleared in one tap. A sentence that repeats is dropped for twenty-five " +
+                    "seconds, so a television left on does not fill the list with the same line.",
+                "ஒவ்வொரு பேச்சு வரியும் ஒவ்வொரு ஒலிப் பெயரும் சேமிக்கப்படும், புதியது " +
+                    "முதலில், பின்னால் படிக்கலாம். ஒலி மட்டும் அல்லது பேச்சு மட்டும் என்று " +
+                    "வடிகட்டலாம், ஒரே தட்டில் அழிக்கலாம். திரும்பத் திரும்ப வரும் வாக்கியம் " +
+                    "இருபத்தைந்து நொடி வரை போடப்படாது, அதனால் ஓடும் டெலிவி அதே வரியை " +
+                    "நிரப்பாது.",
+            ),
+            topic(
+                "Who it is for",
+                "யாருக்கு இது பயன்படும்",
+                "Anyone who wants to see what is being said, or what is happening in the room, in " +
+                    "Tamil. That includes people who are deaf or hard of hearing, people who cannot " +
+                    "hear a television or a call clearly, and anyone who would rather read than " +
+                    "listen. It is an open app for everyone, not for one person.",
+                "எவருக்கும் என்ன சொல்கிறார்கள், அல்லது அறையில் என்ன நடக்கிறது என்பதைத் தமிழில் " +
+                    "பார்க்க வேண்டுமானாலும் இது பயன்படும். செவிடு அல்லது கேள்வி மெதுவானவர்கள், " +
+                    "டெலிவி அல்லது அழைப்பைத் தெளிவாகக் கேட்க முடியாதவர்கள், கேட்பதை விட " +
+                    "படிக்க விரும்புவோர் - அனைவருக்கும். இது அனைவருக்கும் ஒரு திறந்த செயலி, " +
+                    "ஒரே ஒரு நபருக்கு அல்ல.",
+            ),
+            topic(
+                "Privacy",
+                "தனியுரிமை",
+                "Sound naming runs entirely on the phone: YAMNet is inside the app and no audio " +
+                    "leaves it. Speech recognition uses Google's cloud recogniser, so the audio of " +
+                    "speech is sent over the internet - the app says so on its own screen. Nothing " +
+                    "is stored anywhere but on this phone, and there is no account, no tracking and " +
+                    "no advertising.",
+                "ஒலி அறிதல் முழுவதுமாகத் தொலைபேசியில் நடக்கிறது: YAMNet செயலிக்குள்ளேயே " +
+                    "உள்ளது, ஒலி வெளியே செல்வதில்லை. பேச்சு அறிதல் Google-இன் மேகச் சேவையை " +
+                    "பயன்படுத்துகிறது, அதனால் பேச்சின் ஒலி இணையம் வழியாகச் செல்கிறது - " +
+                    "செயலி தன் சொந்த திரையிலேயே அதைச் சொல்கிறது. இந்தத் தொலைபேசியைத் தவிர " +
+                    "எங்கும் சேமிக்கப்படுவதில்லை, கணக்கோ கண்காணிப்போ விளம்பரமோ இல்லை.",
+            ),
+            topic(
+                "What it cannot do",
+                "இது செய்யாதது",
+                "It cannot hear a phone call. Android does not allow any app to capture the other " +
+                    "side of a call, at the system level, and there is no permission to request. " +
+                    "Speech spoken to you in person is written down; a phone call is not. Speech " +
+                    "recognition is also imperfect - good for clear Tamil, weaker in noise and with " +
+                    "fast or dialect-heavy speech.",
+                "தொலைபேசி அழைப்பின் ஒலியைக் கேட்க முடியாது. ஆண்ட்ராய்டு எந்தச் செயலிக்கும் " +
+                    "அதை அனுமதிக்காது, கோரக்கூடிய அனுமதியும் இல்லை. முகமுகமாகப் பேசுபவரின் " +
+                    "பேச்சு மட்டுமே எழுத்தாகும்; அழைப்பு அல்ல. பேச்சு அறிதல் முழுமையாகவும் " +
+                    "இல்லை - தெளிவான தமிழுக்கு நல்லது, சத்தத்திலும் விரைவான பேச்சிலும் " +
+                    "பலவீனம்.",
+            ),
+        ),
+    )
+
+    val podcast = GuideContent(
+        "Choose a category, show and episode. Stream from the publisher or download first and play offline from Downloads.",
+        "பிரிவையும் நிகழ்ச்சியையும் தேர்ந்தெடுத்துப் பகுதியை இயக்குங்கள். இணையத்தில் கேட்கலாம்; அல்லது முதலில் பதிவிறக்கிப் பதிவிறக்கங்கள் பகுதியில் இணையமின்றிக் கேட்கலாம்.",
+        listOf(
+            topic("Continuous stories", "தொடர்ந்து கதைகளைக் கேட்க", "Playing a show queues its episodes in feed order. Continuous is on by default; toggle it in the player. Previous and Next select neighbouring episodes. At the end the queue stops. Play offline queues only completed downloads and never falls back to the network for a missing file.", "ஒரு நிகழ்ச்சியை இயக்கினால் அதன் பகுதிகள் ஊட்ட வரிசையில் தொடரும். இயல்பாகத் தொடர்ச்சி இயக்கத்தில் இருக்கும்; இயக்கக் கட்டுப்பாட்டில் மாற்றலாம். முந்தைய, அடுத்த பகுதியைத் தேர்ந்தெடுக்கலாம். கடைசிப் பகுதியுடன் வரிசை முடியும். இணையமின்றி இயக்கும்போது முழுமையாகப் பதிவிறக்கியவை மட்டுமே தொடரும்; கோப்பு இல்லாவிட்டால் இணைய ஒலிக்கு மாறாது."),
+            topic("Play and seek", "இயக்கமும் தேடலும்", "The player stays at the bottom while you browse shows and episodes. Pause, resume, drag the seek bar, or skip 15 seconds. Duration appears after the audio is prepared.", "ஊட்டங்களையும் பகுதிகளையும் பார்க்கும்போதும் இயக்கக் கட்டுப்பாடுகள் திரையின் கீழே இருக்கும். இடைநிறுத்தலாம், தொடரலாம், பட்டையை இழுத்துத் தேடலாம் அல்லது பதினைந்து நொடிகள் நகர்த்தலாம். ஒலி தயாரான பிறகு நீளம் தெரியும்."),
+            topic("Continue listening", "கேட்பதைத் தொடர", "Continue listening restores your last episode and saved position. Progress is saved every five seconds and on pause; after a sudden kill a few seconds may repeat.", "தொடர்ந்து கேள் பொத்தான் கடைசியாகக் கேட்ட பகுதியைச் சேமித்த இடத்திலிருந்து இயக்கும். ஐந்து நொடிகளுக்கு ஒருமுறையும் இடைநிறுத்தும்போதும் இடம் சேமிக்கப்படும். திடீரெனச் செயலி நின்றால் சில நொடிகள் மீண்டும் கேட்கலாம்."),
+            topic("Feeds and playlists", "ஊட்டங்களும் பகுதிகளும்", "Browse news, history, literature, science, learning, children's stories, love stories, short stories, science fiction, crime, horror and mystery/thrillers. Crime/horror can include violence and adult themes; publisher claims are not independently verified facts. This is a curated list, not every Tamil podcast on the web. Shows belong to their publishers; not every episode is for children. Add another published RSS URL if needed.", "செய்திகள், வரலாறு, இலக்கியம், அறிவியல், கற்றல், சிறுவர் கதைகள், காதல் கதைகள், சிறுகதைகள், அறிவியல் புனைகதைகள், குற்றச் சம்பவங்கள், திகில், மர்மத் திரில்லர் என்று பிரிவுகளாகப் பார்க்கலாம். குற்றம் மற்றும் திகில் பகுதிகளில் வன்முறையும் பெரியவர்களுக்கான உள்ளடக்கமும் இருக்கலாம். வெளியீட்டாளரின் கூற்றுகளை நாங்கள் தனியாக உறுதிசெய்யவில்லை. இது தேர்ந்தெடுத்த பட்டியல்; இணையத்திலுள்ள அனைத்து நிகழ்ச்சிகளும் அல்ல. உள்ளடக்கம் வெளியீட்டாளருடையது; அனைத்துப் பகுதிகளும் சிறுவர்களுக்கானவை அல்ல. வேறு வெளியிடப்பட்ட ஊட்ட இணைப்பையும் சேர்க்கலாம்."),
+            topic("Download and play offline", "பதிவிறக்கமும் இணையமின்றிக் கேட்பதும்", "Tap Download beside an episode, then open Downloads. Wi-Fi only is on by default for new transfers; changes require removing and restarting an existing transfer. System downloads can continue when the app closes. Only complete recognised audio files have Play offline, which never falls back to streaming. See file sizes, retry failures, cancel or delete downloads there. Files are removed on uninstall; do not download content you are not entitled to keep.", "பகுதிக்கு அருகிலுள்ள பதிவிறக்கு பொத்தானைத் தொட்டுப் பதிவிறக்கங்கள் பக்கத்தைத் திறக்கவும். புதிய பதிவிறக்கங்களுக்கு இயல்பாக வைஃபை மட்டும் தேர்ந்தெடுக்கப்பட்டுள்ளது. மாற்றிய பிறகு பழைய பதிவிறக்கத்தை நீக்கி மீண்டும் தொடங்க வேண்டும். செயலியை மூடியும் பதிவிறக்கம் தொடரலாம். முழுமையான ஒலிக் கோப்பை மட்டுமே இணையமின்றிக் கேட்க முடியும்; அது இணைய ஒலியாக மாறாது. அளவைப் பார்க்கலாம்; மீண்டும் முயலலாம்; ரத்து செய்யலாம்; நீக்கலாம். செயலியை அகற்றினால் கோப்புகளும் நீங்கும். உங்களுக்கு உரிமையுள்ள உள்ளடக்கத்தை மட்டும் சேமிக்கவும்."),
+            topic("Permissions and notifications", "அனுமதிகளும் அறிவிப்புகளும்", "Android 13 and later ask for notifications when you first play. Denial does not block listening. Use app Settings to enable a denied notification permission. No microphone, contacts or storage permission is needed.", "புதிய ஆண்ட்ராய்டு பதிப்புகளில் முதல் இயக்கத்தின்போது அறிவிப்பு அனுமதி கேட்கப்படும். மறுத்தாலும் கேட்கலாம். மறுத்த அனுமதியைச் செயலி அமைப்புகளில் மாற்றலாம். ஒலிவாங்கி, தொடர்புகள், சேமிப்பு அனுமதி தேவையில்லை."),
+            topic("Back and updates", "பின்செல்லலும் புதுப்பிப்பும்", "Back returns to the previous page. About & update opens official releases in your browser, sister apps and project links. This app no longer requests package-install access. Stop if Play Protect warns; the reported classification is still under review.", "பின்செல் முந்தைய பக்கத்திற்குத் திரும்பும். இந்தச் செயலி மற்றும் புதுப்பிப்பு பக்கத்தில் அதிகாரப்பூர்வ வெளியீடுகள் உலாவியில் திறக்கும்; பிற செயலிகளின் இணைப்புகளும் உள்ளன. தொகுப்புகளை நிறுவும் அனுமதியை இந்தச் செயலி இனி கேட்காது. பாதுகாப்பு எச்சரிக்கை வந்தால் நிறுத்துங்கள்; அதன் காரணம் இன்னும் உறுதியாகவில்லை."),
+        ),
+    )
+
+    val launcher = GuideContent(
+        "A large-button home screen. Set it as your default home app with the dedicated button.",
+        "பெரிய பொத்தான்கள் கொண்ட முகப்புத் திரை. அதற்கான பொத்தானால் இதை இயல்புநிலை முகப்புத் திரையாகத் தேர்ந்தெடுங்கள்.",
+        listOf(
+            topic("Default home", "இயல்புநிலை முகப்புத் திரை", "Set default home opens Android's home-role chooser, or Home settings. Choose Elderly Launcher there. This is a system role, not a runtime permission. You can return here and try again after cancellation.", "முகப்புத் திரையாக அமை பொத்தான் ஆண்ட்ராய்டின் தேர்வைத் திறக்கும். அங்கே முதியவர் திரையைத் தேர்ந்தெடுங்கள். இது அமைப்பின் பங்கு; சாதாரண அனுமதி அல்ல. ரத்து செய்தாலும் மீண்டும் முயலலாம்."),
+            topic("Calls and contacts", "அழைப்புகளும் தொடர்புகளும்", "Adding a favourite requests contacts access, then opens the phone-number picker. Calling a favourite or confirming 108 requests phone access. If denied, the number opens in the dialler instead. Do not call 108 for testing.", "விருப்ப நபரைச் சேர்க்கும்போது தொடர்புகள் அனுமதி கேட்டு எண்ணைத் தேர்ந்தெடுக்கலாம். விருப்ப நபரை அழைக்கும்போதும் அவசர அழைப்பை உறுதிப்படுத்தும்போதும் அழைப்பு அனுமதி கேட்கப்படும். மறுத்தால் எண் அழைப்புத் திரையில் திறக்கும். சோதனைக்காக அவசர எண்ணை அழைக்காதீர்கள்."),
+            topic("Clock and sound", "நேரமும் ஒலியும்", "The clock uses 12-hour time with AM/PM; battery and charging text is compact. Select Media or Ringtone, then use minus/plus to change that stream's real index directly. The normal audio-settings permission is used; fixed/policy-blocked volume is reported, not bypassed. Silent/vibrate transitions stay in Android settings. Use hardware keys for in-call voice volume. Ringtone and media show their actual level/maximum separately, not decibels or a guessed active stream. Do Not Disturb is not overridden. Scroll the home screen to reach controls, including with large text.", "கடிகாரம் AM/PM உடன் 12 மணி நேரத்தைக் காட்டும்; மின்கலமும் மின்னேற்றமும் சிறிய எழுத்தில் தெரியும். ஊடகம் அல்லது அழைப்பு மணியைத் தேர்ந்தெடுத்து கழித்தல், கூட்டல் பொத்தான்களால் அதன் படிநிலையை நேரடியாக மாற்றலாம். சாதாரண ஒலி அமைப்பு அனுமதி பயன்படும்; அமைப்பு தடுத்தால் மீறாது. அமைதிநிலையை மாற்ற ஆண்ட்ராய்டு அமைப்பையும், பேசும் அழைப்பின் ஒலிக்கு வன்பொருள் பொத்தான்களையும் பயன்படுத்துங்கள். அழைப்பு மணியும் ஊடகமும் உண்மையான அளவு/அதிகபட்ச அளவைத் தனித்தனியாகக் காட்டும்; டெசிபல் அல்லது எந்த ஒலி செயலில் உள்ளது என்ற ஊகம் அல்ல. தொந்தரவு செய்யாதே அமைப்பு மீறப்படாது. பெரிய எழுத்திலும் பொத்தான்களை அடைய முகப்பை உருட்டலாம்."),
+            topic("Favourite apps", "பிடித்த செயலிகள்", "Below favourite contacts, two-column icon/name tiles open your apps. Add/manage opens the launchable-app picker: plus adds a shortcut, minus removes a saved shortcut without uninstalling the app. Stay there to make several changes, then tap Back. Up to eight shortcuts are saved. Only package identities are saved locally, separately from contacts. An unavailable app cannot be added; remove its old shortcut if it was uninstalled. These choices are not uploaded.", "விருப்ப தொடர்புகளுக்குக் கீழே இரண்டு நெடுவரிசைகளில் சின்னம், பெயரைத் தொட்டுச் செயலிகளைத் திறக்கலாம். செயலிகளைச் சேர் / நீக்கு பக்கத்தில் + குறுக்குவழியைச் சேர்க்கும்; − குறுக்குவழியை மட்டும் நீக்கும், செயலியை நிறுவல் நீக்கம் செய்யாது. பல மாற்றங்கள் செய்து பின்செல் அழுத்தலாம். எட்டு குறுக்குவழிகள் வரை சேமிக்கலாம். செயலியின் தொகுப்புப் பெயர் மட்டும் தொடர்புகளிலிருந்து தனியாகச் சாதனத்தில் சேமிக்கப்படும்; பதிவேற்றப்படாது. கிடைக்காத செயலியைச் சேர்க்க முடியாது; நிறுவல் நீக்கம் செய்த செயலியின் பழைய குறுக்குவழியை நீக்கலாம்."),
+            topic("Torch and battery", "விளக்கும் மின்கலமும்", "The torch needs camera permission on supported phones. Battery percentage and charging status come from Android, and update when they change. Unknown battery data is labelled unknown, not zero.", "ஆதரவு உள்ள தொலைபேசிகளில் விளக்கிற்கு கேமரா அனுமதி தேவை. மின்கல அளவும் மின்னேற்ற நிலையும் ஆண்ட்ராய்டிலிருந்து பெற்று மாறும்போது புதுப்பிக்கப்படும். தகவல் கிடைக்காவிட்டால் பூஜ்யம் என்று காட்டாது."),
+            topic("Back and permissions", "பின்செல்லலும் அனுமதிகளும்", "Back closes the app list or guide but never closes the home screen. Permissions are requested only when used. This launcher posts no notifications, so it does not ask for notification access. Denied permissions can be changed in Android app Settings.", "பின்செல் செயலிப் பட்டியலையோ வழிகாட்டியையோ மூடும்; முகப்புத் திரையை மூடாது. பயன்படுத்தும்போதுதான் அனுமதி கேட்கப்படும். அறிவிப்பு அனுப்பாததால் அறிவிப்பு அனுமதி கேட்காது. மறுத்த அனுமதிகளை ஆண்ட்ராய்டின் செயலி அமைப்புகளில் மாற்றலாம்."),
+            topic("About and updates", "செயலி விவரமும் புதுப்பிப்பும்", "About & update lists other apps and official project links. A read-only release-metadata check runs at most once per day when opened or resumed; a newer stable version shows an in-app notice and opens its official website section in the browser. The launcher does not download or install APKs. Checks depend on connectivity and available release metadata. Stop if Play Protect warns; the reported classification remains unresolved.", "இந்தச் செயலி மற்றும் புதுப்பிப்பு பக்கத்தில் மற்ற செயலிகளும் அதிகாரப்பூர்வ இணைப்புகளும் உள்ளன. திறக்கும்போது அல்லது முன்வரும்போது நாளுக்கு ஒருமுறை பொதுப் பதிப்பு விவரங்களை மட்டும் சரிபார்க்கும். புதிய நிலையான பதிப்புக்கான அறிவிப்பு அதிகாரப்பூர்வ இணையதளத்தை உலாவியில் திறக்கும். செயலி APK-ஐப் பதிவிறக்கவோ நிறுவவோ செய்யாது. இணைப்பு மற்றும் வெளியீட்டு விவரங்கள் கிடைப்பதைச் சரிபார்ப்பு பொறுத்தது. Play Protect எச்சரித்தால் நிறுத்துங்கள்; அதன் காரணம் இன்னும் உறுதியாகவில்லை."),
+        ),
+    )
+    // Android TV Guard: keep the TV guide in the same shared bilingual directory.
+    val tvGuard = GuideContent(
+        intro = "Choose a topic with the remote and press OK to expand it.",
+        introTa = "ரிமோட்டில் தலைப்பைத் தேர்ந்தெடுத்து OK அழுத்தி விரிவாக்குங்கள்.",
+        topics = listOf(
+            topic(
+                "Home and default launcher", "முகப்பும் இயல்புநிலை முகப்பு செயலியும்",
+                "In Tools & Settings choose Default Launcher and select TV Guard in Android. Home should return from other apps, tools and dialogs to the first available app tile. When there are no apps, the Tools tile is focused. Home routing depends on the TV system and its default-home setting.",
+                "கருவிகள் & அமைப்புகளில் இயல்புநிலை முகப்பைத் தேர்ந்தெடுத்து Android-இல் TV Guard-ஐ அமைக்கவும். Home அழுத்தினால் பிற செயலி, கருவி அல்லது சாளரத்திலிருந்து முகப்பின் முதல் செயலிக்கு வர வேண்டும். செயலி இல்லாவிட்டால் கருவிகள் பெட்டி தேர்வாகும். இது டிவி அமைப்பையும் இயல்புநிலை முகப்பையும் பொறுத்தது."
+            ),
+            topic(
+                "Lightweight and Expert settings", "எளிய முகப்பும் நிபுணர் அமைப்புகளும்",
+                "TV Guard starts with only the launcher and basic settings. Open Tools & Settings → Expert settings, turn Expert on, and press OK on each optional switch you want. Turning Expert off pauses all extras but keeps your choices and launcher data. Turning it on again restores those choices and can restart a previously enabled file hub. CPU, RAM, storage and network pills need the top status bar; browser controls need the file hub. Memory savings depend on the device.",
+                "முதலில் முகப்பும் அடிப்படை அமைப்புகளும் மட்டும் இயங்கும். கருவிகள் & அமைப்புகள் → நிபுணர் அமைப்புகளில் நிபுணர் முறையை இயக்கி, தேவையான ஒவ்வொரு வசதியிலும் OK அழுத்துங்கள். நிபுணர் முறையை நிறுத்தினால் கூடுதல் வசதிகள் நிற்கும்; தேர்வுகளும் முகப்புத் தகவல்களும் அழியாது. மீண்டும் இயக்கினால் தேர்வுகள் திரும்பும்; முன்பு இயக்கிய கோப்பு மையமும் தொடங்கலாம். CPU, RAM, சேமிப்பகம், இணையக் காட்டிகளுக்கு மேல் நிலைப் பட்டி தேவை; உலாவி ரிமோட்டுக்குக் கோப்பு மையம் தேவை. நினைவகச் சேமிப்பு சாதனத்தைப் பொறுத்தது."
+            ),
+            topic(
+                "App options and remote", "செயலி விருப்பங்களும் ரிமோட்டும்",
+                "Move with the D-pad and press OK to open a tile. Hold OK on an app or press Menu for its options. The arrow keys move among the dialog actions; Back closes the dialog or returns to the previous tools screen.",
+                "திசைப் பொத்தான்களால் நகர்ந்து OK அழுத்தித் திறக்கவும். செயலியில் OK-ஐ அழுத்திப் பிடிக்கவும் அல்லது Menu அழுத்தவும்; விருப்பங்கள் திறக்கும். அம்புப் பொத்தான்கள் சாளரத்திலுள்ள செயல்களுக்கு நகரும். Back சாளரத்தை மூடும் அல்லது முந்தைய கருவித் திரைக்குத் திரும்பும்."
+            ),
+            topic(
+                "Voice helper and privacy", "குரல் உதவியும் தனியுரிமையும்",
+                "First enable Voice helper in Expert settings. Use its Tools button, a delivered voice/search key, or hold OK on the Home tab. Allow microphone access when asked. Some TVs reserve physical Home long-press and voice keys for Android, so those keys may not reach this app. Speech and text-to-speech services may use the internet. Basic TV answers need Hardware audit and are not general AI; screenshot and RAM boost need their own switches. Enable System assistant separately for an installed external assistant; its privacy policy applies.",
+                "முதலில் நிபுணர் அமைப்பில் குரல் உதவியை இயக்குங்கள். கருவிகள் பொத்தான், டிவி அனுப்பும் குரல் விசை அல்லது முகப்பு தாவலில் OK-ஐ அழுத்திப் பிடிப்பதைப் பயன்படுத்தலாம். ஒலிவாங்கி அனுமதி தேவை. சில டிவிகள் Home நீண்ட அழுத்தத்தையும் குரல் விசைகளையும் Android-க்கே ஒதுக்குவதால் செயலிக்கு வராமல் போகலாம். பேச்சறிதலும் குரல் இயந்திரமும் இணையத்தைப் பயன்படுத்தலாம். அடிப்படை டிவி பதில்களுக்கு வன்பொருள் சோதனை தேவை; இது பொதுவான AI அல்ல. திரைப் படத்திற்கும் RAM பூஸ்டுக்கும் தனி சுவிட்சுகள் தேவை. நிறுவப்பட்ட வெளி உதவியாளருக்கான சுவிட்சைத் தனியாக இயக்கவும்; அதன் தனியுரிமை விதிகள் பொருந்தும்."
+            ),
+            topic(
+                "Storage and Android evidence", "சேமிப்பகமும் ஆண்ட்ராய்டு சான்றுகளும்",
+                "Enable Hardware audit in Expert settings; Tools then shows the candidate disk, reported data sizes, a rough accounting remainder and version/class probes. A mismatch is a warning, not proof of spoofing; the disk may be different or the firmware may change the readings. The remainder is not measured writable space. GB and GiB use different units. Do not fill the drive as a test without a backup.",
+                "நிபுணர் அமைப்பில் வன்பொருள் சோதனையை இயக்கினால் கருவிகள் பகுதியில் கண்டறிந்த வட்டு, data அளவுகள், தோராய மீதி மற்றும் பதிப்பு/வகுப்புச் சோதனைகள் தெரியும். முரண்பாடு ஒரு எச்சரிக்கை மட்டுமே; வேறு வட்டாக இருக்கலாம் அல்லது firmware தகவலை மாற்றியிருக்கலாம். தோராய மீதி எழுதக்கூடிய காலி இடத்தின் அளவீடு அல்ல. GB மற்றும் GiB வெவ்வேறு அலகுகள். காப்பு இல்லாமல் சோதனைக்காக வட்டை நிரப்ப வேண்டாம்."
+            ),
+            topic(
+                "CPU indicator", "செயலி பயன்பாட்டுக் காட்டி",
+                "Enable the top status bar and CPU pill in Expert settings. The CPU pill samples Linux counters only while TV Guard is visible. A dash means the reading is unavailable. The percentage is not the one-minute load average.",
+                "நிபுணர் அமைப்பில் மேல் நிலைப் பட்டியையும் CPU காட்டியையும் இயக்குங்கள். TV Guard திரையில் இருக்கும்போது மட்டும் லினக்ஸ் CPU எண்ணிக்கைகளின் மாற்றத்தை அளக்கும். கோடு காட்டினால் தகவல் கிடைக்கவில்லை. இது ஒரு நிமிட load average அல்ல."
+            ),
+            topic(
+                "Wi-Fi file hub", "வைஃபை கோப்பு மையம்",
+                "The file hub is off by default. Enabling it starts a local server while the activity exists; stop it from Wi-Fi Hub or Expert settings. It has no password or encryption: anyone on the local network may view, upload or delete Downloads and saved screenshots. Use only a trusted network. Browser remote actions are a separate switch; review files before installing. Re-enabling Expert can restart a saved hub choice.",
+                "கோப்பு மையம் முதலில் நிறுத்தத்தில் இருக்கும். அதை இயக்கினால் செயலி இருக்கும் வரை உள்ளூர் சேவையகம் தொடங்கும்; வைஃபை மையம் அல்லது நிபுணர் அமைப்பில் நிறுத்தலாம். கடவுச்சொல்லோ குறியாக்கமோ இல்லை: உள்ளூர் வலையமைப்பில் யாரும் Downloads மற்றும் பழைய படங்களைப் பார்க்க, பதிவேற்ற அல்லது நீக்கலாம். நம்பகமான வலையமைப்பில் மட்டும் பயன்படுத்துங்கள். உலாவி ரிமோட் தனி சுவிட்சு; நிறுவுமுன் கோப்பைச் சரிபார்க்கவும். நிபுணர் முறையை மீண்டும் இயக்கினால் சேமித்த கோப்பு மையத் தேர்வும் தொடங்கலாம்."
+            )
+        )
     )
 }

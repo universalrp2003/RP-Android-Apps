@@ -1318,7 +1318,7 @@ private fun AboutDialog(onDismiss: () -> Unit, onModelCredits: () -> Unit, onGui
                         }
                     }) { Text(label) }
                 }
-                AppUpdates.Control("RP-Vocal-Remover-Studio")
+                com.universalrp.updates.BrowserReleaseUpdates("RP-Vocal-Remover-Studio")
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },

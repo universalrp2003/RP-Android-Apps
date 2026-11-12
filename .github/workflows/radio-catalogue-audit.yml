@@ -1,0 +1,43 @@
+name: Radio full catalogue audit (no publication)
+on:
+  push:
+    branches: ["arena/**"]
+    paths: ["tools/audit_radio_catalogue.py", ".github/workflows/radio-catalogue-audit.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check FFprobe
+        run: |
+          if ! command -v ffprobe; then
+            sudo apt-get update -qq
+            sudo apt-get install -y --no-install-recommends ffmpeg
+          fi
+          ffprobe -version | head -1
+      - name: Probe every shipped station and bounded new discoveries
+        run: python3 tools/audit_radio_catalogue.py radio/src/main/assets/stations_seed.json "$RUNNER_TEMP/radio-audit"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: radio-catalogue-audit
+          retention-days: 14
+          path: ${{ runner.temp }}/radio-audit/
+      - name: Expose small report receipts through GitHub blobs (no branch or release write)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import base64,json,os,pathlib,subprocess
+          for name in ('audit.json','stations_seed.json'):
+              data=(pathlib.Path(os.environ['RUNNER_TEMP'])/'radio-audit'/name).read_bytes()
+              payload=json.dumps({'content':base64.b64encode(data).decode(),'encoding':'base64'})
+              p=subprocess.run(['gh','api','--method','POST','repos/'+os.environ['GITHUB_REPOSITORY']+'/git/blobs','--input','-'],input=payload,text=True,capture_output=True,check=True)
+              print('::notice title=Radio audit receipt::'+name+' blob='+json.loads(p.stdout)['sha'])

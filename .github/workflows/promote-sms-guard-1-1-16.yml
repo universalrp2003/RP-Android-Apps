@@ -1,0 +1,168 @@
+name: Publish authorized SMS Guard 1.1.16 (exact tested APK)
+on:
+  push:
+    branches: ["arena/08d2984e-rp-android-apps"]
+    paths: [".github/workflows/promote-sms-guard-1-1-16.yml"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-authorized-sms-guard-1-1-16
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE: 8bc7f5e620c7f3656e17017dd263c6f059a9b544
+      EXPECTED_SHA: db279d30f2ff32606cf808172c91686b3641cdf2f07eb113813a03ddd74ba2df
+      ARCHIVE_SHA: 469b25dd879e0e459e5a7adcb2afbe343d05eb4bc867f16da3968caafbdd5eca
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify authorization, successful native gates and unchanged compiled inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tools/tests
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          python3 - <<'PY'
+          import json, os, pathlib, subprocess
+          def api(path):
+              return json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/'+path], text=True))
+          source=os.environ['SOURCE']
+          approval=pathlib.Path('docs/sms-guard-1.1.16-verification.md').read_text()
+          for value in ('Publication authorized: yes', source, os.environ['EXPECTED_SHA'], os.environ['ARCHIVE_SHA'], 'SMS-only'):
+              assert value in approval, value
+          run=api('actions/runs/41219146110'); job=api('actions/jobs/124590221381'); artifact=api('actions/artifacts/13049163137')
+          assert (run['head_sha'],run['status'],run['conclusion'],run['path']) == (source,'completed','success','.github/workflows/smsguard-test-apk.yml')
+          assert run['head_branch']=='arena/08d2984e-rp-android-apps'
+          assert job['run_id']==run['id'] and job['conclusion']=='success'
+          for name in ('Run repository static & bilingual localization gates','Run SMS Guard unit tests, release lint & assemble signed APK','Verify package, ROLE_SMS manifest, RP Ideas signer & SHA-256','Exercise exact signed APK default-SMS consent, chooser, cancellation and receive path','Verify emulator exercised unchanged selected APK','Upload signed SMS Guard Test APK artifact'):
+              steps=[s for s in job['steps'] if s['name']==name]
+              assert len(steps)==1 and steps[0]['conclusion']=='success', name
+          annotations=api('check-runs/124590221381/annotations')
+          notice='\n'.join(a['message'] for a in annotations)
+          assert 'sha256='+os.environ['EXPECTED_SHA'] in notice and 'bytes=12824500' in notice
+          assert 'blob_sha=87f52eb14ac70be77c631bb181d9ee788caa0fe7' in notice
+          assert artifact['id']==13049163137 and artifact['name']=='SMS-Guard-signed-candidate' and not artifact['expired']
+          assert artifact['workflow_run']['id']==run['id'] and artifact['workflow_run']['head_sha']==source
+          assert artifact['digest']=='sha256:'+os.environ['ARCHIVE_SHA']
+          evidence=api('actions/artifacts/13049407362')
+          assert evidence['name']=='SMS-Guard-default-role-emulator-evidence' and not evidence['expired']
+          assert evidence['workflow_run']['id']==run['id'] and evidence['workflow_run']['head_sha']==source
+          assert evidence['digest']=='sha256:8cc84213c19e3c7bd8a74ba22002b718cbc9e7876039d6f69ef3c4b438462654'
+          # Pin completed SMS release and shared-neural regression gates. The unrelated
+          # four-app aggregate has a global single-pending queue (superseded on docs pushes)
+          # and remains a merge gate; it is not the source of this SMS APK.
+          for run_id,path in ((41219130630,'.github/workflows/smsguard-release.yml'), (41219130682,'.github/workflows/hd-voice-failover.yml')):
+              gate=api('actions/runs/'+str(run_id))
+              assert (gate['head_sha'],gate['status'],gate['conclusion'],gate['path']) == (source,'completed','success',path)
+          subprocess.run(['git','merge-base','--is-ancestor',source,'HEAD'],check=True)
+          paths=subprocess.check_output(['git','diff','--name-only',source,'HEAD'],text=True).splitlines()
+          forbidden=[p for p in paths if (p.startswith(('smsguard/','shared/','gradle/','ci-keystore/')) and p!='smsguard/README.md') or p in {'build.gradle.kts','settings.gradle.kts','gradle.properties','gradlew','gradlew.bat'}]
+          assert not forbidden, 'Compiled inputs changed: '+repr(forbidden)
+          # A release with this unique tag must not already exist, including drafts.
+          pages=json.loads(subprocess.check_output(['gh','api','--paginate','--slurp','repos/'+os.environ['GH_REPO']+'/releases?per_page=100'],text=True))
+          assert not [r for page in pages for r in page if r['tag_name']=='sms-guard-v1.1.16']
+          PY
+      - name: Download the pinned candidate archive and verify its exact APK bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/$GH_REPO/actions/artifacts/13049163137/zip > /tmp/selected-sms.zip
+          echo "$ARCHIVE_SHA  /tmp/selected-sms.zip" | sha256sum --check
+          python3 - <<'PY'
+          import hashlib,os,pathlib,zipfile
+          with zipfile.ZipFile('/tmp/selected-sms.zip') as z:
+              assert z.namelist()==['SMS-Guard-v1.1.16.apk']
+              data=z.read('SMS-Guard-v1.1.16.apk')
+          assert len(data)==12824500 and hashlib.sha256(data).hexdigest()==os.environ['EXPECTED_SHA']
+          pathlib.Path('/tmp/SMS-Guard-v1.1.16.apk').write_bytes(data)
+          PY
+      - name: Verify pinned synthetic emulator evidence belongs to the exact candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api repos/$GH_REPO/actions/artifacts/13049407362/zip > /tmp/sms-role-evidence.zip
+          echo '8cc84213c19e3c7bd8a74ba22002b718cbc9e7876039d6f69ef3c4b438462654  /tmp/sms-role-evidence.zip' | sha256sum --check
+          python3 - <<'PYROLE'
+          import json,zipfile
+          with zipfile.ZipFile('/tmp/sms-role-evidence.zip') as z:
+              names=[n for n in z.namelist() if n.endswith('result.json')]
+              assert len(names)==1
+              r=json.loads(z.read(names[0]))
+          assert r['apk']=='SMS-Guard-v1.1.16.apk' and r['api']=='35'
+          for key in ('disclosure_decline_preserves_default','real_role_dialog','chooser_cancel_preserves_default','acknowledgment_survives_restart','role_granted_through_system_ui','synthetic_sms_received','same_key_update_preserves_role_and_sms'):
+              assert r[key] is True,key
+          for key in ('play_protect_tested','carrier_mms_tested','physical_phone_tested'):
+              assert r[key] is False,key
+          PYROLE
+      - name: Verify manifest, established signer and actual permission delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          apk=/tmp/SMS-Guard-v1.1.16.apk
+          "$tools/aapt2" dump badging "$apk" > /tmp/sms-badging
+          grep -Fq "package: name='com.universalrp.smsguard' versionCode='22' versionName='1.1.16'" /tmp/sms-badging
+          grep -Eiq "(sdkVersion|minSdkVersion)[[:space:]]*[:=][[:space:]]*['\"]?26(['\"]|[[:space:]]|$)" /tmp/sms-badging
+          ! grep -q application-debuggable /tmp/sms-badging
+          ! grep -Eq 'uses-permission.*(REQUEST_INSTALL_PACKAGES|FOREGROUND_SERVICE|BIND_ACCESSIBILITY_SERVICE|BIND_NOTIFICATION_LISTENER_SERVICE|SYSTEM_ALERT_WINDOW)' /tmp/sms-badging
+          grep -Fq android.permission.READ_SMS /tmp/sms-badging
+          grep -Fq android.permission.RECEIVE_SMS /tmp/sms-badging
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/sms-signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/sms-signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          mkdir /tmp/previous-sms
+          gh release download sms-guard-v1.1.15 --pattern SMS-Guard-v1.1.15.apk --dir /tmp/previous-sms
+          echo 'ca6f4e80a7e417c2f86d25ec7f496f120f6f9f0d44525a2b8af04b5bbf4ee01e  /tmp/previous-sms/SMS-Guard-v1.1.15.apk' | sha256sum --check
+          "$tools/aapt2" dump badging /tmp/previous-sms/SMS-Guard-v1.1.15.apk > /tmp/previous-sms-badging
+          "$tools/apksigner" verify --print-certs /tmp/previous-sms/SMS-Guard-v1.1.15.apk > /tmp/previous-sms-signer
+          grep -Fq "$signer" /tmp/previous-sms-signer
+          python3 tools/verify_release_permission_delta.py --candidate-badging /tmp/sms-badging --previous-badging /tmp/previous-sms-badging | tee /tmp/sms-permission-delta
+          grep -Fxq 'EVIDENCE-REQUIRED: no' /tmp/sms-permission-delta
+      - name: Create unique draft, upload selected bytes, re-download by asset ID and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s  SMS-Guard-v1.1.16.apk\n' "$EXPECTED_SHA" > /tmp/SMS-Guard-v1.1.16.sha256
+          python3 - <<'PY'
+          import os,pathlib
+          source=os.environ['SOURCE']; base='https://github.com/'+os.environ['GH_REPO']+'/blob/'+source+'/'
+          note=pathlib.Path('releases/sms-guard-v1.1.16.md').read_text().replace('(../docs/', '('+base+'docs/').replace('(../PRIVACY.md)', '('+base+'PRIVACY.md)')
+          header=(f"**Exact tested APK:** 12,824,500 bytes · SHA-256 `{os.environ['EXPECTED_SHA']}`\n\n"
+                  f"**Source:** [`{source}`](https://github.com/{os.environ['GH_REPO']}/tree/{source}) · "
+                  f"[Signed tests/lint/verification run](https://github.com/{os.environ['GH_REPO']}/actions/runs/41219146110) · artifact `13049163137`. No rebuild.\n\n")
+          pathlib.Path('/tmp/sms-release-notes.md').write_text(header+note)
+          PY
+          gh release create sms-guard-v1.1.16 /tmp/SMS-Guard-v1.1.16.apk /tmp/SMS-Guard-v1.1.16.sha256 --draft --target "$SOURCE" --title 'SMS Guard (குறுஞ்செய்தி காவலன்) v1.1.16' --notes-file /tmp/sms-release-notes.md
+          # Fresh drafts need not be resolvable by /releases/tags yet. Discover the
+          # exact authenticated draft once, then use numeric release/asset IDs.
+          gh api --paginate --slurp "repos/$GH_REPO/releases?per_page=100" > /tmp/sms-releases.json
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib,subprocess
+          pages=json.load(open('/tmp/sms-releases.json'))
+          matches=[r for page in pages for r in page if r['tag_name']=='sms-guard-v1.1.16']
+          assert len(matches)==1
+          release=matches[0]
+          assert release['draft'] and not release['prerelease'] and release['target_commitish']==os.environ['SOURCE']
+          assert sorted(a['name'] for a in release['assets'])==['SMS-Guard-v1.1.16.apk','SMS-Guard-v1.1.16.sha256']
+          asset=next(a for a in release['assets'] if a['name']=='SMS-Guard-v1.1.16.apk')
+          assert asset['size']==12824500 and asset['digest']=='sha256:'+os.environ['EXPECTED_SHA']
+          data=subprocess.check_output(['gh','api','-H','Accept: application/octet-stream','repos/'+os.environ['GH_REPO']+'/releases/assets/'+str(asset['id'])])
+          assert len(data)==12824500 and hashlib.sha256(data).hexdigest()==os.environ['EXPECTED_SHA']
+          subprocess.run(['gh','api','-X','PATCH','repos/'+os.environ['GH_REPO']+'/releases/'+str(release['id']),'-F','draft=false'],check=True)
+          final=json.loads(subprocess.check_output(['gh','api','repos/'+os.environ['GH_REPO']+'/releases/'+str(release['id'])],text=True))
+          assert not final['draft'] and final['published_at']
+          public=next(a for a in final['assets'] if a['name']=='SMS-Guard-v1.1.16.apk')
+          assert public['id']==asset['id'] and public['size']==12824500 and public['digest']=='sha256:'+os.environ['EXPECTED_SHA']
+          receipt=f"Published exact SMS1.1.16: release={final['id']} asset={asset['id']} bytes=12824500 SHA256={os.environ['EXPECTED_SHA']} published_at={final['published_at']}"
+          print('::notice::'+receipt)
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write(receipt+'\n\nSMS-only by owner choice; MMS not implemented. No universal Google clearance or physical-phone acceptance claimed.\n')
+          PY

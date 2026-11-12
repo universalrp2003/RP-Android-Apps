@@ -26,6 +26,7 @@ object VoiceDeliveryPolicy {
         quiet && !manual && !bypassQuietHours -> Stage.QUIET_HOURS
         else -> null
     }
+    fun hdWaiting(latest: Stage): Boolean = latest in setOf(Stage.NO_INTERNET, Stage.ENGINE_ERROR)
     fun cooldownReady(nowMs: Long, lastMs: Long, intervalMs: Long): Boolean = lastMs <= 0 || nowMs < lastMs || nowMs - lastMs >= intervalMs
     fun changedTransport(previous: String?, current: String): Boolean = previous in setOf("wifi", "mobile") &&
         current in setOf("wifi", "mobile") && previous != current

@@ -8,27 +8,30 @@ plugins {
 // CI generates this keystore once and commits it, so every build is signed with
 // the SAME key -> new APKs install as updates over older ones.
 val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
     sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
     namespace = "com.universalrp.cleansweep"
     compileSdk = 36
+    testBuildType = "release"
 
     defaultConfig {
         applicationId = "com.universalrp.cleansweep"
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         targetSdk = 36
-        versionCode = 77
-        versionName = "2.72"
+        versionCode = 104
+        versionName = "2.99"
     }
 
     signingConfigs {
-        if (stableKeystore.exists()) {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
             create("stable") {
                 storeFile = stableKeystore
-                storePassword = "cleansweep-ci"
+                storePassword = releaseStorePassword
                 keyAlias = "cleansweep"
-                keyPassword = "cleansweep-ci"
+                keyPassword = releaseStorePassword
                 storeType = "PKCS12"
             }
         }
@@ -37,10 +40,10 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
         debug {
-            if (stableKeystore.exists()) signingConfig = signingConfigs.getByName("stable")
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
         }
     }
 
@@ -49,6 +52,8 @@ android {
     packaging {
         jniLibs { useLegacyPackaging = true }
     }
+
+    testOptions { unitTests.isIncludeAndroidResources = true }
 
     buildFeatures {
         compose = true
@@ -101,7 +106,11 @@ tasks.register<Test>("testLiveStudioVoice") {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.work:work-testing:2.10.0")
     testImplementation("org.json:json:20240303")
     testImplementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")

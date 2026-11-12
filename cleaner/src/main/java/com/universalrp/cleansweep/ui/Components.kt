@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -107,6 +108,7 @@ fun GradientButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     contentDescription: String? = null,
+    compact: Boolean = false,
 ) {
     val alpha by animateFloatAsState(if (enabled) 1f else 0.45f, label = "btnAlpha")
     Row(
@@ -116,7 +118,8 @@ fun GradientButton(
                 Brush.linearGradient(listOf(AccentCyan, AccentViolet))
             )
             .clickable(enabled = enabled, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .heightIn(min = 48.dp)
+            .padding(horizontal = if (compact) 14.dp else 20.dp, vertical = if (compact) 10.dp else 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
@@ -130,7 +133,8 @@ fun GradientButton(
         }
         Text(
             text,
-            style = MaterialTheme.typography.titleMedium,
+            style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f, fill = false),
             fontWeight = FontWeight.Bold,
             color = Color(0xFF03202B).copy(alpha = alpha),
         )

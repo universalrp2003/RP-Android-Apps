@@ -57,6 +57,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -98,6 +99,7 @@ import com.universalrp.smsguard.engine.SpoofClassification
 import com.universalrp.smsguard.engine.TxDirection
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -112,16 +114,31 @@ fun MessagesTab(
     isDefaultSms: Boolean,
     hasReadSms: Boolean,
     hasMoreMessages: Boolean = false,
+    isLoading: Boolean = false,
+    loadedMessageCount: Int = 0,
     sims: List<SimCardInfo>,
     onRequestDefaultSms: () -> Unit,
     onOpenAppInfoRestricted: () -> Unit,
     onRequestCompanionPermissions: () -> Unit,
     onOpenNewCompose: () -> Unit,
 ) {
+    val context = LocalContext.current
     val visibleThreads = remember(threads, filter, searchQuery) {
         vm.filterThreads(threads, filter, searchQuery)
     }
     var searchExpanded by remember { mutableStateOf(searchQuery.isNotBlank()) }
+    var loadingSeconds by remember { mutableIntStateOf(0) }
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            loadingSeconds = 0
+        } else {
+            loadingSeconds = 0
+            while (true) {
+                delay(1_000)
+                loadingSeconds++
+            }
+        }
+    }
     val searchFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(searchExpanded) {
@@ -140,6 +157,42 @@ fun MessagesTab(
             contentPadding = PaddingValues(start = 10.dp, end = 10.dp, top = 4.dp, bottom = 84.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            if (isLoading) {
+                item(key = "inbox-load-progress") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Text(
+                            text = if (prefs.tamil) {
+                                "சேமித்த செய்திகளை ஏற்றுகிறது… $loadedMessageCount காட்டப்படுகிறது · ${loadingSeconds} விநாடிகள்"
+                            } else {
+                                "Loading saved messages… $loadedMessageCount shown · ${loadingSeconds}s"
+                            },
+                            color = palette.textMuted,
+                            style = MaterialTheme.typography.labelSmall,
+                        )
+                    }
+                }
+            }
+
+            if (prefs.unsupportedMmsCount > 0) {
+                item {
+                    SectionCard(palette) {
+                        Text(if (prefs.tamil) "MMS அறிவிப்பு வந்துள்ளது — உள்ளடக்கம் பெறப்படவில்லை" else "MMS notice received — content not downloaded", color = palette.warnAmber)
+                        Text(if (prefs.tamil) "இந்த SMS-only செயலி பட/குழு MMS-ஐப் பெறாது. முழுமையான செய்திச் செயலியை இயல்புநிலையாக மாற்றி, தேவைப்பட்டால் அனுப்புநரிடம் மீண்டும் அனுப்பச் சொல்லுங்கள்."
+                            else "SMS-only mode cannot receive picture/group MMS. Switch to a full messaging app; you may need to ask the sender to resend.", color = palette.textMuted)
+                        TextButton(onClick = { context.startActivity(Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }) {
+                            Text(if (prefs.tamil) "இயல்புநிலைச் செயலியை மாற்று" else "Change default app")
+                        }
+                        TextButton(onClick = { vm.dismissUnsupportedMmsNotice() }) {
+                            Text(if (prefs.tamil) "அறிவிப்பை மட்டும் நீக்கு" else "Dismiss notice only")
+                        }
+                    }
+                }
+            }
+
             // 1. Setup helper card until Default SMS Role is granted
             if (!isDefaultSms) {
                 item {

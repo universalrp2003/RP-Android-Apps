@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Release-APK emulator checks with synthetic data only. No owner records/passwords.
+Exercises fresh opening, expenses/notes, restart persistence, legacy one-time recovery,
+independent backup password, wrong-password safety, restore and screenshot availability.
+"""
+import hashlib
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+
+PACKAGE = 'com.universalrp.dailyvault'
+OUT = Path('dailyvault-emulator-results'); OUT.mkdir(exist_ok=True)
+
+def adb(*args):
+    return subprocess.check_output(['adb', *args], timeout=40).decode(errors='replace')
+
+def launch():
+    adb('shell', 'am', 'start', '-W', '-n', PACKAGE + '/.MainActivity')
+    time.sleep(2)
+
+def nodes():
+    adb('shell', 'uiautomator', 'dump', '/sdcard/dailyvault-ui.xml')
+    text = adb('shell', 'cat', '/sdcard/dailyvault-ui.xml')
+    (OUT / 'last-ui.xml').write_text(text)
+    result = list(ET.fromstring(text).iter('node'))
+    labels = [n.get('text', '') for n in result]
+    if any("isn't responding" in t and ('Daily Vault' in t or 'தினக்கணக்கு' in t) for t in labels):
+        raise AssertionError('Daily Vault ANR: ' + repr(labels))
+    if any("Pixel Launcher isn't responding" in t for t in labels):
+        # API35's emulator launcher can ANR during boot; never dismiss an app ANR.
+        close = next(n for n in result if n.get('text') == 'Close app')
+        adb('shell', 'input', 'tap', *point(close))
+        print('::warning title=Emulator launcher::Dismissed a Pixel Launcher boot ANR (not Daily Vault).', flush=True)
+        time.sleep(2)
+        launch()
+        return nodes()
+    return result
+
+def wait_text(text, timeout=35, scroll=False):
+    end = time.monotonic() + timeout
+    while time.monotonic() < end:
+        try:
+            ns = nodes()
+            if any(text.casefold() in (n.get('text', '') + n.get('content-desc', '')).casefold() for n in ns): return ns
+            if scroll:
+                width, height = map(int, re.findall(r'(\d+)x(\d+)', adb('shell', 'wm', 'size'))[-1])
+                adb('shell', 'input', 'swipe', str(width//2), str(height*3//4), str(width//2), str(height//3), '300')
+        except AssertionError:
+            raise
+        except Exception:
+            pass
+        time.sleep(.5)
+    raise AssertionError('UI text not found: ' + text)
+
+def point(n):
+    x1,y1,x2,y2 = map(int, re.findall(r'\d+', n.get('bounds', '')))
+    return str((x1+x2)//2), str((y1+y2)//2)
+
+def tap(text):
+    ns = wait_text(text)
+    found = [n for n in ns if n.get('text', '').casefold() == text.casefold() or n.get('content-desc', '').casefold() == text.casefold()]
+    assert found, 'Exact clickable label not found: ' + text
+    adb('shell', 'input', 'tap', *point(found[-1]))
+    time.sleep(.6)
+
+def field(index, value, clear=False):
+    editable = [n for n in nodes() if n.get('class') == 'android.widget.EditText']
+    assert index < len(editable), f'Missing text field {index}; found {len(editable)}'
+    adb('shell', 'input', 'tap', *point(editable[index]))
+    if clear:
+        adb('shell', 'input', 'keyevent', '123')
+        adb('shell', 'input', 'keyevent', *(['67'] * 256))
+    adb('shell', 'input', 'text', value.replace(' ', '%s'))
+    time.sleep(.4)
+
+def keyboard_back():
+    # Do not dismiss the editor if a hardware-keyboard emulator did not show an IME.
+    ime = adb('shell', 'dumpsys', 'input_method')
+    if re.search(r'(mInputShown|mIsInputViewShown|isInputViewShown)=true', ime):
+        adb('shell', 'input', 'keyevent', '4')
+    time.sleep(.4)
+
+def shot(name):
+    path = OUT / (name + '.png')
+    path.write_bytes(subprocess.check_output(['adb', 'exec-out', 'screencap', '-p'], timeout=30))
+    assert path.read_bytes().startswith(b'\x89PNG') and path.stat().st_size > 15_000, 'Screenshot unavailable/blank'
+
+def english():
+    if any(n.get('text') == 'English' for n in nodes()): tap('English')
+
+def private_hash():
+    return adb('shell', 'sha256sum', f'/data/user/0/{PACKAGE}/files/daily-vault.tdv').split()[0]
+
+def main():
+    apk = sys.argv[1]
+    adb('install', '-r', apk)
+    adb('shell', 'settings', 'put', 'secure', 'show_ime_with_hard_keyboard', '1')
+    adb('shell', 'wm', 'dismiss-keyguard')
+    adb('shell', 'am', 'force-stop', 'com.google.android.apps.nexuslauncher')
+    launch(); english(); wait_text('A fresh start'); shot('01-fresh-overview-en')
+    tap('Add spending'); wait_text('Spending record')
+    field(0, '123.45'); field(1, 'Smoke groceries'); keyboard_back(); tap('Save')
+    wait_text('Record saved'); wait_text('Smoke groceries', scroll=True); shot('02-overview-with-spending')
+    tap('Records'); tap('Notes / history'); tap('Add note')
+    field(0, 'Smoke note'); keyboard_back(); tap('Save')
+    wait_text('Smoke note')
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english(); tap('Overview'); wait_text('Smoke groceries', scroll=True); wait_text('Smoke note', scroll=True)
+    # No app-opening password should appear after a process restart.
+    assert not any(n.get('class') == 'android.widget.EditText' for n in nodes())
+    tap('தமிழ்'); wait_text('தினக்கணக்கு'); shot('03-tamil-overview')
+    adb('shell', 'settings', 'put', 'system', 'font_scale', '1.3'); time.sleep(2); shot('04-large-font-tamil')
+    adb('shell', 'settings', 'put', 'system', 'font_scale', '1.0'); time.sleep(2)
+    english()
+    # Replace only this emulator's synthetic local file with the independent old TDV-v1 fixture.
+    adb('shell', 'am', 'force-stop', PACKAGE)
+    adb('root'); adb('wait-for-device')
+    uid = re.search(r'uid:(\d+)', adb('shell', 'pm', 'list', 'packages', '-U', PACKAGE)).group(1)
+    target = f'/data/user/0/{PACKAGE}'
+    adb('push', 'dailyvault/src/test/resources/legacy-v1.tdv', '/data/local/tmp/dailyvault-legacy.tdv')
+    adb('shell', 'sh', '-c', f'"cp /data/local/tmp/dailyvault-legacy.tdv {target}/files/daily-vault.tdv; chmod 600 {target}/files/daily-vault.tdv; chown {uid}:{uid} {target}/files/daily-vault.tdv; rm -f {target}/shared_prefs/local-unlock.xml; restorecon -R {target}"')
+    original = hashlib.sha256(Path('dailyvault/src/test/resources/legacy-v1.tdv').read_bytes()).hexdigest()
+    assert private_hash() == original
+    launch(); english(); wait_text('Recover previous records'); tap('Recover old vault')
+    field(0, 'WrongPassword123'); keyboard_back(); tap('Recover'); wait_text('Check the password or file')
+    assert private_hash() == original, 'Wrong recovery password changed the old vault'
+    field(0, 'LegacyBackupTest123', clear=True); keyboard_back(); tap('Recover')
+    wait_text('Legacy groceries', scroll=True); wait_text('Legacy reminder', scroll=True)
+    assert private_hash() == original, 'Legacy recovery should preserve authenticated file bytes'
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english(); wait_text('Legacy groceries', scroll=True)
+    tap('Backup'); shot('05-backup-screen')
+    tap('Export encrypted backup'); tap('Save')
+    wait_text('Choose a backup password')
+    field(0, 'IndependentBackup987'); field(1, 'IndependentBackup987'); keyboard_back(); tap('Save backup')
+    wait_text('Backup file written')
+    paths = adb('shell', 'find', '/storage/emulated/0/Download', '-name', 'DailyVault-*.tdv').splitlines()
+    assert paths, 'SAF export file not found in Downloads'
+    backup = paths[-1]; adb('pull', backup, str(OUT / 'synthetic-backup.tdv'))
+    content = (OUT / 'synthetic-backup.tdv').read_bytes()
+    assert content[:4] == b'TDV\x01' and b'Legacy groceries' not in content
+    tap('Overview'); tap('Add spending'); field(0, '1.00'); field(1, 'Temporary record'); keyboard_back(); tap('Save'); wait_text('Temporary record', scroll=True)
+    tap('Backup'); tap('Restore from file'); tap(Path(backup).name)
+    wait_text('Restore a backup')
+    field(0, 'WrongPassword123'); keyboard_back()
+    checkbox = next(n for n in nodes() if n.get('class') == 'android.widget.CheckBox')
+    adb('shell', 'input', 'tap', *point(checkbox))
+    before = private_hash(); tap('Replace and restore'); wait_text('Check the password or file')
+    assert private_hash() == before, 'Wrong backup password replaced current records'
+    field(0, 'IndependentBackup987', clear=True); keyboard_back(); tap('Replace and restore')
+    wait_text('Records restored from backup'); wait_text('Legacy groceries', scroll=True)
+    assert not any('Temporary record' in n.get('text', '') for n in nodes())
+    shot('06-restored-overview')
+    tap('Records'); tap('Notes / history'); wait_text('Legacy reminder'); shot('07-restored-notes')
+    tap('Backup'); tap('தமிழ்'); shot('08-backup-tamil')
+    english(); tap('Overview'); tap('Add spending')
+    field(0, '2.00'); field(1, 'Storage fault record'); keyboard_back(); tap('Save')
+    wait_text('Storage fault record', scroll=True)
+    # Force a device-credential read failure, then two independent storage faults.
+    # Only this emulator's synthetic app directory is modified; never owner data.
+    adb('shell', 'am', 'force-stop', PACKAGE)
+    prefs = target + '/shared_prefs/local-unlock.xml'
+    corrupt = OUT / 'synthetic-corrupt-prefs.xml'
+    corrupt.write_text('<?xml version="1.0" encoding="utf-8"?><map><string name="mode">none</string><string name="wrapped">YQ==</string></map>')
+    adb('push', str(corrupt), prefs); corrupt.unlink()
+    adb('shell', 'chmod', '600', prefs); adb('shell', 'chown', uid + ':' + uid, prefs)
+    adb('shell', 'restorecon', prefs)
+    launch(); english(); wait_text('Recover previous records')
+    tap('Restore a backup'); tap(Path(backup).name); wait_text('Restore a backup')
+    field(0, 'IndependentBackup987'); keyboard_back()
+    checkbox = next(n for n in nodes() if n.get('class') == 'android.widget.CheckBox')
+    adb('shell', 'input', 'tap', *point(checkbox))
+    before = private_hash()
+    prefs_before = adb('shell', 'sha256sum', prefs).split()[0]
+    adb('shell', 'chmod', '500', target + '/files')
+    tap('Replace and restore'); wait_text('Check the password or file')
+    assert private_hash() == before, 'Failed local write replaced existing records'
+    assert adb('shell', 'sha256sum', prefs).split()[0] == prefs_before, 'Failed local write replaced the old credential wrapper'
+    shot('09-failed-local-write-preserves-records-and-wrapper')
+    adb('shell', 'chmod', '700', target + '/files')
+    # Now commit the file but deny credential persistence. The data must remain
+    # recoverable with the known backup password, never an unstored random key.
+    adb('shell', 'chmod', '500', target + '/shared_prefs')
+    tap('Replace and restore'); wait_text('automatic opening could not be set up')
+    committed = private_hash()
+    assert committed != before
+    adb('shell', 'chmod', '700', target + '/shared_prefs')
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english()
+    wait_text('Recover previous records'); tap('Recover old vault')
+    field(0, 'IndependentBackup987'); keyboard_back(); tap('Recover')
+    wait_text('Legacy groceries', scroll=True); wait_text('Legacy reminder', scroll=True)
+    assert private_hash() == committed, 'Credential recovery rewrote the committed file'
+    adb('shell', 'am', 'force-stop', PACKAGE); launch(); english()
+    wait_text('Legacy groceries', scroll=True)
+    assert not any(n.get('class') == 'android.widget.EditText' for n in nodes())
+    shot('10-automatic-opening-after-storage-fault-recovery')
+    (OUT / 'PASS.txt').write_text('PASS: exact signed release APK; fresh no-login opening; expense/note saves; process restart; Tamil; screenshot capture; 1.3 font capture; legacy one-time recovery; wrong-password file preservation; password-protected export; independent-password restore; failed local writes preserve both records and credential wrapper; failed wrapper persistence remains recoverable with backup password; automatic opening after recovery. Emulator only, synthetic data; not physical-device/Play Protect certification.\n')
+    # Do not retain the synthetic backup/password as user-facing report artifacts.
+    (OUT / 'synthetic-backup.tdv').unlink(missing_ok=True)
+    print((OUT / 'PASS.txt').read_text())
+
+if __name__ == '__main__':
+    try: main()
+    except Exception as error:
+        message = str(error).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+        print('::error title=Daily Vault emulator check::' + type(error).__name__ + ': ' + message, flush=True)
+        try:
+            visible = [n.get('text', '') for n in nodes() if n.get('text')]
+            print('::error title=Visible synthetic test UI::' + repr(visible)[:1800].replace('%', '%25').replace('\n', '%0A'), flush=True)
+        except Exception: pass
+        try: shot('failure')
+        except Exception: pass
+        subprocess.run(['adb', 'logcat', '-d', '-t', '400'], stdout=(OUT / 'emulator-log.txt').open('w'), timeout=30)
+        raise

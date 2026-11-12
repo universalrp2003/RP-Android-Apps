@@ -1,0 +1,117 @@
+name: Battery and Voice Notes signed update verification (no publication)
+on:
+  push:
+    branches: ["arena/e24330d5-rp-android-apps"]
+    paths:
+      - "cleaner/**"
+      - "voicenotes/**"
+      - "shared/**"
+      - "tools/inspect_battery_voice_candidate.py"
+      - "tools/battery_voice_update_smoke.py"
+      - ".github/workflows/battery-voice-candidates.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: battery-voice-candidates-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [cleaner, voicenotes]
+    name: Signed ${{ matrix.module }} update and regression tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Source, security and bilingual gates
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_cleaner_localization.py
+          python3 tools/verify_release_signing_policy.py --fresh-install
+      - name: Test, lint and build one signed authorized app
+        shell: bash
+        run: |
+          set -euo pipefail
+          extra=()
+          if [[ '${{ matrix.module }}' == voicenotes ]]; then extra=(:voicenotes:assembleReleaseAndroidTest :voicenotes:testLiveNoteHd); fi
+          gradle :${{ matrix.module }}:testReleaseUnitTest :${{ matrix.module }}:lintRelease :${{ matrix.module }}:assembleRelease "${extra[@]}" --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/health-build-${{ matrix.module }}.log"
+      - name: Independent short and long HD reference (diagnostic, not runtime fallback)
+        if: always() && matrix.module == 'voicenotes'
+        run: |
+          python3 -m pip install --disable-pip-version-check --no-input 'edge-tts==7.3.1'
+          python3 tools/probe_note_hd_reference.py
+      - name: Actual APK identity, signer continuity and mandatory permission delta
+        run: python3 tools/inspect_battery_voice_candidate.py ${{ matrix.module }}
+      - name: Enable disposable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exact release update, synthetic data retention and native playback
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          ram-size: 2048M
+          cores: 2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 tools/battery_voice_update_smoke.py ${{ matrix.module }}
+      - name: Remove baseline APK from candidate artifact
+        run: |
+          if [[ '${{ matrix.module }}' == cleaner ]]; then rm "$RUNNER_TEMP/health-cleaner/CleanSweep-v2.81.apk"; else rm "$RUNNER_TEMP/health-voicenotes/Voice-Notes-v1.3.3.apk"; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verified-${{ matrix.module }}-battery-voice-update
+          path: ${{ runner.temp }}/health-${{ matrix.module }}/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Reports and restricted-client error details
+        if: always()
+        shell: python
+        run: |
+          import pathlib, xml.etree.ElementTree as ET
+          for p in pathlib.Path('${{ matrix.module }}/build/test-results').rglob('TEST-*.xml'):
+              root=ET.parse(p).getroot()
+              print('::notice title=JUnit::'+str(p)+' '+str({k:root.get(k) for k in ('tests','failures','errors','skipped')}))
+              for out in root.findall('system-out'):
+                  for line in (out.text or '').splitlines():
+                      if line.startswith('NOTE_HD_PROBE '): print('::notice title=Long-note HD::'+line)
+              for e in root.findall('.//failure')+root.findall('.//error'):
+                  print('::error title=Test failure::'+(e.get('message','')+' '+(e.text or ''))[:1500].replace('\n','%0A'))
+          p=pathlib.Path('${{ runner.temp }}/health-build-${{ matrix.module }}.log')
+          if p.exists():
+              lines=p.read_text(errors='replace').splitlines()
+              for line in [s for s in lines if s.startswith('e:') or ' FAILED' in s][-30:]: print('::error title=Build::'+line[:1200])
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: battery-voice-${{ matrix.module }}-reports
+          path: |
+            ${{ matrix.module }}/build/test-results/
+            ${{ matrix.module }}/build/reports/
+            ${{ runner.temp }}/health-build-${{ matrix.module }}.log
+            ${{ runner.temp }}/health-${{ matrix.module }}/verification.json
+            ${{ runner.temp }}/health-${{ matrix.module }}/instrumentation.txt
+          retention-days: 14
+      - name: Remove ephemeral signing material
+        if: always()
+        run: rm -f ci-keystore/release.p12

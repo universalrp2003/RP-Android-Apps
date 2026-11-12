@@ -61,11 +61,24 @@ jobs:
           gradle-version: "8.14.3"
 
       - name: Run app unit tests, Android lint, and build debug APK
-        run: >-
-          ./gradlew --no-daemon --stacktrace
-          :oorarivippu:testDebugUnitTest
-          :oorarivippu:lintDebug
-          :oorarivippu:assembleDebug
+        shell: bash
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace \
+            :oorarivippu:testDebugUnitTest \
+            :oorarivippu:lintDebug \
+            :oorarivippu:assembleDebug 2>&1 | tee oorarivippu-build.log
+
+      - name: Report real test and compiler failures without changing the gate
+        if: failure()
+        shell: bash
+        run: |
+          python3 tools/report_failing_tests.py | while IFS= read -r line; do
+            [ -n "$line" ] && echo "::error::$line"
+          done
+          grep -E '^e: |FAILED$|AssertionError|: Error:' oorarivippu-build.log | head -n 20 | while IFS= read -r line; do
+            echo "::error::$line"
+          done || true
 
       - name: Verify debug APK and calculate SHA-256
         id: apk

@@ -67,12 +67,20 @@ class SmsCompanionReceiver : BroadcastReceiver() {
     }
 }
 
-/**
- * Required by Android RoleManager.ROLE_SMS to qualify as a full Default SMS Handler.
- */
+/** Android routes MMS WAP notices to the default handler. SMS-only mode must not silently
+ * pretend to download them. Record a content-free notice and notify the user of the limitation. */
 class MmsDeliverReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        // Required manifest receiver for Default SMS Handler role eligibility.
+        if (intent?.action != Telephony.Sms.Intents.WAP_PUSH_DELIVER_ACTION) return
+        if (intent.type != "application/vnd.wap.mms-message") return
+        if (!com.universalrp.smsguard.data.SmsRepository.isDefaultSmsApp(context)) return
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                UnsupportedMmsNotice.record(context.applicationContext)
+                SmsStateChangeSignal.notifyChanged()
+            } finally { pending.finish() }
+        }
     }
 }
 

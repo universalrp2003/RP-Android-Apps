@@ -10,6 +10,8 @@ import com.universalrp.smsguard.data.QueuedSleepAnnouncement
 import com.universalrp.smsguard.data.QueuedSmsLinkCheck
 import com.universalrp.smsguard.data.SimCardInfo
 import com.universalrp.smsguard.data.SmsEvents
+import com.universalrp.smsguard.data.InboxLoadResult
+import com.universalrp.smsguard.data.messagesOrPrevious
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.data.SmsThreadSummary
 import com.universalrp.smsguard.data.SenderMutePref
@@ -176,13 +178,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setFinanceLockEnabled(enabled: Boolean) {
+        // Never allow a settings switch to bypass the Finance authentication gate.
+        if (!enabled && !_financeUnlockedInSession.value) return
         GuardSettingsStore.updateFinanceLockEnabled(getApplication(), enabled)
-        if (!enabled) {
-            _financeUnlockedInSession.value = true
-        }
+        // Re-enabling the lock must not retain an unlocked session from lock-OFF mode.
+        _financeUnlockedInSession.value = !enabled
     }
 
     fun setCustomFinancePin(rawPin: String) {
+        // Creating/replacing/clearing a password is security-sensitive, including first setup.
+        if (prefsFlow.value.financeLockEnabled && !_financeUnlockedInSession.value) {
+            _statusBanner.value = if (prefsFlow.value.tamil) "முதலில் கைரேகை / போன் பூட்டு மூலம் திறக்கவும்" else "Unlock with phone credentials before changing the Finance password"
+            return
+        }
         val ctx = getApplication<Application>()
         GuardSettingsStore.setCustomFinancePin(ctx, rawPin)
         val tamil = prefsFlow.value.tamil
@@ -322,6 +330,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _statusBanner.value = null
     }
 
+    fun dismissUnsupportedMmsNotice() {
+        GuardSettingsStore.clearUnsupportedMmsNotice(getApplication())
+    }
+
     fun postBanner(text: String) {
         _statusBanner.value = text
     }
@@ -349,13 +361,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                         val quickBatch = withContext(Dispatchers.IO) {
                             SmsRepository.loadEnrichedMessages(ctx, maxMessages = 250)
                         }
-                        if (quickBatch.isNotEmpty()) {
+                        if (quickBatch is InboxLoadResult.Success && quickBatch.messages.isNotEmpty()) {
                             val quickThreads = withContext(Dispatchers.Default) {
-                                SmsRepository.groupThreads(quickBatch)
+                                SmsRepository.groupThreads(quickBatch.messages)
                             }
-                            _allMessages.value = quickBatch
+                            _allMessages.value = quickBatch.messages
                             _threads.value = quickThreads
-                            _hasMoreMessages.value = SmsRepository.lastLoadHasMoreMessages
+                            _hasMoreMessages.value = quickBatch.hasMore
                         }
                     }
 
@@ -363,12 +375,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val fullLoaded = withContext(Dispatchers.IO) {
                         SmsRepository.loadEnrichedMessages(ctx, maxMessages = targetMessageCap)
                     }
+                    val retainedMessages = fullLoaded.messagesOrPrevious(_allMessages.value)
                     val fullThreads = withContext(Dispatchers.Default) {
-                        SmsRepository.groupThreads(fullLoaded)
+                        SmsRepository.groupThreads(retainedMessages)
                     }
-                    _allMessages.value = fullLoaded
+                    _allMessages.value = retainedMessages
                     _threads.value = fullThreads
-                    _hasMoreMessages.value = SmsRepository.lastLoadHasMoreMessages
+                    if (fullLoaded is InboxLoadResult.Success) {
+                        _hasMoreMessages.value = fullLoaded.hasMore
+                    } else {
+                        _statusBanner.value = if (prefsFlow.value.tamil) {
+                            if (fullLoaded is InboxLoadResult.PermissionRequired) "பழைய செய்திகளைப் பார்க்க SMS வாசிப்பு அனுமதி தேவை."
+                            else {
+                                val stage = (fullLoaded as? InboxLoadResult.Unavailable)?.stage?.code.orEmpty()
+                                "செய்திகளை மீளேற்ற முடியவில்லை [$stage]. முன்பு ஏற்றியவை உள்ளன; மீண்டும் முயலுங்கள்."
+                            }
+                        } else {
+                            if (fullLoaded is InboxLoadResult.PermissionRequired) "SMS read permission is required to view stored messages."
+                            else {
+                                val stage = (fullLoaded as? InboxLoadResult.Unavailable)?.stage?.code.orEmpty()
+                                "Could not refresh messages [$stage]. Previously loaded messages are retained; please retry."
+                            }
+                        }
+                    }
                     _isLoading.value = false
                     _billReminders.value = GuardSettingsStore.getBillReminders(ctx)
                     syncThreadNotifications(fullThreads)
@@ -500,9 +529,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             if (announceAloud && prefs.voiceEnabled) {
                 val speech = when (res.verdict) {
                     LinkVerdict.SAFE -> if (prefs.tamil) {
-                        "பச்சை டிக் பாதுகாப்பு உறுதி! ${res.displayDomain} இணைப்பு பாதுகாப்பானது, திறக்கலாம்."
+                        "${res.displayDomain} சோதனையில் அச்சுறுத்தல் தெரியவில்லை. இது பாதுகாப்பு உத்தரவாதம் அல்ல."
                     } else {
-                        "Green tick verified! ${res.displayDomain} is safe to open."
+                        "No threat detected in checks for ${res.displayDomain}. This is not a safety guarantee."
                     }
                     LinkVerdict.UNSAFE -> if (prefs.tamil) {
                         "ஆபத்து எச்சரிக்கை! ${res.displayDomain} போலியான ஆபத்தான இணைப்பு — தயவுசெய்து தொடாதீர்கள்!"
@@ -535,9 +564,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    private val _sendPermissionNeeded = MutableStateFlow(false)
+    val sendPermissionNeeded: StateFlow<Boolean> = _sendPermissionNeeded
+    fun clearSendPermissionRequest() { _sendPermissionNeeded.value = false }
+
     fun sendSms(recipient: String, text: String, subId: Int, onDone: (Boolean) -> Unit) {
         val ctx = getApplication<Application>()
         val prefs = prefsFlow.value
+        if (!SmsRepository.hasSendSmsPermission(ctx)) {
+            _sendPermissionNeeded.value = true
+            onDone(false) // Keep the draft. Never auto-send after permission approval.
+            return
+        }
         viewModelScope.launch(Dispatchers.IO) {
             val result = SmsRepository.sendSmsMessage(ctx, recipient, text, subId)
             withContext(Dispatchers.Main) {
@@ -651,7 +689,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         if (msg.isSentByMe) {
-            val cleanText = msg.body.take(180)
+            val cleanText = com.universalrp.smsguard.engine.SpeechPrivacy.prepare(msg.body)?.take(180)
+                ?: run {
+                    postBanner(if (prefs.tamil) "ரகசியக் குறியீடு உள்ள செய்தி குரலில் படிக்கப்படாது." else "Secret-bearing messages are not read aloud.")
+                    return
+                }
             val sentLine = if (prefs.tamil) {
                 "நீங்கள் அனுப்பிய செய்தி: $cleanText"
             } else {
@@ -670,6 +712,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 tamil = prefs.tamil,
                 voiceEnabled = true,
                 senderOnlyVoiceEnabled = prefs.senderOnlyVoiceEnabled,
+                announceOtpSenderOnly = prefs.announceOtpSenderOnly,
                 readFullNormalSmsEnabled = prefs.readFullNormalSmsEnabled,
                 shortEveryMessageEnabled = true,
                 mutePromoVoice = false,
@@ -867,7 +910,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     BillFilter.ALL -> true
                     BillFilter.UNPAID -> !b.isPaid
                     BillFilter.PAID -> b.isPaid
-                    BillFilter.DUE_SOON -> !b.isPaid && BillReminderEngine.isUrgent(b.dueDate, today)
+                    BillFilter.DUE_SOON -> !b.isPaid && !BillReminderEngine.needsReview(b) && BillReminderEngine.isUrgent(b.dueDate, today)
                 }
             }
             .sortedWith(
@@ -986,6 +1029,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setInternetEnabled(enabled: Boolean) {
         val ctx = getApplication<Application>()
+        if (!enabled) SmsVoiceAnnouncer.stop(ctx)
         GuardSettingsStore.updateInternetEnabled(ctx, enabled)
         if (enabled) {
             viewModelScope.launch(Dispatchers.IO) {
@@ -995,6 +1039,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         } else {
             refreshAll()
         }
+    }
+
+    fun setCloudSpeechConsent(enabled: Boolean) {
+        SmsVoiceAnnouncer.stop(getApplication())
+        GuardSettingsStore.updateCloudSpeechConsent(getApplication(), enabled)
     }
 
     fun setVoiceEnabled(enabled: Boolean) {
@@ -1010,6 +1059,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setSenderOnlyVoice(enabled: Boolean) {
         GuardSettingsStore.updateSenderOnlyVoice(getApplication(), enabled)
+    }
+
+    fun setAnnounceOtpSenderOnly(enabled: Boolean) {
+        GuardSettingsStore.updateAnnounceOtpSenderOnly(getApplication(), enabled)
     }
 
     fun setReadFullNormalSms(enabled: Boolean) {

@@ -7,6 +7,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.Assume.assumeTrue
 import java.net.InetAddress
 import java.time.LocalDate
 
@@ -53,10 +54,12 @@ class NeuralCloudVoiceEngineTest {
 
     @Test
     fun livePlaceAnnouncementSynthesisWorksForTamilAndEnglishStudioVoices() {
+        assumeTrue("External live synthesis runs only in the separate opt-in probe, not the deterministic gate",
+            System.getenv("RP_RUN_LIVE_SPEECH_TEST") == "true")
         val reachable = runCatching {
             InetAddress.getByName("speech.platform.bing.com") != null
         }.getOrDefault(false)
-        if (!reachable) return
+        assertTrue("Live probe cannot resolve the synthesis host; no successful audio claimed", reachable)
 
         val sampleProfiles = listOf(
             SharedNeuralVoiceEngine.MALE_VOICES[0],

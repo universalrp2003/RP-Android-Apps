@@ -1,0 +1,12 @@
+{
+  "name": "rp-website-usability-tests",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Development-only browser checks; not part of any Android app or website runtime",
+  "scripts": { "test": "node usability.mjs" },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@sparticuz/chromium": "153.0.0",
+    "playwright": "1.64.1"
+  }
+}

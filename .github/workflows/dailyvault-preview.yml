@@ -1,0 +1,59 @@
+name: Daily Vault preview (no publication)
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "dailyvault/**"
+      - ".github/workflows/dailyvault-preview.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: daily-vault-preview-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Test and compile preview
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle :dailyvault:testDebugUnitTest :dailyvault:lintDebug :dailyvault:assembleDebug --no-daemon --stacktrace 2>&1 | tee dailyvault-build.log
+      - name: Expose actionable compiler and lint errors
+        if: failure()
+        run: |
+          python3 - <<'PYDIAG'
+          from pathlib import Path
+          import re
+          paths = [Path("dailyvault-build.log"), *Path("dailyvault/build/reports").glob("lint-results-*.txt")]
+          found = []
+          for path in paths:
+              if not path.exists(): continue
+              for line in path.read_text(errors="replace").splitlines():
+                  if re.search(r"(^e: |error:|Error:|What went wrong|Execution failed|FAILURE:|requires|Dependency |Minimum supported)", line):
+                      found.append(line[:1500])
+          for line in found[:35]:
+              text = line.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print("::error title=Daily Vault build diagnostic::" + text)
+          PYDIAG
+      - uses: actions/upload-artifact@v4
+        with:
+          name: daily-vault-preview
+          path: dailyvault/build/outputs/apk/debug/*.apk
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: daily-vault-test-reports
+          path: dailyvault/build/reports/
+          retention-days: 14

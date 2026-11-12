@@ -1,0 +1,14 @@
+{
+  "source": "c4331d91b9a069d41b391665a178e09f0762c12f",
+  "candidate_run": 41309213845,
+  "artifact_id": 13085047634,
+  "publication_run": 41312659562,
+  "publication_job": 124866111589,
+  "release_id": 430611845,
+  "asset_id": 698463228,
+  "tag": "elderly-launcher-v1.7",
+  "published_at": "2026-11-01T13:44:12Z",
+  "bytes": 11521755,
+  "apk_sha256": "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec",
+  "rebuilt": false
+}

@@ -54,6 +54,9 @@ data class BatteryReading(
      * purpose — older positional constructions of this class stay valid.
      */
     val currentSource: BatteryValuePolicy.CurrentSource = BatteryValuePolicy.CurrentSource.NONE,
+    /** Sustained supported-current evidence, NOT merely displayed 100%. */
+    val fullChargeConfirmed: Boolean = false,
+    val chargeEstimate: ChargeEstimate = ChargeEstimate(reason = "Waiting for battery observations"),
 ) {
     /** Voltage is read only from Android's battery-changed broadcast in this implementation. */
     val voltageSource: BatteryMeasurementSource
@@ -170,8 +173,9 @@ object BatteryReader {
         // still carries the real charge current. BatteryValuePolicy stays the single decider
         // of which reading may be used and of the unit: a magnitude is never treated as
         // evidence of a different unit, and an unsupported sensor never becomes "0.00 W".
+        val propertyCurrent = property(bm, BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
         val current = BatteryValuePolicy.currentReading(
-            propertyMicroAmps = property(bm, BatteryManager.BATTERY_PROPERTY_CURRENT_NOW),
+            propertyMicroAmps = propertyCurrent,
             broadcastMicroAmps = intent?.getIntExtra(EXTRA_CURRENT_NOW, UNKNOWN),
         )
         val currentA = current.amps
@@ -217,6 +221,9 @@ object BatteryReader {
             null
         }
 
+        val completionEstimate = ChargeAnnouncementSettings.policy.observe(powerConnected, percent,
+                status == BatteryManager.BATTERY_STATUS_FULL, BatteryValuePolicy.microAmpsToAmps(propertyCurrent),
+                voltageV, android.os.SystemClock.elapsedRealtime(), ChargeAnnouncementSettings.thresholds(context))
         val reading = BatteryReading(
             percent = percent.coerceIn(if (percent < 0) -1 else 0, 100),
             temperatureC = temperatureC,
@@ -236,6 +243,15 @@ object BatteryReader {
             reportedLevel = level.takeIf { scale > 0 && it in 0..scale },
             reportedScale = scale.takeIf { it > 0 && level in 0..it },
             currentSource = current.source,
+            chargeEstimate = completionEstimate,
+            fullChargeConfirmed = FullChargeMonitor.policy.observe(
+                connected = powerConnected, percent = percent,
+                androidFull = status == BatteryManager.BATTERY_STATUS_FULL,
+                // Unlike the display, this detector can use zero ONLY after learning a
+                // working documented counter during this continuously observed connection.
+                currentA = BatteryValuePolicy.microAmpsToAmps(propertyCurrent),
+                nowMs = android.os.SystemClock.elapsedRealtime(),
+            ) && completionEstimate.ready,
         )
         LiveChargingEta.observe(reading)
         return reading
@@ -482,8 +498,9 @@ fun batteryTimeMinutes(battery: BatteryReading): Int? {
  */
 fun batteryTimeLabel(battery: BatteryReading): String? {
     if (battery.percent !in 0..100) return null
+    if (battery.fullChargeConfirmed) return tr("Full — unplug when convenient")
+    if (battery.powerConnected && battery.percent >= 100) return if (Lang.isTamil) "100% எட்டியது" else "100% reached"
     if (battery.charging) {
-        if (battery.percent >= 100) return tr("Full — unplug when convenient")
         val minutes = batteryTimeMinutes(battery)
             ?: return tr("Estimating charging time; more observations are needed.")
         return tr("Estimated to 100% from recent charging: %s", formatMinutes(minutes))

@@ -1,0 +1,222 @@
+name: Publish Tamilan Store or DailyVault
+on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - ".github/workflows/new-apps-public-release.yml"
+      - "tamilanstore/**"
+      - "dailyvault/**"
+      - "shared/src/main/java/com/universalrp/updates/**"
+      - "releases/tamilan-store-v0.7.md"
+      - "releases/daily-vault-v0.5.md"
+  workflow_dispatch:
+    inputs:
+      app:
+        description: "Select exactly one app for this candidate or publication run"
+        required: true
+        type: choice
+        options:
+          - tamilanstore
+          - dailyvault
+      publish:
+        description: "Publish this app after all signed APK checks pass (off for candidate-only verification)"
+        required: false
+        default: false
+        type: boolean
+permissions:
+  contents: write
+concurrency:
+  group: first-party-new-app-${{ inputs.app || github.run_id }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    # Ordinary edits belong to the read-only preview workflow, not old release rebuilds.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[publish-tamilanstore]') ||
+      contains(github.event.head_commit.message, '[publish-dailyvault]')
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(github.event_name == 'workflow_dispatch' && format('["{0}"]', inputs.app) || (contains(github.event.head_commit.message, '[publish-tamilanstore]') && '["tamilanstore"]' || '["dailyvault"]')) }}
+    name: Verify ${{ matrix.app }} candidate (publish only by explicit selection)
+    runs-on: ubuntu-latest
+    env:
+      APP: ${{ matrix.app }}
+      PUBLISH_REQUESTED: ${{ (github.event_name == 'workflow_dispatch' && inputs.publish && inputs.app == matrix.app) || (github.event_name == 'push' && ((matrix.app == 'tamilanstore' && contains(github.event.head_commit.message, '[publish-tamilanstore]') && !contains(github.event.head_commit.message, '[publish-dailyvault]')) || (matrix.app == 'dailyvault' && contains(github.event.head_commit.message, '[publish-dailyvault]') && !contains(github.event.head_commit.message, '[publish-tamilanstore]')))) }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve one selected app and its immutable release coordinates
+        id: target
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$APP" in
+            tamilanstore)
+              echo '::error::Store 0.8 is immutable. The 0.9 redesign is preview-only; use tamilanstore-preview.yml.'
+              exit 2
+              ;;
+            dailyvault)
+              echo 'module=dailyvault' >> "$GITHUB_OUTPUT"
+              echo 'version=0.5' >> "$GITHUB_OUTPUT"
+              echo 'code=5' >> "$GITHUB_OUTPUT"
+              echo 'slug=daily-vault' >> "$GITHUB_OUTPUT"
+              echo 'label=DailyVault' >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::Unsupported app selection: $APP"
+              exit 2
+              ;;
+          esac
+
+      - name: Prepare private fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Source tests and localization
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+
+      - name: Test, lint and build the selected signed release
+        env:
+          MODULE: ${{ steps.target.outputs.module }}
+        run: |
+          gradle ":$MODULE:testReleaseUnitTest" ":$MODULE:lintRelease" ":$MODULE:assembleRelease" --no-daemon --stacktrace
+
+      - name: Verify selected package, version, signer and digest
+        env:
+          MODULE: ${{ steps.target.outputs.module }}
+          VERSION: ${{ steps.target.outputs.version }}
+          CODE: ${{ steps.target.outputs.code }}
+          LABEL: ${{ steps.target.outputs.label }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          mkdir -p release-assets
+          mapfile -t apks < <(find "$MODULE/build/outputs/apk/release" -maxdepth 1 -name '*.apk' -type f)
+          test "${#apks[@]}" -eq 1
+          apk="release-assets/$LABEL-v$VERSION.apk"
+          cp "${apks[0]}" "$apk"
+          "$tools/aapt" dump badging "$apk" > /tmp/badging
+          grep -Fq "package: name='com.universalrp.$MODULE' versionCode='$CODE' versionName='$VERSION'" /tmp/badging
+          if grep -q application-debuggable /tmp/badging; then exit 1; fi
+          "$tools/apksigner" verify --print-certs "$apk" > /tmp/signer
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' /tmp/signer | tr -d ' :\r' | tr A-F a-f | sort -u)"
+          test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
+          (cd release-assets && sha256sum "$LABEL-v$VERSION.apk" > "$LABEL-v$VERSION.sha256")
+          cat "release-assets/$LABEL-v$VERSION.sha256"
+
+      - name: Enable emulator acceleration for Daily Vault release checks
+        if: matrix.app == 'dailyvault'
+        run: sudo chmod a+rw /dev/kvm
+
+      - name: Exercise the exact Daily Vault release APK on Android 15
+        if: matrix.app == 'dailyvault'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 dailyvault/tools/emulator-smoke.py release-assets/DailyVault-v0.5.apk
+
+      - name: Upload Daily Vault emulator evidence (synthetic data only)
+        if: always() && matrix.app == 'dailyvault'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dailyvault-release-emulator-evidence
+          path: dailyvault-emulator-results/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Prepare immutable Store0.7 same-key update fixture
+        if: matrix.app == 'tamilanstore'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' 'https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.7/Tamilan-Store-v0.7.apk' -o /tmp/Tamilan-Store-v0.7.apk
+          echo 'b6618ea5e101c23ce4aada39b28820e9840bd1eede03140ff2582255fe4fd8fe  /tmp/Tamilan-Store-v0.7.apk' | sha256sum --check
+          sudo chmod a+rw /dev/kvm
+      - name: Exercise exact Tamilan Store release update, showcase, motion controls and galleries
+        if: matrix.app == 'tamilanstore'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 tamilanstore/tools/showcase-release-smoke.py release-assets/Tamilan-Store-v0.8.apk /tmp/Tamilan-Store-v0.7.apk
+      - name: Verify exact Store APK stayed unchanged through emulator testing
+        if: matrix.app == 'tamilanstore'
+        run: cd release-assets && sha256sum --check Tamilan-Store-v0.8.sha256
+      - name: Upload synthetic Store release showcase evidence
+        if: always() && matrix.app == 'tamilanstore'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tamilan-store-showcase-emulator-evidence
+          path: store-showcase-results/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-verified-release-apk
+          retention-days: 30
+          path: release-assets/
+          if-no-files-found: error
+
+      - name: Publish selected app without replacing an existing release or asset
+        if: ${{ env.PUBLISH_REQUESTED == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODULE: ${{ steps.target.outputs.module }}
+          VERSION: ${{ steps.target.outputs.version }}
+          SLUG: ${{ steps.target.outputs.slug }}
+          LABEL: ${{ steps.target.outputs.label }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            subject="$(git log -1 --format=%s)"
+            if [[ "$APP" == "tamilanstore" ]]; then marker='[publish-tamilanstore]'; other='[publish-dailyvault]';
+            else marker='[publish-dailyvault]'; other='[publish-tamilanstore]'; fi
+            if [[ "$subject" != *"$marker"* || "$subject" == *"$other"* ]]; then
+              echo "::error::The commit subject must select exactly one app-specific release marker."
+              exit 1
+            fi
+          fi
+          tag="$SLUG-v$VERSION"
+          test -s "releases/$tag.md" || { echo "::error::Missing release notes: releases/$tag.md"; exit 1; }
+          if gh release view "$tag" >/dev/null 2>&1 || gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "::error::Release/tag already exists; refusing to replace it: $tag"
+            exit 1
+          fi
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          apk="release-assets/$LABEL-v$VERSION.apk"
+          expected_sha="$(sha256sum "$apk" | cut -d ' ' -f 1)"
+          gh release create "$tag" "$apk" "release-assets/$LABEL-v$VERSION.sha256" --target "$GITHUB_SHA" --title "$LABEL $VERSION" --notes-file "releases/$tag.md" --latest=false
+          published_digest="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$tag" --jq ".assets[] | select(.name == \"$LABEL-v$VERSION.apk\") | .digest")"
+          if [[ "$published_digest" != "sha256:$expected_sha" ]]; then
+            echo "::error::Published $tag digest $published_digest differs from verified sha256:$expected_sha"
+            exit 1
+          fi
+          echo "PUBLISHED AND VERIFIED: $tag $LABEL-v$VERSION.apk sha256:$expected_sha"

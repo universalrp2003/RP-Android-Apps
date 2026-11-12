@@ -129,7 +129,6 @@ PY
     android.permission.POST_NOTIFICATIONS \
     android.permission.RECEIVE_BOOT_COMPLETED \
     android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS \
-    android.permission.REQUEST_INSTALL_PACKAGES \
     android.permission.USE_BIOMETRIC \
     android.permission.USE_FINGERPRINT \
     android.permission.WAKE_LOCK \

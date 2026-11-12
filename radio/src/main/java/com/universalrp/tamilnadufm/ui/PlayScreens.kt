@@ -143,6 +143,19 @@ fun LocalScreen(vm: MainViewModel, state: UiState) {
                         IconButton(onClick = { vm.next() }) { Icon(Icons.Filled.SkipNext, AppStrings.translate("Next song"), tint = Saffron) }
                         IconButton(onClick = { vm.refreshMusicFolder() }) { Icon(Icons.Filled.Refresh, AppStrings.translate("Refresh folder"), tint = Saffron) }
                     }
+                    androidx.compose.material3.TextButton(onClick = { vm.toggleLocalContinuous() }) {
+                        Text(AppStrings.translate(if (state.localContinuous) "Continuous: on" else "Continuous: off"))
+                    }
+                    androidx.compose.material3.TextButton(onClick = { vm.toggleLocalShuffle() }) {
+                        Text(if (state.localShuffle) AppStrings.translate("Random: on") else AppStrings.translate("Random: off"))
+                    }
+                    androidx.compose.material3.TextButton(onClick = { vm.cycleLocalRepeat() }) {
+                        Text(when (state.localRepeat) {
+                            1 -> AppStrings.translate("Repeat: one")
+                            2 -> AppStrings.translate("Repeat: all")
+                            else -> AppStrings.translate("Repeat: off")
+                        })
+                    }
                     if (state.playingLocalTitle != null) {
                         Text(
                             AppStrings.translate("Seek through this track"),
@@ -664,6 +677,9 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         runCatching { aboutContext.packageManager.getPackageInfo(aboutContext.packageName, 0).versionName }.getOrNull() ?: "unknown"
     }
 
+    var showTabOrder by remember { mutableStateOf(false) }
+    if (showTabOrder) TabOrderEditor(vm, state) { showTabOrder = false }
+
     var name by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
     // v1.13 — the last station starts by itself on launch; this is the owner's off switch.
@@ -704,6 +720,16 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
                             .clickable { showGuide = true }
                             .padding(vertical = 8.dp),
                     )
+                }
+            }
+        }
+
+        item {
+            PanelCard(Modifier.fillMaxWidth()) {
+                Column(Modifier.fillMaxWidth().clickable { showTabOrder = true }.padding(14.dp)) {
+                    Text(if (tamil) "முழுத் தாவல்களின் வரிசையை மாற்று" else "Arrange whole tabs", color = Saffron, fontWeight = FontWeight.SemiBold)
+                    Text(if (tamil) "கீழ்த் தாவல்கள் மற்றும் வானொலி வகைகள் — உங்கள் விருப்ப வரிசையில்."
+                        else "Put navigation tabs and station categories in your preferred order.", color = TextSecondary)
                 }
             }
         }
@@ -926,7 +952,7 @@ fun MoreScreen(vm: MainViewModel, state: UiState) {
         item {
             PanelCard(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                    com.universalrp.updates.AppUpdates.Control("Ramesh-Radio")
+                    com.universalrp.updates.BrowserReleaseUpdates("Ramesh-Radio")
                 }
             }
         }

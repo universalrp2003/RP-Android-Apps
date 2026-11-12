@@ -45,6 +45,20 @@ jobs:
       - name: Run the live studio voice suite
         run: ./gradlew :cleaner:testLiveStudioVoice --no-daemon --continue
 
+      - name: SMS Guard live neural voice availability (reports failure separately)
+        continue-on-error: true
+        run: ./gradlew :smsguard:testLiveSmsVoice --no-daemon --stacktrace
+
+      - name: Upload SMS live voice result (including failures)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sms-live-voice-results
+          path: |
+            smsguard/build/reports/tests/testLiveSmsVoice/
+            smsguard/build/test-results/testLiveSmsVoice/
+          retention-days: 14
+
       - name: Report
         if: always()
         run: |

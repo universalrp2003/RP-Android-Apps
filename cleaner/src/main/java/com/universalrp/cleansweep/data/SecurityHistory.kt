@@ -5,6 +5,7 @@ import java.security.MessageDigest
 data class ObservedPackage(
     val packageName: String, val label: String, val installedAtMs: Long = 0,
     val updatedAtMs: Long = 0, val isSystem: Boolean = false,
+    val identity: PackageIdentity? = null, val installer: String? = null,
 )
 
 data class SecurityObservation(
@@ -42,7 +43,7 @@ object SecurityHistoryPolicy {
         "banking_sms_readers", "facebook_stubs", "odd_installer", "root_tools", "installed_apps",
     )
 
-    private val ALL_CHECKS = APP_CHECKS + setOf("accessibility", "notification_listeners", "device_admin", "no_lock", "developer_options", "old_patch")
+    private val ALL_CHECKS = APP_CHECKS + SecurityIdentityPolicy.combinations.keys + setOf("accessibility", "notification_listeners", "device_admin", "no_lock", "developer_options", "old_patch")
 
     fun snapshot(report: SecurityReport, packages: List<ObservedPackage>): SecuritySnapshot {
         val byPackage = packages.associateBy { it.packageName }
@@ -72,6 +73,7 @@ object SecurityHistoryPolicy {
         if (previous != null && current.atMs <= previous.atMs) return state
         val validCurrent = current.copy(observations = current.observations.filterNot { it.findingId in current.unavailableChecks })
         val events = state.events.toMutableList()
+        val identityChanged = mutableSetOf<String>()
         fun add(kind: SecurityChangeKind, observation: SecurityObservation? = null, pkg: ObservedPackage? = null,
                 title: String = observation?.title ?: pkg?.label.orEmpty(), detail: String = "") {
             val key = observation?.key ?: pkg?.packageName.orEmpty()
@@ -105,6 +107,20 @@ object SecurityHistoryPolicy {
                 for ((key, pkg) in newPackages) if (key !in oldPackages) {
                     add(SecurityChangeKind.NEW_APP, pkg = pkg, title = "App newly observed", detail = "First seen in this inventory; not necessarily newly installed or unsafe.")
                 }
+                val oldIdentityPackages = previous.packages.associateBy { it.packageName }
+                for ((key, pkg) in current.packages.associateBy { it.packageName }) {
+                    val oldPackage = oldIdentityPackages[key] ?: continue
+                    when (SecurityIdentityPolicy.compare(oldPackage.identity, pkg.identity)) {
+                        SecurityIdentityPolicy.Change.PLATFORM_ROTATION -> { identityChanged += key; add(SecurityChangeKind.CHANGED, pkg = pkg,
+                            title = "Signing identity rotated", detail = "Android reports a signing lineage including the previous signer. Rotation is not proof of malware or safety.") }
+                        SecurityIdentityPolicy.Change.DIFFERENT -> { identityChanged += key; add(SecurityChangeKind.CHANGED, pkg = pkg,
+                            title = "Signing identity changed", detail = "No continuity with the previous signer was observed. Review the package and source; this alone does not prove malware.") }
+                        else -> Unit
+                    }
+                    if (oldPackage.installer != null && pkg.installer != null && oldPackage.installer != pkg.installer)
+                        add(SecurityChangeKind.CHANGED, pkg = pkg, title = "Reported installer changed",
+                            detail = "${oldPackage.installer} → ${pkg.installer}. Installer attribution is not a verified trust verdict.")
+                }
                 for ((key, pkg) in oldPackages) if (key !in newPackages) {
                     add(SecurityChangeKind.APP_NO_LONGER_LISTED, pkg = pkg, title = "App no longer listed", detail = "May have been removed or become unavailable to this inventory.")
                 }
@@ -114,10 +130,16 @@ object SecurityHistoryPolicy {
         val carried = previous?.observations.orEmpty().filter { old ->
             old.findingId in current.unavailableChecks
         }
-        val packages = if ("installed_apps" in current.unavailableChecks) previous?.packages ?: current.packages else current.packages
+        val packages = if ("installed_apps" in current.unavailableChecks) previous?.packages ?: current.packages else current.packages.map { pkg ->
+            val old = previous?.packages?.firstOrNull { it.packageName == pkg.packageName }
+            if (pkg.identity?.valid() != true) pkg.copy(identity = old?.identity) else pkg
+        }
         val merged = current.copy(observations = (validCurrent.observations + carried).distinctBy { it.key }, packages = packages)
         val fingerprints = merged.observations.associate { it.key to it.fingerprint }
-        val reviewed = state.reviewed.filter { (key, value) -> key.startsWith("local:") || fingerprints[key] == value }
+        val reviewed = state.reviewed.filter { (key, value) ->
+            val pkg = merged.observations.firstOrNull { it.key == key }?.app?.packageName
+            (key.startsWith("local:") || fingerprints[key] == value) && pkg !in identityChanged
+        }
         return SecurityHistoryState(merged, events.takeLast(MAX_EVENTS), reviewed, state.baselinedChecks + (ALL_CHECKS - current.unavailableChecks))
     }
 

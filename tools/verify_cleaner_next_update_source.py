@@ -24,16 +24,12 @@ def require(condition, description):
 def main():
     manifest = ET.parse(ROOT / 'cleaner/src/main/AndroidManifest.xml').getroot()
     permissions = {node.get(ANDROID + 'name') for node in manifest.findall('uses-permission')}
-    require('android.permission.REQUEST_INSTALL_PACKAGES' in permissions, 'Install permission missing')
+    require('android.permission.REQUEST_INSTALL_PACKAGES' not in permissions, 'Retired install permission returned')
     require('android.permission.READ_CONTACTS' not in permissions, 'Reader must not silently add Contacts permission')
     require(core.manifest_problems(manifest, 'source') == [], 'Retired notification-reader capability returned to the manifest')
     core_problems = core.source_problems()
     require(not core_problems, 'Retired reader sources returned to production: ' + '; '.join(core_problems))
     app = manifest.find('application')
-    provider = next(node for node in app.findall('provider') if node.get(ANDROID+'authorities') == '${applicationId}.updates.files')
-    require(provider.get(ANDROID+'exported') == 'false', 'Update files exported')
-    paths = ET.parse(ROOT / 'cleaner/src/main/res/xml/liveguard_update_paths.xml').getroot()
-    require(len(paths) == 1 and paths[0].tag == 'cache-path' and paths[0].get('path') == 'verified-updates/', 'Overbroad update FileProvider scope')
     for widget in ('CleanSweepWidget', 'CleanSweepDataWidget', 'CleanSweepPhoneWidget', 'CleanSweepWeatherWidget'):
         node = next(item for item in app.findall('receiver') if item.get(ANDROID+'name') == '.widget.' + widget)
         require(node.get(ANDROID+'exported') == 'false', 'Widget exported')
@@ -52,33 +48,10 @@ def main():
             'The removed system-TTS fallback came back into the announcer')
     require('never save utterance text' in announcer, 'Voice diagnostics privacy contract missing')
     require('CorePrivacyMigration.run' in source('MainViewModel.kt') and 'CorePrivacyMigrationPolicy' in source('data/CorePrivacyMigration.kt'), 'Core privacy cleanup not wired')
-    require('SHA-256' in source('updates/LiveGuardUpdates.kt') and 'getPackageArchiveInfo' in source('updates/LiveGuardUpdates.kt') and 'trustedSigner' in source('updates/LiveGuardUpdates.kt'), 'APK identity/signing checks missing')
-    require('180_000' in source('updates/VerifiedApkDownload.kt') and 'instanceFollowRedirects = false' in source('updates/VerifiedApkDownload.kt'), 'Download deadline/redirect controls missing')
-    require('officialAsset' in source('updates/LiveGuardUpdates.kt') and 'release.optBoolean("prerelease")' in source('updates/LiveGuardUpdates.kt'), 'Release trust/stability gate missing')
-    release_sources = (ROOT/'shared/src/main/java/com/universalrp/updates/ReleaseRepositorySources.kt').read_text()
-    require('PAGE_SIZE = 100' in release_sources and 'MAX_RELEASE_PAGES = 20' in release_sources,
-            'Updater pagination no longer covers up to 2,000 releases per repository')
-    require('Source("universalrp2003", "RP-Android-Apps")' in release_sources and
-            'Source("universalrp2003", "InternetRadio")' in release_sources,
-            'Dual-repository migration source order or old endpoint fallback changed')
-    liveguard_updater = source('updates/LiveGuardUpdates.kt')
-    shared_updater = (ROOT/'shared/src/main/java/com/universalrp/updates/AppUpdates.kt').read_text()
-    for updater in (liveguard_updater, shared_updater):
-        require('MAX_RELEASE_PAGES' in updater and 'releasesPage(page)' in updater and
-                'isOfficialReleasePage' in updater and
-                ('isOfficialAsset' in updater or 'officialAsset' in updater),
-                'One of the four app updater paths is missing scalable pagination or canonical URL checks')
-    require('versionCode(candidate) > versionCode(installed)' in shared_updater and
-            'signerDigests(candidate) == expected' in shared_updater and
-            'actualHash == release.sha256' in shared_updater and
-            shared_updater.index('ensureApkMatches(context, file, app, release)', shared_updater.index('fun installUpdate()')) <
-            shared_updater.index('launchInstaller(context, file)', shared_updater.index('fun installUpdate()')),
-            'Shared updater does not recheck digest/package/version/signer before Android installer handoff')
-    require('code(apk) > code(installed)' in liveguard_updater and
-            'UpdatePolicy.trustedSigner(signers(apk), signers(installed))' in liveguard_updater and
-            'verify(app, file, release) // Recheck private-cache bytes/installed version immediately before handing off.' in liveguard_updater,
-            'Live Guard updater does not recheck APK identity and signer before Android installer handoff')
-    require('AppUpdates.Control' not in source('MainActivity.kt') and 'AppUpdates.Control' not in source('ui/AboutScreen.kt'), 'Cleaner browser updater still wired')
+    from verify_store_handoff_policy import verify_sources as verify_handoff
+    verify_handoff()
+    require('BrowserReleaseUpdates("CleanSweep", tamil = Lang.isTamil)' in source('ui/LiveGuardUpdateCard.kt'), 'Official website About link not wired')
+    require('AppUpdates.Control("CleanSweep", automatic = true, tamil = Lang.isTamil)' in source('MainActivity.kt'), 'Daily foreground update check not wired')
     require('LastUnplugRepo.observe' in source('data/InsightsStore.kt') and 'explicitDisconnect' in source('data/LastUnplug.kt'), 'Genuine unplug owner missing')
     require('val selected: Boolean = false' in source('data/AppCacheRepo.kt'), 'Cache rows auto-selected')
     require('val includeSystemApps: Boolean = MonitorDefaultsPolicy.CACHE_INCLUDE_SYSTEM' in source('MainViewModel.kt') and
@@ -96,7 +69,7 @@ def main():
             all(not path.exists() for path in removed_rating_paths),
             'Arena model-rating card, policy, data and tests must remain removed')
     gradle = (ROOT/'cleaner/build.gradle.kts').read_text()
-    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 77', 'versionName = "2.72"'):
+    for rule in ('minSdk = 26', 'targetSdk = 36', 'versionCode = 104', 'versionName = "2.99"'):
         require(rule in gradle, 'Release candidate version/API differs: ' + rule)
     for removed in ('com.google.mlkit:translate', 'com.google.mlkit:language-id'):
         require(removed not in gradle, 'Removed reader dependency is still declared: ' + removed)
@@ -166,8 +139,9 @@ def main():
     # Fixes 3-5: one owner of the default-on monitors and security scope, plus a real re-arm.
     defaults = source('data/MonitorDefaultsPolicy.kt')
     require('CHARGE_CARD = true' in defaults and 'PERSISTENT_MONITOR = true' in defaults and
-            'MALWARE_INCLUDE_SYSTEM = true' in defaults and 'STATUS_PILL = false' in defaults,
-            'Monitor defaults are not the 2.42 owner decision (the overlay pill must stay opt-in)')
+            'MALWARE_INCLUDE_SYSTEM = true' in defaults and 'STATUS_PILL = true' in defaults
+            and 'Android still requires the user to grant' in defaults,
+            'Monitor defaults are not screenshot-aligned or imply an automatic Android overlay grant')
     require('fun rearmAfterUpdateOrBoot' in defaults and 'fun healthWatchWanted' in defaults,
             'Monitor re-arm / health-watch policy missing')
     require('DAILY_SECURITY_WATCH = false' in defaults and 'dailyScanMigrationNeeded' in defaults and
@@ -230,7 +204,7 @@ def main():
             'The dedicated live-voice task is missing or gates the build')
     require(not (ROOT/'cleaner/src/test/java/com/universalrp/cleansweep/voice/LiveStudioVoiceSynthesisTest.kt').read_text().count('@Test') == 0,
             'The live-network suite disappeared instead of being excluded')
-    require(sum(expected.values()) == 444 and len(expected) == 49, 'Future required regression gate count differs')
+    require(sum(expected.values()) == 954 and len(expected) == 93, 'Future required regression gate count differs')
     for name, count in expected.items():
         path = ROOT/'cleaner/src/test/java'/Path(*name.split('.')).with_suffix('.kt')
         require(path.is_file() and len(re.findall(r'@Test\b', path.read_text())) == count, 'Required test source missing: ' + name)
@@ -308,8 +282,13 @@ def main():
     require('LiveGuardMenu(' in source('ui/AppRoot.kt') and 'ModalNavigationDrawer(' in source('ui/AppRoot.kt'),
             'The side menu is not reachable by swipe from every screen')
     print('PASS: Static manifest, privacy/backup, updater, charging, duplicate, rating/widget/scope contracts and XML well-formedness.')
-    print(f'PASS: {len(expected)} required suites / {sum(expected.values())} prepared declarations '
-          '(the live-network suite is excluded from the gate); tests NOT executed. Candidate 2.72/code77/API26 matches.')
+    gradle_version = re.search(r'versionName = "([^"]+)"', gradle)
+    gradle_code = re.search(r'versionCode = (\d+)', gradle)
+    candidate = 'Candidate %s/code%s/API26 matches.' % (
+        gradle_version.group(1) if gradle_version else '?',
+        gradle_code.group(1) if gradle_code else '?',
+    )
+    print('PASS: ' + str(len(expected)) + ' required suites / ' + str(sum(expected.values())) + ' prepared declarations (the live-network suite is excluded from the gate); tests NOT executed. ' + candidate)
     print('Source checks are NOT Kotlin/Compose/resource compilation, APK verification, device delivery or a released build.')
 
 

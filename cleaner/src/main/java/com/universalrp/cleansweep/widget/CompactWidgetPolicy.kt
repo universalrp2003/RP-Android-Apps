@@ -8,7 +8,7 @@ object CompactWidgetPolicy {
      * BATTERY = battery details plus the plan,
      * DATA    = plan data / days / today,
      * PHONE   = security review summary,
-     * WEATHER = 1-minute rain & 24×7 storm radar summary.
+     * WEATHER = dated forecast snapshot and manually refreshed regional reports.
      */
     enum class Profile { BATTERY, DATA, PHONE, WEATHER;
         fun next(): Profile = entries[(ordinal + 1) % entries.size]
@@ -90,9 +90,9 @@ object CompactWidgetPolicy {
                 details = if (cleanPlace.isEmpty()) {
                     label("Set GPS or PIN code inside Open", "திற-இல் ஊர் / PIN குறியீட்டை அமைக்கவும்")
                 } else {
-                    label("Ready to check 1-min radar", "1-நிமிட ரேடார் சரிபார்க்கத் தயார்")
+                    label("Ready to check forecast", "முன்னறிவிப்பு சரிபார்க்கத் தயார்")
                 },
-                brief = label("Normal rain: Quiet Hours · Storm: 24×7", "சாதாரண மழை: அமைதி நேரம் · புயல்: 24×7"),
+                brief = label("Forecast not checked yet", "முன்னறிவிப்பு இன்னும் சரிபார்க்கப்படவில்லை"),
             )
         }
 
@@ -104,20 +104,20 @@ object CompactWidgetPolicy {
             "CYCLONE_SEVERE" -> {
                 hero = label("Storm!", "புயல்!")
                 statusLabel = label("Cyclone / storm warning!", "அவசர புயல் எச்சரிக்கை!")
-                brief = label("24×7 urgent safety voice alert active", "24×7 அவசர பாதுகாப்புக் குரல் இயங்குகிறது")
+                brief = label("Regional bulletin · open details", "பிராந்திய அறிக்கை · விவரங்களைத் திறக்கவும்")
             }
             "VERY_HEAVY_RAIN" -> {
                 hero = label("Heavy!", "கனமழை!")
                 statusLabel = label("Very heavy rain ahead!", "மிகக் கனமழை எச்சரிக்கை!")
-                brief = label("24×7 heavy-rain voice warning active", "24×7 கனமழை பாதுகாப்பு எச்சரிக்கை")
+                brief = label("Heavy-rain forecast · take precautions", "கனமழை முன்னறிவிப்பு · முன்னெச்சரிக்கையுடன் இருங்கள்")
             }
             "RAIN_SOON" -> {
                 if (mins != null && mins <= 2) {
                     hero = label("Rain", "மழை")
-                    statusLabel = label("Rain starting now", "இப்போது மழை தொடங்குகிறது")
+                    statusLabel = label("Forecast: rain may start now", "இப்போது மழை தொடங்க வாய்ப்பு")
                     brief = label(
-                        "Falling now · ${precipLabel(currentPrecipMmPerHour, false)}",
-                        "இப்போது வருகிறது · ${precipLabel(currentPrecipMmPerHour, true)}",
+                        "Forecast now · ${precipLabel(currentPrecipMmPerHour, false)}",
+                        "இப்போது முன்னறிவிப்பு · ${precipLabel(currentPrecipMmPerHour, true)}",
                     )
                 } else {
                     val shown = mins ?: 30
@@ -131,17 +131,17 @@ object CompactWidgetPolicy {
             }
             else -> {
                 hero = tempLabel ?: label("Clear", "அமைதி")
-                statusLabel = label("No rain approaching", "மழை அறிகுறி இல்லை")
-                brief = label("Staying quiet · Storm watch 24×7", "அமைதியாக உள்ளது · புயல் கண்காணிப்பு 24×7")
+                statusLabel = label("No rain indicated in forecast", "முன்னறிவிப்பில் மழை அறிகுறி இல்லை")
+                brief = label("Forecast snapshot · not live monitoring", "முன்னறிவிப்பு நிலை · நேரலை கண்காணிப்பு அல்ல")
             }
         }
 
         val windRounded = windGustKmh.takeIf { it.isFinite() && it >= 0.5 }?.roundToInt()
-        val providerShort = if (sourceName == "TOMORROW_IO_1M") "Tomorrow.io" else label("Radar", "ரேடார்")
+        val forecastKind = if (sourceName == "TOMORROW_IO_1M") label("Forecast", "முன்னறிவிப்பு") else label("Model outlook", "மாதிரி முன்னறிவிப்பு")
         val parts = buildList {
             if (severityName != "CLEAR_OR_NORMAL" && tempLabel != null) add(tempLabel)
             if (windRounded != null) add(label("Wind ${windRounded} km/h", "காற்று ${windRounded} km/h"))
-            add(providerShort)
+            add(forecastKind)
             if (clockLabel.isNotBlank()) add(clockLabel)
         }
         return WeatherCardText(
@@ -173,7 +173,7 @@ object CompactWidgetPolicy {
             "VERY_HEAVY_RAIN" -> label("Very heavy rain!", "மிகக் கனமழை!")
             "RAIN_SOON" -> {
                 val mins = minutesUntilRain?.coerceAtLeast(0)
-                if (mins != null && mins <= 2) label("Rain starting now", "மழை தொடங்குகிறது")
+                if (mins != null && mins <= 2) label("Forecast: rain may start now", "மழை தொடங்குகிறது")
                 else label("Rain in ~${mins ?: 30} min", "~${mins ?: 30} நிமிடத்தில் மழை")
             }
             else -> return null

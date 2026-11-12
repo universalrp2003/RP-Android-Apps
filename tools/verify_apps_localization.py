@@ -263,6 +263,11 @@ RELEASE_TAG_PREFIX = {
     "vocalremover": "rp-vocal-remover-studio",
     "oorarivippu": "oor-arivippu",
     "smsguard": "sms-guard",
+    "voicenotes": "voice-notes",
+    "expensetracker": "expense-tracker",
+    "vasanthi": "vasanthi-ai",
+    "podcast": "tamil-podcast",
+    "launcher": "elderly-launcher",
     "secretmessage": "secret-message",
 }
 
@@ -698,13 +703,18 @@ def verify_about_links() -> None:
     shared_links = "fun releaseLinks()" in sister_apps_source
     if shared_links:
         expected_sister_tags = (
-            'tagPrefix = "sms-guard"', 'version = "1.1.8"',
-            'tagPrefix = "live-guard"', 'version = "2.72"',
-            'tagPrefix = "ramesh-radio"', 'version = "1.26"',
-            'tagPrefix = "pulseeq"', 'version = "1.9"',
-            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.15"',
-            'tagPrefix = "oor-arivippu"', 'version = "1.1.9"',
+            'tagPrefix = "sms-guard"', 'version = "1.1.17"',
+            'tagPrefix = "live-guard"', 'version = "2.99"',
+            'tagPrefix = "ramesh-radio"', 'version = "1.31"',
+            'tagPrefix = "pulseeq"', 'version = "1.11"',
+            'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
+            'tagPrefix = "oor-arivippu"', 'version = "1.1.17"',
             'tagPrefix = "secret-message"', 'version = "1.1.3"',
+            'tagPrefix = "expense-tracker"', 'version = "1.2"',
+            'tagPrefix = "voice-notes"', 'version = "1.3.4"',
+            'tagPrefix = "vasanthi-ai"', 'version = "1.1.5"',
+            'tagPrefix = "tamil-podcast"', 'version = "1.6"',
+            'tagPrefix = "elderly-launcher"', 'version = "1.7"',
             'OFFICIAL_WEBSITE_URL = "https://universalrp2003.github.io/RP-Android-Apps/"',
         )
         missing_tags = [tag for tag in expected_sister_tags if tag not in sister_apps_source]
@@ -715,7 +725,7 @@ def verify_about_links() -> None:
         source = path.read_text(encoding="utf-8")
         if shared_links:
             if "com.universalrp.updates.SisterApps.releaseLinks()" not in source or "com.universalrp.updates.SisterApps.projectLinks()" not in source:
-                raise ValueError(f"{app} About does not render the shared seven-app release list and official project links")
+                raise ValueError(f"{app} About does not render the shared sister-app release list and official project links")
         else:
             urls = set(re.findall(r'https://github\.com/universalrp2003/InternetRadio/releases/tag/[^"\\]+', source))
             missing = EXPECTED_RELEASE_URLS - urls
@@ -730,10 +740,25 @@ def verify_about_links() -> None:
     oor_source = oor_path.read_text(encoding="utf-8")
     oor_strings = (ROOT / "oorarivippu/src/main/java/com/oorarivippu/voiceannouncer/BilingualStrings.kt").read_text(encoding="utf-8")
     oor_about_text = oor_source + "\n" + oor_strings
-    oor_urls = set(re.findall(r'https://github\.com/universalrp2003/RP-Android-Apps/releases/tag/[^"\\]+', oor_source))
-    missing_oor = EXPECTED_OOR_RELEASE_URLS - oor_urls
-    if missing_oor:
-        raise ValueError(f"Oor Arivippu About is missing current release links: {sorted(missing_oor)}")
+    # Oor now renders the shared verified public catalog, not the historical 7-tag list
+    # still used by the isolated Secret Message preview below.
+    for required in (
+        'SisterApps.releaseLinks(excludeId = "oorarivippu")',
+        'SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu"',
+        'https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html',
+    ):
+        if required not in oor_source:
+            raise ValueError(f"Oor Arivippu About must use current public metadata and web guide: {required}")
+    if re.search(r'https://github\.com/universalrp2003/RP-Android-Apps/releases/tag/', oor_source):
+        raise ValueError("Oor Arivippu About must not duplicate hardcoded release tags")
+    guide_source = (ROOT / "shared/src/main/java/com/universalrp/updates/AppGuides.kt").read_text(encoding="utf-8")
+    oor_guide = guide_source.split("val oorArivippu = GuideContent(", 1)[1].split("// SMS Guard", 1)[0]
+    for required in ("Connecting family", "Remembered sharing", "Received towns", "Family privacy",
+                     "குடும்ப இணைப்பு", "குடும்பத் தனியுரிமை", "not a separate always-on"):
+        if required not in oor_guide:
+            raise ValueError(f"Oor built-in bilingual guide is missing current feature guidance: {required}")
+    if "30-minute rain & 24×7 cyclone voice alerts" in oor_guide:
+        raise ValueError("Oor guide still promises unconditional 24x7 weather monitoring")
     for required in (
         "https://universalrp2003.github.io/RP-Android-Apps/",
         "https://github.com/universalrp2003/InternetRadio",
@@ -741,7 +766,7 @@ def verify_about_links() -> None:
         "universalrp2003@gmail.com",
         "Arena.ai Agent Mode",
         "Project development",
-        'AppUpdates.Control("Oor-Arivippu")',
+        'BrowserReleaseUpdates("Oor-Arivippu")',
         'AppUpdates.Control("Oor-Arivippu", automatic = true)',
     ):
         if required not in oor_about_text:
@@ -784,6 +809,531 @@ def verify_kotlin_format_strings() -> int:
     return checked
 
 
+
+# Modules that publish a README next to their source. Each one must start with a markdown heading
+# that names its own app.
+MODULE_READMES = {
+    "cleaner": "Live Guard",
+    "radio": "Ramesh Radio",
+    "equalizer": "PulseEQ",
+    "vocalremover": "Vocal Remover",
+    "oorarivippu": "Oor Arivippu",
+    "smsguard": "SMS Guard",
+    "voicenotes": "Voice Notes",
+    "expensetracker": "Expense Tracker",
+    "vasanthi": "Vasanthi AI",
+    "podcast": "Tamil Podcast Player",
+    "launcher": "Elderly Launcher",
+}
+
+
+def verify_module_readmes() -> int:
+    """Every module README must still be that module's README.
+
+    Commit a1aaf7d meant to add a website entry and instead overwrote
+    expensetracker/README.md with the whole of .github/workflows/pages.yml. Nothing caught it: the
+    release-note gates read releases/, the sister-app pins read SisterApps.kt, and no check looked
+    at the module READMEs at all, so a file that had become a GitHub Actions workflow shipped in a
+    commit whose message said it had just recorded a digest.
+
+    A clobbered file is easy to recognise - a README starts with a markdown heading, and a workflow
+    starts with a YAML key - so check exactly that, and name the app in the first line so a file
+    swapped between two modules cannot pass either.
+    """
+    checked = 0
+    for module, app_name in sorted(MODULE_READMES.items()):
+        path = ROOT / module / "README.md"
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8").lstrip()
+        first = text.split("\n", 1)[0]
+        if not first.startswith("# "):
+            raise ValueError(
+                f"{module}/README.md does not start with a markdown heading (it starts with "
+                f"{first[:40]!r}), so it is not this module's README. Restore it from git."
+            )
+        if app_name.lower() not in first.lower():
+            raise ValueError(
+                f"{module}/README.md is titled {first[:60]!r}, which does not name {app_name}. "
+                f"A README belonging to another module has been written here."
+            )
+        checked += 1
+    return checked
+
+
+def verify_resource_comments() -> int:
+    """No XML comment in any module's values/ may contain a double hyphen.
+
+    A release once failed CI on exactly this. Its strings.xml used
+    `<!-- ---------------- the two controls -->` as a section divider, and AAPT rejects any
+    comment containing `--` with "The string \"--\" is not permitted within comments". The
+    message names a line and a column, but the line is the comment, so nothing about it points at
+    the divider, and a full Gradle round is spent to learn that a decorative line of hyphens is
+    illegal XML.
+
+    The gate reads every module's `res/values/*.xml` and looks at comment *bodies* only, because
+    `<!--` and `-->` themselves contain the pair and a naive search would fail on every file.
+    """
+    checked = 0
+    for module in sorted(RELEASE_TAG_PREFIX):
+        values = ROOT / module / "src" / "main" / "res" / "values"
+        if not values.is_dir():
+            continue
+        for path in sorted(values.glob("*.xml")):
+            text = path.read_text(encoding="utf-8")
+            for match in re.finditer(r"<!--(.*?)-->", text, re.S):
+                if "--" in match.group(1):
+                    line = text.count("\n", 0, match.start()) + 1
+                    raise ValueError(
+                        f"{path.relative_to(ROOT)}:{line} has an XML comment containing \"--\", "
+                        "which AAPT rejects. Use a plain sentence, or `=`, instead of a line of "
+                        "hyphens, as a section divider."
+                    )
+            checked += 1
+    return checked
+
+
+
+def verify_no_duplicate_resource_names() -> int:
+    """No values XML file may declare the same resource name twice.
+
+    AAPT rejects this with "Found item String/<name> more than one time", which is a build failure
+    that costs a full CI cycle and says nothing about which file was edited twice. It happened when
+    a scripted insert added a `retry` string that already existed. Checking every module here turns
+    it into a local failure instead.
+    """
+    checked = 0
+    for values in sorted(ROOT.rglob("src/main/res/values/*.xml")):
+        if "build" in values.parts:
+            continue
+        text = values.read_text(encoding="utf-8")
+        checked += 1
+        for kind in ("string", "color", "style", "dimen", "integer", "bool", "string-array"):
+            names = re.findall(r'<%s name="([^"]+)"' % kind, text)
+            for name in sorted({n for n in names if names.count(n) > 1}):
+                rel = values.relative_to(ROOT)
+                raise ValueError(
+                    f"{rel} declares <{kind} name=\"{name}\"> more than once. AAPT rejects this at "
+                    "mergeDebugResources, so it fails the build after every test has already passed."
+                )
+    return checked
+
+
+def verify_readme_app_table() -> int:
+    """The README's release table must have exactly one row per published app.
+
+    A duplicated row is not cosmetic. The owner reads this table to find the current version of each
+    app, and two rows for one app is the exact confusion this repository has already had with stale
+    links. This gate exists because a scripted insert during a rebase landed the Elderly Launcher row
+    twice on `main`, and every other gate passed.
+    """
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    names = []
+    for row in readme.splitlines():
+        if row.startswith("| [**"):
+            names.append(row.split("](")[0].replace("| [**", "").replace("**", "").strip())
+    duplicates = sorted({n for n in names if names.count(n) > 1})
+    if duplicates:
+        raise ValueError(
+            "README.md lists %s more than once in its release table. A duplicated row tells the "
+            "reader two different current versions for one app." % ", ".join(duplicates)
+        )
+    # The legacy module-release gates above cover twelve core apps. DailyVault, then the Android TV
+    # Guard, are normal non-Store apps; Store has its own separate download section.
+    if "DailyVault (தினக்கணக்கு)" not in names or any("Tamilan Store" in n for n in names):
+        raise ValueError("README must list DailyVault among regular apps, with Store separate.")
+    if not any("Android TV Guard" in n for n in names):
+        raise ValueError("README must list the Android TV Guard among the regular apps.")
+    expected = len(RELEASE_TAG_PREFIX) + 2
+    if len(names) != expected:
+        raise ValueError(
+            "README.md release table has %d rows but %d apps have published releases. A missing row "
+            "is an app a reader cannot find the current version of." % (len(names), expected)
+        )
+    return len(names)
+
+
+def verify_module_versions_match_sister_apps() -> int:
+    """Every module's versionName must equal the version its SisterApps entry advertises.
+
+    The sister-app list is the only place an app learns a sibling's version, and it is hand-maintained
+    next to twelve other entries. It went stale twice in one afternoon while both modules were being
+    bumped, and nothing caught it: the site gate reads the HTML, the README gate reads the README, and
+    neither looks here. A stale entry points every app's "our other apps" screen at the previous
+    release, which is the same "old info" defect the owner reported on the website.
+
+    The guard against a vacuous pass is explicit: the tree must contain at least ten versioned modules.
+    """
+    txt = Path("shared/src/main/java/com/universalrp/updates/SisterApps.kt").read_text(encoding="utf-8")
+    # Split on the constructor rather than matching to a close paren: several names carry parentheses
+    # of their own ("SMS Guard (குறுஞ்செய்தி காவலன்)"), which truncates a lazy .*?\) match.
+    chunks = txt.split("SisterApp(")[1:]
+    sisters = {}
+    for chunk in chunks:
+        block = chunk.split("\n        ),")[0]
+        mid = re.search(r'id = "([^"]+)"', block)
+        ver = re.search(r'version = "([^"]+)"', block)
+        if mid and ver:
+            sisters[mid.group(1)] = ver.group(1)
+    if len(sisters) < 10:
+        raise ValueError(
+            "only %d SisterApp entries parsed - this gate would verify almost nothing" % len(sisters)
+        )
+
+    # A module directory is not a sister-app id: the directory is `cleaner` and the app is `liveguard`,
+    # `equalizer` and `pulseeq`. The package name is the identifier both sides actually agree on, so it
+    # is what joins them.
+    by_package = {}
+    for chunk in chunks:
+        block = chunk.split("\n        ),")[0]
+        pkg = re.search(r'packageName = "([^"]+)"', block)
+        ver = re.search(r'version = "([^"]+)"', block)
+        if pkg and ver:
+            by_package[pkg.group(1)] = ver.group(1)
+    if len(by_package) < 10:
+        raise ValueError(
+            "only %d SisterApp package names parsed - this gate would verify almost nothing"
+            % len(by_package)
+        )
+
+    checked = 0
+    for gradle in sorted(ROOT.glob("*/build.gradle.kts")):
+        body = gradle.read_text(encoding="utf-8")
+        ver = re.search(r'versionName = "([^"]+)"', body)
+        pkg = re.search(r'namespace = "([^"]+)"', body)
+        if not ver or not pkg:
+            continue
+        if gradle.parent.name == "dailyvault":
+            if pkg.group(1) != "com.universalrp.dailyvault" or ver.group(1) != "0.5":
+                raise ValueError("Daily Vault 0.5 identity/version changed; review publication gates")
+            if by_package.get(pkg.group(1)) != ver.group(1):
+                raise ValueError("DailyVault directory candidate version differs from source")
+            continue
+        # Published directory versions must match exact promoted releases.
+        if gradle.parent.name == "tamilanstore":
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.12":
+                raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
+            # Stable0.11 is public from the exact signed/native-tested artifact; older assets stay immutable.
+            if by_package.get(pkg.group(1)) != "0.12":
+                raise ValueError("Tamilan published directory must match the verified public stable0.11")
+            continue
+        checked += 1
+        if pkg.group(1) not in by_package:
+            raise ValueError(
+                "module %s (namespace %s) has a versionName but no SisterApps entry"
+                % (gradle.parent.name, pkg.group(1))
+            )
+        if by_package[pkg.group(1)] != ver.group(1):
+            raise ValueError(
+                "module %s is version %s but SisterApps advertises %s for %s"
+                % (gradle.parent.name, ver.group(1), by_package[pkg.group(1)], pkg.group(1))
+            )
+    if checked < 10:
+        raise ValueError("only %d modules checked - the gate is not covering the tree" % checked)
+    return checked
+
+
+
+def verify_newest_first(site: str, regular_ids: list[str]) -> None:
+    """The listing opens with the most recently released app.
+
+    Each card links to its own release tag; the latest-releases table carries the ISO
+    release timestamp for that tag. Both the card list and the table are checked,
+    because a stale order is worse than no order at all.
+    """
+    table = dict(
+        (tag, when)
+        for when, tag in re.findall(
+            r'<time datetime="([^"]+)" data-release-tag="([^"]+)"', site
+        )
+    )
+    if len(table) != 15 or len(set(table.values())) != 15:
+        raise ValueError("Every release-table row needs its own ISO release timestamp.")
+
+    stamps = {}
+    for chunk in site.split('<h2 id="app-')[1:]:
+        card = "app-" + chunk.split('"', 1)[0]
+        # Stop at the card's own closing tag so a duplicated block cannot borrow a
+        # neighbour's release link, and so one card cannot supply two dates.
+        if "</article>" in chunk:
+            chunk = chunk[: chunk.index("</article>")]
+        tags = [t for t in re.findall(r"/releases/download/([a-z0-9.-]+)/", chunk) if t in table]
+        if len(set(tags)) != 1:
+            raise ValueError(f"{card} must name exactly one release tag, found {sorted(set(tags))}.")
+        stamps[card] = table[tags[0]]
+    missing = [card for card in regular_ids if card not in stamps]
+    if missing:
+        raise ValueError(f"Cards without a release date: {missing}")
+
+    by_card = [stamps[card] for card in regular_ids]
+    if by_card != sorted(by_card, reverse=True):
+        raise ValueError(
+            "The regular apps section must list the most recently released app first. "
+            f"Newest-first order is {sorted(by_card, reverse=True)}; found {by_card}."
+        )
+
+    tbody = site.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
+    row_order = re.findall(r'data-release-tag="([^"]+)"', tbody)
+    if len(row_order) != 15:
+        raise ValueError(f"The latest-releases table must name 15 releases, found {len(row_order)}.")
+    if row_order != sorted(row_order, key=lambda tag: table[tag], reverse=True):
+        raise ValueError(
+            "The latest-releases table must list the newest release first. "
+            f"Newest-first is {sorted(row_order, key=lambda tag: table[tag], reverse=True)}."
+        )
+
+
+def verify_site_versions_match_downloads() -> int:
+    """Every version the website states must be the version it actually downloads.
+
+    The owner's complaint about this page was that it showed old information, and he was right in
+    three places that had nothing to do with any release: the Live Guard card offered 2.72 when
+    2.73 was current, the Ramesh Radio card offered 1.25 when 1.26 was current, and the JSON-LD
+    `softwareVersion` values lagged their own `downloadUrl` by a release or two.
+
+    The download link is the thing that matters - it is what a visitor clicks - so it is the source
+    of truth and every other version string is checked against it. That direction is deliberate: a
+    card whose badge says 2.73 but links to 2.72 is a broken download, while the reverse is only a
+    cosmetic mismatch, and only one of those can be caught by comparing to the link.
+    """
+    site = (ROOT / "site" / "index.html").read_text(encoding="utf-8")
+
+    # The JSON-LD block: softwareVersion and downloadUrl sit on adjacent lines in one entry.
+    entries = re.findall(
+        r'"softwareVersion": "([^"]+)",\s*\n\s*"downloadUrl": "[^"]*?/apks/[A-Za-z0-9._-]*?-v([0-9][0-9A-Za-z.]*)\.apk"',
+        site,
+    )
+    if not entries:
+        raise ValueError(
+            "site/index.html has no JSON-LD softwareVersion/downloadUrl pairs, so this gate would "
+            "check nothing."
+        )
+    mismatched = [
+        f"{stated} vs {linked}"
+        for stated, linked in entries
+        if stated != linked
+    ]
+    if mismatched:
+        raise ValueError(
+            "site/index.html states a version its own download link does not match: "
+            + ", ".join(mismatched)
+        )
+
+    # The download buttons, both in the latest-releases table and in the app cards: the asset name,
+    # the release tag it points at and the stated version must all name the same file.
+    buttons = re.findall(
+        r'data-apk="apks/([A-Za-z0-9._-]+)\.apk" data-name="[A-Za-z0-9._-]+\.apk" '
+        r'data-sha="[0-9a-f]{64}" data-status="[a-z][a-z-]*" '
+        r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1\.apk"',
+        site,
+    )
+    if not buttons:
+        raise ValueError(
+            "site/index.html has no verified download buttons, so this gate would check nothing."
+        )
+    broken = [
+        f"{asset} at {tag}"
+        for asset, tag in buttons
+        if not tag.endswith("-v" + asset_tag(asset))
+    ]
+    if broken:
+        raise ValueError(
+            "site/index.html has download buttons whose asset and release tag disagree: "
+            + ", ".join(broken)
+        )
+
+    # The latest-releases table must offer exactly one row per published app, and the version it
+    # prints must be the version its own button downloads. A table that lists nine of the ten apps,
+    # or that names a version the button does not serve, is the "old info" the owner reported.
+    rows = re.findall(
+        r'<td class="lver">v([0-9][0-9A-Za-z.]*)</td>\s*\n\s*'
+        r'<td class="lsize">[^<]*</td>\s*\n\s*'
+        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+)\.apk"',
+        site,
+    )
+    if not rows:
+        raise ValueError(
+            "site/index.html has no latest-releases table rows, so the table is missing or empty."
+        )
+    row_mismatch = [
+        f"row says {stated} but downloads {asset_tag(asset)}"
+        for stated, asset in rows
+        if stated != asset_tag(asset)
+    ]
+    if row_mismatch:
+        raise ValueError(
+            "site/index.html latest-releases table: " + ", ".join(row_mismatch)
+        )
+
+    # Derived from the shared sister-app directory rather than hard-coded, so adding an app there
+    # and forgetting the table is a failure rather than a silent gap.
+    sister_source = (ROOT / "shared" / "src" / "main" / "java" / "com" / "universalrp" / "updates" / "SisterApps.kt").read_text(encoding="utf-8")
+    expected_apps = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
+    if len(rows) != expected_apps:
+        raise ValueError(
+            f"site/index.html latest-releases table has {len(rows)} rows, but SisterApps.kt lists "
+            f"{expected_apps} apps. A missing row is an app a visitor cannot find from the top of "
+            "the page."
+        )
+    if len(entries) != expected_apps:
+        raise ValueError(
+            f"site/index.html JSON-LD ItemList has {len(entries)} entries, but SisterApps.kt lists "
+            f"{expected_apps} apps."
+        )
+
+    # Count parity alone can hide a duplicated app and a missing app. Compare the
+    # actual release identities and asset names across all three public lists.
+    sister_entries = re.findall(r"SisterApp\((.*?)\n\s*\),", sister_source, re.S)
+    expected_tags = set()
+    sister_id_tags = {}
+    for entry in sister_entries:
+        app_id = re.search(r'\bid\s*=\s*"([^"]+)"', entry)
+        tag_prefix = re.search(r'tagPrefix\s*=\s*"([^"]+)"', entry)
+        version = re.search(r'publishedVersion\s*=\s*"([^"]+)"', entry)
+        if not version:
+            version = re.search(r'\bversion\s*=\s*"([^"]+)"', entry)
+        if not app_id or not tag_prefix or not version:
+            raise ValueError("SisterApps.kt entry lacks an id or public release tag/version.")
+        tag = f"{tag_prefix.group(1)}-v{version.group(1)}"
+        expected_tags.add(tag)
+        sister_id_tags[app_id.group(1)] = tag
+    if len(sister_entries) != expected_apps or len(expected_tags) != expected_apps or len(sister_id_tags) != expected_apps:
+        raise ValueError("SisterApps.kt does not contain one unique public release per app.")
+
+    ld_blocks = [json.loads(block) for block in re.findall(
+        r'<script type="application/ld\+json">(.*?)</script>', site, re.S
+    )]
+    item_lists = [data["mainEntity"] for data in ld_blocks
+                  if data.get("mainEntity", {}).get("@type") == "ItemList"]
+    if len(item_lists) != 1:
+        raise ValueError("site/index.html must have exactly one JSON-LD ItemList.")
+    items = item_lists[0]["itemListElement"]
+    if [item["position"] for item in items] != list(range(1, expected_apps + 1)):
+        raise ValueError("JSON-LD ItemList positions must cover every app exactly once.")
+    ld_assets, ld_tags = set(), set()
+    for item in items:
+        app = item["item"]
+        asset = app["downloadUrl"].rsplit("/", 1)[-1]
+        tag = app["url"].rsplit("/", 1)[-1]
+        ld_assets.add(asset)
+        ld_tags.add(tag)
+        if app["softwareVersion"] != asset_tag(asset.removesuffix(".apk")) or not tag.endswith("-v" + app["softwareVersion"]):
+            raise ValueError(f"JSON-LD version/download mismatch for {asset}.")
+    if len(ld_assets) != expected_apps or len(ld_tags) != expected_apps or ld_tags != expected_tags:
+        raise ValueError("JSON-LD ItemList does not match the unique public releases in SisterApps.kt.")
+
+    table_downloads = re.findall(
+        r'<td class="lsize">([0-9]+\.[0-9]+ MB)</td>\s*\n\s*'
+        r'<td class="ldl"><a class="btn btn-primary" data-apk="apks/([A-Za-z0-9._-]+\.apk)" '
+        r'data-name="[A-Za-z0-9._-]+\.apk" data-sha="([0-9a-f]{64})"[^>]* '
+        r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\2"',
+        site,
+    )
+    if len(table_downloads) != expected_apps:
+        raise ValueError("Latest Releases table lacks a size, SHA-256 and release link for every app.")
+    table_sizes = {asset: size for size, asset, _, _ in table_downloads}
+    table_shas = {asset: sha for _, asset, sha, _ in table_downloads}
+    table_assets = set(table_sizes)
+    table_tags = {tag for _, _, _, tag in table_downloads}
+    if len(table_assets) != expected_apps or table_assets != ld_assets or table_tags != expected_tags:
+        raise ValueError("Latest Releases table and JSON-LD do not list the same unique app releases.")
+
+    cards = re.split(r'(?=<article class="card"[ >])', site)[1:]
+    cards = [card for card in cards if card.startswith('<article class="card"')]
+    if len(cards) != expected_apps:
+        raise ValueError(
+            f"site/index.html has {len(cards)} app cards, but SisterApps.kt lists {expected_apps} apps."
+        )
+    card_assets, card_tags = set(), set()
+    for card in cards:
+        btn = re.search(
+            r'data-apk="apks/([A-Za-z0-9._-]+\.apk)"[^>]*data-sha="([0-9a-f]{64})"[^>]* '
+            r'href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1"',
+            card,
+        )
+        if not btn:
+            raise ValueError("site/index.html has an app card without a verified APK release link.")
+        asset_name, btn_sha, release_tag = btn.groups()
+        card_assets.add(asset_name)
+        card_tags.add(release_tag)
+        printed_shas = re.findall(r"SHA-256:\s*([0-9a-f]{64})", card)
+        if not printed_shas or any(s != btn_sha for s in printed_shas) or table_shas[asset_name] != btn_sha:
+            raise ValueError(
+                f"site/index.html card for {asset_name} prints SHA-256 {printed_shas} "
+                f"that disagrees with card/table data-sha {btn_sha}/{table_shas[asset_name]}."
+            )
+        badge = re.search(r'<span class="ver">v([0-9][0-9A-Za-z.]*)\s*·', card)
+        if not badge or badge.group(1) != asset_tag(asset_name.removesuffix(".apk")):
+            raise ValueError(f"site/index.html card version badge disagrees with {asset_name}.")
+        mini_size = re.search(r'<div class="mini">([0-9]+\.[0-9]+ MB)\b', card)
+        if mini_size and mini_size.group(1) != table_sizes[asset_name]:
+            raise ValueError(
+                f"site/index.html card for {asset_name} prints {mini_size.group(1)} "
+                f"while the latest-releases table says {table_sizes[asset_name]}."
+            )
+    if len(card_assets) != expected_apps or card_assets != table_assets or card_tags != expected_tags:
+        raise ValueError("App cards, Latest Releases table and JSON-LD do not list the same unique releases.")
+
+    english_counts = [int(n) for n in re.findall(r"\ball (\d+) RP Ideas apps\b", site)]
+    tamil_counts = [int(n) for n in re.findall(r"அனைத்து (\d+) RP Ideas செயலிகள்", site)]
+    hyphen_counts = [int(n) for n in re.findall(r"\b(\d+)-app\b", site)]
+    if english_counts != [expected_apps, expected_apps] or tamil_counts != [expected_apps, expected_apps]:
+        raise ValueError("Both PulseEQ/Vocal Remover cards must use the current English and Tamil suite counts.")
+    if not hyphen_counts or any(n != expected_apps for n in hyphen_counts):
+        raise ValueError(f"site/index.html suite counts {hyphen_counts} disagree with SisterApps.kt ({expected_apps}).")
+    # Owner-authorized grouping: thirteen normal non-Store apps (including DailyVault)
+    # and the separate optional Store. DailyVault retains browser-only updates.
+    optional_ids = ("tamilanstore",)
+    if not set(optional_ids).issubset(sister_id_tags):
+        raise ValueError("SisterApps.kt does not identify the website's optional companions.")
+    optional_count = len(optional_ids)
+    non_store_count = expected_apps - optional_count
+    optional_tags = {sister_id_tags[app_id] for app_id in optional_ids}
+    if len(table_tags & optional_tags) != optional_count or len(table_tags - optional_tags) != non_store_count:
+        raise ValueError("Latest Releases table does not match the website's non-Store/optional grouping.")
+    expected_intro = (
+        f"({non_store_count} non-Store apps + {optional_count} optional: "
+        "Tamilan Store)"
+    )
+    if expected_intro not in site:
+        raise ValueError("Website intro must match the header grouping and keep DailyVault among regular apps.")
+
+    regular = re.search(
+        rf'<section class="grid" aria-label="{non_store_count} regular Android applications">(.*?)</section>',
+        site, re.S,
+    )
+    optional = re.search(r'<section class="grid" aria-label="Optional Tamilan Store">(.*?)</section>', site, re.S)
+    if not regular or not optional:
+        raise ValueError(f"Website must separate the {non_store_count} regular app cards from optional Store.")
+    ids = re.findall(r'<h2 id="(app-[^"]+)"', regular[1])
+    if len(ids) != non_store_count or "app-tamilan-store" in ids:
+        raise ValueError(
+            f"The regular apps section must hold exactly {non_store_count} non-Store cards."
+        )
+    # Order is a promise to the reader, so it is checked rather than trusted.
+    verify_newest_first(site, ids)
+    if re.findall(r'<h2 id="(app-[^"]+)"', optional[1]) != ["app-tamilan-store"]:
+        raise ValueError("Only Tamilan Store belongs in the separate optional section.")
+
+    if re.search(r"https://github\.com/universalrp2003/RP-Android-Apps/(?:blob|tree)/arena/", site):
+        raise ValueError("site/index.html links to a temporary arena/* branch instead of main.")
+
+    return len(entries) + len(buttons), expected_apps
+
+
+def asset_tag(asset: str) -> str:
+    """The version half of an asset name, with or without its extension.
+
+    `CleanSweep-v2.73.apk` -> `2.73`, and `CleanSweep-v2.73` -> `2.73`, because the JSON-LD block
+    carries the full filename while the download-button regex captures the name without it.
+    """
+    match = re.search(r"-v([0-9][0-9A-Za-z.]*)(?:\.apk)?$", asset)
+    if not match:
+        raise ValueError(f"cannot read a version out of the asset name {asset!r}")
+    return match.group(1)
+
+
+
 def main() -> int:
     try:
         keys = catalog_keys()
@@ -800,6 +1350,12 @@ def main() -> int:
         smsguard_catalog = verify_smsguard_bilingual_catalog()
         exhaustive_whens = verify_kotlin_when_exhaustiveness()
         markdown_notes = verify_release_notes_markdown_subset()
+        module_readmes = verify_module_readmes()
+        resource_comments = verify_resource_comments()
+        site_versions, expected_apps = verify_site_versions_match_downloads()
+        readme_rows = verify_readme_app_table()
+        value_files = verify_no_duplicate_resource_names()
+        sister_app_versions = verify_module_versions_match_sister_apps()
     except (OSError, ValueError, json.JSONDecodeError) as error:
         print(f"FAIL: {error}", file=sys.stderr)
         return 1
@@ -814,6 +1370,12 @@ def main() -> int:
     print(f"PASS: {smsguard_catalog} SMS Guard UI fields are assigned in both languages.")
     print(f"PASS: {exhaustive_whens} Kotlin enums have no `when` that misses a branch.")
     print(f"PASS: {markdown_notes} pinned release notes use only the markdown the in-app update screen can render.")
+    print(f"PASS: {module_readmes} module READMEs are still their own module's README.")
+    print(f"PASS: {resource_comments} values XML files have no comment containing a double hyphen.")
+    print(f"PASS: README.md lists {readme_rows} published apps exactly once each.")
+    print(f"PASS: {value_files} values XML files declare no resource name twice.")
+    print(f"PASS: all {sister_app_versions} versioned modules agree with their SisterApps entries.")
+    print(f"PASS: every version the website states is the version its own download link serves ({site_versions} download links, all {expected_apps} apps in the latest-releases table).")
     print("PASS: all four legacy About sections and the Oor Arivippu About/update screen have their required release links and contributor credits.")
     print("Source-only check; translated meaning, Kotlin compilation, runtime layout and device behavior still require their own checks.")
     return 0

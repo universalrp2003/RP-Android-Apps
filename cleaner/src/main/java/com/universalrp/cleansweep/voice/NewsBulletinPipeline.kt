@@ -1,0 +1,87 @@
+package com.universalrp.cleansweep.voice
+
+import android.content.Context
+import com.universalrp.cleansweep.ai.AiProvider
+import com.universalrp.cleansweep.ai.AiRequestPolicy
+import com.universalrp.cleansweep.ai.AiSettings
+import com.universalrp.cleansweep.ai.RequestBudget
+import com.universalrp.cleansweep.data.BalancedNewsPolicy
+import com.universalrp.cleansweep.data.NewsHeadline
+import com.universalrp.cleansweep.data.NewsPolicy
+import com.universalrp.cleansweep.data.NewsSpeechSanitizer
+import com.universalrp.cleansweep.data.TamilInfoStripRepo
+import com.universalrp.cleansweep.data.WeatherHeadlinePolicy
+import java.time.ZoneId
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+
+/** Replenish category candidates before editing; translations are fallback, never replacements for good Tamil. */
+object NewsBulletinPipeline {
+    private val mutableReport = MutableStateFlow<Report?>(null)
+    val report = mutableReport.asStateFlow()
+    private val specialists = setOf(BalancedNewsPolicy.Category.SCIENCE, BalancedNewsPolicy.Category.CYBER, BalancedNewsPolicy.Category.ENVIRONMENT)
+    data class Row(val category: BalancedNewsPolicy.Category, val fresh: Int, val eligible: Int, val afterEditing: Int, val english: Int, val translated: Int, val chosen: Int, val weatherTeases: Int = 0) {
+        fun label(tamil: Boolean): String = com.universalrp.cleansweep.data.NewsPreferences.label(category, tamil)
+        fun reason(tamil: Boolean): String = when {
+            chosen > 0 -> if (tamil) "தேர்ந்தெடுக்கப்பட்டது" else "Selected"
+            // Owner-reported bug: this row said "Selected" for a headline that never said where the rain is.
+            weatherTeases > 0 -> WeatherHeadlinePolicy.rejectionReason(tamil)
+            english > 0 -> if (tamil) "மொழிபெயர்ப்பு கிடைக்கவில்லை அல்லது ஏற்கப்படவில்லை" else "Translation unavailable or rejected"
+            fresh == 0 -> if (tamil) "புதிய ஆதாரச் செய்தி இல்லை" else "No fresh source item"
+            eligible == 0 -> if (tamil) "வடிகட்டப்பட்டது அல்லது ஏற்கனவே படிக்கப்பட்டது" else "Filtered out or already read"
+            afterEditing == 0 -> if (tamil) "தொகுப்பின்போது நிராகரிக்கப்பட்டது" else "Rejected during editing"
+            else -> if (tamil) "ஒத்த செய்தி அல்லது ஏற்கனவே படிக்கப்பட்டது" else "Duplicate or already read"
+        }
+    }
+    data class Report(val atMs: Long, val rows: List<Row>, val items: List<NewsHeadline>, val translationAttempted: Boolean)
+
+    suspend fun prepare(context: Context, items: List<NewsHeadline>, tamil: Boolean, announced: Set<String>, recent: List<String>, rotation: Int): List<NewsHeadline> = withContext(Dispatchers.Default) {
+        val fingerprint = com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)
+        val enabled = com.universalrp.cleansweep.data.NewsPreferences.categories(context)
+        val now = System.currentTimeMillis()
+        val zone = ZoneId.systemDefault()
+        val nativePool = BalancedNewsPolicy.select(items, announced, recent, tamil, now, zone, rotation, perCategoryMultiplier = 3, enabled = enabled)
+        currentCoroutineContext().ensureActive()
+        var edited = nativePool
+        var english = emptyList<NewsHeadline>()
+        var translated = emptyList<NewsHeadline>()
+        var attempted = false
+        val config = AiSettings.load(context)
+        // One outer deadline covers the entire enhanced path, including fallback feed fetching.
+        val budget = RequestBudget(AiRequestPolicy.Use.NEWS)
+        withTimeoutOrNull(AiRequestPolicy.Use.NEWS.budgetMs) {
+            edited = NewsBulletinEditor.edit(context, nativePool, tamil, budget)
+            val nativeSelected = BalancedNewsPolicy.select(edited, announced, recent, tamil, System.currentTimeMillis(), ZoneId.systemDefault(), rotation, enabled = enabled)
+            val missing = enabled.filter { category -> nativeSelected.none { BalancedNewsPolicy.category(it) == category } }.toSet()
+            if (tamil && com.universalrp.cleansweep.data.NewsPreferences.translate(context) && missing.isNotEmpty() && config.ready && config.provider != AiProvider.FREE && budget.remainingMs() >= 8_000L) {
+                attempted = true
+                val fetched = TamilInfoStripRepo.getEnglishSpecialistsForTranslation(context)
+                english = BalancedNewsPolicy.select(fetched, announced, recent, false, System.currentTimeMillis(), ZoneId.systemDefault(), rotation, perCategoryMultiplier = 3, enabled = enabled)
+                    .filter { BalancedNewsPolicy.category(it) in missing }
+                    .groupBy { BalancedNewsPolicy.category(it) }.values.flatMap { it.take(2) }
+                translated = NewsTranslator.translate(config, english, budget)
+            }
+        }
+        currentCoroutineContext().ensureActive()
+        val readyAt = System.currentTimeMillis()
+        // Date is evaluated again after all networking. Valid AI rejections are never resurrected by a later timeout.
+        if (fingerprint != com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) return@withContext emptyList()
+        val final = BalancedNewsPolicy.select(edited + translated, announced, recent, tamil, readyAt, ZoneId.systemDefault(), rotation, enabled = enabled)
+        // A weather item that asks the listener a question, or counts districts without naming one, is a
+        // promise the bulletin cannot keep. Counted so the Settings row can say so instead of "Filtered out".
+        fun teases(category: BalancedNewsPolicy.Category) = items.count { item ->
+            BalancedNewsPolicy.category(item) == category &&
+                NewsSpeechSanitizer.isWeatherTease(item)
+        }
+        fun count(list: List<NewsHeadline>, category: BalancedNewsPolicy.Category) = list.count { BalancedNewsPolicy.category(it) == category && NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
+        mutableReport.value = Report(readyAt, enabled.map { category ->
+            Row(category, count(items, category), count(nativePool, category), count(edited, category), count(english, category), count(translated, category), count(final, category), teases(category))
+        }, final, attempted)
+        final.map { it.copy(preferenceFingerprint=fingerprint) }
+    }
+}

@@ -11,19 +11,82 @@ import java.util.Locale
  */
 object NewsSpeechSanitizer {
 
-    const val DEFAULT_MAX_SPOKEN_HEADLINES = 5
+    const val DEFAULT_MAX_SPOKEN_HEADLINES = 8
     val VALID_INTERVAL_MINUTES = listOf(30, 60, 120, 180)
-    const val DEFAULT_INTERVAL_MINUTES = 180
+    const val DEFAULT_INTERVAL_MINUTES = 120
+
+    /**
+     * The shared HD engine synthesises at most 1200 characters per request and shares one
+     * short deadline across up to three neural voices. A whole eight-headline bulletin can
+     * exceed that cap and time out even on a healthy network, which looked like "voice is
+     * waiting for the internet". News is therefore prepared and spoken in small sequential
+     * parts. 240 keeps each synthesis request short enough for a patient per-voice budget,
+     * while still leaving ample headroom under the engine cap for Tamil graphemes.
+     */
+    const val MAX_HD_SYNTHESIS_CHARS = 240
+
+    /**
+     * Splits [text] into non-empty parts of at most [maxChars] characters, preferring sentence
+     * ends and then word boundaries. No headline text is dropped: the parts are played in order
+     * as one bulletin. This is pure so the exact chunking can be regression-tested on the JVM.
+     */
+    fun splitForHd(text: String, maxChars: Int = MAX_HD_SYNTHESIS_CHARS): List<String> {
+        require(maxChars > 0) { "maxChars must be positive" }
+        val normalized = text.replace(Regex("\\s+"), " ").trim()
+        if (normalized.isEmpty()) return emptyList()
+        if (normalized.length <= maxChars) return listOf(normalized)
+
+        val parts = ArrayList<String>()
+        val current = StringBuilder()
+        fun flush() {
+            if (current.isNotEmpty()) {
+                parts.add(current.toString())
+                current.setLength(0)
+            }
+        }
+
+        val sentences = normalized.split(Regex("(?<=[.!?])\\s+")).filter { it.isNotBlank() }
+        for (sentence in sentences) {
+            if (sentence.length <= maxChars) {
+                if (current.isNotEmpty() && current.length + 1 + sentence.length > maxChars) flush()
+                if (current.isNotEmpty()) current.append(' ')
+                current.append(sentence)
+                continue
+            }
+            // A single sentence longer than the cap: flush what we have, then cut on words.
+            flush()
+            var remaining = sentence
+            while (remaining.length > maxChars) {
+                var cut = remaining.lastIndexOf(' ', maxChars)
+                if (cut <= 0) {
+                    cut = maxChars
+                    // Do not cut a surrogate pair in half.
+                    if (cut < remaining.length && Character.isHighSurrogate(remaining[cut - 1])) cut--
+                }
+                val piece = remaining.substring(0, cut).trim()
+                if (piece.isNotEmpty()) parts.add(piece)
+                remaining = remaining.substring(cut).trim()
+            }
+            if (remaining.isNotEmpty()) current.append(remaining)
+        }
+        flush()
+        return parts
+    }
 
     private val LEADING_NOISE_REGEX = Regex(
         "^(?:\\s*(?:\\[[^\\]]{1,24}]|\\([^)]{1,20}\\))\\s*|" +
             "\\s*(?:big\\s+breaking|breaking\\s+news|breaking|flash\\s+news|flash|just\\s+in|live\\s+updates|live\\s+blog|live|watch\\s+video|watch|video|photos?|photo\\s+gallery|exclusive|viral\\s+video|viral|" +
-            "முக்கிய\\s*செய்தி|அதிர்ச்சித்?\\s*தகவல்|தற்போதைய\\s*செய்தி|இப்போது|நேரலை|வீடியோ|காணொளி|படங்கள்|புகைப்படங்கள்)\\s*[:|\\-–—»>]+\\s*)+",
+            "முக்கிய\\s*செய்தி|அதிர்ச்சித்?\\s*தகவல்|தற்போதைய\\s*செய்தி|இப்போது|நேரலை|வீடியோ|காணொளி|படங்கள்|புகைப்படங்கள்|" +
+            // A department label is not a story: "Weather Update | …" says nothing itself.
+            "weather\\s*update|weather\\s*alert|weather\\s*news|rain\\s*update|" +
+            "வானிலை\\s*அப்டேட்|வானிலை\\s*செய்தி|வானிலை\\s*தகவல்|மழை\\s*அப்டேட்)\\s*[:|\\-–—»>]+\\s*)+",
         RegexOption.IGNORE_CASE,
     )
 
     private val TRAILING_CLICKBAIT_REGEX = Regex(
         "\\s*(?:[-–—|•:]\\s*)?(?:read\\s+more|click\\s+here|watch\\s+video|full\\s+details(?:\\s+inside)?|see\\s+photos|" +
+            // Trailing department tags ("… வானிலை அப்டேட்!") carry no information of their own.
+            "weather\\s*update|வானிலை\\s*அப்டேட்|வானிலை\\s*செய்தி|" +
             "மேலும்\\s+படிக்க|முழு\\s+விவரம்(?:\\s+உள்ளே)?|வீடியோ\\s+உள்ளே|இங்கே\\s+கிளிக்\\s+செய்யவும்)\\s*[.!…]*$",
         RegexOption.IGNORE_CASE,
     )
@@ -59,6 +122,13 @@ object NewsSpeechSanitizer {
         return sb.toString()
     }
 
+    /**
+     * True when [item] is a weather tease: it asks the listener a question, or counts districts
+     * without naming one. Public so the Settings report can explain the skip in the owner's terms.
+     */
+    fun isWeatherTease(item: NewsHeadline): Boolean =
+        WeatherHeadlinePolicy.isUnanswerable(if (item.translated) item.spokenText else item.title)
+
     private val PURE_STUB_TITLES = setOf(
         "photo gallery", "video gallery", "live updates", "top news", "breaking news",
         "புகைப்படத் தொகுப்பு", "வீடியோ தொகுப்பு", "நேரலை செய்திகள்", "முக்கிய செய்திகள்",
@@ -83,18 +153,25 @@ object NewsSpeechSanitizer {
             if (next == text) return@repeat
             text = next
         }
+        // Reject programme titles and real cutoffs BEFORE punctuation removal can hide them.
+        if (BalancedNewsPolicy.isJunk(text)) return ""
         // Strip dangling punctuation / orphan truncation markers at the very end
         text = text.replace(Regex("(?:\\.{2,}|…+|[-–—|:•]+)\\s*$"), "").replace(Regex("\\s+"), " ").trim()
         return text.take(400)
     }
 
     /**
-     * Rejects broken, truncated, wrong-script, or empty stub headlines before speaking aloud.
+     * Rejects broken, truncated, wrong-script, empty stub, or unanswerable weather headlines
+     * before speaking aloud.
      */
     fun isCompleteSpeakableHeadline(cleanedTitle: String, expectTamil: Boolean): Boolean {
         val t = cleanedTitle.trim()
         if (t.length < 18 || t.length > 360) return false
+        if (BalancedNewsPolicy.isJunk(t)) return false
         if (t.lowercase(Locale.ROOT) in PURE_STUB_TITLES) return false
+        // Owner-reported bug (11 Nov 2026): "… இந்த 9 மாவட்டங்களில் மழை … எங்கேல்லாம் தெரியுமா?"
+        // was read out every day without ever naming a place. A weather tease is not a report.
+        if (WeatherHeadlinePolicy.isUnanswerable(t)) return false
         val hasTamil = t.any { it.code in 0x0B80..0x0BFF }
         if (expectTamil && !hasTamil) return false
         if (!expectTamil && hasTamil) return false
@@ -126,6 +203,9 @@ object NewsSpeechSanitizer {
         for (item in items) {
             val cleaned = cleanHeadline(item.title, item.source)
             if (!isCompleteSpeakableHeadline(cleaned, expectTamil = expectTamil)) continue
+            // The prepared translation is what actually gets spoken, so it must clear the same gate.
+            if (item.translated && item.spokenText.isNotBlank() &&
+                !isCompleteSpeakableHeadline(item.spokenText, expectTamil = true)) continue
             val cleanKey = NewsPolicy.titleKey(cleaned)
             if (cleanKey.isBlank() || cleanKey in seenKeys || item.key in seenKeys) continue
             seenKeys.add(cleanKey)
@@ -136,6 +216,19 @@ object NewsSpeechSanitizer {
         return picked
     }
 
+    /** Speech-only editorial punctuation. Original source/display/evidence and story keys stay intact.
+     * Numeric signs, subtraction, numeric ranges and dates are deliberately not guessed/reworded.
+     */
+    fun forSpeech(text: String): String = text
+        // Tamil numeric suffixes: 2017-க்குப் / 2-வது must not become "minus".
+        .replace(Regex("(?<=\\p{N})[-‐‑](?=[\\u0B80-\\u0BFF&&\\p{L}])"), "")
+        // Compounds and named identifiers, not a sign before a numeric token.
+        .replace(Regex("(?<=[\\p{L}\\p{M}])[-‐‑](?=[\\p{L}\\p{M}\\p{N}])"), " ")
+        .replace(Regex("\\s+[|–—]\\s+"), ", ")
+        .replace(Regex("\\s+-\\s+(?=[\\p{L}\\p{M}])"), ", ")
+        .replace(Regex("(?<=[\\p{L}\\p{M}])[–—](?=[\\p{L}\\p{M}])"), ", ")
+        .replace(Regex("\\s+"), " ").trim()
+
     /**
      * Builds a smooth, natural broadcast script for TTS in Tamil or English.
      * No numeric ordinals ("news 1, news 2 …") — just a clean intro followed by the headlines,
@@ -143,37 +236,13 @@ object NewsSpeechSanitizer {
      */
     fun buildBulletinSpeech(headlines: List<NewsHeadline>, tamil: Boolean): String {
         val cleaned = headlines
-            .map { cleanHeadline(it.title, it.source).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
+            .map { item -> val label = if (BalancedNewsPolicy.category(item) == BalancedNewsPolicy.Category.HUMOUR)
+                (if(tamil) "நகைச்சுவை; உண்மைச் செய்தியல்ல. " else "Humour, not factual news. ") else ""
+                label + forSpeech(item.spokenText.ifBlank { cleanHeadline(item.title, item.source) }).trimEnd('.', '!', '?', ' ', ',', ';', ':', '·') }
             .filter { it.isNotBlank() }
         if (cleaned.isEmpty()) return ""
         val intro = if (tamil) "இன்றைய முக்கியச் செய்திகள். " else "Today's top news headlines. "
         return intro + cleaned.joinToString(". ") + "."
-    }
-
-    /**
-     * Turns an AI-written bulletin into speech-safe text: drops markdown emphasis/headings,
-     * list bullets and numbering, collapses newlines, keeps whole sentences and caps the
-     * spoken length. Returns "" when nothing usable remains, so the caller can fall back to
-     * the on-device sanitized bulletin.
-     */
-    fun cleanAiBulletin(raw: String): String {
-        if (raw.isBlank()) return ""
-        var text = raw
-            .replace("**", "").replace("__", "").replace("`", "")
-            .replace(Regex("(?m)^\\s*#{1,6}\\s*"), "")
-            .replace(Regex("(?m)^\\s*(?:[-*•–—>]+|\\d+[.)])\\s+"), "")
-            .replace(Regex("[\\r\\n]+"), " ")
-            .replace(Regex("\\s+"), " ")
-            .trim()
-        if (text.isBlank()) return ""
-        val sentences = text.split(Regex("(?<=[.!?])\\s+")).map { it.trim() }.filter { it.length >= 8 }
-        var joined = (if (sentences.isNotEmpty()) sentences.joinToString(" ") else text).trim()
-        if (joined.length > 700) {
-            val cut = joined.take(700)
-            val lastStop = maxOf(cut.lastIndexOf('.'), cut.lastIndexOf('!'), cut.lastIndexOf('?'))
-            joined = if (lastStop > 200) cut.substring(0, lastStop + 1) else "${cut.trimEnd()}."
-        }
-        return joined
     }
 
     /**

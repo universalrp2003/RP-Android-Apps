@@ -1,8 +1,9 @@
 package com.universalrp.cleansweep.data
 
 /**
- * The ongoing status-bar charging meter and background battery-health monitor are **ON by
- * default** (opt-out); the scheduled daily security-risk watch is **OFF by default** (opt-in).
+ * The status-bar charging card, watt/data pill switch and background battery-health monitor
+ * are **ON by default** (opt-out); Android still owns the overlay grant. The scheduled daily
+ * security-risk watch is **OFF by default** (opt-in).
  * The file-hash security check includes preinstalled system apps by default.
  *
  * Every switch stays in Settings. Existing choices are normally preserved; the 2.54 migration
@@ -33,11 +34,11 @@ object MonitorDefaultsPolicy {
     const val CACHE_INCLUDE_SYSTEM = true
 
     /**
-     * The floating status-bar pill stays **opt-in**: Android requires "Display over other apps"
-     * before anything can be drawn there, and that access is never granted automatically, so
-     * defaulting it ON would promise a reading the phone has not allowed.
+     * The first-run status-bar pill switch is ON to match the reference settings. This is only
+     * the app preference: Android still requires the user to grant "Display over other apps"
+     * before anything can actually be drawn there.
      */
-    const val STATUS_PILL = false
+    const val STATUS_PILL = true
 
     /** The scheduled local security-risk scan is opt-in; new installs start OFF. */
     const val DAILY_SECURITY_WATCH = false
