@@ -2,7 +2,7 @@
 name: Live Guard 3.00 my-plan and expired-booster regressions (candidate only)
 on:
   push:
-    branches: ["arena/aa496e0a-rp-android-apps"]
+    branches: ["main", "arena/**"]
     paths: ["releases/live-guard-v3.00.md", "cleaner/**", "shared/**", "tools/inspect_liveguard_300_candidate.py", "tools/liveguard_298_native_smoke.py", "tools/verify_liveguard_300_installed.py", "tools/run_liveguard_300_native.py", "tools/verify_liveguard_300_native.py", ".github/workflows/liveguard-300-candidate.yml"]
 permissions:
   contents: read
