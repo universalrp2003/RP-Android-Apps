@@ -33,4 +33,10 @@
     <string name="toast_enabled">Enabled %1$s</string>
     <string name="toast_need_shizuku">Shizuku not ready — complete setup first</string>
     <string name="toast_protected">Protected — not allowed to disable</string>
+    <string name="shizuku_guide_steps">1. Install Shizuku\n2. Developer → Wireless debugging → Pair\n3. Start Shizuku → come back here</string>
+    <string name="export_title">Export disabled list</string>
+    <string name="import_title">Import &amp; restore</string>
+    <string name="batch_disable">Disable selected safe apps</string>
+    <string name="confirm_caution_title">Caution — may break a feature</string>
+    <string name="confirm_caution_msg">%1$s is marked Caution — it may remove a feature (e.g. Game launcher, Phone Manager). Disable anyway? You can Enable back.</string>
 </resources>

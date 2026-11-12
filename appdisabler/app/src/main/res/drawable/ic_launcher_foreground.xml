@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Phone outline -->
+    <path android:fillColor="#FFFFFF" android:pathData="M32,18h44c4,0 8,4 8,8v56c0,4 -4,8 -8,8h-44c-4,0 -8,-4 -8,-8v-56c0,-4 4,-4 8,-8z" android:strokeColor="#E2E8F0" android:strokeWidth="0"/>
+    <!-- App grid: 4 squares -->
+    <path android:fillColor="#60A5FA" android:pathData="M38,32h14v14h-14z" />
+    <path android:fillColor="#60A5FA" android:pathData="M56,32h14v14h-14z" />
+    <path android:fillColor="#94A3B8" android:pathData="M38,50h14v14h-14z" />
+    <path android:fillColor="#60A5FA" android:pathData="M56,50h14v14h-14z" />
+    <!-- Diagonal disable slash with red circle -->
+    <path android:fillColor="#EF4444" android:pathData="M24,80 L84,24 L88,28 L28,84 Z" />
+    <path android:fillColor="none" android:strokeColor="#EF4444" android:strokeWidth="6" android:pathData="M54,34a20,20 0 1,1 0,40a20,20 0 0,1 0,-40" />
+</vector>
