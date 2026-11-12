@@ -23,6 +23,8 @@ CHANGED = [
     MAIN / "data/DataUsageTracker.kt",
     MAIN / "MainViewModel.kt",
     MAIN / "widget/CleanSweepWidget.kt",
+    MAIN / "ui/SettingsScreen.kt",
+    MAIN / "ui/StatusPillHomeControls.kt",
 ]
 
 # Every Kotlin source in the module, so a declaration can be found wherever it lives.
@@ -81,6 +83,47 @@ for path in CHANGED:
     for recv, member in sorted(set(re.findall(r'\b([a-z]\w*)\.(\w+)\(', text))):
         if recv in ("it", "this", "context", "plan", "reading", "status") and member in PLAN_POLICY_MEMBERS:
             problems.append(f"{path.name}: `{recv}.{member}(...)` is probably PlanPolicy.{member}(...), not a member of the value")
+
+
+# A `Foo.bar` is only resolvable if `Foo` is visible in that file. Kotlin has no wildcard import
+# in most of these files, so a newly used object with no matching import is a compile error even
+# though the declaration exists somewhere in the module. That is exactly what shipped to CI once:
+# SettingsScreen called StatusPill.signalMode() after importing only PillSignalPolicy.
+def package_of(text: str) -> str:
+    m = re.search(r'^package\s+([\w.]+)', text, re.M)
+    return m.group(1) if m else ''
+
+
+# Where each object/class actually lives, so same-package uses are not called unimported.
+decl_package: dict[str, str] = {}
+for src_path, text in sources.items():
+    pkg = package_of(text)
+    for name in re.findall(r'^(?:internal |private )?(?:object|class|enum class|data class)\s+(\w+)', text, re.M):
+        decl_package.setdefault(name, pkg)
+
+for path in CHANGED:
+    text = sources[path]
+    pkg = package_of(text)
+    if re.search(r'^import\s+[\w.]+\*\s*$', text, re.M):
+        continue  # a wildcard import makes a whole package visible
+    imported_simple = {i.rsplit('.', 1)[-1] for i in re.findall(r'^import\s+([\w.]+)', text, re.M)}
+    # A fully-qualified use (com.x.y.Foo.bar) needs no import, so drop the package prefix
+    # before looking for the receiver name. Comments are stripped: a name mentioned in prose
+    # is not a reference.
+    code = re.sub(r'//[^\n]*', '', text)
+    qualified = re.sub(r'\b(?:[a-z]\w*\.)+([A-Z]\w+)\.', r'\1.', code)
+    for obj in sorted({o for o, _ in re.findall(r'\b([A-Z]\w+)\.(\w+)', code)}):
+        if obj not in decl_package:
+            continue  # declared outside this module: Compose, Android SDK, Java
+        if decl_package[obj] == pkg:
+            continue  # same package: no import needed in Kotlin
+        if obj in imported_simple:
+            continue
+        if re.search(rf'\b(?:[a-z]\w*\.)+{obj}\b', code):
+            continue  # used fully-qualified somewhere, which satisfies the compiler
+        if re.search(rf'^(?:internal |private )?(?:object|class|fun|val)\s+{obj}\b', text, re.M):
+            continue  # declared in this very file
+        problems.append(f"{path.name}: `{obj}` lives in {decl_package[obj]} but is never imported")
 
 for p in problems:
     print("FAIL:", p)

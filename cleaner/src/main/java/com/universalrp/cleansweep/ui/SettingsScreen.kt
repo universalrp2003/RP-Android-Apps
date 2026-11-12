@@ -66,6 +66,7 @@ import com.universalrp.cleansweep.Screen
 import com.universalrp.cleansweep.UiState
 import com.universalrp.cleansweep.data.formatBytes
 import com.universalrp.cleansweep.notify.PillSignalPolicy
+import com.universalrp.cleansweep.notify.StatusPill
 import com.universalrp.cleansweep.ui.theme.AccentCyan
 import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
