@@ -310,7 +310,7 @@
           "softwareVersion": "1.1.3",
           "downloadUrl": "https://universalrp2003.github.io/RP-Android-Apps/apks/Secret-Message-v1.1.3.apk",
           "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3",
-          "description": "Two-phone MLS-encrypted chat with text, drawings, voice notes and photos. Internet relay or same-network connection required; not independently security-reviewed.",
+          "description": "Two-phone MLS-encrypted chat with a 20-digit safety code, text, hand-drawn letters and pictures. Internet relay or same-Wi-Fi connection; messages expire on a 60-300 second view timer with no chat history kept. Not independently security-reviewed.",
           "offers": {
             "@type": "Offer",
             "price": "0",
@@ -1497,12 +1497,12 @@
         <article class="card">
           <div class="card-top">
             <div class="card-header"><h2 id="app-daily-vault" tabindex="-1">தினக்கணக்கு · DailyVault</h2><span class="ver">v0.5 · Android 8.0+</span><time class="card-date" datetime="2026-10-30T17:37:40Z" data-release-tag="daily-vault-v0.5">30 Oct 2026</time></div>
-            <p class="tagline" data-content-lang="en">A private spending diary and note keeper that stays on your phone: log what you spend and what you note, browse the month, and keep it all offline. <strong>There is no app-opening password</strong> — anyone holding the unlocked phone can read or screenshot the records, so protect it with your phone lock. A password is needed only for the <strong>encrypted backup and restore</strong> you choose to make, which you can keep as your own backup file. The only internet use is a read-only release-metadata check.</p>
-            <p class="ta-note" data-content-lang="ta" lang="ta">உங்கள் போனிலேயே இருக்கும் தனிப்பட்ட செலவுப் பட்டியலும் குறிப்பேடும்: செலவையும் குறிப்பையும் எழுதி, மாதம் வாரி பார்த்து, எல்லாம் ஆஃப்லைனில் வைக்கலாம். <strong>செயலியைத் திறக்கக் கடவுச்சொல் இல்லை</strong> — திறந்த போனை எடுத்தவர் பதிவுகளைப் பார்க்கலாம்; எனவே போன் பூட்டைப் பயன்படுத்துங்கள். நீங்கள் தேர்ந்தெடுக்கும் <strong>மறையாக்கக் காப்பு/மீட்புக்கு</strong> மட்டுமே கடவுச்சொல். இணையம் பதிப்பு விவரத்துக்காக மட்டுமே.</p>
+            <p class="tagline" data-content-lang="en">A private spending diary and note keeper that stays on your phone: log what you spend and what you note, browse the month, and keep it all offline. <strong>There is no app-opening password</strong> — anyone holding the unlocked phone can read or screenshot the records, so protect it with your phone lock. Every export asks for a new 10–256-character password and re-encrypts an immutable snapshot with <strong>AES-256-GCM</strong> (TDV-v1), so you can carry your own encrypted backup file without exposing the ledger; restore it with the same password and keep older copies in case an export is interrupted. An older password-only vault may ask for its previous password once, without overwriting the file. Totals are kept in exact paise. The only internet use is a read-only release-metadata check.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">உங்கள் போனிலேயே இருக்கும் தனிப்பட்ட செலவுப் பட்டியலும் குறிப்பேடும்: செலவையும் குறிப்பையும் எழுதி, மாதம் வாரி பார்த்து, எல்லாம் ஆஃப்லைனில் வைக்கலாம். <strong>செயலியைத் திறக்கக் கடவுச்சொல் இல்லை</strong> — திறந்த போனை எடுத்தவர் பதிவுகளைப் பார்க்கலாம்; எனவே போன் பூட்டைப் பயன்படுத்துங்கள். நீங்கள் ஏற்றுமதி செய்யும்போது 10–256 எழுத்துகளில் புதிய கடவுச்சொல் கேட்கப்பட்டு, மாற்ற முடியாத நகல் <strong>AES-256-GCM</strong> (TDV-v1) மூலம் மறையாக்கப்படும் — பட்டியலை வெளிக்காட்டாமல் உங்கள் சொந்தக் காப்புக் கோப்பை வைத்துக்கொள்ளலாம்; அதே கடவுச்சொல்லால் மீட்கலாம்; ஏற்றுமதி தடைப்பட்டால் பழைய காப்புகளையும் வைத்திருங்கள். பழைய கடவுச்சொல் மட்டும் கொண்ட vault ஒருமுறை அதன் பழைய கடவுச்சொல்லைக் கேட்கலாம்; கோப்பு மாற்றப்படாது. மொத்தங்கள் சரியான பைசா வரை கணக்கிடப்படும். இணையம் பதிப்பு விவரத்துக்காக மட்டுமே.</p>
             <div class="opts">
               <span class="opt">💰 Spending entries + notes</span>
               <span class="opt">📅 Month view</span>
-              <span class="opt">🔐 Encrypted backup & restore</span>
+              <span class="opt">🔐 AES-256-GCM backup files</span>
               <span class="opt">📴 Stays on the phone</span>
               <span class="opt">🔓 No app-opening password (use your phone lock)</span>
             </div>
@@ -1871,14 +1871,14 @@
               <span class="ver">v1.1.3 · Android 8.0+</span>
             <time class="card-date" datetime="2026-10-22T16:42:52Z" data-release-tag="secret-message-v1.1.3">22 Oct 2026</time></div>
             
-            <p class="tagline" data-content-lang="en">Private chat between exactly two phones, with nothing to sign up for: messages are end-to-end encrypted with <strong>MLS</strong>, and the two of you compare a safety code first so you know you are talking to each other and not to an impostor. Send text, drawings, voice notes and photos, or set messages to expire. Works over the internet or directly on the same Wi-Fi network when there is no internet at all. No account, no phone number, no ads; message content is unreadable to the server in the middle. Honest limits: both phones must have the app open to exchange, nothing is queued while you are offline, and a lost phone with no backup means the history on it is gone.</p>
+            <p class="tagline" data-content-lang="en">Private chat between exactly two phones, with nothing to sign up for. The phones pair through <strong>MLS</strong> and both show the same <strong>20-digit safety code</strong>, so the two of you can verify you are talking to each other and not to an impostor — a remembered phone can reconnect without repeating it, a new or changed phone cannot. Send text, hand-drawn letters and pictures through the app’s own keyboard and drawing pad. Works through the internet relay, or <strong>directly over the same Wi-Fi network</strong> when there is no internet at all. No account, no phone number, no ads; the relay carries encrypted messages it cannot read. Honest limits: a message that cannot be delivered is dropped within 30 seconds — there is no offline queue and no resend — and each delivered message disappears from both phones after the 60–300-second viewing timer you choose, so there is no chat history to keep. It is a two-phone messenger, not a group chat, and it has not been independently security-reviewed.</p>
             <div class="opts">
-              <span class="opt">🔐 MLS-encrypted chat</span>
-              <span class="opt">✏️ Text, drawings, voice</span>
-              <span class="opt">⏱️ Timed messages</span>
-              <span class="opt">🌐 Internet or same-network chat</span>
+              <span class="opt">🔐 MLS + 20-digit safety code</span>
+              <span class="opt">✏️ Hand-drawn letters &amp; pictures</span>
+              <span class="opt">⏱️ 60–300 s view timer</span>
+              <span class="opt">📶 Relay or same-Wi-Fi, no history</span>
             </div>
-            <p class="ta-note" data-content-lang="ta" lang="ta">இரண்டு போன்களுக்கு இடையேயான தனிப்பட்ட அரட்டை; பதிவு செய்ய வேண்டியதில்லை. செய்திகள் <strong>MLS</strong> மூலம் முழுமையாக மறையாக்கப்படுகின்றன; முதலில் இரு தரப்பும் பாதுகாப்புக் குறியீட்டை ஒப்பிட்டுப் பார்த்த பின் அரட்டை தொடங்கும். உரை, ஓவியம், குரல், படங்கள் அனுப்பலாம்; நேரம் முடிந்ததும் அழியும் செய்திகளும் உண்டு. இணையம் இருந்தால் இணையம் வழியாக, இல்லாவிட்டால் ஒரே வைஃபை வலையமைப்பில் நேரடியாக வேலை செய்யும். கணக்கு, தொலைபேசி எண், விளம்பரம் இல்லை; நடுவில் உள்ள சேவையர் உள்ளடக்கத்தைப் படிக்க முடியாது. உண்மையான வரம்புகள்: இரு போன்களிலும் செயலி திறந்திருக்க வேண்டும்; ஆஃப்லைனில் இருக்கும்போது செய்திகள் காத்திருக்காது; காப்பு இல்லாமல் போன் போனால் அதிலிருந்த வரலாறும் போய்விடும்.</p>
+            <p class="ta-note" data-content-lang="ta" lang="ta">இரண்டு போன்களுக்கு இடையேயான தனிப்பட்ட அரட்டை; பதிவு செய்ய வேண்டியதில்லை. போன்கள் <strong>MLS</strong> மூலம் இணைந்து இரண்டும் ஒரே <strong>20 இலக்க பாதுகாப்புக் குறியீட்டைக்</strong> காட்டும் — நீங்கள் இருவரும் பார்த்து உறுதிப்படுத்தலாம்; நினைவில் உள்ள போன் மீண்டும் குறியீடு இல்லாமல் இணையலாம், புதிய அல்லது மாறிய போன் இணைய முடியாது. செயலியின் சொந்த விசைப்பலகை மற்றும் வரைவுப் பலகை வழியாக உரை, கை எழுத்து, படங்கள் அனுப்பலாம். இணைய இடைநிலை வழியாகவோ, இணையம் இல்லாவிட்டால் <strong>ஒரே வைஃபை வலையமைப்பில் நேரடியாகவோ</strong> வேலை செய்யும். கணக்கு, தொலைபேசி எண், விளம்பரம் இல்லை; இடைநிலை மறையாக்கிய செய்திகளைப் படிக்க முடியாது. உண்மையான வரம்புகள்: அனுப்ப முடியாத செய்தி 30 வினாடிகளில் நீக்கப்படும் — ஆஃப்லைன் வரிசையும் மறுஅனுப்புதலும் இல்லை; ஒவ்வொரு செய்தியும் நீங்கள் தேர்ந்தெடுக்கும் 60–300 வினாடி பார்வை நேரத்திற்குப் பின் இரு போன்களிலிருந்தும் நீங்கும், எனவே அரட்டை வரலாறு சேமிக்கப்படுவதில்லை. இது இரண்டு போன்களுக்கானது; குழு அரட்டை அல்ல; சுயாதீன பாதுகாப்பு ஆய்வு இல்லை.</p>
             <div class="release-brief"><p class="testing-status"><span data-content-lang="en">Exact-build testing: see release evidence.</span><span data-content-lang="ta" lang="ta">இந்தக் கோப்பின் சோதனை நிலை: வெளியீட்டு ஆதாரத்தைப் பார்க்கவும்.</span></p>
 <a href="https://github.com/universalrp2003/RP-Android-Apps/releases/tag/secret-message-v1.1.3">Full release notes · முழு வெளியீட்டுக் குறிப்புகள்</a></div><figure class="shot has-img"><img loading="lazy" src="images/secret-message-card.jpg" alt="Secret Message help screen"></figure>
             <p class="note"><span data-content-lang="en">Earlier real app screen, reused from the existing Store gallery; not a current-version or device-security verification.</span><span data-content-lang="ta" lang="ta">அங்காடியில் ஏற்கெனவே உள்ள உண்மையான முந்தைய செயலித் திரை; தற்போதைய பதிப்பு அல்லது சாதனப் பாதுகாப்புச் சரிபார்ப்பல்ல.</span></p>
@@ -1887,7 +1887,7 @@
               <div class="body">
                 <ul>
                   <li><strong>Two-phone MLS-encrypted private chat</strong> (experimental; not independently security-reviewed).</li>
-                  <li>Send <strong>text, hand-drawings, voice notes and pictures</strong> between the two paired phones.</li>
+                  <li>Send <strong>text, hand-drawn letters and pictures</strong> between the two paired phones.</li>
                   <li>Published openly with full architecture notes in <code>secret-message-security-design.md</code>.</li>
                   <li>About links to the RP Ideas suite and official project pages.</li>
                   <li>Local-first design; read the security disclosure before relying on it.</li>
@@ -1921,7 +1921,7 @@
               <summary><span class="feat-icon">🆕</span> Earlier feature history · முந்தைய வசதி மாற்றங்கள்</summary>
               <div class="body">
                 <ul>
-                  <li>Current published build <strong>1.1.3</strong> — a two-phone MLS encrypted messenger with text, drawings, voice notes and photo sharing.</li>
+                  <li>Current published build <strong>1.1.3</strong> — the two-phone MLS messenger: text, hand-drawn letters and pictures, with a 20-digit safety code and a 60–300-second view timer.</li>
                   <li><strong>Honest status:</strong> experimental and <em>not</em> independently cryptography-audited — do not rely on it where physical safety depends on secrecy.</li>
                 </ul>
                 <p class="ta" data-content-lang="ta" lang="ta">இரண்டு போன்களுக்கு இடையே MLS மறையாக்கச் செய்தி, ஓவியம், குரல் மற்றும் படப் பகிர்வு (சோதனை நிலை; சுயாதீன பாதுகாப்பு மதிப்பாய்வு இல்லை).</p>
