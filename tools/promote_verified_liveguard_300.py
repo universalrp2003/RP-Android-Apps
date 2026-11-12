@@ -68,8 +68,15 @@ def main():
                     'tools/verify_cleaner_regressions.py', 'tools/inspect_liveguard_300_candidate.py',
                     'tools/liveguard_298_native_smoke.py', 'tools/verify_liveguard_300_installed.py', 'tools/run_liveguard_300_native.py', 'tools/verify_liveguard_300_native.py', '.github/workflows/liveguard-300-candidate.yml'], check=True)
     info = api(f'actions/runs/{p["run_id"]}')
-    assert (info['head_sha'], info['head_branch'], info['status'], info['conclusion'], info['path']) == (
-        source, BRANCH, 'completed', 'success', '.github/workflows/liveguard-300-candidate.yml')
+    # The candidate is BUILT on the feature branch and PUBLISHED from main: those are two
+    # different branches and conflating them is what failed the first attempt. What must hold
+    # is that the run built this exact source, completed green, and ran the candidate workflow.
+    # The pins are then reviewed and committed on main, and the source must already be on main
+    # (checked below with merge-base) - so no code is published that has not been reviewed.
+    assert (info['head_sha'], info['status'], info['conclusion'], info['path']) == (
+        source, 'completed', 'success', '.github/workflows/liveguard-300-candidate.yml')
+    assert re.fullmatch(r'(main|arena/[\w-]+)', info['head_branch'] or ''), info['head_branch']
+    subprocess.run(['git', 'merge-base', '--is-ancestor', source, 'origin/main'], check=True)
     job = api(f'actions/jobs/{p["job_id"]}')
     assert job['run_id'] == p['run_id'] and job['conclusion'] == 'success'
     for name in STEPS: assert next(s for s in job['steps'] if s['name'] == name)['conclusion'] == 'success', name
