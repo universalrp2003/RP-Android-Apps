@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.VolumeOff
 import androidx.compose.material.icons.outlined.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -63,6 +65,7 @@ import com.universalrp.cleansweep.data.tr
 import com.universalrp.cleansweep.Screen
 import com.universalrp.cleansweep.UiState
 import com.universalrp.cleansweep.data.formatBytes
+import com.universalrp.cleansweep.notify.PillSignalPolicy
 import com.universalrp.cleansweep.ui.theme.AccentCyan
 import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
@@ -477,6 +480,58 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                                 dragging = state.pillDragging,
                                 onToggleDrag = { vm.togglePillDrag() },
                             )
+                        }
+                    }
+                }
+            }
+
+            // The owner asked for the SIM-signal choice to live here: "give option for both sims
+            // percentage in settings". It used to sit on Home, so the setting was mixed in with
+            // the readings. Only relevant while the pill is actually being drawn.
+            if (state.statusPill) {
+                PanelCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 14.dp)) {
+                        val context = LocalContext.current
+                        var signalMode by remember { mutableStateOf(StatusPill.signalMode(context)) }
+                        Text(
+                            tr("SIM signal percentage in the pill"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            tr("First SIM shows one phone's percentage. Both SIMs shows each one, side by side, never added together. Off hides both."),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        // Kept from the Home placement this control used to have: the number is
+                        // Android's own signal scale, so it is called a rough estimate rather
+                        // than reception reliability. The disclosure follows the control.
+                        Text(
+                            tr("The percentage is a rough estimate of signal strength from Android's own scale, not reception reliability."),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            PillSignalPolicy.Mode.values().forEach { mode ->
+                                FilterChip(
+                                    selected = signalMode == mode,
+                                    onClick = {
+                                        signalMode = mode
+                                        StatusPill.setSignalMode(context, mode)
+                                    },
+                                    label = {
+                                        Text(when (mode) {
+                                            PillSignalPolicy.Mode.FIRST -> tr("First SIM")
+                                            PillSignalPolicy.Mode.BOTH -> tr("Both SIMs")
+                                            PillSignalPolicy.Mode.OFF -> tr("Off")
+                                        })
+                                    },
+                                )
+                            }
                         }
                     }
                 }

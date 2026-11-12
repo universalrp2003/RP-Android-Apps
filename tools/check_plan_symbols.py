@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Resolve the cross-object references this change introduced, without a compiler.
+"""Resolve cross-object references in the Live Guard plan code, without a compiler.
 
-Not a Kotlin type checker. It answers one question: does every `Foo.bar` this change calls
+Not a Kotlin type checker. It answers one question: does every `Foo.bar` these files call
 actually exist as a declaration in the module? A missing one is exactly the class of mistake
-that used to need a CI round-trip to find.
+that used to need a CI round-trip to find - it caught `PlanReadingPolicy.allowanceGb` (that
+lives on PlanPolicy), a missing import, and `plan.boosterLastDay(plan)` (also PlanPolicy).
+
+Run it after touching any file in CHANGED; tools/tests pins it so it cannot rot.
 """
 import re
 import sys
@@ -17,6 +20,9 @@ CHANGED = [
     MAIN / "notify/ChargeNotifier.kt",
     MAIN / "notify/StatusPill.kt",
     MAIN / "data/PlanReadingPolicy.kt",
+    MAIN / "data/DataUsageTracker.kt",
+    MAIN / "MainViewModel.kt",
+    MAIN / "widget/CleanSweepWidget.kt",
 ]
 
 # Every Kotlin source in the module, so a declaration can be found wherever it lives.
