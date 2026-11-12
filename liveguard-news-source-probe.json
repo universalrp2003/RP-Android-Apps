@@ -1,0 +1,78 @@
+{
+  "monitoring_only": true,
+  "checked_utc": "2026-11-12T08:22:55.178331+00:00",
+  "sources": [
+    {
+      "source": "BBC Tamil",
+      "url": "https://feeds.bbci.co.uk/tamil/rss.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "News18 Tamil Nadu",
+      "url": "https://tamil.news18.com/commonfeeds/v1/tam/rss/tamil-nadu.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "News18 India Tamil",
+      "url": "https://tamil.news18.com/commonfeeds/v1/tam/rss/national.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "Oneindia World Tamil",
+      "url": "https://tamil.oneindia.com/rss/feeds/tamil-international-fb.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "Oneindia Tamil Technology",
+      "url": "https://tamil.oneindia.com/rss/feeds/tamil-technology-fb.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "Tamil Gizbot Science",
+      "url": "https://tamil.gizbot.com/rss/feeds/tamil-scitech-fb.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "The Hindu Science",
+      "url": "https://www.thehindu.com/sci-tech/science/feeder/default.rss",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "NASA",
+      "url": "https://www.nasa.gov/news-release/feed/",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "CISA",
+      "url": "https://www.cisa.gov/cybersecurity-advisories/alerts.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "BleepingComputer",
+      "url": "https://www.bleepingcomputer.com/feed/",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "Mongabay India",
+      "url": "https://india.mongabay.com/feed/",
+      "status": "unavailable",
+      "error": "URLError"
+    },
+    {
+      "source": "BBC Science & Environment",
+      "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+      "status": "unavailable",
+      "error": "URLError"
+    }
+  ]
+}

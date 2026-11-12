@@ -1765,6 +1765,7 @@ object Lang {
         "Its last day has passed, so it is not counted in any total. The switch stays on only as a record." to "அதன் கடைசி நாள் கடந்துவிட்டது; எந்தக் கணக்கிலும் இது சேர்க்கப்படாது. சுவிட்ச் பதிவுக்காக மட்டுமே இயக்கத்தில் இருக்கும்.",
         "Counting from zero starts now. Data used earlier today is no longer shown." to "இப்போதிலிருந்து பூஜ்ஜியத்தில் இருந்து எண்ணல் தொடங்குகிறது. இன்று முன்பே பயன்படுத்திய தரவு இனி காண்பிக்கப்படாது.",
         "SIM signal percentage in the pill" to "மிதக்கும் குறியில் சிம் சிக்னல் சதவீதம்",
+        "Pill size" to "மிதக்கும் குறியின் அளவு",
         "First SIM shows one phone's percentage. Both SIMs shows each one, side by side, never added together. Off hides both." to "முதல் சிம் ஒரு ஃபோனின் சதவீதத்தைக் காட்டும். இரு சிம்கள் ஒவ்வொன்றையும் தனித்தனியாகக் காட்டும், ஒருபோதும் கூட்டப்படாது. வேண்டாம் எனில் இரண்டும் மறையும்.",
         "The percentage is a rough estimate of signal strength from Android's own scale, not reception reliability." to "இந்தச் சதவீதம் ஆண்ட்ராய்டின் சொந்த அளவீட்டிலிருந்து கிடைக்கும் தோராயமான சிக்னல் வலிமை; இது சிக்னல் நம்பகத்தன்மை அல்ல.",
         "First SIM" to "முதல் சிம்",
