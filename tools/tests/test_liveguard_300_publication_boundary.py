@@ -18,7 +18,10 @@ class PublicationBoundaryTest(unittest.TestCase):
     def test_promotion_workflow_only_runs_on_the_pins_file(self):
         wf = (ROOT / '.github/workflows/promote-liveguard-3-00.yml').read_text()
         # The only trigger is a push that touches the pins file.
-        self.assertIn('paths: ["docs/live-guard-3.00-publication-pins.json"]', wf)
+        self.assertIn('docs/live-guard-3.00-publication-pins.json', wf)
+        # The publisher itself is also a trigger, so a promotion that failed before publishing
+        # can be re-run. Still push-only and still fails closed on a missing/stale pins file.
+        self.assertIn('tools/promote_verified_liveguard_300.py', wf)
         self.assertNotIn('workflow_dispatch', wf)
 
     def test_publisher_refuses_a_template_or_incomplete_pins(self):

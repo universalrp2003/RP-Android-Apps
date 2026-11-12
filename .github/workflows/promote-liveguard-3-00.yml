@@ -2,7 +2,12 @@ name: Publish owner-authorized Live Guard 3.00 (exact tested bytes only)
 on:
   push:
     branches: ["main"]
-    paths: ["docs/live-guard-3.00-publication-pins.json"]
+    paths:
+      - "docs/live-guard-3.00-publication-pins.json"
+      # A change to the publisher itself must be able to re-run a promotion that
+      # failed before publishing anything. It still fails closed: the pins must be
+      # real and the tag must not exist.
+      - "tools/promote_verified_liveguard_300.py"
 permissions:
   contents: write
   actions: read
