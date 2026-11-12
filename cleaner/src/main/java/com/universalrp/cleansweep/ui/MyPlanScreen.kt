@@ -49,6 +49,7 @@ import com.universalrp.cleansweep.data.NetworkSplit
 import com.universalrp.cleansweep.data.PlanDataMode
 import com.universalrp.cleansweep.data.PlanExpiryRule
 import com.universalrp.cleansweep.data.PlanPolicy
+import com.universalrp.cleansweep.data.PlanReadingPolicy
 import com.universalrp.cleansweep.data.Lang
 import com.universalrp.cleansweep.data.RechargeSmsParser
 import com.universalrp.cleansweep.data.ParsedRecharge
@@ -325,7 +326,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     color = TextSecondary,
                 )
                 Spacer(Modifier.height(8.dp))
-                TextButton(onClick = { vm.resetDataPackCount(PlanReadingPolicy.allowanceGb(plan, today).toFloat().takeIf { it > 0f }) }) {
+                TextButton(onClick = { vm.resetDataPackFromZero() }) {
                     Text(tr("Start fresh from 0"), color = AccentCyan)
                 }
                 Text(
@@ -334,7 +335,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                     color = TextSecondary,
                 )
                 Spacer(Modifier.height(8.dp))
-                TextButton(onClick = { vm.resetDataPackCount(PlanReadingPolicy.allowanceGb(plan, today).toFloat().takeIf { it > 0f }) }) {
+                TextButton(onClick = { vm.resetDataPackCount(PlanPolicy.allowanceGb(plan, today).toFloat().takeIf { it > 0f }) }) {
                     Text(tr("Keep today's usage"), color = AccentCyan)
                 }
                 Text(

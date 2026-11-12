@@ -13,10 +13,14 @@ import com.universalrp.cleansweep.R
 import com.universalrp.cleansweep.data.BatteryReader
 import com.universalrp.cleansweep.data.BatteryReading
 import com.universalrp.cleansweep.data.ChargingHonestyPolicy
+import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.ThermalWarningPolicy
 import com.universalrp.cleansweep.data.LiveNetworkQuality
 import com.universalrp.cleansweep.data.Lang
+import com.universalrp.cleansweep.data.NetworkSplit
+import com.universalrp.cleansweep.data.PlanReadingPolicy
+import com.universalrp.cleansweep.data.PlanStore
 import com.universalrp.cleansweep.data.DisplayTime
 import com.universalrp.cleansweep.data.LiveChargingEta
 import com.universalrp.cleansweep.data.batteryTimeMinutes
@@ -94,12 +98,12 @@ object ChargeNotifier {
         // each radio gets its own number, and neither is ever silently added to the other.
         // Null when the split is off: then only the combined figure is honest.
         val splitLine = if (!battery.powerConnected && dataUsage != null && dataUsage.isUnlimited5g != true &&
-            com.universalrp.cleansweep.data.NetworkSplit.separateEnabled(context)
+            NetworkSplit.separateEnabled(context)
         ) {
             runCatching {
-                com.universalrp.cleansweep.data.PlanReadingPolicy.splitLine(
-                    com.universalrp.cleansweep.data.NetworkSplit.status(context, 0.0),
-                    Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA,
+                PlanReadingPolicy.splitLine(
+                    NetworkSplit.status(context, 0.0),
+                    Lang.languageIn(context) == AppLang.TA,
                 )
             }.getOrNull()
         } else null
@@ -107,18 +111,18 @@ object ChargeNotifier {
         val isUnlimited = dataUsage?.isUnlimited5g == true
         // The same allowance the My plan screen shows, read from the same place. This is what
         // stops the card and the screen disagreeing when a booster has ended.
-        val savedPlan = runCatching { com.universalrp.cleansweep.data.PlanStore.load(context) }.getOrNull()
+        val savedPlan = runCatching { PlanStore.load(context) }.getOrNull()
         val planLine = savedPlan?.let { plan ->
             runCatching {
-                com.universalrp.cleansweep.data.PlanReadingPolicy.line(
+                PlanReadingPolicy.line(
                     plan,
-                    com.universalrp.cleansweep.data.PlanReadingPolicy.reading(
+                    PlanReadingPolicy.reading(
                         plan = plan,
                         todayUsedMb = (dataUsage?.todayMobileBytes ?: 0L) / (1024.0 * 1024.0),
                         packUsedMb = (dataUsage?.packTotalMobileBytes ?: 0L) / (1024.0 * 1024.0),
                         measured = dataUsage?.readingAvailable == true,
                     ),
-                    Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA,
+                    Lang.languageIn(context) == AppLang.TA,
                 )
             }.getOrNull()
         }

@@ -2992,6 +2992,29 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /**
+     * "Start fresh from 0" from My plan: both the pack window and today's counter begin now.
+     *
+     * Deliberately separate from [resetDataPackCount], which is "keep today's usage". Saying the
+     * same thing twice would make the two buttons lie about being different.
+     */
+    fun resetDataPackFromZero() {
+        viewModelScope.launch {
+            val pack = withContext(Dispatchers.IO) {
+                DataUsageTracker.resetEverythingFromNow(ctx)
+                DataUsageTracker.getUsageInfo(ctx)
+            }
+            mutate {
+                it.copy(
+                    dataPackInfo = pack,
+                    message = tr("Counting from zero starts now. Data used earlier today is no longer shown."),
+                )
+            }
+            rebuildChecklist()
+            com.universalrp.cleansweep.widget.CleanSweepWidget.refresh(ctx)
+        }
+    }
+
+    /**
      * Saves the whole plan from My plan: the mode, both allowances, the validity and the
      * booster. PlanStore mirrors the numbers the older screens and the widget read, so every
      * surface keeps showing the same plan.

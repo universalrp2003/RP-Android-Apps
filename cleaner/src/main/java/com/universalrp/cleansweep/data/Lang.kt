@@ -1663,6 +1663,7 @@ object Lang {
         "No last day set, so this booster keeps counting until you turn it off." to "கடைசி நாள் அமைக்கப்படவில்லை; நீங்கள் அணைக்கும் வரை இந்தப் பூஸ்டர் எண்ணப்படும்.",
         "Counted until %s, then it stops adding to the pack by itself." to "%s வரை எண்ணப்படும்; பிறகு தானாகவே பேக்கில் சேர்க்கப்படாது.",
         "Its last day has passed, so it is not counted in any total. The switch stays on only as a record." to "அதன் கடைசி நாள் கடந்துவிட்டது; எந்தக் கணக்கிலும் இது சேர்க்கப்படாது. சுவிட்ச் பதிவுக்காக மட்டுமே இயக்கத்தில் இருக்கும்.",
+        "Counting from zero starts now. Data used earlier today is no longer shown." to "இப்போதிலிருந்து பூஜ்ஜியத்தில் இருந்து எண்ணல் தொடங்குகிறது. இன்று முன்பே பயன்படுத்திய தரவு இனி காண்பிக்கப்படாது.",
     )
 }
 

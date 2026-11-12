@@ -95,6 +95,34 @@ object DataUsageTracker {
         if (newLimitGb != null) setPackLimitGb(context, newLimitGb)
         setPeriodStart(context, System.currentTimeMillis())
     }
+
+    /**
+     * "Start fresh from 0": move BOTH measuring windows to this moment.
+     *
+     * [resetPackUsage] above is the "keep today's usage" button: it restarts the pack window and
+     * deliberately leaves today's counter alone, so the two numbers describe different spans.
+     * This one also re-bases today, so the screen reads 0 for both and the only honest thing on
+     * it is the number that grows from here.
+     *
+     * Android's own per-app counters cannot be edited, so a baseline is the only honest way to
+     * start at zero; the measured history from earlier today still exists in the OS, it is simply
+     * not counted in this window.
+     */
+    @Synchronized fun resetEverythingFromNow(context: Context, newLimitGb: Float? = null) {
+        getUsageInfo(context) // fold the not-yet-observed delta in before the baseline moves
+        resetPackUsage(context, newLimitGb)
+        val current = mobileCounter() ?: return
+        prefs(context).edit()
+            .putLong(KEY_TODAY_BASELINE_BYTES, current)
+            .putLong("observed_today_bytes", 0L)
+            .putString(KEY_LAST_DAY, currentDayKey())
+            .apply()
+    }
+
+    private fun currentDayKey(): String {
+        val calendar = Calendar.getInstance()
+        return "${calendar.get(Calendar.YEAR)}${calendar.get(Calendar.DAY_OF_YEAR)}"
+    }
     @Synchronized fun setPackStartDay(context: Context, day: LocalDate) {
         require(DataBudgetPolicy.validPeriodStart(day.toString(), LocalDate.now()) != null)
         setPeriodStart(context, day.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
