@@ -11,7 +11,9 @@ import zipfile
 from promote_verified_health_updates import REPO, api, pages, run, sha
 from verify_release_permission_delta import parse_badging
 
-BRANCH = 'arena/aa496e0a-rp-android-apps'
+# 3.00 is published from main: the candidate is built from the merged tree and the pins are
+# reviewed there, so the publisher must be running on that same branch.
+BRANCH = 'main'
 SIGNER = '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d'
 TAG = 'live-guard-v3.00'
 NAME = 'CleanSweep-v3.00.apk'
