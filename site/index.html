@@ -1170,7 +1170,7 @@
                   <li><strong>Conditional rain alert banner</strong> — appears only when rain or a storm is genuinely forecast for your area.</li>
                   <li>Current city/place card (village, taluk/district, GPS accuracy, update time).</li>
                   <li>Live <strong>traveled-distance (km)</strong> trip odometer and a <strong>Destination</strong> box with 10/5/2 km + ~500 m arrival voice alerts.</li>
-                  <li><strong>Automatic HD male↔female</strong> studio voices online with matching Android system TTS offline — no voice menus.</li>
+                  <li><strong>Choose your voice instead of taking a default.</strong> Every Android voice for the language is offered, best quality first, with its quality shown (very high / high / standard) and a Test button that plays it — plus slow, normal or fast speech and a shortcut to Android’s voice downloads. Network voices need a connection; on-device voices keep working without one.</li>
                   <li>Adaptive GPS interval (stationary / traffic / highway), call-aware speech pausing, and optional headset skip.</li>
                 </ul>
               </div>
@@ -1462,7 +1462,7 @@
                   <li>100% <strong>open source</strong> — every line is public on GitHub for anyone to audit.</li>
                   <li><strong>No ads · no tracking · no analytics · no accounts</strong> — ever.</li>
                   <li>Optional Mobile-Tower detection is <strong>user-clicked only</strong> — no background location.</li>
-                  <li>No personal data is uploaded.</li>
+                  <li><strong>Your movement is not tracked or uploaded.</strong> If you switch rain alerts on for a saved place or your current position, the forecast provider (tomorrow.io, with met.no as a fallback) receives that place’s rounded coordinates — about a 10 m square — and nothing else about you. With rain alerts off, no location leaves the phone.</li>
                 </ul>
                 <p class="ta" data-content-lang="ta" lang="ta">முழுமையாக open-source; விளம்பரமோ கண்காணிப்போ இல்லை; Mobile-Tower கண்டறிதல் பயனர் தொடும்போதே; பின்னணி Location இல்லை.</p>
                 <div class="sha">SHA-256: fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22</div>
@@ -1520,6 +1520,12 @@
             <p data-content-lang="en">Old signing key only: <a href="#signing-limitation">read migration instructions before changing an existing install</a>. Same-key installs can update normally.</p>
             <p class="ta-note" data-content-lang="ta" lang="ta">பழைய கையொப்ப நிறுவல் இருந்தால் <a href="#signing-limitation">முதலில் மாற்ற வழிமுறைகளைப் படிக்கவும்</a>. அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p>
             <p data-content-lang="en">Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
+            <details class="feat">
+              <summary>🔒 Privacy &amp; permissions · தனியுரிமை</summary>
+              <div class="body"><p data-content-lang="en"><strong>No advertising SDK, and no SMS, contacts, microphone, location, biometric or installer permission.</strong> Internet is used only for the once-daily foreground release-metadata check — no ledger, note, backup or password data is uploaded; the site and GitHub receive ordinary request metadata such as your IP address. Backups leave through Android's own file picker, so there is no broad storage permission, and a failed export can leave an incomplete file: keep older copies, retry, and test a restore before relying on one. A successful file write is not a verified off-device backup.</p>
+              <p class="ta" data-content-lang="ta" lang="ta">விளம்பர SDK இல்லை; SMS, தொடர்புகள், மைக்ரோஃபோன், இருப்பிடம், பயோமெட்ரிக், நிறுவல் அனுமதிகள் இல்லை. இணையம் நாளொருமுறை பதிப்பு விவரச் சரிபார்ப்புக்கு மட்டுமே — பட்டியல், குறிப்பு, காப்பு, கடவுச்சொல் எதுவும் அனுப்பப்படுவதில்லை. காப்பு ஏற்றுமதி ஆண்ட்ராய்டு கோப்புத் தேர்வு வழியாகவே; பரந்த சேமிப்பு அனுமதி இல்லை. ஏற்றுமதி தோல்வியடைந்தால் முழுமையற்ற கோப்பு இருக்கலாம்: பழைய நகல்களை வைத்திருந்து, மீண்டும் முயற்சி செய்து, மீட்பைச் சோதியுங்கள்.</p></div>
+            </details>
+
             <details class="trust"><summary>File checksum / கோப்பு சரிபார்ப்பு</summary><div class="body"><p>SHA-256: 8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55</p><p data-content-lang="en">A matching checksum confirms the file matches the published hash; it does not prove the app is safe. Do not bypass device warnings or uninstall working apps.</p><p data-content-lang="ta" lang="ta">சரிபார்ப்பு மதிப்பு பொருந்துவது கோப்பின் அடையாளத்தை மட்டுமே காட்டும்; செயலி பாதுகாப்பானது என்பதற்கான சான்றல்ல. பாதுகாப்பு எச்சரிக்கையை மீறவோ செயல்படும் செயலியை நீக்கவோ வேண்டாம்.</p></div></details>
             <div class="dl-status" id="st-dailyvault"></div>
           </div>
@@ -1972,6 +1978,12 @@
             <p data-content-lang="en">Old signing key only: <a href="#signing-limitation">read migration instructions before changing an existing install</a>. Same-key installs can update normally.</p>
             <p class="ta-note" data-content-lang="ta" lang="ta">பழைய கையொப்ப நிறுவல் இருந்தால் <a href="#signing-limitation">முதலில் மாற்ற வழிமுறைகளைப் படிக்கவும்</a>. அதே கையொப்பப் பதிப்பை வழக்கம்போல் புதுப்பிக்கலாம்.</p>
             <p data-content-lang="en">Created by Rameshprathap R · RP Ideas. Software assistance: Arena.ai Agent Mode.</p>
+            <details class="feat">
+              <summary>🔒 Privacy &amp; permissions · தனியுரிமை</summary>
+              <div class="body"><p data-content-lang="en"><strong>No account, no ads, no analytics and no QUERY_ALL_PACKAGES.</strong> Package visibility is scoped to the apps the store lists, so it cannot inventory the rest of your phone. Downloads carry only a public release URL — no cookies, authorization or private identifiers — and redirect and network retries are handled by Android's download manager. The verified file is kept in an app-private cache and handed to Android's installer through a FileProvider that exposes that cache alone, not your storage. Unknown-source settings open only when you choose Install, and you must return and tap Install again; Play Protect is never disabled. The catalogue itself is fetched from this project's public release metadata, so GitHub can see that a check happened.</p>
+              <p class="ta" data-content-lang="ta" lang="ta">கணக்கு, விளம்பரம், பகுப்பாய்வு இல்லை; QUERY_ALL_PACKAGES அனுமதியும் இல்லை. அங்காடி பட்டியலிடும் செயலிகள் மட்டுமே தெரியும் — மீதி போனை அது பட்டியலிட முடியாது. பதிவிறக்கத்தில் பொது வெளியீட்டு முகவரி மட்டுமே செல்லும் — குக்கீ, அனுமதி அல்லது தனிப்பட்ட அடையாளம் இல்லை. சரிபார்க்கப்பட்ட கோப்பு செயலியின் தனிச் சேமிப்பில் வைக்கப்பட்டு, அந்தக் கோப்புறையை மட்டும் வெளிக்காட்டும் FileProvider வழியாக ஆண்ட்ராய்டு நிறுவலுக்குச் செல்லும். நீங்கள் நிறுவலைத் தேர்ந்தெடுத்தால் மட்டுமே அறியப்படாத மூல அமைப்பு திறக்கும்; Play Protect ஒருபோதும் அணைக்கப்படாது.</p></div>
+            </details>
+
             <details class="trust"><summary>File checksum / கோப்பு சரிபார்ப்பு</summary><div class="body"><p>SHA-256: 29ad4b2a8b3dc575ef2e6707bc81e27dcfc0541a69bfef350f1a83ddd4298cce</p><p data-content-lang="en">A matching checksum confirms the file matches the published hash; it does not prove the app is safe. Do not bypass device warnings or uninstall working apps.</p><p data-content-lang="ta" lang="ta">சரிபார்ப்பு மதிப்பு பொருந்துவது கோப்பின் அடையாளத்தை மட்டுமே காட்டும்; செயலி பாதுகாப்பானது என்பதற்கான சான்றல்ல. பாதுகாப்பு எச்சரிக்கையை மீறவோ செயல்படும் செயலியை நீக்கவோ வேண்டாம்.</p>
               <p class="note" style="color:#fcd778"><strong>Installation warning reported — 1 November 2026.</strong> Play Protect showed “Harmful app blocked” for Store0.8 on the owner’s phone. A later running-app screen does not establish that Google cleared the warning. Keep Play Protect enabled; stop if warned and do not bypass it or uninstall a working app. Automated checks are not Google approval. <a href="https://github.com/universalrp2003/RP-Android-Apps/blob/main/docs/tamilan-store-play-protect.md">Investigation and next steps</a>.</p>
             </div></details>
