@@ -38,10 +38,10 @@ class WebsiteUsabilityTest(unittest.TestCase):
             self.assertRegex(label, r'^\d{2} [A-Z][a-z]{2} \d{4}$')
 
     def test_changed_tag_and_stale_date_are_rejected(self):
-        stamp = self.evidence['releases']['live-guard-v2.99']
+        stamp = self.evidence['releases']['live-guard-v3.00']
         for stale in [self.source.replace('datetime="' + stamp + '"', 'datetime="2025-01-01T01:00:00Z"', 1),
                       self.source.replace('>30 Oct 2026</time>', '>31 Oct 2026</time>', 1),
-                      self.source.replace('data-release-tag="live-guard-v2.99"', 'data-release-tag="live-guard-v0.0"', 1)]:
+                      self.source.replace('data-release-tag="live-guard-v3.00"', 'data-release-tag="live-guard-v0.0"', 1)]:
             with self.assertRaises(ValueError):
                 dates.check(stale, self.evidence)
 
@@ -62,7 +62,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         # refresh can recover the date from real evidence.
         head, table = self.source.split('<tbody>', 1)
         row, tail = table.split('</tr>', 1)
-        stale = head + '<tbody>' + row.replace('data-release-tag="tvguard-v1.5.1"', 'data-release-tag="old-version"') + '</tr>' + tail
+        stale = head + '<tbody>' + row.replace('data-release-tag="live-guard-v3.00"', 'data-release-tag="old-version"') + '</tr>' + tail
         self.assertNotEqual(stale, self.source)
         source, evidence = dates.refresh(stale, lambda tag: {'tag_name': tag, 'published_at': self.evidence['releases'][tag]})
         self.assertEqual(source, self.source)
@@ -109,14 +109,15 @@ class WebsiteUsabilityTest(unittest.TestCase):
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
         self.assertEqual(len(ids), 14)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[0], 'app-tv-guard')
+        self.assertEqual(ids[0], 'app-live-guard')
+        self.assertEqual(ids[1], 'app-tv-guard')
 
         # Moving the oldest card to the front must be rejected.
         oldest = site.index('        <!-- Secret Message -->')
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- Android TV Guard')
+        first = shuffled.index('        <!-- Live Guard -->')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',

@@ -55,9 +55,7 @@ object SisterApps {
             tamilName = "கைபேசி காவலன்",
             tagPrefix = "live-guard",
             version = "3.00",
-            // Still 2.99 on purpose: publishedVersion builds the download URL, and the
-            // live-guard-v3.00 tag does not exist until the promotion workflow publishes it.
-            publishedVersion = "2.99",
+            publishedVersion = "3.00",
             packageName = "com.universalrp.cleansweep",
             aboutLabel = "Live Guard — GitHub release",
         ),

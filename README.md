@@ -1,6 +1,6 @@
 # RP-Android-Apps (RP Ideas) — Official Open-Source Tamil & English Android Apps
 
-Live Guard **2.99**: persistent male/female HD voice rotation across process restarts; prior news/weather fixes preserved. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.99). Update over2.98 without uninstalling or clearing data.
+Live Guard **3.00**: the status pill's size is now adjustable from Settings, the SMS paste-fill step is gone, and History reads the same plan as My plan, so the two screens can no longer disagree. The 2.99 voice-rotation and news/weather fixes are preserved. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.00). Update over 2.99 without uninstalling or clearing data.
 
 
 Tamilan Store **0.12** fixes catalog refresh blocked by failed downloads. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.12); install over the current Store without uninstalling or clearing data.
