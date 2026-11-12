@@ -76,12 +76,17 @@ object NewsSpeechSanitizer {
     private val LEADING_NOISE_REGEX = Regex(
         "^(?:\\s*(?:\\[[^\\]]{1,24}]|\\([^)]{1,20}\\))\\s*|" +
             "\\s*(?:big\\s+breaking|breaking\\s+news|breaking|flash\\s+news|flash|just\\s+in|live\\s+updates|live\\s+blog|live|watch\\s+video|watch|video|photos?|photo\\s+gallery|exclusive|viral\\s+video|viral|" +
-            "முக்கிய\\s*செய்தி|அதிர்ச்சித்?\\s*தகவல்|தற்போதைய\\s*செய்தி|இப்போது|நேரலை|வீடியோ|காணொளி|படங்கள்|புகைப்படங்கள்)\\s*[:|\\-–—»>]+\\s*)+",
+            "முக்கிய\\s*செய்தி|அதிர்ச்சித்?\\s*தகவல்|தற்போதைய\\s*செய்தி|இப்போது|நேரலை|வீடியோ|காணொளி|படங்கள்|புகைப்படங்கள்|" +
+            // A department label is not a story: "Weather Update | …" says nothing itself.
+            "weather\\s*update|weather\\s*alert|weather\\s*news|rain\\s*update|" +
+            "வானிலை\\s*அப்டேட்|வானிலை\\s*செய்தி|வானிலை\\s*தகவல்|மழை\\s*அப்டேட்)\\s*[:|\\-–—»>]+\\s*)+",
         RegexOption.IGNORE_CASE,
     )
 
     private val TRAILING_CLICKBAIT_REGEX = Regex(
         "\\s*(?:[-–—|•:]\\s*)?(?:read\\s+more|click\\s+here|watch\\s+video|full\\s+details(?:\\s+inside)?|see\\s+photos|" +
+            // Trailing department tags ("… வானிலை அப்டேட்!") carry no information of their own.
+            "weather\\s*update|வானிலை\\s*அப்டேட்|வானிலை\\s*செய்தி|" +
             "மேலும்\\s+படிக்க|முழு\\s+விவரம்(?:\\s+உள்ளே)?|வீடியோ\\s+உள்ளே|இங்கே\\s+கிளிக்\\s+செய்யவும்)\\s*[.!…]*$",
         RegexOption.IGNORE_CASE,
     )
@@ -117,6 +122,13 @@ object NewsSpeechSanitizer {
         return sb.toString()
     }
 
+    /**
+     * True when [item] is a weather tease: it asks the listener a question, or counts districts
+     * without naming one. Public so the Settings report can explain the skip in the owner's terms.
+     */
+    fun isWeatherTease(item: NewsHeadline): Boolean =
+        WeatherHeadlinePolicy.isUnanswerable(if (item.translated) item.spokenText else item.title)
+
     private val PURE_STUB_TITLES = setOf(
         "photo gallery", "video gallery", "live updates", "top news", "breaking news",
         "புகைப்படத் தொகுப்பு", "வீடியோ தொகுப்பு", "நேரலை செய்திகள்", "முக்கிய செய்திகள்",
@@ -149,13 +161,17 @@ object NewsSpeechSanitizer {
     }
 
     /**
-     * Rejects broken, truncated, wrong-script, or empty stub headlines before speaking aloud.
+     * Rejects broken, truncated, wrong-script, empty stub, or unanswerable weather headlines
+     * before speaking aloud.
      */
     fun isCompleteSpeakableHeadline(cleanedTitle: String, expectTamil: Boolean): Boolean {
         val t = cleanedTitle.trim()
         if (t.length < 18 || t.length > 360) return false
         if (BalancedNewsPolicy.isJunk(t)) return false
         if (t.lowercase(Locale.ROOT) in PURE_STUB_TITLES) return false
+        // Owner-reported bug (11 Nov 2026): "… இந்த 9 மாவட்டங்களில் மழை … எங்கேல்லாம் தெரியுமா?"
+        // was read out every day without ever naming a place. A weather tease is not a report.
+        if (WeatherHeadlinePolicy.isUnanswerable(t)) return false
         val hasTamil = t.any { it.code in 0x0B80..0x0BFF }
         if (expectTamil && !hasTamil) return false
         if (!expectTamil && hasTamil) return false
@@ -187,6 +203,9 @@ object NewsSpeechSanitizer {
         for (item in items) {
             val cleaned = cleanHeadline(item.title, item.source)
             if (!isCompleteSpeakableHeadline(cleaned, expectTamil = expectTamil)) continue
+            // The prepared translation is what actually gets spoken, so it must clear the same gate.
+            if (item.translated && item.spokenText.isNotBlank() &&
+                !isCompleteSpeakableHeadline(item.spokenText, expectTamil = true)) continue
             val cleanKey = NewsPolicy.titleKey(cleaned)
             if (cleanKey.isBlank() || cleanKey in seenKeys || item.key in seenKeys) continue
             seenKeys.add(cleanKey)

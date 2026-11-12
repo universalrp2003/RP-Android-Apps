@@ -8,25 +8,29 @@ import com.universalrp.cleansweep.ai.RequestBudget
 import com.universalrp.cleansweep.data.BalancedNewsPolicy
 import com.universalrp.cleansweep.data.NewsHeadline
 import com.universalrp.cleansweep.data.NewsPolicy
+import com.universalrp.cleansweep.data.NewsSpeechSanitizer
 import com.universalrp.cleansweep.data.TamilInfoStripRepo
+import com.universalrp.cleansweep.data.WeatherHeadlinePolicy
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.time.ZoneId
 
 /** Replenish category candidates before editing; translations are fallback, never replacements for good Tamil. */
 object NewsBulletinPipeline {
     private val mutableReport = MutableStateFlow<Report?>(null)
     val report = mutableReport.asStateFlow()
     private val specialists = setOf(BalancedNewsPolicy.Category.SCIENCE, BalancedNewsPolicy.Category.CYBER, BalancedNewsPolicy.Category.ENVIRONMENT)
-    data class Row(val category: BalancedNewsPolicy.Category, val fresh: Int, val eligible: Int, val afterEditing: Int, val english: Int, val translated: Int, val chosen: Int) {
+    data class Row(val category: BalancedNewsPolicy.Category, val fresh: Int, val eligible: Int, val afterEditing: Int, val english: Int, val translated: Int, val chosen: Int, val weatherTeases: Int = 0) {
         fun label(tamil: Boolean): String = com.universalrp.cleansweep.data.NewsPreferences.label(category, tamil)
         fun reason(tamil: Boolean): String = when {
             chosen > 0 -> if (tamil) "தேர்ந்தெடுக்கப்பட்டது" else "Selected"
+            // Owner-reported bug: this row said "Selected" for a headline that never said where the rain is.
+            weatherTeases > 0 -> WeatherHeadlinePolicy.rejectionReason(tamil)
             english > 0 -> if (tamil) "மொழிபெயர்ப்பு கிடைக்கவில்லை அல்லது ஏற்கப்படவில்லை" else "Translation unavailable or rejected"
             fresh == 0 -> if (tamil) "புதிய ஆதாரச் செய்தி இல்லை" else "No fresh source item"
             eligible == 0 -> if (tamil) "வடிகட்டப்பட்டது அல்லது ஏற்கனவே படிக்கப்பட்டது" else "Filtered out or already read"
@@ -68,9 +72,15 @@ object NewsBulletinPipeline {
         // Date is evaluated again after all networking. Valid AI rejections are never resurrected by a later timeout.
         if (fingerprint != com.universalrp.cleansweep.data.NewsPreferences.fingerprint(context)) return@withContext emptyList()
         val final = BalancedNewsPolicy.select(edited + translated, announced, recent, tamil, readyAt, ZoneId.systemDefault(), rotation, enabled = enabled)
+        // A weather item that asks the listener a question, or counts districts without naming one, is a
+        // promise the bulletin cannot keep. Counted so the Settings row can say so instead of "Filtered out".
+        fun teases(category: BalancedNewsPolicy.Category) = items.count { item ->
+            BalancedNewsPolicy.category(item) == category &&
+                NewsSpeechSanitizer.isWeatherTease(item)
+        }
         fun count(list: List<NewsHeadline>, category: BalancedNewsPolicy.Category) = list.count { BalancedNewsPolicy.category(it) == category && NewsPolicy.isToday(it.publishedAtMs, readyAt, ZoneId.systemDefault()) }
         mutableReport.value = Report(readyAt, enabled.map { category ->
-            Row(category, count(items, category), count(nativePool, category), count(edited, category), count(english, category), count(translated, category), count(final, category))
+            Row(category, count(items, category), count(nativePool, category), count(edited, category), count(english, category), count(translated, category), count(final, category), teases(category))
         }, final, attempted)
         final.map { it.copy(preferenceFingerprint=fingerprint) }
     }
