@@ -22,8 +22,29 @@
   "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk",
   "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
   "rebuilt": false,
-  "physical_phone_tested": false,
+  "physical_phone_tested": true,
   "installed_phone_hash_matched": false,
   "play_protect_clearance": false,
-  "prior_public_assets_unchanged": true
+  "prior_public_assets_unchanged": true,
+  "phone_test_evidence": {
+    "date": "2026-11-12",
+    "by": "owner (Ramesh Prathap .R)",
+    "version_on_device": "3.00 (About screen reads \"Live Guard v3.00\")",
+    "screenshots": [
+      "site/images/liveguard-v3.00/1-my-plan.png",
+      "site/images/liveguard-v3.00/2-data-4g-5g.png",
+      "site/images/liveguard-v3.00/3-pill-size-100.png",
+      "site/images/liveguard-v3.00/4-pill-size-90.png",
+      "site/images/liveguard-v3.00/5-about-3.00.png"
+    ],
+    "confirmed_by_owner": [
+      "My plan: 65.6 MB used since midnight, 2.20 GB left of a 2.2 GB total pack",
+      "Daily / Total / No data choices plus the Custom GB field",
+      "4G 40.74 MB and 5G 24.87 MB counted separately, never added together",
+      "Pill size in Settings, moved 100% -> 90% with the Smaller button",
+      "SIM percentage choice (First SIM / Both SIMs / Off) in the same panel"
+    ],
+    "scope": "Version confirmation and the three 3.00 corrections on a real phone. Not a measurement of operator billing, and not an independent audit."
+  },
+  "note_on_installed_hash": "The owner installed the published 3.00 APK and confirmed v3.00 in About, but no on-device SHA-256 comparison was taken, so that field stays false."
 }
