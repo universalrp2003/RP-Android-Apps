@@ -69,15 +69,20 @@ import java.time.LocalDate
 /**
  * v2.49 — "My plan": the one screen that answers "what is my recharge?".
  *
- * Before this, the same question was split across a pack-size dialog, a daily chip row and a
- * start/expiry screen, and none of them could describe a booster or a "3 GB a day for 3 days"
- * pack. Everything a prepaid plan can be is here, in the order the user thinks about it:
+ * Simplified again on 12 November 2026, because the previous version asked five questions
+ * (kind, amount, start date, day count, end date, operator end-rule, booster order) and the
+ * owner's verdict was "remove this complicated my plan". What is left is the order a person
+ * actually thinks in:
  *
- *     what kind of data → how much → how long → is there a booster → is 5G free
+ *     daily reset or total pack → one amount → booster (amount + last day) → count from now
+ *
+ * Deliberately gone: start date, day count, end date, operator end-time rule, booster ordering.
+ * A daily plan needs none of it — Android's counter already resets at midnight. A total pack
+ * needs only a reset button, because only the owner knows when the carrier resets it.
  *
  * Every amount accepts a typed value in GB **or** MB; the preset chips are shortcuts, not a
- * closed list. Nothing on this screen resets a counter, and the measured numbers come from
- * Android, not from the carrier.
+ * closed list. Nothing on this screen resets a counter by accident, and the measured numbers
+ * come from Android, not from the carrier. No number is coloured red.
  */
 @Composable
 fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
@@ -123,7 +128,7 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                 }
                 Column(Modifier.weight(1f)) {
                     Text(tr("My plan"), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = TextPrimary)
-                    Text(tr("Everything about your recharge in one place"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                    Text(tr("Daily reset or total pack — nothing else to set"), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                 }
             }
 
@@ -172,92 +177,120 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
             })
             Spacer(Modifier.height(10.dp))
 
-            // ---- 1. what kind of data ------------------------------------------
-            SectionCard(title = tr("1. What does this recharge give?")) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // ---- 1. the only two kinds of data plan -----------------------------
+            // The owner asked for this on 12 November 2026: "just show daily reset data plan
+            // like 1 1.5 2 2.5 3 gb so it will daily reset, are total data until user reset".
+            // Three modes are kept because a voice-only SIM is real, but there is no date step,
+            // no day count, no operator end-time rule and no expiry to compute.
+            SectionCard(title = tr("What kind of data is this?")) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                    ModeChip(
+                        label = tr("Daily"),
+                        hint = tr("resets every midnight"),
+                        selected = plan.mode == PlanDataMode.DAILY,
+                        modifier = Modifier.weight(1f),
+                        onClick = { persist(plan.copy(mode = PlanDataMode.DAILY, dailyMb = plan.dailyMb.takeIf { it > 0.0 } ?: 1024.0)) },
+                    )
+                    ModeChip(
+                        label = tr("Total"),
+                        hint = tr("until you reset"),
+                        selected = plan.mode == PlanDataMode.TOTAL,
+                        modifier = Modifier.weight(1f),
+                        onClick = { persist(plan.copy(mode = PlanDataMode.TOTAL, totalMb = plan.totalMb.takeIf { it > 0.0 } ?: 3072.0)) },
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
                     ModeChip(
                         label = tr("No data"),
-                        hint = tr("Voice only"),
+                        hint = tr("voice only"),
                         selected = plan.mode == PlanDataMode.NONE,
                         modifier = Modifier.weight(1f),
                         onClick = { persist(noDataPlan()) },
                     )
-                    ModeChip(
-                        label = tr("Daily"),
-                        hint = tr("GB every day"),
-                        selected = plan.mode == PlanDataMode.DAILY,
-                        modifier = Modifier.weight(1f),
-                        onClick = { persist(plan.copy(mode = PlanDataMode.DAILY)) },
-                    )
-                    ModeChip(
-                        label = tr("Total"),
-                        hint = tr("Whole pack"),
-                        selected = plan.mode == PlanDataMode.TOTAL,
-                        modifier = Modifier.weight(1f),
-                        onClick = { persist(plan.copy(mode = PlanDataMode.TOTAL)) },
-                    )
                 }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    tr("Daily resets on its own at midnight. Total stays used up until you press reset here — only you know when your operator resets it."),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
             }
             Spacer(Modifier.height(10.dp))
 
-            // ---- 2. how much ----------------------------------------------------
+            // ---- 2. one amount, presets plus any custom value --------------------
             when (plan.mode) {
-                PlanDataMode.NONE -> SectionCard(title = tr("2. Daily allowance")) {
+                PlanDataMode.NONE -> SectionCard(title = tr("Data allowance")) {
                     Text(
-                        tr("No mobile data on this plan, so there is nothing to count. 5G, boosters and the split stay off."),
+                        tr("No mobile data on this plan, so there is nothing to count."),
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary,
                     )
                 }
-                PlanDataMode.DAILY -> SectionCard(title = tr("2. Data every day")) {
+                PlanDataMode.DAILY -> SectionCard(title = tr("Data every day")) {
                     Text(
-                        PlanPolicy.formatMb(plan.dailyMb) + " " + tr("per day"),
+                        PlanPolicy.formatMb(plan.dailyMb) + " " + tr("every day"),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = AccentCyan,
                     )
                     Spacer(Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        PlanPolicy.DAILY_PRESETS_MB.take(3).forEach { preset ->
+                        PlanReadingPolicy.DAILY_GB_PRESETS.forEach { gb ->
+                            val preset = gb * PlanPolicy.MB_PER_GB
                             AmountChip(
                                 label = PlanPolicy.formatMb(preset).removeSuffix(" GB"),
                                 selected = kotlin.math.abs(plan.dailyMb - preset) < 0.5,
                                 modifier = Modifier.weight(1f),
-                                onClick = { persist(plan.copy(dailyMb = preset)) },
+                                onClick = { persist(plan.copy(mode = PlanDataMode.DAILY, dailyMb = preset)) },
                             )
                         }
                     }
                     Spacer(Modifier.height(6.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                        PlanPolicy.DAILY_PRESETS_MB.drop(3).forEach { preset ->
-                            AmountChip(
-                                label = PlanPolicy.formatMb(preset).removeSuffix(" GB"),
-                                selected = kotlin.math.abs(plan.dailyMb - preset) < 0.5,
-                                modifier = Modifier.weight(1f),
-                                onClick = { persist(plan.copy(dailyMb = preset)) },
-                            )
-                        }
-                        AmountChip(
-                            label = tr("Custom…"),
-                            selected = !PlanPolicy.DAILY_PRESETS_MB.any { kotlin.math.abs(plan.dailyMb - it) < 0.5 },
-                            modifier = Modifier.weight(1f),
-                            onClick = { amountTarget = AmountTarget.DAILY; showAmountDialog = true },
-                        )
-                    }
+                    AmountChip(
+                        label = tr("Custom…"),
+                        selected = PlanReadingPolicy.DAILY_GB_PRESETS.none { kotlin.math.abs(plan.dailyMb - it * PlanPolicy.MB_PER_GB) < 0.5 },
+                        onClick = { amountTarget = AmountTarget.DAILY; showAmountDialog = true },
+                    )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        tr("Type any value in GB or MB — 0.75 GB, 500 MB, 1.2 GB are all accepted."),
+                        tr("Any value works: 0.75 GB, 500 MB, 1.2 GB. The counter starts again at midnight by itself."),
                         style = MaterialTheme.typography.labelSmall,
                         color = TextSecondary,
                     )
                 }
-                PlanDataMode.TOTAL -> SectionCard(title = tr("2. Data in the whole pack")) {
+                PlanDataMode.TOTAL -> SectionCard(title = tr("Data in the pack")) {
+                    Text(
+                        if (plan.totalUnlimited) tr("Unlimited") else PlanPolicy.formatMb(plan.totalMb),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = AccentCyan,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    if (!plan.totalUnlimited) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            PlanReadingPolicy.TOTAL_GB_PRESETS.forEach { gb ->
+                                val preset = gb * PlanPolicy.MB_PER_GB
+                                AmountChip(
+                                    label = PlanPolicy.formatMb(preset).removeSuffix(" GB"),
+                                    selected = kotlin.math.abs(plan.totalMb - preset) < 0.5,
+                                    modifier = Modifier.weight(1f),
+                                    onClick = { persist(plan.copy(totalMb = preset)) },
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        AmountChip(
+                            label = tr("Custom…"),
+                            selected = PlanReadingPolicy.TOTAL_GB_PRESETS.none { kotlin.math.abs(plan.totalMb - it * PlanPolicy.MB_PER_GB) < 0.5 },
+                            onClick = { amountTarget = AmountTarget.TOTAL; showAmountDialog = true },
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            if (plan.totalUnlimited) tr("Unlimited") else PlanPolicy.formatMb(plan.totalMb),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = AccentCyan,
+                            tr("Unlimited total data"),
+                            style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.weight(1f),
                         )
                         Switch(
@@ -266,35 +299,14 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
                             colors = SwitchDefaults.colors(checkedThumbColor = AccentCyan, checkedTrackColor = AccentCyan.copy(alpha = 0.35f)),
                         )
                     }
-                    Text(tr("Turn the switch on for an unlimited pack, or enter the total."), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                    if (!plan.totalUnlimited) {
-                        Spacer(Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
-                            listOf(1.0, 2.0, 3.0, 6.0).forEach { gb ->
-                                AmountChip(
-                                    label = PlanPolicy.formatMb(gb * PlanPolicy.MB_PER_GB),
-                                    selected = kotlin.math.abs(plan.totalMb - gb * PlanPolicy.MB_PER_GB) < 0.5,
-                                    modifier = Modifier.weight(1f),
-                                    onClick = { persist(plan.copy(totalMb = gb * PlanPolicy.MB_PER_GB)) },
-                                )
-                            }
-                            AmountChip(
-                                label = tr("Custom…"),
-                                selected = plan.totalMb > 0.0 && listOf(1.0, 2.0, 3.0, 6.0).none { kotlin.math.abs(plan.totalMb - it * PlanPolicy.MB_PER_GB) < 0.5 },
-                                modifier = Modifier.weight(1f),
-                                onClick = { amountTarget = AmountTarget.TOTAL; showAmountDialog = true },
-                            )
-                        }
-                    }
                 }
             }
             Spacer(Modifier.height(10.dp))
 
-            // ---- 3. how long ----------------------------------------------------
-            ValidityCard(plan = plan, today = today, onChange = { persist(it) })
-            Spacer(Modifier.height(10.dp))
-
-            // ---- 4. booster ------------------------------------------------------
+            // ---- 3. the booster: an amount and its last day ---------------------
+            // "if user used booster they must set manually booster details". Two inputs only.
+            // The last day is what stops an ended booster from inflating anything (the bug that
+            // made the notification read 5.24 GB when My plan said 2.24 GB).
             BoosterCard(
                 plan = plan,
                 today = today,
@@ -303,40 +315,45 @@ fun MyPlanScreen(state: com.universalrp.cleansweep.UiState, vm: MainViewModel) {
             )
             Spacer(Modifier.height(10.dp))
 
-            // ---- 5. is 5G free ----------------------------------------------------
-            SectionCard(title = tr("5. Is 5G free on this plan?")) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    listOf("AUTO" to tr("Auto"), "ON" to tr("On"), "OFF" to tr("Off")).forEach { (key, label) ->
-                        ModeChip(
-                            label = label,
-                            hint = null,
-                            selected = policy5g == key,
-                            modifier = Modifier.weight(1f),
-                            onClick = { policy5g = key; NetworkSplit.setPolicy(context, key) },
-                        )
-                    }
+            // ---- 4. count from now ---------------------------------------------
+            // "give option for count from now button all need to set in one place". Both
+            // buttons live here, each saying what it does to the numbers before it is pressed.
+            SectionCard(title = tr("Start counting from now")) {
+                Text(
+                    tr("Use this after a recharge. Android's own counter cannot be edited, so the app starts a new measuring window instead."),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = { vm.resetDataPackCount(PlanReadingPolicy.allowanceGb(plan, today).toFloat().takeIf { it > 0f }) }) {
+                    Text(tr("Start fresh from 0"), color = AccentCyan)
                 }
-                Spacer(Modifier.height(6.dp))
-                Text(NetworkSplit.reason(context), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                Text(
+                    PlanReadingPolicy.resetExplanation(PlanReadingPolicy.ResetKind.FRESH_FROM_ZERO, Lang.isTamil),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = { vm.resetDataPackCount(PlanReadingPolicy.allowanceGb(plan, today).toFloat().takeIf { it > 0f }) }) {
+                    Text(tr("Keep today's usage"), color = AccentCyan)
+                }
+                Text(
+                    PlanReadingPolicy.resetExplanation(PlanReadingPolicy.ResetKind.KEEP_TODAY, Lang.isTamil),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                )
             }
             Spacer(Modifier.height(10.dp))
 
-            // ---- advanced -------------------------------------------------------
-            SectionCard(
-                title = tr("Advanced: 4G and 5G counters"),
-                expandable = true,
-                expanded = showAdvanced,
-                onToggle = { showAdvanced = !showAdvanced },
-            ) {
-                if (showAdvanced) {
-                    Text(
-                        tr("Android reports one mobile counter. These numbers are sampled on this phone and can only be exact from the moment counting started."),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TextSecondary,
-                        modifier = Modifier.padding(bottom = 6.dp),
-                    )
-                    RadioSplitCard()
-                }
+            // ---- 5. the 4G / 5G split ------------------------------------------
+            SectionCard(title = tr("4G and 5G counted separately")) {
+                Text(
+                    tr("Count each radio on its own. Android reports one mobile counter, so these numbers are sampled on this phone and can only be exact from the moment counting started."),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondary,
+                    modifier = Modifier.padding(bottom = 6.dp),
+                )
+                RadioSplitCard()
             }
             Spacer(Modifier.height(12.dp))
             Text(
@@ -403,76 +420,77 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
             when (plan.mode) {
                 PlanDataMode.NONE -> Text(tr("No data plan, so nothing is counted."), style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                 PlanDataMode.DAILY -> {
-                    val boosterShare = if (plan.boosterEnabled)
-                        PlanPolicy.boosterShareMb(todayMb, PlanPolicy.boosterMbNow(plan, today), plan.boosterFirst, plan.dailyMb) else 0.0
-                    val remaining = PlanPolicy.dailyRemainingMb(todayMb, plan)
-                    val ratio = if (plan.dailyMb > 0) (PlanPolicy.dailyUsedMb(todayMb, plan) / plan.dailyMb).coerceIn(0.0, 1.0) else 0.0
+                    val reading = PlanReadingPolicy.reading(plan, todayMb, packMb, measured = true, today = today)
+                    val ratio = if (plan.dailyMb > 0) (reading.usedMb / plan.dailyMb).coerceIn(0.0, 1.0) else 0.0
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            PlanPolicy.formatMb(remaining) + " " + tr("left today"),
+                            PlanPolicy.formatMb(reading.leftMb) + " " + tr("left today"),
                             fontWeight = FontWeight.Bold,
-                            color = if (ratio >= 0.9) DangerRed else GoodGreen,
+                            // A plain count, as the owner asked: no red, no amber, no judgement.
+                            color = TextPrimary,
                             modifier = Modifier.weight(1f),
                         )
                         Text(tr("of %s", PlanPolicy.formatMb(plan.dailyMb)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                     }
                     Spacer(Modifier.height(6.dp))
                     ProgressBar(ratio)
-                    if (boosterShare > 0.0) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            PlanPolicy.formatMb(boosterShare) + " " + tr("of today went to the booster"),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AccentViolet,
-                        )
-                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        tr("This resets by itself at midnight. Nothing to press."),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondary,
+                    )
                 }
                 PlanDataMode.TOTAL -> {
-                    val total = PlanPolicy.effectiveTotalMb(plan, today)
-                    if (!total.isFinite()) {
-                        Text(tr("Unlimited total data on this pack."), style = MaterialTheme.typography.bodySmall, color = GoodGreen)
+                    val reading = PlanReadingPolicy.reading(plan, todayMb, packMb, measured = true, today = today)
+                    if (reading.unlimited) {
+                        Text(tr("Unlimited total data on this pack."), style = MaterialTheme.typography.bodySmall, color = TextPrimary)
                     } else {
-                        val remaining = (total - packMb).coerceAtLeast(0.0)
-                        val ratio = if (total > 0) (packMb / total).coerceIn(0.0, 1.0) else 0.0
+                        val ratio = if (reading.allowedMb > 0) (reading.usedMb / reading.allowedMb).coerceIn(0.0, 1.0) else 0.0
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 // 2.51 — the same two-decimal formatter the notification and the
                                 // pill use, so one pack can never read "1.05 GB" in one place and
                                 // "1.1 GB" in another.
-                                DataUsageTracker.formatBytesSafe((remaining * 1024 * 1024).toLong()) + " " + tr("left in the pack"),
+                                DataUsageTracker.formatBytesSafe((reading.leftMb * 1024 * 1024).toLong()) + " " + tr("left in the pack"),
                                 fontWeight = FontWeight.Bold,
-                                color = if (ratio >= 0.9) DangerRed else GoodGreen,
+                                color = TextPrimary,
                                 modifier = Modifier.weight(1f),
                             )
-                            Text(tr("of %s", PlanPolicy.formatMb(total)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                            Text(tr("of %s", PlanPolicy.formatMb(reading.allowedMb)), style = MaterialTheme.typography.labelSmall, color = TextSecondary)
                         }
                         Spacer(Modifier.height(6.dp))
                         ProgressBar(ratio)
-                        val boosterOnly = if (plan.boosterEnabled && !PlanPolicy.boosterActive(plan, today)) {
-                            DataUsageTracker.formatBytesSafe((usageBoosterMb * 1024 * 1024).toLong())
-                        } else null
-                        if (boosterOnly != null && usageBoosterMb > 0.0) {
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                tr("%s of the measured data was used during the booster's days, so it is not counted against this pack.", boosterOnly),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = AccentViolet,
-                            )
-                        }
+                        Text(
+                            tr("This does not reset by itself. Press Start counting from now after your recharge."),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
                     }
-                    // 2.51 — the countdown follows the clock, not just the calendar: a Jio pack
-                    // that ends at 5:00 pm today must say so on the same afternoon.
+                    // A booster is only counted while its last day has not passed. An expired one
+                    // says so plainly instead of quietly inflating the pack — the owner's bug.
+                    if (plan.boosterEnabled) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(
+                            if (PlanPolicy.boosterActive(plan, today)) {
+                                tr("%s booster is counted until %s.", PlanPolicy.formatMb(plan.boosterMb), PlanPolicy.boosterLastDay(plan)?.toString() ?: tr("you turn it off"))
+                            } else {
+                                tr("This booster has ended, so it adds nothing to the pack.")
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondary,
+                        )
+                    }
+                    // The countdown is informational only: it never turns the screen red.
                     val tamilUi = com.universalrp.cleansweep.data.Lang.isTamil
                     val now = java.time.ZonedDateTime.now()
                     val remaining = PlanPolicy.remainingText(plan, now, tamilUi)
                     if (remaining != null) {
                         Spacer(Modifier.height(6.dp))
-                        val moment = PlanPolicy.expiryMoment(plan)
-                        val ended = moment != null && !now.isBefore(moment)
                         Text(
                             remaining + (PlanPolicy.endsAtText(plan, tamilUi)?.let { " · " + it } ?: ""),
                             style = MaterialTheme.typography.labelSmall,
-                            color = if (ended) DangerRed else if (moment != null && now.plusHours(24) > moment) WarnAmber else TextSecondary,
+                            color = TextSecondary,
                         )
                     }
                 }
@@ -481,293 +499,15 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
     }
 }
 
-private enum class ValidityAnchor { START, END }
 
-@Composable
-private fun ValidityCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSettings) -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    var daysText by remember(plan.days) { mutableStateOf(if (plan.days > 0) plan.days.toString() else "") }
-    var pendingDays by remember(plan.days) { mutableStateOf<Int?>(null) }
-    var anchor by remember { mutableStateOf(ValidityAnchor.START) }
-    val tamil = Lang.isTamil
 
-    fun planWithDays(days: Int): PlanSettings? {
-        if (days !in 1..3650) return null
-        return when (anchor) {
-            ValidityAnchor.START -> plan.copy(
-                days = days,
-                endDay = PlanPolicy.expiry(plan.startDay, days),
-                endTime = null,
-            )
-            ValidityAnchor.END -> {
-                val end = PlanPolicy.expiryDay(plan)
-                val start = PlanPolicy.startFromEnd(end, days)
-                plan.copy(days = days, startDay = start ?: plan.startDay, endDay = end)
-            }
-        }
-    }
 
-    fun commitPendingDays() {
-        val days = pendingDays ?: return
-        pendingDays = null
-        planWithDays(days)?.let(onChange)
-    }
 
-    fun applyPendingDays(transform: (PlanSettings) -> PlanSettings) {
-        val base = pendingDays?.let { planWithDays(it) } ?: plan
-        pendingDays = null
-        transform(base).let(onChange)
-    }
 
-    fun chooseDateTime(
-        target: ValidityAnchor,
-        initialDay: LocalDate?,
-        initialTime: java.time.LocalTime?,
-        days: Int,
-    ) {
-        anchor = target
-        val date = initialDay ?: today
-        val time = initialTime ?: java.time.LocalTime.now().withSecond(0).withNano(0)
-        android.app.DatePickerDialog(
-            context,
-            { _, year, month, dayOfMonth ->
-                val selectedDay = LocalDate.of(year, month + 1, dayOfMonth)
-                android.app.TimePickerDialog(
-                    context,
-                    { _, hourOfDay, minute ->
-                        val selectedTime = java.time.LocalTime.of(hourOfDay, minute)
-                        when (target) {
-                            ValidityAnchor.START -> onChange(
-                                plan.copy(
-                                    startDay = selectedDay,
-                                    startTime = selectedTime,
-                                    days = days,
-                                    endDay = PlanPolicy.expiry(selectedDay, days),
-                                    endTime = null,
-                                ),
-                            )
-                            ValidityAnchor.END -> {
-                                val start = PlanPolicy.startFromEnd(selectedDay, days)
-                                onChange(
-                                    plan.copy(
-                                        startDay = start ?: plan.startDay,
-                                        startTime = plan.startTime,
-                                        days = days,
-                                        endDay = selectedDay,
-                                        endTime = selectedTime,
-                                    ),
-                                )
-                            }
-                        }
-                        daysText = if (days > 0) days.toString() else ""
-                        pendingDays = null
-                    },
-                    time.hour,
-                    time.minute,
-                    false,
-                ).show()
-            },
-            date.year,
-            date.monthValue - 1,
-            date.dayOfMonth,
-        ).show()
-    }
-
-    val displayDays = pendingDays ?: plan.days
-    val storedEndDay = PlanPolicy.expiryDay(plan)
-    val endDay = when {
-        pendingDays != null && anchor == ValidityAnchor.START -> PlanPolicy.expiry(plan.startDay, displayDays)
-        else -> storedEndDay
-    }
-    val displayStartDay = if (pendingDays != null && anchor == ValidityAnchor.END) {
-        PlanPolicy.startFromEnd(endDay, displayDays) ?: plan.startDay
-    } else plan.startDay
-    val displayPlan = plan.copy(
-        days = displayDays,
-        startDay = displayStartDay,
-        endDay = endDay,
-        endTime = if (pendingDays != null && anchor == ValidityAnchor.START) null else plan.endTime,
-    )
-    val startValue = displayStartDay?.let { day ->
-        "$day · ${displayPlan.startTime?.let(PlanPolicy::formatTime) ?: tr("Time not set")}"
-    } ?: tr("Choose start date and time")
-    val endValue = endDay?.let { day -> "$day · ${PlanPolicy.formatTime(PlanPolicy.displayEndTime(displayPlan))}" }
-        ?: tr("Choose end date and time")
-
-    SectionCard(title = tr("3. How long is the pack?")) {
-        Text(tr("Choose which date you know"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-        Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ModeChip(
-                label = tr("Start date"),
-                hint = tr("Calculate end"),
-                selected = anchor == ValidityAnchor.START,
-                modifier = Modifier.weight(1f),
-                onClick = { anchor = ValidityAnchor.START },
-            )
-            ModeChip(
-                label = tr("End date"),
-                hint = tr("Calculate start"),
-                selected = anchor == ValidityAnchor.END,
-                modifier = Modifier.weight(1f),
-                onClick = { anchor = ValidityAnchor.END },
-            )
-        }
-        Spacer(Modifier.height(8.dp))
-        DateTimeField(
-            label = tr("Start date and time"),
-            value = startValue,
-            onClick = { chooseDateTime(ValidityAnchor.START, displayStartDay, displayPlan.startTime, displayDays) },
-        )
-        Spacer(Modifier.height(8.dp))
-        OutlinedTextField(
-            value = daysText,
-            onValueChange = { text ->
-                daysText = text.filter { it.isDigit() }.take(4)
-                pendingDays = daysText.toIntOrNull()?.takeIf { it in 1..3650 }
-            },
-            label = { Text(tr("How many days")) },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { commitPendingDays() }),
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
-        DateTimeField(
-            label = tr("End date and time"),
-            value = endValue,
-            onClick = {
-                chooseDateTime(
-                    ValidityAnchor.END,
-                    endDay,
-                    displayPlan.endTime ?: PlanPolicy.displayEndTime(displayPlan),
-                    displayDays,
-                )
-            },
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            tr("Choose a start date to calculate the end, or choose an end date and the number of days to calculate the start."),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary,
-        )
-        Text(
-            tr("Tap either date field to choose a calendar date and time."),
-            style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary,
-        )
-        Spacer(Modifier.height(6.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            PlanPolicy.DAY_PRESETS.forEach { days ->
-                AmountChip(
-                    label = tr("%d days", days),
-                    selected = displayDays == days,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        daysText = days.toString()
-                        pendingDays = null
-                        planWithDays(days)?.let(onChange)
-                    },
-                )
-            }
-        }
-
-        // ---- who the operator is, and how they end a pack -------------------
-        Spacer(Modifier.height(10.dp))
-        Text(tr("Operator"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-        Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            PlanPolicy.OPERATORS.forEach { name ->
-                AmountChip(
-                    label = name,
-                    selected = plan.operatorName.equals(name, ignoreCase = true),
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        val rule = PlanPolicy.ruleFor(name)
-                        applyPendingDays { it.copy(operatorName = name, expiryRule = rule, endTime = null) }
-                    },
-                )
-            }
-        }
-        Spacer(Modifier.height(6.dp))
-        Text(tr("How the pack ends"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-        Spacer(Modifier.height(4.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            ModeChip(
-                label = tr("Same time as recharge"),
-                hint = "Jio",
-                selected = plan.expiryRule == PlanExpiryRule.SAME_TIME,
-                modifier = Modifier.weight(1f),
-                onClick = { applyPendingDays { it.copy(expiryRule = PlanExpiryRule.SAME_TIME, endTime = null) } },
-            )
-            ModeChip(
-                label = tr("End of the last day"),
-                hint = "Airtel · Vi",
-                selected = plan.expiryRule == PlanExpiryRule.END_OF_DAY,
-                modifier = Modifier.weight(1f),
-                onClick = { applyPendingDays { it.copy(expiryRule = PlanExpiryRule.END_OF_DAY, endTime = null) } },
-            )
-        }
-        Spacer(Modifier.height(4.dp))
-        Text(
-            when {
-                plan.endTime != null -> tr("The time you chose for the end overrides the operator's usual expiry time.")
-                plan.expiryRule == PlanExpiryRule.SAME_TIME && plan.startTime != null ->
-                    tr("Jio counts to the minute: a 63-day pack recharged at 5:00 pm ends at 5:00 pm on the last day.")
-                plan.expiryRule == PlanExpiryRule.SAME_TIME ->
-                    tr("Jio counts to the minute. Add the recharge time for the exact ending; without it the app only knows the date.")
-                else -> tr("Airtel and Vi end every pack at 11:59 pm on the last day, whatever time you recharged.")
-            },
-            style = MaterialTheme.typography.labelSmall,
-            color = TextSecondary,
-        )
-        if (plan.endTime != null) {
-            TextButton(onClick = { applyPendingDays { it.copy(endTime = null) } }) {
-                Text(tr("Use the operator's usual end time"), color = AccentCyan)
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-        val moment = PlanPolicy.expiryMoment(plan)
-        Text(
-            if (moment == null) tr("Add a start date or an end date and the number of days to calculate the other date.")
-            else (PlanPolicy.endsAtText(plan, tamil) ?: "") + " · " +
-                (PlanPolicy.remainingText(plan, java.time.ZonedDateTime.now(), tamil) ?: ""),
-            style = MaterialTheme.typography.labelSmall,
-            color = if (moment != null && !java.time.ZonedDateTime.now().isBefore(moment)) DangerRed else TextSecondary,
-        )
-    }
-}
-
-@Composable
-private fun DateTimeField(label: String, value: String, onClick: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(10.dp),
-        color = SurfaceHigh.copy(alpha = 0.30f),
-        border = BorderStroke(1.dp, SurfaceHigh),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(label, style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                Spacer(Modifier.height(2.dp))
-                Text(value, style = MaterialTheme.typography.bodyLarge, color = TextPrimary, maxLines = 1)
-            }
-            Icon(
-                Icons.Outlined.CalendarMonth,
-                contentDescription = tr("Choose date"),
-                tint = AccentCyan,
-            )
-        }
-    }
-}
 
 @Composable
 private fun BoosterCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSettings) -> Unit, onEditAmount: () -> Unit) {
-    SectionCard(title = tr("4. Data booster")) {
+    SectionCard(title = tr("Extra data booster")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(tr("I recharged an extra data booster"), style = MaterialTheme.typography.bodyMedium, color = TextPrimary)
@@ -785,43 +525,30 @@ private fun BoosterCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSet
         }
         if (plan.boosterEnabled) {
             Spacer(Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                AmountChip(
-                    label = if (plan.boosterMb > 0) PlanPolicy.formatMb(plan.boosterMb) else tr("Amount…"),
-                    selected = plan.boosterMb > 0,
-                    modifier = Modifier.weight(1f),
-                    onClick = onEditAmount,
-                )
-            }
+            AmountChip(
+                label = if (plan.boosterMb > 0) PlanPolicy.formatMb(plan.boosterMb) else tr("Amount…"),
+                selected = plan.boosterMb > 0,
+                onClick = onEditAmount,
+            )
             Spacer(Modifier.height(8.dp))
-            Text(tr("When is the booster used?"), style = MaterialTheme.typography.labelMedium, color = TextSecondary)
-            Spacer(Modifier.height(4.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                ModeChip(
-                    label = tr("First"),
-                    hint = tr("before daily data"),
-                    selected = plan.boosterFirst,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onChange(plan.copy(boosterFirst = true)) },
-                )
-                ModeChip(
-                    label = tr("After"),
-                    hint = tr("after daily data"),
-                    selected = !plan.boosterFirst,
-                    modifier = Modifier.weight(1f),
-                    onClick = { onChange(plan.copy(boosterFirst = false)) },
-                )
-            }
-            Spacer(Modifier.height(4.dp))
+            // The only other input: the last day it counts. After that day the booster adds
+            // nothing, even if its switch is left on. This is the whole fix for the owner's
+            // "I used booster but it's expired still its counting" report.
+            BoosterDates(plan = plan, today = today, onChange = onChange)
+            Spacer(Modifier.height(8.dp))
             Text(
-                tr("Your operator decides the order. Live Guard follows the order you choose here."),
+                if (PlanPolicy.boosterActive(plan, today)) {
+                    if (plan.boosterLastDay(plan) == null) {
+                        tr("No last day set, so this booster keeps counting until you turn it off.")
+                    } else {
+                        tr("Counted until %s, then it stops adding to the pack by itself.", PlanPolicy.boosterLastDay(plan).toString())
+                    }
+                } else {
+                    tr("Its last day has passed, so it is not counted in any total. The switch stays on only as a record.")
+                },
                 style = MaterialTheme.typography.labelSmall,
                 color = TextSecondary,
             )
-            Spacer(Modifier.height(10.dp))
-            // 2.51 — the date range. A booster that ran out yesterday stops counting even when
-            // its switch was left on, which is the exact case the owner reported ("9.0 GB").
-            BoosterDates(plan = plan, today = today, onChange = onChange)
         }
     }
 }
@@ -889,7 +616,7 @@ private fun BoosterDates(plan: PlanSettings, today: LocalDate, onChange: (PlanSe
             else -> tr("Optional: set the days the booster is valid. Without them it counts until you switch it off.")
         },
         style = MaterialTheme.typography.labelSmall,
-        color = if (expired) WarnAmber else TextSecondary,
+        color = TextSecondary,
     )
 }
 
@@ -1039,7 +766,7 @@ private fun ProgressBar(ratio: Double) {
     ) {
         Surface(color = SurfaceHigh, shape = RoundedCornerShape(3.dp), modifier = Modifier.fillMaxWidth().height(6.dp)) {}
         Surface(
-            color = if (ratio >= 0.9) DangerRed else AccentCyan,
+            color = AccentCyan,
             shape = RoundedCornerShape(3.dp),
             modifier = Modifier.fillMaxWidth(ratio.coerceIn(0.0, 1.0).toFloat()).height(6.dp),
         ) {}

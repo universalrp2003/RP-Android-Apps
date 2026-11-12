@@ -1633,6 +1633,36 @@ object Lang {
         "Waiting for HD voice; nothing was switched to the phone voice." to "HD குரலுக்கு காத்திருக்கிறது; தொலைபேசியின் குரலுக்கு மாற்றபடவில்லை.",
         // ---------------------------------------------------- global stop button (2.71)
         "Stop speaking" to "பேசுவதை நிறுத்து",
+
+        // ------------------------------------------ simplified My plan (12 Nov 2026)
+        "Daily reset or total pack — nothing else to set" to "தினசரி reset அல்லது மொத்த பேக் — வேறு எதுவும் அமைக்க வேண்டாம்",
+        "What kind of data is this?" to "இது எந்த வகை தரவு?",
+        "resets every midnight" to "ஒவ்வொரு நள்ளிரவிலும் புதுப்பிக்கும்",
+        "until you reset" to "நீங்கள் reset செய்யும் வரை",
+        "voice only" to "குரல் மட்டும்",
+        "Daily resets on its own at midnight. Total stays used up until you press reset here — only you know when your operator resets it." to "தினசரி திட்டம் நள்ளிரவில் தானாகப் புதுப்பிக்கும். மொத்த திட்டம் நீங்கள் இங்கே reset செய்யும் வரை பயன்படுத்தியதாகவே இருக்கும் — உங்கள் நிறுவனம் எப்போது reset செய்கிறது என்பது உங்களுக்கே தெரியும்.",
+        "Data allowance" to "தரவு அளவு",
+        "No mobile data on this plan, so there is nothing to count." to "இந்தத் திட்டத்தில் மொபைல் தரவு இல்லை; எண்ணுவதற்கு ஒன்றுமில்லை.",
+        "Data every day" to "ஒவ்வொரு நாளும் தரவு",
+        "every day" to "ஒவ்வொரு நாளும்",
+        "Any value works: 0.75 GB, 500 MB, 1.2 GB. The counter starts again at midnight by itself." to "எந்த அளவும் ஏற்கப்படும்: 0.75 GB, 500 MB, 1.2 GB. எண்ணிக்கை நள்ளிரவில் தானாக மீண்டும் தொடங்கும்.",
+        "Data in the pack" to "பேக்கில் உள்ள தரவு",
+        "Unlimited total data" to "மொத்த தரவு வரம்பற்றது",
+        "Start counting from now" to "இப்போதிலிருந்து எண்ணத் தொடங்கு",
+        "Use this after a recharge. Android's own counter cannot be edited, so the app starts a new measuring window instead." to "ரீசார்ஜ் செய்த பிறகு இதைப் பயன்படுத்தவும். Android-இன் சொந்த எண்ணிக்கையை மாற்ற முடியாது; அதனால் செயலி புதிய அளவீட்டு காலத்தைத் தொடங்குகிறது.",
+        "Start fresh from 0" to "பூஜ்ஜியத்தில் இருந்து புதிதாகத் தொடங்கு",
+        "Keep today's usage" to "இன்றைய பயன்பாட்டை வைத்திரு",
+        "4G and 5G counted separately" to "4G மற்றும் 5G தனித்தனியாக எண்ணப்படும்",
+        "Count each radio on its own. Android reports one mobile counter, so these numbers are sampled on this phone and can only be exact from the moment counting started." to "ஒவ்வொரு ரேடியோவையும் தனித்தனியாக எண்ணும். Android ஒரே மொபைல் எண்ணிக்கையைத் தான் தெரிவிக்கும்; எனவே இந்த எண்கள் இந்த ஃபோனில் மாதிரி எடுக்கப்படுகின்றன, எண்ணத் தொடங்கிய தருணத்திலிருந்து மட்டுமே துல்லியமாக இருக்கும்.",
+        "This resets by itself at midnight. Nothing to press." to "இது நள்ளிரவில் தானாகப் புதுப்பிக்கும். எதையும் அழுத்த வேண்டாம்.",
+        "This does not reset by itself. Press Start counting from now after your recharge." to "இது தானாகப் புதுப்பிக்காது. ரீசார்ஜ் செய்த பிறகு இப்போதிலிருந்து எண்ணத் தொடங்கு என்பதை அழுத்தவும்.",
+        "%s booster is counted until %s." to "%s பூஸ்டர் %s வரை எண்ணப்படும்.",
+        "you turn it off" to "நீங்கள் அணைக்கும் வரை",
+        "This booster has ended, so it adds nothing to the pack." to "இந்தப் பூஸ்டர் முடிந்துவிட்டது; பேக்கில் எதையும் சேர்க்காது.",
+        "Extra data booster" to "கூடுதல் தரவு பூஸ்டர்",
+        "No last day set, so this booster keeps counting until you turn it off." to "கடைசி நாள் அமைக்கப்படவில்லை; நீங்கள் அணைக்கும் வரை இந்தப் பூஸ்டர் எண்ணப்படும்.",
+        "Counted until %s, then it stops adding to the pack by itself." to "%s வரை எண்ணப்படும்; பிறகு தானாகவே பேக்கில் சேர்க்கப்படாது.",
+        "Its last day has passed, so it is not counted in any total. The switch stays on only as a record." to "அதன் கடைசி நாள் கடந்துவிட்டது; எந்தக் கணக்கிலும் இது சேர்க்கப்படாது. சுவிட்ச் பதிவுக்காக மட்டுமே இயக்கத்தில் இருக்கும்.",
     )
 }
 

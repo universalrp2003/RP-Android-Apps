@@ -382,6 +382,42 @@ object PlanPolicy {
         else base
     }
 
+    /**
+     * The allowance in plain GB that a person would type. A daily plan is "1 GB a day"; a total
+     * plan is "3 GB in the pack". Kept here so the card, the widget and the notification can
+     * never print two different sizes for the same recharge.
+     */
+    fun allowanceGb(plan: PlanSettings, today: LocalDate = LocalDate.now()): Double = when (plan.mode) {
+        PlanDataMode.NONE -> 0.0
+        PlanDataMode.DAILY -> plan.dailyMb / MB_PER_GB
+        PlanDataMode.TOTAL -> if (plan.totalUnlimited) 0.0 else effectiveTotalMb(plan, today) / MB_PER_GB
+    }
+
+    /**
+     * The allowance a *daily* plan resets to at midnight, or 0 for every other kind of plan.
+     *
+     * This is the whole of the "daily reset" rule: Android's own counter already restarts at
+     * midnight, so a daily plan needs no stored history and no date arithmetic — the app just
+     * compares today's measured usage with this number.
+     */
+    fun dailyResetMb(plan: PlanSettings): Double =
+        if (plan.mode == PlanDataMode.DAILY) plan.dailyMb.coerceAtLeast(0.0) else 0.0
+
+    /**
+     * True when this plan is a total pack that will never come back on its own: it must be reset
+     * by the owner, because only the owner knows when the carrier resets it.
+     */
+    fun waitsForManualReset(plan: PlanSettings): Boolean =
+        plan.mode == PlanDataMode.TOTAL && !plan.totalUnlimited
+
+    /** The booster's last day when the user gave one, or null. */
+    fun boosterLastDay(plan: PlanSettings): LocalDate? =
+        if (plan.boosterEnabled) plan.boosterEndDay else null
+
+    /** True when a booster is switched on but its last day has already passed. */
+    fun boosterLapsed(plan: PlanSettings, today: LocalDate = LocalDate.now()): Boolean =
+        plan.boosterEnabled && boosterMbNow(plan, today) <= 0.0
+
     /** The one-line description shown on the summary card. */
     fun summary(plan: PlanSettings, tamil: Boolean): String = when (plan.mode) {
         PlanDataMode.NONE -> if (tamil) "தரவு இல்லாத திட்டம்" else "No data on this plan"

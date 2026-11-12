@@ -90,7 +90,38 @@ object ChargeNotifier {
             null
         }
 
+        // The owner asked (12 November 2026) to "count 4g 5g separately". When the split is on,
+        // each radio gets its own number, and neither is ever silently added to the other.
+        // Null when the split is off: then only the combined figure is honest.
+        val splitLine = if (!battery.powerConnected && dataUsage != null && dataUsage.isUnlimited5g != true &&
+            com.universalrp.cleansweep.data.NetworkSplit.separateEnabled(context)
+        ) {
+            runCatching {
+                com.universalrp.cleansweep.data.PlanReadingPolicy.splitLine(
+                    com.universalrp.cleansweep.data.NetworkSplit.status(context, 0.0),
+                    Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA,
+                )
+            }.getOrNull()
+        } else null
+
         val isUnlimited = dataUsage?.isUnlimited5g == true
+        // The same allowance the My plan screen shows, read from the same place. This is what
+        // stops the card and the screen disagreeing when a booster has ended.
+        val savedPlan = runCatching { com.universalrp.cleansweep.data.PlanStore.load(context) }.getOrNull()
+        val planLine = savedPlan?.let { plan ->
+            runCatching {
+                com.universalrp.cleansweep.data.PlanReadingPolicy.line(
+                    plan,
+                    com.universalrp.cleansweep.data.PlanReadingPolicy.reading(
+                        plan = plan,
+                        todayUsedMb = (dataUsage?.todayMobileBytes ?: 0L) / (1024.0 * 1024.0),
+                        packUsedMb = (dataUsage?.packTotalMobileBytes ?: 0L) / (1024.0 * 1024.0),
+                        measured = dataUsage?.readingAvailable == true,
+                    ),
+                    Lang.languageIn(context) == com.universalrp.cleansweep.data.AppLang.TA,
+                )
+            }.getOrNull()
+        }
         val chargeStatusText = when {
             battery.percent >= 100 -> t("Full")
             battery.charging -> LiveChargingEta.estimate(battery)?.let { t("ETA %s", formatMinutes(it.minutesToFull)) }
@@ -133,6 +164,9 @@ object ChargeNotifier {
             if (dataUsage != null && !isUnlimited) {
                 appendLine(if (!dataUsage.readingAvailable) t("Mobile statistics unavailable")
                     else t("Pack used: %s / %s · left: %s", dataUsage.formattedPackTotal, dataUsage.formattedPackLimit, dataUsage.formattedRemaining))
+                // Two radios, two counts — never one figure pretending to be both.
+                splitLine?.takeIf { it.isNotBlank() }?.let { appendLine(it) }
+                planLine?.takeIf { it.isNotBlank() }?.let { appendLine(it) }
             } else if (isUnlimited) appendLine(t("Unlimited 5G mode is user-set; quota display is hidden."))
             if (battery.powerConnected) {
                 append(t("Charger connected: %s", timeLine))
