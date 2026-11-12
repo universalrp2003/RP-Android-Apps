@@ -117,8 +117,8 @@ class ReleaseGateTests(unittest.TestCase):
         for text in ("p['required_jvm_tests'] == 940", "p['required_suites'] == 92", "== 14"):
             self.assertIn(text, s)
         expected = runpy.run_path(str(ROOT / 'tools/verify_cleaner_regressions.py'))['EXPECTED']
-        self.assertEqual(943, sum(expected.values()))
-        self.assertEqual(92, len(expected))
+        self.assertEqual(954, sum(expected.values()))
+        self.assertEqual(93, len(expected))
         self.assertNotIn('assembleRelease', s)
 
     def test_candidate_gate_keeps_installed_bytes_before_instrumentation(self):

@@ -13,10 +13,14 @@ import com.universalrp.cleansweep.R
 import com.universalrp.cleansweep.data.BatteryReader
 import com.universalrp.cleansweep.data.BatteryReading
 import com.universalrp.cleansweep.data.ChargingHonestyPolicy
+import com.universalrp.cleansweep.data.AppLang
 import com.universalrp.cleansweep.data.DataUsageTracker
 import com.universalrp.cleansweep.data.ThermalWarningPolicy
 import com.universalrp.cleansweep.data.LiveNetworkQuality
 import com.universalrp.cleansweep.data.Lang
+import com.universalrp.cleansweep.data.NetworkSplit
+import com.universalrp.cleansweep.data.PlanReadingPolicy
+import com.universalrp.cleansweep.data.PlanStore
 import com.universalrp.cleansweep.data.DisplayTime
 import com.universalrp.cleansweep.data.LiveChargingEta
 import com.universalrp.cleansweep.data.batteryTimeMinutes
@@ -90,7 +94,38 @@ object ChargeNotifier {
             null
         }
 
+        // The owner asked (12 November 2026) to "count 4g 5g separately". When the split is on,
+        // each radio gets its own number, and neither is ever silently added to the other.
+        // Null when the split is off: then only the combined figure is honest.
+        val splitLine = if (!battery.powerConnected && dataUsage != null && dataUsage.isUnlimited5g != true &&
+            NetworkSplit.separateEnabled(context)
+        ) {
+            runCatching {
+                PlanReadingPolicy.splitLine(
+                    NetworkSplit.status(context, 0.0),
+                    Lang.languageIn(context) == AppLang.TA,
+                )
+            }.getOrNull()
+        } else null
+
         val isUnlimited = dataUsage?.isUnlimited5g == true
+        // The same allowance the My plan screen shows, read from the same place. This is what
+        // stops the card and the screen disagreeing when a booster has ended.
+        val savedPlan = runCatching { PlanStore.load(context) }.getOrNull()
+        val planLine = savedPlan?.let { plan ->
+            runCatching {
+                PlanReadingPolicy.line(
+                    plan,
+                    PlanReadingPolicy.reading(
+                        plan = plan,
+                        todayUsedMb = (dataUsage?.todayMobileBytes ?: 0L) / (1024.0 * 1024.0),
+                        packUsedMb = (dataUsage?.packTotalMobileBytes ?: 0L) / (1024.0 * 1024.0),
+                        measured = dataUsage?.readingAvailable == true,
+                    ),
+                    Lang.languageIn(context) == AppLang.TA,
+                )
+            }.getOrNull()
+        }
         val chargeStatusText = when {
             battery.fullChargeConfirmed -> t("Full")
             battery.percent >= 100 -> t("100% — charge completion not confirmed")
@@ -135,6 +170,9 @@ object ChargeNotifier {
             if (dataUsage != null && !isUnlimited) {
                 appendLine(if (!dataUsage.readingAvailable) t("Mobile statistics unavailable")
                     else t("Pack used: %s / %s · left: %s", dataUsage.formattedPackTotal, dataUsage.formattedPackLimit, dataUsage.formattedRemaining))
+                // Two radios, two counts — never one figure pretending to be both.
+                splitLine?.takeIf { it.isNotBlank() }?.let { appendLine(it) }
+                planLine?.takeIf { it.isNotBlank() }?.let { appendLine(it) }
             } else if (isUnlimited) appendLine(t("Unlimited 5G mode is user-set; quota display is hidden."))
             if (battery.powerConnected) {
                 append(t("Charger connected: %s", timeLine))

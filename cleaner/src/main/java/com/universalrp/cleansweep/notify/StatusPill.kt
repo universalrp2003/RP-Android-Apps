@@ -287,7 +287,6 @@ object StatusPill {
     ) {
         val signalLabels = if (reading.showNetworkMeter) PillSignalPolicy.labels(reading.simSignals, signalMode(context)) else emptyList()
         val rawText = reading.text
-        val packPercent = reading.packPercent.takeIf { reading.showNetworkMeter }
         val currentScale = scale(context)
         root.setPadding(
             (dp(context, 7) * currentScale).toInt(),
@@ -315,42 +314,18 @@ object StatusPill {
             setColor((bgAlpha shl 24) or 0x000000)
         }
 
-        // Pack alert styling
-        val textColor: Int
-        if (packPercent == null) {
-            textColor = Color.parseColor("#E8FBFF")
-            gd.setStroke((dp(context, 1) * currentScale).toInt().coerceAtLeast(1), (strokeAlpha shl 24) or 0x38BDF8)
-        } else {
-            val isFlashingStep = (packPercent >= 75)
-            when {
-                packPercent >= 90 -> {
-                    if (isFlashingStep && blinkState) {
-                        textColor = Color.parseColor("#FFFFFF")
-                        gd.setColor((bgAlpha shl 24) or 0xCC0000)
-                        gd.setStroke((dp(context, 1) * currentScale).toInt().coerceAtLeast(1), Color.parseColor("#FFFF3B30"))
-                    } else {
-                        textColor = Color.parseColor("#FF5252")
-                        gd.setColor((bgAlpha shl 24) or 0x000000)
-                        gd.setStroke((dp(context, 1) * currentScale).toInt().coerceAtLeast(1), Color.parseColor("#FF3B30"))
-                    }
-                }
-                packPercent >= 75 -> {
-                    if (isFlashingStep && blinkState) {
-                        textColor = Color.parseColor("#FFFFFF")
-                        gd.setColor((bgAlpha shl 24) or 0xB87800)
-                        gd.setStroke((dp(context, 1) * currentScale).toInt().coerceAtLeast(1), Color.parseColor("#FFFFD700"))
-                    } else {
-                        textColor = Color.parseColor("#FFB74D")
-                        gd.setColor((bgAlpha shl 24) or 0x000000)
-                        gd.setStroke((dp(context, 1) * currentScale).toInt().coerceAtLeast(1), Color.parseColor("#FFA726"))
-                    }
-                }
-                else -> {
-                    textColor = Color.parseColor("#E8FBFF")
-                    gd.setStroke((dp(context, 1) * currentScale).toInt().coerceAtLeast(1), (strokeAlpha shl 24) or 0x38BDF8)
-                }
-            }
-        }
+        // One steady style, whatever the data percentage is.
+        //
+        // The owner asked on 12 November 2026: "no warning red color on pill just show count
+        // only". So the pill no longer flashes red at 90% or amber at 75% — those steps turned a
+        // plain counter into an alarm, and the number beside them already says everything. The
+        // count stays; the colour no longer judges it. PlanReadingPolicy.pillUsesWarningColour()
+        // records the decision so it cannot quietly come back in another view.
+        val textColor = Color.parseColor("#E8FBFF")
+        gd.setStroke(
+            (dp(context, 1) * currentScale).toInt().coerceAtLeast(1),
+            (strokeAlpha shl 24) or 0x38BDF8,
+        )
 
         if (rawText.isBlank() && signalLabels.isEmpty()) {
             tv.visibility = View.GONE
@@ -362,9 +337,10 @@ object StatusPill {
                 if (sb.isNotEmpty()) sb.append("  ")
                 val start = sb.length
                 sb.append(label.text)
-                val color = when (label.tone) {
-                    0 -> "#FF5252"; 1 -> "#FFD600"; 2 -> "#00E676"; else -> "#AEB8CA"
-                }
+                // The SIM percentages are counts, not verdicts. They used to be red/amber/green;
+                // the owner asked on 12 November 2026 for "no warning red color on pill just show
+                // count only", so every reading now uses the same steady colour as the text.
+                val color = "#E8FBFF"
                 sb.setSpan(ForegroundColorSpan(Color.parseColor(color)), start, sb.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
             tv.text = sb
