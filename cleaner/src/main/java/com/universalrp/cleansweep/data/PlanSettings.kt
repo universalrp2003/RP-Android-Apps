@@ -495,6 +495,25 @@ object PlanStore {
     }
 
     /**
+     * Whether the legacy mirror still holds a number this store wrote, so it may be corrected.
+     *
+     * Every value [save] ever mirrored is recognised, including **base + booster after the booster
+     * ended**. That last case was the owner's bug: with a 3.2 GB pack and an expired 3 GB booster
+     * the stale mirror read 6.2 GB, which matched neither the base (3.2) nor the now-effective
+     * allowance (3.2) — so the repair refused to touch it and the notification kept saying
+     * "Left ≈ 5.24 GB" while My plan correctly said 2.24 GB.
+     *
+     * A hand-set quota is still never overwritten: it must equal one of these exact values.
+     */
+    fun mirrorMayBeCorrected(plan: PlanSettings, mirroredGb: Float, today: LocalDate = LocalDate.now()): Boolean {
+        val baseGb = (plan.totalMb / PlanPolicy.MB_PER_GB).toFloat()
+        val effectiveGb = effectiveLimitGb(plan, today) ?: return false
+        val boosterGb = if (plan.boosterEnabled) (plan.boosterMb / PlanPolicy.MB_PER_GB).toFloat() else 0f
+        val candidates = listOf(baseGb, effectiveGb, baseGb + boosterGb)
+        return candidates.any { kotlin.math.abs(mirroredGb - it) <= 0.0005f }
+    }
+
+    /**
      * Repairs the legacy mirror written by the first 2.49 build. That build copied only the
      * base total, so a plan with a booster showed two different remainders at the same time:
      * My plan said "3.5 GB left of 7.5 GB" while Live Guard said "488 MB left of 4.5 GB".
@@ -503,7 +522,7 @@ object PlanStore {
      * equals the exact base value the old code wrote. A quota the user re-synced by hand (or
      * set through the older pack dialog) is never overwritten.
      */
-    fun ensureMirror(context: Context) {
+    fun ensureMirror(context: Context, today: LocalDate = LocalDate.now()) {
         if (!hasSavedPlan(context)) return
         val plan = load(context)
         if (plan.mode == PlanDataMode.NONE) {
@@ -512,19 +531,14 @@ object PlanStore {
             return
         }
         if (plan.mode != PlanDataMode.TOTAL) return
-        val baseGb = (plan.totalMb / PlanPolicy.MB_PER_GB).toFloat()
-        val effectiveGb = effectiveLimitGb(plan) ?: return
+        val effectiveGb = effectiveLimitGb(plan, today) ?: return
         val mirrored = DataUsageTracker.getPackLimitGb(context)
         // Repair in both directions, but only while the mirror still holds a value this store
-        // wrote (the base total, or the base + booster). A quota the user set by hand is never
-        // touched. Downwards matters when a booster's end date has passed: the mirror must stop
-        // counting data that the carrier has already taken away.
-        val matchesBase = kotlin.math.abs(mirrored - baseGb) <= 0.0005f
-        val matchesEffective = kotlin.math.abs(mirrored - effectiveGb) <= 0.0005f
-        if (matchesBase || matchesEffective) {
-            if (kotlin.math.abs(mirrored - effectiveGb) > 0.0005f) {
-                DataUsageTracker.setPackLimitGb(context, effectiveGb)
-            }
+        // wrote. A quota the user set by hand is never touched. Downwards matters when a
+        // booster's last day has passed: the mirror must stop counting data the carrier has
+        // already taken away, or the notification and My plan disagree by the booster's size.
+        if (mirrorMayBeCorrected(plan, mirrored, today) && kotlin.math.abs(mirrored - effectiveGb) > 0.0005f) {
+            DataUsageTracker.setPackLimitGb(context, effectiveGb)
         }
     }
 

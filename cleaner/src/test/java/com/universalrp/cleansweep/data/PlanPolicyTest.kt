@@ -242,4 +242,56 @@ class PlanPolicyTest {
         assertEquals(6144.0, PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 20)), 0.01)
         assertEquals(9216.0, PlanPolicy.effectiveTotalMb(plan, LocalDate.of(2026, 10, 25)), 0.01)
     }
+
+    /**
+     * The owner's 12 November 2026 bug, reproduced from their own screenshots.
+     *
+     * A 3.2 GB pack with an expired 3 GB booster (8–10 November) showed, on the same phone at the
+     * same moment, "2.24 GB left" in My plan and "Left ≈ 5.24 GB" in the Live Guard notification.
+     * 5.24 = (3.2 + 3.0) − 0.96, so the notification was still counting the dead booster.
+     *
+     * Cause: the stored mirror held base + booster (6.2 GB) from while the booster was running.
+     * The repair only recognised a mirror equal to the base or to the *currently effective*
+     * allowance — and once the booster expired both of those were 3.2, so 6.2 matched nothing
+     * and the stale value survived forever.
+     */
+    @Test fun anExpiredBoosterStopsInflatingTheMirrorTheNotificationReads() {
+        val whileRunning = LocalDate.of(2026, 11, 9)
+        val afterExpiry = LocalDate.of(2026, 11, 12)
+        val plan = PlanSettings(
+            mode = PlanDataMode.TOTAL, totalMb = 3.2 * 1024.0,
+            startDay = LocalDate.of(2026, 9, 25), days = 77, endDay = LocalDate.of(2026, 12, 10),
+            boosterEnabled = true, boosterMb = 3.0 * 1024.0,
+            boosterStartDay = LocalDate.of(2026, 11, 8), boosterEndDay = LocalDate.of(2026, 11, 10),
+        )
+        // What the old save wrote while the booster was still running.
+        val mirroredWhileRunning = 6.2f
+        assertTrue(
+            "a value this store wrote must always be recognisable, even after the booster ends",
+            PlanStore.mirrorMayBeCorrected(plan, mirroredWhileRunning, afterExpiry),
+        )
+        // The number the notification's limit is repaired to, and the arithmetic it reports.
+        val corrected = PlanStore.effectiveLimitGb(plan, afterExpiry)!!
+        assertEquals(3.2f, corrected, 0.001f)
+        val usedGb = 0.96
+        val myPlanLeft = PlanPolicy.effectiveTotalMb(plan, afterExpiry) / 1024.0 - usedGb
+        val notificationLeft = corrected - usedGb
+        assertEquals(2.24, myPlanLeft, 0.01)
+        assertEquals(2.24, notificationLeft.toDouble(), 0.01)
+    }
+
+    @Test fun aHandSetQuotaIsNeverOverwrittenAsIfItWereABoosterMirror() {
+        val plan = PlanSettings(
+            mode = PlanDataMode.TOTAL, totalMb = 3.2 * 1024.0,
+            boosterEnabled = true, boosterMb = 3.0 * 1024.0,
+            boosterStartDay = LocalDate.of(2026, 11, 8), boosterEndDay = LocalDate.of(2026, 11, 10),
+        )
+        val today = LocalDate.of(2026, 11, 12)
+        assertFalse(PlanStore.mirrorMayBeCorrected(plan, 10f, today))
+        assertTrue(PlanStore.mirrorMayBeCorrected(plan, 3.2f, today))
+        assertTrue(PlanStore.mirrorMayBeCorrected(plan, 6.2f, today))
+        // While the booster runs, base + booster IS the effective allowance and stays valid.
+        assertTrue(PlanStore.mirrorMayBeCorrected(plan, 6.2f, LocalDate.of(2026, 11, 9)))
+        assertEquals(6.2f, PlanStore.effectiveLimitGb(plan, LocalDate.of(2026, 11, 9))!!, 0.001f)
+    }
 }
