@@ -8,6 +8,7 @@ on:
       # failed before publishing anything. It still fails closed: the pins must be
       # real and the tag must not exist.
       - "tools/promote_verified_liveguard_300.py"
+      - ".github/workflows/promote-liveguard-3-00.yml"
 permissions:
   contents: write
   actions: read
