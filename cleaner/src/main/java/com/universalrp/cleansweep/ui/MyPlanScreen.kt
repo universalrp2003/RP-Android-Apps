@@ -539,7 +539,7 @@ private fun BoosterCard(plan: PlanSettings, today: LocalDate, onChange: (PlanSet
             Spacer(Modifier.height(8.dp))
             Text(
                 if (PlanPolicy.boosterActive(plan, today)) {
-                    if (plan.boosterLastDay(plan) == null) {
+                    if (PlanPolicy.boosterLastDay(plan) == null) {
                         tr("No last day set, so this booster keeps counting until you turn it off.")
                     } else {
                         tr("Counted until %s, then it stops adding to the pack by itself.", PlanPolicy.boosterLastDay(plan).toString())

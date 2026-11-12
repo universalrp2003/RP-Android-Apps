@@ -45,6 +45,13 @@ def declarations(name: str) -> set[str]:
     return members
 
 
+# Members that live on the plan objects and are easy to call through the wrong receiver.
+PLAN_POLICY_MEMBERS = set()
+for text in sources.values():
+    if "object PlanPolicy {" in text:
+        body = text[text.index("object PlanPolicy {"):]
+        PLAN_POLICY_MEMBERS = set(re.findall(r'\bfun\s+(\w+)', body[:body.index("\n}\nobject PlanStore") if "\n}\nobject PlanStore" in body else len(body)]))
+
 cache: dict[str, set[str]] = {}
 problems: list[str] = []
 
@@ -59,6 +66,15 @@ for path in CHANGED:
             continue  # declared outside this module (Compose, Android SDK…)
         if member not in cache[obj]:
             problems.append(f"{path.name}: {obj}.{member} is not declared")
+
+# A call written as `something.name(...)` where `something` is a value (lower-case) is almost
+# always a typo of `Object.name(...)`. That is how `plan.boosterLastDay(plan)` slipped through a
+# CI round-trip: the member exists, but on PlanPolicy, not on the PlanSettings instance.
+for path in CHANGED:
+    text = sources[path]
+    for recv, member in sorted(set(re.findall(r'\b([a-z]\w*)\.(\w+)\(', text))):
+        if recv in ("it", "this", "context", "plan", "reading", "status") and member in PLAN_POLICY_MEMBERS:
+            problems.append(f"{path.name}: `{recv}.{member}(...)` is probably PlanPolicy.{member}(...), not a member of the value")
 
 for p in problems:
     print("FAIL:", p)
