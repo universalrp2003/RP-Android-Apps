@@ -105,44 +105,11 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
 
                 Spacer(Modifier.height(10.dp))
 
-                // Option 2: Resize Slider / Scale buttons
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        tr("Pill Size: %d%%", (currentScale * 100).toInt()),
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = TextSecondary,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        FilledTonalButton(
-                            onClick = {
-                                val newScale = (currentScale - 0.1f).coerceAtLeast(0.7f)
-                                currentScale = newScale
-                                StatusPill.setScale(context, newScale)
-                            },
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.height(30.dp),
-                        ) {
-                            Text("- Smaller", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                        FilledTonalButton(
-                            onClick = {
-                                val newScale = (currentScale + 0.1f).coerceAtMost(1.5f)
-                                currentScale = newScale
-                                StatusPill.setScale(context, newScale)
-                            },
-                            contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier.height(30.dp),
-                        ) {
-                            Text("+ Bigger", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+                // The size control is shared with Settings (see PillSizeControl) so the two
+                // screens cannot drift apart or offer different limits.
+                PillSizeControl(currentScale) { newScale ->
+                    currentScale = newScale
+                    StatusPill.setScale(context, newScale)
                 }
 
                 Spacer(Modifier.height(8.dp))
@@ -158,3 +125,48 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
         }
     }
 }
+
+/**
+ * Pill size, in one place.
+ *
+ * The owner reported on 12 November 2026 that the resize option was "not found in settings":
+ * it only existed inside the Home pill card, so anyone looking in Settings could not find it.
+ * Both screens now call this composable, so the limits and the wording are identical.
+ */
+@Composable
+fun PillSizeControl(scale: Float, onChange: (Float) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(
+            tr("Pill Size: %d%%", (scale * 100).toInt()),
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = TextSecondary,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilledTonalButton(
+                onClick = { onChange((scale - 0.1f).coerceAtLeast(MIN_PILL_SCALE)) },
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.height(30.dp),
+            ) {
+                Text("- Smaller", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+            FilledTonalButton(
+                onClick = { onChange((scale + 0.1f).coerceAtMost(MAX_PILL_SCALE)) },
+                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.height(30.dp),
+            ) {
+                Text("+ Bigger", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/** Same bounds the Home control used; kept named so a test can assert them. */
+const val MIN_PILL_SCALE = 0.7f
+const val MAX_PILL_SCALE = 1.5f

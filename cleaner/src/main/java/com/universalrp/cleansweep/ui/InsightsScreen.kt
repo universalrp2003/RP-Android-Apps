@@ -302,13 +302,47 @@ private fun DataBudgetContent(state: UiState, vm: MainViewModel, onClear: () -> 
         dismissButton = { TextButton(onClick = { confirmReset = false }) { Text(tr("Cancel")) } })
     val usage = state.dataPackInfo
     val start = usage?.let { Instant.ofEpochMilli(it.packStartDateMs).atZone(ZoneId.systemDefault()).toLocalDate() }
-    val result = DataBudgetPolicy.calculate(LocalDate.now(), state.dataBudgetConfig, usage?.packRemainingBytes?.takeIf { usage.readingAvailable },
+    // History must quote the *plan*, not the legacy mirror.
+    //
+    // On 12 November 2026 the owner's screenshots showed "Configured quota: 2.2 GB" and
+    // "Remaining estimate: 2.20 GB" here while My plan stated "0 MB left in the pack of 3.2 GB"
+    // for the same moment. Two defects were behind it:
+    //   * the quota came from DataUsageTracker's legacy `pack_limit_gb` mirror, while My plan
+    //     reads PlanStore, so the two stores simply disagreed;
+    //   * the remainder was handed to the budget policy as a raw Long, and `Long?` is not a
+    //     distinguishable "not measured" signal, so a mirror that had not been written yet read
+    //     as a truthful-looking zero.
+    // The reading below is the same PlanReadingPolicy call My plan uses, so one plan produces
+    // exactly one remainder, and "unknown" is a real third state rather than a zero.
+    val plan = remember { PlanStore.load(context) }
+    val reading = runCatching {
+        PlanReadingPolicy.reading(
+            plan,
+            todayUsedMb = (usage?.todayMobileBytes ?: 0L) / (1024.0 * 1024.0),
+            packUsedMb = (usage?.packTotalMobileBytes ?: 0L) / (1024.0 * 1024.0),
+            measured = usage?.readingAvailable == true,
+        )
+    }.getOrNull()
+    val quotaText = when {
+        reading == null -> usage?.formattedPackLimit ?: "—"
+        reading.unlimited -> tr("Unlimited")
+        else -> DataUsageTracker.formatBytesSafe((reading.allowedMb * 1024 * 1024).toLong())
+    }
+    val remainingText = when {
+        reading == null -> usage?.formattedRemaining ?: tr("Not measured")
+        reading.unlimited -> tr("Unlimited")
+        !reading.measured -> tr("Not measured")
+        else -> DataUsageTracker.formatBytesSafe((reading.leftMb * 1024 * 1024).toLong())
+    }
+    val remainingBytes = if (reading != null && reading.measured && !reading.unlimited)
+        (reading.leftMb * 1024 * 1024).toLong() else null
+    val result = DataBudgetPolicy.calculate(LocalDate.now(), state.dataBudgetConfig, remainingBytes,
         usage?.let { it.readingAvailable && !it.isPartial } == true, usage?.isUnlimited5g == true, state.dailyDataHistory, start)
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Notice("Android mobile totals cover this device's SIM traffic, not Wi-Fi or the carrier's official bill. Carrier rounding, zero-rating and unlimited-5G eligibility can differ.")
         usage?.let {
-            Text(tr("Configured quota") + ": ${it.formattedPackLimit}", fontWeight = FontWeight.SemiBold)
-            Text(tr("Remaining estimate") + ": ${it.formattedRemaining}")
+            Text(tr("Configured quota") + ": $quotaText", fontWeight = FontWeight.SemiBold)
+            Text(tr("Remaining estimate") + ": $remainingText")
             Text(tr("Today so far") + ": ${it.formattedToday}")
             Notice(tr(it.source)); Notice(tr("Last checked %s", readingTime(it.capturedAtMs)))
         }

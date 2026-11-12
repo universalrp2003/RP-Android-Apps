@@ -46,6 +46,8 @@ object DataBudgetPolicy {
         packStartDay: LocalDate? = null,
     ): DataBudgetResult {
         if (unlimited) return DataBudgetResult(BudgetStatus.UNLIMITED)
+        // null means "not measured" and must never be mistaken for zero. A negative value is
+        // likewise impossible: it is a broken counter, not a spent pack.
         if (remainingBytes == null || remainingBytes < 0) return DataBudgetResult(BudgetStatus.UNAVAILABLE)
         if (!readingComplete) return DataBudgetResult(BudgetStatus.PARTIAL)
         val expiry = dateOrNull(config.expiresOn) ?: return DataBudgetResult(BudgetStatus.NEED_EXPIRY)
@@ -62,6 +64,8 @@ object DataBudgetPolicy {
         val forecast = if (samples.size >= 3 && average != null && average > 0)
             ceil(remainingBytes.toDouble() / average).takeIf { it.isFinite() && it <= 36_500 }?.toLong() else null
         return DataBudgetResult(
+            // 0L is only reached here when the reading really is complete and measured, so
+            // EXHAUSTED now means "the counter says the pack is spent", not "the mirror was empty".
             status = if (remainingBytes == 0L) BudgetStatus.EXHAUSTED else BudgetStatus.READY,
             daysRemaining = days,
             dailyBudgetBytes = remainingBytes / days,

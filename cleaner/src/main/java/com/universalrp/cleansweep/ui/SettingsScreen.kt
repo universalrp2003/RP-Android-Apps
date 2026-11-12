@@ -515,7 +515,23 @@ fun SettingsScreen(state: UiState, vm: MainViewModel) {
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondary,
                         )
-                        Spacer(Modifier.height(8.dp))
+                        Spacer(Modifier.height(14.dp))
+                        // The owner could not find this in Settings on 12 November 2026
+                        // ("The resize option not found in settings"); it lived only on Home.
+                        val pillScale = StatusPill.scale(context)
+                        var scale by remember { mutableStateOf(pillScale) }
+                        Text(
+                            tr("Pill size"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = TextPrimary,
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        PillSizeControl(scale) { newScale ->
+                            scale = newScale
+                            StatusPill.setScale(context, newScale)
+                        }
+                        Spacer(Modifier.height(14.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             PillSignalPolicy.Mode.values().forEach { mode ->
                                 FilterChip(
