@@ -25,12 +25,10 @@ import com.universalrp.cleansweep.ui.theme.SurfaceHigh
 import com.universalrp.cleansweep.ui.theme.TextPrimary
 import com.universalrp.cleansweep.ui.theme.TextSecondary
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
     val context = LocalContext.current
     var currentScale by remember { mutableStateOf(StatusPill.scale(context)) }
-    var signalMode by remember { mutableStateOf(StatusPill.signalMode(context)) }
     var hideOnWifi by remember { mutableStateOf(StatusPill.isHideDataOnWifi(context)) }
 
     PanelCard(Modifier.fillMaxWidth()) {
@@ -67,23 +65,9 @@ fun StatusPillHomeControls(state: UiState, vm: MainViewModel) {
                     color = TextSecondary,
                 )
                 Spacer(Modifier.height(10.dp))
-                Text(watchWords("SIM signal in pill", "மிதக்கும் குறியில் சிம் சிக்னல்"), style = MaterialTheme.typography.bodySmall)
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.values().forEach { mode ->
-                        FilterChip(selected = signalMode == mode, onClick = {
-                            signalMode = mode
-                            StatusPill.setSignalMode(context, mode)
-                        }, label = { Text(when (mode) {
-                            com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.FIRST -> watchWords("First SIM", "முதல் சிம்")
-                            com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.BOTH -> watchWords("Both SIMs", "இரு சிம்கள்")
-                            com.universalrp.cleansweep.notify.PillSignalPolicy.Mode.OFF -> watchWords("Off", "வேண்டாம்")
-                        }) })
-                    }
-                }
-                Text(watchWords("Unplugged the pill shows only coloured percentages, left to right in physical-slot order (first installed SIM first; Both SIMs adds the second). Each percentage is a rough estimate of where the measured dBm sits inside that radio's own range — not reception reliability and not Android's four bars; the Guide explains the ranges. Missing readings stay hidden, never a neighbour or another SIM. Serving-cell fallback needs visible app UI, an existing precise-location grant and one active SIM. Charging stays watts only.",
-                    "சார்ஜர் இல்லாதபோது பட்டியில் நிறமுள்ள சதவீதங்கள் மட்டுமே, இடமிருந்து வலமாக சிம் இட வரிசையில் (முதலில் பொருத்திய சிம் முன்னிலை; இரு சிம்கள் தேர்ந்தெடுத்தால் இரண்டாவது சேரும்). ஒவ்வொரு சதவீதமும் அந்த ரேடியோவின் வரம்புக்குள் அளந்த dBm எங்கே உள்ளது என்பதன் தோராயம் — வரவேற்பு நம்பகத்தன்மையோ ஆண்ட்ராய்டின் நான்கு பட்டைகளோ அல்ல; வரம்புகளை வழிகாட்டி விளக்குகிறது. கிடைக்காத அளவு மறையும்; அண்டை டவர்/வேறு சிம் அல்ல. மாற்று இணைந்த செல் வாசிப்பிற்கு திரையில் திறந்த செயலி, ஏற்கனவே துல்லிய இருப்பிட அனுமதி, செயலில் ஒரே சிம் தேவை. சார்ஜில் வாட்ஸ் மட்டும்."),
-                    style = MaterialTheme.typography.labelSmall, color = TextSecondary)
-                Spacer(Modifier.height(10.dp))
+                // The SIM-signal choice moved to Settings, where the owner asked for it:
+                // "give option for both sims percentage in settings". It is not duplicated
+                // here, so there is exactly one place that decides what the pill shows.
                 // Option 1: Hide mobile data on Wi-Fi / 5G
                 Row(
                     Modifier

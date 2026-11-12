@@ -116,3 +116,11 @@ verification, legacy-signer rejection, read-only installer handoff and the compa
 consent / cancelled-first-install / explicit-resume / two sequential confirmed catalog updates /
 200%-font-scale test all passed. Its `tamilan-store-debug-emulator-only` APK is **not** the owner's
 upgrade candidate; only artifact **13075926175** above contains the release-key candidate.
+
+> **Current workflow (updated 12 November 2026).** The dedicated candidate job described above
+> was renamed per release and now lives at `.github/workflows/store-012-candidate.yml`, pinned to
+> versionCode 14 / 0.12. The old `tamilanstore-signed-candidate.yml` still asserted the 0.11
+> identities after the module moved to 0.12, so it failed on every Store push and shared a
+> concurrency group with its own successor — it has been removed. The guarantees in this
+> document (release key, non-debuggable, exact identity, unchanged merged permissions, no
+> publication capability) are unchanged and still enforced by the successor workflow.

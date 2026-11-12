@@ -146,10 +146,16 @@ open class CleanSweepWidget : AppWidgetProvider() {
             val percent = WidgetReadingPolicy.percent(battery?.percent, battery?.reportedLevel, battery?.reportedScale)
             val plan = runCatching { PlanStore.load(context) }.getOrNull()
             val planSet = plan != null && (plan.mode == PlanDataMode.TOTAL || plan.mode == PlanDataMode.DAILY) && plan.startDay != null
+            // The plan is described the way "My plan" describes it: an amount and its reset rule.
+            // This used to print "3 days left" from the old date fields, so the widget could
+            // contradict the screen the owner had just simplified.
             val planLine = when {
                 !planSet -> label("Set your plan in the app", "ஆப்பில் திட்டத்தை அமைக்கவும்")
-                else -> PlanPolicy.remainingText(plan!!, java.time.ZonedDateTime.now(), tamil)
-                    ?: label("Plan dates are set", "திட்டத் தேதிகள் அமைக்கப்பட்டுள்ளன")
+                else -> PlanReadingPolicy.line(
+                    plan!!,
+                    PlanReadingPolicy.reading(plan, todayUsedMb = 0.0, packUsedMb = 0.0, measured = false),
+                    tamil,
+                )
             }
             val leftLine = when {
                 data == null -> label("Data reading unavailable", "தரவு வாசிப்பு இல்லை")

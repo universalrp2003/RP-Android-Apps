@@ -482,18 +482,9 @@ private fun TodayCard(plan: PlanSettings, todayMb: Double, packMb: Double, today
                             color = TextSecondary,
                         )
                     }
-                    // The countdown is informational only: it never turns the screen red.
-                    val tamilUi = com.universalrp.cleansweep.data.Lang.isTamil
-                    val now = java.time.ZonedDateTime.now()
-                    val remaining = PlanPolicy.remainingText(plan, now, tamilUi)
-                    if (remaining != null) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            remaining + (PlanPolicy.endsAtText(plan, tamilUi)?.let { " · " + it } ?: ""),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextSecondary,
-                        )
-                    }
+                    // No "3 days left" countdown here. The owner asked for "only two options:
+                    // reset daily or reset total", so the screen states the amount and its reset
+                    // rule and stops there instead of reviving the date arithmetic it dropped.
                 }
             }
         }

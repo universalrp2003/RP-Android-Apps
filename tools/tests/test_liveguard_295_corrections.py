@@ -28,9 +28,13 @@ class CompactPillTests(unittest.TestCase):
         self.assertIn('not reception reliability', guide)
         self.assertIn('தோராய', guide)
         self.assertNotIn('S1/S2 are physical slots', guide)
-        controls = (BASE / 'ui/StatusPillHomeControls.kt').read_text()
-        self.assertIn('rough estimate', controls)
-        self.assertIn('தோராயம்', controls)
+        # The SIM-signal control moved from Home to Settings on 12 November 2026 at the owner's
+        # request, so the disclosure is asserted where the control now lives. The requirement
+        # is unchanged: the percentage is called an estimate wherever it is offered.
+        settings = (BASE / 'ui/SettingsScreen.kt').read_text()
+        self.assertIn('rough estimate', settings)
+        self.assertIn('தோராயமான', (BASE / 'data/Lang.kt').read_text())
+        self.assertNotIn('SIM signal in pill', (BASE / 'ui/StatusPillHomeControls.kt').read_text())
 
     def test_native_overlay_asserts_compact_percentages(self):
         s = (ROOT / 'cleaner/src/androidTest/java/com/universalrp/cleansweep/PillDefaultsNativeTest.kt').read_text()
