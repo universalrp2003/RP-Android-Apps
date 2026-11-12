@@ -63,9 +63,16 @@ class PillDefaultsNativeTest : ExactCandidateNativeTest() {
                 assertFalse(text.toString().contains("≈"))
                 assertFalse(text.toString().contains("S1"))
                 assertFalse(text.toString().contains("S2"))
+                // 3.00: the owner asked for "no warning red color on pill just show count only".
+                // The two SIM readings must still be rendered as independent numbers, but they
+                // are no longer amber/green verdicts: every span uses the one steady colour.
+                // This still fails if the values are dropped or merged, which is the point.
                 val colors=text.getSpans(0,text.length,ForegroundColorSpan::class.java).map { it.foregroundColor }
-                assertTrue(colors.contains(Color.parseColor("#FFD600")))
-                assertTrue(colors.contains(Color.parseColor("#00E676")))
+                assertFalse("the pill must not colour a SIM reading amber",colors.contains(Color.parseColor("#FFD600")))
+                assertFalse("the pill must not colour a SIM reading green",colors.contains(Color.parseColor("#00E676")))
+                assertFalse("the pill must not colour a SIM reading red",colors.contains(Color.parseColor("#FF5252")))
+                assertTrue("both readings must use the steady count colour",
+                    colors.isNotEmpty() && colors.all { it==Color.parseColor("#E8FBFF") })
                 assertEquals(android.view.View.VISIBLE,root.getChildAt(1).visibility)
             }
             StatusPill.setSignalMode(c,PillSignalPolicy.Mode.OFF)

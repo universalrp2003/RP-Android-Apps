@@ -1,0 +1,42 @@
+name: Publish owner-authorized Live Guard 3.00 (exact tested bytes only)
+on:
+  push:
+    branches: ["arena/aa496e0a-rp-android-apps"]
+    paths: ["docs/live-guard-3.00-publication-pins.json"]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-exact-liveguard-3-00
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Source, signing policy and promotion boundary tests
+        run: |
+          python3 -m unittest discover -s tools/tests -q
+          python3 tools/verify_apps_localization.py
+          python3 tools/verify_cleaner_localization.py
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          python3 -m py_compile tools/promote_verified_liveguard_300.py
+      - name: Verify pinned completed build, signer, permissions and exact APK; publish only Live Guard
+        run: python3 tools/promote_verified_liveguard_300.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: liveguard300-exact-publication-receipt
+          path: ${{ runner.temp }}/liveguard300-publication-receipt.json
+          retention-days: 30
+          if-no-files-found: warn

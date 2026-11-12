@@ -1,0 +1,20 @@
+{
+  "_how_to_publish": "This is NOT the trigger file. Renaming it to docs/live-guard-3.00-publication-pins.json and pushing publishes these exact tested bytes via .github/workflows/promote-liveguard-3-00.yml. Done only after the owner has tested the candidate.",
+  "_verified": "Candidate run 43175748459 headed by b84f3e5 was fully green: JVM regressions, lint, exact identity/signer/permission continuity, and a real same-key 2.99 -> 3.00 install on a disposable Android 15 emulator with data preserved. Not tested on a physical phone.",
+  "publication_authorized": true,
+  "only_app": "cleaner",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_authorization": "Owner chose option B: prepare 3.00, publish after testing",
+  "source": "b84f3e524d8859e65d9928a0f294cfc4098423c7",
+  "run_id": 43175748459,
+  "job_id": 131039475333,
+  "artifact_id": 13925765522,
+  "archive_sha256": "96cb29b13df12c442fe0e50390216bb8d0cabd7a6491d006358a43cb65f1559f",
+  "apk_sha256": "507287805e2e21cbcacc169889258abec8290ecec5c4cd1e8776d65f7dfff7de",
+  "bytes": 14786667,
+  "required_jvm_tests": 954,
+  "required_suites": 93,
+  "required_android35_native_tests": 16
+}
