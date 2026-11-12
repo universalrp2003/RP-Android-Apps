@@ -1,7 +1,8 @@
 # Android TV Guard 1.5.1 — copy fixes from the owner's screenshots
 
-**Status: candidate, not published.** The owner installs it, tests it on the TV, and says yes before
-anything goes to a public release.
+**Status: published as [tvguard-v1.5.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.1) on 11 November 2026.** This document was the candidate description before publication; the APK was then published without rebuilding after the owner installed this exact build on a physical Sony Bravia and reported it working (strip: 78% / 996 MB / 11.9 GB / 46.0 °C / good). See [release notes](../releases/tvguard-v1.5.1.md) and [tv-guard-guide.html](../site/tv-guard-guide.html).
+
+*Before publication the status was: candidate, not published — the owner installs it, tests it on the TV, and says yes before anything goes public. That check has now been completed.*
 
 ## What changed since 1.5
 
