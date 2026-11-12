@@ -1,0 +1,19 @@
+{
+  "_note": "Template only. Do NOT commit a filled copy: the push of the real pins file is what triggers .github/workflows/promote-liveguard-3-00.yml to publish. Every value below is filled in from a green candidate run, never guessed.",
+  "publication_authorized": false,
+  "only_app": "cleaner",
+  "scoped_corrections_authorized": true,
+  "accepted_features_preserved": true,
+  "new_phone_test_required": false,
+  "owner_authorization": "<quote the owner's message authorising this publication>",
+  "source": "<40-hex commit the candidate was built from; must be an ancestor of HEAD>",
+  "run_id": 0,
+  "job_id": 0,
+  "artifact_id": 0,
+  "archive_sha256": "<sha256 of the downloaded candidate artifact zip>",
+  "apk_sha256": "<sha256 of CleanSweep-v3.00.apk inside that zip>",
+  "bytes": 0,
+  "required_jvm_tests": 954,
+  "required_suites": 93,
+  "required_android35_native_tests": 16
+}

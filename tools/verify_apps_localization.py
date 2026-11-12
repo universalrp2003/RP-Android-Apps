@@ -704,7 +704,9 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.17"',
-            'tagPrefix = "live-guard"', 'version = "2.99"',
+            # live-guard stays 2.99 here on purpose: publishedVersion builds the download URL,
+            # and the 3.00 tag does not exist until promotion publishes it.
+            'tagPrefix = "live-guard"', 'publishedVersion = "2.99"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',
