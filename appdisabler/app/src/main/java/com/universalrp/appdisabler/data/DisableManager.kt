@@ -29,11 +29,13 @@ object DisableManager {
     suspend fun loadInstalledApps(context: Context): List<AppInfo> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val pkgs = pm.getInstalledPackages(PackageManager.GET_META_DATA)
+        // Ensure UAD DB loaded
+        UadDatabase.load(context)
         pkgs.map { pkg ->
             val isSystem = (pkg.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
             val isEnabled = pkg.applicationInfo.enabled
-            val label = pm.getApplicationLabel(pkg.applicationInfo).toString()
-            val uad = UadDatabase.lookup(pkg.packageName)
+            val label = try { pm.getApplicationLabel(pkg.applicationInfo).toString() } catch (_: Exception) { pkg.packageName }
+            val uad = UadDatabase.lookup(pkg.packageName, context)
             AppInfo(
                 packageName = pkg.packageName,
                 label = label,
@@ -50,7 +52,7 @@ object DisableManager {
     // Real disable via Shizuku shell — disable-user only
     suspend fun disablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
         if (!isShizukuAvailable()) return@withContext Result.failure(IllegalStateException("Shizuku not running"))
-        // Critical guard
+        // Critical guard — check cache (DB already loaded via loadInstalledApps)
         if (UadDatabase.lookup(packageName)?.category == DisableCategory.CRITICAL) {
             return@withContext Result.failure(IllegalStateException("Protected package"))
         }
