@@ -1,7 +1,7 @@
 name: Publish owner-authorized Live Guard 3.00 (exact tested bytes only)
 on:
   push:
-    branches: ["arena/aa496e0a-rp-android-apps"]
+    branches: ["main"]
     paths: ["docs/live-guard-3.00-publication-pins.json"]
 permissions:
   contents: write
