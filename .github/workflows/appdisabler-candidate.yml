@@ -1,0 +1,78 @@
+name: System App Disabler Candidate APK Build
+
+on:
+  push:
+    branches: [main, "arena/**"]
+    paths:
+      - "appdisabler/**"
+      - ".github/workflows/appdisabler-candidate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: appdisabler-candidate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build, test, and package System App Disabler
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+
+      - name: Test and assemble System App Disabler
+        shell: bash
+        run: |
+          gradle :appdisabler:testDebugUnitTest :appdisabler:lintDebug :appdisabler:assembleDebug --no-daemon --stacktrace 2>&1 | tee appdisabler-build.log
+
+      - name: Expose actionable compiler and lint errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          paths = [Path("appdisabler-build.log"), *Path("appdisabler/app/build/reports").glob("lint-results-*.txt")]
+          found = []
+          for path in paths:
+              if not path.exists(): continue
+              for line in path.read_text(errors="replace").splitlines():
+                  if re.search(r"error:|FAILED|Execution failed", line, re.I):
+                      found.append(f"{path}: {line.strip()}")
+          if found:
+              print("\n".join(found[-80:]))
+              Path("ci-build-failure.md").write_text("\n".join(found[-80:]))
+          else:
+              print("No specific errors extracted")
+          PY
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-build-failure
+          path: |
+            appdisabler-build.log
+            appdisabler/app/build/reports/
+            ci-build-failure.md
+
+      - name: Upload candidate APK on success
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-0.1.0-candidate
+          path: |
+            appdisabler/app/build/outputs/apk/debug/*.apk
+            appdisabler/app/build/test-results/
