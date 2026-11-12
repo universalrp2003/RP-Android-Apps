@@ -23,6 +23,7 @@ import com.universalrp.appdisabler.data.AppInfo
 import com.universalrp.appdisabler.data.BackupManager
 import com.universalrp.appdisabler.data.DisableCategory
 import com.universalrp.appdisabler.data.DisableManager
+import com.universalrp.appdisabler.data.label
 import com.universalrp.updates.SisterApps
 import kotlinx.coroutines.launch
 import rikka.shizuku.Shizuku

@@ -8,7 +8,11 @@ val stableKeystore = rootProject.file("ci-keystore/release.p12")
 val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
 
 android {
-    sourceSets.getByName("main").java.srcDir(rootProject.file("shared/src/main/java"))
+    sourceSets.getByName("main") {
+        java.srcDir(rootProject.file("shared/src/main/java"))
+        // Only SisterApps from shared is needed; exclude voice engine (needs okhttp, separate module)
+        java.exclude("**/voice/**")
+    }
     namespace = "com.universalrp.appdisabler"
     compileSdk = 36
 

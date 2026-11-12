@@ -36,10 +36,11 @@ object DisableManager {
         }
         // Ensure UAD DB loaded
         UadDatabase.load(context)
-        pkgs.map { pkg ->
-            val isSystem = (pkg.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
-            val isEnabled = pkg.applicationInfo.enabled
-            val label = try { pm.getApplicationLabel(pkg.applicationInfo).toString() } catch (_: Exception) { pkg.packageName }
+        pkgs.mapNotNull { pkg ->
+            val ai = pkg.applicationInfo ?: return@mapNotNull null
+            val isSystem = (ai.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
+            val isEnabled = ai.enabled
+            val label = try { pm.getApplicationLabel(ai).toString() } catch (_: Exception) { pkg.packageName }
             val uad = UadDatabase.lookup(pkg.packageName, context)
             val installer = try {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
