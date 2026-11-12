@@ -30,7 +30,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Shizuku permission request trampoline (provided by Shizuku lib) is handled via code, no extra activity needed -->
+        <provider
+            android:name="rikka.shizuku.ShizukuProvider"
+            android:authorities="${applicationId}.shizuku"
+            android:enabled="true"
+            android:exported="true" />
 
     </application>
 </manifest>
