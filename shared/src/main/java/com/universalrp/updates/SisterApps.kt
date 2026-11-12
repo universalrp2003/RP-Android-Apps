@@ -174,6 +174,11 @@ object SisterApps {
             tagPrefix = "tamilan-store", version = "0.12", publishedVersion = "0.12",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
+        SisterApp(
+            id = "appdisabler", name = "System App Disabler - RP", tamilName = "சிஸ்டம் செயலி முடக்கி",
+            tagPrefix = "system-app-disabler", version = "0.1.0", publishedVersion = "0.1.0",
+            packageName = "com.universalrp.appdisabler", aboutLabel = "System App Disabler - RP — GitHub release",
+        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
@@ -185,7 +190,7 @@ object SisterApps {
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
     )
 
-    /** `label to url` for all fifteen RP Ideas Android apps. */
+    /** `label to url` for all sixteen RP Ideas Android apps (includes new System App Disabler). */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 

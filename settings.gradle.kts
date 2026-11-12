@@ -37,3 +37,7 @@ include(":dailyvault")
 include(":tvguard")
 project(":tvguard").projectDir = file("tvguard/app")
 
+// System App Disabler - RP: pre-installed bloat disabler (disable-only via Shizuku)
+include(":appdisabler")
+project(":appdisabler").projectDir = file("appdisabler/app")
+
