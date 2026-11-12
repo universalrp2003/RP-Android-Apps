@@ -26,9 +26,14 @@ object DisableManager {
         Shizuku.requestPermission(code)
     }
 
+    @Suppress("DEPRECATION")
     suspend fun loadInstalledApps(context: Context): List<AppInfo> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
-        val pkgs = pm.getInstalledPackages(PackageManager.GET_META_DATA)
+        val pkgs = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            pm.getInstalledPackages(PackageManager.PackageInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+        } else {
+            pm.getInstalledPackages(PackageManager.GET_META_DATA)
+        }
         // Ensure UAD DB loaded
         UadDatabase.load(context)
         pkgs.map { pkg ->
@@ -36,13 +41,20 @@ object DisableManager {
             val isEnabled = pkg.applicationInfo.enabled
             val label = try { pm.getApplicationLabel(pkg.applicationInfo).toString() } catch (_: Exception) { pkg.packageName }
             val uad = UadDatabase.lookup(pkg.packageName, context)
+            val installer = try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    pm.getInstallSourceInfo(pkg.packageName).installingPackageName
+                } else {
+                    @Suppress("DEPRECATION") pm.getInstallerPackageName(pkg.packageName)
+                }
+            } catch (_: Exception) { null }
             AppInfo(
                 packageName = pkg.packageName,
                 label = label,
                 isSystem = isSystem,
                 isEnabled = isEnabled,
                 versionName = pkg.versionName,
-                installer = try { pm.getInstallerPackageName(pkg.packageName) } catch (_: Exception) { null },
+                installer = installer,
                 category = uad?.category ?: if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE,
                 description = uad?.description,
             )
