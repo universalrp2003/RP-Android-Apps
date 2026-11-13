@@ -44,7 +44,7 @@ jobs:
       - name: Test and assemble System App Disabler
         shell: bash
         run: |
-          gradle :appdisabler:testDebugUnitTest :appdisabler:lintDebug :appdisabler:assembleDebug --no-daemon --stacktrace 2>&1 | tee appdisabler-build.log
+          gradle :appdisabler:testDebugUnitTest :appdisabler:lintDebug :appdisabler:assembleDebug :appdisabler:assembleRelease --no-daemon --stacktrace 2>&1 | tee appdisabler-build.log
 
       - name: Expose actionable compiler and lint errors
         if: failure()
@@ -105,3 +105,12 @@ jobs:
           path: |
             appdisabler/app/build/outputs/apk/debug/*.apk
             appdisabler/app/build/test-results/
+
+      # The debuggable debug variant is only for a quick owner install. Anything published
+      # publicly must be the release variant: same source, release key, not debuggable.
+      - name: Upload non-debuggable release candidate on success
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-0.1.0-release-candidate
+          path: appdisabler/app/build/outputs/apk/release/*.apk
