@@ -46,6 +46,16 @@ def api(path):
     return json.loads(run("gh", "api", f"repos/{REPO}/{path}"))
 
 
+def release_by_tag(tag):
+    """GET /releases/tags/<tag> answers 404 for drafts, even with a write token — measured.
+
+    A draft only appears in the list endpoint, so look it up there.
+    """
+    draft = [r for r in api("releases?per_page=100") if r["tag_name"] == tag]
+    assert len(draft) <= 1, f"{len(draft)} releases claim {tag}"
+    return draft[0] if draft else None
+
+
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -59,7 +69,8 @@ def main():
     assert os.environ.get("GITHUB_ACTIONS") == "true", "asset upload only runs in CI"
 
     # 1. The draft must exist, be a draft, and have no assets yet.
-    draft = api(f"releases/tags/{TAG}")
+    draft = release_by_tag(TAG)
+    assert draft is not None, f"no draft release for {TAG}; create it first"
     assert draft["draft"] and not draft["prerelease"], "the release is not a draft"
     assert draft["tag_name"] == TAG, draft["tag_name"]
     assert draft["assets"] == [], f"assets already attached: {[a['name'] for a in draft['assets']]}"
@@ -150,7 +161,7 @@ def main():
     if code != "200":
         raise SystemExit(f"publishing the draft returned HTTP {code}: {body[:400]}")
 
-    public = api(f"releases/tags/{TAG}")
+    public = release_by_tag(TAG)
     assert not public["draft"] and not public["prerelease"]
     asset = next(a for a in public["assets"] if a["name"] == NAME)
     assert asset["size"] == apk_bytes and asset["digest"] == "sha256:" + apk_sha
