@@ -1,0 +1,21 @@
+gh: To use GitHub CLI in a GitHub Actions workflow, set the GH_TOKEN environment variable. Example:
+  env:
+    GH_TOKEN: ${{ github.token }}
+Traceback (most recent call last):
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/publish_appdisabler_0_2_0.py", line 236, in <module>
+    main()
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/publish_appdisabler_0_2_0.py", line 120, in main
+    info = api(f"actions/runs/{RUN_ID}")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/publish_appdisabler_0_2_0.py", line 60, in api
+    return json.loads(run("gh", "api", f"repos/{REPO}/{path}"))
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/publish_appdisabler_0_2_0.py", line 56, in run
+    return subprocess.check_output(args, text=True).strip()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 466, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '('gh', 'api', 'repos/universalrp2003/RP-Android-Apps/actions/runs/43410268620')' returned non-zero exit status 4.
