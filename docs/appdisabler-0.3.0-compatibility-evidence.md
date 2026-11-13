@@ -28,13 +28,34 @@ release checks are established; do not rebuild and publish different bytes.
   Android 16 run and a later Android 15 run failed during UI capture; retries were added and the
   final run passed both. These earlier failures are not evidence of universal app compatibility.
 
+## Stock emulator Shizuku and reboot cycle
+
+- [Actions run 43462158768](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43462158768)
+  passed on stock Android 15 and 16, using the exact candidate hash above and Shizuku v13.6.0.
+- On each disposable emulator, the test installed an inert user-app fixture, granted Shizuku
+  permission, used **System App Disabler's UI** to disable it, checked the OS disabled-package list,
+  waited **30 seconds**, rebooted, verified the fixture was still disabled, restarted Shizuku, and
+  used the UI to restore the fixture. The OS enabled/disabled lists verified the result; the test
+  also pulled the installed Disabler base APK and matched its hash to the candidate. The emulator
+  is disposable; test recovery via ADB is not counted as a successful app-driven restore.
+- This does not exercise system-package restrictions, the suspension fallback, actual OEM firmware,
+  or a physical device. It is one test fixture per stock emulator, not proof of universal safety.
+- **Immediate reboot remains unresolved:** [run 43461486057](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43461486057)
+  failed the immediate-reboot check on Android 16: the OS showed the installed fixture at its
+  default enabled state afterward, despite reporting it disabled before reboot. An earlier
+  immediate-reboot run also failed on Android 15 but used an incremental install, so that failure
+  does not establish whether its fixture was re-enabled or absent. Other immediate-reboot cases
+  passed some stages. Cause is unproven; a 30-second delayed pass does not erase the failure or
+  establish how physical phones behave. Further investigation is required before making a
+  persistence claim or publishing this candidate as fully validated.
+
 ## Before broader publication
 
 1. Confirm the installed owner's APK hash matches the candidate to be published; confirm the
    remaining owner test script outcomes rather than assuming screenshots cover every action.
-2. Test app-driven disable, restore, suspend fallback and reboot using a disposable test package
-   and appropriate permissions, first on a stock emulator, then real manufacturer devices where
-   available. Log exact device/OS, package state before and after, and restore outcome.
+2. Investigate the inconsistent immediate-reboot result; test app-driven suspend fallback and
+   reboot using disposable test packages and appropriate permissions on real manufacturer devices
+   where available. Log exact device/OS, package state before and after, and restore outcome.
 3. Clearly distinguish suspension from a full disable in counts and explanations. Ratings must not
    guarantee safety for every model. Preserve a recovery path and do not claim zero bootloop risk.
 4. Treat untested OEMs and versions as unverified, not passed. Ship only the owner-tested artifact
