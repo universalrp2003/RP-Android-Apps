@@ -34,7 +34,20 @@ jobs:
           python3 tools/verify_release_signing_policy.py --fresh-install
           python3 -m py_compile appdisabler/tools/publish_appdisabler_0_1_0.py
       - name: Publish only the pinned owner-tested APK, no rebuild
-        run: python3 appdisabler/tools/publish_appdisabler_0_1_0.py
+        run: |
+          set -o pipefail
+          python3 appdisabler/tools/publish_appdisabler_0_1_0.py 2>&1 | tee publisher.log
+      - name: Commit the failure log to ci-logs (run logs are blocked in the sandbox)
+        if: failure()
+        run: |
+          set -e
+          git config user.name "arena-agent"
+          git config user.email "arena-agent@users.noreply.github.com"
+          mkdir -p ci-logs
+          cp publisher.log "ci-logs/appdisabler-publish-$(date +%Y%m%d-%H%M%S).log" || true
+          git add ci-logs/
+          git commit -m "ci: capture appdisabler publisher failure [skip ci]" || echo "nothing to commit"
+          git push origin HEAD:${GITHUB_REF_NAME} || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
