@@ -1,0 +1,7 @@
+run=43425980604 sha=04b9a711bcdfa35c585dedba00cf974f486f4c27
+=== 1. the publisher's exact call ===
+RESULT_1={"url":"https://api.github.com/repos/universalrp2003/RP-Android-Apps/releases/444207342","assets_url":"https://api.github.com/repos/universalrp2003/RP-Android-Apps/releases/444207342/assets","upload_url":"https://uploads.github.com/repos/universalrp2003/RP-Android-Apps/releases/444207342/assets{?nam
+=== 2. the same call without target_commitish/name/body ===
+RESULT_2={"url":"https://api.github.com/repos/universalrp2003/RP-Android-Apps/releases/444207354","assets_url":"https://api.github.com/repos/universalrp2003/RP-Android-Apps/releases/444207354/assets","upload_url":"https://uploads.github.com/repos/universalrp2003/RP-Android-Apps/releases/444207354/assets{?nam
+=== 3. does a stray draft from a failed call need cleaning? ===
+444207342 probe-1-43425980604
