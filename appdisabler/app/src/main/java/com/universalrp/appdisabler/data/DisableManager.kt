@@ -176,6 +176,9 @@ object DisableManager {
             val isEnabled = ai.enabled
             // FLAG_STOPPED is Android's own answer to "is there a process, and could there be one".
             val isStopped = (ai.flags and android.content.pm.ApplicationInfo.FLAG_STOPPED) != 0
+            // A persistent package is restarted by the framework whenever it dies, so it can be
+            // suspended but never actually stopped. The row must not claim otherwise.
+            val isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0
             val label = try { pm.getApplicationLabel(ai).toString() } catch (_: Exception) { pkg.packageName }
             val uad = UadDatabase.lookup(pkg.packageName, context)
             val installer = try {
@@ -197,6 +200,7 @@ object DisableManager {
                 bootloopRisk = uad?.bootloopRisk == true,
                 isSuspended = pkg.packageName in suspended,
                 isStopped = isStopped,
+                isPersistent = isPersistent,
             )
         }.sortedWith(compareBy<AppInfo> { it.category == DisableCategory.CRITICAL }.thenBy { it.label.lowercase() })
     }

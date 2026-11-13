@@ -796,6 +796,7 @@ fun AppDetailsDialog(
         else -> T.catUnlistedBody
     }
     val happen = when {
+        app.isPersistent && (app.isSuspended || !app.isEnabled) -> T.happenPersistent
         app.isSuspended -> T.happenSuspended
         !app.isEnabled -> T.happenDisabled
         else -> when (app.category) {
@@ -922,8 +923,13 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 // And a force-stopped-but-enabled package is not off either: the owner force-closed
                 // one and it came straight back. Android's FLAG_STOPPED is the only honest way to
                 // say "nothing is running, and nothing can start until you open it".
+                // A persistent system service is restarted by Android the moment it dies, so
+                // "off" or "stopped" is simply not true of it. Say what is happening instead of
+                // claiming something the owner (and the process table) can disprove.
                 val offState = app.isSuspended || !app.isEnabled
                 val statusText = when {
+                    app.isPersistent && offState ->
+                        "● suspended — Android keeps this service alive, so it keeps running"
                     offState -> "● off — tap Enable to restore"
                     running != null && running.contains(app.packageName) -> "● running now"
                     app.isStopped -> "● stopped — no process, starts on next launch"

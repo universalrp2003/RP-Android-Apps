@@ -18,6 +18,12 @@ data class AppInfo(
      * launches it again by hand. A force-stop sets this; a force-closed app that restarts does not.
      */
     val isStopped: Boolean = false,
+    /**
+     * A persistent system service. Android restarts these immediately and refuses to keep them
+     * stopped, so neither disable nor suspend can make one "off" — HyperComm (com.xiaomi.hypercomm)
+     * behaves exactly this way on the owner's phone.
+     */
+    val isPersistent: Boolean = false,
 )
 
 enum class DisableCategory {
