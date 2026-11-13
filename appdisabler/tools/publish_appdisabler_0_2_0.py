@@ -32,10 +32,12 @@ ARCHIVE_SHA = "cfb9ac11e8dd2b087944aef7de2cec3200dae6ac024385ac52a551654382135d"
 # The archive digest above is the ZIP GitHub stores for the artifact. It is NOT the APK's digest:
 # the APK inside has its own SHA-256, and that is the one the website, the Store catalog and the
 # .sha256 sidecar must publish. Conflating the two is what broke the first Pages mirror run.
-# Filled in from the first CI run of this publisher, which is the only place the archive can be
-# downloaded (the blob host is unreachable from the authoring sandbox). Until it is set, the
-# publisher refuses to run: publishing bytes nobody pinned is worse than not publishing.
-APK_SHA = "PENDING_FIRST_RUN"
+# Taken from docs/appdisabler-0.2.0-candidate-digest.md, written by probe_candidate_digest.py from
+# artifact 14028948231 inside Actions. The artifact archive is 11,157,191 B; the APK inside it (the
+# file a download actually produces) is APK_BYTES below. Conflating the two is what broke the first
+# Pages mirror, so both are pinned separately and re-checked.
+APK_SHA = "1f653dd99a68ae5877a5ebd9c178b790e5761866a2dc7c785393d4f298b0b196"
+APK_BYTES = 11651613
 ARCHIVE_BYTES = 11157191
 
 TAG = "system-app-disabler-v0.2.0"
@@ -154,6 +156,7 @@ def main():
     apk_bytes = candidate.stat().st_size
     assert 5_000_000 < apk_bytes < 60_000_000
     assert apk_sha == APK_SHA, f"APK digest {apk_sha} != pinned {APK_SHA}"
+    assert apk_bytes == APK_BYTES, f"APK bytes {apk_bytes} != pinned {APK_BYTES}"
 
     # 3. The bytes really are our package, our version, non-debuggable and release-key signed.
     tools = build_tools()
