@@ -93,27 +93,57 @@ object DisableManager {
         }.sortedWith(compareBy<AppInfo> { it.category == DisableCategory.CRITICAL }.thenBy { it.label.lowercase() })
     }
 
-    /** Run a shell command as Shizuku (uid 2000). Returns stdout or throws with output. */
+    /** Result of one shell invocation (never throws). */
+    data class ShellResult(val exit: Int, val output: String)
+
+    /** Run a shell command as Shizuku (uid 2000). Never throws — returns exit + output. */
+    private fun runShell(cmd: Array<String>): ShellResult {
+        return try {
+            val method = Shizuku::class.java.getDeclaredMethod(
+                "newProcess",
+                Array<String>::class.java, Array<String>::class.java, String::class.java
+            )
+            method.isAccessible = true
+            val process = method.invoke(null, cmd, null, null) as Process
+            // pm output is tiny (one line), sequential reads are safe here.
+            val stdout = process.inputStream.bufferedReader().readText()
+            val stderr = process.errorStream.bufferedReader().readText()
+            val exit = process.waitFor()
+            Log.i(TAG, "cmd=${cmd.joinToString(" ")} exit=$exit out=$stdout err=$stderr")
+            ShellResult(exit, (stdout + stderr).trim())
+        } catch (e: Exception) {
+            Log.e(TAG, "shell ${cmd.joinToString(" ")} threw", e)
+            val cause = e.cause ?: e
+            ShellResult(-1, "${cause.javaClass.simpleName}: ${cause.message ?: "unknown"}")
+        }
+    }
+
+    /** Run a shell command; throws IllegalStateException with output on failure. */
     private fun runShellCommand(cmd: Array<String>): String {
-        val method = Shizuku::class.java.getDeclaredMethod(
-            "newProcess",
-            Array<String>::class.java, Array<String>::class.java, String::class.java
-        )
-        method.isAccessible = true
-        val process = method.invoke(null, cmd, null, null) as Process
-        // pm output is tiny (one line), sequential reads are safe here.
-        val stdout = process.inputStream.bufferedReader().readText()
-        val stderr = process.errorStream.bufferedReader().readText()
-        val exit = process.waitFor()
-        Log.i(TAG, "cmd=${cmd.joinToString(" ")} exit=$exit out=$stdout err=$stderr")
-        val combined = (stdout + stderr).trim()
-        if (exit != 0) {
-            throw IllegalStateException("pm exit $exit: ${combined.take(300).ifEmpty { "no output" }}")
+        val r = runShell(cmd)
+        if (r.exit != 0) {
+            throw IllegalStateException("pm exit ${r.exit}: ${r.output.take(500).ifEmpty { "no output" }}")
         }
-        if (combined.startsWith("Error", ignoreCase = true) || combined.contains("not found", ignoreCase = true)) {
-            throw IllegalStateException(combined.take(300))
+        if (r.output.startsWith("Error", ignoreCase = true) || r.output.contains("not found", ignoreCase = true)) {
+            throw IllegalStateException(r.output.take(500))
         }
-        return stdout
+        return r.output
+    }
+
+    /** Diagnostic: verify shell identity + pm works. Read-only, safe to run anytime. */
+    suspend fun runShellTest(): Result<String> = withContext(Dispatchers.IO) {
+        checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
+        val sb = StringBuilder()
+        val id = runShell(arrayOf("id"))
+        sb.append("id (exit ${id.exit}):\n${id.output.take(300)}\n\n")
+        val list = runShell(arrayOf("pm", "list", "packages", "-3"))
+        val count = if (list.exit == 0) list.output.lines().count { it.startsWith("package:") } else -1
+        sb.append("pm list packages -3 (exit ${list.exit}, count=$count):\n${list.output.take(300)}\n\n")
+        val path = runShell(arrayOf("pm", "path", "com.android.hotwordenrollment.okgoogle"))
+        sb.append("pm path test (exit ${path.exit}):\n${path.output.take(300)}\n\n")
+        val ver = runShell(arrayOf("pm", "--version"))
+        sb.append("pm --version (exit ${ver.exit}):\n${ver.output.take(300)}")
+        Result.success(sb.toString())
     }
 
     private fun checkReady(): String? = when {
@@ -127,25 +157,37 @@ object DisableManager {
         if (UadDatabase.lookup(packageName)?.category == DisableCategory.CRITICAL) {
             return@withContext Result.failure(IllegalStateException("Protected package — never disable"))
         }
-        try {
-            runShellCommand(arrayOf("pm", "disable-user", "--user", "0", packageName))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "disable $packageName failed", e)
-            val cause = e.cause ?: e
-            Result.failure(IllegalStateException("Disable failed: ${cause.javaClass.simpleName}: ${cause.message ?: "unknown"}"))
+        // Try command variants (some OEM/Android builds differ); report all outputs on failure.
+        val attempts = listOf(
+            arrayOf("pm", "disable-user", "--user", "0", packageName),
+            arrayOf("pm", "disable-user", packageName),
+            arrayOf("pm", "disable", packageName),
+        )
+        val log = StringBuilder()
+        for (cmd in attempts) {
+            val r = runShell(cmd)
+            log.append("${cmd.joinToString(" ")} -> exit ${r.exit}: ${r.output.take(200)}\n")
+            if (r.exit == 0 && !r.output.startsWith("Error", ignoreCase = true)) {
+                return@withContext Result.success(Unit)
+            }
         }
+        Result.failure(IllegalStateException("Disable failed. Attempts:\n$log".trim()))
     }
 
     suspend fun enablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
-        try {
-            runShellCommand(arrayOf("pm", "enable", "--user", "0", packageName))
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "enable $packageName failed", e)
-            val cause = e.cause ?: e
-            Result.failure(IllegalStateException("Enable failed: ${cause.javaClass.simpleName}: ${cause.message ?: "unknown"}"))
+        val attempts = listOf(
+            arrayOf("pm", "enable", "--user", "0", packageName),
+            arrayOf("pm", "enable", packageName),
+        )
+        val log = StringBuilder()
+        for (cmd in attempts) {
+            val r = runShell(cmd)
+            log.append("${cmd.joinToString(" ")} -> exit ${r.exit}: ${r.output.take(200)}\n")
+            if (r.exit == 0 && !r.output.startsWith("Error", ignoreCase = true)) {
+                return@withContext Result.success(Unit)
+            }
         }
+        Result.failure(IllegalStateException("Enable failed. Attempts:\n$log".trim()))
     }
 }

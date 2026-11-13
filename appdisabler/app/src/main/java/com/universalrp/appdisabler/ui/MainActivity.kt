@@ -169,6 +169,9 @@ fun ShizukuSetupWindow(
     onGoToApps: () -> Unit
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var testOutput by remember { mutableStateOf<String?>(null) }
+    var testing by remember { mutableStateOf(false) }
     Column(
         Modifier
             .fillMaxSize()
@@ -232,6 +235,18 @@ fun ShizukuSetupWindow(
                         Button(onClick = onRequestShizuku, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_allow_shizuku)) }
                     }
                     Button(onClick = onGoToApps, modifier = Modifier.fillMaxWidth()) { Text("Go to Apps →") }
+                    OutlinedButton(
+                        onClick = {
+                            testing = true
+                            scope.launch {
+                                val r = DisableManager.runShellTest()
+                                testOutput = r.fold({ it }, { e -> "Test failed: ${e.message ?: e.javaClass.simpleName}" })
+                                testing = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !testing
+                    ) { Text(if (testing) "Testing…" else "Test Shizuku shell (diagnostic)") }
                 }
             }
         }
@@ -261,6 +276,21 @@ fun ShizukuSetupWindow(
 
         Text("RP Ideas — ${SisterApps.all.size} apps • github.com/universalrp2003/RP-Android-Apps • Shizuku by Rikka (Apache2) • UAD 2394 entries", style = MaterialTheme.typography.labelSmall)
     }
+
+    testOutput?.let { out ->
+        AlertDialog(
+            onDismissRequest = { testOutput = null },
+            title = { Text("Shizuku shell test") },
+            text = {
+                Text(
+                    out,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                )
+            },
+            confirmButton = { TextButton(onClick = { testOutput = null }) { Text("Close") } }
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -279,6 +309,7 @@ fun AppsListWindow(
     var tab by remember { mutableStateOf(0) } // 0 All (filtered), 1 System, 2 Disabled
     var confirmApp by remember { mutableStateOf<AppInfo?>(null) }
     var infoApp by remember { mutableStateOf<AppInfo?>(null) }
+    var errorMsg by remember { mutableStateOf<String?>(null) }
     var shizukuLive by remember { mutableStateOf(shizukuOk) }
     var shizukuRunningLive by remember { mutableStateOf(shizukuRunning) }
 
@@ -397,7 +428,7 @@ fun AppsListWindow(
                                     if (r.isSuccess) {
                                         Toast.makeText(context, context.getString(if (app.isEnabled) R.string.toast_disabled else R.string.toast_enabled, app.label), Toast.LENGTH_SHORT).show()
                                         apps = DisableManager.loadInstalledApps(context)
-                                    } else Toast.makeText(context, r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error", Toast.LENGTH_SHORT).show()
+                                    } else errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error"
                                 }
                             }
                         },
@@ -409,6 +440,21 @@ fun AppsListWindow(
         }
 
         Text("RP Ideas — ${SisterApps.all.size} apps • Disable-only • Shizuku required", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+
+    errorMsg?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { errorMsg = null },
+            title = { Text("Disable/Enable failed") },
+            text = {
+                Text(
+                    msg,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.verticalScroll(rememberScrollState())
+                )
+            },
+            confirmButton = { TextButton(onClick = { errorMsg = null }) { Text("Close") } }
+        )
     }
 
     confirmApp?.let { app ->
@@ -424,7 +470,7 @@ fun AppsListWindow(
                         if (r.isSuccess) {
                             Toast.makeText(context, context.getString(R.string.toast_disabled, app.label), Toast.LENGTH_SHORT).show()
                             apps = DisableManager.loadInstalledApps(context)
-                        } else Toast.makeText(context, r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error", Toast.LENGTH_SHORT).show()
+                        } else errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error"
                     }
                 }) { Text("Disable anyway") }
             },
@@ -451,7 +497,7 @@ fun AppsListWindow(
                     if (r.isSuccess) {
                         Toast.makeText(context, context.getString(if (app.isEnabled) R.string.toast_disabled else R.string.toast_enabled, app.label), Toast.LENGTH_SHORT).show()
                         apps = DisableManager.loadInstalledApps(context)
-                    } else Toast.makeText(context, r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error", Toast.LENGTH_SHORT).show()
+                    } else errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error"
                 }
             }
         )
