@@ -38,3 +38,11 @@ the shell the app already has, so it needs Shizuku; without it the tile shows `�
 The refusal is checked before any `pm` command runs, and the row explains why instead of failing.
 This exists because 0.1.0 let the owner disable a vendor keyboard and parts of Settings with no
 warning: losing the keyboard also means losing the ability to pair Shizuku again.
+
+## Testing a candidate build
+
+The current test script is `docs/appdisabler-0.3.0-test-script.md`. It covers the two reports that
+matter most: a turned-off app that keeps running after force-close, and a row that used to trust a
+local note instead of asking the phone. Install the release candidate over the installed app — it is
+signed with the same key — and run the shell check in the Setup tab, which prints the authoritative
+`enabled` / `stopped` / `suspended` flags for the package in question.
