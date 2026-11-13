@@ -12,10 +12,13 @@ is uninstalled and nothing is cleared.
 
 ## 0. Before you start — install the build
 
-1. Download `appdisabler-release.apk` from the 0.2.0 candidate artifact of build **43438847542**.
+1. Download `appdisabler-release.apk` from the **`appdisabler-0.3.0-release-candidate`** artifact
+   of the newest candidate build (I will send you the exact run link).
 2. Tap it and install over the existing app.
-3. Open it. The header still shows **323 / 271 / 52 / 15** and the ⛔ tile should still say **15**
-   if all your packages are still off.
+3. Open it. **About** must now say **v0.3.0** — that is how you know the new build replaced the old
+   one. If it still says 0.2.0, the install did not take and the tests below are meaningless.
+4. The header still shows **323 / 271 / 52 / 15** and the ⛔ tile should still say **15** if all
+   your packages are still off.
 
 If the ⛔ number changed, that is useful — write down what it says now.
 
@@ -95,7 +98,7 @@ every other result here.
 Copy this and fill it in:
 
 ```
-Build: 43438847542
+Build: (the run link I send you)
 ⛔ count before: ____   after restart: ____
 
 Test 1  HyperComm before force-stop: ______________________
