@@ -120,7 +120,9 @@ try {
     await page.goto(base);
     await page.route('**/apks/*.apk', route => route.fulfill({ body: 'synthetic-corrupt-fixture' }));
     let downloads = 0; page.on('download', () => downloads++);
-    await page.locator('.latest a[data-apk]').first().click();
+    // The newest row is now the Store, which reports into its own status box; use a row whose
+    // status element this test actually waits on.
+    await page.locator('.latest a[data-apk][data-status="st-latest"]').first().click();
     await page.waitForFunction(() => document.getElementById('st-latest').textContent.includes('File hash mismatch'));
     assert.equal(downloads, 0);
     assert.equal(new URL(page.url()).origin, new URL(base).origin);
@@ -130,7 +132,7 @@ try {
     const fixture = 'synthetic-not-an-apk';
     const hash = createHash('sha256').update(fixture).digest('hex');
     await page.route('**/apks/*.apk', route => route.fulfill({ body: fixture }));
-    const link = page.locator('.latest a[data-apk]').first();
+    const link = page.locator('.latest a[data-apk][data-status="st-latest"]').first();
     await link.evaluate((node, value) => { node.dataset.sha = value; }, hash);
     await link.click();
     await page.waitForFunction(() => document.getElementById('st-latest').textContent.includes('not security approval'));
