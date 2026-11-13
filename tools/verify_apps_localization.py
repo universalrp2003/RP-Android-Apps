@@ -271,6 +271,10 @@ RELEASE_TAG_PREFIX = {
     "secretmessage": "secret-message",
 }
 
+# The Store's next public version is built ahead of its release: 0.13 bundles the 15-app catalog
+# while the shared directory still advertises the public 0.12 until those bytes are published.
+STORE_CANDIDATE_VERSION = "0.13"
+
 
 def module_version(module: str) -> str:
     path = ROOT / module / "build.gradle.kts"
@@ -938,13 +942,15 @@ def verify_readme_app_table() -> int:
             "README.md lists %s more than once in its release table. A duplicated row tells the "
             "reader two different current versions for one app." % ", ".join(duplicates)
         )
-    # The legacy module-release gates above cover twelve core apps. DailyVault, then the Android TV
-    # Guard, are normal non-Store apps; Store has its own separate download section.
+    # The legacy module-release gates above cover twelve core apps. DailyVault, the Android TV Guard
+    # and the System App Disabler are normal non-Store apps; Store has its own download section.
     if "DailyVault (தினக்கணக்கு)" not in names or any("Tamilan Store" in n for n in names):
         raise ValueError("README must list DailyVault among regular apps, with Store separate.")
     if not any("Android TV Guard" in n for n in names):
         raise ValueError("README must list the Android TV Guard among the regular apps.")
-    expected = len(RELEASE_TAG_PREFIX) + 2
+    if not any("System App Disabler" in n for n in names):
+        raise ValueError("README must list the System App Disabler among the regular apps.")
+    expected = len(RELEASE_TAG_PREFIX) + 3
     if len(names) != expected:
         raise ValueError(
             "README.md release table has %d rows but %d apps have published releases. A missing row "
@@ -1011,11 +1017,16 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         # Published directory versions must match exact promoted releases.
         if gradle.parent.name == "tamilanstore":
-            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.12":
+            # 0.13 is the in-flight candidate (15-app catalog). It is not public yet, so the shared
+            # directory still advertises the public 0.12 to every other app until it ships.
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.13":
                 raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
-            # Stable0.11 is public from the exact signed/native-tested artifact; older assets stay immutable.
             if by_package.get(pkg.group(1)) != "0.12":
-                raise ValueError("Tamilan published directory must match the verified public stable0.11")
+                raise ValueError("Tamilan published directory must match the verified public store release")
+            if STORE_CANDIDATE_VERSION != ver.group(1):
+                raise ValueError(
+                    "the Store candidate version and this gate disagree; update STORE_CANDIDATE_VERSION"
+                )
             continue
         checked += 1
         if pkg.group(1) not in by_package:
@@ -1047,7 +1058,7 @@ def verify_newest_first(site: str, regular_ids: list[str]) -> None:
             r'<time datetime="([^"]+)" data-release-tag="([^"]+)"', site
         )
     )
-    if len(table) != 15 or len(set(table.values())) != 15:
+    if len(table) != 16 or len(set(table.values())) != 16:
         raise ValueError("Every release-table row needs its own ISO release timestamp.")
 
     stamps = {}
@@ -1074,8 +1085,8 @@ def verify_newest_first(site: str, regular_ids: list[str]) -> None:
 
     tbody = site.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
     row_order = re.findall(r'data-release-tag="([^"]+)"', tbody)
-    if len(row_order) != 15:
-        raise ValueError(f"The latest-releases table must name 15 releases, found {len(row_order)}.")
+    if len(row_order) != 16:
+        raise ValueError(f"The latest-releases table must name 16 releases, found {len(row_order)}.")
     if row_order != sorted(row_order, key=lambda tag: table[tag], reverse=True):
         raise ValueError(
             "The latest-releases table must list the newest release first. "

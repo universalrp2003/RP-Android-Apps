@@ -22,14 +22,14 @@ class WebsiteUsabilityTest(unittest.TestCase):
         cls.css = (ROOT / 'site/site-controls.css').read_text()
 
     def test_every_release_has_a_matching_real_timestamp(self):
-        self.assertEqual(dates.check(self.source, self.evidence), 15)
+        self.assertEqual(dates.check(self.source, self.evidence), 16)
         for value in self.evidence['releases'].values():
             self.assertIsNotNone(datetime.fromisoformat(value.replace('Z', '+00:00')).tzinfo)
 
     def test_every_card_states_its_own_release_date(self):
         dates_on_cards = [(m.group(1), m.group(2)) for m in re.finditer(
             r'<time class="card-date" datetime="([^"]+)" data-release-tag="([^"]+)">', self.source)]
-        self.assertEqual(len(dates_on_cards), 15)
+        self.assertEqual(len(dates_on_cards), 16)
         for value, tag in dates_on_cards:
             self.assertEqual(self.evidence['releases'][tag], value)
         # and the visible label is a readable date, not a raw timestamp
@@ -60,9 +60,13 @@ class WebsiteUsabilityTest(unittest.TestCase):
     def test_refresh_repairs_date_tag_after_a_pinned_release_changes(self):
         # Corrupt the table row's tag only; the download link still names the release, so
         # refresh can recover the date from real evidence.
-        head, table = self.source.split('<tbody>', 1)
-        row, tail = table.split('</tr>', 1)
-        stale = head + '<tbody>' + row.replace('data-release-tag="live-guard-v3.00"', 'data-release-tag="old-version"') + '</tr>' + tail
+        live = self.source.index('data-release-tag="live-guard-v3.00"')
+        row_start = self.source.rindex('<tr>', 0, live)
+        row_end = self.source.index('</tr>', live) + len('</tr>')
+        row = self.source[row_start:row_end]
+        stale = (self.source[:row_start]
+                 + row.replace('data-release-tag="live-guard-v3.00"', 'data-release-tag="old-version"')
+                 + self.source[row_end:])
         self.assertNotEqual(stale, self.source)
         source, evidence = dates.refresh(stale, lambda tag: {'tag_name': tag, 'published_at': self.evidence['releases'][tag]})
         self.assertEqual(source, self.source)
@@ -94,7 +98,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
             anchors.add(anchor)
             self.assertIn(f'href="#{anchor}"', self.source)
             self.assertRegex(card, r'data-apk="[^"]+"[^>]*aria-label="Download APK · [^"]+"')
-        self.assertEqual(len(anchors), 15)
+        self.assertEqual(len(anchors), 16)
 
     def test_card_order_is_newest_release_first(self):
         """The page promises the newest release first, so a stale order must fail the gate."""
@@ -104,28 +108,44 @@ class WebsiteUsabilityTest(unittest.TestCase):
         sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
         import verify_apps_localization as localization
         regular = re.search(
-            r'aria-label="14 regular Android applications">(.*?)</section>', site, re.S
+            r'aria-label="15 regular Android applications">(.*?)</section>', site, re.S
         )[1]
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
-        self.assertEqual(len(ids), 14)
+        self.assertEqual(len(ids), 15)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[0], 'app-live-guard')
-        self.assertEqual(ids[1], 'app-tv-guard')
+        self.assertEqual(ids[0], 'app-system-app-disabler')
+        self.assertEqual(ids[1], 'app-live-guard')
+        self.assertEqual(ids[2], 'app-tv-guard')
 
         # Moving the oldest card to the front must be rejected.
         oldest = site.index('        <!-- Secret Message -->')
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- Live Guard -->')
+        first = shuffled.index('        <!-- System App Disabler')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',
-            re.search(r'aria-label="14 regular Android applications">(.*?)</section>', shuffled, re.S)[1],
+            re.search(r'aria-label="15 regular Android applications">(.*?)</section>', shuffled, re.S)[1],
         )
         self.assertEqual(shuffled_ids[0], 'app-secret-message')
         with self.assertRaises(ValueError):
             localization.verify_newest_first(shuffled, shuffled_ids)
+        # And moving a middle card above the newest one must be rejected too.
+        pristine = site
+        middle = pristine.index('        <!-- Live Guard -->')
+        end = pristine.index('</article>', middle) + len('</article>')
+        block = pristine[middle:end]
+        reordered = pristine[:middle] + pristine[end:]
+        top = reordered.index('        <!-- System App Disabler')
+        reordered = reordered[:top] + block + '\n\n' + reordered[top:]
+        ids2 = re.findall(
+            r'<h2 id="(app-[^"]+)"',
+            re.search(r'aria-label="15 regular Android applications">(.*?)</section>', reordered, re.S)[1],
+        )
+        self.assertEqual(ids2[0], 'app-live-guard')
+        with self.assertRaises(ValueError):
+            localization.verify_newest_first(reordered, ids2)
 
     def test_features_are_progressive_local_and_accessibly_labelled(self):
         self.assertIn('<option value="both">', self.source)
@@ -141,8 +161,8 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertLess(self.source.index('</style>'), self.source.index('href="site-controls.css'))
 
     def test_current_release_disclosures_are_not_hidden_as_technical_history(self):
-        self.assertEqual(self.source.count('class="release-brief"'), 15)
-        self.assertEqual(self.source.count('class="testing-status"'), 15)
+        self.assertEqual(self.source.count('class="release-brief"'), 16)
+        self.assertEqual(self.source.count('class="testing-status"'), 16)
         self.assertIn('Earlier feature history', self.source)
         self.assertIn('this exact APK was not phone-tested before publication', self.source)
         self.assertIn('same-key', self.source)

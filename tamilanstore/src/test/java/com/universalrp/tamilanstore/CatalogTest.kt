@@ -25,9 +25,9 @@ class CatalogTest {
         }
         assertTrue(TransferFailure.INSTALLED_SIGNER.message(false).contains("Do not uninstall"))
     }
-    @Test fun thirteenOfficialApps() {
+    @Test fun fifteenOfficialApps() {
         val apps = Catalog.parse(catalog())
-        assertEquals(13, apps.size)
+        assertEquals(15, apps.size)
         assertTrue(apps.all { it.url.startsWith("https://github.com/universalrp2003/RP-Android-Apps/releases/download/") })
     }
     @Test fun foreignDownloadRejected() {

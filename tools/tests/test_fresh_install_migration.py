@@ -85,8 +85,8 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
             'launcher': ('1.7', '8', 'elderly-launcher-v1.7'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
-            # Stable Store0.9 published from the exact signed/native-tested candidate.
-            'tamilanstore': ('0.12', '14', 'tamilan-store-v0.12'),
+            # Store0.13 is the in-flight candidate: 15-app catalog, same stable key.
+            'tamilanstore': ('0.13', '15', 'tamilan-store-v0.13'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():

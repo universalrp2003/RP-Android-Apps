@@ -16,15 +16,15 @@ class StoreCertificateRegression(unittest.TestCase):
     def test_bundled_fallback_uses_verified_current_release_receipts(self):
         bundled = json.loads((ROOT/"tamilanstore/src/main/assets/catalog.json").read_text())
         published = json.loads((ROOT/"site/catalog-v2.json").read_text())
-        # The accepted Store0.9 APK is NOT rebuilt for a Live Guard or Oor-only release.
-        # Its verified offline fallback may lag; online catalogs use the new public receipt.
+        # The bundled fallback now carries the promoted public releases too: an offline Store
+        # install must offer the same archives the website pins, not a silent older build.
         old = {a['id']: a for a in bundled['apps']}
         live = {a['id']: a for a in published['apps']}
         self.assertEqual(set(old), set(live))
         for app in old:
-            if app not in ('liveguard', 'oorarivippu'): self.assertEqual(old[app], live[app], app)
+            self.assertEqual(old[app], live[app], app)
         self.assertEqual((old['liveguard']['version'], old['liveguard']['sha256']),
-            ('2.82', '3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5'))
+            ('3.00', '286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940'))
         receipt = json.loads((ROOT/'docs/live-guard-3.00-publication-receipt.json').read_text())
         self.assertEqual(live['liveguard']['version'], '3.00')
         self.assertEqual(live['liveguard']['sha256'], receipt['apk_sha256'])
@@ -32,7 +32,7 @@ class StoreCertificateRegression(unittest.TestCase):
         self.assertEqual(live['liveguard']['url'], receipt['url'])
         oor = json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())
         self.assertEqual((old['oorarivippu']['version'], old['oorarivippu']['sha256']),
-            ('1.1.10', '7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa'))
+            ('1.1.21', 'e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258'))
         self.assertEqual(live['oorarivippu']['version'], '1.1.21')
         for key, field in [('sha256','apk_sha256'),('size','bytes'),('url','url')]:
             self.assertEqual(live['oorarivippu'][key], oor[field])

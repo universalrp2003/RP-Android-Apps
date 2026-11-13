@@ -66,6 +66,7 @@ jobs:
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
               ("tvguard-v1.5.1", "Android-TV-Guard-v1.5.1.apk", 11797331, "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b"),
+              ("system-app-disabler-v0.1.0", "System-App-Disabler-v0.1.0.apk", 11635233, "48b94498d1740e6a7276b73d33c8508c65604d4e86d223d0df956db376291ae4"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -103,6 +104,8 @@ jobs:
           test -s site/apks/CleanSweep-v3.00.zip
           test -s site/apks/Android-TV-Guard-v1.5.1.apk
           test -s site/apks/Android-TV-Guard-v1.5.1.zip
+          test -s site/apks/System-App-Disabler-v0.1.0.apk
+          test -s site/apks/System-App-Disabler-v0.1.0.zip
           test -s site/apks/Tamilan-Store-v0.12.apk
           test -s site/apks/Tamilan-Store-v0.12.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk

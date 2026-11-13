@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-01",
+  "updated": "2026-11-13",
   "apps": [
     {
       "id": "smsguard",
@@ -144,6 +144,28 @@
       "size": 11712552,
       "sha256": "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55",
       "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5"
+    },
+    {
+      "id": "tvguard",
+      "name": "Android TV Guard",
+      "tamilName": "டிவி காவலன்",
+      "packageName": "com.universalrp.tvguard",
+      "version": "1.5.1",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.1/Android-TV-Guard-v1.5.1.apk",
+      "size": 11797331,
+      "sha256": "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.1"
+    },
+    {
+      "id": "appdisabler",
+      "name": "System App Disabler",
+      "tamilName": "சிஸ்டம் செயலி முடக்கி",
+      "packageName": "com.universalrp.appdisabler",
+      "version": "0.1.0",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.1.0/System-App-Disabler-v0.1.0.apk",
+      "size": 11635233,
+      "sha256": "48b94498d1740e6a7276b73d33c8508c65604d4e86d223d0df956db376291ae4",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.1.0"
     }
   ]
 }

@@ -53,18 +53,19 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
             legacy=json.loads((Path(directory)/'catalog.json').read_text())
             current=json.loads((Path(directory)/'catalog-v2.json').read_text())
         self.assertEqual(12,len(legacy['apps']))
-        self.assertEqual(13,len(current['apps']))
-        self.assertNotIn('dailyvault',{a['id'] for a in legacy['apps']})
-        self.assertIn('dailyvault',{a['id'] for a in current['apps']})
+        self.assertEqual(15,len(current['apps']))
+        for added in ('dailyvault','tvguard','appdisabler'):
+            self.assertNotIn(added,{a['id'] for a in legacy['apps']})
+            self.assertIn(added,{a['id'] for a in current['apps']})
         # Served feeds advance from public releases without changing the APK's bundled fallback.
         served_current=json.loads((ROOT/'site/catalog-v2.json').read_text())
         served_legacy=json.loads((ROOT/'site/catalog.json').read_text())
         self.assertEqual(12,len(served_legacy['apps']))
-        self.assertEqual(13,len(served_current['apps']))
+        self.assertEqual(15,len(served_current['apps']))
         # The deployed generator preserves the bundled snapshot metadata; publication
         # timestamps are independently recorded in release-dates.json.
         self.assertEqual(snapshot['updated'],served_current['updated'])
-        self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id']!='dailyvault']))
+        self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id'] not in ('dailyvault','tvguard','appdisabler')]))
         self.assertEqual({a['id'] for a in snapshot['apps']},{a['id'] for a in served_current['apps']})
         bundled={a['id']:a for a in snapshot['apps']}
         for app in served_current['apps']:

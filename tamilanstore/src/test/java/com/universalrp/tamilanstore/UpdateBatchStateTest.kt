@@ -49,13 +49,13 @@ class UpdateBatchStateTest {
         assertEquals(BatchStage.IDLE, UpdateBatchState().stage)
     }
     @Test fun allThirteenCanCompleteAndAlreadyUpdatedItemsNeedNoPrompt() {
-        var state = UpdateBatchState.start(List(13) { "app$it" })
-        repeat(13) { index ->
+        var state = UpdateBatchState.start(List(15) { "app$it" })
+        repeat(15) { index ->
             assertEquals(index, state.index)
             state = if (index % 2 == 0) state.alreadyUpdated() else state.ready().handedOff().returned(true)
         }
         assertEquals(BatchStage.DONE, state.stage)
-        assertEquals(13, state.index)
+        assertEquals(15, state.index)
     }
     @Test fun installerActivityResultIsNotProofAndSameNameOldCodeCannotAdvance() {
         assertFalse(BatchInstallEvidence.confirmed(null, "0.5", 5))

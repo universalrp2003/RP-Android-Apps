@@ -96,6 +96,7 @@ jobs:
             appdisabler-build.log
             appdisabler/app/build/reports/
             ci-build-failure.md
+          retention-days: 14
 
       - name: Upload candidate APK on success
         if: success()
@@ -105,7 +106,7 @@ jobs:
           path: |
             appdisabler/app/build/outputs/apk/debug/*.apk
             appdisabler/app/build/test-results/
-
+          retention-days: 14
       # The debuggable debug variant is only for a quick owner install. Anything published
       # publicly must be the release variant: same source, release key, not debuggable.
       - name: Upload non-debuggable release candidate on success
@@ -114,3 +115,4 @@ jobs:
         with:
           name: appdisabler-0.1.0-release-candidate
           path: appdisabler/app/build/outputs/apk/release/*.apk
+          retention-days: 14
