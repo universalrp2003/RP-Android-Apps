@@ -1,0 +1,40 @@
+name: Report the owner-tested Disabler 0.2.0 APK digest (no publication)
+
+# The APK's own SHA-256 can only be read inside a runner: the artifact blob host is unreachable
+# from the authoring sandbox. This workflow reads the pinned candidate, writes the digest to docs/
+# and pushes it, so a publisher has an exact pin. It creates no release, tag or asset.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Probe the pinned candidate and record its APK digest
+        run: |
+          set -euo pipefail
+          python3 appdisabler/tools/probe_candidate_digest.py 2>&1 | tee probe.log
+      - name: Commit the digest
+        run: |
+          set -e
+          git config user.name "arena-agent"
+          git config user.email "arena-agent@users.noreply.github.com"
+          git add docs/appdisabler-0.2.0-candidate-digest.md
+          git commit -m "Record the owner-tested System App Disabler 0.2.0 APK digest" || echo "nothing to commit"
+          git push origin HEAD:${{ github.ref_name }}
