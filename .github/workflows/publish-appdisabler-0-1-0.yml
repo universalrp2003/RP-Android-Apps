@@ -1,0 +1,44 @@
+name: Publish owner-tested System App Disabler 0.1.0 (exact tested bytes only)
+
+on:
+  push:
+    branches: ["arena/745a8cb3-rp-android-apps"]
+    paths: ["appdisabler/tools/publish_appdisabler_0_1_0.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-exact-appdisabler-0-1-0
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-java@v7
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Signing gate before touching a release
+        run: |
+          python3 tools/verify_release_signing_policy.py --fresh-install
+          python3 -m py_compile appdisabler/tools/publish_appdisabler_0_1_0.py
+      - name: Publish only the pinned owner-tested APK, no rebuild
+        run: python3 appdisabler/tools/publish_appdisabler_0_1_0.py
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: appdisabler-0.1.0-publication-receipt
+          path: ${{ runner.temp }}/appdisabler-publication-receipt.json
+          retention-days: 30
+          if-no-files-found: warn
