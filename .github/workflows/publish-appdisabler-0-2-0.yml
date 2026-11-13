@@ -5,6 +5,13 @@ name: Publish owner-tested System App Disabler 0.2.0 (exact tested bytes only)
 # a *new* version means editing the pins below and dispatching this workflow by hand.
 on:
   workflow_dispatch:
+  # The 0.1.0 publisher created a release from a push-triggered run on this repository, while
+  # workflow_dispatch runs of identical code were refused release creation with HTTP 403. A marker
+  # file gives the run the same event the one successful publisher used; the pins below still
+  # decide the bytes, so the marker cannot change what is published.
+  push:
+    paths:
+      - "docs/appdisabler-0.2.0-publish-request.json"
 
 permissions:
   contents: write

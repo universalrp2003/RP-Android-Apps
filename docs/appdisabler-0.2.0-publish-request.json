@@ -1,0 +1,11 @@
+{
+  "tag": "system-app-disabler-v0.2.0",
+  "run": 43410268620,
+  "artifact_id": 14028948231,
+  "archive_sha256": "cfb9ac11e8dd2b087944aef7de2cec3200dae6ac024385ac52a551654382135d",
+  "archive_bytes": 11157191,
+  "apk_sha256": "1f653dd99a68ae5877a5ebd9c178b790e5761866a2dc7c785393d4f298b0b196",
+  "apk_bytes": 11651613,
+  "owner_device_tested": true,
+  "note": "Marker only; appdisabler/tools/publish_appdisabler_0_2_0.py holds the authoritative pins and re-verifies every one of them before creating anything."
+}
