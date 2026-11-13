@@ -107,9 +107,12 @@ try:
     time.sleep(5)
     package_info = adb('shell', 'dumpsys', 'package', 'moe.shizuku.privileged.api')
     (OUT / 'shizuku-package.txt').write_text(package_info)
-    match = re.search(r'nativeLibraryDir=(\S+)', package_info)
-    assert match, 'Could not determine Shizuku nativeLibraryDir'
-    starter = match.group(1) + '/libshizuku.so'
+    # The official ADB command executes the starter from the installed app's native lib directory.
+    # Android 15/16 dumpsys does not expose ApplicationInfo.nativeLibraryDir by that name.
+    path_lines = adb('shell', 'pm', 'path', 'moe.shizuku.privileged.api').splitlines()
+    apk_path = next(line.removeprefix('package:') for line in path_lines if line.endswith('/base.apk'))
+    starter = apk_path.rsplit('/', 1)[0] + '/lib/x86_64/libshizuku.so'
+    print(adb('shell', 'ls', '-l', starter))
     print('Shizuku starter:', starter, flush=True)
     print(cmd('timeout', '45', 'adb', 'shell', starter))
     print(adb('shell', 'am', 'start', '-W', '-n', DISABLER + '/.ui.MainActivity'))
