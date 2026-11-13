@@ -126,7 +126,7 @@ jobs:
           APK=$(ls appdisabler/app/build/outputs/apk/release/*.apk | head -1)
           mkdir -p docs
           {
-            echo "# System App Disabler candidate digests"
+            echo "# System App Disabler latest build digest (NOT the owner-tested pin)"
             echo
             echo "Written by \`.github/workflows/appdisabler-candidate.yml\`; do not edit by hand."
             echo
@@ -142,8 +142,8 @@ jobs:
             echo
             echo "A publisher must pin \`apk_sha256\` above. \`archive_sha256\` is the ZIP GitHub"
             echo "stores for the artifact and is a different value."
-          } > docs/appdisabler-0.2.0-candidate-digest.md
-          cat docs/appdisabler-0.2.0-candidate-digest.md
+          } > docs/appdisabler-candidate-build-digest.md
+          cat docs/appdisabler-candidate-build-digest.md
 
       - name: Commit the digest for the publisher to pin
         if: success()
@@ -151,6 +151,6 @@ jobs:
           set -e
           git config user.name "arena-agent"
           git config user.email "arena-agent@users.noreply.github.com"
-          git add docs/appdisabler-0.2.0-candidate-digest.md
+          git add docs/appdisabler-candidate-build-digest.md
           git commit -m "CI: record System App Disabler 0.2.0 release APK digest (run ${GITHUB_RUN_ID}) [skip ci]" || echo "nothing to commit"
           git push origin HEAD:${GITHUB_REF_NAME} || true

@@ -277,3 +277,43 @@ class OwnerUiFeedbackTest(unittest.TestCase):
     def test_status_and_detail_labels_are_english_literals(self):
         self.assertIn('"● running now"', self.ui)
         self.assertIn('"Blocked"', self.ui)
+
+
+class PublisherPinTest(unittest.TestCase):
+    """The publisher must pin the bytes the owner ran, not a rebuild that happened to be newer.
+
+    A builder started recording a digest into the same path the probe uses, and its rebuild had a
+    different size — the exact trap PUBLISHING.md forbids. The record now names the source run and
+    the publisher's pins must match it.
+    """
+
+    PUBLISHER = ROOT / 'appdisabler/tools/publish_appdisabler_0_2_0.py'
+    RECORD = ROOT / 'docs/appdisabler-0.2.0-candidate-digest.md'
+
+    def test_publisher_pins_match_the_recorded_owner_tested_artifact(self):
+        record = self.RECORD.read_text()
+        source = self.PUBLISHER.read_text()
+        run = re.search(r'\| run \| (\d+) \|', record).group(1)
+        artifact = re.search(r'\(id (\d+)\)', record).group(1)
+        apk_sha = re.search(r'\| apk sha256 \| `([a-f0-9]{64})` \|', record).group(1)
+        apk_bytes = re.search(r'\| apk bytes \| (\d+) \|', record).group(1)
+        self.assertIn(f'RUN_ID = {run}', source)
+        self.assertIn(f'ARTIFACT_ID = {artifact}', source)
+        self.assertIn(f'APK_SHA = "{apk_sha}"', source)
+        self.assertIn(f'APK_BYTES = {apk_bytes}', source)
+
+    def test_the_tested_record_says_nothing_was_published_to_make_it(self):
+        self.assertIn('Nothing was published to produce this file', self.RECORD.read_text())
+
+    def test_a_rebuild_digest_is_written_somewhere_else(self):
+        # docs/appdisabler-0.2.0-candidate-digest.md is the pin; the builder must not overwrite it.
+        builder = (ROOT / '.github/workflows/appdisabler-candidate.yml').read_text()
+        self.assertNotIn('docs/appdisabler-0.2.0-candidate-digest.md', builder)
+        self.assertIn('docs/appdisabler-candidate-build-digest.md', builder)
+
+    def test_publisher_refuses_a_version_the_record_does_not_name(self):
+        record = self.RECORD.read_text()
+        source = self.PUBLISHER.read_text()
+        self.assertIn("versionName | `0.2.0`", record)
+        self.assertIn("versionCode | `2`", record)
+        self.assertIn("versionCode='2' versionName='0.2.0'", source)
