@@ -161,3 +161,66 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle).group(1)
         self.assertEqual(name, '0.2.0', 'this test was written for the 0.2.0 candidate')
         self.assertEqual(code, 2)
+
+
+class BootloopDetectionTest(unittest.TestCase):
+    """Red rows must come from the database's own words, and only from real warnings.
+
+    The detector is reimplemented here against the same JSON asset so a change to the Kotlin regex
+    that starts blocking safe apps (or stops blocking htmlviewer) fails this suite.
+    """
+
+    NEGATION = re.compile(r"\b(no|not|never|does not|doesn't)\b(?:(?!\bbut\b)[^.!?]){0,40}\bboot-?\s?loop", re.I)
+    SECOND_HAND = re.compile(r"(apparently|some people said|others said|may|might|probably|would|i didn't test)", re.I)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.db = json.loads(
+            (ROOT / 'appdisabler/app/src/main/assets/uad_lists.json').read_text()
+        )
+
+    @classmethod
+    def risk(cls, description):
+        if not description.strip():
+            return False
+        sentences = re.split(r'(?<=[.!?])\s+', description)
+        if not any('bootloop' in s.lower() or 'boot loop' in s.lower() for s in sentences):
+            return False
+        negated = any(
+            'bootloop' in s.lower() and cls.NEGATION.search(s) and not cls.SECOND_HAND.search(s)
+            for s in sentences
+        )
+        return not negated
+
+    def test_a_caution_rated_package_with_a_bootloop_warning_is_caught(self):
+        # The bug this guards: htmlviewer is CAUTION, so the category alone lets it through on a
+        # HyperOS phone, which is exactly the MIUI family the warning names.
+        htmlviewer = self.db['com.android.htmlviewer']
+        self.assertEqual(htmlviewer['category'], 'CAUTION')
+        self.assertTrue(self.risk(htmlviewer['description']))
+
+    def test_reassurances_do_not_read_as_warnings(self):
+        for package in ('com.motorola.coresettingsext', 'com.miui.global.packageinstaller'):
+            self.assertFalse(self.risk(self.db[package]['description']),
+                             f'{package} explicitly says it does not bootloop')
+
+    def test_a_warning_after_a_contrasting_clause_still_counts(self):
+        # "you can still install APKs without it … but … could bootloop your device if removed"
+        self.assertTrue(self.risk(self.db['com.google.android.packageinstaller']['description']))
+
+    def test_the_two_packages_the_owner_turned_off_are_not_bootloop_risks(self):
+        for package in ('com.milink.service', 'com.android.printspooler'):
+            self.assertFalse(self.risk(self.db[package]['description']))
+
+    def test_the_detector_fires_on_a_meaningful_number_of_entries(self):
+        flagged = [k for k, v in self.db.items() if self.risk(v['description'])]
+        self.assertGreaterEqual(len(flagged), 20)
+        self.assertLess(len(flagged), 60, 'a wild detector would block most of the database')
+
+    def test_every_flagged_band_and_severity_reaches_the_database_class(self):
+        source = (ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/UadDatabase.kt').read_text()
+        self.assertIn('claimsBootloopRisk', source)
+        self.assertIn('bootloopRisk = claimsBootloopRisk(', source)
+        manager = (ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt').read_text()
+        self.assertIn('entry?.bootloopRisk == true', manager,
+                      'a bootloop warning must refuse the disable, not just colour the row')

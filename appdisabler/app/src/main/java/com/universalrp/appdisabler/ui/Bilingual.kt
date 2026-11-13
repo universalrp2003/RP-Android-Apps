@@ -164,6 +164,14 @@ object T {
     val rowSuspended = Bi("● Suspended — stopped, tap Enable to restore", "● இடைநிறுத்தப்பட்டது — நிறுத்தப்பட்டுள்ளது, மீட்ட Enable தட்டவும்")
     val rowDisabled = Bi("● Disabled — tap Enable to restore", "● முடக்கப்பட்டது — மீட்ட Enable தட்டவும்")
     val rowBlocked = Bi("⊘ Never disable — blocked", "⊘ முடக்கக் கூடாது — தடுக்கப்பட்டது")
+    val rowBootloop = Bi(
+        "⚠ Not allowed — the database says removal can stop this phone booting",
+        "⚠ அனுமதி இல்லை — நீக்கினால் போன் பூட் ஆகாமல் போகலாம் என தரவுத்தளம் கூறுகிறது"
+    )
+    // ---- colour key: green safe, amber asks first, red never ----
+    val legendSafe = Bi("Safe", "பாதுகாப்பு")
+    val legendCaution = Bi("Asks first", "முதலில் கேட்கும்")
+    val legendNever = Bi("Never", "ஒருபோதும்")
     val toastDisabled = Bi("Disabled %1\$s", "%1\$s முடக்கப்பட்டது")
     val toastEnabled = Bi("Enabled %1\$s", "%1\$s இயக்கப்பட்டது")
     val toastSuspended = Bi("Suspended %1\$s (this device blocks disable)", "%1\$s இடைநிறுத்தப்பட்டது (இந்த சாதனம் முடக்கலைத் தடுக்கிறது)")
@@ -196,6 +204,10 @@ object T {
     val catCriticalBody = Bi(
         "Never disable — system/core package. Blocked by this app.",
         "ஒருபோதும் முடக்க வேண்டாம் — சிஸ்டம் முக்கிய பேக்கேஜ். இந்த ஆப் தடுக்கிறது."
+    )
+    val catBootloopBody = Bi(
+        "The app database says removing or disabling this can leave the phone unable to boot, so this app will not turn it off. Nothing here uninstalls anything, and a phone that will not boot cannot be fixed from inside the app.",
+        "இதை நீக்கினால் அல்லது முடக்கினால் போன் பூட் ஆகாமல் போகலாம் என தரவுத்தளம் கூறுகிறது; எனவே இந்த ஆப் இதை முடக்காது. இங்கு எதுவும் நீக்கப்படுவதில்லை, மேலும் பூட் ஆகாத போனை இந்த ஆப்பிலிருந்து சரிசெய்ய முடியாது."
     )
     val catUnlistedBody = Bi(
         "Not in the UAD list — check Google/AI before disabling.",

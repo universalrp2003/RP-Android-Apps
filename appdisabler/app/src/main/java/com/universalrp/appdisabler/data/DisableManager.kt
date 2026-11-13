@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.provider.Settings
 import android.util.Log
+import com.universalrp.appdisabler.ui.Bi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
@@ -116,6 +117,7 @@ object DisableManager {
                 installer = installer,
                 category = uad?.category ?: if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE,
                 description = uad?.description,
+                bootloopRisk = uad?.bootloopRisk == true,
                 isSuspended = pkg.packageName in suspended,
             )
         }.sortedWith(compareBy<AppInfo> { it.category == DisableCategory.CRITICAL }.thenBy { it.label.lowercase() })
@@ -198,9 +200,28 @@ object DisableManager {
      *
      * Returns the blocking reason, or null when the package is fine to turn off.
      */
-    private fun blockingReason(context: Context, packageName: String): String? {
-        if (UadDatabase.lookup(packageName, context)?.category == DisableCategory.CRITICAL) {
-            return "Protected package — never disable"
+    private fun blockingReason(context: Context, packageName: String): String? =
+        blockingReasonBi(context, packageName)?.en
+
+    /** Same decision, both languages: the UI must explain the refusal in the user's language. */
+    private fun blockingReasonBi(context: Context, packageName: String): Bi? {
+        val entry = UadDatabase.lookup(packageName, context)
+        if (entry?.category == DisableCategory.CRITICAL) {
+            return Bi(
+                "This app is on the database's never-disable list. Turning it off can break the phone.",
+                "இந்த ஆப் 'ஒருபோதும் முடக்கக் கூடாது' பட்டியலில் உள்ளது. முடக்கினால் போன் பழுதாகலாம்."
+            )
+        }
+        // The database text itself warns this can leave the phone unable to boot. The category alone
+        // is not enough: `com.android.htmlviewer` is only CAUTION, yet its text says removing it
+        // bootloops MIUI 12.5.4+ phones, which includes HyperOS.
+        if (entry?.bootloopRisk == true) {
+            return Bi(
+                "The app database warns that removing this can stop this phone from booting " +
+                    "(its text mentions a bootloop). It stays listed but cannot be turned off here.",
+                "இதை நீக்கினால் போன் பூட் ஆகாமல் போகலாம் என தரவுத்தளம் எச்சரிக்கிறது " +
+                    "(அதன் விளக்கத்தில் 'bootloop' உள்ளது). பட்டியலில் தெரியும், ஆனால் இங்கு முடக்க முடியாது."
+            )
         }
         // The keyboard currently in use: losing it means losing the ability to type anywhere.
         val activeIme = try {
@@ -208,8 +229,12 @@ object DisableManager {
         } catch (_: Exception) { null }
         val activeImePkg = activeIme?.substringBefore('/')?.takeIf { it.isNotBlank() }
         if (activeImePkg != null && activeImePkg == packageName) {
-            return "This is your current keyboard — turning it off would leave you unable to type. " +
-                "Switch to another keyboard first, then try again."
+            return Bi(
+                "This is your current keyboard — turning it off would leave you unable to type. " +
+                    "Choose another keyboard first, then try again.",
+                "இது நீங்கள் இப்போது பயன்படுத்தும் விசைப்பலகை — முடக்கினால் எழுத முடியாது. " +
+                    "முதலில் வேறு விசைப்பலகையைத் தேர்ந்தெடுத்து, பிறகு முயற்சிக்கவும்."
+            )
         }
         // An enabled accessibility service (TalkBack, switch access) is how some users use the phone.
         val enabledServices = try {
@@ -219,8 +244,12 @@ object DisableManager {
             )
         } catch (_: Exception) { null }
         if (enabledServices?.split(':')?.any { it.substringBefore('/').equals(packageName, true) } == true) {
-            return "An accessibility service from this app is switched on — turning it off would remove " +
-                "the way this phone is being used. Turn the service off in Accessibility settings first."
+            return Bi(
+                "An accessibility service from this app is switched on — turning it off would remove " +
+                    "the way this phone is being used. Switch the service off in Accessibility settings first.",
+                "இந்த ஆப்பின் அணுகல்தன்மை சேவை இயங்குகிறது — முடக்கினால் இந்த போனை பயன்படுத்தும் " +
+                    "வழி பறிபோகும். முதலில் அணுகல்தன்மை அமைப்புகளில் சேவையை நிறுத்தவும்."
+            )
         }
         return null
     }
@@ -258,6 +287,10 @@ object DisableManager {
     /** Read-only: why this package must not be turned off right now (null when it is fine). */
     fun disableBlockedReason(context: Context, packageName: String): String? =
         blockingReason(context, packageName)
+
+    /** Same reason, both languages, for the warning dialog. */
+    fun disableBlockedReasonBi(context: Context, packageName: String): Bi? =
+        blockingReasonBi(context, packageName)
 
     /**
      * Process names with a live process right now, from the shell the app already runs.

@@ -335,6 +335,21 @@ fun ShizukuSetupWindow(
     }
 }
 
+/** One dot + label in the colour key under the filters. */
+@Composable
+private fun ColourKey(colour: androidx.compose.ui.graphics.Color, text: Bi) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(colour)
+        )
+        Spacer(Modifier.width(4.dp))
+        BiText(text, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp))
+    }
+}
+
 /**
  * One number in the header strip: symbol on top, count under it, label under that.
  * `active` draws the tile as selected so the strip doubles as the "what am I looking at" indicator.
@@ -586,6 +601,17 @@ fun AppsListWindow(
             FilterChip(selected = filter == DisableCategory.CRITICAL, onClick = { filter = DisableCategory.CRITICAL }, label = { Text(biStatic(T.fNever, taFirst), style = MaterialTheme.typography.labelSmall) })
         }
 
+        // ---- colour key: green is safe, amber asks first, red is never allowed ----
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ColourKey(MaterialTheme.colorScheme.primary, T.legendSafe)
+            ColourKey(MaterialTheme.colorScheme.tertiary, T.legendCaution)
+            ColourKey(MaterialTheme.colorScheme.error, T.legendNever)
+        }
+
         Text(
             "${biStatic(T.statsApps, taFirst).format(filtered.size)}  •  " +
                 if (taFirst) "தட்டினால் தகவல்" else "tap a card for info",
@@ -605,7 +631,7 @@ fun AppsListWindow(
                         app = app,
                         taFirst = taFirst,
                         onDisable = {
-                            if (app.category == DisableCategory.CRITICAL) {
+                            if (app.category == DisableCategory.CRITICAL || app.bootloopRisk) {
                                 Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
                             if (!shizukuLive) {
@@ -635,7 +661,8 @@ fun AppsListWindow(
     }
 
     blockedApp?.let { app ->
-        val reason = DisableManager.disableBlockedReason(context, app.packageName) ?: ""
+        val reason = DisableManager.disableBlockedReasonBi(context, app.packageName)
+            ?: Bi("", "")
         AlertDialog(
             onDismissRequest = { blockedApp = null },
             title = { Text(biStatic(T.blockedTitle, taFirst)) },
@@ -643,7 +670,7 @@ fun AppsListWindow(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(app.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(reason, style = MaterialTheme.typography.bodySmall)
+                    BiText(reason, style = MaterialTheme.typography.bodySmall)
                     Text(
                         biStatic(T.blockedRecovery, taFirst),
                         style = MaterialTheme.typography.labelSmall,
@@ -675,7 +702,7 @@ fun AppsListWindow(
             onDismiss = { infoApp = null },
             onDisable = {
                 infoApp = null
-                if (app.category == DisableCategory.CRITICAL) {
+                if (app.category == DisableCategory.CRITICAL || app.bootloopRisk) {
                     Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show()
                 } else if (!shizukuLive) {
                     Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
@@ -701,22 +728,26 @@ fun AppDetailsDialog(
     onDisable: () -> Unit
 ) {
     val context = LocalContext.current
-    val categoryColor = when (app.category) {
-        DisableCategory.SAFE -> MaterialTheme.colorScheme.primary
-        DisableCategory.CAUTION -> MaterialTheme.colorScheme.tertiary
-        DisableCategory.CRITICAL -> MaterialTheme.colorScheme.error
+    // A bootloop warning always outranks the category: htmlviewer is only "Caution", but its text
+    // says removing it stops MIUI/HyperOS phones from booting.
+    val categoryColor = when {
+        app.bootloopRisk || app.category == DisableCategory.CRITICAL -> MaterialTheme.colorScheme.error
+        app.category == DisableCategory.CAUTION -> MaterialTheme.colorScheme.tertiary
+        app.category == DisableCategory.SAFE -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
-    val catLabel = when (app.category) {
-        DisableCategory.SAFE -> Bi("Safe to disable", "முடக்கலாம்")
-        DisableCategory.CAUTION -> Bi("Caution", "கவனம்")
-        DisableCategory.CRITICAL -> Bi("Never disable", "முடக்கக் கூடாது")
+    val catLabel = when {
+        app.bootloopRisk -> Bi("Do not remove — can stop the phone booting", "நீக்க வேண்டாம் — போன் பூட் ஆகாமல் போகலாம்")
+        app.category == DisableCategory.CRITICAL -> Bi("Never disable", "முடக்கக் கூடாது")
+        app.category == DisableCategory.CAUTION -> Bi("Caution", "கவனம்")
+        app.category == DisableCategory.SAFE -> Bi("Safe to disable", "முடக்கலாம்")
         else -> Bi("Not listed", "பட்டியலில் இல்லை")
     }
-    val catBody = when (app.category) {
-        DisableCategory.SAFE -> T.catSafeBody
-        DisableCategory.CAUTION -> T.catCautionBody
-        DisableCategory.CRITICAL -> T.catCriticalBody
+    val catBody = when {
+        app.bootloopRisk -> T.catBootloopBody
+        app.category == DisableCategory.CRITICAL -> T.catCriticalBody
+        app.category == DisableCategory.CAUTION -> T.catCautionBody
+        app.category == DisableCategory.SAFE -> T.catSafeBody
         else -> T.catUnlistedBody
     }
     val happen = when {
@@ -807,15 +838,19 @@ fun AppRow(app: AppInfo, taFirst: Boolean, onDisable: () -> Unit, onOpenDetails:
                     app.description?.take(90)?.let { it + if ((app.description?.length ?: 0) > 90) "…" else "" }
                         ?: app.category.label(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = when (app.category) {
-                        DisableCategory.SAFE -> MaterialTheme.colorScheme.primary
-                        DisableCategory.CAUTION -> MaterialTheme.colorScheme.tertiary
-                        DisableCategory.CRITICAL -> MaterialTheme.colorScheme.error
+                    // Green = safe to turn off, amber = asks first, red = refused.
+                    color = when {
+                        app.bootloopRisk -> MaterialTheme.colorScheme.error
+                        app.category == DisableCategory.CRITICAL -> MaterialTheme.colorScheme.error
+                        app.category == DisableCategory.CAUTION -> MaterialTheme.colorScheme.tertiary
+                        app.category == DisableCategory.SAFE -> MaterialTheme.colorScheme.primary
                         else -> MaterialTheme.colorScheme.onSurfaceVariant
                     },
                     maxLines = 2
                 )
                 val status = when {
+                    // Why it cannot be turned off matters more than whether it is already off.
+                    app.bootloopRisk -> T.rowBootloop
                     app.isSuspended -> T.rowSuspended
                     !app.isEnabled -> T.rowDisabled
                     app.category == DisableCategory.CRITICAL -> T.rowBlocked
@@ -826,7 +861,7 @@ fun AppRow(app: AppInfo, taFirst: Boolean, onDisable: () -> Unit, onOpenDetails:
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.End) {
                 FilledTonalButton(
                     onClick = onDisable,
-                    enabled = app.category != DisableCategory.CRITICAL,
+                    enabled = app.category != DisableCategory.CRITICAL && !app.bootloopRisk,
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                 ) {
                     Text(
