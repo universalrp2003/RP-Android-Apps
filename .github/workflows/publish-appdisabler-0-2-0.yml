@@ -17,9 +17,9 @@ permissions:
   contents: write
   actions: read
 
-concurrency:
-  group: publish-exact-appdisabler-0-2-0
-  cancel-in-progress: false
+# No concurrency group: the publishers that created releases in this repository today have none,
+# and a group that holds another run in this workflow is the last structural difference left.
+
 
 jobs:
   publish:
