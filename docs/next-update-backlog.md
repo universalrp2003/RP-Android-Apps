@@ -38,3 +38,15 @@ Bundle these into the next Store release; do not start a Store-only build just f
       off branch is now tested before the running branch in `MainActivity`), with a test that asserts
       that order. It needs a Disabler rebuild to reach the phone: disabling leaves the process alive,
       so `ps` still lists the package. Bundle it with the update-check work above in 0.3.0.
+- [ ] **The Disabler cannot tell "disabled" from "suspended", and its Enable button trusted a local
+      note.** Owner report 13 November 2026: a turned-off app came straight back after force-close,
+      "never stopped". Cause: on HyperOS `pm disable-user` is refused for system packages, so the app
+      falls back to `pm suspend`, which stops the app from starting but leaves any live process
+      alone — force-closing it does nothing. The row then still read its own SharedPreferences note
+      rather than asking the phone. Source is now fixed: `isActuallyOff()` checks the framework
+      (a disabled package yields no `ApplicationInfo`) and `pm list packages -e`, the Enable/Disable
+      decision comes from that, a suspend that reports exit 0 but leaves the package enabled is now
+      a reported failure instead of a silent success, and the row has a third state
+      "● stopped — no process, starts on next launch" from `FLAG_STOPPED`. Needs 0.3.0 to reach the
+      phone. The diagnostic ("Check Shizuku shell") now prints enabled/disabled list membership plus
+      `dumpsys package` flags for HyperComm so the next report is evidence, not a guess.

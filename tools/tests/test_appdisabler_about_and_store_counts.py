@@ -232,8 +232,11 @@ class OwnerUiFeedbackTest(unittest.TestCase):
     Each assertion pins one of the five requests so a later layout tweak cannot quietly undo it.
     """
 
+    MANAGER = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt'
+
     def setUp(self):
         self.ui = ABOUT.read_text()
+        self.manager = self.MANAGER.read_text()
 
     def test_rows_carry_a_green_amber_red_rating_not_a_theme_role(self):
         # Theme primary in this app is lavender, which is why "Safe to disable" read as body text.
@@ -285,11 +288,30 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         therefore ask "is it off" before "does it have a process", not the other way round. This
         asserts the order in the source, because that order IS the behaviour.
         """
-        off = self.ui.index('app.isSuspended || !app.isEnabled -> "● off — tap Enable to restore"')
+        off = self.ui.index('offState -> "● off — tap Enable to restore"')
         running = self.ui.index('-> "● running now"')
+        stopped = self.ui.index('app.isStopped -> "● stopped — no process, starts on next launch"')
         self.assertLess(off, running,
                         'the off branch must be tested before the running branch, or a disabled '
                         'app reports "running now" instead of "off"')
+        self.assertLess(running, stopped,
+                        'a stopped package is only "stopped" when it is not off and not running')
+
+    def test_off_is_decided_by_the_phone_not_by_the_local_note(self):
+        """Owner: "if i force close it's again running, never stopped" (13 Nov 2026).
+
+        The row used to read its own SharedPreferences note to decide whether a package was off.
+        That note is written when a disable is attempted, so it says nothing about what the phone
+        actually did, and it goes stale the moment the app's data is cleared or a package is
+        re-enabled elsewhere. The framework's answer has to come first.
+        """
+        manager = self.manager
+        self.assertIn('suspend fun isActuallyOff(', manager)
+        self.assertIn('getApplicationInfo(pkg, 0)', manager)
+        self.assertIn("pm\", \"list\", \"packages\", \"-e\"", manager)
+        self.assertIn('DisableManager.isActuallyOff(context, app.packageName, app.isEnabled)', self.ui)
+        # A silent no-op must never be reported as a successful disable.
+        self.assertIn('Suspend reported success but the package is still enabled', manager)
 
 
 class PublisherPinTest(unittest.TestCase):

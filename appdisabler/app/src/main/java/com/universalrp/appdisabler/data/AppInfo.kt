@@ -13,6 +13,11 @@ data class AppInfo(
     val bootloopRisk: Boolean = false,
     /** Suspended via pm suspend (HyperOS fallback when disable is blocked). Tracked locally. */
     val isSuspended: Boolean = false,
+    /**
+     * The framework says this package is stopped — no process, and none may start until someone
+     * launches it again by hand. A force-stop sets this; a force-closed app that restarts does not.
+     */
+    val isStopped: Boolean = false,
 )
 
 enum class DisableCategory {
