@@ -48,8 +48,7 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
-            set -o pipefail
-            bash tools/appdisabler-emulator-candidate-smoke.sh "$RUNNER_TEMP/candidate/appdisabler-release.apk" 9c59908b340a0d7ddc5d1033c26a20b60c5bd1b7d72a08276c4add75539c6b7c "$RUNNER_TEMP/emulator-evidence" 2>&1 | tee "$RUNNER_TEMP/emulator-smoke.log"
+            bash -o pipefail -c 'bash tools/appdisabler-emulator-candidate-smoke.sh "$RUNNER_TEMP/candidate/appdisabler-release.apk" 9c59908b340a0d7ddc5d1033c26a20b60c5bd1b7d72a08276c4add75539c6b7c "$RUNNER_TEMP/emulator-evidence" 2>&1 | tee "$RUNNER_TEMP/emulator-smoke.log"'
       - name: Surface smoke diagnostic
         if: failure()
         run: |
