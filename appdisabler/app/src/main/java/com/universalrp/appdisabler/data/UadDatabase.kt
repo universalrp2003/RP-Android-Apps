@@ -16,7 +16,48 @@ data class UadEntry(
     val description: String,
     val oem: String = "generic",
     val removal: String = "",
+    /** The database's own words say removing this can leave the phone unable to boot. */
+    val bootloopRisk: Boolean = false,
 )
+
+/**
+ * Sentences that say a package does NOT bootloop, so a plain "bootloop" search does not block them.
+ * Real examples in this database: "Safe to remove (no bootloop)", "Disabling does not cause a
+ * bootloop and package installation still works fine."
+ */
+private val NO_BOOTLOOP = Regex(
+    """\b(no|not|never|does not|doesn't)\b(?:(?!\bbut\b)[^.!?]){0,40}\bboot-?\s?loop""",
+    RegexOption.IGNORE_CASE
+)
+
+/**
+ * Restricting the negation to 40 characters and stopping at "but" is what keeps the real warning in
+ * `com.google.android.packageinstaller` ("… you can still install APKs without it … but since
+ * Android 9 … could bootloop your device if removed") from reading as a reassurance.
+ */
+private val SECOND_HAND_BOOTLOOP = Regex(
+    """(apparently|some people said|others said|may|might|probably|would|i didn't test)""",
+    RegexOption.IGNORE_CASE
+)
+
+/**
+ * True when the description warns that removal/disable can bootloop THIS device.
+ *
+ * Errs towards blocking: a wrong "unsafe" only hides a row behind a warning, while a wrong "safe"
+ * can leave a phone that will not boot. Unlisted packages are unaffected (they have no text).
+ */
+fun claimsBootloopRisk(description: String): Boolean {
+    if (description.isBlank()) return false
+    val sentences = Regex("""(?<=[.!?])\s+""").split(description)
+    return sentences.any { sentence ->
+        sentence.contains("bootloop", ignoreCase = true) ||
+            sentence.contains("boot loop", ignoreCase = true)
+    } && sentences.none { sentence ->
+        sentence.contains("bootloop", ignoreCase = true) &&
+            NO_BOOTLOOP.containsMatchIn(sentence) &&
+            !SECOND_HAND_BOOTLOOP.containsMatchIn(sentence)
+    }
+}
 
 object UadDatabase {
 
@@ -41,6 +82,7 @@ object UadDatabase {
                     description = e.optString("description"),
                     oem = e.optString("list"),
                     removal = e.optString("removal"),
+                    bootloopRisk = claimsBootloopRisk(e.optString("description")),
                 )
             }
             cache = map

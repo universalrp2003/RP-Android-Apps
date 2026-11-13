@@ -48,7 +48,9 @@ class DisablerAboutDirectoryTest(unittest.TestCase):
     def test_the_disabler_lists_itself_in_its_own_about_screen(self):
         local = entries(LOCAL.read_text())
         self.assertIn('appdisabler', local)
-        self.assertEqual(local['appdisabler'], ('0.1.0', 'com.universalrp.appdisabler'))
+        # The version lives in build.gradle.kts and About reads it from BuildConfig, so this
+        # only guards package identity and that the app lists itself at all.
+        self.assertEqual(local['appdisabler'][1], 'com.universalrp.appdisabler')
         self.assertNotIn('not yet published', LOCAL.read_text())
 
     def test_about_dialog_does_not_print_this_app_twice(self):
@@ -93,3 +95,185 @@ class StoreAboutCountsTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class DisablerSafetyGuardTest(unittest.TestCase):
+    """The owner turned off 13 packages on a HyperOS phone and lost parts of Settings.
+
+    Nothing in the app refused a package that would take away the keyboard or a live accessibility
+    service, so these tests pin that refusal and the header counts that make the state visible.
+    """
+
+    MANAGER = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt'
+    STRINGS = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/ui/Bilingual.kt'
+    GRADLE = ROOT / 'appdisabler/app/build.gradle.kts'
+
+    def test_disable_refuses_the_keyboard_in_use_and_live_accessibility_services(self):
+        manager = self.MANAGER.read_text()
+        guard = re.search(r'private fun blockingReason\(.*?\n    \}', manager, re.S)
+        self.assertIsNotNone(guard, 'the disable guard is gone')
+        body = guard.group(0)
+        self.assertIn('DEFAULT_INPUT_METHOD', body,
+                      'the active keyboard must be checked before disabling it')
+        self.assertIn('ENABLED_ACCESSIBILITY_SERVICES', body,
+                      'a live accessibility service must be checked before disabling it')
+        self.assertIn('DisableCategory.CRITICAL', body, 'the never-disable list must stay')
+        # The guard has to run before the first pm command, not after a failed attempt.
+        disable = manager[manager.index('suspend fun disablePackage'):]
+        disable = disable[:disable.index('val disableAttempts')]
+        self.assertIn('blockingReason(context, packageName)', disable,
+                      'the guard must fire before pm disable-user is attempted')
+
+    def test_header_counts_are_derived_not_hardcoded(self):
+        ui = ABOUT.read_text()
+        self.assertIn('StatTile(', ui, 'the counts strip is missing')
+        for symbol in ('📦', '⚙', '👤', '⛔', '▶'):
+            self.assertIn(symbol, ui, f'missing the {symbol} tile')
+        # Counts must come from the loaded list, never from a literal.
+        self.assertIn('visible.count { !it.isEnabled || it.isSuspended }', ui)
+        self.assertIn('visible.count { it.isSystem }', ui)
+        self.assertRegex(ui, r'visible\.count \{ app -> live\.contains\(app\.packageName\) \}')
+
+    def test_running_count_says_unknown_without_shizuku_instead_of_zero(self):
+        ui = ABOUT.read_text()
+        self.assertIn('runningCount?.toString() ?: "—"', ui,
+                      'a missing process table must render as unknown, never as 0')
+        manager = self.MANAGER.read_text()
+        running = manager[manager.index('suspend fun runningProcesses'):]
+        running = running[:running.index('suspend fun enablePackage')]
+        self.assertIn('isShizukuAvailable()', running)
+        self.assertIn('return@withContext null', running)
+
+    def test_new_bilingual_strings_are_paired(self):
+        strings = self.STRINGS.read_text()
+        for key in ('statInstalled', 'statPreinstalled', 'statUser', 'statOff', 'statRunning',
+                    'statRunningNeedsShizuku', 'blockedTitle', 'blockedRecovery'):
+            self.assertRegex(strings, rf'{key}\s*=\s*Bi\(\s*"[^"]+"\s*,\s*"[^"]+"\s*\)',
+                             f'{key} must be a Bi(english, tamil) pair')
+
+    def test_about_reads_the_installed_version_from_build_config(self):
+        ui = ABOUT.read_text()
+        self.assertIn('v${BuildConfig.VERSION_NAME}', ui,
+                      'About must not pin a literal version again')
+        self.assertIn('buildConfig = true', self.GRADLE.read_text())
+        gradle = self.GRADLE.read_text()
+        code = int(re.search(r'versionCode\s*=\s*(\d+)', gradle).group(1))
+        name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle).group(1)
+        self.assertEqual(name, '0.2.0', 'this test was written for the 0.2.0 candidate')
+        self.assertEqual(code, 2)
+
+
+class BootloopDetectionTest(unittest.TestCase):
+    """Red rows must come from the database's own words, and only from real warnings.
+
+    The detector is reimplemented here against the same JSON asset so a change to the Kotlin regex
+    that starts blocking safe apps (or stops blocking htmlviewer) fails this suite.
+    """
+
+    NEGATION = re.compile(r"\b(no|not|never|does not|doesn't)\b(?:(?!\bbut\b)[^.!?]){0,40}\bboot-?\s?loop", re.I)
+    SECOND_HAND = re.compile(r"(apparently|some people said|others said|may|might|probably|would|i didn't test)", re.I)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.db = json.loads(
+            (ROOT / 'appdisabler/app/src/main/assets/uad_lists.json').read_text()
+        )
+
+    @classmethod
+    def risk(cls, description):
+        if not description.strip():
+            return False
+        sentences = re.split(r'(?<=[.!?])\s+', description)
+        if not any('bootloop' in s.lower() or 'boot loop' in s.lower() for s in sentences):
+            return False
+        negated = any(
+            'bootloop' in s.lower() and cls.NEGATION.search(s) and not cls.SECOND_HAND.search(s)
+            for s in sentences
+        )
+        return not negated
+
+    def test_a_caution_rated_package_with_a_bootloop_warning_is_caught(self):
+        # The bug this guards: htmlviewer is CAUTION, so the category alone lets it through on a
+        # HyperOS phone, which is exactly the MIUI family the warning names.
+        htmlviewer = self.db['com.android.htmlviewer']
+        self.assertEqual(htmlviewer['category'], 'CAUTION')
+        self.assertTrue(self.risk(htmlviewer['description']))
+
+    def test_reassurances_do_not_read_as_warnings(self):
+        for package in ('com.motorola.coresettingsext', 'com.miui.global.packageinstaller'):
+            self.assertFalse(self.risk(self.db[package]['description']),
+                             f'{package} explicitly says it does not bootloop')
+
+    def test_a_warning_after_a_contrasting_clause_still_counts(self):
+        # "you can still install APKs without it … but … could bootloop your device if removed"
+        self.assertTrue(self.risk(self.db['com.google.android.packageinstaller']['description']))
+
+    def test_the_two_packages_the_owner_turned_off_are_not_bootloop_risks(self):
+        for package in ('com.milink.service', 'com.android.printspooler'):
+            self.assertFalse(self.risk(self.db[package]['description']))
+
+    def test_the_detector_fires_on_a_meaningful_number_of_entries(self):
+        flagged = [k for k, v in self.db.items() if self.risk(v['description'])]
+        self.assertGreaterEqual(len(flagged), 20)
+        self.assertLess(len(flagged), 60, 'a wild detector would block most of the database')
+
+    def test_every_flagged_band_and_severity_reaches_the_database_class(self):
+        source = (ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/UadDatabase.kt').read_text()
+        self.assertIn('claimsBootloopRisk', source)
+        self.assertIn('bootloopRisk = claimsBootloopRisk(', source)
+        manager = (ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt').read_text()
+        self.assertIn('entry?.bootloopRisk == true', manager,
+                      'a bootloop warning must refuse the disable, not just colour the row')
+
+
+class OwnerUiFeedbackTest(unittest.TestCase):
+    """The owner's read of the 0.2.0 candidate: colours unclear, running tile dead, wasted space.
+
+    Each assertion pins one of the five requests so a later layout tweak cannot quietly undo it.
+    """
+
+    def setUp(self):
+        self.ui = ABOUT.read_text()
+
+    def test_rows_carry_a_green_amber_red_rating_not_a_theme_role(self):
+        # Theme primary in this app is lavender, which is why "Safe to disable" read as body text.
+        for colour in ('SafeGreen = androidx.compose.ui.graphics.Color(0xFF1B7F3B)',
+                       'CautionAmber = androidx.compose.ui.graphics.Color(0xFFB26A00)',
+                       'DangerRed = androidx.compose.ui.graphics.Color(0xFFC62828)'):
+            self.assertIn(colour, self.ui)
+        row = self.ui[self.ui.index('fun AppRow('):]
+        row = row[:row.index('fun AboutDialog(')]
+        self.assertIn('val tint = ratingColour(app)', row)
+        # The app name and its rating label must take that colour, not the default on-surface one.
+        self.assertRegex(row, r'Text\(\s*app\.label,\s*style = MaterialTheme\.typography\.titleSmall,\s*color = tint')
+        self.assertIn('ratingLabel(app)', row)
+        self.assertIn('color = tint', row)
+
+    def test_running_tile_and_rows_use_the_live_process_list(self):
+        # Tapping ▶ used to do nothing when Shizuku was up.
+        self.assertIn('runningOnly = !runningOnly', self.ui)
+        self.assertIn('val matchRunning = !runningOnly', self.ui)
+        row = self.ui[self.ui.index('fun AppRow('):]
+        row = row[:row.index('fun AboutDialog(')]
+        self.assertIn('running.contains(app.packageName)', row, 'a running app should say so on its row')
+
+    def test_search_is_collapsed_until_tapped(self):
+        self.assertIn('var searchOpen by remember', self.ui)
+        # The collapsed state must be an icon button, and closing it must clear the query.
+        self.assertRegex(self.ui, r'if \(searchOpen\) \{')
+        self.assertIn('searchOpen = false; query = ""', self.ui)
+
+    def test_the_apps_window_no_longer_prints_tamil(self):
+        # The owner asked for English here; the About dialog keeps its Tamil section.
+        window = self.ui[self.ui.index('fun AppsListWindow('):self.ui.index('fun AboutDialog(')]
+        self.assertNotIn('நீக்க', window)
+        self.assertNotIn('முடக்க', window)
+        self.assertNotIn('பட்டியலில்', window)
+        self.assertNotIn('biStatic(T.fAny', window)
+        # legend and tiles are literal English now
+        self.assertIn('ColourKey(SafeGreen, "Safe")', window)
+        self.assertIn('label = "installed"', window)
+
+    def test_status_and_detail_labels_are_english_literals(self):
+        self.assertIn('"● running now"', self.ui)
+        self.assertIn('"Blocked"', self.ui)

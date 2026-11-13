@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Search
@@ -25,11 +27,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.universalrp.appdisabler.BuildConfig
 import com.universalrp.appdisabler.data.AppInfo
 import com.universalrp.appdisabler.data.BackupManager
 import com.universalrp.appdisabler.data.DisableCategory
@@ -332,6 +336,88 @@ fun ShizukuSetupWindow(
     }
 }
 
+/**
+ * Rating colours. Deliberately fixed greens/ambers/reds rather than theme roles: the previous
+ * palette drew "safe" in the same lavender as body text, so nothing told the two apart at a glance.
+ */
+private val SafeGreen = androidx.compose.ui.graphics.Color(0xFF1B7F3B)
+private val CautionAmber = androidx.compose.ui.graphics.Color(0xFFB26A00)
+private val DangerRed = androidx.compose.ui.graphics.Color(0xFFC62828)
+
+/** The colour that labels a row: red outranks amber, amber outranks green. */
+internal fun ratingColour(app: AppInfo): androidx.compose.ui.graphics.Color = when {
+    app.bootloopRisk || app.category == DisableCategory.CRITICAL -> DangerRed
+    app.category == DisableCategory.CAUTION -> CautionAmber
+    app.category == DisableCategory.SAFE -> SafeGreen
+    else -> androidx.compose.ui.graphics.Color(0xFF5F6368)
+}
+
+/** English label for the rating, shared by the row and the detail dialog. */
+internal fun ratingLabel(app: AppInfo): String = when {
+    app.bootloopRisk -> "Never — can stop the phone booting"
+    app.category == DisableCategory.CRITICAL -> "Never disable"
+    app.category == DisableCategory.CAUTION -> "Caution — asks first"
+    app.category == DisableCategory.SAFE -> "Safe to disable"
+    else -> "Not listed — check first"
+}
+
+/** One dot + label in the colour key under the filters. */
+@Composable
+private fun ColourKey(colour: androidx.compose.ui.graphics.Color, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(colour)
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            color = colour
+        )
+    }
+}
+
+/**
+ * One number in the header strip: symbol on top, count under it, label under that.
+ * `active` draws the tile as selected so the strip doubles as the "what am I looking at" indicator.
+ */
+@Composable
+private fun StatTile(
+    symbol: String,
+    count: String,
+    label: String,
+    tint: androidx.compose.ui.graphics.Color,
+    active: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .background(
+                if (active) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            )
+            .padding(horizontal = 9.dp, vertical = 3.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(symbol, fontSize = 11.sp, color = tint, maxLines = 1)
+            Spacer(Modifier.width(3.dp))
+            Text(count, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppsListWindow(
@@ -345,19 +431,31 @@ fun AppsListWindow(
     val taFirst = tamilFirst()
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
     var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf(DisableCategory.SAFE) }
+    var filter by remember { mutableStateOf<DisableCategory?>(DisableCategory.SAFE) }
     var tab by remember { mutableStateOf(0) } // 0 All (per filter), 1 System, 2 Off
     var confirmApp by remember { mutableStateOf<AppInfo?>(null) }
     var infoApp by remember { mutableStateOf<AppInfo?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var shizukuLive by remember { mutableStateOf(shizukuOk) }
     var shizukuRunningLive by remember { mutableStateOf(shizukuRunning) }
+    /** Processes alive right now; null until the first shell read (or when Shizuku is down). */
+    var running by remember { mutableStateOf<Set<String>?>(null) }
+    /** Package the user keeps tapping even though it is protected — shows a once-per-tap warning. */
+    var blockedApp by remember { mutableStateOf<AppInfo?>(null) }
+    /** Search is collapsed to an icon; the box only takes space while it is in use. */
+    var searchOpen by remember { mutableStateOf(false) }
+    /** Show only apps with a live process (set by the ▶ running tile). */
+    var runningOnly by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         apps = DisableManager.loadInstalledApps(context)
+        var tick = 0
         while (true) {
             shizukuLive = DisableManager.isShizukuAvailable()
             shizukuRunningLive = DisableManager.isShizukuRunning()
+            // `ps` is cheap but not free: refresh every other 2 s tick instead of on every one.
+            if (shizukuLive && tick % 2 == 0) running = DisableManager.runningProcesses()
+            tick++
             kotlinx.coroutines.delay(2000)
         }
     }
@@ -368,17 +466,20 @@ fun AppsListWindow(
         "com.universalrp.appdisabler"
     )
 
-    val filtered = remember(apps, query, filter, tab) {
+    val filtered = remember(apps, query, filter, tab, runningOnly, running) {
         apps.filter { app ->
             if (app.packageName in HIDE_PACKAGES) return@filter false
             val tabOk = when (tab) {
                 1 -> app.isSystem
                 2 -> !app.isEnabled || app.isSuspended
+                3 -> !app.isSystem
                 else -> true
             }
-            val matchFilter = app.category == filter
+            // null = no category filter (the header counts drop you into an unfiltered list).
+            val matchFilter = filter == null || app.category == filter
+            val matchRunning = !runningOnly || running?.contains(app.packageName) == true
             val matchQuery = query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true)
-            tabOk && matchFilter && matchQuery
+            tabOk && matchFilter && matchQuery && matchRunning
         }.take(900)
     }
 
@@ -403,7 +504,7 @@ fun AppsListWindow(
         }
     }
 
-    Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
 
         // ---- compact status row (was a tall card + explanation paragraph) ----
         Row(
@@ -434,24 +535,99 @@ fun AppsListWindow(
                     )
                 }
             }
-            Text(
-                "  " + biStatic(T.offCount, taFirst).format(apps.count { !it.isEnabled || it.isSuspended }),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
 
-        // ---- one line: search + export ----
+        // ---- counts strip: installed / pre-installed / turned off / running ----
+        // Every number is derived from the same list the cards come from, so the four tiles always
+        // add up. Shizuku is only needed for the "running" one (it reads the process table).
+        run {
+            val visible = apps.filter { it.packageName !in HIDE_PACKAGES }
+            val system = visible.count { it.isSystem }
+            val user = visible.size - system
+            val off = visible.count { !it.isEnabled || it.isSuspended }
+            val runningCount = running?.let { live ->
+                visible.count { app -> live.contains(app.packageName) }
+            }
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatTile(
+                    symbol = "📦", count = visible.size.toString(),
+                    label = "installed",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    active = filter == null && tab == 0 && !runningOnly,
+                    onClick = { filter = null; tab = 0; runningOnly = false }
+                )
+                StatTile(
+                    symbol = "⚙", count = system.toString(),
+                    label = "pre-installed",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    active = filter == null && tab == 1 && !runningOnly,
+                    onClick = { filter = null; tab = 1; runningOnly = false }
+                )
+                StatTile(
+                    symbol = "👤", count = user.toString(),
+                    label = "you added",
+                    tint = MaterialTheme.colorScheme.primary,
+                    active = filter == null && tab == 3 && !runningOnly,
+                    onClick = { filter = null; tab = 3; runningOnly = false }
+                )
+                StatTile(
+                    symbol = "⛔", count = off.toString(),
+                    label = "turned off",
+                    tint = MaterialTheme.colorScheme.error,
+                    active = filter == null && tab == 2 && !runningOnly,
+                    onClick = { filter = null; tab = 2; runningOnly = false }
+                )
+                StatTile(
+                    symbol = "▶", count = runningCount?.toString() ?: "—",
+                    label = "running",
+                    tint = if (runningCount == null) MaterialTheme.colorScheme.onSurfaceVariant
+                           else MaterialTheme.colorScheme.primary,
+                    active = runningOnly,
+                    // No Shizuku, no process table: say so instead of showing a fake zero.
+                    onClick = {
+                        if (runningCount == null) {
+                            Toast.makeText(
+                                context,
+                                biStatic(T.statRunningNeedsShizuku, taFirst),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            // Tapping the tile now actually lists what is running.
+                            filter = null; tab = 0; runningOnly = !runningOnly
+                        }
+                    }
+                )
+            }
+        }
+
+        // ---- one line: search stays collapsed until tapped, so the list keeps the height ----
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(biStatic(T.searchHint, taFirst), style = MaterialTheme.typography.bodySmall) },
-                leadingIcon = { Icon(Icons.Default.Search, null) },
-                singleLine = true,
-                shape = MaterialTheme.shapes.small
-            )
+            if (searchOpen) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    placeholder = { Text(biStatic(T.searchHint, taFirst), style = MaterialTheme.typography.bodySmall) },
+                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                    trailingIcon = {
+                        IconButton(onClick = { searchOpen = false; query = "" }) {
+                            Icon(Icons.Default.Close, contentDescription = "Close search")
+                        }
+                    },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.small,
+                    textStyle = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                IconButton(onClick = { searchOpen = true }) {
+                    Icon(Icons.Default.Search, contentDescription = "Search")
+                }
+                Spacer(Modifier.weight(1f))
+            }
             IconButton(onClick = {
                 val json = BackupManager.exportDisabled(apps)
                 val file = BackupManager.saveToFile(context, json)
@@ -465,21 +641,35 @@ fun AppsListWindow(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FilterChip(selected = tab == 0, onClick = { tab = 0 }, label = { Text(biStatic(T.fAll, taFirst), style = MaterialTheme.typography.labelSmall) })
-            FilterChip(selected = tab == 1, onClick = { tab = 1 }, label = { Text(biStatic(T.fSystem, taFirst), style = MaterialTheme.typography.labelSmall) })
-            FilterChip(selected = tab == 2, onClick = { tab = 2 }, label = { Text(biStatic(T.fOff, taFirst), style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = tab == 0 && !runningOnly, onClick = { tab = 0; runningOnly = false }, label = { Text("All", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = tab == 1 && !runningOnly, onClick = { tab = 1; runningOnly = false }, label = { Text("System", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = tab == 2 && !runningOnly, onClick = { tab = 2; runningOnly = false }, label = { Text("Off", style = MaterialTheme.typography.labelSmall) })
             VerticalDivider(Modifier.height(20.dp))
-            FilterChip(selected = filter == DisableCategory.SAFE, onClick = { filter = DisableCategory.SAFE }, label = { Text(biStatic(T.fSafe, taFirst), style = MaterialTheme.typography.labelSmall) })
-            FilterChip(selected = filter == DisableCategory.CAUTION, onClick = { filter = DisableCategory.CAUTION }, label = { Text(biStatic(T.fCaution, taFirst), style = MaterialTheme.typography.labelSmall) })
-            FilterChip(selected = filter == DisableCategory.CRITICAL, onClick = { filter = DisableCategory.CRITICAL }, label = { Text(biStatic(T.fNever, taFirst), style = MaterialTheme.typography.labelSmall) })
+            // With no category filter the list would otherwise hide everything the header counted.
+            FilterChip(selected = filter == null, onClick = { filter = null }, label = { Text("Any", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = filter == DisableCategory.SAFE, onClick = { filter = DisableCategory.SAFE }, label = { Text("Safe", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = filter == DisableCategory.CAUTION, onClick = { filter = DisableCategory.CAUTION }, label = { Text("Caution", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = filter == DisableCategory.CRITICAL, onClick = { filter = DisableCategory.CRITICAL }, label = { Text("Never", style = MaterialTheme.typography.labelSmall) })
+        }
+
+        // ---- colour key: green is safe, amber asks first, red is never allowed ----
+        Row(
+            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ColourKey(SafeGreen, "Safe")
+            ColourKey(CautionAmber, "Asks first")
+            ColourKey(DangerRed, "Never")
         }
 
         Text(
-            "${biStatic(T.statsApps, taFirst).format(filtered.size)}  •  " +
-                if (taFirst) "தட்டினால் தகவல்" else "tap a card for info",
+            "${filtered.size} apps" + if (runningOnly) " running now" else "" +
+                (if (filter != null || tab != 0 || runningOnly) "  •  tap to clear filters" else "  •  tap a card for info"),
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1
+            maxLines = 1,
+            modifier = Modifier.clickable { filter = null; tab = 0; runningOnly = false; query = ""; searchOpen = false }
         )
 
         if (filtered.isEmpty()) {
@@ -492,14 +682,19 @@ fun AppsListWindow(
                     AppRow(
                         app = app,
                         taFirst = taFirst,
+                        running = running,
                         onDisable = {
-                            if (app.category == DisableCategory.CRITICAL) {
+                            if (app.category == DisableCategory.CRITICAL || app.bootloopRisk) {
                                 Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
                             if (!shizukuLive) {
                                 Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
                             val off = !(app.isEnabled && !app.isSuspended)
+                            // Keyboard in use / accessibility service in use: explain, never attempt.
+                            if (!off && DisableManager.disableBlockedReason(context, app.packageName) != null) {
+                                blockedApp = app; return@AppRow
+                            }
                             if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
                         },
                         onOpenDetails = { infoApp = app }
@@ -515,6 +710,28 @@ fun AppsListWindow(
             title = { Text(biStatic(T.errorTitle, taFirst)) },
             text = { Text(msg, style = MaterialTheme.typography.bodySmall, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = { TextButton(onClick = { errorMsg = null }) { Text(biStatic(T.actionClose, taFirst)) } }
+        )
+    }
+
+    blockedApp?.let { app ->
+        val reason = DisableManager.disableBlockedReasonBi(context, app.packageName)
+            ?: Bi("", "")
+        AlertDialog(
+            onDismissRequest = { blockedApp = null },
+            title = { Text(biStatic(T.blockedTitle, taFirst)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(app.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    BiText(reason, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        biStatic(T.blockedRecovery, taFirst),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = { TextButton(onClick = { blockedApp = null }) { Text(biStatic(T.actionClose, taFirst)) } }
         )
     }
 
@@ -538,10 +755,14 @@ fun AppsListWindow(
             onDismiss = { infoApp = null },
             onDisable = {
                 infoApp = null
-                if (app.category == DisableCategory.CRITICAL) {
+                if (app.category == DisableCategory.CRITICAL || app.bootloopRisk) {
                     Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show()
                 } else if (!shizukuLive) {
                     Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
+                } else if (!(app.isEnabled && !app.isSuspended) &&
+                    DisableManager.disableBlockedReason(context, app.packageName) != null
+                ) {
+                    blockedApp = app
                 } else {
                     val off = !(app.isEnabled && !app.isSuspended)
                     if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
@@ -560,22 +781,15 @@ fun AppDetailsDialog(
     onDisable: () -> Unit
 ) {
     val context = LocalContext.current
-    val categoryColor = when (app.category) {
-        DisableCategory.SAFE -> MaterialTheme.colorScheme.primary
-        DisableCategory.CAUTION -> MaterialTheme.colorScheme.tertiary
-        DisableCategory.CRITICAL -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val catLabel = when (app.category) {
-        DisableCategory.SAFE -> Bi("Safe to disable", "முடக்கலாம்")
-        DisableCategory.CAUTION -> Bi("Caution", "கவனம்")
-        DisableCategory.CRITICAL -> Bi("Never disable", "முடக்கக் கூடாது")
-        else -> Bi("Not listed", "பட்டியலில் இல்லை")
-    }
-    val catBody = when (app.category) {
-        DisableCategory.SAFE -> T.catSafeBody
-        DisableCategory.CAUTION -> T.catCautionBody
-        DisableCategory.CRITICAL -> T.catCriticalBody
+    // A bootloop warning always outranks the category: htmlviewer is only "Caution", but its text
+    // says removing it stops MIUI/HyperOS phones from booting.
+    val categoryColor = ratingColour(app)
+    val catLabel = Bi(ratingLabel(app), ratingLabel(app))
+    val catBody = when {
+        app.bootloopRisk -> T.catBootloopBody
+        app.category == DisableCategory.CRITICAL -> T.catCriticalBody
+        app.category == DisableCategory.CAUTION -> T.catCautionBody
+        app.category == DisableCategory.SAFE -> T.catSafeBody
         else -> T.catUnlistedBody
     }
     val happen = when {
@@ -656,45 +870,77 @@ fun AppDetailsDialog(
 }
 
 @Composable
-fun AppRow(app: AppInfo, taFirst: Boolean, onDisable: () -> Unit, onOpenDetails: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth().clickable { onOpenDetails() }) {
-        Row(Modifier.padding(horizontal = 10.dp, vertical = 8.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(app.label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit, onOpenDetails: () -> Unit) {
+    // The whole card is tinted by its rating, so the list can be read without stopping to parse
+    // each line: a green name means safe, amber means it will ask, red means it will not act.
+    val tint = ratingColour(app)
+    val blocked = app.category == DisableCategory.CRITICAL || app.bootloopRisk
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable { onOpenDetails() },
+        colors = CardDefaults.cardColors(containerColor = tint.copy(alpha = 0.07f))
+    ) {
+        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(
-                    app.description?.take(90)?.let { it + if ((app.description?.length ?: 0) > 90) "…" else "" }
-                        ?: app.category.label(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = when (app.category) {
-                        DisableCategory.SAFE -> MaterialTheme.colorScheme.primary
-                        DisableCategory.CAUTION -> MaterialTheme.colorScheme.tertiary
-                        DisableCategory.CRITICAL -> MaterialTheme.colorScheme.error
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    maxLines = 2
+                    app.label,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = tint,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
-                val status = when {
-                    app.isSuspended -> T.rowSuspended
-                    !app.isEnabled -> T.rowDisabled
-                    app.category == DisableCategory.CRITICAL -> T.rowBlocked
+                Text(
+                    app.packageName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = tint.copy(alpha = 0.75f),
+                    maxLines = 1
+                )
+                Text(
+                    ratingLabel(app),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = tint,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1
+                )
+                app.description?.take(80)?.let { short ->
+                    Text(
+                        short + if ((app.description?.length ?: 0) > 80) "…" else "",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = tint.copy(alpha = 0.85f),
+                        maxLines = 2
+                    )
+                }
+                // One short status line: "off", or why it is refused. English-only, like the rest.
+                val statusText = when {
+                    running != null && running.contains(app.packageName) -> "● running now"
+                    app.isSuspended || !app.isEnabled -> "● off — tap Enable to restore"
                     else -> null
                 }
-                status?.let { Text(biStatic(it, taFirst), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error, maxLines = 1) }
+                statusText?.let {
+                    Text(it, style = MaterialTheme.typography.labelSmall, color = tint, maxLines = 1)
+                }
+                if (blocked) {
+                    Text(
+                        if (app.bootloopRisk) "⊘ removed from the disable list" else "⊘ never disable",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = DangerRed,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
+                    )
+                }
             }
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.End) {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp), horizontalAlignment = Alignment.End) {
                 FilledTonalButton(
                     onClick = onDisable,
-                    enabled = app.category != DisableCategory.CRITICAL,
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                    enabled = !blocked,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        biStatic(if (app.isEnabled && !app.isSuspended) T.actionDisable else T.actionEnable, taFirst),
+                        if (blocked) "Blocked" else if (app.isEnabled && !app.isSuspended) "Disable" else "Enable",
                         style = MaterialTheme.typography.labelSmall
                     )
                 }
                 TextButton(onClick = onOpenDetails, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
-                    Text(biStatic(T.actionGetInfo, taFirst), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp))
+                    Text("Get more info", style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp))
                 }
             }
         }
@@ -719,7 +965,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                 SisterApps.all.filter { it.id != "appdisabler" }.forEach { app ->
                     Text("• ${app.name} — ${app.tamilName} (v${app.version})", style = MaterialTheme.typography.labelSmall)
                 }
-                Text("• ${biStatic(T.appName, taFirst)} — v0.1.0 (${biStatic(T.thisApp, taFirst)})", style = MaterialTheme.typography.labelSmall)
+                Text("• ${biStatic(T.appName, taFirst)} — v${BuildConfig.VERSION_NAME} (${biStatic(T.thisApp, taFirst)})", style = MaterialTheme.typography.labelSmall)
                 BiText(T.aboutLinks, style = MaterialTheme.typography.titleSmall, bold = true)
                 Button(onClick = { open(SisterApps.OFFICIAL_WEBSITE_URL) }, modifier = Modifier.fillMaxWidth()) {
                     Text(biStatic(T.btnWebsite, taFirst), style = MaterialTheme.typography.labelMedium)

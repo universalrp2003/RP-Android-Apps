@@ -9,6 +9,8 @@ data class AppInfo(
     val installer: String? = null,
     val category: DisableCategory = DisableCategory.UNLISTED,
     val description: String? = null,
+    /** The database text warns that removing this can bootloop the phone — shown red, never allowed. */
+    val bootloopRisk: Boolean = false,
     /** Suspended via pm suspend (HyperOS fallback when disable is blocked). Tracked locally. */
     val isSuspended: Boolean = false,
 )

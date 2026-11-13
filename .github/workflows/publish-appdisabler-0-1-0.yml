@@ -1,8 +1,7 @@
 name: Publish owner-tested System App Disabler 0.1.0 (exact tested bytes only)
 
-# 0.1.0 is published, so this publisher must not fire on ordinary pushes any more: it refuses an
-# existing tag by design and every push would otherwise queue a guaranteed failure. Publication of
-# a *new* version means editing the pins below and dispatching this workflow by hand.
+# RETIRED: 0.1.0 is published and this script pins its already-used tag, so it cannot succeed.
+# 0.2.0 has its own publisher (publish-appdisabler-0-2-0.yml). Kept for the audit trail only.
 on:
   workflow_dispatch:
 
