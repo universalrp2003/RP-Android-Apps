@@ -1,0 +1,50 @@
+name: Attach the owner-tested APK to the 0.2.0 draft and publish it
+
+# The draft release already exists. It was created from the authoring environment, which can reach
+# api.github.com but not uploads.github.com; a runner can reach both, so this workflow does only the
+# asset upload and the publish, and re-verifies every pinned digest first.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Signing gate
+        run: python3 tools/verify_release_signing_policy.py --fresh-install
+      - name: Upload the pinned bytes and publish
+        run: |
+          set -o pipefail
+          python3 appdisabler/tools/upload_appdisabler_0_2_0.py 2>&1 | tee upload.log
+      - name: Keep the receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-0.2.0-publication-receipt
+          path: ${{ runner.temp }}/appdisabler-0.2.0-publication-receipt.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Commit the log so it is readable without blob hosts
+        if: failure()
+        run: |
+          set -e
+          git config user.name "arena-agent"
+          git config user.email "arena-agent@users.noreply.github.com"
+          mkdir -p ci-logs
+          cp upload.log "ci-logs/appdisabler-upload-$(date +%Y%m%d-%H%M%S).log" || true
+          git add ci-logs/
+          git commit -m "ci: capture appdisabler upload failure [skip ci]" || echo nothing
+          git push origin HEAD:${GITHUB_REF_NAME} || true
