@@ -121,10 +121,8 @@ try:
     tap(allow)
     tap(wait_node('setup', text('Apps')))
     wait_node('apps-ready', lambda n: 'Shizuku running' in n.attrib.get('text', ''))
-    # Search by unique label and remove the default Safe-only filter to avoid accidental targets.
+    # The fixture's unique label sorts first. Do not target any system package.
     tap(wait_node('apps', text('Any')))
-    tap(wait_node('search-icon', lambda n: n.attrib.get('content-desc') == 'Search'))
-    adb('shell', 'input', 'text', 'AAAA%sDisabler%sTest%sFixture')
     wait_node('fixture-before', text('AAAA Disabler Test Fixture'))
     expect_state('-e', 'before')
     assert not list_contains('-d'), 'fixture unexpectedly starts disabled'
