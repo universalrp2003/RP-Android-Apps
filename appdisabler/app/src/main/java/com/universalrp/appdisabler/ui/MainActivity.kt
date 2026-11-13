@@ -492,7 +492,10 @@ fun AppsListWindow(
 
     fun run(app: AppInfo) {
         scope.launch {
-            val off = !(app.isEnabled && !app.isSuspended)
+            // The row's own view can be stale (a package re-enabled elsewhere, or this app's data
+            // cleared while packages stayed off). Ask the phone before choosing Enable or Disable.
+            val off = app.isSuspended || !app.isEnabled ||
+                DisableManager.isActuallyOff(context, app.packageName, app.isEnabled)
             val r = if (off) DisableManager.enablePackage(context, app.packageName)
             else DisableManager.disablePackage(context, app.packageName)
             if (r.isSuccess) {
@@ -909,15 +912,21 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                         maxLines = 2
                     )
                 }
-                // One short status line. English-only, like the rest.
+                // One short status line. English-only, like the rest. Three states, not two.
                 //
-                // A turned-off package must never be described as running. Disabling an app leaves
-                // its process alive (it only stops the package from starting again), and `ps` still
-                // lists it, so "is it in the process table" is not the same question as "is it on".
-                // The owner caught this on HyperComm: an Enable button above "● running now".
+                // A turned-off package must never be described as running. Disabling leaves the
+                // process alive (it only stops the package from starting again) and `ps` still lists
+                // it, so "is it in the process table" is not "is it on". The owner caught this on
+                // HyperComm: an Enable button above "● running now".
+                //
+                // And a force-stopped-but-enabled package is not off either: the owner force-closed
+                // one and it came straight back. Android's FLAG_STOPPED is the only honest way to
+                // say "nothing is running, and nothing can start until you open it".
+                val offState = app.isSuspended || !app.isEnabled
                 val statusText = when {
-                    app.isSuspended || !app.isEnabled -> "● off — tap Enable to restore"
+                    offState -> "● off — tap Enable to restore"
                     running != null && running.contains(app.packageName) -> "● running now"
+                    app.isStopped -> "● stopped — no process, starts on next launch"
                     else -> null
                 }
                 statusText?.let {
