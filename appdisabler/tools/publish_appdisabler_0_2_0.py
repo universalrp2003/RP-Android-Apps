@@ -57,7 +57,12 @@ def run(*args):
 
 
 def api(path):
-    return json.loads(run("gh", "api", f"repos/{REPO}/{path}"))
+    try:
+        return json.loads(run("gh", "api", f"repos/{REPO}/{path}"))
+    except subprocess.CalledProcessError as e:
+        # A bare traceback hides which call and which permission failed; say both.
+        raise SystemExit(f"gh api repos/{REPO}/{path} failed with exit {e.returncode}. "
+                         "403 here means the job token lacks contents: write.") from e
 
 
 def sha(path):
@@ -183,11 +188,17 @@ def main():
     checksum.write_text(f"{apk_sha}  {NAME}\n")
 
     # 5. Create the release, verify every asset digest, then make it public.
-    subprocess.run(
+    created = subprocess.run(
         ["gh", "release", "create", TAG, "--target", source,
          "--title", "System App Disabler 0.2.0 — safety colours, bootloop guard, header counts",
          "--notes-file", "releases/system-app-disabler-v0.2.0.md",
-         "--draft", f"{candidate}#{NAME}", f"{checksum}#{SIDECAR}"], check=True)
+         "--draft", f"{candidate}#{NAME}", f"{checksum}#{SIDECAR}"])
+    if created.returncode != 0:
+        whoami = run("gh", "api", "repos/" + REPO + "/actions/permissions/workflow")
+        raise SystemExit(
+            f"gh release create exited {created.returncode}. The token could read the repository "
+            f"and every pinned byte, so this is a write refusal: the job needs contents: write. "
+            f"Repository workflow permissions: {whoami}")
 
     for attempt in range(12):
         matches = [r for r in pages("releases") if r["tag_name"] == TAG]
