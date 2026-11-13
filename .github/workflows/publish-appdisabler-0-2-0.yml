@@ -34,7 +34,7 @@ jobs:
       - name: Diagnose what this job's token may write
         run: |
           set -uo pipefail
-          exec > >(tee /tmp/write-probe.txt) 2>&1
+          exec > >(tee write-probe.txt) 2>&1
           R="$GH_REPO"
           TAG="diag-${GITHUB_RUN_ID}"
           echo "run=${GITHUB_RUN_ID} ref=${GITHUB_REF} sha=${GITHUB_SHA}"
@@ -75,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: appdisabler-write-probe
-          path: /tmp/write-probe.txt
+          path: write-probe.txt
           retention-days: 7
           if-no-files-found: warn
 
@@ -87,6 +87,9 @@ jobs:
           git config user.email "arena-agent@users.noreply.github.com"
           mkdir -p ci-logs
           cp publisher.log "ci-logs/appdisabler-publish-$(date +%Y%m%d-%H%M%S).log" || true
+          # The probe transcript goes here too: artifact archives and run logs are both on a host
+          # the authoring sandbox cannot reach, so a committed file is the only readable channel.
+          cp write-probe.txt "ci-logs/appdisabler-write-probe-$(date +%Y%m%d-%H%M%S).log" || true
           git add ci-logs/
           git commit -m "ci: capture appdisabler publisher failure [skip ci]" || echo "nothing to commit"
           git push origin HEAD:${GITHUB_REF_NAME} || true
