@@ -25,7 +25,7 @@ DISABLER = 'com.universalrp.appdisabler'
 
 def cmd(*args, check=True):
     print('+', ' '.join(args), flush=True)
-    return subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=check).stdout
+    return subprocess.run(args, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=check, timeout=60).stdout
 
 
 def adb(*args, check=True):
@@ -35,7 +35,7 @@ def adb(*args, check=True):
 def dump(name):
     for _ in range(4):
         result = subprocess.run(['adb', 'shell', 'uiautomator', 'dump', '/sdcard/disabler-cycle.xml'],
-                                text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=60)
         if result.returncode == 0:
             xml = adb('exec-out', 'cat', '/sdcard/disabler-cycle.xml')
             try:
@@ -162,6 +162,11 @@ try:
     tap(wait_node('setup-after-reboot', text('Apps')))
     wait_node('apps-ready-after-reboot', lambda n: 'Shizuku running' in n.attrib.get('text', '') and 'ready' in n.attrib.get('text', ''))
     tap(wait_node('apps-any-after-reboot', text('Any')))
+    # The fixture can be below the fold after the full app list loads. Focus search before typing.
+    tap(wait_node('search-after-reboot', lambda n: n.attrib.get('content-desc') == 'Search'))
+    tap(wait_node('search-field-after-reboot', lambda n: n.attrib.get('class') == 'android.widget.EditText'))
+    adb('shell', 'input', 'text', 'AAAA')
+    adb('shell', 'input', 'keyevent', 'KEYCODE_BACK')  # hide keyboard, leave search active
     wait_node('fixture-after-reboot', text('AAAA Disabler Test Fixture'))
     row_action('fixture-before-enable', 'Enable')
     expect_state('-e', 'restored')
