@@ -31,42 +31,30 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Diagnose every release path this job may use
+      - name: A/B the failing call against the one that works
         run: |
           set -uo pipefail
           exec > >(tee write-probe.txt) 2>&1
-          R="$GH_REPO"; T="diag-${GITHUB_RUN_ID}"
-          echo "run=${GITHUB_RUN_ID}"
+          R="$GH_REPO"; SRC=$(git rev-parse HEAD)
+          echo "run=${GITHUB_RUN_ID} sha=$SRC"
 
-          echo "=== A: gh release create (the command that fails) ==="
-          echo probe > /tmp/a.txt
-          gh release create "$T-a" --target "$GITHUB_SHA" --draft -t "$T" -n "probe" "/tmp/a.txt#a.txt" 2>&1 | tail -3 || true
-          gh api -X DELETE "repos/$R/releases/tags/$T-a" >/dev/null 2>&1 || true
-          gh api -X DELETE "repos/$R/git/refs/tags/$T-a" >/dev/null 2>&1 || true
+          # Both calls are made from this one runner with this one token. The only difference is
+          # the arguments, so whichever fails names the argument that matters.
+          echo "=== 1. the publisher's exact call ==="
+          out=$(gh api -X POST "repos/$R/releases" \
+                  -f tag_name="probe-1-${GITHUB_RUN_ID}" \
+                  -f "target_commitish=${SRC}" \
+                  -f "name=probe" -F draft=true -f "body=probe" 2>&1)
+          echo "RESULT_1=${out:0:300}"
 
-          echo "=== B: REST create + gh release upload ==="
-          if id=$(gh api -X POST "repos/$R/releases" -f tag_name="$T-b" -f target_commitish="$GITHUB_SHA" -f name="$T" -F draft=true -f body=probe -q .id 2>&1); then
-            echo "B_create=ok id=$id"
-            gh release upload "$T-b" /tmp/a.txt 2>&1 | tail -2 || true
-            gh api "repos/$R/releases/$id/assets" -q '.[].name' 2>&1 | head -3 || true
-            gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 || true
-            gh api -X DELETE "repos/$R/git/refs/tags/$T-b" >/dev/null 2>&1 || true
-          else echo "B_create=denied :: $id"; fi
+          echo "=== 2. the same call without target_commitish/name/body ==="
+          out=$(gh api -X POST "repos/$R/releases" -f tag_name="probe-2-${GITHUB_RUN_ID}" -F draft=true 2>&1)
+          echo "RESULT_2=${out:0:300}"
+          id2=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("id",""))' 2>/dev/null || true)
+          [ -n "$id2" ] && gh api -X DELETE "repos/$R/releases/$id2" >/dev/null 2>&1 || true
 
-          echo "=== C: REST create + REST upload with the asset upload_url host ==="
-          if out=$(gh api -X POST "repos/$R/releases" -f tag_name="$T-c" -f target_commitish="$GITHUB_SHA" -f name="$T" -F draft=true -f body=probe 2>&1); then
-            id=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
-            url=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["upload_url"].split("{")[0])')
-            echo "C_create=ok id=$id"
-            echo "C_upload_url=$url"
-            curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: text/plain" \
-                 --data-binary @/tmp/a.txt "${url}?name=c.txt" -o /tmp/c.out -w "C_upload_http=%{http_code}\n" || true
-            head -c 200 /tmp/c.out || true
-            gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 || true
-            gh api -X DELETE "repos/$R/git/refs/tags/$T-c" >/dev/null 2>&1 || true
-          else echo "C_create=denied"; fi
-
-          echo "=== done (every throwaway removed) ==="
+          echo "=== 3. does a stray draft from a failed call need cleaning? ==="
+          gh api "repos/$R/releases?per_page=30" -q '.[] | select(.draft==true) | "\(.id) \(.tag_name)"' 2>&1 | head -5
 
       - name: Signing gate before touching a release
         run: |
