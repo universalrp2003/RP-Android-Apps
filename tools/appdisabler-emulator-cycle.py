@@ -61,8 +61,9 @@ def wait_node(name, predicate, timeout=50):
         if matches:
             return matches[0]
         time.sleep(2)
-    raise AssertionError(f'{name}: expected UI node absent; visible: '
-                         + repr([(n.attrib.get('text'), n.attrib.get('content-desc')) for n in last]))
+    visible = [(n.attrib.get('text'), n.attrib.get('content-desc')) for n in last
+               if n.attrib.get('text') or n.attrib.get('content-desc')]
+    raise AssertionError(f'{name}: expected UI node absent; visible: {visible!r}')
 
 
 def text(value):

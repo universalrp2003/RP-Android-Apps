@@ -76,7 +76,7 @@ jobs:
           from pathlib import Path
           import os
           log = Path(os.environ['RUNNER_TEMP']) / 'cycle.log'
-          text = log.read_text(errors='replace')[-10000:] if log.exists() else 'Cycle script did not start; inspect prior job steps.'
+          text = log.read_text(errors='replace')[-3000:] if log.exists() else 'Cycle script did not start; inspect prior job steps.'
           print('::error title=Shizuku cycle diagnostic::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           PY
       - name: Upload bounded cycle evidence
