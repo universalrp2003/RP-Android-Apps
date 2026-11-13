@@ -115,14 +115,14 @@ object DisableManager {
      */
     suspend fun isActuallyOff(context: Context, pkg: String, isEnabled: Boolean): Boolean =
         withContext(Dispatchers.IO) {
+            // A framework-disabled package is off, full stop.
             if (!isEnabled) return@withContext true
             if (pmPackageState(context, pkg) == "disabled-or-absent") return@withContext true
-            // Enabled per the framework, so suspension is the only remaining way to be off.
-            when (shellSuspension(pkg)) {
-                true -> true
-                false -> false
-                null -> pkg in getSuspended(context)  // shell unreadable: fall back to the note
-            }
+            // Not disabled, so suspension is the only way it can be off — and suspension is the one
+            // state Android does not show us. The note is written only when `pm suspend` confirmed
+            // success, so it is a record of a verified action, not a guess.
+            if (pkg in getSuspended(context)) return@withContext true
+            shellSuspension(pkg) == true
         }
 
     /**
@@ -146,16 +146,6 @@ object DisableManager {
     }
 
     /** Confirms the outcome of one disable attempt; null when it cannot be read. */
-    suspend fun shellIsDisabledOrSuspended(context: Context, pkg: String): Boolean? =
-        withContext(Dispatchers.IO) {
-            if (shellSuspension(pkg) == true) return@withContext true
-            when (pmPackageState(context, pkg)) {
-                "disabled-or-absent" -> true
-                "installed" -> false
-                else -> null
-            }
-        }
-
     private suspend fun runShellSuspend(cmd: Array<String>): String? = withContext(Dispatchers.IO) {
         if (!isShizukuRunning()) return@withContext null
         val r = runShell(cmd)
@@ -385,20 +375,22 @@ object DisableManager {
         val s = runShell(suspendCmd)
         log.append("${suspendCmd.joinToString(" ")} -> exit ${s.exit}: ${s.output.take(200)}\n")
         if (s.exit == 0 && !s.output.startsWith("Error", ignoreCase = true)) {
-            // exit 0 is not proof. Ask the shell whether the package is now absent from the enabled
-            // list before recording it, so a silent no-op is never reported as success.
-            when (shellIsDisabledOrSuspended(context, packageName)) {
-                false -> return@withContext Result.failure(
-                    IllegalStateException(
-                        "Suspend reported success but the package is still enabled. Attempts:\n" +
-                            log.trim()
-                    )
-                )
-                else -> {
-                    setSuspended(context, packageName, true)
-                    return@withContext Result.success(ActionOutcome.SUSPENDED)
-                }
-            }
+            // `pm suspend` printing "new suspended state: true" and exiting 0 IS the proof.
+            //
+            // Do not try to re-read the state. Measured on the owner's HyperOS phone (13 Nov 2026):
+            // `dumpsys package` shows no SUSPENDED flag for a package that suspend just reported as
+            // suspended, and the package stays in `pm list packages -e`. Two earlier versions of
+            // this check therefore turned a real suspension into a red failure over an app that was
+            // already off. The OS says it did it; believe it.
+            setSuspended(context, packageName, true)
+            // Suspend stops the package starting again but does not end a process that is already
+            // alive — which is why the owner force-stopped one and watched it come back. Kill it
+            // now that it cannot restart: this is what makes "off" mean gone rather than inert.
+            val forceStop = runShell(arrayOf("am", "force-stop", packageName))
+            log.append(
+                "am force-stop $packageName -> exit ${forceStop.exit}: ${forceStop.output.take(200)}\n"
+            )
+            return@withContext Result.success(ActionOutcome.SUSPENDED)
         }
         Result.failure(IllegalStateException("Disable failed. Attempts:\n$log".trim()))
     }

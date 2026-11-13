@@ -338,10 +338,22 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         manager = self.manager
         self.assertIn('suspend fun isActuallyOff(', manager)
         self.assertIn('getApplicationInfo(pkg, 0)', manager)
-        self.assertIn("pm\", \"list\", \"packages\", \"-e\"", manager)
         self.assertIn('DisableManager.isActuallyOff(context, app.packageName, app.isEnabled)', self.ui)
-        # A silent no-op must never be reported as a successful disable.
-        self.assertIn('Suspend reported success but the package is still enabled', manager)
+        # The framework is asked before the note is consulted, so a stale note cannot outrank fact.
+        off = manager.split('suspend fun isActuallyOff')[1].split('private suspend fun')[0]
+        self.assertLess(off.index('pmPackageState'), off.index('getSuspended'),
+                        'ask the framework before falling back to the local note')
+
+    def test_a_suspend_that_the_os_confirmed_is_not_second_guessed(self):
+        """Owner, 13 Nov 2026: `pm suspend` printed "new suspended state: true", and two versions of
+        this app still showed a red failure because `dumpsys` has no SUSPENDED flag on that build and
+        `pm list packages -e` still lists the package. The OS reported success; believe it."""
+        manager = self.manager
+        self.assertNotIn('Suspend reported success but the package is still enabled', manager)
+        suspend_block = manager.split('val suspendCmd')[1].split('Result.failure(IllegalStateException("Disable failed')[0]
+        self.assertIn('setSuspended(context, packageName, true)', suspend_block)
+        # A suspended package keeps its process, so a disable must also end it.
+        self.assertIn('"am", "force-stop", packageName', suspend_block)
 
 
 class PublisherPinTest(unittest.TestCase):
