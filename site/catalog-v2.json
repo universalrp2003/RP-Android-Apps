@@ -161,11 +161,11 @@
       "name": "System App Disabler",
       "tamilName": "சிஸ்டம் செயலி முடக்கி",
       "packageName": "com.universalrp.appdisabler",
-      "version": "0.1.0",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.1.0/System-App-Disabler-v0.1.0.apk",
-      "size": 11635233,
-      "sha256": "0ea5d450266586c5c882e72ccd7f64e0fa16a38de10df8b5d0b548aa1331b734",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.1.0"
+      "version": "0.2.0",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.2.0/System-App-Disabler-v0.2.0.apk",
+      "size": 11651613,
+      "sha256": "1f653dd99a68ae5877a5ebd9c178b790e5761866a2dc7c785393d4f298b0b196",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.2.0"
     }
   ]
 }
