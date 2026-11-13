@@ -80,3 +80,20 @@ not acceptable publication candidates. A subsequent source change adds an instal
 candidate can be identified on the phone. Its hash must be compared with the exact built release
 APK after the owner installs and tests that candidate; earlier candidate emulator results do not
 transfer automatically to new bytes.
+
+## Candidate with installed-APK identity diagnostic
+
+- [Build run 43529764131](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43529764131),
+  source commit `039bd65c6484d9a415b4ef22c1886310fe2c1843`; release APK SHA-256
+  `344d1d5cf8c04f5f813a695cc3abe5379be2c2d8b316979ff151bc0915fcdf7a`.
+  This is a new candidate, not the APK established as installed on the owner's phone.
+- [Stock smoke run 43530059910](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43530059910)
+  passed launch/navigation on Android 15 and 16. The [Shizuku cycle run 43530059913](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43530059913)
+  verified the in-app installed base hash, `Debuggable: false` and `Installed splits: 0` on both
+  emulator versions, and passed the 15-second reboot/restore cycle on both. Android 16's no-added-
+  delay cycle passed; Android 15's no-added-delay cycle failed because the fixture returned to the
+  default enabled state after the ADB reboot. The overall cycle run therefore failed. The no-delay
+  behavior remains inconsistent and is not solved by this diagnostic or the safety-text changes.
+- The About and Setup text no longer promises OTA/banking safety or guaranteed recovery. The
+  `turned off` count still includes suspensions, so that count and the strength of rating labels
+  remain follow-up work. No OEM compatibility conclusion follows from these stock tests.
