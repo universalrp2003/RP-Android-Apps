@@ -22,17 +22,17 @@ import zipfile
 REPO = "universalrp2003/RP-Android-Apps"
 BRANCH = "arena/745a8cb3-rp-android-apps"
 
-# Candidate run whose artifact the owner installed and reported working.
-RUN_ID = 43370535232
+# Candidate run that produced the public 0.1.0 bytes (same source as the owner-tested
+# debug build, release variant so the APK is not debuggable — required by the repo rule).
+RUN_ID = 43377851277
 WORKFLOW = ".github/workflows/appdisabler-candidate.yml"
-ARTIFACT = "appdisabler-0.1.0-candidate"
-ARTIFACT_ID = 14012107398
-ARCHIVE_SHA = "e461d09843de64ac2d2daadb8003491605ab29188282589aaabf8c75ce8b768f"
-ARCHIVE_BYTES = 17265390
+ARTIFACT = "appdisabler-0.1.0-release-candidate"
+ARTIFACT_ID = 14015117543
+ARCHIVE_SHA = "48b94498d1740e6a7276b73d33c8508c65604d4e86d223d0df956db376291ae4"
+ARCHIVE_BYTES = 11141876
 
 TAG = "system-app-disabler-v0.1.0"
-# The workflow uploads the debug variant file name; the public asset drops the "-debug".
-INNER = "app-debug.apk"
+INNER = "app-release.apk"
 NAME = "System-App-Disabler-v0.1.0.apk"
 SIDECAR = "System-App-Disabler-v0.1.0.sha256"
 PACKAGE = "com.universalrp.appdisabler"
