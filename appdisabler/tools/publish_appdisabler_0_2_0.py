@@ -184,6 +184,7 @@ def main():
         for r in releases if not r["draft"]
     }
 
+    probe_tag = f"probe-{int(time.time())}"
     checksum = work / SIDECAR
     checksum.write_text(f"{apk_sha}  {NAME}\n")
 
@@ -194,11 +195,33 @@ def main():
          "--notes-file", "releases/system-app-disabler-v0.2.0.md",
          "--draft", f"{candidate}#{NAME}", f"{checksum}#{SIDECAR}"])
     if created.returncode != 0:
-        whoami = run("gh", "api", "repos/" + REPO + "/actions/permissions/workflow")
+        # Report what actually happened instead of assuming a cause. The first version of this
+        # branch asserted "the job needs contents: write" and sent three debugging rounds after a
+        # permission problem that did not exist: the token could create tags, and the real failure
+        # was elsewhere. Ask the API the three questions that separate the cases.
+        try:
+            can_tag = subprocess.run(
+                ["gh", "api", "-X", "POST", f"repos/{REPO}/git/refs",
+                 "-f", f"ref={probe_tag}", "-f", f"sha={source}"],
+                capture_output=True, text=True).returncode == 0
+            subprocess.run(["gh", "api", "-X", "DELETE", f"repos/{REPO}/git/refs/tags/{probe_tag}"],
+                           capture_output=True, text=True)
+        except Exception:
+            can_tag = False
+        can_release = subprocess.run(
+            ["gh", "api", "-X", "POST", f"repos/{REPO}/releases",
+             "-F", f"tag_name={probe_tag}-r", "-F", "draft=true", "-F", f"name={probe_tag}"],
+            capture_output=True, text=True)
+        if can_release.returncode == 0:
+            rid = json.loads(can_release.stdout)["id"]
+            subprocess.run(["gh", "api", "-X", "DELETE", f"repos/{REPO}/releases/{rid}"],
+                           capture_output=True, text=True)
         raise SystemExit(
-            f"gh release create exited {created.returncode}. The token could read the repository "
-            f"and every pinned byte, so this is a write refusal: the job needs contents: write. "
-            f"Repository workflow permissions: {whoami}")
+            f"gh release create exited {created.returncode}. \n"
+            f"  contents write (tag create) : {'ok' if can_tag else 'denied'}\n"
+            f"  releases write (draft)      : {'ok' if can_release.returncode == 0 else 'denied'}\n"
+            f"  If both are ok, the refusal is elsewhere: the first version of this publisher failed "
+            f"on asset upload to uploads.github.com, which is a different host from api.github.com.")
 
     for attempt in range(12):
         matches = [r for r in pages("releases") if r["tag_name"] == TAG]
