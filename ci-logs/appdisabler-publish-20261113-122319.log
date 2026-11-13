@@ -1,0 +1,5 @@
+HTTP 403: Resource not accessible by integration (https://api.github.com/repos/universalrp2003/RP-Android-Apps/releases)
+gh release create exited 1. 
+  contents write (tag create) : denied
+  releases write (draft)      : ok
+  If both are ok, the refusal is elsewhere: the first version of this publisher failed on asset upload to uploads.github.com, which is a different host from api.github.com.

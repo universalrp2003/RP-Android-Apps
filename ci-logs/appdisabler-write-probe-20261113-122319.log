@@ -1,0 +1,10 @@
+run=43424667792 ref=refs/heads/main
+--- token acceptance ---
+HTTP/2.0 200 OK
+X-Accepted-Github-Permissions: metadata=read
+--- contents: write (throwaway tag) ---
+TAG_CREATE=ok
+TAG_DELETE=ok
+--- releases: write, typed fields (draft as a real boolean) ---
+RELEASE_CREATE=ok
+RELEASE_DELETE=ok
