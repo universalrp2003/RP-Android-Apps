@@ -21,6 +21,8 @@ jobs:
     name: Build, test, and package System App Disabler
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +30,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Prepare owner-backed fresh-install signer
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
 
       - uses: gradle/actions/setup-gradle@v4
         with:
