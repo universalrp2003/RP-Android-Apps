@@ -9,6 +9,8 @@ data class AppInfo(
     val installer: String? = null,
     val category: DisableCategory = DisableCategory.UNLISTED,
     val description: String? = null,
+    /** Suspended via pm suspend (HyperOS fallback when disable is blocked). Tracked locally. */
+    val isSuspended: Boolean = false,
 )
 
 enum class DisableCategory {

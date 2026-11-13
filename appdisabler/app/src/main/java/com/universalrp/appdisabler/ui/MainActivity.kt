@@ -333,7 +333,7 @@ fun AppsListWindow(
             if (app.packageName in HIDE_PACKAGES) return@filter false
             val tabOk = when (tab) {
                 1 -> app.isSystem
-                2 -> !app.isEnabled
+                2 -> !app.isEnabled || app.isSuspended
                 else -> true
             }
             val matchFilter = app.category == filter
@@ -365,8 +365,15 @@ fun AppsListWindow(
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer), modifier = Modifier.fillMaxWidth()) {
                 Row(Modifier.padding(8.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("Shizuku ✓ Ready", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text("${apps.count { !it.isEnabled }} disabled", style = MaterialTheme.typography.labelSmall)
+                    Text("${apps.count { !it.isEnabled || it.isSuspended }} disabled", style = MaterialTheme.typography.labelSmall)
                 }
+            }
+            if (apps.any { it.isSuspended }) {
+                Text(
+                    "This device blocks shell disable for system apps, so those are suspended instead — reversible, tap Enable to restore.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
@@ -420,13 +427,14 @@ fun AppsListWindow(
                             if (!shizukuLive) {
                                 Toast.makeText(context, context.getString(R.string.toast_need_shizuku), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
-                            if (app.category == DisableCategory.CAUTION) {
+                            if (app.category == DisableCategory.CAUTION && app.isEnabled && !app.isSuspended) {
                                 confirmApp = app
                             } else {
                                 scope.launch {
-                                    val r = if (app.isEnabled) DisableManager.disablePackage(app.packageName) else DisableManager.enablePackage(app.packageName)
+                                    val effectivelyEnabled = app.isEnabled && !app.isSuspended
+                                    val r = if (effectivelyEnabled) DisableManager.disablePackage(context, app.packageName) else DisableManager.enablePackage(context, app.packageName)
                                     if (r.isSuccess) {
-                                        Toast.makeText(context, context.getString(if (app.isEnabled) R.string.toast_disabled else R.string.toast_enabled, app.label), Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, when (r.getOrNull()) { DisableManager.ActionOutcome.SUSPENDED -> "Suspended ${app.label} (device blocks disable)"; DisableManager.ActionOutcome.UNSUSPENDED -> "Restored ${app.label}"; DisableManager.ActionOutcome.DISABLED -> context.getString(R.string.toast_disabled, app.label); else -> context.getString(R.string.toast_enabled, app.label) }, Toast.LENGTH_SHORT).show()
                                         apps = DisableManager.loadInstalledApps(context)
                                     } else errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error"
                                 }
@@ -466,9 +474,9 @@ fun AppsListWindow(
                 TextButton(onClick = {
                     confirmApp = null
                     scope.launch {
-                        val r = DisableManager.disablePackage(app.packageName)
+                        val r = DisableManager.disablePackage(context, app.packageName)
                         if (r.isSuccess) {
-                            Toast.makeText(context, context.getString(R.string.toast_disabled, app.label), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, if (r.getOrNull() == DisableManager.ActionOutcome.SUSPENDED) "Suspended ${app.label} (device blocks disable)" else context.getString(R.string.toast_disabled, app.label), Toast.LENGTH_SHORT).show()
                             apps = DisableManager.loadInstalledApps(context)
                         } else errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error"
                     }
@@ -491,11 +499,12 @@ fun AppsListWindow(
                 if (!shizukuLive) {
                     Toast.makeText(context, context.getString(R.string.toast_need_shizuku), Toast.LENGTH_SHORT).show(); return@AppDetailsDialog
                 }
-                if (app.category == DisableCategory.CAUTION) confirmApp = app
+                if (app.category == DisableCategory.CAUTION && app.isEnabled && !app.isSuspended) confirmApp = app
                 else scope.launch {
-                    val r = if (app.isEnabled) DisableManager.disablePackage(app.packageName) else DisableManager.enablePackage(app.packageName)
+                    val effectivelyEnabled = app.isEnabled && !app.isSuspended
+                    val r = if (effectivelyEnabled) DisableManager.disablePackage(context, app.packageName) else DisableManager.enablePackage(context, app.packageName)
                     if (r.isSuccess) {
-                        Toast.makeText(context, context.getString(if (app.isEnabled) R.string.toast_disabled else R.string.toast_enabled, app.label), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, when (r.getOrNull()) { DisableManager.ActionOutcome.SUSPENDED -> "Suspended ${app.label} (device blocks disable)"; DisableManager.ActionOutcome.UNSUSPENDED -> "Restored ${app.label}"; DisableManager.ActionOutcome.DISABLED -> context.getString(R.string.toast_disabled, app.label); else -> context.getString(R.string.toast_enabled, app.label) }, Toast.LENGTH_SHORT).show()
                         apps = DisableManager.loadInstalledApps(context)
                     } else errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error"
                 }
@@ -585,7 +594,7 @@ fun AppDetailsDialog(app: AppInfo, shizukuOk: Boolean, onDismiss: () -> Unit, on
         },
         confirmButton = {
             Button(onClick = onDisable, enabled = app.category != DisableCategory.CRITICAL) {
-                Text(if (app.isEnabled) stringResource(R.string.action_disable) else stringResource(R.string.action_enable))
+                Text(if (app.isEnabled && !app.isSuspended) stringResource(R.string.action_disable) else stringResource(R.string.action_enable))
             }
         },
         dismissButton = {
@@ -621,12 +630,13 @@ fun AppRow(app: AppInfo, onDisable: () -> Unit, onInfo: () -> Unit, onOpenDetail
                     },
                     maxLines = 2
                 )
-                if (!app.isEnabled) Text("● Disabled — tap Enable to restore", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                if (app.isSuspended) Text("● Suspended — stopped, tap Enable to restore", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                else if (!app.isEnabled) Text("● Disabled — tap Enable to restore", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                 else if (app.category == DisableCategory.CRITICAL) Text("⊘ Never disable — blocked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
             }
             Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.End) {
                 Button(onClick = onDisable, enabled = app.category != DisableCategory.CRITICAL, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)) {
-                    Text(if (app.isEnabled) stringResource(R.string.action_disable) else stringResource(R.string.action_enable), style = MaterialTheme.typography.labelSmall)
+                    Text(if (app.isEnabled && !app.isSuspended) stringResource(R.string.action_disable) else stringResource(R.string.action_enable), style = MaterialTheme.typography.labelSmall)
                 }
                 OutlinedButton(onClick = onInfo, contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)) {
                     Text(stringResource(R.string.action_app_info), style = MaterialTheme.typography.labelSmall)

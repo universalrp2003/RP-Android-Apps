@@ -8,7 +8,7 @@ object BackupManager {
 
     fun exportDisabled(apps: List<AppInfo>): String {
         val arr = JSONArray()
-        apps.filter { !it.isEnabled }.forEach { arr.put(it.packageName) }
+        apps.filter { !it.isEnabled || it.isSuspended }.forEach { arr.put(it.packageName) }
         val obj = JSONObject()
         obj.put("version", 1)
         obj.put("created", System.currentTimeMillis())

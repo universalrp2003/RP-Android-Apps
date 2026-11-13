@@ -25,6 +25,15 @@ import rikka.shizuku.Shizuku
  * `Shizuku.newProcess` is public in API <=12 but private in 13.x, so it is
  * invoked via reflection (the class is bundled in this APK, not a framework
  * hidden API, so setAccessible works on all Android versions).
+ *
+ * OEM (Xiaomi HyperOS) fallback:
+ * HyperOS' PackageManagerServiceImpl.shouldRestrictEnabledSettingsChange blocks
+ * shell (uid 2000) from changing the enabled state of system packages, so both
+ * `pm disable-user` and `pm disable` exit 255 with a SecurityException.
+ * `pm suspend --user 0` is allowed there and is fully reversible with
+ * `pm unsuspend`; it stops the app (it can no longer run or receive broadcasts)
+ * without deleting it. Suspended packages are tracked locally because no public
+ * API exposes that state.
  */
 object DisableManager {
 
@@ -57,6 +66,22 @@ object DisableManager {
         }
     }
 
+    // Suspended packages tracked locally (HyperOS blocks disable for system apps;
+    // suspend is the reversible fallback). No public API exposes suspended state.
+    private const val PREFS = "appdisabler_state"
+    private const val KEY_SUSPENDED = "suspended_packages"
+
+    fun getSuspended(context: Context): Set<String> =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getStringSet(KEY_SUSPENDED, emptySet()) ?: emptySet()
+
+    private fun setSuspended(context: Context, pkg: String, suspended: Boolean) {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cur = (prefs.getStringSet(KEY_SUSPENDED, emptySet()) ?: emptySet()).toMutableSet()
+        if (suspended) cur.add(pkg) else cur.remove(pkg)
+        prefs.edit().putStringSet(KEY_SUSPENDED, cur).apply()
+    }
+
     @Suppress("DEPRECATION")
     suspend fun loadInstalledApps(context: Context): List<AppInfo> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
@@ -67,6 +92,7 @@ object DisableManager {
         }
         // Ensure UAD DB loaded
         UadDatabase.load(context)
+        val suspended = getSuspended(context)
         pkgs.mapNotNull { pkg ->
             val ai = pkg.applicationInfo ?: return@mapNotNull null
             val isSystem = (ai.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
@@ -89,6 +115,7 @@ object DisableManager {
                 installer = installer,
                 category = uad?.category ?: if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE,
                 description = uad?.description,
+                isSuspended = pkg.packageName in suspended,
             )
         }.sortedWith(compareBy<AppInfo> { it.category == DisableCategory.CRITICAL }.thenBy { it.label.lowercase() })
     }
@@ -142,7 +169,11 @@ object DisableManager {
         val path = runShell(arrayOf("pm", "path", "com.android.hotwordenrollment.okgoogle"))
         sb.append("pm path test (exit ${path.exit}):\n${path.output.take(300)}\n\n")
         val ver = runShell(arrayOf("pm", "--version"))
-        sb.append("pm --version (exit ${ver.exit}):\n${ver.output.take(300)}")
+        sb.append("pm --version (exit ${ver.exit}):\n${ver.output.take(300)}\n\n")
+        // Read-only probe: does this device support suspend (HyperOS fallback)?
+        val help = runShell(arrayOf("pm", "help"))
+        val suspendSupported = help.output.contains("suspend")
+        sb.append("pm suspend available: ${if (suspendSupported) "yes" else "unknown"}")
         Result.success(sb.toString())
     }
 
@@ -152,42 +183,71 @@ object DisableManager {
         else -> null
     }
 
-    suspend fun disablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
+    /** Outcome of a disable/enable action (suspend is the HyperOS fallback). */
+    enum class ActionOutcome { DISABLED, SUSPENDED, ENABLED, UNSUSPENDED }
+
+    suspend fun disablePackage(context: Context, packageName: String): Result<ActionOutcome> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
         if (UadDatabase.lookup(packageName)?.category == DisableCategory.CRITICAL) {
             return@withContext Result.failure(IllegalStateException("Protected package — never disable"))
         }
-        // Try command variants (some OEM/Android builds differ); report all outputs on failure.
-        val attempts = listOf(
+        // 1) Proper disable (works on stock Android + non-system apps everywhere).
+        val disableAttempts = listOf(
             arrayOf("pm", "disable-user", "--user", "0", packageName),
             arrayOf("pm", "disable-user", packageName),
-            arrayOf("pm", "disable", packageName),
         )
         val log = StringBuilder()
-        for (cmd in attempts) {
+        for (cmd in disableAttempts) {
             val r = runShell(cmd)
             log.append("${cmd.joinToString(" ")} -> exit ${r.exit}: ${r.output.take(200)}\n")
             if (r.exit == 0 && !r.output.startsWith("Error", ignoreCase = true)) {
-                return@withContext Result.success(Unit)
+                setSuspended(context, packageName, false)
+                return@withContext Result.success(ActionOutcome.DISABLED)
             }
+        }
+        // 2) HyperOS fallback: suspend (stops app, reversible via unsuspend).
+        //    Xiaomi's PMS blocks shell disable for system packages
+        //    (shouldRestrictEnabledSettingsChange) but allows suspend.
+        val suspendCmd = arrayOf("pm", "suspend", "--user", "0", packageName)
+        val s = runShell(suspendCmd)
+        log.append("${suspendCmd.joinToString(" ")} -> exit ${s.exit}: ${s.output.take(200)}\n")
+        if (s.exit == 0 && !s.output.startsWith("Error", ignoreCase = true)) {
+            setSuspended(context, packageName, true)
+            return@withContext Result.success(ActionOutcome.SUSPENDED)
         }
         Result.failure(IllegalStateException("Disable failed. Attempts:\n$log".trim()))
     }
 
-    suspend fun enablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun enablePackage(context: Context, packageName: String): Result<ActionOutcome> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
-        val attempts = listOf(
+        val wasSuspended = packageName in getSuspended(context)
+        val log = StringBuilder()
+        // 1) Unsuspend first — `pm enable` alone is exit 0 but a no-op for a suspended app.
+        var unsuspended = false
+        if (wasSuspended) {
+            val unsuspendCmd = arrayOf("pm", "unsuspend", "--user", "0", packageName)
+            val u = runShell(unsuspendCmd)
+            log.append("${unsuspendCmd.joinToString(" ")} -> exit ${u.exit}: ${u.output.take(200)}\n")
+            unsuspended = u.exit == 0 && !u.output.startsWith("Error", ignoreCase = true)
+            if (unsuspended) setSuspended(context, packageName, false)
+        }
+        // 2) Re-enable if it had been properly disabled.
+        val enableAttempts = listOf(
             arrayOf("pm", "enable", "--user", "0", packageName),
             arrayOf("pm", "enable", packageName),
         )
-        val log = StringBuilder()
-        for (cmd in attempts) {
+        for (cmd in enableAttempts) {
             val r = runShell(cmd)
             log.append("${cmd.joinToString(" ")} -> exit ${r.exit}: ${r.output.take(200)}\n")
             if (r.exit == 0 && !r.output.startsWith("Error", ignoreCase = true)) {
-                return@withContext Result.success(Unit)
+                setSuspended(context, packageName, false)
+                return@withContext Result.success(
+                    if (wasSuspended) ActionOutcome.UNSUSPENDED else ActionOutcome.ENABLED
+                )
             }
         }
+        // Unsuspend alone already restores the app (it was only suspended, never disabled).
+        if (unsuspended) return@withContext Result.success(ActionOutcome.UNSUSPENDED)
         Result.failure(IllegalStateException("Enable failed. Attempts:\n$log".trim()))
     }
 }
