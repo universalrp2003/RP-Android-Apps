@@ -1,0 +1,22 @@
+gh: Not Found (HTTP 404)
+Traceback (most recent call last):
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/upload_appdisabler_0_2_0.py", line 171, in <module>
+    main()
+    ~~~~^^
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/upload_appdisabler_0_2_0.py", line 62, in main
+    draft = api(f"releases/tags/{TAG}")
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/upload_appdisabler_0_2_0.py", line 46, in api
+    return json.loads(run("gh", "api", f"repos/{REPO}/{path}"))
+                      ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/upload_appdisabler_0_2_0.py", line 42, in run
+    return subprocess.check_output(args, text=True).strip()
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/subprocess.py", line 473, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "/usr/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '('gh', 'api', 'repos/universalrp2003/RP-Android-Apps/releases/tags/system-app-disabler-v0.2.0')' returned non-zero exit status 1.
