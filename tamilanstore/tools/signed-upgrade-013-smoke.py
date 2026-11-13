@@ -154,19 +154,21 @@ def run(out):
     wait_text('Tamilan')
     wait_text('Enable scrolling text')
     assert 'Debug preview' not in ui()[0], 'Release artifact must not masquerade as a debug preview'
-    # The whole point of 0.13: the two new apps are listed by the updated Store itself.
-    scroll_until_text('Android TV Guard')
-    scroll_until_text('System App Disabler')
+    # The header status is at the top, so check it before scrolling into the longer app list.
     wait_text('Last catalog refresh succeeded')
     click('Refresh catalog')
     wait_text('Last catalog refresh succeeded')
     snap(out, '02-store13-release-key-upgrade')
+    # The whole point of 0.13: the two new apps are listed by the updated Store itself.
+    scroll_until_text('Android TV Guard')
+    scroll_until_text('System App Disabler')
+    snap(out, '03-store13-new-apps-listed')
     # Restart must preserve the two real UI preferences as well as the synthetic file.
     adb('shell', 'am', 'force-stop', PKG)
     launch()
     wait_text('Tamilan')
     wait_text('Enable scrolling text')
-    snap(out, '03-after-restart')
+    snap(out, '04-after-restart')
     assert hashlib.sha256(candidate.read_bytes()).hexdigest() == before_digest
     result = dict(from_version='0.12', to_version='0.13', version_code=15,
                   package=PKG, installation_method='adb install -r; no bypass flags',
