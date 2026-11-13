@@ -4,7 +4,7 @@
 The only package this test asks the Disabler to change is the fixture; ADB reads state and
 is used for recovery on failure. This cannot model vendor firmware or a suspend fallback.
 """
-import os
+import hashlib
 import re
 import subprocess
 import sys
@@ -120,7 +120,7 @@ try:
     allow = wait_node('shizuku-permission', text('Allow all the time'))
     tap(allow)
     tap(wait_node('setup', text('Apps')))
-    wait_node('apps-ready', lambda n: 'Shizuku running' in n.attrib.get('text', ''))
+    wait_node('apps-ready', lambda n: 'Shizuku running' in n.attrib.get('text', '') and 'ready' in n.attrib.get('text', ''))
     # The fixture's unique label sorts first. Do not target any system package.
     tap(wait_node('apps', text('Any')))
     wait_node('fixture-before', text('AAAA Disabler Test Fixture'))
@@ -130,12 +130,46 @@ try:
     expect_state('-d', 'disabled')
     print('Framework confirms fixture disabled by app', flush=True)
     wait_node('fixture-after-disable', text('AAAA Disabler Test Fixture'))
+    # Check persistence across a real emulator reboot. Shizuku's ADB service must be started again.
+    print(adb('reboot'))
+    subprocess.run(['adb', 'wait-for-device'], check=True, timeout=180)
+    deadline = time.monotonic() + 180
+    while time.monotonic() < deadline:
+        if adb('shell', 'getprop', 'sys.boot_completed', check=False).strip() == '1':
+            break
+        time.sleep(5)
+    else:
+        raise TimeoutError('Emulator did not finish rebooting')
+    adb('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP')
+    adb('shell', 'wm', 'dismiss-keyguard')
+    expect_state('-d', 'disabled-after-reboot')
+    assert not list_contains('-e'), 'fixture is enabled after reboot'
+    print('Framework confirms fixture stayed disabled after reboot', flush=True)
+    print(cmd('timeout', '45', 'adb', 'shell', starter))
+    print(adb('shell', 'am', 'start', '-W', '-n', DISABLER + '/.ui.MainActivity'))
+    tap(wait_node('setup-after-reboot', text('Apps')))
+    wait_node('apps-ready-after-reboot', lambda n: 'Shizuku running' in n.attrib.get('text', '') and 'ready' in n.attrib.get('text', ''))
+    tap(wait_node('apps-any-after-reboot', text('Any')))
+    wait_node('fixture-after-reboot', text('AAAA Disabler Test Fixture'))
     row_action('fixture-before-enable', 'Enable')
     expect_state('-e', 'restored')
     assert not list_contains('-d'), 'fixture remains in disabled list'
     wait_node('fixture-after-enable', text('AAAA Disabler Test Fixture'))
-    print('Framework confirms fixture restored by app', flush=True)
-    (OUT / 'result.txt').write_text('PASS: stock emulator, Shizuku, app-driven disable and restore of disposable user app. OEM firmware and suspension fallback not tested.\n')
+    row_action_nodes = dump('fixture-restored')
+    assert any(n.attrib.get('text') == 'Disable' for n in row_action_nodes), 'Disable button missing after restore'
+    # Compare installed base APK with the exact APK downloaded from the candidate run.
+    installed_paths = adb('shell', 'pm', 'path', DISABLER).splitlines()
+    assert len(installed_paths) == 1 and installed_paths[0].startswith('package:'), installed_paths
+    pulled = OUT / 'installed-candidate.apk'
+    adb('pull', installed_paths[0].removeprefix('package:'), str(pulled))
+    expected = hashlib.sha256(Path(APK).read_bytes()).hexdigest()
+    installed = hashlib.sha256(pulled.read_bytes()).hexdigest()
+    pulled.unlink()
+    assert installed == expected, f'installed APK hash mismatch: {installed} != {expected}'
+    (OUT / 'candidate-sha256.txt').write_text(expected + '\n')
+    (OUT / 'fingerprint.txt').write_text(adb('shell', 'getprop', 'ro.build.fingerprint'))
+    print('Framework confirms fixture restored by app; installed candidate hash matches', flush=True)
+    (OUT / 'result.txt').write_text('PASS: stock emulator, Shizuku, app-driven disable, reboot and restore of disposable user app. OEM firmware and suspension fallback not tested.\n')
 finally:
     # Safety net on the disposable emulator only; never use this as a test success.
     print(adb('shell', 'pm', 'enable', '--user', '0', PKG, check=False), flush=True)
