@@ -796,9 +796,9 @@ fun AppDetailsDialog(
         else -> T.catUnlistedBody
     }
     val happen = when {
-        app.isPersistent && (app.isSuspended || !app.isEnabled) -> T.happenPersistent
-        app.isSuspended -> T.happenSuspended
         !app.isEnabled -> T.happenDisabled
+        app.isPersistent && app.isSuspended -> T.happenPersistent
+        app.isSuspended -> T.happenSuspended
         else -> when (app.category) {
             DisableCategory.SAFE -> T.happenSafe
             DisableCategory.CAUTION -> T.happenCaution
@@ -913,26 +913,13 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                         maxLines = 2
                     )
                 }
-                // One short status line. English-only, like the rest. Three states, not two.
-                //
-                // A turned-off package must never be described as running. Disabling leaves the
-                // process alive (it only stops the package from starting again) and `ps` still lists
-                // it, so "is it in the process table" is not "is it on". The owner caught this on
-                // HyperComm: an Enable button above "● running now".
-                //
-                // And a force-stopped-but-enabled package is not off either: the owner force-closed
-                // one and it came straight back. Android's FLAG_STOPPED is the only honest way to
-                // say "nothing is running, and nothing can start until you open it".
-                // A persistent system service is restarted by Android the moment it dies, so
-                // "off" or "stopped" is simply not true of it. Say what is happening instead of
-                // claiming something the owner (and the process table) can disprove.
-                val offState = app.isSuspended || !app.isEnabled
+                // Suspension is not a full disable and does not prove that a process is absent.
+                // The local suspension record reflects our last successful action, not a live check.
                 val statusText = when {
-                    app.isPersistent && offState ->
-                        "● suspended — Android keeps this service alive, so it keeps running"
-                    offState -> "● off — tap Enable to restore"
+                    !app.isEnabled -> "● disabled — tap Enable to restore"
+                    app.isSuspended -> "● suspended — may still run"
                     running != null && running.contains(app.packageName) -> "● running now"
-                    app.isStopped -> "● stopped — no process, starts on next launch"
+                    app.isStopped -> "● marked stopped by Android"
                     else -> null
                 }
                 statusText?.let {

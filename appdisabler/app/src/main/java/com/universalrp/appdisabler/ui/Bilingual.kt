@@ -220,30 +220,22 @@ object T {
     )
     val descMissingUser = Bi("User-installed app. Safe to manage normally.", "நீங்கள் நிறுவிய ஆப். சாதாரணமாக நிர்வகிக்கலாம்.")
     val whatHappens = Bi("What happens if turned off?", "முடக்கினால் என்ன ஆகும்?")
-    // Measured on the owner's HyperOS phone, 13 November 2026: a suspended package KEEPS an already
-    // running process and force-stop brings it back. So this must not promise it cannot run — only
-    // that Android will not start it again on its own. The earlier wording said "cannot run or
-    // receive broadcasts", which the owner disproved by force-stopping one and watching it return.
+    // A successful suspend is not proof that the process cannot run or restart.
     val happenSuspended = Bi(
-        "Suspended by Android: it cannot start again on its own. Anything already running keeps " +
-            "running until it is closed. This is weaker than a real disable — HyperOS refuses " +
-            "disable for system packages. Tap Enable to restore.",
-        "ஆண்ட்ராய்டால் இடைநிறுத்தப்பட்டுள்ளது: தானாக மீண்டும் தொடங்க முடியாது. ஏற்கனவே இயங்கும் " +
-            "பகுதி மூடப்படும் வரை இயங்கும். இது முழு முடக்கத்தை விட பலவீனமானது — சிஸ்டம் " +
-            "பேக்கேஜ்களை HyperOS முடக்க விடாது. மீட்ட Enable தட்டுங்கள்."
+        "Suspension was reported successful. This is weaker than a real disable, and the app " +
+            "may still run or restart. Tap Enable to restore; the saved status may become outdated.",
+        "இடைநிறுத்தம் வெற்றியடைந்ததாக தெரிவிக்கப்பட்டது. இது முழு முடக்கத்தை விட பலவீனமானது; " +
+            "ஆப் தொடர்ந்து இயங்கலாம் அல்லது மீண்டும் தொடங்கலாம். மீட்டெடுக்க Enable தட்டுங்கள். " +
+            "சேமிக்கப்பட்ட நிலை மாறியிருக்கலாம்."
     )
-    // Measured on the owner's HyperOS phone (13 Nov 2026): com.xiaomi.hypercomm carries the
-    // PERSISTENT flag. Android restarts a persistent service as soon as it dies and refuses to keep
-    // it stopped, so suspend does not keep it quiet and force-stop is undone in seconds. Saying
-    // "suspended" without that caveat is how a row ended up claiming an app was off while the owner
-    // watched it run — the flag, not the wording, is the reason.
+    // FLAG_PERSISTENT alone does not establish the current process state or prove it cannot be disabled.
     val happenPersistent = Bi(
-        "This is a persistent system service. Android restarts it the moment it stops, so turning " +
-            "it off here cannot keep it stopped — it will keep running even while it is marked " +
-            "suspended. Nothing breaks by trying, and Enable undoes it, but do not expect silence.",
-        "இது ஒரு நிரந்தர சிஸ்டம் சேவை. நிற்கும் உடனே ஆண்ட்ராய்டு அதை மீண்டும் இயக்கும், எனவே இங்கு " +
-            "முடக்கினாலும் அது நிற்காது — இடைநிறுத்தப்பட்டதாகக் காட்டினாலும் தொடர்ந்து இயங்கும். " +
-            "முயற்சிப்பதால் பாதிப்பில்லை; Enable மீட்டும், ஆனால் அமைதியை எதிர்பார்க்க வேண்டாம்."
+        "This package is marked persistent. Suspension was reported successful, but it may still " +
+            "run or restart. Effects vary by device. Tap Enable to restore; the saved status may " +
+            "be outdated.",
+        "இந்த பேக்கேஜ் persistent எனக் குறிக்கப்பட்டுள்ளது. இடைநிறுத்தம் வெற்றியடைந்ததாக " +
+            "தெரிவிக்கப்பட்டாலும் அது இயங்கலாம் அல்லது மீண்டும் தொடங்கலாம். சாதனத்தைப் பொறுத்து " +
+            "விளைவுகள் மாறும். மீட்டெடுக்க Enable தட்டுங்கள்; சேமித்த நிலை மாறியிருக்கலாம்."
     )
     val happenDisabled = Bi(
         "Currently off — hidden and stopped. Enable restores it.",

@@ -141,7 +141,7 @@ object DisableManager {
         val flags = Regex("flags=\\[([^\\]]*)]").find(out)?.groupValues?.get(1) ?: return null
         if (!Regex("SUSPENDED").containsMatchIn(flags)) return false
         // A package can also be suspended by a package-manager actor; that is a different mechanism
-        // and not something this app did, but it still means the app cannot run.
+        // and not something this app did; suspension does not prove the process cannot run.
         return true
     }
 
@@ -174,10 +174,9 @@ object DisableManager {
             val ai = pkg.applicationInfo ?: return@mapNotNull null
             val isSystem = (ai.flags and android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0
             val isEnabled = ai.enabled
-            // FLAG_STOPPED is Android's own answer to "is there a process, and could there be one".
+            // FLAG_STOPPED is package state, not a direct process measurement.
             val isStopped = (ai.flags and android.content.pm.ApplicationInfo.FLAG_STOPPED) != 0
-            // A persistent package is restarted by the framework whenever it dies, so it can be
-            // suspended but never actually stopped. The row must not claim otherwise.
+            // The persistent flag is not itself a measurement of a running process.
             val isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0
             val label = try { pm.getApplicationLabel(ai).toString() } catch (_: Exception) { pkg.packageName }
             val uad = UadDatabase.lookup(pkg.packageName, context)
@@ -372,7 +371,7 @@ object DisableManager {
                 return@withContext Result.success(ActionOutcome.DISABLED)
             }
         }
-        // 2) HyperOS fallback: suspend (stops app, reversible via unsuspend).
+        // 2) HyperOS fallback: suspend (reversible via unsuspend; not a full disable).
         //    Xiaomi's PMS blocks shell disable for system packages
         //    (shouldRestrictEnabledSettingsChange) but allows suspend.
         val suspendCmd = arrayOf("pm", "suspend", "--user", "0", packageName)
@@ -384,12 +383,9 @@ object DisableManager {
             // Do not try to re-read the state. Measured on the owner's HyperOS phone (13 Nov 2026):
             // `dumpsys package` shows no SUSPENDED flag for a package that suspend just reported as
             // suspended, and the package stays in `pm list packages -e`. Two earlier versions of
-            // this check therefore turned a real suspension into a red failure over an app that was
-            // already off. The OS says it did it; believe it.
+            // this check therefore turned a reported successful suspension into a red failure.
             setSuspended(context, packageName, true)
-            // Suspend stops the package starting again but does not end a process that is already
-            // alive — which is why the owner force-stopped one and watched it come back. Kill it
-            // now that it cannot restart: this is what makes "off" mean gone rather than inert.
+            // Best effort only: a force-stop does not guarantee the process stays stopped.
             val forceStop = runShell(arrayOf("am", "force-stop", packageName))
             log.append(
                 "am force-stop $packageName -> exit ${forceStop.exit}: ${forceStop.output.take(200)}\n"

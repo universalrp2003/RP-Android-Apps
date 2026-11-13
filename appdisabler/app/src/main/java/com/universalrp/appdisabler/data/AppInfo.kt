@@ -13,16 +13,9 @@ data class AppInfo(
     val bootloopRisk: Boolean = false,
     /** Suspended via pm suspend (HyperOS fallback when disable is blocked). Tracked locally. */
     val isSuspended: Boolean = false,
-    /**
-     * The framework says this package is stopped — no process, and none may start until someone
-     * launches it again by hand. A force-stop sets this; a force-closed app that restarts does not.
-     */
+    /** Android's stopped-package flag; it is not a direct process measurement. */
     val isStopped: Boolean = false,
-    /**
-     * A persistent system service. Android restarts these immediately and refuses to keep them
-     * stopped, so neither disable nor suspend can make one "off" — HyperComm (com.xiaomi.hypercomm)
-     * behaves exactly this way on the owner's phone.
-     */
+    /** The package has Android's persistent application flag, not a live process state. */
     val isPersistent: Boolean = false,
 )
 

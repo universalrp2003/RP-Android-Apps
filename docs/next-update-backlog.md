@@ -59,10 +59,8 @@ Bundle these into the next Store release; do not start a Store-only build just f
       rather than reading a state the OS does not expose; `isActuallyOff()` keeps the local
       suspend note only for the case the shell already confirmed. Verify the SUSPENDED flag on a
       real suspended package before relying on it again.
-- [ ] **A persistent system service can never be "off", and the app now says so.** HyperComm
-      (`com.xiaomi.hypercomm`) carries `FLAG_PERSISTENT`. Android restarts it as soon as it dies, so
-      `pm suspend` only blocks relaunch and `am force-stop` is undone within seconds — the owner
-      watched it run while the row said "off". The row now reads "suspended — Android keeps this
-      service alive, so it keeps running" and the detail dialog explains the same thing. If the owner
-      wants these silenced for real, that needs a different mechanism (a Shizuku-side `pm disable`
-      that HyperOS refuses, or disabling the caller that starts it), not a stronger force-stop.
+- [ ] **Persistent flag and suspension need cautious wording.** HyperComm on the owner's phone
+      has `FLAG_PERSISTENT` and was observed running after suspension and force-close. The flag alone
+      does not prove it is always running, cannot be disabled or uninstalled, or that disabling is
+      safe. The app now distinguishes reported suspension from disable and avoids those claims;
+      the saved suspension record can become stale. Verify actual behaviour on the device.

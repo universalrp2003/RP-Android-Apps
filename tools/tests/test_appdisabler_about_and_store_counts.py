@@ -285,21 +285,14 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('"● running now"', self.ui)
         self.assertIn('"Blocked"', self.ui)
 
-    def test_a_turned_off_row_is_never_labelled_running(self):
-        """Owner-reported on HyperComm (13 Nov 2026): an Enable button above "● running now".
-
-        Disabling leaves the package's process alive, so it is still in `ps`. The status line must
-        therefore ask "is it off" before "does it have a process", not the other way round. This
-        asserts the order in the source, because that order IS the behaviour.
-        """
-        off = self.ui.index('offState -> "● off — tap Enable to restore"')
+    def test_disabled_and_suspended_states_precede_running_status(self):
+        disabled = self.ui.index('!app.isEnabled -> "● disabled — tap Enable to restore"')
+        suspended = self.ui.index('app.isSuspended -> "● suspended — may still run"')
         running = self.ui.index('-> "● running now"')
-        stopped = self.ui.index('app.isStopped -> "● stopped — no process, starts on next launch"')
-        self.assertLess(off, running,
-                        'the off branch must be tested before the running branch, or a disabled '
-                        'app reports "running now" instead of "off"')
-        self.assertLess(running, stopped,
-                        'a stopped package is only "stopped" when it is not off and not running')
+        stopped = self.ui.index('app.isStopped -> "● marked stopped by Android"')
+        self.assertLess(disabled, suspended)
+        self.assertLess(suspended, running)
+        self.assertLess(running, stopped)
 
     def test_suspension_is_read_from_dumpsys_not_from_the_enabled_list(self):
         """Owner's phone, 13 Nov 2026: `pm suspend` reported success and the app called it a failure.
@@ -319,32 +312,16 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertNotIn('"packages"', decision,
                          'the enabled/disabled lists cannot see a suspension; decide from dumpsys')
 
-    def test_a_persistent_service_is_never_described_as_off(self):
-        """Owner, 13 Nov 2026: HyperComm carried on running while the row said "off".
-
-        `dumpsys` from the owner's phone showed com.xiaomi.hypercomm with PERSISTENT in its flags.
-        Android restarts a persistent service as soon as it dies, so neither suspend nor force-stop
-        can make one quiet. The row must say that, before it says "off".
-        """
-        self.assertIn('isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0',
-                      self.manager)
-        ui = self.ui
-        persistent_branch = ui.index('app.isPersistent && offState')
-        off_branch = ui.index('offState -> "● off — tap Enable to restore"')
-        self.assertLess(persistent_branch, off_branch,
-                        'the persistent caveat must be tested before the plain "off" text')
-        self.assertIn('Android keeps this service alive, so it keeps running', ui)
+    def test_persistent_flag_does_not_prove_a_process_is_running(self):
+        self.assertIn('isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0', self.manager)
+        self.assertIn('app.isPersistent && app.isSuspended -> T.happenPersistent', self.ui)
+        self.assertLess(self.ui.index('!app.isEnabled -> T.happenDisabled'),
+                        self.ui.index('app.isPersistent && app.isSuspended -> T.happenPersistent'))
         strings = self.STRINGS.read_text()
-        self.assertIn('This is a persistent system service.', strings)
-        self.assertIn('do not expect silence', strings)
-
-    def test_the_suspend_explanation_does_not_promise_more_than_it_does(self):
-        """The dialog said "cannot run or receive broadcasts". The owner force-stopped a suspended
-        app and it came straight back, which disproves that. Say what is true instead."""
-        strings = self.STRINGS.read_text()
-        self.assertNotIn('it cannot run or receive broadcasts', strings)
-        self.assertIn('cannot start again on its own', strings)
-        self.assertIn('weaker than a real disable', strings)
+        self.assertIn('may still ', strings)
+        self.assertNotIn('Android restarts it the moment it stops', strings)
+        self.assertNotIn('Nothing breaks by trying', strings)
+        self.assertNotIn('cannot start again on its own', strings)
 
     def test_off_is_decided_by_the_phone_not_by_the_local_note(self):
         """Owner: "if i force close it's again running, never stopped" (13 Nov 2026).
