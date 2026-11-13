@@ -1,5 +1,3 @@
-## System App Disabler 0.2.0 — colour-coded safety, bootloop protection, live counts
-
 Still disable-only: no root, no uninstalling anything, and every action can be undone inside the app.
 0.2.0 is about making the safety information impossible to miss — and about refusing the handful of
 packages that can leave a phone unable to start.
