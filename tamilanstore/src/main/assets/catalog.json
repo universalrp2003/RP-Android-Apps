@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "updated": "2026-11-01",
+  "updated": "2026-11-13",
   "apps": [
     {
       "id": "smsguard",
@@ -18,11 +18,11 @@
       "name": "Live Guard",
       "tamilName": "கைபேசி காவலன்",
       "packageName": "com.universalrp.cleansweep",
-      "version": "2.82",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v2.82/CleanSweep-v2.82.apk",
-      "size": 14505867,
-      "sha256": "3964b17235b107db1c7a07d92bd5d32fbe0bf29127eafcdd97d7f50f9aa677f5",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v2.82"
+      "version": "3.00",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk",
+      "size": 14781579,
+      "sha256": "286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.00"
     },
     {
       "id": "radio",
@@ -62,11 +62,11 @@
       "name": "Oor Arivippu",
       "tamilName": "ஊர் அறிவிப்பு",
       "packageName": "com.oorarivippu.voiceannouncer",
-      "version": "1.1.10",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.10/Oor-Arivippu-v1.1.10.apk",
-      "size": 12842800,
-      "sha256": "7a526fc54ac2ed07a5f972cfa030b9eb71ac77c5d1a16151c50803e9b0d7ceaa",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.10"
+      "version": "1.1.21",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.21/Oor-Arivippu-v1.1.21.apk",
+      "size": 12924720,
+      "sha256": "e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.21"
     },
     {
       "id": "secretmessage",
@@ -144,6 +144,28 @@
       "size": 11712552,
       "sha256": "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55",
       "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5"
+    },
+    {
+      "id": "tvguard",
+      "name": "Android TV Guard",
+      "tamilName": "டிவி காவலன்",
+      "packageName": "com.universalrp.tvguard",
+      "version": "1.5.1",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.1/Android-TV-Guard-v1.5.1.apk",
+      "size": 11797331,
+      "sha256": "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tvguard-v1.5.1"
+    },
+    {
+      "id": "appdisabler",
+      "name": "System App Disabler",
+      "tamilName": "சிஸ்டம் செயலி முடக்கி",
+      "packageName": "com.universalrp.appdisabler",
+      "version": "0.1.0",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.1.0/System-App-Disabler-v0.1.0.apk",
+      "size": 11635233,
+      "sha256": "0ea5d450266586c5c882e72ccd7f64e0fa16a38de10df8b5d0b548aa1331b734",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.1.0"
     }
   ]
 }

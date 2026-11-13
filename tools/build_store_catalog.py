@@ -7,6 +7,7 @@ import urllib.request
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 REPO = 'universalrp2003/RP-Android-Apps'
+LEGACY_EXCLUDED = frozenset({'dailyvault', 'tvguard', 'appdisabler'})
 
 def generate(snapshot, releases):
     apps = []
@@ -39,10 +40,11 @@ def generate(snapshot, releases):
     return dict(snapshot, apps=apps)
 
 def write_catalogs(result, directory):
-    # Store0.5 requires exactly12 entries. Keep its endpoint compatible while0.6 adds DailyVault.
+    # Store0.5 requires exactly12 entries. Its endpoint stays frozen at that approved set:
+    # DailyVault, Android TV Guard and System App Disabler only ship in catalog-v2.json.
     directory = Path(directory)
     directory.joinpath('catalog-v2.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
-    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] != 'dailyvault'])
+    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] not in LEGACY_EXCLUDED])
     if len(legacy['apps']) != 12:
         raise ValueError('Legacy Store endpoint must retain exactly12 approved suite entries')
     directory.joinpath('catalog.json').write_text(json.dumps(legacy, ensure_ascii=False, indent=2)+'\n')

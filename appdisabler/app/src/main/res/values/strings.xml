@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">System App Disabler</string>
+    <string name="app_tagline">Disable pre-installed bloat safely — Shizuku</string>
+    <string name="tamil_name">சிஸ்டம் செயலி முடக்கி</string>
+
+    <string name="shizuku_title">Shizuku — one-time setup</string>
+    <string name="shizuku_desc">This app disables (not uninstalls) bloat. Android only allows it via shell. Shizuku gives that shell via Wireless debugging — no root, no PC after first pairing. Your system stays safe and every disable is 1-tap reversible.</string>
+    <string name="btn_shizuku_download">Get Shizuku</string>
+    <string name="btn_shizuku_guide">How to activate (2 min)</string>
+    <string name="shizuku_status_ok">Shizuku running ✓ Ready to disable</string>
+    <string name="shizuku_status_missing">Shizuku not running — follow guide</string>
+    <string name="shizuku_status_denied">Permission denied — grant in Shizuku</string>
+
+    <string name="tab_all">All</string>
+    <string name="tab_system">System</string>
+    <string name="tab_disabled">Disabled</string>
+    <string name="filter_safe">Safe to disable</string>
+    <string name="filter_caution">Caution</string>
+    <string name="filter_critical">Never disable</string>
+
+    <string name="action_disable">Disable</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_app_info">App info</string>
+    <string name="btn_restore_all">Restore all my disables</string>
+    <string name="about_title">About &amp; RP Apps</string>
+    <string name="guide_title">Shizuku activation guide</string>
+    <string name="search_hint">Search package or name</string>
+    <string name="empty_list">No apps match filter</string>
+    <string name="disable_confirm_title">Disable?</string>
+    <string name="disable_confirm_msg">Disable %1$s? It will hide from launcher and stop. You can Enable it back anytime. Never disable if marked “Never disable”.</string>
+    <string name="toast_disabled">Disabled %1$s</string>
+    <string name="toast_enabled">Enabled %1$s</string>
+    <string name="toast_need_shizuku">Shizuku not ready — complete setup first</string>
+    <string name="toast_protected">Protected — not allowed to disable</string>
+    <string name="toast_permission_needed">Shizuku permission needed — tap Allow Shizuku permission</string>
+    <string name="btn_allow_shizuku">Allow Shizuku permission</string>
+    <string name="shizuku_status_permission">Shizuku running — permission not granted yet</string>
+    <string name="about_title_full">About System App Disabler</string>
+    <string name="shizuku_guide_steps">1. Install Shizuku\n2. Developer → Wireless debugging → Pair\n3. Start Shizuku → come back here</string>
+    <string name="export_title">Export disabled list</string>
+    <string name="import_title">Import &amp; restore</string>
+    <string name="batch_disable">Disable selected safe apps</string>
+    <string name="confirm_caution_title">Caution — may break a feature</string>
+    <string name="confirm_caution_msg">%1$s is marked Caution — it may remove a feature (e.g. Game launcher, Phone Manager). Disable anyway? You can Enable back.</string>
+</resources>

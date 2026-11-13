@@ -1,7 +1,7 @@
 package com.universalrp.updates
 
 /**
- * One list, all fifteen RP Ideas Android apps (including the Android TV Guard) + official project links.
+ * One list, all sixteen RP Ideas Android apps (including the Android TV Guard and System App Disabler) + official project links.
  *
  * Every app's About screen renders this shared directory so adding or bumping an app
  * keeps every app in sync automatically.
@@ -170,22 +170,29 @@ object SisterApps {
             aboutLabel = "Android TV Guard (டிவி காவலன்) — Android TV release",
         ),
         SisterApp(
+            id = "appdisabler", name = "System App Disabler (சிஸ்டம் செயலி முடக்கி)",
+            tamilName = "சிஸ்டம் செயலி முடக்கி",
+            tagPrefix = "system-app-disabler", version = "0.1.0", publishedVersion = "0.1.0",
+            packageName = "com.universalrp.appdisabler",
+            aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
+        ),
+        SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.12", publishedVersion = "0.12",
+            tagPrefix = "tamilan-store", version = "0.13", publishedVersion = "0.13",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
-        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.12",
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.13",
         "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.5",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
     )
 
-    /** `label to url` for all fifteen RP Ideas Android apps. */
+    /** `label to url` for all sixteen RP Ideas Android apps. */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 

@@ -39,7 +39,7 @@ class UpdateBatchStateTest {
         }
     }
     @Test fun planIsBoundedUniqueAndCopiedAndProcessDeathHasNoApproval() {
-        for (bad in listOf(emptyList(), List(14) { "app$it" }, listOf("radio", "radio"), listOf("../radio")))
+        for (bad in listOf(emptyList(), List(16) { "app$it" }, listOf("radio", "radio"), listOf("../radio")))
             assertThrows(IllegalArgumentException::class.java) { UpdateBatchState.start(bad) }
         val plan = mutableListOf("radio")
         val queue = UpdateBatchState.start(plan)
@@ -48,14 +48,14 @@ class UpdateBatchStateTest {
         assertFalse(UpdateBatchState().active)
         assertEquals(BatchStage.IDLE, UpdateBatchState().stage)
     }
-    @Test fun allThirteenCanCompleteAndAlreadyUpdatedItemsNeedNoPrompt() {
-        var state = UpdateBatchState.start(List(13) { "app$it" })
-        repeat(13) { index ->
+    @Test fun allFifteenCanCompleteAndAlreadyUpdatedItemsNeedNoPrompt() {
+        var state = UpdateBatchState.start(List(15) { "app$it" })
+        repeat(15) { index ->
             assertEquals(index, state.index)
             state = if (index % 2 == 0) state.alreadyUpdated() else state.ready().handedOff().returned(true)
         }
         assertEquals(BatchStage.DONE, state.stage)
-        assertEquals(13, state.index)
+        assertEquals(15, state.index)
     }
     @Test fun installerActivityResultIsNotProofAndSameNameOldCodeCannotAdvance() {
         assertFalse(BatchInstallEvidence.confirmed(null, "0.5", 5))

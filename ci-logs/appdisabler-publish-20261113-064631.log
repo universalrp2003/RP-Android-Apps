@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/publish_appdisabler_0_1_0.py", line 205, in <module>
+    main()
+  File "/home/runner/work/RP-Android-Apps/RP-Android-Apps/appdisabler/tools/publish_appdisabler_0_1_0.py", line 144, in main
+    assert not [r for r in releases if r["tag_name"] == TAG], "Tag already exists; publish a new version"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tag already exists; publish a new version

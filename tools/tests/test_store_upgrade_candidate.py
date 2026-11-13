@@ -6,14 +6,14 @@ ROOT = Path(__file__).resolve().parents[2]
 class StoreUpgradeCandidateTest(unittest.TestCase):
     def test_candidate_is_release_signed_non_debug_and_cannot_publish(self):
         # This used to assert against tamilanstore-signed-candidate.yml, which pinned the 0.11
-        # identities. Store moved to 0.12 / versionCode 14 in that workflow's successor,
-        # store-012-candidate.yml, which left the old file asserting a version the module no
-        # longer builds - a guaranteed red run on every Store push. The invariants below are
-        # the ones that actually matter, and they are checked against the live workflow.
-        workflow = (ROOT / '.github/workflows/store-012-candidate.yml').read_text()
+        # identities. Store is now 0.13 / versionCode 15, built by store-013-candidate.yml; the
+        # 0.12 workflow is deleted rather than left asserting a version the module no longer
+        # builds, which would be a guaranteed red run on every Store push. The invariants below
+        # are the ones that actually matter, and they are checked against the live workflow.
+        workflow = (ROOT / '.github/workflows/store-013-candidate.yml').read_text()
         for token in ('contents: read', 'prepare-release-signing', 'RP_RELEASE_KEYSTORE_BASE64',
                       ':tamilanstore:testReleaseUnitTest', ':tamilanstore:lintRelease', ':tamilanstore:assembleRelease',
-                      'application-debuggable', "versionCode='14' versionName='0.12'",
+                      'application-debuggable', "versionCode='15' versionName='0.13'",
                       '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d',
                       'sha256sum --check', 'old == new'):
             self.assertIn(token, workflow)
@@ -24,11 +24,13 @@ class StoreUpgradeCandidateTest(unittest.TestCase):
 
     def test_superseded_candidate_workflow_cannot_run_or_cancel_the_live_one(self):
         # Two workflows cannot share a display name or a concurrency group: the stale one
-        # shared `store-signed-candidate-${{ github.ref }}` with store-012-candidate.yml, so a
+        # shared `store-signed-candidate-${{ github.ref }}` with store-013-candidate.yml, so a
         # Store push could cancel the candidate that is actually tested and promoted.
         self.assertFalse((ROOT / '.github/workflows/tamilanstore-signed-candidate.yml').exists())
-        live = (ROOT / '.github/workflows/store-012-candidate.yml').read_text()
-        self.assertIn('group: store-signed-candidate-${{ github.ref }}', live)
+        # Only the live candidate workflow may exist: a stale 0.12 build would fail every run.
+        self.assertFalse((ROOT / '.github/workflows/store-012-candidate.yml').exists())
+        live = (ROOT / '.github/workflows/store-013-candidate.yml').read_text()
+        self.assertIn('group: store-signed-candidate-013-${{ github.ref }}', live)
         names, groups = {}, {}
         for path in sorted((ROOT / '.github/workflows').glob('*.yml')):
             text = path.read_text()

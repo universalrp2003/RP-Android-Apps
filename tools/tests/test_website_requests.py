@@ -60,10 +60,10 @@ class WebsiteRequestsTest(unittest.TestCase):
         expected_total = len(re.findall(r'^\s+SisterApp\(', sister_source, re.M))
         expected_optional = 1
         expected_non_store = expected_total - expected_optional
-        self.assertEqual(expected_total, 15)
-        self.assertEqual(expected_non_store, 14)
+        self.assertEqual(expected_total, 16)
+        self.assertEqual(expected_non_store, 15)
 
-        self.assertIn(f'Fifteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store)', self.source)
+        self.assertIn(f'Sixteen lightweight, privacy-respecting Android apps ({expected_non_store} non-Store apps + {expected_optional} optional: Tamilan Store)', self.source)
         self.assertNotIn('13 non-Store + optional Tamilan Store', self.source)
         self.assertNotIn('13 non-Store apps + optional Tamilan Store', self.source)
 
@@ -81,7 +81,7 @@ class WebsiteRequestsTest(unittest.TestCase):
             r'<script type="application/ld\+json">(.*?)</script>', self.source, re.S
         ).group(1))
         items = data['mainEntity']['itemListElement']
-        self.assertEqual([item['position'] for item in items], list(range(1, 16)))
+        self.assertEqual([item['position'] for item in items], list(range(1, 17)))
         ld_assets = {item['item']['downloadUrl'].rsplit('/', 1)[-1] for item in items}
         ld_tags = {item['item']['url'].rsplit('/', 1)[-1] for item in items}
         table = re.findall(
@@ -94,20 +94,20 @@ class WebsiteRequestsTest(unittest.TestCase):
             r'[^>]*href="https://github\.com/universalrp2003/RP-Android-Apps/releases/download/([a-z0-9.-]+)/\1"',
             self.source, re.S,
         )
-        self.assertEqual(len(items), 15)
-        self.assertEqual(len(table), 15)
-        self.assertEqual(len(cards), 15)
+        self.assertEqual(len(items), 16)
+        self.assertEqual(len(table), 16)
+        self.assertEqual(len(cards), 16)
         self.assertEqual({asset for asset, _ in table}, ld_assets)
         self.assertEqual({asset for asset, _ in cards}, ld_assets)
         self.assertEqual({tag for _, tag in table}, ld_tags)
         self.assertEqual({tag for _, tag in cards}, ld_tags)
-        self.assertIn('Tamilan-Store-v0.12.apk', ld_assets)
+        self.assertIn('Tamilan-Store-v0.13.apk', ld_assets)
         self.assertIn('DailyVault-v0.5.apk', ld_assets)
-        optional_tags = {'tamilan-store-v0.12'}
+        optional_tags = {'tamilan-store-v0.13'}
         self.assertTrue(optional_tags.issubset(ld_tags))
         self.assertEqual(len(optional_tags), 1)
-        self.assertEqual(len(ld_tags - optional_tags), 14)
-        self.assertEqual(localization.verify_site_versions_match_downloads(), (45, 15))
+        self.assertEqual(len(ld_tags - optional_tags), 15)
+        self.assertEqual(localization.verify_site_versions_match_downloads(), (48, 16))
 
     def assert_site_rejected(self, source):
         with tempfile.TemporaryDirectory() as directory:
@@ -155,10 +155,10 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertNotIn('<marquee', self.source)
 
     def test_parity_gate_rejects_missing_apps_duplicates_and_stale_metadata(self):
-        missing_json_ld = self.source.replace('"position": 15,', '"position": 13,')
+        missing_json_ld = self.source.replace('"position": 16,', '"position": 13,')
         self.assert_site_rejected(missing_json_ld)
         duplicate_card = self.source.replace('data-apk="apks/DailyVault-v0.5.apk"',
-                                             'data-apk="apks/Tamilan-Store-v0.12.apk"', 1)
+                                             'data-apk="apks/Tamilan-Store-v0.13.apk"', 1)
         self.assert_site_rejected(duplicate_card)
         stale_sha = self.source.replace(
             'SHA-256: 286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940',
@@ -168,11 +168,11 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assert_site_rejected(stale_sha)
         stale_size = self.source.replace('<div class="mini">12.2 MB', '<div class="mini">12.1 MB')
         self.assert_site_rejected(stale_size)
-        stale_tamil_count = self.source.replace('அனைத்து 15 RP Ideas செயலிகள்',
+        stale_tamil_count = self.source.replace('அனைத்து 16 RP Ideas செயலிகள்',
                                                 'அனைத்து 7 RP Ideas செயலிகள்', 1)
         self.assert_site_rejected(stale_tamil_count)
         stale_intro = self.source.replace(
-            '(14 non-Store apps + 1 optional: Tamilan Store)',
+            '(15 non-Store apps + 1 optional: Tamilan Store)',
             '(13 non-Store apps + 2 optional: Tamilan Store and DailyVault)',
         )
         self.assertNotEqual(stale_intro, self.source)
@@ -198,7 +198,7 @@ class RealApplicationImageCoverageTest(unittest.TestCase):
         site=(ROOT/'site/index.html').read_text()
         cards=re.findall(r'<article class="card"[^>]*>(.*?)</article>',site,re.S)
         app_cards=[c for c in cards if re.search(r'<h2[^>]+id="app-',c)]
-        self.assertEqual(len(app_cards),15)
+        self.assertEqual(len(app_cards),16)
         for card in app_cards:
             sources=re.findall(r'<img[^>]+src="(images/[^"]+)"',card)
             self.assertTrue(sources)
@@ -210,7 +210,7 @@ class ApkButtonVersionTest(unittest.TestCase):
     def test_all_table_and_card_apk_buttons_show_their_exact_link_version(self):
         source=(ROOT/'site/index.html').read_text()
         buttons=re.findall(r'(<a\b[^>]*data-apk="[^"]+"[^>]*>)([^<]*)</a>',source)
-        self.assertEqual(len(buttons),30)
+        self.assertEqual(len(buttons),32)
         for opening,label in buttons:
             version=re.search(r'-v([0-9.]+)\.apk',opening).group(1)
             self.assertEqual(label,f'APK · v{version}')

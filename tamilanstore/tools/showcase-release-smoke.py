@@ -33,7 +33,7 @@ assert adb('shell','getprop','ro.kernel.qemu').strip()=='1'
 apk=Path(sys.argv[1]);previous=Path(sys.argv[2]);digest=hashlib.sha256(apk.read_bytes()).hexdigest()
 with zipfile.ZipFile(apk) as z:
     index=json.loads(z.read('assets/screenshots/index.json'))
-    assert len(index)==13 and len(index['dailyvault'])==7 and len(index['smsguard'])==6
+    assert len(index)==14 and len(index['dailyvault'])==7 and len(index['smsguard'])==6 and len(index['appdisabler'])==4
     for files in index.values():
         for f in files:assert len(z.read('assets/screenshots/'+f))>1000
 adb('install',str(previous));launch();click('English')
@@ -68,5 +68,5 @@ wait(lambda ns:has(ns,'App screenshot'),'expanded real screenshot');snap('06-exp
 adb('shell','am','force-stop',PKG);adb('install','-r',str(apk));launch()
 wait(lambda ns:has(ns,'Enable scrolling text') and has(ns,'Tamilan'),'same-key reinstall retains pause/language')
 assert hashlib.sha256(apk.read_bytes()).hexdigest()==digest
-result={'api':35,'apk_sha256':digest,'update_from_0_7_preserves_language':True,'pause_survives_restart_and_update':True,'tamil_english_ui':True,'system_reduced_motion_path':True,'dailyvault_gallery_and_enlarge':True,'packaged_galleries':13,'physical_phone_tested':False,'play_protect_tested':False}
+result={'api':35,'apk_sha256':digest,'update_from_0_7_preserves_language':True,'pause_survives_restart_and_update':True,'tamil_english_ui':True,'system_reduced_motion_path':True,'dailyvault_gallery_and_enlarge':True,'packaged_galleries':14,'physical_phone_tested':False,'play_protect_tested':False}
 (OUT/'result.json').write_text(json.dumps(result,indent=2)+'\n');print('::notice::'+json.dumps(result))

@@ -11,7 +11,31 @@ class LiveCatalogTest {
         val root = JSONObject(raw()); edit(root.getJSONArray("apps").getJSONObject(0)); return root.toString()
     }
     @Test fun acceptsUnchangedSnapshot() {
-        assertEquals(13, LiveCatalog.validate(raw(), Catalog.parse(raw())).size)
+        assertEquals(15, LiveCatalog.validate(raw(), Catalog.parse(raw())).size)
+    }
+    /** A feed regenerated before this build shipped still lists 13 apps; it must not be rejected. */
+    @Test fun acceptsShorterFeedAndKeepsTheAppsThisBuildShips() {
+        val root = JSONObject(raw())
+        val apps = root.getJSONArray("apps")
+        val kept = (0 until apps.length()).filter { apps.getJSONObject(it).getString("id") != "appdisabler" }
+        val shortList = org.json.JSONArray()
+        kept.forEach { shortList.put(apps.getJSONObject(it)) }
+        root.put("apps", shortList)
+        val merged = LiveCatalog.validate(root.toString(), Catalog.parse(raw()))
+        assertEquals(15, merged.size)
+        assertTrue(merged.any { it.id == "appdisabler" })
+    }
+    @Test fun rejectsUnknownOrRolledBackFeed() {
+        val baseline = Catalog.parse(raw())
+        val unknown = JSONObject(raw())
+        val extra = JSONObject().put("id", "intruder").put("name", "x").put("tamilName", "x")
+            .put("packageName", "com.attacker.intruder").put("version", "1.0")
+            .put("url", "https://github.com/universalrp2003/RP-Android-Apps/releases/download/x-v1.0/x-v1.0.apk")
+            .put("size", 1).put("sha256", "a".repeat(64))
+            .put("releaseUrl", "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/x-v1.0")
+        unknown.getJSONArray("apps").put(extra)
+        try { LiveCatalog.validate(unknown.toString(), baseline); fail("unknown app accepted") }
+        catch (_: IllegalArgumentException) { }
     }
     @Test fun rejectsIdentityRollbackAndSameVersionMutation() {
         val baseline = Catalog.parse(raw())

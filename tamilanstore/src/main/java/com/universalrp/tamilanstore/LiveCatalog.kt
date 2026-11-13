@@ -7,8 +7,14 @@ import java.net.URL
 object LiveCatalog {
     const val URL = Catalog.WEBSITE + "catalog-v2.json"
     fun validate(text: String, baseline: List<StoreApp>): List<StoreApp> {
-        val next = Catalog.parse(text)
-        require(next.map { it.id }.toSet() == baseline.map { it.id }.toSet())
+        val next = Catalog.parseLive(text)
+        // A live feed can lag this build: the website is regenerated from public releases on its own
+        // deployment, so a phone that refreshes in that window sees fewer apps than it ships with.
+        // That must not be called "rejected" - the app the user already has keeps working, and the
+        // feed only ever updates the entries it does list. Every listed id must still be a known id
+        // with the same package, so an unknown or renamed app can never be introduced this way.
+        val known = baseline.map { it.id }.toSet()
+        require(known.containsAll(next.map { it.id }.toSet())) { "live feed introduced an unknown app" }
         val identities = baseline.associateBy { it.id }
         next.forEach { app ->
             val previous = identities.getValue(app.id)
@@ -18,7 +24,10 @@ object LiveCatalog {
             // A version cannot silently acquire different content under the same label.
             if (state == AppStatus.CURRENT) require(app.sha256 == previous.sha256 && app.size == previous.size && app.url == previous.url)
         }
-        return next
+        // Keep the apps this build knows about if the feed is short, so nothing disappears from the
+        // list; the feed's own values win for every id it does carry.
+        val updated = next.associateBy { it.id }
+        return baseline.map { updated[it.id] ?: it }
     }
     fun fetch(): String {
         val connection = java.net.URL(URL + "?refresh=" + java.lang.Long.toUnsignedString(System.nanoTime())).openConnection() as HttpURLConnection
