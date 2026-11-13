@@ -92,6 +92,8 @@ def expect_state(flag, name):
             (OUT / (name + '.txt')).write_text(adb('shell', 'dumpsys', 'package', PKG))
             return
         time.sleep(2)
+    print('Fixture full package listing:', adb('shell', 'pm', 'list', 'packages', PKG, check=False), flush=True)
+    print('Fixture dumpsys:', adb('shell', 'dumpsys', 'package', PKG, check=False), flush=True)
     raise AssertionError(f'fixture not found in pm list packages {flag}')
 
 
@@ -100,7 +102,8 @@ try:
     adb('shell', 'input', 'keyevent', 'KEYCODE_WAKEUP')
     adb('shell', 'wm', 'dismiss-keyguard')
     print(adb('install', '-r', SHIZUKU))
-    print(adb('install', '-r', FIXTURE))
+    # Incremental installs can disappear after reboot if their loader is not persisted.
+    print(adb('install', '--no-incremental', '-r', FIXTURE))
     print(adb('install', '-r', APK))
     # Starting the Shizuku manager initializes it before running its own starter as shell.
     print(adb('shell', 'monkey', '-p', 'moe.shizuku.privileged.api', '1'))
