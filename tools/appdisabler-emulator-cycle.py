@@ -127,6 +127,25 @@ try:
     # Grant the candidate's requested permission in the real Shizuku dialog, if shown.
     allow = wait_node('shizuku-permission', text('Allow all the time'))
     tap(allow)
+    # The candidate's own shell diagnostic must report the actual installed base APK.
+    # Scroll the Setup card if the button is below the emulator's viewport.
+    for attempt in range(5):
+        nodes = dump('setup-hash-button')
+        buttons = [n for n in nodes if n.attrib.get('text') == 'Check Shizuku shell']
+        if buttons:
+            tap(buttons[0])
+            break
+        adb('shell', 'input', 'swipe', '200', '520', '200', '240', '400')
+        time.sleep(1)
+    else:
+        raise AssertionError('Check Shizuku shell button not visible')
+    expected_hash = hashlib.sha256(Path(APK).read_bytes()).hexdigest()
+    hash_node = wait_node('installed-hash', lambda n: 'Installed base APK SHA-256:' in n.attrib.get('text', ''))
+    report = hash_node.attrib.get('text', '')
+    assert 'Installed base APK SHA-256: ' + expected_hash in report, report
+    assert 'Debuggable: false' in report and 'Installed splits: 0' in report, report
+    (OUT / 'in-app-hash-report.txt').write_text(report + '\n')
+    tap(wait_node('close-hash-report', text('Close')))
     tap(wait_node('setup', text('Apps')))
     wait_node('apps-ready', lambda n: 'Shizuku running' in n.attrib.get('text', '') and 'ready' in n.attrib.get('text', ''))
     # The fixture's unique label sorts first. Do not target any system package.

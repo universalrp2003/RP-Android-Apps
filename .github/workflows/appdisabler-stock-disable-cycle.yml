@@ -47,8 +47,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/cycle-input"
-          gh run download 43452727978 -n appdisabler-0.3.0-release-candidate -D "$RUNNER_TEMP/cycle-input"
-          echo '9c59908b340a0d7ddc5d1033c26a20b60c5bd1b7d72a08276c4add75539c6b7c  '"$RUNNER_TEMP/cycle-input/appdisabler-release.apk" | sha256sum -c -
+          gh run download 43529764131 -n appdisabler-0.3.0-release-candidate -D "$RUNNER_TEMP/cycle-input"
+          echo '344d1d5cf8c04f5f813a695cc3abe5379be2c2d8b316979ff151bc0915fcdf7a  '"$RUNNER_TEMP/cycle-input/appdisabler-release.apk" | sha256sum -c -
           gh release download v13.6.0 --repo RikkaApps/Shizuku --pattern 'shizuku-v13.6.0.r1086.2650830c-release.apk' --dir "$RUNNER_TEMP/cycle-input"
           sha256sum "$RUNNER_TEMP/cycle-input"/*.apk
       - name: Build an inert disposable fixture APK
