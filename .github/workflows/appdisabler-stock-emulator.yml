@@ -48,7 +48,18 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
-            bash tools/appdisabler-emulator-candidate-smoke.sh "$RUNNER_TEMP/candidate/appdisabler-release.apk" 9c59908b340a0d7ddc5d1033c26a20b60c5bd1b7d72a08276c4add75539c6b7c "$RUNNER_TEMP/emulator-evidence"
+            set -o pipefail
+            bash tools/appdisabler-emulator-candidate-smoke.sh "$RUNNER_TEMP/candidate/appdisabler-release.apk" 9c59908b340a0d7ddc5d1033c26a20b60c5bd1b7d72a08276c4add75539c6b7c "$RUNNER_TEMP/emulator-evidence" 2>&1 | tee "$RUNNER_TEMP/emulator-smoke.log"
+      - name: Surface smoke diagnostic
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          log = Path(os.environ["RUNNER_TEMP"]) / "emulator-smoke.log"
+          text = log.read_text(errors="replace")[-6000:] if log.exists() else "Smoke script did not start; inspect emulator setup."
+          print("::error title=Emulator smoke diagnostic::" + text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A"))
+          PY
       - name: Upload bounded smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
