@@ -69,7 +69,13 @@ object DisableManager {
     }
 
     // Suspended packages tracked locally (HyperOS blocks disable for system apps;
-    // suspend is the reversible fallback). No public API exposes suspended state.
+    // suspend is the reversible fallback).
+    //
+    // That comment used to end with "No public API exposes suspended state" and stopped the search
+    // there. It is only half true: DISABLED state is fully readable (a disabled package yields no
+    // ApplicationInfo, and `pm list packages -e` omits it), and FLAG_STOPPED answers "is there a
+    // process". Only suspension genuinely needs the note. See isActuallyOff() below — the note is a
+    // fallback for one narrow case, never the answer shown to the user.
     private const val PREFS = "appdisabler_state"
     private const val KEY_SUSPENDED = "suspended_packages"
 

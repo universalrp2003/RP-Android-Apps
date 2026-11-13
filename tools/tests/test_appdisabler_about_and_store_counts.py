@@ -159,8 +159,11 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         gradle = self.GRADLE.read_text()
         code = int(re.search(r'versionCode\s*=\s*(\d+)', gradle).group(1))
         name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle).group(1)
-        self.assertEqual(name, '0.2.0', 'this test was written for the 0.2.0 candidate')
-        self.assertEqual(code, 2)
+        # The version lives in gradle only; this pins that it moves forward deliberately and that
+        # code and name stay in step, rather than pinning one release's numbers forever.
+        self.assertRegex(name, r'^\d+\.\d+\.\d+$')
+        self.assertEqual(code, int(name.split('.')[1]),
+                         'versionCode must track the minor version (0.2.0 -> 2, 0.3.0 -> 3)')
 
 
 class BootloopDetectionTest(unittest.TestCase):
