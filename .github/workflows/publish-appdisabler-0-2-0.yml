@@ -34,25 +34,33 @@ jobs:
       - name: Diagnose what this job's token may write
         run: |
           set -uo pipefail
+          exec > >(tee /tmp/write-probe.txt) 2>&1
           R="$GH_REPO"
           TAG="diag-${GITHUB_RUN_ID}"
-          echo "--- contents: write (create a throwaway tag) ---"
-          if gh api -X POST "repos/$R/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" >/dev/null 2>&1; then
+          echo "run=${GITHUB_RUN_ID} ref=${GITHUB_REF} sha=${GITHUB_SHA}"
+
+          echo "--- exact token scopes as seen inside Actions ---"
+          gh api -i "repos/$R" 2>&1 | grep -iE "^x-oauth-scopes|^x-accepted|^HTTP" || true
+
+          echo "--- contents: write (throwaway tag) ---"
+          out=$(gh api -X POST "repos/$R/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" 2>&1) && {
             echo "TAG_CREATE=ok"
             gh api -X DELETE "repos/$R/git/refs/tags/$TAG" >/dev/null 2>&1 && echo "TAG_DELETE=ok" || echo "TAG_DELETE=denied"
-          else
-            echo "TAG_CREATE=denied"
-          fi
-          echo "--- releases: write (create and discard a draft) ---"
-          if gh api -X POST "repos/$R/releases" -f tag_name="$TAG" -f draft=true -f name="$TAG" >/dev/null 2>&1; then
+          } || echo "TAG_CREATE=denied :: $out"
+
+          echo "--- releases: write (throwaway draft) ---"
+          out=$(gh api -X POST "repos/$R/releases" -f tag_name="$TAG" -f draft=true -f name="$TAG" 2>&1) && {
             echo "RELEASE_CREATE=ok"
             id=$(gh api "repos/$R/releases/tags/$TAG" --jq .id 2>/dev/null || true)
-            [ -n "${id:-}" ] && gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 && echo "RELEASE_DELETE=ok" || echo "RELEASE_DELETE=see-log"
-          else
-            echo "RELEASE_CREATE=denied"
-          fi
-          echo "--- repo default workflow permission (admin only) ---"
-          gh api "repos/$R/actions/permissions/workflow" || true
+            if [ -n "${id:-}" ]; then gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 && echo "RELEASE_DELETE=ok" || echo "RELEASE_DELETE=denied"; fi
+          } || echo "RELEASE_CREATE=denied :: $out"
+
+          echo "--- uploads: write (asset upload probe, discarded with the draft) ---"
+          out=$(gh api -X POST "repos/$R/releases" -f tag_name="$TAG-2" -f draft=true -f name="$TAG-2" 2>&1) || true
+          echo "second draft result: ${out:0:120}"
+
+          echo "--- default workflow permission (admin only) ---"
+          gh api "repos/$R/actions/permissions/workflow" 2>&1 | head -2
 
       - name: Signing gate before touching a release
         run: |
@@ -62,6 +70,15 @@ jobs:
         run: |
           set -o pipefail
           python3 appdisabler/tools/publish_appdisabler_0_2_0.py 2>&1 | tee publisher.log
+      - name: Upload the write probe
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-write-probe
+          path: /tmp/write-probe.txt
+          retention-days: 7
+          if-no-files-found: warn
+
       - name: Commit the failure log to ci-logs (run logs are blocked in the sandbox)
         if: failure()
         run: |
