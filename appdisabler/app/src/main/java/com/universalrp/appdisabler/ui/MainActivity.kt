@@ -714,7 +714,9 @@ fun AboutDialog(onDismiss: () -> Unit) {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 BiText(T.aboutIntro)
                 BiText(T.aboutApps, style = MaterialTheme.typography.titleSmall, bold = true)
-                SisterApps.all.forEach { app ->
+                // Every other app by name only: the owner asked for a list, not a download screen.
+                // This app is listed once, on the line below, so it is filtered out here.
+                SisterApps.all.filter { it.id != "appdisabler" }.forEach { app ->
                     Text("• ${app.name} — ${app.tamilName} (v${app.version})", style = MaterialTheme.typography.labelSmall)
                 }
                 Text("• ${biStatic(T.appName, taFirst)} — v0.1.0 (${biStatic(T.thisApp, taFirst)})", style = MaterialTheme.typography.labelSmall)

@@ -1,7 +1,7 @@
 package com.universalrp.updates
 
 /**
- * One list, all fifteen RP Ideas Android apps (including the Android TV Guard) + official project links.
+ * One list, all sixteen RP Ideas Android apps (including the Android TV Guard and this app) + official project links.
  *
  * Every app's About screen renders this shared directory so adding or bumping an app
  * keeps every app in sync automatically.
@@ -174,8 +174,12 @@ object SisterApps {
             tagPrefix = "tamilan-store", version = "0.13", publishedVersion = "0.13",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
-        // System App Disabler (draft, not yet published) — keep out of SisterApps until site/catalog + release tag exist
-        // SisterApp(id = "appdisabler", name = "System App Disabler", tamilName = "சிஸ்டம் செயலி முடக்கி", tagPrefix = "system-app-disabler", version = "0.1.0", publishedVersion = "0.1.0", packageName = "com.universalrp.appdisabler", aboutLabel = "System App Disabler — GitHub release"),
+        SisterApp(
+            id = "appdisabler", name = "System App Disabler", tamilName = "சிஸ்டம் செயலி முடக்கி",
+            tagPrefix = "system-app-disabler", version = "0.1.0", publishedVersion = "0.1.0",
+            packageName = "com.universalrp.appdisabler",
+            aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
+        ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
@@ -187,7 +191,7 @@ object SisterApps {
         "Legacy Mirror Repository" to LEGACY_MIRROR_URL,
     )
 
-    /** `label to url` for all fifteen RP Ideas Android apps. */
+    /** `label to url` for all sixteen RP Ideas Android apps. */
     fun releaseLinks(): List<Pair<String, String>> =
         all.map { it.aboutLabel to releaseUrl(it) }
 
