@@ -1,0 +1,15 @@
+run=43424087113 ref=refs/heads/main sha=3aa4cb8ce45a834d225d35eea38f567abdb52e30
+--- exact token scopes as seen inside Actions ---
+HTTP/2.0 200 OK
+X-Accepted-Github-Permissions: metadata=read
+--- contents: write (throwaway tag) ---
+TAG_CREATE=ok
+TAG_DELETE=ok
+--- releases: write (throwaway draft) ---
+RELEASE_CREATE=denied :: {"message":"Invalid request.\n\nFor 'properties/draft', \"true\" is not a boolean.","documentation_url":"https://docs.github.com/rest/releases/releases#create-a-release","status":"422"}gh: Invalid request.
+
+For 'properties/draft', "true" is not a boolean. (HTTP 422)
+--- uploads: write (asset upload probe, discarded with the draft) ---
+second draft result: {"message":"Invalid request.\n\nFor 'properties/draft', \"true\" is not a boolean.","documentation_url":"https://docs.gi
+--- default workflow permission (admin only) ---
+{"message":"Resource not accessible by integration","documentation_url":"https://docs.github.com/rest/actions/permissions#get-default-workflow-permissions-for-a-repository","status":"403"}gh: Resource not accessible by integration (HTTP 403)
