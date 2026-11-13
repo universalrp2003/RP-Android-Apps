@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.universalrp.appdisabler.data.AppInfo
@@ -139,21 +140,14 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
             // Compact one-line header: app name (device language) + tagline, no tall stack.
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            biStatic(T.appName, taFirst),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            maxLines = 1
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            "• " + biStatic(T.appTagline, taFirst),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1
-                        )
-                    }
+                    // One short line only — the old two-line title ate list height.
+                    Text(
+                        biStatic(T.appName, taFirst),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 },
                 actions = {
                     IconButton(onClick = { showAbout = true }) { Icon(Icons.Default.Info, contentDescription = "About") }
@@ -166,14 +160,14 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
                     selected = selectedWindow == 0,
                     onClick = { selectedWindow = 0 },
                     icon = { Icon(if (shizukuOk) Icons.Default.CheckCircle else Icons.Default.Settings, contentDescription = null) },
-                    label = { Text(biStatic(T.fSystem, taFirst)) },
+                    label = { Text(biStatic(T.navSetup, taFirst)) },
                     alwaysShowLabel = true
                 )
                 NavigationBarItem(
                     selected = selectedWindow == 1,
                     onClick = { selectedWindow = 1 },
                     icon = { Icon(Icons.Default.List, contentDescription = null) },
-                    label = { Text(biStatic(T.fAll, taFirst)) },
+                    label = { Text(biStatic(T.navApps, taFirst)) },
                     alwaysShowLabel = true
                 )
             }

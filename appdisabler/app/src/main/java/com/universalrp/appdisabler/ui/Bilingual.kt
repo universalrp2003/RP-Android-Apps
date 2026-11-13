@@ -66,6 +66,8 @@ fun BiText(
 object T {
     val appName = Bi("System App Disabler", "சிஸ்டம் செயலி முடக்கி")
     val appTagline = Bi("Disable only — nothing is uninstalled", "முடக்கல் மட்டும் — எதுவும் நீக்கப்படாது")
+    val navSetup = Bi("Setup", "அமைப்பு")
+    val navApps = Bi("Apps", "ஆப்கள்")
 
     // ---------- setup window ----------
     val setupTitle = Bi("Shizuku — one-time setup", "Shizuku — ஒரே முறை அமைப்பு")
