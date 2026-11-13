@@ -135,8 +135,8 @@ object T {
     val fSafe = Bi("Safe", "பாதுகாப்பானவை")
     val fCaution = Bi("Caution", "கவனம்")
     val fNever = Bi("Never", "ஒருபோதும் இல்லை")
-    val statsApps = Bi("%1$d apps", "%1$d ஆப்கள்")
-    val offCount = Bi("%1$d off", "%1$d முடக்கப்பட்டது")
+    val statsApps = Bi("%1\$d apps", "%1\$d ஆப்கள்")
+    val offCount = Bi("%1\$d off", "%1\$d முடக்கப்பட்டது")
     val emptyList = Bi("No app matches this filter", "இந்த வடிகட்டலுக்கு ஆப் இல்லை")
     val actionDisable = Bi("Disable", "முடக்கு")
     val actionEnable = Bi("Enable", "இயக்கு")
@@ -145,13 +145,13 @@ object T {
     val rowSuspended = Bi("● Suspended — stopped, tap Enable to restore", "● இடைநிறுத்தப்பட்டது — நிறுத்தப்பட்டுள்ளது, மீட்ட Enable தட்டவும்")
     val rowDisabled = Bi("● Disabled — tap Enable to restore", "● முடக்கப்பட்டது — மீட்ட Enable தட்டவும்")
     val rowBlocked = Bi("⊘ Never disable — blocked", "⊘ முடக்கக் கூடாது — தடுக்கப்பட்டது")
-    val toastDisabled = Bi("Disabled %1$s", "%1$s முடக்கப்பட்டது")
-    val toastEnabled = Bi("Enabled %1$s", "%1$s இயக்கப்பட்டது")
-    val toastSuspended = Bi("Suspended %1$s (this device blocks disable)", "%1$s இடைநிறுத்தப்பட்டது (இந்த சாதனம் முடக்கலைத் தடுக்கிறது)")
-    val toastRestored = Bi("Restored %1$s", "%1$s மீட்டெடுக்கப்பட்டது")
+    val toastDisabled = Bi("Disabled %1\$s", "%1\$s முடக்கப்பட்டது")
+    val toastEnabled = Bi("Enabled %1\$s", "%1\$s இயக்கப்பட்டது")
+    val toastSuspended = Bi("Suspended %1\$s (this device blocks disable)", "%1\$s இடைநிறுத்தப்பட்டது (இந்த சாதனம் முடக்கலைத் தடுக்கிறது)")
+    val toastRestored = Bi("Restored %1\$s", "%1\$s மீட்டெடுக்கப்பட்டது")
     val toastNeedShizuku = Bi("Shizuku not ready — finish setup first", "Shizuku தயாராக இல்லை — முதலில் அமைப்பை முடிக்கவும்")
     val toastProtected = Bi("Protected — cannot be disabled", "பாதுகாக்கப்பட்டது — முடக்க முடியாது")
-    val exportDone = Bi("Saved %1$s", "%1$s சேமிக்கப்பட்டது")
+    val exportDone = Bi("Saved %1\$s", "%1\$s சேமிக்கப்பட்டது")
     val errorTitle = Bi("Action failed", "செயல் தோல்வி")
     val unknownError = Bi("Unknown error", "அறியப்படாத பிழை")
     val actionClose = Bi("Close", "மூடு")
@@ -159,8 +159,8 @@ object T {
     // ---------- confirm ----------
     val confirmTitle = Bi("Caution — may break a feature", "கவனம் — ஏதேனும் அம்சம் பாதிக்கலாம்")
     val confirmMsg = Bi(
-        "%1$s is marked Caution — it may remove a feature (for example Game tools or Phone Manager). Disable anyway? You can Enable it back.",
-        "%1$s ‘கவனம்’ எனக் குறிக்கப்பட்டுள்ளது — ஏதேனும் அம்சம் (உம். Game tools, Phone Manager) செயலிழக்கலாம். முடக்கவா? மீண்டும் Enable செய்யலாம்."
+        "%1\$s is marked Caution — it may remove a feature (for example Game tools or Phone Manager). Disable anyway? You can Enable it back.",
+        "%1\$s ‘கவனம்’ எனக் குறிக்கப்பட்டுள்ளது — ஏதேனும் அம்சம் (உம். Game tools, Phone Manager) செயலிழக்கலாம். முடக்கவா? மீண்டும் Enable செய்யலாம்."
     )
     val actionDisableAnyway = Bi("Disable anyway", "இருந்தாலும் முடக்கு")
     val actionCancel = Bi("Cancel", "ரத்து")
