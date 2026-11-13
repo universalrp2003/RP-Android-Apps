@@ -6,17 +6,25 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
-import rikka.shizuku.ShizukuBinderWrapper
-import rikka.shizuku.SystemServiceHelper
 
 /**
- * Disable-only manager via Shizuku (IPackageManager.setApplicationEnabledSetting
- * through ShizukuBinderWrapper). No uninstall, no root. Every disable is reversible.
+ * Disable-only manager via Shizuku shell (`pm disable-user` / `pm enable`).
+ * No uninstall, no root. Every disable is reversible via Enable.
  *
  * Shizuku has TWO states that must both be true before disable works:
  *  1. Server running (pingBinder) — user started Shizuku via Wireless debugging.
  *  2. Permission granted (checkSelfPermission) — user tapped Allow in Shizuku dialog.
  * Checking only (1) caused "Failed" on every Disable because permission was never asked.
+ *
+ * Why shell instead of IPackageManager binder call?
+ * `setApplicationEnabledSetting` via ShizukuBinderWrapper is rejected by
+ * PackageManagerService with "Cannot disable system packages" (it checks the
+ * calling package identity). The `pm` shell command runs with shell privileges
+ * and is the same path ADB/UAD uses — proven to work for system packages.
+ *
+ * `Shizuku.newProcess` is public in API <=12 but private in 13.x, so it is
+ * invoked via reflection (the class is bundled in this APK, not a framework
+ * hidden API, so setAccessible works on all Android versions).
  */
 object DisableManager {
 
@@ -85,18 +93,27 @@ object DisableManager {
         }.sortedWith(compareBy<AppInfo> { it.category == DisableCategory.CRITICAL }.thenBy { it.label.lowercase() })
     }
 
-    /** Call IPackageManager.setApplicationEnabledSetting as shell via Shizuku binder. */
-    private fun setEnabledViaShizuku(packageName: String, newState: Int) {
-        val iPm = ShizukuBinderWrapper(SystemServiceHelper.getSystemService("package"))
-        val pmClass = Class.forName("android.content.pm.IPackageManager\$Stub")
-        val asInterface = pmClass.getMethod("asInterface", android.os.IBinder::class.java).invoke(null, iPm)!!
-        // setApplicationEnabledSetting(String, int newState, int flags, int userId, String callingPackage)
-        val setEnabled = asInterface.javaClass.getMethod(
-            "setApplicationEnabledSetting",
-            String::class.java, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java
+    /** Run a shell command as Shizuku (uid 2000). Returns stdout or throws with output. */
+    private fun runShellCommand(cmd: Array<String>): String {
+        val method = Shizuku::class.java.getDeclaredMethod(
+            "newProcess",
+            Array<String>::class.java, Array<String>::class.java, String::class.java
         )
-        // COMPONENT_ENABLED_STATE_DISABLED_USER = 3, ENABLED = 1; DONT_KILL_APP = 0; userId 0
-        setEnabled.invoke(asInterface, packageName, newState, 0, 0, "com.universalrp.appdisabler")
+        method.isAccessible = true
+        val process = method.invoke(null, cmd, null, null) as Process
+        // pm output is tiny (one line), sequential reads are safe here.
+        val stdout = process.inputStream.bufferedReader().readText()
+        val stderr = process.errorStream.bufferedReader().readText()
+        val exit = process.waitFor()
+        Log.i(TAG, "cmd=${cmd.joinToString(" ")} exit=$exit out=$stdout err=$stderr")
+        val combined = (stdout + stderr).trim()
+        if (exit != 0) {
+            throw IllegalStateException("pm exit $exit: ${combined.take(300).ifEmpty { "no output" }}")
+        }
+        if (combined.startsWith("Error", ignoreCase = true) || combined.contains("not found", ignoreCase = true)) {
+            throw IllegalStateException(combined.take(300))
+        }
+        return stdout
     }
 
     private fun checkReady(): String? = when {
@@ -111,8 +128,7 @@ object DisableManager {
             return@withContext Result.failure(IllegalStateException("Protected package — never disable"))
         }
         try {
-            // COMPONENT_ENABLED_STATE_DISABLED_USER = 3
-            setEnabledViaShizuku(packageName, 3)
+            runShellCommand(arrayOf("pm", "disable-user", "--user", "0", packageName))
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "disable $packageName failed", e)
@@ -124,8 +140,7 @@ object DisableManager {
     suspend fun enablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
         try {
-            // COMPONENT_ENABLED_STATE_ENABLED = 1
-            setEnabledViaShizuku(packageName, 1)
+            runShellCommand(arrayOf("pm", "enable", "--user", "0", packageName))
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "enable $packageName failed", e)
