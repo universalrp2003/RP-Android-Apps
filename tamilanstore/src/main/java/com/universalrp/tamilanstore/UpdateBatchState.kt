@@ -20,7 +20,7 @@ data class UpdateBatchState(val ids: List<String> = emptyList(), val index: Int 
     fun resume(): UpdateBatchState { check(stage == BatchStage.PAUSED); return copy(stage = BatchStage.DOWNLOADING) }
     companion object {
         fun start(ids: List<String>): UpdateBatchState {
-            require(ids.isNotEmpty() && ids.size <= 13 && ids.distinct().size == ids.size)
+            require(ids.isNotEmpty() && ids.size <= 15 && ids.distinct().size == ids.size)
             require(ids.all { it.matches(Regex("[a-z][a-z0-9]*")) })
             return UpdateBatchState(ids.toList(), stage = BatchStage.DOWNLOADING)
         }

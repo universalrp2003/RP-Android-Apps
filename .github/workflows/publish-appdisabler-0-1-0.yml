@@ -1,9 +1,9 @@
 name: Publish owner-tested System App Disabler 0.1.0 (exact tested bytes only)
 
+# 0.1.0 is published, so this publisher must not fire on ordinary pushes any more: it refuses an
+# existing tag by design and every push would otherwise queue a guaranteed failure. Publication of
+# a *new* version means editing the pins below and dispatching this workflow by hand.
 on:
-  push:
-    branches: ["arena/745a8cb3-rp-android-apps"]
-    paths: ["appdisabler/tools/publish_appdisabler_0_1_0.py"]
   workflow_dispatch:
 
 permissions:
