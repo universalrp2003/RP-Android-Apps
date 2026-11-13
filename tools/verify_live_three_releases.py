@@ -22,11 +22,21 @@ def get_bounded(relative, limit):
     assert relative and '..' not in relative and not relative.startswith('/') and ':' not in relative
     url = BASE + relative + '?verified=' + os.environ.get('GITHUB_SHA', 'local-check')
     request = urllib.request.Request(url, headers={'User-Agent': 'RP-Pages-Release-Verification', 'Cache-Control': 'no-cache'})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        data = response.read(limit + 1)
-    if len(data) > limit:
-        raise ValueError('Oversized official response: ' + relative)
-    return data
+    # A CDN read can time out mid-body. Retry the same fixed URL a bounded number of times:
+    # the bytes are still hash-checked afterwards, so a retry can never weaken verification.
+    last = None
+    for attempt in range(4):
+        try:
+            with urllib.request.urlopen(request, timeout=120) as response:
+                data = response.read(limit + 1)
+            if len(data) > limit:
+                raise ValueError('Oversized official response: ' + relative)
+            return data
+        except (TimeoutError, OSError) as error:
+            last = error
+            print(f'Retrying {relative} after transport error ({attempt + 1}/4): {error}', flush=True)
+            time.sleep(5 * (attempt + 1))
+    raise last
 
 
 def validate_apk(data, size, digest):
