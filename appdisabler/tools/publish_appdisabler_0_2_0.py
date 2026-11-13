@@ -192,30 +192,41 @@ def main():
 
     # 5. Create the release, verify every asset digest, then make it public.
     #
-    # This does NOT use `gh release create`. In CI that command answers 403 on /releases, while the
-    # very same token creates a draft release successfully with `gh api -X POST /releases`, measured
-    # by the diagnostic step in this workflow on run 43424667792. Uploads then have to go to
-    # uploads.github.com, which `gh release create` hides but the REST API exposes.
-    body = Path(NOTES).read_text()
-    # -f keeps strings as strings; -F is for the one real boolean (draft).
-    notes = subprocess.run(["gh", "api", "-X", "POST", f"repos/{REPO}/releases",
-                            "-f", f"tag_name={TAG}", "-f", f"target_commitish={source}",
-                            "-f", f"name={TITLE}", "-F", "draft=true",
-                            "-f", f"body={body}"],
-                           capture_output=True, text=True)
-    if notes.returncode != 0:
-        raise SystemExit(f"release create refused: {notes.stderr.strip()[:400]}")
-    release_id = json.loads(notes.stdout)["id"]
+    # These three calls use curl against the REST API rather than `gh`. Measured in CI on this same
+    # runner with this same token: `gh release create` and `gh api POST /releases` both succeed in a
+    # probe step, yet the publisher's own `gh api` call was refused with 403. Rather than keep
+    # guessing at the wrapper, talk to the API directly — and report the exact status and body.
+    token = os.environ["GH_TOKEN"]
+
+    def rest(method, url, data_file=None, content_type="application/json", extra=()):
+        cmd = ["curl", "-sS", "-X", method, "-H", f"Authorization: Bearer {token}",
+               "-H", f"Content-Type: {content_type}", "-w", "\n%{http_code}"]
+        for h in extra:
+            cmd += ["-H", h]
+        if data_file is not None:
+            cmd += ["--data-binary", f"@{data_file}"]
+        cmd.append(url)
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        body, _, code = proc.stdout.rpartition("\n")
+        return code.strip(), body
+
+    payload = work / "release.json"
+    payload.write_text(json.dumps({
+        "tag_name": TAG, "target_commitish": source, "name": TITLE,
+        "body": Path(NOTES).read_text(), "draft": True, "prerelease": False,
+    }))
+    code, body = rest("POST", f"https://api.github.com/repos/{REPO}/releases", payload)
+    if code != "201":
+        raise SystemExit(f"release create returned HTTP {code}: {body[:400]}")
+    release = json.loads(body)
+    release_id = release["id"]
+    upload_url = release["upload_url"].split("{")[0]
 
     for path, asset_name, mime in ((candidate, NAME, "application/vnd.android.package-archive"),
                                    (checksum, SIDECAR, "text/plain")):
-        up = subprocess.run(
-            ["gh", "api", "--hostname", "uploads.github.com", "-X", "POST",
-             f"repos/{REPO}/releases/{release_id}/assets?name={asset_name}",
-             "-H", f"Content-Type: {mime}", "--input", str(path)],
-            capture_output=True, text=True)
-        if up.returncode != 0:
-            raise SystemExit(f"asset upload failed for {asset_name}: {up.stderr.strip()[:400]}")
+        code, body = rest("POST", f"{upload_url}?name={asset_name}", path, mime)
+        if code != "201":
+            raise SystemExit(f"asset upload for {asset_name} returned HTTP {code}: {body[:400]}")
 
     for attempt in range(12):
         matches = [r for r in pages("releases") if r["tag_name"] == TAG]
@@ -233,10 +244,12 @@ def main():
         raise AssertionError("Draft assets not verified; nothing made public")
 
     assert asset["size"] == apk_bytes
-    published = subprocess.run(["gh", "release", "edit", TAG, "--draft=false", "--latest=false"],
-                               capture_output=True, text=True)
-    if published.returncode != 0:
-        raise SystemExit(f"could not make the draft public: {published.stderr.strip()[:400]}")
+    # PATCH the same release to make it public.
+    patch = work / "publish.json"
+    patch.write_text(json.dumps({"draft": False, "prerelease": False, "make_latest": "false"}))
+    code, body = rest("PATCH", f"https://api.github.com/repos/{REPO}/releases/{release_id}", patch)
+    if code != "200":
+        raise SystemExit(f"could not make the draft public: HTTP {code} {body[:400]}")
 
     public = api("releases/tags/" + TAG)
     assert not public["draft"] and not public["prerelease"]
