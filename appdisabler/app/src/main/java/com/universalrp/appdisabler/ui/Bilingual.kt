@@ -220,9 +220,17 @@ object T {
     )
     val descMissingUser = Bi("User-installed app. Safe to manage normally.", "நீங்கள் நிறுவிய ஆப். சாதாரணமாக நிர்வகிக்கலாம்.")
     val whatHappens = Bi("What happens if turned off?", "முடக்கினால் என்ன ஆகும்?")
+    // Measured on the owner's HyperOS phone, 13 November 2026: a suspended package KEEPS an already
+    // running process and force-stop brings it back. So this must not promise it cannot run — only
+    // that Android will not start it again on its own. The earlier wording said "cannot run or
+    // receive broadcasts", which the owner disproved by force-stopping one and watching it return.
     val happenSuspended = Bi(
-        "It is suspended: it cannot run or receive broadcasts. Tap Enable to restore.",
-        "இது இடைநிறுத்தப்பட்டுள்ளது: இயங்கவோ அறிவிப்புகளைப் பெறவோ முடியாது. மீட்ட Enable தட்டுங்கள்."
+        "Suspended by Android: it cannot start again on its own. Anything already running keeps " +
+            "running until it is closed. This is weaker than a real disable — HyperOS refuses " +
+            "disable for system packages. Tap Enable to restore.",
+        "ஆண்ட்ராய்டால் இடைநிறுத்தப்பட்டுள்ளது: தானாக மீண்டும் தொடங்க முடியாது. ஏற்கனவே இயங்கும் " +
+            "பகுதி மூடப்படும் வரை இயங்கும். இது முழு முடக்கத்தை விட பலவீனமானது — சிஸ்டம் " +
+            "பேக்கேஜ்களை HyperOS முடக்க விடாது. மீட்ட Enable தட்டுங்கள்."
     )
     val happenDisabled = Bi(
         "Currently off — hidden and stopped. Enable restores it.",

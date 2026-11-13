@@ -73,7 +73,7 @@ object DisableManager {
     //
     // That comment used to end with "No public API exposes suspended state" and stopped the search
     // there. It is only half true: DISABLED state is fully readable (a disabled package yields no
-    // ApplicationInfo, and `pm list packages -e` omits it), and FLAG_STOPPED answers "is there a
+    // ApplicationInfo), FLAG_STOPPED answers "is there a
     // process". Only suspension genuinely needs the note. See isActuallyOff() below — the note is a
     // fallback for one narrow case, never the answer shown to the user.
     private const val PREFS = "appdisabler_state"
@@ -116,21 +116,45 @@ object DisableManager {
     suspend fun isActuallyOff(context: Context, pkg: String, isEnabled: Boolean): Boolean =
         withContext(Dispatchers.IO) {
             if (!isEnabled) return@withContext true
-            val state = pmPackageState(context, pkg)
-            if (state == "disabled-or-absent") return@withContext true
-            // Enabled per the framework: suspended is all that can still be off, and only the
-            // shell can answer that. `pm list packages -e` omits suspended packages on HyperOS.
-            val enabledList = runShellSuspend(arrayOf("pm", "list", "packages", "-e"))
-            if (enabledList == null) return@withContext pkg in getSuspended(context)
-            !enabledList.lineSequence().any { it.trim() == "package:$pkg" }
+            if (pmPackageState(context, pkg) == "disabled-or-absent") return@withContext true
+            // Enabled per the framework, so suspension is the only remaining way to be off.
+            when (shellSuspension(pkg)) {
+                true -> true
+                false -> false
+                null -> pkg in getSuspended(context)  // shell unreadable: fall back to the note
+            }
         }
 
-    /** Confirms the outcome of one disable attempt with the shell; null when it cannot be read. */
-    suspend fun shellIsDisabledOrSuspended(pkg: String): Boolean? = withContext(Dispatchers.IO) {
-        val enabledList = runShellSuspend(arrayOf("pm", "list", "packages", "-e"))
-            ?: return@withContext null
-        !enabledList.lineSequence().any { it.trim() == "package:$pkg" }
+    /**
+     * Is the package suspended right now? null when the shell cannot say.
+     *
+     * Do NOT ask `pm list packages -e`. Measured on the owner's HyperOS phone on 13 November 2026:
+     * a package that `pm suspend` had just reported as suspended ("new suspended state: true") was
+     * STILL listed by `pm list packages -e`, and absent from `-d`. Filtering by enabled/disabled
+     * therefore cannot see a suspension at all — an earlier version of this function did exactly
+     * that and turned a successful suspend into a false "still enabled" failure.
+     *
+     * `dumpsys package <pkg>` prints the real flags, including SUSPENDED.
+     */
+    private suspend fun shellSuspension(pkg: String): Boolean? {
+        val out = runShellSuspend(arrayOf("dumpsys", "package", pkg)) ?: return null
+        val flags = Regex("flags=\\[([^\\]]*)]").find(out)?.groupValues?.get(1) ?: return null
+        if (!Regex("SUSPENDED").containsMatchIn(flags)) return false
+        // A package can also be suspended by a package-manager actor; that is a different mechanism
+        // and not something this app did, but it still means the app cannot run.
+        return true
     }
+
+    /** Confirms the outcome of one disable attempt; null when it cannot be read. */
+    suspend fun shellIsDisabledOrSuspended(context: Context, pkg: String): Boolean? =
+        withContext(Dispatchers.IO) {
+            if (shellSuspension(pkg) == true) return@withContext true
+            when (pmPackageState(context, pkg)) {
+                "disabled-or-absent" -> true
+                "installed" -> false
+                else -> null
+            }
+        }
 
     private suspend fun runShellSuspend(cmd: Array<String>): String? = withContext(Dispatchers.IO) {
         if (!isShizukuRunning()) return@withContext null
@@ -363,7 +387,7 @@ object DisableManager {
         if (s.exit == 0 && !s.output.startsWith("Error", ignoreCase = true)) {
             // exit 0 is not proof. Ask the shell whether the package is now absent from the enabled
             // list before recording it, so a silent no-op is never reported as success.
-            when (shellIsDisabledOrSuspended(packageName)) {
+            when (shellIsDisabledOrSuspended(context, packageName)) {
                 false -> return@withContext Result.failure(
                     IllegalStateException(
                         "Suspend reported success but the package is still enabled. Attempts:\n" +

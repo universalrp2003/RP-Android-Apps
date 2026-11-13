@@ -50,3 +50,12 @@ Bundle these into the next Store release; do not start a Store-only build just f
       "● stopped — no process, starts on next launch" from `FLAG_STOPPED`. Needs 0.3.0 to reach the
       phone. The diagnostic ("Check Shizuku shell") now prints enabled/disabled list membership plus
       `dumpsys package` flags for HyperComm so the next report is evidence, not a guess.
+- [ ] **Suspension cannot be seen in `pm list packages -e`.** Owner's phone, 13 November 2026: the
+      shell printed `pm suspend --user 0 com.xiaomi.hypercomm -> exit 0: Package com.xiaomi.hypercomm
+      new suspended state: true`, and `dumpsys` showed `flags=[ SYSTEM HAS_CODE PERSISTENT
+      ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]` with no SUSPENDED flag while the package stayed in the
+      `-e` list. So neither list membership nor that `flags=` line reveals a suspension on this
+      build. The success check was therefore made to accept "suspend reported success" as proof
+      rather than reading a state the OS does not expose; `isActuallyOff()` keeps the local
+      suspend note only for the case the shell already confirmed. Verify the SUSPENDED flag on a
+      real suspended package before relying on it again.

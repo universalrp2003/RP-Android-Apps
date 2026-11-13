@@ -236,6 +236,7 @@ class OwnerUiFeedbackTest(unittest.TestCase):
     """
 
     MANAGER = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt'
+    STRINGS = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/ui/Bilingual.kt'
 
     def setUp(self):
         self.ui = ABOUT.read_text()
@@ -299,6 +300,32 @@ class OwnerUiFeedbackTest(unittest.TestCase):
                         'app reports "running now" instead of "off"')
         self.assertLess(running, stopped,
                         'a stopped package is only "stopped" when it is not off and not running')
+
+    def test_suspension_is_read_from_dumpsys_not_from_the_enabled_list(self):
+        """Owner's phone, 13 Nov 2026: `pm suspend` reported success and the app called it a failure.
+
+        `pm list packages -e` still lists a suspended package (and `-d` does not). An earlier
+        version of the check filtered those lists, so a real suspension looked like "still enabled"
+        and a working action was reported as an error. `dumpsys package` prints the real flags.
+        """
+        manager = self.manager
+        self.assertIn('dumpsys", "package", pkg', manager)
+        self.assertIn('"SUSPENDED"', manager)
+        # The lists may be PRINTED by the diagnostic, but they must not be the decision: a suspended
+        # package is still listed by `-e` on HyperOS, which is what made a real suspend look like a
+        # failure. The decision function must not touch them.
+        decision = manager.split('private suspend fun shellSuspension')[1] \
+                          .split('private suspend fun runShellSuspend')[0]
+        self.assertNotIn('"packages"', decision,
+                         'the enabled/disabled lists cannot see a suspension; decide from dumpsys')
+
+    def test_the_suspend_explanation_does_not_promise_more_than_it_does(self):
+        """The dialog said "cannot run or receive broadcasts". The owner force-stopped a suspended
+        app and it came straight back, which disproves that. Say what is true instead."""
+        strings = self.STRINGS.read_text()
+        self.assertNotIn('it cannot run or receive broadcasts', strings)
+        self.assertIn('cannot start again on its own', strings)
+        self.assertIn('weaker than a real disable', strings)
 
     def test_off_is_decided_by_the_phone_not_by_the_local_note(self):
         """Owner: "if i force close it's again running, never stopped" (13 Nov 2026).
