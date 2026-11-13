@@ -43,7 +43,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        shizukuListener = Shizuku.OnRequestPermissionResultListener { _, _ -> }
+        // Ask Shizuku permission as soon as server is running but permission missing.
+        // Without this, Disable always failed with "Failed" (permission never granted).
+        shizukuListener = Shizuku.OnRequestPermissionResultListener { code, grantResult ->
+            if (code == shizukuPermCode) {
+                val granted = grantResult == android.content.pm.PackageManager.PERMISSION_GRANTED
+                Toast.makeText(
+                    this,
+                    if (granted) "Shizuku permission granted ✓" else "Shizuku permission denied — tap Allow again",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
         shizukuListener?.let { Shizuku.addRequestPermissionResultListener(it) }
 
         setContent {
@@ -73,16 +84,22 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
     val context = LocalContext.current
     var selectedWindow by remember { mutableStateOf(0) } // 0 = Setup (Shizuku), 1 = Apps
     var shizukuOk by remember { mutableStateOf(DisableManager.isShizukuAvailable()) }
+    var shizukuRunning by remember { mutableStateOf(DisableManager.isShizukuRunning()) }
+    var showAbout by remember { mutableStateOf(false) }
+    var autoAsked by remember { mutableStateOf(false) }
 
-    // Poll Shizuku every 2s and auto-switch to Apps when ready first time
-    var hasAutoSwitched by remember { mutableStateOf(false) }
+    // Poll Shizuku every 2s. Auto-ask permission once when server runs but permission missing.
     LaunchedEffect(Unit) {
         while (true) {
-            val ok = DisableManager.isShizukuAvailable()
-            shizukuOk = ok
-            if (ok && !hasAutoSwitched && selectedWindow == 0) {
-                // stay on Setup but hint user - do not force switch, let user tap
+            val running = DisableManager.isShizukuRunning()
+            val ready = DisableManager.isShizukuAvailable()
+            shizukuRunning = running
+            shizukuOk = ready
+            if (running && !ready && !autoAsked) {
+                autoAsked = true
+                onRequestShizuku()
             }
+            if (ready) autoAsked = false
             kotlinx.coroutines.delay(2000)
         }
     }
@@ -92,14 +109,12 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
             TopAppBar(
                 title = {
                     Column {
-                        Text("System App Disabler - RP", style = MaterialTheme.typography.titleMedium)
+                        Text("System App Disabler", style = MaterialTheme.typography.titleMedium)
                         Text("சிஸ்டம் செயலி முடக்கி — Disable only", style = MaterialTheme.typography.labelSmall)
                     }
                 },
                 actions = {
-                    IconButton(onClick = {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/universalrp2003/RP-Android-Apps")))
-                    }) { Icon(Icons.Default.Info, contentDescription = "About") }
+                    IconButton(onClick = { showAbout = true }) { Icon(Icons.Default.Info, contentDescription = "About") }
                 }
             )
         },
@@ -126,23 +141,29 @@ fun RootScreen(onRequestShizuku: () -> Unit, onOpenGuide: () -> Unit) {
             when (selectedWindow) {
                 0 -> ShizukuSetupWindow(
                     shizukuOk = shizukuOk,
+                    shizukuRunning = shizukuRunning,
                     onRequestShizuku = onRequestShizuku,
                     onOpenGuide = onOpenGuide,
                     onGoToApps = { selectedWindow = 1 }
                 )
                 1 -> AppsListWindow(
                     shizukuOk = shizukuOk,
+                    shizukuRunning = shizukuRunning,
                     onOpenGuide = onOpenGuide,
                     onRequestShizuku = onRequestShizuku
                 )
             }
         }
     }
+    if (showAbout) {
+        AboutDialog(onDismiss = { showAbout = false })
+    }
 }
 
 @Composable
 fun ShizukuSetupWindow(
     shizukuOk: Boolean,
+    shizukuRunning: Boolean,
     onRequestShizuku: () -> Unit,
     onOpenGuide: () -> Unit,
     onGoToApps: () -> Unit
@@ -167,21 +188,36 @@ fun ShizukuSetupWindow(
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Badge(containerColor = if (shizukuOk) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error) {
-                        Text(if (shizukuOk) "✓ Running" else "● Not running", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = MaterialTheme.colorScheme.onPrimary)
+                        Text(
+                            when {
+                                shizukuOk -> "✓ Ready"
+                                shizukuRunning -> "● Permission needed"
+                                else -> "● Not running"
+                            },
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
                     }
                     Text(
-                        if (shizukuOk) stringResource(R.string.shizuku_status_ok) else stringResource(R.string.shizuku_status_missing),
+                        when {
+                            shizukuOk -> stringResource(R.string.shizuku_status_ok)
+                            shizukuRunning -> stringResource(R.string.shizuku_status_permission)
+                            else -> stringResource(R.string.shizuku_status_missing)
+                        },
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold
                     )
                 }
-                if (!shizukuOk) {
-                    Text(
+                when {
+                    shizukuOk -> Text("Great — you can now disable bloat in the Apps window. This sticks until reboot.", style = MaterialTheme.typography.bodySmall)
+                    shizukuRunning -> Text(
+                        "Shizuku is running but this app has not been allowed yet. Tap Allow below, then Allow in Shizuku. Without this, Disable shows Failed.",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    else -> Text(
                         "Your system stays safe. Every disable is 1-tap reversible. Shizuku is needed only to talk to Android shell — no root, no uninstall.",
                         style = MaterialTheme.typography.bodySmall
                     )
-                } else {
-                    Text("Great — you can now disable bloat in the Apps window. This sticks until reboot.", style = MaterialTheme.typography.bodySmall)
                 }
                 // Buttons wrap to 2 lines, not hidden scrollbar
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -193,10 +229,9 @@ fun ShizukuSetupWindow(
                         OutlinedButton(onClick = onOpenGuide, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.btn_shizuku_guide)) }
                     }
                     if (!shizukuOk) {
-                        Button(onClick = onRequestShizuku, modifier = Modifier.fillMaxWidth()) { Text("Allow Shizuku permission") }
-                    } else {
-                        Button(onClick = onGoToApps, modifier = Modifier.fillMaxWidth()) { Text("Go to Apps →") }
+                        Button(onClick = onRequestShizuku, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_allow_shizuku)) }
                     }
+                    Button(onClick = onGoToApps, modifier = Modifier.fillMaxWidth()) { Text("Go to Apps →") }
                 }
             }
         }
@@ -232,6 +267,7 @@ fun ShizukuSetupWindow(
 @Composable
 fun AppsListWindow(
     shizukuOk: Boolean,
+    shizukuRunning: Boolean,
     onOpenGuide: () -> Unit,
     onRequestShizuku: () -> Unit
 ) {
@@ -244,11 +280,13 @@ fun AppsListWindow(
     var confirmApp by remember { mutableStateOf<AppInfo?>(null) }
     var infoApp by remember { mutableStateOf<AppInfo?>(null) }
     var shizukuLive by remember { mutableStateOf(shizukuOk) }
+    var shizukuRunningLive by remember { mutableStateOf(shizukuRunning) }
 
     LaunchedEffect(Unit) {
         apps = DisableManager.loadInstalledApps(context)
         while (true) {
             shizukuLive = DisableManager.isShizukuAvailable()
+            shizukuRunningLive = DisableManager.isShizukuRunning()
             kotlinx.coroutines.delay(2000)
         }
     }
@@ -278,9 +316,18 @@ fun AppsListWindow(
         // Slim Shizuku banner — not the big card, saves space
         if (!shizukuLive) {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer), modifier = Modifier.fillMaxWidth()) {
-                Row(Modifier.padding(10.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("Shizuku not running — finish Setup", style = MaterialTheme.typography.labelMedium, modifier = Modifier.weight(1f))
-                    TextButton(onClick = onOpenGuide) { Text("Setup") }
+                Column(Modifier.padding(10.dp).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Text(
+                            if (shizukuRunningLive) "Shizuku running — permission not granted" else "Shizuku not running — finish Setup",
+                            style = MaterialTheme.typography.labelMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = onOpenGuide) { Text("Setup") }
+                    }
+                    if (shizukuRunningLive) {
+                        Button(onClick = onRequestShizuku, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.btn_allow_shizuku)) }
+                    }
                 }
             }
         } else {
@@ -350,7 +397,7 @@ fun AppsListWindow(
                                     if (r.isSuccess) {
                                         Toast.makeText(context, context.getString(if (app.isEnabled) R.string.toast_disabled else R.string.toast_enabled, app.label), Toast.LENGTH_SHORT).show()
                                         apps = DisableManager.loadInstalledApps(context)
-                                    } else Toast.makeText(context, r.exceptionOrNull()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                                    } else Toast.makeText(context, r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error", Toast.LENGTH_SHORT).show()
                                 }
                             }
                         },
@@ -377,7 +424,7 @@ fun AppsListWindow(
                         if (r.isSuccess) {
                             Toast.makeText(context, context.getString(R.string.toast_disabled, app.label), Toast.LENGTH_SHORT).show()
                             apps = DisableManager.loadInstalledApps(context)
-                        } else Toast.makeText(context, r.exceptionOrNull()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                        } else Toast.makeText(context, r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error", Toast.LENGTH_SHORT).show()
                     }
                 }) { Text("Disable anyway") }
             },
@@ -404,7 +451,7 @@ fun AppsListWindow(
                     if (r.isSuccess) {
                         Toast.makeText(context, context.getString(if (app.isEnabled) R.string.toast_disabled else R.string.toast_enabled, app.label), Toast.LENGTH_SHORT).show()
                         apps = DisableManager.loadInstalledApps(context)
-                    } else Toast.makeText(context, r.exceptionOrNull()?.message ?: "Failed", Toast.LENGTH_SHORT).show()
+                    } else Toast.makeText(context, r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: "Unknown error", Toast.LENGTH_SHORT).show()
                 }
             }
         )
@@ -544,4 +591,59 @@ fun AppRow(app: AppInfo, onDisable: () -> Unit, onInfo: () -> Unit, onOpenDetail
             }
         }
     }
+}
+
+@Composable
+fun AboutDialog(onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    fun open(url: String) {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.about_title_full), fontWeight = FontWeight.Bold) },
+        text = {
+            Column(
+                Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    "System App Disabler 0.1.0 — Disable-only bloat remover via Shizuku. No uninstall, no root. Every disable is reversible.",
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text("RP Ideas — ${SisterApps.all.size} apps", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                SisterApps.all.forEach { app ->
+                    Text(
+                        "• ${app.name} — ${app.tamilName} (v${app.version})",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+                Text("• System App Disabler — சிஸ்டம் செயலி முடக்கி (v0.1.0, this app)", style = MaterialTheme.typography.bodySmall)
+                Text("Links", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                Button(onClick = { open(SisterApps.OFFICIAL_WEBSITE_URL) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Official Website")
+                }
+                OutlinedButton(onClick = { open(SisterApps.GITHUB_REPO_URL) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("GitHub Repository")
+                }
+                OutlinedButton(
+                    onClick = { open("https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.12") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Tamilan Store — Download all RP apps")
+                }
+                OutlinedButton(onClick = { open("https://shizuku.rikka.app/download/") }, modifier = Modifier.fillMaxWidth()) {
+                    Text("Get Shizuku (by Rikka)")
+                }
+                Text(
+                    "Shizuku by Rikka (Apache 2.0) • UAD lists by 0x192 (GPL-3.0, 2394 entries) • Disable-only, OTA & banking safe.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
 }

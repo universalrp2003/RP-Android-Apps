@@ -12,7 +12,7 @@ object BackupManager {
         val obj = JSONObject()
         obj.put("version", 1)
         obj.put("created", System.currentTimeMillis())
-        obj.put("app", "System App Disabler - RP")
+        obj.put("app", "System App Disabler")
         obj.put("count", arr.length())
         obj.put("packages", arr)
         return obj.toString(2)

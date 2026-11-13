@@ -2,6 +2,7 @@ package com.universalrp.appdisabler.data
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
@@ -9,21 +10,43 @@ import rikka.shizuku.ShizukuBinderWrapper
 import rikka.shizuku.SystemServiceHelper
 
 /**
- * Disable-only manager via Shizuku.
- * Draft: lists + permission check. Actual disable call (IPackageManager.setApplicationEnabledSetting)
- * is wired but guarded — returns error until Shizuku is ready. No uninstall, no root.
+ * Disable-only manager via Shizuku (IPackageManager.setApplicationEnabledSetting
+ * through ShizukuBinderWrapper). No uninstall, no root. Every disable is reversible.
+ *
+ * Shizuku has TWO states that must both be true before disable works:
+ *  1. Server running (pingBinder) — user started Shizuku via Wireless debugging.
+ *  2. Permission granted (checkSelfPermission) — user tapped Allow in Shizuku dialog.
+ * Checking only (1) caused "Failed" on every Disable because permission was never asked.
  */
 object DisableManager {
 
-    fun isShizukuAvailable(): Boolean = try {
+    private const val TAG = "DisableManager"
+
+    /** Server process alive? */
+    fun isShizukuRunning(): Boolean = try {
         Shizuku.pingBinder()
     } catch (_: Exception) { false }
 
-    fun shouldShowRequestPermissionRationale(): Boolean =
+    /** User granted permission in Shizuku? */
+    fun hasShizukuPermission(): Boolean = try {
+        isShizukuRunning() && Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED
+    } catch (_: Exception) { false }
+
+    /** Ready to disable = running + permission granted. */
+    fun isShizukuAvailable(): Boolean = hasShizukuPermission()
+
+    fun shouldShowRequestPermissionRationale(): Boolean = try {
         Shizuku.shouldShowRequestPermissionRationale()
+    } catch (_: Exception) { false }
 
     fun requestShizukuPermission(code: Int) {
-        Shizuku.requestPermission(code)
+        try {
+            if (isShizukuRunning()) {
+                Shizuku.requestPermission(code)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "requestShizukuPermission failed", e)
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -62,44 +85,52 @@ object DisableManager {
         }.sortedWith(compareBy<AppInfo> { it.category == DisableCategory.CRITICAL }.thenBy { it.label.lowercase() })
     }
 
-    // Real disable via Shizuku shell — disable-user only
+    /** Call IPackageManager.setApplicationEnabledSetting as shell via Shizuku binder. */
+    private fun setEnabledViaShizuku(packageName: String, newState: Int) {
+        val iPm = ShizukuBinderWrapper(SystemServiceHelper.getSystemService("package"))
+        val pmClass = Class.forName("android.content.pm.IPackageManager\$Stub")
+        val asInterface = pmClass.getMethod("asInterface", android.os.IBinder::class.java).invoke(null, iPm)!!
+        // setApplicationEnabledSetting(String, int newState, int flags, int userId, String callingPackage)
+        val setEnabled = asInterface.javaClass.getMethod(
+            "setApplicationEnabledSetting",
+            String::class.java, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java
+        )
+        // COMPONENT_ENABLED_STATE_DISABLED_USER = 3, ENABLED = 1; DONT_KILL_APP = 0; userId 0
+        setEnabled.invoke(asInterface, packageName, newState, 0, 0, "com.universalrp.appdisabler")
+    }
+
+    private fun checkReady(): String? = when {
+        !isShizukuRunning() -> "Shizuku not running — start Shizuku first (Setup window)"
+        !hasShizukuPermission() -> "Shizuku permission not granted — tap 'Allow Shizuku permission' in Setup, then Allow in Shizuku"
+        else -> null
+    }
+
     suspend fun disablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!isShizukuAvailable()) return@withContext Result.failure(IllegalStateException("Shizuku not running"))
-        // Critical guard — check cache (DB already loaded via loadInstalledApps)
+        checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
         if (UadDatabase.lookup(packageName)?.category == DisableCategory.CRITICAL) {
-            return@withContext Result.failure(IllegalStateException("Protected package"))
+            return@withContext Result.failure(IllegalStateException("Protected package — never disable"))
         }
         try {
-            val iPm = ShizukuBinderWrapper(SystemServiceHelper.getSystemService("package"))
-            val pmClass = Class.forName("android.content.pm.IPackageManager\$Stub")
-            val asInterface = pmClass.getMethod("asInterface", android.os.IBinder::class.java).invoke(null, iPm)!!
-            val setEnabled = asInterface.javaClass.getMethod(
-                "setApplicationEnabledSetting",
-                String::class.java, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java
-            )
-            // COMPONENT_ENABLED_STATE_DISABLED_USER = 3, DONT_KILL_APP = 0, userId 0
-            setEnabled.invoke(asInterface, packageName, 3, 0, 0, "com.universalrp.appdisabler")
+            // COMPONENT_ENABLED_STATE_DISABLED_USER = 3
+            setEnabledViaShizuku(packageName, 3)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e(TAG, "disable $packageName failed", e)
+            val cause = e.cause ?: e
+            Result.failure(IllegalStateException("Disable failed: ${cause.javaClass.simpleName}: ${cause.message ?: "unknown"}"))
         }
     }
 
     suspend fun enablePackage(packageName: String): Result<Unit> = withContext(Dispatchers.IO) {
-        if (!isShizukuAvailable()) return@withContext Result.failure(IllegalStateException("Shizuku not running"))
+        checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
         try {
-            val iPm = ShizukuBinderWrapper(SystemServiceHelper.getSystemService("package"))
-            val pmClass = Class.forName("android.content.pm.IPackageManager\$Stub")
-            val asInterface = pmClass.getMethod("asInterface", android.os.IBinder::class.java).invoke(null, iPm)!!
-            val setEnabled = asInterface.javaClass.getMethod(
-                "setApplicationEnabledSetting",
-                String::class.java, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, Int::class.javaPrimitiveType, String::class.java
-            )
-            // COMPONENT_ENABLED_STATE_DEFAULT = 0 or ENABLED = 1
-            setEnabled.invoke(asInterface, packageName, 1, 0, 0, "com.universalrp.appdisabler")
+            // COMPONENT_ENABLED_STATE_ENABLED = 1
+            setEnabledViaShizuku(packageName, 1)
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Log.e(TAG, "enable $packageName failed", e)
+            val cause = e.cause ?: e
+            Result.failure(IllegalStateException("Enable failed: ${cause.javaClass.simpleName}: ${cause.message ?: "unknown"}"))
         }
     }
 }

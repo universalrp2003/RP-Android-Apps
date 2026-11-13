@@ -1,4 +1,4 @@
-# System App Disabler - RP (சிஸ்டம் செயலி முடக்கி)
+# System App Disabler (சிஸ்டம் செயலி முடக்கி)
 
 **Disable pre-installed bloat safely — no uninstall, no root.**
 Package `com.universalrp.appdisabler` · `0.1.0 / code 1` · min 26
