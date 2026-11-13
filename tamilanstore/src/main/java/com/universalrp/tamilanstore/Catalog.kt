@@ -14,11 +14,30 @@ object Catalog {
     fun signerFor(packageName: String): String = if (packageName == "com.rpideas.secretmessage")
         "58e370e417cf6f33234689acd5bf379474f5a8c55f79181d9e892a321bc04f08" else SIGNER
     const val WEBSITE = "https://universalrp2003.github.io/RP-Android-Apps/"
-    fun parse(text: String): List<StoreApp> {
+    /**
+     * Fifteen apps is the bundled contract: a Store build ships exactly the suite it was signed for.
+     * A live feed is validated by [LiveCatalog] instead, where the id set must match this snapshot.
+     */
+    const val EXPECTED_APPS = 15
+    fun parse(text: String): List<StoreApp> = parse(text, EXPECTED_APPS)
+    /**
+     * A live feed may be shorter than this build's snapshot for a while after an app is added: the
+     * website is regenerated from public releases on its own deployment, and a phone that refreshes
+     * in that window must keep working on what it already has instead of calling the feed invalid.
+     */
+    fun parseLive(text: String): List<StoreApp> {
+        val root = JSONObject(text)
+        require(root.getInt("schema") == 1)
+        val count = root.getJSONArray("apps").length()
+        require(count in 1..EXPECTED_APPS) { "live catalog must not exceed the bundled contract" }
+        return parse(text, count)
+    }
+    /** Used for the frozen legacy endpoints, which keep serving their original twelve entries. */
+    fun parse(text: String, expected: Int): List<StoreApp> {
         val root = JSONObject(text)
         require(root.getInt("schema") == 1)
         val entries = root.getJSONArray("apps")
-        require(entries.length() == 15)
+        require(entries.length() == expected)
         val apps = (0 until entries.length()).map { i ->
             val a = entries.getJSONObject(i)
             StoreApp(a.getString("id"), a.getString("name"), a.getString("tamilName"),
@@ -40,7 +59,7 @@ object Catalog {
                 require(uri.path.substringAfter("/releases/download/").substringBefore('/') == releaseTag)
             }
         }
-        require(apps.map { it.id }.distinct().size == 15 && apps.map { it.packageName }.distinct().size == 15)
+        require(apps.map { it.id }.distinct().size == expected && apps.map { it.packageName }.distinct().size == expected)
         return apps
     }
     fun allowedDownloadHost(host: String) = host == "github.com" || host == "release-assets.githubusercontent.com" || host == "objects.githubusercontent.com"
