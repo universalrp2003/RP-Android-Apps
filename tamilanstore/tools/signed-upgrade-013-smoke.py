@@ -70,6 +70,32 @@ def scroll_until_text(label, swipes=8):
     raise AssertionError('Missing native UI text after scrolling: ' + label)
 
 
+def dismiss_system_dialogs():
+    """A fresh emulator can raise a notification/permission dialog over the first launch."""
+    for _ in range(6):
+        text, nodes = ui()
+        button = next((n for n in nodes if n.get('text') in ('Allow', 'அனுமதி')), None)
+        if button is None:
+            return
+        x1, y1, x2, y2 = map(int, re.findall(r'\d+', button.get('bounds', '')))
+        adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
+        time.sleep(1)
+
+
+def click_if_present(label, timeout=20):
+    """Return True when the control was tapped. The caller asserts the real end state."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        text, nodes = ui()
+        node = next((n for n in nodes if n.get('text') == label), None)
+        if node is not None:
+            x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
+            adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
+            return True
+        time.sleep(1)
+    return False
+
+
 def click(label):
     node = wait_text(label)
     x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
@@ -121,8 +147,11 @@ def run(out):
     # Fresh fixture installation is setup on this empty emulator, not the tested upgrade.
     adb('install', str(previous))
     launch()
-    click('English')
-    click('Pause scrolling text')
+    dismiss_system_dialogs()
+    # The language buttons only exist before a choice is stored; the assertions below are what
+    # actually pin the resulting preferences.
+    click_if_present('English')
+    click_if_present('Pause scrolling text')
     wait_text('Enable scrolling text')
     for attempt in range(20):
         if prefs().get('tamil') == 'false' and prefs().get('store_motion_v1') == 'false':
