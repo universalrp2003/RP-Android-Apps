@@ -58,6 +58,18 @@ def wait_text(label):
     raise AssertionError('Missing native UI text: ' + label)
 
 
+def scroll_until_text(label, swipes=8):
+    """New apps sit below the fold of a 15-app list, so look for them by scrolling."""
+    for _ in range(swipes):
+        text, nodes = ui()
+        match = next((n for n in nodes if n.get('text') == label), None)
+        if match is not None:
+            return match
+        adb('shell', 'input', 'swipe', '540', '1500', '540', '600', '400')
+        time.sleep(0.6)
+    raise AssertionError('Missing native UI text after scrolling: ' + label)
+
+
 def click(label):
     node = wait_text(label)
     x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
@@ -143,8 +155,8 @@ def run(out):
     wait_text('Enable scrolling text')
     assert 'Debug preview' not in ui()[0], 'Release artifact must not masquerade as a debug preview'
     # The whole point of 0.13: the two new apps are listed by the updated Store itself.
-    wait_text('Android TV Guard')
-    wait_text('System App Disabler')
+    scroll_until_text('Android TV Guard')
+    scroll_until_text('System App Disabler')
     wait_text('Last catalog refresh succeeded')
     click('Refresh catalog')
     wait_text('Last catalog refresh succeeded')
