@@ -18,10 +18,10 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
-    # No GH_TOKEN override: gh picks up the job's own token, which carries the `permissions:`
-    # block above. Overriding it was the one difference from the Store publisher that released
-    # successfully in this repository, and release creation answered 403 with it in place.
+    # gh requires GH_TOKEN in Actions (without it, every gh call exits 4), and the token it is given
+    # carries the `permissions:` block above.
     env:
+      GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
     steps:
       - uses: actions/checkout@v4
