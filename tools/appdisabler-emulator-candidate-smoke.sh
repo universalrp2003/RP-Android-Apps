@@ -16,10 +16,24 @@ adb logcat -c
 adb install -r "$apk"
 adb shell am start -W -n com.universalrp.appdisabler/.ui.MainActivity | tee "$evidence/launch.txt"
 adb shell pidof com.universalrp.appdisabler | tee "$evidence/pid.txt"
-# Allow Compose to render before capturing accessibility hierarchy.
+# UIAutomator can transiently fail to find an idle window during emulator startup.
+dump_ui() {
+    local destination=$1
+    local attempt
+    for attempt in 1 2 3 4; do
+        if adb shell uiautomator dump /sdcard/appdisabler-smoke.xml &&
+            adb exec-out cat /sdcard/appdisabler-smoke.xml > "$destination" &&
+            python3 -c 'import sys, xml.etree.ElementTree as E; E.parse(sys.argv[1])' "$destination"; then
+            return 0
+        fi
+        echo "UI dump attempt $attempt failed; retrying" >&2
+        sleep 5
+    done
+    echo 'Could not capture the UI hierarchy' >&2
+    return 1
+}
 sleep 8
-adb shell uiautomator dump /sdcard/appdisabler-smoke.xml >/dev/null
-adb exec-out cat /sdcard/appdisabler-smoke.xml > "$evidence/setup.xml"
+dump_ui "$evidence/setup.xml"
 python3 - "$evidence/setup.xml" <<'PY'
 import re, subprocess, sys, xml.etree.ElementTree as ET
 root = ET.parse(sys.argv[1]).getroot()
@@ -34,8 +48,7 @@ x1, y1, x2, y2 = map(int, re.findall(r'\d+', bounds))
 subprocess.run(['adb', 'shell', 'input', 'tap', str((x1+x2)//2), str((y1+y2)//2)], check=True)
 PY
 sleep 8
-adb shell uiautomator dump /sdcard/appdisabler-smoke.xml >/dev/null
-adb exec-out cat /sdcard/appdisabler-smoke.xml > "$evidence/apps.xml"
+dump_ui "$evidence/apps.xml"
 python3 - "$evidence/apps.xml" <<'PY'
 import sys, xml.etree.ElementTree as ET
 nodes = list(ET.parse(sys.argv[1]).getroot().iter('node'))
