@@ -116,3 +116,41 @@ jobs:
           name: appdisabler-0.2.0-release-candidate
           path: appdisabler/app/build/outputs/apk/release/*.apk
           retention-days: 14
+
+      # The release APK's own SHA-256 is what the publisher, the site and every catalog must pin.
+      # It is recorded here because the authoring sandbox cannot download the artifact archive.
+      - name: Record the release APK digest
+        if: success()
+        run: |
+          set -euo pipefail
+          APK=$(ls appdisabler/app/build/outputs/apk/release/*.apk | head -1)
+          mkdir -p docs
+          {
+            echo "# System App Disabler candidate digests"
+            echo
+            echo "Written by \`.github/workflows/appdisabler-candidate.yml\`; do not edit by hand."
+            echo
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| run | ${GITHUB_RUN_ID} |"
+            echo "| commit | ${GITHUB_SHA} |"
+            echo "| artifact | appdisabler-0.2.0-release-candidate |"
+            echo "| apk | $(basename "$APK") |"
+            echo "| bytes | $(stat -c %s "$APK") |"
+            echo "| apk_sha256 | $(sha256sum "$APK" | cut -d' ' -f1) |"
+            echo "| archive_sha256 | (read from the Actions artifact API; not the APK) |"
+            echo
+            echo "A publisher must pin \`apk_sha256\` above. \`archive_sha256\` is the ZIP GitHub"
+            echo "stores for the artifact and is a different value."
+          } > docs/appdisabler-0.2.0-candidate-digest.md
+          cat docs/appdisabler-0.2.0-candidate-digest.md
+
+      - name: Commit the digest for the publisher to pin
+        if: success()
+        run: |
+          set -e
+          git config user.name "arena-agent"
+          git config user.email "arena-agent@users.noreply.github.com"
+          git add docs/appdisabler-0.2.0-candidate-digest.md
+          git commit -m "CI: record System App Disabler 0.2.0 release APK digest (run ${GITHUB_RUN_ID}) [skip ci]" || echo "nothing to commit"
+          git push origin HEAD:${GITHUB_REF_NAME} || true
