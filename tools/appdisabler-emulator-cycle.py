@@ -5,6 +5,7 @@ The only package this test asks the Disabler to change is the fixture; ADB reads
 is used for recovery on failure. This cannot model vendor firmware or a suspend fallback.
 """
 import hashlib
+import os
 import re
 import subprocess
 import sys
@@ -15,6 +16,9 @@ from pathlib import Path
 APK, SHIZUKU, FIXTURE, EVIDENCE = sys.argv[1:]
 OUT = Path(EVIDENCE)
 OUT.mkdir(parents=True, exist_ok=True)
+DELAY = int(os.environ.get('WAIT_BEFORE_REBOOT', '30'))
+if DELAY not in (0, 15, 30):
+    raise ValueError('WAIT_BEFORE_REBOOT must be 0, 15, or 30')
 PKG = 'com.universalrp.appdisabler.fixture'
 DISABLER = 'com.universalrp.appdisabler'
 
@@ -134,10 +138,11 @@ try:
     expect_state('-d', 'disabled')
     print('Framework confirms fixture disabled by app', flush=True)
     wait_node('fixture-after-disable', text('AAAA Disabler Test Fixture'))
-    # This run waits 30 seconds before reboot; immediate-reboot failures remain recorded separately.
-    # Shizuku's ADB service must be started again after reboot.
-    print('Waiting 30 seconds before reboot; this does not test immediate reboot', flush=True)
-    time.sleep(30)
+    # Vary the delay explicitly to investigate immediate-reboot persistence.
+    # ADB reboot is not identical to testing the physical power menu.
+    print(f'Waiting {DELAY} seconds before ADB reboot', flush=True)
+    (OUT / 'reboot-delay-seconds.txt').write_text(str(DELAY) + '\n')
+    time.sleep(DELAY)
     print(adb('reboot'))
     subprocess.run(['adb', 'wait-for-device'], check=True, timeout=180)
     deadline = time.monotonic() + 180
@@ -176,7 +181,7 @@ try:
     (OUT / 'candidate-sha256.txt').write_text(expected + '\n')
     (OUT / 'fingerprint.txt').write_text(adb('shell', 'getprop', 'ro.build.fingerprint'))
     print('Framework confirms fixture restored by app; installed candidate hash matches', flush=True)
-    (OUT / 'result.txt').write_text('PASS: stock emulator, Shizuku, app-driven disable, 30-second wait, reboot and restore of disposable user app. Immediate reboot, OEM firmware and suspension fallback not tested.\n')
+    (OUT / 'result.txt').write_text(f'PASS: stock emulator, Shizuku, app-driven disable, {DELAY}-second wait, ADB reboot and restore of disposable user app. OEM firmware and suspension fallback not tested.\n')
 finally:
     # Safety net on the disposable emulator only; never use this as a test success.
     print(adb('shell', 'pm', 'enable', '--user', '0', PKG, check=False), flush=True)
