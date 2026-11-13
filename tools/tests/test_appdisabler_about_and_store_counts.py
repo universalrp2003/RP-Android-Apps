@@ -224,3 +224,56 @@ class BootloopDetectionTest(unittest.TestCase):
         manager = (ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt').read_text()
         self.assertIn('entry?.bootloopRisk == true', manager,
                       'a bootloop warning must refuse the disable, not just colour the row')
+
+
+class OwnerUiFeedbackTest(unittest.TestCase):
+    """The owner's read of the 0.2.0 candidate: colours unclear, running tile dead, wasted space.
+
+    Each assertion pins one of the five requests so a later layout tweak cannot quietly undo it.
+    """
+
+    def setUp(self):
+        self.ui = ABOUT.read_text()
+
+    def test_rows_carry_a_green_amber_red_rating_not_a_theme_role(self):
+        # Theme primary in this app is lavender, which is why "Safe to disable" read as body text.
+        for colour in ('SafeGreen = androidx.compose.ui.graphics.Color(0xFF1B7F3B)',
+                       'CautionAmber = androidx.compose.ui.graphics.Color(0xFFB26A00)',
+                       'DangerRed = androidx.compose.ui.graphics.Color(0xFFC62828)'):
+            self.assertIn(colour, self.ui)
+        row = self.ui[self.ui.index('fun AppRow('):]
+        row = row[:row.index('fun AboutDialog(')]
+        self.assertIn('val tint = ratingColour(app)', row)
+        # The app name and its rating label must take that colour, not the default on-surface one.
+        self.assertRegex(row, r'Text\(\s*app\.label,\s*style = MaterialTheme\.typography\.titleSmall,\s*color = tint')
+        self.assertIn('ratingLabel(app)', row)
+        self.assertIn('color = tint', row)
+
+    def test_running_tile_and_rows_use_the_live_process_list(self):
+        # Tapping ▶ used to do nothing when Shizuku was up.
+        self.assertIn('runningOnly = !runningOnly', self.ui)
+        self.assertIn('val matchRunning = !runningOnly', self.ui)
+        row = self.ui[self.ui.index('fun AppRow('):]
+        row = row[:row.index('fun AboutDialog(')]
+        self.assertIn('running.contains(app.packageName)', row, 'a running app should say so on its row')
+
+    def test_search_is_collapsed_until_tapped(self):
+        self.assertIn('var searchOpen by remember', self.ui)
+        # The collapsed state must be an icon button, and closing it must clear the query.
+        self.assertRegex(self.ui, r'if \(searchOpen\) \{')
+        self.assertIn('searchOpen = false; query = ""', self.ui)
+
+    def test_the_apps_window_no_longer_prints_tamil(self):
+        # The owner asked for English here; the About dialog keeps its Tamil section.
+        window = self.ui[self.ui.index('fun AppsListWindow('):self.ui.index('fun AboutDialog(')]
+        self.assertNotIn('நீக்க', window)
+        self.assertNotIn('முடக்க', window)
+        self.assertNotIn('பட்டியலில்', window)
+        self.assertNotIn('biStatic(T.fAny', window)
+        # legend and tiles are literal English now
+        self.assertIn('ColourKey(SafeGreen, "Safe")', window)
+        self.assertIn('label = "installed"', window)
+
+    def test_status_and_detail_labels_are_english_literals(self):
+        self.assertIn('"● running now"', self.ui)
+        self.assertIn('"Blocked"', self.ui)
