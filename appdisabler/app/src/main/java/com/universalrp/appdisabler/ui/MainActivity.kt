@@ -909,10 +909,15 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                         maxLines = 2
                     )
                 }
-                // One short status line: "off", or why it is refused. English-only, like the rest.
+                // One short status line. English-only, like the rest.
+                //
+                // A turned-off package must never be described as running. Disabling an app leaves
+                // its process alive (it only stops the package from starting again), and `ps` still
+                // lists it, so "is it in the process table" is not the same question as "is it on".
+                // The owner caught this on HyperComm: an Enable button above "● running now".
                 val statusText = when {
-                    running != null && running.contains(app.packageName) -> "● running now"
                     app.isSuspended || !app.isEnabled -> "● off — tap Enable to restore"
+                    running != null && running.contains(app.packageName) -> "● running now"
                     else -> null
                 }
                 statusText?.let {
