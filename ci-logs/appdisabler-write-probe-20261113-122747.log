@@ -1,0 +1,11 @@
+run=43425298309
+=== A: gh release create (the command that fails) ===
+https://github.com/universalrp2003/RP-Android-Apps/releases/tag/untagged-584751e5527e69b8ba73
+=== B: REST create + gh release upload ===
+B_create=ok id=444202753
+a.txt
+=== C: REST create + REST upload with the asset upload_url host ===
+C_create=ok id=444202816
+C_upload_url=https://uploads.github.com/repos/universalrp2003/RP-Android-Apps/releases/444202816/assets
+C_upload_http=201
+{"url":"https://api.github.com/repos/universalrp2003/RP-Android-Apps/releases/assets/743576354","id":743576354,"node_id":"RA_kwDOVIhv884sUhMi","name":"c.txt","label":"","uploader":{"login":"github-act=== done (every throwaway removed) ===
