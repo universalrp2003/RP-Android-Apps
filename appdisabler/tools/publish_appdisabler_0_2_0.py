@@ -20,7 +20,9 @@ import time
 import zipfile
 
 REPO = "universalrp2003/RP-Android-Apps"
-BRANCH = "arena/929c3918-rp-android-apps"
+# The pinned commit reached main through the pull request that carried it, so the publisher may run
+# from either ref. Both are pinned targets of this repository; nothing else is accepted.
+BRANCHES = {"main", "arena/929c3918-rp-android-apps"}
 
 # Candidate run that produced the public 0.1.0 bytes (same source as the owner-tested
 # debug build, release variant so the APK is not debuggable — required by the repo rule).
@@ -107,7 +109,8 @@ def main():
         print(run(str(tools / "aapt2"), "dump", "badging", str(apk))[:400])
         print(run(str(tools / "apksigner"), "verify", "--print-certs", str(apk)))
         return
-    assert os.environ.get("GITHUB_REF") == f"refs/heads/{BRANCH}", os.environ.get("GITHUB_REF")
+    ref = os.environ.get("GITHUB_REF", "")
+    assert ref.startswith("refs/heads/") and ref[len("refs/heads/"):] in BRANCHES, ref
     assert os.environ.get("GH_REPO") == REPO
 
     work = Path(os.environ["RUNNER_TEMP"]) / "appdisabler-publish"
