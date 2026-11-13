@@ -43,6 +43,8 @@ APK_BYTES = 11651613
 ARCHIVE_BYTES = 11157191
 
 TAG = "system-app-disabler-v0.2.0"
+TITLE = "System App Disabler 0.2.0 — safety colours, bootloop guard, header counts"
+NOTES = "releases/system-app-disabler-v0.2.0.md"
 INNER = "app-release.apk"
 NAME = "System-App-Disabler-v0.2.0.apk"
 SIDECAR = "System-App-Disabler-v0.2.0.sha256"
@@ -189,39 +191,31 @@ def main():
     checksum.write_text(f"{apk_sha}  {NAME}\n")
 
     # 5. Create the release, verify every asset digest, then make it public.
-    created = subprocess.run(
-        ["gh", "release", "create", TAG, "--target", source,
-         "--title", "System App Disabler 0.2.0 — safety colours, bootloop guard, header counts",
-         "--notes-file", "releases/system-app-disabler-v0.2.0.md",
-         "--draft", f"{candidate}#{NAME}", f"{checksum}#{SIDECAR}"])
-    if created.returncode != 0:
-        # Report what actually happened instead of assuming a cause. The first version of this
-        # branch asserted "the job needs contents: write" and sent three debugging rounds after a
-        # permission problem that did not exist: the token could create tags, and the real failure
-        # was elsewhere. Ask the API the three questions that separate the cases.
-        try:
-            can_tag = subprocess.run(
-                ["gh", "api", "-X", "POST", f"repos/{REPO}/git/refs",
-                 "-f", f"ref={probe_tag}", "-f", f"sha={source}"],
-                capture_output=True, text=True).returncode == 0
-            subprocess.run(["gh", "api", "-X", "DELETE", f"repos/{REPO}/git/refs/tags/{probe_tag}"],
+    #
+    # This does NOT use `gh release create`. In CI that command answers 403 on /releases, while the
+    # very same token creates a draft release successfully with `gh api -X POST /releases`, measured
+    # by the diagnostic step in this workflow on run 43424667792. Uploads then have to go to
+    # uploads.github.com, which `gh release create` hides but the REST API exposes.
+    body = Path(NOTES).read_text()
+    # -f keeps strings as strings; -F is for the one real boolean (draft).
+    notes = subprocess.run(["gh", "api", "-X", "POST", f"repos/{REPO}/releases",
+                            "-f", f"tag_name={TAG}", "-f", f"target_commitish={source}",
+                            "-f", f"name={TITLE}", "-F", "draft=true",
+                            "-f", f"body={body}"],
                            capture_output=True, text=True)
-        except Exception:
-            can_tag = False
-        can_release = subprocess.run(
-            ["gh", "api", "-X", "POST", f"repos/{REPO}/releases",
-             "-F", f"tag_name={probe_tag}-r", "-F", "draft=true", "-F", f"name={probe_tag}"],
+    if notes.returncode != 0:
+        raise SystemExit(f"release create refused: {notes.stderr.strip()[:400]}")
+    release_id = json.loads(notes.stdout)["id"]
+
+    for path, asset_name, mime in ((candidate, NAME, "application/vnd.android.package-archive"),
+                                   (checksum, SIDECAR, "text/plain")):
+        up = subprocess.run(
+            ["gh", "api", "--hostname", "uploads.github.com", "-X", "POST",
+             f"repos/{REPO}/releases/{release_id}/assets?name={asset_name}",
+             "-H", f"Content-Type: {mime}", "--input", str(path)],
             capture_output=True, text=True)
-        if can_release.returncode == 0:
-            rid = json.loads(can_release.stdout)["id"]
-            subprocess.run(["gh", "api", "-X", "DELETE", f"repos/{REPO}/releases/{rid}"],
-                           capture_output=True, text=True)
-        raise SystemExit(
-            f"gh release create exited {created.returncode}. \n"
-            f"  contents write (tag create) : {'ok' if can_tag else 'denied'}\n"
-            f"  releases write (draft)      : {'ok' if can_release.returncode == 0 else 'denied'}\n"
-            f"  If both are ok, the refusal is elsewhere: the first version of this publisher failed "
-            f"on asset upload to uploads.github.com, which is a different host from api.github.com.")
+        if up.returncode != 0:
+            raise SystemExit(f"asset upload failed for {asset_name}: {up.stderr.strip()[:400]}")
 
     for attempt in range(12):
         matches = [r for r in pages("releases") if r["tag_name"] == TAG]
@@ -239,7 +233,10 @@ def main():
         raise AssertionError("Draft assets not verified; nothing made public")
 
     assert asset["size"] == apk_bytes
-    subprocess.run(["gh", "release", "edit", TAG, "--draft=false", "--latest=false"], check=True)
+    published = subprocess.run(["gh", "release", "edit", TAG, "--draft=false", "--latest=false"],
+                               capture_output=True, text=True)
+    if published.returncode != 0:
+        raise SystemExit(f"could not make the draft public: {published.stderr.strip()[:400]}")
 
     public = api("releases/tags/" + TAG)
     assert not public["draft"] and not public["prerelease"]

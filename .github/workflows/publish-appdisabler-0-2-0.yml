@@ -31,31 +31,42 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Diagnose what this job's token may write
+      - name: Diagnose every release path this job may use
         run: |
           set -uo pipefail
           exec > >(tee write-probe.txt) 2>&1
-          R="$GH_REPO"
-          TAG="diag-${GITHUB_RUN_ID}"
-          echo "run=${GITHUB_RUN_ID} ref=${GITHUB_REF}"
+          R="$GH_REPO"; T="diag-${GITHUB_RUN_ID}"
+          echo "run=${GITHUB_RUN_ID}"
 
-          echo "--- token acceptance ---"
-          gh api -i "repos/$R" 2>&1 | grep -iE "^x-accepted-github-permissions|^HTTP" || true
+          echo "=== A: gh release create (the command that fails) ==="
+          echo probe > /tmp/a.txt
+          gh release create "$T-a" --target "$GITHUB_SHA" --draft -t "$T" -n "probe" "/tmp/a.txt#a.txt" 2>&1 | tail -3 || true
+          gh api -X DELETE "repos/$R/releases/tags/$T-a" >/dev/null 2>&1 || true
+          gh api -X DELETE "repos/$R/git/refs/tags/$T-a" >/dev/null 2>&1 || true
 
-          echo "--- contents: write (throwaway tag) ---"
-          if out=$(gh api -X POST "repos/$R/git/refs" -f ref="refs/tags/$TAG" -f sha="$GITHUB_SHA" 2>&1); then
-            echo "TAG_CREATE=ok"
-            gh api -X DELETE "repos/$R/git/refs/tags/$TAG" >/dev/null 2>&1 && echo "TAG_DELETE=ok" || echo "TAG_DELETE=denied"
-          else echo "TAG_CREATE=denied :: $out"; fi
+          echo "=== B: REST create + gh release upload ==="
+          if id=$(gh api -X POST "repos/$R/releases" -f tag_name="$T-b" -f target_commitish="$GITHUB_SHA" -f name="$T" -F draft=true -f body=probe -q .id 2>&1); then
+            echo "B_create=ok id=$id"
+            gh release upload "$T-b" /tmp/a.txt 2>&1 | tail -2 || true
+            gh api "repos/$R/releases/$id/assets" -q '.[].name' 2>&1 | head -3 || true
+            gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 || true
+            gh api -X DELETE "repos/$R/git/refs/tags/$T-b" >/dev/null 2>&1 || true
+          else echo "B_create=denied :: $id"; fi
 
-          echo "--- releases: write, typed fields (draft as a real boolean) ---"
-          # -F sends a typed value; -f sends a string, which the API rejects as
-          # "For 'properties/draft', \"true\" is not a boolean."
-          if out=$(gh api -X POST "repos/$R/releases" -F tag_name="$TAG" -F draft=true -F name="$TAG" 2>&1); then
-            echo "RELEASE_CREATE=ok"
-            id=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])' 2>/dev/null || true)
-            if [ -n "${id:-}" ]; then gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 && echo "RELEASE_DELETE=ok" || echo "RELEASE_DELETE=denied"; fi
-          else echo "RELEASE_CREATE=denied :: $out"; fi
+          echo "=== C: REST create + REST upload with the asset upload_url host ==="
+          if out=$(gh api -X POST "repos/$R/releases" -f tag_name="$T-c" -f target_commitish="$GITHUB_SHA" -f name="$T" -F draft=true -f body=probe 2>&1); then
+            id=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+            url=$(printf '%s' "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin)["upload_url"].split("{")[0])')
+            echo "C_create=ok id=$id"
+            echo "C_upload_url=$url"
+            curl -sS -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Content-Type: text/plain" \
+                 --data-binary @/tmp/a.txt "${url}?name=c.txt" -o /tmp/c.out -w "C_upload_http=%{http_code}\n" || true
+            head -c 200 /tmp/c.out || true
+            gh api -X DELETE "repos/$R/releases/$id" >/dev/null 2>&1 || true
+            gh api -X DELETE "repos/$R/git/refs/tags/$T-c" >/dev/null 2>&1 || true
+          else echo "C_create=denied"; fi
+
+          echo "=== done (every throwaway removed) ==="
 
       - name: Signing gate before touching a release
         run: |
