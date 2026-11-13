@@ -271,8 +271,8 @@ RELEASE_TAG_PREFIX = {
     "secretmessage": "secret-message",
 }
 
-# The Store's next public version is built ahead of its release: 0.13 bundles the 15-app catalog
-# while the shared directory still advertises the public 0.12 until those bytes are published.
+# The Store's current public version. Bump it in the same commit that publishes new Store bytes so
+# the module, the shared directory and every catalog move together.
 STORE_CANDIDATE_VERSION = "0.13"
 
 
@@ -1017,16 +1017,11 @@ def verify_module_versions_match_sister_apps() -> int:
             continue
         # Published directory versions must match exact promoted releases.
         if gradle.parent.name == "tamilanstore":
-            # 0.13 is the in-flight candidate (15-app catalog). It is not public yet, so the shared
-            # directory still advertises the public 0.12 to every other app until it ships.
-            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != "0.13":
+            # 0.13 is public: the module, the shared directory and this gate must all agree.
+            if pkg.group(1) != "com.universalrp.tamilanstore" or ver.group(1) != STORE_CANDIDATE_VERSION:
                 raise ValueError("Tamilan stable candidate identity/version changed; review publication gates")
-            if by_package.get(pkg.group(1)) != "0.12":
+            if by_package.get(pkg.group(1)) != STORE_CANDIDATE_VERSION:
                 raise ValueError("Tamilan published directory must match the verified public store release")
-            if STORE_CANDIDATE_VERSION != ver.group(1):
-                raise ValueError(
-                    "the Store candidate version and this gate disagree; update STORE_CANDIDATE_VERSION"
-                )
             continue
         checked += 1
         if pkg.group(1) not in by_package:

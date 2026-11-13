@@ -52,7 +52,7 @@ jobs:
               # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
               ("live-guard-v3.00", "CleanSweep-v3.00.apk", 14781579, "286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940"),
-              ("tamilan-store-v0.12", "Tamilan-Store-v0.12.apk", 19476375, "29ad4b2a8b3dc575ef2e6707bc81e27dcfc0541a69bfef350f1a83ddd4298cce"),
+              ("tamilan-store-v0.13", "Tamilan-Store-v0.13.apk", 19906055, "8efc49af3ab281720dd4a4cfedc9afcc319f8f578211796a16cc5aa5c0fa155b"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
               ("sms-guard-v1.1.17", "SMS-Guard-v1.1.17.apk", 12840884, "b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd"),
@@ -106,8 +106,8 @@ jobs:
           test -s site/apks/Android-TV-Guard-v1.5.1.zip
           test -s site/apks/System-App-Disabler-v0.1.0.apk
           test -s site/apks/System-App-Disabler-v0.1.0.zip
-          test -s site/apks/Tamilan-Store-v0.12.apk
-          test -s site/apks/Tamilan-Store-v0.12.zip
+          test -s site/apks/Tamilan-Store-v0.13.apk
+          test -s site/apks/Tamilan-Store-v0.13.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk
           test -s site/apks/Voice-Notes-v1.3.4.zip
           test -s site/apks/Secret-Message-v1.1.3.apk
