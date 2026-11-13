@@ -288,6 +288,7 @@ class PublisherPinTest(unittest.TestCase):
     """
 
     PUBLISHER = ROOT / 'appdisabler/tools/publish_appdisabler_0_2_0.py'
+    UPLOADER = ROOT / 'appdisabler/tools/upload_appdisabler_0_2_0.py'
     RECORD = ROOT / 'docs/appdisabler-0.2.0-candidate-digest.md'
 
     def test_publisher_pins_match_the_recorded_owner_tested_artifact(self):
@@ -301,6 +302,26 @@ class PublisherPinTest(unittest.TestCase):
         self.assertIn(f'ARTIFACT_ID = {artifact}', source)
         self.assertIn(f'APK_SHA = "{apk_sha}"', source)
         self.assertIn(f'APK_BYTES = {apk_bytes}', source)
+
+    def test_the_uploader_pins_the_same_bytes_as_the_publisher(self):
+        """0.2.0 was attached and published by the uploader, so it must not drift from the record.
+
+        Both scripts are authoritative: the publisher is the record of what the owner ran, and the
+        uploader is what actually put those bytes on the release. If one is edited without the
+        other, the release and the "tested" claim would stop describing the same file.
+        """
+        uploader = self.UPLOADER.read_text()
+        for line in ('RUN_ID = 43410268620', 'ARTIFACT_ID = 14028948231',
+                     'ARCHIVE_SHA = "cfb9ac11e8dd2b087944aef7de2cec3200dae6ac024385ac52a551654382135d"',
+                     'ARCHIVE_BYTES = 11157191',
+                     'APK_SHA = "1f653dd99a68ae5877a5ebd9c178b790e5761866a2dc7c785393d4f298b0b196"',
+                     'APK_BYTES = 11651613', 'TAG = "system-app-disabler-v0.2.0"'):
+            self.assertIn(line, uploader)
+
+    def test_the_retired_publisher_cannot_be_dispatched_by_accident(self):
+        retired = (ROOT / '.github/workflows/publish-appdisabler-0-2-0.yml').read_text()
+        self.assertTrue(retired.startswith('# RETIRED'), 'the failed publisher must say it is retired')
+        self.assertIn('finish-appdisabler-0-2-0.yml', retired)
 
     def test_the_tested_record_says_nothing_was_published_to_make_it(self):
         self.assertIn('Nothing was published to produce this file', self.RECORD.read_text())
