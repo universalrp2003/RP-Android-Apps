@@ -278,6 +278,19 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('"● running now"', self.ui)
         self.assertIn('"Blocked"', self.ui)
 
+    def test_a_turned_off_row_is_never_labelled_running(self):
+        """Owner-reported on HyperComm (13 Nov 2026): an Enable button above "● running now".
+
+        Disabling leaves the package's process alive, so it is still in `ps`. The status line must
+        therefore ask "is it off" before "does it have a process", not the other way round. This
+        asserts the order in the source, because that order IS the behaviour.
+        """
+        off = self.ui.index('app.isSuspended || !app.isEnabled -> "● off — tap Enable to restore"')
+        running = self.ui.index('-> "● running now"')
+        self.assertLess(off, running,
+                        'the off branch must be tested before the running branch, or a disabled '
+                        'app reports "running now" instead of "off"')
+
 
 class PublisherPinTest(unittest.TestCase):
     """The publisher must pin the bytes the owner ran, not a rebuild that happened to be newer.
