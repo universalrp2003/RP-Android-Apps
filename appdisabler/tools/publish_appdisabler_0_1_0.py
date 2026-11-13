@@ -29,6 +29,10 @@ WORKFLOW = ".github/workflows/appdisabler-candidate.yml"
 ARTIFACT = "appdisabler-0.1.0-release-candidate"
 ARTIFACT_ID = 14015117543
 ARCHIVE_SHA = "48b94498d1740e6a7276b73d33c8508c65604d4e86d223d0df956db376291ae4"
+# The archive digest above is the ZIP GitHub stores for the artifact. It is NOT the APK's digest:
+# the APK inside has its own SHA-256, and that is the one the website, the Store catalog and the
+# .sha256 sidecar must publish. Conflating the two is what broke the first Pages mirror run.
+APK_SHA = "0ea5d450266586c5c882e72ccd7f64e0fa16a38de10df8b5d0b548aa1331b734"
 ARCHIVE_BYTES = 11141876
 
 TAG = "system-app-disabler-v0.1.0"
@@ -124,6 +128,7 @@ def main():
     apk_sha = sha(candidate)
     apk_bytes = candidate.stat().st_size
     assert 5_000_000 < apk_bytes < 60_000_000
+    assert apk_sha == APK_SHA, f"APK digest {apk_sha} != pinned {APK_SHA}"
 
     # 3. The bytes really are our package, our version, non-debuggable and release-key signed.
     tools = build_tools()
