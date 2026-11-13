@@ -26,30 +26,30 @@ async function test(name, run, options = {}) {
 }
 const count = page => page.locator('article.card:visible').count();
 try {
-  await test('all 15 cards and real publication dates; default Both', async page => {
+  await test('all 16 cards and real publication dates; default Both', async page => {
     await page.goto(base);
     assert.equal(await page.locator('#site-language').inputValue(), 'both');
-    assert.equal(await count(page), 15);
-    assert.equal(await page.locator('.latest tbody time[data-release-tag]').count(), 15);
-    assert.equal(await page.locator('.card-date').count(), 15);
+    assert.equal(await count(page), 16);
+    assert.equal(await page.locator('.latest tbody time[data-release-tag]').count(), 16);
+    assert.equal(await page.locator('.card-date').count(), 16);
     assert.equal(await page.locator('.trust-ticker').count(), 1);
-    assert.equal(await page.locator('.release-brief').count(), 15);
-    assert.equal(await page.locator('a[data-apk][aria-label]').count(), 30);
-    assert.equal(await page.locator('[data-copy-sha]').count(), 15);
+    assert.equal(await page.locator('.release-brief').count(), 16);
+    assert.equal(await page.locator('a[data-apk][aria-label]').count(), 32);
+    assert.equal(await page.locator('[data-copy-sha]').count(), 16);
   });
   await test('cards and release table are ordered newest release first', async page => {
     await page.goto(base);
-    // The optional Store has its own section and its own date, so this checks the 14 regular cards.
-    const dates = await page.locator('section[aria-label="14 regular Android applications"] article.card time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
-    assert.equal(dates.length, 14);
+    // The optional Store has its own section and its own date, so this checks the 15 regular cards.
+    const dates = await page.locator('section[aria-label="15 regular Android applications"] article.card time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
+    assert.equal(dates.length, 15);
     assert.deepEqual([...dates].sort().reverse(), dates, 'cards run newest first');
     const rows = await page.locator('.latest tbody time[data-release-tag]').evaluateAll(nodes => nodes.map(n => n.getAttribute('datetime')));
-    assert.equal(rows.length, 15);
+    assert.equal(rows.length, 16);
     assert.deepEqual([...rows].sort().reverse(), rows, 'release table runs newest first');
     assert.equal(await page.locator('#list-order').innerText().then(t => /Most recently updated first/.test(t) || /சமீபத்தில்/.test(t)), true);
   });
   for (const width of [320, 390, 768]) {
-    await test(`all 30 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
+    await test(`all 32 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(base);
       const buttons = await page.locator('a[data-apk]').evaluateAll(nodes => nodes.map(a => ({
@@ -57,7 +57,7 @@ try {
         wraps: getComputedStyle(a).whiteSpace,
         clipped: a.scrollWidth > a.clientWidth + 1,
       })));
-      assert.equal(buttons.length, 30);
+      assert.equal(buttons.length, 32);
       for (const button of buttons) {
         const version = button.apk.match(/-v([0-9.]+)\.apk$/)[1];
         assert.equal(button.label, `APK · v${version}`);
@@ -69,14 +69,14 @@ try {
   }
   await test('filters and table agree, and jump reveals/focuses a hidden app', async page => {
     await page.goto(base);
-    for (const [category, expected] of [['security',3],['media',4],['productivity',3],['utility',5]]) {
+    for (const [category, expected] of [['security',3],['media',4],['productivity',3],['utility',6]]) {
       await page.locator(`[data-category-filter="${category}"]`).click();
       assert.equal(await count(page), expected);
       assert.equal(await page.locator('.latest tbody tr:visible').count(), expected);
       assert.equal(await page.locator(`[data-category-filter="${category}"]`).getAttribute('aria-pressed'), 'true');
     }
     await page.selectOption('#jump-app', 'app-live-guard');
-    assert.equal(await count(page), 15);
+    assert.equal(await count(page), 16);
     await page.waitForURL('**/#app-live-guard');
     assert.equal(await page.evaluate(() => document.activeElement.id), 'app-live-guard');
   });
@@ -167,13 +167,13 @@ try {
   });
   await test('without JavaScript all releases, warnings and anchors remain readable', async page => {
     await page.goto(base);
-    assert.equal(await count(page), 15);
+    assert.equal(await count(page), 16);
     assert.equal(await page.locator('.site-tools').isVisible(), false);
     assert.equal(await page.locator('.migration-notice').count(), 0);
     assert.equal(await page.locator('#signing-limitation p:visible').count(), 0);
     await page.locator('#signing-limitation summary').click();
     assert.equal(await page.locator('#signing-limitation p:visible').count(), 2);
-    assert.equal(await page.locator('.latest tbody tr').count(), 15);
+    assert.equal(await page.locator('.latest tbody tr').count(), 16);
     await page.locator('a[href="#app-live-guard"]').first().click();
     await page.waitForURL('**/#app-live-guard');
     assert.equal(await page.locator('#app-live-guard').isVisible(), true);
