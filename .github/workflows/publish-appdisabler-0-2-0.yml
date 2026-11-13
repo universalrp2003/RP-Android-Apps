@@ -1,3 +1,9 @@
+# RETIRED 2026-11-13. 0.2.0 is published. Do not dispatch this.
+
+# It failed six times with `403 Resource not accessible by integration` on create-release, from a
+# step in the same job where the write probe beside it succeeded. The release was instead created
+# from the authoring side (which reaches api.github.com) and finished by
+# finish-appdisabler-0-2-0.yml (which also reaches uploads.github.com). Kept for the audit trail.
 name: Publish owner-tested System App Disabler 0.2.0 (exact tested bytes only)
 
 # 0.2.0 publisher: pinned to candidate run 43410268620 / artifact 14028948231, the exact build the owner tested. It must not fire on ordinary pushes any more: it refuses an
