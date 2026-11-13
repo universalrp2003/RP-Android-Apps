@@ -1,0 +1,89 @@
+name: System App Disabler stock Shizuku cycle
+
+on:
+  push:
+    branches: ['arena/**']
+    paths:
+      - '.github/workflows/appdisabler-stock-disable-cycle.yml'
+      - 'tools/appdisabler-emulator-cycle.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  cycle:
+    name: Stock Android ${{ matrix.android }} Shizuku disable and restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api: 35
+            android: '15'
+          - api: 36
+            android: '16'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Obtain the exact release candidate and official Shizuku release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cycle-input"
+          gh run download 43452727978 -n appdisabler-0.3.0-release-candidate -D "$RUNNER_TEMP/cycle-input"
+          echo '9c59908b340a0d7ddc5d1033c26a20b60c5bd1b7d72a08276c4add75539c6b7c  '"$RUNNER_TEMP/cycle-input/appdisabler-release.apk" | sha256sum -c -
+          gh release download v13.6.0 --repo RikkaApps/Shizuku --pattern 'shizuku-v13.6.0.r1086.2650830c-release.apk' --dir "$RUNNER_TEMP/cycle-input"
+          sha256sum "$RUNNER_TEMP/cycle-input"/*.apk
+      - name: Build an inert disposable fixture APK
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' >/dev/null || true
+          SDK="$ANDROID_HOME/build-tools/36.0.0"
+          test -x "$SDK/aapt" && test -f "$ANDROID_HOME/platforms/android-36/android.jar"
+          cat > "$RUNNER_TEMP/cycle-input/AndroidManifest.xml" <<'MANIFEST'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.universalrp.appdisabler.fixture" android:versionCode="1" android:versionName="1">
+            <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+            <application android:label="AAAA Disabler Test Fixture" android:hasCode="false" />
+          </manifest>
+          MANIFEST
+          "$SDK/aapt" package -f -M "$RUNNER_TEMP/cycle-input/AndroidManifest.xml" -I "$ANDROID_HOME/platforms/android-36/android.jar" -F "$RUNNER_TEMP/cycle-input/fixture-unsigned.apk"
+          "$SDK/zipalign" -f 4 "$RUNNER_TEMP/cycle-input/fixture-unsigned.apk" "$RUNNER_TEMP/cycle-input/fixture-aligned.apk"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/fixture.jks" -storepass fixturetest -keypass fixturetest -alias fixture -dname 'CN=Disposable Test Fixture' -keyalg RSA -validity 1 >/dev/null 2>&1
+          "$SDK/apksigner" sign --ks "$RUNNER_TEMP/fixture.jks" --ks-pass pass:fixturetest --key-pass pass:fixturetest --out "$RUNNER_TEMP/cycle-input/fixture.apk" "$RUNNER_TEMP/cycle-input/fixture-aligned.apk"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exercise candidate with Shizuku and a disposable user app
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            bash -o pipefail -c 'python3 tools/appdisabler-emulator-cycle.py "$RUNNER_TEMP/cycle-input/appdisabler-release.apk" "$RUNNER_TEMP/cycle-input/shizuku-v13.6.0.r1086.2650830c-release.apk" "$RUNNER_TEMP/cycle-input/fixture.apk" "$RUNNER_TEMP/cycle-evidence" 2>&1 | tee "$RUNNER_TEMP/cycle.log"'
+      - name: Surface diagnostic on failure
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          log = Path(os.environ['RUNNER_TEMP']) / 'cycle.log'
+          text = log.read_text(errors='replace')[-10000:] if log.exists() else 'Cycle script did not start; inspect prior job steps.'
+          print('::error title=Shizuku cycle diagnostic::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
+      - name: Upload bounded cycle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appdisabler-stock-android-${{ matrix.android }}-shizuku-cycle
+          path: ${{ runner.temp }}/cycle-evidence/
+          if-no-files-found: ignore
+          retention-days: 14
