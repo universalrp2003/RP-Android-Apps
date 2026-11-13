@@ -319,6 +319,25 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertNotIn('"packages"', decision,
                          'the enabled/disabled lists cannot see a suspension; decide from dumpsys')
 
+    def test_a_persistent_service_is_never_described_as_off(self):
+        """Owner, 13 Nov 2026: HyperComm carried on running while the row said "off".
+
+        `dumpsys` from the owner's phone showed com.xiaomi.hypercomm with PERSISTENT in its flags.
+        Android restarts a persistent service as soon as it dies, so neither suspend nor force-stop
+        can make one quiet. The row must say that, before it says "off".
+        """
+        self.assertIn('isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0',
+                      self.manager)
+        ui = self.ui
+        persistent_branch = ui.index('app.isPersistent && offState')
+        off_branch = ui.index('offState -> "● off — tap Enable to restore"')
+        self.assertLess(persistent_branch, off_branch,
+                        'the persistent caveat must be tested before the plain "off" text')
+        self.assertIn('Android keeps this service alive, so it keeps running', ui)
+        strings = self.STRINGS.read_text()
+        self.assertIn('This is a persistent system service.', strings)
+        self.assertIn('do not expect silence', strings)
+
     def test_the_suspend_explanation_does_not_promise_more_than_it_does(self):
         """The dialog said "cannot run or receive broadcasts". The owner force-stopped a suspended
         app and it came straight back, which disproves that. Say what is true instead."""

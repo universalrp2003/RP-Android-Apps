@@ -232,6 +232,19 @@ object T {
             "பகுதி மூடப்படும் வரை இயங்கும். இது முழு முடக்கத்தை விட பலவீனமானது — சிஸ்டம் " +
             "பேக்கேஜ்களை HyperOS முடக்க விடாது. மீட்ட Enable தட்டுங்கள்."
     )
+    // Measured on the owner's HyperOS phone (13 Nov 2026): com.xiaomi.hypercomm carries the
+    // PERSISTENT flag. Android restarts a persistent service as soon as it dies and refuses to keep
+    // it stopped, so suspend does not keep it quiet and force-stop is undone in seconds. Saying
+    // "suspended" without that caveat is how a row ended up claiming an app was off while the owner
+    // watched it run — the flag, not the wording, is the reason.
+    val happenPersistent = Bi(
+        "This is a persistent system service. Android restarts it the moment it stops, so turning " +
+            "it off here cannot keep it stopped — it will keep running even while it is marked " +
+            "suspended. Nothing breaks by trying, and Enable undoes it, but do not expect silence.",
+        "இது ஒரு நிரந்தர சிஸ்டம் சேவை. நிற்கும் உடனே ஆண்ட்ராய்டு அதை மீண்டும் இயக்கும், எனவே இங்கு " +
+            "முடக்கினாலும் அது நிற்காது — இடைநிறுத்தப்பட்டதாகக் காட்டினாலும் தொடர்ந்து இயங்கும். " +
+            "முயற்சிப்பதால் பாதிப்பில்லை; Enable மீட்டும், ஆனால் அமைதியை எதிர்பார்க்க வேண்டாம்."
+    )
     val happenDisabled = Bi(
         "Currently off — hidden and stopped. Enable restores it.",
         "தற்போது முடக்கப்பட்டுள்ளது — மறைந்து நிறுத்தப்பட்டுள்ளது. Enable மீட்டெடுக்கும்."
