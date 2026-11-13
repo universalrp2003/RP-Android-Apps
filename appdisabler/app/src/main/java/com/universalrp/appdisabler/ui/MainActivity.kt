@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -25,11 +26,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.universalrp.appdisabler.BuildConfig
 import com.universalrp.appdisabler.data.AppInfo
 import com.universalrp.appdisabler.data.BackupManager
 import com.universalrp.appdisabler.data.DisableCategory
@@ -332,6 +335,44 @@ fun ShizukuSetupWindow(
     }
 }
 
+/**
+ * One number in the header strip: symbol on top, count under it, label under that.
+ * `active` draws the tile as selected so the strip doubles as the "what am I looking at" indicator.
+ */
+@Composable
+private fun StatTile(
+    symbol: String,
+    count: String,
+    label: String,
+    tint: androidx.compose.ui.graphics.Color,
+    active: Boolean,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .background(
+                if (active) MaterialTheme.colorScheme.secondaryContainer
+                else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            )
+            .padding(horizontal = 9.dp, vertical = 5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(symbol, fontSize = 11.sp, color = tint, maxLines = 1)
+            Spacer(Modifier.width(3.dp))
+            Text(count, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+        }
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppsListWindow(
@@ -345,19 +386,27 @@ fun AppsListWindow(
     val taFirst = tamilFirst()
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
     var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf(DisableCategory.SAFE) }
+    var filter by remember { mutableStateOf<DisableCategory?>(DisableCategory.SAFE) }
     var tab by remember { mutableStateOf(0) } // 0 All (per filter), 1 System, 2 Off
     var confirmApp by remember { mutableStateOf<AppInfo?>(null) }
     var infoApp by remember { mutableStateOf<AppInfo?>(null) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var shizukuLive by remember { mutableStateOf(shizukuOk) }
     var shizukuRunningLive by remember { mutableStateOf(shizukuRunning) }
+    /** Processes alive right now; null until the first shell read (or when Shizuku is down). */
+    var running by remember { mutableStateOf<Set<String>?>(null) }
+    /** Package the user keeps tapping even though it is protected — shows a once-per-tap warning. */
+    var blockedApp by remember { mutableStateOf<AppInfo?>(null) }
 
     LaunchedEffect(Unit) {
         apps = DisableManager.loadInstalledApps(context)
+        var tick = 0
         while (true) {
             shizukuLive = DisableManager.isShizukuAvailable()
             shizukuRunningLive = DisableManager.isShizukuRunning()
+            // `ps` is cheap but not free: refresh every other 2 s tick instead of on every one.
+            if (shizukuLive && tick % 2 == 0) running = DisableManager.runningProcesses()
+            tick++
             kotlinx.coroutines.delay(2000)
         }
     }
@@ -374,9 +423,11 @@ fun AppsListWindow(
             val tabOk = when (tab) {
                 1 -> app.isSystem
                 2 -> !app.isEnabled || app.isSuspended
+                3 -> !app.isSystem
                 else -> true
             }
-            val matchFilter = app.category == filter
+            // null = no category filter (the header counts drop you into an unfiltered list).
+            val matchFilter = filter == null || app.category == filter
             val matchQuery = query.isBlank() || app.label.contains(query, true) || app.packageName.contains(query, true)
             tabOk && matchFilter && matchQuery
         }.take(900)
@@ -434,11 +485,70 @@ fun AppsListWindow(
                     )
                 }
             }
-            Text(
-                "  " + biStatic(T.offCount, taFirst).format(apps.count { !it.isEnabled || it.isSuspended }),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        }
+
+        // ---- counts strip: installed / pre-installed / turned off / running ----
+        // Every number is derived from the same list the cards come from, so the four tiles always
+        // add up. Shizuku is only needed for the "running" one (it reads the process table).
+        run {
+            val visible = apps.filter { it.packageName !in HIDE_PACKAGES }
+            val system = visible.count { it.isSystem }
+            val user = visible.size - system
+            val off = visible.count { !it.isEnabled || it.isSuspended }
+            val runningCount = running?.let { live ->
+                visible.count { app -> live.contains(app.packageName) }
+            }
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                StatTile(
+                    symbol = "📦", count = visible.size.toString(),
+                    label = biStatic(T.statInstalled, taFirst),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    active = filter == null && tab == 0,
+                    onClick = { filter = null; tab = 0 }
+                )
+                StatTile(
+                    symbol = "⚙", count = system.toString(),
+                    label = biStatic(T.statPreinstalled, taFirst),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    active = filter == null && tab == 1,
+                    onClick = { filter = null; tab = 1 }
+                )
+                StatTile(
+                    symbol = "👤", count = user.toString(),
+                    label = biStatic(T.statUser, taFirst),
+                    tint = MaterialTheme.colorScheme.primary,
+                    active = filter == null && tab == 3,
+                    onClick = { filter = null; tab = 3 }
+                )
+                StatTile(
+                    symbol = "⛔", count = off.toString(),
+                    label = biStatic(T.statOff, taFirst),
+                    tint = MaterialTheme.colorScheme.error,
+                    active = filter == null && tab == 2,
+                    onClick = { filter = null; tab = 2 }
+                )
+                StatTile(
+                    symbol = "▶", count = runningCount?.toString() ?: "—",
+                    label = biStatic(T.statRunning, taFirst),
+                    tint = if (runningCount == null) MaterialTheme.colorScheme.onSurfaceVariant
+                           else MaterialTheme.colorScheme.tertiary,
+                    active = false,
+                    // No Shizuku, no process table: say so instead of showing a fake zero.
+                    onClick = {
+                        if (runningCount == null) {
+                            Toast.makeText(
+                                context,
+                                biStatic(T.statRunningNeedsShizuku, taFirst),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                )
+            }
         }
 
         // ---- one line: search + export ----
@@ -469,6 +579,8 @@ fun AppsListWindow(
             FilterChip(selected = tab == 1, onClick = { tab = 1 }, label = { Text(biStatic(T.fSystem, taFirst), style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = tab == 2, onClick = { tab = 2 }, label = { Text(biStatic(T.fOff, taFirst), style = MaterialTheme.typography.labelSmall) })
             VerticalDivider(Modifier.height(20.dp))
+            // With no category filter the list would otherwise hide everything the header counted.
+            FilterChip(selected = filter == null, onClick = { filter = null }, label = { Text(biStatic(T.fAny, taFirst), style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.SAFE, onClick = { filter = DisableCategory.SAFE }, label = { Text(biStatic(T.fSafe, taFirst), style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.CAUTION, onClick = { filter = DisableCategory.CAUTION }, label = { Text(biStatic(T.fCaution, taFirst), style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.CRITICAL, onClick = { filter = DisableCategory.CRITICAL }, label = { Text(biStatic(T.fNever, taFirst), style = MaterialTheme.typography.labelSmall) })
@@ -500,6 +612,10 @@ fun AppsListWindow(
                                 Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
                             val off = !(app.isEnabled && !app.isSuspended)
+                            // Keyboard in use / accessibility service in use: explain, never attempt.
+                            if (!off && DisableManager.disableBlockedReason(context, app.packageName) != null) {
+                                blockedApp = app; return@AppRow
+                            }
                             if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
                         },
                         onOpenDetails = { infoApp = app }
@@ -515,6 +631,27 @@ fun AppsListWindow(
             title = { Text(biStatic(T.errorTitle, taFirst)) },
             text = { Text(msg, style = MaterialTheme.typography.bodySmall, modifier = Modifier.verticalScroll(rememberScrollState())) },
             confirmButton = { TextButton(onClick = { errorMsg = null }) { Text(biStatic(T.actionClose, taFirst)) } }
+        )
+    }
+
+    blockedApp?.let { app ->
+        val reason = DisableManager.disableBlockedReason(context, app.packageName) ?: ""
+        AlertDialog(
+            onDismissRequest = { blockedApp = null },
+            title = { Text(biStatic(T.blockedTitle, taFirst)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(app.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(reason, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        biStatic(T.blockedRecovery, taFirst),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = { TextButton(onClick = { blockedApp = null }) { Text(biStatic(T.actionClose, taFirst)) } }
         )
     }
 
@@ -542,6 +679,10 @@ fun AppsListWindow(
                     Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show()
                 } else if (!shizukuLive) {
                     Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
+                } else if (!(app.isEnabled && !app.isSuspended) &&
+                    DisableManager.disableBlockedReason(context, app.packageName) != null
+                ) {
+                    blockedApp = app
                 } else {
                     val off = !(app.isEnabled && !app.isSuspended)
                     if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
@@ -719,7 +860,7 @@ fun AboutDialog(onDismiss: () -> Unit) {
                 SisterApps.all.filter { it.id != "appdisabler" }.forEach { app ->
                     Text("• ${app.name} — ${app.tamilName} (v${app.version})", style = MaterialTheme.typography.labelSmall)
                 }
-                Text("• ${biStatic(T.appName, taFirst)} — v0.1.0 (${biStatic(T.thisApp, taFirst)})", style = MaterialTheme.typography.labelSmall)
+                Text("• ${biStatic(T.appName, taFirst)} — v${BuildConfig.VERSION_NAME} (${biStatic(T.thisApp, taFirst)})", style = MaterialTheme.typography.labelSmall)
                 BiText(T.aboutLinks, style = MaterialTheme.typography.titleSmall, bold = true)
                 Button(onClick = { open(SisterApps.OFFICIAL_WEBSITE_URL) }, modifier = Modifier.fillMaxWidth()) {
                     Text(biStatic(T.btnWebsite, taFirst), style = MaterialTheme.typography.labelMedium)

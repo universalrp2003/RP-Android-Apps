@@ -2,6 +2,7 @@ package com.universalrp.appdisabler.data
 
 import android.content.Context
 import android.content.pm.PackageManager
+import android.provider.Settings
 import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -186,11 +187,47 @@ object DisableManager {
     /** Outcome of a disable/enable action (suspend is the HyperOS fallback). */
     enum class ActionOutcome { DISABLED, SUSPENDED, ENABLED, UNSUSPENDED }
 
+    /**
+     * Packages the user cannot safely lose, whatever the UAD database says.
+     *
+     * The UAD list labels `com.google.android.marvin.talkback` (Android Accessibility Suite)
+     * "Recommended", and several vendor keyboards are not listed at all, which the app shows as
+     * "Unlisted". Turning either off is recoverable in principle — but not from this phone: if the
+     * keyboard is gone you cannot type a password, an ADB pairing code, or start Shizuku again.
+     * That combination can leave a phone that cannot be recovered without another device.
+     *
+     * Returns the blocking reason, or null when the package is fine to turn off.
+     */
+    private fun blockingReason(context: Context, packageName: String): String? {
+        if (UadDatabase.lookup(packageName, context)?.category == DisableCategory.CRITICAL) {
+            return "Protected package — never disable"
+        }
+        // The keyboard currently in use: losing it means losing the ability to type anywhere.
+        val activeIme = try {
+            Settings.Secure.getString(context.contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
+        } catch (_: Exception) { null }
+        val activeImePkg = activeIme?.substringBefore('/')?.takeIf { it.isNotBlank() }
+        if (activeImePkg != null && activeImePkg == packageName) {
+            return "This is your current keyboard — turning it off would leave you unable to type. " +
+                "Switch to another keyboard first, then try again."
+        }
+        // An enabled accessibility service (TalkBack, switch access) is how some users use the phone.
+        val enabledServices = try {
+            Settings.Secure.getString(
+                context.contentResolver,
+                Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
+            )
+        } catch (_: Exception) { null }
+        if (enabledServices?.split(':')?.any { it.substringBefore('/').equals(packageName, true) } == true) {
+            return "An accessibility service from this app is switched on — turning it off would remove " +
+                "the way this phone is being used. Turn the service off in Accessibility settings first."
+        }
+        return null
+    }
+
     suspend fun disablePackage(context: Context, packageName: String): Result<ActionOutcome> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
-        if (UadDatabase.lookup(packageName)?.category == DisableCategory.CRITICAL) {
-            return@withContext Result.failure(IllegalStateException("Protected package — never disable"))
-        }
+        blockingReason(context, packageName)?.let { return@withContext Result.failure(IllegalStateException(it)) }
         // 1) Proper disable (works on stock Android + non-system apps everywhere).
         val disableAttempts = listOf(
             arrayOf("pm", "disable-user", "--user", "0", packageName),
@@ -216,6 +253,34 @@ object DisableManager {
             return@withContext Result.success(ActionOutcome.SUSPENDED)
         }
         Result.failure(IllegalStateException("Disable failed. Attempts:\n$log".trim()))
+    }
+
+    /** Read-only: why this package must not be turned off right now (null when it is fine). */
+    fun disableBlockedReason(context: Context, packageName: String): String? =
+        blockingReason(context, packageName)
+
+    /**
+     * Process names with a live process right now, from the shell the app already runs.
+     *
+     * Android has no permission-free way to ask "which apps are running"; the shell `ps` output is
+     * the same source `adb shell ps` shows. Null means Shizuku is unavailable, and the UI shows no
+     * running count rather than a misleading zero.
+     */
+    suspend fun runningProcesses(): Set<String>? = withContext(Dispatchers.IO) {
+        if (!isShizukuAvailable()) return@withContext null
+        val names = mutableSetOf<String>()
+        // -o NAME keeps the output to one column; older toolboxes reject it, so fall back to raw ps.
+        var r = runShell(arrayOf("ps", "-A", "-o", "NAME"))
+        if (r.exit != 0 || r.output.isBlank()) r = runShell(arrayOf("ps", "-A"))
+        if (r.exit != 0) return@withContext null
+        val singleColumn = r.output.lineSequence().firstOrNull()?.trim()?.equals("NAME", true) == true
+        r.output.lineSequence().forEach { line ->
+            val t = line.trim()
+            if (t.isEmpty() || t.equals("NAME", true)) return@forEach
+            val name = if (singleColumn) t else t.substringAfterLast(' ')
+            if (name.isNotEmpty() && name != "[kthreadd]") names.add(name)
+        }
+        names
     }
 
     suspend fun enablePackage(context: Context, packageName: String): Result<ActionOutcome> = withContext(Dispatchers.IO) {

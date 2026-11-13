@@ -102,7 +102,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: appdisabler-0.1.0-candidate
+          name: appdisabler-0.2.0-candidate
           path: |
             appdisabler/app/build/outputs/apk/debug/*.apk
             appdisabler/app/build/test-results/
@@ -113,6 +113,6 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: appdisabler-0.1.0-release-candidate
+          name: appdisabler-0.2.0-release-candidate
           path: appdisabler/app/build/outputs/apk/release/*.apk
           retention-days: 14

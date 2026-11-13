@@ -48,7 +48,9 @@ class DisablerAboutDirectoryTest(unittest.TestCase):
     def test_the_disabler_lists_itself_in_its_own_about_screen(self):
         local = entries(LOCAL.read_text())
         self.assertIn('appdisabler', local)
-        self.assertEqual(local['appdisabler'], ('0.1.0', 'com.universalrp.appdisabler'))
+        # The version lives in build.gradle.kts and About reads it from BuildConfig, so this
+        # only guards package identity and that the app lists itself at all.
+        self.assertEqual(local['appdisabler'][1], 'com.universalrp.appdisabler')
         self.assertNotIn('not yet published', LOCAL.read_text())
 
     def test_about_dialog_does_not_print_this_app_twice(self):
@@ -93,3 +95,69 @@ class StoreAboutCountsTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class DisablerSafetyGuardTest(unittest.TestCase):
+    """The owner turned off 13 packages on a HyperOS phone and lost parts of Settings.
+
+    Nothing in the app refused a package that would take away the keyboard or a live accessibility
+    service, so these tests pin that refusal and the header counts that make the state visible.
+    """
+
+    MANAGER = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/data/DisableManager.kt'
+    STRINGS = ROOT / 'appdisabler/app/src/main/java/com/universalrp/appdisabler/ui/Bilingual.kt'
+    GRADLE = ROOT / 'appdisabler/app/build.gradle.kts'
+
+    def test_disable_refuses_the_keyboard_in_use_and_live_accessibility_services(self):
+        manager = self.MANAGER.read_text()
+        guard = re.search(r'private fun blockingReason\(.*?\n    \}', manager, re.S)
+        self.assertIsNotNone(guard, 'the disable guard is gone')
+        body = guard.group(0)
+        self.assertIn('DEFAULT_INPUT_METHOD', body,
+                      'the active keyboard must be checked before disabling it')
+        self.assertIn('ENABLED_ACCESSIBILITY_SERVICES', body,
+                      'a live accessibility service must be checked before disabling it')
+        self.assertIn('DisableCategory.CRITICAL', body, 'the never-disable list must stay')
+        # The guard has to run before the first pm command, not after a failed attempt.
+        disable = manager[manager.index('suspend fun disablePackage'):]
+        disable = disable[:disable.index('val disableAttempts')]
+        self.assertIn('blockingReason(context, packageName)', disable,
+                      'the guard must fire before pm disable-user is attempted')
+
+    def test_header_counts_are_derived_not_hardcoded(self):
+        ui = ABOUT.read_text()
+        self.assertIn('StatTile(', ui, 'the counts strip is missing')
+        for symbol in ('📦', '⚙', '👤', '⛔', '▶'):
+            self.assertIn(symbol, ui, f'missing the {symbol} tile')
+        # Counts must come from the loaded list, never from a literal.
+        self.assertIn('visible.count { !it.isEnabled || it.isSuspended }', ui)
+        self.assertIn('visible.count { it.isSystem }', ui)
+        self.assertRegex(ui, r'visible\.count \{ app -> live\.contains\(app\.packageName\) \}')
+
+    def test_running_count_says_unknown_without_shizuku_instead_of_zero(self):
+        ui = ABOUT.read_text()
+        self.assertIn('runningCount?.toString() ?: "—"', ui,
+                      'a missing process table must render as unknown, never as 0')
+        manager = self.MANAGER.read_text()
+        running = manager[manager.index('suspend fun runningProcesses'):]
+        running = running[:running.index('suspend fun enablePackage')]
+        self.assertIn('isShizukuAvailable()', running)
+        self.assertIn('return@withContext null', running)
+
+    def test_new_bilingual_strings_are_paired(self):
+        strings = self.STRINGS.read_text()
+        for key in ('statInstalled', 'statPreinstalled', 'statUser', 'statOff', 'statRunning',
+                    'statRunningNeedsShizuku', 'blockedTitle', 'blockedRecovery'):
+            self.assertRegex(strings, rf'{key}\s*=\s*Bi\(\s*"[^"]+"\s*,\s*"[^"]+"\s*\)',
+                             f'{key} must be a Bi(english, tamil) pair')
+
+    def test_about_reads_the_installed_version_from_build_config(self):
+        ui = ABOUT.read_text()
+        self.assertIn('v${BuildConfig.VERSION_NAME}', ui,
+                      'About must not pin a literal version again')
+        self.assertIn('buildConfig = true', self.GRADLE.read_text())
+        gradle = self.GRADLE.read_text()
+        code = int(re.search(r'versionCode\s*=\s*(\d+)', gradle).group(1))
+        name = re.search(r'versionName\s*=\s*"([^"]+)"', gradle).group(1)
+        self.assertEqual(name, '0.2.0', 'this test was written for the 0.2.0 candidate')
+        self.assertEqual(code, 2)

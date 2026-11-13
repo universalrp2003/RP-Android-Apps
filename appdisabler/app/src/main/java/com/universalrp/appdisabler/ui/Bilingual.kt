@@ -139,6 +139,23 @@ object T {
     val fNever = Bi("Never", "ஒருபோதும் இல்லை")
     val statsApps = Bi("%1\$d apps", "%1\$d ஆப்கள்")
     val offCount = Bi("%1\$d off", "%1\$d முடக்கப்பட்டது")
+    // ---- header count tiles (symbols are drawn by StatTile, labels here) ----
+    val fAny = Bi("Any", "எதுவும்")
+    val statInstalled = Bi("installed", "நிறுவியவை")
+    val statPreinstalled = Bi("pre-installed", "முன் நிறுவல்")
+    val statUser = Bi("you added", "நீங்கள் சேர்த்தவை")
+    val statOff = Bi("turned off", "முடக்கியவை")
+    val statRunning = Bi("running", "இயங்குகிறது")
+    val statRunningNeedsShizuku = Bi(
+        "Start Shizuku to count apps that are running now.",
+        "இப்போது இயங்கும் ஆப்களை எண்ண Shizuku-வை இயக்குங்கள்."
+    )
+    // ---- refuse to turn off the keyboard in use or a live accessibility service ----
+    val blockedTitle = Bi("Not turned off — this would lock you out", "முடக்கவில்லை — இது உங்களை முடக்கிவிடும்")
+    val blockedRecovery = Bi(
+        "Everything here stays reversible: if an app is already off, tap Enable to restore it.",
+        "இங்குள்ள அனைத்தும் மீளக்கூடியது: ஏற்கனவே முடக்கப்பட்ட ஆப்பை Enable தட்டி மீட்டெடுக்கலாம்."
+    )
     val emptyList = Bi("No app matches this filter", "இந்த வடிகட்டலுக்கு ஆப் இல்லை")
     val actionDisable = Bi("Disable", "முடக்கு")
     val actionEnable = Bi("Enable", "இயக்கு")
