@@ -40,14 +40,22 @@ release checks are established; do not rebuild and publish different bytes.
   is disposable; test recovery via ADB is not counted as a successful app-driven restore.
 - This does not exercise system-package restrictions, the suspension fallback, actual OEM firmware,
   or a physical device. It is one test fixture per stock emulator, not proof of universal safety.
-- **Immediate reboot remains unresolved:** [run 43461486057](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43461486057)
-  failed the immediate-reboot check on Android 16: the OS showed the installed fixture at its
-  default enabled state afterward, despite reporting it disabled before reboot. An earlier
-  immediate-reboot run also failed on Android 15 but used an incremental install, so that failure
-  does not establish whether its fixture was re-enabled or absent. Other immediate-reboot cases
-  passed some stages. Cause is unproven; a 30-second delayed pass does not erase the failure or
-  establish how physical phones behave. Further investigation is required before making a
-  persistence claim or publishing this candidate as fully validated.
+- **Immediate ADB reboot remains unresolved:** [run 43464951948](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43464951948)
+  passed with a 15-second added delay on both Android 15 and 16 and with no added delay on Android
+  15. The Android 16 job with no added delay failed: the OS showed the installed fixture in its
+  default enabled state after reboot, despite reporting it disabled before reboot. The test captures
+  UI and state before reboot, so "no added delay" is not literally instantaneous. An earlier
+  [run 43461486057](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43461486057)
+  also saw this Android 16 result; Android 15's earlier failure used an incremental install, so it
+  does not establish whether the fixture was re-enabled or absent. The newer test forces a full
+  fixture install. One Android 16 job in run 43463106757 was cancelled after hanging, and another
+  job in that run had a UI navigation failure; neither is counted as a persistence result.
+- Relevant AOSP code in [Android 16 PackageManagerService](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-16.0.0_r1/services/core/java/com/android/server/pm/PackageManagerService.java)
+  schedules non-synchronous package restriction writes with a 10-second delay; the corresponding
+  [shell command](https://github.com/aosp-mirror/platform_frameworks_base/blob/android-16.0.0_r1/services/core/java/com/android/server/pm/PackageManagerShellCommand.java)
+  calls `setApplicationEnabledSetting` with flags `0`. This offers a plausible explanation for the
+  timing difference, **not a proven cause**. These tests use `adb reboot`, not a physical phone's
+  power menu, and do not establish behavior on OEM devices. Do not make a general persistence claim.
 
 ## Before broader publication
 
