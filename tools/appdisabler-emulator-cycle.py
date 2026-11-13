@@ -134,7 +134,10 @@ try:
     expect_state('-d', 'disabled')
     print('Framework confirms fixture disabled by app', flush=True)
     wait_node('fixture-after-disable', text('AAAA Disabler Test Fixture'))
-    # Check persistence across a real emulator reboot. Shizuku's ADB service must be started again.
+    # This run waits 30 seconds before reboot; immediate-reboot failures remain recorded separately.
+    # Shizuku's ADB service must be started again after reboot.
+    print('Waiting 30 seconds before reboot; this does not test immediate reboot', flush=True)
+    time.sleep(30)
     print(adb('reboot'))
     subprocess.run(['adb', 'wait-for-device'], check=True, timeout=180)
     deadline = time.monotonic() + 180
@@ -173,7 +176,7 @@ try:
     (OUT / 'candidate-sha256.txt').write_text(expected + '\n')
     (OUT / 'fingerprint.txt').write_text(adb('shell', 'getprop', 'ro.build.fingerprint'))
     print('Framework confirms fixture restored by app; installed candidate hash matches', flush=True)
-    (OUT / 'result.txt').write_text('PASS: stock emulator, Shizuku, app-driven disable, reboot and restore of disposable user app. OEM firmware and suspension fallback not tested.\n')
+    (OUT / 'result.txt').write_text('PASS: stock emulator, Shizuku, app-driven disable, 30-second wait, reboot and restore of disposable user app. Immediate reboot, OEM firmware and suspension fallback not tested.\n')
 finally:
     # Safety net on the disposable emulator only; never use this as a test success.
     print(adb('shell', 'pm', 'enable', '--user', '0', PKG, check=False), flush=True)
