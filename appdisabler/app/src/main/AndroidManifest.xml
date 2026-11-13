@@ -12,6 +12,13 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+
+    <!-- Allow launching Shizuku directly (Open Shizuku shortcut) -->
+    <queries>
+        <package android:name="moe.shizuku.privileged.api" />
+        <package android:name="rikka.shizuku" />
+    </queries>
+
     <application
         android:name=".AppDisablerApp"
         android:allowBackup="false"
