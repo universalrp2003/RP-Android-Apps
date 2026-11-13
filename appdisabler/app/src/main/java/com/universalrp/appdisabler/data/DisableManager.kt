@@ -242,9 +242,27 @@ object DisableManager {
     }
 
     /** Diagnostic: verify shell identity + pm works. Read-only, safe to run anytime. */
-    suspend fun runShellTest(): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun runShellTest(context: Context): Result<String> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
         val sb = StringBuilder()
+        // Hash the installed base APK itself, not the downloaded archive or a version number.
+        try {
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            java.io.File(context.applicationInfo.sourceDir).inputStream().buffered().use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    digest.update(buffer, 0, count)
+                }
+            }
+            val hash = digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
+            val debug = (context.applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+            val splits = context.applicationInfo.splitSourceDirs?.size ?: 0
+            sb.append("Installed base APK SHA-256: $hash\nDebuggable: $debug\nInstalled splits: $splits\n\n")
+        } catch (e: Exception) {
+            sb.append("Installed base APK SHA-256: unavailable (${e.javaClass.simpleName})\n\n")
+        }
         val id = runShell(arrayOf("id"))
         sb.append("id (exit ${id.exit}):\n${id.output.take(300)}\n\n")
         val list = runShell(arrayOf("pm", "list", "packages", "-3"))

@@ -242,6 +242,23 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.ui = ABOUT.read_text()
         self.manager = self.MANAGER.read_text()
 
+    def test_safety_text_does_not_guarantee_ota_banking_or_recovery(self):
+        strings = self.STRINGS.read_text()
+        self.assertNotIn('OTA and banking safe', strings)
+        self.assertNotIn('OTA and banking apps stay safe', strings)
+        self.assertNotIn('every disable is reversible', strings)
+        self.assertIn('OTA updates and banking are not guaranteed safe', strings)
+        self.assertIn('recovery is not guaranteed', strings)
+
+    def test_shell_diagnostic_hashes_installed_base_and_discloses_debug_and_splits(self):
+        manager = self.manager
+        self.assertIn('java.io.File(context.applicationInfo.sourceDir)', manager)
+        self.assertIn('java.security.MessageDigest.getInstance("SHA-256")', manager)
+        self.assertIn('Installed base APK SHA-256: $hash', manager)
+        self.assertIn('ApplicationInfo.FLAG_DEBUGGABLE', manager)
+        self.assertIn('applicationInfo.splitSourceDirs?.size', manager)
+        self.assertIn('DisableManager.runShellTest(context)', self.ui)
+
     def test_rows_carry_a_green_amber_red_rating_not_a_theme_role(self):
         # Theme primary in this app is lavender, which is why "Safe to disable" read as body text.
         for colour in ('SafeGreen = androidx.compose.ui.graphics.Color(0xFF1B7F3B)',

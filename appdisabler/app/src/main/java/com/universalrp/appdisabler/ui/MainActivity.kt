@@ -13,6 +13,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -281,7 +282,7 @@ fun ShizukuSetupWindow(
                         onClick = {
                             testing = true
                             scope.launch {
-                                val r = DisableManager.runShellTest()
+                                val r = DisableManager.runShellTest(context)
                                 testOutput = r.fold({ it }, { e -> "Test failed: ${e.message ?: e.javaClass.simpleName}" })
                                 testing = false
                             }
@@ -330,7 +331,11 @@ fun ShizukuSetupWindow(
         AlertDialog(
             onDismissRequest = { testOutput = null },
             title = { Text(biStatic(T.btnTestShell, taFirst)) },
-            text = { Text(out, style = MaterialTheme.typography.bodySmall, modifier = Modifier.verticalScroll(rememberScrollState())) },
+            text = {
+                SelectionContainer {
+                    Text(out, style = MaterialTheme.typography.bodySmall, modifier = Modifier.verticalScroll(rememberScrollState()))
+                }
+            },
             confirmButton = { TextButton(onClick = { testOutput = null }) { Text(biStatic(T.actionClose, taFirst)) } }
         )
     }

@@ -68,3 +68,15 @@ release checks are established; do not rebuild and publish different bytes.
    guarantee safety for every model. Preserve a recovery path and do not claim zero bootloop risk.
 4. Treat untested OEMs and versions as unverified, not passed. Ship only the owner-tested artifact
    after the actual scope and results are communicated; never weaken release verification.
+
+## Owner screenshot: version and variant are not hash evidence
+
+The owner showed an About screen with 0.3.0 and a file-manager installer dialog for
+`appdisabler-debug.apk` from the debug artifact, showing the installed version also as 0.3.0 (3).
+This identifies the **file displayed** as a debug APK and shows matching version numbers; it does
+not establish whether the installed app came from that file or identify its hash. Debug APKs are
+not acceptable publication candidates. A subsequent source change adds an installed-base SHA-256,
+`Debuggable` and split-count readout to the existing Shizuku shell diagnostic so a future release
+candidate can be identified on the phone. Its hash must be compared with the exact built release
+APK after the owner installs and tests that candidate; earlier candidate emulator results do not
+transfer automatically to new bytes.
