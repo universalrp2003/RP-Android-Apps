@@ -65,6 +65,13 @@ def wait_node(name, predicate, timeout=50):
         matches = [n for n in last if predicate(n)]
         if matches:
             return matches[0]
+        # Some disposable Android 16 images show this system prompt after reboot. Wireless
+        # debugging is not needed by this ADB-started Shizuku test; dismiss without enabling it.
+        if any(n.attrib.get('text', '').startswith('Allow wireless debugging on this network') for n in last):
+            cancel = [n for n in last if n.attrib.get('text') == 'Cancel']
+            if cancel:
+                tap(cancel[0])
+                continue
         time.sleep(2)
     visible = [(n.attrib.get('text'), n.attrib.get('content-desc')) for n in last
                if n.attrib.get('text') or n.attrib.get('content-desc')]
