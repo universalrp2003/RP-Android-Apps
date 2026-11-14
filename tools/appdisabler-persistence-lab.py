@@ -54,17 +54,40 @@ try:
             probe('flush')
     verify()
     # No artificial delay. ADB reboot is not a physical power-menu restart.
-    adb('reboot')
-    adb('wait-for-device', timeout=180)
-    deadline = time.monotonic() + 180
-    while time.monotonic() < deadline:
-        if adb('shell', 'getprop', 'sys.boot_completed', check=False).strip() == '1':
-            break
-        time.sleep(5)
-    else:
+    def reboot():
+        adb('reboot')
+        adb('wait-for-device', timeout=180)
+        deadline = time.monotonic() + 180
+        while time.monotonic() < deadline:
+            if adb('shell', 'getprop', 'sys.boot_completed', check=False).strip() == '1':
+                return
+            time.sleep(5)
         raise TimeoutError('boot incomplete')
+
+    reboot()
     verify()
-    print('RESULT: PASS', MODE, flush=True)
+    print('RESULT: persisted', MODE, flush=True)
+    # Test shell-level restore too, including an immediate second reboot. This is not an app test.
+    if MODE == 'disable-sync':
+        probe('enable-sync', PKG)
+    elif MODE == 'disable-baseline':
+        adb('shell', 'pm', 'enable', '--user', '0', PKG)
+    else:
+        out = adb('shell', 'pm', 'unsuspend', '--user', '0', PKG)
+        assert f'Package {PKG} new suspended state: false' in out
+        if MODE == 'suspend-flush':
+            probe('flush')
+
+    def verify_restored():
+        if MODE.startswith('disable'):
+            assert 'package:' + PKG in adb('shell', 'pm', 'list', 'packages', '-e').splitlines(), 'fixture not enabled'
+        else:
+            assert re.search(r'User 0:.*suspended=false', package_dump()), 'fixture remains suspended'
+
+    verify_restored()
+    reboot()
+    verify_restored()
+    print('RESULT: PASS persisted and restored', MODE, flush=True)
 finally:
     adb('shell', 'pm', 'unsuspend', '--user', '0', PKG, check=False)
     adb('shell', 'pm', 'enable', '--user', '0', PKG, check=False)

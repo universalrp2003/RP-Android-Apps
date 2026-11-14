@@ -9,9 +9,10 @@ public final class Probe {
         Class<?> binderType = Class.forName("android.os.IBinder");
         Object manager = stub.getMethod("asInterface", binderType).invoke(null, binder);
         Class<?> ipm = Class.forName("android.content.pm.IPackageManager");
-        if (args.length == 2 && args[0].equals("disable-sync")) {
+        if (args.length == 2 && (args[0].equals("disable-sync") || args[0].equals("enable-sync"))) {
+            int state = args[0].equals("disable-sync") ? 3 : 1;
             ipm.getMethod("setApplicationEnabledSetting", String.class, int.class, int.class,
-                    int.class, String.class).invoke(manager, args[1], 3, 2, 0, "shell:2000");
+                    int.class, String.class).invoke(manager, args[1], state, 2, 0, "shell:2000");
         } else if (args.length == 1 && args[0].equals("flush")) {
             ipm.getMethod("flushPackageRestrictionsAsUser", int.class).invoke(manager, 0);
         } else {
