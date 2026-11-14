@@ -168,7 +168,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertIn('same-key', self.source)
         self.assertIn('not for an ordinary same-key update', self.source)
         self.assertIn('Copying a hash does not verify a downloaded file.', self.source)
-        self.assertIn('not security approval', self.source)
+        self.assertIn('not a safety approval', self.source)
 
     def test_social_preview_is_local_small_and_1200_by_630(self):
         image = (ROOT / 'site/images/social-preview.png').read_bytes()

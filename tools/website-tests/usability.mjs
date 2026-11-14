@@ -120,10 +120,8 @@ try {
     await page.goto(base);
     await page.route('**/apks/*.apk', route => route.fulfill({ body: 'synthetic-corrupt-fixture' }));
     let downloads = 0; page.on('download', () => downloads++);
-    // The newest row is now the Store, which reports into its own status box; use a row whose
-    // status element this test actually waits on.
     await page.locator('.latest a[data-apk][data-status="st-latest"]').first().click();
-    await page.waitForFunction(() => document.getElementById('st-latest').textContent.includes('File hash mismatch'));
+    await page.waitForFunction(() => Array.from(document.querySelectorAll('.latest tr .apk-download-status')).some(node => node.textContent.includes('File hash mismatch')));
     assert.equal(downloads, 0);
     assert.equal(new URL(page.url()).origin, new URL(base).origin);
   });
@@ -135,7 +133,52 @@ try {
     const link = page.locator('.latest a[data-apk][data-status="st-latest"]').first();
     await link.evaluate((node, value) => { node.dataset.sha = value; }, hash);
     await link.click();
-    await page.waitForFunction(() => document.getElementById('st-latest').textContent.includes('not security approval'));
+    await page.waitForFunction(() => Array.from(document.querySelectorAll('.latest tr .apk-download-status')).some(node => node.textContent.includes('not a safety approval')));
+  });
+  await test('slow download shows progress in the chosen list row and matching card without duplicate fetches', async page => {
+    await page.addInitScript(() => {
+      window.__requests = 0;
+      window.fetch = async () => {
+        window.__requests++;
+        return new Response(new ReadableStream({ start(controller) { window.__stream = controller; } }),
+                            { headers: { 'Content-Length': '20' } });
+      };
+    });
+    await page.goto(base);
+    const fixture = 'synthetic-not-an-apk'; // exactly 20 bytes
+    assert.equal(fixture.length, 20);
+    const hash = createHash('sha256').update(fixture).digest('hex');
+    const row = page.locator('.latest tr').filter({ has: page.locator('a[data-apk*="System-App-Disabler"]') });
+    const rowLink = row.locator('a[data-apk]');
+    const card = page.locator('#system-app-disabler-card');
+    await rowLink.evaluate((node, value) => { node.dataset.sha = value; }, hash);
+    await rowLink.click();
+    await page.waitForFunction(() => !!window.__stream);
+    assert.match(await row.locator('.apk-download-status').innerText(), /Preparing download/);
+    assert.match(await row.locator('.apk-download-status').innerText(), /save prompt comes after verification/);
+    await page.evaluate(() => window.__stream.enqueue(new TextEncoder().encode('synthetic-')));
+    await page.waitForFunction(() => document.querySelector('.latest tr .apk-download-status')?.textContent.includes('50%'));
+    assert.match(await card.locator('.apk-download-status').innerText(), /50%/);
+    assert.equal(await row.locator('progress').getAttribute('value'), '50');
+    await card.locator('a[data-apk]').click();
+    assert.equal(await page.evaluate(() => window.__requests), 1, 'second click must not start a duplicate');
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no mobile overflow while downloading');
+    await page.evaluate(() => { window.__stream.enqueue(new TextEncoder().encode('not-an-apk')); window.__stream.close(); });
+    await row.locator('.apk-download-status').getByText('File verified. Check your browser for the save prompt.').waitFor();
+    assert.match(await card.locator('.apk-download-status').innerText(), /not a safety approval/);
+  });
+  await test('unknown length does not invent a percentage', async page => {
+    await page.addInitScript(() => {
+      window.fetch = async () => new Response(new ReadableStream({ start(controller) { window.__stream = controller; } }));
+    });
+    await page.goto(base);
+    const row = page.locator('.latest tr').filter({ has: page.locator('a[data-apk*="System-App-Disabler"]') });
+    await row.locator('a[data-apk]').click();
+    await page.waitForFunction(() => !!window.__stream);
+    await page.evaluate(() => window.__stream.enqueue(new TextEncoder().encode('bytes')));
+    await page.waitForFunction(() => document.querySelector('.latest tr .apk-download-status')?.textContent.includes('MiB'));
+    assert.doesNotMatch(await row.locator('.apk-download-status').innerText(), /%/);
+    assert.equal(await row.locator('progress').isVisible(), false);
   });
   await test('320/390/768/1280 widths and 200% scale have no page overflow', async page => {
     await page.goto(base);
