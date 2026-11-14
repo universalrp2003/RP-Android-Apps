@@ -43,15 +43,10 @@ Bundle these into the next Store release; do not start a Store-only build just f
       that a process is stopped or cannot restart. The app stores its own successful-action record,
       which may become stale if state changes elsewhere; don't treat it as a live OS check. On the
       owner's HyperOS device, the enabled/disabled package lists did not reveal suspension.
-- [ ] **Suspension cannot be seen in `pm list packages -e`.** Owner's phone, 13 November 2026: the
-      shell printed `pm suspend --user 0 com.xiaomi.hypercomm -> exit 0: Package com.xiaomi.hypercomm
-      new suspended state: true`, and `dumpsys` showed `flags=[ SYSTEM HAS_CODE PERSISTENT
-      ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]` with no SUSPENDED flag while the package stayed in the
-      `-e` list. So neither list membership nor that `flags=` line reveals a suspension on this
-      build. The success check was therefore made to accept "suspend reported success" as proof
-      rather than reading a state the OS does not expose; `isActuallyOff()` keeps the local
-      suspend note only for the case the shell already confirmed. Verify the SUSPENDED flag on a
-      real suspended package before relying on it again.
+- [ ] **Suspension cannot be inferred from enabled/disabled lists.** On the owner's HyperOS
+      device a reported suspension stayed in the `-e` list, and the inspected `flags=` line did not
+      expose it. The newer candidate queries the public suspension API on Android 10+ and shows
+      unknown when unavailable; keep checking real-device compatibility and external state changes.
 - [ ] **Persistent flag and suspension need cautious wording.** HyperComm on the owner's phone
       has `FLAG_PERSISTENT` and was observed running after suspension and force-close. The flag alone
       does not prove it is always running, cannot be disabled or uninstalled, or that disabling is
@@ -66,3 +61,25 @@ Bundle these into the next Store release; do not start a Store-only build just f
 
 - Source now verifies requested suspension results, queries `PackageManager.isPackageSuspended(packageName)` on API 29+, shows unknown on failures/older versions, offers recovery, and separates counts. Unit and device testing remains necessary, especially external/multiple suspenders and user profiles. Don't publish newly rebuilt bytes as the previous owner-tested candidate. See [suspension research](appdisabler-suspension-research.md).
 - Prototype synchronous restriction writes only with disposable fixtures and privileged access; compare immediate-reboot baselines, restore and OEM behavior before claiming a persistence fix. Do not equate suspension with disable or automatically uninstall protected apps.
+
+- [ ] **Unlisted user apps must not automatically read “Safe to disable.”** Owner screenshots of
+      the hash-matched corrected candidate show Aadhaar, AadhaarFaceRd and an IDBI app with that
+      green label; they are absent from the bundled UAD list and the loader defaults non-system
+      apps to SAFE. Design a neutral, understandable classification and test it before rebuilding;
+      functionality and importance depend on the user's needs. Do not publish rebuilt bytes as
+      though they were the current owner-tested APK.
+- [ ] **Overlapping states need clear row text.** In the owner's suspended filter Earphones appears
+      with a “disabled” row. The counts and filters intentionally permit disabled and suspended to
+      overlap, but the row only displays one status. Consider displaying both where both are known.
+
+### Agreed follow-up: unlisted apps and persistence lab
+
+- Source now treats every package missing from UAD as Unlisted, offers an explicit Google AI link
+  on the row and detail/confirmation, and warns that AI answers may be wrong and Google receives
+  the app name and package. The user decides; no answer is fetched or applied automatically.
+  Verify on stock emulators and the owner's phone before release.
+- Source now displays both disabled and suspended when both are observed. Verify the overlap with
+  a disposable fixture and on-device before release.
+- `appdisabler-persistence-lab.yml` tests flags-0 baseline, synchronous disable, suspend baseline,
+  and suspend plus hidden flush, with an inert fixture on stock Android 15/16 only. It is research,
+  not shipped behavior or a guarantee; no OEM or physical reboot is covered.

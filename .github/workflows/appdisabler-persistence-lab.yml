@@ -1,0 +1,68 @@
+name: App Disabler persistence lab
+on:
+  workflow_dispatch:
+  push:
+    branches: ['arena/**']
+    paths:
+      - '.github/workflows/appdisabler-persistence-lab.yml'
+      - 'tools/appdisabler-persistence-lab.py'
+      - 'tools/appdisabler-persistence-lab/**'
+permissions:
+  contents: read
+jobs:
+  experiment:
+    name: Android ${{ matrix.api }} ${{ matrix.mode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35, 36]
+        mode: [disable-baseline, disable-sync, suspend-baseline, suspend-flush]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build disposable fixture and shell-only probe
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' >/dev/null || true
+          sdk="$ANDROID_HOME/build-tools/36.0.0"
+          cat > "$RUNNER_TEMP/AndroidManifest.xml" <<'MANIFEST'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.universalrp.persistencelab.fixture">
+            <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/>
+            <application android:label="Disposable Persistence Fixture" android:hasCode="false"/>
+          </manifest>
+          MANIFEST
+          "$sdk/aapt" package -f -M "$RUNNER_TEMP/AndroidManifest.xml" -I "$ANDROID_HOME/platforms/android-36/android.jar" -F "$RUNNER_TEMP/fixture-unsigned.apk"
+          "$sdk/zipalign" -f 4 "$RUNNER_TEMP/fixture-unsigned.apk" "$RUNNER_TEMP/fixture-aligned.apk"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/fixture.jks" -storepass fixturetest -keypass fixturetest -alias fixture -dname 'CN=Disposable Fixture' -keyalg RSA -validity 1 >/dev/null 2>&1
+          "$sdk/apksigner" sign --ks "$RUNNER_TEMP/fixture.jks" --ks-pass pass:fixturetest --key-pass pass:fixturetest --out "$RUNNER_TEMP/fixture.apk" "$RUNNER_TEMP/fixture-aligned.apk"
+          mkdir -p "$RUNNER_TEMP/classes" "$RUNNER_TEMP/dex"
+          javac -source 8 -target 8 -d "$RUNNER_TEMP/classes" tools/appdisabler-persistence-lab/Probe.java
+          "$sdk/d8" --min-api 26 --output "$RUNNER_TEMP/dex" "$RUNNER_TEMP/classes/com/universalrp/persistencelab/Probe.class"
+          (cd "$RUNNER_TEMP/dex" && jar cf "$RUNNER_TEMP/probe.jar" classes.dex)
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Run immediate reboot experiment
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            bash -o pipefail -c 'python3 tools/appdisabler-persistence-lab.py "$RUNNER_TEMP/fixture.apk" "$RUNNER_TEMP/probe.jar" "${{ matrix.mode }}" 2>&1 | tee "$RUNNER_TEMP/lab.log"'
+      - name: Surface bounded diagnostic
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          log = Path(os.environ['RUNNER_TEMP']) / 'lab.log'
+          text = log.read_text(errors='replace')[-3500:] if log.exists() else 'Experiment did not start.'
+          print('::notice title=Persistence lab::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY

@@ -46,6 +46,17 @@ import rikka.shizuku.Shizuku
 
 private const val SHIZUKU_PKG = "moe.shizuku.privileged.api"
 
+/** Open Google AI Mode only on request. Availability and answers vary by region and account. */
+private fun openGoogleAi(context: Context, app: AppInfo) {
+    val query = Uri.encode("Explain Android package ${app.packageName} (${app.label}): what does it do, and what could be affected if disabled?")
+    try {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?udm=50&q=$query")))
+    } catch (_: android.content.ActivityNotFoundException) {
+        Toast.makeText(context, "No browser available", Toast.LENGTH_SHORT).show()
+    }
+}
+
+
 /** True when Shizuku (or a fork) is installed, so we can offer “Open Shizuku”. */
 fun isShizukuInstalled(context: Context): Boolean {
     val pm = context.packageManager
@@ -433,10 +444,10 @@ fun AppsListWindow(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val taFirst = tamilFirst()
+    val taFirst = false
     var apps by remember { mutableStateOf<List<AppInfo>>(emptyList()) }
     var query by remember { mutableStateOf("") }
-    var filter by remember { mutableStateOf<DisableCategory?>(DisableCategory.SAFE) }
+    var filter by remember { mutableStateOf<DisableCategory?>(null) }
     var tab by remember { mutableStateOf(0) } // 0 All (per filter), 1 System, 2 Off
     var confirmApp by remember { mutableStateOf<AppInfo?>(null) }
     var infoApp by remember { mutableStateOf<AppInfo?>(null) }
@@ -666,6 +677,7 @@ fun AppsListWindow(
             FilterChip(selected = filter == null, onClick = { filter = null }, label = { Text("Any", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.SAFE, onClick = { filter = DisableCategory.SAFE }, label = { Text("Safe", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.CAUTION, onClick = { filter = DisableCategory.CAUTION }, label = { Text("Caution", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = filter == DisableCategory.UNLISTED, onClick = { filter = DisableCategory.UNLISTED }, label = { Text("Unlisted", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.CRITICAL, onClick = { filter = DisableCategory.CRITICAL }, label = { Text("Never", style = MaterialTheme.typography.labelSmall) })
         }
 
@@ -678,6 +690,7 @@ fun AppsListWindow(
             ColourKey(SafeGreen, "Safe")
             ColourKey(CautionAmber, "Asks first")
             ColourKey(DangerRed, "Never")
+            ColourKey(androidx.compose.ui.graphics.Color(0xFF5F6368), "Unlisted")
         }
 
         Text(
@@ -691,7 +704,7 @@ fun AppsListWindow(
 
         if (filtered.isEmpty()) {
             Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                BiText(T.emptyList, style = MaterialTheme.typography.bodyMedium)
+                Text(T.emptyList.en, style = MaterialTheme.typography.bodyMedium)
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.weight(1f)) {
@@ -712,12 +725,13 @@ fun AppsListWindow(
                             if (!off && DisableManager.disableBlockedReason(context, app.packageName) != null) {
                                 blockedApp = app; return@AppRow
                             }
-                            if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
+                            if (!off && app.category in setOf(DisableCategory.CAUTION, DisableCategory.UNLISTED)) confirmApp = app else run(app)
                         },
                         onRestoreUnknown = {
                             if (!shizukuLive) Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
                             else run(app, restore = true)
                         },
+                        onAskAi = { openGoogleAi(context, app) },
                         onOpenDetails = { infoApp = app }
                     )
                 }
@@ -744,7 +758,7 @@ fun AppsListWindow(
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(app.label, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                     Text(app.packageName, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    BiText(reason, style = MaterialTheme.typography.bodySmall)
+                    Text(reason.en, style = MaterialTheme.typography.bodySmall)
                     Text(
                         biStatic(T.blockedRecovery, taFirst),
                         style = MaterialTheme.typography.labelSmall,
@@ -759,8 +773,18 @@ fun AppsListWindow(
     confirmApp?.let { app ->
         AlertDialog(
             onDismissRequest = { confirmApp = null },
-            title = { Text(biStatic(T.confirmTitle, taFirst)) },
-            text = { BiText(T.confirmMsg.let { Bi(it.en.format(app.label), it.ta.format(app.label)) }, style = MaterialTheme.typography.bodyMedium) },
+            title = { Text(if (app.category == DisableCategory.UNLISTED) "Unlisted — check first" else T.confirmTitle.en) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(if (app.category == DisableCategory.UNLISTED)
+                        "${app.label} has no UAD rating. Disabling it may affect features; recovery is not guaranteed. AI answers can be wrong."
+                    else "${app.label} may affect features if disabled. Restoration can fail. Disable anyway?", style = MaterialTheme.typography.bodyMedium)
+                    if (app.category == DisableCategory.UNLISTED) {
+                        Text("Opening Google sends the app name and package to Google.", style = MaterialTheme.typography.labelSmall)
+                        TextButton(onClick = { openGoogleAi(context, app) }) { Text("Ask Google AI") }
+                    }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = { confirmApp = null; run(app) }) { Text(biStatic(T.actionDisableAnyway, taFirst)) }
             },
@@ -786,7 +810,7 @@ fun AppsListWindow(
                     blockedApp = app
                 } else {
                     val off = app.needsRestore
-                    if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
+                    if (!off && app.category in setOf(DisableCategory.CAUTION, DisableCategory.UNLISTED)) confirmApp = app else run(app)
                 }
             }
         )
@@ -824,7 +848,8 @@ fun AppDetailsDialog(
             else -> T.happenUnlisted
         }
     }
-    val desc = app.description?.let { Bi(it, it) } ?: if (app.isSystem) T.descMissingSystem else T.descMissingUser
+    val desc = app.description?.takeIf { it.isNotBlank() } ?: if (app.isSystem) T.descMissingSystem.en
+        else "User-installed app. Its importance and effects depend on how you use it."
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -835,18 +860,22 @@ fun AppDetailsDialog(
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(biStatic(catLabel, taFirst), color = categoryColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelMedium)
-                        BiText(catBody)
+                        Text(catBody.en)
                     }
                 }
-                BiText(T.whatIsApp, style = MaterialTheme.typography.titleSmall, bold = true)
-                BiText(desc, secondary = app.description == null)
+                Text(T.whatIsApp.en, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(desc, style = MaterialTheme.typography.bodySmall)
                 if (app.installer != null) Text("Installer: ${app.installer}", style = MaterialTheme.typography.labelSmall)
-                BiText(T.whatHappens, style = MaterialTheme.typography.titleSmall, bold = true)
-                BiText(happen)
-                BiText(T.howToDisable, style = MaterialTheme.typography.titleSmall, bold = true)
-                BiText(if (shizukuOk) T.howReady else T.howNotReady)
+                Text(T.whatHappens.en, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(if (app.category == DisableCategory.UNLISTED && app.isEnabled && !app.isSuspended)
+                    "Effects vary by app and device. Disable may be refused or fall back to suspension." else happen.en)
+                Text(T.howToDisable.en, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                Text(if (shizukuOk) "Tap Disable to request the action; the device may refuse it." else T.howNotReady.en)
 
-                BiText(T.webHead, style = MaterialTheme.typography.labelMedium, bold = true)
+                Text(T.webHead.en, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                if (app.category == DisableCategory.UNLISTED) {
+                    Text("AI answers can be wrong. Opening Google sends the app name and package to Google.", style = MaterialTheme.typography.labelSmall)
+                }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = {
@@ -857,11 +886,10 @@ fun AppDetailsDialog(
                     ) { Text(biStatic(T.btnGoogle, taFirst), style = MaterialTheme.typography.labelSmall) }
                     OutlinedButton(
                         onClick = {
-                            val q = Uri.encode("Explain ${app.packageName} ${app.label} android: what does it do, what happens if disabled, is it safe to disable?")
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.google.com/search?udm=50&q=$q")))
+                            openGoogleAi(context, app)
                         },
                         modifier = Modifier.weight(1f)
-                    ) { Text(biStatic(T.btnAskAi, taFirst), style = MaterialTheme.typography.labelSmall) }
+                    ) { Text("Ask Google AI", style = MaterialTheme.typography.labelSmall) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     TextButton(onClick = {
@@ -893,7 +921,7 @@ fun AppDetailsDialog(
 
 @Composable
 fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit,
-           onRestoreUnknown: () -> Unit, onOpenDetails: () -> Unit) {
+           onRestoreUnknown: () -> Unit, onAskAi: () -> Unit, onOpenDetails: () -> Unit) {
     // The whole card is tinted by its rating, so the list can be read without stopping to parse
     // each line: a green name means safe, amber means it will ask, red means it will not act.
     val tint = ratingColour(app)
@@ -935,6 +963,7 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 // Suspension is not a full disable and does not prove that a process is absent.
                 // The local suspension record reflects our last successful action, not a live check.
                 val statusText = when {
+                    !app.isEnabled && app.isSuspended -> "● disabled and suspended — tap Enable to restore"
                     !app.isEnabled -> "● disabled — tap Enable to restore"
                     app.isSuspended -> "● suspended — may still run"
                     !app.isSuspensionKnown && app.isSuspensionRemembered -> "● suspension unknown — Enable to recover"
@@ -970,6 +999,11 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 if (!app.isSuspensionKnown && !app.needsRestore) {
                     TextButton(onClick = onRestoreUnknown, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                         Text("Try restore", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                if (app.category == DisableCategory.UNLISTED) {
+                    TextButton(onClick = onAskAi, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                        Text("Ask Google AI", style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 TextButton(onClick = onOpenDetails, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {

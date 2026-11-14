@@ -141,6 +141,26 @@ Release candidate build [43537044614](https://github.com/universalrp2003/RP-Andr
 
 The Android 9 fixture cycle stopped earlier because that stock image's shell was denied `SUSPEND_APPS`. The previous candidate would attempt unsuspend before enabling a disabled app when suspension was unknown. Source subsequently changed to enable normally disabled packages without requiring an unsuspend on this path, and to state that suspension remains unknown. It needs a new build and retest. The Android 9 failure was not an OEM test. All these runs use disposable fixtures and emulators; they do not prove the behavior of a Xiaomi system package, physical power-menu reboot, multi-suspender policies, or other manufacturer ROMs.
 
-## Corrected candidate for further testing — not owner-tested
+## Corrected candidate for further testing
 
-Candidate [build 43537944084](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43537944084), source `04c3e07c3a085b47ba7954ca07cf0a217058f499`, produced the release artifact `appdisabler-0.3.0-release-candidate`, artifact id `14090467870`. [Digest probe 43538283537](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43538283537) computed the APK (not ZIP) SHA-256 `70151ee5602f224fe2713d1b6be3a20357db4eefa4bf161275f189fdda859891`, size 11,668,005 bytes. This is different from all earlier owner-tested bytes. Build and lint passed. The builder's digest-commit step lost a concurrent push race; its older `docs/appdisabler-candidate-build-digest.md` is not the pin for this candidate. Further stock emulator testing is in progress and OEM tests remain outstanding. Do not publish as owner-tested.
+Candidate [build 43537944084](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43537944084), source `04c3e07c3a085b47ba7954ca07cf0a217058f499`, produced the release artifact `appdisabler-0.3.0-release-candidate`, artifact id `14090467870`. [Digest probe 43538283537](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43538283537) computed the APK (not ZIP) SHA-256 `70151ee5602f224fe2713d1b6be3a20357db4eefa4bf161275f189fdda859891`, size 11,668,005 bytes. This is different from the earlier owner-tested bytes. Build and lint passed. The builder's digest-commit step lost a concurrent push race; its older `docs/appdisabler-candidate-build-digest.md` is not the pin for this candidate. See the results and owner observation below; outstanding behavior and OEM tests remain release blockers.
+
+### Corrected candidate stock results
+
+[Smoke 43538333903](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43538333903) passed on Android 15 and 16. [Fixture cycle 43538333889](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43538333889) passed 15-second-delay disable/reboot/restore on Android 9, 10, 15 and 16. On 10, 15 and 16, it also detected an externally suspended fixture and restored it through the app; Android 9 cannot perform that shell suspension on this image and did not test that case. Both no-added-delay Android 15 and Android 16 jobs failed: the fixture was enabled/default after ADB reboot. Thus the persistence issue is unresolved, and this run overall failed. The tests verify the candidate APK hash in-app and via pulled base APK on completed cycles; none tests a manufacturer ROM, a system package, real-device power-menu reboot, multiple suspending actors, or an owner phone.
+
+## Owner screenshot: corrected candidate installed and displayed
+
+On 14 November 2026, the owner's diagnostic screenshot reports the installed base APK SHA-256
+`70151ee5602f224fe2713d1b6be3a20357db4eefa4bf161275f189fdda859891`, `Debuggable: false`, and
+`Installed splits: 0`, matching the release artifact from run `43537944084`. The app opens and
+shows Shizuku ready. In the Apps screenshots it reports 323 installed, 271 pre-installed, 52 added,
+5 disabled, 10 suspended and 5 running. The suspended filter displays Earphones as disabled; the
+implementation permits overlap and prioritizes the disabled row label. These are app-reported
+states, not independent process or package-manager measurements. The screenshots do not show a
+new disable, Enable/restore, or reboot result and do not establish behavior on other OEMs.
+
+The screenshots also show Aadhaar, AadhaarFaceRd and an IDBI app labelled `Safe to disable`. These
+packages are absent from the bundled UAD list; the current code defaults unlisted non-system apps
+to SAFE. This is a generic classification, not a package-specific safety assessment. Track it as
+a safety-label issue rather than interpreting it as advice to disable those apps.

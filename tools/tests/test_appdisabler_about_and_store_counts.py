@@ -349,6 +349,18 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('ENABLED_SUSPENSION_UNKNOWN', enable)
         self.assertIn('app.needsRestore', self.ui)
 
+    def test_unlisted_user_apps_are_neutral_and_ai_is_opt_in(self):
+        self.assertIn('category = uad?.category ?: DisableCategory.UNLISTED', self.manager)
+        self.assertNotIn('if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE', self.manager)
+        self.assertIn('Text("Ask Google AI"', self.ui)
+        self.assertIn('https://www.google.com/search?udm=50&q=$query', self.ui)
+        self.assertIn('AI answers can be wrong', self.ui)
+        self.assertIn('Opening Google sends the app name and package to Google', self.ui)
+        self.assertIn('DisableCategory.CAUTION, DisableCategory.UNLISTED', self.ui)
+        self.assertIn('label = { Text("Unlisted"', self.ui)
+        self.assertIn('!app.isEnabled && app.isSuspended -> "● disabled and suspended', self.ui)
+
+
 
 class PublisherPinTest(unittest.TestCase):
     """The publisher must pin the bytes the owner ran, not a rebuild that happened to be newer.

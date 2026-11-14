@@ -106,7 +106,7 @@ object DisableManager {
                 isEnabled = isEnabled,
                 versionName = pkg.versionName,
                 installer = installer,
-                category = uad?.category ?: if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE,
+                category = uad?.category ?: DisableCategory.UNLISTED,
                 description = uad?.description,
                 bootloopRisk = uad?.bootloopRisk == true,
                 isSuspended = suspendedState == true,
