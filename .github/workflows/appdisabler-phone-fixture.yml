@@ -1,0 +1,48 @@
+name: Build disposable Disabler phone fixture
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['arena/**']
+    paths:
+      - '.github/workflows/appdisabler-phone-fixture.yml'
+      - 'tools/appdisabler-phone-fixture/AndroidManifest.xml'
+
+permissions:
+  contents: read
+
+jobs:
+  fixture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build and verify an inert fixture
+        run: |
+          set -euo pipefail
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' >/dev/null || true
+          sdk="$ANDROID_HOME/build-tools/36.0.0"
+          test -x "$sdk/aapt" && test -f "$ANDROID_HOME/platforms/android-36/android.jar"
+          mkdir -p "$RUNNER_TEMP/phone-fixture"
+          "$sdk/aapt" package -f -M tools/appdisabler-phone-fixture/AndroidManifest.xml -I "$ANDROID_HOME/platforms/android-36/android.jar" -F "$RUNNER_TEMP/unsigned.apk"
+          "$sdk/zipalign" -f 4 "$RUNNER_TEMP/unsigned.apk" "$RUNNER_TEMP/aligned.apk"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/phone-fixture.jks" -storepass fixturetest -keypass fixturetest -alias fixture -dname 'CN=Disposable Disabler Phone Fixture' -keyalg RSA -validity 365 >/dev/null 2>&1
+          "$sdk/apksigner" sign --ks "$RUNNER_TEMP/phone-fixture.jks" --ks-pass pass:fixturetest --key-pass pass:fixturetest --out "$RUNNER_TEMP/phone-fixture/disabler-phone-fixture.apk" "$RUNNER_TEMP/aligned.apk"
+          "$sdk/apksigner" verify --verbose "$RUNNER_TEMP/phone-fixture/disabler-phone-fixture.apk"
+          "$sdk/aapt" dump badging "$RUNNER_TEMP/phone-fixture/disabler-phone-fixture.apk" | tee "$RUNNER_TEMP/phone-fixture/badging.txt"
+          "$sdk/aapt" dump permissions "$RUNNER_TEMP/phone-fixture/disabler-phone-fixture.apk" | tee "$RUNNER_TEMP/phone-fixture/permissions.txt"
+          ! grep -q '^uses-permission:' "$RUNNER_TEMP/phone-fixture/permissions.txt"
+          sha256sum "$RUNNER_TEMP/phone-fixture/disabler-phone-fixture.apk" | tee "$RUNNER_TEMP/phone-fixture/sha256.txt"
+          digest=$(sha256sum "$RUNNER_TEMP/phone-fixture/disabler-phone-fixture.apk" | cut -d' ' -f1)
+          echo "::notice title=Phone fixture APK SHA-256::$digest"
+          echo "Phone fixture APK SHA-256: \`$digest\`" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: disabler-phone-fixture
+          path: ${{ runner.temp }}/phone-fixture/
+          if-no-files-found: error
+          retention-days: 14
