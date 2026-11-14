@@ -67,6 +67,32 @@ try {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal page overflow');
     });
   }
+  await test('APK sizes appear beside every mobile download, including without JavaScript', async page => {
+    await page.goto(base);
+    for (const width of [320, 390, 768]) {
+      await page.setViewportSize({ width, height: 844 });
+      const sizes = await page.locator('.latest tbody tr').evaluateAll(rows => rows.map(row => {
+        const mobile = row.querySelector('.apk-size-mobile');
+        const desktop = row.querySelector('td.lsize');
+        return { mobile: mobile.textContent.trim(), desktop: desktop.textContent.trim(),
+                 mobileVisible: getComputedStyle(mobile).display !== 'none',
+                 desktopVisible: getComputedStyle(desktop).display !== 'none' };
+      }));
+      assert.equal(sizes.length, 16);
+      for (const size of sizes) {
+        assert.match(size.mobile, /^\d+\.\d MB$/);
+        assert.equal(size.mobile, size.desktop);
+        assert.equal(size.mobileVisible, width <= 620);
+        assert.equal(size.desktopVisible, width > 620);
+      }
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
+    }
+  });
+  await test('mobile APK sizes remain visible without JavaScript', async page => {
+    await page.goto(base);
+    assert.equal(await page.locator('.latest tbody .apk-size-mobile:visible').count(), 16);
+    assert.equal(await page.locator('.latest tbody tr').first().locator('.apk-size-mobile').innerText(), '11.7 MB');
+  }, { javaScriptEnabled: false });
   await test('filters and table agree, and jump reveals/focuses a hidden app', async page => {
     await page.goto(base);
     for (const [category, expected] of [['security',3],['media',4],['productivity',3],['utility',6]]) {
