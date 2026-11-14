@@ -26,10 +26,20 @@ public final class PersistenceLabActivity extends Activity {
             try {
                 if (!(Build.HARDWARE.equals("ranchu") || Build.HARDWARE.equals("goldfish")))
                     throw new IllegalStateException("emulator required");
-                if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED)
-                    throw new IllegalStateException("Shizuku permission unavailable");
-                String id = shell("id", "-u");
-                if (!id.trim().equals("2000")) throw new IllegalStateException("shell UID required: " + id);
+                // Mark attachment failures only during preflight, before any mutating command.
+                try {
+                    if (!Shizuku.pingBinder() || Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED)
+                        throw new IllegalStateException("Shizuku permission unavailable");
+                    String id = shell("id", "-u");
+                    if (!id.trim().equals("2000")) throw new IllegalStateException("shell UID required: " + id);
+                } catch (Exception e) {
+                    String detail = e.toString();
+                    if (detail.contains("binder haven't been received") || detail.contains("Not an attached client")) {
+                        Log.i(TAG, "LAB_RESULT|" + nonce + "|RETRY_PRE_COMMAND|" + detail);
+                        return;
+                    }
+                    throw e;
+                }
                 if ("disable-sync".equals(mode) || "enable-sync".equals(mode)) {
                     probe(mode, PKG);
                 } else if ("suspend-flush".equals(mode) || "unsuspend-flush".equals(mode)) {

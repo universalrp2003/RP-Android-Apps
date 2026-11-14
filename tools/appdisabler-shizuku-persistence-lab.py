@@ -77,7 +77,7 @@ def experiment(mode):
             line = lines[-1]
             if marker + 'OK|' + mode in line:
                 return
-            if "binder haven't been received" in line or 'Not an attached client' in line:
+            if marker + 'RETRY_PRE_COMMAND|' in line:
                 print('Shizuku client not attached yet; retrying pre-command check', flush=True)
                 time.sleep(2)
                 break

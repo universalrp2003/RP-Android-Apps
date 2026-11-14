@@ -19,6 +19,13 @@ class PersistenceLabSafety(unittest.TestCase):
         self.assertIn('.lab.PersistenceLabActivity', (DEBUG / 'AndroidManifest.xml').read_text())
         self.assertNotIn('PersistenceLabActivity', (ROOT / 'appdisabler/app/src/main/AndroidManifest.xml').read_text())
 
+    def test_retries_are_explicitly_pre_command_only(self):
+        activity = (DEBUG / 'java/com/universalrp/appdisabler/lab/PersistenceLabActivity.java').read_text()
+        harness = (ROOT / 'tools/appdisabler-shizuku-persistence-lab.py').read_text()
+        self.assertLess(activity.index('RETRY_PRE_COMMAND'), activity.index('probe(mode, PKG)'))
+        self.assertIn("marker + 'RETRY_PRE_COMMAND|'", harness)
+        self.assertNotIn('binder haven', harness)
+
     def test_release_gate_examines_apk_contents(self):
         workflow = (ROOT / '.github/workflows/appdisabler-candidate.yml').read_text()
         verifier = (ROOT / 'tools/verify_disabler_lab_is_debug_only.py').read_text()
