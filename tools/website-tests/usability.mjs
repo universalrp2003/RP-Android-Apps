@@ -164,7 +164,7 @@ try {
     assert.equal(await page.evaluate(() => window.__requests), 1, 'second click must not start a duplicate');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no mobile overflow while downloading');
     await page.evaluate(() => { window.__stream.enqueue(new TextEncoder().encode('not-an-apk')); window.__stream.close(); });
-    await row.locator('.apk-download-status p').first().getByText('File verified. Check your browser for the save prompt.').waitFor();
+    await row.locator('.apk-download-status p').first().filter({ hasText: 'File verified. Check your browser for the save prompt.' }).waitFor();
     assert.match(await card.locator('.apk-download-status').innerText(), /not a safety approval/);
   });
   await test('unknown length does not invent a percentage', async page => {
