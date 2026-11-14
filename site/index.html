@@ -2214,13 +2214,13 @@
             if (part.done) break;
             chunks.push(part.value);
             received += part.value.length;
-            var mib = (received / 1048576).toFixed(2);
+            var mb = (received / 1000000).toFixed(2);
             // Do not show 100% while verification and the save prompt are still pending.
             var percent = total > 0 ? Math.min(99, Math.floor(received / total * 100)) : null;
             var milestone = percent == null ? -1 : Math.floor(percent / 10);
             var speech = milestone > previousMilestone ? 'Downloading ' + fileName + ': ' + percent + ' percent.' : null;
             if (milestone > previousMilestone) previousMilestone = milestone;
-            show('Downloading: ' + (percent == null ? mib + ' MiB' : percent + '% (' + mib + ' MiB)'), waitMessage, percent, speech);
+            show('Downloading: ' + (percent == null ? mb + ' MB' : percent + '% (' + mb + ' MB)'), waitMessage, percent, speech);
           }
           show('Checking file integrity…', waitMessage, null, 'Download complete. Checking file integrity.');
           var merged = new Uint8Array(received);

@@ -202,7 +202,7 @@ try {
     await row.locator('a[data-apk]').click();
     await page.waitForFunction(() => !!window.__stream);
     await page.evaluate(() => window.__stream.enqueue(new TextEncoder().encode('bytes')));
-    await page.waitForFunction(() => document.querySelector('.latest tr .apk-download-status')?.textContent.includes('MiB'));
+    await page.waitForFunction(() => document.querySelector('.latest tr .apk-download-status')?.textContent.includes('MB'));
     assert.doesNotMatch(await row.locator('.apk-download-status').innerText(), /%/);
     assert.equal(await row.locator('progress').isVisible(), false);
   });
