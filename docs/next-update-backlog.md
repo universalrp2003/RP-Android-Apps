@@ -34,35 +34,73 @@ Bundle these into the next Store release; do not start a Store-only build just f
       foreground-only, opens the official site, never downloads or installs), and add each to
       `AppUpdates.ids`. This needs a Disabler 0.3.0 and a TV Guard 1.6.0, so build, owner-test, pin,
       then publish — never a rebuild of untested bytes.
-- [ ] **A turned-off row was labelled "● running now".** Fixed in source on 13 November 2026 (the
-      off branch is now tested before the running branch in `MainActivity`), with a test that asserts
-      that order. It needs a Disabler rebuild to reach the phone: disabling leaves the process alive,
-      so `ps` still lists the package. Bundle it with the update-check work above in 0.3.0.
-- [ ] **The Disabler cannot tell "disabled" from "suspended", and its Enable button trusted a local
-      note.** Owner report 13 November 2026: a turned-off app came straight back after force-close,
-      "never stopped". Cause: on HyperOS `pm disable-user` is refused for system packages, so the app
-      falls back to `pm suspend`, which stops the app from starting but leaves any live process
-      alone — force-closing it does nothing. The row then still read its own SharedPreferences note
-      rather than asking the phone. Source is now fixed: `isActuallyOff()` checks the framework
-      (a disabled package yields no `ApplicationInfo`) and `pm list packages -e`, the Enable/Disable
-      decision comes from that, a suspend that reports exit 0 but leaves the package enabled is now
-      a reported failure instead of a silent success, and the row has a third state
-      "● stopped — no process, starts on next launch" from `FLAG_STOPPED`. Needs 0.3.0 to reach the
-      phone. The diagnostic ("Check Shizuku shell") now prints enabled/disabled list membership plus
-      `dumpsys package` flags for HyperComm so the next report is evidence, not a guess.
-- [ ] **Suspension cannot be seen in `pm list packages -e`.** Owner's phone, 13 November 2026: the
-      shell printed `pm suspend --user 0 com.xiaomi.hypercomm -> exit 0: Package com.xiaomi.hypercomm
-      new suspended state: true`, and `dumpsys` showed `flags=[ SYSTEM HAS_CODE PERSISTENT
-      ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]` with no SUSPENDED flag while the package stayed in the
-      `-e` list. So neither list membership nor that `flags=` line reveals a suspension on this
-      build. The success check was therefore made to accept "suspend reported success" as proof
-      rather than reading a state the OS does not expose; `isActuallyOff()` keeps the local
-      suspend note only for the case the shell already confirmed. Verify the SUSPENDED flag on a
-      real suspended package before relying on it again.
-- [ ] **A persistent system service can never be "off", and the app now says so.** HyperComm
-      (`com.xiaomi.hypercomm`) carries `FLAG_PERSISTENT`. Android restarts it as soon as it dies, so
-      `pm suspend` only blocks relaunch and `am force-stop` is undone within seconds — the owner
-      watched it run while the row said "off". The row now reads "suspended — Android keeps this
-      service alive, so it keeps running" and the detail dialog explains the same thing. If the owner
-      wants these silenced for real, that needs a different mechanism (a Shizuku-side `pm disable`
-      that HyperOS refuses, or disabling the caller that starts it), not a stronger force-stop.
+- [ ] **A suspended app can still have a running process.** The 0.3.0 candidate shows
+      `suspended — may still run` rather than claiming that it is fully off. The running list and
+      suspension list can overlap, and the `turned off` count includes suspensions; make that count
+      clear without implying the process has stopped. Verify state on each actual device.
+- [ ] **Suspension differs from disable and the local record may become stale.** The app attempts
+      disable first, then suspension if disable fails. A reported successful suspend is not evidence
+      that a process is stopped or cannot restart. The app stores its own successful-action record,
+      which may become stale if state changes elsewhere; don't treat it as a live OS check. On the
+      owner's HyperOS device, the enabled/disabled package lists did not reveal suspension.
+- [ ] **Suspension cannot be inferred from enabled/disabled lists.** On the owner's HyperOS
+      device a reported suspension stayed in the `-e` list, and the inspected `flags=` line did not
+      expose it. The newer candidate queries the public suspension API on Android 10+ and shows
+      unknown when unavailable; keep checking real-device compatibility and external state changes.
+- [ ] **Persistent flag and suspension need cautious wording.** HyperComm on the owner's phone
+      has `FLAG_PERSISTENT` and was observed running after suspension and force-close. The flag alone
+      does not prove it is always running, cannot be disabled or uninstalled, or that disabling is
+      safe. The app now distinguishes reported suspension from disable and avoids those claims;
+      the saved suspension record can become stale. Verify actual behaviour on the device.
+- [ ] **Joyose description overclaims that it cannot be stopped.** Owner reported it was not
+      running after suspension; Settings showed Force stop greyed out on 14 November 2026. The
+      UAD-derived row description says "can't be stopped". Review and replace that categorical
+      claim with device-dependent wording, without assuming it stays stopped after a reboot.
+
+### App Disabler: suspension research and state correctness
+
+- Source now verifies requested suspension results, queries `PackageManager.isPackageSuspended(packageName)` on API 29+, shows unknown on failures/older versions, offers recovery, and separates counts. Unit and device testing remains necessary, especially external/multiple suspenders and user profiles. Don't publish newly rebuilt bytes as the previous owner-tested candidate. See [suspension research](appdisabler-suspension-research.md).
+- Prototype synchronous restriction writes only with disposable fixtures and privileged access; compare immediate-reboot baselines, restore and OEM behavior before claiming a persistence fix. Do not equate suspension with disable or automatically uninstall protected apps.
+
+- [ ] **Unlisted user apps must not automatically read “Safe to disable.”** Owner screenshots of
+      the hash-matched corrected candidate show Aadhaar, AadhaarFaceRd and an IDBI app with that
+      green label; they are absent from the bundled UAD list and the loader defaults non-system
+      apps to SAFE. Design a neutral, understandable classification and test it before rebuilding;
+      functionality and importance depend on the user's needs. Do not publish rebuilt bytes as
+      though they were the current owner-tested APK.
+- [ ] **Overlapping states need clear row text.** In the owner's suspended filter Earphones appears
+      with a “disabled” row. The counts and filters intentionally permit disabled and suspended to
+      overlap, but the row only displays one status. Consider displaying both where both are known.
+
+### Agreed follow-up: unlisted apps and persistence lab
+
+- Source now treats every package missing from UAD as Unlisted, offers an explicit Google AI link
+  on the row and detail/confirmation, and warns that AI answers may be wrong and Google receives
+  the app name and package. The user decides; no answer is fetched or applied automatically.
+  Verify on stock emulators and the owner's phone before release.
+- Source now displays both disabled and suspended when both are observed. Verify the overlap with
+  a disposable fixture and on-device before release.
+- `appdisabler-persistence-lab.yml` tests flags-0 baseline, synchronous disable, suspend baseline,
+  and suspend plus hidden flush, with an inert fixture on stock Android 15/16 only. It is research,
+  not shipped behavior or a guarantee; no OEM or physical reboot is covered.
+
+- [ ] **AI answers are speculative.** The owner opened Google AI for Live Guard and IDBI in the
+      hash-matched 0.3.0 candidate. Google speculated about OEM/carrier/enterprise origins for this
+      project's own `com.universalrp.cleansweep` and gave categorical banking safety claims. Keep
+      AI opt-in and warn users that answers can be wrong; do not use generated text as a rating or
+      auto-disable recommendation.
+- [ ] **Compact and unclipped status rows.** In the owner's 0.3.0 screenshots the unlisted cards
+      are tall from stacked actions, and the “disabled and suspended — tap Enable to restore”
+      status is clipped. Shorten or wrap the status and reduce vertical waste in a future candidate;
+      preserve rating colors and both state labels. Any rebuild needs fresh owner hash-matched tests.
+
+### Current continuation
+
+- Compact unlisted rows now move the AI link into the content column beside the existing action
+  column, and the dual status is shortened to `disabled and suspended`. Candidate `d09ab49e…`
+  passed stock smoke and fixture cycles (with infrastructure retries). The owner identified the
+  matching hash and checked the UI and a delayed reboot/restore cycle with an inert user-app fixture
+  on a Redmi 13 5G. This does not establish immediate-reboot or system-package persistence.
+- The Shizuku persistence experiment is isolated to an emulator-only debug activity and a fixed
+  disposable fixture. The candidate pipeline checks that its activity is absent from the release
+  manifest and DEX. Experimental results must not be described as a shipped persistence fix.

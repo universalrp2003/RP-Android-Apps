@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.universalrp.appdisabler.phonefixture"
+    android:versionCode="1"
+    android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+    <!-- No code, components, permissions, data collection or network access. -->
+    <application android:label="Disabler Test Fixture" android:hasCode="false" />
+</manifest>

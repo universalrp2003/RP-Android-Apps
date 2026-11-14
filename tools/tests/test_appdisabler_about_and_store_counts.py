@@ -120,7 +120,7 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         self.assertIn('DisableCategory.CRITICAL', body, 'the never-disable list must stay')
         # The guard has to run before the first pm command, not after a failed attempt.
         disable = manager[manager.index('suspend fun disablePackage'):]
-        disable = disable[:disable.index('val disableAttempts')]
+        disable = disable[:disable.index('val disable = runShell')]
         self.assertIn('blockingReason(context, packageName)', disable,
                       'the guard must fire before pm disable-user is attempted')
 
@@ -130,7 +130,8 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         for symbol in ('📦', '⚙', '👤', '⛔', '▶'):
             self.assertIn(symbol, ui, f'missing the {symbol} tile')
         # Counts must come from the loaded list, never from a literal.
-        self.assertIn('visible.count { !it.isEnabled || it.isSuspended }', ui)
+        self.assertIn('visible.count { !it.isEnabled }', ui)
+        self.assertIn('visible.count { it.isSuspended }', ui)
         self.assertIn('visible.count { it.isSystem }', ui)
         self.assertRegex(ui, r'visible\.count \{ app -> live\.contains\(app\.packageName\) \}')
 
@@ -242,6 +243,23 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.ui = ABOUT.read_text()
         self.manager = self.MANAGER.read_text()
 
+    def test_safety_text_does_not_guarantee_ota_banking_or_recovery(self):
+        strings = self.STRINGS.read_text()
+        self.assertNotIn('OTA and banking safe', strings)
+        self.assertNotIn('OTA and banking apps stay safe', strings)
+        self.assertNotIn('every disable is reversible', strings)
+        self.assertIn('OTA updates and banking are not guaranteed safe', strings)
+        self.assertIn('recovery is not guaranteed', strings)
+
+    def test_shell_diagnostic_hashes_installed_base_and_discloses_debug_and_splits(self):
+        manager = self.manager
+        self.assertIn('java.io.File(context.applicationInfo.sourceDir)', manager)
+        self.assertIn('java.security.MessageDigest.getInstance("SHA-256")', manager)
+        self.assertIn('Installed base APK SHA-256: $hash', manager)
+        self.assertIn('ApplicationInfo.FLAG_DEBUGGABLE', manager)
+        self.assertIn('applicationInfo.splitSourceDirs?.size', manager)
+        self.assertIn('DisableManager.runShellTest(context)', self.ui)
+
     def test_rows_carry_a_green_amber_red_rating_not_a_theme_role(self):
         # Theme primary in this app is lavender, which is why "Safe to disable" read as body text.
         for colour in ('SafeGreen = androidx.compose.ui.graphics.Color(0xFF1B7F3B)',
@@ -285,94 +303,63 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('"● running now"', self.ui)
         self.assertIn('"Blocked"', self.ui)
 
-    def test_a_turned_off_row_is_never_labelled_running(self):
-        """Owner-reported on HyperComm (13 Nov 2026): an Enable button above "● running now".
-
-        Disabling leaves the package's process alive, so it is still in `ps`. The status line must
-        therefore ask "is it off" before "does it have a process", not the other way round. This
-        asserts the order in the source, because that order IS the behaviour.
-        """
-        off = self.ui.index('offState -> "● off — tap Enable to restore"')
+    def test_disabled_and_suspended_states_precede_running_status(self):
+        disabled = self.ui.index('!app.isEnabled -> "● disabled — tap Enable to restore"')
+        suspended = self.ui.index('app.isSuspended -> "● suspended — may still run"')
         running = self.ui.index('-> "● running now"')
-        stopped = self.ui.index('app.isStopped -> "● stopped — no process, starts on next launch"')
-        self.assertLess(off, running,
-                        'the off branch must be tested before the running branch, or a disabled '
-                        'app reports "running now" instead of "off"')
-        self.assertLess(running, stopped,
-                        'a stopped package is only "stopped" when it is not off and not running')
+        stopped = self.ui.index('app.isStopped -> "● marked stopped by Android"')
+        self.assertLess(disabled, suspended)
+        self.assertLess(suspended, running)
+        self.assertLess(running, stopped)
 
-    def test_suspension_is_read_from_dumpsys_not_from_the_enabled_list(self):
-        """Owner's phone, 13 Nov 2026: `pm suspend` reported success and the app called it a failure.
-
-        `pm list packages -e` still lists a suspended package (and `-d` does not). An earlier
-        version of the check filtered those lists, so a real suspension looked like "still enabled"
-        and a working action was reported as an error. `dumpsys package` prints the real flags.
-        """
+    def test_suspension_uses_public_api_not_enabled_lists_or_dumpsys_guess(self):
         manager = self.manager
-        self.assertIn('dumpsys", "package", pkg', manager)
-        self.assertIn('"SUSPENDED"', manager)
-        # The lists may be PRINTED by the diagnostic, but they must not be the decision: a suspended
-        # package is still listed by `-e` on HyperOS, which is what made a real suspend look like a
-        # failure. The decision function must not touch them.
-        decision = manager.split('private suspend fun shellSuspension')[1] \
-                          .split('private suspend fun runShellSuspend')[0]
-        self.assertNotIn('"packages"', decision,
-                         'the enabled/disabled lists cannot see a suspension; decide from dumpsys')
+        state = manager.split('private fun suspensionState')[1].split('private fun enabledState')[0]
+        self.assertIn('isPackageSuspended(pkg)', state)
+        self.assertIn('return null', state)
+        self.assertNotIn('dumpsys', state)
+        self.assertIn('PackageCommandVerification.matchesSuspension', manager)
 
-    def test_a_persistent_service_is_never_described_as_off(self):
-        """Owner, 13 Nov 2026: HyperComm carried on running while the row said "off".
-
-        `dumpsys` from the owner's phone showed com.xiaomi.hypercomm with PERSISTENT in its flags.
-        Android restarts a persistent service as soon as it dies, so neither suspend nor force-stop
-        can make one quiet. The row must say that, before it says "off".
-        """
-        self.assertIn('isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0',
-                      self.manager)
-        ui = self.ui
-        persistent_branch = ui.index('app.isPersistent && offState')
-        off_branch = ui.index('offState -> "● off — tap Enable to restore"')
-        self.assertLess(persistent_branch, off_branch,
-                        'the persistent caveat must be tested before the plain "off" text')
-        self.assertIn('Android keeps this service alive, so it keeps running', ui)
+    def test_persistent_flag_does_not_prove_a_process_is_running(self):
+        self.assertIn('isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0', self.manager)
+        self.assertIn('app.isPersistent && app.isSuspended -> T.happenPersistent', self.ui)
+        self.assertLess(self.ui.index('!app.isEnabled -> T.happenDisabled'),
+                        self.ui.index('app.isPersistent && app.isSuspended -> T.happenPersistent'))
         strings = self.STRINGS.read_text()
-        self.assertIn('This is a persistent system service.', strings)
-        self.assertIn('do not expect silence', strings)
+        self.assertIn('may still ', strings)
+        self.assertNotIn('Android restarts it the moment it stops', strings)
+        self.assertNotIn('Nothing breaks by trying', strings)
+        self.assertNotIn('cannot start again on its own', strings)
 
-    def test_the_suspend_explanation_does_not_promise_more_than_it_does(self):
-        """The dialog said "cannot run or receive broadcasts". The owner force-stopped a suspended
-        app and it came straight back, which disproves that. Say what is true instead."""
-        strings = self.STRINGS.read_text()
-        self.assertNotIn('it cannot run or receive broadcasts', strings)
-        self.assertIn('cannot start again on its own', strings)
-        self.assertIn('weaker than a real disable', strings)
+    def test_live_suspension_is_not_inferred_from_the_local_note(self):
+        self.assertIn('isSuspended = suspendedState == true', self.manager)
+        self.assertIn('isSuspensionKnown = suspendedState != null', self.manager)
+        self.assertIn('isSuspensionRemembered = pkg.packageName in suspended', self.manager)
+        self.assertIn('suspension unknown — Enable to recover', self.ui)
 
-    def test_off_is_decided_by_the_phone_not_by_the_local_note(self):
-        """Owner: "if i force close it's again running, never stopped" (13 Nov 2026).
-
-        The row used to read its own SharedPreferences note to decide whether a package was off.
-        That note is written when a disable is attempted, so it says nothing about what the phone
-        actually did, and it goes stale the moment the app's data is cleared or a package is
-        re-enabled elsewhere. The framework's answer has to come first.
-        """
-        manager = self.manager
-        self.assertIn('suspend fun isActuallyOff(', manager)
-        self.assertIn('getApplicationInfo(pkg, 0)', manager)
-        self.assertIn('DisableManager.isActuallyOff(context, app.packageName, app.isEnabled)', self.ui)
-        # The framework is asked before the note is consulted, so a stale note cannot outrank fact.
-        off = manager.split('suspend fun isActuallyOff')[1].split('private suspend fun')[0]
-        self.assertLess(off.index('pmPackageState'), off.index('getSuspended'),
-                        'ask the framework before falling back to the local note')
-
-    def test_a_suspend_that_the_os_confirmed_is_not_second_guessed(self):
-        """Owner, 13 Nov 2026: `pm suspend` printed "new suspended state: true", and two versions of
-        this app still showed a red failure because `dumpsys` has no SUSPENDED flag on that build and
-        `pm list packages -e` still lists the package. The OS reported success; believe it."""
-        manager = self.manager
-        self.assertNotIn('Suspend reported success but the package is still enabled', manager)
-        suspend_block = manager.split('val suspendCmd')[1].split('Result.failure(IllegalStateException("Disable failed')[0]
+    def test_actions_verify_state_and_preserve_restore(self):
+        suspend_block = self.manager.split('val suspendCmd')[1].split('/** Read-only: why')[0]
+        self.assertIn('s.exit, suspensionState(context, packageName), s.output, packageName, expected = true', suspend_block)
         self.assertIn('setSuspended(context, packageName, true)', suspend_block)
-        # A suspended package keeps its process, so a disable must also end it.
-        self.assertIn('"am", "force-stop", packageName', suspend_block)
+        self.assertIn('"am", "force-stop", "--user", user, packageName', suspend_block)
+        enable = self.manager.split('suspend fun enablePackage')[1]
+        self.assertIn('u.exit, suspensionState(context, packageName), u.output, packageName, expected = false', enable)
+        self.assertIn('enabledState(context, packageName) != true', enable)
+        self.assertIn('PackageCommandVerification.shouldAttemptUnsuspend(before, remembered, enabledBefore)', enable)
+        self.assertIn('ENABLED_SUSPENSION_UNKNOWN', enable)
+        self.assertIn('app.needsRestore', self.ui)
+
+    def test_unlisted_user_apps_are_neutral_and_ai_is_opt_in(self):
+        self.assertIn('category = uad?.category ?: DisableCategory.UNLISTED', self.manager)
+        self.assertNotIn('if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE', self.manager)
+        self.assertIn('Text("Ask Google AI"', self.ui)
+        self.assertIn('https://www.google.com/search?udm=50&q=$query', self.ui)
+        self.assertIn('AI answers can be wrong', self.ui)
+        self.assertIn('Opening Google sends the app name and package to Google', self.ui)
+        self.assertIn('DisableCategory.CAUTION, DisableCategory.UNLISTED', self.ui)
+        self.assertIn('label = { Text("Unlisted"', self.ui)
+        self.assertIn('!app.isEnabled && app.isSuspended -> "● disabled and suspended"', self.ui)
+
 
 
 class PublisherPinTest(unittest.TestCase):

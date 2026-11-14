@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Disposable-emulator experiment only; this source set is absent from release APKs. -->
+        <activity android:name=".lab.PersistenceLabActivity" android:exported="true" />
+    </application>
+</manifest>

@@ -1,48 +1,19 @@
 # System App Disabler (சிஸ்டம் செயலி முடக்கி)
 
-**Disable pre-installed bloat safely — no uninstall, no root.**
-Package `com.universalrp.appdisabler` · `0.2.0 / code 2` · min 26
+[Download 0.3.0](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.3.0) · package `com.universalrp.appdisabler` · version code 3 · Android 8.0+
 
-Combination of **Shizuku + Canta + Universal Android Debloater** as one RP app:
-- **Shizuku** — shell privilege via Wireless debugging (Android 11+)
-- **Canta** UX — simple list, search, filter Disabled, batch
-- **UAD** DB — per-OEM Safe / Caution / Never-disable labels
+Use the separately installed [Shizuku](https://shizuku.rikka.app/guide/setup/) to request that Android disable selected packages, without uninstalling them. The device may refuse; the app may attempt suspension instead. A suspended app may still run. Shizuku may need to be started again after reboot.
 
-**Disable-only:** `setApplicationEnabledSetting(DISABLED_USER)` reversible; 1-tap Enable. No `pm uninstall`, no root, no fully removed APKs. Safer for OTA and banking apps.
+Apps missing from the UAD database are **Unlisted**, not automatically safe. The optional Google and Google AI links send the app name and package to Google. AI answers can be wrong; research and decide yourself.
 
-## Shizuku setup (2 min, inside app)
-App shows Shizuku status card:
-- **Get Shizuku** → https://shizuku.rikka.app/download/ (Play + GitHub)
-- **How to activate** → https://shizuku.rikka.app/guide/setup/
-Steps: Developer options → Wireless debugging → Pair Shizuku → Allow. One pairing per reboot on non-root.
+## Safety and recovery
 
-About & RP Apps links come from `shared/updates/SisterApps` (built against a module-local copy,
-`appdisabler/app/src/main/java/com/universalrp/updates/SisterApps.kt`, because a shared `srcDir`
-would collide).
+Ratings—including Safe—are not safety guarantees. Android Accessibility Suite, for example, provides TalkBack and other accessibility features. The app retains critical-package, bootloop-warning, active-keyboard and enabled-accessibility-service protections, but these cannot cover every dependency or device. Do not disable essential packages. Enable attempts recovery, but recovery can fail; immediate-reboot persistence is not established.
 
-## Header counts (0.2.0)
+Disabled and suspended states may overlap. Unknown suspension state and stale local records are possible. Counts and process observations are not guarantees that an app cannot run. Android and manufacturer restrictions vary.
 
-The top of the Apps window shows four counts with symbols, each drawn from the same list the cards
-use: 📦 installed, ⚙ pre-installed (system), 👤 you added (user apps), ⛔ turned off, ▶ running.
-Tapping a tile filters the list to exactly that set. "Running" is read from the process table over
-the shell the app already has, so it needs Shizuku; without it the tile shows `—`, never `0`.
+## Verification
 
-## Safety guard (0.2.0)
+The published APK is the exact candidate whose installed hash the owner checked on one Redmi 13 5G. The owner tested one disposable user-app disable, delayed restart, Enable and another delayed restart. Stock emulator fixture checks also passed, with some infrastructure retries. These do not establish immediate-reboot persistence, system-package behavior, or broad OEM compatibility. Experimental synchronous-write research is debug-only and not part of the release.
 
-`DisableManager.blockingReason` refuses to turn off:
-
-* the **keyboard currently in use** (`Settings.Secure.DEFAULT_INPUT_METHOD`),
-* a package with an **enabled accessibility service** (`ENABLED_ACCESSIBILITY_SERVICES`),
-* anything the UAD database rates `CRITICAL` (as before).
-
-The refusal is checked before any `pm` command runs, and the row explains why instead of failing.
-This exists because 0.1.0 let the owner disable a vendor keyboard and parts of Settings with no
-warning: losing the keyboard also means losing the ability to pair Shizuku again.
-
-## Testing a candidate build
-
-The current test script is `docs/appdisabler-0.3.0-test-script.md`. It covers the two reports that
-matter most: a turned-off app that keeps running after force-close, and a row that used to trust a
-local note instead of asking the phone. Install the release candidate over the installed app — it is
-signed with the same key — and run the shell check in the Setup tab, which prints the authoritative
-`enabled` / `stopped` / `suspended` flags for the package in question.
+APK SHA-256: `d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0`. A checksum identifies bytes, not safety. Update in place if Android accepts the signature; do not uninstall or clear app data to force an update. Do not bypass device security warnings.

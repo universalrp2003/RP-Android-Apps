@@ -44,7 +44,11 @@ jobs:
       - name: Test and assemble System App Disabler
         shell: bash
         run: |
+          set -o pipefail
           gradle :appdisabler:testDebugUnitTest :appdisabler:lintDebug :appdisabler:assembleDebug :appdisabler:assembleRelease --no-daemon --stacktrace 2>&1 | tee appdisabler-build.log
+
+      - name: Ensure emulator-only lab cannot ship in release
+        run: python3 tools/verify_disabler_lab_is_debug_only.py
 
       - name: Expose actionable compiler and lint errors
         if: failure()
@@ -85,7 +89,7 @@ jobs:
           if ls appdisabler/app/build/reports/lint-results-*.txt 1>/dev/null 2>&1; then cp appdisabler/app/build/reports/lint-results-*.txt ci-logs/ 2>/dev/null || true; fi
           git add ci-logs/
           git commit -m "ci: capture appdisabler candidate failure log $TS [skip ci]" || echo "nothing to commit"
-          git push origin HEAD:${{ github.ref_name }} || git push origin HEAD:arena/745a8cb3-rp-android-apps || true
+          git push origin HEAD:${{ github.ref_name }} || true
 
       - name: Upload build log on failure
         if: failure()
@@ -102,7 +106,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: appdisabler-0.3.0-candidate
+          name: appdisabler-0.3.0-debug-only
           path: |
             appdisabler/app/build/outputs/apk/debug/*.apk
             appdisabler/app/build/test-results/

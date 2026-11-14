@@ -110,18 +110,18 @@ object T {
         "3. Shizuku → Start → return here; this card turns green",
         "3. Shizuku → Start → இங்கே திரும்புங்கள்; இந்த அட்டை பச்சையாகும்"
     )
-    val safeTitle = Bi("Disable-only and reversible", "முடக்கல் மட்டும், மீளக்கூடியது")
+    val safeTitle = Bi("Safety and recovery", "பாதுகாப்பும் மீட்பும்")
     val safe1 = Bi(
-        "• Turned off = hidden and stopped, never uninstalled. OTA and banking apps stay safe.",
-        "• முடக்கம் = மறைக்கப்பட்டு நிறுத்தப்படும், நீக்கப்படாது. OTA மற்றும் வங்கி ஆப்கள் பாதுகாப்பாகும்."
+        "• This app does not uninstall packages. Suspension is weaker than disabling and apps may still run.",
+        "• இந்த ஆப் பேக்கேஜ்களை நீக்காது. இடைநிறுத்தம் முடக்கத்தை விட பலவீனமானது; ஆப்கள் தொடர்ந்து இயங்கலாம்."
     )
     val safe2 = Bi(
-        "• Enable restores it instantly from the Off tab.",
-        "• Off தாவலில் Enable தட்டினால் உடனே மீட்டெடுக்கப்படும்."
+        "• Enable attempts to restore a package. If the phone cannot boot, this app cannot restore it.",
+        "• Enable பேக்கேஜை மீட்டெடுக்க முயற்சிக்கும். போன் பூட் ஆகாவிட்டால் இந்த ஆப்பால் மீட்க முடியாது."
     )
     val safe3 = Bi(
-        "• Never turned off: system core, Play services, telephony, launcher, keyboard — blocked automatically.",
-        "• ஒருபோதும் முடக்கப்படாதவை: சிஸ்டம் முக்கிய பகுதிகள், Play services, telephony, launcher, keyboard — தானாகத் தடுக்கப்படும்."
+        "• Disabling system packages can break features or prevent boot. OTA updates and banking are not guaranteed safe.",
+        "• சிஸ்டம் பேக்கேஜ்களை முடக்குவது அம்சங்களைப் பாதிக்கலாம் அல்லது பூட்டைத் தடுக்கலாம். OTA மற்றும் வங்கி பாதுகாப்புக்கு உறுதி இல்லை."
     )
     val helpTitle = Bi("Not sure about an app?", "ஆப் பற்றி சந்தேகமா?")
     val help1 = Bi(
@@ -194,8 +194,8 @@ object T {
 
     // ---------- details dialog ----------
     val catSafeBody = Bi(
-        "Safe to disable — recommended by UAD. No feature is expected to break.",
-        "முடக்கலாம் — UAD பரிந்துரைத்தது. எந்த அம்சமும் பாதிக்க வாய்ப்பில்லை."
+        "Recommended by UAD, but effects vary by device. Check before disabling; safety is not guaranteed.",
+        "UAD பரிந்துரைத்தாலும் விளைவுகள் சாதனத்தைப் பொறுத்து மாறும். முடக்கும் முன் சரிபாருங்கள்; பாதுகாப்புக்கு உறுதி இல்லை."
     )
     val catCautionBody = Bi(
         "Caution — may remove a feature. You can Enable it back anytime.",
@@ -220,30 +220,22 @@ object T {
     )
     val descMissingUser = Bi("User-installed app. Safe to manage normally.", "நீங்கள் நிறுவிய ஆப். சாதாரணமாக நிர்வகிக்கலாம்.")
     val whatHappens = Bi("What happens if turned off?", "முடக்கினால் என்ன ஆகும்?")
-    // Measured on the owner's HyperOS phone, 13 November 2026: a suspended package KEEPS an already
-    // running process and force-stop brings it back. So this must not promise it cannot run — only
-    // that Android will not start it again on its own. The earlier wording said "cannot run or
-    // receive broadcasts", which the owner disproved by force-stopping one and watching it return.
+    // A successful suspend is not proof that the process cannot run or restart.
     val happenSuspended = Bi(
-        "Suspended by Android: it cannot start again on its own. Anything already running keeps " +
-            "running until it is closed. This is weaker than a real disable — HyperOS refuses " +
-            "disable for system packages. Tap Enable to restore.",
-        "ஆண்ட்ராய்டால் இடைநிறுத்தப்பட்டுள்ளது: தானாக மீண்டும் தொடங்க முடியாது. ஏற்கனவே இயங்கும் " +
-            "பகுதி மூடப்படும் வரை இயங்கும். இது முழு முடக்கத்தை விட பலவீனமானது — சிஸ்டம் " +
-            "பேக்கேஜ்களை HyperOS முடக்க விடாது. மீட்ட Enable தட்டுங்கள்."
+        "Suspension was reported successful. This is weaker than a real disable, and the app " +
+            "may still run or restart. Tap Enable to restore; the saved status may become outdated.",
+        "இடைநிறுத்தம் வெற்றியடைந்ததாக தெரிவிக்கப்பட்டது. இது முழு முடக்கத்தை விட பலவீனமானது; " +
+            "ஆப் தொடர்ந்து இயங்கலாம் அல்லது மீண்டும் தொடங்கலாம். மீட்டெடுக்க Enable தட்டுங்கள். " +
+            "சேமிக்கப்பட்ட நிலை மாறியிருக்கலாம்."
     )
-    // Measured on the owner's HyperOS phone (13 Nov 2026): com.xiaomi.hypercomm carries the
-    // PERSISTENT flag. Android restarts a persistent service as soon as it dies and refuses to keep
-    // it stopped, so suspend does not keep it quiet and force-stop is undone in seconds. Saying
-    // "suspended" without that caveat is how a row ended up claiming an app was off while the owner
-    // watched it run — the flag, not the wording, is the reason.
+    // FLAG_PERSISTENT alone does not establish the current process state or prove it cannot be disabled.
     val happenPersistent = Bi(
-        "This is a persistent system service. Android restarts it the moment it stops, so turning " +
-            "it off here cannot keep it stopped — it will keep running even while it is marked " +
-            "suspended. Nothing breaks by trying, and Enable undoes it, but do not expect silence.",
-        "இது ஒரு நிரந்தர சிஸ்டம் சேவை. நிற்கும் உடனே ஆண்ட்ராய்டு அதை மீண்டும் இயக்கும், எனவே இங்கு " +
-            "முடக்கினாலும் அது நிற்காது — இடைநிறுத்தப்பட்டதாகக் காட்டினாலும் தொடர்ந்து இயங்கும். " +
-            "முயற்சிப்பதால் பாதிப்பில்லை; Enable மீட்டும், ஆனால் அமைதியை எதிர்பார்க்க வேண்டாம்."
+        "This package is marked persistent. Suspension was reported successful, but it may still " +
+            "run or restart. Effects vary by device. Tap Enable to restore; the saved status may " +
+            "be outdated.",
+        "இந்த பேக்கேஜ் persistent எனக் குறிக்கப்பட்டுள்ளது. இடைநிறுத்தம் வெற்றியடைந்ததாக " +
+            "தெரிவிக்கப்பட்டாலும் அது இயங்கலாம் அல்லது மீண்டும் தொடங்கலாம். சாதனத்தைப் பொறுத்து " +
+            "விளைவுகள் மாறும். மீட்டெடுக்க Enable தட்டுங்கள்; சேமித்த நிலை மாறியிருக்கலாம்."
     )
     val happenDisabled = Bi(
         "Currently off — hidden and stopped. Enable restores it.",
@@ -280,8 +272,8 @@ object T {
     // ---------- about ----------
     val aboutTitle = Bi("About System App Disabler", "சிஸ்டம் செயலி முடக்கி பற்றி")
     val aboutIntro = Bi(
-        "Disable-only pre-installed app remover powered by Shizuku. No uninstall, no root, every disable is reversible.",
-        "Shizuku மூலம் இயங்கும், முன்பே நிறுவப்பட்ட ஆப்களை முடக்கும் கருவி. நீக்கம் இல்லை, ரூட் இல்லை, ஒவ்வொரு முடக்கலும் மீளக்கூடியது."
+        "Manage apps using Shizuku, without root or uninstalling packages. Disabling or suspending system apps can affect features or prevent boot; recovery is not guaranteed.",
+        "Shizuku மூலம் ரூட் அல்லது பேக்கேஜ் நீக்கம் இல்லாமல் ஆப்களை நிர்வகிக்கலாம். சிஸ்டம் ஆப்களை முடக்குவது அல்லது இடைநிறுத்துவது அம்சங்களைப் பாதிக்கலாம் அல்லது பூட்டைத் தடுக்கலாம்; மீட்புக்கு உறுதி இல்லை."
     )
     val aboutApps = Bi("Our applications", "எங்கள் ஆப்கள்")
     val aboutLinks = Bi("Links", "இணைப்புகள்")
@@ -290,16 +282,16 @@ object T {
     val btnStore = Bi("Tamilan Store — download our apps", "தமிழன் ஸ்டோர் — எங்கள் ஆப்களைப் பதிவிறக்கு")
     val btnGetShizuku = Bi("Get Shizuku", "Shizuku-ஐப் பெறு")
     val credits = Bi(
-        "Shizuku by Rikka (Apache 2.0) • UAD lists by 0x192 (GPL-3.0, 2394 entries) • Disable-only, OTA and banking safe.",
-        "Shizuku — Rikka (Apache 2.0) • UAD பட்டியல் — 0x192 (GPL-3.0, 2394 பதிவுகள்) • முடக்கல் மட்டும், OTA மற்றும் வங்கி பாதுகாப்பு."
+        "Shizuku by Rikka (Apache 2.0) • UAD lists by 0x192 (GPL-3.0, 2394 entries).",
+        "Shizuku — Rikka (Apache 2.0) • UAD பட்டியல் — 0x192 (GPL-3.0, 2394 பதிவுகள்)."
     )
     val thisApp = Bi("this app", "இந்த ஆப்")
 
     // ---------- guide screen ----------
     val guideTitle = Bi("Shizuku — 2 minute guide", "Shizuku — 2 நிமிட வழிகாட்டி")
     val guideIntro = Bi(
-        "This app never uninstalls anything. Shizuku gives a safe shell so apps can be turned off. No root, fully reversible.",
-        "இந்த ஆப் எதையும் நீக்காது. ஆப்களை முடக்க Shizuku பாதுகாப்பான shell தருகிறது. ரூட் இல்லை, முழுமையாக மீளக்கூடியது."
+        "Shizuku provides shell access without root. This app does not uninstall packages, but disabling or suspending system apps can cause problems and recovery is not guaranteed.",
+        "Shizuku ரூட் இல்லாமல் shell அணுகலை வழங்குகிறது. இந்த ஆப் பேக்கேஜ்களை நீக்காது; ஆனால் சிஸ்டம் ஆப்களை முடக்குவது அல்லது இடைநிறுத்துவது சிக்கல்களை ஏற்படுத்தலாம்; மீட்புக்கு உறுதி இல்லை."
     )
     val g1Title = Bi("Step 1 — Get Shizuku", "படி 1 — Shizuku பெறுங்கள்")
     val g1Body = Bi(
@@ -317,8 +309,8 @@ object T {
         "Shizuku-வில் Start தட்டுங்கள். இயங்குகிறது என்றதும் இங்கே திரும்புங்கள் — அட்டை பச்சையாகும்."
     )
     val gNever = Bi(
-        "Never turned off: system core, com.google.android.gms, telephony providers, keyboard, launcher. This app blocks them automatically.",
-        "ஒருபோதும் முடக்கப்படாதவை: சிஸ்டம் முக்கிய பகுதிகள், com.google.android.gms, telephony providers, keyboard, launcher. இந்த ஆப் அவற்றைத் தானாகத் தடுக்கிறது."
+        "Some known critical packages and currently used input services are blocked, but no list can guarantee that every dangerous package is protected.",
+        "தெரிந்த சில முக்கிய பேக்கேஜ்களும் தற்போது பயன்படுத்தும் உள்ளீட்டு சேவைகளும் தடுக்கப்படும்; எல்லா ஆபத்தான பேக்கேஜ்களும் பாதுகாக்கப்படும் என உறுதியில்லை."
     )
     val gBack = Bi("Back", "திரும்பு")
     val gFullSite = Bi("Open full guide with screenshots", "திரைப்படங்களுடன் முழு வழிகாட்டி")

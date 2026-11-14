@@ -1,0 +1,73 @@
+name: App Disabler Shizuku persistence lab
+on:
+  workflow_dispatch:
+  push:
+    branches: ['arena/**']
+    paths:
+      - '.github/workflows/appdisabler-shizuku-persistence-lab.yml'
+      - 'tools/appdisabler-shizuku-persistence-lab.py'
+      - 'appdisabler/app/src/debug/**'
+permissions:
+  contents: read
+jobs:
+  experiment:
+    name: Android ${{ matrix.api }} Shizuku ${{ matrix.mode }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35, 36]
+        mode: [disable-sync, suspend-flush]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.14.3'
+      - name: Build debug-only lab app
+        run: gradle :appdisabler:assembleDebug --no-daemon --stacktrace
+      - name: Download official Shizuku and build inert fixture
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lab"
+          gh release download v13.6.0 --repo RikkaApps/Shizuku --pattern 'shizuku-v13.6.0.r1086.2650830c-release.apk' --dir "$RUNNER_TEMP/lab"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'platforms;android-36' 'build-tools;36.0.0' >/dev/null || true
+          sdk="$ANDROID_HOME/build-tools/36.0.0"
+          cat > "$RUNNER_TEMP/lab/AndroidManifest.xml" <<'MANIFEST'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.universalrp.appdisabler.fixture">
+            <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35" />
+            <application android:label="Disposable Disabler Fixture" android:hasCode="false" />
+          </manifest>
+          MANIFEST
+          "$sdk/aapt" package -f -M "$RUNNER_TEMP/lab/AndroidManifest.xml" -I "$ANDROID_HOME/platforms/android-36/android.jar" -F "$RUNNER_TEMP/lab/unsigned.apk"
+          "$sdk/zipalign" -f 4 "$RUNNER_TEMP/lab/unsigned.apk" "$RUNNER_TEMP/lab/aligned.apk"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/fixture.jks" -storepass fixturetest -keypass fixturetest -alias fixture -dname 'CN=Disposable Fixture' -keyalg RSA -validity 1 >/dev/null 2>&1
+          "$sdk/apksigner" sign --ks "$RUNNER_TEMP/fixture.jks" --ks-pass pass:fixturetest --key-pass pass:fixturetest --out "$RUNNER_TEMP/lab/fixture.apk" "$RUNNER_TEMP/lab/aligned.apk"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Exercise Shizuku shell and immediate reboots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            bash -o pipefail -c 'python3 tools/appdisabler-shizuku-persistence-lab.py appdisabler/app/build/outputs/apk/debug/appdisabler-debug.apk "$RUNNER_TEMP/lab/shizuku-v13.6.0.r1086.2650830c-release.apk" "$RUNNER_TEMP/lab/fixture.apk" "${{ matrix.mode }}" 2>&1 | tee "$RUNNER_TEMP/shizuku-persistence.log"'
+      - name: Surface bounded diagnostic
+        if: always()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          log = Path(os.environ['RUNNER_TEMP']) / 'shizuku-persistence.log'
+          text = log.read_text(errors='replace')[-3500:] if log.exists() else 'Experiment did not start.'
+          print('::notice title=Shizuku persistence lab::' + text.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY

@@ -11,20 +11,19 @@ data class AppInfo(
     val description: String? = null,
     /** The database text warns that removing this can bootloop the phone — shown red, never allowed. */
     val bootloopRisk: Boolean = false,
-    /** Suspended via pm suspend (HyperOS fallback when disable is blocked). Tracked locally. */
+    /** Live aggregate suspension state when isSuspensionKnown is true. */
     val isSuspended: Boolean = false,
-    /**
-     * The framework says this package is stopped — no process, and none may start until someone
-     * launches it again by hand. A force-stop sets this; a force-closed app that restarts does not.
-     */
+    val isSuspensionKnown: Boolean = false,
+    /** Recovery hint from a past action, not evidence of the current state. */
+    val isSuspensionRemembered: Boolean = false,
+    /** Android's stopped-package flag; it is not a direct process measurement. */
     val isStopped: Boolean = false,
-    /**
-     * A persistent system service. Android restarts these immediately and refuses to keep them
-     * stopped, so neither disable nor suspend can make one "off" — HyperComm (com.xiaomi.hypercomm)
-     * behaves exactly this way on the owner's phone.
-     */
+    /** The package has Android's persistent application flag, not a live process state. */
     val isPersistent: Boolean = false,
-)
+) {
+    val needsRestore: Boolean get() = !isEnabled || isSuspended ||
+        (!isSuspensionKnown && isSuspensionRemembered)
+}
 
 enum class DisableCategory {
     SAFE,           // UAD Recommended — safe to disable
