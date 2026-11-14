@@ -1,0 +1,16 @@
+{
+  "tag": "system-app-disabler-v0.3.0",
+  "release_id": 445075643,
+  "asset_id": 746559346,
+  "checksum_asset_id": 746559405,
+  "candidate_run": 43557688697,
+  "candidate_artifact_id": 14098824005,
+  "publisher_run": 43566824411,
+  "source_commit": "3c512b9f5ed1f893ad86fe5d6b90fe87d6d4fb9c",
+  "apk_sha256": "d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0",
+  "bytes": 11668005,
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.3.0/System-App-Disabler-v0.3.0.apk",
+  "published_at": "2026-11-14T06:32:32Z",
+  "rebuilt": false,
+  "owner_test_scope": "Installed hash, UI, and one delayed-restart disable and restore cycle on an inert user fixture on Redmi 13 5G"
+}

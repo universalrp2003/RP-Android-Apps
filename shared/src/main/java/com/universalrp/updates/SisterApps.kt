@@ -172,7 +172,7 @@ object SisterApps {
         SisterApp(
             id = "appdisabler", name = "System App Disabler (சிஸ்டம் செயலி முடக்கி)",
             tamilName = "சிஸ்டம் செயலி முடக்கி",
-            tagPrefix = "system-app-disabler", version = "0.2.0", publishedVersion = "0.2.0",
+            tagPrefix = "system-app-disabler", version = "0.3.0", publishedVersion = "0.3.0",
             packageName = "com.universalrp.appdisabler",
             aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
         ),
