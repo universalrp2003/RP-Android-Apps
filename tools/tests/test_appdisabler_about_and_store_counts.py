@@ -345,6 +345,8 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         enable = self.manager.split('suspend fun enablePackage')[1]
         self.assertIn('u.exit, suspensionState(context, packageName), u.output, packageName, expected = false', enable)
         self.assertIn('enabledState(context, packageName) != true', enable)
+        self.assertIn('PackageCommandVerification.shouldAttemptUnsuspend(before, remembered, enabledBefore)', enable)
+        self.assertIn('ENABLED_SUSPENSION_UNKNOWN', enable)
         self.assertIn('app.needsRestore', self.ui)
 
 

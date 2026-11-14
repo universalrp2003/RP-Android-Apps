@@ -2,6 +2,9 @@ package com.universalrp.appdisabler.data
 
 /** Parse only an exact package state reported by the package manager; null means unknown. */
 internal object PackageCommandVerification {
+    fun shouldAttemptUnsuspend(liveState: Boolean?, remembered: Boolean, enabled: Boolean?): Boolean =
+        liveState == true || remembered || (liveState == null && enabled != false)
+
     fun matchesSuspension(exit: Int, liveState: Boolean?, output: String, packageName: String, expected: Boolean): Boolean {
         if (exit != 0) return false
         return (liveState ?: suspendedState(output, packageName)) == expected

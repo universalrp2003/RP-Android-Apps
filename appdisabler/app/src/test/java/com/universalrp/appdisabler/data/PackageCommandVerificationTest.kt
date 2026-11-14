@@ -34,6 +34,14 @@ class PackageCommandVerificationTest {
         assertTrue(PackageCommandVerification.matchesSuspension(0, true, "unrecognised vendor output", pkg, true))
     }
 
+    @Test fun oldAndroidCanEnableADisabledPackageWithoutSuspensionPermission() {
+        assertFalse(PackageCommandVerification.shouldAttemptUnsuspend(null, false, false))
+        assertTrue(PackageCommandVerification.shouldAttemptUnsuspend(null, true, false))
+        assertTrue(PackageCommandVerification.shouldAttemptUnsuspend(null, false, true))
+        assertTrue(PackageCommandVerification.shouldAttemptUnsuspend(true, false, false))
+        assertFalse(PackageCommandVerification.shouldAttemptUnsuspend(false, false, false))
+    }
+
     @Test fun recoveryHintIsNotConfirmedSuspension() {
         val app = AppInfo(pkg, "fixture", false, true, isSuspensionRemembered = true)
         assertFalse(app.isSuspended)

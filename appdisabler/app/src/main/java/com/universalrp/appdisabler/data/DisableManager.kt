@@ -219,7 +219,7 @@ object DisableManager {
     }
 
     /** Outcome of a disable/enable action (suspend is the HyperOS fallback). */
-    enum class ActionOutcome { DISABLED, SUSPENDED, ENABLED, UNSUSPENDED }
+    enum class ActionOutcome { DISABLED, SUSPENDED, ENABLED, UNSUSPENDED, ENABLED_SUSPENSION_UNKNOWN }
 
     /**
      * Packages the user cannot safely lose, whatever the UAD database says.
@@ -356,8 +356,11 @@ object DisableManager {
         val user = currentUserId()
         val before = suspensionState(context, packageName)
         val remembered = packageName in getSuspended(context)
+        val enabledBefore = enabledState(context, packageName)
         val log = StringBuilder()
-        val shouldUnsuspend = before == true || remembered || before == null
+        // On API 26–28 the shell may lack SUSPEND_APPS. A normally disabled app with no
+        // suspension hint must still be re-enabled, while its suspension state stays unknown.
+        val shouldUnsuspend = PackageCommandVerification.shouldAttemptUnsuspend(before, remembered, enabledBefore)
         var didUnsuspend = false
         if (shouldUnsuspend) {
             val u = runShell(arrayOf("pm", "unsuspend", "--user", user, packageName))
@@ -381,6 +384,10 @@ object DisableManager {
         if (suspensionState(context, packageName) == true) {
             return@withContext Result.failure(IllegalStateException("The app is still suspended, possibly by another administrator."))
         }
-        Result.success(if (didUnsuspend) ActionOutcome.UNSUSPENDED else ActionOutcome.ENABLED)
+        Result.success(when {
+            didUnsuspend -> ActionOutcome.UNSUSPENDED
+            before == null && !shouldUnsuspend -> ActionOutcome.ENABLED_SUSPENSION_UNKNOWN
+            else -> ActionOutcome.ENABLED
+        })
     }
 }

@@ -8,7 +8,8 @@ matching version numbers or a screenshot of a file is not a hash match.
 
 1. Download the **release** artifact `appdisabler-0.3.0-release-candidate` from the exact Actions
    run supplied with the candidate. Extract `appdisabler-release.apk`. Do not use
-   `appdisabler-0.3.0-candidate` / `appdisabler-debug.apk` for publication.
+   `appdisabler-0.3.0-debug-only` / `appdisabler-debug.apk` for publication (older runs named
+   the debug artifact `appdisabler-0.3.0-candidate`).
 2. Install the release APK over the current app. If installation or signature checks fail, stop;
    do not uninstall the existing app or clear its data just to force an installation.
 3. Open **Setup → Check Shizuku shell**. In candidates that include this diagnostic, the first
@@ -22,12 +23,13 @@ matching version numbers or a screenshot of a file is not a hash match.
 - Check the app opens and Shizuku shows ready. In the Apps list, check the running tile opens a
   list and that a suspended row says it **may** still run. A suspended app can also appear in the
   running list; the two describe different things.
-- The existing **turned off** count includes recorded suspensions. It is not proof all of those
-  processes stopped, and the locally saved suspension status may become stale.
+- The new candidate displays separate **disabled** and **suspended** counts. If suspension state
+  is unavailable, it labels the count as known-only and individual rows as unknown; a recovery
+  hint is not a live state. Neither count is proof that processes are stopped.
 - Test Enable/Disable only on a package you have already chosen to manage, not an unfamiliar or
   critical system package. Record the exact toast or error and any effect on the phone. Suspension
   is not the same as a full disable. Restore using Enable if desired; restoration can fail.
-- Restart testing is optional and carries risk. Only test after the owner agrees and has a recovery
+- Immediate-reboot persistence is not fixed or proven. Restart testing is optional and carries risk. Only test after the owner agrees and has a recovery
   plan; no single successful boot guarantees other packages, firmware or devices are safe. Confirm
   which packages actually stayed disabled or suspended rather than relying on the count alone.
 - Do not uninstall system apps, clear their data, or force-stop HyperComm to run this test.

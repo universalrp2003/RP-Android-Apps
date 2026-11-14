@@ -496,6 +496,7 @@ fun AppsListWindow(
         DisableManager.ActionOutcome.SUSPENDED -> biStatic(T.toastSuspended, taFirst).format(label)
         DisableManager.ActionOutcome.UNSUSPENDED -> biStatic(T.toastRestored, taFirst).format(label)
         DisableManager.ActionOutcome.DISABLED -> biStatic(T.toastDisabled, taFirst).format(label)
+        DisableManager.ActionOutcome.ENABLED_SUSPENSION_UNKNOWN -> "Enabled $label; suspension status is unknown"
         else -> biStatic(T.toastEnabled, taFirst).format(label)
     }
 
