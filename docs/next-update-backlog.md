@@ -97,9 +97,9 @@ Bundle these into the next Store release; do not start a Store-only build just f
 ### Current continuation
 
 - Compact unlisted rows now move the AI link into the content column beside the existing action
-  column, and the dual status is shortened to `disabled and suspended`. These source changes need
-  a new APK, emulator verification, and a new owner hash-matched phone test; prior observations
-  belong to the earlier APK.
+  column, and the dual status is shortened to `disabled and suspended`. Candidate `d09ab49e…`
+  passed stock smoke and fixture cycles (with infrastructure retries); it still needs a new owner
+  hash-matched phone test. Prior phone observations belong to the earlier APK.
 - The Shizuku persistence experiment is isolated to an emulator-only debug activity and a fixed
   disposable fixture. The candidate pipeline checks that its activity is absent from the release
   manifest and DEX. Experimental results must not be described as a shipped persistence fix.
