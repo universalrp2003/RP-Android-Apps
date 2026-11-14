@@ -52,13 +52,13 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'images/social-preview-v16.png'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
-        matches = data == local if name.endswith('.html') else json.loads(data) == json.loads(local)
+        matches = data == local if name.endswith(('.html', '.png')) else json.loads(data) == json.loads(local)
         if not matches:
             raise ValueError('Live metadata is not the tested current source: ' + name)
-    print('PASS: live HTML, actual release dates, legacy12-app and current15-app feeds match tested source', flush=True)
+    print('PASS: live HTML, social preview image, release dates and catalogs match tested source', flush=True)
 
 
 def main():
