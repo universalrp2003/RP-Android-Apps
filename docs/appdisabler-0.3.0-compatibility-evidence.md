@@ -212,3 +212,9 @@ owner-tested only for the displayed identity, navigation and link observations, 
 for persistence or other OEMs. The unlisted cards have substantial vertical space, and the
 combined state text is visibly truncated: retain these as UI follow-ups without rebuilding or
 misrepresenting new bytes as the same owner-tested candidate.
+
+## Compact-row candidate and Shizuku persistence lab
+
+Candidate [43557688697](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43557688697), source `3c512b9f5ed1f893ad86fe5d6b90fe87d6d4fb9c`, release artifact id `14098824005`, APK size 11,668,005 bytes, SHA-256 `d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0`. Build, lint and tests passed; a CI gate checks that the debug-only persistence-lab activity is absent from the release APK's DEX and manifest. This APK changes the AI-link row layout and shortens the dual state text; it is not the hash-matched APK shown by the owner. Stock candidate tests and new owner verification are required. It does not implement synchronous persistence.
+
+The initial [debug-only Shizuku lab 43557688749](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43557688749) used Shizuku shell and a probe loaded from the debug APK against a disposable fixture. Suspension plus flush and restoration each survived immediate ADB reboots on both stock Android 15 and 16. The two synchronous-disable jobs reached the post-reboot state check, but their restoration attempts failed because the test activity reached Shizuku before the client attached (`binder haven't been received` / `Not an attached client`). Do not count these as successful disable/restore cycles. The test was updated to retry only those pre-command connection errors. Results remain emulator-only; this is not the release action path, a physical reboot, OEM behavior, or a proven general solution.

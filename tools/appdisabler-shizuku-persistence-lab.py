@@ -59,19 +59,32 @@ def reboot():
 
 
 def experiment(mode):
-    nonce = uuid.uuid4().hex
-    adb('shell', 'am', 'start', '-W', '-n', APP + '/.lab.PersistenceLabActivity',
-        '--es', 'mode', mode, '--es', 'nonce', nonce)
+    # A freshly restarted Shizuku server can take a moment to attach the app client. Retry only
+    # these two pre-command attachment errors, never an operation that could have changed state.
     deadline = time.monotonic() + 60
-    marker = f'LAB_RESULT|{nonce}|'
     while time.monotonic() < deadline:
-        log = adb('logcat', '-d', '-v', 'brief', '-s', 'DisablerPersistLab:I', '*:S')
-        for line in log.splitlines():
-            if marker in line:
-                assert marker + 'OK|' + mode in line, line
+        nonce = uuid.uuid4().hex
+        adb('shell', 'am', 'start', '-W', '-n', APP + '/.lab.PersistenceLabActivity',
+            '--es', 'mode', mode, '--es', 'nonce', nonce)
+        marker = f'LAB_RESULT|{nonce}|'
+        attempt_end = min(deadline, time.monotonic() + 15)
+        while time.monotonic() < attempt_end:
+            log = adb('logcat', '-d', '-v', 'brief', '-s', 'DisablerPersistLab:I', '*:S')
+            lines = [line for line in log.splitlines() if marker in line]
+            if not lines:
+                time.sleep(1)
+                continue
+            line = lines[-1]
+            if marker + 'OK|' + mode in line:
                 return
-        time.sleep(1)
-    raise TimeoutError('debug lab activity did not report completion')
+            if "binder haven't been received" in line or 'Not an attached client' in line:
+                print('Shizuku client not attached yet; retrying pre-command check', flush=True)
+                time.sleep(2)
+                break
+            raise AssertionError(line)
+        else:
+            raise TimeoutError('debug lab activity did not report completion')
+    raise TimeoutError('Shizuku client did not attach in time')
 
 
 def state(expected):
@@ -103,6 +116,7 @@ try:
     reboot()
     state(True)
     cmd('timeout', '45', 'adb', 'shell', starter)
+    adb('shell', 'am', 'start', '-W', '-n', APP + '/.ui.MainActivity')
     experiment('enable-sync' if MODE == 'disable-sync' else 'unsuspend-flush')
     state(False)
     reboot()

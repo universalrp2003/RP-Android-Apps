@@ -172,7 +172,7 @@ try:
         wait_node('external-suspension-detected', text('● suspended — may still run'), timeout=80)
         # The same app can be both disabled and suspended; the row must show both.
         adb('shell', 'pm', 'disable-user', '--user', '0', PKG)
-        wait_node('fixture-overlapping-states', text('● disabled and suspended — tap Enable to restore'), timeout=80)
+        wait_node('fixture-overlapping-states', text('● disabled and suspended'), timeout=80)
         row_action('external-suspension-enable', 'Enable')
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
