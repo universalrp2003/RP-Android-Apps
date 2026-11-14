@@ -1,6 +1,11 @@
 name: App Disabler suspension research
 on:
   workflow_dispatch:
+  push:
+    branches: ['arena/**']
+    paths:
+      - '.github/workflows/appdisabler-suspension-research.yml'
+      - 'tools/appdisabler-suspension-research.py'
 permissions:
   contents: read
 jobs:
