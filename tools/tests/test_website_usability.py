@@ -171,11 +171,15 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertIn('not a safety approval', self.source)
 
     def test_social_preview_is_local_small_and_1200_by_630(self):
-        image = (ROOT / 'site/images/social-preview.png').read_bytes()
+        image = (ROOT / 'site/images/social-preview-v16.png').read_bytes()
         self.assertEqual(image[:8], b'\x89PNG\r\n\x1a\n')
         self.assertEqual(struct.unpack('>II', image[16:24]), (1200, 630))
         self.assertLess(len(image), 200_000)
-        self.assertIn('RP-Android-Apps/images/social-preview.png', self.source)
+        self.assertIn('RP-Android-Apps/images/social-preview-v16.png', self.source)
+        self.assertIn(b'16 free Android apps; 15 regular + 1 optional app', image)
+        self.assertEqual(self.source.count('RP-Android-Apps/images/social-preview-v16.png'), 2)
+        self.assertEqual(len(re.findall(r'<article class="card"', self.source)), 16)
+        self.assertIn('aria-label="15 regular Android applications"', self.source)
 
 
 if __name__ == '__main__':

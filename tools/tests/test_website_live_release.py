@@ -59,3 +59,12 @@ class LiveReleaseVerificationTests(unittest.TestCase):
         with patch.object(live, 'get_bounded', return_value=b'stale website'):
             with self.assertRaises(ValueError):
                 live.check_metadata()
+
+    def test_stale_social_image_is_rejected(self):
+        def fetch(name, limit):
+            if name == 'images/social-preview-v16.png':
+                return b'stale image'
+            return (live.ROOT / 'site' / name).read_bytes()
+        with patch.object(live, 'get_bounded', side_effect=fetch):
+            with self.assertRaisesRegex(ValueError, 'social-preview-v16.png'):
+                live.check_metadata()
