@@ -153,6 +153,37 @@ try:
     wait_node('fixture-before', text('AAAA Disabler Test Fixture'))
     expect_state('-e', 'before')
     assert not list_contains('-d'), 'fixture unexpectedly starts disabled'
+    # Suspend externally: the candidate has no local note for this fixture.
+    external = adb('shell', 'pm', 'suspend', '--user', '0', PKG)
+    assert f'Package {PKG} new suspended state: true' in external, external
+    api = int(adb('shell', 'getprop', 'ro.build.version.sdk').strip())
+    if api >= 29:
+        wait_node('external-suspension-detected', text('● suspended — may still run'), timeout=80)
+        row_action('external-suspension-enable', 'Enable')
+    else:
+        wait_node('external-suspension-unknown', text('● suspension status unknown'), timeout=80)
+        row_action('external-suspension-recovery', 'Try restore')
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        package_dump = adb('shell', 'dumpsys', 'package', PKG)
+        if re.search(r'User 0:.*suspended=false', package_dump):
+            (OUT / 'external-suspension-restored.txt').write_text(package_dump)
+            break
+        time.sleep(2)
+    else:
+        raise AssertionError('externally suspended fixture did not recover')
+    # Reload after the app finishes its asynchronous restore action.
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        nodes = dump('fixture-after-external-restore')
+        labels = [n for n in nodes if n.attrib.get('text') == 'AAAA Disabler Test Fixture']
+        buttons = [n for n in nodes if n.attrib.get('text') == 'Disable']
+        if labels and any(abs(int(re.findall(r'\d+', b.attrib['bounds'])[1]) -
+                              int(re.findall(r'\d+', labels[0].attrib['bounds'])[1])) < 60 for b in buttons):
+            break
+        time.sleep(2)
+    else:
+        raise AssertionError('fixture Disable button did not return after unsuspend')
     row_action('fixture-before-disable', 'Disable')
     expect_state('-d', 'disabled')
     print('Framework confirms fixture disabled by app', flush=True)
@@ -205,8 +236,9 @@ try:
     (OUT / 'candidate-sha256.txt').write_text(expected + '\n')
     (OUT / 'fingerprint.txt').write_text(adb('shell', 'getprop', 'ro.build.fingerprint'))
     print('Framework confirms fixture restored by app; installed candidate hash matches', flush=True)
-    (OUT / 'result.txt').write_text(f'PASS: stock emulator, Shizuku, app-driven disable, {DELAY}-second wait, ADB reboot and restore of disposable user app. OEM firmware and suspension fallback not tested.\n')
+    (OUT / 'result.txt').write_text(f'PASS: stock emulator, Shizuku, app-driven disable, {DELAY}-second wait, ADB reboot and restore of disposable user app. External suspension recovery tested; OEM firmware and app-driven suspension fallback not tested.\n')
 finally:
     # Safety net on the disposable emulator only; never use this as a test success.
+    print(adb('shell', 'pm', 'unsuspend', '--user', '0', PKG, check=False), flush=True)
     print(adb('shell', 'pm', 'enable', '--user', '0', PKG, check=False), flush=True)
     (OUT / 'runtime.log').write_text(adb('logcat', '-d', '-v', 'brief', '-s', 'AndroidRuntime:E', check=False))
