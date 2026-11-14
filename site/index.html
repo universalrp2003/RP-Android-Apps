@@ -489,8 +489,10 @@
     .latest .lsize { color: var(--muted); font-size: 0.76rem; white-space: nowrap; }
     .latest .ldl { text-align: right; white-space: nowrap; }
     .latest .ldl .btn { font-size: 0.78rem; padding: 6px 12px; }
+    .apk-size-mobile { display: none; }
     @media (max-width: 620px) {
       .latest .ldate, .latest .lsize, .latest .lver { display: none; }
+      .latest .apk-size-mobile { display: block; margin-top: 4px; color: var(--muted); font-size: 0.76rem; font-weight: 400; }
     }
     .grid {
       display: grid;
@@ -835,7 +837,7 @@
             <tr>
               <th>Application</th>
               <th class="ldate">Released (UTC)</th>
-              <th>Version</th>
+              <th class="lver">Version</th>
               <th class="lsize">Size</th>
               <th class="ldl">Download</th>
             </tr>
@@ -846,15 +848,15 @@
               <td class="ldate"><time datetime="2026-11-14T06:32:32Z" data-release-tag="system-app-disabler-v0.3.0">14 Nov 2026</time></td>
               <td class="lver">v0.3.0</td>
               <td class="lsize">11.7 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/System-App-Disabler-v0.3.0.apk" data-name="System-App-Disabler-v0.3.0.apk" data-sha="d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0" data-status="st-appdisabler" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.3.0/System-App-Disabler-v0.3.0.apk" aria-label="Download APK · System-App-Disabler-v0.3.0.apk">APK · v0.3.0</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/System-App-Disabler-v0.3.0.apk" data-name="System-App-Disabler-v0.3.0.apk" data-sha="d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0" data-status="st-appdisabler" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.3.0/System-App-Disabler-v0.3.0.apk" aria-label="Download APK · System-App-Disabler-v0.3.0.apk">APK · v0.3.0</a><span class="apk-size-mobile" aria-label="APK size: 11.7 MB">11.7 MB</span></td>
             </tr>
 
 <tr>
               <td class="lname"><a href="#app-tamilan-store">Tamilan Store <span class="ta-name">(தமிழன்)</span></a></td>
               <td class="ldate"><time datetime="2026-11-13T07:39:58Z" data-release-tag="tamilan-store-v0.13">13 Nov 2026</time></td>
               <td class="lver">v0.13</td>
-              <td class="lsize">19.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamilan-Store-v0.13.apk" data-name="Tamilan-Store-v0.13.apk" data-sha="8efc49af3ab281720dd4a4cfedc9afcc319f8f578211796a16cc5aa5c0fa155b" data-status="st-tamilanstore" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.13/Tamilan-Store-v0.13.apk" aria-label="Download APK · Tamilan-Store-v0.13.apk">APK · v0.13</a></td>
+              <td class="lsize">19.9 MB</td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamilan-Store-v0.13.apk" data-name="Tamilan-Store-v0.13.apk" data-sha="8efc49af3ab281720dd4a4cfedc9afcc319f8f578211796a16cc5aa5c0fa155b" data-status="st-tamilanstore" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.13/Tamilan-Store-v0.13.apk" aria-label="Download APK · Tamilan-Store-v0.13.apk">APK · v0.13</a><span class="apk-size-mobile" aria-label="APK size: 19.9 MB">19.9 MB</span></td>
             </tr>
 
             <tr>
@@ -862,7 +864,7 @@
               <td class="ldate"><time datetime="2026-11-12T09:45:13Z" data-release-tag="live-guard-v3.00">12 Nov 2026</time></td>
               <td class="lver">v3.00</td>
               <td class="lsize">14.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/CleanSweep-v3.00.apk" data-name="CleanSweep-v3.00.apk" data-sha="286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk" aria-label="Download APK · CleanSweep-v3.00.apk">APK · v3.00</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/CleanSweep-v3.00.apk" data-name="CleanSweep-v3.00.apk" data-sha="286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk" aria-label="Download APK · CleanSweep-v3.00.apk">APK · v3.00</a><span class="apk-size-mobile" aria-label="APK size: 14.8 MB">14.8 MB</span></td>
             </tr>
 
             <tr>
@@ -870,7 +872,7 @@
               <td class="ldate"><time datetime="2026-11-11T12:00:01Z" data-release-tag="tvguard-v1.5.1">11 Nov 2026</time></td>
               <td class="lver">v1.5.1</td>
               <td class="lsize">11.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Android-TV-Guard-v1.5.1.apk" data-name="Android-TV-Guard-v1.5.1.apk" data-sha="aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.1/Android-TV-Guard-v1.5.1.apk" aria-label="Download APK · Android-TV-Guard-v1.5.1.apk">APK · v1.5.1</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Android-TV-Guard-v1.5.1.apk" data-name="Android-TV-Guard-v1.5.1.apk" data-sha="aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tvguard-v1.5.1/Android-TV-Guard-v1.5.1.apk" aria-label="Download APK · Android-TV-Guard-v1.5.1.apk">APK · v1.5.1</a><span class="apk-size-mobile" aria-label="APK size: 11.8 MB">11.8 MB</span></td>
             </tr>
 
             
@@ -880,7 +882,7 @@
               <td class="ldate"><time datetime="2026-11-09T11:56:55Z" data-release-tag="oor-arivippu-v1.1.21">09 Nov 2026</time></td>
               <td class="lver">v1.1.21</td>
               <td class="lsize">12.9 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.21.apk" data-name="Oor-Arivippu-v1.1.21.apk" data-sha="e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.21/Oor-Arivippu-v1.1.21.apk" aria-label="Download APK · Oor-Arivippu-v1.1.21.apk">APK · v1.1.21</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Oor-Arivippu-v1.1.21.apk" data-name="Oor-Arivippu-v1.1.21.apk" data-sha="e65e1bdbabebc89edbe994894eb1554ce1c7583b8cdb8940aaf0eee054975258" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.21/Oor-Arivippu-v1.1.21.apk" aria-label="Download APK · Oor-Arivippu-v1.1.21.apk">APK · v1.1.21</a><span class="apk-size-mobile" aria-label="APK size: 12.9 MB">12.9 MB</span></td>
             </tr>
 
             <tr>
@@ -888,7 +890,7 @@
               <td class="ldate"><time datetime="2026-11-04T12:21:13Z" data-release-tag="sms-guard-v1.1.17">04 Nov 2026</time></td>
               <td class="lver">v1.1.17</td>
               <td class="lsize">12.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.17.apk" data-name="SMS-Guard-v1.1.17.apk" data-sha="b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.17/SMS-Guard-v1.1.17.apk" aria-label="Download APK · SMS-Guard-v1.1.17.apk">APK · v1.1.17</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/SMS-Guard-v1.1.17.apk" data-name="SMS-Guard-v1.1.17.apk" data-sha="b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.17/SMS-Guard-v1.1.17.apk" aria-label="Download APK · SMS-Guard-v1.1.17.apk">APK · v1.1.17</a><span class="apk-size-mobile" aria-label="APK size: 12.8 MB">12.8 MB</span></td>
             </tr>
 
             <tr>
@@ -896,7 +898,7 @@
               <td class="ldate"><time datetime="2026-11-01T13:44:12Z" data-release-tag="elderly-launcher-v1.7">01 Nov 2026</time></td>
               <td class="lver">v1.7</td>
               <td class="lsize">11.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.7.apk" data-name="Elderly-Launcher-v1.7.apk" data-sha="13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.7/Elderly-Launcher-v1.7.apk" aria-label="Download APK · Elderly-Launcher-v1.7.apk">APK · v1.7</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Elderly-Launcher-v1.7.apk" data-name="Elderly-Launcher-v1.7.apk" data-sha="13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.7/Elderly-Launcher-v1.7.apk" aria-label="Download APK · Elderly-Launcher-v1.7.apk">APK · v1.7</a><span class="apk-size-mobile" aria-label="APK size: 11.5 MB">11.5 MB</span></td>
             </tr>
 
             <tr>
@@ -904,7 +906,7 @@
               <td class="ldate"><time datetime="2026-11-01T09:57:54Z" data-release-tag="voice-notes-v1.3.4">01 Nov 2026</time></td>
               <td class="lver">v1.3.4</td>
               <td class="lsize">13.1 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.4.apk" data-name="Voice-Notes-v1.3.4.apk" data-sha="1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk" aria-label="Download APK · Voice-Notes-v1.3.4.apk">APK · v1.3.4</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Voice-Notes-v1.3.4.apk" data-name="Voice-Notes-v1.3.4.apk" data-sha="1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk" aria-label="Download APK · Voice-Notes-v1.3.4.apk">APK · v1.3.4</a><span class="apk-size-mobile" aria-label="APK size: 13.1 MB">13.1 MB</span></td>
             </tr>
 
             <tr>
@@ -912,7 +914,7 @@
               <td class="ldate"><time datetime="2026-10-31T13:53:48Z" data-release-tag="ramesh-radio-v1.31">31 Oct 2026</time></td>
               <td class="lver">v1.31</td>
               <td class="lsize">15.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.31.apk" data-name="Ramesh-Radio-v1.31.apk" data-sha="fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk" aria-label="Download APK · Ramesh-Radio-v1.31.apk">APK · v1.31</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Ramesh-Radio-v1.31.apk" data-name="Ramesh-Radio-v1.31.apk" data-sha="fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/ramesh-radio-v1.31/Ramesh-Radio-v1.31.apk" aria-label="Download APK · Ramesh-Radio-v1.31.apk">APK · v1.31</a><span class="apk-size-mobile" aria-label="APK size: 15.2 MB">15.2 MB</span></td>
             </tr>
 
             <tr>
@@ -920,7 +922,7 @@
               <td class="ldate"><time datetime="2026-10-30T17:37:40Z" data-release-tag="daily-vault-v0.5">30 Oct 2026</time></td>
               <td class="lver">v0.5</td>
               <td class="lsize">11.7 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/DailyVault-v0.5.apk" data-name="DailyVault-v0.5.apk" data-sha="8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55" data-status="st-dailyvault" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk" aria-label="Download APK · DailyVault-v0.5.apk">APK · v0.5</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/DailyVault-v0.5.apk" data-name="DailyVault-v0.5.apk" data-sha="8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55" data-status="st-dailyvault" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk" aria-label="Download APK · DailyVault-v0.5.apk">APK · v0.5</a><span class="apk-size-mobile" aria-label="APK size: 11.7 MB">11.7 MB</span></td>
             </tr>
 
             <tr>
@@ -928,7 +930,7 @@
               <td class="ldate"><time datetime="2026-10-29T12:11:23Z" data-release-tag="rp-vocal-remover-studio-v0.1.16">29 Oct 2026</time></td>
               <td class="lver">v0.1.16</td>
               <td class="lsize">65.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">APK · v0.1.16</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/RP-Vocal-Remover-Studio-v0.1.16.apk" data-name="RP-Vocal-Remover-Studio-v0.1.16.apk" data-sha="6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/rp-vocal-remover-studio-v0.1.16/RP-Vocal-Remover-Studio-v0.1.16.apk" aria-label="Download APK · RP-Vocal-Remover-Studio-v0.1.16.apk">APK · v0.1.16</a><span class="apk-size-mobile" aria-label="APK size: 65.2 MB">65.2 MB</span></td>
             </tr>
 
             <tr>
@@ -936,7 +938,7 @@
               <td class="ldate"><time datetime="2026-10-29T12:01:26Z" data-release-tag="pulseeq-v1.11">29 Oct 2026</time></td>
               <td class="lver">v1.11</td>
               <td class="lsize">12.2 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">APK · v1.11</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/PulseEQ-v1.11.apk" data-name="PulseEQ-v1.11.apk" data-sha="bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/pulseeq-v1.11/PulseEQ-v1.11.apk" aria-label="Download APK · PulseEQ-v1.11.apk">APK · v1.11</a><span class="apk-size-mobile" aria-label="APK size: 12.2 MB">12.2 MB</span></td>
             </tr>
 
             <tr>
@@ -944,7 +946,7 @@
               <td class="ldate"><time datetime="2026-10-29T10:55:43Z" data-release-tag="expense-tracker-v1.2">29 Oct 2026</time></td>
               <td class="lver">v1.2</td>
               <td class="lsize">11.6 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">APK · v1.2</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Expense-Tracker-v1.2.apk" data-name="Expense-Tracker-v1.2.apk" data-sha="286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/expense-tracker-v1.2/Expense-Tracker-v1.2.apk" aria-label="Download APK · Expense-Tracker-v1.2.apk">APK · v1.2</a><span class="apk-size-mobile" aria-label="APK size: 11.6 MB">11.6 MB</span></td>
             </tr>
 
             <tr>
@@ -952,7 +954,7 @@
               <td class="ldate"><time datetime="2026-10-29T10:20:33Z" data-release-tag="tamil-podcast-v1.6">29 Oct 2026</time></td>
               <td class="lver">v1.6</td>
               <td class="lsize">12.0 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">APK · v1.6</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Tamil-Podcast-Player-v1.6.apk" data-name="Tamil-Podcast-Player-v1.6.apk" data-sha="f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamil-podcast-v1.6/Tamil-Podcast-Player-v1.6.apk" aria-label="Download APK · Tamil-Podcast-Player-v1.6.apk">APK · v1.6</a><span class="apk-size-mobile" aria-label="APK size: 12.0 MB">12.0 MB</span></td>
             </tr>
 
             <tr>
@@ -960,7 +962,7 @@
               <td class="ldate"><time datetime="2026-10-29T09:07:16Z" data-release-tag="vasanthi-ai-v1.1.5">29 Oct 2026</time></td>
               <td class="lver">v1.1.5</td>
               <td class="lsize">45.8 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">APK · v1.1.5</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Vasanthi-AI-v1.1.5.apk" data-name="Vasanthi-AI-v1.1.5.apk" data-sha="4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/vasanthi-ai-v1.1.5/Vasanthi-AI-v1.1.5.apk" aria-label="Download APK · Vasanthi-AI-v1.1.5.apk">APK · v1.1.5</a><span class="apk-size-mobile" aria-label="APK size: 45.8 MB">45.8 MB</span></td>
             </tr>
 
             <tr>
@@ -968,7 +970,7 @@
               <td class="ldate"><time datetime="2026-10-22T16:42:52Z" data-release-tag="secret-message-v1.1.3">22 Oct 2026</time></td>
               <td class="lver">v1.1.3</td>
               <td class="lsize">29.5 MB</td>
-              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">APK · v1.1.3</a></td>
+              <td class="ldl"><a class="btn btn-primary" data-apk="apks/Secret-Message-v1.1.3.apk" data-name="Secret-Message-v1.1.3.apk" data-sha="2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c" data-status="st-latest" href="https://github.com/universalrp2003/RP-Android-Apps/releases/download/secret-message-v1.1.3/Secret-Message-v1.1.3.apk" aria-label="Download APK · Secret-Message-v1.1.3.apk">APK · v1.1.3</a><span class="apk-size-mobile" aria-label="APK size: 29.5 MB">29.5 MB</span></td>
             </tr>
             </tbody>
         </table>
@@ -2212,13 +2214,13 @@
             if (part.done) break;
             chunks.push(part.value);
             received += part.value.length;
-            var mib = (received / 1048576).toFixed(2);
+            var mb = (received / 1000000).toFixed(2);
             // Do not show 100% while verification and the save prompt are still pending.
             var percent = total > 0 ? Math.min(99, Math.floor(received / total * 100)) : null;
             var milestone = percent == null ? -1 : Math.floor(percent / 10);
             var speech = milestone > previousMilestone ? 'Downloading ' + fileName + ': ' + percent + ' percent.' : null;
             if (milestone > previousMilestone) previousMilestone = milestone;
-            show('Downloading: ' + (percent == null ? mib + ' MiB' : percent + '% (' + mib + ' MiB)'), waitMessage, percent, speech);
+            show('Downloading: ' + (percent == null ? mb + ' MB' : percent + '% (' + mb + ' MB)'), waitMessage, percent, speech);
           }
           show('Checking file integrity…', waitMessage, null, 'Download complete. Checking file integrity.');
           var merged = new Uint8Array(received);
