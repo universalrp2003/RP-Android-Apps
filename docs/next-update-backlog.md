@@ -98,8 +98,9 @@ Bundle these into the next Store release; do not start a Store-only build just f
 
 - Compact unlisted rows now move the AI link into the content column beside the existing action
   column, and the dual status is shortened to `disabled and suspended`. Candidate `d09ab49e…`
-  passed stock smoke and fixture cycles (with infrastructure retries); it still needs a new owner
-  hash-matched phone test. Prior phone observations belong to the earlier APK.
+  passed stock smoke and fixture cycles (with infrastructure retries). The owner identified the
+  matching hash and checked the UI and a delayed reboot/restore cycle with an inert user-app fixture
+  on a Redmi 13 5G. This does not establish immediate-reboot or system-package persistence.
 - The Shizuku persistence experiment is isolated to an emulator-only debug activity and a fixed
   disposable fixture. The candidate pipeline checks that its activity is absent from the release
   manifest and DEX. Experimental results must not be described as a shipped persistence fix.
