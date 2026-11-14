@@ -149,8 +149,9 @@ try:
     tap(wait_node('close-hash-report', text('Close')))
     tap(wait_node('setup', text('Apps')))
     wait_node('apps-ready', lambda n: 'Shizuku running' in n.attrib.get('text', '') and 'ready' in n.attrib.get('text', ''))
-    # The fixture's unique label sorts first. Do not target any system package.
-    tap(wait_node('apps', text('Any')))
+    # Restrict to user-added packages so system labels sorting before AAAA do not hide the fixture.
+    # This is a navigation action only; all package changes remain fixture-only.
+    tap(wait_node('apps-user-added', text('you added')))
     wait_node('fixture-before', text('AAAA Disabler Test Fixture'))
     wait_node('fixture-unlisted', text('Not listed — check first'))
     wait_node('fixture-ask-ai', text('Ask Google AI'))
