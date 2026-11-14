@@ -164,3 +164,20 @@ The screenshots also show Aadhaar, AadhaarFaceRd and an IDBI app labelled `Safe 
 packages are absent from the bundled UAD list; the current code defaults unlisted non-system apps
 to SAFE. This is a generic classification, not a package-specific safety assessment. Track it as
 a safety-label issue rather than interpreting it as advice to disable those apps.
+
+## Unlisted and Ask Google AI candidate — not yet owner-tested
+
+Release build [43554849554](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43554849554) from source `d5345069f0f0041ffba6423c3b744f305774dd14` passed Android compilation, unit tests and lint. Release artifact id `14097473782`, `appdisabler-release.apk`, size 11,668,005 bytes, APK SHA-256 `4dec0221f1bdc9bfa42b9d69ee3b0b40bb581a76a5dda7326de7a3ea76f1b912`. This is not the APK whose hash the owner previously showed. It does not contain a persistence modification. Exact-candidate emulator checks and an owner's hash-matched device test are still needed.
+
+## Bounded synchronous-write research (not shipped)
+
+[Lab run 43554849635](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43554849635) used a temporary shell `app_process` Java probe and an inert fixture, not the Disabler APK. One immediate-ADB-reboot trial for each mode on stock Android 15 and 16 yielded:
+
+| Mode | Android 15 | Android 16 |
+| --- | --- | --- |
+| `pm disable-user` flags-0 baseline | passed | failed after reboot |
+| direct hidden binder disable with `SYNCHRONOUS` | passed | passed |
+| `pm suspend` baseline | failed after reboot | failed after reboot |
+| `pm suspend`, then hidden restriction flush | passed | passed |
+
+Failures are retained in the workflow; the overall run failed because baseline failures are real results. This is a promising lead, not proof of durability, statistical reliability, or root cause. The probe used shell privileges and hidden framework APIs in a separate process: an ordinary app API call or Shizuku integration has not been validated. The lab did not perform app-driven Enable after reboot, nor test Android 9/10, an OEM system package, vendor firmware, multi-user profiles, physical power-menu reboot or power loss. Do not copy this hidden-API approach into the release as a compatibility guarantee. Future work must test actual Shizuku integration, repeated cycles, failure reporting and restore, plus OEM policy/SELinux and a safe fallback.

@@ -152,6 +152,8 @@ try:
     # The fixture's unique label sorts first. Do not target any system package.
     tap(wait_node('apps', text('Any')))
     wait_node('fixture-before', text('AAAA Disabler Test Fixture'))
+    wait_node('fixture-unlisted', text('Not listed — check first'))
+    wait_node('fixture-ask-ai', text('Ask Google AI'))
     expect_state('-e', 'before')
     assert not list_contains('-d'), 'fixture unexpectedly starts disabled'
     api = int(adb('shell', 'getprop', 'ro.build.version.sdk').strip())
@@ -160,6 +162,9 @@ try:
         external = adb('shell', 'pm', 'suspend', '--user', '0', PKG)
         assert f'Package {PKG} new suspended state: true' in external, external
         wait_node('external-suspension-detected', text('● suspended — may still run'), timeout=80)
+        # The same app can be both disabled and suspended; the row must show both.
+        adb('shell', 'pm', 'disable-user', '--user', '0', PKG)
+        wait_node('fixture-overlapping-states', text('● disabled and suspended — tap Enable to restore'), timeout=80)
         row_action('external-suspension-enable', 'Enable')
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
@@ -170,6 +175,7 @@ try:
             time.sleep(2)
         else:
             raise AssertionError('externally suspended fixture did not recover')
+        expect_state('-e', 'external-restored-enabled')
         # Reload after the app finishes its asynchronous restore action.
         deadline = time.monotonic() + 60
         while time.monotonic() < deadline:
@@ -187,6 +193,8 @@ try:
         # disable/restore and unknown display, but do not assert a suspension cycle passed.
         wait_node('external-suspension-unknown', text('● suspension status unknown'), timeout=80)
     row_action('fixture-before-disable', 'Disable')
+    wait_node('unlisted-confirmation', text('Unlisted — check first'))
+    tap(wait_node('unlisted-disable-anyway', text('Disable anyway')))
     expect_state('-d', 'disabled')
     print('Framework confirms fixture disabled by app', flush=True)
     wait_node('fixture-after-disable', text('AAAA Disabler Test Fixture'))
