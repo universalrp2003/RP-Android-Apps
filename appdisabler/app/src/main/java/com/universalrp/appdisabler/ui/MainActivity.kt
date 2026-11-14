@@ -963,7 +963,7 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 // Suspension is not a full disable and does not prove that a process is absent.
                 // The local suspension record reflects our last successful action, not a live check.
                 val statusText = when {
-                    !app.isEnabled && app.isSuspended -> "● disabled and suspended — tap Enable to restore"
+                    !app.isEnabled && app.isSuspended -> "● disabled and suspended"
                     !app.isEnabled -> "● disabled — tap Enable to restore"
                     app.isSuspended -> "● suspended — may still run"
                     !app.isSuspensionKnown && app.isSuspensionRemembered -> "● suspension unknown — Enable to recover"
@@ -974,6 +974,11 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 }
                 statusText?.let {
                     Text(it, style = MaterialTheme.typography.labelSmall, color = tint, maxLines = 1)
+                }
+                if (app.category == DisableCategory.UNLISTED) {
+                    TextButton(onClick = onAskAi, contentPadding = PaddingValues(horizontal = 0.dp, vertical = 0.dp)) {
+                        Text("Ask Google AI", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
                 if (blocked) {
                     Text(
@@ -999,11 +1004,6 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 if (!app.isSuspensionKnown && !app.needsRestore) {
                     TextButton(onClick = onRestoreUnknown, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                         Text("Try restore", style = MaterialTheme.typography.labelSmall)
-                    }
-                }
-                if (app.category == DisableCategory.UNLISTED) {
-                    TextButton(onClick = onAskAi, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
-                        Text("Ask Google AI", style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 TextButton(onClick = onOpenDetails, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {

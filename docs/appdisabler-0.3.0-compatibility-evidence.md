@@ -165,9 +165,9 @@ packages are absent from the bundled UAD list; the current code defaults unliste
 to SAFE. This is a generic classification, not a package-specific safety assessment. Track it as
 a safety-label issue rather than interpreting it as advice to disable those apps.
 
-## Unlisted and Ask Google AI candidate — not yet owner-tested
+## Unlisted and Ask Google AI candidate
 
-Release build [43554849554](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43554849554) from source `d5345069f0f0041ffba6423c3b744f305774dd14` passed Android compilation, unit tests and lint. Release artifact id `14097473782`, `appdisabler-release.apk`, size 11,668,005 bytes, APK SHA-256 `4dec0221f1bdc9bfa42b9d69ee3b0b40bb581a76a5dda7326de7a3ea76f1b912`. This is not the APK whose hash the owner previously showed. It does not contain a persistence modification. Exact-candidate emulator checks and an owner's hash-matched device test are still needed.
+Release build [43554849554](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43554849554) from source `d5345069f0f0041ffba6423c3b744f305774dd14` passed Android compilation, unit tests and lint. Release artifact id `14097473782`, `appdisabler-release.apk`, size 11,668,005 bytes, APK SHA-256 `4dec0221f1bdc9bfa42b9d69ee3b0b40bb581a76a5dda7326de7a3ea76f1b912`. This is not the earlier APK whose hash the owner showed. It does not contain a persistence modification. See the later exact-candidate emulator checks and limited owner observations below.
 
 ## Bounded synchronous-write research (not shipped)
 
@@ -187,3 +187,28 @@ A second stock lab run, [43555215803](https://github.com/universalrp2003/RP-Andr
 The candidate's [first stock cycle 43555171637](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43555171637) passed Android 9 but its other jobs failed during UI navigation: after the default filter changed to All, other packages sorted ahead of the test fixture, which was below the viewport. Those navigation failures did not reach the package-action test and must not be counted as package-state failures. The cycle was adjusted to select the user-added filter before the fixture.
 
 The navigation-fixed candidate cycle [43555570692](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43555570692) passed Android 9, 10 and 15 with 15-second delay, and Android 15 and 16 with no added delay. The Android 16 15-second job confirmed disabled state after reboot but failed to continue UI recovery because an emulator wireless-debugging network prompt covered the app; this is a test-navigation failure, not a restore result. Completed jobs verified the fixture's Unlisted label and Ask Google AI button, the confirmation, and app-driven disable/recovery; Android 10, 15 and 16 also checked the combined disabled-and-suspended row. The tests verify button presence, not Google availability or answer quality. The earlier intermittent immediate-reboot failures remain unresolved despite these successful samples.
+
+### Final candidate stock checks
+
+[Smoke 43555171705](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43555171705) passed on Android 15 and 16. After fixing emulator-only prompt handling, [cycle 43556124108](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43556124108) passed on stock Android 9, 10, 15 and 16 with a 15-second delay, plus Android 15 and 16 with no added delay. The exact candidate was hash-checked; completed cycles test a disposable unlisted fixture's label, AI button presence, confirmation, disable, ADB reboot and restore. Android 10/15/16 also exercised overlapping disabled/suspended states; Android 9 could not test suspension under shell permissions. The workflow did not verify Google AI Mode availability or the quality of its output. Although this particular no-added-delay run passed, previous runs on Android 15/16 and the lab baselines failed; immediate-reboot durability is still not established. Those stock workflows did not test manufacturer ROMs or physical-device power-menu reboots; see the later owner observation for the limited physical-device coverage.
+
+## Owner's hash-matched unlisted / Google AI observation
+
+The owner’s 14 November screenshots show installed APK SHA-256
+`4dec0221f1bdc9bfa42b9d69ee3b0b40bb581a76a5dda7326de7a3ea76f1b912`, `Debuggable: false`,
+and zero splits: this matches release build `43554849554`. The device shows Shizuku ready and
+the neutral Unlisted label for Aadhaar, AadhaarFaceRd and HyperComm; Earphones shows both disabled
+and suspended (the end of the status is clipped). The running filter displays app-reported running
+apps, including suspended HyperComm. Google AI Mode opened in the owner's browser for the IDBI
+package and for Live Guard, `com.universalrp.cleansweep`. This confirms the observed links opened
+on that phone, not the correctness of the generated responses. The Google AI answer speculates
+about OEM/carrier/enterprise origins for Live Guard; the repository's `cleaner/README.md` and
+`cleaner/build.gradle.kts` identify it as this project's Live Guard. The banking answer's
+absolute safety and no-impact claims are not verified by these screenshots. Treat AI as fallible
+research, not an independent safety guarantee.
+
+The screenshots do not show a new disable/Enable cycle or a reboot for this APK. The app is
+owner-tested only for the displayed identity, navigation and link observations, not fully validated
+for persistence or other OEMs. The unlisted cards have substantial vertical space, and the
+combined state text is visibly truncated: retain these as UI follow-ups without rebuilding or
+misrepresenting new bytes as the same owner-tested candidate.

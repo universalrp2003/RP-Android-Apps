@@ -47,6 +47,9 @@ jobs:
           set -o pipefail
           gradle :appdisabler:testDebugUnitTest :appdisabler:lintDebug :appdisabler:assembleDebug :appdisabler:assembleRelease --no-daemon --stacktrace 2>&1 | tee appdisabler-build.log
 
+      - name: Ensure emulator-only lab cannot ship in release
+        run: python3 tools/verify_disabler_lab_is_debug_only.py
+
       - name: Expose actionable compiler and lint errors
         if: failure()
         run: |

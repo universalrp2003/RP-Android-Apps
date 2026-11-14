@@ -83,3 +83,23 @@ Bundle these into the next Store release; do not start a Store-only build just f
 - `appdisabler-persistence-lab.yml` tests flags-0 baseline, synchronous disable, suspend baseline,
   and suspend plus hidden flush, with an inert fixture on stock Android 15/16 only. It is research,
   not shipped behavior or a guarantee; no OEM or physical reboot is covered.
+
+- [ ] **AI answers are speculative.** The owner opened Google AI for Live Guard and IDBI in the
+      hash-matched 0.3.0 candidate. Google speculated about OEM/carrier/enterprise origins for this
+      project's own `com.universalrp.cleansweep` and gave categorical banking safety claims. Keep
+      AI opt-in and warn users that answers can be wrong; do not use generated text as a rating or
+      auto-disable recommendation.
+- [ ] **Compact and unclipped status rows.** In the owner's 0.3.0 screenshots the unlisted cards
+      are tall from stacked actions, and the “disabled and suspended — tap Enable to restore”
+      status is clipped. Shorten or wrap the status and reduce vertical waste in a future candidate;
+      preserve rating colors and both state labels. Any rebuild needs fresh owner hash-matched tests.
+
+### Current continuation
+
+- Compact unlisted rows now move the AI link into the content column beside the existing action
+  column, and the dual status is shortened to `disabled and suspended`. These source changes need
+  a new APK, emulator verification, and a new owner hash-matched phone test; prior observations
+  belong to the earlier APK.
+- The Shizuku persistence experiment is isolated to an emulator-only debug activity and a fixed
+  disposable fixture. The candidate pipeline checks that its activity is absent from the release
+  manifest and DEX. Experimental results must not be described as a shipped persistence fix.

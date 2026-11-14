@@ -358,7 +358,7 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('Opening Google sends the app name and package to Google', self.ui)
         self.assertIn('DisableCategory.CAUTION, DisableCategory.UNLISTED', self.ui)
         self.assertIn('label = { Text("Unlisted"', self.ui)
-        self.assertIn('!app.isEnabled && app.isSuspended -> "● disabled and suspended', self.ui)
+        self.assertIn('!app.isEnabled && app.isSuspended -> "● disabled and suspended"', self.ui)
 
 
 
