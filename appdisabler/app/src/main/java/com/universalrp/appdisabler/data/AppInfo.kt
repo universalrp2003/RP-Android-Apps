@@ -11,13 +11,19 @@ data class AppInfo(
     val description: String? = null,
     /** The database text warns that removing this can bootloop the phone — shown red, never allowed. */
     val bootloopRisk: Boolean = false,
-    /** Suspended via pm suspend (HyperOS fallback when disable is blocked). Tracked locally. */
+    /** Live aggregate suspension state when isSuspensionKnown is true. */
     val isSuspended: Boolean = false,
+    val isSuspensionKnown: Boolean = false,
+    /** Recovery hint from a past action, not evidence of the current state. */
+    val isSuspensionRemembered: Boolean = false,
     /** Android's stopped-package flag; it is not a direct process measurement. */
     val isStopped: Boolean = false,
     /** The package has Android's persistent application flag, not a live process state. */
     val isPersistent: Boolean = false,
-)
+) {
+    val needsRestore: Boolean get() = !isEnabled || isSuspended ||
+        (!isSuspensionKnown && isSuspensionRemembered)
+}
 
 enum class DisableCategory {
     SAFE,           // UAD Recommended — safe to disable

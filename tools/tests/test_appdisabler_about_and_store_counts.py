@@ -120,7 +120,7 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         self.assertIn('DisableCategory.CRITICAL', body, 'the never-disable list must stay')
         # The guard has to run before the first pm command, not after a failed attempt.
         disable = manager[manager.index('suspend fun disablePackage'):]
-        disable = disable[:disable.index('val disableAttempts')]
+        disable = disable[:disable.index('val disable = runShell')]
         self.assertIn('blockingReason(context, packageName)', disable,
                       'the guard must fire before pm disable-user is attempted')
 
@@ -130,7 +130,8 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         for symbol in ('📦', '⚙', '👤', '⛔', '▶'):
             self.assertIn(symbol, ui, f'missing the {symbol} tile')
         # Counts must come from the loaded list, never from a literal.
-        self.assertIn('visible.count { !it.isEnabled || it.isSuspended }', ui)
+        self.assertIn('visible.count { !it.isEnabled }', ui)
+        self.assertIn('visible.count { it.isSuspended }', ui)
         self.assertIn('visible.count { it.isSystem }', ui)
         self.assertRegex(ui, r'visible\.count \{ app -> live\.contains\(app\.packageName\) \}')
 
@@ -311,23 +312,13 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertLess(suspended, running)
         self.assertLess(running, stopped)
 
-    def test_suspension_is_read_from_dumpsys_not_from_the_enabled_list(self):
-        """Owner's phone, 13 Nov 2026: `pm suspend` reported success and the app called it a failure.
-
-        `pm list packages -e` still lists a suspended package (and `-d` does not). An earlier
-        version of the check filtered those lists, so a real suspension looked like "still enabled"
-        and a working action was reported as an error. `dumpsys package` prints the real flags.
-        """
+    def test_suspension_uses_public_api_not_enabled_lists_or_dumpsys_guess(self):
         manager = self.manager
-        self.assertIn('dumpsys", "package", pkg', manager)
-        self.assertIn('"SUSPENDED"', manager)
-        # The lists may be PRINTED by the diagnostic, but they must not be the decision: a suspended
-        # package is still listed by `-e` on HyperOS, which is what made a real suspend look like a
-        # failure. The decision function must not touch them.
-        decision = manager.split('private suspend fun shellSuspension')[1] \
-                          .split('private suspend fun runShellSuspend')[0]
-        self.assertNotIn('"packages"', decision,
-                         'the enabled/disabled lists cannot see a suspension; decide from dumpsys')
+        state = manager.split('private fun suspensionState')[1].split('private fun enabledState')[0]
+        self.assertIn('isPackageSuspended(pkg)', state)
+        self.assertIn('return null', state)
+        self.assertNotIn('dumpsys', state)
+        self.assertIn('PackageCommandVerification.matchesSuspension', manager)
 
     def test_persistent_flag_does_not_prove_a_process_is_running(self):
         self.assertIn('isPersistent = (ai.flags and android.content.pm.ApplicationInfo.FLAG_PERSISTENT) != 0', self.manager)
@@ -340,33 +331,21 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertNotIn('Nothing breaks by trying', strings)
         self.assertNotIn('cannot start again on its own', strings)
 
-    def test_off_is_decided_by_the_phone_not_by_the_local_note(self):
-        """Owner: "if i force close it's again running, never stopped" (13 Nov 2026).
+    def test_live_suspension_is_not_inferred_from_the_local_note(self):
+        self.assertIn('isSuspended = suspendedState == true', self.manager)
+        self.assertIn('isSuspensionKnown = suspendedState != null', self.manager)
+        self.assertIn('isSuspensionRemembered = pkg.packageName in suspended', self.manager)
+        self.assertIn('suspension unknown — Enable to recover', self.ui)
 
-        The row used to read its own SharedPreferences note to decide whether a package was off.
-        That note is written when a disable is attempted, so it says nothing about what the phone
-        actually did, and it goes stale the moment the app's data is cleared or a package is
-        re-enabled elsewhere. The framework's answer has to come first.
-        """
-        manager = self.manager
-        self.assertIn('suspend fun isActuallyOff(', manager)
-        self.assertIn('getApplicationInfo(pkg, 0)', manager)
-        self.assertIn('DisableManager.isActuallyOff(context, app.packageName, app.isEnabled)', self.ui)
-        # The framework is asked before the note is consulted, so a stale note cannot outrank fact.
-        off = manager.split('suspend fun isActuallyOff')[1].split('private suspend fun')[0]
-        self.assertLess(off.index('pmPackageState'), off.index('getSuspended'),
-                        'ask the framework before falling back to the local note')
-
-    def test_a_suspend_that_the_os_confirmed_is_not_second_guessed(self):
-        """Owner, 13 Nov 2026: `pm suspend` printed "new suspended state: true", and two versions of
-        this app still showed a red failure because `dumpsys` has no SUSPENDED flag on that build and
-        `pm list packages -e` still lists the package. The OS reported success; believe it."""
-        manager = self.manager
-        self.assertNotIn('Suspend reported success but the package is still enabled', manager)
-        suspend_block = manager.split('val suspendCmd')[1].split('Result.failure(IllegalStateException("Disable failed')[0]
+    def test_actions_verify_state_and_preserve_restore(self):
+        suspend_block = self.manager.split('val suspendCmd')[1].split('/** Read-only: why')[0]
+        self.assertIn('s.exit, suspensionState(context, packageName), s.output, packageName, expected = true', suspend_block)
         self.assertIn('setSuspended(context, packageName, true)', suspend_block)
-        # A suspended package keeps its process, so a disable must also end it.
-        self.assertIn('"am", "force-stop", packageName', suspend_block)
+        self.assertIn('"am", "force-stop", "--user", user, packageName', suspend_block)
+        enable = self.manager.split('suspend fun enablePackage')[1]
+        self.assertIn('u.exit, suspensionState(context, packageName), u.output, packageName, expected = false', enable)
+        self.assertIn('enabledState(context, packageName) != true', enable)
+        self.assertIn('app.needsRestore', self.ui)
 
 
 class PublisherPinTest(unittest.TestCase):

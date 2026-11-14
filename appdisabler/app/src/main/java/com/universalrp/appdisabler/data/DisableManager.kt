@@ -9,34 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import rikka.shizuku.Shizuku
 
-/**
- * Disable-only manager via Shizuku shell (`pm disable-user` / `pm enable`).
- * No uninstall, no root. Every disable is reversible via Enable.
- *
- * Shizuku has TWO states that must both be true before disable works:
- *  1. Server running (pingBinder) — user started Shizuku via Wireless debugging.
- *  2. Permission granted (checkSelfPermission) — user tapped Allow in Shizuku dialog.
- * Checking only (1) caused "Failed" on every Disable because permission was never asked.
- *
- * Why shell instead of IPackageManager binder call?
- * `setApplicationEnabledSetting` via ShizukuBinderWrapper is rejected by
- * PackageManagerService with "Cannot disable system packages" (it checks the
- * calling package identity). The `pm` shell command runs with shell privileges
- * and is the same path ADB/UAD uses — proven to work for system packages.
- *
- * `Shizuku.newProcess` is public in API <=12 but private in 13.x, so it is
- * invoked via reflection (the class is bundled in this APK, not a framework
- * hidden API, so setAccessible works on all Android versions).
- *
- * OEM (Xiaomi HyperOS) fallback:
- * HyperOS' PackageManagerServiceImpl.shouldRestrictEnabledSettingsChange blocks
- * shell (uid 2000) from changing the enabled state of system packages, so both
- * `pm disable-user` and `pm disable` exit 255 with a SecurityException.
- * `pm suspend --user 0` is allowed there and is fully reversible with
- * `pm unsuspend`; it stops the app (it can no longer run or receive broadcasts)
- * without deleting it. Suspended packages are tracked locally because no public
- * API exposes that state.
- */
+/** Package actions through the Shizuku shell. Suspension is weaker than disabling. */
 object DisableManager {
 
     private const val TAG = "DisableManager"
@@ -68,14 +41,7 @@ object DisableManager {
         }
     }
 
-    // Suspended packages tracked locally (HyperOS blocks disable for system apps;
-    // suspend is the reversible fallback).
-    //
-    // That comment used to end with "No public API exposes suspended state" and stopped the search
-    // there. It is only half true: DISABLED state is fully readable (a disabled package yields no
-    // ApplicationInfo), FLAG_STOPPED answers "is there a
-    // process". Only suspension genuinely needs the note. See isActuallyOff() below — the note is a
-    // fallback for one narrow case, never the answer shown to the user.
+    // A local note is only a recovery hint, never a live suspension-state measurement.
     private const val PREFS = "appdisabler_state"
     private const val KEY_SUSPENDED = "suspended_packages"
 
@@ -83,74 +49,19 @@ object DisableManager {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getStringSet(KEY_SUSPENDED, emptySet()) ?: emptySet()
 
-    /**
-     * Does an app have no process at all? Distinguishes the two things `ps` cannot tell apart.
-     *
-     * The comment above says no public API exposes suspended state. That is true for *suspended*,
-     * but not for the much more common case: a disabled package answers null here (the framework
-     * will not hand out its ApplicationInfo) while a suspended one still answers, because suspend
-     * stops the app from starting without uninstalling it.
-     *
-     * The owner forced-stopped a turned-off app and it came straight back, which is what a
-     * suspended package does; `pm disable-user` is refused for system packages on HyperOS, so the
-     * app falls back to suspend and the fallback is much weaker than the row implies.
-     */
-    private fun pmPackageState(context: Context, pkg: String): String? = try {
-        context.packageManager.getApplicationInfo(pkg, 0)
-        "installed"
-    } catch (_: PackageManager.NameNotFoundException) {
-        "disabled-or-absent"
-    } catch (_: Exception) {
-        null
+    /** Null means the package is not visible, the API is unavailable, or the query failed. */
+    private fun suspensionState(context: Context, pkg: String): Boolean? {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) return null
+        return try { context.packageManager.isPackageSuspended(pkg) } catch (_: Exception) { null }
     }
 
-    /**
-     * Read-only: is this package ACTUALLY turned off on the phone right now?
-     *
-     * Never trust the local suspension note for what the user sees. It drifts in two ways that both
-     * hurt the owner: the app is reinstalled or its data cleared (the note is gone, the package is
-     * still disabled), or the package was re-enabled outside this app (the note survives, the
-     * package is back). The framework's answer is checked first; the note only fills the gap where
-     * the framework genuinely cannot speak.
-     */
-    suspend fun isActuallyOff(context: Context, pkg: String, isEnabled: Boolean): Boolean =
-        withContext(Dispatchers.IO) {
-            // A framework-disabled package is off, full stop.
-            if (!isEnabled) return@withContext true
-            if (pmPackageState(context, pkg) == "disabled-or-absent") return@withContext true
-            // Not disabled, so suspension is the only way it can be off — and suspension is the one
-            // state Android does not show us. The note is written only when `pm suspend` confirmed
-            // success, so it is a record of a verified action, not a guess.
-            if (pkg in getSuspended(context)) return@withContext true
-            shellSuspension(pkg) == true
-        }
+    @Suppress("DEPRECATION")
+    private fun enabledState(context: Context, pkg: String): Boolean? = try {
+        context.packageManager.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS).enabled
+    } catch (_: Exception) { null }
 
-    /**
-     * Is the package suspended right now? null when the shell cannot say.
-     *
-     * Do NOT ask `pm list packages -e`. Measured on the owner's HyperOS phone on 13 November 2026:
-     * a package that `pm suspend` had just reported as suspended ("new suspended state: true") was
-     * STILL listed by `pm list packages -e`, and absent from `-d`. Filtering by enabled/disabled
-     * therefore cannot see a suspension at all — an earlier version of this function did exactly
-     * that and turned a successful suspend into a false "still enabled" failure.
-     *
-     * `dumpsys package <pkg>` prints the real flags, including SUSPENDED.
-     */
-    private suspend fun shellSuspension(pkg: String): Boolean? {
-        val out = runShellSuspend(arrayOf("dumpsys", "package", pkg)) ?: return null
-        val flags = Regex("flags=\\[([^\\]]*)]").find(out)?.groupValues?.get(1) ?: return null
-        if (!Regex("SUSPENDED").containsMatchIn(flags)) return false
-        // A package can also be suspended by a package-manager actor; that is a different mechanism
-        // and not something this app did; suspension does not prove the process cannot run.
-        return true
-    }
-
-    /** Confirms the outcome of one disable attempt; null when it cannot be read. */
-    private suspend fun runShellSuspend(cmd: Array<String>): String? = withContext(Dispatchers.IO) {
-        if (!isShizukuRunning()) return@withContext null
-        val r = runShell(cmd)
-        if (r.exit != 0) null else r.output
-    }
+    // Android application UIDs are partitioned into per-user ranges of 100000.
+    private fun currentUserId(): String = (android.os.Process.myUid() / 100000).toString()
 
     private fun setSuspended(context: Context, pkg: String, suspended: Boolean) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -163,9 +74,9 @@ object DisableManager {
     suspend fun loadInstalledApps(context: Context): List<AppInfo> = withContext(Dispatchers.IO) {
         val pm = context.packageManager
         val pkgs = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            pm.getInstalledPackages(PackageManager.PackageInfoFlags.of(PackageManager.GET_META_DATA.toLong()))
+            pm.getInstalledPackages(PackageManager.PackageInfoFlags.of((PackageManager.GET_META_DATA or PackageManager.MATCH_DISABLED_COMPONENTS).toLong()))
         } else {
-            pm.getInstalledPackages(PackageManager.GET_META_DATA)
+            pm.getInstalledPackages(PackageManager.GET_META_DATA or PackageManager.MATCH_DISABLED_COMPONENTS)
         }
         // Ensure UAD DB loaded
         UadDatabase.load(context)
@@ -187,6 +98,7 @@ object DisableManager {
                     @Suppress("DEPRECATION") pm.getInstallerPackageName(pkg.packageName)
                 }
             } catch (_: Exception) { null }
+            val suspendedState = suspensionState(context, pkg.packageName)
             AppInfo(
                 packageName = pkg.packageName,
                 label = label,
@@ -197,7 +109,9 @@ object DisableManager {
                 category = uad?.category ?: if (isSystem) DisableCategory.UNLISTED else DisableCategory.SAFE,
                 description = uad?.description,
                 bootloopRisk = uad?.bootloopRisk == true,
-                isSuspended = pkg.packageName in suspended,
+                isSuspended = suspendedState == true,
+                isSuspensionKnown = suspendedState != null,
+                isSuspensionRemembered = pkg.packageName in suspended,
                 isStopped = isStopped,
                 isPersistent = isPersistent,
             )
@@ -375,42 +289,34 @@ object DisableManager {
     suspend fun disablePackage(context: Context, packageName: String): Result<ActionOutcome> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
         blockingReason(context, packageName)?.let { return@withContext Result.failure(IllegalStateException(it)) }
-        // 1) Proper disable (works on stock Android + non-system apps everywhere).
-        val disableAttempts = listOf(
-            arrayOf("pm", "disable-user", "--user", "0", packageName),
-            arrayOf("pm", "disable-user", packageName),
-        )
-        val log = StringBuilder()
-        for (cmd in disableAttempts) {
-            val r = runShell(cmd)
-            log.append("${cmd.joinToString(" ")} -> exit ${r.exit}: ${r.output.take(200)}\n")
-            if (r.exit == 0 && !r.output.startsWith("Error", ignoreCase = true)) {
-                setSuspended(context, packageName, false)
-                return@withContext Result.success(ActionOutcome.DISABLED)
-            }
+        val user = currentUserId()
+        val currentEnabled = enabledState(context, packageName)
+        if (currentEnabled != true || suspensionState(context, packageName) == true) {
+            return@withContext Result.failure(IllegalStateException("App state changed or is unavailable. Refresh and review it before retrying."))
         }
-        // 2) HyperOS fallback: suspend (reversible via unsuspend; not a full disable).
-        //    Xiaomi's PMS blocks shell disable for system packages
-        //    (shouldRestrictEnabledSettingsChange) but allows suspend.
-        val suspendCmd = arrayOf("pm", "suspend", "--user", "0", packageName)
+        val log = StringBuilder()
+        val disable = runShell(arrayOf("pm", "disable-user", "--user", user, packageName))
+        log.append("disable-user -> exit ${disable.exit}: ${disable.output.take(300)}\n")
+        // A shell exit code is not a state. Do not infer disabled from absence/visibility failure.
+        val afterDisable = enabledState(context, packageName)
+        if (disable.exit == 0 && afterDisable == false) {
+            return@withContext Result.success(ActionOutcome.DISABLED)
+        }
+        if (afterDisable != true) {
+            return@withContext Result.failure(IllegalStateException("Could not verify the disable result. Refresh and check the app before retrying.\n$log".trim()))
+        }
+        val suspendCmd = arrayOf("pm", "suspend", "--user", user, packageName)
         val s = runShell(suspendCmd)
-        log.append("${suspendCmd.joinToString(" ")} -> exit ${s.exit}: ${s.output.take(200)}\n")
-        if (s.exit == 0 && !s.output.startsWith("Error", ignoreCase = true)) {
-            // `pm suspend` printing "new suspended state: true" and exiting 0 IS the proof.
-            //
-            // Do not try to re-read the state. Measured on the owner's HyperOS phone (13 Nov 2026):
-            // `dumpsys package` shows no SUSPENDED flag for a package that suspend just reported as
-            // suspended, and the package stays in `pm list packages -e`. Two earlier versions of
-            // this check therefore turned a reported successful suspension into a red failure.
+        log.append("suspend -> exit ${s.exit}: ${s.output.take(300)}\n")
+        if (PackageCommandVerification.matchesSuspension(
+                s.exit, suspensionState(context, packageName), s.output, packageName, expected = true)) {
             setSuspended(context, packageName, true)
-            // Best effort only: a force-stop does not guarantee the process stays stopped.
-            val forceStop = runShell(arrayOf("am", "force-stop", packageName))
-            log.append(
-                "am force-stop $packageName -> exit ${forceStop.exit}: ${forceStop.output.take(200)}\n"
-            )
+            // Best effort: a force-stop does not guarantee the process stays stopped.
+            val forceStop = runShell(arrayOf("am", "force-stop", "--user", user, packageName))
+            log.append("force-stop -> exit ${forceStop.exit}: ${forceStop.output.take(200)}\n")
             return@withContext Result.success(ActionOutcome.SUSPENDED)
         }
-        Result.failure(IllegalStateException("Disable failed. Attempts:\n$log".trim()))
+        Result.failure(IllegalStateException("Could not verify disable or suspension. The device may have refused it. Refresh and check the app before retrying.\n$log".trim()))
     }
 
     /** Read-only: why this package must not be turned off right now (null when it is fine). */
@@ -447,34 +353,34 @@ object DisableManager {
 
     suspend fun enablePackage(context: Context, packageName: String): Result<ActionOutcome> = withContext(Dispatchers.IO) {
         checkReady()?.let { return@withContext Result.failure(IllegalStateException(it)) }
-        val wasSuspended = packageName in getSuspended(context)
+        val user = currentUserId()
+        val before = suspensionState(context, packageName)
+        val remembered = packageName in getSuspended(context)
         val log = StringBuilder()
-        // 1) Unsuspend first — `pm enable` alone is exit 0 but a no-op for a suspended app.
-        var unsuspended = false
-        if (wasSuspended) {
-            val unsuspendCmd = arrayOf("pm", "unsuspend", "--user", "0", packageName)
-            val u = runShell(unsuspendCmd)
-            log.append("${unsuspendCmd.joinToString(" ")} -> exit ${u.exit}: ${u.output.take(200)}\n")
-            unsuspended = u.exit == 0 && !u.output.startsWith("Error", ignoreCase = true)
-            if (unsuspended) setSuspended(context, packageName, false)
+        val shouldUnsuspend = before == true || remembered || before == null
+        var didUnsuspend = false
+        if (shouldUnsuspend) {
+            val u = runShell(arrayOf("pm", "unsuspend", "--user", user, packageName))
+            log.append("unsuspend -> exit ${u.exit}: ${u.output.take(300)}\n")
+            if (!PackageCommandVerification.matchesSuspension(
+                    u.exit, suspensionState(context, packageName), u.output, packageName, expected = false)) {
+                return@withContext Result.failure(IllegalStateException(
+                    "Could not verify that suspension was removed; another administrator may still suspend this app.\n$log".trim()))
+            }
+            setSuspended(context, packageName, false)
+            didUnsuspend = before == true || remembered
         }
-        // 2) Re-enable if it had been properly disabled.
-        val enableAttempts = listOf(
-            arrayOf("pm", "enable", "--user", "0", packageName),
-            arrayOf("pm", "enable", packageName),
-        )
-        for (cmd in enableAttempts) {
-            val r = runShell(cmd)
-            log.append("${cmd.joinToString(" ")} -> exit ${r.exit}: ${r.output.take(200)}\n")
-            if (r.exit == 0 && !r.output.startsWith("Error", ignoreCase = true)) {
-                setSuspended(context, packageName, false)
-                return@withContext Result.success(
-                    if (wasSuspended) ActionOutcome.UNSUSPENDED else ActionOutcome.ENABLED
-                )
+        // A package can be both disabled and suspended. Verify both parts of restoration.
+        if (enabledState(context, packageName) != true) {
+            val e = runShell(arrayOf("pm", "enable", "--user", user, packageName))
+            log.append("enable -> exit ${e.exit}: ${e.output.take(300)}\n")
+            if (e.exit != 0 || enabledState(context, packageName) != true) {
+                return@withContext Result.failure(IllegalStateException("Could not verify that the app was enabled.\n$log".trim()))
             }
         }
-        // Unsuspend alone already restores the app (it was only suspended, never disabled).
-        if (unsuspended) return@withContext Result.success(ActionOutcome.UNSUSPENDED)
-        Result.failure(IllegalStateException("Enable failed. Attempts:\n$log".trim()))
+        if (suspensionState(context, packageName) == true) {
+            return@withContext Result.failure(IllegalStateException("The app is still suspended, possibly by another administrator."))
+        }
+        Result.success(if (didUnsuspend) ActionOutcome.UNSUSPENDED else ActionOutcome.ENABLED)
     }
 }

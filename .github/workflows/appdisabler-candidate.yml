@@ -103,7 +103,7 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: appdisabler-0.3.0-candidate
+          name: appdisabler-0.3.0-debug-only
           path: |
             appdisabler/app/build/outputs/apk/debug/*.apk
             appdisabler/app/build/test-results/

@@ -97,3 +97,40 @@ transfer automatically to new bytes.
 - The About and Setup text no longer promises OTA/banking safety or guaranteed recovery. The
   `turned off` count still includes suspensions, so that count and the strength of rating labels
   remain follow-up work. No OEM compatibility conclusion follows from these stock tests.
+
+## Installed APK reported by owner on 14 November 2026
+
+The owner's diagnostic screenshot reports installed base APK SHA-256
+`83e302a986df7b9ab7421e0bf1b072a944c9046527cb78baaaff3fd83a80b86c`,
+`Debuggable: true`, and `Installed splits: 0`. This is a debug build and does **not** match the
+non-debuggable release candidate from run 43529764131 (`344d1d5cf8c04f5f813a695cc3abe5379be2c2d8b316979ff151bc0915fcdf7a`).
+The owner did run the new identity diagnostic and showed the corrected About text; neither
+establishes the release APK was installed or tested. Do not publish the debug APK or count its
+observations as a hash match for the release. No installer action is inferred from a screenshot.
+
+The similarly named debug and release artifacts have now led to repeated confusion. For future
+candidate workflows make the debug artifact name explicitly say debug / not for release and keep
+release-download directions unambiguous. This is a workflow follow-up, not evidence that existing
+artifacts have changed. Avoid rebuilding the candidate under test just to rename an artifact.
+
+## Owner confirmed release identity on 14 November 2026
+
+The owner's subsequent Shizuku diagnostic screenshot reports installed base APK SHA-256
+`344d1d5cf8c04f5f813a695cc3abe5379be2c2d8b316979ff151bc0915fcdf7a`, `Debuggable: false`, and
+`Installed splits: 0`. The full hash matches the release APK recorded for build run `43529764131`.
+The screenshot also shows that the app opened and the Shizuku shell diagnostic ran on this phone.
+This establishes the installed candidate's identity and those observed checks only: earlier
+screenshots from the debug build do not prove disable/restore or reboot outcomes for these release
+bytes. The immediate-ADB-reboot issue and broader OEM testing limitations above remain unresolved.
+
+## Owner's Joyose observation on the hash-matched release candidate
+
+On 14 November 2026 the owner reported Joyose (`com.xiaomi.joyose`) was not running. Their
+screenshot shows the toast `Suspended Joyose (this device blocks disable)`, the row says
+`suspended — may still run` with an Enable button, and the Settings app shows Force stop greyed
+out. This is consistent with the owner's observation, but Settings button state and the app's
+saved suspension record are not a direct process-table or independent suspension-state check.
+The screenshots do not show the Enable action's result, a later reboot, or behaviour on other
+models. The app's imported description says Joyose "can't be stopped"; that categorical statement
+is not supported by this observation and needs a cautious wording review. Keep the exact release
+hash evidence above; do not rebuild and call new bytes owner-tested.

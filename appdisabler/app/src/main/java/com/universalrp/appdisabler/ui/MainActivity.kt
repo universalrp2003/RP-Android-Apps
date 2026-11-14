@@ -460,6 +460,8 @@ fun AppsListWindow(
             shizukuRunningLive = DisableManager.isShizukuRunning()
             // `ps` is cheap but not free: refresh every other 2 s tick instead of on every one.
             if (shizukuLive && tick % 2 == 0) running = DisableManager.runningProcesses()
+            if (!shizukuLive) running = null
+            if (tick > 0 && tick % 5 == 0) apps = DisableManager.loadInstalledApps(context)
             tick++
             kotlinx.coroutines.delay(2000)
         }
@@ -476,8 +478,10 @@ fun AppsListWindow(
             if (app.packageName in HIDE_PACKAGES) return@filter false
             val tabOk = when (tab) {
                 1 -> app.isSystem
-                2 -> !app.isEnabled || app.isSuspended
+                2 -> app.needsRestore
                 3 -> !app.isSystem
+                4 -> app.isSuspended
+                5 -> !app.isEnabled
                 else -> true
             }
             // null = no category filter (the header counts drop you into an unfiltered list).
@@ -495,20 +499,17 @@ fun AppsListWindow(
         else -> biStatic(T.toastEnabled, taFirst).format(label)
     }
 
-    fun run(app: AppInfo) {
+    fun run(app: AppInfo, restore: Boolean = app.needsRestore) {
         scope.launch {
-            // The row's own view can be stale (a package re-enabled elsewhere, or this app's data
-            // cleared while packages stayed off). Ask the phone before choosing Enable or Disable.
-            val off = app.isSuspended || !app.isEnabled ||
-                DisableManager.isActuallyOff(context, app.packageName, app.isEnabled)
-            val r = if (off) DisableManager.enablePackage(context, app.packageName)
+            // Preserve the action shown on the button; the manager verifies the current state.
+            val r = if (restore) DisableManager.enablePackage(context, app.packageName)
             else DisableManager.disablePackage(context, app.packageName)
             if (r.isSuccess) {
                 Toast.makeText(context, msgFor(r, app.label), Toast.LENGTH_SHORT).show()
-                apps = DisableManager.loadInstalledApps(context)
             } else {
                 errorMsg = r.exceptionOrNull()?.let { e -> e.message ?: e.javaClass.simpleName } ?: biStatic(T.unknownError, taFirst)
             }
+            apps = DisableManager.loadInstalledApps(context)
         }
     }
 
@@ -545,14 +546,14 @@ fun AppsListWindow(
             }
         }
 
-        // ---- counts strip: installed / pre-installed / turned off / running ----
-        // Every number is derived from the same list the cards come from, so the four tiles always
-        // add up. Shizuku is only needed for the "running" one (it reads the process table).
+        // Counts are separate, may overlap, and derive from the same list as the cards.
         run {
             val visible = apps.filter { it.packageName !in HIDE_PACKAGES }
             val system = visible.count { it.isSystem }
             val user = visible.size - system
-            val off = visible.count { !it.isEnabled || it.isSuspended }
+            val disabled = visible.count { !it.isEnabled }
+            val suspended = visible.count { it.isSuspended }
+            val suspensionUnknown = visible.any { !it.isSuspensionKnown }
             val runningCount = running?.let { live ->
                 visible.count { app -> live.contains(app.packageName) }
             }
@@ -583,11 +584,18 @@ fun AppsListWindow(
                     onClick = { filter = null; tab = 3; runningOnly = false }
                 )
                 StatTile(
-                    symbol = "⛔", count = off.toString(),
-                    label = "turned off",
+                    symbol = "⛔", count = disabled.toString(),
+                    label = "disabled",
                     tint = MaterialTheme.colorScheme.error,
-                    active = filter == null && tab == 2 && !runningOnly,
-                    onClick = { filter = null; tab = 2; runningOnly = false }
+                    active = filter == null && tab == 5 && !runningOnly,
+                    onClick = { filter = null; tab = 5; runningOnly = false }
+                )
+                StatTile(
+                    symbol = "⏸", count = suspended.toString(),
+                    label = if (suspensionUnknown) "suspended (known)" else "suspended",
+                    tint = MaterialTheme.colorScheme.error,
+                    active = filter == null && tab == 4 && !runningOnly,
+                    onClick = { filter = null; tab = 4; runningOnly = false }
                 )
                 StatTile(
                     symbol = "▶", count = runningCount?.toString() ?: "—",
@@ -692,18 +700,22 @@ fun AppsListWindow(
                         taFirst = taFirst,
                         running = running,
                         onDisable = {
-                            if (app.category == DisableCategory.CRITICAL || app.bootloopRisk) {
+                            if (!app.needsRestore && (app.category == DisableCategory.CRITICAL || app.bootloopRisk)) {
                                 Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
                             if (!shizukuLive) {
                                 Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show(); return@AppRow
                             }
-                            val off = !(app.isEnabled && !app.isSuspended)
+                            val off = app.needsRestore
                             // Keyboard in use / accessibility service in use: explain, never attempt.
                             if (!off && DisableManager.disableBlockedReason(context, app.packageName) != null) {
                                 blockedApp = app; return@AppRow
                             }
                             if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
+                        },
+                        onRestoreUnknown = {
+                            if (!shizukuLive) Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
+                            else run(app, restore = true)
                         },
                         onOpenDetails = { infoApp = app }
                     )
@@ -763,16 +775,16 @@ fun AppsListWindow(
             onDismiss = { infoApp = null },
             onDisable = {
                 infoApp = null
-                if (app.category == DisableCategory.CRITICAL || app.bootloopRisk) {
+                if (!app.needsRestore && (app.category == DisableCategory.CRITICAL || app.bootloopRisk)) {
                     Toast.makeText(context, biStatic(T.toastProtected, taFirst), Toast.LENGTH_SHORT).show()
                 } else if (!shizukuLive) {
                     Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
-                } else if (!(app.isEnabled && !app.isSuspended) &&
+                } else if (!app.needsRestore &&
                     DisableManager.disableBlockedReason(context, app.packageName) != null
                 ) {
                     blockedApp = app
                 } else {
-                    val off = !(app.isEnabled && !app.isSuspended)
+                    val off = app.needsRestore
                     if (!off && app.category == DisableCategory.CAUTION) confirmApp = app else run(app)
                 }
             }
@@ -863,8 +875,8 @@ fun AppDetailsDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDisable, enabled = app.category != DisableCategory.CRITICAL) {
-                Text(biStatic(if (app.isEnabled && !app.isSuspended) T.actionDisable else T.actionEnable, taFirst))
+            Button(onClick = onDisable, enabled = app.needsRestore || (app.category != DisableCategory.CRITICAL && !app.bootloopRisk)) {
+                Text(biStatic(if (app.needsRestore) T.actionEnable else T.actionDisable, taFirst))
             }
         },
         dismissButton = {
@@ -879,11 +891,12 @@ fun AppDetailsDialog(
 }
 
 @Composable
-fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit, onOpenDetails: () -> Unit) {
+fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit,
+           onRestoreUnknown: () -> Unit, onOpenDetails: () -> Unit) {
     // The whole card is tinted by its rating, so the list can be read without stopping to parse
     // each line: a green name means safe, amber means it will ask, red means it will not act.
     val tint = ratingColour(app)
-    val blocked = app.category == DisableCategory.CRITICAL || app.bootloopRisk
+    val blocked = !app.needsRestore && (app.category == DisableCategory.CRITICAL || app.bootloopRisk)
     Card(
         modifier = Modifier.fillMaxWidth().clickable { onOpenDetails() },
         colors = CardDefaults.cardColors(containerColor = tint.copy(alpha = 0.07f))
@@ -923,6 +936,8 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 val statusText = when {
                     !app.isEnabled -> "● disabled — tap Enable to restore"
                     app.isSuspended -> "● suspended — may still run"
+                    !app.isSuspensionKnown && app.isSuspensionRemembered -> "● suspension unknown — Enable to recover"
+                    !app.isSuspensionKnown -> "● suspension status unknown"
                     running != null && running.contains(app.packageName) -> "● running now"
                     app.isStopped -> "● marked stopped by Android"
                     else -> null
@@ -947,9 +962,14 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
                 ) {
                     Text(
-                        if (blocked) "Blocked" else if (app.isEnabled && !app.isSuspended) "Disable" else "Enable",
+                        if (blocked) "Blocked" else if (app.needsRestore) "Enable" else "Disable",
                         style = MaterialTheme.typography.labelSmall
                     )
+                }
+                if (!app.isSuspensionKnown && !app.needsRestore) {
+                    TextButton(onClick = onRestoreUnknown, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                        Text("Try restore", style = MaterialTheme.typography.labelSmall)
+                    }
                 }
                 TextButton(onClick = onOpenDetails, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                     Text("Get more info", style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp))

@@ -34,22 +34,15 @@ Bundle these into the next Store release; do not start a Store-only build just f
       foreground-only, opens the official site, never downloads or installs), and add each to
       `AppUpdates.ids`. This needs a Disabler 0.3.0 and a TV Guard 1.6.0, so build, owner-test, pin,
       then publish — never a rebuild of untested bytes.
-- [ ] **A turned-off row was labelled "● running now".** Fixed in source on 13 November 2026 (the
-      off branch is now tested before the running branch in `MainActivity`), with a test that asserts
-      that order. It needs a Disabler rebuild to reach the phone: disabling leaves the process alive,
-      so `ps` still lists the package. Bundle it with the update-check work above in 0.3.0.
-- [ ] **The Disabler cannot tell "disabled" from "suspended", and its Enable button trusted a local
-      note.** Owner report 13 November 2026: a turned-off app came straight back after force-close,
-      "never stopped". Cause: on HyperOS `pm disable-user` is refused for system packages, so the app
-      falls back to `pm suspend`, which stops the app from starting but leaves any live process
-      alone — force-closing it does nothing. The row then still read its own SharedPreferences note
-      rather than asking the phone. Source is now fixed: `isActuallyOff()` checks the framework
-      (a disabled package yields no `ApplicationInfo`) and `pm list packages -e`, the Enable/Disable
-      decision comes from that, a suspend that reports exit 0 but leaves the package enabled is now
-      a reported failure instead of a silent success, and the row has a third state
-      "● stopped — no process, starts on next launch" from `FLAG_STOPPED`. Needs 0.3.0 to reach the
-      phone. The diagnostic ("Check Shizuku shell") now prints enabled/disabled list membership plus
-      `dumpsys package` flags for HyperComm so the next report is evidence, not a guess.
+- [ ] **A suspended app can still have a running process.** The 0.3.0 candidate shows
+      `suspended — may still run` rather than claiming that it is fully off. The running list and
+      suspension list can overlap, and the `turned off` count includes suspensions; make that count
+      clear without implying the process has stopped. Verify state on each actual device.
+- [ ] **Suspension differs from disable and the local record may become stale.** The app attempts
+      disable first, then suspension if disable fails. A reported successful suspend is not evidence
+      that a process is stopped or cannot restart. The app stores its own successful-action record,
+      which may become stale if state changes elsewhere; don't treat it as a live OS check. On the
+      owner's HyperOS device, the enabled/disabled package lists did not reveal suspension.
 - [ ] **Suspension cannot be seen in `pm list packages -e`.** Owner's phone, 13 November 2026: the
       shell printed `pm suspend --user 0 com.xiaomi.hypercomm -> exit 0: Package com.xiaomi.hypercomm
       new suspended state: true`, and `dumpsys` showed `flags=[ SYSTEM HAS_CODE PERSISTENT
@@ -64,3 +57,12 @@ Bundle these into the next Store release; do not start a Store-only build just f
       does not prove it is always running, cannot be disabled or uninstalled, or that disabling is
       safe. The app now distinguishes reported suspension from disable and avoids those claims;
       the saved suspension record can become stale. Verify actual behaviour on the device.
+- [ ] **Joyose description overclaims that it cannot be stopped.** Owner reported it was not
+      running after suspension; Settings showed Force stop greyed out on 14 November 2026. The
+      UAD-derived row description says "can't be stopped". Review and replace that categorical
+      claim with device-dependent wording, without assuming it stays stopped after a reboot.
+
+### App Disabler: suspension research and state correctness
+
+- Source now verifies requested suspension results, queries `PackageManager.isPackageSuspended(packageName)` on API 29+, shows unknown on failures/older versions, offers recovery, and separates counts. Unit and device testing remains necessary, especially external/multiple suspenders and user profiles. Don't publish newly rebuilt bytes as the previous owner-tested candidate. See [suspension research](appdisabler-suspension-research.md).
+- Prototype synchronous restriction writes only with disposable fixtures and privileged access; compare immediate-reboot baselines, restore and OEM behavior before claiming a persistence fix. Do not equate suspension with disable or automatically uninstall protected apps.
