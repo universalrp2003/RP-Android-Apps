@@ -572,6 +572,13 @@
       border-radius: 10px;
       padding: 8px 10px;
     }
+    /* Per-app progress is next to the selected release, not at the bottom of the list. */
+    .apk-download-status { margin-top: 8px; white-space: normal; text-align: left; font-weight: 400; overflow-wrap: anywhere; line-height: 1.4; }
+    .apk-download-status p { margin: 0; }
+    .apk-download-status p + p { margin-top: 4px; }
+    .apk-download-status progress { display: block; width: 100%; height: 0.5rem; margin: 6px 0; accent-color: var(--green); }
+    .apk-download-status progress[hidden] { display: none; }
+    .apk-download-announce { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
     .note {
       background: rgba(251, 191, 36, 0.09);
       border: 1px solid rgba(251, 191, 36, 0.32);
@@ -2138,19 +2145,61 @@
       });
     });
 
-    // Single-stream WebCrypto SHA-256 verified CDN downloader (bypasses multi-range Parallel Downloading & cross-domain 302 redirects)
+    // Show each APK's progress beside its table row and its card, including on small screens.
+    // Links remain ordinary GitHub downloads if JavaScript, fetch or WebCrypto is unavailable.
+    var apkDownloads = new Map();
     document.querySelectorAll('a[data-apk]').forEach(function (link) {
+      var apkUrl = link.getAttribute('data-apk');
+      var group = apkDownloads.get(apkUrl);
+      if (!group) {
+        group = { busy: false, views: [] };
+        apkDownloads.set(apkUrl, group);
+      }
+      var box = document.createElement('div');
+      box.className = 'dl-status apk-download-status';
+      var headline = document.createElement('p');
+      var bar = document.createElement('progress');
+      bar.setAttribute('aria-label', 'APK download progress');
+      bar.max = 100;
+      bar.hidden = true;
+      var hint = document.createElement('p');
+      var announce = document.createElement('span');
+      announce.className = 'apk-download-announce';
+      box.append(headline, bar, hint, announce);
+      var row = link.closest('.latest tr');
+      if (row) row.querySelector('.lname').appendChild(box);
+      else link.closest('.hero-links').insertAdjacentElement('afterend', box);
+      var view = { box: box, headline: headline, bar: bar, hint: hint, announce: announce };
+      group.views.push(view);
+
       link.addEventListener('click', async function (ev) {
         if (!window.fetch || !window.crypto || !window.crypto.subtle) return;
         ev.preventDefault();
-        var apkUrl = link.getAttribute('data-apk');
+        if (group.busy) return; // Do not start a second transfer for the same APK.
+        group.busy = true;
         var fileName = link.getAttribute('data-name');
         var expectedSha = link.getAttribute('data-sha');
-        var box = document.getElementById(link.getAttribute('data-status'));
-        if (box) {
-          box.style.display = 'block';
-          box.textContent = 'Starting single-stream CDN download of ' + fileName + '...';
+        var previousMilestone = -1;
+        // Announce only at the clicked location so the second copy does not echo it.
+        group.views.forEach(function (v) {
+          v.announce.removeAttribute('role');
+          v.announce.removeAttribute('aria-live');
+          v.announce.textContent = '';
+        });
+        view.announce.setAttribute('role', 'status');
+        view.announce.setAttribute('aria-live', 'polite');
+        function show(title, detail, percent, announcement) {
+          group.views.forEach(function (v) {
+            v.box.style.display = 'block';
+            v.headline.textContent = title;
+            v.hint.textContent = detail;
+            v.bar.hidden = percent == null;
+            if (percent != null) v.bar.value = percent;
+          });
+          if (announcement) view.announce.textContent = announcement;
         }
+        var waitMessage = 'Keep this page open. The save prompt comes after verification. / பதிவிறக்கம் முடியும் வரை இப்பக்கத்தைத் திறந்து வைக்கவும்.';
+        show('Preparing download…', waitMessage, null, 'Preparing ' + fileName + '. Keep this page open.');
         try {
           var resp = await fetch(apkUrl, { cache: 'no-store' });
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -2163,26 +2212,26 @@
             if (part.done) break;
             chunks.push(part.value);
             received += part.value.length;
-            if (box) {
-              var mb = (received / 1048576).toFixed(2);
-              var pct = total > 0 ? Math.round((received / total) * 100) + '% ' : '';
-              box.textContent = 'Streaming ' + fileName + ': ' + pct + '(' + mb + ' MB)...';
-            }
+            var mib = (received / 1048576).toFixed(2);
+            // Do not show 100% while verification and the save prompt are still pending.
+            var percent = total > 0 ? Math.min(99, Math.floor(received / total * 100)) : null;
+            var milestone = percent == null ? -1 : Math.floor(percent / 10);
+            var speech = milestone > previousMilestone ? 'Downloading ' + fileName + ': ' + percent + ' percent.' : null;
+            if (milestone > previousMilestone) previousMilestone = milestone;
+            show('Downloading: ' + (percent == null ? mib + ' MiB' : percent + '% (' + mib + ' MiB)'), waitMessage, percent, speech);
           }
+          show('Checking file integrity…', waitMessage, null, 'Download complete. Checking file integrity.');
           var merged = new Uint8Array(received);
           var offset = 0;
           for (var i = 0; i < chunks.length; i++) {
             merged.set(chunks[i], offset);
             offset += chunks[i].length;
           }
-          if (box) box.textContent = 'Verifying SHA-256 file hash in browser...';
           var hashBuf = await crypto.subtle.digest('SHA-256', merged.buffer);
           var actualSha = Array.from(new Uint8Array(hashBuf)).map(function (b) {
             return b.toString(16).padStart(2, '0');
           }).join('');
-          if (actualSha !== expectedSha) {
-            throw new Error('SHA-256 mismatch');
-          }
+          if (actualSha !== expectedSha) throw new Error('SHA-256 mismatch');
           var blob = new Blob([merged], { type: 'application/octet-stream' });
           var objUrl = URL.createObjectURL(blob);
           var a = document.createElement('a');
@@ -2192,21 +2241,20 @@
           a.click();
           a.remove();
           setTimeout(function () { URL.revokeObjectURL(objUrl); }, 60000);
-          if (box) {
-            box.innerHTML = 'Published SHA-256 matched (not security approval). கோப்பு மதிப்பு பொருந்தியது; இது பாதுகாப்பு ஒப்புதல் அல்ல. Saving <strong>' + fileName + '</strong>. (If your phone still blocks raw <code>.apk</code> saving, tap the green <strong>📦 Download .ZIP</strong> button!)';
-          }
+          show('File verified. Check your browser for the save prompt.', 'Matching SHA-256 is not a safety approval. If no prompt appears, try the ZIP download.', null, 'File verified. Check your browser for the save prompt.');
         } catch (err) {
           if (err.message === 'SHA-256 mismatch') {
-            if (box) box.textContent = 'கோப்பு அடையாளம் பொருந்தவில்லை; பதிவிறக்கம் நிறுத்தப்பட்டது. File hash mismatch; download stopped. Do not install this file.';
+            show('File hash mismatch; download stopped.', 'Do not install this file. / கோப்பை நிறுவ வேண்டாம்.', null, 'File hash mismatch. Download stopped.');
             return; // Integrity failure must never become an unchecked direct download.
           }
-          if (box) {
-            box.textContent = 'Switching to direct GitHub Release link (' + err.message + ')...';
-          }
+          show('Could not verify here; opening the direct GitHub release download.', 'Check the file hash separately before installing.', null, 'Opening the direct GitHub download.');
           window.location.href = link.href;
+        } finally {
+          group.busy = false;
         }
       });
     });
+
   </script>
 </body>
 </html>
