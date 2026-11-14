@@ -1,0 +1,24 @@
+name: Read System App Disabler candidate digest
+on:
+  workflow_dispatch:
+  push:
+    branches: ['arena/**']
+    paths: ['.github/workflows/appdisabler-candidate-digest-probe.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Read the APK (not the archive)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download 43537944084 --repo "$GITHUB_REPOSITORY" -n appdisabler-0.3.0-release-candidate -D "$RUNNER_TEMP/apk"
+          apk="$RUNNER_TEMP/apk/appdisabler-release.apk"
+          test -f "$apk"
+          echo "::notice title=Candidate APK SHA-256::$(sha256sum "$apk" | cut -d' ' -f1)"
+          echo "::notice title=Candidate APK bytes::$(stat -c %s "$apk")"
