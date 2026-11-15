@@ -17,6 +17,19 @@ class PreviewTest {
         encrypted[encrypted.lastIndex] = (encrypted.last().toInt() xor 1).toByte()
         assertTrue(runCatching { BackupCrypto.open(encrypted, password) }.isFailure)
     }
+    @Test fun archiveRetainsRecordsAndHistory() {
+        val book = Book("b", "1", DayOfWeek.MONDAY, LocalDate.of(2026, 11, 15))
+        val initial = NotebookState(Actor("o", "Owner", Role.OWNER), listOf(book))
+        val event = BookArchiveEvent("archive", "b", true, "o", java.time.Instant.parse("2026-11-15T12:00:00Z"))
+        val archived = initial.copy(archiveHistory = listOf(event))
+        assertTrue(archived.isArchived("b"))
+        assertEquals(initial.books, archived.books)
+        val restored = NotebookState.decode(archived.encode())
+        assertEquals(archived, restored)
+        val unarchived = restored.copy(archiveHistory = restored.archiveHistory + event.copy(id = "undo", archived = false))
+        assertFalse(unarchived.isArchived("b"))
+        assertEquals(2, unarchived.archiveHistory.size)
+    }
     @Test fun invalidReferencesRejected() {
         assertTrue(runCatching {
             NotebookState(Actor("o", "Owner", Role.OWNER), loans = listOf(Loan("l", "missing", "c", "p", "f", "n", 100, LocalDate.now(), 1)))

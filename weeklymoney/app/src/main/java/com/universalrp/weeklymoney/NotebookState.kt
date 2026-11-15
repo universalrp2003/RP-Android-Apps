@@ -6,16 +6,23 @@ import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 
+data class BookArchiveEvent(val id: String, val bookId: String, val archived: Boolean,
+                            val actorId: String, val at: Instant)
+
 /** Immutable snapshot wrapper; commit a validated replacement only after a successful atomic write. */
 data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
-                         val loans: List<Loan> = emptyList(), val audits: List<Audit> = emptyList()) {
+                         val loans: List<Loan> = emptyList(), val audits: List<Audit> = emptyList(),
+                         val archiveHistory: List<BookArchiveEvent> = emptyList()) {
     init {
         require(owner.role == Role.OWNER)
         require(books.map { it.id }.distinct().size == books.size)
         require(loans.map { it.id }.distinct().size == loans.size)
         require(loans.all { l -> books.any { it.id == l.bookId } })
+        require(archiveHistory.map { it.id }.distinct().size == archiveHistory.size)
+        require(archiveHistory.all { event -> event.id.isNotBlank() && event.actorId == owner.id && books.any { it.id == event.bookId } })
         Ledger(loans.associateBy { it.id }, audits)
     }
+    fun isArchived(bookId: String) = archiveHistory.lastOrNull { it.bookId == bookId }?.archived ?: false
     fun ledger() = Ledger(loans.associateBy { it.id }, audits)
     fun encode(): ByteArray = JSONObject().apply {
         put("schema", 1); put("kind", "FULL_BACKUP")
@@ -29,6 +36,9 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
             put("place", l.place); put("family", l.familyHead); put("name", l.customerName)
             put("total", l.totalPaise); put("started", l.started.toString()); put("sequence", l.sequence)
         }) } })
+        put("archiveHistory", JSONArray().apply { archiveHistory.forEach { e -> put(JSONObject().apply {
+            put("id", e.id); put("book", e.bookId); put("archived", e.archived); put("actor", e.actorId); put("at", e.at.toString())
+        }) } })
         put("audits", JSONArray().apply { audits.forEach { a -> put(JSONObject().apply {
             put("id", a.eventId); put("before", a.before?.json() ?: JSONObject.NULL); put("after", a.after.json())
         }) } })
@@ -40,13 +50,14 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
             require(root.getInt("schema") == 1 && root.getString("kind") == "FULL_BACKUP")
             val owner = root.getJSONObject("owner").let { Actor(it.getString("id"), it.getString("name"), Role.OWNER) }
             fun <T> array(key: String, parse: (JSONObject) -> T): List<T> {
-                val a = root.getJSONArray(key); require(a.length() <= 100000)
+                val a = root.optJSONArray(key) ?: if (key == "archiveHistory") JSONArray() else error("Missing records"); require(a.length() <= 100000)
                 return (0 until a.length()).map { parse(a.getJSONObject(it)) }
             }
             return NotebookState(owner,
                 array("books") { Book(it.getString("id"), it.getString("number"), DayOfWeek.of(it.getInt("day")), LocalDate.parse(it.getString("started")), it.getString("heading")) },
                 array("loans") { Loan(it.getString("id"), it.getString("book"), it.getString("customerId"), it.getString("place"), it.getString("family"), it.getString("name"), it.getLong("total"), LocalDate.parse(it.getString("started")), it.getInt("sequence")) },
-                array("audits") { Audit(it.getString("id"), if (it.isNull("before")) null else payment(it.getJSONObject("before")), payment(it.getJSONObject("after"))) })
+                array("audits") { Audit(it.getString("id"), if (it.isNull("before")) null else payment(it.getJSONObject("before")), payment(it.getJSONObject("after"))) },
+                array("archiveHistory") { BookArchiveEvent(it.getString("id"), it.getString("book"), it.getBoolean("archived"), it.getString("actor"), Instant.parse(it.getString("at"))) })
         }
         private fun payment(j: JSONObject) = Payment(j.getString("id"), j.getString("loan"), j.getInt("week"),
             LocalDate.parse(j.getString("date")), if (j.isNull("amount")) null else j.getLong("amount"),

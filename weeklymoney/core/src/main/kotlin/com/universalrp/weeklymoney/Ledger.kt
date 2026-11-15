@@ -72,8 +72,7 @@ class Ledger(private val loans: Map<String, Loan>, history: List<Audit> = emptyL
         require(audit.before == previous)
         require(next.revision == (previous?.revision ?: 0L) + 1L)
         if (previous != null) {
-            require(next.loanId == previous.loanId && next.week == previous.week &&
-                next.receivedOn == previous.receivedOn)
+            require(next.loanId == previous.loanId && next.week == previous.week)
         }
         require(latest().none { it.id != next.id && it.loanId == next.loanId && it.week == next.week })
         val paidElsewhere = latest().filter { it.loanId == next.loanId && it.id != next.id }

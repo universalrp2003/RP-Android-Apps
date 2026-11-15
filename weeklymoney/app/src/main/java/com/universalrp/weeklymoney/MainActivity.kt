@@ -160,13 +160,15 @@ class MainActivity : ComponentActivity() {
             }) { Text("தொடர / Continue") }
         }
     }
-    @Composable private fun Notebook(current: NotebookState) {
+    @Composable private fun ColumnScope.Notebook(current: NotebookState) {
         var selected by remember { mutableStateOf<String?>(null) }
         var form by remember { mutableStateOf("") }
         var loan by remember { mutableStateOf<Loan?>(null) }
         var search by remember { mutableStateOf("") }
-        val sorted = current.books.sortedBy { if (it.collectionDay == LocalDate.now().dayOfWeek) 0 else 1 }
-        val book = current.books.find { it.id == selected } ?: sorted.firstOrNull()
+        var showArchived by remember { mutableStateOf(false) }
+        var confirmArchive by remember { mutableStateOf(false) }
+        val sorted = current.books.filter { showArchived || !current.isArchived(it.id) }.sortedBy { if (it.collectionDay == LocalDate.now().dayOfWeek) 0 else 1 }
+        val book = sorted.find { it.id == selected } ?: sorted.firstOrNull()
         Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(enabled = !busy, onClick = { form = "book" }) { Text("+ புத்தகம் / Book") }
             TextButton(enabled = !busy, onClick = {
@@ -180,11 +182,18 @@ class MainActivity : ComponentActivity() {
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
             FilterChip(selected = b.id == book?.id, onClick = { selected = b.id }, label = { Text("${b.number} · ${b.collectionDay}") })
         } }
+        Row {
+            Checkbox(checked = showArchived, onCheckedChange = { showArchived = it })
+            Text("காப்பக புத்தகங்களும் / Include archived books")
+        }
         Field("தேடல் / Place, family, customer", search) { search = it }
         if (book != null) {
             Text(book.heading)
             Text("புத்தகம் ${book.number} · ${book.started}")
-            Button(enabled = !busy, onClick = { form = "loan" }) { Text("+ புதிய கடன் / New loan") }
+            TextButton(enabled = !busy, onClick = { confirmArchive = true }) {
+                Text(if (current.isArchived(book.id)) "மீட்டெடு / Unarchive" else "காப்பகம் / Archive (never delete)")
+            }
+            Button(enabled = !busy && !current.isArchived(book.id), onClick = { form = "loan" }) { Text("+ புதிய கடன் / New loan") }
             val matches = if (search.isBlank()) current.loans else current.ledger().search(search)
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
                 matches.filter { it.bookId == book.id }.forEach { l ->
@@ -200,6 +209,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
+        if (confirmArchive && book != null) AlertDialog(onDismissRequest = { confirmArchive = false },
+            title = { Text("புத்தகத்தை பாதுகாப்பாக மறைக்க / Reversible archive") },
+            text = { Text("No records will be deleted. Archived books remain searchable when Include archived books is checked, and remain in every full backup.") },
+            confirmButton = { TextButton(enabled = !busy, onClick = { task {
+                save(current.copy(archiveHistory = current.archiveHistory + BookArchiveEvent(id(), book.id, !current.isArchived(book.id), current.owner.id, Instant.now())))
+                confirmArchive = false
+            } }) { Text("உறுதிப்படுத்து / Confirm") } },
+            dismissButton = { TextButton(onClick = { confirmArchive = false }) { Text("ரத்து / Cancel") } })
         if (form == "book") Form("புதிய புத்தகம் / New book", listOf("எண் / Number", "Day 1–7 (Mon–Sun)", "Start YYYY-MM-DD", "தலைப்பு / Optional heading"), { form = "" }) { v ->
             val next = current.copy(books = current.books + Book(id(), v[0], java.time.DayOfWeek.of(v[1].toInt()), LocalDate.parse(v[2]), v[3]))
             save(next); selected = next.books.last().id; form = ""
