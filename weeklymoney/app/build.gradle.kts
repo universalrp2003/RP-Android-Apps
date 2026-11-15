@@ -10,8 +10,8 @@ android {
         applicationId = "com.universalrp.weeklymoney.preview"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2-preview"
+        versionCode = 3
+        versionName = "0.3-preview"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets.getByName("main").java.srcDir("../core/src/main/kotlin")
@@ -22,9 +22,19 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
+    signingConfigs {
+        val password = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
+        val key = rootProject.file("ci-keystore/release.p12")
+        if (key.exists() && !password.isNullOrBlank()) create("ownerPreview") {
+            storeFile = key; storePassword = password; keyAlias = "cleansweep"; keyPassword = password; storeType = "PKCS12"
+        }
+    }
     buildTypes {
         // Old ephemeral debug signer was not retained. Install beside it, never force uninstall.
-        debug { applicationIdSuffix = ".fix2" }
+        debug {
+            applicationIdSuffix = ".notebook"
+            signingConfig = signingConfigs.findByName("ownerPreview") ?: signingConfigs.getByName("debug")
+        }
         release { isMinifyEnabled = false }
     }
 }

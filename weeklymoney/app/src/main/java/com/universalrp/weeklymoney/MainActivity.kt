@@ -77,8 +77,8 @@ class MainActivity : ComponentActivity() {
         applyScreenshotPreference(getSharedPreferences("privacy", MODE_PRIVATE).getBoolean("allowScreenshots", false))
         setContent { MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xff183f78), background = Color(0xfff7f0dd))) {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
-                Text("வார வசூல்", style = MaterialTheme.typography.headlineMedium)
-                Text("சோதனை மட்டும் · PREVIEW — synthetic records only", color = Color(0xffa32c30))
+                Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
+                Text("சோதனை 0.3 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
@@ -89,7 +89,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (screenshotsAllowed) Text("கவனம்: பெயர், தொகை படத்தில் தெரியும் / Names and amounts may appear in screenshots.", style = MaterialTheme.typography.bodySmall)
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-                if (message.isNotEmpty()) Text(message, color = Color(0xff9c3030))
+                if (message.isNotEmpty()) Text(message, color = Color(0xff9c3030), style = MaterialTheme.typography.bodySmall)
                 val current = state
                 if (current == null) Unlock() else Notebook(current)
             } }
@@ -196,67 +196,78 @@ class MainActivity : ComponentActivity() {
         var selected by remember { mutableStateOf<String?>(null) }
         var form by remember { mutableStateOf("") }
         var loan by remember { mutableStateOf<Loan?>(null) }
+        var initialWeek by remember { mutableStateOf<Int?>(null) }
+        var initialAll by remember { mutableStateOf(false) }
+        var initialAudit by remember { mutableStateOf(false) }
+        var repeatCandidate by remember { mutableStateOf<Loan?>(null) }
+        var loanSeed by remember { mutableStateOf<Loan?>(null) }
+        var editLoan by remember { mutableStateOf(false) }
         var search by remember { mutableStateOf("") }
+        var tools by remember { mutableStateOf(false) }
         var showArchived by remember { mutableStateOf(false) }
         var confirmArchive by remember { mutableStateOf(false) }
         val sorted = current.books.filter { showArchived || !current.isArchived(it.id) }.sortedBy { if (it.collectionDay == LocalDate.now().dayOfWeek) 0 else 1 }
         val book = sorted.find { it.id == selected } ?: sorted.firstOrNull()
         Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(modifier = Modifier.testTag("newBook"), enabled = !busy, onClick = { form = "book" }) { Text("+ புத்தகம் / Book") }
-            TextButton(enabled = !busy, onClick = {
-                task {
+            if (book != null) TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன் / Loan") }
+            TextButton(onClick = { tools = !tools }) { Text("கருவிகள் / Tools") }
+        }
+        if (tools) {
+            Row(Modifier.horizontalScroll(rememberScrollState())) {
+                TextButton(enabled = !busy, onClick = { task {
                     pendingExport = withContext(Dispatchers.Default) { BackupCrypto.seal(current.encode(), requireNotNull(secret)) }
                     export.launch("WeeklyMoney-${LocalDate.now()}-${System.currentTimeMillis()}.vvasool")
-                }
-            }) { Text("காப்பு / Export backup") }
-            TextButton(enabled = !busy, onClick = { lock() }) { Text("பூட்டு / Lock") }
+                } }) { Text("காப்பு / Export backup") }
+                if (book != null) TextButton(enabled = !busy, onClick = { confirmArchive = true }) { Text(if (current.isArchived(book.id)) "Unarchive / மீட்டெடு" else "Archive / காப்பகம்") }
+                TextButton(enabled = !busy, onClick = { lock() }) { Text("பூட்டு / Lock") }
+            }
+            Row { Checkbox(showArchived, { showArchived = it }); Text("காப்பகமும் / Include archived books") }
         }
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
-            FilterChip(selected = b.id == book?.id, onClick = { selected = b.id }, label = { Text("${b.number} · ${b.collectionDay}") })
+            FilterChip(selected = b.id == book?.id, onClick = { selected = b.id; search = "" }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
-        Row {
-            Checkbox(checked = showArchived, onCheckedChange = { showArchived = it })
-            Text("காப்பக புத்தகங்களும் / Include archived books")
-        }
         Field("தேடல் / Place, family, customer", search) { search = it }
         if (book != null) {
-            Text(book.heading)
-            Text("புத்தகம் ${book.number} · ${book.started}", modifier = Modifier.testTag("bookHeader"))
-            TextButton(enabled = !busy, onClick = { confirmArchive = true }) {
-                Text(if (current.isArchived(book.id)) "மீட்டெடு / Unarchive" else "காப்பகம் / Archive (never delete)")
-            }
-            Button(enabled = !busy && !current.isArchived(book.id), onClick = { form = "loan" }) { Text("+ புதிய கடன் / New loan") }
-            val matches = if (search.isBlank()) current.loans else current.ledger().search(search)
-            Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                matches.filter { it.bookId == book.id }.forEach { l ->
-                    val balance = current.ledger().balance(l.id)
-                    Card(Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { loan = l }) {
-                        Column(Modifier.padding(12.dp)) {
-                            Text("${l.customerName} · ${l.familyHead}", color = Color(0xff183f78))
-                            Text("${l.place} · ${l.started}")
-                            Text("மொத்தம் ₹${money(l.totalPaise)} · மீதி ₹${money(balance.remainingPaise)}")
-                            if (balance.completed) Text("முடிந்தது / Completed")
-                        }
-                    }
+            Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
+            key(book.id) {
+                LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
+                    loan = selectedLoan; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
         if (confirmArchive && book != null) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { confirmArchive = false },
-            title = { Text("புத்தகத்தை பாதுகாப்பாக மறைக்க / Reversible archive") },
-            text = { Text("No records will be deleted. Archived books remain searchable when Include archived books is checked, and remain in every full backup.") },
+            title = { Text("காப்பகம் / Reversible archive") }, text = { Text("No records will be deleted. Archived books remain searchable through Tools and are included in backups.") },
             confirmButton = { TextButton(enabled = !busy, onClick = { task {
                 save(current.copy(archiveHistory = current.archiveHistory + BookArchiveEvent(id(), book.id, !current.isArchived(book.id), current.owner.id, Instant.now())))
                 confirmArchive = false
-            } }) { Text("உறுதிப்படுத்து / Confirm") } },
-            dismissButton = { TextButton(onClick = { confirmArchive = false }) { Text("ரத்து / Cancel") } })
-        if (form == "book") BookDialog(current, { form = "" }) { created ->
-            selected = created.id; form = ""
+            } }) { Text("உறுதிப்படுத்து / Confirm") } }, dismissButton = { TextButton(onClick = { confirmArchive = false }) { Text("ரத்து / Cancel") } })
+        if (form == "book") BookDialog(current, { form = "" }) { created -> selected = created.id; form = "" }
+        if (form == "loan" && book != null) LoanEntryDialog(current, book, loanSeed, editLoan, busy, dialogPrivacy(), screenshotsAllowed,
+            dismiss = { form = "" }, commit = { next, done -> task(onError = { done(it) }) { save(next); done(null) } },
+            saved = { created, history ->
+                form = ""; search = ""; message = "கடன் சேமிக்கப்பட்டது / Loan saved"
+                if (history) { loan = created; initialWeek = 1; initialAll = true; initialAudit = false }
+            })
+        loan?.let { selectedLoan ->
+            val effective = current.effectiveLoans().find { it.id == selectedLoan.id } ?: selectedLoan
+            key(effective.id) {
+                WeeklyDialog(current, effective, initialWeek, initialAll, initialAudit, busy, dialogPrivacy(), screenshotsAllowed,
+                    dismiss = { loan = null }, commit = { next, done -> task(onError = { done(it) }) {
+                        val justCompleted = !current.ledger().balance(effective.id).completed && next.ledger().balance(effective.id).completed
+                        save(next); done(null)
+                        if (justCompleted) repeatCandidate = effective
+                    } }, editDetails = { loan = null; loanSeed = effective; editLoan = true; form = "loan" },
+                    renew = { loan = null; repeatCandidate = effective })
+            }
         }
-        if (form == "loan" && book != null) Form("புதிய கடன் / New loan", listOf("இடம் / Place", "குடும்பத் தலைவர் / Family head", "வாடிக்கையாளர் / Customer", "மொத்த ரூபாய் / Total rupees", "Start YYYY-MM-DD"), { form = "" }) { v ->
-            val l = Loan(id(), book.id, id(), v[0], v[1], v[2], paise(v[3]), LocalDate.parse(v[4]), 1)
-            save(current.copy(loans = current.loans + l)); form = ""
+        repeatCandidate?.let { previous ->
+            AlertDialog(properties = dialogPrivacy(), onDismissRequest = { repeatCandidate = null },
+                title = { Text("புதிய கடன் வேண்டுமா? / New loan needed?") },
+                text = { Text("${previous.place} → ${previous.familyHead} → ${previous.customerName}\nPrevious loan is completed. Keep the same details and enter a new amount?") },
+                confirmButton = { TextButton(modifier = Modifier.testTag("confirmRenew"), onClick = { repeatCandidate = null; loanSeed = previous; editLoan = false; form = "loan" }) { Text("ஆம் / Yes") } },
+                dismissButton = { TextButton(onClick = { repeatCandidate = null }) { Text("வேண்டாம் / No") } })
         }
-        loan?.let { l -> LoanDialog(current, l) { loan = null } }
     }
     @Composable private fun BookDialog(current: NotebookState, dismiss: () -> Unit, saved: (Book) -> Unit) {
         var number by remember { mutableStateOf("") }
@@ -304,46 +315,6 @@ class MainActivity : ComponentActivity() {
                 }
             }) { Text("சேமி / Save") } },
             dismissButton = { TextButton(enabled = !busy, onClick = dismiss) { Text("ரத்து / Cancel") } })
-    }
-    @Composable private fun LoanDialog(current: NotebookState, l: Loan, dismiss: () -> Unit) {
-        var week by remember { mutableStateOf("") }
-        var amount by remember { mutableStateOf("") }
-        var date by remember { mutableStateOf(LocalDate.now().toString()) }
-        val ledger = current.ledger()
-        var formError by remember { mutableStateOf("") }
-        AlertDialog(properties = dialogPrivacy(), onDismissRequest = dismiss, title = { Text(l.customerName) }, text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                if (formError.isNotEmpty()) Text(formError, color = MaterialTheme.colorScheme.error)
-                Text("மீதி / Remaining ₹${money(ledger.balance(l.id).remainingPaise)}")
-                Field("வாரம் / Week", week) { week = it }
-                Field("ரூபாய் / Amount or - for no payment", amount) { amount = it }
-                Field("Collection YYYY-MM-DD", date) { date = it }
-                Text("Existing week entries become owner corrections. Original values remain below.")
-                current.audits.filter { it.after.loanId == l.id }.forEach { a ->
-                    val p = a.after
-                    Text("W${p.week}: ${p.amountPaise?.let { "₹${money(it)}" } ?: "—"} · ${p.receivedOn}\n${p.actorName} · ${p.recordedAt} · revision ${p.revision}")
-                    HorizontalDivider()
-                }
-            }
-        }, confirmButton = { TextButton(enabled = !busy, onClick = { task(onError = { formError = it }) {
-            formError = ""
-            val w = week.toInt(); val prior = ledger.latest().find { it.loanId == l.id && it.week == w }
-            val now = Instant.now()
-            val payment = Payment(prior?.id ?: id(), l.id, w, LocalDate.parse(date), if (amount.trim() == "-") null else paise(amount),
-                (prior?.revision ?: 0) + 1, current.owner.id, current.owner.name, now)
-            ledger.record(id(), payment, current.owner, LocalDate.now(), now, prior?.revision ?: 0)
-            save(current.copy(audits = ledger.history())); dismiss()
-        } }) { Text("சேமி / Save") } }, dismissButton = { TextButton(onClick = dismiss) { Text("மூடு / Close") } })
-    }
-    @Composable private fun Form(title: String, labels: List<String>, dismiss: () -> Unit, submit: suspend (List<String>) -> Unit) {
-        val values = remember { mutableStateListOf<String>().apply { repeat(labels.size) { add("") } } }
-        var formError by remember { mutableStateOf("") }
-        AlertDialog(properties = dialogPrivacy(), onDismissRequest = dismiss, title = { Text(title) }, text = {
-            Column(Modifier.verticalScroll(rememberScrollState())) {
-                if (formError.isNotEmpty()) Text(formError, color = MaterialTheme.colorScheme.error)
-                labels.forEachIndexed { i, label -> Field(label, values[i]) { values[i] = it } } }
-        }, confirmButton = { TextButton(enabled = !busy, onClick = { task(onError = { formError = it }) { formError = ""; submit(values.toList()) } }) { Text("சேமி / Save") } },
-            dismissButton = { TextButton(onClick = dismiss) { Text("ரத்து / Cancel") } })
     }
     @Composable private fun Field(label: String, value: String, tag: String = "", change: (String) -> Unit) {
         OutlinedTextField(value, change, label = { Text(label) }, modifier = Modifier.fillMaxWidth().testTag(tag), singleLine = true)

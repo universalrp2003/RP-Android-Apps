@@ -12,6 +12,8 @@ jobs:
   preview:
     if: github.ref == 'refs/heads/arena/1cd060b0-rp-android-apps'
     runs-on: ubuntu-latest
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +21,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Prepare persistent owner-backed preview signer (no publication)
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
       - name: Verify runner Android SDK
         run: |
           test -d "$ANDROID_HOME"
@@ -67,12 +74,21 @@ jobs:
           for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
               message = p.read_text(errors='replace')[-12000:]
               print('::error title=Native XML::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+      - name: Record exact APK digest and pinned signer
+        run: |
+          apk=weeklymoney/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum "$apk" > weeklymoney/app/build/outputs/apk/debug/app-debug.sha256
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify --print-certs "$apk" > weeklymoney/app/build/outputs/apk/debug/signer.txt
+          grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' weeklymoney/app/build/outputs/apk/debug/signer.txt
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: WeeklyMoney-0.2-diagnostic-synthetic-records-only
+          name: WeeklyMoney-0.3-notebook-preview-test-records-only
           path: |
             weeklymoney/app/build/outputs/apk/debug/*.apk
+            weeklymoney/app/build/outputs/apk/debug/*.sha256
+            weeklymoney/app/build/outputs/apk/debug/signer.txt
             weeklymoney/app/build/test-results/testDebugUnitTest/
             weeklymoney/app/build/outputs/androidTest-results/
             weeklymoney/app/build/reports/androidTests/connected/
