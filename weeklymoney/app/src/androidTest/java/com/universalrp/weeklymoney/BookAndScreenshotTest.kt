@@ -71,6 +71,15 @@ class BookAndScreenshotTest {
         ui.onNodeWithText("Synthetic Place").performScrollTo()
         ui.waitUntil(15000) { ui.onNodeWithText("Synthetic Place").isDisplayed() }
         ui.onNodeWithText("Synthetic Place").performClick()
+        ui.waitForIdle()
+        if (ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isEmpty()) {
+            // Keep the physical tap failure visible, but first distinguish hit testing
+            // from a broken row callback/state transition using accessibility activation.
+            ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+            ui.waitForIdle()
+            val opened = ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isNotEmpty()
+            throw AssertionError("Physical ledger tap did not open receipt editor; accessibility activation opened=$opened")
+        }
         waitFor("receiptAmount-1")
         ui.onNodeWithTag("receiptAmount-1").performScrollTo().performTextInput("100")
         ui.onNodeWithTag("receiptSave").performClick()
