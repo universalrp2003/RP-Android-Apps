@@ -61,7 +61,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: sh -c 'timeout 300s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; exit "$result"' 
+          script: sh -c 'timeout 300s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; exit "$result"'
       - name: Expose bounded native regression failure
         if: failure()
         shell: python

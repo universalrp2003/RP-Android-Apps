@@ -20,6 +20,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.shape.RoundedCornerShape
+import kotlin.math.absoluteValue
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -236,8 +243,16 @@ private val paper = Color(0xfffff8df)
             val rows = state.pageLines(book.id, page).filter { filteredIds == null || it.loan.id in filteredIds }
             val payments = remember(state) { state.ledger().latest() }.associateBy { it.loanId to it.week }
             CompositionLocalProvider(LocalDensity provides Density(baseDensity.density * zoom, baseDensity.fontScale)) {
-            Column(Modifier.fillMaxSize()) {
-                Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
+            val turn = ((pager.currentPage - index) + pager.currentPageOffsetFraction).coerceIn(-1f, 1f)
+            Column(Modifier.fillMaxSize().graphicsLayer {
+                transformOrigin = TransformOrigin(if (turn >= 0f) 0f else 1f, 0.5f)
+                rotationY = turn * -65f
+                cameraDistance = 24f * density
+            }.shadow(3.dp, RoundedCornerShape(2.dp)).background(paper).drawWithContent {
+                drawContent()
+                drawRect(Color(0xff3b2b18).copy(alpha = turn.absoluteValue * 0.16f))
+            }) {
+                if (book.heading.isNotBlank()) Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
                 Text("புதிய தேதி / Start ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk)
                 if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${page.date.minusWeeks(10).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
                 // Ruled two-page ledger, horizontally scrollable at readable text size on phones.
@@ -245,6 +260,7 @@ private val paper = Color(0xfffff8df)
                 Column(Modifier.width(IntrinsicSize.Max).fillMaxHeight().verticalScroll(rememberScrollState()).testTag("ledgerVertical")) {
                     Row(Modifier.height(IntrinsicSize.Min)) {
                         listOf("இடம்\nPlace" to 140, "குடும்பத் தலைவர்\nFamily head" to 160, "வாடிக்கையாளர்\nCustomer" to 160, "மொத்தம்\nTotal" to 100).forEach { (text, width) -> LedgerCell(text, width, redInk) }
+                        LedgerFold()
                         repeat(10) { i -> LedgerCell("${i + 1}\n${page.date.plusWeeks(i.toLong()).format(DateTimeFormatter.ofPattern("dd-MM"))}", 90, redInk) }
                         LedgerCell("மீதி\nRemaining", 110, redInk)
                     }
@@ -256,6 +272,7 @@ private val paper = Color(0xfffff8df)
                             LedgerCell(loan.familyHead, 160, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
+                            LedgerFold()
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
@@ -266,7 +283,13 @@ private val paper = Color(0xfffff8df)
                             LedgerCell(rupees(row.ending), 110, redInk)
                         }
                     }
-                    repeat((8 - rows.size).coerceAtLeast(0)) { Row(Modifier.height(IntrinsicSize.Min)) { listOf(140, 160, 160, 100).plus(List(10) { 90 }).plus(110).forEach { LedgerCell("", it, blueInk) } } }
+                    repeat((8 - rows.size).coerceAtLeast(0)) {
+                        Row(Modifier.height(IntrinsicSize.Min)) {
+                            listOf(140, 160, 160, 100).forEach { LedgerCell("", it, blueInk) }
+                            LedgerFold()
+                            (List(10) { 90 } + 110).forEach { LedgerCell("", it, blueInk) }
+                        }
+                    }
                 }
             }
         }
@@ -274,11 +297,16 @@ private val paper = Color(0xfffff8df)
 }
 }
 }
+/** The bound centre crease separates identity details and ten receipt columns. */
+@Composable private fun LedgerFold() {
+    Box(Modifier.width(18.dp).fillMaxHeight().background(Brush.horizontalGradient(listOf(
+        Color.Transparent, Color(0xffc4b697), Color(0xff91846b), Color(0xffe6dcc5), Color.Transparent))))
+}
 @OptIn(ExperimentalFoundationApi::class)
 @Composable private fun LedgerCell(text: String, width: Int, ink: Color, modifier: Modifier = Modifier,
     tap: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
     val interaction = if (tap == null) modifier else modifier.combinedClickable(onClick = tap, onLongClick = hold)
-    Box(interaction.width(width.dp).heightIn(min = 64.dp).drawBehind {
+    Box(interaction.width(width.dp).heightIn(min = 64.dp).fillMaxHeight().drawBehind {
         drawLine(redInk.copy(alpha = .65f), Offset(size.width - 1, 0f), Offset(size.width - 1, size.height), 1.dp.toPx())
         drawLine(blueInk.copy(alpha = .45f), Offset(0f, size.height - 1), Offset(size.width, size.height - 1), 1.dp.toPx())
     }.padding(8.dp)) {

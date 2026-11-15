@@ -52,6 +52,8 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    // Use maintained compatible matchers instead of Espresso's legacy library 1.3.
+    androidTestImplementation("org.hamcrest:hamcrest-library:2.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
 }
