@@ -1,0 +1,98 @@
+name: Weekly Money isolated preview
+on:
+  push:
+    branches: ["arena/1cd060b0-rp-android-apps"]
+    paths:
+      - "weeklymoney/**"
+      - ".github/workflows/weeklymoney-preview.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preview:
+    if: github.ref == 'refs/heads/arena/1cd060b0-rp-android-apps'
+    runs-on: ubuntu-latest
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare persistent owner-backed preview signer (no publication)
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - name: Verify runner Android SDK
+        run: |
+          test -d "$ANDROID_HOME"
+          echo "Using GitHub-hosted runner Android SDK"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Check app 17 identity and offline source contract
+        run: python3 -m unittest discover -s weeklymoney/checks -v
+      - name: Test, lint and build offline preview only
+        shell: bash
+        run: |
+          set -o pipefail
+          set +e
+          ./gradlew :weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug --console=plain > weeklymoney-build.log 2>&1
+          result=$?
+          tail -100 weeklymoney-build.log
+          if [ "$result" -ne 0 ]; then
+            python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('weeklymoney-build.log').read_text(errors='replace').splitlines()
+          message = '\n'.join(lines[-100:])[-12000:]
+          print('::error title=Weekly Money build failure::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
+          fi
+          exit "$result"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Native book-save, restart persistence and screenshot-switch regression
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1
+      - name: Expose bounded native regression failure
+        if: failure()
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('weeklymoney-native.log')
+          if p.exists():
+              message = p.read_text(errors='replace')[-12000:]
+              print('::error title=Weekly Money native test::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
+              message = p.read_text(errors='replace')[:24000]
+              for index in range(0, len(message), 3000):
+                  chunk = message[index:index+3000]
+                  print(f'::error title=Native XML {index//3000}::' + chunk.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+      - name: Record exact APK digest and pinned signer
+        run: |
+          apk=weeklymoney/app/build/outputs/apk/debug/app-debug.apk
+          sha256sum "$apk" > weeklymoney/app/build/outputs/apk/debug/app-debug.sha256
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify --print-certs "$apk" > weeklymoney/app/build/outputs/apk/debug/signer.txt
+          grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' weeklymoney/app/build/outputs/apk/debug/signer.txt
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: WeeklyMoney-0.3-notebook-preview-test-records-only
+          path: |
+            weeklymoney/app/build/outputs/apk/debug/*.apk
+            weeklymoney/app/build/outputs/apk/debug/*.sha256
+            weeklymoney/app/build/outputs/apk/debug/signer.txt
+            weeklymoney/app/build/test-results/testDebugUnitTest/
+            weeklymoney/app/build/outputs/androidTest-results/
+            weeklymoney/app/build/reports/androidTests/connected/
+            weeklymoney/app/build/reports/lint-results-debug.html
+          retention-days: 14
