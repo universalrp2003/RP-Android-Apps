@@ -188,7 +188,7 @@ private val paper = Color(0xfffff8df)
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable fun LedgerBook(state: NotebookState, book: Book, search: String, modifier: Modifier,
-    open: (Loan, Int?, Boolean) -> Unit) {
+    onOpen: (Loan, Int?, Boolean) -> Unit) {
     var zoom by remember(book.id) { mutableStateOf(1f) }
     val baseDensity = LocalDensity.current
     val pinch = Modifier.pointerInput(book.id) {
@@ -246,16 +246,16 @@ private val paper = Color(0xfffff8df)
                         val loan = row.loan
                         val ink = if (row.cycle == 0) blueInk else redInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
-                            LedgerCell(loan.place, 140, ink, tap = { open(loan, null, false) }, hold = { open(loan, null, true) })
-                            LedgerCell(loan.familyHead, 160, ink, tap = { open(loan, null, false) }, hold = { open(loan, null, true) })
-                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, tap = { open(loan, null, false) }, hold = { open(loan, null, true) })
+                            LedgerCell(loan.place, 140, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
                                 val text = if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
-                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { open(loan, week, false) }, hold = { open(loan, week, true) })
+                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
                             }
                             LedgerCell(rupees(row.ending), 110, redInk)
                         }
