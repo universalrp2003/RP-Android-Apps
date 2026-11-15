@@ -1,14 +1,34 @@
 # வார வசூல் — Weekly Money · RP Ideas application 17
 
-Status: **CI-built owner-only Android development preview, not ready for real data**.
-The first Android source implementation is in `app/`, registered as `:weeklymoney`.
-Current diagnostic **0.2-preview/code2** passed compilation, JVM tests, lint and a native
-Android 35 UI regression. The owner installed the older 0.1 preview and reported Save
-and screenshot problems; this does not establish that this new build works on that phone.
-See [0.2 fix/installation receipt](FIX-0.2.md) and [historical first build receipt](BUILD-STATUS.md).
-No stable release or end-to-end recovery acceptance is claimed.
-Existing apps and Secret Message service are unchanged. Private reference photographs
-must not be committed or published.
+Status: **Owner-only Android TEST0.3 notebook preview, not production-ready for real data**.
+
+The notebook build uses `com.universalrp.weeklymoney.preview.notebook` (code 3),
+installed **beside** TEST0.2 (`.preview.fix2`), never requiring its uninstall or data clear.
+TEST0.2 was phone-confirmed by the owner. TEST0.3 has passed Android 35 native tests
+for save/reopen, repeated loans, historical entries, correction, pinch zoom and
+collection close; phone acceptance is still required. See [TEST0.3 receipt](FIX-0.3.md)
+for the exact verified source, artifact, certificate and checksums.
+
+The paper-style spread follows the private notebook reference: place → family head →
+customer → manual total, bound centre crease, ten numbered receipt columns and remaining
+balance; blue new rows, red carried rows, blue horizontal rules and red dividers.
+It supports right/left page-turn shading, horizontal/vertical panning, two-finger
+20–220% layout zoom and a 100% reset. This is a native ruled rendering, **not** a
+photographic texture or a physically simulated paper curl. Empty dates use calendars.
+
+Tap a customer/cell to record an amount and date, then Save. Long press opens retained
+history; the ten-week editor supports existing paper-note history and owner corrections.
+“வசூல் முடிந்தது” requires a selected book/date/count confirmation before appending missed
+payment dashes to that collection week's blanks only. Existing amounts, other books,
+older blanks, completed loans and future weeks are not blanket-filled. Repeated close
+is idempotent; dashes remain auditable and correctable. Collection week currently follows
+the loan's start-date seven-day periods, the same mapping used by its page columns.
+
+**Not finished for production:** authenticated collector operation-file exchange and
+conflict resolution, biometric unlock, independent recovery-secret flow, separate English
+UI selection, verified Tamil solar-calendar dates and full physical page-curl rendering.
+This preview is fully offline and owner-only. Keep only synthetic/test records in it.
+Existing stable apps/catalogs are unchanged. Private reference photos must never be committed.
 
 ## Portfolio identity — owner designation
 

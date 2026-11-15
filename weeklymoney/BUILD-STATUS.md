@@ -1,17 +1,19 @@
 # Current notebook preview status — 15 November 2026
 
-**TEST0.3 is blocked; do not distribute for real records. TEST0.2 remains the last phone-confirmed build.**
+**TEST0.3 notebook/zoom/collection-close preview passed CI. Synthetic records only; not production-ready.**
 
-Latest requested behavior added to source:
-- Two-finger zoom, bounded 65–220%, with a 100% reset; scaled layout rather than a visual-only transform so cells scale with their hit areas.
-- Customer/cell activation is intended to open the amount editor; this remains blocked by the native regression below.
-- “வசூல் முடிந்தது / Collection finished” opens a date/count confirmation scoped to the selected book.
-- Confirming appends explicit missed-payment records only for that collection week's still-blank cells of active, started loans. Existing receipts/dashes, completed loans, older blanks, future weeks and other books stay unchanged. Future dates and archived books are refused. Repeating the operation is idempotent. A missed payment does not reduce debt; it remains correctable through retained audit history.
-- Week selection currently follows each loan's start-date seven-day periods, matching the notebook page model. This is not a blanket fill of all ten columns.
+- Tested source: `faf05110d818419c16a767d61a0c268fb66432bd`.
+- CI [43735408657](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43735408657): **SUCCESS**, 16:30:34 UTC.
+- Native Android 35: 1 comprehensive test, 0 failures/errors/skips, 80.396 seconds. Physical customer activation, receipt save, duplicate/renewal/history/correction, zoom in/out/reset, collection cancellation/confirmation/repeat-close safety and screenshot persistence covered.
+- Unit tests, lint, APK build, four Python identity checks and pinned-certificate verification passed.
+- [Download artifact 14170102447](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43735408657/artifacts/14170102447).
+- APK SHA-256: `d5cd638ddbede98c3d7bbd409d00b24d8d474086dd940f802da6ed1dfbd59eae`.
+- APK filename is **weeklymoney-debug.apk**, determined from AGP metadata, not app-debug.apk.
+- Full receipt/install instructions/limits: [FIX-0.3.md](FIX-0.3.md).
 
-Validation: seven notebook rule tests (including collection-close/idempotency/protection cases), other JVM tests, lint, APK compilation and four Python identity checks passed in CI at `138ca4d` (run 43729725532). **Native emulator regression still fails at the first receipt editor opening.** No successful TEST0.3 APK artifact or final digest/signer receipt has been produced. Pinch and collection-close UI behavior have not yet passed native gesture coverage. Existing ruled horizontal pages are not yet a verified photographic/paper-curl match.
+TEST0.2 remains the owner-phone-confirmed build; TEST0.3 phone acceptance is not yet established. Install beside it; never require uninstall/data clear. The former row-opening blocker was a test race against an async loan-save dialog, now corrected by waiting for that dialog to close. Scroll axes now have separate layout nodes. Two-finger layout zoom covers 20–220%; collection close appends only current-week blank dashes with count/date confirmation and retained audit history.
 
-Remaining broader production work includes independent recovery secrets, biometric unlock, collector authority and conflict-safe offline operations exchange. Do not uninstall or clear the installed TEST0.2 app to try this source.
+Broader production work remains: authenticated collectors and conflict-safe offline exchange, independent recovery secrets/biometrics, English-only UI selection, verified Tamil solar-calendar dates, and full physical paper curl. Private reference photographs remain excluded. No stable release was created.
 
 ---
 
