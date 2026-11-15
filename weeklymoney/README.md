@@ -1,8 +1,8 @@
 # வார வசூல் — Weekly Money · RP Ideas application 17
 
-Status: **uncompiled owner-only Android development preview, not ready for real data**.
+Status: **CI-built owner-only Android development preview, not ready for real data**.
 The first Android source implementation is in `app/`, registered as `:weeklymoney`.
-No APK has been built or published; no phone or recovery tests have passed.
+A debug APK passed CI compilation, JVM tests and lint; no stable release, phone test or end-to-end recovery test has passed. See [build receipt](BUILD-STATUS.md).
 Existing apps and Secret Message service are unchanged. Private reference photographs
 must not be committed or published.
 
@@ -174,25 +174,28 @@ AES-GCM encrypted snapshots using the preview passphrase; background auto-lock a
 screenshot protection; book/loan creation; today's books first; prefix search;
 integer-paise receipts, explicit missed-visit dashes, owner correction audit history;
 completion balances; encrypted full-backup export through CreateDocument with readback
-verification. No INTERNET/storage permissions and no delete UI. Export is an external
+verification; full-backup restore on an empty installation with password validation and
+record-count preview before explicit confirmation; reversible owner archive/unarchive
+with retained history and archived-book search toggle. No INTERNET/storage permissions and no delete UI. Export is an external
 user-selected document, not the internal database. This preview uses the same passphrase
 for local encryption and exported backups, **not the final master-key/recovery design**.
 Preview password must be retained; there is no password reset/recovery bypass.
 
-NOT implemented: backup import/restore, independent master recovery key, password change,
+NOT implemented: merge/import into existing books, independent master recovery key, password change,
 biometric unlock, login rate limiting, automatic external backup scheduling/rotation,
-collector pairing/permissions/handoffs, file association/import, archive/void events,
+collector pairing/permissions/handoffs, file association/import, void events,
 loan/customer matching and Roman suffixes, name/loan/date editing, physical-note recovery,
 real ledger-spread/page curl layout, Tamil calendar conversion, expandable guide/About,
 accessibility review and device testing. There is deliberately no misleading Online switch.
 Do not use real customer data; use synthetic test names and values only.
 
-Verification attempt: `./gradlew :weeklymoney:testDebugUnitTest :weeklymoney:assembleDebug`
-failed before Gradle startup: JAVA_HOME unset and no java on PATH. No tests ran and no
-APK was produced. Isolated manual workflow `weeklymoney-preview.yml` prepares JVM tests,
-lint and debug build on the fixed session branch, without release keys/publication or
-sibling build tasks; it has not been run. Gradle/JDK/SDK dependencies need network access
-not available for Android builds in this sandbox.
+Verification: sandbox build is unavailable (no Java), but GitHub Actions run
+[43712248695](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43712248695)
+**passed** `:weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug`
+at source `3129f4756f704d544d73ff057b564c63698a9099`. The first two attempts failed
+SDK setup and Compose scope compilation respectively, then were fixed. Artifact is a
+temporary debug/test build only; no stable signing/release/publisher was used. The
+four Python source checks also passed. See build receipt for evidence and limits.
 
 ## Current source scope and checks
 
@@ -215,6 +218,6 @@ kotlinc core/src/main/kotlin/com/universalrp/weeklymoney/Ledger.kt \
 java -jar /tmp/weeklymoney-checks.jar
 ```
 
-These checks were **not executed in the Arena sandbox**, which has neither Java nor
-Kotlin installed. Android integration/build/device/restore/two-phone tests remain open.
+The domain checks were executed by the successful CI JVM test suite, not in the Arena
+sandbox (which has neither Java nor Kotlin). Device/UI/recovery/two-phone tests remain open.
 Do not publish or use this foundation to collect real financial records yet.

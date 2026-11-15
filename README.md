@@ -15,8 +15,8 @@ Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**
 
 The owner designated **வார வசூல் (Weekly Money)** as RP Ideas' 17th application.
 It is a separate, fully offline weekly collection notebook with an isolated Android
-preview module. **Not published or ready for real financial records; no verified APK
-is available yet.** See [implementation status and agreed requirements](weeklymoney/README.md).
+preview module. **Not published or ready for real financial records.** A debug preview has passed
+compilation/JVM tests/lint; [build evidence and remaining gates](weeklymoney/BUILD-STATUS.md). See [implementation status and agreed requirements](weeklymoney/README.md).
 This development designation does not change the stable app/download count below.
 
 ## 15 regular apps + separate optional Tamilan Store
