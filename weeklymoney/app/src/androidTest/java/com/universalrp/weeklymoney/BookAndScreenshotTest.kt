@@ -78,6 +78,7 @@ class BookAndScreenshotTest {
             ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
             ui.waitForIdle()
             val opened = ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isNotEmpty()
+            if (!opened) waitFor("receiptAmount-1")
             throw AssertionError("Physical ledger tap did not open receipt editor; accessibility activation opened=$opened")
         }
         waitFor("receiptAmount-1")

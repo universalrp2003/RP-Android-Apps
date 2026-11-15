@@ -37,6 +37,10 @@ class MainActivity : ComponentActivity() {
     private var state by mutableStateOf<NotebookState?>(null)
     private var message by mutableStateOf("")
     private var busy by mutableStateOf(false)
+    private var openedLoanId by mutableStateOf<String?>(null)
+    private var initialWeek by mutableStateOf<Int?>(null)
+    private var initialAll by mutableStateOf(false)
+    private var initialAudit by mutableStateOf(false)
     private var screenshotsAllowed by mutableStateOf(false)
     private fun applyScreenshotPreference(allowed: Boolean) {
         screenshotsAllowed = allowed
@@ -102,7 +106,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onDestroy() { secret?.fill('\u0000'); super.onDestroy() }
     private fun lock() {
-        state = null; restorePreview = null; secret?.fill('\u0000'); secret = null
+        state = null; openedLoanId = null; restorePreview = null; secret?.fill('\u0000'); secret = null
     }
     private fun task(onError: ((String) -> Unit)? = null, block: suspend () -> Unit) {
         if (busy) return
@@ -195,10 +199,6 @@ class MainActivity : ComponentActivity() {
     @Composable private fun ColumnScope.Notebook(current: NotebookState) {
         var selected by remember { mutableStateOf<String?>(null) }
         var form by remember { mutableStateOf("") }
-        var openedLoanId by remember { mutableStateOf<String?>(null) }
-        var initialWeek by remember { mutableStateOf<Int?>(null) }
-        var initialAll by remember { mutableStateOf(false) }
-        var initialAudit by remember { mutableStateOf(false) }
         var repeatCandidate by remember { mutableStateOf<Loan?>(null) }
         var loanSeed by remember { mutableStateOf<Loan?>(null) }
         var editLoan by remember { mutableStateOf(false) }
@@ -234,7 +234,7 @@ class MainActivity : ComponentActivity() {
             Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
                 LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
-                    openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
+                    android.util.Log.i("WeeklyMoneyEntry", "Open ${selectedLoan.id}"); openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
