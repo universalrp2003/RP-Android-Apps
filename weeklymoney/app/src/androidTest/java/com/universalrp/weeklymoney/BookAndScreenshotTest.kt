@@ -75,7 +75,7 @@ class BookAndScreenshotTest {
         if (ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isEmpty()) {
             // Keep the physical tap failure visible, but first distinguish hit testing
             // from a broken row callback/state transition using accessibility activation.
-            ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
+            ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
             ui.waitForIdle()
             val opened = ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isNotEmpty()
             if (!opened) waitFor("receiptAmount-1")
