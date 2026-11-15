@@ -251,9 +251,9 @@ private val paper = Color(0xfffff8df)
                         val loan = row.loan
                         val ink = if (row.cycle == 0) blueInk else redInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
-                            LedgerCell(loan.place, 140, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(loan.familyHead, 160, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1

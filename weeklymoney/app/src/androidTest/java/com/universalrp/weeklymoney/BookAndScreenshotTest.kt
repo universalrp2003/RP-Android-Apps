@@ -23,8 +23,12 @@ class BookAndScreenshotTest {
             val cells = ui.onAllNodesWithText("Synthetic Place", useUnmergedTree = true)
             val targets = (0 until cells.fetchSemanticsNodes().size).joinToString("\n") { cells[it].printToString(maxDepth = 2) }
             val tags = ui.onAllNodes(SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.TestTag), useUnmergedTree = true).fetchSemanticsNodes().joinToString { it.config[androidx.compose.ui.semantics.SemanticsProperties.TestTag] }
-            throw AssertionError("Missing $tag. Trace=${EntryTrace.snapshot()}. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
+            val merged = ui.onAllNodesWithText("Synthetic Place").onFirst().printToString(maxDepth = 3)
+            throw AssertionError("Missing $tag. Merged=$merged. Trace=${EntryTrace.snapshot()}. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
         }
+    }
+    private fun hasTestTagPrefix(prefix: String) = SemanticsMatcher("test tag starts $prefix") {
+        it.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.TestTag) { "" }.startsWith(prefix)
     }
     private fun assertSecure(expected: Boolean) = ui.runOnIdle {
         val secure = ui.activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0
@@ -68,14 +72,14 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanSave").performClick()
         waitFor("ledgerBook")
         ui.waitUntil(15000) { ui.onAllNodesWithText("Synthetic Place").fetchSemanticsNodes().isNotEmpty() }
-        ui.onNodeWithText("Synthetic Place").performScrollTo()
-        ui.waitUntil(15000) { ui.onNodeWithText("Synthetic Place").isDisplayed() }
-        ui.onNodeWithText("Synthetic Place").performClick()
+        val place = ui.onAllNodes(hasTestTagPrefix("place-")).onFirst()
+        place.performScrollTo()
+        place.performClick()
         ui.waitForIdle()
         if (ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isEmpty()) {
             // Keep the physical tap failure visible, but first distinguish hit testing
             // from a broken row callback/state transition using accessibility activation.
-            ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { EntryTrace.add("semantics=${it()}") }
+            place.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { EntryTrace.add("semantics=${it()}") }
             ui.waitForIdle()
             val opened = ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isNotEmpty()
             if (!opened) waitFor("receiptAmount-1")
