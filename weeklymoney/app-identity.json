@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "portfolioNumber": 17,
+  "id": "weeklymoney",
+  "nameTamil": "வார வசூல்",
+  "nameEnglish": "Weekly Money",
+  "brand": "RP Ideas",
+  "gradleModule": ":weeklymoney",
+  "namespace": "com.universalrp.weeklymoney",
+  "previewPackage": "com.universalrp.weeklymoney.preview",
+  "plannedProductionPackage": "com.universalrp.weeklymoney",
+  "status": "development-preview",
+  "publishedVersion": null,
+  "releaseUrl": null,
+  "offlineOnly": true
+}

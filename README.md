@@ -11,6 +11,14 @@ Oor Arivippu **1.1.21**: fixed live title/value positions, readable large text a
 
 Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**[universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/)**) for fifteen regular non-Store open-source Android apps (including DailyVault, Android TV Guard and System App Disabler), plus separate optional Tamilan Store in **தமிழ் (Tamil)** and **English**: utilities including (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / தமிழன் வானொலி**, **PulseEQ**, **RP Vocal Remover Studio**, **Oor Arivippu / ஊர் அறிவிப்பு**, **Vasanthi AI / என்னைச் சுற்றி**) plus **Secret Message**, a separately published app that is not independently security-reviewed. Developed by **Rameshprathap R (`@universalrp2003`)** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. Current minimum Android versions and signed GitHub Release APKs are listed below; device-dependent features are described honestly in each app's documentation.
 
+## Application 17 in development: வார வசூல் / Weekly Money
+
+The owner designated **வார வசூல் (Weekly Money)** as RP Ideas' 17th application.
+It is a separate, fully offline weekly collection notebook with an isolated Android
+preview module. **Not published or ready for real financial records; no verified APK
+is available yet.** See [implementation status and agreed requirements](weeklymoney/README.md).
+This development designation does not change the stable app/download count below.
+
 ## 15 regular apps + separate optional Tamilan Store
 
 DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion. Its already-public APK is unchanged. Store0.11 promotes the exact signed/native-tested, owner-authorized catalog-recovery update, with no rebuild. [Store0.11 verification and limits](docs/tamilan-store-0.11-catalog-recovery.md).
