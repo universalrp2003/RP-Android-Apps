@@ -239,7 +239,7 @@ class MainActivity : ComponentActivity() {
             Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader").semantics { stateDescription = entryDiagnostic() })
             key(book.id) {
                 LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
-                    openCount++; openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
+                    EntryTrace.add("activity"); openCount++; openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")

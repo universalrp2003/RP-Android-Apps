@@ -23,7 +23,7 @@ class BookAndScreenshotTest {
             val cells = ui.onAllNodesWithText("Synthetic Place", useUnmergedTree = true)
             val targets = (0 until cells.fetchSemanticsNodes().size).joinToString("\n") { cells[it].printToString(maxDepth = 2) }
             val tags = ui.onAllNodes(SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.TestTag), useUnmergedTree = true).fetchSemanticsNodes().joinToString { it.config[androidx.compose.ui.semantics.SemanticsProperties.TestTag] }
-            throw AssertionError("Missing $tag. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
+            throw AssertionError("Missing $tag. Trace=${EntryTrace.snapshot()}. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
         }
     }
     private fun assertSecure(expected: Boolean) = ui.runOnIdle {
@@ -46,7 +46,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("bookNumber").performScrollTo().performTextInput("Test ௧")
         ui.onNodeWithTag("weekday-1").performScrollTo().performClick()
         ui.onNodeWithTag("bookDate").performScrollTo().performClick()
-        androidx.test.espresso.Espresso.pressBack()
+        androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
         ui.onNodeWithTag("bookSave").performClick()
         waitFor("bookHeader")
         ui.onNodeWithTag("bookHeader").assertTextContains("Test ௧", substring = true)
@@ -75,7 +75,7 @@ class BookAndScreenshotTest {
         if (ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isEmpty()) {
             // Keep the physical tap failure visible, but first distinguish hit testing
             // from a broken row callback/state transition using accessibility activation.
-            ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+            ui.onNodeWithText("Synthetic Place").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { EntryTrace.add("semantics=${it()}") }
             ui.waitForIdle()
             val opened = ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isNotEmpty()
             if (!opened) waitFor("receiptAmount-1")

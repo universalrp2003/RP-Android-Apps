@@ -34,6 +34,11 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
+internal object EntryTrace {
+    private val events = java.util.concurrent.CopyOnWriteArrayList<String>()
+    fun add(event: String) { if (events.size < 30) events.add(event) }
+    fun snapshot() = events.joinToString(";")
+}
 private val dateFormat = DateTimeFormatter.ofPattern("dd-MM-uuuu")
 private val blueInk = Color(0xff153c8b)
 private val redInk = Color(0xffb3323c)
@@ -246,16 +251,16 @@ private val paper = Color(0xfffff8df)
                         val loan = row.loan
                         val ink = if (row.cycle == 0) blueInk else redInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
-                            LedgerCell(loan.place, 140, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.place, 140, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.familyHead, 160, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
                                 val text = if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
-                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
+                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { EntryTrace.add("row"); onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
                             }
                             LedgerCell(rupees(row.ending), 110, redInk)
                         }
@@ -274,8 +279,8 @@ private val paper = Color(0xfffff8df)
         drawLine(blueInk.copy(alpha = .45f), Offset(0f, size.height - 1), Offset(size.width, size.height - 1), 1.dp.toPx())
     }
     if (tap != null) {
-        TextButton(onClick = tap, modifier = cell.semantics { onLongClick { hold?.invoke(); true } }
-                .pointerInput(tap, hold) { detectTapGestures(onTap = { tap() }, onLongPress = { hold?.invoke() }) },
+        TextButton(onClick = { EntryTrace.add("button"); tap() }, modifier = cell.semantics { onLongClick { hold?.invoke(); true } }
+                .pointerInput(tap, hold) { detectTapGestures(onTap = { EntryTrace.add("pointer"); tap() }, onLongPress = { hold?.invoke() }) },
             shape = androidx.compose.ui.graphics.RectangleShape,
             contentPadding = PaddingValues(8.dp), colors = ButtonDefaults.textButtonColors(contentColor = ink)) {
             Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium)
