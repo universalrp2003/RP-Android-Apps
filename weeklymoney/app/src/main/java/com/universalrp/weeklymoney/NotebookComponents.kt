@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
@@ -50,6 +51,7 @@ private val paper = Color(0xfffff8df)
 @Composable fun LoanEntryDialog(state: NotebookState, book: Book, seed: Loan?, edit: Boolean,
     busy: Boolean, privacy: DialogProperties, allowed: Boolean, dismiss: () -> Unit,
     commit: (NotebookState, (String?) -> Unit) -> Unit, saved: (Loan, Boolean) -> Unit) {
+    val keyboard = LocalSoftwareKeyboardController.current
     var place by remember { mutableStateOf(seed?.place ?: "") }
     var family by remember { mutableStateOf(seed?.familyHead ?: "") }
     var name by remember { mutableStateOf(seed?.customerName ?: "") }
@@ -70,7 +72,7 @@ private val paper = Color(0xfffff8df)
             val created = if (edit && seed != null) seed.copy(place = place.trim(), familyHead = family.trim(), customerName = name.trim(), totalPaise = parseRupees(amount), started = date)
                 else state.nextLoan(book, place, family, name, amount, date, linked)
             val next = if (edit && seed != null) state.correctLoan(seed, created) else state.copy(loans = state.loans + created)
-            commit(next) { problem -> if (problem == null) saved(created, history) else error = problem }
+            commit(next) { problem -> if (problem == null) { keyboard?.hide(); saved(created, history) } else error = problem }
         } catch (e: Exception) {
             error = (e as? InputProblem)?.explanation ?: "விவரங்கள், தொகை, தேதியைச் சரிபார்க்கவும் / Check details, total and date against saved payments"
         }
@@ -117,6 +119,7 @@ private val paper = Color(0xfffff8df)
 @Composable fun WeeklyDialog(state: NotebookState, loan: Loan, initialWeek: Int?, allInitially: Boolean, auditInitially: Boolean,
     busy: Boolean, privacy: DialogProperties, allowed: Boolean, dismiss: () -> Unit,
     commit: (NotebookState, (String?) -> Unit) -> Unit, editDetails: () -> Unit, renew: () -> Unit) {
+    val keyboard = LocalSoftwareKeyboardController.current
     val ledger = remember(state) { state.ledger() }
     val old = ledger.latest().filter { it.loanId == loan.id }.associateBy { it.week }
     val firstEmpty = generateSequence(1) { it + 1 }.first { it !in old }
@@ -142,7 +145,7 @@ private val paper = Color(0xfffff8df)
                 Row {
                     TextButton(enabled = cycle > 0, onClick = { cycle--; error = "" }) { Text("‹") }
                     Text("பக்கம் / Cycle ${cycle + 1}")
-                    TextButton(enabled = cycle <= (old.keys.maxOrNull() ?: 0) / 10, onClick = { cycle++; error = "" }) { Text("›") }
+                    TextButton(enabled = cycle < (old.keys.maxOrNull() ?: 0) / 10 && !ledger.balance(loan.id).completed, onClick = { cycle++; error = "" }) { Text("›") }
                 }
                 Row { Checkbox(all, { all = it }, modifier = Modifier.testTag("allTenWeeks")); Text("10 வாரமும் உள்ளிடு / Enter or edit all 10 weeks") }
                 Text("வெற்று = மாற்றமில்லை; - = வசூல் இல்லை / Blank leaves unchanged; - records no payment")
@@ -170,7 +173,7 @@ private val paper = Color(0xfffff8df)
                 error = ""
                 val indices = if (all) (0..9).toList() else listOf(selected)
                 val next = state.withReceipts(loan, indices.map { ReceiptDraft(cycle * 10 + it + 1, amounts[it], dates[it]) })
-                commit(next) { problem -> if (problem == null) dismiss() else error = problem }
+                commit(next) { problem -> if (problem == null) { keyboard?.hide(); dismiss() } else error = problem }
             } catch (e: Exception) { error = (e as? InputProblem)?.explanation ?: "தொகை, தேதியைச் சரிபார்க்கவும் / Check amounts and dates" }
         }) { Text("சேமி / Save") } }, dismissButton = { TextButton(enabled = !busy, onClick = dismiss) { Text("மூடு / Close") } })
 }

@@ -14,8 +14,12 @@ import org.junit.runner.RunWith
 class BookAndScreenshotTest {
     @get:Rule val ui = createAndroidComposeRule<MainActivity>()
     private val password = "synthetic-passphrase-only"
-    private fun waitFor(tag: String) = ui.waitUntil(15000) {
-        ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
+    private fun waitFor(tag: String) {
+        try {
+            ui.waitUntil(15000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+        } catch (e: Exception) {
+            throw AssertionError("Missing $tag in synthetic regression: " + ui.onRoot(useUnmergedTree = true).printToString(), e)
+        }
     }
     private fun assertSecure(expected: Boolean) = ui.runOnIdle {
         val secure = ui.activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_SECURE != 0
