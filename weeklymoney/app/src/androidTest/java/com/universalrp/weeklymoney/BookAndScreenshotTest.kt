@@ -3,7 +3,6 @@ package com.universalrp.weeklymoney
 import android.view.WindowManager
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asAndroidBitmap
-import java.io.File
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -138,8 +137,16 @@ class BookAndScreenshotTest {
         }
         ui.waitUntil(15000) { !ui.onNodeWithTag("bookZoom").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString().contains("100%") }
         val image = ui.onNodeWithTag("ledgerBook").captureToImage().asAndroidBitmap()
-        val output = File(androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.getExternalFilesDir(null), "synthetic-notebook.png")
-        output.outputStream().use { assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)) }
+        val resolver = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext.contentResolver
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, "synthetic-notebook.png")
+            put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/png")
+            put(android.provider.MediaStore.Images.Media.RELATIVE_PATH, "Pictures/WeeklyMoneySynthetic")
+            put(android.provider.MediaStore.Images.Media.IS_PENDING, 1)
+        }
+        val uri = requireNotNull(resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values))
+        requireNotNull(resolver.openOutputStream(uri)).use { assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)) }
+        resolver.update(uri, android.content.ContentValues().apply { put(android.provider.MediaStore.Images.Media.IS_PENDING, 0) }, null, null)
         ui.onNodeWithTag("resetBookZoom").performClick()
         // Only loan II is blank for today's week. III has 50, I is completed.
         ui.onNodeWithTag("finishCollection").performClick()
