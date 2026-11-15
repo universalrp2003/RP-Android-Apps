@@ -4,6 +4,11 @@ import android.app.DatePickerDialog
 import android.view.WindowManager
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
@@ -217,17 +222,16 @@ private val paper = Color(0xfffff8df)
                         val loan = row.loan
                         val ink = if (row.cycle == 0) blueInk else redInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
-                            val identityClick = Modifier.combinedClickable(onClick = { open(loan, null, false) }, onLongClick = { open(loan, null, true) })
-                            LedgerCell(loan.place, 140, ink, identityClick)
-                            LedgerCell(loan.familyHead, 160, ink, identityClick)
-                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, identityClick)
+                            LedgerCell(loan.place, 140, ink, tap = { open(loan, null, false) }, hold = { open(loan, null, true) })
+                            LedgerCell(loan.familyHead, 160, ink, tap = { open(loan, null, false) }, hold = { open(loan, null, true) })
+                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, tap = { open(loan, null, false) }, hold = { open(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
                                 val text = if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
-                                    Modifier.testTag("cell-${loan.id}-$week").combinedClickable(onClick = { open(loan, week, false) }, onLongClick = { open(loan, week, true) }))
+                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { open(loan, week, false) }, hold = { open(loan, week, true) })
                             }
                             LedgerCell(rupees(row.ending), 110, redInk)
                         }
@@ -238,8 +242,12 @@ private val paper = Color(0xfffff8df)
         }
     }
 }
-@Composable private fun LedgerCell(text: String, width: Int, ink: Color, modifier: Modifier = Modifier) {
-    Text(text, modifier.width(width.dp).heightIn(min = 64.dp).fillMaxHeight().drawBehind {
+@Composable private fun LedgerCell(text: String, width: Int, ink: Color, modifier: Modifier = Modifier,
+    tap: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
+    val interaction = if (tap == null) modifier else modifier
+        .semantics { onClick { tap(); true }; onLongClick { hold?.invoke(); true } }
+        .pointerInput(tap, hold) { detectTapGestures(onTap = { tap() }, onLongPress = { hold?.invoke() }) }
+    Text(text, interaction.width(width.dp).heightIn(min = 64.dp).fillMaxHeight().drawBehind {
         drawLine(redInk.copy(alpha = .65f), Offset(size.width - 1, 0f), Offset(size.width - 1, size.height), 1.dp.toPx())
         drawLine(blueInk.copy(alpha = .45f), Offset(0f, size.height - 1), Offset(size.width, size.height - 1), 1.dp.toPx())
     }.padding(8.dp), color = ink, style = MaterialTheme.typography.bodyMedium)
