@@ -1,3 +1,20 @@
+# Current notebook preview status — 15 November 2026
+
+**TEST0.3 is blocked; do not distribute for real records. TEST0.2 remains the last phone-confirmed build.**
+
+Latest requested behavior added to source:
+- Two-finger zoom, bounded 65–220%, with a 100% reset; scaled layout rather than a visual-only transform so cells scale with their hit areas.
+- Customer/cell activation is intended to open the amount editor; this remains blocked by the native regression below.
+- “வசூல் முடிந்தது / Collection finished” opens a date/count confirmation scoped to the selected book.
+- Confirming appends explicit missed-payment records only for that collection week's still-blank cells of active, started loans. Existing receipts/dashes, completed loans, older blanks, future weeks and other books stay unchanged. Future dates and archived books are refused. Repeating the operation is idempotent. A missed payment does not reduce debt; it remains correctable through retained audit history.
+- Week selection currently follows each loan's start-date seven-day periods, matching the notebook page model. This is not a blanket fill of all ten columns.
+
+Validation: seven notebook rule tests (including collection-close/idempotency/protection cases), other JVM tests, lint, APK compilation and four Python identity checks passed in CI at `138ca4d` (run 43729725532). **Native emulator regression still fails at the first receipt editor opening.** No successful TEST0.3 APK artifact or final digest/signer receipt has been produced. Pinch and collection-close UI behavior have not yet passed native gesture coverage. Existing ruled horizontal pages are not yet a verified photographic/paper-curl match.
+
+Remaining broader production work includes independent recovery secrets, biometric unlock, collector authority and conflict-safe offline operations exchange. Do not uninstall or clear the installed TEST0.2 app to try this source.
+
+---
+
 # Weekly Money — first Android preview build receipt
 
 **Not a production release. Synthetic test records only.**

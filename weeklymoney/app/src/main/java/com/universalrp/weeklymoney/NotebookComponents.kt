@@ -274,7 +274,8 @@ private val paper = Color(0xfffff8df)
         drawLine(blueInk.copy(alpha = .45f), Offset(0f, size.height - 1), Offset(size.width, size.height - 1), 1.dp.toPx())
     }
     if (tap != null) {
-        TextButton(onClick = tap, modifier = cell.semantics { onLongClick { hold?.invoke(); true } },
+        TextButton(onClick = tap, modifier = cell.semantics { onLongClick { hold?.invoke(); true } }
+                .pointerInput(tap, hold) { detectTapGestures(onTap = { tap() }, onLongPress = { hold?.invoke() }) },
             shape = androidx.compose.ui.graphics.RectangleShape,
             contentPadding = PaddingValues(8.dp), colors = ButtonDefaults.textButtonColors(contentColor = ink)) {
             Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium)
