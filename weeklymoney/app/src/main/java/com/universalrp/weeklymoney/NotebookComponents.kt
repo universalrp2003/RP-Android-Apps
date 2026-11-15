@@ -15,7 +15,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.platform.LocalContext
@@ -207,7 +206,7 @@ private val paper = Color(0xfffff8df)
             val page = pages[index]
             val rows = state.pageLines(book.id, page).filter { filteredIds == null || it.loan.id in filteredIds }
             val payments = remember(state) { state.ledger().latest() }.associateBy { it.loanId to it.week }
-            Column(Modifier.fillMaxSize().graphicsLayer { rotationY = ((pager.currentPage - index) + pager.currentPageOffsetFraction) * 8f; cameraDistance = 24f * density }) {
+            Column(Modifier.fillMaxSize()) {
                 Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
                 Text("புதிய தேதி / Start ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk)
                 if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${page.date.minusWeeks(10).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
