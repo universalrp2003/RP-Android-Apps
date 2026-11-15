@@ -23,7 +23,7 @@ class BookAndScreenshotTest {
             val cells = ui.onAllNodesWithText("Synthetic Place", useUnmergedTree = true)
             val targets = (0 until cells.fetchSemanticsNodes().size).joinToString("\n") { cells[it].printToString(maxDepth = 2) }
             val tags = ui.onAllNodes(SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.TestTag), useUnmergedTree = true).fetchSemanticsNodes().joinToString { it.config[androidx.compose.ui.semantics.SemanticsProperties.TestTag] }
-            val merged = ui.onAllNodesWithText("Synthetic Place").onFirst().printToString(maxDepth = 3)
+            val merged = ui.onAllNodesWithText("Synthetic Place").onFirst().printToString(maxDepth = 6)
             throw AssertionError("Missing $tag. Merged=$merged. Trace=${EntryTrace.snapshot()}. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
         }
     }
@@ -72,7 +72,9 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanSave").performClick()
         waitFor("ledgerBook")
         ui.waitUntil(15000) { ui.onAllNodesWithText("Synthetic Place").fetchSemanticsNodes().isNotEmpty() }
-        val place = ui.onAllNodes(hasTestTagPrefix("place-")).onFirst()
+        val all = ui.onAllNodes(hasTestTagPrefix("place-"), useUnmergedTree = true)
+        if (all.fetchSemanticsNodes().isEmpty()) waitFor("place-missing-diagnostic")
+        val place = all.onFirst()
         place.performScrollTo()
         place.performClick()
         ui.waitForIdle()
