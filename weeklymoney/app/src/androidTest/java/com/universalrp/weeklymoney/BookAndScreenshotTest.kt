@@ -2,6 +2,8 @@ package com.universalrp.weeklymoney
 
 import android.view.WindowManager
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asAndroidBitmap
+import java.io.File
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -130,10 +132,28 @@ class BookAndScreenshotTest {
         ui.waitUntil(15000) { !ui.onNodeWithTag("bookZoom").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString().contains("100%") }
         ui.onNodeWithTag("resetBookZoom").performClick()
         ui.onNodeWithTag("bookZoom").assertTextContains("100%", substring = true)
+        ui.onNodeWithTag("ledgerBook").performTouchInput {
+            pinch(center - Offset(140f, 0f), center + Offset(140f, 0f),
+                center - Offset(20f, 0f), center + Offset(20f, 0f), durationMillis = 500)
+        }
+        ui.waitUntil(15000) { !ui.onNodeWithTag("bookZoom").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString().contains("100%") }
+        val image = ui.onNodeWithTag("ledgerBook").captureToImage().asAndroidBitmap()
+        val output = File(androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().context.getExternalFilesDir(null), "synthetic-notebook.png")
+        output.outputStream().use { assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)) }
+        ui.onNodeWithTag("resetBookZoom").performClick()
         // Only loan II is blank for today's week. III has 50, I is completed.
         ui.onNodeWithTag("finishCollection").performClick()
         waitFor("confirmFinishCollection")
+        ui.onNodeWithText("ரத்து / Cancel").performClick()
+        waitClosed("confirmFinishCollection")
+        ui.onNodeWithTag("finishCollection").performClick()
+        waitFor("confirmFinishCollection")
         ui.onNodeWithTag("confirmFinishCollection").performClick()
+        waitClosed("confirmFinishCollection")
+        ui.onNodeWithTag("finishCollection").performClick()
+        waitFor("confirmFinishCollection")
+        ui.onNodeWithTag("confirmFinishCollection").assertIsNotEnabled() // idempotent: no blanks remain
+        ui.onNodeWithText("ரத்து / Cancel").performClick()
         waitClosed("confirmFinishCollection")
         ui.onNodeWithText("Synthetic Customer II").performScrollTo().performClick()
         waitFor("receiptAmount-2") // closing the collection records week 1 as missed

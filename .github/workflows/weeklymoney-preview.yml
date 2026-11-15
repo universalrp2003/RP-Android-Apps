@@ -61,7 +61,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: sh -c 'timeout 300s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; exit "$result"'
+          script: sh -c 'timeout 300s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; adb pull /sdcard/Android/data/com.universalrp.weeklymoney.preview.notebook.test/files/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; exit "$result"'
       - name: Expose bounded native regression failure
         if: failure()
         shell: python
@@ -116,4 +116,5 @@ jobs:
             weeklymoney/app/build/outputs/androidTest-results/
             weeklymoney/app/build/reports/androidTests/connected/
             weeklymoney/app/build/reports/lint-results-debug.html
+            weeklymoney/app/build/synthetic-notebook.png
           retention-days: 14
