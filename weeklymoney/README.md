@@ -2,7 +2,11 @@
 
 Status: **CI-built owner-only Android development preview, not ready for real data**.
 The first Android source implementation is in `app/`, registered as `:weeklymoney`.
-A debug APK passed CI compilation, JVM tests and lint; no stable release, phone test or end-to-end recovery test has passed. See [build receipt](BUILD-STATUS.md).
+Current diagnostic **0.2-preview/code2** passed compilation, JVM tests, lint and a native
+Android 35 UI regression. The owner installed the older 0.1 preview and reported Save
+and screenshot problems; this does not establish that this new build works on that phone.
+See [0.2 fix/installation receipt](FIX-0.2.md) and [historical first build receipt](BUILD-STATUS.md).
+No stable release or end-to-end recovery acceptance is claimed.
 Existing apps and Secret Message service are unchanged. Private reference photographs
 must not be committed or published.
 
@@ -11,7 +15,9 @@ must not be committed or published.
 The owner designated this as **RP Ideas' 17th application** on 15 November 2026.
 Machine-readable identity lives in `app-identity.json`. It is a separate Android app,
 not a screen inside Expense Tracker or DailyVault. Development builds keep the isolated
-`.preview` package; the planned production package is reserved, not released. Portfolio
+`.preview` base package. Diagnostic 0.2 adds `.fix2` for safe side-by-side installation
+because the initial ephemeral debug signer was not retained; do not uninstall 0.1 to
+try it. The planned production package is reserved, not released. Portfolio
 number 17 does not mean 17 published releases: existing stable catalogs/download links
 remain unchanged until this application's actual publication and verification.
 
@@ -171,7 +177,7 @@ secret alone cannot retrieve records from a lost phone.
 
 Implemented source: Tamil/English-labelled owner setup/password unlock; atomic local
 AES-GCM encrypted snapshots using the preview passphrase; background auto-lock and
-screenshot protection; book/loan creation; today's books first; prefix search;
+a remembered screenshot ON/OFF switch (protection ON by default); book/loan creation (book weekday choices, calendar picker and inline Save errors); today's books first; prefix search;
 integer-paise receipts, explicit missed-visit dashes, owner correction audit history;
 completion balances; encrypted full-backup export through CreateDocument with readback
 verification; full-backup restore on an empty installation with password validation and
