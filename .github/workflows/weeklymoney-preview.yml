@@ -61,7 +61,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1
+          script: sh -c 'timeout 300s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; exit "$result"' 
       - name: Expose bounded native regression failure
         if: failure()
         shell: python
@@ -71,6 +71,10 @@ jobs:
           if p.exists():
               message = p.read_text(errors='replace')[-12000:]
               print('::error title=Weekly Money native test::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          device = Path('weeklymoney-device.log')
+          if device.exists():
+              message = device.read_text(errors='replace')[-3000:]
+              print('::error title=Native progress::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
               message = p.read_text(errors='replace')[:24000]
               for index in range(0, len(message), 3000):

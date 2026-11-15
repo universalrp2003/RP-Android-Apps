@@ -189,7 +189,7 @@ private val paper = Color(0xfffff8df)
                 val next = state.withReceipts(loan, indices.map { ReceiptDraft(cycle * 10 + it + 1, amounts[it], dates[it]) })
                 commit(next) { problem -> if (problem == null) { keyboard?.hide(); dismiss() } else error = problem }
             } catch (e: Exception) { error = (e as? InputProblem)?.explanation ?: "தொகை, தேதியைச் சரிபார்க்கவும் / Check amounts and dates" }
-        }) { Text("சேமி / Save") } }, dismissButton = { TextButton(enabled = !busy, onClick = dismiss) { Text("மூடு / Close") } })
+        }) { Text("சேமி / Save") } }, dismissButton = { TextButton(enabled = !busy, modifier = Modifier.testTag("receiptClose"), onClick = dismiss) { Text("மூடு / Close") } })
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable fun LedgerBook(state: NotebookState, book: Book, search: String, modifier: Modifier,
@@ -203,7 +203,7 @@ private val paper = Color(0xfffff8df)
                 val event = awaitPointerEvent()
                 if (event.changes.count { it.pressed } >= 2) {
                     val factor = event.calculateZoom()
-                    if (factor.isFinite()) zoom = (zoom * factor).coerceIn(0.65f, 2.2f)
+                    if (factor.isFinite()) zoom = (zoom * factor).coerceIn(0.2f, 2.2f)
                     event.changes.forEach { it.consume() }
                 }
             } while (event.changes.any { it.pressed })
@@ -222,7 +222,7 @@ private val paper = Color(0xfffff8df)
     }
     Column(modifier.then(pinch).background(paper).border(1.dp, redInk).testTag("ledgerBook")) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("இரு விரல் பெரிதாக்கு / Pinch to zoom ${(zoom * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+            Text("இரு விரல் பெரிதாக்கு / Pinch to zoom ${(zoom * 100).toInt()}%", modifier = Modifier.testTag("bookZoom"), style = MaterialTheme.typography.labelSmall)
             TextButton(onClick = { zoom = 1f }, modifier = Modifier.testTag("resetBookZoom")) { Text("100%") }
         }
         Row(Modifier.fillMaxWidth()) {
@@ -241,7 +241,8 @@ private val paper = Color(0xfffff8df)
                 Text("புதிய தேதி / Start ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk)
                 if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${page.date.minusWeeks(10).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
                 // Ruled two-page ledger, horizontally scrollable at readable text size on phones.
-                Column(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).verticalScroll(rememberScrollState()).width(IntrinsicSize.Max)) {
+                Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).testTag("ledgerHorizontal")) {
+                Column(Modifier.width(IntrinsicSize.Max).fillMaxHeight().verticalScroll(rememberScrollState()).testTag("ledgerVertical")) {
                     Row(Modifier.height(IntrinsicSize.Min)) {
                         listOf("இடம்\nPlace" to 140, "குடும்பத் தலைவர்\nFamily head" to 160, "வாடிக்கையாளர்\nCustomer" to 160, "மொத்தம்\nTotal" to 100).forEach { (text, width) -> LedgerCell(text, width, redInk) }
                         repeat(10) { i -> LedgerCell("${i + 1}\n${page.date.plusWeeks(i.toLong()).format(DateTimeFormatter.ofPattern("dd-MM"))}", 90, redInk) }
@@ -270,6 +271,7 @@ private val paper = Color(0xfffff8df)
             }
         }
     }
+}
 }
 }
 @OptIn(ExperimentalFoundationApi::class)

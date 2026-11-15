@@ -1,6 +1,7 @@
 package com.universalrp.weeklymoney
 
 import android.view.WindowManager
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -15,6 +16,7 @@ class BookAndScreenshotTest {
     @get:Rule val ui = createAndroidComposeRule<MainActivity>()
     private val password = "synthetic-passphrase-only"
     private fun waitFor(tag: String) {
+        android.util.Log.i("WeeklyMoneyRegression", "wait $tag")
         try {
             ui.waitUntil(15000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
         } catch (e: Throwable) {
@@ -28,6 +30,7 @@ class BookAndScreenshotTest {
         }
     }
     private fun waitClosed(tag: String) {
+        android.util.Log.i("WeeklyMoneyRegression", "close $tag")
         ui.waitUntil(20000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
         ui.waitForIdle()
     }
@@ -117,7 +120,35 @@ class BookAndScreenshotTest {
         waitFor("loanPlace")
         ui.onNodeWithTag("loanPlace").performScrollTo().performTextReplacement("Corrected Place")
         ui.onNodeWithTag("loanSave").performClick()
-        ui.waitUntil(15000) { ui.onAllNodesWithText("Corrected Place").fetchSemanticsNodes().isNotEmpty() }
+        waitClosed("loanSave")
+        ui.onNodeWithText("Corrected Place").assertExists()
+        // Two real pointers change the table's layout density, then reset it.
+        ui.onNodeWithTag("ledgerBook").performTouchInput {
+            pinch(center - Offset(55f, 0f), center + Offset(55f, 0f),
+                center - Offset(130f, 0f), center + Offset(130f, 0f), durationMillis = 500)
+        }
+        ui.waitUntil(15000) { !ui.onNodeWithTag("bookZoom").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].joinToString().contains("100%") }
+        ui.onNodeWithTag("resetBookZoom").performClick()
+        ui.onNodeWithTag("bookZoom").assertTextContains("100%", substring = true)
+        // Only loan II is blank for today's week. III has 50, I is completed.
+        ui.onNodeWithTag("finishCollection").performClick()
+        waitFor("confirmFinishCollection")
+        ui.onNodeWithTag("confirmFinishCollection").performClick()
+        waitClosed("confirmFinishCollection")
+        ui.onNodeWithText("Synthetic Customer II").performScrollTo().performClick()
+        waitFor("receiptAmount-2") // closing the collection records week 1 as missed
+        ui.onNodeWithTag("week-1").performScrollTo().performClick()
+        waitFor("receiptAmount-1")
+        ui.onNodeWithTag("receiptAmount-1").assertTextContains("-", substring = true)
+        ui.onNodeWithTag("receiptClose").performClick()
+        waitClosed("receiptClose")
+        ui.onNodeWithText("Synthetic Customer III").performScrollTo().performClick()
+        waitFor("receiptAmount-2")
+        ui.onNodeWithTag("week-1").performScrollTo().performClick()
+        waitFor("receiptAmount-1")
+        ui.onNodeWithTag("receiptAmount-1").assertTextContains("50", substring = true)
+        ui.onNodeWithTag("receiptClose").performClick()
+        waitClosed("receiptClose")
         ui.onNodeWithTag("allowScreenshots").performClick()
         assertSecure(true)
         ui.activityRule.scenario.recreate()
