@@ -195,7 +195,7 @@ class MainActivity : ComponentActivity() {
     @Composable private fun ColumnScope.Notebook(current: NotebookState) {
         var selected by remember { mutableStateOf<String?>(null) }
         var form by remember { mutableStateOf("") }
-        var loan by remember { mutableStateOf<Loan?>(null) }
+        var openedLoanId by remember { mutableStateOf<String?>(null) }
         var initialWeek by remember { mutableStateOf<Int?>(null) }
         var initialAll by remember { mutableStateOf(false) }
         var initialAudit by remember { mutableStateOf(false) }
@@ -206,6 +206,8 @@ class MainActivity : ComponentActivity() {
         var tools by remember { mutableStateOf(false) }
         var showArchived by remember { mutableStateOf(false) }
         var confirmArchive by remember { mutableStateOf(false) }
+        var finishCollection by remember { mutableStateOf(false) }
+        var collectionDate by remember { mutableStateOf(LocalDate.now()) }
         val sorted = current.books.filter { showArchived || !current.isArchived(it.id) }.sortedBy { if (it.collectionDay == LocalDate.now().dayOfWeek) 0 else 1 }
         val book = sorted.find { it.id == selected } ?: sorted.firstOrNull()
         Row(Modifier.horizontalScroll(rememberScrollState())) {
@@ -232,10 +234,28 @@ class MainActivity : ComponentActivity() {
             Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
                 LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
-                    loan = selectedLoan; initialWeek = week; initialAll = false; initialAudit = audit
+                    openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
+        if (book != null && !current.isArchived(book.id)) TextButton(enabled = !busy,
+            modifier = Modifier.testTag("finishCollection"), onClick = { collectionDate = LocalDate.now(); finishCollection = true }) {
+            Text("வசூல் முடிந்தது / Collection finished")
+        }
+        if (finishCollection && book != null) {
+            val targets = runCatching { current.collectionBlanks(book, collectionDate) }.getOrDefault(emptyList())
+            AlertDialog(properties = dialogPrivacy(), onDismissRequest = { if (!busy) finishCollection = false },
+                title = { Text("வசூல் முடிந்ததா? / Finish collection?") },
+                text = { Column {
+                    DateChoice("வசூல் தேதி / Collection date", collectionDate, screenshotsAllowed, "finishDate") { collectionDate = it }
+                    Text("${book.number} · ${targets.size} காலி கட்டங்களில் – பதியப்படும்.\nOnly this collection week's blanks become missed payments. Existing amounts, earlier blanks and future weeks stay unchanged. Confirm only after visiting every customer.")
+                } }, confirmButton = { TextButton(enabled = !busy && targets.isNotEmpty() && collectionDate <= LocalDate.now(),
+                    modifier = Modifier.testTag("confirmFinishCollection"), onClick = { task {
+                        save(current.finishCollection(book, collectionDate)); finishCollection = false
+                        message = "வசூல் முடிந்தது · ${targets.size} பதிவுகள் / Collection closed"
+                    } }) { Text("ஆம், முடிந்தது / Confirm") } },
+                dismissButton = { TextButton(enabled = !busy, onClick = { finishCollection = false }) { Text("ரத்து / Cancel") } })
+        }
         if (confirmArchive && book != null) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { confirmArchive = false },
             title = { Text("காப்பகம் / Reversible archive") }, text = { Text("No records will be deleted. Archived books remain searchable through Tools and are included in backups.") },
             confirmButton = { TextButton(enabled = !busy, onClick = { task {
@@ -247,18 +267,17 @@ class MainActivity : ComponentActivity() {
             dismiss = { form = "" }, commit = { next, done -> task(onError = { done(it) }) { save(next); done(null) } },
             saved = { created, history ->
                 form = ""; search = ""; message = "கடன் சேமிக்கப்பட்டது / Loan saved"
-                if (history) { loan = created; initialWeek = 1; initialAll = true; initialAudit = false }
+                if (history) { openedLoanId = created.id; initialWeek = 1; initialAll = true; initialAudit = false }
             })
-        loan?.let { selectedLoan ->
-            val effective = current.effectiveLoans().find { it.id == selectedLoan.id } ?: selectedLoan
+        current.effectiveLoans().find { it.id == openedLoanId }?.let { effective ->
             key(effective.id) {
                 WeeklyDialog(current, effective, initialWeek, initialAll, initialAudit, busy, dialogPrivacy(), screenshotsAllowed,
-                    dismiss = { loan = null }, commit = { next, done -> task(onError = { done(it) }) {
+                    dismiss = { openedLoanId = null }, commit = { next, done -> task(onError = { done(it) }) {
                         val justCompleted = !current.ledger().balance(effective.id).completed && next.ledger().balance(effective.id).completed
                         save(next); done(null)
                         if (justCompleted) repeatCandidate = effective
-                    } }, editDetails = { loan = null; loanSeed = effective; editLoan = true; form = "loan" },
-                    renew = { loan = null; repeatCandidate = effective })
+                    } }, editDetails = { openedLoanId = null; loanSeed = effective; editLoan = true; form = "loan" },
+                    renew = { openedLoanId = null; repeatCandidate = effective })
             }
         }
         repeatCandidate?.let { previous ->

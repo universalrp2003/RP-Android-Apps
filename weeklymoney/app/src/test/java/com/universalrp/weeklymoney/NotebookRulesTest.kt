@@ -11,6 +11,25 @@ class NotebookRulesTest {
     private val owner = Actor("o", "Owner", Role.OWNER)
     private val book = Book("b", "1", DayOfWeek.THURSDAY, date)
     private fun empty() = NotebookState(owner, listOf(book))
+    @Test fun closingCollectionOnlyMarksThisWeeksBlanksAndIsIdempotent() {
+        val first = empty().nextLoan(book, "P", "F", "N", "100", date)
+        val second = empty().nextLoan(book, "P", "F", "Other", "100", date)
+        val future = empty().nextLoan(book, "P", "F", "Future", "100", date.plusWeeks(9))
+        val paid = empty().nextLoan(book, "P", "F", "Paid", "10", date)
+        val base = empty().copy(loans = listOf(first, second, future, paid))
+            .withReceipts(first, listOf(ReceiptDraft(3, "10", date.plusWeeks(2))))
+            .withReceipts(paid, listOf(ReceiptDraft(1, "10", date)))
+        val next = base.finishCollection(book, date.plusWeeks(2))
+        assertEquals(base.audits.size + 1, next.audits.size)
+        val missed = next.ledger().latest().single { it.loanId == second.id }
+        assertEquals(3, missed.week)
+        assertNull(missed.amountPaise)
+        assertEquals(date.plusWeeks(2), missed.receivedOn)
+        assertEquals(1000L, next.ledger().latest().single { it.loanId == first.id }.amountPaise)
+        assertEquals(next, next.finishCollection(book, date.plusWeeks(2)))
+        assertFalse(next.ledger().latest().any { it.loanId == future.id })
+        assertTrue(runCatching { base.finishCollection(book, LocalDate.now().plusDays(1)) }.isFailure)
+    }
     @Test fun duplicateCustomerGetsIndependentLoanAndRomanOrdinal() {
         val first = empty().nextLoan(book, "Place", "Family", "Name", "100", date)
         val state = empty().copy(loans = listOf(first))

@@ -4,6 +4,11 @@ import android.app.DatePickerDialog
 import android.view.WindowManager
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.semantics
@@ -184,6 +189,21 @@ private val paper = Color(0xfffff8df)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable fun LedgerBook(state: NotebookState, book: Book, search: String, modifier: Modifier,
     open: (Loan, Int?, Boolean) -> Unit) {
+    var zoom by remember(book.id) { mutableStateOf(1f) }
+    val baseDensity = LocalDensity.current
+    val pinch = Modifier.pointerInput(book.id) {
+        awaitEachGesture {
+            awaitFirstDown(requireUnconsumed = false)
+            do {
+                val event = awaitPointerEvent()
+                if (event.changes.count { it.pressed } >= 2) {
+                    val factor = event.calculateZoom()
+                    if (factor.isFinite()) zoom = (zoom * factor).coerceIn(0.65f, 2.2f)
+                    event.changes.forEach { it.consume() }
+                }
+            } while (event.changes.any { it.pressed })
+        }
+    }
     val pages = remember(state, book.id) { state.pages(book.id) }
     val filteredIds = remember(state, search) { if (search.isBlank()) null else state.ledger().search(search).map { it.id }.toSet() }
     val pager = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
@@ -195,7 +215,11 @@ private val paper = Color(0xfffff8df)
             if (index >= 0) pager.scrollToPage(index)
         }
     }
-    Column(modifier.background(paper).border(1.dp, redInk).testTag("ledgerBook")) {
+    Column(modifier.then(pinch).background(paper).border(1.dp, redInk).testTag("ledgerBook")) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("இரு விரல் பெரிதாக்கு / Pinch to zoom ${(zoom * 100).toInt()}%", style = MaterialTheme.typography.labelSmall)
+            TextButton(onClick = { zoom = 1f }, modifier = Modifier.testTag("resetBookZoom")) { Text("100%") }
+        }
         Row(Modifier.fillMaxWidth()) {
             TextButton(enabled = pager.currentPage > 0, onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }) { Text("‹ முந்தைய / Previous") }
             Text("${pager.currentPage + 1}/${pages.size.coerceAtLeast(1)}", Modifier.padding(top = 14.dp))
@@ -206,6 +230,7 @@ private val paper = Color(0xfffff8df)
             val page = pages[index]
             val rows = state.pageLines(book.id, page).filter { filteredIds == null || it.loan.id in filteredIds }
             val payments = remember(state) { state.ledger().latest() }.associateBy { it.loanId to it.week }
+            CompositionLocalProvider(LocalDensity provides Density(baseDensity.density * zoom, baseDensity.fontScale)) {
             Column(Modifier.fillMaxSize()) {
                 Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
                 Text("புதிய தேதி / Start ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk)
@@ -240,6 +265,7 @@ private val paper = Color(0xfffff8df)
             }
         }
     }
+}
 }
 @Composable private fun LedgerCell(text: String, width: Int, ink: Color, modifier: Modifier = Modifier,
     tap: (() -> Unit)? = null, hold: (() -> Unit)? = null) {

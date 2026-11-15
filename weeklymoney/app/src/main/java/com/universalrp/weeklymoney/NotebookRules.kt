@@ -74,3 +74,18 @@ fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLi
         if (cycle > 0 && opening == 0L) null else NotebookLine(loan, cycle, opening, ledger.balance(loan.id, (cycle + 1) * 10).remainingPaise)
     }.sortedWith(compareBy<NotebookLine> { if (it.cycle == 0) 0 else 1 }.thenBy { it.loan.started }.thenBy { it.loan.sequence })
 }
+
+/** Only the selected collection week's blank cells; never backfill older/future weeks. */
+fun NotebookState.collectionBlanks(book: Book, date: LocalDate): List<Pair<Loan, Int>> {
+    if (isArchived(book.id)) throw InputProblem("காப்பக புத்தகத்தில் வசூல் செய்ய முடியாது / Book is archived")
+    if (date > LocalDate.now()) throw InputProblem("எதிர்கால வசூலை முடிக்க முடியாது / Cannot close a future collection")
+    val ledger = ledger()
+    val recorded = ledger.latest().map { it.loanId to it.week }.toSet()
+    return effectiveLoans().filter { it.bookId == book.id && it.started <= date && !ledger.balance(it.id).completed }
+        .map { it to (java.time.temporal.ChronoUnit.DAYS.between(it.started, date) / 7 + 1).toInt() }
+        .filter { (loan, week) -> (loan.id to week) !in recorded }
+}
+fun NotebookState.finishCollection(book: Book, date: LocalDate, now: Instant = Instant.now()): NotebookState =
+    collectionBlanks(book, date).fold(this) { next, (loan, week) ->
+        next.withReceipts(loan, listOf(ReceiptDraft(week, "-", date)), now)
+    }
