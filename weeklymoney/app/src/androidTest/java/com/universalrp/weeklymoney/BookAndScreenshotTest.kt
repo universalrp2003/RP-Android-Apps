@@ -19,10 +19,11 @@ class BookAndScreenshotTest {
             ui.waitUntil(15000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
         } catch (e: Throwable) {
             val roots = ui.onAllNodes(isRoot(), useUnmergedTree = true)
-            val tree = (0 until roots.fetchSemanticsNodes().size).joinToString("\n") { roots[it].printToString(maxDepth = 40) }
+            val tree = (0 until roots.fetchSemanticsNodes().size).reversed().joinToString("\n") { roots[it].printToString(maxDepth = 40) }
             val cells = ui.onAllNodesWithText("Synthetic Place", useUnmergedTree = true)
             val targets = (0 until cells.fetchSemanticsNodes().size).joinToString("\n") { cells[it].printToString(maxDepth = 2) }
-            throw AssertionError("Missing $tag in synthetic regression. Target cells:\n$targets\nRoots:\n$tree")
+            val tags = ui.onAllNodes(SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.TestTag), useUnmergedTree = true).fetchSemanticsNodes().joinToString { it.config[androidx.compose.ui.semantics.SemanticsProperties.TestTag] }
+            throw AssertionError("Missing $tag. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
         }
     }
     private fun assertSecure(expected: Boolean) = ui.runOnIdle {
