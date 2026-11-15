@@ -9,11 +9,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.onClick
-import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
@@ -41,11 +37,6 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-internal object EntryTrace {
-    private val events = java.util.concurrent.CopyOnWriteArrayList<String>()
-    fun add(event: String) { if (events.size < 30) events.add(event) }
-    fun snapshot() = events.joinToString(";")
-}
 private val dateFormat = DateTimeFormatter.ofPattern("dd-MM-uuuu")
 private val blueInk = Color(0xff153c8b)
 private val redInk = Color(0xffb3323c)
@@ -179,6 +170,8 @@ private val paper = Color(0xfffff8df)
                 shown.forEach { i ->
                     Text("வாரம் / Week ${i + 1}" + if (cycle > 0) " · ${cycle * 10 + i + 1} overall" else "")
                     EntryField("ரூபாய் / Amount or -", amounts[i], "receiptAmount-${i + 1}", true) { amounts[i] = it }
+                    TextButton(modifier = Modifier.testTag("markMissed-${i + 1}"), enabled = !busy,
+                        onClick = { amounts[i] = "-" }) { Text("வசூல் இல்லை / Mark missed –") }
                     DateChoice("வசூல் தேதி / Collection date", dates[i], allowed, "receiptDate-${i + 1}") { dates[i] = it }
                 }
                 TextButton(onClick = { audit = !audit }) { Text("பதிவு / திருத்த வரலாறு · History") }
@@ -268,9 +261,9 @@ private val paper = Color(0xfffff8df)
                         val loan = row.loan
                         val ink = if (row.cycle == 0) blueInk else redInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
-                            LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell(loan.familyHead, 160, ink, tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { EntryTrace.add("row"); onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             LedgerFold()
                             repeat(10) { i ->
@@ -278,7 +271,7 @@ private val paper = Color(0xfffff8df)
                                 val p = payments[loan.id to week]
                                 val text = if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
-                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { EntryTrace.add("row"); onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
+                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
                             }
                             LedgerCell(rupees(row.ending), 110, redInk)
                         }

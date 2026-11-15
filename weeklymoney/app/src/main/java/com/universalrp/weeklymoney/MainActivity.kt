@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -39,9 +37,6 @@ class MainActivity : ComponentActivity() {
     private var state by mutableStateOf<NotebookState?>(null)
     private var message by mutableStateOf("")
     private var busy by mutableStateOf(false)
-    private var openCount = 0
-    private var dismissCount = 0
-    fun entryDiagnostic() = "taps=$openCount dismiss=$dismissCount id=$openedLoanId loans=${state?.effectiveLoans()?.map { it.id }}"
     private var openedLoanId by mutableStateOf<String?>(null)
     private var initialWeek by mutableStateOf<Int?>(null)
     private var initialAll by mutableStateOf(false)
@@ -236,10 +231,10 @@ class MainActivity : ComponentActivity() {
         } }
         Field("தேடல் / Place, family, customer", search) { search = it }
         if (book != null) {
-            Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader").semantics { stateDescription = entryDiagnostic() })
+            Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
                 LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
-                    EntryTrace.add("activity"); openCount++; openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
+                    openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
@@ -277,7 +272,7 @@ class MainActivity : ComponentActivity() {
         current.effectiveLoans().find { it.id == openedLoanId }?.let { effective ->
             key(effective.id) {
                 WeeklyDialog(current, effective, initialWeek, initialAll, initialAudit, busy, dialogPrivacy(), screenshotsAllowed,
-                    dismiss = { dismissCount++; openedLoanId = null }, commit = { next, done -> task(onError = { done(it) }) {
+                    dismiss = { openedLoanId = null }, commit = { next, done -> task(onError = { done(it) }) {
                         val justCompleted = !current.ledger().balance(effective.id).completed && next.ledger().balance(effective.id).completed
                         save(next); done(null)
                         if (justCompleted) repeatCandidate = effective

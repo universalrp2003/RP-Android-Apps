@@ -80,13 +80,30 @@ jobs:
               for index in range(0, len(message), 3000):
                   chunk = message[index:index+3000]
                   print(f'::error title=Native XML {index//3000}::' + chunk.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+      - name: Record native regression receipt
+        shell: python
+        run: |
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for path in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
+              root = ET.parse(path).getroot()
+              print(f"::notice title=Native test receipt::{root.attrib}")
       - name: Record exact APK digest and pinned signer
         run: |
-          apk=weeklymoney/app/build/outputs/apk/debug/app-debug.apk
-          sha256sum "$apk" > weeklymoney/app/build/outputs/apk/debug/app-debug.sha256
+          directory=weeklymoney/app/build/outputs/apk/debug
+          file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
+          apk="$directory/$file"
+          test -f "$apk" || { echo "::error::Metadata APK is missing: $file"; exit 1; }
+          (cd "$directory" && sha256sum "$file" > "$file.sha256")
+          echo "::notice title=APK SHA256::$(cat "$apk.sha256")"
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$tools/apksigner" verify --print-certs "$apk" > weeklymoney/app/build/outputs/apk/debug/signer.txt
-          grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' weeklymoney/app/build/outputs/apk/debug/signer.txt
+          cat "$directory/signer.txt"
+          if ! grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$directory/signer.txt"; then
+            echo "::error title=APK signer mismatch::$(cat "$directory/signer.txt")"
+            exit 1
+          fi
+          echo "::notice title=APK signer::7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
       - uses: actions/upload-artifact@v4
         if: success()
         with:

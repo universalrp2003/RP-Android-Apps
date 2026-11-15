@@ -26,7 +26,7 @@ class BookAndScreenshotTest {
             val targets = (0 until cells.fetchSemanticsNodes().size).joinToString("\n") { cells[it].printToString(maxDepth = 2) }
             val tags = ui.onAllNodes(SemanticsMatcher.keyIsDefined(androidx.compose.ui.semantics.SemanticsProperties.TestTag), useUnmergedTree = true).fetchSemanticsNodes().joinToString { it.config[androidx.compose.ui.semantics.SemanticsProperties.TestTag] }
             val merged = ui.onAllNodesWithText("Synthetic Place").onFirst().printToString(maxDepth = 6)
-            throw AssertionError("Missing $tag. Merged=$merged. Trace=${EntryTrace.snapshot()}. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
+            throw AssertionError("Missing $tag. Merged=$merged. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
         }
     }
     private fun waitClosed(tag: String) {
