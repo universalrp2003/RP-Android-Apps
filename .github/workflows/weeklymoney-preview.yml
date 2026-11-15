@@ -73,7 +73,9 @@ jobs:
               print('::error title=Weekly Money native test::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
               message = p.read_text(errors='replace')[:24000]
-              print('::error title=Native XML::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+              for index in range(0, len(message), 3000):
+                  chunk = message[index:index+3000]
+                  print(f'::error title=Native XML {index//3000}::' + chunk.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
       - name: Record exact APK digest and pinned signer
         run: |
           apk=weeklymoney/app/build/outputs/apk/debug/app-debug.apk

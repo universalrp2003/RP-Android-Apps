@@ -20,7 +20,9 @@ class BookAndScreenshotTest {
         } catch (e: Throwable) {
             val roots = ui.onAllNodes(isRoot(), useUnmergedTree = true)
             val tree = (0 until roots.fetchSemanticsNodes().size).joinToString("\n") { roots[it].printToString(maxDepth = 40) }
-            throw AssertionError("Missing $tag in synthetic regression.\n$tree")
+            val cells = ui.onAllNodesWithText("Synthetic Place", useUnmergedTree = true)
+            val targets = (0 until cells.fetchSemanticsNodes().size).joinToString("\n") { cells[it].printToString(maxDepth = 2) }
+            throw AssertionError("Missing $tag in synthetic regression. Target cells:\n$targets\nRoots:\n$tree")
         }
     }
     private fun assertSecure(expected: Boolean) = ui.runOnIdle {
