@@ -37,6 +37,9 @@ class MainActivity : ComponentActivity() {
     private var state by mutableStateOf<NotebookState?>(null)
     private var message by mutableStateOf("")
     private var busy by mutableStateOf(false)
+    private var openCount = 0
+    private var dismissCount = 0
+    fun entryDiagnostic() = "taps=$openCount dismiss=$dismissCount id=$openedLoanId loans=${state?.effectiveLoans()?.map { it.id }}"
     private var openedLoanId by mutableStateOf<String?>(null)
     private var initialWeek by mutableStateOf<Int?>(null)
     private var initialAll by mutableStateOf(false)
@@ -234,7 +237,7 @@ class MainActivity : ComponentActivity() {
             Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
                 LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
-                    android.util.Log.i("WeeklyMoneyEntry", "Open ${selectedLoan.id}"); openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
+                    openCount++; openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
@@ -272,7 +275,7 @@ class MainActivity : ComponentActivity() {
         current.effectiveLoans().find { it.id == openedLoanId }?.let { effective ->
             key(effective.id) {
                 WeeklyDialog(current, effective, initialWeek, initialAll, initialAudit, busy, dialogPrivacy(), screenshotsAllowed,
-                    dismiss = { openedLoanId = null }, commit = { next, done -> task(onError = { done(it) }) {
+                    dismiss = { dismissCount++; openedLoanId = null }, commit = { next, done -> task(onError = { done(it) }) {
                         val justCompleted = !current.ledger().balance(effective.id).completed && next.ledger().balance(effective.id).completed
                         save(next); done(null)
                         if (justCompleted) repeatCandidate = effective
