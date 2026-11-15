@@ -19,12 +19,30 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      - name: Verify runner Android SDK
+        run: |
+          test -d "$ANDROID_HOME"
+          echo "Using GitHub-hosted runner Android SDK"
       - uses: gradle/actions/setup-gradle@v4
       - name: Check app 17 identity and offline source contract
         run: python3 -m unittest discover -s weeklymoney/checks -v
       - name: Test, lint and build offline preview only
-        run: ./gradlew :weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug --console=plain
+        shell: bash
+        run: |
+          set -o pipefail
+          set +e
+          ./gradlew :weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug --console=plain > weeklymoney-build.log 2>&1
+          result=$?
+          tail -100 weeklymoney-build.log
+          if [ "$result" -ne 0 ]; then
+            python3 - <<'PY'
+          from pathlib import Path
+          lines = Path('weeklymoney-build.log').read_text(errors='replace').splitlines()
+          message = '\n'.join(lines[-100:])[-12000:]
+          print('::error title=Weekly Money build failure::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          PY
+          fi
+          exit "$result"
       - uses: actions/upload-artifact@v4
         if: success()
         with:
