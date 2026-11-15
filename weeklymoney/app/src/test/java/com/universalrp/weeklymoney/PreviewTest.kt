@@ -6,6 +6,17 @@ import java.time.LocalDate
 import java.time.DayOfWeek
 
 class PreviewTest {
+    @Test fun bookFormValidationAndTamilNumber() {
+        val date = LocalDate.of(2026, 11, 15)
+        val failure = runCatching { BookInput.create("b", "  ", DayOfWeek.SUNDAY, date, "") }.exceptionOrNull()
+        assertTrue(failure is InputProblem)
+        assertTrue((failure as InputProblem).explanation.contains("Enter a book number"))
+        val book = BookInput.create("b", "  ௧  ", DayOfWeek.SUNDAY, date, "  ")
+        assertEquals("௧", book.number)
+        assertEquals(date, book.started)
+        assertEquals("", book.heading)
+        assertEquals(7, DayOfWeek.values().map { BookInput.weekday(it) }.distinct().size)
+    }
     @Test fun domainChecks() { main() }
     @Test fun portableEncryptedRoundTrip() {
         val state = NotebookState(Actor("owner", "உரிமையாளர்", Role.OWNER), listOf(Book("b", "1", DayOfWeek.MONDAY, LocalDate.of(2026, 11, 15))))

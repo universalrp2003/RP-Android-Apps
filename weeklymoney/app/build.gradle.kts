@@ -10,8 +10,9 @@ android {
         applicationId = "com.universalrp.weeklymoney.preview"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1-preview"
+        versionCode = 2
+        versionName = "0.2-preview"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     sourceSets.getByName("main").java.srcDir("../core/src/main/kotlin")
     sourceSets.getByName("test").java.srcDir("../core/src/test/kotlin")
@@ -21,7 +22,11 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
-    buildTypes { release { isMinifyEnabled = false } }
+    buildTypes {
+        // Old ephemeral debug signer was not retained. Install beside it, never force uninstall.
+        debug { applicationIdSuffix = ".fix2" }
+        release { isMinifyEnabled = false }
+    }
 }
 dependencies {
     implementation("androidx.activity:activity-compose:1.10.1")
@@ -31,6 +36,11 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2025.08.00"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
 }

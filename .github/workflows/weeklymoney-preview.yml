@@ -43,12 +43,38 @@ jobs:
           PY
           fi
           exit "$result"
+      - name: Enable emulator acceleration
+        run: sudo chmod a+rw /dev/kvm
+      - name: Native book-save, restart persistence and screenshot-switch regression
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1
+      - name: Expose bounded native regression failure
+        if: failure()
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('weeklymoney-native.log')
+          if p.exists():
+              message = p.read_text(errors='replace')[-12000:]
+              print('::error title=Weekly Money native test::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          for p in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
+              message = p.read_text(errors='replace')[-12000:]
+              print('::error title=Native XML::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: WeeklyMoney-UNVERIFIED-PREVIEW-not-for-real-records
+          name: WeeklyMoney-0.2-diagnostic-synthetic-records-only
           path: |
             weeklymoney/app/build/outputs/apk/debug/*.apk
             weeklymoney/app/build/test-results/testDebugUnitTest/
+            weeklymoney/app/build/outputs/androidTest-results/
+            weeklymoney/app/build/reports/androidTests/connected/
             weeklymoney/app/build/reports/lint-results-debug.html
           retention-days: 14
