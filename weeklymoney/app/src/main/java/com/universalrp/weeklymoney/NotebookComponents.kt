@@ -267,14 +267,17 @@ private val paper = Color(0xfffff8df)
     }
 }
 }
-@OptIn(ExperimentalFoundationApi::class)
 @Composable private fun LedgerCell(text: String, width: Int, ink: Color, modifier: Modifier = Modifier,
     tap: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
-    val interaction = if (tap == null) modifier else modifier.combinedClickable(onClick = tap, onLongClick = hold)
-    Box(interaction.width(width.dp).heightIn(min = 64.dp).drawBehind {
+    val cell = modifier.width(width.dp).heightIn(min = 64.dp).drawBehind {
         drawLine(redInk.copy(alpha = .65f), Offset(size.width - 1, 0f), Offset(size.width - 1, size.height), 1.dp.toPx())
         drawLine(blueInk.copy(alpha = .45f), Offset(0f, size.height - 1), Offset(size.width, size.height - 1), 1.dp.toPx())
-    }.padding(8.dp)) {
-        Text(text, color = ink, style = MaterialTheme.typography.bodyMedium)
     }
+    if (tap != null) {
+        TextButton(onClick = tap, modifier = cell.semantics { onLongClick { hold?.invoke(); true } },
+            shape = androidx.compose.ui.graphics.RectangleShape,
+            contentPadding = PaddingValues(8.dp), colors = ButtonDefaults.textButtonColors(contentColor = ink)) {
+            Text(text, modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodyMedium)
+        }
+    } else Box(cell.padding(8.dp)) { Text(text, color = ink, style = MaterialTheme.typography.bodyMedium) }
 }
