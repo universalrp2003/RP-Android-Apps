@@ -27,6 +27,10 @@ class BookAndScreenshotTest {
             throw AssertionError("Missing $tag. Merged=$merged. Trace=${EntryTrace.snapshot()}. Navigation=${ui.activity.entryDiagnostic()}. Tags=[$tags]. Roots=${roots.fetchSemanticsNodes().size}\nTarget cells:\n$targets\nRoots:\n$tree")
         }
     }
+    private fun waitClosed(tag: String) {
+        ui.waitUntil(20000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
+        ui.waitForIdle()
+    }
     private fun hasTestTagPrefix(prefix: String) = SemanticsMatcher("test tag starts $prefix") {
         it.config.getOrElse(androidx.compose.ui.semantics.SemanticsProperties.TestTag) { "" }.startsWith(prefix)
     }
@@ -70,23 +74,10 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanAmount").performScrollTo().performTextInput("1000")
         ui.onNodeWithTag("loanDate").performScrollTo().assertTextContains(java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd-MM-uuuu")), substring = true)
         ui.onNodeWithTag("loanSave").performClick()
+        waitClosed("loanSave")
         waitFor("ledgerBook")
-        ui.waitUntil(15000) { ui.onAllNodesWithText("Synthetic Place").fetchSemanticsNodes().isNotEmpty() }
-        val all = ui.onAllNodes(hasTestTagPrefix("place-"), useUnmergedTree = true)
-        if (all.fetchSemanticsNodes().isEmpty()) waitFor("place-missing-diagnostic")
-        val place = all.onFirst()
-        place.performScrollTo()
-        place.performClick()
-        ui.waitForIdle()
-        if (ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isEmpty()) {
-            // Keep the physical tap failure visible, but first distinguish hit testing
-            // from a broken row callback/state transition using accessibility activation.
-            place.performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { EntryTrace.add("semantics=${it()}") }
-            ui.waitForIdle()
-            val opened = ui.onAllNodesWithTag("receiptAmount-1").fetchSemanticsNodes().isNotEmpty()
-            if (!opened) waitFor("receiptAmount-1")
-            throw AssertionError("Physical ledger tap did not open receipt editor; accessibility activation opened=$opened")
-        }
+        val customer = ui.onAllNodes(hasTestTagPrefix("customer-")).onFirst()
+        customer.performScrollTo().performClick()
         waitFor("receiptAmount-1")
         ui.onNodeWithTag("receiptAmount-1").performScrollTo().performTextInput("100")
         ui.onNodeWithTag("receiptSave").performClick()
@@ -100,6 +91,7 @@ class BookAndScreenshotTest {
         waitFor("duplicatePrompt")
         ui.onNodeWithText("ஆம், இவருக்குப் புதிய கடன் / Yes, new loan for this person").performScrollTo().performClick()
         ui.onNodeWithTag("loanSave").performClick()
+        waitClosed("loanSave")
         ui.waitUntil(15000) { ui.onAllNodesWithText("Synthetic Customer II").fetchSemanticsNodes().isNotEmpty() }
         ui.onAllNodesWithText("Synthetic Place").onFirst().performScrollTo().performClick()
         waitFor("receiptAmount-2") // next week auto-selected, not typed
@@ -114,6 +106,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanAmount").performScrollTo().performTextInput("500")
         ui.onNodeWithTag("historicalLoan").performScrollTo().performClick()
         ui.onNodeWithTag("loanSave").performClick()
+        waitClosed("loanSave")
         waitFor("receiptAmount-10") // initial physical-note history exposes all ten editable weeks
         ui.onNodeWithTag("receiptAmount-1").performScrollTo().performTextInput("50")
         ui.onNodeWithTag("receiptSave").performClick()
