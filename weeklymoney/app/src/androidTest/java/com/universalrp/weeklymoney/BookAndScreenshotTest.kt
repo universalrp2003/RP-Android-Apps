@@ -17,8 +17,10 @@ class BookAndScreenshotTest {
     private fun waitFor(tag: String) {
         try {
             ui.waitUntil(15000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
-        } catch (e: Exception) {
-            throw AssertionError("Missing $tag in synthetic regression: " + ui.onRoot(useUnmergedTree = true).printToString(), e)
+        } catch (e: Throwable) {
+            val roots = ui.onAllNodes(isRoot(), useUnmergedTree = true)
+            val tree = (0 until roots.fetchSemanticsNodes().size).joinToString("\n") { roots[it].printToString(maxDepth = 40) }
+            throw AssertionError("Missing $tag in synthetic regression.\n$tree")
         }
     }
     private fun assertSecure(expected: Boolean) = ui.runOnIdle {
@@ -63,7 +65,9 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanSave").performClick()
         waitFor("ledgerBook")
         ui.waitUntil(15000) { ui.onAllNodesWithText("Synthetic Place").fetchSemanticsNodes().isNotEmpty() }
-        ui.onNodeWithText("Synthetic Place").performScrollTo().performClick()
+        ui.onNodeWithText("Synthetic Place").performScrollTo()
+        ui.waitUntil(15000) { ui.onNodeWithText("Synthetic Place").isDisplayed() }
+        ui.onNodeWithText("Synthetic Place").performClick()
         waitFor("receiptAmount-1")
         ui.onNodeWithTag("receiptAmount-1").performScrollTo().performTextInput("100")
         ui.onNodeWithTag("receiptSave").performClick()
