@@ -501,7 +501,7 @@ class MainActivity : ComponentActivity() {
     }
     @Composable private fun BookDialog(current: NotebookState, dismiss: () -> Unit, predecessor: Book? = null, saved: (Book) -> Unit) {
         var number by remember { mutableStateOf("") }
-        var heading by remember { mutableStateOf(BookInput.weekday(LocalDate.now().dayOfWeek).substringBefore(" /")) }
+        var heading by remember { mutableStateOf(predecessor?.heading ?: BookInput.weekday(LocalDate.now().dayOfWeek).substringBefore(" /")) }
         var headingEdited by remember { mutableStateOf(false) }
         var day by remember { mutableStateOf(predecessor?.collectionDay ?: LocalDate.now().dayOfWeek) }
         var date by remember { mutableStateOf(LocalDate.now()) }
