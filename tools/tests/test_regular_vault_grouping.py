@@ -14,7 +14,7 @@ class RegularVaultGroupingTest(unittest.TestCase):
         self.assertIn('tvguard', ids[:-1])
         self.assertIn('appdisabler', ids[:-1])
         self.assertEqual(len(ids[:-1]), 16)
-        self.assertIn('$RELEASE_BASE/tamilan-store-v0.13', source)
+        self.assertIn('$RELEASE_BASE/tamilan-store-v0.14', source)
         self.assertIn('$RELEASE_BASE/daily-vault-v0.5', source)
         site = (ROOT/'site/index.html').read_text()
         regular = re.search(r'aria-label="16 regular Android applications">(.*?)</section>', site, re.S)[1]
