@@ -1,7 +1,7 @@
-name: Weekly Money isolated preview
+name: Weekly Money release verification
 on:
   push:
-    branches: ["arena/0cb2c2a8-rp-android-apps"]
+    branches: ["arena/1e9cafce-rp-android-apps"]
     paths:
       - "weeklymoney/**"
       - ".github/workflows/weeklymoney-preview.yml"
@@ -10,10 +10,11 @@ permissions:
   contents: read
 jobs:
   preview:
-    if: github.ref == 'refs/heads/arena/0cb2c2a8-rp-android-apps'
+    if: github.ref == 'refs/heads/arena/1e9cafce-rp-android-apps'
     runs-on: ubuntu-latest
     env:
       RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      GH_TOKEN: ${{ github.token }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +22,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Prepare persistent owner-backed preview signer (no publication)
+      - name: Prepare persistent owner-backed persistent signer (no publication)
         uses: ./.github/actions/prepare-release-signing
         with:
           keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
@@ -33,12 +34,12 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Check app 17 identity and offline source contract
         run: python3 -m unittest discover -s weeklymoney/checks -v
-      - name: Test, lint and build offline preview only
+      - name: Test, lint and build signed offline release
         shell: bash
         run: |
           set -o pipefail
           set +e
-          ./gradlew :weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug --console=plain > weeklymoney-build.log 2>&1
+          ./gradlew :weeklymoney:testDebugUnitTest :weeklymoney:lintDebug :weeklymoney:assembleDebug :weeklymoney:assembleRelease :weeklymoney:lintRelease --console=plain > weeklymoney-build.log 2>&1
           result=$?
           tail -100 weeklymoney-build.log
           if [ "$result" -ne 0 ]; then
@@ -65,7 +66,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: sh -c 'adb logcat -v time -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log 2>&1 & logger=$!; timeout -k 15s 420s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain --no-parallel --max-workers=2 -Dorg.gradle.jvmargs=-Xmx2048m -Pkotlin.compiler.execution.strategy=in-process > weeklymoney-native.log 2>&1; result=$?; kill "$logger" 2>/dev/null || true; timeout -k 5s 20s adb pull /sdcard/Pictures/WeeklyMoneySynthetic/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; exit "$result"'
+          script: sh -c 'adb logcat -v time -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log 2>&1 & logger=$!; timeout -k 15s 420s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain --no-parallel --max-workers=2 -Dorg.gradle.jvmargs=-Xmx2048m -Pkotlin.compiler.execution.strategy=in-process > weeklymoney-native.log 2>&1; result=$?; kill "$logger" 2>/dev/null || true; timeout -k 5s 20s adb pull /sdcard/Pictures/WeeklyMoneySynthetic/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; if [ "$result" -eq 0 ]; then python3 weeklymoney/tools/release-upgrade-smoke.py; result=$?; fi; exit "$result"'
       - name: Expose bounded native regression failure
         if: failure()
         shell: python
@@ -92,53 +93,32 @@ jobs:
           for path in Path('weeklymoney/app/build/outputs/androidTest-results').rglob('*.xml'):
               root = ET.parse(path).getroot()
               print(f"::notice title=Native test receipt::{root.attrib}")
-      - name: Record exact APK digest and pinned signer
-        run: |
-          directory=weeklymoney/app/build/outputs/apk/debug
-          file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
-          apk="$directory/$file"
-          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.notebook"; assert m["elements"][0]["versionCode"]==11'
-          test -f "$apk" || { echo "::error::Metadata APK is missing: $file"; exit 1; }
-          (cd "$directory" && sha256sum "$file" > "$file.sha256")
-          echo "::notice title=APK SHA256::$(cat "$apk.sha256")"
-          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
-          "$tools/apksigner" verify --print-certs "$apk" > weeklymoney/app/build/outputs/apk/debug/signer.txt
-          cat "$directory/signer.txt"
-          if ! grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$directory/signer.txt"; then
-            echo "::error title=APK signer mismatch::$(cat "$directory/signer.txt")"
-            exit 1
-          fi
-          echo "::notice title=APK signer::7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
-      - name: Preserve verified notebook APK and build isolated demo APK
+      - name: Preserve verified signed release
         shell: bash
         run: |
           set -euo pipefail
-          directory=weeklymoney/app/build/outputs/apk/debug
+          directory=weeklymoney/app/build/outputs/apk/release
           handover=weeklymoney/app/build/handover
-          mkdir -p "$handover/notebook" "$handover/demo" "$handover/samples"
-          file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
-          cp "$directory/$file" "$handover/notebook/WeeklyMoney-TEST0.11.apk"
-          cp "$directory/signer.txt" "$handover/notebook/signer.txt"
-          (cd "$handover/notebook" && sha256sum WeeklyMoney-TEST0.11.apk > WeeklyMoney-TEST0.11.apk.sha256)
-          ./gradlew :weeklymoney:assembleDebug -PweeklymoneySample=true --console=plain
-          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.sample"; assert m["elements"][0]["versionCode"]==11'
-          file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
-          cp "$directory/$file" "$handover/demo/WeeklyMoney-DEMO0.11.apk"
+          mkdir -p "$handover"
+          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/release/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.notebook"; assert m["elements"][0]["versionCode"]==12; assert m["elements"][0]["versionName"]=="1.0"'
+          file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/release/output-metadata.json"))["elements"][0]["outputFile"])')
+          cp "$directory/$file" "$handover/Weekly-Money-v1.0.apk"
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
-          "$tools/apksigner" verify --print-certs "$handover/demo/WeeklyMoney-DEMO0.11.apk" > "$handover/demo/signer.txt"
-          grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$handover/demo/signer.txt"
-          (cd "$handover/demo" && sha256sum WeeklyMoney-DEMO0.11.apk > WeeklyMoney-DEMO0.11.apk.sha256)
-          cp weeklymoney/samples/* "$handover/samples/"
-          echo "::notice title=Demo APK SHA256::$(cat "$handover/demo/WeeklyMoney-DEMO0.11.apk.sha256")"
+          "$tools/apksigner" verify --print-certs "$handover/Weekly-Money-v1.0.apk" > "$handover/signer.txt"
+          grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$handover/signer.txt"
+          "$tools/aapt" dump badging "$handover/Weekly-Money-v1.0.apk" > "$handover/badging.txt"
+          ! grep -q 'application-debuggable' "$handover/badging.txt"
+          grep -q "application-label:'வார வசூல்'" "$handover/badging.txt"
+          (cd "$handover" && sha256sum Weekly-Money-v1.0.apk > Weekly-Money-v1.0.apk.sha256)
+          echo "::notice title=APK SHA256::$(cat "$handover/Weekly-Money-v1.0.apk.sha256")"
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: WeeklyMoney-0.11-gold-home-and-contact-preview-and-isolated-demo
+          name: WeeklyMoney-1.0-signed-release
           path: |
             weeklymoney/app/build/handover/
+            weeklymoney/app/build/release-upgrade-receipt.json
             weeklymoney/app/build/test-results/testDebugUnitTest/
             weeklymoney/app/build/outputs/androidTest-results/
-            weeklymoney/app/build/reports/androidTests/connected/
-            weeklymoney/app/build/reports/lint-results-debug.html
-            weeklymoney/app/build/synthetic-notebook.png
+            weeklymoney/app/build/reports/lint-results-release.html
           retention-days: 14

@@ -36,7 +36,7 @@ import java.time.LocalDate
 import java.time.Instant
 import java.util.UUID
 
-/** Owner-only development preview. Collector authority and recovery UI deliberately not simulated. */
+/** Single-owner offline notebook; encrypted backups and master-passphrase restore. */
 class MainActivity : ComponentActivity() {
     private var reading by mutableStateOf(false)
     private var stoppedAt = 0L
@@ -250,7 +250,7 @@ class MainActivity : ComponentActivity() {
         LaunchedEffect(useBiometric) { if (useBiometric) biometricUnlock() }
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(if (exists) "திறக்க / Unlock" else "உரிமையாளர் அமைப்பு / Owner setup")
-            Text("Preview: full-backup restore on an empty installation only. Collector exchange is unfinished. Keep an external backup and master password.")
+            Text("முழு backup-ஐ காலியான நிறுவலில் மீட்கலாம். Master password மற்றும் வெளிப்புற backup பாதுகாப்பாக வைக்கவும். / Restore a full backup on an empty installation. Keep your master password and an external encrypted backup.")
             if (useBiometric) {
                 Button(enabled = !busy && !biometricPending, modifier = Modifier.testTag("biometricUnlock"), onClick = { biometricUnlock() }) { Text("விரல்ரேகை / Biometric திறக்க") }
                 TextButton(onClick = { masterFallback = !masterFallback }) { Text("Biometric கிடைக்கவில்லையா? Master password recovery") }
@@ -348,9 +348,9 @@ class MainActivity : ComponentActivity() {
         if (information.isNotEmpty()) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { information = "" },
             title = { Text(if (information == "guide") "வார வசூல் · வழிகாட்டி" else "வார வசூல் · Weekly Money") },
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-                if (information == "guide") Text("புத்தகம் உருவாக்கி வசூல் கிழமை தேர்வு செய்யவும். கடன் தொகை என்பது நீங்கள் முடிவு செய்யும் இறுதி மொத்தம்; வட்டி கணக்கிடப்படாது. முதல் வசூல் கடன் தேதிக்குப் பிறகு வரும் புத்தகக் கிழமை.\n\nபழைய பதிவு இயல்பாக ON: நீலம்/சிவப்பு தொடக்க நிறம் தேர்வு; வாரக் கட்டத்தைத் தொட்டு அசல் தொகை/தேதி உள்ளிடவும். வழக்கமான இன்றைய கூடுதல் வசூலுக்கு Settings-ல் பழைய பதிவு OFF செய்யவும். சிவப்பு பாக்கி கீழே, ஊர்வாரியாக வரிசை. ஒரே நேர பாக்கிக் கடன்களுக்கு மட்டும் I/II.\n\nவசூல் முடிந்தது: அந்த நாளின் காலிக் கட்டங்கள் மட்டும் –; பெற்ற தொகைகள் மாறாது. பின் வசூல்/புதிய கடன் சுருக்கம் மற்றும் backup.\n\nவாரத்தின் முதல் மாற்றத்திற்கு முன் முழு encrypted backup; வசூல் முடித்த பிறகும் backup. Android 10+: Downloads/WeeklyMoney. Android 8/9: Settings Backup folder தேர்வு. App திறந்து unlock செய்திருக்கும்போது மட்டுமே; பின்னணி வார scheduler அல்ல. Backup தோல்வி: முன் பதிவு நிறுத்தப்படும்; முடித்த பின் உள்ளூர் பதிவு பாதுகாப்பாக இருக்கும்—மீண்டும் Backup now செய்யவும்.\n\nBiometric-ஐ phone-ல் உறுதி செய்ய வேண்டும். Master password புதிய phone/restore/recoveryக்கு அவசியம். Downloads backup phone அழிந்தால் போய்விடும்: USB/மற்றொரு device/Drive-க்கும் நீங்களே நகலெடுக்கவும்.\n\nCollector பரிமாற்றம் இன்னும் முடியவில்லை. இது சோதனைப் பதிப்பு; முக்கிய பணக் கணக்கின் ஒரே நகலாகப் பயன்படுத்த வேண்டாம்.")
+                if (information == "guide") Text("புத்தகம் உருவாக்கி வசூல் கிழமை தேர்வு செய்யவும். கடன் தொகை என்பது நீங்கள் முடிவு செய்யும் இறுதி மொத்தம்; வட்டி கணக்கிடப்படாது. முதல் வசூல் கடன் தேதிக்குப் பிறகு வரும் புத்தகக் கிழமை.\n\nபழைய பதிவு இயல்பாக ON: நீலம்/சிவப்பு தொடக்க நிறம் தேர்வு; வாரக் கட்டத்தைத் தொட்டு அசல் தொகை/தேதி உள்ளிடவும். வழக்கமான இன்றைய கூடுதல் வசூலுக்கு Settings-ல் பழைய பதிவு OFF செய்யவும். சிவப்பு பாக்கி கீழே, ஊர்வாரியாக வரிசை. ஒரே நேர பாக்கிக் கடன்களுக்கு மட்டும் I/II.\n\nவசூல் முடிந்தது: அந்த நாளின் காலிக் கட்டங்கள் மட்டும் –; பெற்ற தொகைகள் மாறாது. பின் வசூல்/புதிய கடன் சுருக்கம் மற்றும் backup.\n\nவாரத்தின் முதல் மாற்றத்திற்கு முன் முழு encrypted backup; வசூல் முடித்த பிறகும் backup. Android 10+: Downloads/WeeklyMoney. Android 8/9: Settings Backup folder தேர்வு. App திறந்து unlock செய்திருக்கும்போது மட்டுமே; பின்னணி வார scheduler அல்ல. Backup தோல்வி: முன் பதிவு நிறுத்தப்படும்; முடித்த பின் உள்ளூர் பதிவு பாதுகாப்பாக இருக்கும்—மீண்டும் Backup now செய்யவும்.\n\nBiometric-ஐ phone-ல் உறுதி செய்ய வேண்டும். Master password புதிய phone/restore/recoveryக்கு அவசியம். Downloads backup phone அழிந்தால் போய்விடும்: USB/மற்றொரு device/Drive-க்கும் நீங்களே நகலெடுக்கவும்.\n\nஇது உரிமையாளருக்கான இணையமில்லா நோட்டு. Master password-ஐ பாதுகாப்பாக வைக்கவும்; வேறு சாதனம் / USB-ல் encrypted backup வைத்திருக்கவும்.")
                 else {
-                    Text("RP Ideas · Rameshprathap R (@universalrp2003)\nApp 17 · Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\nOffline owner notebook · Test preview\nPackage: $packageName\nNo ads; no interest calculation. Collector exchange and independent recovery secret are unfinished.")
+                    Text("RP Ideas · Rameshprathap R (@universalrp2003)\nApp 17 · Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\nOffline owner notebook\nPackage: $packageName\nNo ads; no interest calculation. Restore with your encrypted backup and master password.")
                     Text("எங்கள் செயலிகள் / Our applications", style = MaterialTheme.typography.titleSmall)
                     OurApplications.names.forEachIndexed { index, name ->
                         Text("${index + 1}. $name", modifier = Modifier.testTag("ourApplication-$index"))

@@ -31,6 +31,17 @@ class IdentityChecks(unittest.TestCase):
         entry = app.find("meta-data[@" + ANDROID + "name='com.universalrp.portfolio.NUMBER']")
         self.assertEqual(entry.get(ANDROID + 'value'), '17')
 
+    def test_system_biometric_label_is_clean_and_demo_stays_distinct(self):
+        build = (ROOT / 'weeklymoney/app/build.gradle.kts').read_text()
+        self.assertIn('manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO" else "வார வசூல்"', build)
+        manifest = ET.parse(ROOT / 'weeklymoney/app/src/main/AndroidManifest.xml').getroot()
+        self.assertEqual(manifest.find('application').get(ANDROID + 'label'), '${weeklymoneyLabel}')
+        activity = (ROOT / 'weeklymoney/app/src/main/java/com/universalrp/weeklymoney/MainActivity.kt').read_text()
+        self.assertIn('BuildConfig.VERSION_NAME', activity)
+        self.assertNotIn('Test preview', activity)
+        self.assertNotIn('Collector exchange is unfinished', activity)
+        self.assertIn('isDebuggable = false', build)
+
     def test_resources_parse(self):
         for path in (ROOT / 'weeklymoney/app/src/main/res').rglob('*.xml'):
             ET.parse(path)
