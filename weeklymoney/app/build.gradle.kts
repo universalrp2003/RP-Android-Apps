@@ -11,9 +11,9 @@ android {
         applicationId = "com.universalrp.weeklymoney.preview"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "0.4-preview"
-        manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO 0.4" else "வார வசூல் · TEST 0.4"
+        versionCode = 5
+        versionName = "0.5-preview"
+        manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO 0.5" else "வார வசூல் · TEST 0.5"
         buildConfigField("boolean", "IS_SAMPLE", sampleBuild.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

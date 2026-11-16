@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
                 Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
-                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.4" else "சோதனை 0.4 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
+                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.5" else "சோதனை 0.5 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
