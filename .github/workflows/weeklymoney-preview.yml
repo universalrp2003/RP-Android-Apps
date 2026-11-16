@@ -66,7 +66,7 @@ jobs:
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -memory 1536 -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: sh -c 'adb logcat -v time -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log 2>&1 & logger=$!; timeout -k 15s 420s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain --no-parallel --max-workers=2 -Dorg.gradle.jvmargs=-Xmx2048m -Pkotlin.compiler.execution.strategy=in-process > weeklymoney-native.log 2>&1; result=$?; kill "$logger" 2>/dev/null || true; timeout -k 5s 20s adb pull /sdcard/Pictures/WeeklyMoneySynthetic/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; if [ "$result" -eq 0 ]; then python3 weeklymoney/tools/release-upgrade-smoke.py; result=$?; fi; exit "$result"'
+          script: sh -c 'adb logcat -v time -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log 2>&1 & logger=$!; timeout -k 15s 420s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain --no-parallel --max-workers=2 -Dorg.gradle.jvmargs=-Xmx2048m -Pkotlin.compiler.execution.strategy=in-process > weeklymoney-native.log 2>&1; result=$?; kill "$logger" 2>/dev/null || true; timeout -k 5s 20s adb pull /sdcard/Pictures/WeeklyMoneySynthetic/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; if [ "$result" -eq 0 ]; then python3 weeklymoney/tools/release-upgrade-smoke.py > weeklymoney-upgrade.log 2>&1; result=$?; cat weeklymoney-upgrade.log; fi; exit "$result"'
       - name: Expose bounded native regression failure
         if: failure()
         shell: python
@@ -76,6 +76,10 @@ jobs:
           if p.exists():
               message = p.read_text(errors='replace')[-12000:]
               print('::error title=Weekly Money native test::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+          upgrade = Path('weeklymoney-upgrade.log')
+          if upgrade.exists():
+              message = upgrade.read_text(errors='replace')[-10000:]
+              print('::error title=Release upgrade smoke::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
           device = Path('weeklymoney-device.log')
           if device.exists():
               message = device.read_text(errors='replace')[-3000:]
