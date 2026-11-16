@@ -11,6 +11,16 @@ class NotebookRulesTest {
     private val owner = Actor("o", "Owner", Role.OWNER)
     private val book = Book("b", "1", DayOfWeek.THURSDAY, date)
     private fun empty() = NotebookState(owner, listOf(book))
+    @Test fun originalLoanDateAndPriorCycleStayDistinctFromCollectionStart() {
+        val start = LocalDate.of(2026, 11, 12)
+        val loan = empty().nextLoan(book, "P", "Rengan", "Radhika", "12500", start)
+        val state = empty().copy(loans = listOf(loan))
+        assertEquals(start, loan.started)
+        assertEquals(LocalDate.of(2026, 11, 19), state.dueDate(loan, 1))
+        assertNull(state.previousPage(loan, 0))
+        assertEquals(NotebookPage(state.dueDate(loan, 1)), state.previousPage(loan, 1))
+        assertEquals(NotebookPage(state.dueDate(loan, 41)), state.previousPage(loan, 5))
+    }
     @Test fun closingCollectionOnlyMarksThisWeeksBlanksAndIsIdempotent() {
         val first = empty().nextLoan(book, "P", "F", "N", "100", date)
         val second = empty().nextLoan(book, "P", "F", "Other", "100", date)

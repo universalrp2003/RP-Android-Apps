@@ -219,6 +219,17 @@ private val paper = Color(0xfffff8df)
                         modifier = Modifier.testTag("newBalance"), color = if (entered != null && entered > remaining) redInk else blueInk)
                     Text("சேமித்த பிறகே புத்தகம் மாறும் / Preview only until Save", style = MaterialTheme.typography.labelSmall)
                 }
+                var fullHistory by remember { mutableStateOf(false) }
+                TextButton(modifier = Modifier.testTag("fullPaymentHistory"), onClick = { fullHistory = !fullHistory }) {
+                    Text("முழு வசூல் வரலாறு / All payments (${old.size})")
+                }
+                if (fullHistory) {
+                    if (old.isEmpty()) Text("பதிவுகள் இல்லை / No recorded payments")
+                    old.values.sortedWith(compareBy<Payment> { it.receivedOn }.thenBy { it.week }).forEach { payment ->
+                        Text("W${payment.week} · ${payment.receivedOn.format(dateFormat)} · ${payment.amountPaise?.let { "₹${rupees(it)}" } ?: "–"}")
+                    }
+                    Text("பதிவு இல்லாத வாரங்கள் பணம் செலுத்தியதாகக் காட்டப்படாது / Unrecorded weeks are not payments", style = MaterialTheme.typography.labelSmall)
+                }
                 TextButton(onClick = { audit = !audit }) { Text("பதிவு / திருத்த வரலாறு · History") }
                 if (audit) {
                     state.audits.filter { it.after.loanId == loan.id }.forEach { a ->
@@ -302,7 +313,19 @@ private val paper = Color(0xfffff8df)
                 drawRect(Color(0xff3b2b18).copy(alpha = turn.absoluteValue * 0.16f))
             }) {
                 if (book.heading.isNotBlank()) Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
-                Text("புதிய தேதி / Start ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk)
+                Text("முதல் வசூல் தேதி / Cycle first collection ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk,
+                    style = MaterialTheme.typography.bodySmall)
+                rows.filter { it.cycle == 0 }.map { it.loan.started }.distinct().sorted().forEach { date ->
+                    Text("கடன் கொடுத்த தேதி / Loan date ${date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk,
+                        style = MaterialTheme.typography.bodySmall)
+                }
+                rows.filter { it.cycle > 0 }.distinctBy { it.loan.id }.forEach { row ->
+                    val previous = state.previousPage(row.loan, row.cycle)
+                    val previousIndex = pages.indexOf(previous)
+                    if (previousIndex >= 0) TextButton(modifier = Modifier.testTag("previousCycle-${row.loan.id}"), onClick = {
+                        scope.launch { pager.animateScrollToPage(previousIndex) }
+                    }) { Text("${state.customerLabel(row.loan)} · முந்தைய 10 வாரப் பதிவு — திறக்க", style = MaterialTheme.typography.labelSmall) }
+                }
                 if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${state.dueDate(rows.first { it.cycle > 0 }.loan, (rows.first { it.cycle > 0 }.cycle - 1) * 10 + 1).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
                 // Ruled two-page ledger, horizontally scrollable at readable text size on phones.
                 Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).testTag("ledgerHorizontal")) {

@@ -91,3 +91,7 @@ fun NotebookState.finishCollection(book: Book, date: LocalDate, now: Instant = I
     collectionBlanks(book, date).fold(this) { next, (loan, week) ->
         next.withReceipts(loan, listOf(ReceiptDraft(week, "-", date)), now)
     }
+
+/** Previous ten-week sheet for this exact debt, never an unrelated adjacent page. */
+fun NotebookState.previousPage(loan: Loan, cycle: Int): NotebookPage? =
+    if (cycle <= 0) null else NotebookPage(dueDate(loan, (cycle - 1) * 10 + 1))
