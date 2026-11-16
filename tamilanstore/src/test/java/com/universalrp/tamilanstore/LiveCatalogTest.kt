@@ -11,7 +11,7 @@ class LiveCatalogTest {
         val root = JSONObject(raw()); edit(root.getJSONArray("apps").getJSONObject(0)); return root.toString()
     }
     @Test fun acceptsUnchangedSnapshot() {
-        assertEquals(15, LiveCatalog.validate(raw(), Catalog.parse(raw())).size)
+        assertEquals(16, LiveCatalog.validate(raw(), Catalog.parse(raw())).size)
     }
     /** A feed regenerated before this build shipped still lists 13 apps; it must not be rejected. */
     @Test fun acceptsShorterFeedAndKeepsTheAppsThisBuildShips() {
@@ -22,7 +22,7 @@ class LiveCatalogTest {
         kept.forEach { shortList.put(apps.getJSONObject(it)) }
         root.put("apps", shortList)
         val merged = LiveCatalog.validate(root.toString(), Catalog.parse(raw()))
-        assertEquals(15, merged.size)
+        assertEquals(16, merged.size)
         assertTrue(merged.any { it.id == "appdisabler" })
     }
     @Test fun rejectsUnknownOrRolledBackFeed() {

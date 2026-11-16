@@ -87,7 +87,7 @@ class StoreAboutCountsTest(unittest.TestCase):
         catalog = json.loads(STORE_CATALOG.read_text())
         self.assertNotIn('tamilanstore', {a['id'] for a in catalog['apps']})
         sections = (ROOT / 'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        store = re.search(r'tagPrefix = "tamilan-store", version = "([^"]+)"', sections).group(1)
+        store = re.search(r'tagPrefix = "tamilan-store", version = "[^"]+", publishedVersion = "([^"]+)"', sections).group(1)
         ui = STORE_MAIN.read_text()
         # The Disabler's own About dialog is the one that must reach the current Store build.
         self.assertIn(f'releases/tag/tamilan-store-v{store}', ABOUT.read_text())

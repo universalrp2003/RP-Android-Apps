@@ -52,7 +52,7 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'images/social-preview-v16.png'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'weekly-money-guide.html', 'images/social-preview-v17.png'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
         matches = data == local if name.endswith(('.html', '.png')) else json.loads(data) == json.loads(local)

@@ -5,7 +5,7 @@ import java.net.URL
 
 /** HTTPS transport + pinned package identities; APK signer/hash verification remains separate. */
 object LiveCatalog {
-    const val URL = Catalog.WEBSITE + "catalog-v2.json"
+    const val URL = Catalog.WEBSITE + "catalog-v3.json"
     fun validate(text: String, baseline: List<StoreApp>): List<StoreApp> {
         val next = Catalog.parseLive(text)
         // A live feed can lag this build: the website is regenerated from public releases on its own
@@ -29,8 +29,9 @@ object LiveCatalog {
         val updated = next.associateBy { it.id }
         return baseline.map { updated[it.id] ?: it }
     }
-    fun fetch(): String {
-        val connection = java.net.URL(URL + "?refresh=" + java.lang.Long.toUnsignedString(System.nanoTime())).openConnection() as HttpURLConnection
+    fun fetch(): String = fetchAt(URL, true)
+    private fun fetchAt(endpoint: String, allowLegacy: Boolean): String {
+        val connection = java.net.URL(endpoint + "?refresh=" + java.lang.Long.toUnsignedString(System.nanoTime())).openConnection() as HttpURLConnection
         connection.instanceFollowRedirects = false
         // Public metadata only: per-request nonce avoids stale intermediary/CDN responses.
         // No device identifier and no extra automatic polling; all validation stays intact.
@@ -40,6 +41,7 @@ object LiveCatalog {
         connection.connectTimeout = 15_000
         connection.readTimeout = 15_000
         try {
+            if (connection.responseCode == 404 && allowLegacy) return fetchAt(Catalog.WEBSITE + "catalog-v2.json", false)
             check(connection.responseCode == 200)
             return connection.inputStream.use { stream ->
                 val bytes = stream.readBytesLimited(256 * 1024)

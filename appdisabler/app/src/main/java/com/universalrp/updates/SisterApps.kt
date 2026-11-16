@@ -170,8 +170,14 @@ object SisterApps {
             aboutLabel = "Android TV Guard (டிவி காவலன்) — Android TV release",
         ),
         SisterApp(
+            id = "weeklymoney", name = "Weekly Money · TEST preview", tamilName = "வார வசூல் · சோதனை",
+            tagPrefix = "weekly-money", version = "0.10", publishedVersion = "0.10",
+            packageName = "com.universalrp.weeklymoney.preview.notebook",
+            aboutLabel = "வார வசூல் / Weekly Money TEST preview — GitHub release",
+        ),
+        SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.13", publishedVersion = "0.13",
+            tagPrefix = "tamilan-store", version = "0.14", publishedVersion = "0.13",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
         SisterApp(

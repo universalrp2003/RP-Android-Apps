@@ -19,14 +19,19 @@ def main():
         artifacts = api(f'actions/runs/{p["run_id"]}/artifacts')['artifacts']
         a, = [a for a in artifacts if a['name'] == p['artifact'] and not a['expired']]
         assert a['digest'] == 'sha256:' + p['artifact_sha256']
-        existing = subprocess.run(['gh','api',f'repos/{REPO}/releases/tags/{p["tag"]}'], capture_output=True, text=True)
-        if existing.returncode == 0:
-            released = json.loads(existing.stdout)
-            assert not released['draft'] and released['prerelease'] == p['prerelease']
+        # GitHub's by-tag endpoint does not return drafts. Enumerate before creating,
+        # or a retry can create another unpublished draft for the same tag.
+        pages = json.loads(cmd('gh', 'api', '--paginate', '--slurp', f'repos/{REPO}/releases?per_page=100'))
+        matches = [r for page in pages for r in page if r['tag_name'] == p['tag']]
+        if matches:
+            released = sorted(matches, key=lambda r: (r['draft'], r['id']))[0]
+            assert released['prerelease'] == p['prerelease']
+            assert released['target_commitish'] == p['source']
             asset, = [a for a in released['assets'] if a['name'] == p['asset']]
             assert asset['digest'] == 'sha256:' + p['sha256'] and asset['size'] == p.get('bytes', asset['size'])
-            print('Already published exact bytes:', p['tag']); continue
-        assert '404' in existing.stderr, existing.stderr
+            if released['draft']:
+                subprocess.run(['gh', 'api', '--method', 'PATCH', f'repos/{REPO}/releases/{released["id"]}', '-F', 'draft=false'], check=True)
+            print('Published exact bytes already verified:', p['tag']); continue
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             subprocess.run(['gh','run','download',str(p['run_id']),'--repo',REPO,'--name',p['artifact'],'--dir',tmp], check=True)
@@ -47,11 +52,12 @@ def main():
             args = ['gh','release','create',p['tag'],str(apk),str(checksum),'--repo',REPO,'--target',p['source'],'--title',p['title'],'--notes-file',p['notes'],'--draft']
             if p['prerelease']: args += ['--prerelease']
             subprocess.run(args, check=True)
-            draft = api('releases/tags/'+p['tag'])
+            drafts = api('releases?per_page=100')
+            draft, = [r for r in drafts if r['tag_name'] == p['tag'] and r['draft']]
             assert draft['draft']
             asset, = [a for a in draft['assets'] if a['name'] == p['asset']]
             assert asset['digest'] == 'sha256:'+p['sha256'] and asset['size'] == p['bytes']
-            subprocess.run(['gh','release','edit',p['tag'],'--repo',REPO,'--draft=false'], check=True)
+            subprocess.run(['gh','api','--method','PATCH',f'repos/{REPO}/releases/{draft["id"]}','-F','draft=false'], check=True)
             published = api('releases/tags/'+p['tag'])
             assert not published['draft'] and published['prerelease'] == p['prerelease']
             print('Published exact verified bytes:', p['tag'], p['sha256'])

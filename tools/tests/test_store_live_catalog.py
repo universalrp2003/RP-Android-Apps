@@ -66,7 +66,7 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         # timestamps are independently recorded in release-dates.json.
         self.assertEqual(snapshot['updated'],served_current['updated'])
         self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id'] not in ('dailyvault','tvguard','appdisabler')]))
-        self.assertEqual({a['id'] for a in snapshot['apps']},{a['id'] for a in served_current['apps']})
+        self.assertEqual({a['id'] for a in snapshot['apps'] if a['id'] != 'weeklymoney'},{a['id'] for a in served_current['apps']})
         bundled={a['id']:a for a in snapshot['apps']}
         for app in served_current['apps']:
             before=bundled[app['id']]
@@ -76,6 +76,19 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
             self.assertGreaterEqual(numeric(app['version']),numeric(before['version']))
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         self.assertIn('"catalog-v2.json"',source)
+
+    def test_new_store_v3_adds_labelled_preview_without_changing_old_id_sets(self):
+        snapshot=json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
+        current=json.loads((ROOT/'site/catalog-v3.json').read_text())
+        old=json.loads((ROOT/'site/catalog-v2.json').read_text())
+        self.assertEqual(16, len(current['apps']))
+        self.assertEqual({a['id'] for a in old['apps']} | {'weeklymoney'}, {a['id'] for a in current['apps']})
+        preview=next(a for a in current['apps'] if a['id']=='weeklymoney')
+        self.assertIn('TEST preview',preview['name'])
+        self.assertEqual('com.universalrp.weeklymoney.preview.notebook',preview['packageName'])
+        source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
+        self.assertIn('"catalog-v3.json"',source)
+        self.assertIn('connection.responseCode == 404 && allowLegacy',source)
 
     def test_served_catalog_uses_exact_website_and_mirror_receipts(self):
         current=json.loads((ROOT/'site/catalog-v2.json').read_text())

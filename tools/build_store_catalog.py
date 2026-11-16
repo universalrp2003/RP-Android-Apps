@@ -12,12 +12,14 @@ LEGACY_EXCLUDED = frozenset({'dailyvault', 'tvguard', 'appdisabler'})
 def generate(snapshot, releases):
     apps = []
     for app in snapshot['apps']:
+        if app['id'] == 'weeklymoney' and ('TEST preview' not in app['name'] or app['packageName'] != 'com.universalrp.weeklymoney.preview.notebook'):
+            raise ValueError('Weekly Money must remain an explicitly labelled notebook TEST preview')
         tag = app['releaseUrl'].rsplit('/', 1)[1]
         slug = tag.rsplit('-v', 1)[0]
         prefix = app['url'].rsplit('/', 1)[1].rsplit('-v', 1)[0]
         matches = []
         for release in releases:
-            if release.get('draft') or release.get('prerelease'):
+            if release.get('draft') or (release.get('prerelease') and app['id'] != 'weeklymoney'):
                 continue
             m = re.fullmatch(re.escape(slug) + r'-v([0-9]+(?:\.[0-9]+){1,3})', release['tag_name'])
             if not m:
@@ -43,8 +45,11 @@ def write_catalogs(result, directory):
     # Store0.5 requires exactly12 entries. Its endpoint stays frozen at that approved set:
     # DailyVault, Android TV Guard and System App Disabler only ship in catalog-v2.json.
     directory = Path(directory)
-    directory.joinpath('catalog-v2.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
-    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] not in LEGACY_EXCLUDED])
+    directory.joinpath('catalog-v3.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
+    v2 = dict(result, apps=[a for a in result['apps'] if a['id'] != 'weeklymoney'])
+    if len(v2['apps']) != 15: raise ValueError('Store0.13 endpoint must retain its15 identities')
+    directory.joinpath('catalog-v2.json').write_text(json.dumps(v2, ensure_ascii=False, indent=2)+'\n')
+    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] not in LEGACY_EXCLUDED | {'weeklymoney'}])
     if len(legacy['apps']) != 12:
         raise ValueError('Legacy Store endpoint must retain exactly12 approved suite entries')
     directory.joinpath('catalog.json').write_text(json.dumps(legacy, ensure_ascii=False, indent=2)+'\n')
