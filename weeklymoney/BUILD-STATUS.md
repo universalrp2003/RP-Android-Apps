@@ -1,3 +1,23 @@
+# Current receipt — TEST0.4 calendar and isolated sample
+
+**Verified test preview, not a production release.**
+
+- Exact source `45433f2a997bdaaad93dbeef7cda042ee6458cad`.
+- [CI 43784113423](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43784113423): **SUCCESS**, 16 November 2026, 01:09:44 UTC.
+- [Artifact 14189262735](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43784113423/artifacts/14189262735): normal TEST0.4 APK, separately packaged DEMO0.4 APK, encrypted invented sample, expected dates/balances, Tamil/English guide and test reports.
+- Android 35 comprehensive native regression: 1 test, 0 failures/errors/skips, 66.052 seconds. Unit suites, lint, APK builds, identity and pinned-signature checks passed.
+- Corrected strict-next-weekday schedule; book holidays that consume no week; conditional Roman suffixes; Settings history toggle; ten-date amount overview; today's additive receipt and new-balance preview; calendar-aware collection closure.
+- Normal APK SHA-256 `cd55ed075a4e85436ee85768dc4e6910b3192b8f61bb88aa2c00b4127482e424`.
+- DEMO APK SHA-256 `6c4fce861873c6c6d5a53b19873b86a98af40d6139f4f44507f8e0b2a571b646`.
+- Full receipt, migration cautions and remaining limitations: [FIX-0.4.md](FIX-0.4.md).
+
+Do not erase or uninstall the owner's TEST0.3 installation. Try the invented restore
+file in the **fresh, separate DEMO0.4 app** first. The regular version-4 APK is signed
+for an in-place TEST0.3 update; export an external encrypted backup before updating.
+No actual owner-phone upgrade, document-picker restore or production release is claimed.
+
+---
+
 # Current notebook preview status — 15 November 2026
 
 **TEST0.3 notebook/zoom/collection-close preview passed CI. Synthetic records only; not production-ready.**

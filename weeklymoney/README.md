@@ -1,34 +1,42 @@
 # வார வசூல் — Weekly Money · RP Ideas application 17
 
-Status: **Owner-only Android TEST0.3 notebook preview, not production-ready for real data**.
+Status: **Owner-only Android TEST0.4 collection-calendar preview; not production-ready for real data**.
 
-The notebook build uses `com.universalrp.weeklymoney.preview.notebook` (code 3),
-installed **beside** TEST0.2 (`.preview.fix2`), never requiring its uninstall or data clear.
-TEST0.2 was phone-confirmed by the owner. TEST0.3 has passed Android 35 native tests
-for save/reopen, repeated loans, historical entries, correction, pinch zoom and
-collection close; phone acceptance is still required. See [TEST0.3 receipt](FIX-0.3.md)
-for the exact verified source, artifact, certificate and checksums.
+The normal notebook build retains `com.universalrp.weeklymoney.preview.notebook`
+with version code 4 and the pinned TEST0.3 signer. A separate **DEMO0.4** build uses
+`.preview.sample` to try invented restored records without replacing existing books.
+See [verified TEST0.4 receipt and install guidance](FIX-0.4.md),
+[sample restore instructions](samples/README.md) and
+[தமிழ் மாதிரி சரிபார்ப்பு](samples/மாதிரி-சரிபார்ப்பு.md).
 
-The paper-style spread follows the private notebook reference: place → family head →
-customer → manual total, bound centre crease, ten numbered receipt columns and remaining
-balance; blue new rows, red carried rows, blue horizontal rules and red dividers.
-It supports right/left page-turn shading, horizontal/vertical panning, two-finger
-20–220% layout zoom and a 100% reset. This is a native ruled rendering, **not** a
-photographic texture or a physically simulated paper curl. Empty dates use calendars.
+- Roman I/II appears **only** when the same customer ID has multiple loans.
+- History/bulk ten-week entry is a persisted Settings switch, OFF by default.
+- A book's first weekly collection is the collection weekday **strictly after** loan
+  disbursement. Thursday 05-11-2026 → 12-11, 19-11, etc.
+- Manually marked book holidays do not consume a week. Sunday 08-11-2026 skipped →
+  that week's slot moves to 15-11-2026, and subsequent dates follow active Sundays.
+  This is distinct from a customer's missed-payment dash. Calendar changes/reversals
+  retain reasons/actor/time and never automatically rewrite actual receipt records.
+- The normal customer dialog shows ten dates with amount boxes, then today's additional
+  receipt and a new-balance preview. Save is allowed only for an active duty slot.
+  Additional receipts add to earlier amounts through retained before/after revisions.
+- Collection finished only marks blank cells of an active duty day, with confirmation,
+  no duplicate closure records, no overwrite of existing amounts and no skipped-day entry.
+- Native ruled paper, centre crease, directional page-turn shading, separate horizontal/
+  vertical panning, two-finger 20–220% layout zoom, 100% reset, calendar date inputs.
+  This is not a photographic texture or a full physically simulated paper curl.
 
-Tap a customer/cell to record an amount and date, then Save. Long press opens retained
-history; the ten-week editor supports existing paper-note history and owner corrections.
-“வசூல் முடிந்தது” requires a selected book/date/count confirmation before appending missed
-payment dashes to that collection week's blanks only. Existing amounts, other books,
-older blanks, completed loans and future weeks are not blanket-filled. Repeated close
-is idempotent; dashes remain auditable and correctable. Collection week currently follows
-the loan's start-date seven-day periods, the same mapping used by its page columns.
+Schema 3 stores book holiday history. Schema 1/2 records still load with their original
+amounts/actual dates/audits unchanged. Corrected planned dates can differ; the UI labels
+actual receipt dates separately. Do not downgrade after saving schema-3 data. Export an
+external encrypted backup before a normal app update. Never uninstall/clear an existing
+notebook to try the sample: restore into the **fresh DEMO app** before creating an owner.
 
-**Not finished for production:** authenticated collector operation-file exchange and
-conflict resolution, biometric unlock, independent recovery-secret flow, separate English
-UI selection, verified Tamil solar-calendar dates and full physical page-curl rendering.
-This preview is fully offline and owner-only. Keep only synthetic/test records in it.
-Existing stable apps/catalogs are unchanged. Private reference photos must never be committed.
+**Not finished for production:** authenticated collector operation-file exchange/conflicts,
+biometrics, independent recovery-secret flow, English-only UI selection, verified Tamil
+solar-calendar dates, complete phone-loss/reinstall/upgrade and large-book acceptance.
+All previews are fully offline and owner-only. Existing stable catalogs/apps are unchanged.
+Private reference photographs must never be committed or packaged. Samples are invented.
 
 ## Portfolio identity — owner designation
 
@@ -57,6 +65,9 @@ remain unchanged until this application's actual publication and verification.
   Old and new start dates and verified Tamil calendar dates belong in page headers.
   Calendar conversion still needs implementation and reference-date verification.
 - Explicit no-payment visit is a distinct-colour dash. Future/unentered cell is blank.
+  A book-level skipped duty day is not a missed visit: it has no weekly slot, and later
+  planned collection dates move to the next active book weekday. Week 1 is strictly after
+  disbursement, never the disbursement date itself.
 - Prefix search by place, family head or customer navigates to the original loan/page.
 - Long press shows every entry/correction, collector, recorded time and edit time.
   Retain original values; corrections recalculate subsequent balance projections.
