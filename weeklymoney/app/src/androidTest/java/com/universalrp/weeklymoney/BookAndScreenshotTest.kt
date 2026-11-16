@@ -235,5 +235,23 @@ class BookAndScreenshotTest {
             ui.waitUntil(5000) { rejected }
             ui.onNodeWithTag("unlockPassword").assertExists()
         }
+        unlock()
+        ui.onNodeWithTag("booksHome").performClick()
+        ui.onNodeWithTag("settingsMenu").performClick()
+        ui.onNodeWithTag("continueBook").performScrollTo().performClick(); waitFor("bookSave")
+        ui.onNodeWithTag("bookNumber").performTextInput("Synthetic volume 2")
+        ui.onNodeWithTag("bookSave").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
+        closed("bookSave")
+        val continued = NotebookState.decode(BackupCrypto.open(File(context.filesDir, "notebooks.vvb").readBytes(), password.toCharArray()))
+        val transfer = continued.continuations.single()
+        assertTrue(continued.isArchived(transfer.fromBook))
+        assertEquals("Synthetic volume 2", continued.books.single { it.id == transfer.toBook }.number)
+        assertTrue(transfer.loanIds.isNotEmpty())
+        transfer.loanIds.forEach { loanId ->
+            assertEquals(transfer.toBook, continued.activeBookId(continued.effectiveLoans().single { it.id == loanId }))
+        }
+        assertEquals(continued, NotebookState.decode(continued.encode()))
+        ui.onNodeWithTag("openArchivedVolume").performScrollTo().performClick(); waitFor("ledgerBook")
+        ui.onNodeWithTag("finishCollection").assertDoesNotExist()
     }
 }

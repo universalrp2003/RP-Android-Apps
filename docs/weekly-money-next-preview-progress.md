@@ -16,3 +16,11 @@ Still required before delivering another TEST:
 - Version/code advance and next candidate CI. Do not overwrite TEST 0.8 artifact identity.
 
 Pending Store 0.14/catalog-v3/website files are separate unfinished work and must NOT be published until explicit owner approval after next TEST.
+
+## TEST 0.9 implementation update
+
+Name-only About directory added (17 apps). Same-weekday continuation is represented by schema-5 membership events, never by copied loans or opening-balance receipts. It archives the predecessor, leaves other weekdays alone, preserves loan/customer IDs and all audits, and exposes the inherited latest ten-week sheet plus an archive link. Schema 1–4 are still readable; do not downgrade after saving schema 5. Unit tests cover balance preservation, chains, paid exclusion and backup round-trip; native test now exercises fresh-volume creation and archive opening.
+
+Tamil civil-date display currently has a bounded 15-Jan–31-Dec-2026 offline table; outside that range it explicitly reports unavailable rather than guessing. See calendar source document. Universal multi-year coverage is NOT complete. Archive records still reside in the encrypted snapshot: this change reduces rendered sheets, not total file/decryption memory. Separate lazy archive storage is NOT complete. Do not claim either limitation solved.
+
+Publication remains held for owner testing. Pending Store 0.14 is not part of this preview verification.
