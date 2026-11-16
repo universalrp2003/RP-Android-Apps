@@ -275,6 +275,9 @@ private val paper = Color(0xfffff8df)
             } while (event.changes.any { it.pressed })
         }
     }
+    // Pinch/zoom recomposes frequently: never replay the audited ledger for every cell/frame.
+    val settlements = remember(state) { state.effectiveLoans().associate { it.id to state.settlementWeek(it) } }
+    val labels = remember(state) { state.effectiveLoans().associate { it.id to state.customerLabel(it) } }
     val pages = remember(state, book.id) { state.pages(book.id) }
     val filteredIds = remember(state, search) { if (search.isBlank()) null else state.ledger().search(search).map { it.id }.toSet() }
     val pager = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
@@ -304,7 +307,9 @@ private val paper = Color(0xfffff8df)
         if (pages.isEmpty()) Text("புதிய கடன் சேர்க்கவும் / Add a loan to start the ledger", Modifier.padding(12.dp))
         else HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth().weight(1f)) { index ->
             val page = pages[index]
-            val rows = state.pageLines(book.id, page).filter { filteredIds == null || it.loan.id in filteredIds }
+            val rows = remember(state, book.id, page, filteredIds) {
+                state.pageLines(book.id, page).filter { filteredIds == null || it.loan.id in filteredIds }
+            }
             val payments = remember(state) { state.ledger().latest() }.associateBy { it.loanId to it.week }
             CompositionLocalProvider(LocalDensity provides Density(baseDensity.density * zoom, baseDensity.fontScale)) {
             val turn = ((pager.currentPage - index) + pager.currentPageOffsetFraction).coerceIn(-1f, 1f)
@@ -354,12 +359,12 @@ private val paper = Color(0xfffff8df)
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
                             LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell("${state.customerLabel(loan)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell("${labels.getValue(loan.id)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             LedgerFold()
                             Box(Modifier.width(900.dp).height(IntrinsicSize.Min)) {
                                 // Behind receipts, never on top of numbers; no duplicate spoken/clickable identity.
-                                Text(if (state.ledger().balance(loan.id).completed) "கடன் தீர்க்கப்பட்டது" else "${loan.place} · ${loan.familyHead} · ${state.customerLabel(loan)}",
+                                Text(if (settlements[loan.id] != null) "கடன் தீர்க்கப்பட்டது" else "${loan.place} · ${loan.familyHead} · ${labels.getValue(loan.id)}",
                                     modifier = Modifier.matchParentSize().wrapContentSize(androidx.compose.ui.Alignment.Center)
                                         .clearAndSetSemantics { },
                                     color = Color(0xffb8b8b8).copy(alpha = .65f),
@@ -369,7 +374,7 @@ private val paper = Color(0xfffff8df)
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
-                                val blocked = state.isAfterSettlement(loan, week) && p == null
+                                val blocked = (settlements[loan.id]?.let { week > it } == true) && p == null
                                 val text = if (blocked) "—" else if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
                                     Modifier.testTag("cell-${loan.id}-$week"), tap = { if (!blocked) onOpen(loan, week, false) }, hold = { if (!blocked) onOpen(loan, week, true) })
