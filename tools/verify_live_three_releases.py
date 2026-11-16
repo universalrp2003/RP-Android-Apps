@@ -52,7 +52,7 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'weekly-money-guide.html', 'images/social-preview-v17.png'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'images/social-preview-v17.png'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
         matches = data == local if name.endswith(('.html', '.png')) else json.loads(data) == json.loads(local)
@@ -96,6 +96,8 @@ def main():
     checks.append(('Weekly-Money-v0.11.apk', json.loads((ROOT/'docs/weekly-money-0.11-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v1.0.apk', json.loads((ROOT/'docs/weekly-money-1.0-publication-receipt.json').read_text())))
     current_names.add('Weekly-Money-v1.0.apk')
+    checks.append(('CleanSweep-v3.00.apk', json.loads((ROOT/'docs/live-guard-3.00-publication-receipt.json').read_text())))
+    checks.append(('CleanSweep-v3.01.apk', json.loads((ROOT/'docs/live-guard-3.01-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v2.99.apk', json.loads((ROOT/'docs/live-guard-2.99-publication-receipt.json').read_text())))
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000

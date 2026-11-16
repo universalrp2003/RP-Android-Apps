@@ -1,0 +1,20 @@
+{
+  "source": "e8f763f33f0c29ae6d771a3235e1a19096143434",
+  "run_id": 43881834720,
+  "artifact_id": 14231804036,
+  "artifact_sha256": "41831d92334ff8110340c354bd85382256a070bf0957a71bb8880a13659cbce1",
+  "apk_sha256": "b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f",
+  "bytes": 14781231,
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "package": "com.universalrp.cleansweep",
+  "version": "3.01",
+  "version_code": 106,
+  "release_id": 447205657,
+  "asset_id": 755309414,
+  "published_at": "2026-11-16T15:13:29Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk",
+  "rebuilt": false,
+  "physical_phone_tested": false,
+  "publisher_run": 43893930297,
+  "publication_authorized": true
+}

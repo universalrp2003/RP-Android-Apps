@@ -708,7 +708,7 @@ def verify_about_links() -> None:
     if shared_links:
         expected_sister_tags = (
             'tagPrefix = "sms-guard"', 'version = "1.1.17"',
-            'tagPrefix = "live-guard"', 'publishedVersion = "3.00"',
+            'tagPrefix = "live-guard"', 'publishedVersion = "3.01"',
             'tagPrefix = "ramesh-radio"', 'version = "1.31"',
             'tagPrefix = "pulseeq"', 'version = "1.11"',
             'tagPrefix = "rp-vocal-remover-studio"', 'version = "0.1.16"',

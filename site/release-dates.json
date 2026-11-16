@@ -1,7 +1,6 @@
 {
   "source": "GitHub Releases published_at (UTC)",
   "releases": {
-    "live-guard-v3.00": "2026-11-12T09:45:13Z",
     "sms-guard-v1.1.17": "2026-11-04T12:21:13Z",
     "ramesh-radio-v1.31": "2026-10-31T13:53:48Z",
     "oor-arivippu-v1.1.21": "2026-11-09T11:56:55Z",
@@ -17,6 +16,7 @@
     "tvguard-v1.5.1": "2026-11-11T12:00:01Z",
     "system-app-disabler-v0.3.0": "2026-11-14T06:32:32Z",
     "tamilan-store-v0.14": "2026-11-16T10:08:26Z",
-    "weekly-money-v1.0": "2026-11-16T13:23:21Z"
+    "weekly-money-v1.0": "2026-11-16T13:23:21Z",
+    "live-guard-v3.01": "2026-11-16T15:13:29Z"
   }
 }
