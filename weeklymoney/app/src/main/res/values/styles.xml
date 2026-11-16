@@ -1,0 +1,8 @@
+<resources>
+    <style name="Theme.WeeklyMoney" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#F7F0DD</item>
+        <item name="android:navigationBarColor">#F7F0DD</item>
+    </style>
+</resources>
