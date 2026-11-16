@@ -246,7 +246,7 @@ class MainActivity : ComponentActivity() {
             TextButton(modifier = Modifier.testTag("booksHome"), onClick = { reading = false }) { Text("‹ புத்தகங்கள்") }
             Text(book?.heading.orEmpty(), Modifier.padding(top = 12.dp))
             TextButton(onClick = { summary = true; collectionDate = LocalDate.now() }) { Text("சுருக்கம்") }
-            TextButton(onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன்") }
+            TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && book != null && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன்") }
         }
         if (!reading) {
         Row(Modifier.horizontalScroll(rememberScrollState())) {
@@ -260,7 +260,7 @@ class MainActivity : ComponentActivity() {
                 TextButton(onClick = { getSharedPreferences("preferences", MODE_PRIVATE).edit().putInt("lockMinutes", minutes).apply() }) {
                     Text(if (minutes == 0) "உடனே" else "$minutes நிமி")
                 }
-            }
+            } }
             Text("தற்போது: ${getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)} நிமிடம். App மூடப்பட்டால்/phone மறுதொடங்கினால் கடவுச்சொல் தேவை.")
             Row {
                 Switch(historyEntryEnabled, { enabled ->
@@ -340,7 +340,7 @@ class MainActivity : ComponentActivity() {
         if (form == "loan" && book != null) LoanEntryDialog(current, book, loanSeed, editLoan, busy, dialogPrivacy(), screenshotsAllowed, historyEntryEnabled,
             dismiss = { form = "" }, commit = { next, done -> task(onError = { done(it) }) { save(next); done(null) } },
             saved = { created, history ->
-                form = ""; search = ""; message = "கடன் சேமிக்கப்பட்டது / Loan saved"
+                reading = true; form = ""; search = ""; message = "கடன் சேமிக்கப்பட்டது / Loan saved"
                 if (history) { openedLoanId = created.id; initialWeek = 1; initialAll = true; initialAudit = false }
             })
         current.effectiveLoans().find { it.id == openedLoanId }?.let { effective ->
