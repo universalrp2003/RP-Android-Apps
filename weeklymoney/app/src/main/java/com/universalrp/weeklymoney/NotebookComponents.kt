@@ -68,6 +68,7 @@ private val paper = Color(0xfffff8df)
     var place by remember { mutableStateOf(seed?.place ?: "") }
     var family by remember { mutableStateOf(seed?.familyHead ?: "") }
     var name by remember { mutableStateOf(seed?.customerName ?: "") }
+    var contact by remember { mutableStateOf(seed?.contactNumber ?: "") }
     var amount by remember { mutableStateOf(if (edit && seed != null) rupees(seed.totalPaise) else "") }
     var date by remember { mutableStateOf(if (edit && seed != null) seed.started else LocalDate.now()) }
     var linked by remember { mutableStateOf(if (!edit) seed else null) }
@@ -80,10 +81,12 @@ private val paper = Color(0xfffff8df)
     fun submit() {
         try {
             error = ""
+            if (contact.trim().length > 40 || contact.trim().any { !it.isDigit() && it !in "+ -()." })
+                throw InputProblem("தொடர்பு எண்ணைச் சரிபார்க்கவும் / Check contact number (maximum 40 characters)")
             val matches = state.matchingCustomers(name)
             if (!edit && !resolved && matches.isNotEmpty()) { choosing = true; return }
-            val created = if (edit && seed != null) seed.copy(place = place.trim(), familyHead = family.trim(), customerName = name.trim(), totalPaise = parseRupees(amount), started = date, openingInk = if (historyEnabled) openingInk else seed.openingInk)
-                else state.nextLoan(book, place, family, name, amount, date, linked).copy(openingInk = if (historyEnabled) openingInk else Ink.BLUE)
+            val created = if (edit && seed != null) seed.copy(place = place.trim(), familyHead = family.trim(), customerName = name.trim(), contactNumber = contact.trim(), totalPaise = parseRupees(amount), started = date, openingInk = if (historyEnabled) openingInk else seed.openingInk)
+                else state.nextLoan(book, place, family, name, amount, date, linked).copy(contactNumber = contact.trim(), openingInk = if (historyEnabled) openingInk else Ink.BLUE)
             val next = if (edit && seed != null) state.correctLoan(seed, created) else state.copy(loans = state.loans + created)
             commit(next) { problem -> if (problem == null) { keyboard?.hide(); saved(created, false) } else error = problem }
         } catch (e: Exception) {
@@ -101,7 +104,7 @@ private val paper = Color(0xfffff8df)
                         Text("${candidate.place} → ${candidate.familyHead} → ${candidate.customerName}\n" +
                             if (balance > 0) "கடன் உள்ளது / Outstanding ₹${rupees(balance)}" else "முழுவதும் செலுத்தப்பட்டது / Fully paid. New loan needed?")
                         TextButton(modifier = Modifier.testTag("reuse-${candidate.id}"), onClick = {
-                            linked = candidate; place = candidate.place; family = candidate.familyHead; name = candidate.customerName
+                            linked = candidate; place = candidate.place; family = candidate.familyHead; name = candidate.customerName; contact = candidate.contactNumber
                             resolved = true; choosing = false
                         }) { Text("ஆம், இவருக்குப் புதிய கடன் / Yes, new loan for this person") }
                     }
@@ -117,6 +120,10 @@ private val paper = Color(0xfffff8df)
                     EntryField("இடம் / Place", place, "loanPlace") { place = it; if (seed == null) { resolved = false; linked = null } }
                     EntryField("குடும்பத் தலைவர் / Family head", family, "loanFamily") { family = it; if (seed == null) { resolved = false; linked = null } }
                     EntryField("வாடிக்கையாளர் / Customer", name, "loanName") { name = it; if (seed == null) { resolved = false; linked = null } }
+                    OutlinedTextField(contact, { contact = it }, singleLine = true,
+                        label = { Text("தொடர்பு எண் (விருப்பம்) / Contact (optional)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        modifier = Modifier.fillMaxWidth().testTag("loanContact"))
                     EntryField("மொத்த ரூபாய் / Total rupees", amount, "loanAmount", true) { amount = it }
                     DateChoice("கடன் தேதி / Loan date", date, allowed, "loanDate") { date = it }
                     if (historyEnabled) {
@@ -165,6 +172,7 @@ private val paper = Color(0xfffff8df)
                 if (error.isNotEmpty()) Text(error, modifier = Modifier.testTag("receiptError"), color = redInk)
                 Text("மீதி / Remaining ₹${rupees(remaining)}", modifier = Modifier.testTag("remainingBalance"))
                 Text("கடன் தேதி / Loan ${loan.started.format(dateFormat)}")
+                ContactNumber(loan.contactNumber)
                 if (ledger.balance(loan.id).completed) {
                     Text("முழுவதும் செலுத்தப்பட்டது / Completed")
                     TextButton(modifier = Modifier.testTag("renewLoan"), onClick = renew) { Text("புதிய கடன் / New loan with same details?") }

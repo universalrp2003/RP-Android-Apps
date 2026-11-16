@@ -93,7 +93,8 @@ def main():
     current_names.add('Tamilan-Store-v0.14.apk')
     checks.append(('Tamilan-Store-v0.14.apk', json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.10.apk', json.loads((ROOT/'docs/weekly-money-0.10-publication-receipt.json').read_text())))
-    current_names.add('Weekly-Money-v0.10.apk')
+    checks.append(('Weekly-Money-v0.11.apk', json.loads((ROOT/'docs/weekly-money-0.11-publication-receipt.json').read_text())))
+    current_names.add('Weekly-Money-v0.11.apk')
     checks.append(('CleanSweep-v2.99.apk', json.loads((ROOT/'docs/live-guard-2.99-publication-receipt.json').read_text())))
     for name, pin in checks:
         assert 0 < pin['bytes'] < 40_000_000

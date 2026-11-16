@@ -161,10 +161,9 @@ class MainActivity : ComponentActivity() {
             }
         }
         setContent { MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xff183f78), background = Color(0xfff7f0dd))) {
-            Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
+            Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().then(if (!reading) Modifier.moneyPaper() else Modifier).windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
-                Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
-                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.8" else "சோதனை 0.8 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
+                MoneyHomeHeading()
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->

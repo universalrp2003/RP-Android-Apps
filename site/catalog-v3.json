@@ -172,11 +172,11 @@
       "name": "Weekly Money · TEST preview",
       "tamilName": "வார வசூல் · சோதனை",
       "packageName": "com.universalrp.weeklymoney.preview.notebook",
-      "version": "0.10",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v0.10/Weekly-Money-v0.10.apk",
-      "size": 10120630,
-      "sha256": "5f05a9bd070d451b0db51560f3e1304903db2e64cc2c402843f64c6924730494",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.10"
+      "version": "0.11",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v0.11/Weekly-Money-v0.11.apk",
+      "size": 10137014,
+      "sha256": "83600bfa2b50a9989cf9cfbffb1a72b1da3f54b27163d5d591e31ba16c3aa2a4",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.11"
     }
   ]
 }

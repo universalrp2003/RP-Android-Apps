@@ -1,3 +1,7 @@
+# Current public release: TEST0.11
+
+Owner approved the gold home design and optional encrypted contact/tap-to-copy on phone. [Download](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.11) · [Verification and exact-byte receipt](../docs/weekly-money-0.11-publication-receipt.json). Same package/key, code11, schema6 reads1–5; update in place, do not uninstall/clear data or downgrade. Collector exchange/recovery remain unfinished TEST features. Earlier release notes below are historical.
+
 # Current public release: Weekly Money TEST 0.10
 
 Owner phone-tested and approved this exact APK for publication on 16 November 2026.

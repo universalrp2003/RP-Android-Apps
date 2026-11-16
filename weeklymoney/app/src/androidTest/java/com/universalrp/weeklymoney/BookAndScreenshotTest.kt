@@ -105,10 +105,17 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanPlace").performScrollTo().performTextInput("Synthetic Place")
         ui.onNodeWithTag("loanFamily").performScrollTo().performTextInput("Synthetic Family")
         ui.onNodeWithTag("loanName").performScrollTo().performTextInput("Synthetic Customer")
+        ui.onNodeWithTag("loanContact").performScrollTo().performTextInput("+91 00000 00000")
         ui.onNodeWithTag("loanAmount").performScrollTo().performTextInput("1000")
         ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
         ui.onNodeWithText("Synthetic Customer").performScrollTo().performClick()
         waitFor("todayAmount")
+        ui.onNodeWithTag("copyContact").assertTextContains("+91 00000 00000", substring = true)
+        ui.onNodeWithTag("copyContact").performScrollTo().performClick()
+        ui.runOnIdle {
+            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            assertEquals("+91 00000 00000", clipboard.primaryClip!!.getItemAt(0).text.toString())
+        }
         ui.onNodeWithTag("dueDate-1").assertTextEquals(today.plusWeeks(1).format(DateTimeFormatter.ofPattern("dd-MM-yy")))
         ui.onNodeWithTag("dueDate-10").assertExists()
         ui.onNodeWithTag("allTenWeeks").assertDoesNotExist()
@@ -136,6 +143,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithText("Synthetic Customer I").performScrollTo().performClick(); waitFor("receiptAmount-1")
         ui.onNodeWithTag("allTenWeeks").assertDoesNotExist()
         ui.onNodeWithTag("editLoanDetails").performScrollTo().performClick(); waitFor("openingRed")
+        ui.onNodeWithTag("loanContact").performScrollTo().assertTextContains("+91 00000 00000")
         ui.onNodeWithTag("historicalLoan").assertDoesNotExist()
         ui.onNodeWithTag("openingRed").performScrollTo().performClick()
         ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
