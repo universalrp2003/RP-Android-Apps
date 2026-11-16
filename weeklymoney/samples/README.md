@@ -12,7 +12,7 @@ Passphrase for this demonstration file only: **Demo-Weekly-2026**
 
 ## What to verify
 
-- `DEMO-THU`: “மாதிரி அ” has ten old weekly entries, including explicit missed dashes, with a remaining balance/carry-forward. Because this person has only one loan there is **no I suffix**.
+- `DEMO-THU`: “மாதிரி அ” has ten old weekly entries, including explicit missed dashes, with a remaining balance/carry-forward. If the dialog opens the current carry-forward cycle, use ‹ to view cycle 1 with the original ten receipts. Because this person has only one loan there is **no I suffix**.
 - `DEMO-THU`: “மாதிரி ஆ”, loan date **05-11-2026**, has first due **12-11-2026**, second due **19-11-2026**. All ten dates are Thursdays, not dates derived by adding a week to a Monday disbursement.
 - `DEMO-SUN`: “மாதிரி இ I” starts **20-09-2026**. Weeks 1–6 are **27-09, 04-10, 11-10, 18-10, 25-10, 01-11**. Book holiday **08-11-2026** is omitted: week **7 = 15-11-2026**, week **8 = 22-11**, week **9 = 29-11**, week **10 = 06-12**.
 - “மாதிரி இ II” is a second independent loan for that same customer, so **only this repeated customer** gets I/II. Its schedule uses the same book-wide skipped date. Names alone are never used as an ID.

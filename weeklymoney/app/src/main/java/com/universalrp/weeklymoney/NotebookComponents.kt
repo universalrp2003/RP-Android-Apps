@@ -178,7 +178,7 @@ private val paper = Color(0xfffff8df)
                                 modifier = Modifier.testTag("dueDate-${i + 1}"), style = MaterialTheme.typography.labelSmall)
                             Box(Modifier.fillMaxWidth().heightIn(min = 44.dp).border(1.dp,
                                 if (historyEnabled && selected == i) blueInk else Color.Gray)
-                                .clickable(enabled = historyEnabled) { selected = i; all = false }.padding(3.dp)) {
+                                .then(if (historyEnabled) Modifier.clickable { selected = i; all = false } else Modifier).padding(3.dp)) {
                                 Text(if (p == null) "" else p.amountPaise?.let(::rupees) ?: "–",
                                     modifier = Modifier.testTag("overviewAmount-${i + 1}"), color = if (p?.amountPaise == null) Color(0xff805029) else blueInk,
                                     style = MaterialTheme.typography.bodySmall)
