@@ -55,8 +55,7 @@ jobs:
           script: |
             adb shell device_config put activity_manager data_sync_fgs_timeout_duration 5000
             adb shell device_config get activity_manager data_sync_fgs_timeout_duration | grep -x 5000
-            digest=$(sha256sum "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" | cut -d' ' -f1)
-            gradle :cleaner:connectedReleaseAndroidTest -Pandroid.testInstrumentationRunnerArguments.expectedCandidateSha256="$digest" -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.cleansweep.RadioTimeoutNativeTest,com.universalrp.cleansweep.OfficialStatusNativeTest#foregroundServicesShareCardAndIndependentStop --no-daemon --stacktrace
+            gradle :cleaner:connectedReleaseAndroidTest -Pandroid.testInstrumentationRunnerArguments.expectedCandidateSha256="$(sha256sum "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" | cut -d' ' -f1)" -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.cleansweep.RadioTimeoutNativeTest,com.universalrp.cleansweep.OfficialStatusNativeTest#foregroundServicesShareCardAndIndependentStop --no-daemon --stacktrace
       - name: Verify native tests ran without failures
         run: |
           python3 - <<'PY'
