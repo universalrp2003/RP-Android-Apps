@@ -1,3 +1,23 @@
+# Latest: verified TEST0.7 active-debt labels and imported colour groups
+
+[Download TEST0.7 + separate DEMO0.7](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43803717584/artifacts/14197905836).
+See [TEST0.7 full receipt, biometric setup and data safety](FIX-0.7.md).
+
+- I/II only for simultaneous unpaid debts. Fully settled renewals are unmarked; immutable lifetime sequences remain intact.
+- Settings Old entry ON/OFF; no per-loan/bulk-ten-week checkbox. Tap a week box for old receipt entry.
+- Old entry ON exposes BLUE/RED opening-group selection with audited corrections.
+- Within each actual cycle page: blue first, red below; same-place/family customers adjacent in each colour group.
+- Summary collections green, new loans purple with a divider.
+- Android 9+ authenticated Keystore/BiometricPrompt wrapping, configured in Settings after one master unlock.
+  Routine biometric mode hides the password field. Master fallback remains for lockout, enrolment changes, new installs and restores.
+- Schema 4 reads old schemas 1–3. Export an external encrypted backup before updating; no uninstall/data clear. Do not downgrade after saving schema 4.
+
+CI 43803717584 passed unit suites, lint, builds, Android 35 regression (1 test, 0 failures/errors) and both APK signature/identity checks.
+**Successful hardware biometric enrolment/authentication on the owner's phone is not yet verified.**
+Earlier receipts below are historical and superseded where these rules differ. Collector exchange and independent recovery-secret workflows remain unfinished.
+
+---
+
 # Latest: verified TEST0.6 receipt-row identification
 
 [Download TEST0.6 + separate DEMO0.6](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43797310251/artifacts/14194734059).

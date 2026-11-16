@@ -1,3 +1,5 @@
+> **TEST0.7 / DEMO0.7 update:** This unchanged schema-3 invented sample is supported. Current data saves in schema 4. Old entry is a single Settings ON/OFF switch: tap each weekly amount box to enter/correct that week; there is no extra ten-week checkbox. Old entry ON also offers BLUE/RED opening-group selection. Roman marks now apply only to simultaneous unpaid debts; the sample's two Sunday debts remain unpaid and therefore show I/II. See ../FIX-0.7.md for biometric setup and upgrade safety.
+
 > Latest artifact includes **DEMO0.5** and **TEST0.5**. These also support this unchanged schema-3 sample; DEMO0.4 instructions below remain applicable. Prefer the separately labelled DEMO app, never erase an existing notebook to restore sample records. TEST0.5 uses a separate home/book screen and background lock grace period; see ../FIX-0.5.md.
 
 # வார வசூல் — SAMPLE ONLY / மாதிரி மட்டும்
