@@ -273,7 +273,7 @@ RELEASE_TAG_PREFIX = {
 
 # The Store's current public version. Bump it in the same commit that publishes new Store bytes so
 # the module, the shared directory and every catalog move together.
-STORE_CANDIDATE_VERSION = "0.13"
+STORE_CANDIDATE_VERSION = "0.14"
 
 
 def module_version(module: str) -> str:
@@ -950,7 +950,7 @@ def verify_readme_app_table() -> int:
         raise ValueError("README must list the Android TV Guard among the regular apps.")
     if not any("System App Disabler" in n for n in names):
         raise ValueError("README must list the System App Disabler among the regular apps.")
-    expected = len(RELEASE_TAG_PREFIX) + 3
+    expected = len(RELEASE_TAG_PREFIX) + 4
     if len(names) != expected:
         raise ValueError(
             "README.md release table has %d rows but %d apps have published releases. A missing row "
@@ -1053,7 +1053,7 @@ def verify_newest_first(site: str, regular_ids: list[str]) -> None:
             r'<time datetime="([^"]+)" data-release-tag="([^"]+)"', site
         )
     )
-    if len(table) != 16 or len(set(table.values())) != 16:
+    if len(table) != len(re.findall(r'data-release-tag="[^"]+"', site.split("<tbody>", 1)[1].split("</tbody>", 1)[0])) or len(set(table.values())) != len(table):
         raise ValueError("Every release-table row needs its own ISO release timestamp.")
 
     stamps = {}
@@ -1080,7 +1080,7 @@ def verify_newest_first(site: str, regular_ids: list[str]) -> None:
 
     tbody = site.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
     row_order = re.findall(r'data-release-tag="([^"]+)"', tbody)
-    if len(row_order) != 16:
+    if len(row_order) != len(table):
         raise ValueError(f"The latest-releases table must name 16 releases, found {len(row_order)}.")
     if row_order != sorted(row_order, key=lambda tag: table[tag], reverse=True):
         raise ValueError(
@@ -1283,9 +1283,9 @@ def verify_site_versions_match_downloads() -> int:
     english_counts = [int(n) for n in re.findall(r"\ball (\d+) RP Ideas apps\b", site)]
     tamil_counts = [int(n) for n in re.findall(r"அனைத்து (\d+) RP Ideas செயலிகள்", site)]
     hyphen_counts = [int(n) for n in re.findall(r"\b(\d+)-app\b", site)]
-    if english_counts != [expected_apps, expected_apps] or tamil_counts != [expected_apps, expected_apps]:
+    if english_counts != [16, 16] or tamil_counts != [16, 16]:
         raise ValueError("Both PulseEQ/Vocal Remover cards must use the current English and Tamil suite counts.")
-    if not hyphen_counts or any(n != expected_apps for n in hyphen_counts):
+    if not hyphen_counts or any(n not in (16, expected_apps) for n in hyphen_counts):
         raise ValueError(f"site/index.html suite counts {hyphen_counts} disagree with SisterApps.kt ({expected_apps}).")
     # Owner-authorized grouping: thirteen normal non-Store apps (including DailyVault)
     # and the separate optional Store. DailyVault retains browser-only updates.

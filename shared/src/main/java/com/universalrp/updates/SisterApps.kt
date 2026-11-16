@@ -1,7 +1,7 @@
 package com.universalrp.updates
 
 /**
- * One list, all sixteen RP Ideas Android apps (including the Android TV Guard and System App Disabler) + official project links.
+ * One list, all seventeen RP Ideas Android apps (including the Android TV Guard and System App Disabler) + official project links.
  *
  * Every app's About screen renders this shared directory so adding or bumping an app
  * keeps every app in sync automatically.
@@ -177,15 +177,21 @@ object SisterApps {
             aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
         ),
         SisterApp(
+            id = "weeklymoney", name = "Weekly Money · TEST preview", tamilName = "வார வசூல் · சோதனை",
+            tagPrefix = "weekly-money", version = "0.10", publishedVersion = "0.10",
+            packageName = "com.universalrp.weeklymoney.preview.notebook",
+            aboutLabel = "வார வசூல் / Weekly Money TEST preview — GitHub release",
+        ),
+        SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.13", publishedVersion = "0.13",
+            tagPrefix = "tamilan-store", version = "0.14", publishedVersion = "0.14",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )
 
     /** Official project hub links shown consistently across all RP Ideas About screens. */
     fun projectLinks(): List<Pair<String, String>> = listOf(
-        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.13",
+        "தமிழன் / Tamilan Store — official download" to "$RELEASE_BASE/tamilan-store-v0.14",
         "தினக்கணக்கு / DailyVault — official download" to "$RELEASE_BASE/daily-vault-v0.5",
         "RP-Android-Apps Official Website" to OFFICIAL_WEBSITE_URL,
         "RP-Android-Apps GitHub Repository" to GITHUB_REPO_URL,

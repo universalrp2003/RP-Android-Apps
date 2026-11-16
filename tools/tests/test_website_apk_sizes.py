@@ -26,7 +26,7 @@ class WebsiteApkSizes(unittest.TestCase):
             self.assertIn(f'<span class="apk-size-mobile" aria-label="APK size: {label}">{label}</span>', row)
             seen.add(name)
         self.assertEqual(seen, set(pins))
-        self.assertEqual(len(seen), 16)
+        self.assertEqual(len(seen), 17)
 
     def test_version_header_hides_with_its_column(self):
         html = (ROOT / 'site/index.html').read_text()

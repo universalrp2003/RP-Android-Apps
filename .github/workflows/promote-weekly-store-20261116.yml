@@ -1,0 +1,22 @@
+name: Publish authorized Weekly Money and Store exact verified bytes
+on:
+  push:
+    branches: ["arena/1cd060b0-rp-android-apps"]
+    paths: ["docs/approved-weekly-store-20261116.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: exact-weekly-store-20261116-v2
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Promote pinned successful artifacts without rebuilding or replacement
+        run: python3 tools/promote_weekly_store_20261116.py

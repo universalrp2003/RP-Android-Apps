@@ -3,7 +3,7 @@
 Live Guard **3.00**: the status pill's size is now adjustable from Settings, the SMS paste-fill step is gone, and History reads the same plan as My plan, so the two screens can no longer disagree. The 2.99 voice-rotation and news/weather fixes are preserved. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.00). Update over 2.99 without uninstalling or clearing data. Tested on the owner's phone: [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html).
 
 
-Tamilan Store **0.13** adds Android TV Guard and System App Disabler to the store list (fifteen apps) and keeps catalog refresh working after a failed download. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.13); install over the current Store without uninstalling or clearing data.
+Tamilan Store **0.13** adds Android TV Guard and System App Disabler to the store list (fifteen apps) and keeps catalog refresh working after a failed download. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.14); install over the current Store without uninstalling or clearing data.
 
 
 Oor Arivippu **1.1.21**: fixed live title/value positions, readable large text and full-value dialogs. [Release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.21). Signed build/lint/unit and bilingual normal/double-font emulator layout checks passed; no physical-phone install claimed.
@@ -11,11 +11,19 @@ Oor Arivippu **1.1.21**: fixed live title/value positions, readable large text a
 
 Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**[universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/)**) for fifteen regular non-Store open-source Android apps (including DailyVault, Android TV Guard and System App Disabler), plus separate optional Tamilan Store in **தமிழ் (Tamil)** and **English**: utilities including (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / தமிழன் வானொலி**, **PulseEQ**, **RP Vocal Remover Studio**, **Oor Arivippu / ஊர் அறிவிப்பு**, **Vasanthi AI / என்னைச் சுற்றி**) plus **Secret Message**, a separately published app that is not independently security-reviewed. Developed by **Rameshprathap R (`@universalrp2003`)** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. Current minimum Android versions and signed GitHub Release APKs are listed below; device-dependent features are described honestly in each app's documentation.
 
+## Application 17 in development: வார வசூல் / Weekly Money
+
+The owner designated **வார வசூல் (Weekly Money)** as RP Ideas' 17th application.
+It is a separate, fully offline weekly collection notebook with an isolated Android
+preview module. **Not published or ready for real financial records.** A debug preview has passed
+compilation/JVM tests/lint; [build evidence and remaining gates](weeklymoney/BUILD-STATUS.md). See [implementation status and agreed requirements](weeklymoney/README.md).
+This development designation does not change the stable app/download count below.
+
 ## 15 regular apps + separate optional Tamilan Store
 
 DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion. Its already-public APK is unchanged. Store0.11 promotes the exact signed/native-tested, owner-authorized catalog-recovery update, with no rebuild. [Store0.11 verification and limits](docs/tamilan-store-0.11-catalog-recovery.md).
 
-- **[Tamilan Store0.13/code15 — current stable APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.13/Tamilan-Store-v0.13.apk)** (`8efc49af…`, 19906055 B) · [release notes](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.13) · [website / updates](https://universalrp2003.github.io/RP-Android-Apps/#st-tamilanstore).
+- **[Tamilan Store0.13/code15 — current stable APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.14/Tamilan-Store-v0.14.apk)** (`8efc49af…`, 19906055 B) · [release notes](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.14) · [website / updates](https://universalrp2003.github.io/RP-Android-Apps/#st-tamilanstore).
 - **[DailyVault0.5/code5 — existing public APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/daily-vault-v0.5/DailyVault-v0.5.apk)** · [release notes](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/daily-vault-v0.5) · [website / updates](https://universalrp2003.github.io/RP-Android-Apps/#st-dailyvault).
 
 **தற்போதைய வெளியீடுகள் கிடைக்கின்றன.** Tamilan Store 0.6, DailyVault 0.4, SMS Guard 1.1.11 and Voice Notes 1.3.3 were published with the replacement signing identity on 29 October 2026; Live Guard 2.79 followed on 30 October. The earlier candidate/publication-hold text is historical, not their current status. Same-key installations update normally: do not uninstall working apps. Only affected old-key installations need backup/export and migration; uninstalling may erase local data. File hashes are not security clearance. Stop if Play Protect warns; never bypass it. [Current signing migration](docs/fresh-install-signing-migration.md) · [Verified release ledger](docs/published-release-digests.md).
@@ -26,6 +34,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
+| [**வார வசூல் · Weekly Money TEST**](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.10) | Offline owner collection notebook; TEST 0.10. Same-key in-place updates. [Guide](site/weekly-money-guide.html). |
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.17 / code 23](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.17) | [`SMS-Guard-v1.1.17.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.17/SMS-Guard-v1.1.17.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [3.00 / code 105](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.00) | [`CleanSweep-v3.00.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk) |
 | [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.3.4 / code 8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.4) | [`Voice-Notes-v1.3.4.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk) |

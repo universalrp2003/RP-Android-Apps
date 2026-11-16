@@ -15,7 +15,7 @@ class StoreCertificateRegression(unittest.TestCase):
 
     def test_bundled_fallback_uses_verified_current_release_receipts(self):
         bundled = json.loads((ROOT/"tamilanstore/src/main/assets/catalog.json").read_text())
-        published = json.loads((ROOT/"site/catalog-v2.json").read_text())
+        published = json.loads((ROOT/"site/catalog-v3.json").read_text())
         # The bundled fallback now carries the promoted public releases too: an offline Store
         # install must offer the same archives the website pins, not a silent older build.
         old = {a['id']: a for a in bundled['apps']}
@@ -39,16 +39,7 @@ class StoreCertificateRegression(unittest.TestCase):
         ledger = (ROOT/'docs/published-release-digests.md').read_text()
         for app in (old['liveguard'], live['liveguard']): self.assertIn(app['sha256'], ledger)
 
-    def test_published_store_matches_the_exact_verified_release(self):
-        text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.13", publishedVersion = "0.13"', text)
-        site = (ROOT/'site/index.html').read_text()
-        self.assertIn('tamilan-store-v0.13/Tamilan-Store-v0.13.apk', site)
-        self.assertIn('8efc49af3ab281720dd4a4cfedc9afcc319f8f578211796a16cc5aa5c0fa155b', site)
-        mirrors = (ROOT/'.github/workflows/pages.yml').read_text()
-        # Only the current Store build stays mirrored; 0.9 and older remain public release assets.
-        self.assertIn('8efc49af3ab281720dd4a4cfedc9afcc319f8f578211796a16cc5aa5c0fa155b', mirrors)
-        self.assertNotIn('3fae24373a6ead0bab0c0b2ad56a80a3b191de7a44ca69b50561deac3eea8474', mirrors)
+    def test_previous_store13_publication_receipt_stays_immutable(self):
         receipt = json.loads((ROOT/'docs/tamilan-store-0.13-publication-receipt.json').read_text())
         approved = json.loads((ROOT/'docs/approved-store-0.13-candidate.json').read_text())
         for key, value in approved.items():
@@ -58,15 +49,26 @@ class StoreCertificateRegression(unittest.TestCase):
         self.assertEqual(receipt['publisher_run'], 43387318586)
         self.assertFalse(receipt['rebuilt'])
         self.assertTrue(receipt['prior_public_assets_unchanged'])
-        dates = json.loads((ROOT/'site/release-dates.json').read_text())
-        self.assertEqual(dates['releases']['tamilan-store-v0.13'], receipt['published_at'])
-        self.assertIn(receipt['published_at'], site)
-        self.assertIn('("tamilan-store-v0.13", "Tamilan-Store-v0.13.apk", 19906055, "' + receipt['apk_sha256'] + '")', mirrors)
-        self.assertNotIn('("tamilan-store-v0.9",', mirrors)
-        verifier = (ROOT/'tools/verify_live_three_releases.py').read_text()
-        self.assertIn("('Tamilan-Store-v0.13.apk',", verifier)
-        self.assertIn('tamilan-store-0.13-publication-receipt.json', verifier)
 
+    def test_published_store_matches_the_exact_verified_release(self):
+        receipt = json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())
+        text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
+        self.assertIn('tagPrefix = "tamilan-store", version = "0.14", publishedVersion = "0.14"', text)
+        site = (ROOT/'site/index.html').read_text()
+        mirrors = (ROOT/'.github/workflows/pages.yml').read_text()
+        self.assertIn(receipt['url'],site)
+        self.assertIn(receipt['apk_sha256'],site)
+        self.assertIn(receipt['published_at'],site)
+        self.assertIn(receipt['apk_sha256'],mirrors)
+        self.assertEqual((receipt['release_id'],receipt['asset_id']), (446868013,754355208))
+        self.assertEqual(receipt['publisher_run'],43846064166)
+        self.assertFalse(receipt['rebuilt'])
+        self.assertTrue(receipt['same_uid'])
+        self.assertTrue(receipt['private_file_preserved'])
+        dates = json.loads((ROOT/'site/release-dates.json').read_text())
+        self.assertEqual(dates['releases']['tamilan-store-v0.14'],receipt['published_at'])
+        self.assertIn('("tamilan-store-v0.14", "Tamilan-Store-v0.14.apk", 19906251, "'+receipt['apk_sha256']+'")',mirrors)
+        self.assertNotIn('("tamilan-store-v0.13",',mirrors)
 
     def test_installer_handoff_keeps_uri_read_only_and_failures_typed(self):
         source = ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore'

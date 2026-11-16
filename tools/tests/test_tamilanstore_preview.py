@@ -9,8 +9,8 @@ STORE = ROOT / 'tamilanstore'
 class TamilanStorePreviewTest(unittest.TestCase):
     def test_catalog_has_fifteen_unique_official_pinned_releases(self):
         apps = json.loads((STORE / 'src/main/assets/catalog.json').read_text())['apps']
-        self.assertEqual(len(apps), 15)
-        self.assertEqual(len({a['packageName'] for a in apps}), 15)
+        self.assertEqual(len(apps), 16)
+        self.assertEqual(len({a['packageName'] for a in apps}), 16)
         for app in apps:
             self.assertRegex(app['sha256'], r'^[a-f0-9]{64}$')
             self.assertTrue(app['url'].startswith('https://github.com/universalrp2003/RP-Android-Apps/releases/download/'))
@@ -37,7 +37,7 @@ class TamilanStorePreviewTest(unittest.TestCase):
         ns = '{http://schemas.android.com/apk/res/android}'
         self.assertEqual({e.attrib[ns+'name'] for e in root.findall('uses-permission')}, {
             'android.permission.INTERNET', 'android.permission.REQUEST_INSTALL_PACKAGES', 'android.permission.POST_NOTIFICATIONS'})
-        self.assertEqual(len(root.findall('queries/package')), 15)
+        self.assertEqual(len(root.findall('queries/package')), 16)
         self.assertEqual({e.attrib[ns+'name'] for e in root.findall('queries/package')}, {a['packageName'] for a in json.loads((STORE / 'src/main/assets/catalog.json').read_text())['apps']})
         self.assertEqual(root.find('application/provider').attrib[ns+'exported'], 'false')
         paths = ET.parse(STORE / 'src/main/res/xml/apk_paths.xml').getroot()
