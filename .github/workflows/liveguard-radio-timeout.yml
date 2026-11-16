@@ -1,0 +1,90 @@
+name: Live Guard radio timeout fix candidate
+on:
+  push:
+    branches: ["arena/dc49fff8-rp-android-apps"]
+    paths: ["cleaner/**", "tools/tests/test_liveguard_radio_timeout.py", ".github/workflows/liveguard-radio-timeout.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/arena/dc49fff8-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Source contract, JVM tests, lint and signed candidate
+        run: |
+          set -o pipefail
+          python3 -m unittest tools.tests.test_liveguard_radio_timeout -v
+          gradle :cleaner:testReleaseUnitTest :cleaner:lintRelease :cleaner:assembleRelease :cleaner:assembleReleaseAndroidTest --no-daemon --stacktrace > "$RUNNER_TEMP/build.log" 2>&1 || { tail -150 "$RUNNER_TEMP/build.log"; exit 1; }
+          python3 - <<'PY'
+          from pathlib import Path
+          from tools.verify_cleaner_regressions import verify
+          for summary in verify(Path('cleaner/build/test-results'), variants=('Release',)): print(summary)
+          PY
+          mkdir -p "$RUNNER_TEMP/candidate"
+          cp cleaner/build/outputs/apk/release/cleaner-release.apk "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk"
+          sha256sum "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" | tee "$RUNNER_TEMP/candidate/sha256.txt"
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify --print-certs "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" | tee "$RUNNER_TEMP/candidate/signer.txt"
+          grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$RUNNER_TEMP/candidate/signer.txt"
+          "$tools/aapt" dump badging "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" > "$RUNNER_TEMP/candidate/badging.txt"
+          grep -q "package: name='com.universalrp.cleansweep' versionCode='106' versionName='3.01'" "$RUNNER_TEMP/candidate/badging.txt"
+          ! grep -q application-debuggable "$RUNNER_TEMP/candidate/badging.txt"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Android 16 in-place upgrade, accelerated timeout and shared notification
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            python3 tools/liveguard_radio_upgrade_smoke.py
+            adb shell device_config put activity_manager data_sync_fgs_timeout_duration 5000
+            adb shell device_config get activity_manager data_sync_fgs_timeout_duration | grep -x 5000
+            gradle :cleaner:connectedReleaseAndroidTest -Pandroid.testInstrumentationRunnerArguments.expectedCandidateSha256="$(sha256sum "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" | cut -d' ' -f1)" -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.cleansweep.RadioTimeoutNativeTest,com.universalrp.cleansweep.OfficialStatusNativeTest#foregroundServicesShareCardAndIndependentStop --no-daemon --stacktrace
+      - name: Verify native tests ran without failures
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          results = [ET.parse(p).getroot() for p in Path('cleaner/build/outputs/androidTest-results').rglob('*.xml')]
+          cases = [c for r in results for c in r.iter('testcase')]
+          for name in ('continuousMonitorSurvivesShortenedDataSyncTimeoutAndStopsCleanly', 'foregroundServicesShareCardAndIndependentStop'):
+              match = [c for c in cases if c.get('name') == name]
+              assert len(match) == 1 and not any(match[0].find(x) is not None for x in ('failure','error','skipped')), name
+          print('Radio timeout and shared notification regressions passed')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: Live-Guard-3.01-radio-timeout-candidate
+          path: |
+            ${{ runner.temp }}/candidate/
+            cleaner/build/outputs/androidTest-results/
+          retention-days: 14
+      - name: Surface failures
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+          for p in Path('cleaner/build/outputs/androidTest-results').rglob('*.xml'):
+              text=p.read_text(errors='replace')[:10000]
+              print('::error title=Native test::'+text.replace('%','%25').replace('\n','%0A'))
+          PY

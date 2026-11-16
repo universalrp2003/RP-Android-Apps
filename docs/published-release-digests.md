@@ -1,3 +1,8 @@
+## Live Guard 3.01 — radio timeout fix
+
+- [CleanSweep-v3.01.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk): 14,781,231 bytes; SHA-256 `b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f`.
+- Exact signed artifact from Android 16 emulator run 43881834720; same-key 3.00 update and synthetic data preservation verified. Publisher 43893930297; no rebuild. The exact 3.01 APK has not been tested on a physical phone. [Receipt](live-guard-3.01-publication-receipt.json).
+
 ## Oor Arivippu1.1.15 — owner-authorized exact configured APK, 3 November2026
 
 - Public [Oor-Arivippu-v1.1.15.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.15/Oor-Arivippu-v1.1.15.apk): **12891952 bytes**, SHA256 `ec625cbfb6faa1bab680b71e4184d945913908662e56f898e695dea932c1abe5`.

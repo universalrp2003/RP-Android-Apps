@@ -37,8 +37,8 @@ import com.universalrp.cleansweep.voice.Announcer
  *     one mobile total.
  *
  * Started only when the user turns on "count 4G/5G separately" or "announce 4G ⇄ 5G" — it is
- * not part of the default footprint. Runs as a `dataSync` foreground service (local work,
- * no network transfer) with an unimportant notification.
+ * not part of the default footprint. Also supports user-enabled no-signal alerts. Runs as a
+ * `specialUse` foreground service for continuous local monitoring, not a data transfer.
  */
 /**
  * Pure transition and 5G bearer rules for [RadioWatchService], tested on plain JVM.
@@ -168,6 +168,14 @@ class RadioWatchService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_STICKY
+
+    // Android 15+ calls this if a time-limited type ever reaches its budget. Even though
+    // this continuous monitor now uses specialUse, stop promptly if its type changes in a
+    // future manifest/platform: otherwise Android kills the process within seconds.
+    override fun onTimeout(startId: Int, fgsType: Int) {
+        handler.removeCallbacks(poll)
+        stopSelf()
+    }
 
     override fun onDestroy() {
         handler.removeCallbacks(poll)

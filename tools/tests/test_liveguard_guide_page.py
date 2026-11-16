@@ -13,7 +13,7 @@ class LiveGuardGuidePage(unittest.TestCase):
     def setUp(self):
         self.guide = GUIDE.read_text()
         self.site = (ROOT / 'site/index.html').read_text()
-        self.receipt = json.loads((ROOT / 'docs/live-guard-3.00-publication-receipt.json').read_text())
+        self.receipt = json.loads((ROOT / 'docs/live-guard-3.01-publication-receipt.json').read_text())
 
     def test_guide_exists_and_is_linked_from_the_live_guard_card(self):
         self.assertIn('href="live-guard-guide.html"', self.site)
@@ -22,7 +22,7 @@ class LiveGuardGuidePage(unittest.TestCase):
 
     def test_guide_downloads_the_published_bytes(self):
         self.assertEqual(self.receipt['apk_sha256'],
-                         '286f172054f0a9b10a16d673f49acff1a3bac3d8b3686c9ddf65c27b2b2a5940')
+                         'b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f')
         self.assertIn(self.receipt['apk_sha256'], self.guide)
         self.assertIn(f"{self.receipt['bytes']:,} bytes", self.guide)
         self.assertIn(self.receipt['url'], self.guide)
@@ -48,9 +48,11 @@ class LiveGuardGuidePage(unittest.TestCase):
         self.assertIn('turns red on a bad connection', self.guide)
 
     def test_phone_test_is_recorded_honestly(self):
-        self.assertTrue(self.receipt['physical_phone_tested'])
-        self.assertFalse(self.receipt['installed_phone_hash_matched'])
-        self.assertIn('no on-device SHA-256 comparison', self.receipt['note_on_installed_hash'])
+        self.assertFalse(self.receipt['physical_phone_tested'])
+        historical = json.loads((ROOT / 'docs/live-guard-3.00-publication-receipt.json').read_text())
+        self.assertTrue(historical['physical_phone_tested'])
+        self.assertFalse(historical['installed_phone_hash_matched'])
+        self.assertIn('no on-device SHA-256 comparison', historical['note_on_installed_hash'])
 
 
 if __name__ == '__main__':

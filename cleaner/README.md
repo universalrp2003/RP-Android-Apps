@@ -1,10 +1,14 @@
 # Live Guard (CleanSweep)
 
-Current public APK: **3.00 / code 105**, package `com.universalrp.cleansweep`, Android 8.0/API 26+.
+Current public APK: **3.01 / code 106**, package `com.universalrp.cleansweep`, Android 8.0/API 26+.
 
-[Download CleanSweep-v3.00.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk) · [release notes](../releases/live-guard-v3.00.md) · [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html) · [verification](../docs/live-guard-3.00-publication-receipt.json).
+[Download CleanSweep-v3.01.apk](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk) · [release notes](../releases/live-guard-v3.01.md) · [guide and screenshots](https://universalrp2003.github.io/RP-Android-Apps/live-guard-guide.html) · [verification](../docs/live-guard-3.01-publication-receipt.json).
 
-## This update — 3.00 (12 November 2026)
+## This update — 3.01
+
+Fixes the Android 15/16 radio-monitor foreground timeout identified in the owner’s 3.00 crash report. Unit/lint, Android 15/16 emulator tests and in-place upgrade from 3.00 with synthetic data passed; 3.01 is not yet phone-tested. Update without uninstalling or clearing data.
+
+## Previous update — 3.00 (12 November 2026)
 
 **The expired-booster bug is fixed.** A booster that had already ended kept inflating the data limit, so the floating card could disagree with My plan by gigabytes. Reproduced on the owner's phone: My plan said 2.24 GB left while the card said 5.24 GB. An ended booster now adds exactly zero.
 
