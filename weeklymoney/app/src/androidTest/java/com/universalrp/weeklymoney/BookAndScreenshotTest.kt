@@ -38,7 +38,7 @@ class BookAndScreenshotTest {
     private fun unlock() {
         waitFor("unlockPassword")
         ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput(password)
-        ui.onNodeWithTag("unlockContinue").performScrollTo().performClick()
+        ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
         waitFor("bookHeader")
         openBook()
     }
@@ -79,7 +79,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("ownerName").performScrollTo().performTextInput("Synthetic Owner")
         ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput(password)
         ui.onNodeWithTag("confirmPassword").performScrollTo().performTextInput(password)
-        ui.onNodeWithTag("unlockContinue").performScrollTo().performClick()
+        ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
         waitFor("newBook")
         ui.onNodeWithTag("newBook").performClick()
         ui.onNodeWithTag("bookSave").performClick(); waitFor("bookError")
