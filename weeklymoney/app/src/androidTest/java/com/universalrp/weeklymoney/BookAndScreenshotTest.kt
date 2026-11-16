@@ -159,7 +159,8 @@ class BookAndScreenshotTest {
         ui.onNodeWithText("ரத்து / Cancel").performClick(); closed("confirmFinishCollection")
         ui.onNodeWithTag("finishCollection").performClick(); waitFor("confirmFinishCollection")
         ui.onNodeWithTag("confirmFinishCollection").performClick(); closed("confirmFinishCollection")
-        waitFor("closeSummary"); ui.onNodeWithTag("closeSummary").performClick()
+        waitFor("closeSummary"); ui.onNodeWithTag("closeSummary").performClick(); closed("closeSummary")
+        ui.waitUntil(20000) { !ui.onNodeWithTag("finishCollection").fetchSemanticsNode().config.contains(androidx.compose.ui.semantics.SemanticsProperties.Disabled) }
         ui.onNodeWithTag("finishCollection").performClick(); waitFor("confirmFinishCollection")
         ui.onNodeWithTag("confirmFinishCollection").assertIsEnabled()
         ui.onNodeWithText("ரத்து / Cancel").performClick(); closed("confirmFinishCollection")
