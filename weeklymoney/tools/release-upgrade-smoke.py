@@ -29,13 +29,14 @@ def tap(node):
 with tempfile.TemporaryDirectory() as tmp:
     # Native regression left an encrypted, synthetic notebook and its known test password.
     adb('root'); adb('wait-for-device')
-    encrypted = subprocess.check_output(['adb', 'exec-out', 'cat', BASE+'/files/notebooks.vvb'])
-    assert len(encrypted) > 100
+    encrypted = subprocess.check_output(['adb', 'exec-out', 'cat', '/sdcard/Download/WeeklyMoneySynthetic/weeklymoney-synthetic-upgrade.vvb'])
+    assert len(encrypted) > 100 and encrypted.startswith(b'VVB\x01'), 'Missing encrypted synthetic fixture'
     run('gh', 'release', 'download', 'weekly-money-v0.11', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v0.11.apk', '--dir', tmp)
     old = Path(tmp)/'Weekly-Money-v0.11.apk'
     assert hashlib.sha256(old.read_bytes()).hexdigest() == '83600bfa2b50a9989cf9cfbffb1a72b1da3f54b27163d5d591e31ba16c3aa2a4'
     # Only this disposable emulator fixture is uninstalled to establish the real old baseline.
-    adb('uninstall', PACKAGE)
+    if adb('shell', 'pm', 'path', PACKAGE):
+        assert 'Success' in adb('uninstall', PACKAGE)
     assert 'Success' in adb('install', str(old))
     uid = adb('shell', 'stat', '-c', '%u', BASE)
     local = Path(tmp)/'synthetic.vvb'; local.write_bytes(encrypted)

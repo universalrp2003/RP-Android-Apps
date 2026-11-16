@@ -258,6 +258,17 @@ class BookAndScreenshotTest {
         transfer.loanIds.forEach { loanId ->
             assertEquals(transfer.toBook, continued.activeBookId(continued.effectiveLoans().single { it.id == loanId }))
         }
+        // Export only the invented encrypted test fixture for the separate signed-release upgrade test.
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            val values = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.DISPLAY_NAME, "weeklymoney-synthetic-upgrade.vvb")
+                put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/octet-stream")
+                put(android.provider.MediaStore.Downloads.RELATIVE_PATH, "Download/WeeklyMoneySynthetic")
+            }
+            val resolver = context.contentResolver
+            val uri = checkNotNull(resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
+            checkNotNull(resolver.openOutputStream(uri)).use { it.write(File(context.filesDir, "notebooks.vvb").readBytes()) }
+        }
         assertEquals(continued, NotebookState.decode(continued.encode()))
         ui.onNodeWithTag("openArchivedVolume").performScrollTo().performClick(); waitFor("ledgerBook")
         ui.onNodeWithTag("finishCollection").assertDoesNotExist()
