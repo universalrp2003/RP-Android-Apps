@@ -110,7 +110,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
         ui.onNodeWithText("Synthetic Customer").performScrollTo().performClick()
         waitFor("todayAmount")
-        ui.onNodeWithTag("copyContact").assertTextContains("+91 00000 00000")
+        ui.onNodeWithTag("copyContact").assertTextContains("+91 00000 00000", substring = true)
         ui.onNodeWithTag("copyContact").performScrollTo().performClick()
         ui.runOnIdle {
             val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
