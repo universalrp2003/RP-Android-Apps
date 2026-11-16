@@ -265,14 +265,17 @@ private val paper = Color(0xfffff8df)
     val pinch = Modifier.pointerInput(book.id, pinchEnabled) {
         awaitEachGesture {
             awaitFirstDown(requireUnconsumed = false)
+            var gestureZoom = zoom
             do {
                 val event = awaitPointerEvent()
                 if (pinchEnabled && event.changes.count { it.pressed } >= 2) {
                     val factor = event.calculateZoom()
-                    if (factor.isFinite()) zoom = (zoom * factor).coerceIn(0.2f, 2.2f)
+                    if (factor.isFinite()) gestureZoom = (gestureZoom * factor).coerceIn(0.2f, 2.2f)
                     event.changes.forEach { it.consume() }
                 }
             } while (event.changes.any { it.pressed })
+            // Reflow the ruled table once on release, not for every two-finger event.
+            if (pinchEnabled) zoom = gestureZoom
         }
     }
     // Pinch/zoom recomposes frequently: never replay the audited ledger for every cell/frame.
