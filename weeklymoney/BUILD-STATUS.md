@@ -1,3 +1,17 @@
+# Latest: verified TEST0.6 receipt-row identification
+
+[Download TEST0.6 + separate DEMO0.6](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43797310251/artifacts/14194734059).
+See [TEST0.6 receipt, changes and upgrade safety](FIX-0.6.md).
+Faint customer identity behind the ten receipt columns; no outside book-number/date header in entry;
+no bottom aggregate loan amount; weekly collection totals distinguished by a pale-green row, green text and outline.
+Individual loan amounts, collection-cycle dates, weekly totals and records are preserved.
+CI 43797310251 passed unit suites, lint, builds, Android 35 regression (1 test, zero failures/errors) and both APK signature/identity checks.
+Export an external encrypted backup before updating; do not uninstall or clear data.
+
+Earlier receipts below are historical; TEST0.6 supersedes their relevant interface descriptions.
+
+---
+
 # Latest: verified TEST0.5 focused notebook preview
 
 See [TEST0.5 changes, lock semantics and verified receipt](FIX-0.5.md).
