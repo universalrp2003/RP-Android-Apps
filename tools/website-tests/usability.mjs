@@ -91,7 +91,7 @@ try {
   await test('mobile APK sizes remain visible without JavaScript', async page => {
     await page.goto(base);
     assert.equal(await page.locator('.latest tbody .apk-size-mobile:visible').count(), 17);
-    assert.equal(await page.locator('.latest tbody tr').first().locator('.apk-size-mobile').innerText(), '10.1 MB');
+    assert.equal(await page.locator('.latest tbody tr').first().locator('.apk-size-mobile').innerText(), '7.4 MB');
   }, { javaScriptEnabled: false });
   await test('filters and table agree, and jump reveals/focuses a hidden app', async page => {
     await page.goto(base);
