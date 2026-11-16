@@ -1,0 +1,25 @@
+name: Publish owner-authorized Live Guard 3.01 exact tested bytes
+on:
+  push:
+    branches: ["arena/dc49fff8-rp-android-apps"]
+    paths: ["tools/publish_liveguard_301.py"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/dc49fff8-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Promote exact verified candidate without rebuild
+        run: python3 tools/publish_liveguard_301.py
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: liveguard-3.01-publication-receipt
+          path: ${{ runner.temp }}/liveguard301-receipt.json
