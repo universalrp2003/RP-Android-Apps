@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory() as tmp:
     old = Path(tmp)/'Weekly-Money-v0.11.apk'
     assert hashlib.sha256(old.read_bytes()).hexdigest() == '83600bfa2b50a9989cf9cfbffb1a72b1da3f54b27163d5d591e31ba16c3aa2a4'
     # Only this disposable emulator fixture is uninstalled to establish the real old baseline.
-    if adb('shell', 'pm', 'path', PACKAGE):
+    if 'package:'+PACKAGE in adb('shell', 'pm', 'list', 'packages', PACKAGE).splitlines():
         assert 'Success' in adb('uninstall', PACKAGE)
     assert 'Success' in adb('install', str(old))
     uid = adb('shell', 'stat', '-c', '%u', BASE)
