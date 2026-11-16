@@ -20,7 +20,8 @@ class IdentityChecks(unittest.TestCase):
 
     def test_offline_and_no_platform_backup(self):
         root = ET.parse(ROOT / 'weeklymoney/app/src/main/AndroidManifest.xml').getroot()
-        self.assertFalse(root.findall('uses-permission'))
+        self.assertEqual({p.get(ANDROID + 'name') for p in root.findall('uses-permission')},
+                         {'android.permission.USE_BIOMETRIC'})
         app = root.find('application')
         self.assertEqual(app.get(ANDROID + 'allowBackup'), 'false')
         self.assertEqual(app.get(ANDROID + 'fullBackupContent'), 'false')

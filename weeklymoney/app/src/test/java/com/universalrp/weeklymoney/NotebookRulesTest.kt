@@ -160,4 +160,39 @@ class NotebookRulesTest {
         assertTrue(paid.ledger().balance(l.id).completed)
         assertEquals(5000L, paid.copy(loans = paid.loans + fresh).ledger().balance(fresh.id).remainingPaise)
     }
+    @Test fun completedRenewalsHaveNoRomanAndOnlyConcurrentDebtIsNumbered() {
+        val first = empty().nextLoan(book, "P", "F", "N", "100", date)
+        val paid = empty().copy(loans = listOf(first)).withReceipts(first, listOf(ReceiptDraft(1, "100", date)))
+        val second = paid.nextLoan(book, "P", "F", "N", "50", date.plusWeeks(1), first)
+        val renewed = paid.copy(loans = paid.loans + second)
+        assertEquals("N", renewed.customerLabel(first))
+        assertEquals("N", renewed.customerLabel(second))
+        val third = renewed.nextLoan(book, "P", "F", "N", "20", date.plusWeeks(2), second)
+        val concurrent = renewed.copy(loans = renewed.loans + third)
+        assertEquals("N I", concurrent.customerLabel(second))
+        assertEquals("N II", concurrent.customerLabel(third))
+        val settled = concurrent.withReceipts(second, listOf(ReceiptDraft(1, "50", date.plusWeeks(2))))
+        assertEquals("N", settled.customerLabel(third))
+        assertEquals(3, third.sequence) // immutable identity order is not the displayed active-debt ordinal
+    }
+    @Test fun importedInkIsAuditedRoundtripsAndGroupsPlacesWithinBlueThenRed() {
+        val blueA = empty().nextLoan(book, "Pudukkottai", "Rajesh", "Praba", "100", date)
+        val blueB = empty().nextLoan(book, "Pudukkottai", "Murugesh", "Pappa", "100", date)
+        val other = empty().nextLoan(book, "Alangudi", "F", "Other", "100", date)
+        val red = empty().nextLoan(book, "Pudukkottai", "F", "Old", "100", date).copy(openingInk = Ink.RED)
+        val original = empty().copy(loans = listOf(blueA, red, other, blueB))
+        val decoded = NotebookState.decode(original.encode())
+        assertEquals(original, decoded)
+        val lines = decoded.pageLines(book.id, decoded.pages(book.id).single())
+        assertEquals(listOf(other.id, blueB.id, blueA.id, red.id), lines.map { it.loan.id })
+        assertTrue(lines.last().isRed)
+        assertTrue(lines.dropLast(1).none { it.isRed })
+        val revised = original.correctLoan(blueA, blueA.copy(openingInk = Ink.RED))
+        assertEquals(Ink.BLUE, revised.loanChanges.single().before.openingInk)
+        assertEquals(Ink.RED, NotebookState.decode(revised.encode()).effectiveLoans().first().openingInk)
+        val legacy = JSONObject(String(original.copy(loans = listOf(blueA)).encode())).put("schema", 3)
+        legacy.getJSONArray("loans").getJSONObject(0).remove("openingInk")
+        assertEquals(Ink.BLUE, NotebookState.decode(legacy.toString().toByteArray()).loans.single().openingInk)
+    }
+
 }

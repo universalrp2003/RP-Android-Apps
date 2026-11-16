@@ -73,7 +73,7 @@ private val paper = Color(0xfffff8df)
     var linked by remember { mutableStateOf(if (!edit) seed else null) }
     var resolved by remember { mutableStateOf(seed != null) }
     var choosing by remember { mutableStateOf(false) }
-    var history by remember { mutableStateOf(false) }
+    var openingInk by remember { mutableStateOf(seed?.openingInk ?: Ink.BLUE) }
     var error by remember { mutableStateOf("") }
     val scroll = rememberScrollState()
     LaunchedEffect(error, choosing) { if (error.isNotEmpty() || choosing) scroll.animateScrollTo(0) }
@@ -82,10 +82,10 @@ private val paper = Color(0xfffff8df)
             error = ""
             val matches = state.matchingCustomers(name)
             if (!edit && !resolved && matches.isNotEmpty()) { choosing = true; return }
-            val created = if (edit && seed != null) seed.copy(place = place.trim(), familyHead = family.trim(), customerName = name.trim(), totalPaise = parseRupees(amount), started = date)
-                else state.nextLoan(book, place, family, name, amount, date, linked)
+            val created = if (edit && seed != null) seed.copy(place = place.trim(), familyHead = family.trim(), customerName = name.trim(), totalPaise = parseRupees(amount), started = date, openingInk = if (historyEnabled) openingInk else seed.openingInk)
+                else state.nextLoan(book, place, family, name, amount, date, linked).copy(openingInk = if (historyEnabled) openingInk else Ink.BLUE)
             val next = if (edit && seed != null) state.correctLoan(seed, created) else state.copy(loans = state.loans + created)
-            commit(next) { problem -> if (problem == null) { keyboard?.hide(); saved(created, history) } else error = problem }
+            commit(next) { problem -> if (problem == null) { keyboard?.hide(); saved(created, false) } else error = problem }
         } catch (e: Exception) {
             error = (e as? InputProblem)?.explanation ?: "விவரங்கள், தொகை, தேதியைச் சரிபார்க்கவும் / Check details, total and date against saved payments"
         }
@@ -119,9 +119,17 @@ private val paper = Color(0xfffff8df)
                     EntryField("வாடிக்கையாளர் / Customer", name, "loanName") { name = it; if (seed == null) { resolved = false; linked = null } }
                     EntryField("மொத்த ரூபாய் / Total rupees", amount, "loanAmount", true) { amount = it }
                     DateChoice("கடன் தேதி / Loan date", date, allowed, "loanDate") { date = it }
-                    if (!edit) {
-                        if (historyEnabled && history) Text("பழைய கடனின் தொடக்கத் தேதியைத் தேர்ந்தெடுக்கவும்; ஒவ்வொரு வாரத் தேதியும் திருத்தலாம் / Choose the original loan date; each weekly date remains editable")
-                        if (historyEnabled) Row { Checkbox(history, { history = it }, modifier = Modifier.testTag("historicalLoan")); Text("பழைய நோட்டிலிருந்து 10 வார விவரங்கள் / Enter existing 10-week history after saving") }
+                    if (historyEnabled) {
+                        Text("பழைய பதிவு நிறம் / Opening group")
+                        Row {
+                            FilterChip(selected = openingInk == Ink.BLUE, onClick = { openingInk = Ink.BLUE },
+                                modifier = Modifier.testTag("openingBlue"), label = { Text("நீலம் · புதிய பதிவு", color = blueInk) })
+                        }
+                        Row {
+                            FilterChip(selected = openingInk == Ink.RED, onClick = { openingInk = Ink.RED },
+                                modifier = Modifier.testTag("openingRed"), label = { Text("சிவப்பு · 10 வாரம் கடந்த பாக்கி", color = redInk) })
+                        }
+                        Text("அசல் கடன் தேதி, அசல் மொத்தம் மற்றும் பழைய வசூல்களை உள்ளிடவும். நிறம் தொகை/தேதியை மாற்றாது.")
                     }
                     if (busy) Text("சேமிக்கிறது / Saving…")
                 }
@@ -140,7 +148,7 @@ private val paper = Color(0xfffff8df)
     val target = if (historyEnabled) initialWeek ?: state.entryWeek(loan, today) else state.entryWeek(loan, today)
     var cycle by remember { mutableStateOf((target - 1) / 10) }
     var selected by remember { mutableStateOf((target - 1) % 10) }
-    var all by remember { mutableStateOf(historyEnabled && allInitially) }
+    val all = false
     var audit by remember { mutableStateOf(auditInitially) }
     var error by remember { mutableStateOf("") }
     var todayAmount by remember { mutableStateOf("") }
@@ -179,7 +187,7 @@ private val paper = Color(0xfffff8df)
                                 modifier = Modifier.testTag("dueDate-${i + 1}"), style = MaterialTheme.typography.labelSmall)
                             Box(Modifier.fillMaxWidth().heightIn(min = 44.dp).border(1.dp,
                                 if (historyEnabled && selected == i) blueInk else Color.Gray)
-                                .then(if (historyEnabled) Modifier.clickable { selected = i; all = false } else Modifier).padding(3.dp)) {
+                                .then(if (historyEnabled) Modifier.clickable { selected = i } else Modifier).padding(3.dp)) {
                                 Text(if (p == null) "" else p.amountPaise?.let(::rupees) ?: "–",
                                     modifier = Modifier.testTag("overviewAmount-${i + 1}"), color = if (p?.amountPaise == null) Color(0xff805029) else blueInk,
                                     style = MaterialTheme.typography.bodySmall)
@@ -192,7 +200,7 @@ private val paper = Color(0xfffff8df)
                 if (historyEnabled) {
                     Text("பழைய பதிவுகள் திருத்தம் ON / History entry ON", color = redInk)
                     TextButton(onClick = editDetails, modifier = Modifier.testTag("editLoanDetails")) { Text("பெயர், தொகை, தேதி திருத்து / Edit loan details") }
-                    Row { Checkbox(all, { all = it }, modifier = Modifier.testTag("allTenWeeks")); Text("10 வாரமும் உள்ளிடு / Edit all 10 weeks") }
+                    Text("மேலே தேவையான வாரக் கட்டத்தைத் தொட்டு பழைய பதிவை உள்ளிடவும் / Tap a week above to enter or correct it")
                     Text("வெற்று = மாற்றமில்லை / Blank leaves unchanged")
                     val shown = if (all) (0..9).toList() else listOf(selected)
                     shown.forEach { i ->
@@ -310,9 +318,11 @@ private val paper = Color(0xfffff8df)
                         }
                         LedgerCell("மீதி\nRemaining", 110, redInk)
                     }
-                    rows.forEach { row ->
+                    rows.forEachIndexed { rowIndex, row ->
+                        if (row.isRed && (rowIndex == 0 || !rows[rowIndex - 1].isRed))
+                            Text("சிவப்பு · பழைய பாக்கி", color = redInk, modifier = Modifier.padding(8.dp))
                         val loan = row.loan
-                        val ink = if (row.cycle == 0) blueInk else redInk
+                        val ink = if (row.isRed) redInk else blueInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
                             LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })

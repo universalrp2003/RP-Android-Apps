@@ -55,9 +55,14 @@ fun NotebookState.changeCollectionDay(book: Book, date: LocalDate, skipped: Bool
     if ((date in skippedDates(book.id)) == skipped) return this
     return copy(collectionDays = collectionDays + CollectionDayChange(newId(), book.id, date, skipped, reason.trim(), owner.id, now))
 }
-/** Only customers with multiple independent loans need a Roman suffix. Identity never changes. */
-fun NotebookState.customerLabel(loan: Loan): String = loan.customerName +
-    if (customerLoans(loan).size > 1) " ${roman(loan.sequence)}" else ""
+/** Roman labels distinguish simultaneous outstanding debts, never completed renewals. */
+fun NotebookState.customerLabel(loan: Loan): String {
+    val ledger = ledger()
+    val active = customerLoans(loan).filter { !ledger.balance(it.id).completed }
+        .sortedWith(compareBy<Loan> { it.sequence }.thenBy { it.id })
+    val index = active.indexOfFirst { it.id == loan.id }
+    return loan.customerName + if (active.size > 1 && index >= 0) " ${roman(index + 1)}" else ""
+}
 
 /** Another receipt today adds to this week's amount; it never replaces an earlier receipt silently. */
 fun NotebookState.withTodayReceipt(loan: Loan, amount: String, date: LocalDate = LocalDate.now(),

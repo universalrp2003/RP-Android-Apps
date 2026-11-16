@@ -56,6 +56,7 @@ fun NotebookState.withReceipts(loan: Loan, drafts: List<ReceiptDraft>, now: Inst
 }
 data class NotebookPage(val date: LocalDate)
 data class NotebookLine(val loan: Loan, val cycle: Int, val opening: Long, val ending: Long)
+val NotebookLine.isRed: Boolean get() = cycle > 0 || loan.openingInk == Ink.RED
 private fun NotebookState.lastCycle(loan: Loan): Int {
     val maxWeek = ledger().latest().filter { it.loanId == loan.id }.maxOfOrNull { it.week } ?: 0
     return if (maxWeek > 0 && maxWeek % 10 == 0 && !ledger().balance(loan.id).completed) maxWeek / 10 else (maxWeek.coerceAtLeast(1) - 1) / 10
@@ -70,7 +71,9 @@ fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLi
             val opening = ledger.balance(loan.id, cycle * 10).remainingPaise
             if (cycle > 0 && opening == 0L) null else NotebookLine(loan, cycle, opening, ledger.balance(loan.id, (cycle + 1) * 10).remainingPaise)
         }
-    }.sortedWith(compareBy<NotebookLine> { if (it.cycle == 0) 0 else 1 }.thenBy { it.loan.started }.thenBy { it.loan.sequence })
+    }.sortedWith(compareBy<NotebookLine> { if (it.isRed) 1 else 0 }
+        .thenBy { personText(it.loan.place) }.thenBy { personText(it.loan.familyHead) }
+        .thenBy { personText(it.loan.customerName) }.thenBy { it.loan.started }.thenBy { it.loan.sequence })
 }
 
 /** Only the selected collection week's blank cells; never backfill older/future weeks. */

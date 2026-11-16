@@ -42,6 +42,28 @@ class MainActivity : ComponentActivity() {
     private var stoppedAt = 0L
     private val autoLock = android.os.Handler(android.os.Looper.getMainLooper())
     private val lockAction = Runnable { if (busy) lockAfterTask = true else lock() }
+    private var biometricEnabled by mutableStateOf(false)
+    private var biometricSignal: android.os.CancellationSignal? = null
+    private var authEpoch = 0
+    private fun biometricUnlock() {
+        if (android.os.Build.VERSION.SDK_INT < 28 || busy || state != null || restoreBytes != null) return
+        val epoch = authEpoch
+        biometricSignal = BiometricGate(this).authenticate(success = { entered ->
+            if (entered != null) {
+                if (epoch != authEpoch || state != null) entered.fill('\u0000')
+                else task {
+                    try {
+                        val loaded = withContext(Dispatchers.Default) {
+                            val bytes = withContext(Dispatchers.IO) { disk.openRead().use { it.readBytesBounded() } }
+                            val plain = BackupCrypto.open(bytes, entered)
+                            try { NotebookState.decode(plain) } finally { plain.fill(0) }
+                        }
+                        if (epoch == authEpoch) { secret = entered.copyOf(); state = loaded; message = "" }
+                    } finally { entered.fill('\u0000') }
+                }
+            }
+        }, failure = { message = "Biometric ரத்து/கிடைக்கவில்லை. மீண்டும் முயலவும் அல்லது master password மூலம் மீட்கவும்." })
+    }
     private var state by mutableStateOf<NotebookState?>(null)
     private var message by mutableStateOf("")
     private var busy by mutableStateOf(false)
@@ -87,6 +109,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        biometricEnabled = android.os.Build.VERSION.SDK_INT >= 28 && BiometricGate(this).configured()
         historyEntryEnabled = getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("historyEntry", false)
         applyScreenshotPreference(getSharedPreferences("privacy", MODE_PRIVATE).getBoolean("allowScreenshots", false))
         if (intent?.action == android.content.Intent.ACTION_VIEW) {
@@ -101,7 +124,7 @@ class MainActivity : ComponentActivity() {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
                 Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
-                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.6" else "சோதனை 0.6 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
+                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.7" else "சோதனை 0.7 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
@@ -120,6 +143,7 @@ class MainActivity : ComponentActivity() {
         } }
     }
     override fun onStop() {
+        authEpoch++; biometricSignal?.cancel(); biometricSignal = null
         super.onStop()
         stoppedAt = android.os.SystemClock.elapsedRealtime()
         val minutes = getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)
@@ -132,8 +156,9 @@ class MainActivity : ComponentActivity() {
         if (stoppedAt > 0 && android.os.SystemClock.elapsedRealtime() - stoppedAt >= limit) lockAction.run()
         stoppedAt = 0
     }
-    override fun onDestroy() { autoLock.removeCallbacks(lockAction); secret?.fill('\u0000'); super.onDestroy() }
+    override fun onDestroy() { biometricSignal?.cancel(); autoLock.removeCallbacks(lockAction); secret?.fill('\u0000'); super.onDestroy() }
     private fun lock() {
+        authEpoch++; biometricSignal?.cancel(); biometricSignal = null
         reading = false; message = ""; state = null; openedLoanId = null; restorePreview = null; secret?.fill('\u0000'); secret = null
     }
     private fun task(onError: ((String) -> Unit)? = null, block: suspend () -> Unit) {
@@ -171,9 +196,16 @@ class MainActivity : ComponentActivity() {
         var password by remember { mutableStateOf("") }
         var confirm by remember { mutableStateOf("") }
         val exists = hasLocalRecords()
+        var masterFallback by remember { mutableStateOf(false) }
+        val useBiometric = exists && biometricEnabled && restoreBytes == null
+        LaunchedEffect(useBiometric) { if (useBiometric) biometricUnlock() }
         Column(Modifier.verticalScroll(rememberScrollState())) {
             Text(if (exists) "திறக்க / Unlock" else "உரிமையாளர் அமைப்பு / Owner setup")
-            Text("Preview: full-backup restore on an empty installation only. Biometric and collector exchange are unfinished. Synthetic records only.")
+            Text("Preview: full-backup restore on an empty installation only. Collector exchange is unfinished. Keep an external backup and master password.")
+            if (useBiometric) {
+                Button(enabled = !busy, modifier = Modifier.testTag("biometricUnlock"), onClick = { biometricUnlock() }) { Text("விரல்ரேகை / Biometric திறக்க") }
+                TextButton(onClick = { masterFallback = !masterFallback }) { Text("Biometric கிடைக்கவில்லையா? Master password recovery") }
+            }
             if (!exists) {
                 TextButton(enabled = !busy, onClick = { restore.launch(arrayOf("application/octet-stream", "*/*")) }) {
                     Text("காப்பிலிருந்து மீட்க / Restore a full backup")
@@ -193,6 +225,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
             if (!exists && restoreBytes == null) Field("உரிமையாளர் பெயர் / Owner name", name, "ownerName") { name = it }
+            if (!useBiometric || masterFallback) {
             OutlinedTextField(password, { password = it }, label = { Text("கடவுச்சொல் / Passphrase (10+ characters)") },
                 visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("unlockPassword"))
             if (!exists && restoreBytes == null) OutlinedTextField(confirm, { confirm = it }, label = { Text("மீண்டும் / Confirm passphrase") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("confirmPassword"))
@@ -222,6 +255,7 @@ class MainActivity : ComponentActivity() {
                     } finally { entered.fill('\u0000') }
                 }
             }) { Text("தொடர / Continue") }
+            }
         }
     }
     @Composable private fun ColumnScope.Notebook(current: NotebookState) {
@@ -256,6 +290,20 @@ class MainActivity : ComponentActivity() {
             TextButton(modifier = Modifier.testTag("settingsMenu"), onClick = { tools = !tools }) { Text("அமைப்புகள் / Settings") }
         }
         if (tools) {
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                TextButton(enabled = !busy, modifier = Modifier.testTag("biometricSetting"), onClick = {
+                    val gate = BiometricGate(this@MainActivity)
+                    if (biometricEnabled) { gate.disable(); biometricEnabled = false }
+                    else {
+                        biometricSignal = gate.authenticate(requireNotNull(secret), success = {
+                            biometricEnabled = gate.configured()
+                            message = "Biometric இணைக்கப்பட்டது. Master password-ஐ பாதுகாப்பாக வைத்திருக்கவும்."
+                        }, failure = { message = "Biometric இணைக்க முடியவில்லை. Phone-ல் fingerprint அமைத்து மீண்டும் முயலவும்." })
+                    }
+                }) { Text(if (biometricEnabled) "Biometric ON · அணைக்க" else "Biometric இணைக்க / Enable") }
+                Text("புதிய phone / restore / biometric மாற்றத்திற்குப் பிறகு master password தேவை. Phone key backup-ல் சேராது.")
+            }
+
             Text("பின்னணியில் தானாகப் பூட்டும் நேரம் / Background auto-lock")
             Row { listOf(0, 1, 5, 15, 30).forEach { minutes ->
                 TextButton(modifier = Modifier.testTag("lockMinutes-$minutes"), onClick = { lockMinutes = minutes; getSharedPreferences("preferences", MODE_PRIVATE).edit().putInt("lockMinutes", minutes).apply() }) {
@@ -268,7 +316,7 @@ class MainActivity : ComponentActivity() {
                     getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("historyEntry", enabled).apply()
                     historyEntryEnabled = enabled
                 }, modifier = Modifier.testTag("historyEntrySetting"))
-                Text("பழைய நோட்டின் 10 வார பதிவு / History entry " + if (historyEntryEnabled) "ON" else "OFF")
+                Text("பழைய பதிவு உள்ளிட / Old entry " + if (historyEntryEnabled) "ON" else "OFF")
             }
             if (book != null) TextButton(modifier = Modifier.testTag("bookHolidays"), onClick = { form = "holiday" }) { Text("வசூல் விடுமுறை நாட்கள் / Book holidays") }
             Row(Modifier.horizontalScroll(rememberScrollState())) {
@@ -323,10 +371,11 @@ class MainActivity : ComponentActivity() {
                 title = { Text("வசூல் சுருக்கம்") },
                 text = { Column(Modifier.verticalScroll(rememberScrollState())) {
                     DateChoice("தேதி", collectionDate, screenshotsAllowed, "summaryDate") { collectionDate = it }
-                    Text("மொத்த வசூல் ₹${money(paid.sumOf { it.amountPaise ?: 0L })}")
-                    paid.forEach { p -> Text("${current.customerLabel(loans.first { it.id == p.loanId })} · ₹${money(p.amountPaise ?: 0L)}") }
-                    Text("புதிய கடன்கள்")
-                    loans.filter { it.started == collectionDate }.forEach { Text("${current.customerLabel(it)} · ₹${money(it.totalPaise)}") }
+                    Text("வசூல் · ₹${money(paid.sumOf { it.amountPaise ?: 0L })}", color = Color(0xff145c38))
+                    paid.forEach { p -> Text("${current.customerLabel(loans.first { it.id == p.loanId })} · ₹${money(p.amountPaise ?: 0L)}", color = Color(0xff145c38)) }
+                    HorizontalDivider(Modifier.padding(vertical = 12.dp))
+                    Text("புதிய கடன்கள்", color = Color(0xff7c3291))
+                    loans.filter { it.started == collectionDate }.forEach { Text("${current.customerLabel(it)} · ₹${money(it.totalPaise)}", color = Color(0xff7c3291)) }
                 } }, confirmButton = { TextButton(modifier = Modifier.testTag("closeSummary"), onClick = { summary = false }) { Text("சரி") } })
         }
         if (confirmArchive && book != null) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { confirmArchive = false },

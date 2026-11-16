@@ -29,7 +29,8 @@ data class Book(val id: String, val number: String, val collectionDay: java.time
 }
 data class Loan(val id: String, val bookId: String, val customerId: String,
                 val place: String, val familyHead: String, val customerName: String,
-                val totalPaise: Long, val started: LocalDate, val sequence: Int) {
+                val totalPaise: Long, val started: LocalDate, val sequence: Int,
+                val openingInk: Ink = Ink.BLUE) {
     init {
         require(listOf(id, bookId, customerId, place, familyHead, customerName).all { it.isNotBlank() })
         require(totalPaise > 0 && sequence > 0)
