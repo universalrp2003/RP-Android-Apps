@@ -14,6 +14,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
@@ -318,6 +319,15 @@ private val paper = Color(0xfffff8df)
                             LedgerCell("${state.customerLabel(loan)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             LedgerFold()
+                            Box(Modifier.width(900.dp).height(IntrinsicSize.Min)) {
+                                // Behind receipts, never on top of numbers; no duplicate spoken/clickable identity.
+                                Text("${loan.place} · ${loan.familyHead} · ${state.customerLabel(loan)}",
+                                    modifier = Modifier.matchParentSize().wrapContentSize(androidx.compose.ui.Alignment.Center)
+                                        .clearAndSetSemantics { },
+                                    color = Color(0xffb8b8b8).copy(alpha = .65f),
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                    maxLines = 1)
+                                Row(Modifier.height(IntrinsicSize.Min)) {
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
@@ -325,16 +335,22 @@ private val paper = Color(0xfffff8df)
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
                                     Modifier.testTag("cell-${loan.id}-$week"), tap = { onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
                             }
+                            }
+                            }
                             LedgerCell(rupees(row.ending), 110, redInk)
                         }
                     }
-                    Row(Modifier.height(IntrinsicSize.Min)) {
-                        LedgerCell("மொத்தம்", 140, blueInk)
-                        LedgerCell("", 160, blueInk); LedgerCell("", 160, blueInk)
-                        LedgerCell(rupees(rows.sumOf { it.opening }), 100, blueInk)
+                    Row(Modifier.height(IntrinsicSize.Min).background(Color(0xffe1f1e8))
+                        .border(2.dp, Color(0xff23734a)).testTag("weeklyTotals")) {
+                        val totalInk = Color(0xff145c38)
+                        LedgerCell("வசூல் மொத்தம்", 140, totalInk)
+                        LedgerCell("", 160, totalInk); LedgerCell("", 160, totalInk)
+                        // Individual loan amounts stay above; no summed loan-amount cell.
+                        LedgerCell("", 100, totalInk, Modifier.testTag("noLoanAmountTotal"))
                         LedgerFold()
-                        repeat(10) { i -> LedgerCell(rupees(rows.sumOf { row -> payments[row.loan.id to (row.cycle * 10 + i + 1)]?.amountPaise ?: 0L }), 90, blueInk) }
-                        LedgerCell(rupees(rows.sumOf { it.ending }), 110, redInk)
+                        repeat(10) { i -> LedgerCell(rupees(rows.sumOf { row -> payments[row.loan.id to (row.cycle * 10 + i + 1)]?.amountPaise ?: 0L }), 90, totalInk,
+                            Modifier.testTag("weeklyTotal-${i + 1}")) }
+                        LedgerCell(rupees(rows.sumOf { it.ending }), 110, totalInk)
                     }
                     repeat((8 - rows.size).coerceAtLeast(0)) {
                         Row(Modifier.height(IntrinsicSize.Min)) {

@@ -101,7 +101,7 @@ class MainActivity : ComponentActivity() {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
                 Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
-                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.5" else "சோதனை 0.5 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
+                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.6" else "சோதனை 0.6 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
@@ -289,7 +289,7 @@ class MainActivity : ComponentActivity() {
             keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); focus.clearFocus() }),
             modifier = Modifier.fillMaxWidth().testTag("ledgerSearch"))
         if (book != null) {
-            Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
+            if (!reading) Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
                 if (reading) LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
                     openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
