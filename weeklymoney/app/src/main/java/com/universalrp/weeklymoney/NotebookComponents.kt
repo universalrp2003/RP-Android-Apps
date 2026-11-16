@@ -56,8 +56,8 @@ private val paper = Color(0xfffff8df)
         }) { Text(value.format(dateFormat)) }
     }
 }
-@Composable private fun EntryField(label: String, value: String, tag: String, numeric: Boolean = false, change: (String) -> Unit) {
-    OutlinedTextField(value, change, label = { Text(label) }, singleLine = true,
+@Composable private fun EntryField(label: String, value: String, tag: String, numeric: Boolean = false, enabled: Boolean = true, change: (String) -> Unit) {
+    OutlinedTextField(value, change, label = { Text(label) }, singleLine = true, enabled = enabled,
         keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.Decimal else KeyboardType.Text),
         modifier = Modifier.fillMaxWidth().testTag(tag))
 }
@@ -213,7 +213,7 @@ private val paper = Color(0xfffff8df)
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Text("இன்றைய வசூல் / Today's collection · ${today.format(dateFormat)}")
                     if (!canCollect) Text("அடுத்த வசூல் / Next ${state.dueDate(loan, state.entryWeek(loan, today)).format(dateFormat)}. இன்று வசூல் கட்டம் இல்லை.")
-                    EntryField("இன்று பெற்ற தொகை / Additional amount today", todayAmount, "todayAmount", true) { todayAmount = it }
+                    EntryField("இன்று பெற்ற தொகை / Additional amount today", todayAmount, "todayAmount", true, enabled = canCollect && !busy) { todayAmount = it }
                     TextButton(modifier = Modifier.testTag("todayMissed"), enabled = canCollect && !busy, onClick = { todayAmount = "-" }) { Text("வசூல் இல்லை / Mark missed –") }
                     Text("புதிய மீதி / New balance ₹${rupees(if (entered == null) remaining else remaining - entered)}",
                         modifier = Modifier.testTag("newBalance"), color = if (entered != null && entered > remaining) redInk else blueInk)
