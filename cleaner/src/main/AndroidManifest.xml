@@ -65,9 +65,6 @@
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
-    <!-- v2.47: 4G/5G split counting. Local sampling only; no network transfer. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-
     <!--
       The optional "watt reading beside the clock": Android offers no API for a third-party
       status-bar item, so Live Guard draws one tiny, touch-through overlay in the empty part
@@ -155,7 +152,11 @@
         <service
             android:name=".notify.RadioWatchService"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-enabled continuous mobile radio monitoring for signal-loss alerts, radio-change announcements and local 4G/5G usage estimation" />
+        </service>
 
         <service
             android:name=".notify.ChargeMonitorService"

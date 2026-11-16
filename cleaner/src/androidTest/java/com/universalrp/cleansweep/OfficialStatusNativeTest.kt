@@ -75,6 +75,9 @@ class OfficialStatusNativeTest : ExactCandidateNativeTest() {
         instrumentation.uiAutomation.grantRuntimePermission(c.packageName, android.Manifest.permission.POST_NOTIFICATIONS)
         assertEquals(android.content.pm.PackageManager.PERMISSION_GRANTED,
             c.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS))
+        val info = c.packageManager.getServiceInfo(android.content.ComponentName(c, RadioWatchService::class.java), 0)
+        assertEquals("Continuous radio monitoring must not use Android's time-limited dataSync type",
+            android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE, info.foregroundServiceType)
         val nm=c.getSystemService(NotificationManager::class.java)
         assertTrue("Notification permission is a required test precondition", nm.areNotificationsEnabled())
         val activity=instrumentation.startActivitySync(Intent(c,MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
