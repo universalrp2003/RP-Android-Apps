@@ -61,7 +61,7 @@ private val paper = Color(0xfffff8df)
         modifier = Modifier.fillMaxWidth().testTag(tag))
 }
 @Composable fun LoanEntryDialog(state: NotebookState, book: Book, seed: Loan?, edit: Boolean,
-    busy: Boolean, privacy: DialogProperties, allowed: Boolean, dismiss: () -> Unit,
+    busy: Boolean, privacy: DialogProperties, allowed: Boolean, historyEnabled: Boolean, dismiss: () -> Unit,
     commit: (NotebookState, (String?) -> Unit) -> Unit, saved: (Loan, Boolean) -> Unit) {
     val keyboard = LocalSoftwareKeyboardController.current
     var place by remember { mutableStateOf(seed?.place ?: "") }
@@ -119,8 +119,8 @@ private val paper = Color(0xfffff8df)
                     EntryField("மொத்த ரூபாய் / Total rupees", amount, "loanAmount", true) { amount = it }
                     DateChoice("கடன் தேதி / Loan date", date, allowed, "loanDate") { date = it }
                     if (!edit) {
-                        if (history) Text("பழைய கடனின் தொடக்கத் தேதியைத் தேர்ந்தெடுக்கவும்; ஒவ்வொரு வாரத் தேதியும் திருத்தலாம் / Choose the original loan date; each weekly date remains editable")
-                        Row { Checkbox(history, { history = it }, modifier = Modifier.testTag("historicalLoan")); Text("பழைய நோட்டிலிருந்து 10 வார விவரங்கள் / Enter existing 10-week history after saving") }
+                        if (historyEnabled && history) Text("பழைய கடனின் தொடக்கத் தேதியைத் தேர்ந்தெடுக்கவும்; ஒவ்வொரு வாரத் தேதியும் திருத்தலாம் / Choose the original loan date; each weekly date remains editable")
+                        if (historyEnabled) Row { Checkbox(history, { history = it }, modifier = Modifier.testTag("historicalLoan")); Text("பழைய நோட்டிலிருந்து 10 வார விவரங்கள் / Enter existing 10-week history after saving") }
                     }
                     if (busy) Text("சேமிக்கிறது / Saving…")
                 }
@@ -129,64 +129,107 @@ private val paper = Color(0xfffff8df)
         dismissButton = { TextButton(enabled = !busy, onClick = dismiss) { Text("ரத்து / Cancel") } })
 }
 @Composable fun WeeklyDialog(state: NotebookState, loan: Loan, initialWeek: Int?, allInitially: Boolean, auditInitially: Boolean,
-    busy: Boolean, privacy: DialogProperties, allowed: Boolean, dismiss: () -> Unit,
+    busy: Boolean, privacy: DialogProperties, allowed: Boolean, historyEnabled: Boolean, dismiss: () -> Unit,
     commit: (NotebookState, (String?) -> Unit) -> Unit, editDetails: () -> Unit, renew: () -> Unit) {
     val keyboard = LocalSoftwareKeyboardController.current
     val ledger = remember(state) { state.ledger() }
+    val today = LocalDate.now()
+    val book = state.books.single { it.id == loan.bookId }
     val old = ledger.latest().filter { it.loanId == loan.id }.associateBy { it.week }
-    val firstEmpty = generateSequence(1) { it + 1 }.first { it !in old }
-    var cycle by remember { mutableStateOf(((initialWeek ?: firstEmpty) - 1) / 10) }
-    var selected by remember { mutableStateOf(((initialWeek ?: firstEmpty) - 1) % 10) }
-    var all by remember { mutableStateOf(allInitially) }
+    val target = if (historyEnabled) initialWeek ?: state.entryWeek(loan, today) else state.entryWeek(loan, today)
+    var cycle by remember { mutableStateOf((target - 1) / 10) }
+    var selected by remember { mutableStateOf((target - 1) % 10) }
+    var all by remember { mutableStateOf(historyEnabled && allInitially) }
     var audit by remember { mutableStateOf(auditInitially) }
     var error by remember { mutableStateOf("") }
+    var todayAmount by remember { mutableStateOf("") }
     val amounts = remember(cycle) { mutableStateListOf<String>().apply { repeat(10) { i -> val p = old[cycle * 10 + i + 1]; add(if (p == null) "" else p.amountPaise?.let(::rupees) ?: "-") } } }
-    val dates = remember(cycle) { mutableStateListOf<LocalDate>().apply { repeat(10) { i -> add(old[cycle * 10 + i + 1]?.receivedOn ?: if (allInitially) loan.started.plusWeeks((cycle * 10 + i).toLong()) else LocalDate.now()) } } }
+    val dates = remember(cycle) { mutableStateListOf<LocalDate>().apply { repeat(10) { i -> add(old[cycle * 10 + i + 1]?.receivedOn ?: state.dueDate(loan, cycle * 10 + i + 1)) } } }
     val scroll = rememberScrollState()
+    val remaining = ledger.balance(loan.id).remainingPaise
+    val entered = runCatching { if (todayAmount.trim() == "-") 0L else parseRupees(todayAmount) }.getOrNull()
+    val canCollect = state.collectionWeek(loan, today) != null && !ledger.balance(loan.id).completed
     LaunchedEffect(error) { if (error.isNotEmpty()) scroll.animateScrollTo(0) }
     AlertDialog(properties = privacy, onDismissRequest = { if (!busy) dismiss() },
-        title = { Text("${loan.place} → ${loan.familyHead} → ${loan.customerName} ${roman(loan.sequence)}") }, text = {
+        title = { Text("${loan.place} → ${loan.familyHead} → ${state.customerLabel(loan)}", style = MaterialTheme.typography.titleMedium) }, text = {
             Column(Modifier.verticalScroll(scroll)) {
                 if (error.isNotEmpty()) Text(error, modifier = Modifier.testTag("receiptError"), color = redInk)
-                Text("மீதி / Remaining ₹${rupees(ledger.balance(loan.id).remainingPaise)}")
+                Text("மீதி / Remaining ₹${rupees(remaining)}", modifier = Modifier.testTag("remainingBalance"))
+                Text("கடன் தேதி / Loan ${loan.started.format(dateFormat)}")
                 if (ledger.balance(loan.id).completed) {
                     Text("முழுவதும் செலுத்தப்பட்டது / Completed")
-                    TextButton(modifier = Modifier.testTag("renewLoan"), onClick = renew) { Text("மீண்டும் புதிய கடன் வேண்டுமா? / New loan with the same details?") }
+                    TextButton(modifier = Modifier.testTag("renewLoan"), onClick = renew) { Text("புதிய கடன் / New loan with same details?") }
                 }
-                TextButton(onClick = editDetails, modifier = Modifier.testTag("editLoanDetails")) { Text("பெயர், தொகை, தேதி திருத்து / Edit loan details") }
-                Row {
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     TextButton(enabled = cycle > 0, onClick = { cycle--; error = "" }) { Text("‹") }
-                    Text("பக்கம் / Cycle ${cycle + 1}")
-                    TextButton(enabled = cycle < (old.keys.maxOrNull() ?: 0) / 10 && !ledger.balance(loan.id).completed, onClick = { cycle++; error = "" }) { Text("›") }
+                    Text("10 வார அட்டவணை / Cycle ${cycle + 1}")
+                    TextButton(enabled = cycle < maxOf((old.keys.maxOrNull() ?: 1) - 1, state.entryWeek(loan, today) - 1) / 10,
+                        onClick = { cycle++; error = "" }) { Text("›") }
                 }
-                Row { Checkbox(all, { all = it }, modifier = Modifier.testTag("allTenWeeks")); Text("10 வாரமும் உள்ளிடு / Enter or edit all 10 weeks") }
-                Text("வெற்று = மாற்றமில்லை; - = வசூல் இல்லை / Blank leaves unchanged; - records no payment")
-                if (!all) {
-                    Row(Modifier.horizontalScroll(rememberScrollState())) { repeat(10) { i ->
-                        FilterChip(selected = selected == i, onClick = { selected = i }, modifier = Modifier.testTag("week-${i + 1}"), label = { Text("${i + 1}") })
+                // Two rows of five: date above each amount; absent stays blank, missed is a dash.
+                repeat(2) { row ->
+                    Row(Modifier.fillMaxWidth()) { repeat(5) { column ->
+                        val i = row * 5 + column
+                        val week = cycle * 10 + i + 1
+                        val p = old[week]
+                        Column(Modifier.weight(1f).padding(2.dp).testTag("overviewWeek-${i + 1}")) {
+                            Text("${i + 1}", style = MaterialTheme.typography.labelSmall)
+                            Text(state.dueDate(loan, week).format(DateTimeFormatter.ofPattern("dd-MM-yy")),
+                                modifier = Modifier.testTag("dueDate-${i + 1}"), style = MaterialTheme.typography.labelSmall)
+                            Box(Modifier.fillMaxWidth().heightIn(min = 44.dp).border(1.dp,
+                                if (historyEnabled && selected == i) blueInk else Color.Gray)
+                                .clickable(enabled = historyEnabled) { selected = i; all = false }.padding(3.dp)) {
+                                Text(if (p == null) "" else p.amountPaise?.let(::rupees) ?: "–",
+                                    modifier = Modifier.testTag("overviewAmount-${i + 1}"), color = if (p?.amountPaise == null) Color(0xff805029) else blueInk,
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (p != null && p.receivedOn != state.dueDate(loan, week))
+                                Text("பெற்றது ${p.receivedOn.format(DateTimeFormatter.ofPattern("dd-MM"))}", style = MaterialTheme.typography.labelSmall)
+                        }
                     } }
                 }
-                val shown = if (all) (0..9).toList() else listOf(selected)
-                shown.forEach { i ->
-                    Text("வாரம் / Week ${i + 1}" + if (cycle > 0) " · ${cycle * 10 + i + 1} overall" else "")
-                    EntryField("ரூபாய் / Amount or -", amounts[i], "receiptAmount-${i + 1}", true) { amounts[i] = it }
-                    TextButton(modifier = Modifier.testTag("markMissed-${i + 1}"), enabled = !busy,
-                        onClick = { amounts[i] = "-" }) { Text("வசூல் இல்லை / Mark missed –") }
-                    DateChoice("வசூல் தேதி / Collection date", dates[i], allowed, "receiptDate-${i + 1}") { dates[i] = it }
+                if (historyEnabled) {
+                    Text("பழைய பதிவுகள் திருத்தம் ON / History entry ON", color = redInk)
+                    TextButton(onClick = editDetails, modifier = Modifier.testTag("editLoanDetails")) { Text("பெயர், தொகை, தேதி திருத்து / Edit loan details") }
+                    Row { Checkbox(all, { all = it }, modifier = Modifier.testTag("allTenWeeks")); Text("10 வாரமும் உள்ளிடு / Edit all 10 weeks") }
+                    Text("வெற்று = மாற்றமில்லை / Blank leaves unchanged")
+                    val shown = if (all) (0..9).toList() else listOf(selected)
+                    shown.forEach { i ->
+                        Text("வாரம் / Week ${i + 1} · ${state.dueDate(loan, cycle * 10 + i + 1).format(dateFormat)}")
+                        EntryField("ரூபாய் / Amount or -", amounts[i], "receiptAmount-${i + 1}", true) { amounts[i] = it }
+                        TextButton(modifier = Modifier.testTag("markMissed-${i + 1}"), enabled = !busy, onClick = { amounts[i] = "-" }) { Text("வசூல் இல்லை / Mark missed –") }
+                        DateChoice("பெற்ற தேதி / Actual collection date", dates[i], allowed, "receiptDate-${i + 1}") { dates[i] = it }
+                    }
+                } else {
+                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                    Text("இன்றைய வசூல் / Today's collection · ${today.format(dateFormat)}")
+                    if (!canCollect) Text("அடுத்த வசூல் / Next ${state.dueDate(loan, state.entryWeek(loan, today)).format(dateFormat)}. இன்று வசூல் கட்டம் இல்லை.")
+                    EntryField("இன்று பெற்ற தொகை / Additional amount today", todayAmount, "todayAmount", true) { todayAmount = it }
+                    TextButton(modifier = Modifier.testTag("todayMissed"), enabled = canCollect && !busy, onClick = { todayAmount = "-" }) { Text("வசூல் இல்லை / Mark missed –") }
+                    Text("புதிய மீதி / New balance ₹${rupees(if (entered == null) remaining else remaining - entered)}",
+                        modifier = Modifier.testTag("newBalance"), color = if (entered != null && entered > remaining) redInk else blueInk)
+                    Text("சேமித்த பிறகே புத்தகம் மாறும் / Preview only until Save", style = MaterialTheme.typography.labelSmall)
                 }
                 TextButton(onClick = { audit = !audit }) { Text("பதிவு / திருத்த வரலாறு · History") }
                 if (audit) {
                     state.audits.filter { it.after.loanId == loan.id }.forEach { a ->
-                        Text("W${a.after.week} · ${a.before?.amountPaise?.let(::rupees) ?: "—"} → ${a.after.amountPaise?.let(::rupees) ?: "—"}\n${a.after.receivedOn} · ${a.after.actorName} · ${a.after.recordedAt} · rev ${a.after.revision}")
+                        Text("W${a.after.week} · ${a.before?.amountPaise?.let(::rupees) ?: "–"} → ${a.after.amountPaise?.let(::rupees) ?: "–"}\n${a.after.receivedOn} · ${a.after.actorName} · ${a.after.recordedAt} · rev ${a.after.revision}")
                     }
-                    state.loanChanges.filter { it.after.id == loan.id }.forEach { c -> Text("${c.before.place} → ${c.before.familyHead} → ${c.before.customerName} ₹${rupees(c.before.totalPaise)} ${c.before.started}\n→ ${c.after.place} → ${c.after.familyHead} → ${c.after.customerName} ₹${rupees(c.after.totalPaise)} ${c.after.started}\n${state.owner.name} · ${c.at}") }
+                    state.loanChanges.filter { it.after.id == loan.id }.forEach { c -> Text("${c.before.customerName} ₹${rupees(c.before.totalPaise)} ${c.before.started} → ${c.after.customerName} ₹${rupees(c.after.totalPaise)} ${c.after.started}\n${state.owner.name} · ${c.at}") }
                 }
             }
-        }, confirmButton = { TextButton(enabled = !busy, modifier = Modifier.testTag("receiptSave"), onClick = {
+        }, confirmButton = { TextButton(enabled = !busy && (historyEnabled || canCollect), modifier = Modifier.testTag("receiptSave"), onClick = {
             try {
                 error = ""
-                val indices = if (all) (0..9).toList() else listOf(selected)
-                val next = state.withReceipts(loan, indices.map { ReceiptDraft(cycle * 10 + it + 1, amounts[it], dates[it]) })
+                val next = if (!historyEnabled) state.withTodayReceipt(loan, todayAmount, today) else {
+                    val indices = if (all) (0..9).toList() else listOf(selected)
+                    indices.filter { amounts[it].isNotBlank() }.forEach { i ->
+                        val previous = old[cycle * 10 + i + 1]
+                        if (dates[i] > today || (!state.isCollectionDate(book, dates[i]) && dates[i] != previous?.receivedOn))
+                            throw InputProblem("வசூல் கிழமை / விடுமுறை / தேதியைச் சரிபார்க்கவும் / Choose an active collection date, not a future date")
+                    }
+                    state.withReceipts(loan, indices.map { ReceiptDraft(cycle * 10 + it + 1, amounts[it], dates[it]) })
+                }
                 commit(next) { problem -> if (problem == null) { keyboard?.hide(); dismiss() } else error = problem }
             } catch (e: Exception) { error = (e as? InputProblem)?.explanation ?: "தொகை, தேதியைச் சரிபார்க்கவும் / Check amounts and dates" }
         }) { Text("சேமி / Save") } }, dismissButton = { TextButton(enabled = !busy, modifier = Modifier.testTag("receiptClose"), onClick = dismiss) { Text("மூடு / Close") } })
@@ -247,14 +290,14 @@ private val paper = Color(0xfffff8df)
             }) {
                 if (book.heading.isNotBlank()) Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
                 Text("புதிய தேதி / Start ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk)
-                if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${page.date.minusWeeks(10).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
+                if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${state.dueDate(rows.first { it.cycle > 0 }.loan, (rows.first { it.cycle > 0 }.cycle - 1) * 10 + 1).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
                 // Ruled two-page ledger, horizontally scrollable at readable text size on phones.
                 Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).testTag("ledgerHorizontal")) {
                 Column(Modifier.width(IntrinsicSize.Max).fillMaxHeight().verticalScroll(rememberScrollState()).testTag("ledgerVertical")) {
                     Row(Modifier.height(IntrinsicSize.Min)) {
                         listOf("இடம்\nPlace" to 140, "குடும்பத் தலைவர்\nFamily head" to 160, "வாடிக்கையாளர்\nCustomer" to 160, "மொத்தம்\nTotal" to 100).forEach { (text, width) -> LedgerCell(text, width, redInk) }
                         LedgerFold()
-                        repeat(10) { i -> LedgerCell("${i + 1}\n${page.date.plusWeeks(i.toLong()).format(DateTimeFormatter.ofPattern("dd-MM"))}", 90, redInk) }
+                        repeat(10) { i -> LedgerCell("${i + 1}\n${state.collectionDates(book, page.date.minusDays(1), 10)[i].format(DateTimeFormatter.ofPattern("dd-MM"))}", 90, redInk) }
                         LedgerCell("மீதி\nRemaining", 110, redInk)
                     }
                     rows.forEach { row ->
@@ -263,7 +306,7 @@ private val paper = Color(0xfffff8df)
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
                             LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell("${loan.customerName} ${roman(loan.sequence)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell("${state.customerLabel(loan)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
                             LedgerCell(rupees(row.opening), 100, ink)
                             LedgerFold()
                             repeat(10) { i ->
@@ -305,4 +348,28 @@ private val paper = Color(0xfffff8df)
     }.padding(8.dp)) {
         Text(text, color = ink, style = MaterialTheme.typography.bodyMedium)
     }
+}
+
+@Composable fun CollectionHolidayDialog(state: NotebookState, book: Book, allowed: Boolean, busy: Boolean,
+    privacy: DialogProperties, dismiss: () -> Unit, commit: (NotebookState, (String?) -> Unit) -> Unit) {
+    var date by remember { mutableStateOf(LocalDate.now().with(java.time.temporal.TemporalAdjusters.nextOrSame(book.collectionDay))) }
+    var reason by remember { mutableStateOf("") }
+    var skipped by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf("") }
+    AlertDialog(properties = privacy, onDismissRequest = { if (!busy) dismiss() }, title = { Text("புத்தக வசூல் விடுமுறை / Book holiday") },
+        text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+            if (error.isNotBlank()) Text(error, color = redInk, modifier = Modifier.testTag("holidayError"))
+            Text("புத்தகம் ${book.number} · ${BookInput.weekday(book.collectionDay)}")
+            DateChoice("வசூல் விடுமுறை தேதி / Date", date, allowed, "holidayDate") { date = it }
+            Row { Checkbox(skipped, { skipped = it }, modifier = Modifier.testTag("holidaySkipped")); Text("விடுமுறை / Skip (OFF = restore duty)") }
+            EntryField("காரணம் / Reason", reason, "holidayReason") { reason = it }
+            Text("இந்த தேதியை வாரமாக எண்ண வேண்டாம். பின்வரும் திட்டத் தேதிகள் அடுத்த வசூல் கிழமைக்கு நகரும். ஏற்கெனவே பெற்ற தொகை / உண்மைத் தேதிகள் மாற்றப்படாது. அந்த நாளில் கடன் அல்லது வசூல் இருந்தால் விடுமுறை அனுமதி இல்லை.")
+            Text("Planned dates shift for the whole book, not a customer. Existing actual receipts stay in history. No automatic festival calendar.")
+            state.collectionDays.filter { it.bookId == book.id }.forEach { e ->
+                Text("${e.date.format(dateFormat)} · ${if (e.skipped) "விடுமுறை" else "மீண்டும் வசூல்"} · ${e.reason}\n${state.owner.name} · ${e.at}", style = MaterialTheme.typography.bodySmall)
+            }
+        } }, confirmButton = { TextButton(enabled = !busy, modifier = Modifier.testTag("holidaySave"), onClick = {
+            try { commit(state.changeCollectionDay(book, date, skipped, reason)) { problem -> if (problem == null) dismiss() else error = problem } }
+            catch (e: Exception) { error = (e as? InputProblem)?.explanation ?: "தேதியைச் சரிபார்க்கவும் / Check date" }
+        }) { Text("உறுதி / Confirm") } }, dismissButton = { TextButton(enabled = !busy, onClick = dismiss) { Text("ரத்து / Cancel") } })
 }

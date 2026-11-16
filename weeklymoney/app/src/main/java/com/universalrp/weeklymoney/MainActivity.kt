@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
     private var initialWeek by mutableStateOf<Int?>(null)
     private var initialAll by mutableStateOf(false)
     private var initialAudit by mutableStateOf(false)
+    private var historyEntryEnabled by mutableStateOf(false)
     private var screenshotsAllowed by mutableStateOf(false)
     private fun applyScreenshotPreference(allowed: Boolean) {
         screenshotsAllowed = allowed
@@ -78,11 +79,12 @@ class MainActivity : ComponentActivity() {
     }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        historyEntryEnabled = getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("historyEntry", false)
         applyScreenshotPreference(getSharedPreferences("privacy", MODE_PRIVATE).getBoolean("allowScreenshots", false))
         setContent { MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xff183f78), background = Color(0xfff7f0dd))) {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
-                Text("சோதனை 0.3 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
+                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.4" else "சோதனை 0.4 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
@@ -213,9 +215,17 @@ class MainActivity : ComponentActivity() {
         Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(modifier = Modifier.testTag("newBook"), enabled = !busy, onClick = { form = "book" }) { Text("+ புத்தகம் / Book") }
             if (book != null) TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன் / Loan") }
-            TextButton(onClick = { tools = !tools }) { Text("கருவிகள் / Tools") }
+            TextButton(modifier = Modifier.testTag("settingsMenu"), onClick = { tools = !tools }) { Text("அமைப்புகள் / Settings") }
         }
         if (tools) {
+            Row {
+                Switch(historyEntryEnabled, { enabled ->
+                    getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("historyEntry", enabled).apply()
+                    historyEntryEnabled = enabled
+                }, modifier = Modifier.testTag("historyEntrySetting"))
+                Text("பழைய நோட்டின் 10 வார பதிவு / History entry " + if (historyEntryEnabled) "ON" else "OFF")
+            }
+            if (book != null) TextButton(modifier = Modifier.testTag("bookHolidays"), onClick = { form = "holiday" }) { Text("வசூல் விடுமுறை நாட்கள் / Book holidays") }
             Row(Modifier.horizontalScroll(rememberScrollState())) {
                 TextButton(enabled = !busy, onClick = { task {
                     pendingExport = withContext(Dispatchers.Default) { BackupCrypto.seal(current.encode(), requireNotNull(secret)) }
@@ -229,7 +239,7 @@ class MainActivity : ComponentActivity() {
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
             FilterChip(selected = b.id == book?.id, onClick = { selected = b.id; search = "" }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
-        Field("தேடல் / Place, family, customer", search) { search = it }
+        OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("ledgerSearch"))
         if (book != null) {
             Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
@@ -248,6 +258,7 @@ class MainActivity : ComponentActivity() {
                 title = { Text("வசூல் முடிந்ததா? / Finish collection?") },
                 text = { Column {
                     DateChoice("வசூல் தேதி / Collection date", collectionDate, screenshotsAllowed, "finishDate") { collectionDate = it }
+                    if (!current.isCollectionDate(book, collectionDate)) Text("இந்த தேதி வசூல் நாள் அல்ல / Not an active collection day", color = Color.Red)
                     Text("${book.number} · ${targets.size} காலி கட்டங்களில் – பதியப்படும்.\nOnly this collection week's blanks become missed payments. Existing amounts, earlier blanks and future weeks stay unchanged. Confirm only after visiting every customer.")
                 } }, confirmButton = { TextButton(enabled = !busy && targets.isNotEmpty() && collectionDate <= LocalDate.now(),
                     modifier = Modifier.testTag("confirmFinishCollection"), onClick = { task {
@@ -262,8 +273,10 @@ class MainActivity : ComponentActivity() {
                 save(current.copy(archiveHistory = current.archiveHistory + BookArchiveEvent(id(), book.id, !current.isArchived(book.id), current.owner.id, Instant.now())))
                 confirmArchive = false
             } }) { Text("உறுதிப்படுத்து / Confirm") } }, dismissButton = { TextButton(onClick = { confirmArchive = false }) { Text("ரத்து / Cancel") } })
+        if (form == "holiday" && book != null) CollectionHolidayDialog(current, book, screenshotsAllowed, busy, dialogPrivacy(),
+            dismiss = { form = "" }, commit = { next, done -> task(onError = { done(it) }) { save(next); done(null) } })
         if (form == "book") BookDialog(current, { form = "" }) { created -> selected = created.id; form = "" }
-        if (form == "loan" && book != null) LoanEntryDialog(current, book, loanSeed, editLoan, busy, dialogPrivacy(), screenshotsAllowed,
+        if (form == "loan" && book != null) LoanEntryDialog(current, book, loanSeed, editLoan, busy, dialogPrivacy(), screenshotsAllowed, historyEntryEnabled,
             dismiss = { form = "" }, commit = { next, done -> task(onError = { done(it) }) { save(next); done(null) } },
             saved = { created, history ->
                 form = ""; search = ""; message = "கடன் சேமிக்கப்பட்டது / Loan saved"
@@ -271,7 +284,7 @@ class MainActivity : ComponentActivity() {
             })
         current.effectiveLoans().find { it.id == openedLoanId }?.let { effective ->
             key(effective.id) {
-                WeeklyDialog(current, effective, initialWeek, initialAll, initialAudit, busy, dialogPrivacy(), screenshotsAllowed,
+                WeeklyDialog(current, effective, initialWeek, initialAll, initialAudit, busy, dialogPrivacy(), screenshotsAllowed, historyEntryEnabled,
                     dismiss = { openedLoanId = null }, commit = { next, done -> task(onError = { done(it) }) {
                         val justCompleted = !current.ledger().balance(effective.id).completed && next.ledger().balance(effective.id).completed
                         save(next); done(null)

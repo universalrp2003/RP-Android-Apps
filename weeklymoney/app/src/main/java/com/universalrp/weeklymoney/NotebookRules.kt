@@ -27,6 +27,7 @@ fun NotebookState.matchingCustomers(name: String) = effectiveLoans().filter { pe
 fun NotebookState.nextLoan(book: Book, place: String, family: String, name: String, amount: String,
                            date: LocalDate, existingCustomer: Loan? = null): Loan {
     if (listOf(place, family, name).any { it.isBlank() }) throw InputProblem("இடம், குடும்பத் தலைவர், பெயரை உள்ளிடவும் / Enter place, family head and customer")
+    if (date in skippedDates(book.id)) throw InputProblem("அன்று புத்தகத்திற்கு விடுமுறை / No new loan on a skipped collection date")
     val related = existingCustomer?.let { customerLoans(it) }.orEmpty()
     return Loan(newId(), book.id, existingCustomer?.customerId ?: newId(), place.trim(), family.trim(), name.trim(), parseRupees(amount), date,
         (related.maxOfOrNull { it.sequence } ?: 0) + 1)
@@ -55,23 +56,20 @@ fun NotebookState.withReceipts(loan: Loan, drafts: List<ReceiptDraft>, now: Inst
 }
 data class NotebookPage(val date: LocalDate)
 data class NotebookLine(val loan: Loan, val cycle: Int, val opening: Long, val ending: Long)
-fun NotebookState.pages(bookId: String): List<NotebookPage> {
-    val ledger = ledger()
-    val latest = ledger.latest()
-    return effectiveLoans().filter { it.bookId == bookId }.flatMap { loan ->
-        val maxWeek = latest.filter { it.loanId == loan.id }.maxOfOrNull { it.week } ?: 0
-        val lastCycle = if (maxWeek > 0 && maxWeek % 10 == 0 && !ledger.balance(loan.id).completed) maxWeek / 10 else (maxWeek.coerceAtLeast(1) - 1) / 10
-        (0..lastCycle).map { NotebookPage(loan.started.plusWeeks(it * 10L)) }
-    }.distinct().sortedBy { it.date }
+private fun NotebookState.lastCycle(loan: Loan): Int {
+    val maxWeek = ledger().latest().filter { it.loanId == loan.id }.maxOfOrNull { it.week } ?: 0
+    return if (maxWeek > 0 && maxWeek % 10 == 0 && !ledger().balance(loan.id).completed) maxWeek / 10 else (maxWeek.coerceAtLeast(1) - 1) / 10
 }
+fun NotebookState.pages(bookId: String): List<NotebookPage> = effectiveLoans().filter { it.bookId == bookId }
+    .flatMap { loan -> (0..lastCycle(loan)).map { NotebookPage(dueDate(loan, it * 10 + 1)) } }.distinct().sortedBy { it.date }
 fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLine> {
     val ledger = ledger()
-    return effectiveLoans().filter { it.bookId == bookId }.mapNotNull { loan ->
-        val days = java.time.temporal.ChronoUnit.DAYS.between(loan.started, page.date)
-        if (days < 0 || days % 70 != 0L) return@mapNotNull null
-        val cycle = (days / 70).toInt()
-        val opening = ledger.balance(loan.id, cycle * 10).remainingPaise
-        if (cycle > 0 && opening == 0L) null else NotebookLine(loan, cycle, opening, ledger.balance(loan.id, (cycle + 1) * 10).remainingPaise)
+    return effectiveLoans().filter { it.bookId == bookId }.flatMap { loan ->
+        (0..lastCycle(loan)).mapNotNull { cycle ->
+            if (dueDate(loan, cycle * 10 + 1) != page.date) return@mapNotNull null
+            val opening = ledger.balance(loan.id, cycle * 10).remainingPaise
+            if (cycle > 0 && opening == 0L) null else NotebookLine(loan, cycle, opening, ledger.balance(loan.id, (cycle + 1) * 10).remainingPaise)
+        }
     }.sortedWith(compareBy<NotebookLine> { if (it.cycle == 0) 0 else 1 }.thenBy { it.loan.started }.thenBy { it.loan.sequence })
 }
 
@@ -79,10 +77,11 @@ fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLi
 fun NotebookState.collectionBlanks(book: Book, date: LocalDate): List<Pair<Loan, Int>> {
     if (isArchived(book.id)) throw InputProblem("காப்பக புத்தகத்தில் வசூல் செய்ய முடியாது / Book is archived")
     if (date > LocalDate.now()) throw InputProblem("எதிர்கால வசூலை முடிக்க முடியாது / Cannot close a future collection")
+    if (!isCollectionDate(book, date)) throw InputProblem("இன்று இந்த புத்தகத்தின் வசூல் நாள் அல்ல / Not an active collection date for this book")
     val ledger = ledger()
     val recorded = ledger.latest().map { it.loanId to it.week }.toSet()
     return effectiveLoans().filter { it.bookId == book.id && it.started <= date && !ledger.balance(it.id).completed }
-        .map { it to (java.time.temporal.ChronoUnit.DAYS.between(it.started, date) / 7 + 1).toInt() }
+        .mapNotNull { loan -> collectionWeek(loan, date)?.let { loan to it } }
         .filter { (loan, week) -> (loan.id to week) !in recorded }
 }
 fun NotebookState.finishCollection(book: Book, date: LocalDate, now: Instant = Instant.now()): NotebookState =
