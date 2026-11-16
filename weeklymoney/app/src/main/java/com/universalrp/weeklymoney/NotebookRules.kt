@@ -43,6 +43,8 @@ fun NotebookState.withReceipts(loan: Loan, drafts: List<ReceiptDraft>, now: Inst
         if (draft.date < loan.started) throw InputProblem("வசூல் தேதி கடன் தேதிக்கு முன் இருக்க முடியாது / Collection date cannot precede the loan")
         val amount = if (draft.amount.trim() == "-") null else parseRupees(draft.amount)
         val previous = old[draft.week]
+        if (previous == null && isAfterSettlement(loan, draft.week))
+            throw InputProblem("கடன் தீர்க்கப்பட்டது; அடுத்த வாரங்களில் பதிவு செய்ய முடியாது / Loan settled; later weeks are blocked")
         if (previous != null && previous.amountPaise == amount && previous.receivedOn == draft.date) null
         else Payment(previous?.id ?: newId(), loan.id, draft.week, draft.date, amount, (previous?.revision ?: 0L) + 1, owner.id, owner.name, now)
     }
@@ -95,3 +97,12 @@ fun NotebookState.finishCollection(book: Book, date: LocalDate, now: Instant = I
 /** Previous ten-week sheet for this exact debt, never an unrelated adjacent page. */
 fun NotebookState.previousPage(loan: Loan, cycle: Int): NotebookPage? =
     if (cycle <= 0) null else NotebookPage(dueDate(loan, (cycle - 1) * 10 + 1))
+
+/** Derived from latest receipts, never writes synthetic missed payments after settlement. */
+fun NotebookState.settlementWeek(loan: Loan): Int? {
+    val latest = ledger().latest().filter { it.loanId == loan.id }.sortedBy { it.week }
+    var paid = 0L
+    if (!ledger().balance(loan.id).completed) return null
+    return latest.firstOrNull { paid = Math.addExact(paid, it.amountPaise ?: 0L); paid >= loan.totalPaise }?.week
+}
+fun NotebookState.isAfterSettlement(loan: Loan, week: Int): Boolean = settlementWeek(loan)?.let { week > it } ?: false

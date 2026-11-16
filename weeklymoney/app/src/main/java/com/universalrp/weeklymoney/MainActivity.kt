@@ -110,6 +110,7 @@ class MainActivity : ComponentActivity() {
     private var initialAll by mutableStateOf(false)
     private var initialAudit by mutableStateOf(false)
     private var historyEntryEnabled by mutableStateOf(true)
+    private var tamilDateEnabled by mutableStateOf(false)
     private var screenshotsAllowed by mutableStateOf(false)
     private fun applyScreenshotPreference(allowed: Boolean) {
         screenshotsAllowed = allowed
@@ -148,6 +149,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         biometricEnabled = android.os.Build.VERSION.SDK_INT >= 28 && BiometricGate(this).configured()
+        tamilDateEnabled = getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("tamilDate", false)
         historyEntryEnabled = getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("historyEntry", true)
         applyScreenshotPreference(getSharedPreferences("privacy", MODE_PRIVATE).getBoolean("allowScreenshots", false))
         if (intent?.action == android.content.Intent.ACTION_VIEW) {
@@ -311,6 +313,7 @@ class MainActivity : ComponentActivity() {
         val keyboard = LocalSoftwareKeyboardController.current
         val focus = LocalFocusManager.current
         var selected by remember { mutableStateOf<String?>(null) }
+        var requestedPageDate by remember { mutableStateOf<LocalDate?>(null) }
         var form by remember { mutableStateOf("") }
         var repeatCandidate by remember { mutableStateOf<Loan?>(null) }
         var loanSeed by remember { mutableStateOf<Loan?>(null) }
@@ -390,6 +393,14 @@ class MainActivity : ComponentActivity() {
                 }, modifier = Modifier.testTag("historyEntrySetting"))
                 Text("பழைய பதிவு உள்ளிட / Old entry " + if (historyEntryEnabled) "ON" else "OFF")
             }
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Switch(tamilDateEnabled, { enabled ->
+                    tamilDateEnabled = enabled
+                    getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("tamilDate", enabled).apply()
+                }, modifier = Modifier.testTag("tamilDateSetting"))
+                Text("தமிழ் தேதி " + if (tamilDateEnabled) "ON" else "OFF")
+            }
+            if (tamilDateEnabled) Text("தமிழ் தேதி அட்டவணை: 15-01-2026 முதல் 31-12-2026 வரை மட்டும்; பிற தேதிகளில் காட்டப்படாது.")
             if (book != null && !current.isArchived(book.id)) TextButton(modifier = Modifier.testTag("continueBook"), enabled = !busy, onClick = { form = "continueBook" }) {
                 Text("அடுத்த புத்தகம் தொடங்கு / Continue in a fresh volume")
             }
@@ -410,7 +421,7 @@ class MainActivity : ComponentActivity() {
             Row { Checkbox(showArchived, { showArchived = it }); Text("காப்பகமும் / Include archived books") }
         }
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
-            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { task { ensureWeeklyBackup(current); selected = b.id; search = ""; message = ""; reading = true } }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
+            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { task { ensureWeeklyBackup(current); selected = b.id; requestedPageDate = null; search = ""; message = ""; reading = true } }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
         } }
         if (reading) current.continuations.lastOrNull { it.toBook == book?.id }?.let { continuation ->
@@ -424,7 +435,10 @@ class MainActivity : ComponentActivity() {
         if (book != null) {
             if (!reading) Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
-                if (reading) LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth()) { selectedLoan, week, audit ->
+                if (reading) LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth(), tamilDateEnabled, requestedPageDate,
+                    onArchivePage = { loan, previous ->
+                        showArchived = true; selected = loan.bookId; search = ""; requestedPageDate = previous.date
+                    }) { selectedLoan, week, audit ->
                     openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }

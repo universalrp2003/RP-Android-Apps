@@ -165,7 +165,6 @@ private val paper = Color(0xfffff8df)
                 if (error.isNotEmpty()) Text(error, modifier = Modifier.testTag("receiptError"), color = redInk)
                 Text("மீதி / Remaining ₹${rupees(remaining)}", modifier = Modifier.testTag("remainingBalance"))
                 Text("கடன் தேதி / Loan ${loan.started.format(dateFormat)}")
-                Text(TamilLoanDate.display(loan.started), style = MaterialTheme.typography.bodySmall)
                 if (ledger.balance(loan.id).completed) {
                     Text("முழுவதும் செலுத்தப்பட்டது / Completed")
                     TextButton(modifier = Modifier.testTag("renewLoan"), onClick = renew) { Text("புதிய கடன் / New loan with same details?") }
@@ -188,8 +187,8 @@ private val paper = Color(0xfffff8df)
                                 modifier = Modifier.testTag("dueDate-${i + 1}"), style = MaterialTheme.typography.labelSmall)
                             Box(Modifier.fillMaxWidth().heightIn(min = 44.dp).border(1.dp,
                                 if (historyEnabled && selected == i) blueInk else Color.Gray)
-                                .then(if (historyEnabled) Modifier.clickable { selected = i } else Modifier).padding(3.dp)) {
-                                Text(if (p == null) "" else p.amountPaise?.let(::rupees) ?: "–",
+                                .then(if (historyEnabled && !state.isAfterSettlement(loan, week)) Modifier.clickable { selected = i } else Modifier).padding(3.dp)) {
+                                Text(if (p == null && state.isAfterSettlement(loan, week)) "–" else if (p == null) "" else p.amountPaise?.let(::rupees) ?: "–",
                                     modifier = Modifier.testTag("overviewAmount-${i + 1}"), color = if (p?.amountPaise == null) Color(0xff805029) else blueInk,
                                     style = MaterialTheme.typography.bodySmall)
                             }
@@ -204,7 +203,7 @@ private val paper = Color(0xfffff8df)
                     Text("மேலே தேவையான வாரக் கட்டத்தைத் தொட்டு பழைய பதிவை உள்ளிடவும் / Tap a week above to enter or correct it")
                     Text("வெற்று = மாற்றமில்லை / Blank leaves unchanged")
                     val shown = if (all) (0..9).toList() else listOf(selected)
-                    shown.forEach { i ->
+                    shown.filter { !state.isAfterSettlement(loan, cycle * 10 + it + 1) }.forEach { i ->
                         Text("வாரம் / Week ${i + 1} · ${state.dueDate(loan, cycle * 10 + i + 1).format(dateFormat)}")
                         EntryField("ரூபாய் / Amount or -", amounts[i], "receiptAmount-${i + 1}", true) { amounts[i] = it }
                         TextButton(modifier = Modifier.testTag("markMissed-${i + 1}"), enabled = !busy, onClick = { amounts[i] = "-" }) { Text("வசூல் இல்லை / Mark missed –") }
@@ -239,7 +238,7 @@ private val paper = Color(0xfffff8df)
                     state.loanChanges.filter { it.after.id == loan.id }.forEach { c -> Text("${c.before.customerName} ₹${rupees(c.before.totalPaise)} ${c.before.started} → ${c.after.customerName} ₹${rupees(c.after.totalPaise)} ${c.after.started}\n${state.owner.name} · ${c.at}") }
                 }
             }
-        }, confirmButton = { TextButton(enabled = !busy && (historyEnabled || canCollect), modifier = Modifier.testTag("receiptSave"), onClick = {
+        }, confirmButton = { TextButton(enabled = !busy && (if (historyEnabled) !state.isAfterSettlement(loan, cycle * 10 + selected + 1) else canCollect), modifier = Modifier.testTag("receiptSave"), onClick = {
             try {
                 error = ""
                 val next = if (!historyEnabled) state.withTodayReceipt(loan, todayAmount, today) else {
@@ -257,7 +256,8 @@ private val paper = Color(0xfffff8df)
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable fun LedgerBook(state: NotebookState, book: Book, search: String, modifier: Modifier,
-    onOpen: (Loan, Int?, Boolean) -> Unit) {
+    tamilDateEnabled: Boolean = false, requestedPageDate: LocalDate? = null,
+    onArchivePage: (Loan, NotebookPage) -> Unit = { _, _ -> }, onOpen: (Loan, Int?, Boolean) -> Unit) {
     var zoom by remember(book.id) { mutableStateOf(1f) }
     var pinchEnabled by remember { mutableStateOf(false) }
     val baseDensity = LocalDensity.current
@@ -278,7 +278,9 @@ private val paper = Color(0xfffff8df)
     val filteredIds = remember(state, search) { if (search.isBlank()) null else state.ledger().search(search).map { it.id }.toSet() }
     val pager = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
     val scope = rememberCoroutineScope()
-    LaunchedEffect(search, pages) {
+    LaunchedEffect(search, pages, requestedPageDate) {
+        val requestedIndex = pages.indexOfFirst { it.date == requestedPageDate }
+        if (requestedIndex >= 0) { pager.scrollToPage(requestedIndex); return@LaunchedEffect }
         if (search.isBlank() && pages.isNotEmpty()) pager.scrollToPage(pages.lastIndex)
         if (search.isNotBlank()) {
             val index = pages.indexOfFirst { page -> state.pageLines(book.id, page).any { it.loan.id in filteredIds.orEmpty() } }
@@ -314,21 +316,23 @@ private val paper = Color(0xfffff8df)
                 drawRect(Color(0xff3b2b18).copy(alpha = turn.absoluteValue * 0.16f))
             }) {
                 if (book.heading.isNotBlank()) Text(book.heading, Modifier.padding(horizontal = 8.dp), color = blueInk)
-                Text("முதல் வசூல் தேதி / Cycle first collection ${page.date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk,
-                    style = MaterialTheme.typography.bodySmall)
-                rows.filter { it.cycle == 0 }.map { it.loan.started }.distinct().sorted().forEach { date ->
-                    Text("கடன் கொடுத்த தேதி / Loan date ${date.format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = blueInk,
-                        style = MaterialTheme.typography.bodySmall)
-                    Text(TamilLoanDate.display(date), Modifier.padding(horizontal = 8.dp), color = blueInk, style = MaterialTheme.typography.bodySmall)
+                rows.map { if (it.cycle == 0) it.loan.started else page.date }.distinct().sorted().forEach { date ->
+                    Text(date.format(dateFormat), Modifier.padding(horizontal = 8.dp).testTag("pageStartDate"), color = blueInk)
+                    if (tamilDateEnabled) TamilLoanDate.label(date)?.let { label ->
+                        Text(label, Modifier.padding(horizontal = 8.dp).testTag("pageTamilDate"), color = blueInk, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
-                rows.filter { it.cycle > 0 }.distinctBy { it.loan.id }.forEach { row ->
-                    val previous = state.previousPage(row.loan, row.cycle)
+                rows.filter { it.cycle > 0 }.mapNotNull { row ->
+                    state.previousPage(row.loan, row.cycle)?.let { previous ->
+                        Triple(previous, if (row.cycle == 1) row.loan.started else previous.date, row.loan)
+                    }
+                }.distinctBy { it.first to it.second }.forEach { (previous, date, loan) ->
                     val previousIndex = pages.indexOf(previous)
-                    if (previousIndex >= 0) TextButton(modifier = Modifier.testTag("previousCycle-${row.loan.id}"), onClick = {
-                        scope.launch { pager.animateScrollToPage(previousIndex) }
-                    }) { Text("${state.customerLabel(row.loan)} · முந்தைய 10 வாரப் பதிவு — திறக்க", style = MaterialTheme.typography.labelSmall) }
+                    TextButton(modifier = Modifier.testTag("previousDate-${date}"), onClick = {
+                        if (previousIndex >= 0) scope.launch { pager.animateScrollToPage(previousIndex) }
+                        else onArchivePage(loan, previous)
+                    }) { Text(date.format(dateFormat), color = redInk, style = MaterialTheme.typography.labelSmall) }
                 }
-                if (rows.any { it.cycle > 0 }) Text("பழைய தேதி / Previous ${state.dueDate(rows.first { it.cycle > 0 }.loan, (rows.first { it.cycle > 0 }.cycle - 1) * 10 + 1).format(dateFormat)}", Modifier.padding(horizontal = 8.dp), color = redInk)
                 // Ruled two-page ledger, horizontally scrollable at readable text size on phones.
                 Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).testTag("ledgerHorizontal")) {
                 Column(Modifier.width(IntrinsicSize.Max).fillMaxHeight().verticalScroll(rememberScrollState()).testTag("ledgerVertical")) {
@@ -354,7 +358,7 @@ private val paper = Color(0xfffff8df)
                             LedgerFold()
                             Box(Modifier.width(900.dp).height(IntrinsicSize.Min)) {
                                 // Behind receipts, never on top of numbers; no duplicate spoken/clickable identity.
-                                Text("${loan.place} · ${loan.familyHead} · ${state.customerLabel(loan)}",
+                                Text(if (state.ledger().balance(loan.id).completed) "கடன் தீர்க்கப்பட்டது" else "${loan.place} · ${loan.familyHead} · ${state.customerLabel(loan)}",
                                     modifier = Modifier.matchParentSize().wrapContentSize(androidx.compose.ui.Alignment.Center)
                                         .clearAndSetSemantics { },
                                     color = Color(0xffb8b8b8).copy(alpha = .65f),
@@ -364,9 +368,10 @@ private val paper = Color(0xfffff8df)
                             repeat(10) { i ->
                                 val week = row.cycle * 10 + i + 1
                                 val p = payments[loan.id to week]
-                                val text = if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
+                                val blocked = state.isAfterSettlement(loan, week) && p == null
+                                val text = if (blocked) "—" else if (p == null) "" else p.amountPaise?.let(::rupees) ?: "—"
                                 LedgerCell(text, 90, if (p != null && p.amountPaise == null) Color(0xff7b5c39) else ink,
-                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { onOpen(loan, week, false) }, hold = { onOpen(loan, week, true) })
+                                    Modifier.testTag("cell-${loan.id}-$week"), tap = { if (!blocked) onOpen(loan, week, false) }, hold = { if (!blocked) onOpen(loan, week, true) })
                             }
                             }
                             }
