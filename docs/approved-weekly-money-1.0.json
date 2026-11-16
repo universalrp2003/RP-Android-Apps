@@ -1,0 +1,26 @@
+{
+  "owner_authorized": true,
+  "publications": [
+    {
+      "app": "weeklymoney",
+      "run_id": 43873920987,
+      "source": "424b292de131a32ba0b739b15704e77aeaefe2e2",
+      "source_branch": "arena/1e9cafce-rp-android-apps",
+      "artifact": "WeeklyMoney-1.0-signed-release",
+      "artifact_sha256": "b6927c8582ce0252ff10fee9f19194750ec1512de30b3a51d953d873b72bf5f0",
+      "input_file": "Weekly-Money-v1.0.apk",
+      "asset": "Weekly-Money-v1.0.apk",
+      "sha256": "b23ea6dd75b1b6aa95798810f1abefa956dff06b8bca9ac95b7387218f687fb8",
+      "bytes": 7401255,
+      "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+      "package": "com.universalrp.weeklymoney.preview.notebook",
+      "code": 12,
+      "version": "1.0",
+      "tag": "weekly-money-v1.0",
+      "title": "வார வசூல் · Weekly Money 1.0",
+      "notes": "releases/weekly-money-v1.0.md",
+      "prerelease": false
+    }
+  ],
+  "publication_policy": "Promote the exact signed release build and synthetic upgrade-tested APK; no rebuild or overwrite."
+}
