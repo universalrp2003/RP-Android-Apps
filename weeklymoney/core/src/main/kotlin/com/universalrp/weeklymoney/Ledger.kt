@@ -30,10 +30,11 @@ data class Book(val id: String, val number: String, val collectionDay: java.time
 data class Loan(val id: String, val bookId: String, val customerId: String,
                 val place: String, val familyHead: String, val customerName: String,
                 val totalPaise: Long, val started: LocalDate, val sequence: Int,
-                val openingInk: Ink = Ink.BLUE) {
+                val openingInk: Ink = Ink.BLUE, val contactNumber: String = "") {
     init {
         require(listOf(id, bookId, customerId, place, familyHead, customerName).all { it.isNotBlank() })
         require(totalPaise > 0 && sequence > 0)
+        require(contactNumber.length <= 40 && contactNumber.all { it.isDigit() || it in "+ -()." })
     }
 }
 /** null payment = explicitly visited but nothing received; absent event = future/unentered, not a dash. */

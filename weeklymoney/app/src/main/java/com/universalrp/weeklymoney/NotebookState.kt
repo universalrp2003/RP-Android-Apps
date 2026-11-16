@@ -52,7 +52,7 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
         return copy(loanChanges = loanChanges + LoanChange(newId(), before, after, owner.id, Instant.now()))
     }
     fun encode(): ByteArray = JSONObject().apply {
-        put("schema", 5); put("kind", "FULL_BACKUP")
+        put("schema", 6); put("kind", "FULL_BACKUP")
         put("continuations", JSONArray().apply { continuations.forEach { e -> put(JSONObject().apply {
             put("id", e.id); put("from", e.fromBook); put("to", e.toBook); put("date", e.date.toString())
             put("loans", JSONArray(e.loanIds)); put("actor", e.actorId); put("at", e.at.toString())
@@ -64,7 +64,7 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
         }) } })
         put("loans", JSONArray().apply { loans.forEach { l -> put(JSONObject().apply {
             put("id", l.id); put("book", l.bookId); put("customerId", l.customerId)
-            put("place", l.place); put("family", l.familyHead); put("name", l.customerName)
+            put("place", l.place); put("family", l.familyHead); put("name", l.customerName); put("contact", l.contactNumber)
             put("total", l.totalPaise); put("started", l.started.toString()); put("sequence", l.sequence); put("openingInk", l.openingInk.name)
         }) } })
         put("collectionDays", JSONArray().apply { collectionDays.forEach { e -> put(JSONObject().apply {
@@ -86,7 +86,7 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
             require(bytes.size <= BackupCrypto.MAX_FILE)
             val root = JSONObject(bytes.toString(Charsets.UTF_8))
             val schema = root.getInt("schema")
-            require(schema in 1..5 && root.getString("kind") == "FULL_BACKUP")
+            require(schema in 1..6 && root.getString("kind") == "FULL_BACKUP")
             val owner = root.getJSONObject("owner").let { Actor(it.getString("id"), it.getString("name"), Role.OWNER) }
             fun <T> array(key: String, parse: (JSONObject) -> T): List<T> {
                 val a = root.optJSONArray(key) ?: if (key == "archiveHistory" || (key == "continuations" && schema < 5) || (key == "loanChanges" && schema == 1) || (key == "collectionDays" && schema < 3)) JSONArray() else error("Missing records"); require(a.length() <= 100000)
@@ -104,7 +104,7 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
                     LocalDate.parse(e.getString("date")), (0 until e.getJSONArray("loans").length()).map { e.getJSONArray("loans").getString(it) },
                     e.getString("actor"), Instant.parse(e.getString("at"))) })
         }
-        private fun loan(it: JSONObject) = Loan(it.getString("id"), it.getString("book"), it.getString("customerId"), it.getString("place"), it.getString("family"), it.getString("name"), it.getLong("total"), LocalDate.parse(it.getString("started")), it.getInt("sequence"), Ink.valueOf(it.optString("openingInk", "BLUE")))
+        private fun loan(it: JSONObject) = Loan(it.getString("id"), it.getString("book"), it.getString("customerId"), it.getString("place"), it.getString("family"), it.getString("name"), it.getLong("total"), LocalDate.parse(it.getString("started")), it.getInt("sequence"), Ink.valueOf(it.optString("openingInk", "BLUE")), it.optString("contact", ""))
         private fun payment(j: JSONObject) = Payment(j.getString("id"), j.getString("loan"), j.getInt("week"),
             LocalDate.parse(j.getString("date")), if (j.isNull("amount")) null else j.getLong("amount"),
             j.getLong("revision"), j.getString("actor"), j.getString("actorName"), Instant.parse(j.getString("at")))
@@ -118,6 +118,6 @@ private fun Payment.json() = JSONObject().apply {
 
 private fun Loan.json() = JSONObject().apply {
     put("id", id); put("book", bookId); put("customerId", customerId); put("place", place)
-    put("family", familyHead); put("name", customerName); put("total", totalPaise)
+    put("family", familyHead); put("name", customerName); put("contact", contactNumber); put("total", totalPaise)
     put("started", started.toString()); put("sequence", sequence); put("openingInk", openingInk.name)
 }
