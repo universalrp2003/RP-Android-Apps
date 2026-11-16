@@ -55,4 +55,12 @@ def main():
             published = api('releases/tags/'+p['tag'])
             assert not published['draft'] and published['prerelease'] == p['prerelease']
             print('Published exact verified bytes:', p['tag'], p['sha256'])
-if __name__ == '__main__': main()
+if __name__ == '__main__':
+    try:
+        main()
+    except Exception:
+        import traceback
+        message = traceback.format_exc()
+        print('::error title=Exact publication verification::' + message.replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A'))
+        raise
+
