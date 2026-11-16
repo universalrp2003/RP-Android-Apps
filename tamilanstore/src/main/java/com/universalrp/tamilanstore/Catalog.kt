@@ -15,7 +15,7 @@ object Catalog {
         "58e370e417cf6f33234689acd5bf379474f5a8c55f79181d9e892a321bc04f08" else SIGNER
     const val WEBSITE = "https://universalrp2003.github.io/RP-Android-Apps/"
     /**
-     * Sixteen entries (including an explicitly labelled Weekly Money TEST preview) is the bundled contract: a Store build ships exactly the suite it was signed for.
+     * Sixteen entries (including Weekly Money) is the bundled contract: a Store build ships exactly the suite it was signed for.
      * A live feed is validated by [LiveCatalog] instead, where the id set must match this snapshot.
      */
     const val EXPECTED_APPS = 16

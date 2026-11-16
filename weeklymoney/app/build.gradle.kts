@@ -11,9 +11,10 @@ android {
         applicationId = "com.universalrp.weeklymoney.preview"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
-        versionName = "0.11"
-        manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO 0.11" else "வார வசூல் · TEST 0.11"
+        versionCode = 12
+        versionName = "1.0"
+        // Android also uses this label in system biometric UI. Keep version/status in About.
+        manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO" else "வார வசூல்"
         buildConfigField("boolean", "IS_SAMPLE", sampleBuild.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,12 +36,17 @@ android {
         }
     }
     buildTypes {
-        // Old ephemeral debug signer was not retained. Install beside it, never force uninstall.
+        // Both build types keep the established notebook update identity and persistent signer.
         debug {
             applicationIdSuffix = if (sampleBuild) ".sample" else ".notebook"
             signingConfig = signingConfigs.findByName("ownerPreview") ?: signingConfigs.getByName("debug")
         }
-        release { isMinifyEnabled = false }
+        release {
+            applicationIdSuffix = if (sampleBuild) ".sample" else ".notebook"
+            signingConfig = signingConfigs.findByName("ownerPreview")
+            isMinifyEnabled = false
+            isDebuggable = false
+        }
     }
 }
 dependencies {

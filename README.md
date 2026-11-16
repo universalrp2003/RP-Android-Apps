@@ -9,17 +9,13 @@ Tamilan Store **0.13** adds Android TV Guard and System App Disabler to the stor
 Oor Arivippu **1.1.21**: fixed live title/value positions, readable large text and full-value dialogs. [Release](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/oor-arivippu-v1.1.21). Signed build/lint/unit and bilingual normal/double-font emulator layout checks passed; no physical-phone install claimed.
 
 
-Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**[universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/)**) for fifteen regular non-Store open-source Android apps (including DailyVault, Android TV Guard and System App Disabler), plus separate optional Tamilan Store in **தமிழ் (Tamil)** and **English**: utilities including (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / தமிழன் வானொலி**, **PulseEQ**, **RP Vocal Remover Studio**, **Oor Arivippu / ஊர் அறிவிப்பு**, **Vasanthi AI / என்னைச் சுற்றி**) plus **Secret Message**, a separately published app that is not independently security-reviewed. Developed by **Rameshprathap R (`@universalrp2003`)** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. Current minimum Android versions and signed GitHub Release APKs are listed below; device-dependent features are described honestly in each app's documentation.
+Official repository (**`universalrp2003/RP-Android-Apps`**) and download hub (**[universalrp2003.github.io/RP-Android-Apps](https://universalrp2003.github.io/RP-Android-Apps/)**) for sixteen regular non-Store open-source Android apps (including DailyVault, Android TV Guard, System App Disabler and Weekly Money), plus separate optional Tamilan Store in **தமிழ் (Tamil)** and **English**: utilities including (**SMS Guard / குறுஞ்செய்தி காவலன்**, **Live Guard / CleanSweep**, **Ramesh Radio / தமிழன் வானொலி**, **PulseEQ**, **RP Vocal Remover Studio**, **Oor Arivippu / ஊர் அறிவிப்பு**, **Vasanthi AI / என்னைச் சுற்றி**) plus **Secret Message**, a separately published app that is not independently security-reviewed. Developed by **Rameshprathap R (`@universalrp2003`)** with shared project contributions, including software assistance from **Arena.ai Agent Mode**. Current minimum Android versions and signed GitHub Release APKs are listed below; device-dependent features are described honestly in each app's documentation.
 
-## Application 17 in development: வார வசூல் / Weekly Money
+## Application 17: வார வசூல் / Weekly Money
 
-The owner designated **வார வசூல் (Weekly Money)** as RP Ideas' 17th application.
-It is a separate, fully offline weekly collection notebook with an isolated Android
-preview module. **Not published or ready for real financial records.** A debug preview has passed
-compilation/JVM tests/lint; [build evidence and remaining gates](weeklymoney/BUILD-STATUS.md). See [implementation status and agreed requirements](weeklymoney/README.md).
-This development designation does not change the stable app/download count below.
+A Tamil-first, single-owner offline weekly collection notebook. [Version 1.0](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.0) updates in place with the same package and signer. Keep the master password and external encrypted backups safe; both are needed to restore on a fresh installation. [Guide](site/weekly-money-guide.html) · [Verification](weeklymoney/BUILD-STATUS.md).
 
-## 15 regular apps + separate optional Tamilan Store
+## 16 regular apps + separate optional Tamilan Store
 
 DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion. Its already-public APK is unchanged. Store0.11 promotes the exact signed/native-tested, owner-authorized catalog-recovery update, with no rebuild. [Store0.11 verification and limits](docs/tamilan-store-0.11-catalog-recovery.md).
 
@@ -34,7 +30,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
-| [**வார வசூல் · Weekly Money TEST**](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.10) | Offline owner collection notebook; TEST 0.10. Same-key in-place updates. [Guide](site/weekly-money-guide.html). |
+| [**வார வசூல் · Weekly Money**](weeklymoney/README.md) · 8.0+ (API 26) | [1.0 / code 12](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.0) | [`Weekly-Money-v1.0.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.0/Weekly-Money-v1.0.apk) |
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.17 / code 23](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.17) | [`SMS-Guard-v1.1.17.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.17/SMS-Guard-v1.1.17.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [3.00 / code 105](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.00) | [`CleanSweep-v3.00.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.00/CleanSweep-v3.00.apk) |
 | [**Voice Notes (குரல் குறிப்பு)**](voicenotes/README.md) · 8.0+ (API 26) | [1.3.4 / code 8](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/voice-notes-v1.3.4) | [`Voice-Notes-v1.3.4.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/voice-notes-v1.3.4/Voice-Notes-v1.3.4.apk) |

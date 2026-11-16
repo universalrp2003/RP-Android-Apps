@@ -169,14 +169,14 @@
     },
     {
       "id": "weeklymoney",
-      "name": "Weekly Money · TEST preview",
-      "tamilName": "வார வசூல் · சோதனை",
+      "name": "Weekly Money",
+      "tamilName": "வார வசூல்",
       "packageName": "com.universalrp.weeklymoney.preview.notebook",
-      "version": "0.11",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v0.11/Weekly-Money-v0.11.apk",
-      "size": 10137014,
-      "sha256": "83600bfa2b50a9989cf9cfbffb1a72b1da3f54b27163d5d591e31ba16c3aa2a4",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.11"
+      "version": "1.0",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.0/Weekly-Money-v1.0.apk",
+      "size": 7401255,
+      "sha256": "b23ea6dd75b1b6aa95798810f1abefa956dff06b8bca9ac95b7387218f687fb8",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.0"
     }
   ]
 }

@@ -21,6 +21,12 @@ class CatalogGenerationTest(unittest.TestCase):
             with self.assertRaises(ValueError):module.generate(self.snapshot,releases)
         self.releases[0]['draft']=True
         with self.assertRaises(ValueError):module.generate(self.snapshot,self.releases)
+    def test_weeklymoney_stable_feed_excludes_prereleases(self):
+        releases=copy.deepcopy(self.releases)
+        weekly=next(r for r in releases if r['tag_name'].startswith('weekly-money-v'))
+        weekly['prerelease']=True
+        with self.assertRaises(ValueError):module.generate(self.snapshot,releases)
+
     def test_live_test_is_not_deleted_or_silently_ignored(self):
         gradle=(ROOT/'smsguard/build.gradle.kts').read_text()
         self.assertIn('tasks.register<Test>("testLiveSmsVoice")',gradle)
@@ -77,14 +83,14 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         self.assertIn('"catalog-v2.json"',source)
 
-    def test_new_store_v3_adds_labelled_preview_without_changing_old_id_sets(self):
+    def test_new_store_v3_adds_owner_notebook_without_changing_old_id_sets(self):
         snapshot=json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
         current=json.loads((ROOT/'site/catalog-v3.json').read_text())
         old=json.loads((ROOT/'site/catalog-v2.json').read_text())
         self.assertEqual(16, len(current['apps']))
         self.assertEqual({a['id'] for a in old['apps']} | {'weeklymoney'}, {a['id'] for a in current['apps']})
         preview=next(a for a in current['apps'] if a['id']=='weeklymoney')
-        self.assertIn('TEST preview',preview['name'])
+        self.assertEqual('Weekly Money',preview['name'])
         self.assertEqual('com.universalrp.weeklymoney.preview.notebook',preview['packageName'])
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         self.assertIn('"catalog-v3.json"',source)

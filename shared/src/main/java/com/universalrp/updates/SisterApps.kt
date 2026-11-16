@@ -177,10 +177,10 @@ object SisterApps {
             aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
         ),
         SisterApp(
-            id = "weeklymoney", name = "Weekly Money · TEST preview", tamilName = "வார வசூல் · சோதனை",
-            tagPrefix = "weekly-money", version = "0.11", publishedVersion = "0.11",
+            id = "weeklymoney", name = "Weekly Money", tamilName = "வார வசூல்",
+            tagPrefix = "weekly-money", version = "1.0", publishedVersion = "1.0",
             packageName = "com.universalrp.weeklymoney.preview.notebook",
-            aboutLabel = "வார வசூல் / Weekly Money TEST preview — GitHub release",
+            aboutLabel = "வார வசூல் / Weekly Money — GitHub release",
         ),
         SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",

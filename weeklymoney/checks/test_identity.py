@@ -9,11 +9,11 @@ ANDROID = '{http://schemas.android.com/apk/res/android}'
 
 
 class IdentityChecks(unittest.TestCase):
-    def test_seventeenth_preview_not_falsely_published(self):
+    def test_seventeenth_stable_update_identity(self):
         identity = json.loads((ROOT / 'weeklymoney/app-identity.json').read_text())
         self.assertEqual(identity['portfolioNumber'], 17)
-        self.assertEqual(identity['publishedVersion'], '0.11')
-        self.assertEqual(identity['releaseUrl'], 'https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.11')
+        self.assertEqual(identity['publishedVersion'], '1.0')
+        self.assertEqual(identity['releaseUrl'], 'https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.0')
         self.assertEqual(identity['updatePackage'], 'com.universalrp.weeklymoney.preview.notebook')
         self.assertEqual(identity['plannedProductionPackage'], identity['updatePackage'])
         self.assertEqual(identity['signerSha256'], '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
@@ -30,6 +30,17 @@ class IdentityChecks(unittest.TestCase):
         self.assertEqual(app.get(ANDROID + 'fullBackupContent'), 'false')
         entry = app.find("meta-data[@" + ANDROID + "name='com.universalrp.portfolio.NUMBER']")
         self.assertEqual(entry.get(ANDROID + 'value'), '17')
+
+    def test_system_biometric_label_is_clean_and_demo_stays_distinct(self):
+        build = (ROOT / 'weeklymoney/app/build.gradle.kts').read_text()
+        self.assertIn('manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO" else "வார வசூல்"', build)
+        manifest = ET.parse(ROOT / 'weeklymoney/app/src/main/AndroidManifest.xml').getroot()
+        self.assertEqual(manifest.find('application').get(ANDROID + 'label'), '${weeklymoneyLabel}')
+        activity = (ROOT / 'weeklymoney/app/src/main/java/com/universalrp/weeklymoney/MainActivity.kt').read_text()
+        self.assertIn('BuildConfig.VERSION_NAME', activity)
+        self.assertNotIn('Test preview', activity)
+        self.assertNotIn('Collector exchange is unfinished', activity)
+        self.assertIn('isDebuggable = false', build)
 
     def test_resources_parse(self):
         for path in (ROOT / 'weeklymoney/app/src/main/res').rglob('*.xml'):
