@@ -1,3 +1,7 @@
+# Superseded progress log
+
+Current state: TEST0.10 is public after owner approval. See [publication receipt](weekly-money-0.10-publication-receipt.json) and [permanent signing policy](weekly-money-signing-policy.md). The publication holds below describe earlier stages, not the current authorization. Multi-year Tamil dates and separate archive storage remain bounded as stated in the current release notes.
+
 # Next preview — work in progress, publication held
 
 Owner requested testing before publication. TEST 0.8 phone screenshots confirm the candidate hash, and the owner reported other features working, but requested additional changes. This is NOT final publication approval.

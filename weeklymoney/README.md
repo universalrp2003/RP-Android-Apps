@@ -1,3 +1,16 @@
+# Current public release: Weekly Money TEST 0.10
+
+Owner phone-tested and approved this exact APK for publication on 16 November 2026.
+
+- [Direct APK download](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v0.10/Weekly-Money-v0.10.apk) · [Release notes](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.10) · [Optional online guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html)
+- Source/CI and hashes: [verification](../docs/weekly-money-0.10-verification.md), [public release receipt](../docs/weekly-money-0.10-publication-receipt.json).
+- **Update in place:** permanent package `com.universalrp.weeklymoney.preview.notebook`; same persistent signing key, code10. Future updates must keep package/key and increase versionCode. [Signing policy](../docs/weekly-money-signing-policy.md). Do not uninstall/clear data for normal updates.
+- Weekly pre-change and post-collection Downloads backups; separate original loan dates, optional bounded Tamil date OFF by default; settled-debt dashes/entry block; full receipt history; previous date links and same-weekday fresh-volume archive continuation. About names all17 applications.
+- Schema5 reads1–4. Keep external encrypted backups and master passphrase. Do not downgrade after saving. Collector exchange/independent recovery-secret features remain unfinished. Physical biometric and old Android SAF acceptance are not universally verified. Archive remains in same encrypted snapshot; no separate lazy-storage claim.
+- [Tamilan Store0.14](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.14) lists this public TEST explicitly. Store0.13→0.14 same-key update preserved UID/preferences/private marker in the emulator; physical/Play Protect acceptance is not claimed.
+
+## Historical development receipts (superseded by the release above)
+
 # Latest: verified TEST0.7 active-debt labels and imported colour groups
 
 [Download TEST0.7 + separate DEMO0.7](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43803717584/artifacts/14197905836).
