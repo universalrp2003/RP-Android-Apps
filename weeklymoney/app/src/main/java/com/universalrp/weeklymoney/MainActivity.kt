@@ -67,6 +67,41 @@ class MainActivity : ComponentActivity() {
             }
         }, failure = { biometricPending = false; message = "Biometric ரத்து/கிடைக்கவில்லை. மீண்டும் முயலவும் அல்லது master password மூலம் மீட்கவும்." })
     }
+    private var enrollmentOffered = false
+    private fun enableBiometric() {
+        if (android.os.Build.VERSION.SDK_INT < 28 || biometricPending || secret == null) return
+        biometricPending = true
+        val gate = BiometricGate(this)
+        biometricSignal = gate.authenticate(requireNotNull(secret), success = {
+            biometricPending = false; biometricEnabled = gate.configured()
+            getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("biometricWanted", true).apply()
+            message = "Biometric இணைக்கப்பட்டது. Master password-ஐ பாதுகாப்பாக வைத்திருக்கவும்."
+        }, failure = { biometricPending = false; message = "Biometric இணைக்க முடியவில்லை/ரத்து. Settings-ல் மீண்டும் இணைக்கலாம்; master password பாதுகாப்பாக இருக்கட்டும்." })
+    }
+    private val backupFolder = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) task {
+            contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            getSharedPreferences("preferences", MODE_PRIVATE).edit().putString("backupTree", uri.toString()).apply()
+            message = "Backup folder தேர்ந்தெடுக்கப்பட்டது"
+        }
+    }
+    private suspend fun externalBackup(snapshot: NotebookState, reason: String) {
+        withContext(Dispatchers.IO) {
+            val bytes = BackupCrypto.seal(snapshot.encode(), requireNotNull(secret))
+            AutomaticBackup(this@MainActivity).write(bytes, reason)
+            getSharedPreferences("preferences", MODE_PRIVATE).edit().putString("lastAutomaticBackup", Instant.now().toString()).commit()
+        }
+    }
+    private suspend fun ensureWeeklyBackup(snapshot: NotebookState) {
+        if (snapshot.books.isEmpty()) return
+        val week = LocalDate.now().with(java.time.temporal.TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).toString()
+        val prefs = getSharedPreferences("preferences", MODE_PRIVATE)
+        if (prefs.getString("backupWeek", "") != week) {
+            try { externalBackup(snapshot, "before-week") }
+            catch (e: Exception) { throw InputProblem("வார முன் backup முடியவில்லை; பதிவு தொடங்கவில்லை. Downloads இடம்/Backup folder சரிபார்த்து மீண்டும் முயலவும்.") }
+            check(prefs.edit().putString("backupWeek", week).commit())
+        }
+    }
     private var state by mutableStateOf<NotebookState?>(null)
     private var message by mutableStateOf("")
     private var busy by mutableStateOf(false)
@@ -74,7 +109,7 @@ class MainActivity : ComponentActivity() {
     private var initialWeek by mutableStateOf<Int?>(null)
     private var initialAll by mutableStateOf(false)
     private var initialAudit by mutableStateOf(false)
-    private var historyEntryEnabled by mutableStateOf(false)
+    private var historyEntryEnabled by mutableStateOf(true)
     private var screenshotsAllowed by mutableStateOf(false)
     private fun applyScreenshotPreference(allowed: Boolean) {
         screenshotsAllowed = allowed
@@ -113,7 +148,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         biometricEnabled = android.os.Build.VERSION.SDK_INT >= 28 && BiometricGate(this).configured()
-        historyEntryEnabled = getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("historyEntry", false)
+        historyEntryEnabled = getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("historyEntry", true)
         applyScreenshotPreference(getSharedPreferences("privacy", MODE_PRIVATE).getBoolean("allowScreenshots", false))
         if (intent?.action == android.content.Intent.ACTION_VIEW) {
             val uri = intent.data
@@ -127,7 +162,7 @@ class MainActivity : ComponentActivity() {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
                 Text("வார வசூல்", style = MaterialTheme.typography.titleLarge)
-                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.7" else "சோதனை 0.7 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
+                Text(if (BuildConfig.IS_SAMPLE) "DEMO · மாதிரி மட்டும் · TEST0.8" else "சோதனை 0.8 · Test records only", color = Color(0xffa32c30), style = MaterialTheme.typography.bodySmall)
                 Row {
                     Switch(checked = screenshotsAllowed, enabled = !busy,
                         modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
@@ -141,6 +176,13 @@ class MainActivity : ComponentActivity() {
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (message.isNotEmpty()) Text(message, color = Color(0xff9c3030), style = MaterialTheme.typography.bodySmall)
                 val current = state
+                LaunchedEffect(current?.owner?.id, busy) {
+                    if (current != null && !busy && !enrollmentOffered && !biometricEnabled &&
+                        getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("biometricWanted", true)) {
+                        enrollmentOffered = true
+                        enableBiometric()
+                    }
+                }
                 if (current == null) Unlock() else Notebook(current)
             } }
         } }
@@ -186,6 +228,7 @@ class MainActivity : ComponentActivity() {
         }
     }
     private suspend fun save(next: NotebookState) {
+        state?.let { ensureWeeklyBackup(it) }
         val encrypted = withContext(Dispatchers.Default) { BackupCrypto.seal(next.encode(), requireNotNull(secret)) }
         withContext(Dispatchers.IO) {
             val stream = disk.startWrite()
@@ -271,6 +314,7 @@ class MainActivity : ComponentActivity() {
         var editLoan by remember { mutableStateOf(false) }
         var search by remember { mutableStateOf("") }
         var tools by remember { mutableStateOf(false) }
+        var information by remember { mutableStateOf("") }
         var showArchived by remember { mutableStateOf(false) }
         var confirmArchive by remember { mutableStateOf(false) }
         var finishCollection by remember { mutableStateOf(false) }
@@ -287,23 +331,40 @@ class MainActivity : ComponentActivity() {
             TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && book != null && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன்") }
         }
         if (!reading) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(modifier = Modifier.testTag("newBook"), enabled = !busy, onClick = { form = "book" }) { Text("+ புத்தகம் / Book") }
             if (book != null) TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன் / Loan") }
             TextButton(modifier = Modifier.testTag("settingsMenu"), onClick = { tools = !tools }) { Text("அமைப்புகள் / Settings") }
         }
+        Row {
+            TextButton(modifier = Modifier.testTag("guidePage"), onClick = { information = "guide" }) { Text("வழிகாட்டி / Guide") }
+            TextButton(modifier = Modifier.testTag("aboutPage"), onClick = { information = "about" }) { Text("பற்றி / About") }
+        }
+        if (information.isNotEmpty()) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { information = "" },
+            title = { Text(if (information == "guide") "வார வசூல் · வழிகாட்டி" else "வார வசூல் · Weekly Money") },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                if (information == "guide") Text("புத்தகம் உருவாக்கி வசூல் கிழமை தேர்வு செய்யவும். கடன் தொகை என்பது நீங்கள் முடிவு செய்யும் இறுதி மொத்தம்; வட்டி கணக்கிடப்படாது. முதல் வசூல் கடன் தேதிக்குப் பிறகு வரும் புத்தகக் கிழமை.\n\nபழைய பதிவு இயல்பாக ON: நீலம்/சிவப்பு தொடக்க நிறம் தேர்வு; வாரக் கட்டத்தைத் தொட்டு அசல் தொகை/தேதி உள்ளிடவும். வழக்கமான இன்றைய கூடுதல் வசூலுக்கு Settings-ல் பழைய பதிவு OFF செய்யவும். சிவப்பு பாக்கி கீழே, ஊர்வாரியாக வரிசை. ஒரே நேர பாக்கிக் கடன்களுக்கு மட்டும் I/II.\n\nவசூல் முடிந்தது: அந்த நாளின் காலிக் கட்டங்கள் மட்டும் –; பெற்ற தொகைகள் மாறாது. பின் வசூல்/புதிய கடன் சுருக்கம் மற்றும் backup.\n\nவாரத்தின் முதல் மாற்றத்திற்கு முன் முழு encrypted backup; வசூல் முடித்த பிறகும் backup. Android 10+: Downloads/WeeklyMoney. Android 8/9: Settings Backup folder தேர்வு. App திறந்து unlock செய்திருக்கும்போது மட்டுமே; பின்னணி வார scheduler அல்ல. Backup தோல்வி: முன் பதிவு நிறுத்தப்படும்; முடித்த பின் உள்ளூர் பதிவு பாதுகாப்பாக இருக்கும்—மீண்டும் Backup now செய்யவும்.\n\nBiometric-ஐ phone-ல் உறுதி செய்ய வேண்டும். Master password புதிய phone/restore/recoveryக்கு அவசியம். Downloads backup phone அழிந்தால் போய்விடும்: USB/மற்றொரு device/Drive-க்கும் நீங்களே நகலெடுக்கவும்.\n\nCollector பரிமாற்றம் இன்னும் முடியவில்லை. இது சோதனைப் பதிப்பு; முக்கிய பணக் கணக்கின் ஒரே நகலாகப் பயன்படுத்த வேண்டாம்.")
+                else {
+                    Text("RP Ideas · Rameshprathap R (@universalrp2003)\nApp 17 · Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\nOffline owner notebook · Test preview\nPackage: $packageName\nNo ads; no interest calculation. Collector exchange and independent recovery secret are unfinished.")
+                    listOf("Official website" to "https://universalrp2003.github.io/RP-Android-Apps/", "GitHub · Source / Issues" to "https://github.com/universalrp2003/RP-Android-Apps", "Online guide" to "https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html").forEach { (label, url) ->
+                        TextButton(onClick = { runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) } }) { Text(label) }
+                    }
+                }
+            } }, confirmButton = { TextButton(modifier = Modifier.testTag("closeInformation"), onClick = { information = "" }) { Text("சரி") } })
         if (tools) {
+            Text("தானியங்கி encrypted backup: Downloads/WeeklyMoney · வார முதல் பதிவுக்கு முன் + வசூல் முடிந்ததும்")
+            Text("கடைசி backup: ${getSharedPreferences("preferences", MODE_PRIVATE).getString("lastAutomaticBackup", "இன்னும் இல்லை")}")
+            if (android.os.Build.VERSION.SDK_INT < 29) TextButton(onClick = { backupFolder.launch(null) }) { Text("Backup folder தேர்வு") }
+            TextButton(enabled = !busy, onClick = { task { externalBackup(current, "manual"); message = "Encrypted backup சேமிக்கப்பட்டது" } }) { Text("Backup now · Downloads") }
+
             if (android.os.Build.VERSION.SDK_INT >= 28) {
                 TextButton(enabled = !busy && !biometricPending, modifier = Modifier.testTag("biometricSetting"), onClick = {
                     val gate = BiometricGate(this@MainActivity)
-                    if (biometricEnabled) { runCatching { gate.disable() }; biometricEnabled = gate.configured() }
-                    else {
-                        biometricPending = true
-                        biometricSignal = gate.authenticate(requireNotNull(secret), success = {
-                            biometricPending = false; biometricEnabled = gate.configured()
-                            message = "Biometric இணைக்கப்பட்டது. Master password-ஐ பாதுகாப்பாக வைத்திருக்கவும்."
-                        }, failure = { biometricPending = false; message = "Biometric இணைக்க முடியவில்லை. Phone-ல் fingerprint அமைத்து மீண்டும் முயலவும்." })
-                    }
+                    if (biometricEnabled) {
+                        runCatching { gate.disable() }; biometricEnabled = gate.configured()
+                        getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("biometricWanted", false).apply()
+                    } else enableBiometric()
                 }) { Text(if (biometricEnabled) "Biometric ON · அணைக்க" else "Biometric இணைக்க / Enable") }
                 Text("புதிய phone / restore / biometric மாற்றத்திற்குப் பிறகு master password தேவை. Phone key backup-ல் சேராது.")
             }
@@ -334,9 +395,9 @@ class MainActivity : ComponentActivity() {
             Row { Checkbox(showArchived, { showArchived = it }); Text("காப்பகமும் / Include archived books") }
         }
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
-            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { selected = b.id; search = ""; message = ""; reading = true }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
+            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { task { ensureWeeklyBackup(current); selected = b.id; search = ""; message = ""; reading = true } }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
-        }
+        } }
         if (reading) OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); focus.clearFocus() }),
             modifier = Modifier.fillMaxWidth().testTag("ledgerSearch"))
@@ -363,7 +424,8 @@ class MainActivity : ComponentActivity() {
                 } }, confirmButton = { TextButton(enabled = !busy && targets.isNotEmpty() && collectionDate <= LocalDate.now(),
                     modifier = Modifier.testTag("confirmFinishCollection"), onClick = { task {
                         save(current.finishCollection(book, collectionDate)); finishCollection = false; summary = true
-                        message = "வசூல் முடிந்தது · ${targets.size} பதிவுகள் / Collection closed"
+                        try { externalBackup(requireNotNull(state), "after-collection"); message = "வசூல் முடிந்தது · Downloads backup சேமிக்கப்பட்டது" }
+                        catch (e: Exception) { message = "வசூல் உள்ளூரில் சேமிக்கப்பட்டது; Downloads backup தோல்வி. Settings → Backup now மீண்டும் செய்யவும்." }
                     } }) { Text("ஆம், முடிந்தது / Confirm") } },
                 dismissButton = { TextButton(enabled = !busy, onClick = { finishCollection = false }) { Text("ரத்து / Cancel") } })
         }

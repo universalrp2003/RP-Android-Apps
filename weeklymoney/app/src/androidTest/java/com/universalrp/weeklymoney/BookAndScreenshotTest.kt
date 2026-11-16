@@ -45,16 +45,16 @@ class BookAndScreenshotTest {
     private fun openBook() {
         val file = File(context.filesDir, "notebooks.vvb")
         val state = NotebookState.decode(BackupCrypto.open(file.readBytes(), password.toCharArray()))
-        ui.onNodeWithTag("openBook-${state.books.first().id}").performClick()
+        ui.onNodeWithTag("openBook-${state.books.first().id}").performScrollTo().performClick()
         waitFor("ledgerBook")
     }
     private fun history(enabled: Boolean) {
         ui.onNodeWithTag("booksHome").performClick()
-        ui.onNodeWithTag("settingsMenu").performClick()
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick()
         waitFor("historyEntrySetting")
-        ui.onNodeWithTag("historyEntrySetting").performClick()
+        ui.onNodeWithTag("historyEntrySetting").performScrollTo().performClick()
         if (enabled) ui.onNodeWithTag("historyEntrySetting").assertIsOn() else ui.onNodeWithTag("historyEntrySetting").assertIsOff()
-        ui.onNodeWithTag("settingsMenu").performClick()
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick()
         closed("historyEntrySetting")
         openBook()
     }
@@ -74,6 +74,9 @@ class BookAndScreenshotTest {
         unlock()
     }
     @Test fun calendarOverviewTodayEntryHistoryAndHolidayRegression() {
+        ui.runOnIdle {
+            context.getSharedPreferences("preferences", android.content.Context.MODE_PRIVATE).edit().putBoolean("biometricWanted", false).commit()
+        }
         secure(true)
         ui.onNodeWithTag("allowScreenshots").performClick(); secure(false)
         ui.onNodeWithTag("ownerName").performScrollTo().performTextInput("Synthetic Owner")
@@ -81,6 +84,14 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("confirmPassword").performScrollTo().performTextInput(password)
         ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
         waitFor("newBook")
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick()
+        ui.onNodeWithTag("historyEntrySetting").assertIsOn()
+        ui.onNodeWithTag("historyEntrySetting").performScrollTo().performClick()
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick()
+        ui.onNodeWithTag("guidePage").performScrollTo().performClick(); waitFor("closeInformation")
+        ui.onNodeWithTag("closeInformation").performClick()
+        ui.onNodeWithTag("aboutPage").performScrollTo().performClick(); waitFor("closeInformation")
+        ui.onNodeWithTag("closeInformation").performClick()
         ui.onNodeWithTag("newBook").performClick()
         ui.onNodeWithTag("bookSave").performClick(); waitFor("bookError")
         ui.onNodeWithTag("bookNumber").performScrollTo().performTextInput("Test ௧")
@@ -157,12 +168,12 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("overviewAmount-1", useUnmergedTree = true).assertTextEquals("–")
         ui.onNodeWithTag("receiptClose").performClick(); closed("receiptClose")
         ui.onNodeWithTag("booksHome").performClick()
-        ui.onNodeWithTag("settingsMenu").performClick()
-        ui.onNodeWithTag("bookHolidays").performClick(); waitFor("holidayDate")
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick()
+        ui.onNodeWithTag("bookHolidays").performScrollTo().performClick(); waitFor("holidayDate")
         ui.onNodeWithTag("holidayReason").performScrollTo().performTextInput("Synthetic closure")
         ui.onNodeWithTag("holidaySave").performClick(); waitFor("holidayError") // receipts already exist today
         ui.onNodeWithText("ரத்து / Cancel").performClick(); closed("holidaySave")
-        ui.onNodeWithTag("settingsMenu").performClick(); closed("historyEntrySetting")
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick(); closed("historyEntrySetting")
         openBook()
         ui.onNodeWithTag("pinchToggle").performClick()
         ui.onNodeWithTag("ledgerBook").performTouchInput {
@@ -183,6 +194,16 @@ class BookAndScreenshotTest {
         val uri=requireNotNull(resolver.insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,values))
         requireNotNull(resolver.openOutputStream(uri)).use { assertTrue(image.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)) }
         ui.onNodeWithTag("resetBookZoom").performClick()
+        val resolverBackup = context.contentResolver
+        resolverBackup.query(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+            arrayOf(android.provider.MediaStore.Downloads._ID),
+            "${android.provider.MediaStore.Downloads.DISPLAY_NAME} LIKE ?", arrayOf("WeeklyMoney-%after-collection%.vvasool"), null)!!.use { cursor ->
+            assertTrue("Post-collection backup missing", cursor.moveToFirst())
+            val backupUri = android.content.ContentUris.withAppendedId(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0))
+            val bytes = resolverBackup.openInputStream(backupUri)!!.use { it.readBytes() }
+            val backupState = NotebookState.decode(BackupCrypto.open(bytes, password.toCharArray()))
+            assertTrue(backupState.audits.isNotEmpty())
+        }
         val demo = InstrumentationRegistry.getInstrumentation().context.assets.open("WeeklyMoney-DEMO.vvasool").use { it.readBytes() }
         val restored=NotebookState.decode(BackupCrypto.open(demo,"Demo-Weekly-2026".toCharArray()))
         assertEquals(LocalDate.of(2026,11,15),restored.dueDate(restored.loans.single { it.id=="demo-sun-first" },7))
@@ -198,8 +219,8 @@ class BookAndScreenshotTest {
         ui.activityRule.scenario.recreate(); waitFor("unlockPassword"); secure(true)
         unlock()
         ui.onNodeWithTag("booksHome").performClick()
-        ui.onNodeWithTag("settingsMenu").performClick()
-        ui.onNodeWithTag("lockMinutes-0").performClick()
+        ui.onNodeWithTag("settingsMenu").performScrollTo().performClick()
+        ui.onNodeWithTag("lockMinutes-0").performScrollTo().performClick()
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
         waitFor("unlockPassword")

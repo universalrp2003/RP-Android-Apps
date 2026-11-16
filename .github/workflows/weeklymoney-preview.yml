@@ -93,7 +93,7 @@ jobs:
           directory=weeklymoney/app/build/outputs/apk/debug
           file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
           apk="$directory/$file"
-          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.notebook"; assert m["elements"][0]["versionCode"]==7'
+          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.notebook"; assert m["elements"][0]["versionCode"]==8'
           test -f "$apk" || { echo "::error::Metadata APK is missing: $file"; exit 1; }
           (cd "$directory" && sha256sum "$file" > "$file.sha256")
           echo "::notice title=APK SHA256::$(cat "$apk.sha256")"
@@ -113,23 +113,23 @@ jobs:
           handover=weeklymoney/app/build/handover
           mkdir -p "$handover/notebook" "$handover/demo" "$handover/samples"
           file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
-          cp "$directory/$file" "$handover/notebook/WeeklyMoney-TEST0.7.apk"
+          cp "$directory/$file" "$handover/notebook/WeeklyMoney-TEST0.8.apk"
           cp "$directory/signer.txt" "$handover/notebook/signer.txt"
-          (cd "$handover/notebook" && sha256sum WeeklyMoney-TEST0.7.apk > WeeklyMoney-TEST0.7.apk.sha256)
+          (cd "$handover/notebook" && sha256sum WeeklyMoney-TEST0.8.apk > WeeklyMoney-TEST0.8.apk.sha256)
           ./gradlew :weeklymoney:assembleDebug -PweeklymoneySample=true --console=plain
-          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.sample"; assert m["elements"][0]["versionCode"]==7'
+          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.sample"; assert m["elements"][0]["versionCode"]==8'
           file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/debug/output-metadata.json"))["elements"][0]["outputFile"])')
-          cp "$directory/$file" "$handover/demo/WeeklyMoney-DEMO0.7.apk"
+          cp "$directory/$file" "$handover/demo/WeeklyMoney-DEMO0.8.apk"
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
-          "$tools/apksigner" verify --print-certs "$handover/demo/WeeklyMoney-DEMO0.7.apk" > "$handover/demo/signer.txt"
+          "$tools/apksigner" verify --print-certs "$handover/demo/WeeklyMoney-DEMO0.8.apk" > "$handover/demo/signer.txt"
           grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$handover/demo/signer.txt"
-          (cd "$handover/demo" && sha256sum WeeklyMoney-DEMO0.7.apk > WeeklyMoney-DEMO0.7.apk.sha256)
+          (cd "$handover/demo" && sha256sum WeeklyMoney-DEMO0.8.apk > WeeklyMoney-DEMO0.8.apk.sha256)
           cp weeklymoney/samples/* "$handover/samples/"
-          echo "::notice title=Demo APK SHA256::$(cat "$handover/demo/WeeklyMoney-DEMO0.7.apk.sha256")"
+          echo "::notice title=Demo APK SHA256::$(cat "$handover/demo/WeeklyMoney-DEMO0.8.apk.sha256")"
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: WeeklyMoney-0.7-calendar-preview-and-isolated-demo
+          name: WeeklyMoney-0.8-calendar-preview-and-isolated-demo
           path: |
             weeklymoney/app/build/handover/
             weeklymoney/app/build/test-results/testDebugUnitTest/

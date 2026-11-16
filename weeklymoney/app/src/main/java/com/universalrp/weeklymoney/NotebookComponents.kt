@@ -318,9 +318,7 @@ private val paper = Color(0xfffff8df)
                         }
                         LedgerCell("மீதி\nRemaining", 110, redInk)
                     }
-                    rows.forEachIndexed { rowIndex, row ->
-                        if (row.isRed && (rowIndex == 0 || !rows[rowIndex - 1].isRed))
-                            Text("சிவப்பு · பழைய பாக்கி", color = redInk, modifier = Modifier.padding(8.dp))
+                    rows.forEach { row ->
                         val loan = row.loan
                         val ink = if (row.isRed) redInk else blueInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
