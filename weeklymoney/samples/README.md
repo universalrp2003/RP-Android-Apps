@@ -1,3 +1,5 @@
+> Latest artifact includes **DEMO0.5** and **TEST0.5**. These also support this unchanged schema-3 sample; DEMO0.4 instructions below remain applicable. Prefer the separately labelled DEMO app, never erase an existing notebook to restore sample records. TEST0.5 uses a separate home/book screen and background lock grace period; see ../FIX-0.5.md.
+
 # வார வசூல் — SAMPLE ONLY / மாதிரி மட்டும்
 
 **These are invented identities and amounts, not copies of the private notebook photos.**

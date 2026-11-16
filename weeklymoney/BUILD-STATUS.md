@@ -1,3 +1,16 @@
+# Latest: verified TEST0.5 focused notebook preview
+
+See [TEST0.5 changes, lock semantics and verified receipt](FIX-0.5.md).
+[Download TEST0.5 + separate DEMO0.5](https://github.com/universalrp2003/RP-Android-Apps/actions/runs/43792552224/artifacts/14193158500).
+CI 43792552224 passed compilation, tests, lint, Android 35 native regression and both APK identity/signature checks.
+Export an external encrypted backup before updating. No uninstall/data clear is required.
+Default auto-lock is five minutes **in the background**, not foreground inactivity; process death/restart still requires a passphrase.
+Pinch defaults OFF; fixed +/− and 100% reset are available. File-manager MIME support/performance on the owner's phone still needs confirmation.
+
+The earlier TEST0.4 receipt below is retained as history; TEST0.5 supersedes its UI/locking behaviour.
+
+---
+
 # Current receipt — TEST0.4 calendar and isolated sample
 
 **Verified test preview, not a production release.**
