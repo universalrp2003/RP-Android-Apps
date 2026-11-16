@@ -13,6 +13,7 @@ jobs:
     timeout-minutes: 40
     env:
       RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -43,16 +44,17 @@ jobs:
           grep -q "package: name='com.universalrp.cleansweep' versionCode='106' versionName='3.01'" "$RUNNER_TEMP/candidate/badging.txt"
           ! grep -q application-debuggable "$RUNNER_TEMP/candidate/badging.txt"
       - run: sudo chmod a+rw /dev/kvm
-      - name: Android 15 accelerated timeout, actual signed APK and native shared notification
+      - name: Android 16 in-place upgrade, accelerated timeout and shared notification
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
+          api-level: 36
           target: google_apis
           arch: x86_64
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
+            python3 tools/liveguard_radio_upgrade_smoke.py
             adb shell device_config put activity_manager data_sync_fgs_timeout_duration 5000
             adb shell device_config get activity_manager data_sync_fgs_timeout_duration | grep -x 5000
             gradle :cleaner:connectedReleaseAndroidTest -Pandroid.testInstrumentationRunnerArguments.expectedCandidateSha256="$(sha256sum "$RUNNER_TEMP/candidate/Live-Guard-3.01-candidate.apk" | cut -d' ' -f1)" -Pandroid.testInstrumentationRunnerArguments.class=com.universalrp.cleansweep.RadioTimeoutNativeTest,com.universalrp.cleansweep.OfficialStatusNativeTest#foregroundServicesShareCardAndIndependentStop --no-daemon --stacktrace
