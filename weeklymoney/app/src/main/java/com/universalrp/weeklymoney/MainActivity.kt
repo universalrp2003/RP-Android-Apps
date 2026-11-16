@@ -334,7 +334,6 @@ class MainActivity : ComponentActivity() {
             TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && book != null && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன்") }
         }
         if (!reading) {
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(modifier = Modifier.testTag("newBook"), enabled = !busy, onClick = { form = "book" }) { Text("+ புத்தகம் / Book") }
             if (book != null) TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன் / Loan") }
@@ -355,6 +354,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             } }, confirmButton = { TextButton(modifier = Modifier.testTag("closeInformation"), onClick = { information = "" }) { Text("சரி") } })
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         if (tools) {
             Text("தானியங்கி encrypted backup: Downloads/WeeklyMoney · வார முதல் பதிவுக்கு முன் + வசூல் முடிந்ததும்")
             Text("கடைசி backup: ${getSharedPreferences("preferences", MODE_PRIVATE).getString("lastAutomaticBackup", "இன்னும் இல்லை")}")
