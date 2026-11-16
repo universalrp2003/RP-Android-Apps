@@ -37,7 +37,10 @@ fun NotebookState.continueBook(from: Book, to: Book, now: Instant = Instant.now(
     val carried = effectiveLoans().filter { activeBookId(it) == from.id && !ledger.balance(it.id).completed }
     if (carried.any { it.started > to.started } || ledger.latest().any { p -> p.loanId in carried.map { it.id } && p.receivedOn > to.started })
         throw InputProblem("புதிய புத்தக தேதி கடைசி பதிவுக்கு முன் இருக்க முடியாது / Start date precedes existing records")
-    return copy(books = books + to,
+    val futureHolidays = skippedDates(from.id).filter { it >= to.started }.map { date ->
+        CollectionDayChange(newId(), to.id, date, true, "முந்தைய புத்தக விடுமுறை / Inherited holiday", owner.id, now)
+    }
+    return copy(books = books + to, collectionDays = collectionDays + futureHolidays,
         archiveHistory = archiveHistory + BookArchiveEvent(newId(), from.id, true, owner.id, now),
         continuations = continuations + BookContinuation(newId(), from.id, to.id, to.started, carried.map { it.id }, owner.id, now))
 }

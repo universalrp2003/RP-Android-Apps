@@ -541,7 +541,9 @@ class MainActivity : ComponentActivity() {
                 task(onError = { formError = it }) {
                     formError = ""
                     val created = BookInput.create(id(), number, day, date, heading)
-                    save(if (predecessor == null) current.copy(books = current.books + created) else current.continueBook(predecessor, created))
+                    val replacement = if (predecessor == null) current.copy(books = current.books + created) else current.continueBook(predecessor, created)
+                    if (predecessor != null) externalBackup(current, "before-volume")
+                    save(replacement)
                     message = "புத்தகம் சேமிக்கப்பட்டது / Book saved"
                     saved(created)
                 }

@@ -338,7 +338,7 @@ private val paper = Color(0xfffff8df)
                         repeat(10) { i ->
                             Column(Modifier.width(90.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                                 Text("${i + 1}", color = redInk, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                                Text(state.collectionDates(book, page.date.minusDays(1), 10)[i].format(DateTimeFormatter.ofPattern("dd-MM")), color = blueInk, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                Text((rows.firstOrNull()?.let { state.dueDate(it.loan, it.cycle * 10 + i + 1) } ?: state.collectionDates(book, page.date.minusDays(1), 10)[i]).format(DateTimeFormatter.ofPattern("dd-MM")), color = blueInk, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                             }
                         }
                         LedgerCell("மீதி\nRemaining", 110, redInk)
