@@ -183,7 +183,7 @@ try {
     assert.match(await row.locator('.apk-download-status').innerText(), /Preparing download/);
     assert.match(await row.locator('.apk-download-status').innerText(), /save prompt comes after verification/);
     await page.evaluate(() => window.__stream.enqueue(new TextEncoder().encode('synthetic-')));
-    await page.waitForFunction(() => document.querySelector('.latest tr .apk-download-status')?.textContent.includes('50%'));
+    await page.waitForFunction(() => Array.from(document.querySelectorAll('.latest tr .apk-download-status')).some(node => node.textContent.includes('50%')));
     assert.match(await card.locator('.apk-download-status').innerText(), /50%/);
     assert.equal(await row.locator('progress').getAttribute('value'), '50');
     await card.locator('a[data-apk]').click();
