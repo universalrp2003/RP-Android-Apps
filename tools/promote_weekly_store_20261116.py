@@ -15,7 +15,7 @@ def main():
         assert p['signer'] == SIGNER
         run = api(f'actions/runs/{p["run_id"]}')
         assert run['conclusion'] == 'success' and run['head_sha'] == p['source']
-        assert run['head_branch'] == 'arena/1cd060b0-rp-android-apps'
+        assert run['head_branch'] == p.get('source_branch', 'arena/1cd060b0-rp-android-apps')
         artifacts = api(f'actions/runs/{p["run_id"]}/artifacts')['artifacts']
         a, = [a for a in artifacts if a['name'] == p['artifact'] and not a['expired']]
         assert a['digest'] == 'sha256:' + p['artifact_sha256']

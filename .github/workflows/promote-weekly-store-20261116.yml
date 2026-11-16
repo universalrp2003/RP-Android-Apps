@@ -1,7 +1,7 @@
 name: Publish authorized Weekly Money and Store exact verified bytes
 on:
   push:
-    branches: ["arena/1cd060b0-rp-android-apps"]
+    branches: ["arena/0cb2c2a8-rp-android-apps"]
     paths: ["docs/approved-weekly-store-20261116.json"]
   workflow_dispatch:
 permissions:
