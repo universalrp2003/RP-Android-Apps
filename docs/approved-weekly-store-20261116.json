@@ -20,5 +20,6 @@
       "notes": "releases/weekly-money-v0.10.md",
       "prerelease": true
     }
-  ]
+  ],
+  "publication_policy": "Exact successful owner-tested bytes only; preserve notebook package and persistent signer for every update."
 }
