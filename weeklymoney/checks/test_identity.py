@@ -15,6 +15,7 @@ class IdentityChecks(unittest.TestCase):
         self.assertEqual(identity['publishedVersion'], '0.10')
         self.assertEqual(identity['releaseUrl'], 'https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.10')
         self.assertEqual(identity['updatePackage'], 'com.universalrp.weeklymoney.preview.notebook')
+        self.assertEqual(identity['plannedProductionPackage'], identity['updatePackage'])
         self.assertEqual(identity['signerSha256'], '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
         self.assertEqual(identity['previewPackage'], 'com.universalrp.weeklymoney.preview')
         build = (ROOT / 'weeklymoney/app/build.gradle.kts').read_text()
