@@ -413,6 +413,11 @@ class MainActivity : ComponentActivity() {
             FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { task { ensureWeeklyBackup(current); selected = b.id; search = ""; message = ""; reading = true } }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
         } }
+        if (reading) current.continuations.lastOrNull { it.toBook == book?.id }?.let { continuation ->
+            TextButton(modifier = Modifier.testTag("readerArchivedVolume"), onClick = {
+                showArchived = true; selected = continuation.fromBook; search = ""
+            }) { Text("முந்தைய 10 வாரங்கள் / முழு காப்பக புத்தகம் — திறக்க", style = MaterialTheme.typography.labelSmall) }
+        }
         if (reading) OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); focus.clearFocus() }),
             modifier = Modifier.fillMaxWidth().testTag("ledgerSearch"))

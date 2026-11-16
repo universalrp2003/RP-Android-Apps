@@ -76,6 +76,7 @@ fun NotebookState.customerLabel(loan: Loan): String {
 /** Another receipt today adds to this week's amount; it never replaces an earlier receipt silently. */
 fun NotebookState.withTodayReceipt(loan: Loan, amount: String, date: LocalDate = LocalDate.now(),
     now: Instant = Instant.now()): NotebookState {
+    if (isArchived(activeBookId(loan))) throw InputProblem("காப்பக புத்தகத்தில் புதிய வசூல் இல்லை / No new collection in archived book")
     val week = collectionWeek(loan, date) ?: throw InputProblem("இன்று இந்த கடனின் வசூல் நாள் அல்ல / No collection slot today")
     if (date > LocalDate.now()) throw InputProblem("எதிர்கால வசூல் பதிவு வேண்டாம் / Cannot record a future collection")
     if (amount.isBlank()) throw InputProblem("தொகை உள்ளிடவும் / Enter today's amount")
