@@ -54,14 +54,16 @@ jobs:
         run: sudo chmod a+rw /dev/kvm
       - name: Native book-save, restart persistence and screenshot-switch regression
         uses: reactivecircus/android-emulator-runner@v2
+        timeout-minutes: 12
         with:
+          emulator-boot-timeout: 180
           api-level: 35
           target: google_apis
           arch: x86_64
           profile: pixel_2
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          script: sh -c 'timeout 420s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; adb pull /sdcard/Pictures/WeeklyMoneySynthetic/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; exit "$result"'
+          script: sh -c 'timeout -k 15s 420s ./gradlew :weeklymoney:connectedDebugAndroidTest --console=plain > weeklymoney-native.log 2>&1; result=$?; timeout -k 5s 20s adb logcat -d -s WeeklyMoneyRegression TestRunner > weeklymoney-device.log; timeout -k 5s 20s adb pull /sdcard/Pictures/WeeklyMoneySynthetic/synthetic-notebook.png weeklymoney/app/build/synthetic-notebook.png || true; exit "$result"'
       - name: Expose bounded native regression failure
         if: failure()
         shell: python
