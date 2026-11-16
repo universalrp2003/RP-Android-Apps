@@ -12,14 +12,14 @@ LEGACY_EXCLUDED = frozenset({'dailyvault', 'tvguard', 'appdisabler'})
 def generate(snapshot, releases):
     apps = []
     for app in snapshot['apps']:
-        if app['id'] == 'weeklymoney' and ('TEST preview' not in app['name'] or app['packageName'] != 'com.universalrp.weeklymoney.preview.notebook'):
-            raise ValueError('Weekly Money must remain an explicitly labelled notebook TEST preview')
+        if app['id'] == 'weeklymoney' and app['packageName'] != 'com.universalrp.weeklymoney.preview.notebook':
+            raise ValueError('Weekly Money must retain its permanent notebook update package')
         tag = app['releaseUrl'].rsplit('/', 1)[1]
         slug = tag.rsplit('-v', 1)[0]
         prefix = app['url'].rsplit('/', 1)[1].rsplit('-v', 1)[0]
         matches = []
         for release in releases:
-            if release.get('draft') or (release.get('prerelease') and app['id'] != 'weeklymoney'):
+            if release.get('draft') or release.get('prerelease'):
                 continue
             m = re.fullmatch(re.escape(slug) + r'-v([0-9]+(?:\.[0-9]+){1,3})', release['tag_name'])
             if not m:
