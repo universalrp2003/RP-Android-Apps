@@ -8,7 +8,7 @@ permissions:
   contents: write
   actions: read
 concurrency:
-  group: exact-weekly-store-20261116
+  group: exact-weekly-store-20261116-v2
   cancel-in-progress: false
 jobs:
   publish:
