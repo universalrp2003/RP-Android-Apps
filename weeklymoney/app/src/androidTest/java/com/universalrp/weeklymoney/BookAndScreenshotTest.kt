@@ -177,7 +177,22 @@ class BookAndScreenshotTest {
         val demo = InstrumentationRegistry.getInstrumentation().context.assets.open("WeeklyMoney-DEMO.vvasool").use { it.readBytes() }
         val restored=NotebookState.decode(BackupCrypto.open(demo,"Demo-Weekly-2026".toCharArray()))
         assertEquals(LocalDate.of(2026,11,15),restored.dueDate(restored.loans.single { it.id=="demo-sun-first" },7))
+        ui.onNodeWithTag("showSummary").performClick(); waitFor("closeSummary")
+        ui.onNodeWithText("புதிய கடன்கள்").assertExists()
+        ui.onNodeWithTag("closeSummary").performClick()
+        ui.onNodeWithTag("settingsMenu").assertDoesNotExist()
+        ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        ui.onNodeWithTag("unlockPassword").assertDoesNotExist() // default five-minute background grace
+        ui.onNodeWithTag("booksHome").performClick()
         ui.onNodeWithTag("allowScreenshots").performClick(); secure(true)
         ui.activityRule.scenario.recreate(); waitFor("unlockPassword"); secure(true)
+        unlock()
+        ui.onNodeWithTag("booksHome").performClick()
+        ui.onNodeWithTag("settingsMenu").performClick()
+        ui.onNodeWithTag("lockMinutes-0").performClick()
+        ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+        ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+        waitFor("unlockPassword")
     }
 }

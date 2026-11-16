@@ -241,11 +241,12 @@ class MainActivity : ComponentActivity() {
         val sorted = current.books.filter { showArchived || !current.isArchived(it.id) }.sortedBy { if (it.collectionDay == LocalDate.now().dayOfWeek) 0 else 1 }
         val book = sorted.find { it.id == selected } ?: sorted.firstOrNull()
         var summary by remember { mutableStateOf(false) }
+        var lockMinutes by remember { mutableStateOf(getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)) }
         androidx.activity.compose.BackHandler(reading) { reading = false }
-        if (reading) Row {
+        if (reading) Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(modifier = Modifier.testTag("booksHome"), onClick = { reading = false }) { Text("‹ புத்தகங்கள்") }
             Text(book?.heading.orEmpty(), Modifier.padding(top = 12.dp))
-            TextButton(onClick = { summary = true; collectionDate = LocalDate.now() }) { Text("சுருக்கம்") }
+            TextButton(modifier = Modifier.testTag("showSummary"), onClick = { summary = true; collectionDate = LocalDate.now() }) { Text("சுருக்கம்") }
             TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && book != null && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன்") }
         }
         if (!reading) {
@@ -257,11 +258,11 @@ class MainActivity : ComponentActivity() {
         if (tools) {
             Text("பின்னணியில் தானாகப் பூட்டும் நேரம் / Background auto-lock")
             Row { listOf(0, 1, 5, 15, 30).forEach { minutes ->
-                TextButton(onClick = { getSharedPreferences("preferences", MODE_PRIVATE).edit().putInt("lockMinutes", minutes).apply() }) {
+                TextButton(modifier = Modifier.testTag("lockMinutes-$minutes"), onClick = { lockMinutes = minutes; getSharedPreferences("preferences", MODE_PRIVATE).edit().putInt("lockMinutes", minutes).apply() }) {
                     Text(if (minutes == 0) "உடனே" else "$minutes நிமி")
                 }
             } }
-            Text("தற்போது: ${getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)} நிமிடம். App மூடப்பட்டால்/phone மறுதொடங்கினால் கடவுச்சொல் தேவை.")
+            Text("தற்போது: ${lockMinutes} நிமிடம். App மூடப்பட்டால்/phone மறுதொடங்கினால் கடவுச்சொல் தேவை.")
             Row {
                 Switch(historyEntryEnabled, { enabled ->
                     getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("historyEntry", enabled).apply()
@@ -281,7 +282,7 @@ class MainActivity : ComponentActivity() {
             Row { Checkbox(showArchived, { showArchived = it }); Text("காப்பகமும் / Include archived books") }
         }
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
-            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { selected = b.id; search = ""; reading = true }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
+            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { selected = b.id; search = ""; message = ""; reading = true }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
         }
         if (reading) OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
