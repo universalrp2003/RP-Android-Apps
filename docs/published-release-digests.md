@@ -611,3 +611,10 @@ Exact `CleanSweep-v2.97.apk`: **14,784,299B**, SHA-256 `121b2c757996910849c76b70
 - Weekly-Money-v0.10.apk — 10,120,630 bytes — SHA-256 `5f05a9bd070d451b0db51560f3e1304903db2e64cc2c402843f64c6924730494`; exact owner-tested bytes, persistent notebook package/key.
 - Tamilan-Store-v0.14.apk — 19,906,251 bytes — SHA-256 `3d804fc152bddb9df75f92d62d9e2bc18ec3c11c32fc6fd81736fd8fbf0181a5`; exact successful Store0.13→0.14 same-key upgrade candidate.
 - Detailed publication IDs/provenance: `weekly-money-0.10-publication-receipt.json` and `tamilan-store-0.14-publication-receipt.json`. No published assets were overwritten.
+
+## Weekly Money TEST0.11 — owner approved
+
+- Release: https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v0.11
+- Published: 2026-11-16T11:34:21Z; exact artifact14219741171 from successful run43852699502; no rebuild/re-sign.
+- APK: 10137014 bytes, SHA-256 `83600bfa2b50a9989cf9cfbffb1a72b1da3f54b27163d5d591e31ba16c3aa2a4`.
+- Package/key retained; code11. [Receipt](weekly-money-0.11-publication-receipt.json).

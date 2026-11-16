@@ -1,6 +1,6 @@
 # Weekly Money TEST 0.11 — home artwork and optional contact
 
-Candidate only; public release/catalog remain at owner-approved 0.10 until this update is reviewed. Do not replace the existing public APK.
+Owner phone-tested TEST0.11 and explicitly authorized publication. Exact approved APK is now public; see [publication receipt](weekly-money-0.11-publication-receipt.json). Older public0.10 remains immutable.
 
 ## Changes
 
