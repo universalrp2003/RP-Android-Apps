@@ -238,6 +238,8 @@ class MainActivity : ComponentActivity() {
         state = next
     }
     @Composable private fun Unlock() {
+        val keyboard = LocalSoftwareKeyboardController.current
+        val focus = LocalFocusManager.current
         var name by remember { mutableStateOf("") }
         var password by remember { mutableStateOf("") }
         var confirm by remember { mutableStateOf("") }
@@ -276,6 +278,7 @@ class MainActivity : ComponentActivity() {
                 visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("unlockPassword"))
             if (!exists && restoreBytes == null) OutlinedTextField(confirm, { confirm = it }, label = { Text("மீண்டும் / Confirm passphrase") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("confirmPassword"))
             Button(modifier = Modifier.testTag("unlockContinue"), enabled = !busy && password.length in 10..256 && (exists || restoreBytes != null || (name.isNotBlank() && password == confirm)), onClick = {
+                keyboard?.hide(); focus.clearFocus()
                 val entered = password.toCharArray(); password = ""; confirm = ""
                 task {
                     try {
