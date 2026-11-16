@@ -161,7 +161,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("confirmFinishCollection").performClick(); closed("confirmFinishCollection")
         waitFor("closeSummary"); ui.onNodeWithTag("closeSummary").performClick()
         ui.onNodeWithTag("finishCollection").performClick(); waitFor("confirmFinishCollection")
-        ui.onNodeWithTag("confirmFinishCollection").assertIsNotEnabled()
+        ui.onNodeWithTag("confirmFinishCollection").assertIsEnabled()
         ui.onNodeWithText("ரத்து / Cancel").performClick(); closed("confirmFinishCollection")
         searchFirstPage()
         ui.onNodeWithText("Synthetic Customer I").performScrollTo().performClick(); waitFor("todayAmount")

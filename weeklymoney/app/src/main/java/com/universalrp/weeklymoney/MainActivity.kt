@@ -421,7 +421,7 @@ class MainActivity : ComponentActivity() {
                     DateChoice("வசூல் தேதி / Collection date", collectionDate, screenshotsAllowed, "finishDate") { collectionDate = it }
                     if (!current.isCollectionDate(book, collectionDate)) Text("இந்த தேதி வசூல் நாள் அல்ல / Not an active collection day", color = Color.Red)
                     Text("${book.number} · ${targets.size} காலி கட்டங்களில் – பதியப்படும்.\nOnly this collection week's blanks become missed payments. Existing amounts, earlier blanks and future weeks stay unchanged. Confirm only after visiting every customer.")
-                } }, confirmButton = { TextButton(enabled = !busy && targets.isNotEmpty() && collectionDate <= LocalDate.now(),
+                } }, confirmButton = { TextButton(enabled = !busy && current.isCollectionDate(book, collectionDate) && collectionDate <= LocalDate.now(),
                     modifier = Modifier.testTag("confirmFinishCollection"), onClick = { task {
                         save(current.finishCollection(book, collectionDate)); finishCollection = false; summary = true
                         try { externalBackup(requireNotNull(state), "after-collection"); message = "வசூல் முடிந்தது · Downloads backup சேமிக்கப்பட்டது" }
