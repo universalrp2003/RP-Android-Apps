@@ -92,7 +92,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("closeInformation").performClick()
         ui.onNodeWithTag("aboutPage").performScrollTo().performClick(); waitFor("closeInformation")
         ui.onNodeWithTag("closeInformation").performClick()
-        ui.onNodeWithTag("newBook").performClick()
+        ui.onNodeWithTag("newBook").performScrollTo().performClick(); waitFor("bookSave")
         ui.onNodeWithTag("bookSave").performClick(); waitFor("bookError")
         ui.onNodeWithTag("bookNumber").performScrollTo().performTextInput("Test ௧")
         ui.onNodeWithTag("weekday-${today.dayOfWeek.value}").performScrollTo().performClick()
