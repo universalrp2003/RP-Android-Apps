@@ -51,6 +51,7 @@ class BookAndScreenshotTest {
     }
     private fun searchFirstPage() {
         ui.onNodeWithTag("ledgerSearch").performTextReplacement("Synthetic")
+        ui.onNodeWithTag("ledgerSearch").performImeAction()
         ui.waitForIdle()
     }
     private fun fixtureBackdate(sequence: Int) {

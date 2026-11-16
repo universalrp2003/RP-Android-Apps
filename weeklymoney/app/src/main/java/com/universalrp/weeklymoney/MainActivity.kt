@@ -10,6 +10,10 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -199,6 +203,8 @@ class MainActivity : ComponentActivity() {
         }
     }
     @Composable private fun ColumnScope.Notebook(current: NotebookState) {
+        val keyboard = LocalSoftwareKeyboardController.current
+        val focus = LocalFocusManager.current
         var selected by remember { mutableStateOf<String?>(null) }
         var form by remember { mutableStateOf("") }
         var repeatCandidate by remember { mutableStateOf<Loan?>(null) }
@@ -239,7 +245,9 @@ class MainActivity : ComponentActivity() {
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
             FilterChip(selected = b.id == book?.id, onClick = { selected = b.id; search = "" }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
-        OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, modifier = Modifier.fillMaxWidth().testTag("ledgerSearch"))
+        OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = KeyboardActions(onSearch = { keyboard?.hide(); focus.clearFocus() }),
+            modifier = Modifier.fillMaxWidth().testTag("ledgerSearch"))
         if (book != null) {
             Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
