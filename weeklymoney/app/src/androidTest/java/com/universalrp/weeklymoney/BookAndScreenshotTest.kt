@@ -124,6 +124,12 @@ class BookAndScreenshotTest {
         searchFirstPage()
         ui.onNodeWithText("Synthetic Customer I").performScrollTo().performClick(); waitFor("receiptAmount-1")
         ui.onNodeWithTag("allTenWeeks").assertDoesNotExist()
+        ui.onNodeWithTag("editLoanDetails").performScrollTo().performClick(); waitFor("openingRed")
+        ui.onNodeWithTag("historicalLoan").assertDoesNotExist()
+        ui.onNodeWithTag("openingRed").performScrollTo().performClick()
+        ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
+        searchFirstPage()
+        ui.onNodeWithText("Synthetic Customer I").performScrollTo().performClick(); waitFor("receiptAmount-1")
         ui.onNodeWithTag("receiptAmount-1").performScrollTo().performTextReplacement("50")
         ui.onNodeWithTag("receiptSave").performClick(); closed("receiptSave")
         history(false)
@@ -197,5 +203,15 @@ class BookAndScreenshotTest {
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
         waitFor("unlockPassword")
+        if (android.os.Build.VERSION.SDK_INT >= 28) {
+            var rejected = false
+            ui.runOnIdle {
+                val gate = BiometricGate(ui.activity)
+                assertFalse(gate.configured())
+                gate.authenticate(success = { fail("No key must never authenticate") }, failure = { rejected = true })
+            }
+            ui.waitUntil(5000) { rejected }
+            ui.onNodeWithTag("unlockPassword").assertExists()
+        }
     }
 }

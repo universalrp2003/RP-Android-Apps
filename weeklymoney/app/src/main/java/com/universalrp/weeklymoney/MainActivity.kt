@@ -42,13 +42,16 @@ class MainActivity : ComponentActivity() {
     private var stoppedAt = 0L
     private val autoLock = android.os.Handler(android.os.Looper.getMainLooper())
     private val lockAction = Runnable { if (busy) lockAfterTask = true else lock() }
+    private var biometricPending by mutableStateOf(false)
     private var biometricEnabled by mutableStateOf(false)
     private var biometricSignal: android.os.CancellationSignal? = null
     private var authEpoch = 0
     private fun biometricUnlock() {
-        if (android.os.Build.VERSION.SDK_INT < 28 || busy || state != null || restoreBytes != null) return
+        if (android.os.Build.VERSION.SDK_INT < 28 || busy || biometricPending || state != null || restoreBytes != null) return
         val epoch = authEpoch
+        biometricPending = true
         biometricSignal = BiometricGate(this).authenticate(success = { entered ->
+            biometricPending = false
             if (entered != null) {
                 if (epoch != authEpoch || state != null) entered.fill('\u0000')
                 else task {
@@ -62,7 +65,7 @@ class MainActivity : ComponentActivity() {
                     } finally { entered.fill('\u0000') }
                 }
             }
-        }, failure = { message = "Biometric ரத்து/கிடைக்கவில்லை. மீண்டும் முயலவும் அல்லது master password மூலம் மீட்கவும்." })
+        }, failure = { biometricPending = false; message = "Biometric ரத்து/கிடைக்கவில்லை. மீண்டும் முயலவும் அல்லது master password மூலம் மீட்கவும்." })
     }
     private var state by mutableStateOf<NotebookState?>(null)
     private var message by mutableStateOf("")
@@ -143,7 +146,7 @@ class MainActivity : ComponentActivity() {
         } }
     }
     override fun onStop() {
-        authEpoch++; biometricSignal?.cancel(); biometricSignal = null
+        authEpoch++; biometricSignal?.cancel(); biometricSignal = null; biometricPending = false
         super.onStop()
         stoppedAt = android.os.SystemClock.elapsedRealtime()
         val minutes = getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)
@@ -158,7 +161,7 @@ class MainActivity : ComponentActivity() {
     }
     override fun onDestroy() { biometricSignal?.cancel(); autoLock.removeCallbacks(lockAction); secret?.fill('\u0000'); super.onDestroy() }
     private fun lock() {
-        authEpoch++; biometricSignal?.cancel(); biometricSignal = null
+        authEpoch++; biometricSignal?.cancel(); biometricSignal = null; biometricPending = false
         reading = false; message = ""; state = null; openedLoanId = null; restorePreview = null; secret?.fill('\u0000'); secret = null
     }
     private fun task(onError: ((String) -> Unit)? = null, block: suspend () -> Unit) {
@@ -203,7 +206,7 @@ class MainActivity : ComponentActivity() {
             Text(if (exists) "திறக்க / Unlock" else "உரிமையாளர் அமைப்பு / Owner setup")
             Text("Preview: full-backup restore on an empty installation only. Collector exchange is unfinished. Keep an external backup and master password.")
             if (useBiometric) {
-                Button(enabled = !busy, modifier = Modifier.testTag("biometricUnlock"), onClick = { biometricUnlock() }) { Text("விரல்ரேகை / Biometric திறக்க") }
+                Button(enabled = !busy && !biometricPending, modifier = Modifier.testTag("biometricUnlock"), onClick = { biometricUnlock() }) { Text("விரல்ரேகை / Biometric திறக்க") }
                 TextButton(onClick = { masterFallback = !masterFallback }) { Text("Biometric கிடைக்கவில்லையா? Master password recovery") }
             }
             if (!exists) {
@@ -291,14 +294,15 @@ class MainActivity : ComponentActivity() {
         }
         if (tools) {
             if (android.os.Build.VERSION.SDK_INT >= 28) {
-                TextButton(enabled = !busy, modifier = Modifier.testTag("biometricSetting"), onClick = {
+                TextButton(enabled = !busy && !biometricPending, modifier = Modifier.testTag("biometricSetting"), onClick = {
                     val gate = BiometricGate(this@MainActivity)
-                    if (biometricEnabled) { gate.disable(); biometricEnabled = false }
+                    if (biometricEnabled) { runCatching { gate.disable() }; biometricEnabled = gate.configured() }
                     else {
+                        biometricPending = true
                         biometricSignal = gate.authenticate(requireNotNull(secret), success = {
-                            biometricEnabled = gate.configured()
+                            biometricPending = false; biometricEnabled = gate.configured()
                             message = "Biometric இணைக்கப்பட்டது. Master password-ஐ பாதுகாப்பாக வைத்திருக்கவும்."
-                        }, failure = { message = "Biometric இணைக்க முடியவில்லை. Phone-ல் fingerprint அமைத்து மீண்டும் முயலவும்." })
+                        }, failure = { biometricPending = false; message = "Biometric இணைக்க முடியவில்லை. Phone-ல் fingerprint அமைத்து மீண்டும் முயலவும்." })
                     }
                 }) { Text(if (biometricEnabled) "Biometric ON · அணைக்க" else "Biometric இணைக்க / Enable") }
                 Text("புதிய phone / restore / biometric மாற்றத்திற்குப் பிறகு master password தேவை. Phone key backup-ல் சேராது.")
