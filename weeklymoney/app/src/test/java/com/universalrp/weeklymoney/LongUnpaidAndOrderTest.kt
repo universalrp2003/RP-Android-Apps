@@ -59,6 +59,17 @@ class LongUnpaidAndOrderTest {
         assertEquals(HandoffPolicy.Decision.FORWARD, HandoffPolicy.compare(initial, moved))
         assertEquals(HandoffPolicy.Decision.CONFLICT, HandoffPolicy.compare(moved, initial))
     }
+    @Test fun longBalanceGroupsByNormalizedPlaceWithoutChangingSavedOrder() {
+        var state = base.addLongUnpaid(book, "Place A", "F", "One", "100")
+        state = state.addLongUnpaid(book, "Place B", "F", "Two", "200")
+        state = state.addLongUnpaid(book, " place   a ", "F", "Three", "300")
+        val original = state.longVolume(book.id)
+        assertEquals(listOf("One", "Three", "Two"), groupLongUnpaidByPlace(original).map { it.customer })
+        assertEquals(listOf("One", "Two", "Three"), state.longVolume(book.id).map { it.customer })
+        val changed = state.correctLongUnpaid(original[1], "Place A", "F", "Two", "200")
+        assertEquals(listOf("One", "Two", "Three"), groupLongUnpaidByPlace(changed.longVolume(book.id)).map { it.customer })
+        assertEquals(state, NotebookState.decode(state.encode()))
+    }
     @Test fun schemaSixLoadsEmptyNewLists() {
         val old = JSONObject(String(base.encode())).put("schema", 6)
         listOf("longUnpaid", "longReceiptAudits", "longDebtChanges", "longTransfers", "rowOrders").forEach(old::remove)

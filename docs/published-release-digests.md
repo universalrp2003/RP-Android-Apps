@@ -651,3 +651,10 @@ Exact `CleanSweep-v2.97.apk`: **14,784,299B**, SHA-256 `121b2c757996910849c76b70
 - Published: 2026-11-17T04:08:02Z. Exact tested run 44011689271 artifact promoted by publisher 44014964552 without rebuilding.
 - APK: 7,483,207 bytes, SHA-256 `b4e1ac9625d0576691c1a20605b5375f664ecfe3863b52c7821fce6ae4e4ad23`.
 - Same package and signer, code 16. Android 15 and 1.3 synthetic in-place upgrade passed; user reports phone features work but installed APK hash not checked. [Receipt](weekly-money-1.4-publication-receipt.json).
+
+## Weekly Money 1.5 — public
+
+- Release: https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5
+- Published: 2026-11-17T09:39:55Z. Exact tested run 44053299356 attempt 2 artifact promoted by publisher 44057582802 without rebuilding.
+- APK: 7,499,595 bytes, SHA-256 `b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6`.
+- Same package and signer, code 17. Android 15 UI/search and 1.4 synthetic in-place upgrade passed; user reports phone search works but installed APK hash not checked. [Receipt](weekly-money-1.5-publication-receipt.json).

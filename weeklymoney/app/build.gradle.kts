@@ -11,8 +11,8 @@ android {
         applicationId = "com.universalrp.weeklymoney.preview"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "1.4"
+        versionCode = 17
+        versionName = "1.5"
         // Android also uses this label in system biometric UI. Keep version/status in About.
         manifestPlaceholders["weeklymoneyLabel"] = if (sampleBuild) "வார வசூல் · DEMO" else "வார வசூல்"
         buildConfigField("boolean", "IS_SAMPLE", sampleBuild.toString())

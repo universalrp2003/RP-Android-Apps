@@ -1,4 +1,4 @@
-"""Emulator-only synthetic 1.3 -> non-debuggable 1.4 update proof. Never owner data."""
+"""Emulator-only synthetic 1.4 -> non-debuggable 1.5 update proof. Never owner data."""
 import hashlib
 import json
 from pathlib import Path
@@ -31,9 +31,9 @@ with tempfile.TemporaryDirectory() as tmp:
     adb('root'); adb('wait-for-device')
     encrypted = subprocess.check_output(['adb', 'exec-out', 'cat', '/sdcard/Download/WeeklyMoneySynthetic/weeklymoney-synthetic-upgrade.vvb'])
     assert len(encrypted) > 100 and encrypted.startswith(b'VVB\x01'), 'Missing encrypted synthetic fixture'
-    run('gh', 'release', 'download', 'weekly-money-v1.3', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.3.apk', '--dir', tmp)
-    old = Path(tmp)/'Weekly-Money-v1.3.apk'
-    assert hashlib.sha256(old.read_bytes()).hexdigest() == 'ec2606b774f916633d502d1b62f4891034423681f946128efac42c7374c3a416'
+    run('gh', 'release', 'download', 'weekly-money-v1.4', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.4.apk', '--dir', tmp)
+    old = Path(tmp)/'Weekly-Money-v1.4.apk'
+    assert hashlib.sha256(old.read_bytes()).hexdigest() == 'b4e1ac9625d0576691c1a20605b5375f664ecfe3863b52c7821fce6ae4e4ad23'
     # Only this disposable emulator fixture is uninstalled to establish the real old baseline.
     if 'package:'+PACKAGE in adb('shell', 'pm', 'list', 'packages', PACKAGE).splitlines():
         assert 'Success' in adb('uninstall', PACKAGE)
@@ -70,7 +70,7 @@ with tempfile.TemporaryDirectory() as tmp:
             if 'Synthetic volume 2' in text: return text
             time.sleep(1)
         raise AssertionError('Existing synthetic notebook volume not displayed')
-    # Prove that the genuine public old APK can open the schema-6 fixture first.
+    # Prove that the genuine public old APK can open the schema-7 fixture first.
     unlock_and_show_list()
     adb('shell', 'am', 'force-stop', PACKAGE)
     assert subprocess.check_output(['adb', 'exec-out', 'cat', BASE+'/files/notebooks.vvb']) == before
@@ -82,7 +82,7 @@ with tempfile.TemporaryDirectory() as tmp:
     text = unlock_and_show_list()
     assert 'Check for updates' in text, 'Update check must be visible on the unlocked home of an upgraded install'
     assert 'Test preview' not in text and 'TEST 0.' not in text
-    receipt = dict(baseline='public1.3/code15', candidate='release1.4/code16', same_uid=True,
+    receipt = dict(baseline='public1.4/code16', candidate='release1.5/code17', same_uid=True,
                    encrypted_notebook_byte_identical=True, master_unlock_existing_volume=True,
                    apk_sha256=hashlib.sha256(apk.read_bytes()).hexdigest(), apk_bytes=apk.stat().st_size,
                    physical_phone=False)

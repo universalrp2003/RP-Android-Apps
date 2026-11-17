@@ -47,11 +47,18 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
         Ledger(projected, audits)
     }
     fun isArchived(bookId: String) = archiveHistory.lastOrNull { it.bookId == bookId }?.archived ?: false
-    fun effectiveLoans(): List<Loan> {
+    private val projectedLoans by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
         val projected = loans.associateBy { it.id }.toMutableMap()
         loanChanges.forEach { projected[it.after.id] = it.after }
-        return loans.map { projected.getValue(it.id) }
+        loans.map { projected.getValue(it.id) }
     }
+    private val readProjection by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+        Ledger(projectedLoans.associateBy { it.id }, audits)
+    }
+    fun effectiveLoans(): List<Loan> = projectedLoans
+    /** Private-to-module immutable projection for reads only; never call record on this instance. */
+    internal fun readLedger(): Ledger = readProjection
+    // A fresh mutable ledger remains mandatory for all writes and validation.
     fun ledger() = Ledger(effectiveLoans().associateBy { it.id }, audits)
     fun correctLoan(before: Loan, after: Loan): NotebookState {
         require(after.started !in skippedDates(after.bookId)) { "No loan on a skipped collection day" }
