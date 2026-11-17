@@ -299,12 +299,14 @@ private val paper = Color(0xfffff8df)
     val settlements = remember(state) { state.effectiveLoans().associate { it.id to state.settlementWeek(it) } }
     val labels = remember(state) { state.effectiveLoans().associate { it.id to state.customerLabel(it) } }
     val pages = remember(state, book.id) { state.pages(book.id) }
+    val dailyPages = remember(state, book.id) { state.dailyPages(book.id) }
     val filteredIds = remember(state, search) { if (search.isBlank()) null else state.ledger().search(search).map { it.id }.toSet() }
     val pager = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
     val scope = rememberCoroutineScope()
     val pageButtonList = rememberLazyListState()
-    LaunchedEffect(pager.currentPage, pages.size) {
-        if (pages.isNotEmpty()) pageButtonList.animateScrollToItem(pager.currentPage.coerceAtMost(pages.lastIndex))
+    val dailyIndex = pages.getOrNull(pager.currentPage)?.let { dailyPages.indexOf(it) } ?: -1
+    LaunchedEffect(dailyIndex, dailyPages) {
+        if (dailyIndex >= 0) pageButtonList.animateScrollToItem(dailyIndex)
     }
     LaunchedEffect(search, pages, requestedPageDate) {
         val requestedIndex = pages.indexOfFirst { it.date == requestedPageDate }
@@ -323,16 +325,17 @@ private val paper = Color(0xfffff8df)
             TextButton(onClick = { zoom = 1f }, modifier = Modifier.testTag("resetBookZoom")) { Text("100%") }
             TextButton(onClick = { pinchEnabled = !pinchEnabled }, modifier = Modifier.testTag("pinchToggle")) { Text(if (pinchEnabled) "Pinch ON" else "Pinch OFF") }
         }
-        if (pages.isNotEmpty()) {
+        if (dailyPages.isNotEmpty()) {
             LazyRow(state = pageButtonList, modifier = Modifier.fillMaxWidth().testTag("ledgerPageButtons"),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(pages.indices.toList()) { index ->
-                    val selected = pager.currentPage == index
+                items(dailyPages.indices.toList()) { index ->
+                    val targetPage = dailyPages[index]
+                    val selected = dailyIndex == index
                     Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                         .background(if (selected) blueInk else Color.White.copy(alpha = .65f), RoundedCornerShape(8.dp))
                         .border(1.dp, blueInk, RoundedCornerShape(8.dp))
-                        .selectable(selected = selected, role = Role.Tab, onClick = { scope.launch { pager.scrollToPage(index) } })
+                        .selectable(selected = selected, role = Role.Tab, onClick = { scope.launch { val pageIndex = pages.indexOf(targetPage); if (pageIndex >= 0) pager.scrollToPage(pageIndex) } })
                         .semantics { contentDescription = "பக்கம் ${index + 1} / Page ${index + 1}" }
                         .testTag("ledgerPage-${index + 1}"), contentAlignment = Alignment.Center) {
                         Text("${index + 1}", modifier = Modifier.padding(horizontal = 10.dp), color = if (selected) Color.White else blueInk,
@@ -343,7 +346,7 @@ private val paper = Color(0xfffff8df)
         }
         Row(Modifier.fillMaxWidth()) {
             TextButton(enabled = pager.currentPage > 0, onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }) { Text("‹ முந்தைய / Previous") }
-            Text("${pager.currentPage + 1}/${pages.size.coerceAtLeast(1)}", Modifier.padding(top = 14.dp).testTag("ledgerPageCount"))
+            Text(if (dailyIndex >= 0) "${dailyIndex + 1}/${dailyPages.size}" else "பழைய பக்கம் / Older page", Modifier.padding(top = 14.dp).testTag("ledgerPageCount"))
             TextButton(enabled = pager.currentPage < pages.lastIndex, modifier = Modifier.testTag("nextLedgerPage"), onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }) { Text("அடுத்த / Next ›") }
         }
         if (pages.isEmpty()) Text("புதிய கடன் சேர்க்கவும் / Add a loan to start the ledger", Modifier.padding(12.dp))

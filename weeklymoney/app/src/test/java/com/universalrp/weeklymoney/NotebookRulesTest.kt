@@ -21,6 +21,29 @@ class NotebookRulesTest {
         assertEquals(NotebookPage(state.dueDate(loan, 1)), state.previousPage(loan, 1))
         assertEquals(NotebookPage(state.dueDate(loan, 41)), state.previousPage(loan, 5))
     }
+    @Test fun dailyButtonsExcludeEarlierCyclesAndKeepHistoricalPageLinks() {
+        val first = empty().nextLoan(book, "P", "F", "First", "100", date)
+        var state = empty().copy(loans = listOf(first))
+        val prior = NotebookPage(state.dueDate(first, 1))
+        state = state.withReceipts(first, (1..10).map { ReceiptDraft(it, "-", date.plusWeeks(it.toLong())) })
+        val current = NotebookPage(state.dueDate(first, 11))
+        assertEquals(listOf(prior, current), state.pages(book.id))
+        assertEquals(listOf(current), state.dailyPages(book.id))
+        assertEquals(prior, state.previousPage(first, 1))
+        assertTrue(state.pageLines(book.id, prior).any { it.loan.id == first.id })
+        // If another current debt shares the older date, its sheet remains useful daily.
+        val second = state.nextLoan(book, "P", "F", "Second", "100", date)
+        val mixed = state.copy(loans = state.loans + second)
+        assertEquals(listOf(prior, current), mixed.dailyPages(book.id))
+        assertEquals(2, mixed.pageLines(book.id, prior).size)
+    }
+    @Test fun dailyButtonsCapAtTenWithoutDeletingOlderSheets() {
+        val loans = (0..11).map { empty().nextLoan(book, "P", "F", "N$it", "100", date.plusWeeks(it.toLong())) }
+        val state = empty().copy(loans = loans)
+        assertEquals(12, state.pages(book.id).size)
+        assertEquals(state.pages(book.id).takeLast(10), state.dailyPages(book.id))
+        assertEquals(12, NotebookState.decode(state.encode()).pages(book.id).size)
+    }
     @Test fun closingCollectionOnlyMarksThisWeeksBlanksAndIsIdempotent() {
         val first = empty().nextLoan(book, "P", "F", "N", "100", date)
         val second = empty().nextLoan(book, "P", "F", "Other", "100", date)

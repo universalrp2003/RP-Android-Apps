@@ -67,6 +67,13 @@ private fun NotebookState.lastCycle(loan: Loan): Int {
 }
 fun NotebookState.pages(bookId: String): List<NotebookPage> = volumeLoans(bookId)
     .flatMap { loan -> (firstVisibleCycle(bookId, loan)..maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan))).map { NotebookPage(dueDate(loan, it * 10 + 1)) } }.distinct().sortedBy { it.date }
+/** Daily shortcuts show at most ten newest latest-cycle sheets, not completed earlier cycles.
+ * Historical sheets remain in pages() for date links, search and navigation. A shared
+ * sheet can still contain an older-cycle row alongside another debt's latest-cycle row. */
+fun NotebookState.dailyPages(bookId: String): List<NotebookPage> = volumeLoans(bookId)
+    .map { loan -> NotebookPage(dueDate(loan, maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan)) * 10 + 1)) }
+    .distinct().sortedBy { it.date }.takeLast(10)
+
 fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLine> {
     val ledger = ledger()
     return volumeLoans(bookId).flatMap { loan ->
