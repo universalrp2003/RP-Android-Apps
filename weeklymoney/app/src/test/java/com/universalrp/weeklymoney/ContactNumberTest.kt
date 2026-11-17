@@ -21,7 +21,7 @@ class ContactNumberTest {
             json.getJSONArray("loans").getJSONObject(0).remove("contact")
             assertEquals(original, NotebookState.decode(json.toString().toByteArray()))
         }
-        assertEquals(6, JSONObject(String(original.encode())).getInt("schema"))
+        assertEquals(7, JSONObject(String(original.encode())).getInt("schema"))
     }
     @Test fun encryptedContactAndAuditedCorrectionRoundTrip() {
         val before = loan().copy(contactNumber = "+91 00000 00000")

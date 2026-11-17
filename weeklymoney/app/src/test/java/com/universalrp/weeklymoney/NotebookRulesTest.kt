@@ -185,7 +185,7 @@ class NotebookRulesTest {
         assertEquals("N", settled.customerLabel(third))
         assertEquals(3, third.sequence) // immutable identity order is not the displayed active-debt ordinal
     }
-    @Test fun importedInkIsAuditedRoundtripsAndGroupsPlacesWithinBlueThenRed() {
+    @Test fun importedInkIsAuditedRoundtripsAndKeepsEntryOrderWithinBlueThenRed() {
         val blueA = empty().nextLoan(book, "Pudukkottai", "Rajesh", "Praba", "100", date)
         val blueB = empty().nextLoan(book, "Pudukkottai", "Murugesh", "Pappa", "100", date)
         val other = empty().nextLoan(book, "Alangudi", "F", "Other", "100", date)
@@ -194,7 +194,7 @@ class NotebookRulesTest {
         val decoded = NotebookState.decode(original.encode())
         assertEquals(original, decoded)
         val lines = decoded.pageLines(book.id, decoded.pages(book.id).single())
-        assertEquals(listOf(other.id, blueB.id, blueA.id, red.id), lines.map { it.loan.id })
+        assertEquals(listOf(blueA.id, other.id, blueB.id, red.id), lines.map { it.loan.id })
         assertTrue(lines.last().isRed)
         assertTrue(lines.dropLast(1).none { it.isRed })
         val revised = original.correctLoan(blueA, blueA.copy(openingInk = Ink.RED))

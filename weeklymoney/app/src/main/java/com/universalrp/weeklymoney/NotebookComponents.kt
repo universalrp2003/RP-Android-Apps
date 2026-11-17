@@ -267,7 +267,7 @@ private val paper = Color(0xfffff8df)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable fun LedgerBook(state: NotebookState, book: Book, search: String, modifier: Modifier,
     tamilDateEnabled: Boolean = false, requestedPageDate: LocalDate? = null,
-    onArchivePage: (Loan, NotebookPage) -> Unit = { _, _ -> }, onOpen: (Loan, Int?, Boolean) -> Unit) {
+    onArchivePage: (Loan, NotebookPage) -> Unit = { _, _ -> }, onReorder: (Loan, NotebookPage) -> Unit = { _, _ -> }, onOpen: (Loan, Int?, Boolean) -> Unit) {
     var zoom by remember(book.id) { mutableStateOf(1f) }
     var pinchEnabled by remember { mutableStateOf(false) }
     val baseDensity = LocalDensity.current
@@ -324,6 +324,16 @@ private val paper = Color(0xfffff8df)
             }
             val payments = remember(state) { state.ledger().latest() }.associateBy { it.loanId to it.week }
             CompositionLocalProvider(LocalDensity provides Density(baseDensity.density * zoom, baseDensity.fontScale)) {
+            val measurer = androidx.compose.ui.text.rememberTextMeasurer()
+            val textDensity = LocalDensity.current
+            val cellStyle = MaterialTheme.typography.bodyMedium.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            fun columnWidth(minimum: Int, values: List<String>): Int {
+                val px = values.maxOfOrNull { measurer.measure(it, style = cellStyle, maxLines = 1, softWrap = false).size.width } ?: 0
+                return maxOf(minimum, kotlin.math.ceil(px / textDensity.density).toInt() + 20)
+            }
+            val placeWidth = columnWidth(140, rows.map { it.loan.place })
+            val familyWidth = columnWidth(160, rows.map { it.loan.familyHead })
+            val customerWidth = columnWidth(160, rows.map { labels.getValue(it.loan.id) })
             val turn = ((pager.currentPage - index) + pager.currentPageOffsetFraction).coerceIn(-1f, 1f)
             Column(Modifier.fillMaxSize().graphicsLayer {
                 transformOrigin = TransformOrigin(if (turn >= 0f) 0f else 1f, 0.5f)
@@ -355,7 +365,7 @@ private val paper = Color(0xfffff8df)
                 Box(Modifier.fillMaxSize().horizontalScroll(rememberScrollState()).testTag("ledgerHorizontal")) {
                 Column(Modifier.width(IntrinsicSize.Max).fillMaxHeight().verticalScroll(rememberScrollState()).testTag("ledgerVertical")) {
                     Row(Modifier.height(IntrinsicSize.Min)) {
-                        listOf("இடம்\nPlace" to 140, "குடும்பத் தலைவர்\nFamily head" to 160, "வாடிக்கையாளர்\nCustomer" to 160, "மொத்தம்\nTotal" to 100).forEach { (text, width) -> LedgerCell(text, width, redInk) }
+                        listOf("இடம்\nPlace" to placeWidth, "குடும்பத் தலைவர்\nFamily head" to familyWidth, "வாடிக்கையாளர்\nCustomer" to customerWidth, "மொத்தம்\nTotal" to 100).forEach { (text, width) -> LedgerCell(text, width, redInk) }
                         LedgerFold()
                         repeat(10) { i ->
                             Column(Modifier.width(90.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
@@ -369,9 +379,11 @@ private val paper = Color(0xfffff8df)
                         val loan = row.loan
                         val ink = if (row.isRed) redInk else blueInk
                         Row(Modifier.height(IntrinsicSize.Min).testTag("ledgerRow-${loan.id}")) {
-                            LedgerCell(loan.place, 140, ink, Modifier.testTag("place-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell(loan.familyHead, 160, ink, tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
-                            LedgerCell("${labels.getValue(loan.id)}", 160, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onOpen(loan, null, true) })
+                            LedgerCell(loan.place, placeWidth, ink, Modifier.testTag("place-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onReorder(loan, page) }, singleLine = true)
+                            LedgerCell(loan.familyHead, familyWidth, ink, tap = { onOpen(loan, null, false) }, hold = { onReorder(loan, page) }, singleLine = true)
+                            LedgerCell(labels.getValue(loan.id), customerWidth, ink, Modifier.testTag("customer-${loan.id}"), tap = { onOpen(loan, null, false) }, hold = { onReorder(loan, page) }, singleLine = true,
+                                highlightFrom = if (labels.getValue(loan.id) != loan.customerName) loan.customerName.length else null,
+                                highlightColor = if (row.isRed) blueInk else redInk)
                             LedgerCell(rupees(row.opening), 100, ink)
                             LedgerFold()
                             Box(Modifier.width(900.dp).height(IntrinsicSize.Min)) {
@@ -399,8 +411,8 @@ private val paper = Color(0xfffff8df)
                     Row(Modifier.height(IntrinsicSize.Min).background(Color(0xffe1f1e8))
                         .border(2.dp, Color(0xff23734a)).testTag("weeklyTotals")) {
                         val totalInk = Color(0xff145c38)
-                        LedgerCell("வசூல் மொத்தம்", 140, totalInk)
-                        LedgerCell("", 160, totalInk); LedgerCell("", 160, totalInk)
+                        LedgerCell("வசூல் மொத்தம்", placeWidth, totalInk)
+                        LedgerCell("", familyWidth, totalInk); LedgerCell("", customerWidth, totalInk)
                         // Individual loan amounts stay above; no summed loan-amount cell.
                         LedgerCell("", 100, totalInk, Modifier.testTag("noLoanAmountTotal"))
                         LedgerFold()
@@ -410,7 +422,7 @@ private val paper = Color(0xfffff8df)
                     }
                     repeat((8 - rows.size).coerceAtLeast(0)) {
                         Row(Modifier.height(IntrinsicSize.Min)) {
-                            listOf(140, 160, 160, 100).forEach { LedgerCell("", it, blueInk) }
+                            listOf(placeWidth, familyWidth, customerWidth, 100).forEach { LedgerCell("", it, blueInk) }
                             LedgerFold()
                             (List(10) { 90 } + 110).forEach { LedgerCell("", it, blueInk) }
                         }
@@ -429,13 +441,21 @@ private val paper = Color(0xfffff8df)
 }
 @OptIn(ExperimentalFoundationApi::class)
 @Composable private fun LedgerCell(text: String, width: Int, ink: Color, modifier: Modifier = Modifier,
-    tap: (() -> Unit)? = null, hold: (() -> Unit)? = null) {
+    tap: (() -> Unit)? = null, hold: (() -> Unit)? = null, singleLine: Boolean = false,
+    highlightFrom: Int? = null, highlightColor: Color = redInk) {
     val interaction = if (tap == null) modifier else modifier.combinedClickable(onClick = tap, onLongClick = hold)
     Box(interaction.width(width.dp).heightIn(min = 48.dp).fillMaxHeight().drawBehind {
         drawLine(redInk.copy(alpha = .65f), Offset(size.width - 1, 0f), Offset(size.width - 1, size.height), 1.dp.toPx())
         drawLine(blueInk.copy(alpha = .45f), Offset(0f, size.height - 1), Offset(size.width, size.height - 1), 1.dp.toPx())
     }.padding(8.dp)) {
-        Text(text, color = ink, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+        val styled = androidx.compose.ui.text.buildAnnotatedString {
+            if (highlightFrom != null && highlightFrom in 0 until text.length) {
+                append(text.substring(0, highlightFrom))
+                pushStyle(androidx.compose.ui.text.SpanStyle(color = highlightColor))
+                append(text.substring(highlightFrom)); pop()
+            } else append(text)
+        }
+        Text(styled, color = ink, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, maxLines = if (singleLine) 1 else Int.MAX_VALUE, softWrap = !singleLine)
     }
 }
 

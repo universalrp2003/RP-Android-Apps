@@ -1,6 +1,6 @@
 # வார வசூல் · Weekly Money
 
-A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.3) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
+A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.4](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.4) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
 
 ## Scope and use
 
@@ -13,7 +13,7 @@ A Tamil-first offline weekly collection notebook with one-editor-at-a-time hando
 
 ## Updates and limits
 
-Update the installed public notebook **without uninstalling or clearing data**. Version 1.0 uses the permanent package `com.universalrp.weeklymoney.preview.notebook`, version code 12 and the same signing certificate as the public 0.11 release. A different older signing key cannot update in place. Make an external encrypted backup first; do not downgrade after saving. Schema 6 reads schemas 1–5.
+Update the installed public notebook **without uninstalling or clearing data**. Version 1.0 uses the permanent package `com.universalrp.weeklymoney.preview.notebook`, version code 12 and the same signing certificate as the public 0.11 release. A different older signing key cannot update in place. Make an external encrypted backup first; do not downgrade after saving. Version 1.4 writes schema 7 and reads schemas 1–6. Older versions cannot open schema-7 backups; update every sharing device before handoff.
 
 The optional Tamil date table is bounded to supported 2026 dates; ordinary Gregorian dates continue to work. Unit, lint, Android emulator and synthetic same-key upgrade checks are recorded in [BUILD-STATUS.md](BUILD-STATUS.md). They are not independent security/financial certification or proof of functionality on every physical device. Historical versions and their original receipts remain available in Git history and [release pages](https://github.com/universalrp2003/RP-Android-Apps/releases?q=weekly-money).
 
@@ -28,3 +28,5 @@ The login screen's **Check for updates** uses the internet only when tapped; it 
 Android Back dismisses the current dialog, returns from a linked archived book to its previous book, from the reader to the book list, and from Settings to the main menu. At the main or unlock screen it asks before exiting; cancelling stays in the app.
 
 The notebook owner / business name is chosen once at creation and is displayed on the main and reader screens after unlock. It cannot currently be changed. Restore brings back the original name and notebook identity; a matching name alone does not make independently created notebooks the same. Shared owners use a common business name and take turns; individual editor attribution is not supported.
+
+Version 1.4 adds an undated old-balance page with dated receipts, audited corrections and unpaid-only continuation. Weekly-sheet row ordering is user-controlled within colour groups. Full backups include these records; use 1.4 or newer on every sharing device and keep an external backup before updating.
