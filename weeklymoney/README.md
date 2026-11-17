@@ -1,6 +1,6 @@
 # வார வசூல் · Weekly Money
 
-A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.4](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.4) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
+A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.5](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
 
 ## Scope and use
 
@@ -30,3 +30,5 @@ Android Back dismisses the current dialog, returns from a linked archived book t
 The notebook owner / business name is chosen once at creation and is displayed on the main and reader screens after unlock. It cannot currently be changed. Restore brings back the original name and notebook identity; a matching name alone does not make independently created notebooks the same. Shared owners use a common business name and take turns; individual editor attribution is not supported.
 
 Version 1.4 adds an undated old-balance page with dated receipts, audited corrections and unpaid-only continuation. Weekly-sheet row ordering is user-controlled within colour groups. Full backups include these records; use 1.4 or newer on every sharing device and keep an external backup before updating.
+
+Version 1.5 adds collection-week shortcuts, grouped old balances, full-identity duplicate checks and indexed search. Pages open with buttons; swipe/page-turn animation is removed.
