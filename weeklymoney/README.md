@@ -1,6 +1,6 @@
 # வார வசூல் · Weekly Money
 
-A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.1) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
+A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.2) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
 
 ## Scope and use
 
@@ -26,3 +26,5 @@ For a handoff, only one owner should edit at a time: send the latest full encryp
 The login screen's **Check for updates** uses the internet only when tapped; it reads the official public catalog and offers the official release page when a newer version is listed. No notebook data or password is sent. It does not download or install updates automatically. Normal notebook use remains offline. Screenshots are controlled in Settings. After unlocking, the first unarchived book for today's weekday opens automatically, if it has started; otherwise the book list remains available.
 
 Android Back dismisses the current dialog, returns from a linked archived book to its previous book, from the reader to the book list, and from Settings to the main menu. At the main or unlock screen it asks before exiting; cancelling stays in the app.
+
+The notebook owner / business name is chosen once at creation and is displayed on the main and reader screens after unlock. It cannot currently be changed. Restore brings back the original name and notebook identity; a matching name alone does not make independently created notebooks the same. Shared owners use a common business name and take turns; individual editor attribution is not supported.
