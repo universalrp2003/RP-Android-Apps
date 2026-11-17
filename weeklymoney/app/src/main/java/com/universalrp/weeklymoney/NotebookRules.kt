@@ -67,17 +67,41 @@ private fun NotebookState.lastCycle(loan: Loan): Int {
 }
 fun NotebookState.pages(bookId: String): List<NotebookPage> = volumeLoans(bookId)
     .flatMap { loan -> (firstVisibleCycle(bookId, loan)..maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan))).map { NotebookPage(dueDate(loan, it * 10 + 1)) } }.distinct().sortedBy { it.date }
-/** Daily shortcuts show at most ten newest latest-cycle sheets, not completed earlier cycles.
- * Historical sheets remain in pages() for date links, search and navigation. A shared
- * sheet can still contain an older-cycle row alongside another debt's latest-cycle row. */
-fun NotebookState.dailyPages(bookId: String): List<NotebookPage> = volumeLoans(bookId)
-    .map { loan -> NotebookPage(dueDate(loan, maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan)) * 10 + 1)) }
-    .distinct().sortedBy { it.date }.takeLast(10)
-
-fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLine> {
+/** Reference is today on a collection day, otherwise the next open collection day. */
+fun NotebookState.nextCollectionForButtons(book: Book, today: LocalDate): LocalDate {
+    var day = today.with(java.time.temporal.TemporalAdjusters.nextOrSame(book.collectionDay))
+    val skipped = skippedDates(book.id)
+    while (day in skipped) day = day.plusWeeks(1)
+    return day
+}
+/** Only unpaid loans actually due on the reference collection date get a shortcut. */
+fun NotebookState.weekButtonTargets(book: Book, today: LocalDate): Map<Int, List<NotebookPage>> {
+    if (isArchived(book.id)) return emptyMap()
+    val reference = nextCollectionForButtons(book, today)
+    val ledger = ledger()
+    return volumeLoans(book.id).filter { activeBookId(it) == book.id && !ledger.balance(it.id).completed }
+        .mapNotNull { loan ->
+            val week = collectionWeek(loan, reference) ?: return@mapNotNull null
+            if (week !in 1..10000) return@mapNotNull null
+            val cycle = (week - 1) / 10
+            if (cycle < firstVisibleCycle(book.id, loan)) return@mapNotNull null
+            ((week - 1) % 10 + 1) to NotebookPage(dueDate(loan, cycle * 10 + 1))
+        }.groupBy({ it.first }, { it.second }).mapValues { (_, pages) -> pages.distinct().sortedBy { it.date } }.toSortedMap()
+}
+/** Projection is read-only: it creates no receipt, debt, or backup change. */
+private fun NotebookState.visibleLastCycle(bookId: String, loan: Loan, reference: LocalDate?): Int {
+    val saved = maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan))
+    if (reference == null || isArchived(bookId) || activeBookId(loan) != bookId || ledger().balance(loan.id).completed) return saved
+    val week = collectionWeek(loan, reference) ?: return saved
+    return if (week in 1..10000) maxOf(saved, (week - 1) / 10) else saved
+}
+fun NotebookState.pagesForCollection(bookId: String, reference: LocalDate): List<NotebookPage> = volumeLoans(bookId)
+    .flatMap { loan -> (firstVisibleCycle(bookId, loan)..visibleLastCycle(bookId, loan, reference)).map { NotebookPage(dueDate(loan, it * 10 + 1)) } }
+    .distinct().sortedBy { it.date }
+fun NotebookState.pageLines(bookId: String, page: NotebookPage, reference: LocalDate? = null): List<NotebookLine> {
     val ledger = ledger()
     return volumeLoans(bookId).flatMap { loan ->
-        (firstVisibleCycle(bookId, loan)..maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan))).mapNotNull { cycle ->
+        (firstVisibleCycle(bookId, loan)..visibleLastCycle(bookId, loan, reference)).mapNotNull { cycle ->
             if (dueDate(loan, cycle * 10 + 1) != page.date) return@mapNotNull null
             val opening = ledger.balance(loan.id, cycle * 10).remainingPaise
             if (cycle > 0 && opening == 0L) null else NotebookLine(loan, cycle, opening, ledger.balance(loan.id, (cycle + 1) * 10).remainingPaise)
@@ -93,7 +117,8 @@ fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLi
 fun NotebookState.movePageLine(bookId: String, page: NotebookPage, loanId: String, direction: Int): NotebookState {
     require(direction == -1 || direction == 1)
     if (isArchived(bookId)) throw InputProblem("காப்பக வரிசையை மாற்ற முடியாது / Archived book is read-only")
-    val lines = pageLines(bookId, page)
+    val reference = nextCollectionForButtons(books.single { it.id == bookId }, LocalDate.now())
+    val lines = pageLines(bookId, page, reference)
     val index = lines.indexOfFirst { it.loan.id == loanId }
     if (index < 0) throw InputProblem("பதிவு கிடைக்கவில்லை / Row not found")
     val target = index + direction

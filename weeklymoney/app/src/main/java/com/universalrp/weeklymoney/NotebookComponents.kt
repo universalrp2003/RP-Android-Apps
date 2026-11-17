@@ -298,22 +298,25 @@ private val paper = Color(0xfffff8df)
     // Pinch/zoom recomposes frequently: never replay the audited ledger for every cell/frame.
     val settlements = remember(state) { state.effectiveLoans().associate { it.id to state.settlementWeek(it) } }
     val labels = remember(state) { state.effectiveLoans().associate { it.id to state.customerLabel(it) } }
-    val pages = remember(state, book.id) { state.pages(book.id) }
-    val dailyPages = remember(state, book.id) { state.dailyPages(book.id) }
+    val today = LocalDate.now()
+    val reference = remember(state, book.id, today) { state.nextCollectionForButtons(book, today) }
+    val pages = remember(state, book.id, reference) { state.pagesForCollection(book.id, reference) }
+    val targets = remember(state, book.id, today) { state.weekButtonTargets(book, today) }
     val filteredIds = remember(state, search) { if (search.isBlank()) null else state.ledger().search(search).map { it.id }.toSet() }
     val pager = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
     val scope = rememberCoroutineScope()
     val pageButtonList = rememberLazyListState()
-    val dailyIndex = pages.getOrNull(pager.currentPage)?.let { dailyPages.indexOf(it) } ?: -1
-    LaunchedEffect(dailyIndex, dailyPages) {
-        if (dailyIndex >= 0) pageButtonList.animateScrollToItem(dailyIndex)
+    var choosingWeek by remember(book.id) { mutableStateOf<Int?>(null) }
+    val activeWeek = targets.entries.firstOrNull { pages.getOrNull(pager.currentPage) in it.value }?.key
+    LaunchedEffect(activeWeek) {
+        if (activeWeek != null) pageButtonList.animateScrollToItem(activeWeek - 1)
     }
     LaunchedEffect(search, pages, requestedPageDate) {
         val requestedIndex = pages.indexOfFirst { it.date == requestedPageDate }
         if (requestedIndex >= 0) { pager.scrollToPage(requestedIndex); return@LaunchedEffect }
         if (search.isBlank() && pages.isNotEmpty()) pager.scrollToPage(pages.lastIndex)
         if (search.isNotBlank()) {
-            val index = pages.indexOfFirst { page -> state.pageLines(book.id, page).any { it.loan.id in filteredIds.orEmpty() } }
+            val index = pages.indexOfFirst { page -> state.pageLines(book.id, page, reference).any { it.loan.id in filteredIds.orEmpty() } }
             if (index >= 0) pager.scrollToPage(index)
         }
     }
@@ -325,35 +328,49 @@ private val paper = Color(0xfffff8df)
             TextButton(onClick = { zoom = 1f }, modifier = Modifier.testTag("resetBookZoom")) { Text("100%") }
             TextButton(onClick = { pinchEnabled = !pinchEnabled }, modifier = Modifier.testTag("pinchToggle")) { Text(if (pinchEnabled) "Pinch ON" else "Pinch OFF") }
         }
-        if (dailyPages.isNotEmpty()) {
+        if (targets.isNotEmpty()) {
             LazyRow(state = pageButtonList, modifier = Modifier.fillMaxWidth().testTag("ledgerPageButtons"),
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(dailyPages.indices.toList()) { index ->
-                    val targetPage = dailyPages[index]
-                    val selected = dailyIndex == index
+                items((1..10).toList()) { week ->
+                    val options = targets[week].orEmpty()
+                    val selected = pages.getOrNull(pager.currentPage) in options
                     Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                         .background(if (selected) blueInk else Color.White.copy(alpha = .65f), RoundedCornerShape(8.dp))
-                        .border(1.dp, blueInk, RoundedCornerShape(8.dp))
-                        .selectable(selected = selected, role = Role.Tab, onClick = { scope.launch { val pageIndex = pages.indexOf(targetPage); if (pageIndex >= 0) pager.scrollToPage(pageIndex) } })
-                        .semantics { contentDescription = "பக்கம் ${index + 1} / Page ${index + 1}" }
-                        .testTag("ledgerPage-${index + 1}"), contentAlignment = Alignment.Center) {
-                        Text("${index + 1}", modifier = Modifier.padding(horizontal = 10.dp), color = if (selected) Color.White else blueInk,
+                        .border(1.dp, if (options.isEmpty()) Color.Gray else blueInk, RoundedCornerShape(8.dp))
+                        .selectable(selected = selected, enabled = options.isNotEmpty(), role = Role.Tab, onClick = {
+                            if (options.size == 1) scope.launch { val i = pages.indexOf(options.single()); if (i >= 0) pager.scrollToPage(i) }
+                            else choosingWeek = week
+                        })
+                        .semantics { contentDescription = "வசூல் வாரம் $week / Collection week $week" }
+                        .testTag("ledgerPage-$week"), contentAlignment = Alignment.Center) {
+                        Text("$week", modifier = Modifier.padding(horizontal = 10.dp),
+                            color = if (selected) Color.White else if (options.isEmpty()) Color.Gray else blueInk,
                             style = MaterialTheme.typography.titleMedium)
                     }
                 }
             }
         }
+        choosingWeek?.let { week ->
+            AlertDialog(onDismissRequest = { choosingWeek = null }, title = { Text("வாரம் $week · பக்கத்தைத் தேர்வு செய்யவும்") },
+                text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                    targets[week].orEmpty().forEach { page ->
+                        TextButton(onClick = { choosingWeek = null; scope.launch { val i = pages.indexOf(page); if (i >= 0) pager.scrollToPage(i) } }) {
+                            Text("${page.date.format(dateFormat)} · பக்கம் / Page")
+                        }
+                    }
+                } }, confirmButton = { TextButton(onClick = { choosingWeek = null }) { Text("மூடு / Close") } })
+        }
         Row(Modifier.fillMaxWidth()) {
             TextButton(enabled = pager.currentPage > 0, onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }) { Text("‹ முந்தைய / Previous") }
-            Text(if (dailyIndex >= 0) "${dailyIndex + 1}/${dailyPages.size}" else "பழைய பக்கம் / Older page", Modifier.padding(top = 14.dp).testTag("ledgerPageCount"))
+            Text("${pager.currentPage + 1}/${pages.size.coerceAtLeast(1)}", Modifier.padding(top = 14.dp).testTag("ledgerPageCount"))
             TextButton(enabled = pager.currentPage < pages.lastIndex, modifier = Modifier.testTag("nextLedgerPage"), onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }) { Text("அடுத்த / Next ›") }
         }
         if (pages.isEmpty()) Text("புதிய கடன் சேர்க்கவும் / Add a loan to start the ledger", Modifier.padding(12.dp))
         else HorizontalPager(state = pager, modifier = Modifier.fillMaxWidth().weight(1f)) { index ->
             val page = pages[index]
             val rows = remember(state, book.id, page, filteredIds) {
-                state.pageLines(book.id, page).filter { filteredIds == null || it.loan.id in filteredIds }
+                state.pageLines(book.id, page, reference).filter { filteredIds == null || it.loan.id in filteredIds }
             }
             val payments = remember(state) { state.ledger().latest() }.associateBy { it.loanId to it.week }
             CompositionLocalProvider(LocalDensity provides Density(baseDensity.density * zoom, baseDensity.fontScale)) {
