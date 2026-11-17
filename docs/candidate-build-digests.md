@@ -1,35 +1,35 @@
 # Candidate build digests
 
-- Workflow run: 43871565012
-- Source commit: 8a85ac37bedff540225ab8aab5050ccc880ee08d
-- Ref: refs/heads/arena/1e9cafce-rp-android-apps
-- Built (UTC): 2026-11-16T13:02:39Z
+- Workflow run: 44038107102
+- Source commit: 451fcf6595039851f587aa55adcf3dcfaee7d4b1
+- Ref: refs/heads/arena/45d22062-rp-android-apps
+- Built (UTC): 2026-11-17T07:33:18Z
 - Note: candidate build output only. GitHub publication is not Play Protect approval.
 
 | File | Bytes | SHA-256 |
 | --- | --- | --- |
-| `cleaner/build/outputs/apk/debug/CleanSweep-v3.00-debug.apk` | 21520775 | `e7ebf2202985c7eec3bfc7c07fa2586457607381d8b9ce8da758a213f98aea49` |
-| `cleaner/build/outputs/apk/release/CleanSweep-v3.00.apk` | 14781791 | `75aa070c0cd2ba87b676e9fe27a0cc77b943a1d1d170783344fa524ebea09dbc` |
-| `dailyvault/build/outputs/apk/debug/dailyvault-debug.apk` | 17941399 | `e12f04436555e5dd396c54be8d59bfab6c08769adeaee7bf74d209e4a76dd4f5` |
-| `equalizer/build/outputs/apk/debug/PulseEQ-v1.11-debug.apk` | 17769012 | `6bb757804885d19ac1fbdbe99f498c48bd55cec7bc05f8a04f309307727e753c` |
-| `equalizer/build/outputs/apk/release/PulseEQ-v1.11.apk` | 12182177 | `4ebad403a83192f2f129387c3e2c0d8aebddf2302be6515c4407e6556f1a9884` |
-| `expensetracker/build/outputs/apk/debug/expensetracker-debug.apk` | 17727088 | `0b264a24cc634da24339c6eec9d0e1a2f3d659de5569ce138ca9995a98552ea2` |
-| `expensetracker/build/outputs/apk/release/Expense-Tracker-v1.2.apk` | 11564299 | `ba9653ce9ebe979c673a5a321e8f7a572fcb721a4303b583a76fb1468e4c205b` |
-| `launcher/build/outputs/apk/debug/launcher-debug.apk` | 17684610 | `e486032a4aca9ca48547e86f030da007f9c15300a0a6a625df2344f948a57e26` |
-| `launcher/build/outputs/apk/release/launcher-release.apk` | 11538139 | `77fa181048c7f7176721c39a462ee42902061b572451df23f616955200c2dfa0` |
-| `oorarivippu/build/outputs/apk/debug/oorarivippu-debug.apk` | 18681965 | `3dce07ff4b89927d62ffb1c70891ad38afd0fab9104609f347f66cd2d3877d5d` |
-| `podcast/build/outputs/apk/debug/podcast-debug.apk` | 18310533 | `d4285d5f88b290fdd4e49b73d29f71773002440c7825f4389221b1c6360c4657` |
-| `podcast/build/outputs/apk/release/podcast-release.apk` | 11983623 | `8e17a6a8d86cc55191bf6c85071b44ef830906acc61e35b8782d331b7f2dfe75` |
-| `radio/build/outputs/apk/debug/Ramesh-Radio-v1.31-debug.apk` | 21637926 | `1925585aab049a238777da0fe30ab03fa8f3cdb0a32bfa14140355b3d93edc52` |
-| `radio/build/outputs/apk/release/Ramesh-Radio-v1.31.apk` | 15192748 | `3bb54698ab555a31cda9f6b4d4592f7c447afdc9d0c32feec5a7ddb568a822e6` |
-| `smsguard/build/outputs/apk/debug/smsguard-debug.apk` | 18739273 | `3ed94a1308294faa7c930f324a18a0668fcdc99fe874c01a641e48be2cd44f99` |
-| `tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk` | 26151192 | `f460684e6d2a9a5681d8ad884b1d07a11a92f9b5e23e9da8ac039a466a5f6596` |
-| `vasanthi/build/outputs/apk/debug/vasanthi-debug.apk` | 49668862 | `fae75832b66c4d6d0d9ae15586c37649feda93727ed7426102b301745e0733f8` |
-| `vasanthi/build/outputs/apk/release/Vasanthi-AI-v1.1.5.apk` | 45794346 | `981a21eba7e3b7a11e21b940b0e4e2058b72dbae5ca2fc3c635bc19529fcf4b5` |
-| `vocalremover/build/outputs/apk/debug/RP-Vocal-Remover-Studio-v0.1.16-debug.apk` | 83669397 | `6d89e1d20636ec09c58131513ecf3ba6da41f4586db30d7aa9c20e30b14c38e6` |
-| `vocalremover/build/outputs/apk/release/RP-Vocal-Remover-Studio-v0.1.16.apk` | 65216669 | `509f10e75361698ae3517a1a84798e732d3a6dac0f1eec6534e4afd76ede9420` |
-| `voicenotes/build/outputs/apk/debug/voicenotes-debug.apk` | 18899503 | `a657176b4afb402b1f92cc6f1e24be13a999242c714ef4a15cc61f49e6229ff1` |
-| `voicenotes/build/outputs/apk/release/Voice-Notes-v1.3.4.apk` | 13151579 | `2df02bb390c5bc0fb454acb6f1baed10ea155f30404f09be6c3d999e4394d0bf` |
-| `cleaner/build/outputs/bundle/release/CleanSweep-v3.00.aab` | 14494636 | `61447bcd4fc91d84bdec81ca5bc2101041479b4ef8604cb5c7621c4ee8d6a3d4` |
-| `equalizer/build/outputs/bundle/release/PulseEQ-v1.11.aab` | 11853948 | `c01345bfb631810fe85d716eb3746ad63bb9d41f0f5396870985e95546d0f694` |
-| `radio/build/outputs/bundle/release/Ramesh-Radio-v1.31.aab` | 14754803 | `2a75d388d57c456811f791fc340bf47532ef11547a14ed40306a42b511d7b3d1` |
+| `cleaner/build/outputs/apk/debug/CleanSweep-v3.01-debug.apk` | 21520895 | `3938d340edb2c779e4ce5a0910dd0b047dd97197a94a301ae9ba5f2ac7f673b0` |
+| `cleaner/build/outputs/apk/release/CleanSweep-v3.01.apk` | 14781255 | `889fd3d8ed127a01ff1d9aab54fd47563ccfb944ed34e1a0daada6b6e234fdfb` |
+| `dailyvault/build/outputs/apk/debug/dailyvault-debug.apk` | 17941399 | `3082634b7bfef6ddbf08d21c7f20193e5f88f7e2b20e57dcd7939f1bb059ba00` |
+| `equalizer/build/outputs/apk/debug/PulseEQ-v1.11-debug.apk` | 17769012 | `9317b8ad3ff532f5f66069a1b95ef698c1ecb81bbdb4471117e549503dffe27b` |
+| `equalizer/build/outputs/apk/release/PulseEQ-v1.11.apk` | 12182177 | `7e17f93813bd3afc08a6e6cc0ce6c66f5b2ab76d22b5e3fdbb20e204e63d1bd2` |
+| `expensetracker/build/outputs/apk/debug/expensetracker-debug.apk` | 17727088 | `7b4e00900b294859c584e7e50b0ea8b7d5d10fab28ac7a9465e5092cf0b99833` |
+| `expensetracker/build/outputs/apk/release/Expense-Tracker-v1.2.apk` | 11564299 | `289798cf43599fdb1115a2734cc16ceb9276fb386cdd1fb40eb02b6a2b62acac` |
+| `launcher/build/outputs/apk/debug/launcher-debug.apk` | 17684610 | `6ba707451822fd613e9648ce30fb6faa5b0dfe86cfaca3ab4b8eddc2dd52541e` |
+| `launcher/build/outputs/apk/release/launcher-release.apk` | 11538139 | `a98f9339c3175ae2c045d7f7fcfa082456ce4b9720f19e851a21c7b78f9cb31b` |
+| `oorarivippu/build/outputs/apk/debug/oorarivippu-debug.apk` | 18681965 | `2c1a48af4acf61b21d9218508913c06ad249c3f120eaf5d4c9c88712abeee940` |
+| `podcast/build/outputs/apk/debug/podcast-debug.apk` | 18310533 | `f934a8f93a777bd72b7772331bc75b54824806d54d42fb6985747207c94ade12` |
+| `podcast/build/outputs/apk/release/podcast-release.apk` | 11983623 | `d1bdb3086572925da26f13f78ff351b67a919d13757db17bedd2b5de87576762` |
+| `radio/build/outputs/apk/debug/Ramesh-Radio-v1.31-debug.apk` | 21637926 | `bba1b7cc9916ff3db6a2bdb068908b5a0077118b57c5dde98e0376093db6e09c` |
+| `radio/build/outputs/apk/release/Ramesh-Radio-v1.31.apk` | 15192748 | `f7010d6d9060a63dc77b0795b46d402b6d405b715889d95ceb2c68a693f77adf` |
+| `smsguard/build/outputs/apk/debug/smsguard-debug.apk` | 18739273 | `1335ae862ae0351acd9eae74ab44774ca3a0d19b0665afe32df1864aac4b7631` |
+| `tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk` | 26151168 | `afb960219dc4cabc67628f0da47490d3d912e3dab75b381f7231c3f1b20d61f6` |
+| `vasanthi/build/outputs/apk/debug/vasanthi-debug.apk` | 49668862 | `ac9fe7f6b238f575114f58dc2bac501de0ca53fb118daece0e33af7310213f53` |
+| `vasanthi/build/outputs/apk/release/Vasanthi-AI-v1.1.5.apk` | 45794346 | `8a7064da778c1f47e163b1bc97e64e4842923b21b283fdad5cb0b4fc5d21aea1` |
+| `vocalremover/build/outputs/apk/debug/RP-Vocal-Remover-Studio-v0.1.16-debug.apk` | 83669349 | `036c5b2ee391e1c3b149a694073073374013d4686c835892e3024235b0634a27` |
+| `vocalremover/build/outputs/apk/release/RP-Vocal-Remover-Studio-v0.1.16.apk` | 65216609 | `880763b30afccf24b28c434c3ded2b5c34fe2497d876d6669aaec0aff552fb91` |
+| `voicenotes/build/outputs/apk/debug/voicenotes-debug.apk` | 18899503 | `496a04660964fd22decf95bc391d0ba7d5d9b741acce2442a11ea25c9e25301d` |
+| `voicenotes/build/outputs/apk/release/Voice-Notes-v1.3.4.apk` | 13151579 | `fcdace0c46df8e847d4c662194019501a3292a6f7ee0d0058010dd6094f2fe73` |
+| `cleaner/build/outputs/bundle/release/CleanSweep-v3.01.aab` | 14494081 | `8e6b5efd05286e66be4d6bcf8d8fa681ade5a24b4a9f5288eb04c578aa6af37c` |
+| `equalizer/build/outputs/bundle/release/PulseEQ-v1.11.aab` | 11853870 | `ed036edad6d656fe623578f86d429685cd1762322d95725fe75057476189a990` |
+| `radio/build/outputs/bundle/release/Ramesh-Radio-v1.31.aab` | 14754829 | `ac3e4b6263a1ca8693f4504a0d5da82b390c9dcea7873235ac2d8bdeedf9d4d6` |
