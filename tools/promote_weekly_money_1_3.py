@@ -53,8 +53,8 @@ def main():
             args = ['gh','release','create',p['tag'],str(apk),str(checksum),'--repo',REPO,'--target',p['source'],'--title',p['title'],'--notes-file',p['notes'],'--draft']
             if p['prerelease']: args += ['--prerelease']
             subprocess.run(args, check=True)
-            drafts = api('releases?per_page=100')
-            draft, = [r for r in drafts if r['tag_name'] == p['tag'] and r['draft']]
+            draft_pages = json.loads(cmd('gh', 'api', '--paginate', '--slurp', f'repos/{REPO}/releases?per_page=100'))
+            draft, = [r for page in draft_pages for r in page if r['tag_name'] == p['tag'] and r['draft']]
             assert draft['draft']
             asset, = [a for a in draft['assets'] if a['name'] == p['asset']]
             assert asset['digest'] == 'sha256:'+p['sha256'] and asset['size'] == p['bytes']
