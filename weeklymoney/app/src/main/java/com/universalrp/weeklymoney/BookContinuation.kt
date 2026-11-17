@@ -33,7 +33,7 @@ fun NotebookState.continueBook(from: Book, to: Book, now: Instant = Instant.now(
     if (isArchived(from.id) || continuations.any { it.fromBook == from.id }) throw InputProblem("இந்த புத்தகம் ஏற்கனவே முடிக்கப்பட்டது / Book already archived or continued")
     if (to.id in books.map { it.id } || to.collectionDay != from.collectionDay || to.started < from.started || to.started > LocalDate.now())
         throw InputProblem("அதே கிழமை மற்றும் சரியான தொடக்க தேதியைத் தேர்வு செய்யவும் / Choose the same weekday and a valid start date")
-    val ledger = ledger()
+    val ledger = readLedger()
     val carried = effectiveLoans().filter { activeBookId(it) == from.id && !ledger.balance(it.id).completed }
     if (carried.any { it.started > to.started } || ledger.latest().any { p -> p.loanId in carried.map { it.id } && p.receivedOn > to.started })
         throw InputProblem("புதிய புத்தக தேதி கடைசி பதிவுக்கு முன் இருக்க முடியாது / Start date precedes existing records")
@@ -53,6 +53,6 @@ fun NotebookState.continueBook(from: Book, to: Book, now: Instant = Instant.now(
 /** A successor starts with each carried debt's latest ten-week sheet; older sheets stay in archive. */
 fun NotebookState.firstVisibleCycle(bookId: String, loan: Loan): Int {
     val transfer = continuations.firstOrNull { it.toBook == bookId && loan.id in it.loanIds } ?: return 0
-    val latest = ledger().latest().filter { it.loanId == loan.id }.maxOfOrNull { it.week } ?: 1
+    val latest = readLedger().latestForLoan(loan.id).maxOfOrNull { it.week } ?: 1
     return (maxOf(latest, entryWeek(loan, transfer.date)) - 1) / 10
 }

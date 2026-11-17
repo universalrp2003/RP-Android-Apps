@@ -59,14 +59,14 @@ fun NotebookState.changeCollectionDay(book: Book, date: LocalDate, skipped: Bool
         throw InputProblem("புத்தகத்தின் வசூல் கிழமையைத் தேர்ந்தெடுக்கவும் / Choose this book's collection weekday")
     if (reason.isBlank()) throw InputProblem("காரணம் உள்ளிடவும் / Enter a reason")
     if (skipped && (volumeLoans(book.id).any { it.started == date } ||
-        ledger().latest().any { p -> volumeLoans(book.id).any { it.id == p.loanId } && p.receivedOn == date }))
+        readLedger().latest().any { p -> volumeLoans(book.id).any { it.id == p.loanId } && p.receivedOn == date }))
         throw InputProblem("அன்று பதிவு உள்ளது; முதலில் உரிமையாளர் சரிபார்க்கவும் / Records exist on this date; review them before marking a holiday")
     if ((date in skippedDates(book.id)) == skipped) return this
     return copy(collectionDays = collectionDays + CollectionDayChange(newId(), book.id, date, skipped, reason.trim(), owner.id, now))
 }
 /** Roman labels distinguish simultaneous outstanding debts, never completed renewals. */
 fun NotebookState.customerLabel(loan: Loan): String {
-    val ledger = ledger()
+    val ledger = readLedger()
     val active = customerLoans(loan).filter { !ledger.balance(it.id).completed }
         .sortedWith(compareBy<Loan> { it.sequence }.thenBy { it.id })
     val index = active.indexOfFirst { it.id == loan.id }
@@ -80,7 +80,7 @@ fun NotebookState.withTodayReceipt(loan: Loan, amount: String, date: LocalDate =
     val week = collectionWeek(loan, date) ?: throw InputProblem("இன்று இந்த கடனின் வசூல் நாள் அல்ல / No collection slot today")
     if (date > LocalDate.now()) throw InputProblem("எதிர்கால வசூல் பதிவு வேண்டாம் / Cannot record a future collection")
     if (amount.isBlank()) throw InputProblem("தொகை உள்ளிடவும் / Enter today's amount")
-    val previous = ledger().latest().find { it.loanId == loan.id && it.week == week }
+    val previous = readLedger().latest().find { it.loanId == loan.id && it.week == week }
     val total = if (amount.trim() == "-") {
         if (previous?.amountPaise != null) throw InputProblem("ஏற்கெனவே தொகை உள்ளது / Amount exists; use history correction, not missed")
         "-"

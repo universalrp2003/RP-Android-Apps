@@ -53,39 +53,47 @@ data class PageRow(val loan: Loan, val openingPaise: Long, val ink: Ink)
 
 /** Append-only history; projections always derive from latest revisions, including older corrections. */
 class Ledger(private val loans: Map<String, Loan>, history: List<Audit> = emptyList()) {
-    private val events = history.toMutableList()
+    private val events = mutableListOf<Audit>()
+    private val eventIds = mutableSetOf<String>()
+    private val current = linkedMapOf<String, Payment>()
+    private val slots = mutableMapOf<Pair<String, Int>, String>()
+    private val byLoan = mutableMapOf<String, MutableMap<String, Payment>>()
+    private val totals = mutableMapOf<String, Long>()
     init {
         require(loans.all { (id, loan) -> id == loan.id })
-        // Replay supplied history through validation, not directly into authoritative state.
-        events.clear()
+        // Validate every event while building indexes; corrections remain append-only.
         history.forEach { append(it) }
     }
     fun history(): List<Audit> = events.toList()
-    fun latest(): List<Payment> = events.map { it.after }.groupBy { it.id }
-        .values.map { revisions -> revisions.maxBy { it.revision } }
+    fun latest(): List<Payment> = current.values.toList()
+    fun latestForLoan(loanId: String): List<Payment> = byLoan[loanId].orEmpty().values.toList()
 
     /** Boundary must verify owner/device signatures before calling this method. */
     private fun append(audit: Audit) {
-        require(audit.eventId.isNotBlank() && events.none { it.eventId == audit.eventId })
+        require(audit.eventId.isNotBlank() && audit.eventId !in eventIds)
         val next = audit.after
         val loan = requireNotNull(loans[next.loanId])
         require(!next.receivedOn.isBefore(loan.started))
-        val previous = latest().find { it.id == next.id }
+        val previous = current[next.id]
         require(audit.before == previous)
         require(next.revision == (previous?.revision ?: 0L) + 1L)
-        if (previous != null) {
-            require(next.loanId == previous.loanId && next.week == previous.week)
-        }
-        require(latest().none { it.id != next.id && it.loanId == next.loanId && it.week == next.week })
-        val paidElsewhere = latest().filter { it.loanId == next.loanId && it.id != next.id }
-            .fold(0L) { sum, p -> Math.addExact(sum, p.amountPaise ?: 0L) }
-        require(Math.addExact(paidElsewhere, next.amountPaise ?: 0L) <= loan.totalPaise)
+        if (previous != null) require(next.loanId == previous.loanId && next.week == previous.week)
+        val slot = next.loanId to next.week
+        require(slots[slot] == null || slots[slot] == next.id)
+        val paidElsewhere = Math.subtractExact(totals[next.loanId] ?: 0L, previous?.amountPaise ?: 0L)
+        val paid = Math.addExact(paidElsewhere, next.amountPaise ?: 0L)
+        require(paid <= loan.totalPaise)
         events.add(audit)
+        eventIds.add(audit.eventId)
+        current[next.id] = next
+        slots[slot] = next.id
+        byLoan.getOrPut(next.loanId) { linkedMapOf() }[next.id] = next
+        totals[next.loanId] = paid
     }
     fun record(eventId: String, next: Payment, actor: Actor, today: LocalDate,
                now: Instant, expectedRevision: Long, grant: Grant? = null) {
         val loan = requireNotNull(loans[next.loanId])
-        val old = latest().find { it.id == next.id }
+        val old = current[next.id]
         require((old?.revision ?: 0L) == expectedRevision) { "Conflict: refresh before saving" }
         require(next.actorId == actor.id && next.actorName == actor.name && next.recordedAt == now)
         val action = if (old == null && next.receivedOn == today) Action.RECEIVE_PAYMENT else Action.CORRECT_ENTRY
@@ -94,8 +102,9 @@ class Ledger(private val loans: Map<String, Loan>, history: List<Audit> = emptyL
     }
     fun balance(loanId: String, throughWeek: Int = Int.MAX_VALUE): Balance {
         val loan = requireNotNull(loans[loanId])
-        val paid = latest().filter { it.loanId == loanId && it.week <= throughWeek }
-            .fold(0L) { sum, p -> Math.addExact(sum, p.amountPaise ?: 0L) }
+        val paid = if (throughWeek == Int.MAX_VALUE) totals[loanId] ?: 0L else
+            byLoan[loanId].orEmpty().values.filter { it.week <= throughWeek }
+                .fold(0L) { sum, p -> Math.addExact(sum, p.amountPaise ?: 0L) }
         val remaining = loan.totalPaise - paid
         return Balance(remaining, remaining == 0L)
     }

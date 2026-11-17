@@ -62,8 +62,8 @@ data class NotebookPage(val date: LocalDate)
 data class NotebookLine(val loan: Loan, val cycle: Int, val opening: Long, val ending: Long)
 val NotebookLine.isRed: Boolean get() = cycle > 0 || loan.openingInk == Ink.RED
 private fun NotebookState.lastCycle(loan: Loan): Int {
-    val maxWeek = ledger().latest().filter { it.loanId == loan.id }.maxOfOrNull { it.week } ?: 0
-    return if (maxWeek > 0 && maxWeek % 10 == 0 && !ledger().balance(loan.id).completed) maxWeek / 10 else (maxWeek.coerceAtLeast(1) - 1) / 10
+    val maxWeek = readLedger().latestForLoan(loan.id).maxOfOrNull { it.week } ?: 0
+    return if (maxWeek > 0 && maxWeek % 10 == 0 && !readLedger().balance(loan.id).completed) maxWeek / 10 else (maxWeek.coerceAtLeast(1) - 1) / 10
 }
 fun NotebookState.pages(bookId: String): List<NotebookPage> = volumeLoans(bookId)
     .flatMap { loan -> (firstVisibleCycle(bookId, loan)..maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan))).map { NotebookPage(dueDate(loan, it * 10 + 1)) } }.distinct().sortedBy { it.date }
@@ -78,7 +78,7 @@ fun NotebookState.nextCollectionForButtons(book: Book, today: LocalDate): LocalD
 fun NotebookState.weekButtonTargets(book: Book, today: LocalDate): Map<Int, List<NotebookPage>> {
     if (isArchived(book.id)) return emptyMap()
     val reference = nextCollectionForButtons(book, today)
-    val ledger = ledger()
+    val ledger = readLedger()
     return volumeLoans(book.id).filter { activeBookId(it) == book.id }
         .mapNotNull { loan ->
             val week = collectionWeek(loan, reference) ?: return@mapNotNull null
@@ -92,7 +92,7 @@ fun NotebookState.weekButtonTargets(book: Book, today: LocalDate): Map<Int, List
 /** Projection is read-only: it creates no receipt, debt, or backup change. */
 private fun NotebookState.visibleLastCycle(bookId: String, loan: Loan, reference: LocalDate?): Int {
     val saved = maxOf(firstVisibleCycle(bookId, loan), lastCycle(loan))
-    if (reference == null || isArchived(bookId) || activeBookId(loan) != bookId || ledger().balance(loan.id).completed) return saved
+    if (reference == null || isArchived(bookId) || activeBookId(loan) != bookId || readLedger().balance(loan.id).completed) return saved
     val week = collectionWeek(loan, reference) ?: return saved
     return if (week in 1..10000) maxOf(saved, (week - 1) / 10) else saved
 }
@@ -100,7 +100,7 @@ fun NotebookState.pagesForCollection(bookId: String, reference: LocalDate): List
     .flatMap { loan -> (firstVisibleCycle(bookId, loan)..visibleLastCycle(bookId, loan, reference)).map { NotebookPage(dueDate(loan, it * 10 + 1)) } }
     .distinct().sortedBy { it.date }
 fun NotebookState.pageLines(bookId: String, page: NotebookPage, reference: LocalDate? = null): List<NotebookLine> {
-    val ledger = ledger()
+    val ledger = readLedger()
     return volumeLoans(bookId).flatMap { loan ->
         (firstVisibleCycle(bookId, loan)..visibleLastCycle(bookId, loan, reference)).mapNotNull { cycle ->
             if (dueDate(loan, cycle * 10 + 1) != page.date) return@mapNotNull null
@@ -134,7 +134,7 @@ fun NotebookState.collectionBlanks(book: Book, date: LocalDate): List<Pair<Loan,
     if (isArchived(book.id)) throw InputProblem("காப்பக புத்தகத்தில் வசூல் செய்ய முடியாது / Book is archived")
     if (date > LocalDate.now()) throw InputProblem("எதிர்கால வசூலை முடிக்க முடியாது / Cannot close a future collection")
     if (!isCollectionDate(book, date)) throw InputProblem("இன்று இந்த புத்தகத்தின் வசூல் நாள் அல்ல / Not an active collection date for this book")
-    val ledger = ledger()
+    val ledger = readLedger()
     val recorded = ledger.latest().map { it.loanId to it.week }.toSet()
     return volumeLoans(book.id).filter { activeBookId(it) == book.id && it.started <= date && !ledger.balance(it.id).completed }
         .mapNotNull { loan -> collectionWeek(loan, date)?.let { loan to it } }
@@ -151,9 +151,9 @@ fun NotebookState.previousPage(loan: Loan, cycle: Int): NotebookPage? =
 
 /** Derived from latest receipts, never writes synthetic missed payments after settlement. */
 fun NotebookState.settlementWeek(loan: Loan): Int? {
-    val latest = ledger().latest().filter { it.loanId == loan.id }.sortedBy { it.week }
+    val latest = readLedger().latestForLoan(loan.id).sortedBy { it.week }
     var paid = 0L
-    if (!ledger().balance(loan.id).completed) return null
+    if (!readLedger().balance(loan.id).completed) return null
     return latest.firstOrNull { paid = Math.addExact(paid, it.amountPaise ?: 0L); paid >= loan.totalPaise }?.week
 }
 fun NotebookState.isAfterSettlement(loan: Loan, week: Int): Boolean = settlementWeek(loan)?.let { week > it } ?: false
