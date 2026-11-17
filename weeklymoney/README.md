@@ -1,6 +1,6 @@
 # வார வசூல் · Weekly Money
 
-A Tamil-first, fully offline, single-owner weekly collection notebook (Android 8+). [Download version 1.0](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.0) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
+A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.1](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.1) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
 
 ## Scope and use
 
@@ -17,7 +17,7 @@ Update the installed public notebook **without uninstalling or clearing data**. 
 
 The optional Tamil date table is bounded to supported 2026 dates; ordinary Gregorian dates continue to work. Unit, lint, Android emulator and synthetic same-key upgrade checks are recorded in [BUILD-STATUS.md](BUILD-STATUS.md). They are not independent security/financial certification or proof of functionality on every physical device. Historical versions and their original receipts remain available in Git history and [release pages](https://github.com/universalrp2003/RP-Android-Apps/releases?q=weekly-money).
 
-### Passwords, sharing and updates (1.1 candidate)
+### Passwords, sharing and updates (1.1)
 
 Changing the master password creates a verified encrypted backup with the new password before replacing local storage. Copy that backup off the phone. Backups made earlier still require the password used when each was created. Re-enable biometric access after a change. A failed backup prevents the password change.
 

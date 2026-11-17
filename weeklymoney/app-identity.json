@@ -9,11 +9,12 @@
   "namespace": "com.universalrp.weeklymoney",
   "previewPackage": "com.universalrp.weeklymoney.preview",
   "plannedProductionPackage": "com.universalrp.weeklymoney.preview.notebook",
-  "status": "stable-single-owner",
-  "publishedVersion": "1.0",
-  "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.0",
-  "offlineOnly": true,
+  "status": "stable-single-editor-handoff",
+  "publishedVersion": "1.1",
+  "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.1",
+  "offlineOnly": false,
   "updatePackage": "com.universalrp.weeklymoney.preview.notebook",
   "signerSha256": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
-  "updatePolicy": "Retain the public notebook package and persistent signing certificate; higher versionCode for every update. Never require routine uninstall/restore."
+  "updatePolicy": "Retain the public notebook package and persistent signing certificate; higher versionCode for every update. Never require routine uninstall/restore.",
+  "networkPolicy": "Optional manual update check only; notebooks and backups stay offline"
 }

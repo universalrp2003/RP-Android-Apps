@@ -48,7 +48,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
-              ("weekly-money-v1.0", "Weekly-Money-v1.0.apk", 7401255, "b23ea6dd75b1b6aa95798810f1abefa956dff06b8bca9ac95b7387218f687fb8"),
+              ("weekly-money-v1.1", "Weekly-Money-v1.1.apk", 7434055, "1ebae14f47b05458376e2346421d9c68b4d20874b8101114abfc9d6a09f887c0"),
               # Retention rule: the current release of every app. Historical releases are
               # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
@@ -107,8 +107,8 @@ jobs:
           test -s site/apks/Android-TV-Guard-v1.5.1.zip
           test -s site/apks/System-App-Disabler-v0.3.0.apk
           test -s site/apks/System-App-Disabler-v0.3.0.zip
-          test -s site/apks/Weekly-Money-v1.0.apk
-          test -s site/apks/Weekly-Money-v1.0.zip
+          test -s site/apks/Weekly-Money-v1.1.apk
+          test -s site/apks/Weekly-Money-v1.1.zip
           test -s site/apks/Tamilan-Store-v0.14.apk
           test -s site/apks/Tamilan-Store-v0.14.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk
