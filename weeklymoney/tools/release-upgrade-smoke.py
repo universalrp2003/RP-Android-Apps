@@ -1,4 +1,4 @@
-"""Emulator-only synthetic 1.1 -> non-debuggable 1.2 update proof. Never owner data."""
+"""Emulator-only synthetic 1.2 -> non-debuggable 1.3 update proof. Never owner data."""
 import hashlib
 import json
 from pathlib import Path
@@ -31,9 +31,9 @@ with tempfile.TemporaryDirectory() as tmp:
     adb('root'); adb('wait-for-device')
     encrypted = subprocess.check_output(['adb', 'exec-out', 'cat', '/sdcard/Download/WeeklyMoneySynthetic/weeklymoney-synthetic-upgrade.vvb'])
     assert len(encrypted) > 100 and encrypted.startswith(b'VVB\x01'), 'Missing encrypted synthetic fixture'
-    run('gh', 'release', 'download', 'weekly-money-v1.1', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.1.apk', '--dir', tmp)
-    old = Path(tmp)/'Weekly-Money-v1.1.apk'
-    assert hashlib.sha256(old.read_bytes()).hexdigest() == '1ebae14f47b05458376e2346421d9c68b4d20874b8101114abfc9d6a09f887c0'
+    run('gh', 'release', 'download', 'weekly-money-v1.2', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.2.apk', '--dir', tmp)
+    old = Path(tmp)/'Weekly-Money-v1.2.apk'
+    assert hashlib.sha256(old.read_bytes()).hexdigest() == '437b5c742c4164477ba16b64bed6aca7bb2e7ca641c46b9f11e17ef65e30c1e5'
     # Only this disposable emulator fixture is uninstalled to establish the real old baseline.
     if 'package:'+PACKAGE in adb('shell', 'pm', 'list', 'packages', PACKAGE).splitlines():
         assert 'Success' in adb('uninstall', PACKAGE)
@@ -75,8 +75,9 @@ with tempfile.TemporaryDirectory() as tmp:
         if 'Synthetic volume 2' in text: break
         time.sleep(1)
     assert 'Synthetic volume 2' in text, 'Release must decrypt and display existing notebook'
+    assert 'Check for updates' in text, 'Update check must be visible on the unlocked home of an upgraded install'
     assert 'Test preview' not in text and 'TEST 0.' not in text
-    receipt = dict(baseline='public1.1/code13', candidate='release1.2/code14', same_uid=True,
+    receipt = dict(baseline='public1.2/code14', candidate='release1.3/code15', same_uid=True,
                    encrypted_notebook_byte_identical=True, master_unlock_existing_volume=True,
                    apk_sha256=hashlib.sha256(apk.read_bytes()).hexdigest(), apk_bytes=apk.stat().st_size,
                    physical_phone=False)
