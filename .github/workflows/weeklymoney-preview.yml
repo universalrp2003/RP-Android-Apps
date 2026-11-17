@@ -1,7 +1,7 @@
 name: Weekly Money release verification
 on:
   push:
-    branches: ["arena/1e9cafce-rp-android-apps"]
+    branches: ["arena/172dd090-rp-android-apps"]
     paths:
       - "weeklymoney/**"
       - ".github/workflows/weeklymoney-preview.yml"
@@ -10,7 +10,7 @@ permissions:
   contents: read
 jobs:
   preview:
-    if: github.ref == 'refs/heads/arena/1e9cafce-rp-android-apps'
+    if: github.ref == 'refs/heads/arena/172dd090-rp-android-apps'
     runs-on: ubuntu-latest
     env:
       RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
@@ -104,21 +104,21 @@ jobs:
           directory=weeklymoney/app/build/outputs/apk/release
           handover=weeklymoney/app/build/handover
           mkdir -p "$handover"
-          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/release/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.notebook"; assert m["elements"][0]["versionCode"]==12; assert m["elements"][0]["versionName"]=="1.0"'
+          python3 -c 'import json; m=json.load(open("weeklymoney/app/build/outputs/apk/release/output-metadata.json")); assert m["applicationId"]=="com.universalrp.weeklymoney.preview.notebook"; assert m["elements"][0]["versionCode"]==13; assert m["elements"][0]["versionName"]=="1.1"'
           file=$(python3 -c 'import json; print(json.load(open("weeklymoney/app/build/outputs/apk/release/output-metadata.json"))["elements"][0]["outputFile"])')
-          cp "$directory/$file" "$handover/Weekly-Money-v1.0.apk"
+          cp "$directory/$file" "$handover/Weekly-Money-v1.1.apk"
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
-          "$tools/apksigner" verify --print-certs "$handover/Weekly-Money-v1.0.apk" > "$handover/signer.txt"
+          "$tools/apksigner" verify --print-certs "$handover/Weekly-Money-v1.1.apk" > "$handover/signer.txt"
           grep -q 'certificate SHA-256 digest: 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d' "$handover/signer.txt"
-          "$tools/aapt" dump badging "$handover/Weekly-Money-v1.0.apk" > "$handover/badging.txt"
+          "$tools/aapt" dump badging "$handover/Weekly-Money-v1.1.apk" > "$handover/badging.txt"
           ! grep -q 'application-debuggable' "$handover/badging.txt"
           grep -q "application-label:'வார வசூல்'" "$handover/badging.txt"
-          (cd "$handover" && sha256sum Weekly-Money-v1.0.apk > Weekly-Money-v1.0.apk.sha256)
-          echo "::notice title=APK SHA256::$(cat "$handover/Weekly-Money-v1.0.apk.sha256")"
+          (cd "$handover" && sha256sum Weekly-Money-v1.1.apk > Weekly-Money-v1.1.apk.sha256)
+          echo "::notice title=APK SHA256::$(cat "$handover/Weekly-Money-v1.1.apk.sha256")"
       - uses: actions/upload-artifact@v4
         if: success()
         with:
-          name: WeeklyMoney-1.0-signed-release
+          name: WeeklyMoney-1.1-signed-release
           path: |
             weeklymoney/app/build/handover/
             weeklymoney/app/build/release-upgrade-receipt.json

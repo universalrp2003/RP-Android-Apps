@@ -171,7 +171,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "weeklymoney", name = "Weekly Money", tamilName = "வார வசூல்",
-            tagPrefix = "weekly-money", version = "1.0", publishedVersion = "1.0",
+            tagPrefix = "weekly-money", version = "1.1", publishedVersion = "1.1",
             packageName = "com.universalrp.weeklymoney.preview.notebook",
             aboutLabel = "வார வசூல் / Weekly Money — GitHub release",
         ),

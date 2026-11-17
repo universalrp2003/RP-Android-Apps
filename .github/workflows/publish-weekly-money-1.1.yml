@@ -1,0 +1,23 @@
+name: Publish verified Weekly Money 1.1
+on:
+  push:
+    branches: ["arena/172dd090-rp-android-apps"]
+    paths: ["docs/approved-weekly-money-1.1.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-weekly-money-1.1
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/172dd090-rp-android-apps'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish verified APK without rebuilding
+        run: python3 tools/promote_weekly_money_1_1.py

@@ -1,4 +1,4 @@
-"""Emulator-only synthetic 0.11 -> non-debuggable 1.0 update proof. Never owner data."""
+"""Emulator-only synthetic 1.0 -> non-debuggable 1.1 update proof. Never owner data."""
 import hashlib
 import json
 from pathlib import Path
@@ -31,9 +31,9 @@ with tempfile.TemporaryDirectory() as tmp:
     adb('root'); adb('wait-for-device')
     encrypted = subprocess.check_output(['adb', 'exec-out', 'cat', '/sdcard/Download/WeeklyMoneySynthetic/weeklymoney-synthetic-upgrade.vvb'])
     assert len(encrypted) > 100 and encrypted.startswith(b'VVB\x01'), 'Missing encrypted synthetic fixture'
-    run('gh', 'release', 'download', 'weekly-money-v0.11', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v0.11.apk', '--dir', tmp)
-    old = Path(tmp)/'Weekly-Money-v0.11.apk'
-    assert hashlib.sha256(old.read_bytes()).hexdigest() == '83600bfa2b50a9989cf9cfbffb1a72b1da3f54b27163d5d591e31ba16c3aa2a4'
+    run('gh', 'release', 'download', 'weekly-money-v1.0', '--repo', 'universalrp2003/RP-Android-Apps', '--pattern', 'Weekly-Money-v1.0.apk', '--dir', tmp)
+    old = Path(tmp)/'Weekly-Money-v1.0.apk'
+    assert hashlib.sha256(old.read_bytes()).hexdigest() == 'b23ea6dd75b1b6aa95798810f1abefa956dff06b8bca9ac95b7387218f687fb8'
     # Only this disposable emulator fixture is uninstalled to establish the real old baseline.
     if 'package:'+PACKAGE in adb('shell', 'pm', 'list', 'packages', PACKAGE).splitlines():
         assert 'Success' in adb('uninstall', PACKAGE)
@@ -62,14 +62,21 @@ with tempfile.TemporaryDirectory() as tmp:
     tree = dump()
     button, = [n for n in tree.iter('node') if 'Continue' in n.get('text', '')]
     tap(button)
+    # The current-day book may open directly. Return to the list to inspect all volumes.
     for _ in range(15):
         tree = dump()
-        text = ' '.join(n.get('text', '') for n in tree.iter('node'))
+        nodes = list(tree.iter('node'))
+        text = ' '.join(n.get('text', '') for n in nodes)
+        home = next((n for n in nodes if 'புத்தகங்கள்' in n.get('text', '')), None)
+        if home is not None:
+            tap(home)
+            tree = dump()
+            text = ' '.join(n.get('text', '') for n in tree.iter('node'))
         if 'Synthetic volume 2' in text: break
         time.sleep(1)
     assert 'Synthetic volume 2' in text, 'Release must decrypt and display existing notebook'
     assert 'Test preview' not in text and 'TEST 0.' not in text
-    receipt = dict(baseline='public0.11/code11', candidate='release1.0/code12', same_uid=True,
+    receipt = dict(baseline='public1.0/code12', candidate='release1.1/code13', same_uid=True,
                    encrypted_notebook_byte_identical=True, master_unlock_existing_volume=True,
                    apk_sha256=hashlib.sha256(apk.read_bytes()).hexdigest(), apk_bytes=apk.stat().st_size,
                    physical_phone=False)

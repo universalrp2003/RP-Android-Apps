@@ -113,8 +113,8 @@ class WebsiteUsabilityTest(unittest.TestCase):
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
         self.assertEqual(len(ids), 16)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[0], 'app-live-guard')
-        self.assertEqual(ids[1], 'app-weekly-money')
+        self.assertEqual(ids[0], 'app-weekly-money')
+        self.assertEqual(ids[1], 'app-live-guard')
         self.assertEqual(ids[2], 'app-system-app-disabler')
 
         # Moving the oldest card to the front must be rejected.
@@ -122,7 +122,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- Live Guard -->')
+        first = shuffled.index('        <!-- Weekly Money -->')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',
@@ -133,17 +133,17 @@ class WebsiteUsabilityTest(unittest.TestCase):
             localization.verify_newest_first(shuffled, shuffled_ids)
         # And moving a middle card above the newest one must be rejected too.
         pristine = site
-        middle = pristine.index('        <!-- Weekly Money -->')
+        middle = pristine.index('        <!-- Live Guard -->')
         end = pristine.index('</article>', middle) + len('</article>')
         block = pristine[middle:end]
         reordered = pristine[:middle] + pristine[end:]
-        top = reordered.index('        <!-- Live Guard -->')
+        top = reordered.index('        <!-- Weekly Money -->')
         reordered = reordered[:top] + block + '\n\n' + reordered[top:]
         ids2 = re.findall(
             r'<h2 id="(app-[^"]+)"',
             re.search(r'aria-label="16 regular Android applications">(.*?)</section>', reordered, re.S)[1],
         )
-        self.assertEqual(ids2[0], 'app-weekly-money')
+        self.assertEqual(ids2[0], 'app-live-guard')
         with self.assertRaises(ValueError):
             localization.verify_newest_first(reordered, ids2)
 
