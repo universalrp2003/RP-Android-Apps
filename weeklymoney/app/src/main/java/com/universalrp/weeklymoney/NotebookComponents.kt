@@ -121,7 +121,8 @@ private val paper = Color(0xfffff8df)
                     EntryField("குடும்பத் தலைவர் / Family head", family, "loanFamily") { family = it; if (seed == null) { resolved = false; linked = null } }
                     EntryField("வாடிக்கையாளர் / Customer", name, "loanName") { name = it; if (seed == null) { resolved = false; linked = null } }
                     OutlinedTextField(contact, { contact = it }, singleLine = true,
-                        label = { Text("தொடர்பு எண் (விருப்பம்) / Contact (optional)") },
+                        label = { Text("தொடர்பு எண் / Phone", maxLines = 1) },
+                        supportingText = { Text("விருப்பம் / Optional") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         modifier = Modifier.fillMaxWidth().testTag("loanContact"))
                     EntryField("மொத்த ரூபாய் / Total rupees", amount, "loanAmount", true) { amount = it }

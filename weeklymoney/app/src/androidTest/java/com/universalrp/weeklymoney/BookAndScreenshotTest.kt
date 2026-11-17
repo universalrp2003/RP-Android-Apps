@@ -272,5 +272,22 @@ class BookAndScreenshotTest {
         assertEquals(continued, NotebookState.decode(continued.encode()))
         ui.onNodeWithTag("openArchivedVolume").performScrollTo().performClick(); waitFor("ledgerBook")
         ui.onNodeWithTag("finishCollection").assertDoesNotExist()
+        // Change the master password without altering previously exported encrypted bytes.
+        val oldBytes = File(context.filesDir, "notebooks.vvb").readBytes()
+        ui.onNodeWithTag("booksHome").performClick()
+        if (ui.onAllNodesWithTag("changeMasterPassword").fetchSemanticsNodes().isEmpty()) ui.onNodeWithTag("settingsMenu").performClick()
+        ui.onNodeWithTag("changeMasterPassword").performScrollTo().performClick()
+        ui.onNodeWithTag("oldMasterPassword").performScrollTo().performTextInput(password)
+        ui.onNodeWithTag("newMasterPassword").performScrollTo().performTextInput("synthetic-new-password")
+        ui.onNodeWithTag("confirmNewMasterPassword").performScrollTo().performTextInput("synthetic-new-password")
+        ui.onNodeWithTag("saveMasterPassword").performClick(); closed("saveMasterPassword")
+        val changed = File(context.filesDir, "notebooks.vvb").readBytes()
+        assertEquals(continued, NotebookState.decode(BackupCrypto.open(oldBytes, password.toCharArray())))
+        assertTrue(runCatching { BackupCrypto.open(oldBytes, "synthetic-new-password".toCharArray()) }.isFailure)
+        assertTrue(runCatching { BackupCrypto.open(changed, password.toCharArray()) }.isFailure)
+        assertEquals(continued, NotebookState.decode(BackupCrypto.open(changed, "synthetic-new-password".toCharArray())))
+        ui.activityRule.scenario.recreate(); waitFor("unlockPassword")
+        ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput("synthetic-new-password")
+        ui.onNodeWithTag("unlockContinue").performClick(); waitFor("bookHeader")
     }
 }

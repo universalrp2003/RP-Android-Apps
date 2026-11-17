@@ -124,6 +124,13 @@ class MainActivity : ComponentActivity() {
     private var lockAfterTask = false
     private var restoreBytes by mutableStateOf<ByteArray?>(null)
     private var restorePreview by mutableStateOf<NotebookState?>(null)
+    private var handoffBytes by mutableStateOf<ByteArray?>(null)
+    private var handoffPreview by mutableStateOf<NotebookState?>(null)
+    private val handoff = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) task { handoffBytes = withContext(Dispatchers.IO) {
+            requireNotNull(contentResolver.openInputStream(uri)).use { it.readBytesBounded() }
+        }; handoffPreview = null; message = "பகிர்ந்த backup கடவுச்சொல் / Enter shared backup password" }
+    }
     private val restore = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null && !hasLocalRecords()) task {
             restoreBytes = withContext(Dispatchers.IO) {
@@ -154,10 +161,13 @@ class MainActivity : ComponentActivity() {
         applyScreenshotPreference(getSharedPreferences("privacy", MODE_PRIVATE).getBoolean("allowScreenshots", false))
         if (intent?.action == android.content.Intent.ACTION_VIEW) {
             val uri = intent.data
-            if (hasLocalRecords()) message = "ஏற்கெனவே பதிவுகள் உள்ளன. Restore அவற்றை மாற்றாது; காலியான DEMO app-ஐப் பயன்படுத்தவும்."
-            else if (uri != null && uri.scheme in listOf("content", "file")) task {
-                restoreBytes = withContext(Dispatchers.IO) { requireNotNull(contentResolver.openInputStream(uri)).use { it.readBytesBounded() } }
-                message = "காப்பின் கடவுச்சொல் → Preview → உறுதிப்படுத்து. இன்னும் மீட்கப்படவில்லை."
+            if (uri != null && uri.scheme in listOf("content", "file")) task {
+                val bytes = withContext(Dispatchers.IO) { requireNotNull(contentResolver.openInputStream(uri)).use { it.readBytesBounded() } }
+                if (hasLocalRecords()) {
+                    handoffBytes = bytes; message = "முதலில் உங்கள் நோட்டைத் திறக்கவும் / Unlock your notebook before reviewing the shared backup."
+                } else {
+                    restoreBytes = bytes; message = "காப்பின் கடவுச்சொல் → Preview → உறுதிப்படுத்து. இன்னும் மீட்கப்படவில்லை."
+                }
             }
         }
         setContent { MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xff183f78), background = Color(0xfff7f0dd))) {
@@ -187,6 +197,16 @@ class MainActivity : ComponentActivity() {
                 if (current == null) Unlock() else Notebook(current)
             } }
         } }
+    }
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        val uri = intent.data
+        if (intent.action == android.content.Intent.ACTION_VIEW && uri != null && uri.scheme in listOf("content", "file")) task {
+            val bytes = withContext(Dispatchers.IO) { requireNotNull(contentResolver.openInputStream(uri)).use { it.readBytesBounded() } }
+            handoffPreview = null
+            if (hasLocalRecords()) { handoffBytes = bytes; message = "பகிர்ந்த backup-ஐச் சரிபார்க்கவும் / Review shared backup" }
+            else { restoreBytes = bytes; message = "காப்பின் கடவுச்சொல்லை உள்ளிடவும் / Enter backup password" }
+        }
     }
     override fun onStop() {
         authEpoch++; biometricSignal?.cancel(); biometricSignal = null; biometricPending = false
@@ -228,14 +248,17 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    private suspend fun save(next: NotebookState) {
-        state?.let { ensureWeeklyBackup(it) }
-        val encrypted = withContext(Dispatchers.Default) { BackupCrypto.seal(next.encode(), requireNotNull(secret)) }
+    private suspend fun writeEncrypted(encrypted: ByteArray) {
         withContext(Dispatchers.IO) {
             val stream = disk.startWrite()
             try { stream.write(encrypted); disk.finishWrite(stream) }
             catch (e: Exception) { disk.failWrite(stream); throw e }
         }
+    }
+    private suspend fun save(next: NotebookState) {
+        state?.let { ensureWeeklyBackup(it) }
+        val encrypted = withContext(Dispatchers.Default) { BackupCrypto.seal(next.encode(), requireNotNull(secret)) }
+        writeEncrypted(encrypted)
         state = next
     }
     @Composable private fun Unlock() {
@@ -321,6 +344,12 @@ class MainActivity : ComponentActivity() {
         var tools by remember { mutableStateOf(false) }
         var information by remember { mutableStateOf("") }
         var showArchived by remember { mutableStateOf(false) }
+        var changePassword by remember { mutableStateOf(false) }
+        var oldPassword by remember { mutableStateOf("") }
+        var newPassword by remember { mutableStateOf("") }
+        var confirmNewPassword by remember { mutableStateOf("") }
+        var sharedPassword by remember { mutableStateOf("") }
+        var passwordError by remember { mutableStateOf("") }
         var confirmArchive by remember { mutableStateOf(false) }
         var finishCollection by remember { mutableStateOf(false) }
         var collectionDate by remember { mutableStateOf(LocalDate.now()) }
@@ -350,7 +379,7 @@ class MainActivity : ComponentActivity() {
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {
                 if (information == "guide") Text("புத்தகம் உருவாக்கி வசூல் கிழமை தேர்வு செய்யவும். கடன் தொகை என்பது நீங்கள் முடிவு செய்யும் இறுதி மொத்தம்; வட்டி கணக்கிடப்படாது. முதல் வசூல் கடன் தேதிக்குப் பிறகு வரும் புத்தகக் கிழமை.\n\nபழைய பதிவு இயல்பாக ON: நீலம்/சிவப்பு தொடக்க நிறம் தேர்வு; வாரக் கட்டத்தைத் தொட்டு அசல் தொகை/தேதி உள்ளிடவும். வழக்கமான இன்றைய கூடுதல் வசூலுக்கு Settings-ல் பழைய பதிவு OFF செய்யவும். சிவப்பு பாக்கி கீழே, ஊர்வாரியாக வரிசை. ஒரே நேர பாக்கிக் கடன்களுக்கு மட்டும் I/II.\n\nவசூல் முடிந்தது: அந்த நாளின் காலிக் கட்டங்கள் மட்டும் –; பெற்ற தொகைகள் மாறாது. பின் வசூல்/புதிய கடன் சுருக்கம் மற்றும் backup.\n\nவாரத்தின் முதல் மாற்றத்திற்கு முன் முழு encrypted backup; வசூல் முடித்த பிறகும் backup. Android 10+: Downloads/WeeklyMoney. Android 8/9: Settings Backup folder தேர்வு. App திறந்து unlock செய்திருக்கும்போது மட்டுமே; பின்னணி வார scheduler அல்ல. Backup தோல்வி: முன் பதிவு நிறுத்தப்படும்; முடித்த பின் உள்ளூர் பதிவு பாதுகாப்பாக இருக்கும்—மீண்டும் Backup now செய்யவும்.\n\nBiometric-ஐ phone-ல் உறுதி செய்ய வேண்டும். Master password புதிய phone/restore/recoveryக்கு அவசியம். Downloads backup phone அழிந்தால் போய்விடும்: USB/மற்றொரு device/Drive-க்கும் நீங்களே நகலெடுக்கவும்.\n\nஇது உரிமையாளருக்கான இணையமில்லா நோட்டு. Master password-ஐ பாதுகாப்பாக வைக்கவும்; வேறு சாதனம் / USB-ல் encrypted backup வைத்திருக்கவும்.")
                 else {
-                    Text("RP Ideas · Rameshprathap R (@universalrp2003)\nApp 17 · Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\nOffline owner notebook\nPackage: $packageName\nNo ads; no interest calculation. Restore with your encrypted backup and master password.")
+                    Text("RP Ideas · Rameshprathap R (@universalrp2003)\nApp 17 · Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\nOffline owner notebook\nNo ads; no interest calculation. Restore with your encrypted backup and master password.")
                     Text("எங்கள் செயலிகள் / Our applications", style = MaterialTheme.typography.titleSmall)
                     OurApplications.names.forEachIndexed { index, name ->
                         Text("${index + 1}. $name", modifier = Modifier.testTag("ourApplication-$index"))
@@ -360,8 +389,65 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             } }, confirmButton = { TextButton(modifier = Modifier.testTag("closeInformation"), onClick = { information = "" }) { Text("சரி") } })
+        if (changePassword) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { if (!busy) { changePassword = false; oldPassword = ""; newPassword = ""; confirmNewPassword = "" } },
+            title = { Text("கடவுச்சொல் மாற்று / Change master password") },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text("பழைய backup-களைத் திறக்க பழைய password தேவை. புதிய backup-ஐ வேறு இடத்தில் சேமிக்கவும். / Old backups still need their old password. A new backup is created before the change.")
+                if (passwordError.isNotEmpty()) Text(passwordError, color = Color(0xffb3323c))
+                OutlinedTextField(oldPassword, { oldPassword = it }, label = { Text("தற்போதைய / Current password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("oldMasterPassword"))
+                OutlinedTextField(newPassword, { newPassword = it }, label = { Text("புதிய / New password (10+)") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("newMasterPassword"))
+                OutlinedTextField(confirmNewPassword, { confirmNewPassword = it }, label = { Text("மீண்டும் / Confirm new password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("confirmNewMasterPassword"))
+            } }, confirmButton = { TextButton(modifier = Modifier.testTag("saveMasterPassword"), enabled = !busy && oldPassword.length in 10..256 && newPassword.length in 10..256 && newPassword == confirmNewPassword && newPassword != oldPassword, onClick = {
+                val old = oldPassword.toCharArray(); val replacement = newPassword.toCharArray()
+                oldPassword = ""; newPassword = ""; confirmNewPassword = ""; passwordError = ""
+                task(onError = { passwordError = it }) {
+                    try {
+                        val diskBytes = withContext(Dispatchers.IO) { disk.openRead().use { it.readBytesBounded() } }
+                        val verified = withContext(Dispatchers.Default) { val plain = BackupCrypto.open(diskBytes, old); try { NotebookState.decode(plain) } finally { plain.fill(0) } }
+                        if (verified != current) throw InputProblem("தற்போதைய password அல்லது பதிவு பொருந்தவில்லை / Current password or notebook does not match")
+                        val encrypted = withContext(Dispatchers.Default) { BackupCrypto.seal(current.encode(), replacement) }
+                        withContext(Dispatchers.IO) { AutomaticBackup(this@MainActivity).write(encrypted, "password-change") }
+                        // Disable old biometric wrapping before replacing the encrypted file; failure leaves old password usable.
+                        if (android.os.Build.VERSION.SDK_INT >= 28 && biometricEnabled) { BiometricGate(this@MainActivity).disable(); biometricEnabled = false }
+                        writeEncrypted(encrypted)
+                        secret?.fill('\u0000'); secret = replacement.copyOf()
+                        changePassword = false
+                        message = "Password மாற்றப்பட்டது. பழைய backups-க்கு பழைய password தேவை; புதிய backup-ஐ வெளியே நகலெடுக்கவும். Biometric-ஐ மீண்டும் இணைக்கவும்."
+                    } finally { old.fill('\u0000'); replacement.fill('\u0000') }
+                }
+            }) { Text("மாற்று / Change") } }, dismissButton = { TextButton(enabled = !busy, onClick = { changePassword = false; oldPassword = ""; newPassword = ""; confirmNewPassword = ""; passwordError = "" }) { Text("ரத்து / Cancel") } })
+        if (handoffBytes != null) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { if (!busy) { handoffBytes = null; handoffPreview = null; sharedPassword = "" } },
+            title = { Text("பகிர்ந்த நோட்டு / Shared notebook") }, text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                val incoming = handoffPreview
+                if (incoming == null) {
+                    Text("ஒரே நேரத்தில் ஒருவர் மட்டும் பதிவு செய்யவும். பகிர்ந்த கோப்பின் password-ஐ உள்ளிடவும் / One person edits at a time. Enter the backup password.")
+                    OutlinedTextField(sharedPassword, { sharedPassword = it }, label = { Text("Backup password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("handoffPassword"))
+                } else {
+                    Text("${incoming.owner.name} · ${incoming.books.size} books · ${incoming.loans.size} loans · ${incoming.audits.size} history events")
+                    Text("இந்த phone-ன் தற்போதைய பதிவிற்கு முன் backup எடுக்கப்படும். புதிய பதிவுகள் மட்டும் உள்ள முழு நோட்டை ஏற்கிறீர்களா? Your local password stays unchanged.")
+                }
+            } }, confirmButton = { if (handoffPreview == null) TextButton(enabled = !busy && sharedPassword.length in 10..256, modifier = Modifier.testTag("reviewHandoff"), onClick = {
+                val entered = sharedPassword.toCharArray(); sharedPassword = ""
+                task { try {
+                    val loaded = withContext(Dispatchers.Default) { val plain = BackupCrypto.open(requireNotNull(handoffBytes), entered); try { NotebookState.decode(plain) } finally { plain.fill(0) } }
+                    when (HandoffPolicy.compare(current, loaded)) {
+                        HandoffPolicy.Decision.FORWARD -> handoffPreview = loaded
+                        HandoffPolicy.Decision.SAME -> { handoffBytes = null; message = "பதிவுகள் ஏற்கெனவே ஒரே மாதிரி / This notebook is already up to date." }
+                        HandoffPolicy.Decision.CONFLICT -> throw InputProblem("வேறுபட்ட அல்லது பழைய பதிவுகள்: தானாக மாற்றவில்லை. இரு உரிமையாளர்களும் சரிபார்க்கவும் / Older, different or conflicting notebook; nothing replaced. Review both copies.")
+                    }
+                } finally { entered.fill('\u0000') } }
+            }) { Text("சரிபார் / Review") } else TextButton(enabled = !busy, modifier = Modifier.testTag("confirmHandoff"), onClick = { task {
+                val incoming = requireNotNull(handoffPreview)
+                check(HandoffPolicy.compare(requireNotNull(state), incoming) == HandoffPolicy.Decision.FORWARD)
+                externalBackup(requireNotNull(state), "before-handoff")
+                save(incoming)
+                handoffPreview = null; handoffBytes = null
+                message = "பகிர்ந்த பதிவுகள் சேர்க்கப்பட்டன / Shared notebook updated. Keep only one person editing."
+            } }) { Text("உறுதிப்படுத்து / Update notebook") } }, dismissButton = { TextButton(enabled = !busy, onClick = { handoffBytes = null; handoffPreview = null; sharedPassword = "" }) { Text("ரத்து / Cancel") } })
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         if (tools) {
+            TextButton(enabled = !busy, modifier = Modifier.testTag("changeMasterPassword"), onClick = { passwordError = ""; changePassword = true }) { Text("Master password மாற்று / Change password") }
+            TextButton(enabled = !busy, modifier = Modifier.testTag("openSharedBackup"), onClick = { handoff.launch(arrayOf("application/octet-stream", "*/*")) }) { Text("பகிர்ந்த backup திற / Open shared backup") }
             Text("தானியங்கி encrypted backup: Downloads/WeeklyMoney · வார முதல் பதிவுக்கு முன் + வசூல் முடிந்ததும்")
             Text("கடைசி backup: ${getSharedPreferences("preferences", MODE_PRIVATE).getString("lastAutomaticBackup", "இன்னும் இல்லை")}")
             if (android.os.Build.VERSION.SDK_INT < 29) TextButton(onClick = { backupFolder.launch(null) }) { Text("Backup folder தேர்வு") }
