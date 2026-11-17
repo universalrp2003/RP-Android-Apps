@@ -39,6 +39,7 @@ import java.util.UUID
 /** Single-owner offline notebook; encrypted backups and master-passphrase restore. */
 class MainActivity : ComponentActivity() {
     private var reading by mutableStateOf(false)
+    private var confirmExit by mutableStateOf(false)
     private var stoppedAt = 0L
     private val autoLock = android.os.Handler(android.os.Looper.getMainLooper())
     private val lockAction = Runnable { if (busy) lockAfterTask = true else lock() }
@@ -178,6 +179,12 @@ class MainActivity : ComponentActivity() {
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (message.isNotEmpty()) Text(message, color = Color(0xff9c3030), style = MaterialTheme.typography.bodySmall)
                 val current = state
+                androidx.activity.compose.BackHandler(enabled = current == null) { if (!busy) confirmExit = true }
+                if (confirmExit) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { confirmExit = false },
+                    title = { Text("செயலியை மூடவா? / Exit app?") },
+                    text = { Text("பதிவுகள் பாதுகாப்பாக இருக்கும் / Your saved notebook stays on this device.") },
+                    confirmButton = { TextButton(modifier = Modifier.testTag("confirmExit"), onClick = { confirmExit = false; lock(); finish() }) { Text("மூடு / Exit") } },
+                    dismissButton = { TextButton(modifier = Modifier.testTag("cancelExit"), onClick = { confirmExit = false }) { Text("திரும்பு / Stay") } })
                 LaunchedEffect(current?.owner?.id, busy) {
                     if (current != null && !busy && !enrollmentOffered && !biometricEnabled &&
                         getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("biometricWanted", true)) {
@@ -364,9 +371,20 @@ class MainActivity : ComponentActivity() {
         val book = sorted.find { it.id == selected } ?: sorted.firstOrNull()
         var summary by remember { mutableStateOf(false) }
         var lockMinutes by remember { mutableStateOf(getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)) }
-        androidx.activity.compose.BackHandler(reading) { reading = false }
+        var previousBook by remember { mutableStateOf<Pair<String, LocalDate?>?>(null) }
+        androidx.activity.compose.BackHandler {
+            if (!busy) when {
+                reading && previousBook != null -> {
+                    selected = previousBook?.first; requestedPageDate = previousBook?.second
+                    previousBook = null; search = ""
+                }
+                reading -> { reading = false; previousBook = null }
+                tools -> tools = false
+                else -> confirmExit = true
+            }
+        }
         if (reading) Row(Modifier.horizontalScroll(rememberScrollState())) {
-            TextButton(modifier = Modifier.testTag("booksHome"), onClick = { reading = false }) { Text("‹ புத்தகங்கள்") }
+            TextButton(modifier = Modifier.testTag("booksHome"), onClick = { reading = false; previousBook = null }) { Text("‹ புத்தகங்கள்") }
             Text(book?.heading.orEmpty(), Modifier.padding(top = 12.dp))
             TextButton(modifier = Modifier.testTag("showSummary"), onClick = { summary = true; collectionDate = LocalDate.now() }) { Text("சுருக்கம்") }
             TextButton(modifier = Modifier.testTag("newLoan"), enabled = !busy && book != null && !current.isArchived(book.id), onClick = { loanSeed = null; editLoan = false; form = "loan" }) { Text("+ கடன்") }
@@ -506,7 +524,7 @@ class MainActivity : ComponentActivity() {
             }
             current.continuations.lastOrNull { it.toBook == book?.id }?.let { continuation ->
                 TextButton(modifier = Modifier.testTag("openArchivedVolume"), onClick = {
-                    showArchived = true; selected = continuation.fromBook; search = ""; reading = true
+                    previousBook = null; showArchived = true; selected = continuation.fromBook; search = ""; reading = true
                 }) { Text("முந்தைய காப்பக புத்தகம் — திறக்க / Open archived volume") }
             }
             if (book != null) TextButton(modifier = Modifier.testTag("bookHolidays"), onClick = { form = "holiday" }) { Text("வசூல் விடுமுறை நாட்கள் / Book holidays") }
@@ -521,12 +539,12 @@ class MainActivity : ComponentActivity() {
             Row { Checkbox(showArchived, { showArchived = it }); Text("காப்பகமும் / Include archived books") }
         }
         Row(Modifier.horizontalScroll(rememberScrollState())) { sorted.forEach { b ->
-            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { task { ensureWeeklyBackup(current); selected = b.id; requestedPageDate = null; search = ""; message = ""; reading = true } }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
+            FilterChip(modifier = Modifier.testTag("openBook-${b.id}"), selected = b.id == book?.id, onClick = { task { ensureWeeklyBackup(current); previousBook = null; selected = b.id; requestedPageDate = null; search = ""; message = ""; reading = true } }, label = { Text("${b.number} · ${BookInput.weekday(b.collectionDay)}") })
         } }
         } }
         if (reading) current.continuations.lastOrNull { it.toBook == book?.id }?.let { continuation ->
             TextButton(modifier = Modifier.testTag("readerArchivedVolume"), onClick = {
-                showArchived = true; selected = continuation.fromBook; search = ""
+                previousBook = book?.id?.let { it to requestedPageDate }; showArchived = true; selected = continuation.fromBook; search = ""; requestedPageDate = null
             }) { Text("முந்தைய 10 வாரங்கள் / முழு காப்பக புத்தகம் — திறக்க", style = MaterialTheme.typography.labelSmall) }
         }
         if (reading) OutlinedTextField(search, { search = it }, label = { Text("தேடல் / Place, family, customer") }, singleLine = true, keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -537,7 +555,7 @@ class MainActivity : ComponentActivity() {
             key(book.id) {
                 if (reading) LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth(), tamilDateEnabled, requestedPageDate,
                     onArchivePage = { loan, previous ->
-                        showArchived = true; selected = loan.bookId; search = ""; requestedPageDate = previous.date
+                        previousBook = book.id to requestedPageDate; showArchived = true; selected = loan.bookId; search = ""; requestedPageDate = previous.date
                     }) { selectedLoan, week, audit ->
                     openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
