@@ -263,6 +263,24 @@ class MainActivity : ComponentActivity() {
         writeEncrypted(encrypted)
         state = next
     }
+    @Composable private fun UpdateCheckControl(tag: String) {
+        var updateResult by remember { mutableStateOf<String?>(null) }
+        Column {
+            TextButton(enabled = !busy, modifier = Modifier.testTag(tag), onClick = {
+                updateResult = null
+                task(onError = { updateResult = "இணையம் அல்லது update தகவலைச் சரிபார்க்க முடியவில்லை / Update check failed; check your connection and try again." }) {
+                    val newer = withContext(Dispatchers.IO) { UpdateCheck.check(BuildConfig.VERSION_NAME) }
+                    updateResult = if (newer == null) "புதிய பதிப்பு இல்லை / No newer version available." else "புதிய பதிப்பு / New version available: $newer"
+                }
+            }) { Text("புதிய பதிப்பு பார்க்க / Check for updates") }
+            updateResult?.let { result ->
+                Text(result, modifier = Modifier.testTag("updateResult"))
+                if (result.contains("New version available")) TextButton(onClick = {
+                    runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(UpdateCheck.RELEASES))) }
+                }) { Text("அதிகாரப்பூர்வ பதிவிறக்கம் / Official download") }
+            }
+        }
+    }
     @Composable private fun Unlock() {
         val keyboard = LocalSoftwareKeyboardController.current
         val focus = LocalFocusManager.current
@@ -280,21 +298,8 @@ class MainActivity : ComponentActivity() {
             }) { Text("புரிந்தது · தொடரலாம்") } })
         val useBiometric = exists && biometricEnabled && restoreBytes == null
         LaunchedEffect(useBiometric) { if (useBiometric) biometricUnlock() }
-        var updateResult by remember { mutableStateOf<String?>(null) }
         Column(Modifier.verticalScroll(rememberScrollState())) {
-            TextButton(enabled = !busy, modifier = Modifier.testTag("checkUpdates"), onClick = {
-                updateResult = null
-                task(onError = { updateResult = "இணையம் அல்லது update தகவலைச் சரிபார்க்க முடியவில்லை / Update check failed; check your connection and try again." }) {
-                    val newer = withContext(Dispatchers.IO) { UpdateCheck.check(BuildConfig.VERSION_NAME) }
-                    updateResult = if (newer == null) "புதிய பதிப்பு இல்லை / No newer version available." else "புதிய பதிப்பு / New version available: $newer"
-                }
-            }) { Text("புதிய பதிப்பு பார்க்க / Check for updates") }
-            updateResult?.let { result ->
-                Text(result, modifier = Modifier.testTag("updateResult"))
-                if (result.contains("New version available")) TextButton(onClick = {
-                    runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(UpdateCheck.RELEASES))) }
-                }) { Text("அதிகாரப்பூர்வ பதிவிறக்கம் / Official download") }
-            }
+            UpdateCheckControl("checkUpdates")
             Text(if (exists) "திறக்க / Unlock" else "உரிமையாளர் அமைப்பு / Owner setup")
             Text("முழு backup-ஐ காலியான நிறுவலில் மீட்கலாம். Master password மற்றும் வெளிப்புற backup பாதுகாப்பாக வைக்கவும். / Restore a full backup on an empty installation. Keep your master password and an external encrypted backup.")
             if (useBiometric) {
@@ -417,6 +422,7 @@ class MainActivity : ComponentActivity() {
             TextButton(modifier = Modifier.testTag("guidePage"), onClick = { information = "guide" }) { Text("வழிகாட்டி / Guide") }
             TextButton(modifier = Modifier.testTag("aboutPage"), onClick = { information = "about" }) { Text("பற்றி / About") }
         }
+        UpdateCheckControl("checkUpdatesHome")
         if (information.isNotEmpty()) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { information = "" },
             title = { Text(if (information == "guide") "வார வசூல் · வழிகாட்டி" else "வார வசூல் · Weekly Money") },
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {

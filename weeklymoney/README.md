@@ -1,6 +1,6 @@
 # வார வசூல் · Weekly Money
 
-A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.2](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.2) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
+A Tamil-first offline weekly collection notebook with one-editor-at-a-time handoff and an optional manual update check (Android 8+). [Download version 1.3](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.3) · [தமிழ் / English guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [Build and publication verification](BUILD-STATUS.md).
 
 ## Scope and use
 

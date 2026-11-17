@@ -90,6 +90,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("confirmPassword").performScrollTo().performTextInput(password)
         ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
         waitFor("newBook")
+        ui.onNodeWithTag("checkUpdatesHome").assertIsDisplayed().assertIsEnabled()
         ui.onNodeWithTag("notebookOwnerName").assertTextContains("Synthetic Business", substring = true)
         ui.onNodeWithTag("settingsMenu").performClick()
         ui.onNodeWithTag("allowScreenshots").performScrollTo().performClick(); secure(false)
@@ -113,7 +114,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("ledgerBook").assertExists() // today's book opens automatically
         ui.onNodeWithTag("notebookOwnerName").assertTextContains("Synthetic Business", substring = true)
         InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
-        waitFor("bookHeader"); ui.onNodeWithTag("notebookOwnerName").assertTextContains("Synthetic Business", substring = true); openBook()
+        waitFor("bookHeader"); ui.onNodeWithTag("checkUpdatesHome").assertIsDisplayed().assertIsEnabled(); ui.onNodeWithTag("notebookOwnerName").assertTextContains("Synthetic Business", substring = true); openBook()
         ui.onNodeWithTag("newLoan").performClick()
         ui.onNodeWithTag("historicalLoan").assertDoesNotExist()
         ui.onNodeWithTag("loanPlace").performScrollTo().performTextInput("Synthetic Place")
