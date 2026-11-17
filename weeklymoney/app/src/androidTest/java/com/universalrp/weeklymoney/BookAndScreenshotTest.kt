@@ -299,6 +299,6 @@ class BookAndScreenshotTest {
         assertEquals(continued, NotebookState.decode(BackupCrypto.open(changed, "synthetic-new-password".toCharArray())))
         ui.activityRule.scenario.recreate(); waitFor("unlockPassword")
         ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput("synthetic-new-password")
-        ui.onNodeWithTag("unlockContinue").performClick(); waitFor("ledgerBook")
+        ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }; waitFor("ledgerBook")
     }
 }
