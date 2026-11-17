@@ -11,6 +11,7 @@ on:
     paths:
       - "site/**"
       - "tools/build_store_catalog.py"
+      - "tools/verify_live_three_releases.py"
       - "tamilanstore/src/main/assets/catalog.json"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
