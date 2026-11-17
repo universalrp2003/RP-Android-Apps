@@ -45,8 +45,9 @@ class LedgerSearchPerformanceTest {
         val started = System.nanoTime()
         listOf("Sample047", "Sample082", "Sample119").forEach { query ->
             ui.onNodeWithTag("perfSearch").performTextReplacement(query)
-            ui.waitUntil(10000) { ui.onAllNodesWithText(query).fetchSemanticsNodes().isNotEmpty() }
-            ui.onNodeWithText(query).assertExists()
+            val tag = "customer-loan${query.removePrefix("Sample").toInt()}"
+            ui.waitUntil(10000) { ui.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
+            ui.onNodeWithTag(tag).assertTextEquals(query)
         }
         val seconds = (System.nanoTime() - started) / 1_000_000_000.0
         android.util.Log.i("WeeklyMoneyRegression", "Synthetic 120 loans, 720 receipts: three searches ${seconds}s")
