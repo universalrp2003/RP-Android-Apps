@@ -40,6 +40,7 @@ class NotebookRulesTest {
         assertTrue(state.pageLines(b.id, nextPage, week11).single().isRed)
         assertEquals(page, state.previousPage(loan, 1))
         val paid = state.withReceipts(loan, listOf(ReceiptDraft(6, "100", sixth)))
+        assertEquals(listOf(page), paid.weekButtonTargets(b, sixth)[6])
         assertTrue(paid.weekButtonTargets(b, sixth.plusWeeks(1)).isEmpty())
         assertEquals(listOf(page), paid.pagesForCollection(b.id, sixth.plusWeeks(11)))
         assertTrue(state.audits.isEmpty()) // projection never writes receipts

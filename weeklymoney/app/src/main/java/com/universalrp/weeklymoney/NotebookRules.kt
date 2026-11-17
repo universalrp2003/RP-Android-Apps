@@ -74,15 +74,16 @@ fun NotebookState.nextCollectionForButtons(book: Book, today: LocalDate): LocalD
     while (day in skipped) day = day.plusWeeks(1)
     return day
 }
-/** Only unpaid loans actually due on the reference collection date get a shortcut. */
+/** An unpaid loan or one settled in this very collection week gets a shortcut. */
 fun NotebookState.weekButtonTargets(book: Book, today: LocalDate): Map<Int, List<NotebookPage>> {
     if (isArchived(book.id)) return emptyMap()
     val reference = nextCollectionForButtons(book, today)
     val ledger = ledger()
-    return volumeLoans(book.id).filter { activeBookId(it) == book.id && !ledger.balance(it.id).completed }
+    return volumeLoans(book.id).filter { activeBookId(it) == book.id }
         .mapNotNull { loan ->
             val week = collectionWeek(loan, reference) ?: return@mapNotNull null
             if (week !in 1..10000) return@mapNotNull null
+            if (ledger.balance(loan.id).completed && settlementWeek(loan) != week) return@mapNotNull null
             val cycle = (week - 1) / 10
             if (cycle < firstVisibleCycle(book.id, loan)) return@mapNotNull null
             ((week - 1) % 10 + 1) to NotebookPage(dueDate(loan, cycle * 10 + 1))
