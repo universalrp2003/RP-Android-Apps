@@ -1,3 +1,11 @@
+# Weekly Money 1.2 publication
+
+[Download the signed APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.2/Weekly-Money-v1.2.apk) · [Tamil guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [release notes](../releases/weekly-money-v1.2.md) · [publication receipt](../docs/weekly-money-1.2-publication-receipt.json).
+
+Version 1.2/code 14, SHA-256 `437b5c742c4164477ba16b64bed6aca7bb2e7ca641c46b9f11e17ef65e30c1e5`. CI 43997105422 verified Android 15 and public 1.1 in-place upgrade; publisher 43999516682 promoted exact bytes without rebuilding. No physical phone acceptance or independent security audit.
+
+## Previous publication
+
 # Weekly Money 1.1 publication
 
 [Download the verified signed APK](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.1/Weekly-Money-v1.1.apk) · [Tamil guide](https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html) · [release notes](../releases/weekly-money-v1.1.md) · [publication receipt](../docs/weekly-money-1.1-publication-receipt.json).

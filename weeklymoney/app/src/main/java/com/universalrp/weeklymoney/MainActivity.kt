@@ -175,6 +175,10 @@ class MainActivity : ComponentActivity() {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().then(if (!reading) Modifier.moneyPaper() else Modifier).windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
                 MoneyHomeHeading()
+                state?.let { notebook ->
+                    Text("உரிமையாளர் / தொழில்: ${notebook.owner.name}", modifier = Modifier.fillMaxWidth().testTag("notebookOwnerName"),
+                        style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
                 }
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (message.isNotEmpty()) Text(message, color = Color(0xff9c3030), style = MaterialTheme.typography.bodySmall)
@@ -305,6 +309,7 @@ class MainActivity : ComponentActivity() {
             val candidate = restorePreview
             if (candidate != null) {
                 Text("${candidate.owner.name} · ${candidate.books.size} books · ${candidate.loans.size} loans · ${candidate.audits.size} history events")
+                Text("Backup-ல் உள்ள உரிமையாளர் / தொழில் பெயரே மீண்டும் வரும்; புதிய பெயர் உருவாக்கப்படாது. / The original owner or business name is restored with the notebook.")
                 Text("Review before restoring. This will continue the original books, preserving their identities and history.")
                 Button(enabled = !busy, onClick = { task {
                     check(!hasLocalRecords()) { "Existing records must never be replaced" }
@@ -315,7 +320,11 @@ class MainActivity : ComponentActivity() {
                     Text("ரத்து / Cancel restore")
                 }
             }
-            if (!exists && restoreBytes == null) Field("உரிமையாளர் பெயர் / Owner name", name, "ownerName") { name = it }
+            if (!exists && restoreBytes == null) {
+                Text("உரிமையாளர் / நிறுவனம் / தொழில் பெயர்", style = MaterialTheme.typography.titleSmall)
+                Text("தனியாகப் பயன்படுத்தினால் உங்கள் பெயர்; பலர் பயன்படுத்தினால் பொதுவான தொழில் பெயர். உருவாக்கிய பின் பெயரை மாற்ற முடியாது. Backup மீட்டாலும் இதே பெயர் வரும்.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.testTag("ownerNameHelp"))
+                Field("பெயர் / Name", name, "ownerName") { name = it }
+            }
             if (!useBiometric || masterFallback) {
             OutlinedTextField(password, { password = it }, label = { Text("கடவுச்சொல் / Passphrase (10+ characters)") },
                 visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth().testTag("unlockPassword"))
@@ -390,6 +399,8 @@ class MainActivity : ComponentActivity() {
                 else -> confirmExit = true
             }
         }
+        if (reading) Text("உரிமையாளர் / தொழில்: ${current.owner.name}", modifier = Modifier.fillMaxWidth().testTag("notebookOwnerName"),
+            style = MaterialTheme.typography.labelSmall, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
         if (reading) Row(Modifier.horizontalScroll(rememberScrollState())) {
             TextButton(modifier = Modifier.testTag("booksHome"), onClick = { reading = false; previousBook = null }) { Text("‹ புத்தகங்கள்") }
             Text(book?.heading.orEmpty(), Modifier.padding(top = 12.dp))
