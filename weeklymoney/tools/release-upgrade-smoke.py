@@ -46,35 +46,40 @@ with tempfile.TemporaryDirectory() as tmp:
     adb('shell', 'chown', '-R', f'{uid}:{uid}', BASE+'/files')
     adb('shell', 'restorecon', '-R', BASE+'/files')
     before = subprocess.check_output(['adb', 'exec-out', 'cat', BASE+'/files/notebooks.vvb'])
+    def unlock_and_show_list():
+        adb('shell', 'am', 'start', '-n', PACKAGE+'/com.universalrp.weeklymoney.MainActivity')
+        for _ in range(15):
+            tree = dump()
+            fields = [n for n in tree.iter('node') if n.get('class') == 'android.widget.EditText']
+            if len(fields) == 1: break
+            time.sleep(1)
+        assert len(fields) == 1, 'Existing notebook must unlock, not show new-owner setup'
+        tap(fields[0]); adb('shell', 'input', 'text', 'synthetic-passphrase-only'); adb('shell', 'input', 'keyevent', '4')
+        tree = dump()
+        button, = [n for n in tree.iter('node') if 'Continue' in n.get('text', '')]
+        tap(button)
+        for _ in range(15):
+            tree = dump()
+            nodes = list(tree.iter('node'))
+            text = ' '.join(n.get('text', '') for n in nodes)
+            home = next((n for n in nodes if 'புத்தகங்கள்' in n.get('text', '')), None)
+            if home is not None:
+                tap(home)
+                tree = dump()
+                text = ' '.join(n.get('text', '') for n in tree.iter('node'))
+            if 'Synthetic volume 2' in text: return text
+            time.sleep(1)
+        raise AssertionError('Existing synthetic notebook volume not displayed')
+    # Prove that the genuine public old APK can open the schema-6 fixture first.
+    unlock_and_show_list()
+    adb('shell', 'am', 'force-stop', PACKAGE)
+    assert subprocess.check_output(['adb', 'exec-out', 'cat', BASE+'/files/notebooks.vvb']) == before
     metadata = json.loads((ROOT/'outputs/apk/release/output-metadata.json').read_text())
     apk = ROOT/'outputs/apk/release'/metadata['elements'][0]['outputFile']
     assert 'Success' in adb('install', '-r', str(apk))
     assert adb('shell', 'stat', '-c', '%u', BASE) == uid
     assert subprocess.check_output(['adb', 'exec-out', 'cat', BASE+'/files/notebooks.vvb']) == before
-    adb('shell', 'am', 'start', '-n', PACKAGE+'/com.universalrp.weeklymoney.MainActivity')
-    for _ in range(15):
-        tree = dump()
-        fields = [n for n in tree.iter('node') if n.get('class') == 'android.widget.EditText']
-        if len(fields) == 1: break
-        time.sleep(1)
-    assert len(fields) == 1, 'Existing notebook must unlock, not show new-owner setup'
-    tap(fields[0]); adb('shell', 'input', 'text', 'synthetic-passphrase-only'); adb('shell', 'input', 'keyevent', '4')
-    tree = dump()
-    button, = [n for n in tree.iter('node') if 'Continue' in n.get('text', '')]
-    tap(button)
-    # The current-day book may open directly. Return to the list to inspect all volumes.
-    for _ in range(15):
-        tree = dump()
-        nodes = list(tree.iter('node'))
-        text = ' '.join(n.get('text', '') for n in nodes)
-        home = next((n for n in nodes if 'புத்தகங்கள்' in n.get('text', '')), None)
-        if home is not None:
-            tap(home)
-            tree = dump()
-            text = ' '.join(n.get('text', '') for n in tree.iter('node'))
-        if 'Synthetic volume 2' in text: break
-        time.sleep(1)
-    assert 'Synthetic volume 2' in text, 'Release must decrypt and display existing notebook'
+    text = unlock_and_show_list()
     assert 'Check for updates' in text, 'Update check must be visible on the unlocked home of an upgraded install'
     assert 'Test preview' not in text and 'TEST 0.' not in text
     receipt = dict(baseline='public1.3/code15', candidate='release1.4/code16', same_uid=True,

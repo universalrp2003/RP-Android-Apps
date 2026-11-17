@@ -140,6 +140,9 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanContact").performScrollTo().performTextInput("+91 00000 00000")
         ui.onNodeWithTag("loanAmount").performScrollTo().performTextInput("1000")
         ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
+        ui.onNodeWithText("Synthetic Customer").performScrollTo().performTouchInput { longClick() }
+        waitFor("moveRowUp"); ui.onNodeWithTag("moveRowUp").assertIsEnabled()
+        ui.onNodeWithText("முடிந்தது / Done").performClick(); closed("moveRowUp")
         ui.onNodeWithText("Synthetic Customer").performScrollTo().performClick()
         waitFor("todayAmount")
         ui.onNodeWithTag("copyContact").assertTextContains("+91 00000 00000", substring = true)
