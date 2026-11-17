@@ -112,6 +112,7 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("bookSave").performClick(); waitFor("bookHeader")
         ui.activityRule.scenario.recreate(); unlock(); secure(false)
         ui.onNodeWithTag("openLongUnpaid").assertExists().performClick()
+        ui.onNodeWithTag("longUnpaidHeader").assertExists()
         ui.onNodeWithTag("longUnpaidAdd").performClick()
         ui.onNodeWithTag("longPlace").performScrollTo().performTextInput("Synthetic long place")
         ui.onNodeWithTag("longFamily").performScrollTo().performTextInput("Synthetic family")
@@ -307,10 +308,8 @@ class BookAndScreenshotTest {
             }
             val resolver = context.contentResolver
             val uri = checkNotNull(resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
-            // Make a real schema-6 baseline fixture for the public 1.3 upgrade, never real user data.
-            val legacy = org.json.JSONObject(String(continued.encode())).put("schema", 6)
-            listOf("longUnpaid", "longReceiptAudits", "longDebtChanges", "longTransfers", "rowOrders").forEach { legacy.remove(it) }
-            val encryptedLegacy = BackupCrypto.seal(legacy.toString().toByteArray(), password.toCharArray())
+            // Schema-7 synthetic notebook, including old balances and receipts, for public 1.4 upgrade.
+            val encryptedLegacy = BackupCrypto.seal(continued.encode(), password.toCharArray())
             checkNotNull(resolver.openOutputStream(uri)).use { it.write(encryptedLegacy) }
         }
         assertEquals(continued, NotebookState.decode(continued.encode()))

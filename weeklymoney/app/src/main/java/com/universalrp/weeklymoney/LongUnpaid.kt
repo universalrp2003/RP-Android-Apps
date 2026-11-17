@@ -40,6 +40,9 @@ fun NotebookState.longActiveBook(debt: LongUnpaid): String = longTransfers.fold(
 fun NotebookState.longVolume(bookId: String): List<LongUnpaid> = effectiveLongUnpaid().filter { debt ->
     debt.bookId == bookId || longTransfers.any { transfer -> debt.id in transfer.debtIds && continuations.single { it.id == transfer.continuationId }.toBook == bookId }
 }
+/** Display grouping only; retains original records and first-seen place and row order. */
+fun groupLongUnpaidByPlace(debts: List<LongUnpaid>): List<LongUnpaid> =
+    debts.groupBy { personText(it.place) }.values.flatMap { it }
 fun NotebookState.addLongUnpaid(book: Book, place: String, family: String, name: String, amount: String): NotebookState {
     if (isArchived(book.id)) throw InputProblem("காப்பகத்தில் பதிவு செய்ய முடியாது / Archived book is read-only")
     if (listOf(place, family, name).any { it.isBlank() }) throw InputProblem("இடம், குடும்பத் தலைவர், பெயர் தேவை / Enter place, family and name")

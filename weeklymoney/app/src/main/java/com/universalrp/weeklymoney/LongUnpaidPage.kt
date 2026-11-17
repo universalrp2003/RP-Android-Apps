@@ -8,6 +8,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -31,14 +34,33 @@ import java.time.format.DateTimeFormatter
     }
     Text("நீண்ட நாள் பாக்கி · ${book.number}", style = MaterialTheme.typography.titleMedium, modifier = Modifier.testTag("longUnpaidTitle"))
     Text("கடன் தேதி தேவையில்லை. பணம் பெற்ற தேதி மட்டும் பதியவும்.", style = MaterialTheme.typography.bodySmall)
-    val debts = state.longVolume(book.id)
+    val debts = groupLongUnpaidByPlace(state.longVolume(book.id))
     if (debts.isEmpty()) Text("பாக்கி பதிவு இல்லை / No old balances", Modifier.padding(12.dp))
+    val measurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    val cellStyle = MaterialTheme.typography.bodyMedium
+    fun width(minimum: Int, values: List<String>): Int {
+        val pixels = values.maxOfOrNull { measurer.measure(it, style = cellStyle.copy(fontWeight = FontWeight.Bold), maxLines = 1, softWrap = false).size.width } ?: 0
+        return maxOf(minimum, kotlin.math.ceil(pixels / density.density).toInt() + 24)
+    }
+    val widths = listOf(width(140, debts.map { it.place } + "இடம் / Place"), width(150, debts.map { it.family } + "குடும்பம் / Family"),
+        width(150, debts.map { it.customer } + "பெயர் / Customer"), width(100, debts.map { "₹${rupees(state.longRemaining(it))}" } + "மீதி / Balance"))
+    val ink = Color(0xffa52b37)
+    val border = Color(0xffbd7880)
+    @Composable fun Cell(text: String, index: Int, heading: Boolean = false) {
+        Box(Modifier.width(widths[index].dp).heightIn(min = 48.dp).border(0.5.dp, border).padding(horizontal = 8.dp, vertical = 10.dp)) {
+            Text(text, style = cellStyle, fontWeight = if (heading) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1, softWrap = false, color = ink)
+        }
+    }
     Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).horizontalScroll(rememberScrollState()).testTag("longUnpaidPage")) {
+        Row(Modifier.background(Color(0xfffff8df)).testTag("longUnpaidHeader")) {
+            listOf("இடம் / Place", "குடும்பம் / Family", "பெயர் / Customer", "மீதி / Balance").forEachIndexed { i, label -> Cell(label, i, true) }
+        }
         debts.forEach { debt ->
-            Row(Modifier.fillMaxWidth().clickable { selectedId = debt.id }.padding(vertical = 8.dp).testTag("longDebt-${debt.id}")) {
-                Text("${debt.place}  ·  ${debt.family}  ·  ${debt.customer}   ₹${rupees(state.longRemaining(debt))}", maxLines = 1, softWrap = false, color = Color(0xffa52b37))
+            Row(Modifier.background(Color(0xfffff8df)).clickable { selectedId = debt.id }.testTag("longDebt-${debt.id}")) {
+                listOf(debt.place, debt.family, debt.customer, "₹${rupees(state.longRemaining(debt))}").forEachIndexed { i, value -> Cell(value, i) }
             }
-            HorizontalDivider()
         }
     }
     if (adding || (editing && selected != null)) {

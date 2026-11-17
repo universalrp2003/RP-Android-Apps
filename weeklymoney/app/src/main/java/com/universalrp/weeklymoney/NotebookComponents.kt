@@ -83,7 +83,7 @@ private val paper = Color(0xfffff8df)
             error = ""
             if (contact.trim().length > 40 || contact.trim().any { !it.isDigit() && it !in "+ -()." })
                 throw InputProblem("தொடர்பு எண்ணைச் சரிபார்க்கவும் / Check contact number (maximum 40 characters)")
-            val matches = state.matchingCustomers(name)
+            val matches = state.matchingCustomers(place, family, name)
             if (!edit && !resolved && matches.isNotEmpty()) { choosing = true; return }
             val created = if (edit && seed != null) seed.copy(place = place.trim(), familyHead = family.trim(), customerName = name.trim(), contactNumber = contact.trim(), totalPaise = parseRupees(amount), started = date, openingInk = if (historyEnabled) openingInk else seed.openingInk)
                 else state.nextLoan(book, place, family, name, amount, date, linked).copy(contactNumber = contact.trim(), openingInk = if (historyEnabled) openingInk else Ink.BLUE)
@@ -98,8 +98,8 @@ private val paper = Color(0xfffff8df)
             Column(Modifier.verticalScroll(scroll)) {
                 if (error.isNotEmpty()) Text(error, color = redInk, modifier = Modifier.testTag("loanError"))
                 if (choosing) {
-                    Text("இதே பெயரில் பதிவு உள்ளது / Matching name already exists. Is this the same person?", modifier = Modifier.testTag("duplicatePrompt"))
-                    state.matchingCustomers(name).forEach { candidate ->
+                    Text("இதே இடம், குடும்பத் தலைவர், பெயரில் பதிவு உள்ளது. இவரேதானா? / Same place, family and name found. Is this the same person?", modifier = Modifier.testTag("duplicatePrompt"))
+                    state.matchingCustomers(place, family, name).forEach { candidate ->
                         val balance = state.customerLoans(candidate).sumOf { state.ledger().balance(it.id).remainingPaise }
                         Text("${candidate.place} → ${candidate.familyHead} → ${candidate.customerName}\n" +
                             if (balance > 0) "கடன் உள்ளது / Outstanding ₹${rupees(balance)}" else "முழுவதும் செலுத்தப்பட்டது / Fully paid. New loan needed?")

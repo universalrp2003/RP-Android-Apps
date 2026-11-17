@@ -23,7 +23,9 @@ fun roman(number: Int): String {
     return buildString { listOf(1000 to "M", 900 to "CM", 500 to "D", 400 to "CD", 100 to "C", 90 to "XC", 50 to "L", 40 to "XL", 10 to "X", 9 to "IX", 5 to "V", 4 to "IV", 1 to "I").forEach { (value, symbol) -> while (n >= value) { append(symbol); n -= value } } }
 }
 fun NotebookState.customerLoans(loan: Loan) = effectiveLoans().filter { it.customerId == loan.customerId }
-fun NotebookState.matchingCustomers(name: String) = effectiveLoans().filter { personText(it.customerName) == personText(name) }.distinctBy { it.customerId }
+fun NotebookState.matchingCustomers(place: String, family: String, name: String) = effectiveLoans().filter {
+    personText(it.place) == personText(place) && personText(it.familyHead) == personText(family) && personText(it.customerName) == personText(name)
+}.distinctBy { it.customerId }
 fun NotebookState.nextLoan(book: Book, place: String, family: String, name: String, amount: String,
                            date: LocalDate, existingCustomer: Loan? = null): Loan {
     if (listOf(place, family, name).any { it.isBlank() }) throw InputProblem("இடம், குடும்பத் தலைவர், பெயரை உள்ளிடவும் / Enter place, family head and customer")
