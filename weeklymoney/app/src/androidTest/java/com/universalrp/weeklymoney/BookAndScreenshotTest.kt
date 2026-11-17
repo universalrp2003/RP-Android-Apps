@@ -78,6 +78,7 @@ class BookAndScreenshotTest {
             context.getSharedPreferences("preferences", android.content.Context.MODE_PRIVATE).edit().putBoolean("biometricWanted", false).commit()
         }
         secure(true)
+        ui.onNodeWithTag("understandPasswordHelp").assertExists().performClick()
         ui.onNodeWithTag("checkUpdates").assertExists()
         InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
         waitFor("cancelExit"); ui.onNodeWithTag("cancelExit").performClick()

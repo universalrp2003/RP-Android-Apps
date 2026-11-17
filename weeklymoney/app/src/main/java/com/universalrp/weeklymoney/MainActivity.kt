@@ -267,6 +267,13 @@ class MainActivity : ComponentActivity() {
         var confirm by remember { mutableStateOf("") }
         val exists = hasLocalRecords()
         var masterFallback by remember { mutableStateOf(false) }
+        var showFirstHelp by remember { mutableStateOf(!exists && !getSharedPreferences("preferences", MODE_PRIVATE).getBoolean("firstPasswordHelpSeen", false)) }
+        if (showFirstHelp) AlertDialog(properties = dialogPrivacy(), onDismissRequest = {},
+            title = { Text("முதலில் இதைப் படியுங்கள்") },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(TamilGuide.firstStart) } },
+            confirmButton = { TextButton(modifier = Modifier.testTag("understandPasswordHelp"), onClick = {
+                getSharedPreferences("preferences", MODE_PRIVATE).edit().putBoolean("firstPasswordHelpSeen", true).apply(); showFirstHelp = false
+            }) { Text("புரிந்தது · தொடரலாம்") } })
         val useBiometric = exists && biometricEnabled && restoreBytes == null
         LaunchedEffect(useBiometric) { if (useBiometric) biometricUnlock() }
         var updateResult by remember { mutableStateOf<String?>(null) }
@@ -402,7 +409,10 @@ class MainActivity : ComponentActivity() {
         if (information.isNotEmpty()) AlertDialog(properties = dialogPrivacy(), onDismissRequest = { information = "" },
             title = { Text(if (information == "guide") "வார வசூல் · வழிகாட்டி" else "வார வசூல் · Weekly Money") },
             text = { Column(Modifier.verticalScroll(rememberScrollState())) {
-                if (information == "guide") Text("புத்தகம் உருவாக்கி வசூல் கிழமை தேர்வு செய்யவும். கடன் தொகை என்பது நீங்கள் முடிவு செய்யும் இறுதி மொத்தம்; வட்டி கணக்கிடப்படாது. முதல் வசூல் கடன் தேதிக்குப் பிறகு வரும் புத்தகக் கிழமை.\n\nபழைய பதிவு இயல்பாக ON: நீலம்/சிவப்பு தொடக்க நிறம் தேர்வு; வாரக் கட்டத்தைத் தொட்டு அசல் தொகை/தேதி உள்ளிடவும். வழக்கமான இன்றைய கூடுதல் வசூலுக்கு Settings-ல் பழைய பதிவு OFF செய்யவும். சிவப்பு பாக்கி கீழே, ஊர்வாரியாக வரிசை. ஒரே நேர பாக்கிக் கடன்களுக்கு மட்டும் I/II.\n\nவசூல் முடிந்தது: அந்த நாளின் காலிக் கட்டங்கள் மட்டும் –; பெற்ற தொகைகள் மாறாது. பின் வசூல்/புதிய கடன் சுருக்கம் மற்றும் backup.\n\nவாரத்தின் முதல் மாற்றத்திற்கு முன் முழு encrypted backup; வசூல் முடித்த பிறகும் backup. Android 10+: Downloads/WeeklyMoney. Android 8/9: Settings Backup folder தேர்வு. App திறந்து unlock செய்திருக்கும்போது மட்டுமே; பின்னணி வார scheduler அல்ல. Backup தோல்வி: முன் பதிவு நிறுத்தப்படும்; முடித்த பின் உள்ளூர் பதிவு பாதுகாப்பாக இருக்கும்—மீண்டும் Backup now செய்யவும்.\n\nBiometric-ஐ phone-ல் உறுதி செய்ய வேண்டும். Master password புதிய phone/restore/recoveryக்கு அவசியம். Downloads backup phone அழிந்தால் போய்விடும்: USB/மற்றொரு device/Drive-க்கும் நீங்களே நகலெடுக்கவும்.\n\nஇது உரிமையாளருக்கான இணையமில்லா நோட்டு. Master password-ஐ பாதுகாப்பாக வைக்கவும்; வேறு சாதனம் / USB-ல் encrypted backup வைத்திருக்கவும்.")
+                if (information == "guide") {
+                    Text(TamilGuide.guide, modifier = Modifier.testTag("tamilGuideText"))
+                    TextButton(onClick = { runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse("https://universalrp2003.github.io/RP-Android-Apps/weekly-money-guide.html"))) } }) { Text("இணையத்தில் முழு வழிகாட்டி") }
+                }
                 else {
                     Text("RP Ideas · Rameshprathap R (@universalrp2003)\nApp 17 · Version ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\nOffline owner notebook\nNo ads; no interest calculation. Restore with your encrypted backup and master password.")
                     Text("எங்கள் செயலிகள் / Our applications", style = MaterialTheme.typography.titleSmall)
