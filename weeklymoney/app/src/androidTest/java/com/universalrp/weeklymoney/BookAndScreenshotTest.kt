@@ -39,8 +39,8 @@ class BookAndScreenshotTest {
         waitFor("unlockPassword")
         ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput(password)
         ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
-        waitFor("bookHeader")
-        openBook()
+        ui.waitUntil(20000) { ui.onAllNodesWithTag("ledgerBook").fetchSemanticsNodes().isNotEmpty() || ui.onAllNodesWithTag("bookHeader").fetchSemanticsNodes().isNotEmpty() }
+        if (ui.onAllNodesWithTag("ledgerBook").fetchSemanticsNodes().isEmpty()) openBook()
     }
     private fun openBook() {
         val file = File(context.filesDir, "notebooks.vvb")
@@ -78,14 +78,16 @@ class BookAndScreenshotTest {
             context.getSharedPreferences("preferences", android.content.Context.MODE_PRIVATE).edit().putBoolean("biometricWanted", false).commit()
         }
         secure(true)
-        ui.onNodeWithTag("allowScreenshots").performClick(); secure(false)
+        ui.onNodeWithTag("checkUpdates").assertExists()
+        ui.onNodeWithTag("allowScreenshots").assertDoesNotExist()
         ui.onNodeWithTag("ownerName").performScrollTo().performTextInput("Synthetic Owner")
         ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput(password)
         ui.onNodeWithTag("confirmPassword").performScrollTo().performTextInput(password)
         ui.onNodeWithTag("unlockContinue").assertIsEnabled().performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }
         waitFor("newBook")
         ui.onNodeWithTag("settingsMenu").performClick()
-        ui.onNodeWithTag("historyEntrySetting").assertIsOn()
+        ui.onNodeWithTag("allowScreenshots").performScrollTo().performClick(); secure(false)
+        ui.onNodeWithTag("historyEntrySetting").performScrollTo().assertIsOn()
         ui.onNodeWithTag("historyEntrySetting").performScrollTo().performClick()
         ui.onNodeWithTag("settingsMenu").performClick()
         ui.onNodeWithTag("guidePage").performClick(); waitFor("closeInformation")
@@ -100,6 +102,7 @@ class BookAndScreenshotTest {
         InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
         ui.onNodeWithTag("bookSave").performClick(); waitFor("bookHeader")
         ui.activityRule.scenario.recreate(); unlock(); secure(false)
+        ui.onNodeWithTag("ledgerBook").assertExists() // today's book opens automatically
         ui.onNodeWithTag("newLoan").performClick()
         ui.onNodeWithTag("historicalLoan").assertDoesNotExist()
         ui.onNodeWithTag("loanPlace").performScrollTo().performTextInput("Synthetic Place")
@@ -224,7 +227,8 @@ class BookAndScreenshotTest {
         ui.activityRule.scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
         ui.onNodeWithTag("unlockPassword").assertDoesNotExist() // default five-minute background grace
         ui.onNodeWithTag("booksHome").performClick()
-        ui.onNodeWithTag("allowScreenshots").performClick(); secure(true)
+        ui.onNodeWithTag("settingsMenu").performClick()
+        ui.onNodeWithTag("allowScreenshots").performScrollTo().performClick(); secure(true)
         ui.activityRule.scenario.recreate(); waitFor("unlockPassword"); secure(true)
         unlock()
         ui.onNodeWithTag("booksHome").performClick()
@@ -288,6 +292,6 @@ class BookAndScreenshotTest {
         assertEquals(continued, NotebookState.decode(BackupCrypto.open(changed, "synthetic-new-password".toCharArray())))
         ui.activityRule.scenario.recreate(); waitFor("unlockPassword")
         ui.onNodeWithTag("unlockPassword").performScrollTo().performTextInput("synthetic-new-password")
-        ui.onNodeWithTag("unlockContinue").performClick(); waitFor("bookHeader")
+        ui.onNodeWithTag("unlockContinue").performClick(); waitFor("ledgerBook")
     }
 }

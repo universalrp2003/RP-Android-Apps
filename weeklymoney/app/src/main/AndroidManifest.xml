@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
-    <!-- Intentionally no internet, storage or package-install permissions. -->
+    <!-- Internet is used only for the optional, user-initiated update check. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application android:allowBackup="false" android:fullBackupContent="false"
         android:usesCleartextTraffic="false" android:label="${weeklymoneyLabel}"
         android:icon="@drawable/ic_weeklymoney" android:theme="@style/Theme.WeeklyMoney">

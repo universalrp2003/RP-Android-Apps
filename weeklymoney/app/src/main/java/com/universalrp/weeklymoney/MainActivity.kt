@@ -174,15 +174,6 @@ class MainActivity : ComponentActivity() {
             Surface(Modifier.fillMaxSize()) { Column(Modifier.fillMaxSize().then(if (!reading) Modifier.moneyPaper() else Modifier).windowInsetsPadding(WindowInsets.safeDrawing).imePadding().padding(16.dp)) {
                 if (!reading) {
                 MoneyHomeHeading()
-                Row {
-                    Switch(checked = screenshotsAllowed, enabled = !busy,
-                        modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
-                            getSharedPreferences("privacy", MODE_PRIVATE).edit().putBoolean("allowScreenshots", allowed).apply()
-                            applyScreenshotPreference(allowed)
-                        })
-                    Text("ஸ்கிரீன்ஷாட் / Screenshots " + if (screenshotsAllowed) "ON" else "OFF")
-                }
-                if (screenshotsAllowed) Text("கவனம்: பெயர், தொகை படத்தில் தெரியும் / Names and amounts may appear in screenshots.", style = MaterialTheme.typography.bodySmall)
                 }
                 if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
                 if (message.isNotEmpty()) Text(message, color = Color(0xff9c3030), style = MaterialTheme.typography.bodySmall)
@@ -271,7 +262,21 @@ class MainActivity : ComponentActivity() {
         var masterFallback by remember { mutableStateOf(false) }
         val useBiometric = exists && biometricEnabled && restoreBytes == null
         LaunchedEffect(useBiometric) { if (useBiometric) biometricUnlock() }
+        var updateResult by remember { mutableStateOf<String?>(null) }
         Column(Modifier.verticalScroll(rememberScrollState())) {
+            TextButton(enabled = !busy, modifier = Modifier.testTag("checkUpdates"), onClick = {
+                updateResult = null
+                task(onError = { updateResult = "இணையம் அல்லது update தகவலைச் சரிபார்க்க முடியவில்லை / Update check failed; check your connection and try again." }) {
+                    val newer = withContext(Dispatchers.IO) { UpdateCheck.check(BuildConfig.VERSION_NAME) }
+                    updateResult = if (newer == null) "புதிய பதிப்பு இல்லை / No newer version available." else "புதிய பதிப்பு / New version available: $newer"
+                }
+            }) { Text("புதிய பதிப்பு பார்க்க / Check for updates") }
+            updateResult?.let { result ->
+                Text(result, modifier = Modifier.testTag("updateResult"))
+                if (result.contains("New version available")) TextButton(onClick = {
+                    runCatching { startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(UpdateCheck.RELEASES))) }
+                }) { Text("அதிகாரப்பூர்வ பதிவிறக்கம் / Official download") }
+            }
             Text(if (exists) "திறக்க / Unlock" else "உரிமையாளர் அமைப்பு / Owner setup")
             Text("முழு backup-ஐ காலியான நிறுவலில் மீட்கலாம். Master password மற்றும் வெளிப்புற backup பாதுகாப்பாக வைக்கவும். / Restore a full backup on an empty installation. Keep your master password and an external encrypted backup.")
             if (useBiometric) {
@@ -334,7 +339,9 @@ class MainActivity : ComponentActivity() {
     @Composable private fun ColumnScope.Notebook(current: NotebookState) {
         val keyboard = LocalSoftwareKeyboardController.current
         val focus = LocalFocusManager.current
-        var selected by remember { mutableStateOf<String?>(null) }
+        val todayBook = current.books.firstOrNull { !current.isArchived(it.id) && it.collectionDay == LocalDate.now().dayOfWeek && it.started <= LocalDate.now() }
+        var selected by remember { mutableStateOf(todayBook?.id) }
+        LaunchedEffect(current.owner.id) { if (todayBook != null) reading = true }
         var requestedPageDate by remember { mutableStateOf<LocalDate?>(null) }
         var form by remember { mutableStateOf("") }
         var repeatCandidate by remember { mutableStateOf<Loan?>(null) }
@@ -446,6 +453,14 @@ class MainActivity : ComponentActivity() {
             } }) { Text("உறுதிப்படுத்து / Update notebook") } }, dismissButton = { TextButton(enabled = !busy, onClick = { handoffBytes = null; handoffPreview = null; sharedPassword = "" }) { Text("ரத்து / Cancel") } })
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
         if (tools) {
+            Row {
+                Switch(checked = screenshotsAllowed, enabled = !busy, modifier = Modifier.testTag("allowScreenshots"), onCheckedChange = { allowed ->
+                    getSharedPreferences("privacy", MODE_PRIVATE).edit().putBoolean("allowScreenshots", allowed).apply()
+                    applyScreenshotPreference(allowed)
+                })
+                Text("ஸ்கிரீன்ஷாட் / Screenshots " + if (screenshotsAllowed) "ON" else "OFF")
+            }
+            if (screenshotsAllowed) Text("கவனம்: பெயர், தொகை படத்தில் தெரியும் / Names and amounts may appear in screenshots.", style = MaterialTheme.typography.bodySmall)
             TextButton(enabled = !busy, modifier = Modifier.testTag("changeMasterPassword"), onClick = { passwordError = ""; changePassword = true }) { Text("Master password மாற்று / Change password") }
             TextButton(enabled = !busy, modifier = Modifier.testTag("openSharedBackup"), onClick = { handoff.launch(arrayOf("application/octet-stream", "*/*")) }) { Text("பகிர்ந்த backup திற / Open shared backup") }
             Text("தானியங்கி encrypted backup: Downloads/WeeklyMoney · வார முதல் பதிவுக்கு முன் + வசூல் முடிந்ததும்")
