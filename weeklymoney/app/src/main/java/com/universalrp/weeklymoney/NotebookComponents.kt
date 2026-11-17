@@ -4,6 +4,14 @@ import android.app.DatePickerDialog
 import android.view.WindowManager
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateZoom
@@ -294,6 +302,10 @@ private val paper = Color(0xfffff8df)
     val filteredIds = remember(state, search) { if (search.isBlank()) null else state.ledger().search(search).map { it.id }.toSet() }
     val pager = rememberPagerState(pageCount = { pages.size.coerceAtLeast(1) })
     val scope = rememberCoroutineScope()
+    val pageButtonList = rememberLazyListState()
+    LaunchedEffect(pager.currentPage, pages.size) {
+        if (pages.isNotEmpty()) pageButtonList.animateScrollToItem(pager.currentPage.coerceAtMost(pages.lastIndex))
+    }
     LaunchedEffect(search, pages, requestedPageDate) {
         val requestedIndex = pages.indexOfFirst { it.date == requestedPageDate }
         if (requestedIndex >= 0) { pager.scrollToPage(requestedIndex); return@LaunchedEffect }
@@ -311,9 +323,27 @@ private val paper = Color(0xfffff8df)
             TextButton(onClick = { zoom = 1f }, modifier = Modifier.testTag("resetBookZoom")) { Text("100%") }
             TextButton(onClick = { pinchEnabled = !pinchEnabled }, modifier = Modifier.testTag("pinchToggle")) { Text(if (pinchEnabled) "Pinch ON" else "Pinch OFF") }
         }
+        if (pages.isNotEmpty()) {
+            LazyRow(state = pageButtonList, modifier = Modifier.fillMaxWidth().testTag("ledgerPageButtons"),
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(pages.indices.toList()) { index ->
+                    val selected = pager.currentPage == index
+                    Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                        .background(if (selected) blueInk else Color.White.copy(alpha = .65f), RoundedCornerShape(8.dp))
+                        .border(1.dp, blueInk, RoundedCornerShape(8.dp))
+                        .selectable(selected = selected, role = Role.Tab, onClick = { scope.launch { pager.scrollToPage(index) } })
+                        .semantics { contentDescription = "பக்கம் ${index + 1} / Page ${index + 1}" }
+                        .testTag("ledgerPage-${index + 1}"), contentAlignment = Alignment.Center) {
+                        Text("${index + 1}", modifier = Modifier.padding(horizontal = 10.dp), color = if (selected) Color.White else blueInk,
+                            style = MaterialTheme.typography.titleMedium)
+                    }
+                }
+            }
+        }
         Row(Modifier.fillMaxWidth()) {
             TextButton(enabled = pager.currentPage > 0, onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } }) { Text("‹ முந்தைய / Previous") }
-            Text("${pager.currentPage + 1}/${pages.size.coerceAtLeast(1)}", Modifier.padding(top = 14.dp))
+            Text("${pager.currentPage + 1}/${pages.size.coerceAtLeast(1)}", Modifier.padding(top = 14.dp).testTag("ledgerPageCount"))
             TextButton(enabled = pager.currentPage < pages.lastIndex, modifier = Modifier.testTag("nextLedgerPage"), onClick = { scope.launch { pager.animateScrollToPage(pager.currentPage + 1) } }) { Text("அடுத்த / Next ›") }
         }
         if (pages.isEmpty()) Text("புதிய கடன் சேர்க்கவும் / Add a loan to start the ledger", Modifier.padding(12.dp))
