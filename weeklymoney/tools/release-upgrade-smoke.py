@@ -62,9 +62,16 @@ with tempfile.TemporaryDirectory() as tmp:
     tree = dump()
     button, = [n for n in tree.iter('node') if 'Continue' in n.get('text', '')]
     tap(button)
+    # The current-day book may open directly. Return to the list to inspect all volumes.
     for _ in range(15):
         tree = dump()
-        text = ' '.join(n.get('text', '') for n in tree.iter('node'))
+        nodes = list(tree.iter('node'))
+        text = ' '.join(n.get('text', '') for n in nodes)
+        home = next((n for n in nodes if 'புத்தகங்கள்' in n.get('text', '')), None)
+        if home is not None:
+            tap(home)
+            tree = dump()
+            text = ' '.join(n.get('text', '') for n in tree.iter('node'))
         if 'Synthetic volume 2' in text: break
         time.sleep(1)
     assert 'Synthetic volume 2' in text, 'Release must decrypt and display existing notebook'
