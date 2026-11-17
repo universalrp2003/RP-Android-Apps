@@ -12,7 +12,9 @@ object HandoffPolicy {
         if (local.owner != incoming.owner || !prefix(local.books, incoming.books) ||
             !prefix(local.loans, incoming.loans) || !prefix(local.audits, incoming.audits) ||
             !prefix(local.archiveHistory, incoming.archiveHistory) || !prefix(local.loanChanges, incoming.loanChanges) ||
-            !prefix(local.collectionDays, incoming.collectionDays) || !prefix(local.continuations, incoming.continuations)) return Decision.CONFLICT
+            !prefix(local.collectionDays, incoming.collectionDays) || !prefix(local.continuations, incoming.continuations) ||
+            !prefix(local.longUnpaid, incoming.longUnpaid) || !prefix(local.longReceiptAudits, incoming.longReceiptAudits) || !prefix(local.longDebtChanges, incoming.longDebtChanges) ||
+            !prefix(local.longTransfers, incoming.longTransfers) || !prefix(local.rowOrders, incoming.rowOrders)) return Decision.CONFLICT
         return Decision.FORWARD
     }
 }

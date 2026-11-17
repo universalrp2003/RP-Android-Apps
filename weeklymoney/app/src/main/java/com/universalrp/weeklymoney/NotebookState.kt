@@ -17,7 +17,12 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
                          val archiveHistory: List<BookArchiveEvent> = emptyList(),
                          val loanChanges: List<LoanChange> = emptyList(),
                          val collectionDays: List<CollectionDayChange> = emptyList(),
-                         val continuations: List<BookContinuation> = emptyList()) {
+                         val continuations: List<BookContinuation> = emptyList(),
+                         val longUnpaid: List<LongUnpaid> = emptyList(),
+                         val longReceiptAudits: List<LongReceiptAudit> = emptyList(),
+                         val longDebtChanges: List<LongDebtChange> = emptyList(),
+                         val longTransfers: List<LongTransfer> = emptyList(),
+                         val rowOrders: List<RowOrder> = emptyList()) {
     init {
         require(owner.role == Role.OWNER)
         require(books.map { it.id }.distinct().size == books.size)
@@ -38,6 +43,7 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
         require(collectionDays.all { event -> event.id.isNotBlank() && event.actorId == owner.id && event.reason.isNotBlank() &&
             books.any { it.id == event.bookId && event.date >= it.started && event.date.dayOfWeek == it.collectionDay } })
         validateContinuations()
+        validateLongUnpaid()
         Ledger(projected, audits)
     }
     fun isArchived(bookId: String) = archiveHistory.lastOrNull { it.bookId == bookId }?.archived ?: false
@@ -52,7 +58,18 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
         return copy(loanChanges = loanChanges + LoanChange(newId(), before, after, owner.id, Instant.now()))
     }
     fun encode(): ByteArray = JSONObject().apply {
-        put("schema", 6); put("kind", "FULL_BACKUP")
+        put("schema", 7); put("kind", "FULL_BACKUP")
+        put("longUnpaid", JSONArray().apply { longUnpaid.forEach { d -> put(JSONObject().apply {
+            put("id", d.id); put("book", d.bookId); put("place", d.place); put("family", d.family); put("customer", d.customer); put("opening", d.openingPaise)
+        }) } })
+        put("longDebtChanges", JSONArray().apply { longDebtChanges.forEach { e -> put(JSONObject().put("id", e.id).put("before", e.before.longDebtJson()).put("after", e.after.longDebtJson()).put("actor", e.actorId).put("at", e.at.toString())) } })
+        put("longReceiptAudits", JSONArray().apply { longReceiptAudits.forEach { e -> put(JSONObject().apply {
+            put("id", e.id); put("before", e.before?.longJson() ?: JSONObject.NULL); put("after", e.after.longJson()); put("actor", e.actorId); put("at", e.at.toString())
+        }) } })
+        put("longTransfers", JSONArray().apply { longTransfers.forEach { t -> put(JSONObject().put("continuation", t.continuationId).put("debts", JSONArray(t.debtIds))) } })
+        put("rowOrders", JSONArray().apply { rowOrders.forEach { e -> put(JSONObject().apply {
+            put("id", e.id); put("book", e.bookId); put("page", e.page.toString()); put("loans", JSONArray(e.loanIds)); put("actor", e.actorId); put("at", e.at.toString())
+        }) } })
         put("continuations", JSONArray().apply { continuations.forEach { e -> put(JSONObject().apply {
             put("id", e.id); put("from", e.fromBook); put("to", e.toBook); put("date", e.date.toString())
             put("loans", JSONArray(e.loanIds)); put("actor", e.actorId); put("at", e.at.toString())
@@ -86,10 +103,10 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
             require(bytes.size <= BackupCrypto.MAX_FILE)
             val root = JSONObject(bytes.toString(Charsets.UTF_8))
             val schema = root.getInt("schema")
-            require(schema in 1..6 && root.getString("kind") == "FULL_BACKUP")
+            require(schema in 1..7 && root.getString("kind") == "FULL_BACKUP")
             val owner = root.getJSONObject("owner").let { Actor(it.getString("id"), it.getString("name"), Role.OWNER) }
             fun <T> array(key: String, parse: (JSONObject) -> T): List<T> {
-                val a = root.optJSONArray(key) ?: if (key == "archiveHistory" || (key == "continuations" && schema < 5) || (key == "loanChanges" && schema == 1) || (key == "collectionDays" && schema < 3)) JSONArray() else error("Missing records"); require(a.length() <= 100000)
+                val a = root.optJSONArray(key) ?: if (key == "archiveHistory" || (key == "continuations" && schema < 5) || (key == "loanChanges" && schema == 1) || (key == "collectionDays" && schema < 3) || (key in listOf("longUnpaid", "longReceiptAudits", "longDebtChanges", "longTransfers", "rowOrders") && schema < 7)) JSONArray() else error("Missing records"); require(a.length() <= 100000)
                 return (0 until a.length()).map { parse(a.getJSONObject(it)) }
             }
             return NotebookState(owner,
@@ -102,8 +119,15 @@ data class NotebookState(val owner: Actor, val books: List<Book> = emptyList(),
                     it.getBoolean("skipped"), it.getString("reason"), it.getString("actor"), Instant.parse(it.getString("at"))) },
                 array("continuations") { e -> BookContinuation(e.getString("id"), e.getString("from"), e.getString("to"),
                     LocalDate.parse(e.getString("date")), (0 until e.getJSONArray("loans").length()).map { e.getJSONArray("loans").getString(it) },
-                    e.getString("actor"), Instant.parse(e.getString("at"))) })
+                    e.getString("actor"), Instant.parse(e.getString("at"))) },
+                array("longUnpaid") { d -> LongUnpaid(d.getString("id"), d.getString("book"), d.getString("place"), d.getString("family"), d.getString("customer"), d.getLong("opening")) },
+                array("longReceiptAudits") { e -> LongReceiptAudit(e.getString("id"), if (e.isNull("before")) null else longReceipt(e.getJSONObject("before")), longReceipt(e.getJSONObject("after")), e.getString("actor"), Instant.parse(e.getString("at"))) },
+                array("longDebtChanges") { e -> LongDebtChange(e.getString("id"), longDebt(e.getJSONObject("before")), longDebt(e.getJSONObject("after")), e.getString("actor"), Instant.parse(e.getString("at"))) },
+                array("longTransfers") { t -> LongTransfer(t.getString("continuation"), (0 until t.getJSONArray("debts").length()).map { t.getJSONArray("debts").getString(it) }) },
+                array("rowOrders") { e -> RowOrder(e.getString("id"), e.getString("book"), LocalDate.parse(e.getString("page")), (0 until e.getJSONArray("loans").length()).map { e.getJSONArray("loans").getString(it) }, e.getString("actor"), Instant.parse(e.getString("at"))) })
         }
+        private fun longDebt(d: JSONObject) = LongUnpaid(d.getString("id"), d.getString("book"), d.getString("place"), d.getString("family"), d.getString("customer"), d.getLong("opening"))
+        private fun longReceipt(j: JSONObject) = LongReceipt(j.getString("id"), j.getString("debt"), LocalDate.parse(j.getString("date")), j.getLong("amount"), j.getLong("revision"))
         private fun loan(it: JSONObject) = Loan(it.getString("id"), it.getString("book"), it.getString("customerId"), it.getString("place"), it.getString("family"), it.getString("name"), it.getLong("total"), LocalDate.parse(it.getString("started")), it.getInt("sequence"), Ink.valueOf(it.optString("openingInk", "BLUE")), it.optString("contact", ""))
         private fun payment(j: JSONObject) = Payment(j.getString("id"), j.getString("loan"), j.getInt("week"),
             LocalDate.parse(j.getString("date")), if (j.isNull("amount")) null else j.getLong("amount"),
@@ -121,3 +145,6 @@ private fun Loan.json() = JSONObject().apply {
     put("family", familyHead); put("name", customerName); put("contact", contactNumber); put("total", totalPaise)
     put("started", started.toString()); put("sequence", sequence); put("openingInk", openingInk.name)
 }
+
+private fun LongReceipt.longJson() = JSONObject().put("id", id).put("debt", debtId).put("date", date.toString()).put("amount", amountPaise).put("revision", revision)
+private fun LongUnpaid.longDebtJson() = JSONObject().put("id", id).put("book", bookId).put("place", place).put("family", family).put("customer", customer).put("opening", openingPaise)

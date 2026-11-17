@@ -40,9 +40,14 @@ fun NotebookState.continueBook(from: Book, to: Book, now: Instant = Instant.now(
     val futureHolidays = skippedDates(from.id).filter { it >= to.started }.map { date ->
         CollectionDayChange(newId(), to.id, date, true, "முந்தைய புத்தக விடுமுறை / Inherited holiday", owner.id, now)
     }
+    val carriedLong = effectiveLongUnpaid().filter { longActiveBook(it) == from.id && longRemaining(it) > 0 }
+    if (latestLongReceipts().any { p -> carriedLong.any { it.id == p.debtId } && p.date > to.started })
+        throw InputProblem("புதிய புத்தக தேதி கடைசி பதிவுக்கு முன் இருக்க முடியாது / Start date precedes existing records")
+    val continuationId = newId()
     return copy(books = books + to, collectionDays = collectionDays + futureHolidays,
         archiveHistory = archiveHistory + BookArchiveEvent(newId(), from.id, true, owner.id, now),
-        continuations = continuations + BookContinuation(newId(), from.id, to.id, to.started, carried.map { it.id }, owner.id, now))
+        continuations = continuations + BookContinuation(continuationId, from.id, to.id, to.started, carried.map { it.id }, owner.id, now),
+        longTransfers = longTransfers + LongTransfer(continuationId, carriedLong.map { it.id }))
 }
 
 /** A successor starts with each carried debt's latest ten-week sheet; older sheets stay in archive. */

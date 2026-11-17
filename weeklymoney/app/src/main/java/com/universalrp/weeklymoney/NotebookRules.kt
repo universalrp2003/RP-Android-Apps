@@ -73,9 +73,25 @@ fun NotebookState.pageLines(bookId: String, page: NotebookPage): List<NotebookLi
             val opening = ledger.balance(loan.id, cycle * 10).remainingPaise
             if (cycle > 0 && opening == 0L) null else NotebookLine(loan, cycle, opening, ledger.balance(loan.id, (cycle + 1) * 10).remainingPaise)
         }
-    }.sortedWith(compareBy<NotebookLine> { if (it.isRed) 1 else 0 }
-        .thenBy { personText(it.loan.place) }.thenBy { personText(it.loan.familyHead) }
-        .thenBy { personText(it.loan.customerName) }.thenBy { it.loan.started }.thenBy { it.loan.sequence })
+    }.let { lines ->
+        val saved = rowOrders.lastOrNull { it.bookId == bookId && it.page == page.date }?.loanIds.orEmpty()
+        val rank = saved.withIndex().associate { it.value to it.index }
+        val created = loans.mapIndexed { index, loan -> loan.id to index }.toMap()
+        lines.sortedWith(compareBy<NotebookLine> { if (it.isRed) 1 else 0 }
+            .thenBy { rank[it.loan.id] ?: (saved.size + (created[it.loan.id] ?: Int.MAX_VALUE / 2)) })
+    }
+}
+fun NotebookState.movePageLine(bookId: String, page: NotebookPage, loanId: String, direction: Int): NotebookState {
+    require(direction == -1 || direction == 1)
+    if (isArchived(bookId)) throw InputProblem("காப்பக வரிசையை மாற்ற முடியாது / Archived book is read-only")
+    val lines = pageLines(bookId, page)
+    val index = lines.indexOfFirst { it.loan.id == loanId }
+    if (index < 0) throw InputProblem("பதிவு கிடைக்கவில்லை / Row not found")
+    val target = index + direction
+    if (target !in lines.indices || lines[target].isRed != lines[index].isRed) return this
+    val ids = lines.map { it.loan.id }.toMutableList()
+    java.util.Collections.swap(ids, index, target)
+    return copy(rowOrders = rowOrders + RowOrder(newId(), bookId, page.date, ids, owner.id, Instant.now()))
 }
 
 /** Only the selected collection week's blank cells; never backfill older/future weeks. */

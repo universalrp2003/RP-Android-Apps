@@ -376,6 +376,8 @@ class MainActivity : ComponentActivity() {
         var loanSeed by remember { mutableStateOf<Loan?>(null) }
         var editLoan by remember { mutableStateOf(false) }
         var search by remember { mutableStateOf("") }
+        var longPage by remember { mutableStateOf(false) }
+        var moving by remember { mutableStateOf<Pair<Loan, NotebookPage>?>(null) }
         var tools by remember { mutableStateOf(false) }
         var information by remember { mutableStateOf("") }
         var showArchived by remember { mutableStateOf(false) }
@@ -393,6 +395,12 @@ class MainActivity : ComponentActivity() {
         var summary by remember { mutableStateOf(false) }
         var lockMinutes by remember { mutableStateOf(getSharedPreferences("preferences", MODE_PRIVATE).getInt("lockMinutes", 5)) }
         var previousBook by remember { mutableStateOf<Pair<String, LocalDate?>?>(null) }
+        if (longPage && book != null) {
+            androidx.activity.compose.BackHandler { if (!busy) longPage = false }
+            LongUnpaidPage(current, book, busy, dialogPrivacy(), screenshotsAllowed, back = { longPage = false },
+                commit = { next, done -> task(onError = { done(it) }) { save(next); done(null) } })
+            return
+        }
         androidx.activity.compose.BackHandler {
             if (!busy) when {
                 reading && previousBook != null -> {
@@ -581,16 +589,32 @@ class MainActivity : ComponentActivity() {
             if (!reading) Text("புத்தகம் ${book.number} · ${book.started.format(DateTimeFormatter.ofPattern("dd-MM-uuuu"))}", modifier = Modifier.testTag("bookHeader"))
             key(book.id) {
                 if (reading) LedgerBook(current, book, search, Modifier.weight(1f).fillMaxWidth(), tamilDateEnabled, requestedPageDate,
-                    onArchivePage = { loan, previous ->
+                    onReorder = { loan, page -> moving = loan to page }, onArchivePage = { loan, previous ->
                         previousBook = book.id to requestedPageDate; showArchived = true; selected = loan.bookId; search = ""; requestedPageDate = previous.date
                     }) { selectedLoan, week, audit ->
                     openedLoanId = selectedLoan.id; initialWeek = week; initialAll = false; initialAudit = audit
                 }
             }
         } else Text("ஒரு புத்தகத்தை உருவாக்கவும் / Create your first notebook")
-        if (reading && book != null && !current.isArchived(book.id)) TextButton(enabled = !busy,
-            modifier = Modifier.testTag("finishCollection"), onClick = { collectionDate = LocalDate.now(); finishCollection = true }) {
-            Text("வசூல் முடிந்தது / Collection finished")
+        if (reading && book != null) Row(Modifier.horizontalScroll(rememberScrollState())) {
+            TextButton(enabled = !busy, modifier = Modifier.testTag("openLongUnpaid"), onClick = { longPage = true }) { Text("பழைய பாக்கி / Old balance") }
+            if (!current.isArchived(book.id)) TextButton(enabled = !busy,
+                modifier = Modifier.testTag("finishCollection"), onClick = { collectionDate = LocalDate.now(); finishCollection = true }) {
+                Text("வசூல் முடிந்தது / Collection finished")
+            }
+        }
+        moving?.let { (loan, page) ->
+            AlertDialog(properties = dialogPrivacy(), onDismissRequest = { if (!busy) moving = null },
+                title = { Text("வரிசை மாற்று / Move row") },
+                text = { Column {
+                    Text("${loan.place} · ${loan.familyHead} · ${current.customerLabel(loan)}")
+                    Text("நீலம் அல்லது சிவப்பு குழுவுக்குள் முழு வரியும் நகரும். தேடல் இருந்தால் முதலில் அதை நீக்கவும். / Move the whole row within its colour group.")
+                    Row {
+                        TextButton(modifier = Modifier.testTag("moveRowUp"), enabled = !busy && search.isBlank() && book != null && !current.isArchived(book.id), onClick = { task { save(current.movePageLine(requireNotNull(book).id, page, loan.id, -1)) } }) { Text("↑ மேலே / Up") }
+                        TextButton(modifier = Modifier.testTag("moveRowDown"), enabled = !busy && search.isBlank() && book != null && !current.isArchived(book.id), onClick = { task { save(current.movePageLine(requireNotNull(book).id, page, loan.id, 1)) } }) { Text("↓ கீழே / Down") }
+                    }
+                    TextButton(onClick = { moving = null; openedLoanId = loan.id; initialWeek = null; initialAll = false; initialAudit = true }) { Text("திருத்த வரலாறு / History") }
+                } }, confirmButton = { TextButton(onClick = { moving = null }) { Text("முடிந்தது / Done") } })
         }
         if (finishCollection && book != null) {
             val targets = runCatching { current.collectionBlanks(book, collectionDate) }.getOrDefault(emptyList())

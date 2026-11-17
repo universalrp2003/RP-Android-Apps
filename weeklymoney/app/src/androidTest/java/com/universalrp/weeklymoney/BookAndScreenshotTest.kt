@@ -111,6 +111,23 @@ class BookAndScreenshotTest {
         InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
         ui.onNodeWithTag("bookSave").performClick(); waitFor("bookHeader")
         ui.activityRule.scenario.recreate(); unlock(); secure(false)
+        ui.onNodeWithTag("openLongUnpaid").assertExists().performClick()
+        ui.onNodeWithTag("longUnpaidAdd").performClick()
+        ui.onNodeWithTag("longPlace").performScrollTo().performTextInput("Synthetic long place")
+        ui.onNodeWithTag("longFamily").performScrollTo().performTextInput("Synthetic family")
+        ui.onNodeWithTag("longCustomer").performScrollTo().performTextInput("Synthetic old debt")
+        ui.onNodeWithTag("longOpening").performScrollTo().performTextInput("100")
+        ui.onNodeWithTag("saveLongDebt").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }; closed("saveLongDebt")
+        val debt = NotebookState.decode(BackupCrypto.open(File(context.filesDir, "notebooks.vvb").readBytes(), password.toCharArray())).longUnpaid.single()
+        ui.onNodeWithTag("longDebt-${debt.id}").performClick()
+        ui.onNodeWithTag("addLongReceipt").performClick()
+        ui.onNodeWithTag("longReceiptAmount").performTextInput("25")
+        ui.onNodeWithTag("saveLongReceipt").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick) { it() }; closed("saveLongReceipt")
+        val partial = NotebookState.decode(BackupCrypto.open(File(context.filesDir, "notebooks.vvb").readBytes(), password.toCharArray()))
+        assertEquals(7500L, partial.longRemaining(debt))
+        assertEquals(today, partial.latestLongReceipts().single().date)
+        ui.onNodeWithTag("closeLongDetails").performClick()
+        ui.onNodeWithTag("longUnpaidBack").performClick()
         ui.onNodeWithTag("ledgerBook").assertExists() // today's book opens automatically
         ui.onNodeWithTag("notebookOwnerName").assertTextContains("Synthetic Business", substring = true)
         InstrumentationRegistry.getInstrumentation().uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
@@ -155,6 +172,8 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
         history(true)
         searchFirstPage()
+        val blueLabel = ui.onNodeWithText("Synthetic Customer I").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].single()
+        assertTrue(blueLabel.spanStyles.any { it.item.color == androidx.compose.ui.graphics.Color(0xffb3323c) })
         ui.onNodeWithText("Synthetic Customer I").performScrollTo().performClick(); waitFor("receiptAmount-1")
         ui.onNodeWithTag("allTenWeeks").assertDoesNotExist()
         ui.onNodeWithTag("editLoanDetails").performScrollTo().performClick(); waitFor("openingRed")
@@ -163,6 +182,8 @@ class BookAndScreenshotTest {
         ui.onNodeWithTag("openingRed").performScrollTo().performClick()
         ui.onNodeWithTag("loanSave").performClick(); closed("loanSave")
         searchFirstPage()
+        val redLabel = ui.onNodeWithText("Synthetic Customer I").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.Text].single()
+        assertTrue(redLabel.spanStyles.any { it.item.color == androidx.compose.ui.graphics.Color(0xff153c8b) })
         ui.onNodeWithText("Synthetic Customer I").performScrollTo().performClick(); waitFor("receiptAmount-1")
         ui.onNodeWithTag("receiptAmount-1").performScrollTo().performTextReplacement("50")
         ui.onNodeWithTag("receiptSave").performClick(); closed("receiptSave")
@@ -283,7 +304,11 @@ class BookAndScreenshotTest {
             }
             val resolver = context.contentResolver
             val uri = checkNotNull(resolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
-            checkNotNull(resolver.openOutputStream(uri)).use { it.write(File(context.filesDir, "notebooks.vvb").readBytes()) }
+            // Make a real schema-6 baseline fixture for the public 1.3 upgrade, never real user data.
+            val legacy = org.json.JSONObject(String(continued.encode())).put("schema", 6)
+            listOf("longUnpaid", "longReceiptAudits", "longDebtChanges", "longTransfers", "rowOrders").forEach { legacy.remove(it) }
+            val encryptedLegacy = BackupCrypto.seal(legacy.toString().toByteArray(), password.toCharArray())
+            checkNotNull(resolver.openOutputStream(uri)).use { it.write(encryptedLegacy) }
         }
         assertEquals(continued, NotebookState.decode(continued.encode()))
         ui.onNodeWithTag("openArchivedVolume").performScrollTo().performClick(); waitFor("ledgerBook")
