@@ -1,0 +1,32 @@
+name: Oor compass candidate emulator verification
+on:
+  push:
+    branches: ["arena/440b6275-rp-android-apps"]
+    paths: [".github/workflows/oor-compass-native.yml", "tools/oor_compass_candidate_smoke.py"]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact signed candidate and public baseline
+        run: |
+          gh run download 44217614992 --name oorarivippu-stable-candidate-1248 --dir "$RUNNER_TEMP/candidate"
+          gh release download oor-arivippu-v1.1.21 --pattern 'Oor-Arivippu-v1.1.21.apk' --dir "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/Oor-Arivippu-v1.1.21.apk" "$RUNNER_TEMP/oor-base.apk"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Real update and settings on disposable Android 15 emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 tools/oor_compass_candidate_smoke.py

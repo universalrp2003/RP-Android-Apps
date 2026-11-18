@@ -658,3 +658,5 @@ Exact `CleanSweep-v2.97.apk`: **14,784,299B**, SHA-256 `121b2c757996910849c76b70
 - Published: 2026-11-17T09:39:55Z. Exact tested run 44053299356 attempt 2 artifact promoted by publisher 44057582802 without rebuilding.
 - APK: 7,499,595 bytes, SHA-256 `b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6`.
 - Same package and signer, code 17. Android 15 UI/search and 1.4 synthetic in-place upgrade passed; user reports phone search works but installed APK hash not checked. [Receipt](weekly-money-1.5-publication-receipt.json).
+
+- Oor Arivippu 1.1.22 / code27: `Oor-Arivippu-v1.1.22.apk`, 12941104 bytes, SHA-256 `5d8777f1f9eb6ed8eeb87fbcf89cd1bffc30d5f7f78cca43e8f93ff7e848bd1d`. Exact candidate build 44217614992, Android 15 upgrade/settings/About 44221838446, publisher 44222418667. Owner reports working on phone; installed hash not independently verified. No new permissions.

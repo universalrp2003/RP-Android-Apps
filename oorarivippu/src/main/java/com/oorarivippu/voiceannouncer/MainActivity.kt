@@ -547,6 +547,8 @@ fun OorArivippuScreen(
                 )
             }
 
+            CompassSection(state, oorIsTamil) { destinationDirection ->
+
             com.oorarivippu.voiceannouncer.family.FamilyPanel(tamil = oorIsTamil, onChanged = onSettingsChanged, onFamilyUpdates = {
                 if(com.oorarivippu.voiceannouncer.family.FamilyRepository.homeVisible) runCatching {
                     context.startService(Intent(context,LocationAnnouncementService::class.java).setAction(LocationAnnouncementService.ACTION_FAMILY_UPDATES))
@@ -749,11 +751,10 @@ fun OorArivippuScreen(
                     modifier = Modifier.padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(
-                        text = ui.destinationSectionTitle,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.5.sp
-                    )
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = ui.destinationSectionTitle, fontWeight = FontWeight.Bold, fontSize = 14.5.sp, modifier = Modifier.weight(1f))
+                        if (state.compassEnabled) DestinationDirection(destinationDirection, state.destinationName.isNotBlank(), oorIsTamil)
+                    }
                     OutlinedTextField(
                         value = destinationQuery,
                         onValueChange = {
@@ -882,6 +883,7 @@ fun OorArivippuScreen(
                     }
                 }
             }
+            } // CompassSection shares its live bearing with the destination card.
                 LocationDiagnostics(state, oorIsTamil)
                 // 4. Recent Voice Announcements History Card
                 Card(
@@ -1187,6 +1189,16 @@ private fun OorSettingsFullDialog(
                         modifier = Modifier.padding(10.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
+                        SettingToggleItem(
+                            icon = Icons.Default.LocationCity,
+                            title = if (oorIsTamil) "திசைகாட்டி" else "Compass",
+                            subtitle = if (oorIsTamil) "திசைகாட்டியையும் இலக்கின் திசையையும் காட்டும். அணைத்தால் சென்சார் பயன்படுத்தப்படாது." else "Show the compass and destination direction. Turning it off stops the compass sensor.",
+                            detailsShow = ui.detailsShow,
+                            detailsHide = ui.detailsHide,
+                            checked = state.compassEnabled,
+                            onCheckedChange = { AppPreferences.setCompassEnabled(it) }
+                        )
+                        Divider(color = Color(0xFFE2E8F0))
                         SettingToggleItem(
                             icon = Icons.Default.LocationCity,
                             title = ui.sameCityOptionTitle,

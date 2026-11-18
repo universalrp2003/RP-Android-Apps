@@ -88,6 +88,7 @@ def main():
     checks.append(('Oor-Arivippu-v1.1.20.apk', json.loads((ROOT/'docs/oor-location-1.1.20-publication-receipt.json').read_text())))
     checks.append(('Tamilan-Store-v0.13.apk', json.loads((ROOT/'docs/tamilan-store-0.13-publication-receipt.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.21.apk', json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())))
+    checks.append(('Oor-Arivippu-v1.1.22.apk', json.loads((ROOT/'docs/oor-1.1.22-publication.json').read_text())))
     checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
     current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
     current_names.add('Tamilan-Store-v0.14.apk')
@@ -128,6 +129,8 @@ def main():
     for image in oor_gallery['images']+[oor_gallery['artwork_archive']]:
         data=get_bounded(image['website'],2_000_000)
         validate_apk(data,image['bytes'],image['sha256'])
+    for image in json.loads((ROOT/'docs/oor-compass-1.1.22-gallery-review.json').read_text())['images']:
+        validate_apk(get_bounded(image['website'], 1_000_000), image['bytes'], image['sha256'])
     print('::notice title=Live redacted Oor gallery::Four reviewed masked screenshots and artwork ZIP match pinned bytes on the live website; originals are not published.',flush=True)
     print(f'PASS: main Pages serves all {len(checks)} exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
 

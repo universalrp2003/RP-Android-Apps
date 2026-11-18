@@ -31,6 +31,7 @@ enum class TtsVoiceStatus {
 
 data class AppStateSnapshot(
     val isTrackingEnabled: Boolean = false,
+    val compassEnabled: Boolean = true,
     val appLanguage: String = "ta",        // Default Tamil ("ta")
     val voiceLanguage: String = "ta",      // Default Tamil ("ta")
     // Owner request after 1.0.2: the next area within the same town is off unless chosen.
@@ -93,6 +94,7 @@ object AppPreferences {
     private const val PREFS_NAME = "oor_arivippu_prefs"
 
     private const val KEY_TRACKING_ENABLED = "is_tracking_enabled"
+    private const val KEY_COMPASS_ENABLED = "compass_enabled"
     private const val KEY_APP_LANG = "app_language"
     private const val KEY_VOICE_LANG = "voice_language"
     private const val KEY_TAMIL_TTS_VOICE = "tamil_tts_voice"
@@ -135,6 +137,7 @@ object AppPreferences {
             .apply()
         _state.value = AppStateSnapshot(
             isTrackingEnabled = prefs.getBoolean(KEY_TRACKING_ENABLED, false),
+            compassEnabled = prefs.getBoolean(KEY_COMPASS_ENABLED, true),
             appLanguage = savedLang,
             voiceLanguage = savedLang,
             tamilTtsVoiceName = "",
@@ -164,6 +167,11 @@ object AppPreferences {
                 prefs.getString(KEY_ANNOUNCEMENT_LOG, "") ?: ""
             )
         )
+    }
+
+    fun setCompassEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_COMPASS_ENABLED, enabled).apply()
+        _state.value = _state.value.copy(compassEnabled = enabled)
     }
 
     fun setTrackingEnabled(enabled: Boolean) {

@@ -1,0 +1,17 @@
+{
+  "owner_authorized": true,
+  "visual_review_completed": true,
+  "privacy": "Cropped to compass and destination heading only; no status bar, town, destination or personal fields. Metadata stripped.",
+  "images": [
+    {
+      "website": "images/oor-arivippu-v1.1.22/compass.png",
+      "bytes": 204667,
+      "sha256": "970d57f3810f8a7f5adda03fec43d0abf702c805bbf135070311f73d03b002b5"
+    },
+    {
+      "website": "images/oor-arivippu-v1.1.22/destination-direction.png",
+      "bytes": 32128,
+      "sha256": "62f54aeba21f8c1ea09c9ae3405ba519287d4e74b910daa90a110f96faac2e17"
+    }
+  ]
+}
