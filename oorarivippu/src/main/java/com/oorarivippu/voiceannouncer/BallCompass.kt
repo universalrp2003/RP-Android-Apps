@@ -5,7 +5,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import android.location.GeomagneticField
+import android.hardware.GeomagneticField
 import android.location.Location
 import android.os.SystemClock
 import android.view.Surface
