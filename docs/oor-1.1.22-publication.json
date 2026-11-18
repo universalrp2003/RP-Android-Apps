@@ -1,0 +1,16 @@
+{
+  "tag": "oor-arivippu-v1.1.22",
+  "release_id": 449442453,
+  "asset_id": 761520622,
+  "bytes": 12941104,
+  "published_at": "2026-11-18T02:19:59Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/oor-arivippu-v1.1.22/Oor-Arivippu-v1.1.22.apk",
+  "owner_reports_compass_working_on_phone": true,
+  "installed_phone_hash_independently_verified": false,
+  "native_run": 44221838446,
+  "build_run": 44217614992,
+  "publisher_run": 44222418667,
+  "source": "e592d1b0aefcd3a7e8e9806a0ba09cf12fde8436",
+  "apk_sha256": "5d8777f1f9eb6ed8eeb87fbcf89cd1bffc30d5f7f78cca43e8f93ff7e848bd1d",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+}

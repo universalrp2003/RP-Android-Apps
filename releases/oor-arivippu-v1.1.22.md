@@ -5,7 +5,7 @@
 - Compass bearings are magnetic; hold the phone flat and calibrate if prompted. Nearby metal or magnetic interference can affect accuracy.
 - About includes the official website, GitHub repositories and the current list of other RP Ideas apps.
 
-The owner reports that the compass and destination direction work on their phone. The exact installed APK hash was not independently verified. Signed release unit tests and lint passed; an Android 15 emulator tested an in-place update and the compass setting. Physical sensor accuracy, all devices and Play Protect are not independently certified.
+The owner reports the candidate was installed on a phone and that the compass and destination direction work. The exact installed APK hash was not independently verified. Signed release unit tests and lint passed; an Android 15 emulator tested an in-place update and the compass setting. Physical sensor accuracy, all devices and Play Protect are not independently certified. Update with the same signing key; do not uninstall or clear local data; uninstalling may erase saved settings and history.
 
 ## தமிழ்
 

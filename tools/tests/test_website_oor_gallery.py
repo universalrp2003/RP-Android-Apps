@@ -72,3 +72,18 @@ class RedactedOorGallery(unittest.TestCase):
         chunk=struct.pack('>I',len(payload))+kind+payload+struct.pack('>I',zlib.crc32(kind+payload))
         for bad in (b'jpeg',data[:-5],data[:8]+chunk+data[8:]):
             with self.assertRaises(ValueError):png_info(bad)
+
+class CompassGallery(unittest.TestCase):
+    def test_owner_crops_are_metadata_free_and_pinned(self):
+        review=json.loads((ROOT/'docs/oor-compass-1.1.22-gallery-review.json').read_text())
+        self.assertTrue(review['owner_authorized'] and review['visual_review_completed'])
+        expected={'images/oor-arivippu-v1.1.22/compass.png':(1010,470),
+                  'images/oor-arivippu-v1.1.22/destination-direction.png':(1010,180)}
+        self.assertEqual({i['website'] for i in review['images']}, set(expected))
+        self.assertEqual({str(p.relative_to(ROOT/'site')) for p in (ROOT/'site/images/oor-arivippu-v1.1.22').iterdir()},set(expected))
+        page=(ROOT/'site/index.html').read_text()
+        for im in review['images']:
+            data=(ROOT/'site'/im['website']).read_bytes()
+            self.assertEqual((len(data),hashlib.sha256(data).hexdigest()),(im['bytes'],im['sha256']))
+            self.assertEqual(png_info(data),expected[im['website']])
+            self.assertIn(im['website'],page)
