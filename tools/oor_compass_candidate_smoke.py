@@ -86,3 +86,14 @@ for _ in range(20):
     time.sleep(.2)
 assert readprefs()['compass_enabled']=='true'
 print('PASS: public 1.1.21 to exact signed candidate, same UID, synthetic preferences preserved; real UI switch off/restart/on')
+# Inspect real built-in About in the accepted APK, not a source-only approximation.
+find('About', True)
+find('Version: 1.1.22', True)
+find('🔗 RP-Android-Apps Official Website', True)
+find('🔗 RP-Android-Apps GitHub Repository', True)
+find('🔗 Legacy Mirror Repository — InternetRadio', True)
+find('Our RP Ideas apps (16)', True)
+find('🔗 SMS Guard (குறுஞ்செய்தி காவலன்) — GitHub release', True)
+find('🔗 Weekly Money — GitHub release', True)
+find('🔗 தமிழன் / Tamilan Store — GitHub release', True)
+print('PASS: real About version, single official website, GitHub repositories and current 16-app list rendered')
