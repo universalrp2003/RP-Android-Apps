@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Disposable emulator: exact public-to-candidate update and actual compass settings UI."""
-import hashlib, os, re, subprocess, time, xml.etree.ElementTree as ET
+import hashlib, os, re, subprocess, sys, time, traceback, xml.etree.ElementTree as ET
+
+def report_failure(kind, value, tb):
+    print("::error title=Compass emulator failure::" + " | ".join(traceback.format_exception(kind, value, tb)).replace("\n", "%0A"), flush=True)
+    sys.__excepthook__(kind, value, tb)
+sys.excepthook = report_failure
 from pathlib import Path
 
 def adb(*args):
