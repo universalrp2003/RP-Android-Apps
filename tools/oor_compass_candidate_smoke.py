@@ -60,7 +60,7 @@ tap(find('Settings'))
 label=find('Compass',True)
 # The switch is the nearest checkbox on the same row as the Compass label.
 _,top,_,bottom=map(int,re.findall(r'\d+',label.get('bounds')))
-switches=[n for n in nodes() if n.get('class')=='android.widget.Switch']
+switches=[n for n in nodes() if n.get('checkable')=='true']
 near=min(switches,key=lambda n: abs((lambda v:(v[1]+v[3])//2)(list(map(int,re.findall(r'\d+',n.get('bounds')))))-(top+bottom)//2))
 assert near.get('checked')=='true', ET.tostring(near,encoding='unicode')
 tap(near)
@@ -77,7 +77,7 @@ find('Family · optional town sharing')
 assert readprefs()['compass_enabled']=='false'
 tap(find('Settings')); label=find('Compass',True)
 _,top,_,bottom=map(int,re.findall(r'\d+',label.get('bounds')))
-switches=[n for n in nodes() if n.get('class')=='android.widget.Switch']
+switches=[n for n in nodes() if n.get('checkable')=='true']
 near=min(switches,key=lambda n: abs((lambda v:(v[1]+v[3])//2)(list(map(int,re.findall(r'\d+',n.get('bounds')))))-(top+bottom)//2))
 assert near.get('checked')=='false'
 tap(near)
