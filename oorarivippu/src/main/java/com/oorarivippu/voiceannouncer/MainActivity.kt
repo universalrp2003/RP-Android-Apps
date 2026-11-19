@@ -1311,10 +1311,6 @@ private fun OorSettingsFullDialog(
                             onClick = { openExternalLink(context, "https://github.com/universalrp2003/RP-Android-Apps") },
                             modifier = Modifier.fillMaxWidth()
                         ) { Text("🔗 " + ui.downloadRepositoryLabel) }
-                        TextButton(
-                            onClick = { openExternalLink(context, "https://github.com/universalrp2003/InternetRadio") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("🔗 " + ui.sourceRepositoryLabel) }
                         Divider(color = Color(0xFFE2E8F0))
                         Text(
                             if (oorIsTamil)
@@ -1345,14 +1341,22 @@ private fun OorSettingsFullDialog(
                             Text(if (oorIsTamil) "இணைய வழிகாட்டி & மறைக்கப்பட்ட படங்கள்" else "Web guide & redacted screenshots")
                         }
                         Divider(color = Color(0xFFE2E8F0))
-                        Text((if(oorIsTamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas apps") + " (${com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu").size})", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-                        // Use the suite's verified public versions, never a second stale tag list.
-                        val releaseLinks = com.universalrp.updates.SisterApps.releaseLinks(excludeId = "oorarivippu")
-                        releaseLinks.forEach { (label, url) ->
-                            TextButton(
-                                onClick = { openExternalLink(context, url) },
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text("🔗 " + label) }
+                        val appNames = oorAboutAppNames()
+                        Text((if (oorIsTamil) "எமது RP Ideas செயலிகள்" else "Our RP Ideas apps") + " (${appNames.size})",
+                            fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.fillMaxWidth()) {
+                            appNames.forEachIndexed { index, name ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().background(Color(0xFFF0FAF8), RoundedCornerShape(10.dp)).padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Box(modifier = Modifier.size(28.dp).background(Color(0xFFD3F1E9), CircleShape), contentAlignment = Alignment.Center) {
+                                        Text("${index + 1}", color = Color(0xFF0F766E), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                    Text(name, color = Color(0xFF164E49), fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                }
+                            }
                         }
                         Divider(color = Color(0xFFE2E8F0))
                         TextButton(
@@ -1371,6 +1375,10 @@ private fun OorSettingsFullDialog(
         }
     }
 }
+
+internal fun oorAboutAppNames(): List<String> =
+    com.universalrp.updates.SisterApps.all.filter { it.id != "oorarivippu" }
+        .map { it.aboutLabel.substringBefore(" — ") }
 
 @Composable
 private fun CompactChoice(label: String, selected: Boolean, onClick: () -> Unit) {

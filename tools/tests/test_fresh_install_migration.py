@@ -21,7 +21,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
         releases = (
             ('sms-guard-v1.1.17', 'SMS-Guard-v1.1.17.apk', '1.1.17', 12840884, 'b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd'),
             ('vasanthi-ai-v1.1.5', 'Vasanthi-AI-v1.1.5.apk', '1.1.5', 45777962, '4b3c98a446f040d5e754eeee22065412ec1e6e756bf427001418e3b100182fa6'),
-            ('oor-arivippu-v1.1.22', 'Oor-Arivippu-v1.1.22.apk', '1.1.22', 12941104, '5d8777f1f9eb6ed8eeb87fbcf89cd1bffc30d5f7f78cca43e8f93ff7e848bd1d'),
+            ('oor-arivippu-v1.1.26', 'Oor-Arivippu-v1.1.26.apk', '1.1.26', 12941104, '96ff45915749f5f1a851ff246ee9ddcd0b83886b3d1017e6ab5f22661d17d22c'),
             ('tamil-podcast-v1.6', 'Tamil-Podcast-Player-v1.6.apk', '1.6', 11967239, 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
             ('daily-vault-v0.5', 'DailyVault-v0.5.apk', '0.5', 11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
             ('tamilan-store-v0.14', 'Tamilan-Store-v0.14.apk', '0.14', 19906251, '3d804fc152bddb9df75f92d62d9e2bc18ec3c11c32fc6fd81736fd8fbf0181a5'),
@@ -78,7 +78,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'radio': ('1.31', '31', 'ramesh-radio-v1.31'),
             'equalizer': ('1.11', '12', 'pulseeq-v1.11'),
             'vocalremover': ('0.1.16', '17', 'rp-vocal-remover-studio-v0.1.16'),
-            'oorarivippu': ('1.1.22', '27', 'oor-arivippu-v1.1.22'),
+            'oorarivippu': ('1.1.26', '31', 'oor-arivippu-v1.1.26'),
             'smsguard': ('1.1.17', '23', 'sms-guard-v1.1.17'),
             'voicenotes': ('1.3.4', '8', 'voice-notes-v1.3.4'),
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),

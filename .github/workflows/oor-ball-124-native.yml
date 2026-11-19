@@ -1,0 +1,56 @@
+name: Oor 1.1.24 ball compass candidate checks
+on:
+  push:
+    branches: ["arena/1aca933a-rp-android-apps"]
+    paths: [".github/workflows/oor-ball-124-native.yml", "tools/oor_ball_124_smoke.py", "oorarivippu/src/androidTest/java/com/oorarivippu/voiceannouncer/CompassVisualNativeTest.kt"]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ORG_GRADLE_PROJECT_oorFamilyServiceUrl: https://oor-family-relay.universalrp2003.workers.dev
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Build native tests without changing the selected candidate
+        run: ./gradlew :oorarivippu:assembleReleaseAndroidTest --no-daemon --stacktrace
+      - name: Download selected candidate and public 1.1.22
+        run: |
+          gh run download 44456936677 --name oorarivippu-stable-candidate-1261 --dir "$RUNNER_TEMP/candidate"
+          gh release download oor-arivippu-v1.1.22 --pattern Oor-Arivippu-v1.1.22.apk --dir "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/Oor-Arivippu-v1.1.22.apk" "$RUNNER_TEMP/oor-base.apk"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Exact upgrade, settings and synthetic rendered headings on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            python3 tools/oor_ball_124_smoke.py
+            adb shell am force-stop com.oorarivippu.voiceannouncer
+            adb install -r oorarivippu/build/outputs/apk/androidTest/release/oorarivippu-release-androidTest.apk
+            adb shell am instrument -w -r -e class com.oorarivippu.voiceannouncer.CompassVisualNativeTest com.oorarivippu.voiceannouncer.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/compass-native.txt"
+            grep -F 'OK (1 test)' "$RUNNER_TEMP/compass-native.txt"
+            grep -F 'INSTRUMENTATION_CODE: -1' "$RUNNER_TEMP/compass-native.txt"
+      - name: Surface build and native failures
+        if: failure()
+        run: |
+          if test -f "$RUNNER_TEMP/compass-native.txt"; then
+            python3 -c 'import os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"compass-native.txt"; print("::error title=Native compass test::"+p.read_text()[-4500:].replace("\n","%0A"))'
+          fi

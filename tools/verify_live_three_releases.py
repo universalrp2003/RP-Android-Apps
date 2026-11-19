@@ -89,6 +89,7 @@ def main():
     checks.append(('Tamilan-Store-v0.13.apk', json.loads((ROOT/'docs/tamilan-store-0.13-publication-receipt.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.21.apk', json.loads((ROOT/'docs/oor-1.1.21-publication.json').read_text())))
     checks.append(('Oor-Arivippu-v1.1.22.apk', json.loads((ROOT/'docs/oor-1.1.22-publication.json').read_text())))
+    checks.append(('Oor-Arivippu-v1.1.26.apk', json.loads((ROOT/'docs/oor-1.1.26-publication.json').read_text())))
     checks.append(('CleanSweep-v2.98.apk', json.loads((ROOT/'docs/live-guard-2.98-publication-receipt.json').read_text())))
     current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
     current_names.add('Tamilan-Store-v0.14.apk')

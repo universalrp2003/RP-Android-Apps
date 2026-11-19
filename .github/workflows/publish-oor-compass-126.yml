@@ -1,0 +1,28 @@
+name: Publish owner-approved Oor compass 1.1.26
+on:
+  push:
+    branches: ["arena/1aca933a-rp-android-apps"]
+    paths: ["docs/oor-compass-1.1.26-publication-approved.json"]
+permissions:
+  contents: write
+  actions: read
+jobs:
+  promote:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Verify and publish the tested signed candidate
+        run: python3 tools/promote_oor_compass_126.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: oor126-publication-receipt
+          path: ${{ runner.temp }}/oor126-publication.json
+          if-no-files-found: warn
+          retention-days: 30
