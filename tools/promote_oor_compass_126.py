@@ -34,7 +34,7 @@ def main():
   tools=sorted((pathlib.Path(os.environ['ANDROID_HOME'])/'build-tools').iterdir(),key=lambda p:tuple(map(int,re.findall(r'\d+',p.name))))[-1]
   signer=cmd(str(tools/'apksigner'),'verify','--print-certs',str(apk)); assert 'certificate SHA-256 digest: '+SIGNER in signer
   badging=cmd(str(tools/'aapt'),'dump','badging',str(apk)); assert "package: name='com.oorarivippu.voiceannouncer' versionCode='31' versionName='1.1.26'" in badging and 'application-debuggable' not in badging
-  subprocess.run(['gh','release','download','oor-arivippu-v1.1.22','--repo',R,'--pattern','Oor-Arivippu-v1.1.21.apk','--dir',t],check=True)
+  subprocess.run(['gh','release','download','oor-arivippu-v1.1.22','--repo',R,'--pattern','Oor-Arivippu-v1.1.22.apk','--dir',t],check=True)
   base=root/'Oor-Arivippu-v1.1.22.apk'; assert digest(base)=='5d8777f1f9eb6ed8eeb87fbcf89cd1bffc30d5f7f78cca43e8f93ff7e848bd1d'
   previous=cmd(str(tools/'aapt'),'dump','badging',str(base))
   from verify_release_permission_delta import parse_badging

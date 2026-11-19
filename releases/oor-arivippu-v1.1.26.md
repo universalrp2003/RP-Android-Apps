@@ -2,7 +2,7 @@
 
 - A ball-style magnetic compass responds to the phone's rotation and tilt, with north and lower-scale markings. The existing destination direction uses the location and magnetic correction; hold the phone flat for a heading. Calibrate the sensor if prompted, and keep away from magnets and metal. Accuracy depends on the device and surroundings; this is not a substitute for safety-critical navigation.
 - Settings & About now presents the other 16 RP Ideas apps as a compact, non-link directory. The old mirror repository link has been removed; the official website and GitHub repository remain.
-- The owner reported the preceding 1.1.25 compass looks great on their phone. The final 1.1.26 About changes and update from 1.1.22 were checked on an Android 15 emulator; this exact APK has not been independently tested on the owner's phone.
+- The owner reported the preceding 1.1.25 compass looks great on their phone. The final 1.1.26 About changes and update from 1.1.22 were checked on an Android 15 emulator; this exact APK has not been installed on a phone for independent verification.
 - Install over your current app without uninstalling, to retain settings.
 
 ## தமிழ்
