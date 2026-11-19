@@ -1,6 +1,8 @@
 name: Publish owner-approved Oor compass 1.1.26
 on:
-  workflow_dispatch:
+  push:
+    branches: ["arena/1aca933a-rp-android-apps"]
+    paths: ["docs/oor-compass-1.1.26-publication-approved.json"]
 permissions:
   contents: write
   actions: read
