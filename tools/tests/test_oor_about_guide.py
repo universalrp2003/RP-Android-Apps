@@ -13,12 +13,12 @@ class OorAboutGuideContracts(unittest.TestCase):
     def test_current_shared_release_links_web_guide_and_credits(self):
         localization.verify_about_links()
         text=MAIN.read_text()
-        for required in ('SisterApps.releaseLinks(excludeId = "oorarivippu")',
+        for required in ('SisterApps.all.filter { it.id != "oorarivippu" }',
                          'SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu"',
                          'oor-arivippu-guide.html','${ui.aboutVersionLabel}: $installedVersion'):
             self.assertIn(required,text)
         self.assertNotIn('/releases/tag/',text)
-        self.assertIn('https://github.com/universalrp2003/InternetRadio',text)
+        self.assertNotIn('https://github.com/universalrp2003/InternetRadio',text)
     def rejected_change(self,path,transform):
         read=Path.read_text
         def substitute(p,*args,**kwargs):
