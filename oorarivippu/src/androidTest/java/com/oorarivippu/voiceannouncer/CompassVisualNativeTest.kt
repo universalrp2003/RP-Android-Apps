@@ -64,7 +64,15 @@ class CompassVisualNativeTest {
                 if (after.getPixel(x,y) != tilted.getPixel(x,y)) tiltedPixels++
             }
             assertTrue("Pitch at the same heading must visibly move the markings", tiltedPixels > 80)
-            before.recycle(); after.recycle(); tilted.recycle()
+            i.runOnMainSync { rotation.value = floatArrayOf(0f,1f,0f, -.8660254f,0f,-.5f, -.5f,0f,.8660254f) }
+            i.waitForIdleSync(); SystemClock.sleep(500)
+            val rolled = i.uiAutomation.takeScreenshot()
+            var rolledPixels = 0
+            for (y in 0 until after.height step 3) for (x in 0 until after.width step 3) {
+                if (after.getPixel(x,y) != rolled.getPixel(x,y)) rolledPixels++
+            }
+            assertTrue("Roll at the same heading must visibly move the markings", rolledPixels > 80)
+            before.recycle(); after.recycle(); tilted.recycle(); rolled.recycle()
         } finally { i.runOnMainSync { activity.finish() }; i.waitForIdleSync() }
     }
 }
