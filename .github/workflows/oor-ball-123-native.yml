@@ -43,6 +43,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           script: |
             python3 tools/oor_ball_123_smoke.py
+            adb shell am force-stop com.oorarivippu.voiceannouncer
             adb install -r oorarivippu/build/outputs/apk/androidTest/release/oorarivippu-release-androidTest.apk
             adb shell am instrument -w -r -e class com.oorarivippu.voiceannouncer.CompassVisualNativeTest com.oorarivippu.voiceannouncer.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/compass-native.txt"
             grep -F 'OK (1 test)' "$RUNNER_TEMP/compass-native.txt"

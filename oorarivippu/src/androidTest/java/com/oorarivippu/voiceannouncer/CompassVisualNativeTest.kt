@@ -32,11 +32,18 @@ class CompassVisualNativeTest {
                 collect(i.uiAutomation.rootInActiveWindow)
                 return texts
             }
-            assertTrue(descriptions().any { it.contains("Magnetic heading 0 degrees") })
+            fun awaitDescription(text: String) {
+                repeat(30) {
+                    if (descriptions().any { it.contains(text) }) return
+                    SystemClock.sleep(200)
+                }
+                fail("Missing $text; found ${descriptions()}")
+            }
+            awaitDescription("Magnetic heading 0 degrees")
             val before = i.uiAutomation.takeScreenshot()
             i.runOnMainSync { heading.floatValue = 90f }
             i.waitForIdleSync(); SystemClock.sleep(500)
-            assertTrue(descriptions().any { it.contains("Magnetic heading 90 degrees") })
+            awaitDescription("Magnetic heading 90 degrees")
             val after = i.uiAutomation.takeScreenshot()
             assertEquals(before.width, after.width); assertEquals(before.height, after.height)
             var changed = 0
