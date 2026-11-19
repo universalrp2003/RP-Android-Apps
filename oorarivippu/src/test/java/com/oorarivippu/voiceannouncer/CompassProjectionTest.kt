@@ -19,6 +19,19 @@ class CompassProjectionTest {
             assertTrue(projectCompassPoint(h + 180f, 0f, yaw(h)).depth < 0f)
         }
     }
+    @Test fun polarAndLowerMarksStayOnTheirCorrectBearing() {
+        for (heading in 0 until 360 step 15) {
+            val rotation = yaw(heading.toFloat())
+            for (bearing in 0 until 360 step 15) {
+                val equator = projectCompassPoint(bearing.toFloat(), 0f, rotation)
+                val top = projectCompassPoint(bearing.toFloat(), 48f, rotation)
+                val bottom = projectCompassPoint(bearing.toFloat(), -43f, rotation)
+                // A mark's east/west position must not change sides between caps.
+                assertEquals(equator.x * cos(Math.toRadians(48.0)).toFloat(), top.x, .0001f)
+                assertEquals(equator.x * cos(Math.toRadians(43.0)).toFloat(), bottom.x, .0001f)
+            }
+        }
+    }
     @Test fun bearingWrapAndLengthAreStable() {
         val a = projectCompassPoint(0f, 25f, yaw(350f))
         val b = projectCompassPoint(360f, 25f, yaw(350f))
