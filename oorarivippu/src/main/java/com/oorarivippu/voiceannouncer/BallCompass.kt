@@ -188,6 +188,39 @@ internal fun BallCompass(heading: Float?, rotation: FloatArray?, tamil: Boolean)
                     }
                 }
             }
+            // Polar markings are attached to the same earth-fixed longitudes as the
+            // main scale. They are not a second, decorative direction indicator.
+            fun surfaceLine(bearing: Float, lat1: Float, lat2: Float, color: Color, width: Float) {
+                val a = point(bearing, lat1)
+                val b = point(bearing, lat2)
+                if (a.depth > .12f && b.depth > .12f) {
+                    drawLine(color.copy(alpha = minOf(a.depth, b.depth).coerceIn(0f, 1f)),
+                        offset(a), offset(b), strokeWidth = r * width)
+                }
+            }
+            // A second, finer scale wraps underneath the sphere and becomes visible
+            // when the phone is tilted. Cardinal ticks share their actual bearings.
+            for (degree in 0 until 360 step 15) {
+                surfaceLine(degree.toFloat(), -37f, if (degree % 45 == 0) -47f else -43f,
+                    Color(0xFFE7F8EE), if (degree % 45 == 0) .022f else .012f)
+            }
+            // On the top cap, a north arrow and its south tail rotate with the ball.
+            // Its tip is on the 0-degree longitude, not the fixed case pointer.
+            fun capTriangle(bearing: Float, color: Color) {
+                val tip = point(bearing, 66f)
+                val left = point(bearing - 18f, 48f)
+                val right = point(bearing + 18f, 48f)
+                if (tip.depth > .12f && left.depth > .12f && right.depth > .12f) {
+                    val a = offset(tip); val b = offset(left); val d = offset(right)
+                    val triangle = Path().apply { moveTo(a.x, a.y); lineTo(b.x, b.y); lineTo(d.x, d.y); close() }
+                    drawPath(triangle, color.copy(alpha = minOf(tip.depth, left.depth, right.depth).coerceIn(0f, 1f)))
+                }
+            }
+            capTriangle(0f, Color(0xFF65F0A3))
+            capTriangle(180f, Color(0xFFE2EFEA))
+            for (degree in 0 until 360 step 45) {
+                surfaceLine(degree.toFloat(), 49f, 55f, Color(0xFFBCDBCF), .014f)
+            }
             // Eight directions share the same spherical longitude as their tick.
             for (degree in 0 until 360 step 45) {
                 val p = point(degree.toFloat(), 25f)
