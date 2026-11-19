@@ -40,7 +40,7 @@ import kotlin.math.*
 internal fun compassRelativeBearing(trueBearing: Float, magneticHeading: Float, declination: Float): Float =
     ((trueBearing - (magneticHeading + declination)) % 360f + 360f) % 360f
 
-private data class CompassReading(val heading: Float? = null, val status: Int = SensorManager.SENSOR_STATUS_UNRELIABLE, val available: Boolean = true)
+private data class CompassReading(val heading: Float? = null, val rotation: FloatArray? = null, val status: Int = SensorManager.SENSOR_STATUS_UNRELIABLE, val available: Boolean = true)
 
 @Composable
 private fun rememberCompass(): CompassReading {
@@ -67,11 +67,14 @@ private fun rememberCompass(): CompassReading {
                     Surface.ROTATION_270 -> SensorManager.AXIS_MINUS_Y to SensorManager.AXIS_X
                     else -> SensorManager.AXIS_X to SensorManager.AXIS_Y
                 }
-                SensorManager.remapCoordinateSystem(rotation, axes.first, axes.second, adjusted)
+                if (!SensorManager.remapCoordinateSystem(rotation, axes.first, axes.second, adjusted) || adjusted.any { !it.isFinite() }) {
+                    reading = CompassReading()
+                    return
+                }
                 val orientation = FloatArray(3)
                 SensorManager.getOrientation(adjusted, orientation)
                 val heading = ((Math.toDegrees(orientation[0].toDouble()).toFloat() % 360f) + 360f) % 360f
-                reading = CompassReading(heading, event.accuracy.takeIf { it >= 0 } ?: accuracy)
+                reading = CompassReading(heading = heading, rotation = adjusted, status = event.accuracy.takeIf { it >= 0 } ?: accuracy)
             }
         }
         if (sensor == null || magnetic == null) reading = CompassReading(available = false)
@@ -96,7 +99,8 @@ internal fun CompassSection(state: AppStateSnapshot, tamil: Boolean, content: @C
     LaunchedEffect(lifecycle) {
         while (lifecycle.isAtLeast(Lifecycle.State.RESUMED)) { now = SystemClock.elapsedRealtime(); delay(1000) }
     }
-    val heading = reading.heading.takeIf { reading.available && reading.status != SensorManager.SENSOR_STATUS_UNRELIABLE }
+    val rotation = reading.rotation.takeIf { reading.available && reading.status != SensorManager.SENSOR_STATUS_UNRELIABLE }
+    val heading = reading.heading.takeIf { rotation != null && compassPhoneIsFlat(rotation) }
     val lat = state.tripLatitude
     val lon = state.tripLongitude
     val targetLat = state.destinationLatitude
@@ -111,18 +115,19 @@ internal fun CompassSection(state: AppStateSnapshot, tamil: Boolean, content: @C
         }
     } else null
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth().background(brush = Brush.linearGradient(listOf(Color(0xFFE2F8F4), Color(0xFFE7F0FF), Color(0xFFFFF1DC))), shape = RoundedCornerShape(16.dp)).padding(8.dp)) {
-        BallCompass(heading, tamil)
+        BallCompass(heading, rotation, tamil)
         Text(if (!reading.available) { if (tamil) "திசைகாட்டி சென்சார் இல்லை" else "Compass sensor unavailable" }
-            else if (heading == null || reading.status == SensorManager.SENSOR_STATUS_ACCURACY_LOW) { if (tamil) "திசைகாட்டியைச் சரிசெய்ய கைபேசியை 8 வடிவில் அசைக்கவும்" else "Calibrate: move phone in a figure eight" }
+            else if (rotation == null || reading.status == SensorManager.SENSOR_STATUS_ACCURACY_LOW) { if (tamil) "திசைகாட்டியைச் சரிசெய்ய கைபேசியை 8 வடிவில் அசைக்கவும்" else "Calibrate: move phone in a figure eight" }
             else if (tamil) "காந்த வடக்கு • கைபேசியைத் தட்டையாகப் பிடிக்கவும்" else "Magnetic north • hold phone flat", fontSize = 11.sp)
     }
     content(relative)
 }
 
 @Composable
-internal fun BallCompass(heading: Float?, tamil: Boolean) {
+internal fun BallCompass(heading: Float?, rotation: FloatArray?, tamil: Boolean) {
     val description = if (heading == null) {
-        if (tamil) "திசைகாட்டி தகவல் இல்லை" else "Compass reading unavailable"
+        if (rotation != null) { if (tamil) "திசை அறிய கைபேசியைத் தட்டையாகப் பிடிக்கவும்" else "Hold phone flat for direction" }
+        else { if (tamil) "திசைகாட்டி தகவல் இல்லை" else "Compass reading unavailable" }
     } else {
         val degree = ((heading.roundToInt() % 360) + 360) % 360
         if (tamil) "காந்தத் திசை $degree பாகை" else "Magnetic heading $degree degrees"
@@ -139,14 +144,14 @@ internal fun BallCompass(heading: Float?, tamil: Boolean) {
         drawCircle(brush = Brush.radialGradient(listOf(Color(0xFF285459), Color(0xFF102A32), Color(0xFF061319), Color(0xFF010609)),
             center = Offset(c.x-r*.38f,c.y-r*.53f), radius = r*1.8f), radius = r, center = c)
 
-        fun point(bearing: Float, latitude: Float) = projectCompassPoint(bearing, heading ?: 0f, latitude)
+        fun point(bearing: Float, latitude: Float) = projectCompassPoint(bearing, latitude, rotation!!)
         fun offset(p: CompassPoint) = Offset(c.x+p.x*r, c.y+p.y*r)
         // Latitude line projected on the sphere, not a flat horizontal ruler.
-        if (heading != null) {
+        if (rotation != null) {
             val belt = Path()
             var started = false
             for (deg in 0..360 step 2) {
-                val p = point(heading + deg, -14f)
+                val p = point(deg.toFloat(), -14f)
                 if (p.depth > 0f) {
                     val q = offset(p)
                     if (!started) belt.moveTo(q.x, q.y) else belt.lineTo(q.x, q.y)
@@ -195,6 +200,9 @@ internal fun BallCompass(heading: Float?, tamil: Boolean) {
                     val native = canvas.nativeCanvas
                     native.save()
                     native.translate(c.x+p.x*r, c.y+p.y*r)
+                    val up = point(degree.toFloat(), 25.5f)
+                    val angle = Math.toDegrees(atan2((up.x - p.x).toDouble(), (p.y - up.y).toDouble())).toFloat()
+                    native.rotate(angle)
                     native.scale(p.depth.coerceIn(.35f,1f), 1f)
                     native.drawText(label, 0f, paint.textSize*.34f, paint)
                     native.restore()
