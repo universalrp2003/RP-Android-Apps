@@ -747,7 +747,7 @@ def verify_about_links() -> None:
     # Oor now renders the shared verified public catalog, not the historical 7-tag list
     # still used by the isolated Secret Message preview below.
     for required in (
-        'SisterApps.releaseLinks(excludeId = "oorarivippu")',
+        'SisterApps.all.filter { it.id != "oorarivippu" }',
         'SisterApps.OFFICIAL_WEBSITE_URL + "#app-oor-arivippu"',
         'https://universalrp2003.github.io/RP-Android-Apps/oor-arivippu-guide.html',
     ):
@@ -765,7 +765,6 @@ def verify_about_links() -> None:
         raise ValueError("Oor guide still promises unconditional 24x7 weather monitoring")
     for required in (
         "https://universalrp2003.github.io/RP-Android-Apps/",
-        "https://github.com/universalrp2003/InternetRadio",
         "https://github.com/universalrp2003/RP-Android-Apps",
         "universalrp2003@gmail.com",
         "Arena.ai Agent Mode",

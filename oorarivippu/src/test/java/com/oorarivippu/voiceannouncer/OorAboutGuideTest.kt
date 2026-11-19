@@ -42,14 +42,13 @@ class OorAboutGuideTest {
         assertFalse(topic.body.contains("free Tomorrow.io key"))
     }
 
-    @Test fun aboutReleaseLinksUseOnlyPublishedSuiteMetadataWithoutSelfDuplication() {
-        val links = SisterApps.releaseLinks(excludeId = "oorarivippu")
-        assertEquals(SisterApps.all.size - 1, links.size)
-        assertEquals(links.size, links.map { it.second }.toSet().size)
-        assertFalse(links.any { it.second.contains("/oor-arivippu-v") })
-        SisterApps.all.filter { it.id != "oorarivippu" }.forEach { app ->
-            assertTrue(links.any { it.second == SisterApps.releaseUrl(app) })
-            assertTrue(SisterApps.releaseUrl(app).endsWith("-v${app.publishedVersion}"))
-        }
+    @Test fun aboutShowsNamesOnlyForAllOtherApps() {
+        val names = oorAboutAppNames()
+        assertEquals(16, names.size)
+        assertEquals(names.size, names.toSet().size)
+        assertFalse(names.any { it.contains("release", ignoreCase = true) || it.contains("github", ignoreCase = true) || it.contains("http") })
+        assertFalse(names.any { it == "Oor Arivippu" })
+        assertTrue(names.any { it.contains("Weekly Money") })
+        assertTrue(names.any { it.contains("Tamilan Store") })
     }
 }
