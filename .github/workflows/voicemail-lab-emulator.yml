@@ -1,0 +1,26 @@
+name: Voicemail lab emulator smoke (no real call)
+on:
+  push:
+    branches: ["arena/eb6de80e-rp-android-apps"]
+    paths: ["voicemail-lab/tools/**", ".github/workflows/voicemail-lab-emulator.yml"]
+permissions: {contents: read, actions: read}
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env: {GH_TOKEN: "${{ github.token }}"}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download the exact debug candidate
+        run: gh run download 44657596288 --name voicemail-feasibility-lab-debug --dir "$RUNNER_TEMP/lab"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Launch and exercise test controls, no phone call
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 voicemail-lab/tools/emulator_smoke.py
