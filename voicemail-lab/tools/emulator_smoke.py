@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """No calls and no real voice: verify debug lab opens, permissions and tests terminate."""
-import os, re, subprocess, time, xml.etree.ElementTree as ET
+import os, re, subprocess, time, traceback, sys, xml.etree.ElementTree as ET
+def exception_hook(kind, value, tb):
+    print("::error title=Lab smoke failure::" + "".join(traceback.format_exception(kind, value, tb)).replace("\n", "%0A"), flush=True)
+    sys.__excepthook__(kind, value, tb)
+sys.excepthook = exception_hook
 from pathlib import Path
 
 def adb(*a): return subprocess.check_output(['adb',*map(str,a)],text=True,stderr=subprocess.STDOUT)
