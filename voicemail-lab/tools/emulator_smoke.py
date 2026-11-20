@@ -20,10 +20,10 @@ def all_text(): return [n.get('text','') for n in nodes()]
 def find(label):
     for _ in range(12):
         for node in nodes():
-            if node.get('text') == label: return node
+            if (node.get('text') or '').casefold() == label.casefold(): return node
         adb('shell','input','swipe',540,1600,540,750,500)
         time.sleep(.2)
-    raise AssertionError('Missing '+label)
+    raise AssertionError('Missing '+label+'; visible: '+str(all_text()))
 def tap(node):
     x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds')))
     adb('shell','input','tap',(x1+x2)//2,(y1+y2)//2)
