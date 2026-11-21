@@ -14,6 +14,9 @@ assert os.environ.get('CI')=='true' and adb('get-serialno').strip().startswith('
 t=Path(os.environ['RUNNER_TEMP']); old=t/'old/System-App-Disabler-v0.3.0.apk'; new=t/'candidate/appdisabler-0.4.1.apk'
 assert sha(old)=='d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0'
 pkg='com.universalrp.appdisabler'
+# Install the inert synthetic package only if this emulator has no real TalkBack package.
+if 'package:com.google.android.marvin.talkback' not in adb('shell','pm','list','packages','-u','com.google.android.marvin.talkback'):
+    adb('install',t/'talkback-fixture/fixture.apk')
 adb('install',old)
 uid=re.search(r'uid:(\d+)',adb('shell','cmd','package','list','packages','-U',pkg)).group(1)
 adb('install','-r',new)
@@ -37,6 +40,24 @@ def find(label, substring=False, scroll=False):
 def tap(node):
     x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds'))); adb('shell','input','tap',(x1+x2)//2,(y1+y2)//2)
 tap(find('Apps'))
+# Search by package and verify both the list and detail warning, without changing state.
+def find_desc(label):
+    for _ in range(20):
+        for n in nodes():
+            if n.get('content-desc') == label: return n
+        time.sleep(.3)
+    raise AssertionError('Missing description '+label+'; visible '+str(texts()))
+tap(find_desc('Search'))
+for n in nodes():
+    if n.get('class') == 'android.widget.EditText':
+        tap(n); break
+else: raise AssertionError('Search text field not found')
+adb('shell','input','text','com.google.android.marvin.talkback')
+warning = find('Accessibility — important; check first',substring=True)
+tap(warning)
+find('Accessibility — important; check first',substring=True)
+adb('shell','input','keyevent','KEYCODE_BACK')
+tap(find_desc('Close search'))
 tap(find('Compare / ஒப்பிடு'))
 find('No apps are changed here.',substring=True)
 tap(find('Save baseline / முதல் நிலை'))

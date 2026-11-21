@@ -21,6 +21,16 @@ test "$uid" = "$(adb shell cmd package list packages -U "$P" | tr -d '\r' | awk 
 installed=$(adb shell pm path "$P" | tr -d '\r' | sed -n 's/^package://p')
 test "$(adb shell sha256sum "$installed" | awk '{print $1}')" = "$(sha256sum "$D/Elderly-Launcher-v1.8.apk" | awk '{print $1}')"
 adb shell dumpsys role | grep -F "$P"
-adb shell am instrument -w -r -e class com.universalrp.launcher.HomeReturnAndContactsTest "$P.test/androidx.test.runner.AndroidJUnitRunner" | tee "$D/native.txt"
+adb shell am instrument -w -r -e class com.universalrp.launcher.HomeReturnAndContactsTest#homeButtonAndSyntheticContacts "$P.test/androidx.test.runner.AndroidJUnitRunner" | tee "$D/native.txt"
 grep -F 'OK (1 test)' "$D/native.txt"
 grep -F 'INSTRUMENTATION_CODE: -1' "$D/native.txt"
+
+# Exercise large fonts and a named remove action without making any phone calls.
+adb shell settings put system font_scale 2.0
+adb shell am force-stop "$P"
+adb shell am instrument -w -r -e class com.universalrp.launcher.LargeContactLayoutTest#largeFontAndRemove "$P.test/androidx.test.runner.AndroidJUnitRunner" | tee "$D/large-font.txt"
+grep -F 'OK (1 test)' "$D/large-font.txt"
+adb shell am force-stop "$P"
+adb shell am instrument -w -r -e class com.universalrp.launcher.LargeContactLayoutTest#restartRetainsOnlyTheOtherContacts "$P.test/androidx.test.runner.AndroidJUnitRunner" | tee "$D/restart.txt"
+grep -F 'OK (1 test)' "$D/restart.txt"
+adb shell settings put system font_scale 1.0

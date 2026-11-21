@@ -64,8 +64,8 @@ jobs:
           python3 - <<'PY'
           import os,pathlib
           root=pathlib.Path(os.environ['RUNNER_TEMP'])
-          for path in (root/'launcher-build.log',root/'launcher18/native.txt',root/'launcher18/seed.txt'):
+          for path in (root/'launcher-build.log',root/'launcher18/native.txt',root/'launcher18/seed.txt',root/'launcher18/large-font.txt',root/'launcher18/restart.txt'):
               if path.exists():
-                  lines=path.read_text(errors='replace').splitlines(); selected=lines if path.name in ('seed.txt', 'native.txt') else [x for x in lines if any(y in x for y in ('FAILURE:', 'AssertionError', 'Error:', 'Exception'))]
+                  lines=path.read_text(errors='replace').splitlines(); selected=lines if path.name in ('seed.txt', 'native.txt', 'large-font.txt', 'restart.txt') else [x for x in lines if any(y in x for y in ('FAILURE:', 'AssertionError', 'Error:', 'Exception'))]
                   print('::error title=Launcher check::'+(path.name+' '+ '\n'.join(selected or lines[-12:]))[-5000:].replace('%','%25').replace('\n','%0A'))
           PY

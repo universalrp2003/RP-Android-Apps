@@ -21,6 +21,17 @@ jobs:
           "$TOOLS/aapt" dump permissions "$RUNNER_TEMP/old/System-App-Disabler-v0.3.0.apk" | grep '^uses-permission:' | sort > "$RUNNER_TEMP/old-perms"
           "$TOOLS/aapt" dump permissions "$RUNNER_TEMP/candidate/appdisabler-0.4.1.apk" | grep '^uses-permission:' | sort > "$RUNNER_TEMP/new-perms"
           diff -u "$RUNNER_TEMP/old-perms" "$RUNNER_TEMP/new-perms"
+      - name: Build synthetic accessibility package for disposable emulator
+        run: |
+          set -euo pipefail
+          d="$RUNNER_TEMP/talkback-fixture"; mkdir -p "$d"
+          cat > "$d/AndroidManifest.xml" <<'MANIFEST'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.google.android.marvin.talkback"><uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/><application android:label="Synthetic Accessibility Suite" android:hasCode="false"/></manifest>
+          MANIFEST
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$tools/aapt" package -f -M "$d/AndroidManifest.xml" -I "$ANDROID_HOME/platforms/android-35/android.jar" -F "$d/unsigned.apk"
+          keytool -genkeypair -keystore "$d/test.p12" -storetype PKCS12 -storepass disposable -keypass disposable -alias fixture -dname 'CN=Disposable CI Fixture' -keyalg RSA -validity 1 >/dev/null 2>&1
+          "$tools/apksigner" sign --ks "$d/test.p12" --ks-pass pass:disposable --out "$d/fixture.apk" "$d/unsigned.apk"
       - run: sudo chmod a+rw /dev/kvm
       - name: Stock Android 15 read-only upgrade and review
         uses: reactivecircus/android-emulator-runner@v2
