@@ -16,5 +16,5 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
-      - name: Promote exact signed tested bytes, no rebuilding
+      - name: Promote exact signed and tested bytes without rebuilding
         run: python3 tools/promote_disabler_launcher.py

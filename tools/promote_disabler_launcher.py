@@ -37,8 +37,10 @@ def main():
    subprocess.run(['gh','release','download',p['baseline'],'--repo',R,'--pattern',p['old'],'--dir',tmp],check=True)
    old=d/p['old']; assert sha(old)==p['old_sha']
    previous=cmd(str(tools/'aapt'),'dump','badging',str(old)); assert parse_badging(previous)==parse_badging(badging), 'Permissions changed'
+   print('::notice title=Candidate verified::'+json.dumps(dict(tag=p['tag'],sha256=digest,bytes=apk.stat().st_size)),flush=True)
    checksum=d/(p['asset']+'.sha256'); checksum.write_text(digest+'  '+p['asset']+'\n')
-   subprocess.run(['gh','release','create',p['tag'],str(apk),str(checksum),'--repo',R,'--target',p['source'],'--title',p['tag'],'--notes-file','releases/'+p['tag']+'.md','--draft'],check=True)
+   create=subprocess.run(['gh','release','create',p['tag'],str(apk),str(checksum),'--repo',R,'--target',p['source'],'--title',p['tag'],'--notes-file','releases/'+p['tag']+'.md','--draft'],text=True,capture_output=True)
+   if create.returncode: raise RuntimeError('Draft creation failed: '+create.stdout+' '+create.stderr)
    for _ in range(15):
     pages=json.loads(cmd('gh','api','--paginate','--slurp',f'repos/{R}/releases?per_page=100'))
     matches=[r for page in pages for r in page if r['tag_name']==p['tag']]
