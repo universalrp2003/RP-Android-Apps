@@ -53,6 +53,7 @@ for n in nodes():
         tap(n); break
 else: raise AssertionError('Search text field not found')
 adb('shell','input','text','com.google.android.marvin.talkback')
+adb('shell','input','keyevent','KEYCODE_BACK')  # Hide the keyboard before tapping the row.
 warning = find('Accessibility — important; check first',substring=True)
 tap(warning)
 find('Accessibility — important; check first',substring=True)
