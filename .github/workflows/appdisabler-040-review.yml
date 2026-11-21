@@ -25,7 +25,11 @@ jobs:
       - name: Verify release identity and stable signer
         run: |
           set -euo pipefail
-          APK=appdisabler/app/build/outputs/apk/release/app-release.apk
+          trap 'echo "::error title=APK verification failed::Line $LINENO; $(cat "$RUNNER_TEMP/badging.txt" 2>/dev/null | head -1)"' ERR
+          mapfile -t APKS < <(find appdisabler/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f)
+          [[ ${#APKS[@]} == 1 ]]
+          APK="${APKS[0]}"
+          cp "$APK" "$RUNNER_TEMP/appdisabler-0.4.0.apk"
           TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           "$TOOLS/aapt" dump badging "$APK" > "$RUNNER_TEMP/badging.txt"
           grep -F "package: name='com.universalrp.appdisabler' versionCode='4' versionName='0.4.0'" "$RUNNER_TEMP/badging.txt"
@@ -36,5 +40,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: appdisabler-0.4.0-review-candidate
-          path: appdisabler/app/build/outputs/apk/release/app-release.apk
+          path: ${{ runner.temp }}/appdisabler-0.4.0.apk
           retention-days: 14
