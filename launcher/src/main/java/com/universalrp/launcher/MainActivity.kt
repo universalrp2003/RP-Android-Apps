@@ -21,6 +21,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -64,6 +65,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -92,6 +94,7 @@ class MainActivity : ComponentActivity() {
         }
 
     private var pendingEmergencyNumber: String? = null
+    private var homeRequests by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +118,7 @@ class MainActivity : ComponentActivity() {
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
                     LauncherScreen(
                         onEmergency = { number -> requestEmergencyCall(number) },
+                        homeRequests = homeRequests,
                     )
                 }
             }
@@ -130,6 +134,9 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        // Android delivers a fresh MAIN intent to the existing singleTask home activity.
+        // Do not treat unrelated intents or activity-result callbacks as a Home press.
+        if (intent.action == Intent.ACTION_MAIN) homeRequests++
     }
 
     private fun requestEmergencyCall(number: String) {
@@ -145,7 +152,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun LauncherScreen(onEmergency: (String) -> Unit) {
+private fun LauncherScreen(onEmergency: (String) -> Unit, homeRequests: Int) {
     val context = LocalContext.current
     var showAppList by remember { mutableStateOf(false) }
     var choosingFavouriteApp by remember { mutableStateOf(false) }
@@ -158,6 +165,15 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
     var favourites by remember { mutableStateOf(Favourites.load(context)) }
     var addingFavourite by remember { mutableStateOf(false) }
     var page by remember { mutableStateOf("") }
+    val homeScroll = rememberLazyListState()
+    val appScroll = rememberLazyListState()
+    LaunchedEffect(homeRequests) {
+        if (homeRequests > 0) {
+            page = ""; showAppList = false; choosingFavouriteApp = false
+            confirmEmergency = false; notice = null; addingFavourite = false
+            homeScroll.scrollToItem(0)
+        }
+    }
     BackHandler {
         when {
             page.isNotEmpty() -> page = ""
@@ -272,8 +288,6 @@ private fun LauncherScreen(onEmergency: (String) -> Unit) {
         }
     }
 
-    val homeScroll = rememberLazyListState()
-    val appScroll = rememberLazyListState()
     LaunchedEffect(showAppList, choosingFavouriteApp) {
         if (showAppList) appScroll.scrollToItem(0)
     }
@@ -688,41 +702,32 @@ private fun FavouritesCard(
                     modifier = Modifier.padding(top = 6.dp),
                 )
             } else {
-                // Wrapping rather than a grid, so a long name does not push a button off the edge.
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    for (favourite in favourites) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Button(
-                                onClick = { onCall(favourite) },
-                                modifier = Modifier.heightIn(min = 64.dp),
-                                shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = AccentBg,
-                                    contentColor = ButtonText,
-                                    disabledContainerColor = CardBg,
-                                    disabledContentColor = Muted,
-                                ),
-                            ) {
-                                Text(
-                                    text = favourite.name,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    lineHeight = 19.sp,
-                                )
-                            }
-                            TextButton(onClick = { onRemove(favourite.number) }) {
-                                Text(
-                                    text = context.getString(R.string.favourites_remove),
-                                    color = Muted,
-                                    fontSize = 12.sp,
-                                )
+                // Equal columns keep each name and its remove action together. On narrow
+                // screens or large text, a single column protects readability and touch targets.
+                BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 8.dp)) {
+                    val fontScale = LocalDensity.current.fontScale
+                    val columns = if (maxWidth < 300.dp || fontScale >= 1.5f) 1 else 2
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        favourites.chunked(columns).forEach { row ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.Top) {
+                                row.forEach { favourite ->
+                                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Button(onClick = { onCall(favourite) },
+                                            modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
+                                            shape = RoundedCornerShape(16.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = AccentBg, contentColor = ButtonText,
+                                                disabledContainerColor = CardBg, disabledContentColor = Muted)) {
+                                            Text(favourite.name, fontSize = 15.sp, fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.Center, lineHeight = 19.sp)
+                                        }
+                                        TextButton(onClick = { onRemove(favourite.number) },
+                                            modifier = Modifier.semantics { contentDescription = context.getString(R.string.favourites_remove) + " " + favourite.name }) {
+                                            Text(context.getString(R.string.favourites_remove), color = Muted, fontSize = 12.sp)
+                                        }
+                                    }
+                                }
+                                if (row.size < columns) Spacer(Modifier.weight(1f))
                             }
                         }
                     }

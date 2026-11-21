@@ -153,7 +153,7 @@ object SisterApps {
             name = "Elderly Launcher",
             tamilName = "முதியவர் திரை",
             tagPrefix = "elderly-launcher",
-            version = "1.7",
+            version = "1.8",
             publishedVersion = "1.7",
             packageName = "com.universalrp.launcher",
             aboutLabel = "Elderly Launcher — GitHub release",
@@ -182,7 +182,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "appdisabler", name = "System App Disabler", tamilName = "சிஸ்டம் செயலி முடக்கி",
-            tagPrefix = "system-app-disabler", version = "0.3.0", publishedVersion = "0.3.0",
+            tagPrefix = "system-app-disabler", version = "0.4.1", publishedVersion = "0.3.0",
             packageName = "com.universalrp.appdisabler",
             aboutLabel = "System App Disabler (சிஸ்டம் செயலி முடக்கி) — GitHub release",
         ),
