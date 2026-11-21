@@ -468,6 +468,9 @@ fun AppsListWindow(
     /** Show only apps with a live process (set by the ▶ running tile). */
     var runningOnly by remember { mutableStateOf(false) }
     var reviewOpen by remember { mutableStateOf(false) }
+    var planOpen by remember { mutableStateOf(false) }
+    var replaceBaseline by remember { mutableStateOf(false) }
+    var plan by remember { mutableStateOf<Set<String>>(emptySet()) }
     var baseline by remember { mutableStateOf(ReviewSnapshots.load(context)) }
     var comparison by remember { mutableStateOf<DeviceSnapshot?>(null) }
     val exportBaseline = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -547,8 +550,13 @@ fun AppsListWindow(
     }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        OutlinedButton(onClick = { reviewOpen = true }, modifier = Modifier.fillMaxWidth()) {
-            Text("Review & compare / ஆய்வு", style = MaterialTheme.typography.labelMedium)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = { reviewOpen = true }, modifier = Modifier.weight(1f)) {
+                Text("Compare / ஒப்பிடு", style = MaterialTheme.typography.labelMedium)
+            }
+            OutlinedButton(onClick = { planOpen = true }, modifier = Modifier.weight(1f)) {
+                Text("Plan / திட்டம் (${plan.size})", style = MaterialTheme.typography.labelMedium)
+            }
         }
 
         // ---- compact status row (was a tall card + explanation paragraph) ----
@@ -756,11 +764,40 @@ fun AppsListWindow(
                             else run(app, restore = true)
                         },
                         onAskAi = { openGoogleAi(context, app) },
+                        planned = app.packageName in plan,
+                        onPlan = { plan = if (app.packageName in plan) plan - app.packageName else plan + app.packageName },
                         onOpenDetails = { infoApp = app }
                     )
                 }
             }
         }
+    }
+
+    if (planOpen) {
+        AlertDialog(
+            onDismissRequest = { planOpen = false },
+            title = { Text("Review plan / திட்டத்தைப் பார்க்கவும்") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Planning does not change any app. Review each item separately; there is no automatic batch. Test your phone after each change. This temporary plan is cleared when the app closes.\nதிட்டம் எதையும் மாற்றாது. ஒவ்வொன்றாக ஆய்வு செய்து கைபேசியைச் சோதிக்கவும்.")
+                    if (plan.isEmpty()) Text("No apps selected. Use + Plan on an app card. / செயலிகளைத் தேர்வு செய்யவும்.")
+                    plan.sorted().forEach { pkg ->
+                        val app = apps.firstOrNull { it.packageName == pkg }
+                        Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small).padding(8.dp)) {
+                            Text(app?.label ?: pkg, fontWeight = FontWeight.Bold)
+                            Text(pkg, style = MaterialTheme.typography.labelSmall)
+                            Text(app?.let { ratingLabel(it) } ?: "No longer visible — do not act", style = MaterialTheme.typography.bodySmall)
+                            app?.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            Row {
+                                TextButton(onClick = { plan = plan - pkg }) { Text("Remove / நீக்கு") }
+                                if (app != null) TextButton(onClick = { planOpen = false; infoApp = app }) { Text("Review / ஆய்வு") }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { planOpen = false }) { Text("Close / மூடு") } }
+        )
     }
 
     if (reviewOpen) {
@@ -775,18 +812,11 @@ fun AppsListWindow(
                     Text("Snapshots are for this Android user only. RAM and storage vary with time; a difference does not prove an improvement.", style = MaterialTheme.typography.bodySmall)
                     if (b == null) Text("No baseline saved / முதல் நிலை சேமிக்கப்படவில்லை") else {
                         Text("Baseline: ${java.text.DateFormat.getDateTimeInstance().format(java.util.Date(b.capturedAt))} · ${b.packages.size} packages")
-                        Text("Available RAM ${b.availableRam / 1048576} MB; storage ${b.availableStorage / 1048576} MB", style = MaterialTheme.typography.bodySmall)
+                        Text("Available / total: RAM ${b.availableRam / 1048576} / ${b.totalRam / 1048576} MB; storage ${b.availableStorage / 1048576} / ${b.totalStorage / 1048576} MB", style = MaterialTheme.typography.bodySmall)
                     }
-                    OutlinedButton(enabled = apps.isNotEmpty(), onClick = {
-                        scope.launch {
-                            try {
-                                val fresh = DisableManager.loadInstalledApps(context)
-                                val snapshot = ReviewSnapshots.capture(context, fresh)
-                                if (!ReviewSnapshots.save(context, snapshot)) error("Could not save")
-                                apps = fresh; baseline = snapshot; comparison = null
-                            } catch (e: Exception) { errorMsg = "Could not save baseline: ${e.javaClass.simpleName}"; reviewOpen = false }
-                        }
-                    }) { Text(if (b == null) "Save baseline / முதல் நிலை" else "Replace baseline / மாற்று") }
+                    OutlinedButton(enabled = apps.isNotEmpty(), onClick = { replaceBaseline = true }) {
+                        Text(if (b == null) "Save baseline / முதல் நிலை" else "Replace baseline / மாற்று")
+                    }
                     OutlinedButton(enabled = b != null, onClick = {
                         scope.launch {
                             try { val fresh = DisableManager.loadInstalledApps(context); apps = fresh; comparison = ReviewSnapshots.capture(context, fresh) }
@@ -807,6 +837,27 @@ fun AppsListWindow(
                 }
             },
             confirmButton = { TextButton(onClick = { reviewOpen = false }) { Text("Close / மூடு") } }
+        )
+    }
+
+    if (replaceBaseline) {
+        AlertDialog(
+            onDismissRequest = { replaceBaseline = false },
+            title = { Text(if (baseline == null) "Save baseline?" else "Replace baseline?") },
+            text = { Text(if (baseline == null) "Save the current package states and device memory measurements on this phone? App data is not backed up."
+                else "This replaces the earlier baseline. Export it first if you want to keep it. Continue?\nபழைய முதல் நிலை மாற்றப்படும். தேவைப்பட்டால் முதலில் சேமிக்கவும்.") },
+            dismissButton = { TextButton(onClick = { replaceBaseline = false }) { Text("Cancel / வேண்டாம்") } },
+            confirmButton = { TextButton(onClick = {
+                replaceBaseline = false
+                scope.launch {
+                    try {
+                        val fresh = DisableManager.loadInstalledApps(context)
+                        val snapshot = ReviewSnapshots.capture(context, fresh)
+                        if (!ReviewSnapshots.save(context, snapshot)) error("Could not save")
+                        apps = fresh; baseline = snapshot; comparison = null
+                    } catch (e: Exception) { errorMsg = "Could not save baseline: ${e.javaClass.simpleName}"; reviewOpen = false }
+                }
+            }) { Text("Save / சேமி") } }
         )
     }
 
@@ -866,7 +917,7 @@ fun AppsListWindow(
                         val fresh = DisableManager.loadInstalledApps(context)
                         apps = fresh
                         val current = fresh.firstOrNull { it.packageName == app.packageName }
-                        if (current == null || current.needsRestore || current.category == DisableCategory.CRITICAL || current.bootloopRisk || DisableManager.disableBlockedReason(context, current.packageName) != null) {
+                        if (current == null || current != app || current.needsRestore || current.category == DisableCategory.CRITICAL || current.bootloopRisk || DisableManager.disableBlockedReason(context, current.packageName) != null) {
                             errorMsg = "Package state or protection changed. Nothing was disabled; review it again."
                         } else run(current, restore = false)
                     }
@@ -1005,7 +1056,8 @@ fun AppDetailsDialog(
 
 @Composable
 fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit,
-           onRestoreUnknown: () -> Unit, onAskAi: () -> Unit, onOpenDetails: () -> Unit) {
+           onRestoreUnknown: () -> Unit, onAskAi: () -> Unit, planned: Boolean,
+           onPlan: () -> Unit, onOpenDetails: () -> Unit) {
     // The whole card is tinted by its rating, so the list can be read without stopping to parse
     // each line: a green name means safe, amber means it will ask, red means it will not act.
     val tint = ratingColour(app)
@@ -1088,6 +1140,11 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 if (!app.isSuspensionKnown && !app.needsRestore) {
                     TextButton(onClick = onRestoreUnknown, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                         Text("Try restore", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                if (!app.needsRestore && !blocked) {
+                    TextButton(onClick = onPlan, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                        Text(if (planned) "− Plan" else "+ Plan", style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 TextButton(onClick = onOpenDetails, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
