@@ -1,0 +1,71 @@
+name: Launcher 1.8 home and contacts candidate (no publication)
+on:
+  push:
+    branches: ["arena/eb6de80e-rp-android-apps"]
+    paths: ["launcher/**", ".github/workflows/launcher-18-verified.yml"]
+permissions: {contents: read, actions: read}
+jobs:
+  candidate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Build and test signed launcher
+        run: |
+          set -o pipefail
+          ./gradlew :launcher:testReleaseUnitTest :launcher:lintRelease :launcher:assembleRelease :launcher:assembleReleaseAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/launcher-build.log"
+      - name: Check exact public baseline, candidate signer and unchanged permissions
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/launcher18"
+          gh release download elderly-launcher-v1.7 --pattern Elderly-Launcher-v1.7.apk --dir "$RUNNER_TEMP/launcher18"
+          cd "$RUNNER_TEMP/launcher18"
+          echo '13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec  Elderly-Launcher-v1.7.apk' | sha256sum -c
+          cp "$GITHUB_WORKSPACE/launcher/build/outputs/apk/release/launcher-release.apk" Elderly-Launcher-v1.8.apk
+          TOOLS="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          for v in 1.7 1.8; do
+            "$TOOLS/apksigner" verify --print-certs "Elderly-Launcher-v$v.apk" | grep -F '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d'
+            "$TOOLS/aapt" dump badging "Elderly-Launcher-v$v.apk" > "badging-$v.txt"
+          done
+          grep -F "package: name='com.universalrp.launcher' versionCode='9' versionName='1.8'" badging-1.8.txt
+          ! grep -q application-debuggable badging-1.8.txt
+          PYTHONPATH="$GITHUB_WORKSPACE/tools" python3 -c 'from verify_release_permission_delta import parse_badging; assert parse_badging(open("badging-1.7.txt").read()) == parse_badging(open("badging-1.8.txt").read())'
+          sha256sum Elderly-Launcher-v1.8.apk
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Synthetic contacts upgrade and actual Home key on Android 15
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: bash launcher/tools/home-return-18-smoke.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: launcher-1.8-signed-candidate
+          path: ${{ runner.temp }}/launcher18/Elderly-Launcher-v1.8.apk
+          retention-days: 14
+      - name: Surface errors
+        if: failure()
+        run: |
+          python3 - <<'PY'
+          import os,pathlib
+          root=pathlib.Path(os.environ['RUNNER_TEMP'])
+          for path in (root/'launcher-build.log',root/'launcher18/native.txt',root/'launcher18/seed.txt'):
+              if path.exists():
+                  lines=path.read_text(errors='replace').splitlines(); selected=[x for x in lines if any(y in x for y in ('e:', 'FAILURE:', 'AssertionError', 'Error:', 'Exception', 'HomeReturnAndContactsTest.kt'))]
+                  print('::error title=Launcher check::'+(path.name+' '+ '\n'.join(selected or lines[-12:]))[-5000:].replace('%','%25').replace('\n','%0A'))
+          PY
