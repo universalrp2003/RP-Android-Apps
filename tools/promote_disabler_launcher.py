@@ -5,8 +5,8 @@ R='universalrp2003/RP-Android-Apps'
 BRANCH='arena/eb6de80e-rp-android-apps'
 SIGNER='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d'
 P=[
- dict(tag='system-app-disabler-v0.4.1',asset='System-App-Disabler-v0.4.1.apk',input='appdisabler-0.4.1.apk',package='com.universalrp.appdisabler',code=5,version='0.4.1',run=44893210469,attempt=2,artifact=14703052949,archive='4d296e2bcf392b4044f7fd12cc340f6055d49f95ec8773e1b901b278c6c1a169',source='558d148f62566fb336d5029356f7efb8fe594e8d',baseline='system-app-disabler-v0.3.0',old='System-App-Disabler-v0.3.0.apk',old_sha='d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0',native=44896432640,native_source='c42e271'),
- dict(tag='elderly-launcher-v1.8',asset='Elderly-Launcher-v1.8.apk',input='Elderly-Launcher-v1.8.apk',package='com.universalrp.launcher',code=9,version='1.8',run=44896014323,attempt=1,artifact=14704067520,archive='c5b68806002acc4bd02f23065d2ce4834d8287c60158a03f3ee6eb72d0e5e65b',source='9bf3c8c636f5d76f963b140c85fc4b214fc2759d',baseline='elderly-launcher-v1.7',old='Elderly-Launcher-v1.7.apk',old_sha='13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec',native=44896014323,native_source='9bf3c8c'),
+ dict(draft_id=453638013,tag='system-app-disabler-v0.4.1',asset='System-App-Disabler-v0.4.1.apk',input='appdisabler-0.4.1.apk',package='com.universalrp.appdisabler',code=5,version='0.4.1',run=44893210469,attempt=2,artifact=14703052949,archive='4d296e2bcf392b4044f7fd12cc340f6055d49f95ec8773e1b901b278c6c1a169',source='558d148f62566fb336d5029356f7efb8fe594e8d',baseline='system-app-disabler-v0.3.0',old='System-App-Disabler-v0.3.0.apk',old_sha='d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0',native=44896432640,native_source='c42e271'),
+ dict(draft_id=453638147,tag='elderly-launcher-v1.8',asset='Elderly-Launcher-v1.8.apk',input='Elderly-Launcher-v1.8.apk',package='com.universalrp.launcher',code=9,version='1.8',run=44896014323,attempt=1,artifact=14704067520,archive='c5b68806002acc4bd02f23065d2ce4834d8287c60158a03f3ee6eb72d0e5e65b',source='9bf3c8c636f5d76f963b140c85fc4b214fc2759d',baseline='elderly-launcher-v1.7',old='Elderly-Launcher-v1.7.apk',old_sha='13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec',native=44896014323,native_source='9bf3c8c'),
 ]
 def cmd(*args): return subprocess.check_output(args,text=True).strip()
 def api(path): return json.loads(cmd('gh','api',f'repos/{R}/{path}'))
@@ -23,7 +23,9 @@ def main():
   native=api(f'actions/runs/{p["native"]}'); assert native['head_sha'].startswith(p['native_source']) and native['head_branch']==BRANCH and native['conclusion']=='success'
   artifact=api(f'actions/artifacts/{p["artifact"]}'); assert artifact['workflow_run']['id']==p['run'] and artifact['workflow_run']['head_sha']==p['source'] and not artifact['expired'] and artifact['digest']=='sha256:'+p['archive']
   pages=json.loads(cmd('gh','api','--paginate','--slurp',f'repos/{R}/releases?per_page=100'))
-  assert not any(r['tag_name']==p['tag'] for page in pages for r in page), 'Release already exists; stop rather than overwrite'
+  matches=[r for page in pages for r in page if r['tag_name']==p['tag']]
+  assert len(matches)==1 and matches[0]['id']==p['draft_id'] and matches[0]['draft'] and matches[0]['target_commitish']==p['source'], 'Expected pinned draft is missing or not private'
+  assert not matches[0]['assets'], 'Draft is not empty; stop rather than overwrite'
   assert subprocess.run(['gh','api',f'repos/{R}/git/ref/tags/{p["tag"]}'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0, 'Tag already exists'
   with tempfile.TemporaryDirectory() as tmp:
    d=pathlib.Path(tmp); z=d/'artifact.zip'
@@ -39,14 +41,10 @@ def main():
    previous=cmd(str(tools/'aapt'),'dump','badging',str(old)); assert parse_badging(previous)==parse_badging(badging), 'Permissions changed'
    print('::notice title=Candidate verified::'+json.dumps(dict(tag=p['tag'],sha256=digest,bytes=apk.stat().st_size)),flush=True)
    checksum=d/(p['asset']+'.sha256'); checksum.write_text(digest+'  '+p['asset']+'\n')
-   create=subprocess.run(['gh','release','create',p['tag'],str(apk),str(checksum),'--repo',R,'--target',p['source'],'--title',p['tag'],'--notes-file','releases/'+p['tag']+'.md','--draft'],text=True,capture_output=True)
-   if create.returncode: raise RuntimeError('Draft creation failed: '+create.stdout+' '+create.stderr)
-   for _ in range(15):
-    pages=json.loads(cmd('gh','api','--paginate','--slurp',f'repos/{R}/releases?per_page=100'))
-    matches=[r for page in pages for r in page if r['tag_name']==p['tag']]
-    if matches: break
-    time.sleep(2)
-   assert len(matches)==1 and matches[0]['draft'] and matches[0]['target_commitish']==p['source']
+   upload=subprocess.run(['gh','release','upload',p['tag'],str(apk),str(checksum),'--repo',R],text=True,capture_output=True)
+   if upload.returncode: raise RuntimeError('Draft upload failed: '+upload.stdout+' '+upload.stderr)
+   matches=[api('releases/'+str(p['draft_id']))]
+   assert matches[0]['draft'] and matches[0]['target_commitish']==p['source']
    draft=api('releases/'+str(matches[0]['id'])); asset,=[a for a in draft['assets'] if a['name']==p['asset']]
    assert asset['digest']=='sha256:'+digest and asset['size']==apk.stat().st_size and sorted(a['name'] for a in draft['assets'])==sorted([p['asset'],checksum.name])
    subprocess.run(['gh','api','--method','PATCH',f'repos/{R}/releases/{draft["id"]}','-F','draft=false'],check=True)

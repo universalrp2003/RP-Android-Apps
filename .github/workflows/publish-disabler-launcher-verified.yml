@@ -16,5 +16,5 @@ jobs:
         with: {fetch-depth: 0}
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
-      - name: Promote exact signed and tested bytes without rebuilding
+      - name: Verify and attach exact signed and tested bytes to pinned drafts
         run: python3 tools/promote_disabler_launcher.py
