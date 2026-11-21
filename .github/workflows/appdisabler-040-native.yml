@@ -1,0 +1,28 @@
+name: System App Disabler 0.4 Android review checks
+on:
+  push:
+    branches: ["arena/eb6de80e-rp-android-apps"]
+    paths: [".github/workflows/appdisabler-040-native.yml", "tools/appdisabler_review_040_smoke.py"]
+permissions: {contents: read, actions: read}
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env: {GH_TOKEN: "${{ github.token }}"}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact signed candidate and public baseline
+        run: |
+          gh run download 44856981641 --name appdisabler-0.4.0-review-candidate --dir "$RUNNER_TEMP/candidate"
+          gh release download system-app-disabler-v0.3.0 --pattern 'System-App-Disabler-v0.3.0.apk' --dir "$RUNNER_TEMP/old"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Stock Android 15 read-only upgrade and review
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: python3 tools/appdisabler_review_040_smoke.py
