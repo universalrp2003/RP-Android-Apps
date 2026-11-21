@@ -7,6 +7,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -39,6 +41,9 @@ import com.universalrp.appdisabler.data.AppInfo
 import com.universalrp.appdisabler.data.BackupManager
 import com.universalrp.appdisabler.data.DisableCategory
 import com.universalrp.appdisabler.data.DisableManager
+import com.universalrp.appdisabler.data.ReviewSnapshots
+import com.universalrp.appdisabler.data.DeviceSnapshot
+import com.universalrp.appdisabler.data.compareSnapshots
 import com.universalrp.appdisabler.data.label
 import com.universalrp.updates.SisterApps
 import kotlinx.coroutines.launch
@@ -372,8 +377,9 @@ internal fun ratingColour(app: AppInfo): androidx.compose.ui.graphics.Color = wh
 internal fun ratingLabel(app: AppInfo): String = when {
     app.bootloopRisk -> "Never — can stop the phone booting"
     app.category == DisableCategory.CRITICAL -> "Never disable"
+    app.packageName == "com.google.android.marvin.talkback" -> "Accessibility — important; check first"
     app.category == DisableCategory.CAUTION -> "Caution — asks first"
-    app.category == DisableCategory.SAFE -> "Safe to disable"
+    app.category == DisableCategory.SAFE -> "UAD recommended — still check"
     else -> "Not listed — check first"
 }
 
@@ -462,6 +468,25 @@ fun AppsListWindow(
     var searchOpen by remember { mutableStateOf(false) }
     /** Show only apps with a live process (set by the ▶ running tile). */
     var runningOnly by remember { mutableStateOf(false) }
+    var reviewOpen by remember { mutableStateOf(false) }
+    var planOpen by remember { mutableStateOf(false) }
+    var replaceBaseline by remember { mutableStateOf(false) }
+    var plan by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var baseline by remember { mutableStateOf(ReviewSnapshots.load(context)) }
+    var comparison by remember { mutableStateOf<DeviceSnapshot?>(null) }
+    val exportBaseline = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) {
+            val saved = baseline
+            try {
+                check(saved != null) { "No baseline" }
+                val stream = context.contentResolver.openOutputStream(uri, "wt") ?: error("Cannot open selected file")
+                stream.bufferedWriter(Charsets.UTF_8).use { it.write(ReviewSnapshots.encode(saved)) }
+                Toast.makeText(context, "Inventory saved. It contains app names; keep it private.", Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Inventory export failed: ${e.javaClass.simpleName}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         apps = DisableManager.loadInstalledApps(context)
@@ -526,6 +551,14 @@ fun AppsListWindow(
     }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 10.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = { reviewOpen = true }, modifier = Modifier.weight(1f)) {
+                Text("Compare / ஒப்பிடு", style = MaterialTheme.typography.labelMedium)
+            }
+            OutlinedButton(onClick = { planOpen = true }, modifier = Modifier.weight(1f)) {
+                Text("Plan / திட்டம் (${plan.size})", style = MaterialTheme.typography.labelMedium)
+            }
+        }
 
         // ---- compact status row (was a tall card + explanation paragraph) ----
         Row(
@@ -675,7 +708,7 @@ fun AppsListWindow(
             VerticalDivider(Modifier.height(20.dp))
             // With no category filter the list would otherwise hide everything the header counted.
             FilterChip(selected = filter == null, onClick = { filter = null }, label = { Text("Any", style = MaterialTheme.typography.labelSmall) })
-            FilterChip(selected = filter == DisableCategory.SAFE, onClick = { filter = DisableCategory.SAFE }, label = { Text("Safe", style = MaterialTheme.typography.labelSmall) })
+            FilterChip(selected = filter == DisableCategory.SAFE, onClick = { filter = DisableCategory.SAFE }, label = { Text("Recommended", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.CAUTION, onClick = { filter = DisableCategory.CAUTION }, label = { Text("Caution", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.UNLISTED, onClick = { filter = DisableCategory.UNLISTED }, label = { Text("Unlisted", style = MaterialTheme.typography.labelSmall) })
             FilterChip(selected = filter == DisableCategory.CRITICAL, onClick = { filter = DisableCategory.CRITICAL }, label = { Text("Never", style = MaterialTheme.typography.labelSmall) })
@@ -687,7 +720,7 @@ fun AppsListWindow(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ColourKey(SafeGreen, "Safe")
+            ColourKey(SafeGreen, "UAD recommended")
             ColourKey(CautionAmber, "Asks first")
             ColourKey(DangerRed, "Never")
             ColourKey(androidx.compose.ui.graphics.Color(0xFF5F6368), "Unlisted")
@@ -725,18 +758,108 @@ fun AppsListWindow(
                             if (!off && DisableManager.disableBlockedReason(context, app.packageName) != null) {
                                 blockedApp = app; return@AppRow
                             }
-                            if (!off && app.category in setOf(DisableCategory.CAUTION, DisableCategory.UNLISTED)) confirmApp = app else run(app)
+                            if (!off) confirmApp = app else run(app)
                         },
                         onRestoreUnknown = {
                             if (!shizukuLive) Toast.makeText(context, biStatic(T.toastNeedShizuku, taFirst), Toast.LENGTH_SHORT).show()
                             else run(app, restore = true)
                         },
                         onAskAi = { openGoogleAi(context, app) },
+                        planned = app.packageName in plan,
+                        onPlan = { plan = if (app.packageName in plan) plan - app.packageName else plan + app.packageName },
                         onOpenDetails = { infoApp = app }
                     )
                 }
             }
         }
+    }
+
+    if (planOpen) {
+        AlertDialog(
+            onDismissRequest = { planOpen = false },
+            title = { Text("Review plan / திட்டத்தைப் பார்க்கவும்") },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Planning does not change any app. Review each item separately; there is no automatic batch. Test your phone after each change. This temporary plan is cleared when the app closes.\nதிட்டம் எதையும் மாற்றாது. ஒவ்வொன்றாக ஆய்வு செய்து கைபேசியைச் சோதிக்கவும்.")
+                    if (plan.isEmpty()) Text("No apps selected. Use + Plan on an app card. / செயலிகளைத் தேர்வு செய்யவும்.")
+                    plan.sorted().forEach { pkg ->
+                        val app = apps.firstOrNull { it.packageName == pkg }
+                        Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.small).padding(8.dp)) {
+                            Text(app?.label ?: pkg, fontWeight = FontWeight.Bold)
+                            Text(pkg, style = MaterialTheme.typography.labelSmall)
+                            Text(app?.let { ratingLabel(it) } ?: "No longer visible — do not act", style = MaterialTheme.typography.bodySmall)
+                            app?.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                            Row {
+                                TextButton(onClick = { plan = plan - pkg }) { Text("Remove / நீக்கு") }
+                                if (app != null) TextButton(onClick = { planOpen = false; infoApp = app }) { Text("Review / ஆய்வு") }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { planOpen = false }) { Text("Close / மூடு") } }
+        )
+    }
+
+    if (reviewOpen) {
+        val b = baseline
+        AlertDialog(
+            onDismissRequest = { reviewOpen = false },
+            title = { Text("Compare / ஒப்பிடு", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("No apps are changed here. Recommended is not a safety guarantee.\nஇங்கு எதுவும் முடக்கப்படாது. பாதுகாப்பு உறுதி அல்ல.", style = MaterialTheme.typography.bodyMedium)
+                    Text("Inventory contains installed package names and states. It is not a backup of apps or their data, and cannot automatically restore the phone. Keep exports private.", style = MaterialTheme.typography.bodySmall)
+                    Text("Snapshots are for this Android user only. RAM and storage vary with time; a difference does not prove an improvement.", style = MaterialTheme.typography.bodySmall)
+                    if (b == null) Text("No baseline saved / முதல் நிலை சேமிக்கப்படவில்லை") else {
+                        Text("Baseline: ${java.text.DateFormat.getDateTimeInstance().format(java.util.Date(b.capturedAt))} · ${b.packages.size} packages")
+                        Text("Available / total: RAM ${b.availableRam / 1048576} / ${b.totalRam / 1048576} MB; storage ${b.availableStorage / 1048576} / ${b.totalStorage / 1048576} MB", style = MaterialTheme.typography.bodySmall)
+                    }
+                    OutlinedButton(enabled = apps.isNotEmpty(), onClick = { replaceBaseline = true }) {
+                        Text(if (b == null) "Save baseline / முதல் நிலை" else "Replace baseline / மாற்று")
+                    }
+                    OutlinedButton(enabled = b != null, onClick = {
+                        scope.launch {
+                            try { val fresh = DisableManager.loadInstalledApps(context); apps = fresh; comparison = ReviewSnapshots.capture(context, fresh) }
+                            catch (e: Exception) { errorMsg = "Comparison unavailable: ${e.javaClass.simpleName}"; reviewOpen = false }
+                        }
+                    }) { Text("Compare now / இப்போது ஒப்பிடு") }
+                    OutlinedButton(enabled = b != null, onClick = { exportBaseline.launch("app-inventory.json") }) { Text("Export baseline / பட்டியலை சேமி") }
+                    comparison?.let { after ->
+                        if (b != null) {
+                            val changes = compareSnapshots(b, after)
+                            Text("Now: ${after.packages.size} packages · available RAM ${after.availableRam / 1048576} MB · storage ${after.availableStorage / 1048576} MB", fontWeight = FontWeight.SemiBold)
+                            Text("Added ${changes.added.size}; no longer visible ${changes.missing.size}; enabled state changed ${changes.enabledChanged.size}; known suspension changed ${changes.suspensionChanged.size}; suspension unknown ${changes.suspensionUnknown}.")
+                            listOf("Added" to changes.added, "No longer visible" to changes.missing, "Enabled state changed" to changes.enabledChanged, "Suspension changed" to changes.suspensionChanged).forEach { (title, names) ->
+                                if (names.isNotEmpty()) Text("$title: ${names.take(30).joinToString()}${if (names.size > 30) " … (${names.size} total)" else ""}", style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { reviewOpen = false }) { Text("Close / மூடு") } }
+        )
+    }
+
+    if (replaceBaseline) {
+        AlertDialog(
+            onDismissRequest = { replaceBaseline = false },
+            title = { Text(if (baseline == null) "Save baseline?" else "Replace baseline?") },
+            text = { Text(if (baseline == null) "Save the current package states and device memory measurements on this phone? App data is not backed up."
+                else "This replaces the earlier baseline. Export it first if you want to keep it. Continue?\nபழைய முதல் நிலை மாற்றப்படும். தேவைப்பட்டால் முதலில் சேமிக்கவும்.") },
+            dismissButton = { TextButton(onClick = { replaceBaseline = false }) { Text("Cancel / வேண்டாம்") } },
+            confirmButton = { TextButton(onClick = {
+                replaceBaseline = false
+                scope.launch {
+                    try {
+                        val fresh = DisableManager.loadInstalledApps(context)
+                        val snapshot = ReviewSnapshots.capture(context, fresh)
+                        if (!ReviewSnapshots.save(context, snapshot)) error("Could not save")
+                        apps = fresh; baseline = snapshot; comparison = null
+                    } catch (e: Exception) { errorMsg = "Could not save baseline: ${e.javaClass.simpleName}"; reviewOpen = false }
+                }
+            }) { Text("Save / சேமி") } }
+        )
     }
 
     errorMsg?.let { msg ->
@@ -773,12 +896,14 @@ fun AppsListWindow(
     confirmApp?.let { app ->
         AlertDialog(
             onDismissRequest = { confirmApp = null },
-            title = { Text(if (app.category == DisableCategory.UNLISTED) "Unlisted — check first" else T.confirmTitle.en) },
+            title = { Text("Review before disabling / முடக்கும் முன் ஆய்வு") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(if (app.category == DisableCategory.UNLISTED)
-                        "${app.label} has no UAD rating. Disabling it may affect features; recovery is not guaranteed. AI answers can be wrong."
-                    else "${app.label} may affect features if disabled. Restoration can fail. Disable anyway?", style = MaterialTheme.typography.bodyMedium)
+                    Text(app.label, fontWeight = FontWeight.Bold)
+                    Text(app.packageName, style = MaterialTheme.typography.labelSmall)
+                    Text(ratingLabel(app), style = MaterialTheme.typography.labelMedium)
+                    app.description?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                    Text("Any app may be needed on your phone. Recovery can fail. Change one app, then test your phone. No app data backup is included.\nஎந்த செயலியும் தேவைப்படலாம். மீண்டும் இயக்க முடியாமல் போகலாம். ஒன்றை மட்டும் மாற்றி கைபேசியைச் சோதிக்கவும்.", style = MaterialTheme.typography.bodyMedium)
                     if (app.category == DisableCategory.UNLISTED) {
                         Text("Opening Google sends the app name and package to Google.", style = MaterialTheme.typography.labelSmall)
                         TextButton(onClick = { openGoogleAi(context, app) }) { Text("Ask Google AI") }
@@ -786,7 +911,18 @@ fun AppsListWindow(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { confirmApp = null; run(app) }) { Text(biStatic(T.actionDisableAnyway, taFirst)) }
+                TextButton(onClick = {
+                    confirmApp = null
+                    // The package may have changed since opening the dialog: re-read before acting.
+                    scope.launch {
+                        val fresh = DisableManager.loadInstalledApps(context)
+                        apps = fresh
+                        val current = fresh.firstOrNull { it.packageName == app.packageName }
+                        if (current == null || current != app || current.needsRestore || current.category == DisableCategory.CRITICAL || current.bootloopRisk || DisableManager.disableBlockedReason(context, current.packageName) != null) {
+                            errorMsg = "Package state or protection changed. Nothing was disabled; review it again."
+                        } else run(current, restore = false)
+                    }
+                }) { Text(biStatic(T.actionDisableAnyway, taFirst)) }
             },
             dismissButton = { TextButton(onClick = { confirmApp = null }) { Text(biStatic(T.actionCancel, taFirst)) } }
         )
@@ -810,7 +946,7 @@ fun AppsListWindow(
                     blockedApp = app
                 } else {
                     val off = app.needsRestore
-                    if (!off && app.category in setOf(DisableCategory.CAUTION, DisableCategory.UNLISTED)) confirmApp = app else run(app)
+                    if (!off) confirmApp = app else run(app)
                 }
             }
         )
@@ -921,7 +1057,8 @@ fun AppDetailsDialog(
 
 @Composable
 fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisable: () -> Unit,
-           onRestoreUnknown: () -> Unit, onAskAi: () -> Unit, onOpenDetails: () -> Unit) {
+           onRestoreUnknown: () -> Unit, onAskAi: () -> Unit, planned: Boolean,
+           onPlan: () -> Unit, onOpenDetails: () -> Unit) {
     // The whole card is tinted by its rating, so the list can be read without stopping to parse
     // each line: a green name means safe, amber means it will ask, red means it will not act.
     val tint = ratingColour(app)
@@ -1004,6 +1141,11 @@ fun AppRow(app: AppInfo, taFirst: Boolean, running: Set<String>? = null, onDisab
                 if (!app.isSuspensionKnown && !app.needsRestore) {
                     TextButton(onClick = onRestoreUnknown, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
                         Text("Try restore", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+                if (!app.needsRestore && !blocked) {
+                    TextButton(onClick = onPlan, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {
+                        Text(if (planned) "− Plan" else "+ Plan", style = MaterialTheme.typography.labelSmall)
                     }
                 }
                 TextButton(onClick = onOpenDetails, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)) {

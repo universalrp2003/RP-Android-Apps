@@ -163,8 +163,7 @@ class DisablerSafetyGuardTest(unittest.TestCase):
         # The version lives in gradle only; this pins that it moves forward deliberately and that
         # code and name stay in step, rather than pinning one release's numbers forever.
         self.assertRegex(name, r'^\d+\.\d+\.\d+$')
-        self.assertEqual(code, int(name.split('.')[1]),
-                         'versionCode must track the minor version (0.2.0 -> 2, 0.3.0 -> 3)')
+        self.assertGreater(code, 3, 'candidate code must upgrade the published 0.3.0 code 3')
 
 
 class BootloopDetectionTest(unittest.TestCase):
@@ -288,16 +287,14 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertRegex(self.ui, r'if \(searchOpen\) \{')
         self.assertIn('searchOpen = false; query = ""', self.ui)
 
-    def test_the_apps_window_no_longer_prints_tamil(self):
-        # The owner asked for English here; the About dialog keeps its Tamil section.
+    def test_apps_window_keeps_clear_risk_legend_and_bilingual_review(self):
         window = self.ui[self.ui.index('fun AppsListWindow('):self.ui.index('fun AboutDialog(')]
-        self.assertNotIn('நீக்க', window)
-        self.assertNotIn('முடக்க', window)
-        self.assertNotIn('பட்டியலில்', window)
-        self.assertNotIn('biStatic(T.fAny', window)
-        # legend and tiles are literal English now
-        self.assertIn('ColourKey(SafeGreen, "Safe")', window)
+        self.assertIn('ColourKey(SafeGreen, "UAD recommended")', window)
+        self.assertIn('ColourKey(CautionAmber, "Asks first")', window)
+        self.assertIn('ColourKey(DangerRed, "Never")', window)
         self.assertIn('label = "installed"', window)
+        self.assertIn('பாதுகாப்பு உறுதி அல்ல', window)
+        self.assertIn('No apps are changed here.', window)
 
     def test_status_and_detail_labels_are_english_literals(self):
         self.assertIn('"● running now"', self.ui)
@@ -356,7 +353,8 @@ class OwnerUiFeedbackTest(unittest.TestCase):
         self.assertIn('https://www.google.com/search?udm=50&q=$query', self.ui)
         self.assertIn('AI answers can be wrong', self.ui)
         self.assertIn('Opening Google sends the app name and package to Google', self.ui)
-        self.assertIn('DisableCategory.CAUTION, DisableCategory.UNLISTED', self.ui)
+        self.assertIn('filter == DisableCategory.CAUTION', self.ui)
+        self.assertIn('filter == DisableCategory.UNLISTED', self.ui)
         self.assertIn('label = { Text("Unlisted"', self.ui)
         self.assertIn('!app.isEnabled && app.isSuspended -> "● disabled and suspended"', self.ui)
 

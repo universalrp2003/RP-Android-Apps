@@ -20,6 +20,11 @@ data class UadEntry(
     val bootloopRisk: Boolean = false,
 )
 
+/** Accessibility Suite must never be advertised as a low-risk recommendation. */
+internal fun reviewCategory(packageName: String, databaseCategory: DisableCategory): DisableCategory =
+    if (packageName == "com.google.android.marvin.talkback" && databaseCategory == DisableCategory.SAFE)
+        DisableCategory.CAUTION else databaseCategory
+
 /**
  * Sentences that say a package does NOT bootloop, so a plain "bootloop" search does not block them.
  * Real examples in this database: "Safe to remove (no bootloop)", "Disabling does not cause a
@@ -73,12 +78,12 @@ object UadDatabase {
                 val e = obj.getJSONObject(pkg)
                 map[pkg] = UadEntry(
                     packageName = pkg,
-                    category = when (e.optString("category")) {
+                    category = reviewCategory(pkg, when (e.optString("category")) {
                         "SAFE" -> DisableCategory.SAFE
                         "CAUTION" -> DisableCategory.CAUTION
                         "CRITICAL" -> DisableCategory.CRITICAL
                         else -> DisableCategory.UNLISTED
-                    },
+                    }),
                     description = e.optString("description"),
                     oem = e.optString("list"),
                     removal = e.optString("removal"),

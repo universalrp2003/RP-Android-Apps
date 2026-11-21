@@ -26,7 +26,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('daily-vault-v0.5', 'DailyVault-v0.5.apk', '0.5', 11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
             ('tamilan-store-v0.14', 'Tamilan-Store-v0.14.apk', '0.14', 19906251, '3d804fc152bddb9df75f92d62d9e2bc18ec3c11c32fc6fd81736fd8fbf0181a5'),
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
-            ('elderly-launcher-v1.7', 'Elderly-Launcher-v1.7.apk', '1.7', 11521755, '13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec'),
+            ('elderly-launcher-v1.8', 'Elderly-Launcher-v1.8.apk', '1.8', 11538139, '6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c'),
             ('voice-notes-v1.3.4', 'Voice-Notes-v1.3.4.apk', '1.3.4', 13135195, '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a'),
             ('live-guard-v3.01', 'CleanSweep-v3.01.apk', '3.01', 14781231, 'b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f'),
             ('ramesh-radio-v1.31', 'Ramesh-Radio-v1.31.apk', '1.31', 15179972, 'fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22'),
@@ -84,7 +84,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
             'vasanthi': ('1.1.5', '8', 'vasanthi-ai-v1.1.5'),
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
-            'launcher': ('1.7', '8', 'elderly-launcher-v1.7'),
+            'launcher': ('1.8', '9', 'elderly-launcher-v1.8'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Store0.13 is the in-flight candidate: 15-app catalog, same stable key.
             'tamilanstore': ('0.14', '16', 'tamilan-store-v0.14'),

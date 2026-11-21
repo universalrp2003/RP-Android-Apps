@@ -63,15 +63,15 @@ class LauncherPublicationTests(unittest.TestCase):
     def test_unrelated_accepted_apk_versions_hashes_still_pinned(self):
         feed = json.loads((ROOT/'site/catalog-v2.json').read_text())
         apps = {a['id']: a for a in feed['apps']}
-        self.assertEqual((apps['launcher']['version'], apps['launcher']['sha256']), ('1.7', promotion.DIGEST))
+        self.assertEqual((apps['launcher']['version'], apps['launcher']['sha256']), ('1.8', '6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c'))
         for name, version, digest in (
             ('liveguard', '3.01', 'b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f'),
             ('voicenotes', '1.3.4', '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a')):
             self.assertEqual((apps[name]['version'], apps[name]['sha256']), (version, digest))
         pages = (ROOT/'.github/workflows/pages.yml').read_text()
         self.assertIn(json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())['apk_sha256'], pages)
-        self.assertIn('"elderly-launcher-v1.7"', pages)  # the current launcher stays mirrored
+        self.assertIn('"elderly-launcher-v1.8"', pages)  # the current launcher stays mirrored
         # 1.5 and older are still public release assets; only current builds are mirrored now.
         self.assertNotIn('"elderly-launcher-v1.5"', pages)
-        self.assertIn(promotion.DIGEST, pages)
+        self.assertIn('6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c', pages)
         self.assertIn("if: github.ref == 'refs/heads/main'", pages)
