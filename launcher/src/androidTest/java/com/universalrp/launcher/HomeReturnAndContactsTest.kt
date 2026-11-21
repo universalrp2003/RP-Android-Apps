@@ -48,7 +48,8 @@ class HomeReturnAndContactsTest {
             val saved=Favourites.load(context)
             find(context.getString(R.string.all_apps)).click()
             assertNotNull(device.wait(Until.findObject(By.text(context.getString(R.string.back))), 10000))
-            assertTrue("The system Home button should be delivered", device.pressHome())
+            // UiAutomator may return false for a third-party HOME handler; assert the resulting UI instead.
+            device.pressHome()
             assertNotNull("Home returns to main phone button", device.wait(Until.findObject(By.text(context.getString(R.string.big_phone))), 10000))
             assertFalse("All-apps Back control is closed", device.hasObject(By.text(context.getString(R.string.back))))
             assertEquals("Home did not change favourites", saved, Favourites.load(context))
