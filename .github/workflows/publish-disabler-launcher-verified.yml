@@ -1,0 +1,20 @@
+name: Publish approved Disabler 0.4.1 and Launcher 1.8
+on:
+  push:
+    branches: ["arena/eb6de80e-rp-android-apps"]
+    paths: [".github/workflows/publish-disabler-launcher-verified.yml"]
+permissions: {contents: write, actions: read}
+concurrency: {group: publish-disabler-launcher-verified, cancel-in-progress: false}
+jobs:
+  promote:
+    if: github.ref == 'refs/heads/arena/eb6de80e-rp-android-apps'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env: {GH_TOKEN: "${{ github.token }}"}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Promote exact signed tested bytes, no rebuilding
+        run: python3 tools/promote_disabler_launcher.py
