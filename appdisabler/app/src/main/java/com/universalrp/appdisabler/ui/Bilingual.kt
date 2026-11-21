@@ -198,8 +198,8 @@ object T {
         "UAD பரிந்துரைத்தாலும் விளைவுகள் சாதனத்தைப் பொறுத்து மாறும். முடக்கும் முன் சரிபாருங்கள்; பாதுகாப்புக்கு உறுதி இல்லை."
     )
     val catCautionBody = Bi(
-        "Caution — may remove a feature. You can Enable it back anytime.",
-        "கவனம் — ஏதேனும் அம்சம் செயலிழக்கலாம். எப்போது வேண்டுமானாலும் மீட்ட Enable செய்யலாம்."
+        "Caution — may affect features. Enable can fail; recovery is not guaranteed.",
+        "கவனம் — அம்சங்கள் பாதிக்கலாம். மீண்டும் இயக்க முடியாமல் போகலாம்."
     )
     val catCriticalBody = Bi(
         "Never disable — system/core package. Blocked by this app.",
@@ -238,26 +238,26 @@ object T {
             "விளைவுகள் மாறும். மீட்டெடுக்க Enable தட்டுங்கள்; சேமித்த நிலை மாறியிருக்கலாம்."
     )
     val happenDisabled = Bi(
-        "Currently off — hidden and stopped. Enable restores it.",
-        "தற்போது முடக்கப்பட்டுள்ளது — மறைந்து நிறுத்தப்பட்டுள்ளது. Enable மீட்டெடுக்கும்."
+        "Android reports it disabled. Enable requests recovery, but can fail.",
+        "முடக்கப்பட்டதாக ஆண்ட்ராய்டு கூறுகிறது. மீண்டும் இயக்க முடியாமல் போகலாம்."
     )
     val happenSafe = Bi(
-        "It disappears from the launcher and stops running in the background. Reversible from the Off tab.",
-        "Launcher-ல் இருந்து மறைந்து பின்னணியில் இயங்குவது நிற்கும். Off தாவலில் மீட்டெடுக்கலாம்."
+        "Effects differ by device. The request may fail or only suspend the app. Recovery can fail.",
+        "விளைவுகள் சாதனத்தைப் பொறுத்து மாறும். கோரிக்கை தோல்வியடையலாம்; மீட்க முடியாமல் போகலாம்."
     )
     val happenCaution = Bi(
-        "Its feature stops working until you Enable it again.",
-        "மீண்டும் Enable செய்யும் வரை அதன் அம்சம் செயல்படாது."
+        "Features may stop working. Enable requests recovery, but can fail.",
+        "அம்சங்கள் செயலிழக்கலாம். மீண்டும் இயக்க முடியாமல் போகலாம்."
     )
     val happenCritical = Bi("Would break the system — blocked.", "சிஸ்டத்தைப் பாதிக்கும் — தடுக்கப்பட்டுள்ளது.")
     val happenUnlisted = Bi(
-        "It is hidden and stopped. If something breaks, Enable it from the Off tab.",
-        "அது மறைந்து நிறுத்தப்படும். ஏதேனும் பாதிப்பு ஏற்பட்டால் Off தாவலில் Enable செய்யுங்கள்."
+        "Effects are unknown. Enable requests recovery, but can fail.",
+        "விளைவுகள் தெரியாது. மீண்டும் இயக்க முடியாமல் போகலாம்."
     )
     val howToDisable = Bi("How to turn it off?", "எப்படி முடக்குவது?")
     val howReady = Bi(
-        "Tap Disable below and confirm — it turns off instantly.",
-        "கீழே Disable தட்டி உறுதிப்படுத்துங்கள் — உடனே முடக்கப்படும்."
+        "Tap Disable and review. The device may refuse or suspend instead.",
+        "கீழே முடக்கு என்பதைத் தட்டி ஆய்வு செய்யவும். சாதனம் மறுக்கலாம்."
     )
     val howNotReady = Bi(
         "Finish Shizuku setup in window 1 first, then tap Disable.",
