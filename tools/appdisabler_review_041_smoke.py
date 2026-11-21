@@ -38,7 +38,7 @@ def tap(node):
     x1,y1,x2,y2=map(int,re.findall(r'\d+',node.get('bounds'))); adb('shell','input','tap',(x1+x2)//2,(y1+y2)//2)
 tap(find('Apps'))
 tap(find('Compare / ஒப்பிடு'))
-find('Read-only inventory',substring=True)
+find('No apps are changed here.',substring=True)
 tap(find('Save baseline / முதல் நிலை'))
 find('Save baseline?'); tap(find('Save / சேமி'))
 find('Baseline:',substring=True)
