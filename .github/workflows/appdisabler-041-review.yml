@@ -1,4 +1,4 @@
-name: System App Disabler 0.4 review candidate (no publication)
+name: System App Disabler 0.4.1 review candidate (no publication)
 on:
   push:
     branches: ["arena/eb6de80e-rp-android-apps"]

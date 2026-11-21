@@ -17,7 +17,7 @@ class HomeReturnAndContactsTest {
     private val instrument = InstrumentationRegistry.getInstrumentation()
     private val context = instrument.targetContext
     private val device = UiDevice.getInstance(instrument)
-    private val fixtures = listOf(Favourite("Test Alpha", "1110001"), Favourite("Test Beta", "1110002"),
+    private val fixtures = listOf(Favourite("சோதனை மிக நீளமான தமிழ் பெயர் ஒருவர்", "1110001"), Favourite("Test Beta", "1110002"),
         Favourite("Test Long Name Example", "1110003"), Favourite("Test Delta", "1110004"))
     private fun find(label: String): androidx.test.uiautomator.UiObject2 {
         repeat(24) {
@@ -38,13 +38,16 @@ class HomeReturnAndContactsTest {
         assertEquals("Upgrade must keep the saved contacts and their order", fixtures, Favourites.load(context))
         ActivityScenario.launch(MainActivity::class.java).use {
             device.waitForIdle()
-            find("Test Alpha")
-            val alpha=find("Test Alpha").visibleBounds
+            find("சோதனை மிக நீளமான தமிழ் பெயர் ஒருவர்")
+            val alpha=find("சோதனை மிக நீளமான தமிழ் பெயர் ஒருவர்").visibleBounds
             val beta=find("Test Beta").visibleBounds
             assertTrue("First two contacts must be distinct columns", alpha.right < beta.left)
-            assertEquals("First two contacts start on same row", alpha.top, beta.top)
+            val removePrefix = context.getString(R.string.favourites_remove) + " "
+            val leftRemove = find(removePrefix + fixtures[0].name).visibleBounds
+            val rightRemove = find(removePrefix + fixtures[1].name).visibleBounds
+            assertEquals("Remove controls stay aligned even when a name wraps", leftRemove.top, rightRemove.top)
             val third=find("Test Long Name Example").visibleBounds
-            assertTrue("Next contact follows on the next row", third.top >= alpha.bottom)
+            assertTrue("Next contact follows on the next row", third.top >= leftRemove.bottom)
             val saved=Favourites.load(context)
             find(context.getString(R.string.all_apps)).click()
             assertNotNull(device.wait(Until.findObject(By.text(context.getString(R.string.back))), 10000))

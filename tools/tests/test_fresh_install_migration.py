@@ -84,7 +84,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
             'vasanthi': ('1.1.5', '8', 'vasanthi-ai-v1.1.5'),
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
-            'launcher': ('1.7', '8', 'elderly-launcher-v1.7'),
+            'launcher': ('1.8', '9', 'elderly-launcher-v1.7'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
             # Store0.13 is the in-flight candidate: 15-app catalog, same stable key.
             'tamilanstore': ('0.14', '16', 'tamilan-store-v0.14'),

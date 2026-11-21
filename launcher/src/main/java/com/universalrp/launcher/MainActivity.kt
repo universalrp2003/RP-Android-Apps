@@ -709,12 +709,12 @@ private fun FavouritesCard(
                     val columns = if (maxWidth < 300.dp || fontScale >= 1.5f) 1 else 2
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         favourites.chunked(columns).forEach { row ->
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.Top) {
                                 row.forEach { favourite ->
-                                    Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Column(Modifier.weight(1f).fillMaxHeight(), horizontalAlignment = Alignment.CenterHorizontally) {
                                         Button(onClick = { onCall(favourite) },
-                                            modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp),
+                                            modifier = Modifier.fillMaxWidth().weight(1f).heightIn(min = 72.dp),
                                             shape = RoundedCornerShape(16.dp),
                                             colors = ButtonDefaults.buttonColors(containerColor = AccentBg, contentColor = ButtonText,
                                                 disabledContainerColor = CardBg, disabledContentColor = Muted)) {

@@ -11,7 +11,7 @@ import org.junit.runner.RunWith
 class SeedUpgradeFixtureTest {
     @Test fun seed() {
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        val values = listOf("Test Alpha\u001f1110001", "Test Beta\u001f1110002", "Test Long Name Example\u001f1110003", "Test Delta\u001f1110004").joinToString("\u001e")
+        val values = listOf("சோதனை மிக நீளமான தமிழ் பெயர் ஒருவர்\u001f1110001", "Test Beta\u001f1110002", "Test Long Name Example\u001f1110003", "Test Delta\u001f1110004").joinToString("\u001e")
         assertTrue(ctx.getSharedPreferences("launcher_favourites", 0).edit().putString("list", values).commit())
         assertTrue(ctx.getSharedPreferences("launcher", 0).edit().putBoolean("asked_for_home", true).commit())
     }
