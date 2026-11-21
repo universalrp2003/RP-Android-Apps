@@ -63,12 +63,12 @@ jobs:
               ("tamil-podcast-v1.6", "Tamil-Podcast-Player-v1.6.apk", 11967239, "f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec"),
               ("daily-vault-v0.5", "DailyVault-v0.5.apk", 11712552, "8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55"),
               ("expense-tracker-v1.2", "Expense-Tracker-v1.2.apk", 11564299, "286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108"),
-              ("elderly-launcher-v1.7", "Elderly-Launcher-v1.7.apk", 11521755, "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec"),
+              ("elderly-launcher-v1.8", "Elderly-Launcher-v1.8.apk", 11538139, "6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c"),
               ("ramesh-radio-v1.31", "Ramesh-Radio-v1.31.apk", 15179972, "fceac7c50758990eaa33228a3ec375f38fb9a307bca8452566eb84d037a5dc22"),
               ("pulseeq-v1.11", "PulseEQ-v1.11.apk", 12165793, "bcfb6a606d831ad935efe024bae4960ed33ececcb67157ae408f57c596c43e4a"),
               ("rp-vocal-remover-studio-v0.1.16", "RP-Vocal-Remover-Studio-v0.1.16.apk", 65163821, "6d0b04cd63f18bcb82bd2512d71c0985737268752007d96ccc4327558d38489e"),
               ("tvguard-v1.5.1", "Android-TV-Guard-v1.5.1.apk", 11797331, "aea1ae03d2bfe87ee0659cd2cba8104e22365c1c18391587d9ae7b70cae3614b"),
-              ("system-app-disabler-v0.3.0", "System-App-Disabler-v0.3.0.apk", 11668005, "d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0"),
+              ("system-app-disabler-v0.4.1", "System-App-Disabler-v0.4.1.apk", 11684389, "d4a51560e1cd77eb240d2132cfad568796be5f4f642f6dfce5bcecdbd5294aea"),
           ]
 
           out_dir = pathlib.Path("site/apks")
@@ -106,8 +106,8 @@ jobs:
           test -s site/apks/CleanSweep-v3.01.zip
           test -s site/apks/Android-TV-Guard-v1.5.1.apk
           test -s site/apks/Android-TV-Guard-v1.5.1.zip
-          test -s site/apks/System-App-Disabler-v0.3.0.apk
-          test -s site/apks/System-App-Disabler-v0.3.0.zip
+          test -s site/apks/System-App-Disabler-v0.4.1.apk
+          test -s site/apks/System-App-Disabler-v0.4.1.zip
           test -s site/apks/Weekly-Money-v1.5.apk
           test -s site/apks/Weekly-Money-v1.5.zip
           test -s site/apks/Tamilan-Store-v0.14.apk
@@ -128,8 +128,8 @@ jobs:
           test -s site/apks/DailyVault-v0.5.zip
           test -s site/apks/Expense-Tracker-v1.2.apk
           test -s site/apks/Expense-Tracker-v1.2.zip
-          test -s site/apks/Elderly-Launcher-v1.7.apk
-          test -s site/apks/Elderly-Launcher-v1.7.zip
+          test -s site/apks/Elderly-Launcher-v1.8.apk
+          test -s site/apks/Elderly-Launcher-v1.8.zip
           test -s site/apks/Ramesh-Radio-v1.31.apk
           test -s site/apks/Ramesh-Radio-v1.31.zip
           test -s site/apks/PulseEQ-v1.11.apk

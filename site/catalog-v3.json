@@ -128,11 +128,11 @@
       "name": "Elderly Launcher",
       "tamilName": "முதியவர் திரை",
       "packageName": "com.universalrp.launcher",
-      "version": "1.7",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.7/Elderly-Launcher-v1.7.apk",
-      "size": 11521755,
-      "sha256": "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.7"
+      "version": "1.8",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.8/Elderly-Launcher-v1.8.apk",
+      "size": 11538139,
+      "sha256": "6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.8"
     },
     {
       "id": "dailyvault",
@@ -161,11 +161,11 @@
       "name": "System App Disabler",
       "tamilName": "சிஸ்டம் செயலி முடக்கி",
       "packageName": "com.universalrp.appdisabler",
-      "version": "0.3.0",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.3.0/System-App-Disabler-v0.3.0.apk",
-      "size": 11668005,
-      "sha256": "d09ab49e57e7ac3daed7e4edac4a9d8b7fc9292ccbce6ff2a4b48065977f30a0",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.3.0"
+      "version": "0.4.1",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.4.1/System-App-Disabler-v0.4.1.apk",
+      "size": 11684389,
+      "sha256": "d4a51560e1cd77eb240d2132cfad568796be5f4f642f6dfce5bcecdbd5294aea",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/system-app-disabler-v0.4.1"
     },
     {
       "id": "weeklymoney",

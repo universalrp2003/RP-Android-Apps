@@ -50,9 +50,9 @@ class LauncherHomeFollowupTests(unittest.TestCase):
         sister = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
         row = sister.split('id = "launcher",', 1)[1].split('),', 1)[0]
         self.assertIn('version = "1.8"', row)
-        self.assertIn('publishedVersion = "1.7"', row)
+        self.assertIn('publishedVersion = "1.8"', row)
         catalog = (ROOT/'site/catalog-v2.json').read_text()
-        self.assertIn('elderly-launcher-v1.7', catalog)
+        self.assertIn('elderly-launcher-v1.8', catalog)
         self.assertNotIn('elderly-launcher-v1.6', catalog)
 
     def test_compact_tiles_and_removal_live_only_in_management(self):

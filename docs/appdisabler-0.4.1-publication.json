@@ -1,0 +1,17 @@
+{
+  "tag": "system-app-disabler-v0.4.1",
+  "source": "558d148f62566fb336d5029356f7efb8fe594e8d",
+  "release_id": 453638013,
+  "asset_id": 775338194,
+  "published_at": "2026-11-21T11:21:20Z",
+  "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/system-app-disabler-v0.4.1/System-App-Disabler-v0.4.1.apk",
+  "bytes": 11684389,
+  "apk_sha256": "d4a51560e1cd77eb240d2132cfad568796be5f4f642f6dfce5bcecdbd5294aea",
+  "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+  "candidate_run": 44893210469,
+  "artifact_id": 14703052949,
+  "native_run": 44896432640,
+  "publication_run": 44898673116,
+  "rebuilt": false,
+  "physical_phone_tested": false
+}

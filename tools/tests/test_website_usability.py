@@ -113,16 +113,16 @@ class WebsiteUsabilityTest(unittest.TestCase):
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
         self.assertEqual(len(ids), 16)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[0], 'app-oor-arivippu')
-        self.assertEqual(ids[1], 'app-weekly-money')
-        self.assertEqual(ids[2], 'app-live-guard')
+        self.assertEqual(ids[0], 'app-elderly-launcher')
+        self.assertEqual(ids[1], 'app-system-app-disabler')
+        self.assertEqual(ids[2], 'app-oor-arivippu')
 
         # Moving the oldest card to the front must be rejected.
         oldest = site.index('        <!-- Secret Message -->')
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- Oor Arivippu -->')
+        first = shuffled.index('        <!-- Elderly Launcher -->')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',
@@ -137,7 +137,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
         end = pristine.index('</article>', middle) + len('</article>')
         block = pristine[middle:end]
         reordered = pristine[:middle] + pristine[end:]
-        top = reordered.index('        <!-- Oor Arivippu -->')
+        top = reordered.index('        <!-- Elderly Launcher -->')
         reordered = reordered[:top] + block + '\n\n' + reordered[top:]
         ids2 = re.findall(
             r'<h2 id="(app-[^"]+)"',

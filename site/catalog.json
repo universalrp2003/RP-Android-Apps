@@ -128,11 +128,11 @@
       "name": "Elderly Launcher",
       "tamilName": "முதியவர் திரை",
       "packageName": "com.universalrp.launcher",
-      "version": "1.7",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.7/Elderly-Launcher-v1.7.apk",
-      "size": 11521755,
-      "sha256": "13ce20550e9493f6492a399e5bfad72d8fdd95af9e7d0838b7fd0219f543bfec",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.7"
+      "version": "1.8",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/elderly-launcher-v1.8/Elderly-Launcher-v1.8.apk",
+      "size": 11538139,
+      "sha256": "6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/elderly-launcher-v1.8"
     }
   ]
 }

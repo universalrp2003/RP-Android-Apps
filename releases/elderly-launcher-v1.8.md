@@ -5,6 +5,8 @@
 - The signed APK was tested on an emulator, including synthetic Tamil names, 200% text and removal. This exact version was not tested on a physical phone; behaviour can vary by device. No new permissions were added.
 - Update normally without uninstalling or clearing data; uninstalling can erase local data.
 
+No physical-device test was performed for this exact release.
+
 ## தமிழ்
 
 விருப்பத் தொடர்புகளின் பெயர் நீளமாக இருந்தாலும் அழைப்பு மற்றும் நீக்கு பொத்தான்கள் சீராக இருக்கும். பெரிய எழுத்தில் ஒரு நெடுவரிசையாகக் காட்டும்.

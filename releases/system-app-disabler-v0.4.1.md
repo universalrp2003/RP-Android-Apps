@@ -6,6 +6,8 @@
 - Tested as a signed 0.3.0 upgrade on an Android 15 emulator, including read-only comparison and a synthetic accessibility package. The previous 0.4.0 candidate was also reviewed on the owner's phone; this exact 0.4.1 APK was not phone-tested. No disable or recovery guarantee, Shizuku action, or general device compatibility is claimed for this version.
 - Update normally without uninstalling or clearing data; uninstalling may erase local data. A disabled essential component can make a phone difficult or impossible to use or recover.
 
+No physical-device test was performed for this exact release.
+
 ## தமிழ்
 
 செயலிகளின் தற்போதைய பட்டியலைத் தனிப்பட்ட முறையில் சேமித்து பின்னர் ஒப்பிடலாம். இது செயலித் தரவின் காப்புப்பிரதி அல்ல; தானாக மீட்டெடுக்காது. நினைவகம் மற்றும் சேமிப்பு மாற்றம் மட்டும் முன்னேற்றத்தை உறுதிப்படுத்தாது.
