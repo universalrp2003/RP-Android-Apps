@@ -23,7 +23,9 @@ jobs:
         run: |
           set -euo pipefail
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
-          apk=animalvoice/app/build/outputs/apk/debug/app-debug.apk
+          apk="$(find animalvoice/app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$apk"
+          echo "Found APK: $apk"
           "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/animal-badging.txt"
           cat "$RUNNER_TEMP/animal-badging.txt"
           grep -F "name='com.universalrp.animalvoice.experimental'" "$RUNNER_TEMP/animal-badging.txt"
@@ -43,15 +45,15 @@ jobs:
           script: |
             set -euo pipefail
             [[ "$(adb get-serialno)" == emulator-* ]]
-            adb install animalvoice/app/build/outputs/apk/debug/app-debug.apk
-            adb install animalvoice/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb install "$(find animalvoice/app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
+            adb install "$(find animalvoice/app/build/outputs/apk/androidTest/debug -maxdepth 1 -name '*.apk' -print -quit)"
             adb shell am instrument -w -r com.universalrp.animalvoice.experimental.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/animal-native.txt"
             grep -F 'OK (2 tests)' "$RUNNER_TEMP/animal-native.txt"
             ! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$RUNNER_TEMP/animal-native.txt"
       - uses: actions/upload-artifact@v4
         with:
           name: animal-voices-experimental-debug
-          path: animalvoice/app/build/outputs/apk/debug/app-debug.apk
+          path: animalvoice/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
           retention-days: 14
       - name: Surface bounded build or native failures
