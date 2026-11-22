@@ -27,7 +27,7 @@ class RangeInspectionTests(unittest.TestCase):
         with zipfile.ZipFile(b, 'w', compression=zipfile.ZIP_DEFLATED) as z:
             z.writestr('root/ZebraFinchModeling-Internal/README.md', 'checkpoint documentation')
             z.writestr('root/zf_aim_model_checkpoints/model.pt', b'weights')
-            z.writestr('root/ZebraFinchModeling-Internal/for_live/run.pregenerate_calls.summary_model.sh', 'echo research')
+            z.writestr('root/ZebraFinchModeling-Internal/scripts/for_live/run.pregenerate_calls.summary_model.sh', 'echo research')
             z.writestr('root/StreamPlayback/README.md', 'stream instructions')
         f = m.RangeFile('https://example.invalid/file', fake_opener(b.getvalue()))
         result = m.inspect(f)

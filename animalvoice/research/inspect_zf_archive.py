@@ -75,13 +75,21 @@ def inspect(fileobj):
         # Only read a fixed shortlist of small text files, never model bytes or archive paths to disk.
         suffixes = (
             "/ZebraFinchModeling-Internal/pyproject.toml",
-            "/ZebraFinchModeling-Internal/for_live/run.pregenerate_calls.summary_model.sh",
-            "/ZebraFinchModeling-Internal/for_live/resample_and_remove_padding_from_pregenereated_calls.py",
-            "/StreamPlayback/README.md", "/StreamPlayback/pyproject.toml",
+            "/ZebraFinchModeling-Internal/scripts/for_live/run.pregenerate_calls.summary_model.sh",
+            "/ZebraFinchModeling-Internal/scripts/for_live/resample_and_remove_padding_from_pregenereated_calls.py",
+            "/StreamPlayback/README.md", "/StreamPlayback/requirements.txt",
+            "/StreamPlayback/configs/config.live.model_with_pregen_calls.yml",
+            "/StreamPlayback/streamplayback/models/interaction.py",
+            "/StreamPlayback/streamplayback/models/response2waveform.py",
+            "/ZebraFinchModeling-Internal/scripts/for_live/pregenerate_calls.summary_model.py",
         )
         output["live_paths"] = [x.filename for x in infos if not x.is_dir() and
-                                ("/for_live/" in x.filename or "/StreamPlayback/" in x.filename)
+                                ("/for_live/" in x.filename or "/StreamPlayback/" in x.filename and not "/data/" in x.filename)
                                 and not any(part in x.filename for part in ("/.git/", "/.venv/", "/__pycache__/"))][:150]
+        interesting = ("20250417_231457/", "20250210_171314/", "1fbf1933/", "diarization.20250412_032448/", "pregenerated_calls.resampled_to_32000.padding_removed.20250210_171314_subset/")
+        output["pipeline_files"] = [{"path": x.filename, "bytes": x.file_size, "compressed_bytes": x.compress_size}
+                                    for x in infos if not x.is_dir() and any(t in x.filename for t in interesting)
+                                    and (x.filename.endswith((".th", ".ckpt", ".joblib", ".json", ".yaml", ".yml")))]
         for info in infos:
             if any(info.filename.endswith(suffix) for suffix in suffixes) and info.file_size <= 100_000 and info.compress_size <= 100_000:
                 output["source_files"].append({"path": info.filename, "content": archive.read(info).decode("utf-8", errors="replace")})

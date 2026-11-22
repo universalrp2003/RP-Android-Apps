@@ -33,6 +33,7 @@ jobs:
               for i in range(0,min(len(r['content']),36000),3000):
                   notice('README part '+str(i//3000+1),r['content'][i:i+3000])
           notice('Live pipeline paths', '\n'.join(d['live_paths']))
+          notice('Candidate pipeline files', '\n'.join(f"{f['bytes']} bytes: {f['path']}" for f in d['pipeline_files']))
           for f in d['source_files']:
               for i in range(0,min(len(f['content']),24000),3000):
                   notice('Source '+f['path']+' part '+str(i//3000+1),f['content'][i:i+3000])
