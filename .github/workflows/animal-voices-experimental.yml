@@ -32,7 +32,7 @@ jobs:
           grep -F "versionCode='1'" "$RUNNER_TEMP/animal-badging.txt"
           grep -F "versionName='0.1-experimental'" "$RUNNER_TEMP/animal-badging.txt"
           grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$RUNNER_TEMP/animal-badging.txt"
-          ! grep -F "uses-permission: name='android.permission.INTERNET'" "$RUNNER_TEMP/animal-badging.txt"
+          ! grep -E "uses-permission: name='android.permission.(INTERNET|READ_PHONE_STATE|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE)'" "$RUNNER_TEMP/animal-badging.txt"
       - run: sudo chmod a+rw /dev/kvm
       - name: Run synthetic native model and permission checks (no animal recordings)
         uses: reactivecircus/android-emulator-runner@v2
@@ -42,14 +42,7 @@ jobs:
           arch: x86_64
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
-          script: |
-            set -euo pipefail
-            [[ "$(adb get-serialno)" == emulator-* ]]
-            adb install "$(find animalvoice/app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
-            adb install "$(find animalvoice/app/build/outputs/apk/androidTest/debug -maxdepth 1 -name '*.apk' -print -quit)"
-            adb shell am instrument -w -r com.universalrp.animalvoice.experimental.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/animal-native.txt"
-            grep -F 'OK (2 tests)' "$RUNNER_TEMP/animal-native.txt"
-            ! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$RUNNER_TEMP/animal-native.txt"
+          script: bash animalvoice/run-emulator-checks.sh
       - uses: actions/upload-artifact@v4
         with:
           name: animal-voices-experimental-debug
