@@ -61,9 +61,9 @@ jobs:
         run: |
           import os,pathlib
           r=pathlib.Path(os.environ['RUNNER_TEMP'])
-          for p in (r/'animal-build.log',r/'animal-native.txt',r/'animal-badging.txt'):
+          for p in (r/'animal-build.log',r/'animal-native.txt',r/'animal-setup.txt',r/'animal-badging.txt'):
               if p.exists():
                   lines=p.read_text(errors='replace').splitlines()
-                  selected=lines if p.name.endswith('native.txt') or p.name.endswith('badging.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
+                  selected=lines if p.name.endswith('native.txt') or p.name.endswith('setup.txt') or p.name.endswith('badging.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
                   msg=(p.name+'\n'+'\n'.join(selected or lines[-20:]))[-8000:]
                   print('::error title=Animal Voices check::'+msg.replace('%','%25').replace('\n','%0A'))
