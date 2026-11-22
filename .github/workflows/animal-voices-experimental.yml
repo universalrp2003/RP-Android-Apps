@@ -1,0 +1,65 @@
+name: Animal Voices experimental Android test (no publication)
+on:
+  push:
+    branches: ["arena/b0b465b9-rp-android-apps"]
+    paths: ["animalvoice/**", "settings.gradle.kts", ".github/workflows/animal-voices-experimental.yml"]
+permissions: {contents: read}
+jobs:
+  prototype:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Verify model and compile isolated prototype
+        run: |
+          set -o pipefail
+          echo '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de  animalvoice/app/src/main/assets/yamnet.tflite' | sha256sum -c
+          ./gradlew :animalvoice:testDebugUnitTest :animalvoice:lintDebug :animalvoice:assembleDebug :animalvoice:assembleDebugAndroidTest --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/animal-build.log"
+      - name: Verify APK identity and permissions
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          apk=animalvoice/app/build/outputs/apk/debug/app-debug.apk
+          "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "package: name='com.universalrp.animalvoice.experimental' versionCode='1' versionName='0.1-experimental'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$RUNNER_TEMP/animal-badging.txt"
+          ! grep -F "uses-permission: name='android.permission.INTERNET'" "$RUNNER_TEMP/animal-badging.txt"
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Run synthetic native model and permission checks (no animal recordings)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: |
+            set -euo pipefail
+            [[ "$(adb get-serialno)" == emulator-* ]]
+            adb install animalvoice/app/build/outputs/apk/debug/app-debug.apk
+            adb install animalvoice/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w -r com.universalrp.animalvoice.experimental.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/animal-native.txt"
+            grep -F 'OK (2 tests)' "$RUNNER_TEMP/animal-native.txt"
+            ! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$RUNNER_TEMP/animal-native.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: animal-voices-experimental-debug
+          path: animalvoice/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Surface bounded build or native failures
+        if: failure()
+        shell: python
+        run: |
+          import os,pathlib
+          r=pathlib.Path(os.environ['RUNNER_TEMP'])
+          for p in (r/'animal-build.log',r/'animal-native.txt'):
+              if p.exists():
+                  lines=p.read_text(errors='replace').splitlines()
+                  selected=lines if p.name.endswith('native.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
+                  msg=(p.name+'\n'+'\n'.join(selected or lines[-20:]))[-8000:]
+                  print('::error title=Animal Voices check::'+msg.replace('%','%25').replace('\n','%0A'))
