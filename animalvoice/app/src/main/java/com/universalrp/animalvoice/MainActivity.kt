@@ -129,6 +129,7 @@ class MainActivity : ComponentActivity() {
                                     else birds.forEach { Text("• ${it.common} (${it.scientific})") }
                                     Text(tr("இவை உறுதியான அடையாளம் அல்ல. இடம் மற்றும் நேரம் பயன்படுத்தப்படவில்லை.", "These are unverified guesses; no location or date filter is used."), style = MaterialTheme.typography.bodySmall)
                                     if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
+                                    if (birds.isNotEmpty()) ContextGuide(crowExample = birds.any { it.scientific.startsWith("Corvus ") }, tamil = tamil)
                                 }
                             }
                         }
@@ -140,6 +141,7 @@ class MainActivity : ComponentActivity() {
                                     else found.forEach { Text("• " + (if (tamil) "${it.tamil} (${it.label})" else it.label), fontSize = 17.sp) }
                                     Text(tr("இவை ஊகங்கள் மட்டுமே; பல ஒலிகள் ஒன்றுபோல் இருக்கலாம். இதன் பொருள் தெரியாது.", "These are guesses, not verified identities. Similar sounds can be confused; the meaning is unknown."), style = MaterialTheme.typography.bodySmall)
                                     if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
+                                    if (found.isNotEmpty()) ContextGuide(crowExample = found.any { it.label == "Crow" || it.label == "Caw" }, tamil = tamil)
                                 }
                             }
                         }

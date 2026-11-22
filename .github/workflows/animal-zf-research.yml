@@ -1,0 +1,45 @@
+name: Inspect zebra finch research archive (no model execution)
+on:
+  push:
+    branches: ["arena/b0b465b9-rp-android-apps"]
+    paths: ["animalvoice/research/**", "animalvoice/tests/**", ".github/workflows/animal-zf-research.yml"]
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test bounded ZIP reader
+        run: python3 -m unittest discover -s animalvoice/tests -v
+      - name: Inspect upstream archive metadata only
+        run: |
+          set -o pipefail
+          python3 animalvoice/research/inspect_zf_archive.py > "$RUNNER_TEMP/zf-inventory.json" 2> "$RUNNER_TEMP/zf-error.txt"
+      - name: Report archive structure (not a model verification)
+        shell: python
+        run: |
+          import json, os
+          from pathlib import Path
+          p=Path(os.environ['RUNNER_TEMP'])/'zf-inventory.json'
+          d=json.loads(p.read_text())
+          lines=[f"Archive bytes: {d['archive_size']}; network bytes read: {d['network_bytes']}; entries: {d['archive_entries']}; checkpoint files: {d['checkpoint_files']}; uncompressed checkpoint bytes: {d['checkpoint_bytes_uncompressed']}"]
+          lines += [f"{v['bytes']} bytes: {v['path']}" for v in d['largest_checkpoint_entries'][:15]]
+          for r in d['readmes']:
+              lines.append('README: '+r['path'])
+              lines.append(r['content'][:9000])
+          msg='\n'.join(lines)[:14000].replace('%','%25').replace('\r','%0D').replace('\n','%0A')
+          print('::notice title=Partial ZF-AIM archive inventory::'+msg)
+      - name: Show bounded failure
+        if: failure()
+        run: |
+          if [ -s "$RUNNER_TEMP/zf-error.txt" ]; then
+            msg=$(head -c 4000 "$RUNNER_TEMP/zf-error.txt" | tr '\n' ' ')
+            echo "::error title=ZF archive inspection::$msg"
+          fi
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: zebra-finch-research-archive-inventory
+          path: ${{ runner.temp }}/zf-inventory.json
+          retention-days: 14
