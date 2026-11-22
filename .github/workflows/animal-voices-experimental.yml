@@ -25,7 +25,10 @@ jobs:
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           apk=animalvoice/app/build/outputs/apk/debug/app-debug.apk
           "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/animal-badging.txt"
-          grep -F "package: name='com.universalrp.animalvoice.experimental' versionCode='1' versionName='0.1-experimental'" "$RUNNER_TEMP/animal-badging.txt"
+          cat "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "name='com.universalrp.animalvoice.experimental'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "versionCode='1'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "versionName='0.1-experimental'" "$RUNNER_TEMP/animal-badging.txt"
           grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$RUNNER_TEMP/animal-badging.txt"
           ! grep -F "uses-permission: name='android.permission.INTERNET'" "$RUNNER_TEMP/animal-badging.txt"
       - run: sudo chmod a+rw /dev/kvm
@@ -57,9 +60,9 @@ jobs:
         run: |
           import os,pathlib
           r=pathlib.Path(os.environ['RUNNER_TEMP'])
-          for p in (r/'animal-build.log',r/'animal-native.txt'):
+          for p in (r/'animal-build.log',r/'animal-native.txt',r/'animal-badging.txt'):
               if p.exists():
                   lines=p.read_text(errors='replace').splitlines()
-                  selected=lines if p.name.endswith('native.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
+                  selected=lines if p.name.endswith('native.txt') or p.name.endswith('badging.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
                   msg=(p.name+'\n'+'\n'.join(selected or lines[-20:]))[-8000:]
                   print('::error title=Animal Voices check::'+msg.replace('%','%25').replace('\n','%0A'))
