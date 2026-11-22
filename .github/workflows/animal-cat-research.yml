@@ -18,7 +18,8 @@ jobs:
         run: python -m unittest discover -s animalvoice/tests -p 'test_catmeows_baseline.py' -v
       - name: Download official research-only dataset and evaluate
         run: |
-          python - <<'PY'
+          set -o pipefail
+          { python - <<'PY'
           import urllib.request, pathlib, os
           url='https://zenodo.org/records/4008297/files/dataset.zip?download=1'
           with urllib.request.urlopen(url, timeout=90) as response:
@@ -26,7 +27,11 @@ jobs:
           if len(blob)>20_000_000: raise ValueError('Download exceeds limit')
           (pathlib.Path(os.environ['RUNNER_TEMP'])/'catmeows.zip').write_bytes(blob)
           PY
-          python animalvoice/research/catmeows_baseline.py "$RUNNER_TEMP/catmeows.zip" > "$RUNNER_TEMP/cat-result.json"
+          python animalvoice/research/catmeows_baseline.py "$RUNNER_TEMP/catmeows.zip" > "$RUNNER_TEMP/cat-result.json"; } 2> "$RUNNER_TEMP/cat-error.txt"
+      - name: Show bounded error
+        if: failure()
+        run: |
+          if [ -s "$RUNNER_TEMP/cat-error.txt" ]; then echo "::error title=Cat benchmark::$(tail -c 3000 "$RUNNER_TEMP/cat-error.txt" | tr "\n" " ")"; fi
       - name: Report research-only results
         run: |
           python - <<'PY'
