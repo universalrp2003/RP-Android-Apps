@@ -62,7 +62,7 @@ class RangeFile(io.RawIOBase):
 def inspect(fileobj):
     with zipfile.ZipFile(fileobj) as archive:
         infos = archive.infolist()
-        if len(infos) > 100000: raise ValueError("Too many entries")
+        if len(infos) > 500000: raise ValueError("Too many entries")
         readmes = [x for x in infos if x.filename.lower().endswith("readme.md") and "zebrafinchmodeling-internal/" in x.filename.lower() and x.file_size <= 200_000 and x.compress_size <= 200_000]
         checkpoints = [x for x in infos if "zf_aim_model_checkpoints/" in x.filename.lower() and not x.is_dir()]
         output = {"archive_entries": len(infos), "checkpoint_files": len(checkpoints),
