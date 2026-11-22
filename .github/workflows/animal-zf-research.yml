@@ -24,12 +24,14 @@ jobs:
           p=Path(os.environ['RUNNER_TEMP'])/'zf-inventory.json'
           d=json.loads(p.read_text())
           lines=[f"Archive bytes: {d['archive_size']}; network bytes read: {d['network_bytes']}; entries: {d['archive_entries']}; checkpoint files: {d['checkpoint_files']}; uncompressed checkpoint bytes: {d['checkpoint_bytes_uncompressed']}"]
-          lines += [f"{v['bytes']} bytes: {v['path']}" for v in d['largest_checkpoint_entries'][:15]]
+          lines += [f"{v['bytes']} bytes: {v['path']}" for v in d['largest_checkpoint_entries'][:12]]
+          def notice(title, value):
+              print('::notice title='+title+'::'+value.replace('%','%25').replace('\r','%0D').replace('\n','%0A'))
+          notice('Partial ZF-AIM archive inventory', '\n'.join(lines))
           for r in d['readmes']:
-              lines.append('README: '+r['path'])
-              lines.append(r['content'][:9000])
-          msg='\n'.join(lines)[:14000].replace('%','%25').replace('\r','%0D').replace('\n','%0A')
-          print('::notice title=Partial ZF-AIM archive inventory::'+msg)
+              if '/.pytest_cache/' in r['path']: continue
+              for i in range(0,min(len(r['content']),36000),3000):
+                  notice('README part '+str(i//3000+1),r['content'][i:i+3000])
       - name: Show bounded failure
         if: failure()
         run: |
