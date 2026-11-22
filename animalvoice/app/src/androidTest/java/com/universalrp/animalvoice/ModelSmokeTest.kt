@@ -31,7 +31,7 @@ class ModelSmokeTest {
             assertTrue(classes.any { it.label == "Dog" })
             assertTrue(classes.any { it.label == "Crow" })
         }
-        assertTrue(AudioEngine(context).analyze(ShortArray(AudioEngine.WINDOW * AudioEngine.WINDOWS)).isEmpty())
+        assertTrue(AudioEngine(context).analyze(ShortArray(AudioEngine.WINDOW * AudioEngine.WINDOWS)).guesses.isEmpty())
     }
     @Test fun permissionAndFirstScreenAreIsolated() {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
@@ -43,5 +43,19 @@ class ModelSmokeTest {
     @Test fun staticTrackLoadsAndReplaysSyntheticSilence() {
         // Regression: static tracks are in STATE_NO_STATIC_DATA before the first write.
         AudioEngine(context).replay(ShortArray(1600))
+    }
+    @Test fun birdNetReferenceModelRunsOnSyntheticSignal() {
+        assertTrue("CI supplies exact upstream model", BirdNet.installed(context))
+        val digest = MessageDigest.getInstance("SHA-256")
+        BirdNet.file(context).inputStream().use { input ->
+            val buffer = ByteArray(65536)
+            while (true) { val n = input.read(buffer); if (n < 0) break; digest.update(buffer, 0, n) }
+        }
+        assertEquals(BirdNet.SHA256, digest.digest().joinToString("") { "%02x".format(it) })
+        assertTrue(BirdNet.analyze(context, ShortArray(BirdNet.SAMPLES)).isEmpty())
+        val tone = ShortArray(BirdNet.SAMPLES) { i -> (5000 * kotlin.math.sin(2 * Math.PI * 1000 * i / BirdNet.RATE)).toInt().toShort() }
+        val result = BirdNet.analyze(context, tone)
+        assertTrue(result.size <= 3)
+        assertTrue(result.all { it.scientific.isNotBlank() && it.common.isNotBlank() && it.score in 0.35f..1f })
     }
 }

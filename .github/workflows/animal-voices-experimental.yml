@@ -29,10 +29,16 @@ jobs:
           "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/animal-badging.txt"
           cat "$RUNNER_TEMP/animal-badging.txt"
           grep -F "name='com.universalrp.animalvoice.experimental'" "$RUNNER_TEMP/animal-badging.txt"
-          grep -F "versionCode='2'" "$RUNNER_TEMP/animal-badging.txt"
-          grep -F "versionName='0.2-experimental'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "versionCode='3'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "versionName='0.3-experimental'" "$RUNNER_TEMP/animal-badging.txt"
           grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$RUNNER_TEMP/animal-badging.txt"
           ! grep -E "uses-permission: name='android.permission.(INTERNET|READ_PHONE_STATE|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE)'" "$RUNNER_TEMP/animal-badging.txt"
+      - name: Fetch exact BirdNET model for non-commercial test only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -H 'Accept: application/vnd.github.raw+json' repos/birdnet-team/BirdNET-Lite/git/blobs/cff805384fae5e980c5294a1f3b7530eef042332 > "$RUNNER_TEMP/birdnet.tflite"
+          echo "f073d0aa626b4a5bb0705982d06de74c562f041ba76ebada18bc3e29126f6755  $RUNNER_TEMP/birdnet.tflite" | sha256sum -c
       - run: sudo chmod a+rw /dev/kvm
       - name: Run synthetic native model and permission checks (no animal recordings)
         uses: reactivecircus/android-emulator-runner@v2

@@ -19,11 +19,11 @@ class AudioEngine(private val context: Context) {
     private val lock = Any()
 
     @SuppressLint("MissingPermission") // Activity checks permission immediately before this call.
-    fun capture(): ShortArray {
+    fun capture(rate: Int = RATE, count: Int = WINDOW * WINDOWS): ShortArray {
         check(!stopped) { "Recording stopped" }
-        val minimum = AudioRecord.getMinBufferSize(RATE, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+        val minimum = AudioRecord.getMinBufferSize(rate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         check(minimum > 0) { "Microphone format is unavailable" }
-        val input = AudioRecord(MediaRecorder.AudioSource.MIC, RATE, AudioFormat.CHANNEL_IN_MONO,
+        val input = AudioRecord(MediaRecorder.AudioSource.MIC, rate, AudioFormat.CHANNEL_IN_MONO,
             AudioFormat.ENCODING_PCM_16BIT, maxOf(minimum, 4096))
         try {
             check(input.state == AudioRecord.STATE_INITIALIZED) { "Microphone could not be opened" }
@@ -33,7 +33,7 @@ class AudioEngine(private val context: Context) {
                 input.startRecording()
             }
             check(input.recordingState == AudioRecord.RECORDSTATE_RECORDING) { "Microphone did not start" }
-            val samples = ShortArray(WINDOW * WINDOWS)
+            val samples = ShortArray(count)
             var pos = 0
             while (pos < samples.size && !stopped) {
                 val n = input.read(samples, pos, minOf(2048, samples.size - pos))
@@ -49,32 +49,41 @@ class AudioEngine(private val context: Context) {
         }
     }
 
-    fun analyze(samples: ShortArray, selected: Set<String>? = null): List<SoundGuess> {
+    data class Analysis(val guesses: List<SoundGuess>, val windowStart: Int?)
+
+    fun analyze(samples: ShortArray, selected: Set<String>? = null, selectionId: String? = null): Analysis {
         require(samples.size == WINDOW * WINDOWS)
-        val rms = sqrt(samples.sumOf { (it.toDouble() / 32768.0) * (it.toDouble() / 32768.0) } / samples.size)
-        val best = mutableMapOf<String, Float>()
+        var best: Analysis = Analysis(emptyList(), null)
         AudioClassifier.createFromFile(context, "yamnet.tflite").use { classifier ->
             for (i in 0 until WINDOWS) {
-                if (stopped) return emptyList()
+                if (stopped) return Analysis(emptyList(), null)
+                val offset = i * WINDOW
+                var energy = 0.0
+                for (j in offset until offset + WINDOW) {
+                    val amplitude = samples[j].toDouble() / 32768.0
+                    energy += amplitude * amplitude
+                }
+                val rms = sqrt(energy / WINDOW)
                 val tensor = classifier.createInputTensorAudio()
-                tensor.load(samples, i * WINDOW, WINDOW)
-                val categories = classifier.classify(tensor).flatMap { it.categories }
-                for (category in categories) {
-                    val label = category.label ?: continue
-                    val score = category.score
-                    best[label] = maxOf(best[label] ?: 0f, score)
+                tensor.load(samples, offset, WINDOW)
+                val scores = classifier.classify(tensor).flatMap { it.categories }.mapNotNull { category ->
+                    category.label?.let { SoundScore(it, category.score) }
+                }
+                val guesses = Interpretation.choose(scores, rms, selected, selectionId)
+                if (guesses.isNotEmpty() && (best.guesses.isEmpty() || guesses.first().score > best.guesses.first().score)) {
+                    best = Analysis(guesses, offset)
                 }
             }
         }
-        return Interpretation.choose(best.map { SoundScore(it.key, it.value) }, rms, selected)
+        return best
     }
 
     /** Explicitly chosen replay of the recorded sample, NOT an AI-generated reply. */
-    fun replay(samples: ShortArray) {
+    fun replay(samples: ShortArray, rate: Int = RATE) {
         check(!stopped) { "Sample is no longer available" }
         val output = AudioTrack.Builder()
             .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
-            .setAudioFormat(AudioFormat.Builder().setSampleRate(RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
+            .setAudioFormat(AudioFormat.Builder().setSampleRate(rate).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
             .setTransferMode(AudioTrack.MODE_STATIC).setBufferSizeInBytes(samples.size * 2).build()
         try {
             // A static AudioTrack begins in STATE_NO_STATIC_DATA until its first write.
@@ -87,7 +96,7 @@ class AudioEngine(private val context: Context) {
                 output.play()
             }
             if (!stopped) {
-                val until = android.os.SystemClock.elapsedRealtime() + samples.size * 1000L / RATE + 200L
+                val until = android.os.SystemClock.elapsedRealtime() + samples.size * 1000L / rate + 200L
                 while (!stopped && android.os.SystemClock.elapsedRealtime() < until) Thread.sleep(50)
             }
         } finally {

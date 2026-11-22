@@ -24,14 +24,36 @@ object Interpretation {
         "Wild animals" to "காட்டு விலங்கு", "Roaring cats (lions, tigers)" to "புலி / சிங்கம் வகை", "Roar" to "உரத்த கர்ஜனை",
         "Whale vocalization" to "திமிங்கல ஒலி"
     )
+    // Broader ontology ancestors can score highly alongside a specific selected class;
+    // treating Bird as evidence against Crow, for example, incorrectly suppresses it.
+    private val ancestors = mapOf(
+        "crow" to setOf("Animal", "Wild animals", "Bird", "Bird vocalization, bird call, bird song"),
+        "pigeon" to setOf("Animal", "Wild animals", "Bird", "Bird vocalization, bird call, bird song"),
+        "owl" to setOf("Animal", "Wild animals", "Bird", "Bird vocalization, bird call, bird song"),
+        "dog" to setOf("Animal", "Domestic animals, pets"),
+        "cat" to setOf("Animal", "Domestic animals, pets"),
+        "cow" to setOf("Animal", "Livestock, farm animals, working animals"),
+        "goat" to setOf("Animal", "Livestock, farm animals, working animals"),
+        "horse" to setOf("Animal", "Livestock, farm animals, working animals"),
+        "pig" to setOf("Animal", "Livestock, farm animals, working animals"),
+        "chicken" to setOf("Animal", "Livestock, farm animals, working animals", "Fowl", "Bird"),
+        "duck" to setOf("Animal", "Livestock, farm animals, working animals", "Fowl", "Bird"),
+        "rodent" to setOf("Animal", "Wild animals"),
+        "bird" to setOf("Animal", "Wild animals"),
+        "insect" to setOf("Animal", "Wild animals"),
+        "frog" to setOf("Animal", "Wild animals"),
+        "snake" to setOf("Animal", "Wild animals"),
+        "bigcat" to setOf("Animal", "Wild animals"),
+        "whale" to setOf("Animal", "Wild animals")
+    )
     // This is a conservative display gate, NOT a probability, scientific calibration or proof.
     const val DISPLAY_GATE = 0.25f
-    fun choose(scores: List<SoundScore>, rms: Double, selected: Set<String>? = null): List<SoundGuess> {
+    fun choose(scores: List<SoundScore>, rms: Double, selected: Set<String>? = null, selectionId: String? = null): List<SoundGuess> {
         if (!rms.isFinite() || rms < 0.003) return emptyList()
         val valid = scores.filter { it.score.isFinite() && it.score in 0f..1f }
         val bestAnimal = valid.filter { it.label in names && (selected == null || it.label in selected) && it.score >= DISPLAY_GATE }.sortedByDescending { it.score }
         if (bestAnimal.isEmpty()) return emptyList()
-        val bestOther = valid.filterNot { it.label in names && (selected == null || it.label in selected) }.maxOfOrNull { it.score } ?: 0f
+        val bestOther = valid.filterNot { (it.label in names && (selected == null || it.label in selected)) || it.label in ancestors[selectionId].orEmpty() }.maxOfOrNull { it.score } ?: 0f
         if (bestOther >= 0.45f && bestOther > bestAnimal.first().score) return emptyList()
         return bestAnimal.take(3).map { SoundGuess(it.label, names.getValue(it.label), it.score) }
     }

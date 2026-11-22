@@ -30,4 +30,11 @@ class InterpretationTest {
         assertFalse(AnimalOptions.all.first { it.id == "lizard" }.supported)
         assertEquals(AnimalOptions.all.size, AnimalOptions.all.map { it.id }.toSet().size)
     }
+    @Test fun selectedBirdDoesNotCompeteAgainstItsParentCategory() {
+        val crow = AnimalOptions.all.first { it.id == "crow" }
+        val got = Interpretation.choose(listOf(SoundScore("Bird", .8f), SoundScore("Crow", .4f)), .1, crow.labels, "crow")
+        assertEquals(listOf("Crow"), got.map { it.label })
+        assertTrue(Interpretation.choose(listOf(SoundScore("Cat", .8f), SoundScore("Crow", .4f)), .1, crow.labels, "crow").isEmpty())
+        assertTrue(Interpretation.choose(listOf(SoundScore("Speech", .8f), SoundScore("Crow", .4f)), .1, crow.labels, "crow").isEmpty())
+    }
 }
