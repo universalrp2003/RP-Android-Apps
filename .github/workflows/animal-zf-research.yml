@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Test bounded ZIP reader
-        run: python3 -m unittest discover -s animalvoice/tests -v
+        run: python3 -m unittest discover -s animalvoice/tests -p 'test_archive_inspection.py' -v
       - name: Inspect upstream archive metadata only
         run: |
           set -o pipefail

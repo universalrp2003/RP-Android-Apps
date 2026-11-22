@@ -1,0 +1,43 @@
+name: CatMeows grouped research baseline (no publication)
+on:
+  push:
+    branches: ["arena/b0b465b9-rp-android-apps"]
+    paths: ["animalvoice/research/catmeows_baseline.py", "animalvoice/tests/test_catmeows_baseline.py", ".github/workflows/animal-cat-research.yml"]
+permissions: {contents: read}
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Install pinned research dependencies
+        run: pip install numpy==2.1.3 scipy==1.14.1 scikit-learn==1.6.1
+      - name: Test baseline on synthetic signals
+        run: python -m unittest discover -s animalvoice/tests -p 'test_catmeows_baseline.py' -v
+      - name: Download official research-only dataset and evaluate
+        run: |
+          python - <<'PY'
+          import urllib.request, pathlib, os
+          url='https://zenodo.org/records/4008297/files/dataset.zip?download=1'
+          with urllib.request.urlopen(url, timeout=90) as response:
+              blob=response.read(20_000_001)
+          if len(blob)>20_000_000: raise ValueError('Download exceeds limit')
+          (pathlib.Path(os.environ['RUNNER_TEMP'])/'catmeows.zip').write_bytes(blob)
+          PY
+          python animalvoice/research/catmeows_baseline.py "$RUNNER_TEMP/catmeows.zip" > "$RUNNER_TEMP/cat-result.json"
+      - name: Report research-only results
+        run: |
+          python - <<'PY'
+          import json, pathlib, os
+          result=json.loads((pathlib.Path(os.environ['RUNNER_TEMP'])/'cat-result.json').read_text())
+          text=json.dumps(result, separators=(',', ':')).replace('%','%25')
+          print('::notice title=CatMeows held-out-cat benchmark::'+text)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: catmeows-research-metrics-only
+          path: ${{ runner.temp }}/cat-result.json
+          retention-days: 14
