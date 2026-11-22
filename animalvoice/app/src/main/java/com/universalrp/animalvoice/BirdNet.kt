@@ -62,12 +62,13 @@ object BirdNet {
             require(model.getOutputTensor(0).shape().contentEquals(intArrayOf(1, labels.size)))
             model.runForMultipleInputsOutputs(arrayOf(audio, metadata), mutableMapOf(0 to outputs))
         }
-        return outputs[0].mapIndexedNotNull { i, logit ->
-            if (!logit.isFinite()) return@mapIndexedNotNull null
+        return outputs[0].indices.mapNotNull { i ->
+            val logit = outputs[0][i]
+            if (!logit.isFinite()) return@mapNotNull null
             val label = labels[i]
-            if (label in setOf("Human_Human", "Noise_Noise", "Non-bird_Non-bird")) return@mapIndexedNotNull null
+            if (label in setOf("Human_Human", "Noise_Noise", "Non-bird_Non-bird")) return@mapNotNull null
             val score = (1.0 / (1.0 + exp(-logit.toDouble()))).toFloat()
-            if (score < THRESHOLD) return@mapIndexedNotNull null
+            if (score < THRESHOLD) return@mapNotNull null
             val parts = label.split('_', limit = 2)
             if (parts.size != 2) null else Guess(parts[0], parts[1], score)
         }.sortedByDescending { it.score }.take(3)

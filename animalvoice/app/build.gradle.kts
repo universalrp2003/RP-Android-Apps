@@ -36,6 +36,7 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.material3:material3")
     implementation("org.tensorflow:tensorflow-lite-task-audio:0.4.4")
+    implementation("org.tensorflow:tensorflow-lite:2.14.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
