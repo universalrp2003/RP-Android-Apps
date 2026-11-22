@@ -60,7 +60,7 @@ object BirdNet {
             require(model.getInputTensor(0).shape().contentEquals(intArrayOf(1, SAMPLES)))
             require(model.getInputTensor(1).shape().contentEquals(intArrayOf(1, 6)))
             require(model.getOutputTensor(0).shape().contentEquals(intArrayOf(1, labels.size)))
-            model.runForMultipleInputsOutputs(arrayOf(audio, metadata), mutableMapOf(0 to outputs))
+            model.runForMultipleInputsOutputs(arrayOf(audio, metadata), mutableMapOf<Int, Any>(0 to outputs))
         }
         return outputs[0].indices.mapNotNull { i ->
             val logit = outputs[0][i]
