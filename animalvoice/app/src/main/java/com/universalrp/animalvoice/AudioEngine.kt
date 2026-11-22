@@ -49,7 +49,7 @@ class AudioEngine(private val context: Context) {
         }
     }
 
-    fun analyze(samples: ShortArray): List<SoundGuess> {
+    fun analyze(samples: ShortArray, selected: Set<String>? = null): List<SoundGuess> {
         require(samples.size == WINDOW * WINDOWS)
         val rms = sqrt(samples.sumOf { (it.toDouble() / 32768.0) * (it.toDouble() / 32768.0) } / samples.size)
         val best = mutableMapOf<String, Float>()
@@ -66,7 +66,7 @@ class AudioEngine(private val context: Context) {
                 }
             }
         }
-        return Interpretation.choose(best.map { SoundScore(it.key, it.value) }, rms)
+        return Interpretation.choose(best.map { SoundScore(it.key, it.value) }, rms, selected)
     }
 
     /** Explicitly chosen replay of the recorded sample, NOT an AI-generated reply. */
@@ -77,8 +77,10 @@ class AudioEngine(private val context: Context) {
             .setAudioFormat(AudioFormat.Builder().setSampleRate(RATE).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build())
             .setTransferMode(AudioTrack.MODE_STATIC).setBufferSizeInBytes(samples.size * 2).build()
         try {
-            check(output.state == AudioTrack.STATE_INITIALIZED) { "Playback unavailable" }
+            // A static AudioTrack begins in STATE_NO_STATIC_DATA until its first write.
+            check(output.state == AudioTrack.STATE_NO_STATIC_DATA) { "Playback unavailable" }
             check(output.write(samples, 0, samples.size) == samples.size) { "Playback failed" }
+            check(output.state == AudioTrack.STATE_INITIALIZED) { "Playback unavailable after loading" }
             synchronized(lock) {
                 check(!stopped) { "Playback stopped" }
                 track = output

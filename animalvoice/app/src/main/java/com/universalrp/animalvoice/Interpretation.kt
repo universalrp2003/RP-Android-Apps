@@ -26,12 +26,12 @@ object Interpretation {
     )
     // This is a conservative display gate, NOT a probability, scientific calibration or proof.
     const val DISPLAY_GATE = 0.25f
-    fun choose(scores: List<SoundScore>, rms: Double): List<SoundGuess> {
+    fun choose(scores: List<SoundScore>, rms: Double, selected: Set<String>? = null): List<SoundGuess> {
         if (!rms.isFinite() || rms < 0.003) return emptyList()
         val valid = scores.filter { it.score.isFinite() && it.score in 0f..1f }
-        val bestAnimal = valid.filter { it.label in names && it.score >= DISPLAY_GATE }.sortedByDescending { it.score }
+        val bestAnimal = valid.filter { it.label in names && (selected == null || it.label in selected) && it.score >= DISPLAY_GATE }.sortedByDescending { it.score }
         if (bestAnimal.isEmpty()) return emptyList()
-        val bestOther = valid.filterNot { it.label in names }.maxOfOrNull { it.score } ?: 0f
+        val bestOther = valid.filterNot { it.label in names && (selected == null || it.label in selected) }.maxOfOrNull { it.score } ?: 0f
         if (bestOther >= 0.45f && bestOther > bestAnimal.first().score) return emptyList()
         return bestAnimal.take(3).map { SoundGuess(it.label, names.getValue(it.label), it.score) }
     }

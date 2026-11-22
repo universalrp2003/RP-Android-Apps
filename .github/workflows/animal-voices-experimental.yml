@@ -29,8 +29,8 @@ jobs:
           "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/animal-badging.txt"
           cat "$RUNNER_TEMP/animal-badging.txt"
           grep -F "name='com.universalrp.animalvoice.experimental'" "$RUNNER_TEMP/animal-badging.txt"
-          grep -F "versionCode='1'" "$RUNNER_TEMP/animal-badging.txt"
-          grep -F "versionName='0.1-experimental'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "versionCode='2'" "$RUNNER_TEMP/animal-badging.txt"
+          grep -F "versionName='0.2-experimental'" "$RUNNER_TEMP/animal-badging.txt"
           grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$RUNNER_TEMP/animal-badging.txt"
           ! grep -E "uses-permission: name='android.permission.(INTERNET|READ_PHONE_STATE|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE)'" "$RUNNER_TEMP/animal-badging.txt"
       - run: sudo chmod a+rw /dev/kvm

@@ -40,4 +40,8 @@ class ModelSmokeTest {
         assertFalse(Manifest.permission.INTERNET in permissions)
         ActivityScenario.launch(MainActivity::class.java).use { it.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED) }
     }
+    @Test fun staticTrackLoadsAndReplaysSyntheticSilence() {
+        // Regression: static tracks are in STATE_NO_STATIC_DATA before the first write.
+        AudioEngine(context).replay(ShortArray(1600))
+    }
 }

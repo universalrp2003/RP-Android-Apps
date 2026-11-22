@@ -22,4 +22,12 @@ class InterpretationTest {
         assertTrue(Interpretation.choose(listOf(SoundScore("Dog", Float.NaN), SoundScore("Cat", 2f)), .2).isEmpty())
         assertTrue(Interpretation.choose(listOf(SoundScore("Dog", .9f)), Double.NaN).isEmpty())
     }
+    @Test fun selectionFiltersWithoutForcingAnAnswer() {
+        val dog = AnimalOptions.all.first { it.id == "dog" }
+        assertTrue(Interpretation.choose(listOf(SoundScore("Cat", .9f), SoundScore("Dog", .3f)), .1, dog.labels).isEmpty())
+        assertEquals(listOf("Bark"), Interpretation.choose(listOf(SoundScore("Bark", .8f)), .1, dog.labels).map { it.label })
+        assertTrue(Interpretation.choose(listOf(SoundScore("Dog", .9f)), .1, emptySet()).isEmpty())
+        assertFalse(AnimalOptions.all.first { it.id == "lizard" }.supported)
+        assertEquals(AnimalOptions.all.size, AnimalOptions.all.map { it.id }.toSet().size)
+    }
 }

@@ -38,6 +38,8 @@ class MainActivity : ComponentActivity() {
     private var message by mutableStateOf("")
     private var tamil by mutableStateOf(true)
     private var confirmReplay by mutableStateOf(false)
+    private var selected by mutableStateOf(AnimalOptions.all.first())
+    private var selectionExpanded by mutableStateOf(false)
     private fun tr(ta: String, en: String) = if (tamil) ta else en
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -48,19 +50,38 @@ class MainActivity : ComponentActivity() {
             }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF276A54), secondary = Color(0xFF94703A), surface = Color(0xFFF7FAF4))) {
                 Surface(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("🌿  உயிர்களின் குரல்", fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                            Text("🌿  Reply to animal", fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                             TextButton(onClick = { tamil = !tamil }) { Text(if (tamil) "English" else "தமிழ்") }
                         }
-                        Text("ANIMAL VOICES · EXPERIMENTAL", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF276A54))
+                        Text("REPLY TO ANIMAL · EXPERIMENTAL", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF276A54))
                         Text(tr("சுற்றியுள்ள ஒலிகளைக் கவனமாகக் கேட்போம்", "Listen carefully to the sounds around you"), fontSize = 26.sp, lineHeight = 34.sp, fontWeight = FontWeight.Bold)
                         Text(tr("இது ஒலி வகையை ஊகிக்கும் ஒரு சோதனை. விலங்கின் எண்ணத்தை மொழிபெயர்க்காது.", "This experiment guesses sound categories. It does not translate an animal's thoughts or words."))
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(20.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(tr("விலங்கைத் தேர்வு செய்யவும்", "Choose an animal"), fontWeight = FontWeight.Bold, fontSize = 19.sp)
+                                Text(tr("தேர்வு ஒலிகளை வடிகட்டும்; இது விலங்கின் அடையாளத்தை உறுதி செய்யாது.", "Your choice filters guesses; it does not confirm the animal's identity."))
+                                Box {
+                                    OutlinedButton(enabled = !busy, onClick = { selectionExpanded = true }) { Text((if (tamil) selected.tamil else selected.english) + " ▾") }
+                                    DropdownMenu(expanded = selectionExpanded, onDismissRequest = { selectionExpanded = false }) {
+                                        AnimalOptions.all.forEach { option ->
+                                            DropdownMenuItem(text = { Text(if (tamil) option.tamil else option.english) }, onClick = {
+                                                selectionExpanded = false
+                                                if (selected.id != option.id) { stopAndClear(); selected = option; message = "" }
+                                            })
+                                        }
+                                    }
+                                }
+                                if (!selected.supported) Text(tr("இந்த மாதிரியில் பல்லிக்கான தனி வகை இல்லை. இதற்குப் பதில் ஒலியும் இல்லை.", "This model has no dedicated lizard category or reply sound."))
+                                if (selected.id == "rodent") Text(tr("எலியின் மீயொலி சாதாரண கைபேசியில் பதிவாகாமல் போகலாம்.", "Rat ultrasound may not be recorded by an ordinary phone."))
+                            }
+                        }
                         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE4F1E7)), shape = RoundedCornerShape(20.dp)) {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(tr("முதலில் கேளுங்கள்", "Listen first"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
                                 Text(tr("சுமார் 3 விநாடிகள் மட்டுமே கேட்கும். இணையம் தேவையில்லை; ஒலி சேமிக்கப்படாது.", "Listens for about 3 seconds. No internet or audio file storage."))
-                                Button(enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
+                                Button(enabled = !busy && selected.supported, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
                                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
                                     else permission.launch(Manifest.permission.RECORD_AUDIO)
                                 }) { Text(if (busy) tr("கேட்கிறது / ஆய்வு செய்கிறது…", "Listening / analysing…") else tr("🎙  ஒலியைக் கேள்", "🎙  Listen to a sound")) }
@@ -103,10 +124,11 @@ class MainActivity : ComponentActivity() {
         samples?.fill(0); samples = null; guesses = null; message = ""; busy = true
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
+        val selectedLabels = selected.labels
         job = lifecycleScope.launch {
             try {
                 val captured = withContext(Dispatchers.IO) { activeEngine.capture() }
-                val found = withContext(Dispatchers.Default) { activeEngine.analyze(captured) }
+                val found = withContext(Dispatchers.Default) { activeEngine.analyze(captured, selectedLabels) }
                 if (generation == thisGeneration) { samples = captured; guesses = found } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) message = tr("மைக்ரோஃபோன் அல்லது ஒலி ஆய்வு செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Microphone or sound analysis failed. Please try again.") }
@@ -118,7 +140,7 @@ class MainActivity : ComponentActivity() {
         val activeEngine = engine ?: return
         if (busy) return
         val thisGeneration = generation
-        busy = true
+        message = ""; busy = true
         job = lifecycleScope.launch {
             try { withContext(Dispatchers.IO) { activeEngine.replay(captured) } }
             catch (e: CancellationException) { throw e }

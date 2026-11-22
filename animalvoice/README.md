@@ -1,6 +1,8 @@
-# Animal Voices / உயிர்களின் குரல் — experimental prototype
+# Reply to animal — experimental prototype
 
 Private-development Android application, not a public release. It uses an on-device YAMNet sound-event classifier to suggest up to three **broad sound categories**, including some dog, cat, cattle, crow, bird, rodent, insect and frog labels. It does not identify every species or determine intention, emotion, words, or what an animal understood. The scores are not calibrated probabilities and are not shown as certainty. Silence, weak results and dominant non-animal sounds produce “unknown”. Results are experimental and require real-world validation.
+
+The animal selector filters the existing broad YAMNet labels; it does not confirm identity, add a new model, or guarantee a detection. Lizard is explicitly unsupported, and rat ultrasound requires appropriate hardware. The app does not currently produce animal-like replies for any selection; the recording replay is not a reply.
 
 The microphone runs only after explicit permission and a tap, for three approximately 0.975-second windows. The PCM sample stays in memory; it is not written to a file or uploaded, and is cleared when the app stops. There is no INTERNET permission, background service, auto-listening, location, analytics, or audio history. The operating system and device can still affect privacy, microphone capture, performance, and playback. A brief user-confirmed replay of the same sample is **not an AI-generated reply**. No sound is played automatically. Avoid playback near animals, nesting sites and protected wildlife; stop and move away if stressed. A recording can contain nearby people's voices, so obtain consent and use headphones for personal listening.
 
