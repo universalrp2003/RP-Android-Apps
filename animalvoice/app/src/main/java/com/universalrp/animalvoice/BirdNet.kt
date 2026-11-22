@@ -62,7 +62,10 @@ object BirdNet {
             require(model.getOutputTensor(0).shape().contentEquals(intArrayOf(1, labels.size)))
             model.runForMultipleInputsOutputs(arrayOf(audio, metadata), mutableMapOf<Int, Any>(0 to outputs))
         }
-        return outputs[0].indices.mapNotNull { i ->
+        // A strong Human/Noise/Non-bird class is evidence against a bird identity.
+        val background = labels.indices.filter { labels[it] in setOf("Human_Human", "Noise_Noise", "Non-bird_Non-bird") }
+            .map { outputs[0][it] }.filter { it.isFinite() }.maxOrNull()
+        val guesses = outputs[0].indices.mapNotNull { i ->
             val logit = outputs[0][i]
             if (!logit.isFinite()) return@mapNotNull null
             val label = labels[i]
@@ -72,5 +75,10 @@ object BirdNet {
             val parts = label.split('_', limit = 2)
             if (parts.size != 2) null else Guess(parts[0], parts[1], score)
         }.sortedByDescending { it.score }.take(3)
+        if (background != null && guesses.isNotEmpty()) {
+            val backgroundScore = (1.0 / (1.0 + exp(-background.toDouble()))).toFloat()
+            if (backgroundScore >= .45f && backgroundScore > guesses.first().score) return emptyList()
+        }
+        return guesses
     }
 }

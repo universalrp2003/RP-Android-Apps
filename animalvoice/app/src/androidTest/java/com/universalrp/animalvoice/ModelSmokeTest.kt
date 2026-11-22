@@ -58,4 +58,18 @@ class ModelSmokeTest {
         assertTrue(result.size <= 3)
         assertTrue(result.all { it.scientific.isNotBlank() && it.common.isNotBlank() && it.score in 0.35f..1f })
     }
+    @Test fun birdNetImportChecksHashAndKeepsPriorModelOnInvalidFile() {
+        val model = BirdNet.file(context)
+        assertTrue(BirdNet.installed(context))
+        // The exact model is supplied in the emulator only, not in the APK.
+        BirdNet.import(context, android.net.Uri.fromFile(model))
+        assertTrue(BirdNet.installed(context))
+        val bad = java.io.File(context.cacheDir, "wrong-model.bin")
+        bad.writeBytes(byteArrayOf(1, 2, 3))
+        try {
+            try { BirdNet.import(context, android.net.Uri.fromFile(bad)); fail("Invalid model was accepted") }
+            catch (_: IllegalArgumentException) { }
+            assertTrue(BirdNet.installed(context))
+        } finally { bad.delete() }
+    }
 }
