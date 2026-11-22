@@ -2,7 +2,7 @@ name: Animal Voices experimental Android test (no publication)
 on:
   push:
     branches: ["arena/b0b465b9-rp-android-apps"]
-    paths: ["animalvoice/**", "settings.gradle.kts", ".github/workflows/animal-voices-experimental.yml"]
+    paths: ["animalvoice/app/**", "animalvoice/run-emulator-checks.sh", "settings.gradle.kts", ".github/workflows/animal-voices-experimental.yml"]
 permissions: {contents: read}
 jobs:
   prototype:

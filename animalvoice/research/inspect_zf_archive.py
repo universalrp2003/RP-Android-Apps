@@ -12,8 +12,8 @@ import urllib.request
 import zipfile
 
 URL = "https://zenodo.org/records/23024019/files/zf_aim_release.zip?download=1"
-BUDGET = 20 * 1024 * 1024
-MAX_READ = 8 * 1024 * 1024
+BUDGET = 40 * 1024 * 1024
+MAX_READ = 32 * 1024 * 1024
 
 class RangeFile(io.RawIOBase):
     def __init__(self, url=URL, opener=urllib.request.urlopen):
