@@ -2,7 +2,7 @@ name: BirdNET v3 host research probe (no publication)
 on:
   push:
     branches: ["arena/b0b465b9-rp-android-apps"]
-    paths: ["animalvoice/research/probe_birdnet_v3.py", ".github/workflows/animal-birdnet3-research.yml"]
+    paths: ["animalvoice/research/probe_birdnet_v3*.py", ".github/workflows/animal-birdnet3-research.yml"]
 permissions: {contents: read}
 jobs:
   probe:
@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
       - name: Install research runtime
-        run: pip install numpy==1.26.4 ai-edge-litert==1.2.0
+        run: pip install numpy==1.26.4 scipy==1.14.1 scikit-learn==1.6.1 ai-edge-litert==1.2.0
       - name: Fetch exact published files and probe synthetic signals
         run: |
           set -o pipefail
@@ -26,14 +26,20 @@ jobs:
                   data=r.read(limit+1)
               if len(data)>limit: raise ValueError('Download exceeds limit')
               (root/filename).write_bytes(data)
+          with urllib.request.urlopen('https://zenodo.org/records/4008297/files/dataset.zip?download=1', timeout=90) as r: data=r.read(20_000_001)
+          if len(data)>20_000_000: raise ValueError('Dataset exceeds limit')
+          (root/'catmeows.zip').write_bytes(data)
           PY
-          python animalvoice/research/probe_birdnet_v3.py "$RUNNER_TEMP/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite" "$RUNNER_TEMP/BirdNET+_V3.0_Global_12K_Labels.csv" > "$RUNNER_TEMP/probe-result.json"; } 2> "$RUNNER_TEMP/probe-error.txt"
+          python animalvoice/research/probe_birdnet_v3.py "$RUNNER_TEMP/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite" "$RUNNER_TEMP/BirdNET+_V3.0_Global_12K_Labels.csv" > "$RUNNER_TEMP/probe-result.json"
+          python animalvoice/research/probe_birdnet_v3_catmeows.py "$RUNNER_TEMP/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite" "$RUNNER_TEMP/BirdNET+_V3.0_Global_12K_Labels.csv" "$RUNNER_TEMP/catmeows.zip" > "$RUNNER_TEMP/probe-cat-result.json"; } 2> "$RUNNER_TEMP/probe-error.txt"
       - name: Report probe output
         run: |
           python - <<'PY'
           import pathlib, os
           text=(pathlib.Path(os.environ['RUNNER_TEMP'])/'probe-result.json').read_text().replace('%','%25').replace('\n','%0A')
           print('::notice title=BirdNET v3 host probe::'+text)
+          text=(pathlib.Path(os.environ['RUNNER_TEMP'])/'probe-cat-result.json').read_text().replace('%','%25').replace('\n','%0A')
+          print('::notice title=BirdNET v3 CatMeows research::'+text)
           PY
       - name: Surface failure
         if: failure()
