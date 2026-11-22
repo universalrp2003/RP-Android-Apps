@@ -25,7 +25,7 @@ class RangeFile(io.RawIOBase):
     def _request(self, start, end, known_total):
         length = end - start + 1
         if length <= 0 or length > MAX_READ or self.total_read + length > BUDGET:
-            raise ValueError("Range or aggregate read budget exceeded")
+            raise ValueError(f"Range or aggregate read budget exceeded: requested {length} bytes after {self.total_read}, limits {MAX_READ} per call / {BUDGET} total")
         req = urllib.request.Request(self.url, headers={"Range": f"bytes={start}-{end}", "Accept-Encoding": "identity"})
         with self.opener(req, timeout=60) as response:
             if response.status != 206:
