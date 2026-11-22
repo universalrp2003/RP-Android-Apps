@@ -23,7 +23,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 EXPECTED_MD5 = 'b5fa911bcd6514e39dfef6876f747df4'
-NAME = re.compile(r'^([BFI])_([A-Za-z0-9]+)_(MC|EU)_(FI|FN|MI|MN)_([A-Za-z0-9]+)_([123])([0-9]{2})\.wav$', re.I)
+NAME = re.compile(r'^([BFI])_([A-Za-z0-9]+)_(MC|EU)_(FI|FN|MI|MN)_([A-Za-z0-9]+)_([0-9])([0-9]{2})\.wav$', re.I)
 LABELS = ('B', 'F', 'I')
 
 
