@@ -68,10 +68,23 @@ def inspect(fileobj):
         output = {"archive_entries": len(infos), "checkpoint_files": len(checkpoints),
                   "checkpoint_bytes_uncompressed": sum(x.file_size for x in checkpoints),
                   "largest_checkpoint_entries": [{"path": x.filename, "bytes": x.file_size, "compressed_bytes": x.compress_size} for x in sorted(checkpoints, key=lambda a: a.file_size, reverse=True)[:30]],
-                  "readmes": []}
+                  "readmes": [], "source_files": [], "live_paths": []}
         for info in readmes[:2]:
             text = archive.read(info).decode("utf-8", errors="replace")
             output["readmes"].append({"path": info.filename, "content": text[:120000]})
+        # Only read a fixed shortlist of small text files, never model bytes or archive paths to disk.
+        suffixes = (
+            "/ZebraFinchModeling-Internal/pyproject.toml",
+            "/ZebraFinchModeling-Internal/for_live/run.pregenerate_calls.summary_model.sh",
+            "/ZebraFinchModeling-Internal/for_live/resample_and_remove_padding_from_pregenereated_calls.py",
+            "/StreamPlayback/README.md", "/StreamPlayback/pyproject.toml",
+        )
+        output["live_paths"] = [x.filename for x in infos if not x.is_dir() and
+                                ("/for_live/" in x.filename or "/StreamPlayback/" in x.filename)
+                                and not any(part in x.filename for part in ("/.git/", "/.venv/", "/__pycache__/"))][:150]
+        for info in infos:
+            if any(info.filename.endswith(suffix) for suffix in suffixes) and info.file_size <= 100_000 and info.compress_size <= 100_000:
+                output["source_files"].append({"path": info.filename, "content": archive.read(info).decode("utf-8", errors="replace")})
         return output
 
 if __name__ == "__main__":

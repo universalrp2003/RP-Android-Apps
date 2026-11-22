@@ -27,11 +27,15 @@ class RangeInspectionTests(unittest.TestCase):
         with zipfile.ZipFile(b, 'w', compression=zipfile.ZIP_DEFLATED) as z:
             z.writestr('root/ZebraFinchModeling-Internal/README.md', 'checkpoint documentation')
             z.writestr('root/zf_aim_model_checkpoints/model.pt', b'weights')
+            z.writestr('root/ZebraFinchModeling-Internal/for_live/run.pregenerate_calls.summary_model.sh', 'echo research')
+            z.writestr('root/StreamPlayback/README.md', 'stream instructions')
         f = m.RangeFile('https://example.invalid/file', fake_opener(b.getvalue()))
         result = m.inspect(f)
         self.assertEqual(result['checkpoint_files'], 1)
         self.assertEqual(result['largest_checkpoint_entries'][0]['bytes'], 7)
         self.assertEqual(result['readmes'][0]['content'], 'checkpoint documentation')
+        self.assertEqual([f['content'] for f in result['source_files']], ['echo research', 'stream instructions'])
+        self.assertEqual(len(result['live_paths']), 2)
     def test_rejects_server_ignoring_ranges(self):
         with self.assertRaises(ValueError): m.RangeFile('https://example.invalid', fake_opener(b'abcdef', True))
     def test_bounded_reads(self):
