@@ -366,7 +366,7 @@ class MainActivity : ComponentActivity() {
                         }
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                // Stacked on purpose: a side-by-side toggle squeezed the Tamil title into one-character lines.
+                                // Every model-file control is listed below in full (owner choice, November 2026): no dropdown.
                                 Text(tr("உயிரின மாடல் கோப்புகள்", "Species model files"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                                 if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                                 if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -378,7 +378,7 @@ class MainActivity : ComponentActivity() {
                                             if (!removed && birdnetReady) setMessage("பழைய மாடலை நீக்க முடியவில்லை.", "Could not remove the old model.")
                                         }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பழைய பறவை மாடலை நீக்கு", "Remove old bird model")) }
                                     }
-                                    Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."), style = MaterialTheme.typography.bodySmall)
                                 Text(tr("கோப்புகள் நிறுவுவதற்கு முன் SHA-256 மூலம் சரிபார்க்கப்படும்.", "Files are verified by SHA-256 before installation."), style = MaterialTheme.typography.bodySmall)
                                 if (v3ModelReady && v3LabelsReady) Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"), style = MaterialTheme.typography.bodySmall)
@@ -403,7 +403,7 @@ class MainActivity : ComponentActivity() {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 // Owner choice (November 2026): every detail is shown directly; nothing hides behind a dropdown.
                                 Text(tr("எதை அறியலாம்?", "What can it identify?"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
-                                    Text(tr("BirdNET+ V3 பட்டியலில் 11,709 உயிரினங்கள்: 9,788 பறவைகள், 802 பூச்சிகள், 649 நீர்நில வாழ்வன, 419 பாலூட்டிகள் (மனிதர் உட்பட), 35 மீன்கள், 15 ஊர்வன, 1 சிலந்தி வகை. மேலும் 16 உயிரினமல்லாத ஒலி வகைகள்.", "BirdNET+ V3 lists 11,709 animal species: 9,788 birds, 802 insects, 649 amphibians, 419 mammals (including humans), 35 fishes, 15 reptiles and 1 arachnid; plus 16 non-animal sound classes."), style = MaterialTheme.typography.bodyMedium)
+                                Text(tr("BirdNET+ V3 பட்டியலில் 11,709 உயிரினங்கள்: 9,788 பறவைகள், 802 பூச்சிகள், 649 நீர்நில வாழ்வன, 419 பாலூட்டிகள் (மனிதர் உட்பட), 35 மீன்கள், 15 ஊர்வன, 1 சிலந்தி வகை. மேலும் 16 உயிரினமல்லாத ஒலி வகைகள்.", "BirdNET+ V3 lists 11,709 animal species: 9,788 birds, 802 insects, 649 amphibians, 419 mammals (including humans), 35 fishes, 15 reptiles and 1 arachnid; plus 16 non-animal sound classes."), style = MaterialTheme.typography.bodyMedium)
                                 Text(tr("பட்டியலில் இருப்பது சரியாக அறியும் என்பதற்கு உறுதியல்ல. பெரும்பாலும் பறவைகளே உள்ளன. பூனை, மாடு, வீட்டுக் காகம், வீட்டுப் பல்லி பட்டியலில் உள்ளன. எல்லா நாய் அல்லது எலி இனங்களும் உள்ளனவா என உறுதியில்லை. மெல்லிய ஒலி தவறவிடப்படலாம்.", "A listed species is not a guarantee of identification; most are birds. House Crow, Domestic Cat, Domestic Cattle and Asian House Gecko are listed. Coverage of dogs and rats is not established. Quiet calls can be missed."), style = MaterialTheme.typography.bodyMedium)
                                 Text(tr("சில எலி ஒலிகள் மீயொலி; மீன் ஒலிக்குத் தண்ணீருக்கேற்ற ஒலிவாங்கி தேவைப்படலாம். எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது. பொருள் அறியவோ பதில் உருவாக்கவோ முடியாது.", "Some rat calls are ultrasonic; fish sounds may need an underwater microphone. Ant chemical signals cannot be heard. The app does not determine meaning or generate replies."), style = MaterialTheme.typography.bodyMedium)
                             }
