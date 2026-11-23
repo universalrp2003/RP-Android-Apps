@@ -10,6 +10,8 @@ adb shell chmod 644 /data/local/tmp/birdnet.tflite
 adb shell run-as com.universalrp.animalvoice.experimental mkdir -p files
 adb shell run-as com.universalrp.animalvoice.experimental cp /data/local/tmp/birdnet.tflite files/birdnet-lite-6k.tflite
 adb shell rm /data/local/tmp/birdnet.tflite
+# Large-text layout check: the first-run download control must stay reachable at 2x font scale.
+adb shell settings put system font_scale 2.0
 adb shell am instrument -w -r com.universalrp.animalvoice.experimental.test/androidx.test.runner.AndroidJUnitRunner | tee "$RUNNER_TEMP/animal-native.txt"
-grep -F 'OK (6 tests)' "$RUNNER_TEMP/animal-native.txt"
+grep -F 'OK (8 tests)' "$RUNNER_TEMP/animal-native.txt"
 ! grep -Eq 'FAILURES!!!|INSTRUMENTATION_FAILED|Process crashed|shortMsg=' "$RUNNER_TEMP/animal-native.txt"
