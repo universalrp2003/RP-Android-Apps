@@ -662,3 +662,18 @@ Exact `CleanSweep-v2.97.apk`: **14,784,299B**, SHA-256 `121b2c757996910849c76b70
 - Oor Arivippu 1.1.22 / code27: `Oor-Arivippu-v1.1.22.apk`, 12941104 bytes, SHA-256 `5d8777f1f9eb6ed8eeb87fbcf89cd1bffc30d5f7f78cca43e8f93ff7e848bd1d`. Exact candidate build 44217614992, Android 15 upgrade/settings/About 44221838446, publisher 44222418667. Owner reports working on phone; installed hash not independently verified. No new permissions.
 
 - Oor Arivippu 1.1.26 / code31: `Oor-Arivippu-v1.1.26.apk`, 12941104 bytes, SHA-256 `96ff45915749f5f1a851ff246ee9ddcd0b83886b3d1017e6ab5f22661d17d22c`. Exact signed build 44462974759, Android 15 upgrade and About check 44463364271, publisher 44464312883. Owner liked 1.1.25 on phone; final exact APK has not been independently phone-tested. No added permissions.
+
+## Animal Sounds 0.21 — first public release
+
+- Release: https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.21
+- Published: 2026-11-23T11:07:59Z. Exact successful run 45159623048 attempt 1 artifact promoted by publisher 45162292864 without rebuilding.
+- APK: `Animal-Sounds-v0.21.apk`, 52,813,729 bytes, SHA-256 `24ba91656e44bbf8f140138bf282e8946af34c35e77ac9ca1ec3267366423a26`, signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`, package `com.universalrp.animalvoice.experimental`, code 21.
+- 15 Android 15 emulator tests at 1.0x and 2.0x font scale in English and Tamil plus model smoke tests passed; no in-place upgrade was exercised on an emulator and the 0.21 bytes were not phone-tested before publication (owner accepted 0.20 on a phone). [Receipt](animal-sounds-0.21-publication-receipt.json).
+
+## Tamilan Store 0.15 — public
+
+- Release: https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.15
+- Published: 2026-11-23T11:39:25Z. Exact successful candidate run 45165949849 attempt 1 artifact promoted by publisher 45167094585 without rebuilding; the public 0.14 assets were verified unchanged afterwards.
+- APK: `Tamilan-Store-v0.15.apk`, 20,713,379 bytes, SHA-256 `c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b`, same package and signer, code 17. Ships 17 catalog entries (adds Animal Sounds 0.21 experimental); catalog-v4.json with the frozen v3/v2/legacy endpoints.
+- Android 15 same-key in-place upgrade over public 0.14: same UID, private marker, language and motion preferences preserved, restart and manual catalog refresh passed, debug-over-release rejected, identical permissions. Not installed on a physical phone. [Receipt](tamilan-store-0.15-publication-receipt.json).
+

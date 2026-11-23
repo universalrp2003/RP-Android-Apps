@@ -51,24 +51,36 @@ class StoreCertificateRegression(unittest.TestCase):
         self.assertTrue(receipt['prior_public_assets_unchanged'])
 
     def test_published_store_matches_the_exact_verified_release(self):
-        receipt = json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())
+        receipt = json.loads((ROOT/'docs/tamilan-store-0.15-publication-receipt.json').read_text())
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.15", publishedVersion = "0.14"', text)
+        self.assertIn('tagPrefix = "tamilan-store", version = "0.15", publishedVersion = "0.15"', text)
         site = (ROOT/'site/index.html').read_text()
         mirrors = (ROOT/'.github/workflows/pages.yml').read_text()
         self.assertIn(receipt['url'],site)
         self.assertIn(receipt['apk_sha256'],site)
         self.assertIn(receipt['published_at'],site)
         self.assertIn(receipt['apk_sha256'],mirrors)
-        self.assertEqual((receipt['release_id'],receipt['asset_id']), (446868013,754355208))
-        self.assertEqual(receipt['publisher_run'],43846064166)
+        self.assertEqual((receipt['release_id'],receipt['asset_id']), (455341045,782704805))
+        self.assertEqual(receipt['publisher_run'],45167094585)
         self.assertFalse(receipt['rebuilt'])
         self.assertTrue(receipt['same_uid'])
         self.assertTrue(receipt['private_file_preserved'])
         dates = json.loads((ROOT/'site/release-dates.json').read_text())
-        self.assertEqual(dates['releases']['tamilan-store-v0.14'],receipt['published_at'])
-        self.assertIn('("tamilan-store-v0.14", "Tamilan-Store-v0.14.apk", 19906251, "'+receipt['apk_sha256']+'")',mirrors)
-        self.assertNotIn('("tamilan-store-v0.13",',mirrors)
+        self.assertEqual(dates['releases']['tamilan-store-v0.15'],receipt['published_at'])
+        self.assertIn('("tamilan-store-v0.15", "Tamilan-Store-v0.15.apk", 20713379, "'+receipt['apk_sha256']+'")',mirrors)
+        self.assertNotIn('("tamilan-store-v0.14",',mirrors)
+
+    def test_previous_store14_publication_receipt_stays_immutable(self):
+        receipt = json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())
+        approved = json.loads((ROOT/'docs/approved-weekly-store-20261116.json').read_text())
+        entry = next(p for p in approved['publications'] if p['app'] == 'tamilanstore')
+        for key, value in entry.items():
+            self.assertEqual(receipt[key], value, key)
+        self.assertEqual((receipt['release_id'], receipt['asset_id']), (446868013, 754355208))
+        self.assertEqual(receipt['publisher_run'], 43846064166)
+        self.assertFalse(receipt['rebuilt'])
+        self.assertTrue(receipt['same_uid'])
+        self.assertTrue(receipt['private_file_preserved'])
 
     def test_installer_handoff_keeps_uri_read_only_and_failures_typed(self):
         source = ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore'
