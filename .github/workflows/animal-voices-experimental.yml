@@ -81,6 +81,11 @@ jobs:
           bytes="$(stat -c %s "$apk")"
           echo "Release APK: $apk"
           echo "Release APK size: $bytes bytes ($(awk -v b="$bytes" 'BEGIN {printf "%.1f", b/1000000}') MB)"
+          sha="$(sha256sum "$apk" | cut -d' ' -f1)"
+          sha256sum "$apk" > "$apk.sha256"
+          echo "Release APK SHA-256: $sha"
+          # The exact bytes the publication record must pin; a notice survives without the raw log.
+          echo "::notice title=Animal Sounds signed candidate::$apk | $bytes bytes | SHA-256 $sha"
           echo "Largest entries (uncompressed bytes):"
           unzip -l "$apk" | awk '$1 ~ /^[0-9]+$/ {printf "%12d  %s\n", $1, $4}' | sort -n -r | head -12
           for abi in arm64-v8a armeabi-v7a x86 x86_64; do
