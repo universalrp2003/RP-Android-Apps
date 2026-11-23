@@ -79,6 +79,9 @@ class LargeTextLayoutTest {
     @Test fun backFromSettingsReturnsToMainScreen() {
         openSettings("அமைப்புகள்")
         rule.onNodeWithText("←  பின்").performClick()
-        rule.onNodeWithText("உயிரின மாடல்").assertIsDisplayed()
+        // The header is the top of the main screen; the species card sits lower at 2x font scale.
+        rule.onNodeWithText("விலங்கு ஒலிகள்", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("உயிரின மாடல்").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("அமைப்புகள்").assertDoesNotExist()
     }
 }

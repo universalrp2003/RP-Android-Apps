@@ -115,6 +115,9 @@ jobs:
           for p in (r/'animal-build.log',r/'animal-native.txt',r/'animal-setup.txt',r/'animal-badging.txt',r/'animal-signature.txt',r/'animal-debug-signature.txt'):
               if p.exists():
                   lines=p.read_text(errors='replace').splitlines()
-                  selected=lines if p.name.endswith('native.txt') or p.name.endswith('setup.txt') or p.name.endswith('badging.txt') or p.name.endswith('signature.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
+                  selected=lines if p.name.endswith('setup.txt') or p.name.endswith('badging.txt') or p.name.endswith('signature.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Exception', 'What went wrong'))]
+                  if p.name.endswith('native.txt'):
+                      # Every test's start/end status plus the first line of each failure, so a truncated annotation still shows which tests passed.
+                      selected=[x[:300] for x in lines if any(y in x for y in ('INSTRUMENTATION_STATUS: test=', 'INSTRUMENTATION_STATUS: stack=', 'INSTRUMENTATION_STATUS_CODE', 'OK (', 'FAILURES', 'shortMsg', 'Process crashed', 'INSTRUMENTATION_FAILED'))]
                   msg=(p.name+'\n'+'\n'.join(selected or lines[-20:]))[-8000:]
                   print('::error title=Animal Voices check::'+msg.replace('%','%25').replace('\n','%0A'))
