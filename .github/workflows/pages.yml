@@ -49,6 +49,7 @@ jobs:
           import hashlib, pathlib, urllib.request, zipfile
 
           RELEASES = [
+              ("animal-sounds-v0.21", "Animal-Sounds-v0.21.apk", 52813729, "24ba91656e44bbf8f140138bf282e8946af34c35e77ac9ca1ec3267366423a26"),
               ("weekly-money-v1.5", "Weekly-Money-v1.5.apk", 7499595, "b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6"),
               # Retention rule: the current release of every app. Historical releases are
               # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
@@ -108,6 +109,8 @@ jobs:
           test -s site/apks/Android-TV-Guard-v1.5.1.zip
           test -s site/apks/System-App-Disabler-v0.4.1.apk
           test -s site/apks/System-App-Disabler-v0.4.1.zip
+          test -s site/apks/Animal-Sounds-v0.21.apk
+          test -s site/apks/Animal-Sounds-v0.21.zip
           test -s site/apks/Weekly-Money-v1.5.apk
           test -s site/apks/Weekly-Money-v1.5.zip
           test -s site/apks/Tamilan-Store-v0.14.apk

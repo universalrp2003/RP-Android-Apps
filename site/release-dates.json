@@ -1,22 +1,23 @@
 {
   "source": "GitHub Releases published_at (UTC)",
   "releases": {
+    "animal-sounds-v0.21": "2026-11-23T11:07:59Z",
+    "elderly-launcher-v1.8": "2026-11-21T11:21:26Z",
+    "system-app-disabler-v0.4.1": "2026-11-21T11:21:20Z",
+    "oor-arivippu-v1.1.26": "2026-11-19T05:19:19Z",
+    "weekly-money-v1.5": "2026-11-17T09:39:55Z",
+    "live-guard-v3.01": "2026-11-16T15:13:29Z",
+    "tamilan-store-v0.14": "2026-11-16T10:08:26Z",
+    "tvguard-v1.5.1": "2026-11-11T12:00:01Z",
     "sms-guard-v1.1.17": "2026-11-04T12:21:13Z",
-    "ramesh-radio-v1.31": "2026-10-31T13:53:48Z",
-    "pulseeq-v1.11": "2026-10-29T12:01:26Z",
-    "rp-vocal-remover-studio-v0.1.16": "2026-10-29T12:11:23Z",
-    "secret-message-v1.1.3": "2026-10-22T16:42:52Z",
-    "expense-tracker-v1.2": "2026-10-29T10:55:43Z",
     "voice-notes-v1.3.4": "2026-11-01T09:57:54Z",
+    "ramesh-radio-v1.31": "2026-10-31T13:53:48Z",
+    "daily-vault-v0.5": "2026-10-30T17:37:40Z",
+    "rp-vocal-remover-studio-v0.1.16": "2026-10-29T12:11:23Z",
+    "pulseeq-v1.11": "2026-10-29T12:01:26Z",
+    "expense-tracker-v1.2": "2026-10-29T10:55:43Z",
     "tamil-podcast-v1.6": "2026-10-29T10:20:33Z",
     "vasanthi-ai-v1.1.5": "2026-10-29T09:07:16Z",
-    "daily-vault-v0.5": "2026-10-30T17:37:40Z",
-    "tvguard-v1.5.1": "2026-11-11T12:00:01Z",
-    "tamilan-store-v0.14": "2026-11-16T10:08:26Z",
-    "live-guard-v3.01": "2026-11-16T15:13:29Z",
-    "weekly-money-v1.5": "2026-11-17T09:39:55Z",
-    "oor-arivippu-v1.1.26": "2026-11-19T05:19:19Z",
-    "elderly-launcher-v1.8": "2026-11-21T11:21:26Z",
-    "system-app-disabler-v0.4.1": "2026-11-21T11:21:20Z"
+    "secret-message-v1.1.3": "2026-10-22T16:42:52Z"
   }
 }

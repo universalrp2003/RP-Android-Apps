@@ -22,14 +22,14 @@ class WebsiteUsabilityTest(unittest.TestCase):
         cls.css = (ROOT / 'site/site-controls.css').read_text()
 
     def test_every_release_has_a_matching_real_timestamp(self):
-        self.assertEqual(dates.check(self.source, self.evidence), 17)
+        self.assertEqual(dates.check(self.source, self.evidence), 18)
         for value in self.evidence['releases'].values():
             self.assertIsNotNone(datetime.fromisoformat(value.replace('Z', '+00:00')).tzinfo)
 
     def test_every_card_states_its_own_release_date(self):
         dates_on_cards = [(m.group(1), m.group(2)) for m in re.finditer(
             r'<time class="card-date" datetime="([^"]+)" data-release-tag="([^"]+)">', self.source)]
-        self.assertEqual(len(dates_on_cards), 17)
+        self.assertEqual(len(dates_on_cards), 18)
         for value, tag in dates_on_cards:
             self.assertEqual(self.evidence['releases'][tag], value)
         # and the visible label is a readable date, not a raw timestamp
@@ -98,7 +98,7 @@ class WebsiteUsabilityTest(unittest.TestCase):
             anchors.add(anchor)
             self.assertIn(f'href="#{anchor}"', self.source)
             self.assertRegex(card, r'data-apk="[^"]+"[^>]*aria-label="Download APK · [^"]+"')
-        self.assertEqual(len(anchors), 17)
+        self.assertEqual(len(anchors), 18)
 
     def test_card_order_is_newest_release_first(self):
         """The page promises the newest release first, so a stale order must fail the gate."""
@@ -108,25 +108,26 @@ class WebsiteUsabilityTest(unittest.TestCase):
         sys.path.insert(0, str(_P(__file__).resolve().parents[1]))
         import verify_apps_localization as localization
         regular = re.search(
-            r'aria-label="16 regular Android applications">(.*?)</section>', site, re.S
+            r'aria-label="17 regular Android applications">(.*?)</section>', site, re.S
         )[1]
         ids = re.findall(r'<h2 id="(app-[^"]+)"', regular)
-        self.assertEqual(len(ids), 16)
+        self.assertEqual(len(ids), 17)
         localization.verify_newest_first(site, ids)
-        self.assertEqual(ids[0], 'app-elderly-launcher')
-        self.assertEqual(ids[1], 'app-system-app-disabler')
-        self.assertEqual(ids[2], 'app-oor-arivippu')
+        self.assertEqual(ids[0], 'app-animal-sounds')
+        self.assertEqual(ids[1], 'app-elderly-launcher')
+        self.assertEqual(ids[2], 'app-system-app-disabler')
+        self.assertEqual(ids[3], 'app-oor-arivippu')
 
         # Moving the oldest card to the front must be rejected.
         oldest = site.index('        <!-- Secret Message -->')
         end = site.index('</article>', oldest) + len('</article>')
         block = site[oldest:end]
         shuffled = site[:oldest] + site[end:]
-        first = shuffled.index('        <!-- Elderly Launcher -->')
+        first = shuffled.index('        <!-- Animal Sounds -->')
         shuffled = shuffled[:first] + block + '\n\n' + shuffled[first:]
         shuffled_ids = re.findall(
             r'<h2 id="(app-[^"]+)"',
-            re.search(r'aria-label="16 regular Android applications">(.*?)</section>', shuffled, re.S)[1],
+            re.search(r'aria-label="17 regular Android applications">(.*?)</section>', shuffled, re.S)[1],
         )
         self.assertEqual(shuffled_ids[0], 'app-secret-message')
         with self.assertRaises(ValueError):
@@ -137,11 +138,11 @@ class WebsiteUsabilityTest(unittest.TestCase):
         end = pristine.index('</article>', middle) + len('</article>')
         block = pristine[middle:end]
         reordered = pristine[:middle] + pristine[end:]
-        top = reordered.index('        <!-- Elderly Launcher -->')
+        top = reordered.index('        <!-- Animal Sounds -->')
         reordered = reordered[:top] + block + '\n\n' + reordered[top:]
         ids2 = re.findall(
             r'<h2 id="(app-[^"]+)"',
-            re.search(r'aria-label="16 regular Android applications">(.*?)</section>', reordered, re.S)[1],
+            re.search(r'aria-label="17 regular Android applications">(.*?)</section>', reordered, re.S)[1],
         )
         self.assertEqual(ids2[0], 'app-live-guard')
         with self.assertRaises(ValueError):
@@ -161,8 +162,8 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertLess(self.source.index('</style>'), self.source.index('href="site-controls.css'))
 
     def test_current_release_disclosures_are_not_hidden_as_technical_history(self):
-        self.assertEqual(self.source.count('class="release-brief"'), 17)
-        self.assertEqual(self.source.count('class="testing-status"'), 17)
+        self.assertEqual(self.source.count('class="release-brief"'), 18)
+        self.assertEqual(self.source.count('class="testing-status"'), 18)
         self.assertIn('Earlier feature history', self.source)
         self.assertIn('this exact APK was not phone-tested before publication', self.source)
         self.assertIn('same-key', self.source)
@@ -171,15 +172,15 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertIn('not a safety approval', self.source)
 
     def test_social_preview_is_local_small_and_1200_by_630(self):
-        image = (ROOT / 'site/images/social-preview-v17.png').read_bytes()
+        image = (ROOT / 'site/images/social-preview-v18.png').read_bytes()
         self.assertEqual(image[:8], b'\x89PNG\r\n\x1a\n')
         self.assertEqual(struct.unpack('>II', image[16:24]), (1200, 630))
         self.assertLess(len(image), 200_000)
-        self.assertIn('RP-Android-Apps/images/social-preview-v17.png', self.source)
-        self.assertIn(b'17 free Android apps; 16 regular + 1 optional app', image)
-        self.assertEqual(self.source.count('RP-Android-Apps/images/social-preview-v17.png'), 2)
-        self.assertEqual(len(re.findall(r'<article class="card"', self.source)), 17)
-        self.assertIn('aria-label="16 regular Android applications"', self.source)
+        self.assertIn('RP-Android-Apps/images/social-preview-v18.png', self.source)
+        self.assertIn(b'18 free Android apps; 17 regular + 1 optional app', image)
+        self.assertEqual(self.source.count('RP-Android-Apps/images/social-preview-v18.png'), 2)
+        self.assertEqual(len(re.findall(r'<article class="card"', self.source)), 18)
+        self.assertIn('aria-label="17 regular Android applications"', self.source)
 
 
 if __name__ == '__main__':
