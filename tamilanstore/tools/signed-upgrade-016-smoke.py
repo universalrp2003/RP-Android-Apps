@@ -53,10 +53,24 @@ def visible_texts(limit=40):
     _, nodes = ui()
     return [n.get('text').strip() for n in nodes if n.get('text', '').strip()][:limit]
 
+def dismiss_launcher_anr(nodes):
+    """A cold emulator can raise "Pixel Launcher isn't responding" over the app under test.
+    Tapping Wait keeps both alive; Close app is never touched."""
+    wait = next((n for n in nodes if n.get('text') == 'Wait' and n.get('package') != PKG), None)
+    if wait is None:
+        return False
+    x1, y1, x2, y2 = map(int, re.findall(r'\d+', wait.get('bounds', '')))
+    adb('shell', 'input', 'tap', str((x1 + x2) // 2), str((y1 + y2) // 2))
+    time.sleep(1)
+    return True
+
+
 def wait_text_if_present(label, timeout=45):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         text, nodes = ui()
+        if dismiss_launcher_anr(nodes):
+            continue
         match = next((n for n in nodes if n.get('text') == label), None)
         if match is not None:
             return match
@@ -74,6 +88,8 @@ def scroll_until_text(label, swipes=8):
     """New apps sit below the fold of a 17-app list, so look for them by scrolling."""
     for _ in range(swipes):
         text, nodes = ui()
+        if dismiss_launcher_anr(nodes):
+            continue
         match = next((n for n in nodes if n.get('text') == label), None)
         if match is not None:
             return match
