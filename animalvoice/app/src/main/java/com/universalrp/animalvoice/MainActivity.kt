@@ -7,6 +7,9 @@ import android.net.Uri
 import android.net.ConnectivityManager
 import java.io.IOException
 import android.os.Bundle
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -52,8 +55,11 @@ class MainActivity : ComponentActivity() {
     private var confirmReplay by mutableStateOf(false)
     private var confirmDownload by mutableStateOf(false)
     private var downloadingV3 by mutableStateOf(false)
-    private var selected by mutableStateOf(AnimalOptions.all.first())
-    private var selectionExpanded by mutableStateOf(false)
+    private var photo by mutableStateOf<Bitmap?>(null)
+    private var photoLoading by mutableStateOf(false)
+    private var photoNotice by mutableStateOf(false)
+    private var confirmPhoto by mutableStateOf(false)
+    private var photoJob: Job? = null
     private var advancedModels by mutableStateOf(false)
     private var showCoverage by mutableStateOf(false)
     private var sampleRate = AudioEngine.RATE
@@ -92,25 +98,6 @@ class MainActivity : ComponentActivity() {
                         Text(tr("ஒலி அறிதல் · சோதனை", "SOUND IDENTIFICATION · EXPERIMENTAL"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF276A54))
                         Text(tr("ஒலியைக் கேட்டு அறியுங்கள்", "Listen and identify"), fontSize = 22.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
                         Text(tr("இது ஒலி வகையை ஊகிக்கும் ஒரு சோதனை. விலங்கின் எண்ணத்தை மொழிபெயர்க்காது.", "This experiment guesses sound categories. It does not translate an animal's thoughts or words."))
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(20.dp)) {
-                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(tr("விலங்கைத் தேர்வு செய்யவும்", "Choose an animal"), fontWeight = FontWeight.Bold, fontSize = 19.sp)
-                                Text(tr("இன மாடல் மற்ற முடிவுகளையும் காட்டும். தேர்வு அடையாளத்தை உறுதி செய்யாது.", "Species guesses include other animals too. Your choice does not confirm identity."), style = MaterialTheme.typography.bodyMedium)
-                                Box {
-                                    OutlinedButton(enabled = !busy, onClick = { selectionExpanded = true }) { Text((if (tamil) selected.tamil else selected.english) + " ▾") }
-                                    DropdownMenu(expanded = selectionExpanded, onDismissRequest = { selectionExpanded = false }) {
-                                        AnimalOptions.all.forEach { option ->
-                                            DropdownMenuItem(text = { Text(if (tamil) option.tamil else option.english) }, onClick = {
-                                                selectionExpanded = false
-                                                if (selected.id != option.id) { stopAndClear(); selected = option; messageText = BilingualText.EMPTY }
-                                            })
-                                        }
-                                    }
-                                }
-                                if (!selected.supported) Text(tr("பொது மாடலில் பல்லி இல்லை. புதிய மாடலில் வீட்டுப் பல்லி உள்ளது; சரியாகக் கண்டறியுமா எனத் தெரியவில்லை. பதில் ஒலி இல்லை.", "The basic sound model has no dedicated lizard category; the optional v3 species model has an Asian House Gecko label, but accuracy is not established. No reply sound is available."))
-                                if (selected.id == "rodent") Text(tr("எலியின் மீயொலி சாதாரண கைபேசியில் பதிவாகாமல் போகலாம்.", "Rat ultrasound may not be recorded by an ordinary phone."))
-                            }
-                        }
                         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE4F1E7)), shape = RoundedCornerShape(20.dp)) {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(tr("முதலில் கேளுங்கள்", "Listen first"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
@@ -136,7 +123,7 @@ class MainActivity : ComponentActivity() {
                                     Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { confirmDownload = true }) { Text(tr("உயிரின மாடலைப் பதிவிறக்கு", "Download species model")) }
                                 }
                                 if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
-                                OutlinedButton(enabled = !busy && selected.supported, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
+                                OutlinedButton(enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
                                     wantV3 = false
                                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
                                     else permission.launch(Manifest.permission.RECORD_AUDIO)
@@ -155,16 +142,23 @@ class MainActivity : ComponentActivity() {
                                     }
                                     if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
                                     else found.forEach { guess ->
-                                        val match = SpeciesPresentation.focusMatches(selected.id, guess.scientific)
-                                        Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil) + if (match == true) tr(" · தேர்வுடன் பொருந்தலாம்", " · may match your choice") else "")
+                                        Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil))
+                                        if (guess.scientific.trim().equals("Corvus splendens", ignoreCase = true)) {
+                                            if (photo == null) {
+                                                OutlinedButton(enabled = !photoLoading, onClick = { confirmPhoto = true }) { Text(if (photoLoading) tr("படம் வருகிறது…", "Loading photo…") else tr("காகத்தின் மாதிரிப் படம்", "Show reference photo")) }
+                                                if (photoNotice) Text(tr("படம் வரவில்லை. இணையத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Photo unavailable. Check the connection and try again."), style = MaterialTheme.typography.bodySmall)
+                                            } else {
+                                                Image(photo!!.asImageBitmap(), contentDescription = tr("வீட்டுக் காகத்தின் மாதிரிப் படம்", "House Crow reference photo"), modifier = Modifier.width(180.dp).heightIn(max = 150.dp))
+                                                Text(tr("மாதிரிப் படம் மட்டும்; நீங்கள் கேட்ட பறவை அல்ல. படம்: Pkspks / Wikimedia Commons, CC BY 4.0.", "Reference photo only, not the animal you heard. Photo: Pkspks / Wikimedia Commons, CC BY 4.0."), style = MaterialTheme.typography.bodySmall)
+                                                TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ReferencePhoto.CREDIT_URL))) } }) { Text(tr("பட விவரம் மற்றும் உரிமம்", "Photo credit and licence")) }
+                                            }
+                                        }
                                         SpeciesPresentation.description(guess.scientific, tamil)?.let { detail ->
                                             Text(detail, style = MaterialTheme.typography.bodySmall)
                                         }
                                     }
-                                    if (selected.id != "all") Text(tr("தேர்வு மற்ற முடிவுகளை மறைக்காது; பொருத்தம் இருப்பது உறுதி அல்ல.", "Your choice does not hide other results; a match is not confirmation."), style = MaterialTheme.typography.bodySmall)
                                     Text(tr("இவை உறுதியற்ற ஊகங்கள். மனிதர் அல்லது பிற சத்தங்களையும் காட்டலாம். இடம் பயன்படுத்தப்படவில்லை.", "Unverified guesses; results can include human or other sounds. No location filter is used."), style = MaterialTheme.typography.bodySmall)
                                     if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
-                                    if (found.isNotEmpty()) ContextGuide(crowExample = found.any { it.scientific.startsWith("Corvus ") }, tamil = tamil)
                               }
                             }
                         }
@@ -181,7 +175,7 @@ class MainActivity : ComponentActivity() {
                         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(20.dp)) {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                                 Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம்; உங்கள் தேர்வு மற்ற முடிவுகளை மறைக்காது. பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong; your choice never hides other guesses. It does not determine meaning or generate replies."))
+                                Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."))
                                 Text(tr("இந்த மாடலையும் பெயர் பட்டியலையும் ஒரே பொத்தானில் பதிவிறக்கலாம். இரண்டையும் சரிபார்த்துச் சேர்க்கும்.", "Download and verify the model and labels together with one button."), style = MaterialTheme.typography.bodySmall)
                                 if (!v3ModelReady || !v3LabelsReady) {
                                     Button(enabled = !busy, onClick = { confirmDownload = true }) { Text(tr("மாடலைப் பதிவிறக்கு", "Download model")) }
@@ -223,7 +217,6 @@ class MainActivity : ComponentActivity() {
                                     else found.forEach { Text("• " + (if (tamil) "${it.tamil} (${it.label})" else it.label), fontSize = 17.sp) }
                                     Text(tr("இவை ஊகங்கள் மட்டுமே; பல ஒலிகள் ஒன்றுபோல் இருக்கலாம். இதன் பொருள் தெரியாது.", "These are guesses, not verified identities. Similar sounds can be confused; the meaning is unknown."), style = MaterialTheme.typography.bodySmall)
                                     if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
-                                    if (found.isNotEmpty()) ContextGuide(crowExample = found.any { it.label == "Crow" || it.label == "Caw" }, tamil = tamil)
                                 }
                             }
                         }
@@ -250,6 +243,13 @@ class MainActivity : ComponentActivity() {
                         Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                     }
                 }
+                if (confirmPhoto) AlertDialog(
+                    onDismissRequest = { confirmPhoto = false },
+                    title = { Text(tr("மாதிரிப் படத்தைப் பார்க்கவா?", "Show a reference photo?")) },
+                    text = { Text(tr("இணையத்தில் Wikimedia Commons-லிருந்து காகத்தின் மாதிரிப் படம் வரும். இது நீங்கள் கேட்ட பறவை அல்ல. உங்கள் ஒலி அனுப்பப்படாது; இணைய முகவரி அச்சேவைக்குத் தெரியும்.", "Downloads a House Crow reference photo from Wikimedia Commons. It is not the animal you heard. No audio is sent; the provider can see your IP address.")) },
+                    confirmButton = { TextButton(onClick = { confirmPhoto = false; loadReferencePhoto() }) { Text(tr("படத்தைக் காட்டு", "Show photo")) } },
+                    dismissButton = { TextButton(onClick = { confirmPhoto = false }) { Text(tr("வேண்டாம்", "Cancel")) } }
+                )
                 if (confirmDownload) AlertDialog(
                     onDismissRequest = { confirmDownload = false },
                     title = { Text(tr("மாடலைப் பதிவிறக்கவா?", "Download the model?")) },
@@ -265,17 +265,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun clearPhoto() {
+        photoJob?.cancel(); photoJob = null; photo = null; photoLoading = false; photoNotice = false; confirmPhoto = false
+    }
+    private fun loadReferencePhoto() {
+        if (photoLoading) return
+        photoLoading = true; photoNotice = false
+        val thisGeneration = generation
+        photoJob = lifecycleScope.launch {
+            try {
+                val image = withContext(Dispatchers.IO) { ReferencePhoto.load() }
+                if (generation == thisGeneration) photo = image
+            } catch (e: CancellationException) { throw e }
+              catch (_: Exception) { if (generation == thisGeneration) photoNotice = true }
+            finally { if (generation == thisGeneration) photoLoading = false }
+        }
+    }
     private fun listen() {
         if (busy) return
+        clearPhoto()
         samples?.fill(0); samples = null; guesses = null; v3Guesses = null; sampleRate = AudioEngine.RATE; messageText = BilingualText.EMPTY; busy = true
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
-        val selectedLabels = selected.labels
-        val selectedId = selected.id
         job = lifecycleScope.launch {
             try {
                 val captured = withContext(Dispatchers.IO) { activeEngine.capture() }
-                val found = withContext(Dispatchers.Default) { activeEngine.analyze(captured, selectedLabels, selectedId) }
+                val found = withContext(Dispatchers.Default) { activeEngine.analyze(captured) }
                 if (generation == thisGeneration) { samples = captured; guesses = found.guesses } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) setMessage("மைக்ரோஃபோன் அல்லது ஒலி ஆய்வு செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Microphone or sound analysis failed. Please try again.") }
@@ -335,6 +350,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun listenV3() {
         if (busy || !BirdNetV3.ready(this)) return
+        clearPhoto()
         samples?.fill(0); samples = null; guesses = null; v3Guesses = null; messageText = BilingualText.EMPTY; busy = true
         sampleRate = BirdNetV3.RATE
         val windows = v3WindowCount
@@ -368,6 +384,7 @@ class MainActivity : ComponentActivity() {
         }
     }
     private fun stopAndClear() {
+        clearPhoto()
         generation++; importRunning?.set(false); importRunning = null; engine?.stop(); engine = null; job?.cancel(); job = null; samples?.fill(0); samples = null
         guesses = null; v3Guesses = null; confirmReplay = false; confirmDownload = false; downloadingV3 = false; busy = false
     }
