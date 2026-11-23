@@ -38,3 +38,5 @@ With explicit confirmation, **Download model** fetches missing BirdNET+ 3.0 file
 The main screen presents BirdNET+ species listening and its download first, with the bundled basic sound classifier as an explicit fallback. Older BirdNET-Lite and manual file controls are under Other model settings; existing model files are not removed. The models are not merged and no automatic switching or reply generation is claimed.
 
 Version 0.10 corrects download-status language switching and avoids showing a listening message while the model is downloading. No new animal reply model is included.
+
+Version 0.11 stores both language versions of remaining runtime and legacy-model notices, so existing notices can switch with the language. This does not translate every species name; unknown Tamil names still fall back to the supplied English name. Geographic filtering is researched but not enabled.

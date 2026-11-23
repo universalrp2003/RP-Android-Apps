@@ -41,13 +41,16 @@ class MainActivity : ComponentActivity() {
     private var samples by mutableStateOf<ShortArray?>(null)
     private var guesses by mutableStateOf<List<SoundGuess>?>(null)
     private var busy by mutableStateOf(false)
-    private var message by mutableStateOf("")
-    private var legacyNotice by mutableStateOf("")
+    private var messageText by mutableStateOf(BilingualText.EMPTY)
+    private val message: String get() = messageText.display(tamil)
+    private fun setMessage(ta: String, en: String) { messageText = BilingualText(ta, en) }
+    private var legacyNoticeText by mutableStateOf(BilingualText.EMPTY)
+    private val legacyNotice: String get() = legacyNoticeText.display(tamil)
+    private fun setLegacyNotice(ta: String, en: String) { legacyNoticeText = BilingualText(ta, en) }
     private var legacyNoticeOk by mutableStateOf(false)
-    private var v3NoticeTa by mutableStateOf("")
-    private var v3NoticeEn by mutableStateOf("")
-    private val v3Notice: String get() = tr(v3NoticeTa, v3NoticeEn)
-    private fun setV3Notice(ta: String, en: String) { v3NoticeTa = ta; v3NoticeEn = en }
+    private var v3NoticeText by mutableStateOf(BilingualText.EMPTY)
+    private val v3Notice: String get() = v3NoticeText.display(tamil)
+    private fun setV3Notice(ta: String, en: String) { v3NoticeText = BilingualText(ta, en) }
     private var v3NoticeOk by mutableStateOf(false)
     private var tamil by mutableStateOf(true)
     private var confirmReplay by mutableStateOf(false)
@@ -76,7 +79,7 @@ class MainActivity : ComponentActivity() {
         updateV3Status()
         setContent {
             val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                if (granted) { if (wantV3) listenV3() else if (wantBirdnet) listenBirds() else listen() } else message = tr("ஒலியைக் கேட்க மைக்ரோஃபோன் அனுமதி தேவை.", "Microphone permission is needed to listen.")
+                if (granted) { if (wantV3) listenV3() else if (wantBirdnet) listenBirds() else listen() } else setMessage("ஒலியைக் கேட்க மைக்ரோஃபோன் அனுமதி தேவை.", "Microphone permission is needed to listen.")
             }
             val modelPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
                 if (uri != null) importBirdnet(uri)
@@ -107,7 +110,7 @@ class MainActivity : ComponentActivity() {
                                         AnimalOptions.all.forEach { option ->
                                             DropdownMenuItem(text = { Text(if (tamil) option.tamil else option.english) }, onClick = {
                                                 selectionExpanded = false
-                                                if (selected.id != option.id) { stopAndClear(); selected = option; message = "" }
+                                                if (selected.id != option.id) { stopAndClear(); selected = option; messageText = BilingualText.EMPTY }
                                             })
                                         }
                                     }
@@ -183,7 +186,7 @@ class MainActivity : ComponentActivity() {
                                 Text(tr("Cornell Lab of Ornithology / BirdNET · CC BY-NC-SA 4.0 · creativecommons.org/licenses/by-nc-sa/4.0/", "Cornell Lab of Ornithology / BirdNET · CC BY-NC-SA 4.0 · creativecommons.org/licenses/by-nc-sa/4.0/"), style = MaterialTheme.typography.bodySmall)
                                 OutlinedButton(enabled = !busy, onClick = {
                                     runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/birdnet-team/BirdNET-Lite/blob/main/model/BirdNET_6K_GLOBAL_MODEL.tflite"))) }
-                                        .onFailure { message = tr("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                        .onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
                                 }) { Text(tr("மாடல் பக்கத்தைத் திற", "Open model download page")) }
                                 OutlinedButton(enabled = !busy, onClick = { modelPicker.launch(arrayOf("*/*")) }) { Text(if (birdnetReady) tr("மாடலை மாற்று", "Replace model") else tr("பதிவிறக்கிய மாடலைத் தேர்வு செய்", "Select downloaded model")) }
                                 if (birdnetReady) {
@@ -221,7 +224,7 @@ class MainActivity : ComponentActivity() {
                                 Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
                                 OutlinedButton(enabled = !busy, onClick = {
                                     runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
-                                        .onFailure { message = tr("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                        .onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
                                 }) { Text(tr("இரண்டு கோப்புகளின் பக்கத்தைத் திற", "Open both files' download page")) }
                                 Text(tr("மாடல் கோப்பு .tflite என முடிய வேண்டும்; .onnx கோப்பைத் தேர்வு செய்ய வேண்டாம்.", "The model must end in .tflite, not .onnx."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(enabled = !busy, onClick = {
@@ -283,7 +286,7 @@ class MainActivity : ComponentActivity() {
 
     private fun listen() {
         if (busy) return
-        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; sampleRate = AudioEngine.RATE; message = ""; busy = true
+        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; sampleRate = AudioEngine.RATE; messageText = BilingualText.EMPTY; busy = true
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
         val selectedLabels = selected.labels
@@ -294,28 +297,28 @@ class MainActivity : ComponentActivity() {
                 val found = withContext(Dispatchers.Default) { activeEngine.analyze(captured, selectedLabels, selectedId) }
                 if (generation == thisGeneration) { samples = captured; guesses = found.guesses } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) message = tr("மைக்ரோஃபோன் அல்லது ஒலி ஆய்வு செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Microphone or sound analysis failed. Please try again.") }
+              catch (_: Exception) { if (generation == thisGeneration) setMessage("மைக்ரோஃபோன் அல்லது ஒலி ஆய்வு செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Microphone or sound analysis failed. Please try again.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
     private fun importBirdnet(uri: Uri) {
         if (busy) return
-        busy = true; message = ""; legacyNotice = ""; legacyNoticeOk = false
+        busy = true; messageText = BilingualText.EMPTY; legacyNoticeText = BilingualText.EMPTY; legacyNoticeOk = false
         val thisGeneration = ++generation
         val isActive = AtomicBoolean(true); importRunning = isActive
         job = lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) { BirdNet.import(this@MainActivity, uri) { isActive.get() } }
                 birdnetReady = BirdNet.installed(this@MainActivity)
-                if (generation == thisGeneration) { legacyNoticeOk = true; legacyNotice = tr("பறவை மாடல் சேர்க்கப்பட்டது.", "Bird model imported.") }
+                if (generation == thisGeneration) { legacyNoticeOk = true; setLegacyNotice("பறவை மாடல் சேர்க்கப்பட்டது.", "Bird model imported.") }
             } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) legacyNotice = tr("மாடல் தவறு அல்லது சேதமடைந்துள்ளது. சரியான BirdNET-Lite கோப்பைத் தேர்வு செய்யவும்.", "Model import failed. Select the exact BirdNET-Lite model; check storage space.") }
+              catch (_: Exception) { if (generation == thisGeneration) setLegacyNotice("மாடல் தவறு அல்லது சேதமடைந்துள்ளது. சரியான BirdNET-Lite கோப்பைத் தேர்வு செய்யவும்.", "Model import failed. Select the exact BirdNET-Lite model; check storage space.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
     private fun listenBirds() {
         if (busy || !BirdNet.installed(this)) return
-        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; message = ""; busy = true
+        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; messageText = BilingualText.EMPTY; busy = true
         sampleRate = BirdNet.RATE
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
@@ -325,7 +328,7 @@ class MainActivity : ComponentActivity() {
                 val found = withContext(Dispatchers.Default) { BirdNet.analyze(this@MainActivity, captured) }
                 if (generation == thisGeneration) { samples = captured; birdGuesses = found } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) message = tr("பறவை ஒலியைப் பதிவுசெய்யவோ ஆய்வு செய்யவோ முடியவில்லை.", "Could not record or analyse bird audio on this device.") }
+              catch (_: Exception) { if (generation == thisGeneration) setMessage("பறவை ஒலியைப் பதிவுசெய்யவோ ஆய்வு செய்யவோ முடியவில்லை.", "Could not record or analyse bird audio on this device.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
@@ -334,7 +337,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun importV3(uri: Uri, isModel: Boolean) {
         if (busy) return
-        busy = true; message = ""; setV3Notice("", ""); v3NoticeOk = false
+        busy = true; messageText = BilingualText.EMPTY; setV3Notice("", ""); v3NoticeOk = false
         val thisGeneration = ++generation
         val isActive = AtomicBoolean(true); importRunning = isActive
         job = lifecycleScope.launch {
@@ -382,7 +385,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun listenV3() {
         if (busy || !BirdNetV3.ready(this)) return
-        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; message = ""; busy = true
+        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; messageText = BilingualText.EMPTY; busy = true
         sampleRate = BirdNetV3.RATE
         val windows = v3WindowCount
         v3ResultWindow = null; v3ResultWindows = windows
@@ -397,7 +400,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (generation == thisGeneration) { samples = captured; v3Guesses = found.guesses; v3ResultWindow = found.windowIndex } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) message = tr("புதிய மாடல் செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Could not record or analyse with the new model on this device.") }
+              catch (_: Exception) { if (generation == thisGeneration) setMessage("புதிய மாடல் செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Could not record or analyse with the new model on this device.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
@@ -406,11 +409,11 @@ class MainActivity : ComponentActivity() {
         val activeEngine = engine ?: return
         if (busy) return
         val thisGeneration = generation
-        message = ""; busy = true
+        messageText = BilingualText.EMPTY; busy = true
         job = lifecycleScope.launch {
             try { withContext(Dispatchers.IO) { activeEngine.replay(captured, sampleRate) } }
             catch (e: CancellationException) { throw e }
-            catch (_: Exception) { if (generation == thisGeneration) message = tr("ஒலியை இயக்க முடியவில்லை.", "Could not play the sample.") }
+            catch (_: Exception) { if (generation == thisGeneration) setMessage("ஒலியை இயக்க முடியவில்லை.", "Could not play the sample.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
