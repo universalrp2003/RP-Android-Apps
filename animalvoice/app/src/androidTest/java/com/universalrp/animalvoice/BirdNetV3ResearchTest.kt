@@ -23,7 +23,22 @@ class BirdNetV3ResearchTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val file = File(context.filesDir, "research-birdnet3.tflite")
         // Normal app smoke tests do not include this research-only file.
-        assumeTrue("Optional v3 research model not installed", file.isFile)
+        val labels = File(context.filesDir, "research-birdnet3-labels.csv")
+        assumeTrue("Optional v3 research files not installed", file.isFile && labels.isFile)
+        BirdNetV3.import(context, android.net.Uri.fromFile(file), true)
+        BirdNetV3.import(context, android.net.Uri.fromFile(labels), false)
+        assertTrue(BirdNetV3.ready(context))
+        assertTrue(BirdNetV3.analyze(context, ShortArray(BirdNetV3.SAMPLES)).isEmpty())
+        val bad = File(context.cacheDir, "v3-wrong.bin").apply { writeBytes(byteArrayOf(1, 2, 3)) }
+        try {
+            try { BirdNetV3.import(context, android.net.Uri.fromFile(bad), true); fail("Bad model accepted") }
+            catch (_: IllegalArgumentException) { }
+            assertTrue(BirdNetV3.ready(context))
+        } finally { bad.delete() }
+        val tone = ShortArray(BirdNetV3.SAMPLES) { (5000 * sin(2.0 * PI * 1000 * it / BirdNetV3.RATE)).toInt().toShort() }
+        val guesses = BirdNetV3.analyze(context, tone)
+        assertTrue(guesses.size <= 3)
+        assertTrue(guesses.all { it.score in 0.5f..1f })
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().use { stream ->
             val buf = ByteArray(65536)

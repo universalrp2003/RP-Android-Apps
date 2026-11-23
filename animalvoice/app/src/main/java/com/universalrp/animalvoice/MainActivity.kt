@@ -47,18 +47,29 @@ class MainActivity : ComponentActivity() {
     private var sampleRate = AudioEngine.RATE
     private var birdnetReady by mutableStateOf(false)
     private var wantBirdnet = false
+    private var wantV3 = false
+    private var v3ModelReady by mutableStateOf(false)
+    private var v3LabelsReady by mutableStateOf(false)
+    private var v3Guesses by mutableStateOf<List<BirdNetV3.Guess>?>(null)
     private var importRunning: AtomicBoolean? = null
     private fun tr(ta: String, en: String) = if (tamil) ta else en
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         birdnetReady = BirdNet.installed(this)
+        updateV3Status()
         setContent {
             val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-                if (granted) { if (wantBirdnet) listenBirds() else listen() } else message = tr("ஒலியைக் கேட்க மைக்ரோஃபோன் அனுமதி தேவை.", "Microphone permission is needed to listen.")
+                if (granted) { if (wantV3) listenV3() else if (wantBirdnet) listenBirds() else listen() } else message = tr("ஒலியைக் கேட்க மைக்ரோஃபோன் அனுமதி தேவை.", "Microphone permission is needed to listen.")
             }
             val modelPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
                 if (uri != null) importBirdnet(uri)
+            }
+            val v3ModelPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                if (uri != null) importV3(uri, true)
+            }
+            val v3LabelPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+                if (uri != null) importV3(uri, false)
             }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF276A54), secondary = Color(0xFF94703A), surface = Color(0xFFF7FAF4))) {
                 Surface(Modifier.fillMaxSize()) {
@@ -85,7 +96,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 }
-                                if (!selected.supported) Text(tr("இந்த மாதிரியில் பல்லிக்கான தனி வகை இல்லை. இதற்குப் பதில் ஒலியும் இல்லை.", "This model has no dedicated lizard category or reply sound."))
+                                if (!selected.supported) Text(tr("இந்த மாதிரியில் பல்லிக்கான தனி வகை இல்லை. இதற்குப் பதில் ஒலியும் இல்லை.", "The basic sound model has no dedicated lizard category; the optional v3 species model has an Asian House Gecko label, but accuracy is not established. No reply sound is available."))
                                 if (selected.id == "rodent") Text(tr("எலியின் மீயொலி சாதாரண கைபேசியில் பதிவாகாமல் போகலாம்.", "Rat ultrasound may not be recorded by an ordinary phone."))
                             }
                         }
@@ -94,7 +105,7 @@ class MainActivity : ComponentActivity() {
                                 Text(tr("முதலில் கேளுங்கள்", "Listen first"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
                                 Text(tr("சுமார் 3 விநாடிகள் மட்டுமே கேட்கும். இணையம் தேவையில்லை; ஒலி சேமிக்கப்படாது.", "Listens for about 3 seconds. No internet or audio file storage."))
                                 Button(enabled = !busy && selected.supported, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
-                                    wantBirdnet = false
+                                    wantV3 = false; wantBirdnet = false
                                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
                                     else permission.launch(Manifest.permission.RECORD_AUDIO)
                                 }) { Text(if (busy) tr("கேட்கிறது / ஆய்வு செய்கிறது…", "Listening / analysing…") else tr("🎙  ஒலியைக் கேள்", "🎙  Listen to a sound")) }
@@ -116,7 +127,7 @@ class MainActivity : ComponentActivity() {
                                 if (birdnetReady) {
                                     Text(tr("மாடல் நிறுவப்பட்டுள்ளது.", "Model installed."))
                                     Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = {
-                                        wantBirdnet = true
+                                        wantV3 = false; wantBirdnet = true
                                         if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listenBirds()
                                         else permission.launch(Manifest.permission.RECORD_AUDIO)
                                     }) { Text(tr("பறவையைக் கேள்", "Identify a bird")) }
@@ -130,6 +141,37 @@ class MainActivity : ComponentActivity() {
                                     Text(tr("இவை உறுதியான அடையாளம் அல்ல. இடம் மற்றும் நேரம் பயன்படுத்தப்படவில்லை.", "These are unverified guesses; no location or date filter is used."), style = MaterialTheme.typography.bodySmall)
                                     if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
                                     if (birds.isNotEmpty()) ContextGuide(crowExample = birds.any { it.scientific.startsWith("Corvus ") }, tamil = tamil)
+                                }
+                            }
+                        }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(20.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                                Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம்; இது மேலுள்ள தேர்வைப் பயன்படுத்தாது. பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong and does not use the selection above. It does not determine meaning or generate replies."))
+                                Text(tr("இரண்டு கோப்புகள் தேவை: FP16 pruned TFLite மாடல் (71 MB) மற்றும் Labels CSV (8 MB). பதிப்பு 3.0 கோப்புகளை மட்டும் சேர்க்கவும்.", "Two separate files required: version 3.0 FP16 pruned TFLite model (71 MB) and Labels CSV (8 MB). The app verifies both files."), style = MaterialTheme.typography.bodySmall)
+                                Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
+                                OutlinedButton(enabled = !busy, onClick = {
+                                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
+                                        .onFailure { message = tr("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                }) { Text(tr("இரண்டு கோப்புகளின் பக்கத்தைத் திற", "Open both files' download page")) }
+                                OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
+                                OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
+                                if (v3ModelReady && v3LabelsReady) {
+                                    Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = {
+                                        wantV3 = true; wantBirdnet = false
+                                        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listenV3()
+                                        else permission.launch(Manifest.permission.RECORD_AUDIO)
+                                    }) { Text(tr("உயிரின ஒலியைக் கேள்", "Identify an animal sound")) }
+                                    TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
+                                }
+                                if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error)
+                                v3Guesses?.let { found ->
+                                    Text(tr("சாத்தியமான ஒலி வகைகள்", "Possible sound sources"), fontWeight = FontWeight.Bold)
+                                    if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
+                                    else found.forEach { Text("• ${it.common}" + if (it.scientific.isNotBlank()) " (${it.scientific})" else "") }
+                                    Text(tr("இவை உறுதியற்ற ஊகங்கள். மனிதர் அல்லது பிற சத்தங்களையும் காட்டலாம். இடம் பயன்படுத்தப்படவில்லை.", "Unverified guesses; results can include human or other sounds. No location filter is used."), style = MaterialTheme.typography.bodySmall)
+                                    if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
+                                    if (found.isNotEmpty()) ContextGuide(crowExample = found.any { it.scientific.startsWith("Corvus ") }, tamil = tamil)
                                 }
                             }
                         }
@@ -152,7 +194,7 @@ class MainActivity : ComponentActivity() {
                                 Text(tr("பறவைக் கூடு அல்லது விலங்கு அருகே ஒலியை இயக்க வேண்டாம். பதற்றம் தெரிந்தால் நிறுத்தி விலகுங்கள்.", "Avoid playback near animals, nests or protected wildlife. Stop and move away if an animal seems stressed."))
                             }
                         }
-                        Text(tr("வரம்புகள்: காகம், நாய், பூனை, மாடு உள்ளிட்ட சில பொதுவான ஒலிகளை மட்டுமே ஊகிக்கும். பல்லிக்கு தனி அடையாளம் இல்லை. எலியின் மீயொலி சாதாரண கைபேசியில் கேட்காமல் போகலாம்; எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது.", "Limits: guesses only some broad sounds such as dog, cat, cattle, crow and birds. No dedicated lizard identification. Rat ultrasound may need special hardware; ant chemical signals cannot be heard."), style = MaterialTheme.typography.bodyMedium)
+                        Text(tr("வரம்புகள்: காகம், நாய், பூனை, மாடு உள்ளிட்ட சில பொதுவான ஒலிகளை மட்டுமே ஊகிக்கும். பல்லிக்கு தனி அடையாளம் இல்லை. எலியின் மீயொலி சாதாரண கைபேசியில் கேட்காமல் போகலாம்; எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது.", "The basic model guesses broad sounds such as dog, cat, cattle, crow and birds; it has no lizard class. The optional species model is separate and unverified. Rat ultrasound may need special hardware; ant chemical signals cannot be heard."), style = MaterialTheme.typography.bodyMedium)
                         Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -166,7 +208,7 @@ class MainActivity : ComponentActivity() {
 
     private fun listen() {
         if (busy) return
-        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; sampleRate = AudioEngine.RATE; message = ""; busy = true
+        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; sampleRate = AudioEngine.RATE; message = ""; busy = true
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
         val selectedLabels = selected.labels
@@ -198,7 +240,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun listenBirds() {
         if (busy || !BirdNet.installed(this)) return
-        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; message = ""; busy = true
+        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; message = ""; busy = true
         sampleRate = BirdNet.RATE
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
@@ -209,6 +251,40 @@ class MainActivity : ComponentActivity() {
                 if (generation == thisGeneration) { samples = captured; birdGuesses = found } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) message = tr("பறவை ஒலியைப் பதிவுசெய்யவோ ஆய்வு செய்யவோ முடியவில்லை.", "Could not record or analyse bird audio on this device.") }
+            finally { if (generation == thisGeneration) busy = false }
+        }
+    }
+    private fun updateV3Status() {
+        v3ModelReady = BirdNetV3.model(this).isFile; v3LabelsReady = BirdNetV3.labels(this).isFile
+    }
+    private fun importV3(uri: Uri, isModel: Boolean) {
+        if (busy) return
+        busy = true; message = ""
+        val thisGeneration = ++generation
+        val isActive = AtomicBoolean(true); importRunning = isActive
+        job = lifecycleScope.launch {
+            try {
+                withContext(Dispatchers.IO) { BirdNetV3.import(this@MainActivity, uri, isModel) { isActive.get() } }
+                updateV3Status()
+                if (generation == thisGeneration) message = tr("கோப்பு சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "File verified and imported.")
+            } catch (e: CancellationException) { throw e }
+              catch (_: Exception) { if (generation == thisGeneration) message = tr("சரியான பதிப்பு 3.0 கோப்பைத் தேர்வு செய்யவும். இடத்தையும் சரிபார்க்கவும்.", "Import failed. Select the exact v3.0 file and check storage space.") }
+            finally { if (generation == thisGeneration) busy = false }
+        }
+    }
+    private fun listenV3() {
+        if (busy || !BirdNetV3.ready(this)) return
+        samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; message = ""; busy = true
+        sampleRate = BirdNetV3.RATE
+        val thisGeneration = ++generation
+        val activeEngine = AudioEngine(this); engine = activeEngine
+        job = lifecycleScope.launch {
+            try {
+                val captured = withContext(Dispatchers.IO) { activeEngine.capture(BirdNetV3.RATE, BirdNetV3.SAMPLES) }
+                val found = withContext(Dispatchers.Default) { BirdNetV3.analyze(this@MainActivity, captured) }
+                if (generation == thisGeneration) { samples = captured; v3Guesses = found } else captured.fill(0)
+            } catch (e: CancellationException) { throw e }
+              catch (_: Exception) { if (generation == thisGeneration) message = tr("புதிய மாடல் செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Could not record or analyse with the new model on this device.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
@@ -227,7 +303,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun stopAndClear() {
         generation++; importRunning?.set(false); importRunning = null; engine?.stop(); engine = null; job?.cancel(); job = null; samples?.fill(0); samples = null
-        guesses = null; birdGuesses = null; confirmReplay = false; busy = false
+        guesses = null; birdGuesses = null; v3Guesses = null; confirmReplay = false; busy = false
     }
     override fun onStop() { stopAndClear(); super.onStop() }
 }
