@@ -44,11 +44,12 @@ class OorAboutGuideTest {
 
     @Test fun aboutShowsNamesOnlyForAllOtherApps() {
         val names = oorAboutAppNames()
-        assertEquals(16, names.size)
+        assertEquals(17, names.size)
         assertEquals(names.size, names.toSet().size)
         assertFalse(names.any { it.contains("release", ignoreCase = true) || it.contains("github", ignoreCase = true) || it.contains("http") })
         assertFalse(names.any { it == "Oor Arivippu" })
         assertTrue(names.any { it.contains("Weekly Money") })
+        assertTrue(names.any { it.contains("Animal Sounds") })
         assertTrue(names.any { it.contains("Tamilan Store") })
     }
 }
