@@ -57,6 +57,7 @@ class MainActivity : ComponentActivity() {
     private var photo by mutableStateOf<ReferencePhoto.Result?>(null)
     private var photoSpecies by mutableStateOf("")
     private var requestedPhoto by mutableStateOf("")
+    private var imageSearchSpecies by mutableStateOf("")
     private var photoLoading by mutableStateOf(false)
     private var photoNotice by mutableStateOf(false)
     private var confirmPhoto by mutableStateOf(false)
@@ -145,6 +146,7 @@ class MainActivity : ComponentActivity() {
                                     else found.forEach { guess ->
                                         Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil))
                                         if (ReferencePhoto.validScientific(guess.scientific) && !guess.scientific.equals("Homo sapiens", true)) {
+                                            TextButton(onClick = { imageSearchSpecies = guess.scientific }) { Text(tr("இணையத்தில் படங்களைத் தேடு", "Search images in browser")) }
                                             if (photo != null && photoSpecies == guess.scientific) {
                                                 Image(photo!!.bitmap.asImageBitmap(), contentDescription = tr("மாதிரிப் படம்", "Reference image"), modifier = Modifier.width(180.dp).heightIn(max = 150.dp))
                                                 Text(tr("மாதிரிப் படம்; இது கேட்ட உயிரினத்தை உறுதி செய்யாது.", "Reference image; it does not confirm what you heard."), style = MaterialTheme.typography.bodySmall)
@@ -241,6 +243,17 @@ class MainActivity : ComponentActivity() {
                         Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                     }
                 }
+                if (imageSearchSpecies.isNotEmpty()) AlertDialog(
+                    onDismissRequest = { imageSearchSpecies = "" },
+                    title = { Text(tr("படங்களை இணையத்தில் தேடவா?", "Search images online?")) },
+                    text = { Text(tr("இனத்தின் பெயர் Google-க்கு அனுப்பப்பட்டு உலாவி திறக்கும். ஒலி அனுப்பப்படாது. உங்கள் இணைய முகவரி Google-க்குத் தெரியும். தேடல் படங்கள் சரியாகவோ சுதந்திரமாகப் பயன்படுத்தக்கூடியதாகவோ இருக்க வேண்டியதில்லை.", "The species name will be sent to Google and your browser will open. No audio is sent; Google can see your IP address. Search images may be inaccurate or copyrighted.")) },
+                    confirmButton = { TextButton(onClick = {
+                        val uri = Uri.parse("https://www.google.com/search").buildUpon().appendQueryParameter("tbm", "isch").appendQueryParameter("q", imageSearchSpecies).build()
+                        imageSearchSpecies = ""
+                        runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }.onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                    }) { Text(tr("தேடு", "Search")) } },
+                    dismissButton = { TextButton(onClick = { imageSearchSpecies = "" }) { Text(tr("வேண்டாம்", "Cancel")) } }
+                )
                 if (confirmPhoto) AlertDialog(
                     onDismissRequest = { confirmPhoto = false },
                     title = { Text(tr("மாதிரிப் படத்தைப் பார்க்கவா?", "Show a reference photo?")) },
@@ -264,7 +277,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun clearPhoto() {
-        photoJob?.cancel(); photoJob = null; photo = null; photoSpecies = ""; requestedPhoto = ""; photoLoading = false; photoNotice = false; confirmPhoto = false
+        photoJob?.cancel(); photoJob = null; photo = null; photoSpecies = ""; requestedPhoto = ""; imageSearchSpecies = ""; photoLoading = false; photoNotice = false; confirmPhoto = false
     }
     private fun loadReferencePhoto() {
         if (photoLoading) return
