@@ -21,14 +21,17 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -47,6 +50,7 @@ import com.universalrp.updates.BrowserReleaseUpdates
 import com.universalrp.updates.DailyWebsiteUpdateNotice
 import com.universalrp.updates.GuideEntryRow
 import com.universalrp.updates.GuideScreen
+import com.universalrp.updates.SisterApp
 import com.universalrp.updates.SisterApps
 import com.universalrp.updates.StoreUpdateRouter
 import java.io.IOException
@@ -89,7 +93,7 @@ class MainActivity : ComponentActivity() {
     private val lastProgressUpdate = AtomicLong(0)
     private val photos = mutableStateMapOf<String, ReferencePhoto.Result>()
     private val photoFailures = mutableStateMapOf<String, Boolean>()
-    private var autoPhotos by mutableStateOf(false)
+    private var autoPhotos by mutableStateOf(true)
     private var confirmAutoPhotos by mutableStateOf(false)
     private var requestedPhoto by mutableStateOf("")
     private var imageSearchSpecies by mutableStateOf("")
@@ -97,9 +101,7 @@ class MainActivity : ComponentActivity() {
     private var confirmPhoto by mutableStateOf(false)
     private var photoJob: Job? = null
     private var photoEpoch = 0
-    private var advancedModels by mutableStateOf(false)
     private var showSettings by mutableStateOf(false)
-    private var showCoverage by mutableStateOf(false)
     private var sampleRate = AudioEngine.RATE
     private var birdnetReady by mutableStateOf(false)
     private var wantV3 by mutableStateOf(false)
@@ -111,10 +113,20 @@ class MainActivity : ComponentActivity() {
     private var v3ResultWindows by mutableIntStateOf(1)
     private var importRunning: AtomicBoolean? = null
     private fun tr(ta: String, en: String) = if (tamil) ta else en
+    /**
+     * Tamil glyphs fill more of the em box than Latin letters, so the same sp reads larger and wraps earlier
+     * (the 0.21 phone screenshots showed the Tamil title and heading breaking into two lines). Drawing Tamil
+     * at 85% keeps both interfaces the same visual size; dp paddings and 48 dp touch targets are unchanged.
+     */
+    private val TAMIL_TEXT_SCALE = 0.85f
+    /** About list name: "தமிழன் · Tamilan Store" in Tamil, the catalog name in English. */
+    private fun appListName(app: SisterApp): String =
+        if (tamil && app.tamilName.isNotBlank()) "${app.tamilName} · ${app.name.substringBefore(" (")}" else app.name
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        autoPhotos = getPreferences(MODE_PRIVATE).getBoolean("auto_photos", false)
+        // Owner choice (November 2026): reference photos are on from the first launch; Settings can turn them off.
+        autoPhotos = getPreferences(MODE_PRIVATE).getBoolean("auto_photos", true)
         birdnetReady = BirdNet.installed(this)
         updateV3Status()
         AppLanguageState.initialize(this)
@@ -133,6 +145,9 @@ class MainActivity : ComponentActivity() {
             // Both screens share one scroll container; start each screen at the top.
             val scroll = rememberScrollState()
             LaunchedEffect(showSettings, overlay) { scroll.scrollTo(0) }
+            val base = LocalDensity.current
+            val density = if (tamil) Density(base.density, base.fontScale * TAMIL_TEXT_SCALE) else base
+            CompositionLocalProvider(LocalDensity provides density) {
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF276A54), secondary = Color(0xFF94703A), surface = Color(0xFFF7FAF4))) {
                 Surface(Modifier.fillMaxSize()) {
                     when (overlay) {
@@ -188,6 +203,7 @@ class MainActivity : ComponentActivity() {
                     text = { Text(tr("இது AI பதில் அல்ல. உங்கள் பதிவில் மனிதர்களின் குரலும் இருக்கலாம். விலங்குகள் அருகே இயக்காதீர்கள்; இயர்போன் பயன்படுத்துங்கள்.", "This is not an AI reply. Your sample may contain people's voices. Do not play near animals; use headphones.")) },
                     confirmButton = { TextButton(onClick = { confirmReplay = false; replay() }) { Text(tr("மீண்டும் கேள்", "Replay")) } },
                     dismissButton = { TextButton(onClick = { confirmReplay = false }) { Text(tr("வேண்டாம்", "Cancel")) } })
+            }
             }
         }
     }
@@ -333,7 +349,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     })
                                 }
-                                Text(tr("விருப்பம். இனப் பெயர்கள் மட்டும் Wikipedia/Wikimedia-க்கு அனுப்பப்படும்; ஒலி அனுப்பப்படாது. படங்கள் ஊகத்தை உறுதிப்படுத்தாது.", "Optional. Only species names are sent to Wikipedia/Wikimedia; no audio. Photos do not confirm the guess."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(tr("இயல்பாக இயக்கப்பட்டுள்ளது. ஒவ்வொரு அடையாளத்திற்கும் பிறகு இனப் பெயர்கள் மட்டும் Wikipedia/Wikimedia-க்கு அனுப்பப்படும்; ஒலி அனுப்பப்படாது. படங்கள் ஊகத்தை உறுதிப்படுத்தாது. விரும்பினால் இங்கே அணைக்கலாம்.", "On by default. After each identification only the species names are sent to Wikipedia/Wikimedia; no audio is sent. Photos do not confirm the guess. Turn it off here if you prefer."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
@@ -352,11 +368,8 @@ class MainActivity : ComponentActivity() {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 // Stacked on purpose: a side-by-side toggle squeezed the Tamil title into one-character lines.
                                 Text(tr("உயிரின மாடல் கோப்புகள்", "Species model files"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
-                                TextButton(onClick = { advancedModels = !advancedModels }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(if (advancedModels) tr("மேலதிக அமைப்புகளை மறை ▴", "Hide advanced settings ▴") else tr("மேலதிக அமைப்புகள் ▾", "Advanced settings ▾")) }
                                 if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                                 if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                                if (advancedModels) {
-                                    HorizontalDivider(Modifier.padding(vertical = 2.dp))
                                     if (birdnetReady) {
                                         Text(tr("பழைய பறவை மாடல் இனி பயன்படுத்தப்படாது.", "The old bird-only model is no longer used."), style = MaterialTheme.typography.bodySmall)
                                         TextButton(enabled = !busy, onClick = {
@@ -366,37 +379,33 @@ class MainActivity : ComponentActivity() {
                                         }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பழைய பறவை மாடலை நீக்கு", "Remove old bird model")) }
                                     }
                                     Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                                    Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."), style = MaterialTheme.typography.bodySmall)
-                                    Text(tr("கோப்புகள் நிறுவுவதற்கு முன் SHA-256 மூலம் சரிபார்க்கப்படும்.", "Files are verified by SHA-256 before installation."), style = MaterialTheme.typography.bodySmall)
-                                    if (v3ModelReady && v3LabelsReady) Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"), style = MaterialTheme.typography.bodySmall)
-                                    else Text(tr("நிறுவப்படவில்லை. முதன்மைத் திரையில் உள்ள Download species model பொத்தானைப் பயன்படுத்தவும்.", "Not installed. Use Download species model on the main screen."), style = MaterialTheme.typography.bodySmall)
-                                    OutlinedButton(enabled = !busy, onClick = {
-                                        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
-                                            .onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
-                                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("இரண்டு கோப்புகளின் பக்கத்தைத் திற", "Open both files' download page")) }
-                                    Text(tr("மாடல் கோப்பு .tflite என முடிய வேண்டும்; .onnx கோப்பைத் தேர்வு செய்ய வேண்டாம்.", "The model must end in .tflite, not .onnx."), style = MaterialTheme.typography.bodySmall)
-                                    TextButton(enabled = !busy, onClick = {
-                                        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite?download=1"))) }
-                                            .onFailure { v3NoticeOk = false; setV3Notice("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
-                                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("சரியான .tflite மாடலைப் பதிவிறக்கு", "Download the correct .tflite model")) }
-                                    OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
-                                    OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
-                                    if (v3ModelReady && v3LabelsReady) {
-                                        TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
+                                Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."), style = MaterialTheme.typography.bodySmall)
+                                Text(tr("கோப்புகள் நிறுவுவதற்கு முன் SHA-256 மூலம் சரிபார்க்கப்படும்.", "Files are verified by SHA-256 before installation."), style = MaterialTheme.typography.bodySmall)
+                                if (v3ModelReady && v3LabelsReady) Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"), style = MaterialTheme.typography.bodySmall)
+                                else Text(tr("நிறுவப்படவில்லை. முதன்மைத் திரையில் உள்ள Download species model பொத்தானைப் பயன்படுத்தவும்.", "Not installed. Use Download species model on the main screen."), style = MaterialTheme.typography.bodySmall)
+                                OutlinedButton(enabled = !busy, onClick = {
+                                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
+                                        .onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("இரண்டு கோப்புகளின் பக்கத்தைத் திற", "Open both files' download page")) }
+                                Text(tr("மாடல் கோப்பு .tflite என முடிய வேண்டும்; .onnx கோப்பைத் தேர்வு செய்ய வேண்டாம்.", "The model must end in .tflite, not .onnx."), style = MaterialTheme.typography.bodySmall)
+                                TextButton(enabled = !busy, onClick = {
+                                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite?download=1"))) }
+                                        .onFailure { v3NoticeOk = false; setV3Notice("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("சரியான .tflite மாடலைப் பதிவிறக்கு", "Download the correct .tflite model")) }
+                                OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
+                                OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
+                                if (v3ModelReady && v3LabelsReady) {
+                                    TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
                                     }
-                                }
                             }
                         }
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                TextButton(onClick = { showCoverage = !showCoverage }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                                    Text(if (showCoverage) tr("எதை அறியலாம்? ▴", "What can it identify? ▴") else tr("எதை அறியலாம்? ▾", "What can it identify? ▾"))
-                                }
-                                if (showCoverage) {
+                                // Owner choice (November 2026): every detail is shown directly; nothing hides behind a dropdown.
+                                Text(tr("எதை அறியலாம்?", "What can it identify?"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                                     Text(tr("BirdNET+ V3 பட்டியலில் 11,709 உயிரினங்கள்: 9,788 பறவைகள், 802 பூச்சிகள், 649 நீர்நில வாழ்வன, 419 பாலூட்டிகள் (மனிதர் உட்பட), 35 மீன்கள், 15 ஊர்வன, 1 சிலந்தி வகை. மேலும் 16 உயிரினமல்லாத ஒலி வகைகள்.", "BirdNET+ V3 lists 11,709 animal species: 9,788 birds, 802 insects, 649 amphibians, 419 mammals (including humans), 35 fishes, 15 reptiles and 1 arachnid; plus 16 non-animal sound classes."), style = MaterialTheme.typography.bodyMedium)
-                                    Text(tr("பட்டியலில் இருப்பது சரியாக அறியும் என்பதற்கு உறுதியல்ல. பெரும்பாலும் பறவைகளே உள்ளன. பூனை, மாடு, வீட்டுக் காகம், வீட்டுப் பல்லி பட்டியலில் உள்ளன. எல்லா நாய் அல்லது எலி இனங்களும் உள்ளனவா என உறுதியில்லை. மெல்லிய ஒலி தவறவிடப்படலாம்.", "A listed species is not a guarantee of identification; most are birds. House Crow, Domestic Cat, Domestic Cattle and Asian House Gecko are listed. Coverage of dogs and rats is not established. Quiet calls can be missed."), style = MaterialTheme.typography.bodyMedium)
-                                    Text(tr("சில எலி ஒலிகள் மீயொலி; மீன் ஒலிக்குத் தண்ணீருக்கேற்ற ஒலிவாங்கி தேவைப்படலாம். எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது. பொருள் அறியவோ பதில் உருவாக்கவோ முடியாது.", "Some rat calls are ultrasonic; fish sounds may need an underwater microphone. Ant chemical signals cannot be heard. The app does not determine meaning or generate replies."), style = MaterialTheme.typography.bodyMedium)
-                                }
+                                Text(tr("பட்டியலில் இருப்பது சரியாக அறியும் என்பதற்கு உறுதியல்ல. பெரும்பாலும் பறவைகளே உள்ளன. பூனை, மாடு, வீட்டுக் காகம், வீட்டுப் பல்லி பட்டியலில் உள்ளன. எல்லா நாய் அல்லது எலி இனங்களும் உள்ளனவா என உறுதியில்லை. மெல்லிய ஒலி தவறவிடப்படலாம்.", "A listed species is not a guarantee of identification; most are birds. House Crow, Domestic Cat, Domestic Cattle and Asian House Gecko are listed. Coverage of dogs and rats is not established. Quiet calls can be missed."), style = MaterialTheme.typography.bodyMedium)
+                                Text(tr("சில எலி ஒலிகள் மீயொலி; மீன் ஒலிக்குத் தண்ணீருக்கேற்ற ஒலிவாங்கி தேவைப்படலாம். எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது. பொருள் அறியவோ பதில் உருவாக்கவோ முடியாது.", "Some rat calls are ultrasonic; fish sounds may need an underwater microphone. Ant chemical signals cannot be heard. The app does not determine meaning or generate replies."), style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
@@ -447,7 +456,12 @@ class MainActivity : ComponentActivity() {
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(tr("இணைப்புகள்", "Links"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                     TextButton(onClick = { if (!StoreUpdateRouter.openWebsite(this@MainActivity, "animalvoice")) browserFailed = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(tr("அதிகாரப்பூர்வ இணையதளம் — இந்தச் செயலியின் பக்கம்", "Official website — this app's page")) }
-                    SisterApps.projectLinks().forEach { (label, url) ->
+                    // Owner choice (November 2026): Links carry only the project website and repository.
+                    // The apps are a plain name list in the next card; downloads happen on the website.
+                    listOf(
+                        "RP-Android-Apps Official Website" to SisterApps.OFFICIAL_WEBSITE_URL,
+                        "RP-Android-Apps GitHub Repository" to SisterApps.GITHUB_REPO_URL,
+                    ).forEach { (label, url) ->
                         TextButton(onClick = { openLink(url) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(label, style = MaterialTheme.typography.bodyMedium) }
                     }
                     if (browserFailed) Text(tr("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -470,11 +484,14 @@ class MainActivity : ComponentActivity() {
             Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(tr("எமது செயலிகள்", "Our apps"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
-                    Text(tr("Animal Sounds (விலங்கு ஒலிகள்) — இந்தச் செயலி", "Animal Sounds (விலங்கு ஒலிகள்) — this app"), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF276A54))
-                    // The shared directory: every RP Ideas app's current public release, so this list never drifts from the website.
-                    SisterApps.releaseLinks("animalvoice").forEach { (label, url) ->
-                        TextButton(onClick = { openLink(url) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(label, style = MaterialTheme.typography.bodyMedium) }
+                    Text(tr("பதிவிறக்கங்கள் அதிகாரப்பூர்வ இணையதளத்தில் உள்ளன; இங்கே பெயர்கள் மட்டும்.", "Downloads are on the official website; this list is names only."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // Every app from the shared directory, Store and DailyVault first (owner choice, November 2026), so this list never drifts from the website.
+                    (listOf("tamilanstore", "dailyvault") + SisterApps.all.map { it.id }.filter { it != "tamilanstore" && it != "dailyvault" }).forEach { id ->
+                        val app = SisterApps.byId(id) ?: return@forEach
+                        val mine = id == "animalvoice"
+                        Text(appListName(app) + if (mine) tr(" — இந்தச் செயலி", " — this app") else "", style = MaterialTheme.typography.bodyMedium, color = if (mine) Color(0xFF276A54) else Color.Unspecified)
                     }
+                    TextButton(onClick = { if (!StoreUpdateRouter.openWebsite(this@MainActivity, "animalvoice")) browserFailed = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(tr("அதிகாரப்பூர்வ இணையதளம் — எல்லாச் செயலிகளும்", "Official website — all our apps"), style = MaterialTheme.typography.bodyMedium) }
                 }
             }
         }

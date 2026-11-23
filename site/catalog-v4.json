@@ -180,8 +180,8 @@
     },
     {
       "id": "animalvoice",
-      "name": "Animal Sounds · experimental",
-      "tamilName": "விலங்கு ஒலிகள் · சோதனை முன்னோட்டம்",
+      "name": "Animal Sounds",
+      "tamilName": "விலங்கு ஒலிகள்",
       "packageName": "com.universalrp.animalvoice.experimental",
       "version": "0.21",
       "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.21/Animal-Sounds-v0.21.apk",

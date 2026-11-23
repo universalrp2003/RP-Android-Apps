@@ -788,6 +788,8 @@ def verify_about_links() -> None:
 
     # Like Oor Arivippu, Animal Sounds takes its official links from the shared directory and router
     # instead of hardcoding release tags, so the URLs are checked in the shared sources too.
+    # Owner choice (November 2026): Links = website + GitHub only; "Our apps" = plain names from
+    # SisterApps.all with Tamilan Store and DailyVault first, then one website button.
     animal_about = (ROOT / "animalvoice/app/src/main/java/com/universalrp/animalvoice/MainActivity.kt").read_text(encoding="utf-8")
     animal_about += "\n" + sister_apps_source
     for required in (
@@ -795,14 +797,18 @@ def verify_about_links() -> None:
         "https://github.com/universalrp2003/RP-Android-Apps",
         "universalrp2003@gmail.com",
         "Arena.ai Agent Mode",
-        'SisterApps.releaseLinks("animalvoice")',
-        "SisterApps.projectLinks()",
+        'SisterApps.byId(id)',
+        'listOf("tamilanstore", "dailyvault")',
+        'SisterApps.OFFICIAL_WEBSITE_URL',
+        'SisterApps.GITHUB_REPO_URL',
         'BrowserReleaseUpdates("Animal-Sounds", tamil)',
         'DailyWebsiteUpdateNotice("animalvoice", tamil)',
         'StoreUpdateRouter.openWebsite(this@MainActivity, "animalvoice")',
     ):
         if required not in animal_about:
             raise ValueError(f"Animal Sounds About/updater is missing required content: {required}")
+    if 'SisterApps.projectLinks()' in animal_about or 'SisterApps.releaseLinks(' in animal_about:
+        raise ValueError("Animal Sounds About must not bring back per-app download links or the legacy mirror link (owner choice, November 2026).")
     if re.search(r'\bAuthor\b', animal_about, re.I):
         raise ValueError("Animal Sounds About still uses the disallowed 'Author' label.")
 

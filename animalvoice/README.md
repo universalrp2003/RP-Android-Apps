@@ -102,3 +102,13 @@ Human speech is still shown as a guess, now with a note that people talking near
 - The interface language (English / தமிழ்) is now kept in the shared RP Ideas preference, so the app, its Guide and its About always agree.
 - Version code 21, version name 0.21. Signed with the same key as 0.17–0.20, so it installs over 0.20 in place and keeps the downloaded model and settings.
 - Model licences and credits moved from the Settings card to About; the experimental-prototype notice stays on the main screen and in Settings.
+
+### Version 0.22
+
+Fixes from the owner's phone screenshots of 0.21.
+
+- **Tamil text at the same visual size as English.** Tamil glyphs are drawn larger than Latin letters at the same sp, so the Tamil title and heading broke into two lines on a phone. Tamil text is now drawn at 85% of the sp size through a density override; spacing and 48 dp touch targets are unchanged and the system font scale is still honoured.
+- **Settings shows every detail directly.** The "Advanced settings" and "What can it identify?" dropdowns are gone; the species model file controls and the full coverage text are always visible.
+- **About page.** Links carry only the official website and the GitHub repository. **Our apps** is a plain list of all 18 app names (Tamilan Store and DailyVault first) plus one button to the official website; per-app download links and the legacy mirror link are removed from this app only.
+- **Reference photos on by default** (owner choice): after each identification only species names go to Wikipedia/Wikimedia Commons and a credited, free-licence photo is shown; no audio is sent. The Settings switch turns it off. This also applies to existing installations that never touched the switch.
+- Version code 22, version name 0.22. Signed with the same key as 0.17–0.21, so it installs over 0.21 in place and keeps the downloaded model and settings.

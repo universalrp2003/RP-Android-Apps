@@ -86,11 +86,14 @@ class LargeTextLayoutTest {
         rule.onNodeWithText("Load reference photos automatically").performScrollTo().assertIsDisplayed()
     }
 
-    @Test fun tamilAdvancedToggleWorksFromSettings() {
+    @Test fun tamilSettingsShowModelFilesAndCoverageWithoutADropdown() {
         openSettings("அமைப்புகள்")
-        rule.onNodeWithText("மேலதிக அமைப்புகள் ▾").performScrollTo().performClick()
-        rule.onNodeWithText("மேலதிக அமைப்புகளை மறை ▴").performScrollTo().assertIsDisplayed()
+        // 0.22: every detail is shown directly; no "Advanced settings" or "What can it identify?" toggle.
+        rule.onNodeWithText("மேலதிக அமைப்புகள் ▾").assertDoesNotExist()
+        rule.onNodeWithText("எதை அறியலாம்? ▾").assertDoesNotExist()
         rule.onNodeWithText("இரண்டு கோப்புகளின் பக்கத்தைத் திற").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("எதை அறியலாம்?").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("BirdNET+ V3 பட்டியலில் 11,709 உயிரினங்கள்", substring = true).performScrollTo().assertIsDisplayed()
     }
 
     @Test fun tamilSettingsHeadingsKeepFullWidthAtLargeTextSize() {
@@ -131,10 +134,15 @@ class LargeTextLayoutTest {
         rule.onNodeWithText("RP-Android-Apps GitHub Repository").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("அதிகாரப்பூர்வ இணையதளம் — இந்தச் செயலியின் பக்கம்").performScrollTo().assertHasClickAction()
         rule.onNodeWithText("YAMNet / AudioSet", substring = true).performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Animal Sounds (விலங்கு ஒலிகள்) — இந்தச் செயலி").performScrollTo().assertIsDisplayed()
-        // The shared directory: the seventeen other RP Ideas apps, each linking to its own current release.
-        rule.onAllNodesWithText("GitHub release", substring = true).assertCountEquals(16)
-        rule.onNodeWithText("Android TV Guard (டிவி காவலன்) — Android TV release").performScrollTo().assertIsDisplayed()
+        // Owner choice (November 2026): the apps are a plain name list, Store and DailyVault first; downloads live on the website.
+        rule.onNodeWithText("தமிழன் · Tamilan Store").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("தினக்கணக்கு · DailyVault").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("விலங்கு ஒலிகள் · Animal Sounds — இந்தச் செயலி").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("டிவி காவலன் · Android TV Guard").performScrollTo().assertIsDisplayed()
+        rule.onAllNodesWithText("GitHub release", substring = true).assertCountEquals(0)
+        rule.onAllNodesWithText("official download", substring = true).assertCountEquals(0)
+        rule.onAllNodesWithText("Legacy Mirror", substring = true).assertCountEquals(0)
+        rule.onNodeWithText("அதிகாரப்பூர்வ இணையதளம் — எல்லாச் செயலிகளும்").performScrollTo().assertHasClickAction()
         rule.onNodeWithText("←  பின்").performScrollTo().performClick()
         rule.onNodeWithText("அமைப்புகள்").assertIsDisplayed()
     }
@@ -154,5 +162,7 @@ class LargeTextLayoutTest {
         rule.onNodeWithText("Created by").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("RP-Android-Apps Official Website").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Animal Sounds (விலங்கு ஒலிகள்) — this app").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Tamilan Store").performScrollTo().assertIsDisplayed()
+        rule.onAllNodesWithText("official download", substring = true).assertCountEquals(0)
     }
 }

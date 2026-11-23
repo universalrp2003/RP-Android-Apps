@@ -112,7 +112,7 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         self.assertEqual(16, len(old['apps']))
         self.assertEqual({a['id'] for a in old['apps']} | {'animalvoice'}, {a['id'] for a in current['apps']})
         sounds=next(a for a in current['apps'] if a['id']=='animalvoice')
-        self.assertEqual('Animal Sounds · experimental',sounds['name'])
+        self.assertEqual('Animal Sounds',sounds['name'])
         self.assertEqual('com.universalrp.animalvoice.experimental',sounds['packageName'])
         # The bundled fallback carries the exact public release metadata the website serves.
         self.assertEqual(bundled,current['apps'])
