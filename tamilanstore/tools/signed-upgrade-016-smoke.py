@@ -182,9 +182,11 @@ def download_retained_copy():
     wait_text(VERIFIED_TEXT, 240)
 
 
-def refresh_control():
+def refresh_usable():
+    """A disabled Compose TextButton keeps enabled="true" in the hierarchy but exposes no click
+    action (observed on the 0.15 reproduction), so the click action is what 'usable' means here."""
     node = wait_text('Refresh catalog')
-    return node.get('enabled')
+    return node.get('clickable') == 'true'
 
 
 def snap(out, name):
@@ -244,13 +246,8 @@ def run(out):
     launch()
     wait_text('Tamilan')
     snap(out, '01b-store15-relaunch-with-retained-copy')
-    held = None
-    for attempt in range(30):
-        held = refresh_control()
-        if held == 'false':
-            break
-        time.sleep(1)
-    assert held == 'false', 'expected the public 0.15 to hold Refresh catalog closed: ' + retained_diagnostics()
+    wait_text(VERIFIED_TEXT)  # 0.15 restores the copy on launch and re-verifies it
+    assert refresh_usable() is False, 'expected the public 0.15 to hold Refresh catalog closed: ' + retained_diagnostics()
     assert wait_text_if_present('Last catalog refresh succeeded', 5) is None
     snap(out, '01b-store15-retained-copy-holds-refresh')
     adb('shell', 'am', 'force-stop', PKG)
@@ -278,8 +275,9 @@ def run(out):
     # The refresh on open may already be running (the control is busy, then shows its result) or the
     # control is free for a manual refresh; the 0.15 state, idle and disabled, must be gone.
     if wait_text_if_present('Last catalog refresh succeeded', 60) is None:
-        enabled = refresh_control()
-        assert enabled == 'true', '0.16 must leave Refresh catalog usable: enabled=' + str(enabled)
+        assert refresh_usable(), '0.16 must leave Refresh catalog usable: ' + retained_diagnostics()
+        click('Refresh catalog')
+    wait_text('Last catalog refresh succeeded')
     snap(out, '02c-store16-refresh-usable')
     # The header status is at the top, so check it before scrolling into the longer app list.
     # The first foreground refresh races the emulator's network after the reinstall; if it has not
