@@ -1,15 +1,15 @@
-name: Tamilan Store 0.15 release-key candidate (no publication)
+name: Tamilan Store 0.16 release-key candidate (no publication)
 on:
   push:
     branches: ["arena/**"]
     paths:
       - "tamilanstore/**"
-      - ".github/workflows/store-015-candidate.yml"
+      - ".github/workflows/store-016-candidate.yml"
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: store-signed-candidate-015-${{ github.ref }}
+  group: store-signed-candidate-016-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   verify-upgrade:
@@ -45,17 +45,22 @@ jobs:
           set -euo pipefail
           tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
           mkdir -p "$RUNNER_TEMP/store-upgrade-candidate"
-          apk="$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.15.apk"
+          apk="$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.16.apk"
           cp tamilanstore/build/outputs/apk/release/tamilanstore-release.apk "$apk"
           "$tools/aapt" dump badging "$apk" > "$RUNNER_TEMP/store-candidate-badging.txt"
-          grep -Fq "package: name='com.universalrp.tamilanstore' versionCode='17' versionName='0.15'" "$RUNNER_TEMP/store-candidate-badging.txt"
+          grep -Fq "package: name='com.universalrp.tamilanstore' versionCode='18' versionName='0.16'" "$RUNNER_TEMP/store-candidate-badging.txt"
           ! grep -q application-debuggable "$RUNNER_TEMP/store-candidate-badging.txt"
           curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
-            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.14/Tamilan-Store-v0.14.apk' \
-            -o "$RUNNER_TEMP/Store0.14.apk"
-          echo "3d804fc152bddb9df75f92d62d9e2bc18ec3c11c32fc6fd81736fd8fbf0181a5  $RUNNER_TEMP/Store0.14.apk" | sha256sum --check
-          test "$(stat -c %s "$RUNNER_TEMP/Store0.14.apk")" = 19906251
-          "$tools/aapt" dump badging "$RUNNER_TEMP/Store0.14.apk" > "$RUNNER_TEMP/store-previous-badging.txt"
+            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/tamilan-store-v0.15/Tamilan-Store-v0.15.apk' \
+            -o "$RUNNER_TEMP/Store0.15.apk"
+          echo "c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b  $RUNNER_TEMP/Store0.15.apk" | sha256sum --check
+          test "$(stat -c %s "$RUNNER_TEMP/Store0.15.apk")" = 20713379
+          "$tools/aapt" dump badging "$RUNNER_TEMP/Store0.15.apk" > "$RUNNER_TEMP/store-previous-badging.txt"
+          curl --fail --location --retry 3 --proto '=https' --proto-redir '=https' \
+            'https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.5/Weekly-Money-v1.5.apk' \
+            -o "$RUNNER_TEMP/Weekly-Money-v1.5.apk"
+          echo "b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6  $RUNNER_TEMP/Weekly-Money-v1.5.apk" | sha256sum --check
+          test "$(stat -c %s "$RUNNER_TEMP/Weekly-Money-v1.5.apk")" = 7499595
           python3 - <<'PY'
           import json,os,pathlib,sys
           sys.path.insert(0,'tools')
@@ -67,15 +72,15 @@ jobs:
           (root/'store-upgrade-candidate/permissions.json').write_text(json.dumps({'added':[],'removed':[],'permissions':sorted(new)},indent=2)+'\n')
           PY
           for name in candidate previous; do
-            if [[ "$name" == candidate ]]; then file="$apk"; else file="$RUNNER_TEMP/Store0.14.apk"; fi
+            if [[ "$name" == candidate ]]; then file="$apk"; else file="$RUNNER_TEMP/Store0.15.apk"; fi
             "$tools/apksigner" verify --print-certs "$file" > "$RUNNER_TEMP/store-$name-signer.txt"
             signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' "$RUNNER_TEMP/store-$name-signer.txt" | tr -d ' :\r' | tr A-F a-f | sort -u)"
             test "$signer" = 7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d
           done
-          (cd "$RUNNER_TEMP/store-upgrade-candidate" && sha256sum Tamilan-Store-v0.15.apk > Tamilan-Store-v0.15.sha256)
+          (cd "$RUNNER_TEMP/store-upgrade-candidate" && sha256sum Tamilan-Store-v0.16.apk > Tamilan-Store-v0.16.sha256)
       - name: Enable guarded emulator acceleration
         run: sudo chmod a+rw /dev/kvm
-      - name: Exact signed Store0.14 upgrade and data preservation on Android15
+      - name: Exact signed Store0.15 upgrade and data preservation on Android15
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -89,9 +94,10 @@ jobs:
           script: >-
             bash -o pipefail -c '
             echo "::notice title=Store upgrade harness::Starting guarded exact-APK probe";
-            python3 tamilanstore/tools/signed-upgrade-015-smoke.py
-            "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.15.apk"
-            "$RUNNER_TEMP/Store0.14.apk" tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk
+            python3 tamilanstore/tools/signed-upgrade-016-smoke.py
+            "$RUNNER_TEMP/store-upgrade-candidate/Tamilan-Store-v0.16.apk"
+            "$RUNNER_TEMP/Store0.15.apk" tamilanstore/build/outputs/apk/debug/tamilanstore-debug.apk
+            "$RUNNER_TEMP/Weekly-Money-v1.5.apk"
             2>&1 | tee "$RUNNER_TEMP/store-upgrade-console.log"'
 
       - name: Exact artifact receipt after upgrade testing
@@ -99,10 +105,10 @@ jobs:
         run: |
           set -euo pipefail
           cd "$RUNNER_TEMP/store-upgrade-candidate"
-          sha256sum --check Tamilan-Store-v0.15.sha256
+          sha256sum --check Tamilan-Store-v0.16.sha256
           python3 - <<'PY'
           import hashlib,json,os,pathlib
-          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'store-upgrade-candidate/Tamilan-Store-v0.15.apk'
+          p=pathlib.Path(os.environ['RUNNER_TEMP'])/'store-upgrade-candidate/Tamilan-Store-v0.16.apk'
           receipt=json.loads((pathlib.Path(os.environ['GITHUB_WORKSPACE'])/'store-signed-upgrade-results/result.json').read_text())
           receipt['permission_comparison']=json.loads((p.parent/'permissions.json').read_text())
           receipt.update(source=os.environ['GITHUB_SHA'],bytes=p.stat().st_size,apk_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),signer='7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d')
@@ -111,7 +117,7 @@ jobs:
           PY
       - uses: actions/upload-artifact@v7
         with:
-          name: Tamilan-Store-0.15-release-key-upgrade-candidate
+          name: Tamilan-Store-0.16-release-key-upgrade-candidate
           path: ${{ runner.temp }}/store-upgrade-candidate/
           retention-days: 30
           if-no-files-found: error

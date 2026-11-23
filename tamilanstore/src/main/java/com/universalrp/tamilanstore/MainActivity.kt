@@ -61,7 +61,12 @@ class MainActivity : ComponentActivity() {
     }
     private var packageRevision by mutableIntStateOf(0)
     private val packageReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) { packageRevision++ }
+        override fun onReceive(context: Context?, intent: Intent?) {
+            packageRevision++
+            // An app installed by other means (or while the installer's return was lost) can make a
+            // retained verified copy obsolete; drop it so catalog refresh is not held closed.
+            if (::storeModel.isInitialized) storeModel.reconcileRetainedTransfer()
+        }
     }
     override fun onStart() {
         super.onStart()
@@ -75,7 +80,10 @@ class MainActivity : ComponentActivity() {
     }
     override fun onResume() {
         super.onResume(); foreground = true; packageRevision++
-        if (::storeModel.isInitialized) storeModel.refreshOnOpen(storeVersion)
+        if (::storeModel.isInitialized) {
+            storeModel.reconcileRetainedTransfer()
+            storeModel.refreshOnOpen(storeVersion)
+        }
     }
     override fun onPause() { foreground = false; super.onPause() }
     override fun onStop() {
@@ -222,6 +230,12 @@ class MainActivity : ComponentActivity() {
                             }
                             if (model.catalogMessage == "live") Text(bi("கடைசிப் பட்டியல் புதுப்பிப்பு வெற்றி", "Last catalog refresh succeeded"), style = MaterialTheme.typography.labelSmall)
                             if (model.catalogMessage == "rejected") Text(bi("இணையப் பட்டியல் சரிபார்ப்பில் ஏற்கப்படவில்லை · சேமித்த பதிப்புகள் காட்டப்படுகின்றன", "Online catalog rejected by validation · showing saved versions"), style = MaterialTheme.typography.labelSmall)
+                            // A held download is the only reason the control is disabled outside a batch or a
+                            // running refresh; say so instead of leaving a greyed-out button with no state.
+                            if (!model.canRefreshCatalog && !model.refreshing && !model.batch.active) Text(when {
+                                transfer.busy -> bi("பதிவிறக்கம் முடியும் வரை அல்லது ரத்து செய்யப்படும் வரை பட்டியல் புதுப்பிப்பு காத்திருக்கும்", "Refresh waits until the current download finishes or is cancelled")
+                                else -> bi("சரிபார்க்கப்பட்ட கோப்பு நிறுவ காத்திருக்கிறது · அந்தச் செயலியின் அட்டையில் நிறுவவும் அல்லது கோப்பை நீக்கவும்", "A verified file is waiting to be installed · install it or remove it from that app's card")
+                            }, style = MaterialTheme.typography.labelSmall)
                         }
                         if (model.refreshing) item { LinearProgressIndicator(modifier = Modifier.fillMaxWidth()) }
                         if (model.catalogMessage == "offline" || model.selfCheckUnavailable) item {
@@ -353,6 +367,11 @@ class MainActivity : ComponentActivity() {
                                                 Text(if (showScreenshots) bi("படங்களை மறை", "Hide screenshots") else bi("திரைப் படங்கள்", "Screenshots"))
                                             }
                                             TextButton(onClick = { open(app.releaseUrl) }) { Text(bi("விவரம்", "Details")) }
+                                            // A verified copy is kept across restarts until it is installed; the user
+                                            // must also be able to let go of it, or catalog refresh stays closed.
+                                            if (active && transfer.verified && !model.batch.active) TextButton(onClick = { model.cancel() }) {
+                                                Text(bi("பதிவிறக்கிய கோப்பை நீக்கு", "Remove downloaded file"))
+                                            }
                                         }
                                     }
                                 }
