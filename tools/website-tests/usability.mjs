@@ -49,7 +49,7 @@ try {
     assert.equal(await page.locator('#list-order').innerText().then(t => /Most recently updated first/.test(t) || /சமீபத்தில்/.test(t)), true);
   });
   for (const width of [320, 390, 768]) {
-    await test(`all 34 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
+    await test(`all 36 APK buttons have correct visible unwrapped versions at ${width}px`, async page => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(base);
       const buttons = await page.locator('a[data-apk]').evaluateAll(nodes => nodes.map(a => ({
@@ -57,7 +57,7 @@ try {
         wraps: getComputedStyle(a).whiteSpace,
         clipped: a.scrollWidth > a.clientWidth + 1,
       })));
-      assert.equal(buttons.length, 34);
+      assert.equal(buttons.length, 36);
       for (const button of buttons) {
         const version = button.apk.match(/-v([0-9.]+)\.apk$/)[1];
         assert.equal(button.label, `APK · v${version}`);
