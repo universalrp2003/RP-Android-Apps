@@ -13,7 +13,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.activity.result.ManagedActivityResultLauncher
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -118,7 +118,7 @@ class MainActivity : ComponentActivity() {
             BackHandler(enabled = showSettings) { showSettings = false }
             // Both screens share one scroll container; start each screen at the top.
             val scroll = rememberScrollState()
-            LaunchedEffect(showSettings) { scroll.scrollTo(0f) }
+            LaunchedEffect(showSettings) { scroll.scrollTo(0) }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF276A54), secondary = Color(0xFF94703A), surface = Color(0xFFF7FAF4))) {
                 Surface(Modifier.fillMaxSize()) {
                     Column(
@@ -172,7 +172,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable private fun MainContent(permission: ManagedActivityResultLauncher<String, Boolean>) {
+    @Composable private fun MainContent(permission: ActivityResultLauncher<String>) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(tr("🌿  விலங்கு ஒலிகள்", "🌿  Animal Sounds"), fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
@@ -288,9 +288,9 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable private fun SettingsContent(
-        permission: ManagedActivityResultLauncher<String, Boolean>,
-        v3ModelPicker: ManagedActivityResultLauncher<Array<String>, Uri?>,
-        v3LabelPicker: ManagedActivityResultLauncher<Array<String>, Uri?>,
+        permission: ActivityResultLauncher<String>,
+        v3ModelPicker: ActivityResultLauncher<Array<String>>,
+        v3LabelPicker: ActivityResultLauncher<Array<String>>,
     ) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
