@@ -1,4 +1,4 @@
-# Reply to animal — experimental prototype
+# Animal Sounds — experimental prototype (formerly Reply to animal)
 
 Private-development Android application, not a public release. It uses an on-device YAMNet sound-event classifier to suggest up to three **broad sound categories**, including some dog, cat, cattle, crow, bird, rodent, insect and frog labels. It does not identify every species or determine intention, emotion, words, or what an animal understood. The scores are not calibrated probabilities and are not shown as certainty. Silence, weak results and dominant non-animal sounds produce “unknown”. Results are experimental and require real-world validation.
 
@@ -14,9 +14,9 @@ A normal phone microphone/speaker cannot be assumed to handle rats' ultrasonic c
 
 Build locally with Android SDK 36, JDK 17 and `./gradlew :animalvoice:assembleDebug`. Debug signing is for testing only, not an update or a public stable release. For a new app microphone permission requires explicit consent; never use this prototype as an update to another package. See `docs/RESEARCH.md` for evidence, licensing, limitations and open work.
 
-## Optional BirdNET-Lite species detector
+## Retired BirdNET-Lite detector
 
-For **non-commercial** experiments only, the app includes the BirdNET-Lite 6K labels and their CC BY-NC-SA 4.0 licence. Attribution: BirdNET, K. Lisa Yang Center for Conservation Bioacoustics, Cornell Lab of Ornithology; <https://github.com/birdnet-team/BirdNET-Lite>, <https://creativecommons.org/licenses/by-nc-sa/4.0/>. The upstream project is archived and deprecated. Its separately distributed `BirdNET_6K_GLOBAL_MODEL.tflite` is 56,681,380 bytes; SHA-256 `f073d0aa626b4a5bb0705982d06de74c562f041ba76ebada18bc3e29126f6755`. The app opens the GitHub model page in a browser only when requested. Download manually and choose the file in the app; it checks size/hash, copies it into private app storage and can delete it. No model or audio is automatically downloaded or uploaded. The classifier is separate from the generic animal selector, listens for 3 seconds at 48 kHz, needs a compatible microphone and provides only uncertain bird species suggestions; no geographical filtering. The 0.35 score gate is an uncalibrated heuristic. A person’s voice may be present; test consent and privacy carefully. No real-animal accuracy or Android-device performance is claimed. Distribution of this app/labels is subject to the included non-commercial and share-alike terms; review before publishing.
+Version 0.12 removes the old bird-only detector from the UI; the bundled basic YAMNet fallback and optional BirdNET+ V3 species model remain. An already installed old model is not automatically erased: Other model settings provides a remove button to reclaim its storage. Legacy test code and BirdNET-Lite label and licence assets remain for now; its non-commercial CC BY-NC-SA 4.0 terms must still be reviewed before distribution.
 
 ## Experimental observation guide
 
@@ -40,3 +40,5 @@ The main screen presents BirdNET+ species listening and its download first, with
 Version 0.10 corrects download-status language switching and avoids showing a listening message while the model is downloading. No new animal reply model is included.
 
 Version 0.11 stores both language versions of remaining runtime and legacy-model notices, so existing notices can switch with the language. This does not translate every species name; unknown Tamil names still fall back to the supplied English name. Geographic filtering is researched but not enabled.
+
+Version 0.12 renames the app Animal Sounds, adds a custom icon and a concise model coverage explanation, and removes the obsolete bird-only controls. Counts are publisher class-list coverage, not tested identification accuracy, and include human and non-animal classes as explained. No semantic translation or generated reply is available. The application ID is unchanged.
