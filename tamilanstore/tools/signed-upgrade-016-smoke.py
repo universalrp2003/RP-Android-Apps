@@ -42,10 +42,30 @@ def enable_ci_root():
     raise AssertionError('CI emulator adbd did not become root after five bounded attempts: ' + last)
 
 
+DUMP = '/sdcard/store-upgrade.xml'
+
+
 def ui():
-    adb('shell', 'uiautomator', 'dump', '/sdcard/store-upgrade.xml')
-    text = adb('shell', 'cat', '/sdcard/store-upgrade.xml')
-    return text, list(ET.fromstring(text).iter('node'))
+    # uiautomator exits 0 with "ERROR: could not get idle state" while the screen animates and
+    # leaves the previous file behind; never read a stale hierarchy, retry the dump instead.
+    out = ''
+    for attempt in range(15):
+        adb('shell', 'rm', '-f', DUMP)
+        out = adb('shell', 'uiautomator', 'dump', DUMP)
+        if 'dumped' in out:
+            text = adb('shell', 'cat', DUMP)
+            return text, list(ET.fromstring(text).iter('node'))
+        time.sleep(1)
+    raise AssertionError('uiautomator produced no hierarchy: ' + out[-300:])
+
+
+def retained_diagnostics():
+    prefs = adb('shell', 'cat', f'/data/user/0/{PKG}/shared_prefs/active_download_v1.xml').strip()
+    copies = adb('shell', 'ls', '-l', f'/data/user/0/{PKG}/cache/verified-apks').strip()
+    node = wait_text('Refresh catalog')
+    return ('prefs=' + prefs[-600:] + ' | copies=' + copies + ' | refresh node=' +
+            ' '.join(f'{k}={v}' for k, v in sorted(node.attrib.items()) if k in ('text', 'enabled', 'clickable', 'bounds')) +
+            ' | visible=' + ' || '.join(visible_texts())[:1500])
 
 
 def visible_texts(limit=40):
@@ -223,8 +243,14 @@ def run(out):
     adb('shell', 'am', 'force-stop', PKG)
     launch()
     wait_text('Tamilan')
-    held = refresh_control()
-    assert held == 'false', 'expected the public 0.15 to hold Refresh catalog closed: enabled=' + str(held)
+    snap(out, '01b-store15-relaunch-with-retained-copy')
+    held = None
+    for attempt in range(30):
+        held = refresh_control()
+        if held == 'false':
+            break
+        time.sleep(1)
+    assert held == 'false', 'expected the public 0.15 to hold Refresh catalog closed: ' + retained_diagnostics()
     assert wait_text_if_present('Last catalog refresh succeeded', 5) is None
     snap(out, '01b-store15-retained-copy-holds-refresh')
     adb('shell', 'am', 'force-stop', PKG)
