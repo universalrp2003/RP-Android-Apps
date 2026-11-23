@@ -28,7 +28,7 @@ object ReferencePhoto {
             val conn = url.openConnection() as HttpsURLConnection
             conn.instanceFollowRedirects = false
             conn.connectTimeout = 15_000; conn.readTimeout = 15_000
-            conn.setRequestProperty("User-Agent", "AnimalSounds/0.14 (https://github.com/universalrp2003/RP-Android-Apps)")
+            conn.setRequestProperty("User-Agent", "AnimalSounds/0.15 (https://github.com/universalrp2003/RP-Android-Apps)")
             try {
                 val status = conn.responseCode
                 if (status in setOf(301, 302, 303, 307, 308)) {
@@ -62,7 +62,7 @@ object ReferencePhoto {
         if (props.has("disambiguation")) throw IOException("Ambiguous name")
         val file = props.optString("page_image_free")
         if (file.isBlank() || file != page.optString("pageimage")) throw IOException("No free photo")
-        val commons = json("https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Cmime%7Cextmetadata&iiurlwidth=240&titles=" + encode("File:$file"))
+        val commons = json("https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=url%7Cmime%7Cextmetadata&iiurlwidth=480&titles=" + encode("File:$file"))
         val p = commons.getJSONObject("query").getJSONArray("pages").getJSONObject(0)
         val info = p.getJSONArray("imageinfo").getJSONObject(0)
         val meta = info.getJSONObject("extmetadata")

@@ -54,12 +54,13 @@ class MainActivity : ComponentActivity() {
     private var confirmReplay by mutableStateOf(false)
     private var confirmDownload by mutableStateOf(false)
     private var downloadingV3 by mutableStateOf(false)
-    private var photo by mutableStateOf<ReferencePhoto.Result?>(null)
-    private var photoSpecies by mutableStateOf("")
+    private val photos = mutableStateMapOf<String, ReferencePhoto.Result>()
+    private val photoFailures = mutableStateMapOf<String, Boolean>()
+    private var autoPhotos by mutableStateOf(false)
+    private var confirmAutoPhotos by mutableStateOf(false)
     private var requestedPhoto by mutableStateOf("")
     private var imageSearchSpecies by mutableStateOf("")
     private var photoLoading by mutableStateOf(false)
-    private var photoNotice by mutableStateOf(false)
     private var confirmPhoto by mutableStateOf(false)
     private var photoJob: Job? = null
     private var advancedModels by mutableStateOf(false)
@@ -78,6 +79,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        autoPhotos = getPreferences(MODE_PRIVATE).getBoolean("auto_photos", false)
         birdnetReady = BirdNet.installed(this)
         updateV3Status()
         setContent {
@@ -147,17 +149,18 @@ class MainActivity : ComponentActivity() {
                                         Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil))
                                         if (ReferencePhoto.validScientific(guess.scientific) && !guess.scientific.equals("Homo sapiens", true)) {
                                             TextButton(onClick = { imageSearchSpecies = guess.scientific }) { Text(tr("இணையத்தில் படங்களைத் தேடு", "Search images in browser")) }
-                                            if (photo != null && photoSpecies == guess.scientific) {
-                                                Image(photo!!.bitmap.asImageBitmap(), contentDescription = tr("மாதிரிப் படம்", "Reference image"), modifier = Modifier.width(180.dp).heightIn(max = 150.dp))
+                                            val photo = photos[guess.scientific]
+                                            if (photo != null) {
+                                                Image(photo.bitmap.asImageBitmap(), contentDescription = tr("மாதிரிப் படம்", "Reference image"), modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp))
                                                 Text(tr("மாதிரிப் படம்; இது கேட்ட உயிரினத்தை உறுதி செய்யாது.", "Reference image; it does not confirm what you heard."), style = MaterialTheme.typography.bodySmall)
-                                                Text("${photo!!.title} · ${photo!!.artist} · ${photo!!.licence} · Wikimedia Commons", style = MaterialTheme.typography.bodySmall)
+                                                Text("${photo.title} · ${photo.artist} · ${photo.licence} · Wikimedia Commons", style = MaterialTheme.typography.bodySmall)
                                                 Row {
-                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo!!.creditUrl))) } }) { Text(tr("பட விவரம்", "Photo details")) }
-                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo!!.licenceUrl))) } }) { Text(tr("உரிமம்", "Licence")) }
+                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo.creditUrl))) } }) { Text(tr("பட விவரம்", "Photo details")) }
+                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo.licenceUrl))) } }) { Text(tr("உரிமம்", "Licence")) }
                                                 }
                                             } else {
                                                 OutlinedButton(enabled = !photoLoading, onClick = { requestedPhoto = guess.scientific; confirmPhoto = true }) { Text(if (photoLoading && requestedPhoto == guess.scientific) tr("படம் வருகிறது…", "Loading photo…") else tr("மாதிரிப் படம் காட்டு", "Show reference photo")) }
-                                                if (photoNotice && requestedPhoto == guess.scientific) Text(tr("படம் கிடைக்கவில்லை. இணையத்தைச் சரிபார்க்கவும்; எல்லா இனங்களுக்கும் படம் கிடைக்காது.", "Photo unavailable. Check your connection; not every species has a usable image."), style = MaterialTheme.typography.bodySmall)
+                                                if (photoFailures[guess.scientific] == true) Text(tr("படம் கிடைக்கவில்லை. இணையத்தைச் சரிபார்க்கவும்; எல்லா இனங்களுக்கும் படம் கிடைக்காது.", "Photo unavailable. Check your connection; not every species has a usable image."), style = MaterialTheme.typography.bodySmall)
                                             }
                                         }
                                         SpeciesPresentation.description(guess.scientific, tamil)?.let { detail ->
@@ -168,6 +171,16 @@ class MainActivity : ComponentActivity() {
                                     if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
                               }
                             }
+                        }
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                            Text(tr("மாதிரிப் படங்களைத் தானாகக் காட்டு", "Load reference photos automatically"), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                            Switch(checked = autoPhotos, onCheckedChange = { enabled ->
+                                if (enabled) confirmAutoPhotos = true else {
+                                    autoPhotos = false
+                                    getPreferences(MODE_PRIVATE).edit().putBoolean("auto_photos", false).apply()
+                                    photoJob?.cancel(); photoLoading = false
+                                }
+                            })
                         }
                         TextButton(onClick = { advancedModels = !advancedModels }) { Text(if (advancedModels) tr("மற்ற மாடல் அமைப்புகளை மறை ▴", "Hide other model settings ▴") else tr("மற்ற மாடல் அமைப்புகள் ▾", "Other model settings ▾")) }
                         if (advancedModels) {
@@ -254,11 +267,22 @@ class MainActivity : ComponentActivity() {
                     }) { Text(tr("தேடு", "Search")) } },
                     dismissButton = { TextButton(onClick = { imageSearchSpecies = "" }) { Text(tr("வேண்டாம்", "Cancel")) } }
                 )
+                if (confirmAutoPhotos) AlertDialog(
+                    onDismissRequest = { confirmAutoPhotos = false },
+                    title = { Text(tr("படங்களைத் தானாகப் பதிவிறக்கவா?", "Load photos automatically?")) },
+                    text = { Text(tr("ஒவ்வொரு முடிவின் இனப் பெயரும் Wikipedia-க்கு அனுப்பப்பட்டு, படம் Wikimedia-லிருந்து பதிவிறக்கப்படும். உங்கள் இணைய முகவரி அவர்களுக்குத் தெரியும்; ஒலி அனுப்பப்படாது. இதை எப்போது வேண்டுமானாலும் அணைக்கலாம்.", "After each identification, candidate species names are sent to Wikipedia and photos downloaded from Wikimedia. They can see your IP address; no audio is sent. You can turn this off at any time.")) },
+                    confirmButton = { TextButton(onClick = {
+                        confirmAutoPhotos = false; autoPhotos = true
+                        getPreferences(MODE_PRIVATE).edit().putBoolean("auto_photos", true).apply()
+                        loadReferencePhotos(v3Guesses.orEmpty().map { it.scientific })
+                    }) { Text(tr("இயக்கு", "Enable")) } },
+                    dismissButton = { TextButton(onClick = { confirmAutoPhotos = false }) { Text(tr("வேண்டாம்", "Cancel")) } }
+                )
                 if (confirmPhoto) AlertDialog(
                     onDismissRequest = { confirmPhoto = false },
                     title = { Text(tr("மாதிரிப் படத்தைப் பார்க்கவா?", "Show a reference photo?")) },
                     text = { Text(tr("இனத்தின் பெயர் Wikipedia-க்கு அனுப்பப்படும்; படம் Wikimedia Commons-லிருந்து வரும். இது நீங்கள் கேட்ட உயிரினம் அல்ல. ஒலி அனுப்பப்படாது; உங்கள் இணைய முகவரி அச்சேவைகளுக்குத் தெரியும்.", "Sends the species name to Wikipedia and loads a reference image from Wikimedia Commons. It is not the animal you heard. No audio is sent; the providers can see your IP address.")) },
-                    confirmButton = { TextButton(onClick = { confirmPhoto = false; loadReferencePhoto() }) { Text(tr("படத்தைக் காட்டு", "Show photo")) } },
+                    confirmButton = { TextButton(onClick = { confirmPhoto = false; loadReferencePhotos(listOf(requestedPhoto)) }) { Text(tr("படத்தைக் காட்டு", "Show photo")) } },
                     dismissButton = { TextButton(onClick = { confirmPhoto = false }) { Text(tr("வேண்டாம்", "Cancel")) } }
                 )
                 if (confirmDownload) AlertDialog(
@@ -277,20 +301,26 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun clearPhoto() {
-        photoJob?.cancel(); photoJob = null; photo = null; photoSpecies = ""; requestedPhoto = ""; imageSearchSpecies = ""; photoLoading = false; photoNotice = false; confirmPhoto = false
+        photoJob?.cancel(); photoJob = null; photos.clear(); photoFailures.clear(); requestedPhoto = ""; imageSearchSpecies = ""; photoLoading = false; confirmPhoto = false; confirmAutoPhotos = false
     }
-    private fun loadReferencePhoto() {
+    private fun loadReferencePhotos(names: List<String>) {
         if (photoLoading) return
-        photoLoading = true; photoNotice = false
+        val eligible = names.distinct().filter { ReferencePhoto.validScientific(it) && !it.equals("Homo sapiens", true) && !photos.containsKey(it) }.take(3)
+        if (eligible.isEmpty()) return
+        photoLoading = true
         val thisGeneration = generation
         photoJob = lifecycleScope.launch {
             try {
-                val species = requestedPhoto
-                val image = withContext(Dispatchers.IO) { ReferencePhoto.load(species) }
-                if (generation == thisGeneration) { photoSpecies = species; photo = image }
-            } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) photoNotice = true }
-            finally { if (generation == thisGeneration) photoLoading = false }
+                for (species in eligible) {
+                    requestedPhoto = species
+                    photoFailures.remove(species)
+                    try {
+                        val image = withContext(Dispatchers.IO) { ReferencePhoto.load(species) }
+                        if (generation == thisGeneration) photos[species] = image
+                    } catch (e: CancellationException) { throw e }
+                      catch (_: Exception) { if (generation == thisGeneration) photoFailures[species] = true }
+                }
+            } finally { if (generation == thisGeneration) photoLoading = false }
         }
     }
     private fun listen() {
@@ -376,7 +406,10 @@ class MainActivity : ComponentActivity() {
                     val active = coroutineContext
                     BirdNetV3.analyzeRecording(this@MainActivity, captured) { active.isActive }
                 }
-                if (generation == thisGeneration) { samples = captured; v3Guesses = found.guesses; v3ResultWindow = found.windowIndex } else captured.fill(0)
+                if (generation == thisGeneration) {
+                    samples = captured; v3Guesses = found.guesses; v3ResultWindow = found.windowIndex
+                    if (autoPhotos) loadReferencePhotos(found.guesses.map { it.scientific })
+                } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) setMessage("புதிய மாடல் செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Could not record or analyse with the new model on this device.") }
             finally { if (generation == thisGeneration) busy = false }
