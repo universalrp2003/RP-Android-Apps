@@ -14,8 +14,8 @@ android {
         applicationId = "com.universalrp.animalvoice.experimental"
         minSdk = 26
         targetSdk = 36
-        versionCode = 18
-        versionName = "0.18-experimental"
+        versionCode = 19
+        versionName = "0.19-experimental"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
@@ -60,7 +60,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("org.tensorflow:tensorflow-lite-task-audio:0.4.4")
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
-    implementation("org.tensorflow:tensorflow-lite-select-tf-ops:2.14.0")
+    // No tensorflow-lite-select-tf-ops: only the retired BirdNET-Lite V2.4 model needed the Flex ops, and it
+    // added ~400 MB of uncompressed native libraries for four ABIs. YAMNet and BirdNET+ V3 run on plain LiteRT.
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")

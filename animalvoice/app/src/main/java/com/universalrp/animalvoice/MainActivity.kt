@@ -190,6 +190,7 @@ class MainActivity : ComponentActivity() {
                                             Text(tr("பகுதிகள்: $ranges விநாடி", "Qualifying windows: $ranges seconds"), style = MaterialTheme.typography.bodySmall)
                                         }
                                         SpeciesPresentation.geographicCaveat(guess.scientific, tamil)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF8A5A00)) }
+                                        SpeciesPresentation.speechNote(guess.scientific, tamil)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF8A5A00)) }
                                         if (ReferencePhoto.validScientific(guess.scientific) && !guess.scientific.equals("Homo sapiens", true)) {
                                             TextButton(onClick = { imageSearchSpecies = guess.scientific }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("இணையத்தில் படங்களைத் தேடு", "Search images in browser")) }
                                             val photo = photos[guess.scientific]

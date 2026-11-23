@@ -11,7 +11,8 @@ import org.junit.runner.RunWith
 import org.tensorflow.lite.task.audio.classifier.AudioClassifier
 import java.security.MessageDigest
 
-/** Synthetic inputs only; no animal, person's voice, recorded audio or microphone access. */
+/** Synthetic inputs only; no animal, person's voice, recorded audio or microphone access.
+ * The YAMNet test also proves the bundled model runs on plain LiteRT without the TensorFlow Flex runtime. */
 @RunWith(AndroidJUnit4::class)
 class ModelSmokeTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -45,33 +46,5 @@ class ModelSmokeTest {
     @Test fun staticTrackLoadsAndReplaysSyntheticSilence() {
         // Regression: static tracks are in STATE_NO_STATIC_DATA before the first write.
         AudioEngine(context).replay(ShortArray(1600))
-    }
-    @Test fun birdNetReferenceModelRunsOnSyntheticSignal() {
-        assertTrue("CI supplies exact upstream model", BirdNet.installed(context))
-        val digest = MessageDigest.getInstance("SHA-256")
-        BirdNet.file(context).inputStream().use { input ->
-            val buffer = ByteArray(65536)
-            while (true) { val n = input.read(buffer); if (n < 0) break; digest.update(buffer, 0, n) }
-        }
-        assertEquals(BirdNet.SHA256, digest.digest().joinToString("") { "%02x".format(it) })
-        assertTrue(BirdNet.analyze(context, ShortArray(BirdNet.SAMPLES)).isEmpty())
-        val tone = ShortArray(BirdNet.SAMPLES) { i -> (5000 * kotlin.math.sin(2 * Math.PI * 1000 * i / BirdNet.RATE)).toInt().toShort() }
-        val result = BirdNet.analyze(context, tone)
-        assertTrue(result.size <= 3)
-        assertTrue(result.all { it.scientific.isNotBlank() && it.common.isNotBlank() && it.score in 0.35f..1f })
-    }
-    @Test fun birdNetImportChecksHashAndKeepsPriorModelOnInvalidFile() {
-        val model = BirdNet.file(context)
-        assertTrue(BirdNet.installed(context))
-        // The exact model is supplied in the emulator only, not in the APK.
-        BirdNet.import(context, android.net.Uri.fromFile(model))
-        assertTrue(BirdNet.installed(context))
-        val bad = java.io.File(context.cacheDir, "wrong-model.bin")
-        bad.writeBytes(byteArrayOf(1, 2, 3))
-        try {
-            try { BirdNet.import(context, android.net.Uri.fromFile(bad)); fail("Invalid model was accepted") }
-            catch (_: IllegalArgumentException) { }
-            assertTrue(BirdNet.installed(context))
-        } finally { bad.delete() }
     }
 }

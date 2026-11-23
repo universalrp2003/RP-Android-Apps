@@ -16,7 +16,7 @@ Build locally with Android SDK 36, JDK 17 and `./gradlew :animalvoice:assembleDe
 
 ## Retired BirdNET-Lite detector
 
-Version 0.12 removes the old bird-only detector from the UI; the bundled basic YAMNet fallback and optional BirdNET+ V3 species model remain. An already installed old model is not automatically erased: Other model settings provides a remove button to reclaim its storage. Legacy test code and BirdNET-Lite label and licence assets remain for now; its non-commercial CC BY-NC-SA 4.0 terms must still be reviewed before distribution.
+Version 0.12 removed the old bird-only detector from the UI, and 0.19 removed its inference code too: that V2.4 model was the only reason the app carried the TensorFlow Flex runtime (`tensorflow-lite-select-tf-ops`), which added roughly 400 MB of native libraries for four ABIs. The bundled basic YAMNet fallback and the optional BirdNET+ V3 species model run on plain LiteRT and remain. An already installed old model is not automatically erased: Advanced settings still provides a remove button to reclaim its storage, and the licence texts remain bundled for anyone still holding that file (its terms were non-commercial CC BY-NC-SA 4.0).
 
 ## Experimental observation guide
 
@@ -80,3 +80,10 @@ The success confirmations "File verified and imported." and "Model downloaded an
 Each guess can show a small "Group:" badge (Bird, Insect, Amphibian, Mammal, Fish, Reptile, Arachnid, or Human-made sound / Natural sound, not an animal / Music, with Tamil labels) taken from the publisher's `taxon_group` column in the BirdNET+ V3 label table. It is display only: nothing is hidden, filtered or reordered, an unknown or missing group shows no badge, and the badge does not confirm the guess. Regional filtering stays disabled (see the geomodel research); the Wood Frog caveat still appears in Tamil Nadu.
 
 0.18 is signed with the same key as 0.17, so it installs as an in-place update over 0.17 and keeps the downloaded model and settings.
+
+### Version 0.19
+A phone test of 0.18 showed a 461 MB installer. The cause was not an asset (bundled assets are 4.3 MB) but the TensorFlow Flex runtime `tensorflow-lite-select-tf-ops`, whose native libraries are about 100 MB per ABI and were packaged for all four ABIs. Only the retired BirdNET-Lite V2.4 model needed those ops (see the "Retired BirdNET-Lite detector" section); the bundled YAMNet model and the BirdNET+ V3 model run on plain LiteRT — the publisher's own minimal example and our host probes use LiteRT without a Flex delegate. 0.19 therefore removes the Flex dependency and the dead legacy inference code (file detection and removal stay), and the emulator test now also proves YAMNet runs without the Flex runtime. The workflow prints the release APK size, its largest entries and per-ABI native totals, and fails if the release APK exceeds 150 MB.
+
+Human speech is still shown as a guess, now with a note that people talking nearby may be masking quieter animal calls in the same recording; it is not hidden or demoted, because the ranking is the model's output and the app does not silently filter results.
+
+0.19 is signed with the same key as 0.17 and 0.18, so it installs as an in-place update and keeps the downloaded model and settings.

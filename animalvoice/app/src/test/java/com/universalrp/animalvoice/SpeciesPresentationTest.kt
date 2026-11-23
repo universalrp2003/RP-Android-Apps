@@ -30,6 +30,12 @@ class SpeciesPresentationTest {
         assertNull(SpeciesPresentation.taxonGroup("", true))
         assertNull(SpeciesPresentation.taxonGroup("Mystery", false))
     }
+    @Test fun humanSpeechIsExplainedNotHiddenOrDemoted() {
+        assertNotNull(SpeciesPresentation.speechNote("Homo sapiens", true))
+        assertTrue(SpeciesPresentation.speechNote("Homo sapiens", false)!!.startsWith("Human speech detected"))
+        assertNull(SpeciesPresentation.speechNote("Corvus splendens", true))
+        assertNull(SpeciesPresentation.speechNote("", false))
+    }
     @Test fun focusDoesNotClaimUnsupportedGroupsOrUnknownNames() {
         assertEquals(true, SpeciesPresentation.focusMatches("crow", "Corvus splendens"))
         assertEquals(false, SpeciesPresentation.focusMatches("cat", "Corvus splendens"))

@@ -47,8 +47,8 @@ jobs:
             "$tools/aapt" dump badging "$apk" > "$badging"
             cat "$badging"
             grep -F "name='com.universalrp.animalvoice.experimental'" "$badging"
-            grep -F "versionCode='18'" "$badging"
-            grep -F "versionName='0.18-experimental'" "$badging"
+            grep -F "versionCode='19'" "$badging"
+            grep -F "versionName='0.19-experimental'" "$badging"
             grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$badging"
             grep -F "uses-permission: name='android.permission.INTERNET'" "$badging"
             grep -F "uses-permission: name='android.permission.ACCESS_NETWORK_STATE'" "$badging"
@@ -74,12 +74,22 @@ jobs:
           test -n "$debug_signer"
           test "$debug_signer" = "$signer"
           echo "OK: debug and release APKs use the persistent owner-backed certificate"
-      - name: Fetch exact BirdNET model for non-commercial test only
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Report APK contents and guard the size
         run: |
-          gh api -H 'Accept: application/vnd.github.raw+json' repos/birdnet-team/BirdNET-Lite/git/blobs/cff805384fae5e980c5294a1f3b7530eef042332 > "$RUNNER_TEMP/birdnet.tflite"
-          echo "f073d0aa626b4a5bb0705982d06de74c562f041ba76ebada18bc3e29126f6755  $RUNNER_TEMP/birdnet.tflite" | sha256sum -c
+          set -euo pipefail
+          apk="$(find animalvoice/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -print -quit)"
+          bytes="$(stat -c %s "$apk")"
+          echo "Release APK: $apk"
+          echo "Release APK size: $bytes bytes ($(awk -v b="$bytes" 'BEGIN {printf "%.1f", b/1000000}') MB)"
+          echo "Largest entries (uncompressed bytes):"
+          unzip -l "$apk" | awk '$1 ~ /^[0-9]+$/ {printf "%12d  %s\n", $1, $4}' | sort -n -r | head -12
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            unzip -l "$apk" | awk -v dir="lib/$abi/" '$1 ~ /^[0-9]+$/ && index($4, dir) == 1 {total += $1} END {printf "lib/%s: %.1f MB\n", dir, total/1000000}'
+          done
+          if [ "$bytes" -gt 150000000 ]; then
+            echo "FAIL: release APK is larger than 150 MB; a native runtime or asset was probably re-added"
+            exit 1
+          fi
       - run: sudo chmod a+rw /dev/kvm
       - name: Run synthetic native model and permission checks (no animal recordings)
         uses: reactivecircus/android-emulator-runner@v2

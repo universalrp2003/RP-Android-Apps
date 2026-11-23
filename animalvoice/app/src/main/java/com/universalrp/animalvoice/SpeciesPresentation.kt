@@ -53,6 +53,14 @@ object SpeciesPresentation {
         }
     }
 
+    /** Human speech is a genuine model output: explain it, never hide or demote it. */
+    fun speechNote(scientific: String, tamil: Boolean): String? {
+        return if (scientific.trim().equals("Homo sapiens", true)) {
+            if (tamil) "மனிதப் பேச்சு கேட்கப்பட்டது. அருகில் பேசும் நபர்கள் இருக்கலாம்; அதே பதிவில் உள்ள மெல்லிய விலங்கு ஒலிகள் மறைக்கப்படலாம்."
+            else "Human speech detected. People talking nearby may be masking quieter animal calls in the same recording."
+        } else null
+    }
+
     /** A transparent caveat, never a filter: the model can be wrong anywhere. */
     fun geographicCaveat(scientific: String, tamil: Boolean): String? {
         return when (scientific.trim().lowercase()) {
