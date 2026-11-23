@@ -17,6 +17,17 @@ class BirdNetV3CsvTest {
         assertEquals(listOf(b), result.guesses)
         assertEquals(null, BirdNetV3.strongestWindow(listOf(emptyList(), emptyList())).windowIndex)
     }
+    @Test fun candidatesCombineWindowsDeduplicateAndLimit() {
+        val a = BirdNetV3.Guess("A", "A a", .7f)
+        val b = BirdNetV3.Guess("B", "B b", .8f)
+        val c = BirdNetV3.Guess("C", "C c", .6f)
+        val d = BirdNetV3.Guess("D", "D d", .55f)
+        val result = BirdNetV3.candidates(listOf(listOf(a, d), listOf(b, a.copy(score = .9f)), listOf(c)))
+        assertEquals(listOf("A", "B", "C"), result.map { it.guess.common })
+        assertEquals(listOf(0, 1), result[0].windows)
+        assertEquals(.9f, result[0].guess.score)
+        assertEquals(emptyList<BirdNetV3.Candidate>(), BirdNetV3.candidates(listOf(emptyList(), emptyList())))
+    }
     @Test(expected = IllegalArgumentException::class)
     fun rejectsUnterminatedQuotedField() { BirdNetV3.parseCsv("\"unfinished") }
 }

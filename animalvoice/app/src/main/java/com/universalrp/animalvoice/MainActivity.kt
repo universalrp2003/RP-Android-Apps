@@ -63,6 +63,7 @@ class MainActivity : ComponentActivity() {
     private var photoLoading by mutableStateOf(false)
     private var confirmPhoto by mutableStateOf(false)
     private var photoJob: Job? = null
+    private var photoEpoch = 0
     private var advancedModels by mutableStateOf(false)
     private var showCoverage by mutableStateOf(false)
     private var sampleRate = AudioEngine.RATE
@@ -72,7 +73,7 @@ class MainActivity : ComponentActivity() {
     private var v3LabelsReady by mutableStateOf(false)
     private var v3Guesses by mutableStateOf<List<BirdNetV3.Guess>?>(null)
     private var v3WindowCount by mutableIntStateOf(1)
-    private var v3ResultWindow by mutableStateOf<Int?>(null)
+    private var v3Candidates by mutableStateOf<List<BirdNetV3.Candidate>>(emptyList())
     private var v3ResultWindows by mutableIntStateOf(1)
     private var importRunning: AtomicBoolean? = null
     private fun tr(ta: String, en: String) = if (tamil) ta else en
@@ -140,13 +141,14 @@ class MainActivity : ComponentActivity() {
                             Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(20.dp)) {
                               Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(tr("சாத்தியமான ஒலி வகைகள்", "Possible sound sources"), fontWeight = FontWeight.Bold)
-                                    if (v3ResultWindows == 3 && v3ResultWindow != null) {
-                                        val from = v3ResultWindow!! * 3
-                                        Text(tr("${from}–${from + 3} விநாடியில் அதிக மதிப்பெண் வந்தது; இது உறுதி அல்ல.", "Highest score was in seconds $from–${from + 3}; this is not confirmation."), style = MaterialTheme.typography.bodySmall)
-                                    }
+                                    if (v3ResultWindows == 3) Text(tr("மூன்று பகுதிகளிலிருந்தும் அதிக மதிப்பெண் பெற்ற மூன்று ஊகங்கள் வரை; இவை உறுதி அல்ல.", "Up to three highest-scoring guesses across all three windows; these are not confirmations."), style = MaterialTheme.typography.bodySmall)
                                     if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
                                     else found.forEach { guess ->
                                         Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil))
+                                        if (v3ResultWindows == 3) {
+                                            val ranges = v3Candidates.firstOrNull { it.guess == guess }?.windows.orEmpty().joinToString(", ") { "${it * 3}–${it * 3 + 3}" }
+                                            Text(tr("பகுதிகள்: $ranges விநாடி", "Qualifying windows: $ranges seconds"), style = MaterialTheme.typography.bodySmall)
+                                        }
                                         if (ReferencePhoto.validScientific(guess.scientific) && !guess.scientific.equals("Homo sapiens", true)) {
                                             TextButton(onClick = { imageSearchSpecies = guess.scientific }) { Text(tr("இணையத்தில் படங்களைத் தேடு", "Search images in browser")) }
                                             val photo = photos[guess.scientific]
@@ -178,7 +180,7 @@ class MainActivity : ComponentActivity() {
                                 if (enabled) confirmAutoPhotos = true else {
                                     autoPhotos = false
                                     getPreferences(MODE_PRIVATE).edit().putBoolean("auto_photos", false).apply()
-                                    photoJob?.cancel(); photoLoading = false
+                                    photoEpoch++; photoJob?.cancel(); photoJob = null; photoLoading = false; photos.clear(); photoFailures.clear()
                                 }
                             })
                         }
@@ -300,7 +302,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun clearPhoto() {
-        photoJob?.cancel(); photoJob = null; photos.clear(); photoFailures.clear(); requestedPhoto = ""; imageSearchSpecies = ""; photoLoading = false; confirmPhoto = false; confirmAutoPhotos = false
+        photoEpoch++; photoJob?.cancel(); photoJob = null; photos.clear(); photoFailures.clear(); requestedPhoto = ""; imageSearchSpecies = ""; photoLoading = false; confirmPhoto = false; confirmAutoPhotos = false
     }
     private fun loadReferencePhotos(names: List<String>) {
         if (photoLoading) return
@@ -313,6 +315,7 @@ class MainActivity : ComponentActivity() {
         }
         photoLoading = true
         val thisGeneration = generation
+        val thisPhotoEpoch = ++photoEpoch
         photoJob = lifecycleScope.launch {
             try {
                 for (species in eligible) {
@@ -320,11 +323,11 @@ class MainActivity : ComponentActivity() {
                     photoFailures.remove(species)
                     try {
                         val image = withContext(Dispatchers.IO) { ReferencePhoto.load(species) }
-                        if (generation == thisGeneration) photos[species] = image
+                        if (generation == thisGeneration && photoEpoch == thisPhotoEpoch) photos[species] = image
                     } catch (e: CancellationException) { throw e }
-                      catch (_: Exception) { if (generation == thisGeneration) photoFailures[species] = true }
+                      catch (_: Exception) { if (generation == thisGeneration && photoEpoch == thisPhotoEpoch) photoFailures[species] = true }
                 }
-            } finally { if (generation == thisGeneration) photoLoading = false }
+            } finally { if (generation == thisGeneration && photoEpoch == thisPhotoEpoch) photoLoading = false }
         }
     }
     private fun listen() {
@@ -400,7 +403,7 @@ class MainActivity : ComponentActivity() {
         samples?.fill(0); samples = null; guesses = null; v3Guesses = null; messageText = BilingualText.EMPTY; busy = true
         sampleRate = BirdNetV3.RATE
         val windows = v3WindowCount
-        v3ResultWindow = null; v3ResultWindows = windows
+        v3Candidates = emptyList(); v3ResultWindows = windows
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
         job = lifecycleScope.launch {
@@ -411,8 +414,10 @@ class MainActivity : ComponentActivity() {
                     BirdNetV3.analyzeRecording(this@MainActivity, captured) { active.isActive }
                 }
                 if (generation == thisGeneration) {
-                    samples = captured; v3Guesses = found.guesses; v3ResultWindow = found.windowIndex
-                    if (autoPhotos) loadReferencePhotos(found.guesses.map { it.scientific })
+                    samples = captured
+                    v3Candidates = BirdNetV3.candidates(found.windows)
+                    v3Guesses = v3Candidates.map { it.guess }
+                    if (autoPhotos) loadReferencePhotos(v3Guesses.orEmpty().map { it.scientific })
                 } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) setMessage("புதிய மாடல் செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Could not record or analyse with the new model on this device.") }

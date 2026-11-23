@@ -83,7 +83,16 @@ object BirdNetV3 {
         return rows
     }
 
-    data class Analysis(val guesses: List<Guess>, val windowIndex: Int?)
+    data class Analysis(val guesses: List<Guess>, val windowIndex: Int?, val windows: List<List<Guess>> = emptyList())
+    data class Candidate(val guess: Guess, val windows: List<Int>)
+
+    /** Top three distinct labels by their best qualifying window score; scores are not probabilities. */
+    fun candidates(windows: List<List<Guess>>): List<Candidate> = windows
+        .flatMapIndexed { index, guesses -> guesses.map { index to it } }
+        .groupBy { (_, guess) -> guess.common to guess.scientific }
+        .values.map { matches ->
+            Candidate(matches.maxBy { it.second.score }.second, matches.map { it.first }.distinct().sorted())
+        }.sortedByDescending { it.guess.score }.take(3)
 
     /** Picks one 3-second window with the strongest qualifying score; never combines or promotes a selection. */
     fun strongestWindow(windows: List<List<Guess>>): Analysis {
@@ -132,6 +141,6 @@ object BirdNetV3 {
                 }
             }
         }
-        return strongestWindow(results)
+        return strongestWindow(results).copy(windows = results)
     }
 }

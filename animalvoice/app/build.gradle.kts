@@ -11,8 +11,8 @@ android {
         applicationId = "com.universalrp.animalvoice.experimental"
         minSdk = 26
         targetSdk = 36
-        versionCode = 15
-        versionName = "0.15-experimental"
+        versionCode = 16
+        versionName = "0.16-experimental"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures { compose = true }
