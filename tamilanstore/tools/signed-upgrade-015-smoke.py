@@ -209,7 +209,9 @@ def run(out):
     scroll_until_text('Android TV Guard')
     scroll_until_text('System App Disabler')
     scroll_until_text('Weekly Money')
-    scroll_until_text('Animal Sounds · experimental')
+    # The bundled catalog lists the app under its plain name (the "· experimental" tag was
+    # dropped from the Store entry name with Animal Sounds 0.22); scroll for exactly that.
+    scroll_until_text('Animal Sounds')
     snap(out, '03-store15-new-app-listed')
     # Restart must preserve the two real UI preferences as well as the synthetic file.
     adb('shell', 'am', 'force-stop', PKG)
