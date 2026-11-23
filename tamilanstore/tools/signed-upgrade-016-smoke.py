@@ -13,15 +13,10 @@ import sys
 import time
 import traceback
 import xml.etree.ElementTree as ET
-from xml.sax.saxutils import escape
 
 PKG = 'com.universalrp.tamilanstore'
 OLD_SHA = 'c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b'
-# A public catalog release used as the retained verified copy that reproduces the owner's report.
-FIXTURE_APP = 'weeklymoney'
-FIXTURE_SHA = 'b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6'
-FIXTURE_BYTES = 7499595
-TRANSFER_NAME = '00000000-0000-0000-0000-000000000000.transfer'
+VERIFIED_TEXT = 'File verified. Tap Install to open Android’s confirmation.'
 
 
 def adb(*args, timeout=90):
@@ -144,31 +139,11 @@ def package_state():
     return parse_package_state(dump, listing)
 
 
-def install_retained_verified_copy(out, fixture, previous):
-    """Write the state the public 0.15 restores on launch: its own catalog snapshot, the chosen
-    entry, a completed system download (id -1) and the verified copy in the app's cache. Root on a
-    disposable CI emulator only; never an owner's device. Models an installer return that was lost
-    (process death), which is how the owner's phone ended up with refresh held closed."""
-    assert hashlib.sha256(fixture.read_bytes()).hexdigest() == FIXTURE_SHA and fixture.stat().st_size == FIXTURE_BYTES
-    uid = package_state()['uid']
-    # The exact bundled catalog the installed 0.15 ships, so the saved entry matches its own contract.
-    catalog = subprocess.check_output(['unzip', '-p', str(previous), 'assets/catalog.json']).decode()
-    saved = next(a for a in json.loads(catalog)['apps'] if a['id'] == FIXTURE_APP)
-    assert saved['sha256'] == FIXTURE_SHA and saved['size'] == FIXTURE_BYTES
-    xml = ("<?xml version='1.0' encoding='utf-8' standalone='yes' ?>\n<map>\n"
-           f"    <string name=\"catalog\">{escape(catalog)}</string>\n"
-           f"    <string name=\"app\">{FIXTURE_APP}</string>\n"
-           f"    <string name=\"file\">{TRANSFER_NAME}</string>\n"
-           "    <long name=\"id\" value=\"-1\" />\n</map>\n")
-    base = f'/data/user/0/{PKG}'
-    subprocess.run(['adb', 'push', str(fixture), '/data/local/tmp/store-fixture.apk'], check=True, capture_output=True)
-    (out / 'active_download_v1.xml').write_text(xml)
-    subprocess.run(['adb', 'push', str(out / 'active_download_v1.xml'), '/data/local/tmp/active_download_v1.xml'], check=True, capture_output=True)
-    adb('shell', f'mkdir -p {base}/cache/verified-apks {base}/shared_prefs')
-    adb('shell', f'cp /data/local/tmp/store-fixture.apk {base}/cache/verified-apks/{FIXTURE_APP}.apk')
-    adb('shell', f'cp /data/local/tmp/active_download_v1.xml {base}/shared_prefs/active_download_v1.xml')
-    adb('shell', f'chown -R {uid}:{uid} {base}/cache/verified-apks {base}/shared_prefs/active_download_v1.xml')
-    adb('shell', f'restorecon -R {base}/cache/verified-apks {base}/shared_prefs/active_download_v1.xml')
+def download_retained_copy():
+    """Through the public 0.15's own Download control, the real user path that leaves a verified
+    copy behind when the installer is never opened (the user backs out, or the process dies)."""
+    click('Download')
+    wait_text(VERIFIED_TEXT, 240)
 
 
 def refresh_control():
@@ -187,8 +162,8 @@ def run(out):
     assert os.environ.get('CI') == 'true' and os.environ.get('GITHUB_ACTIONS') == 'true'
     assert adb('get-serialno').strip().startswith('emulator-')
     assert adb('shell', 'getprop', 'ro.kernel.qemu').strip() == '1'
-    assert len(sys.argv) == 5
-    candidate, previous, debug, fixture = map(Path, sys.argv[1:])
+    assert len(sys.argv) == 4
+    candidate, previous, debug = map(Path, sys.argv[1:])
     before_digest = hashlib.sha256(candidate.read_bytes()).hexdigest()
     assert previous.stat().st_size == 20713379
     assert hashlib.sha256(previous.read_bytes()).hexdigest() == OLD_SHA
@@ -221,10 +196,15 @@ def run(out):
     assert package_state() == old
     assert adb('shell', 'sha256sum', marker).split()[0] == marker_hash
     adb('shell', 'am', 'force-stop', PKG)
-    # Reproduce the owner's report on the public 0.15 first: the retained verified copy comes back
-    # on launch and holds "Refresh catalog" disabled, with no status line explaining why.
-    install_retained_verified_copy(out, fixture, previous)
+    # Reproduce the owner's report on the public 0.15 first: download a not-installed app through
+    # the Store's own control, never open the installer, and relaunch. The retained verified copy
+    # comes back and holds "Refresh catalog" disabled, with no status line explaining why.
+    launch()
+    wait_text('Tamilan')
+    wait_text('Enable scrolling text')
+    download_retained_copy()
     (out / 'retained-state-on-device.txt').write_text(adb('shell', 'cat', f'/data/user/0/{PKG}/shared_prefs/active_download_v1.xml'))
+    adb('shell', 'am', 'force-stop', PKG)
     launch()
     wait_text('Tamilan')
     held = refresh_control()
@@ -243,7 +223,7 @@ def run(out):
     wait_text('Tamilan')
     wait_text('Enable scrolling text')
     assert 'Debug preview' not in ui()[0], 'Release artifact must not masquerade as a debug preview'
-    # The retained copy survived the upgrade (Weekly Money is not installed, so it is still
+    # The retained copy survived the upgrade (its app is still not installed, so it is still
     # installable and 0.16 keeps it) but the Store now offers a way to let go of it.
     scroll_until_text('Remove downloaded file')
     snap(out, '02b-store16-retained-copy-offered')
