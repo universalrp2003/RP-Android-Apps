@@ -14,8 +14,8 @@ android {
         applicationId = "com.universalrp.animalvoice.experimental"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "0.19-experimental"
+        versionCode = 20
+        versionName = "0.20-experimental"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
