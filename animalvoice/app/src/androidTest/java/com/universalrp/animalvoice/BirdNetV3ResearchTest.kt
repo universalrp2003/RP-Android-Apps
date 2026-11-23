@@ -39,8 +39,11 @@ class BirdNetV3ResearchTest {
             V3Download.fetch(context, true) { true }
             V3Download.fetch(context, false) { true }
             assertTrue(BirdNetV3.ready(context))
-            val reference = ReferencePhoto.load()
-            assertTrue(reference.width in 1..1024 && reference.height in 1..1024)
+            for (species in listOf("Corvus splendens", "Leptocoma zeylonica")) {
+                val reference = ReferencePhoto.load(species)
+                assertTrue(reference.bitmap.width in 1..1024 && reference.bitmap.height in 1..1024)
+                assertTrue(reference.artist.isNotBlank() && reference.licence.isNotBlank())
+            }
         }
         val tone = ShortArray(BirdNetV3.SAMPLES) { (5000 * sin(2.0 * PI * 1000 * it / BirdNetV3.RATE)).toInt().toShort() }
         val guesses = BirdNetV3.analyze(context, tone)

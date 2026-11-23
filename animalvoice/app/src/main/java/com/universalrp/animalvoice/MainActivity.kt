@@ -7,7 +7,6 @@ import android.net.Uri
 import android.net.ConnectivityManager
 import java.io.IOException
 import android.os.Bundle
-import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.activity.ComponentActivity
@@ -55,7 +54,9 @@ class MainActivity : ComponentActivity() {
     private var confirmReplay by mutableStateOf(false)
     private var confirmDownload by mutableStateOf(false)
     private var downloadingV3 by mutableStateOf(false)
-    private var photo by mutableStateOf<Bitmap?>(null)
+    private var photo by mutableStateOf<ReferencePhoto.Result?>(null)
+    private var photoSpecies by mutableStateOf("")
+    private var requestedPhoto by mutableStateOf("")
     private var photoLoading by mutableStateOf(false)
     private var photoNotice by mutableStateOf(false)
     private var confirmPhoto by mutableStateOf(false)
@@ -143,14 +144,18 @@ class MainActivity : ComponentActivity() {
                                     if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
                                     else found.forEach { guess ->
                                         Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil))
-                                        if (guess.scientific.trim().equals("Corvus splendens", ignoreCase = true)) {
-                                            if (photo == null) {
-                                                OutlinedButton(enabled = !photoLoading, onClick = { confirmPhoto = true }) { Text(if (photoLoading) tr("படம் வருகிறது…", "Loading photo…") else tr("காகத்தின் மாதிரிப் படம்", "Show reference photo")) }
-                                                if (photoNotice) Text(tr("படம் வரவில்லை. இணையத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Photo unavailable. Check the connection and try again."), style = MaterialTheme.typography.bodySmall)
+                                        if (ReferencePhoto.validScientific(guess.scientific) && !guess.scientific.equals("Homo sapiens", true)) {
+                                            if (photo != null && photoSpecies == guess.scientific) {
+                                                Image(photo!!.bitmap.asImageBitmap(), contentDescription = tr("மாதிரிப் படம்", "Reference image"), modifier = Modifier.width(180.dp).heightIn(max = 150.dp))
+                                                Text(tr("மாதிரிப் படம்; இது கேட்ட உயிரினத்தை உறுதி செய்யாது.", "Reference image; it does not confirm what you heard."), style = MaterialTheme.typography.bodySmall)
+                                                Text("${photo!!.title} · ${photo!!.artist} · ${photo!!.licence} · Wikimedia Commons", style = MaterialTheme.typography.bodySmall)
+                                                Row {
+                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo!!.creditUrl))) } }) { Text(tr("பட விவரம்", "Photo details")) }
+                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo!!.licenceUrl))) } }) { Text(tr("உரிமம்", "Licence")) }
+                                                }
                                             } else {
-                                                Image(photo!!.asImageBitmap(), contentDescription = tr("வீட்டுக் காகத்தின் மாதிரிப் படம்", "House Crow reference photo"), modifier = Modifier.width(180.dp).heightIn(max = 150.dp))
-                                                Text(tr("மாதிரிப் படம் மட்டும்; நீங்கள் கேட்ட பறவை அல்ல. படம்: Pkspks / Wikimedia Commons, CC BY 4.0.", "Reference photo only, not the animal you heard. Photo: Pkspks / Wikimedia Commons, CC BY 4.0."), style = MaterialTheme.typography.bodySmall)
-                                                TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ReferencePhoto.CREDIT_URL))) } }) { Text(tr("பட விவரம் மற்றும் உரிமம்", "Photo credit and licence")) }
+                                                OutlinedButton(enabled = !photoLoading, onClick = { requestedPhoto = guess.scientific; confirmPhoto = true }) { Text(if (photoLoading && requestedPhoto == guess.scientific) tr("படம் வருகிறது…", "Loading photo…") else tr("மாதிரிப் படம் காட்டு", "Show reference photo")) }
+                                                if (photoNotice && requestedPhoto == guess.scientific) Text(tr("படம் கிடைக்கவில்லை. இணையத்தைச் சரிபார்க்கவும்; எல்லா இனங்களுக்கும் படம் கிடைக்காது.", "Photo unavailable. Check your connection; not every species has a usable image."), style = MaterialTheme.typography.bodySmall)
                                             }
                                         }
                                         SpeciesPresentation.description(guess.scientific, tamil)?.let { detail ->
@@ -232,13 +237,6 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         }
-                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF2D7)), shape = RoundedCornerShape(20.dp)) {
-                            Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(tr("பதில் ஒலி பற்றி", "About reply sounds"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                Text(tr("விலங்குக்கு ஏற்ற AI பதிலை அறிவியல்பூர்வமாக உறுதி செய்ய முடியாது; அதனால் இப்பதிப்பில் AI பதில் இல்லை. பதிவை மீண்டும் கேட்பது பதில் அல்ல.", "A scientifically verified AI reply is not available here. Replaying your recording is not a reply and does not prove communication."))
-                                Text(tr("பறவைக் கூடு அல்லது விலங்கு அருகே ஒலியை இயக்க வேண்டாம். பதற்றம் தெரிந்தால் நிறுத்தி விலகுங்கள்.", "Avoid playback near animals, nests or protected wildlife. Stop and move away if an animal seems stressed."))
-                            }
-                        }
                         Text(tr("பொது மாடல் காகம், நாய், பூனை, மாடு போன்ற ஒலிகளை ஊகிக்கும்; அதில் பல்லி இல்லை. புதிய உயிரின மாடலின் முடிவுகள் உறுதியானவை அல்ல. எலியின் மீயொலிக்குத் தனி கருவி தேவைப்படலாம்; எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது.", "The basic model guesses broad sounds such as dog, cat, cattle, crow and birds; it has no lizard class. The optional species model is separate and unverified. Rat ultrasound may need special hardware; ant chemical signals cannot be heard."), style = MaterialTheme.typography.bodyMedium)
                         Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                     }
@@ -246,7 +244,7 @@ class MainActivity : ComponentActivity() {
                 if (confirmPhoto) AlertDialog(
                     onDismissRequest = { confirmPhoto = false },
                     title = { Text(tr("மாதிரிப் படத்தைப் பார்க்கவா?", "Show a reference photo?")) },
-                    text = { Text(tr("இணையத்தில் Wikimedia Commons-லிருந்து காகத்தின் மாதிரிப் படம் வரும். இது நீங்கள் கேட்ட பறவை அல்ல. உங்கள் ஒலி அனுப்பப்படாது; இணைய முகவரி அச்சேவைக்குத் தெரியும்.", "Downloads a House Crow reference photo from Wikimedia Commons. It is not the animal you heard. No audio is sent; the provider can see your IP address.")) },
+                    text = { Text(tr("இனத்தின் பெயர் Wikipedia-க்கு அனுப்பப்படும்; படம் Wikimedia Commons-லிருந்து வரும். இது நீங்கள் கேட்ட உயிரினம் அல்ல. ஒலி அனுப்பப்படாது; உங்கள் இணைய முகவரி அச்சேவைகளுக்குத் தெரியும்.", "Sends the species name to Wikipedia and loads a reference image from Wikimedia Commons. It is not the animal you heard. No audio is sent; the providers can see your IP address.")) },
                     confirmButton = { TextButton(onClick = { confirmPhoto = false; loadReferencePhoto() }) { Text(tr("படத்தைக் காட்டு", "Show photo")) } },
                     dismissButton = { TextButton(onClick = { confirmPhoto = false }) { Text(tr("வேண்டாம்", "Cancel")) } }
                 )
@@ -266,7 +264,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun clearPhoto() {
-        photoJob?.cancel(); photoJob = null; photo = null; photoLoading = false; photoNotice = false; confirmPhoto = false
+        photoJob?.cancel(); photoJob = null; photo = null; photoSpecies = ""; requestedPhoto = ""; photoLoading = false; photoNotice = false; confirmPhoto = false
     }
     private fun loadReferencePhoto() {
         if (photoLoading) return
@@ -274,8 +272,9 @@ class MainActivity : ComponentActivity() {
         val thisGeneration = generation
         photoJob = lifecycleScope.launch {
             try {
-                val image = withContext(Dispatchers.IO) { ReferencePhoto.load() }
-                if (generation == thisGeneration) photo = image
+                val species = requestedPhoto
+                val image = withContext(Dispatchers.IO) { ReferencePhoto.load(species) }
+                if (generation == thisGeneration) { photoSpecies = species; photo = image }
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) photoNotice = true }
             finally { if (generation == thisGeneration) photoLoading = false }
