@@ -23,6 +23,6 @@ object AnimalOptions {
         AnimalOption("snake", "Snake", "பாம்பு", setOf("Snake", "Rattle")),
         AnimalOption("bigcat", "Lion / tiger (broad)", "சிங்கம் / புலி (பொது)", setOf("Roaring cats (lions, tigers)", "Roar")),
         AnimalOption("whale", "Whale sound", "திமிங்கல ஒலி", setOf("Whale vocalization")),
-        AnimalOption("lizard", "Lizard / gecko — not supported", "பல்லி — அடையாளம் காண இயலாது", emptySet(), false)
+        AnimalOption("lizard", "Lizard / gecko (new species model)", "பல்லி (புதிய உயிரின மாடல்)", emptySet(), false)
     )
 }
