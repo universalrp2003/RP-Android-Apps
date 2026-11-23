@@ -176,6 +176,12 @@ object SisterApps {
             aboutLabel = "வார வசூல் / Weekly Money — GitHub release",
         ),
         SisterApp(
+            id = "animalvoice", name = "Animal Sounds (விலங்கு ஒலிகள்)", tamilName = "விலங்கு ஒலிகள்",
+            tagPrefix = "animal-sounds", version = "0.21", publishedVersion = "0.21",
+            packageName = "com.universalrp.animalvoice.experimental",
+            aboutLabel = "Animal Sounds (விலங்கு ஒலிகள்) — GitHub release",
+        ),
+        SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
             tagPrefix = "tamilan-store", version = "0.14", publishedVersion = "0.14",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",

@@ -4,7 +4,9 @@ import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -19,14 +21,23 @@ import org.junit.runner.RunWith
  * Large-text layout check. CI runs the emulator with font scale 2.0, so controls must stay
  * reachable by scrolling, visible, tappable and at least 48 dp tall in both languages.
  * The main screen holds only the identify controls; everything optional lives behind the
- * ⚙ Settings button. No microphone access, no network, no model download.
+ * ⚙ Settings button, with the built-in Guide and About at the end of Settings. No microphone
+ * access, no network, no model download.
  */
 @RunWith(AndroidJUnit4::class)
 class LargeTextLayoutTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
 
     private fun openSettings(description: String) {
+        dismissUpdateNoticeIfShown()
         rule.onNodeWithContentDescription(description).performClick()
+    }
+
+    /** The daily update check may show "Update available" once a newer public release exists; it is not part of these tests. */
+    private fun dismissUpdateNoticeIfShown() {
+        rule.waitForIdle()
+        if (rule.onAllNodesWithText("பிறகு").fetchSemanticsNodes().isNotEmpty()) rule.onNodeWithText("பிறகு").performClick()
+        else if (rule.onAllNodesWithText("Later").fetchSemanticsNodes().isNotEmpty()) rule.onNodeWithText("Later").performClick()
     }
 
     @Test fun tamilDownloadControlStaysReachableAtLargeTextSize() {
@@ -83,5 +94,53 @@ class LargeTextLayoutTest {
         rule.onNodeWithText("விலங்கு ஒலிகள்", substring = true).assertIsDisplayed()
         rule.onNodeWithText("உயிரின மாடல்").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("அமைப்புகள்").assertDoesNotExist()
+    }
+
+    @Test fun tamilGuideOpensExpandsAndReturns() {
+        openSettings("அமைப்புகள்")
+        rule.onNodeWithText("வழிகாட்டி — எப்படிப் பயன்படுத்துவது").performScrollTo().assertIsDisplayed().assertHeightIsAtLeast(48.dp).performClick()
+        rule.onNodeWithText("வழிகாட்டி").assertIsDisplayed()
+        rule.onNodeWithText("விலங்கு ஒலிகள் நீங்கள் அழுத்தியபிறகு", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("மதிப்பெண்கள் சரிசெய்யப்படாத ஊகங்களே", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("முதல் பதிவிறக்கம் (சுமார் 79 MB)").performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
+        rule.onNodeWithText("SHA-256 மூலம் சரிபார்க்கப்படும்", substring = true).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("முதல் பதிவிறக்கம் (சுமார் 79 MB)").performScrollTo().performClick()
+        rule.onNodeWithText("SHA-256 மூலம் சரிபார்க்கப்படும்", substring = true).assertDoesNotExist()
+        rule.onNodeWithText("பின்செல்").performScrollTo().performClick()
+        rule.onNodeWithText("அமைப்புகள்").assertIsDisplayed()
+    }
+
+    @Test fun tamilAboutListsCreditsLinksModelLicencesAndEveryOtherApp() {
+        openSettings("அமைப்புகள்")
+        rule.onNodeWithText("இந்தச் செயலி பற்றி — எமது செயலிகள், இணைப்புகள், நன்றிகள்").performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
+        rule.onNodeWithText("இந்தச் செயலி").assertIsDisplayed()
+        rule.onNodeWithText("Ramesh prathap .R (universalrp2003@gmail.com) · RP Ideas").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Arena.ai Agent Mode", substring = true).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("RP-Android-Apps GitHub Repository").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("அதிகாரப்பூர்வ இணையதளம் — இந்தச் செயலியின் பக்கம்").performScrollTo().assertHasClickAction()
+        rule.onNodeWithText("YAMNet / AudioSet", substring = true).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Animal Sounds (விலங்கு ஒலிகள்) — இந்தச் செயலி").performScrollTo().assertIsDisplayed()
+        // The shared directory: the seventeen other RP Ideas apps, each linking to its own current release.
+        rule.onAllNodesWithText("GitHub release", substring = true).assertCountEquals(16)
+        rule.onNodeWithText("Android TV Guard (டிவி காவலன்) — Android TV release").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("←  பின்").performScrollTo().performClick()
+        rule.onNodeWithText("அமைப்புகள்").assertIsDisplayed()
+    }
+
+    @Test fun englishGuideAndAboutReadCorrectly() {
+        rule.onNodeWithText("English").performClick()
+        openSettings("Settings")
+        rule.onNodeWithText("Guide — how to use this app").performScrollTo().assertHeightIsAtLeast(48.dp).performClick()
+        rule.onNodeWithText("Guide").assertIsDisplayed()
+        rule.onNodeWithText("Animal Sounds listens for a few seconds after you tap", substring = true).assertIsDisplayed()
+        rule.onNodeWithText("What this app does").performScrollTo().performClick()
+        rule.onNodeWithText("BirdNET+ 3.0, about 79 MB", substring = true).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Back").performScrollTo().performClick()
+        rule.onNodeWithText("Settings").assertIsDisplayed()
+        rule.onNodeWithText("About this app — our apps, links & credits").performScrollTo().performClick()
+        rule.onNodeWithText("About").assertIsDisplayed()
+        rule.onNodeWithText("Created by").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("RP-Android-Apps Official Website").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Animal Sounds (விலங்கு ஒலிகள்) — this app").performScrollTo().assertIsDisplayed()
     }
 }

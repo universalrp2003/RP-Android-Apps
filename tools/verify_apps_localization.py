@@ -171,7 +171,8 @@ def verify_app_guides() -> None:
         ("PulseEQ", "pulseEq", "// RP Vocal Remover Studio"),
         ("RP Vocal Remover Studio", "vocalRemover", "// Oor Arivippu"),
         ("Oor Arivippu", "oorArivippu", "// SMS Guard"),
-        ("SMS Guard", "smsGuard", None),
+        ("SMS Guard", "smsGuard", "// Animal Sounds (விலங்கு ஒலிகள்)"),
+        ("Animal Sounds", "animalSounds", None),
     )
     for app, field, end_marker in guide_sections:
         start = guides_source.find(f"val {field} = GuideContent(")
@@ -222,6 +223,10 @@ def verify_app_guides() -> None:
             "secretmessage/wifi-test/app/src/main/java/com/rpideas/secretmessage/wifitest/ConnectScreen.kt",
             ("onOpenGuide", "HelpOutline", 'tr("Guide")'),
         ),
+        "Animal Sounds": (
+            "animalvoice/app/src/main/java/com/universalrp/animalvoice/MainActivity.kt",
+            ("AppGuides.animalSounds", 'overlay = "guide"', "GuideEntryRow"),
+        ),
     }
     for app, (relative_path, required_tokens) in direct_entry_points.items():
         source = (ROOT / relative_path).read_text(encoding="utf-8")
@@ -269,6 +274,7 @@ RELEASE_TAG_PREFIX = {
     "podcast": "tamil-podcast",
     "launcher": "elderly-launcher",
     "secretmessage": "secret-message",
+    "animalvoice": "animal-sounds",
 }
 
 # The Store's current public version. Bump it in the same commit that publishes new Store bytes so
@@ -278,6 +284,9 @@ STORE_CANDIDATE_VERSION = "0.14"
 
 def module_version(module: str) -> str:
     path = ROOT / module / "build.gradle.kts"
+    if not path.exists():
+        # Modules whose Gradle project lives one level deeper (animalvoice/app).
+        path = ROOT / module / "app" / "build.gradle.kts"
     if not path.exists():
         return ""
     match = re.search(
@@ -777,6 +786,26 @@ def verify_about_links() -> None:
     if re.search(r'\bAuthor\b', oor_about_text, re.I):
         raise ValueError("Oor Arivippu About still uses the disallowed 'Author' label.")
 
+    # Like Oor Arivippu, Animal Sounds takes its official links from the shared directory and router
+    # instead of hardcoding release tags, so the URLs are checked in the shared sources too.
+    animal_about = (ROOT / "animalvoice/app/src/main/java/com/universalrp/animalvoice/MainActivity.kt").read_text(encoding="utf-8")
+    animal_about += "\n" + sister_apps_source
+    for required in (
+        "https://universalrp2003.github.io/RP-Android-Apps/",
+        "https://github.com/universalrp2003/RP-Android-Apps",
+        "universalrp2003@gmail.com",
+        "Arena.ai Agent Mode",
+        'SisterApps.releaseLinks("animalvoice")',
+        "SisterApps.projectLinks()",
+        'BrowserReleaseUpdates("Animal-Sounds", tamil)',
+        'DailyWebsiteUpdateNotice("animalvoice", tamil)',
+        'StoreUpdateRouter.openWebsite(this@MainActivity, "animalvoice")',
+    ):
+        if required not in animal_about:
+            raise ValueError(f"Animal Sounds About/updater is missing required content: {required}")
+    if re.search(r'\bAuthor\b', animal_about, re.I):
+        raise ValueError("Animal Sounds About still uses the disallowed 'Author' label.")
+
     sms_source = (ROOT / "smsguard/src/main/java/com/universalrp/smsguard/ui/ControlsTab.kt").read_text(encoding="utf-8")
     if '1.0.0' in sms_source or "https://universalrp2003.github.io/RP-Android-Apps/" not in sms_source:
         raise ValueError("SMS Guard About must read installed version dynamically and link to the official website.")
@@ -1080,7 +1109,7 @@ def verify_newest_first(site: str, regular_ids: list[str]) -> None:
     tbody = site.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
     row_order = re.findall(r'data-release-tag="([^"]+)"', tbody)
     if len(row_order) != len(table):
-        raise ValueError(f"The latest-releases table must name 16 releases, found {len(row_order)}.")
+        raise ValueError(f"The latest-releases table must name {len(table)} releases, found {len(row_order)}.")
     if row_order != sorted(row_order, key=lambda tag: table[tag], reverse=True):
         raise ValueError(
             "The latest-releases table must list the newest release first. "
@@ -1282,9 +1311,9 @@ def verify_site_versions_match_downloads() -> int:
     english_counts = [int(n) for n in re.findall(r"\ball (\d+) RP Ideas apps\b", site)]
     tamil_counts = [int(n) for n in re.findall(r"அனைத்து (\d+) RP Ideas செயலிகள்", site)]
     hyphen_counts = [int(n) for n in re.findall(r"\b(\d+)-app\b", site)]
-    if english_counts != [16, 16] or tamil_counts != [16, 16]:
+    if english_counts != [17, 17] or tamil_counts != [17, 17]:
         raise ValueError("Both PulseEQ/Vocal Remover cards must use the current English and Tamil suite counts.")
-    if not hyphen_counts or any(n not in (16, expected_apps) for n in hyphen_counts):
+    if not hyphen_counts or any(n not in (17, expected_apps) for n in hyphen_counts):
         raise ValueError(f"site/index.html suite counts {hyphen_counts} disagree with SisterApps.kt ({expected_apps}).")
     # Owner-authorized grouping: thirteen normal non-Store apps (including DailyVault)
     # and the separate optional Store. DailyVault retains browser-only updates.
@@ -1366,7 +1395,7 @@ def main() -> int:
         return 1
     print(f"PASS: {len(keys)} unique shared Tamil catalog entries; {checked} explicit Compose labels are covered.")
     print(f"PASS: all {oor_fields} Oor Arivippu UI fields have Tamil and English strings and are referenced consistently.")
-    print("PASS: all six apps have bilingual, expandable guides and direct main-screen entry points.")
+    print("PASS: all seven apps have bilingual, expandable guides and direct entry points.")
     print(f"PASS: {kotlin_files} Kotlin sources have no unescaped positional format specifiers in string literals.")
     print(f"PASS: {notes_checked} pinned release notes each state their device-test status.")
     print(f"PASS: {tamil_notes} pinned release notes each carry exactly one Tamil section, last, for the in-app update screen.")

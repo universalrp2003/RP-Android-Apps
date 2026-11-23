@@ -40,6 +40,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import com.universalrp.updates.AppGuides
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
+import com.universalrp.updates.BrowserReleaseUpdates
+import com.universalrp.updates.DailyWebsiteUpdateNotice
+import com.universalrp.updates.GuideEntryRow
+import com.universalrp.updates.GuideScreen
+import com.universalrp.updates.SisterApps
+import com.universalrp.updates.StoreUpdateRouter
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -65,7 +74,11 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { delay(6_000); if (noticeSeq == seq && v3NoticeOk) setV3Notice("", "") }
     }
     private var v3NoticeOk by mutableStateOf(false)
-    private var tamil by mutableStateOf(true)
+    /** Interface language lives in the shared RP Ideas preference so this app, Guide and About always agree. */
+    private val tamil: Boolean get() = AppLanguageState.current == AppLanguage.TAMIL
+    private fun toggleLanguage() = AppLanguageState.set(this, if (tamil) AppLanguage.ENGLISH else AppLanguage.TAMIL)
+    /** "" = main/Settings, "guide" = built-in guide, "about" = About screen. */
+    private var overlay by mutableStateOf("")
     private var confirmReplay by mutableStateOf(false)
     private var confirmDownload by mutableStateOf(false)
     private var downloadingV3 by mutableStateOf(false)
@@ -104,6 +117,7 @@ class MainActivity : ComponentActivity() {
         autoPhotos = getPreferences(MODE_PRIVATE).getBoolean("auto_photos", false)
         birdnetReady = BirdNet.installed(this)
         updateV3Status()
+        AppLanguageState.initialize(this)
         setContent {
             val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
                 if (granted) { if (wantV3) listenV3() else listen() } else setMessage("ஒலியைக் கேட்க மைக்ரோஃபோன் அனுமதி தேவை.", "Microphone permission is needed to listen.")
@@ -118,16 +132,22 @@ class MainActivity : ComponentActivity() {
             BackHandler(enabled = showSettings) { showSettings = false }
             // Both screens share one scroll container; start each screen at the top.
             val scroll = rememberScrollState()
-            LaunchedEffect(showSettings) { scroll.scrollTo(0) }
+            LaunchedEffect(showSettings, overlay) { scroll.scrollTo(0) }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF276A54), secondary = Color(0xFF94703A), surface = Color(0xFFF7FAF4))) {
                 Surface(Modifier.fillMaxSize()) {
-                    Column(
-                        Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(scroll).padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        if (showSettings) SettingsContent(permission, v3ModelPicker, v3LabelPicker) else MainContent(permission)
+                    when (overlay) {
+                        "guide" -> GuideScreen(AppGuides.animalSounds, tamil, onBack = { overlay = "" }, accent = Color(0xFF276A54), surface = Color(0xFFEAF3EB))
+                        "about" -> AboutContent { overlay = "" }
+                        else -> Column(
+                            Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(scroll).padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (showSettings) SettingsContent(permission, v3ModelPicker, v3LabelPicker) else MainContent(permission)
+                        }
                     }
                 }
+                // Read-only, at most once-a-day check of public release metadata; opens the official website, never installs.
+                DailyWebsiteUpdateNotice("animalvoice", tamil)
                 if (imageSearchSpecies.isNotEmpty()) AlertDialog(
                     onDismissRequest = { imageSearchSpecies = "" },
                     title = { Text(tr("படங்களை இணையத்தில் தேடவா?", "Search images online?")) },
@@ -177,7 +197,7 @@ class MainActivity : ComponentActivity() {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(tr("🌿  விலங்கு ஒலிகள்", "🌿  Animal Sounds"), fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                             TextButton(onClick = { showSettings = true }, modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = tr("அமைப்புகள்", "Settings") }) { Text("⚙", fontSize = 22.sp) }
-                            TextButton(onClick = { tamil = !tamil }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (tamil) "English" else "தமிழ்") }
+                            TextButton(onClick = { toggleLanguage() }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (tamil) "English" else "தமிழ்") }
                         }
                         Text(tr("ஒலியைக் கேட்டு அறியுங்கள்", "Listen and identify"), fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
                         Text(tr("இது ஒலி வகையை ஊகிக்கும் ஒரு சோதனை. விலங்கின் எண்ணத்தை மொழிபெயர்க்காது. ஒலி இந்தப் போனிலிருந்து வெளியே போகாது.", "This experiment guesses sound categories. It does not translate an animal's thoughts. Audio never leaves this phone."), style = MaterialTheme.typography.bodyMedium)
@@ -296,7 +316,7 @@ class MainActivity : ComponentActivity() {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             TextButton(onClick = { showSettings = false }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("←  பின்", "←  Back")) }
                             Spacer(Modifier.weight(1f))
-                            TextButton(onClick = { tamil = !tamil }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (tamil) "English" else "தமிழ்") }
+                            TextButton(onClick = { toggleLanguage() }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (tamil) "English" else "தமிழ்") }
                         }
                         Text(tr("அமைப்புகள்", "Settings"), fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
                         Text(tr("இங்கே உள்ளவை அனைத்தும் விருப்பமானவை. உயிரின ஒலியைக் கேட்க முதன்மைத் திரைக்குத் திரும்பவும்.", "Everything here is optional. Return to the main screen to identify animal sounds."), style = MaterialTheme.typography.bodyMedium)
@@ -383,10 +403,80 @@ class MainActivity : ComponentActivity() {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text(tr("ஒலி அறிதல் · சோதனை", "SOUND IDENTIFICATION · EXPERIMENTAL"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF276A54))
                                 Text(tr("இது ஒரு சோதனை முன்னோட்டம். ஊகங்களும் மாதிரிப் படங்களும் உயிரினத்தை உறுதிப்படுத்தாது. மதிப்பெண்கள் சரிசெய்யப்படாதவை; கூடுதல் பகுதிகள் தவறான ஊகங்களை அதிகரிக்கலாம். இடம் பயன்படுத்தப்படவில்லை. ஒலி இந்தப் போனிலிருந்து வெளியே போகாது.", "Experimental prototype. Guesses and reference photos do not confirm a species. Scores are uncalibrated; more windows can increase false guesses. No location filter is used. Audio never leaves this phone."), style = MaterialTheme.typography.bodySmall)
-                                Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
-                                Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                             }
                         }
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(tr("வழிகாட்டியும் இந்தச் செயலியும்", "Guide & about"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                                GuideEntryRow(tamil, onClick = { overlay = "guide" }, accent = Color(0xFF276A54))
+                                TextButton(onClick = { overlay = "about" }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(tr("இந்தச் செயலி பற்றி — எமது செயலிகள், இணைப்புகள், நன்றிகள்", "About this app — our apps, links & credits")) }
+                            }
+                        }
+        }
+    }
+
+    /** The RP Ideas About screen: credits, official links, update policy, model licences and the shared app directory. */
+    @Composable private fun AboutContent(onBack: () -> Unit) {
+        BackHandler { onBack() }
+        var browserFailed by remember { mutableStateOf(false) }
+        val version = remember { runCatching { packageManager.getPackageInfo(packageName, 0).versionName.orEmpty() }.getOrDefault("") }
+        fun openLink(url: String) { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }.onFailure { browserFailed = true } }
+        Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = onBack, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("←  பின்", "←  Back")) }
+                Spacer(Modifier.weight(1f))
+                TextButton(onClick = { toggleLanguage() }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (tamil) "English" else "தமிழ்") }
+            }
+            Text(tr("இந்தச் செயலி", "About"), fontSize = 22.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE4F1E7)), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tr("விலங்கு ஒலிகள் · Animal Sounds", "Animal Sounds · விலங்கு ஒலிகள்"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text(tr("பதிப்பு $version · சோதனை முன்னோட்டம்", "Version $version · experimental prototype"), style = MaterialTheme.typography.bodySmall)
+                    Text(tr("ஒலியைக் கேட்டுச் சாத்தியமான ஒலி வகைகளை இந்தப் போனிலேயே ஊகிக்கும் செயலி. விலங்கின் எண்ணத்தை மொழிபெயராது; பொருளை அறியாது; பதில் உருவாக்காது. ஒலி இந்தப் போனிலிருந்து வெளியே போகாது.", "Listens and guesses possible sound sources on this phone. It does not translate an animal's thoughts, determine meaning or generate replies. Audio never leaves this phone."), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tr("உருவாக்கம்", "Created by"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text(tr("Ramesh prathap .R (universalrp2003@gmail.com) · RP Ideas", "Ramesh prathap .R (universalrp2003@gmail.com) · RP Ideas"), style = MaterialTheme.typography.bodyMedium)
+                    Text(tr("மென்பொருள் உதவி: Arena.ai Agent Mode. மூல நிரலும் பங்களிப்பாளர் விவரங்களும் திட்ட இணைப்புகளில் உள்ளன.", "Software assistance: Arena.ai Agent Mode. Source and contributor credits are in the project links."), style = MaterialTheme.typography.bodyMedium)
+                    Text(tr("இலவசம். விளம்பரங்களோ கண்காணிப்போ இல்லை. புதுப்பிப்பை நிறுவ உங்கள் ஒப்புதல் தேவை.", "Free, no ads or tracking. Updates require your confirmation."), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tr("இணைப்புகள்", "Links"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    TextButton(onClick = { if (!StoreUpdateRouter.openWebsite(this@MainActivity, "animalvoice")) browserFailed = true }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(tr("அதிகாரப்பூர்வ இணையதளம் — இந்தச் செயலியின் பக்கம்", "Official website — this app's page")) }
+                    SisterApps.projectLinks().forEach { (label, url) ->
+                        TextButton(onClick = { openLink(url) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(label, style = MaterialTheme.typography.bodyMedium) }
+                    }
+                    if (browserFailed) Text(tr("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser."), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tr("புதுப்பிப்புகள்", "Updates"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    BrowserReleaseUpdates("Animal-Sounds", tamil)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tr("மாடல் நன்றிகளும் உரிமங்களும்", "Model credits & licences"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
+                    Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
+                    Text(tr("மாதிரிப் படங்கள் Wikimedia Commons-லிருந்து; ஒவ்வொரு படத்தின் நன்றியும் உரிமமும் படத்தின் கீழே காட்டப்படும்.", "Reference photos come from Wikimedia Commons; each photo shows its own credit and licence."), style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(tr("எமது செயலிகள்", "Our apps"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                    Text(tr("Animal Sounds (விலங்கு ஒலிகள்) — இந்தச் செயலி", "Animal Sounds (விலங்கு ஒலிகள்) — this app"), style = MaterialTheme.typography.bodyMedium, color = Color(0xFF276A54))
+                    // The shared directory: every RP Ideas app's current public release, so this list never drifts from the website.
+                    SisterApps.releaseLinks("animalvoice").forEach { (label, url) ->
+                        TextButton(onClick = { openLink(url) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(label, style = MaterialTheme.typography.bodyMedium) }
+                    }
+                }
+            }
         }
     }
 

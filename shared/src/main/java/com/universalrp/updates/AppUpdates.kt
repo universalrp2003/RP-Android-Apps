@@ -11,6 +11,7 @@ object AppUpdates {
         "SMS-Guard" to "smsguard", "Voice-Notes" to "voicenotes", "Expense-Tracker" to "expensetracker",
         "Tamil-Podcast-Player" to "podcast", "Elderly-Launcher" to "launcher", "Vasanthi-AI" to "vasanthi",
         "DailyVault" to "dailyvault", "Secret-Message" to "secretmessage",
+        "Animal-Sounds" to "animalvoice",
     )
 
     fun appId(prefix: String): String? = ids[prefix]

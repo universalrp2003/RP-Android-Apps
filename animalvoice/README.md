@@ -94,3 +94,11 @@ A phone test of 0.18 showed a 461 MB installer. The cause was not an asset (bund
 Human speech is still shown as a guess, now with a note that people talking nearby may be masking quieter animal calls in the same recording; it is not hidden or demoted, because the ranking is the model's output and the app does not silently filter results.
 
 0.19 is signed with the same key as 0.17 and 0.18, so it installs as an in-place update and keeps the downloaded model and settings.
+
+### Version 0.21
+
+- **Built-in Guide and About, reachable from ⚙ Settings.** Settings now ends with a **Guide & about** card: the shared bilingual guide (12 topics: what this app does, the ~79 MB first download, 3 vs 9 seconds, reading results, reference photos, the models, privacy, settings) and **About this app** — team details (Ramesh prathap .R, RP Ideas; software assistance Arena.ai Agent Mode), links to the official website and the GitHub repository, the update policy, model licences, and the shared directory of every RP Ideas app (18, including this one and the optional Tamilan Store).
+- **Daily update notice.** Once a day the app reads only public release metadata from the official website and shows an "update available" card when a newer release exists; tapping it opens the official website in a browser. Nothing is downloaded or installed by the app. AUDIO NEVER LEAVES THE PHONE.
+- The interface language (English / தமிழ்) is now kept in the shared RP Ideas preference, so the app, its Guide and its About always agree.
+- Version code 21, version name 0.21. Signed with the same key as 0.17–0.20, so it installs over 0.20 in place and keeps the downloaded model and settings.
+- Model licences and credits moved from the Settings card to About; the experimental-prototype notice stays on the main screen and in Settings.

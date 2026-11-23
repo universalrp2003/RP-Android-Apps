@@ -24,6 +24,7 @@ object OfficialReleaseVersion {
         "podcast" to "Tamil-Podcast-Player",
         "launcher" to "Elderly-Launcher",
         "dailyvault" to "DailyVault",
+        "animalvoice" to "Animal-Sounds",
     )
 
     fun expectedAssetName(appId: String, version: String): String =
