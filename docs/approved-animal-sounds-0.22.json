@@ -1,0 +1,28 @@
+{
+  "owner_authorized": true,
+  "publications": [
+    {
+      "app": "animalvoice",
+      "run_id": 45177603476,
+      "run_attempt": 1,
+      "source": "f102a8489330b40fa565dc4ad75f3db1c7b3966c",
+      "source_branch": "arena/3c5adaf9-rp-android-apps",
+      "artifact": "animal-voices-experimental-signed",
+      "artifact_id": 14818817855,
+      "artifact_sha256": "9987cd459b2c9fa56a71958964f5be495b919eca30f016f8e3a1c4277aad2675",
+      "input_file": "animalvoice-release.apk",
+      "asset": "Animal-Sounds-v0.22.apk",
+      "sha256": "dcabd2d99a922b2634b76af5f4fa26db250a0122c527c68bb00716c985cdb708",
+      "bytes": 52813729,
+      "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+      "package": "com.universalrp.animalvoice.experimental",
+      "code": 22,
+      "version": "0.22",
+      "tag": "animal-sounds-v0.22",
+      "title": "விலங்கு ஒலிகள் · Animal Sounds 0.22",
+      "notes": "releases/animal-sounds-v0.22.md",
+      "prerelease": false
+    }
+  ],
+  "publication_policy": "Owner authorized on 2026-11-23 in the Arena chat: publish Animal Sounds 0.22 automatically once its own candidate CI is green. Promote the exact signed artifact from successful run 45177603476 (attempt 1: unit tests, lint, 15 Android 15 emulator tests at 2.0x font scale in English and Tamil, signer and identity checks) without rebuild or overwrite; the public 0.21 release must stay byte-identical before and after. The exact 0.22 bytes were not phone-tested before publication; the release fixes the issues the owner reported from 0.21 phone screenshots (Tamil text size, Settings dropdowns, About links, photos off by default)."
+}
