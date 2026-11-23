@@ -3,6 +3,9 @@
 Live Guard **3.01** fixes the reported Android foreground-service timeout affecting radio monitoring. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.01) · Update over 3.00 without uninstalling or clearing data. Android emulator verified; not yet tested on the owner’s phone.
 
 
+Animal Sounds **0.22** fixes what the owner saw on a phone: Tamil text now reads at the English visual size (no more two-line title), Settings shows every detail without dropdowns, About keeps only the website and GitHub links with the apps as a plain list, and reference photos are on by default. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22) installs over 0.21 in place. Emulator-verified only; not phone-tested before publication.
+
+
 Tamilan Store **0.15** adds Animal Sounds (experimental) to the store list (seventeen apps) with six owner screenshots. [Signed update](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/tamilan-store-v0.15); install over the current Store without uninstalling or clearing data. Android 15 emulator upgrade over 0.14 verified; not installed on the owner's phone.
 
 
@@ -30,7 +33,7 @@ DailyVault0.5 is the normal thirteenth non-Store app, not an optional companion.
 
 | App · minimum Android | Current stable release (`RP-Android-Apps`) | Direct Signed APK |
 |---|---|---|
-| [**Animal Sounds (விலங்கு ஒலிகள்)**](animalvoice/README.md) · 8.0+ (API 26) | [0.21 / code 21](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.21) | [`Animal-Sounds-v0.21.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.21/Animal-Sounds-v0.21.apk) |
+| [**Animal Sounds (விலங்கு ஒலிகள்)**](animalvoice/README.md) · 8.0+ (API 26) | [0.22 / code 22](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22) | [`Animal-Sounds-v0.22.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.22/Animal-Sounds-v0.22.apk) |
 | [**வார வசூல் · Weekly Money**](weeklymoney/README.md) · 8.0+ (API 26) | [1.5 / code 17](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5) | [`Weekly-Money-v1.5.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/weekly-money-v1.5/Weekly-Money-v1.5.apk) |
 | [**SMS Guard (குறுஞ்செய்தி காவலன்)**](smsguard/README.md) · 8.0+ (API 26) | [1.1.17 / code 23](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/sms-guard-v1.1.17) | [`SMS-Guard-v1.1.17.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/sms-guard-v1.1.17/SMS-Guard-v1.1.17.apk) |
 | [**Live Guard (CleanSweep)**](cleaner/README.md) · 8.0+ (API 26) | [3.01 / code 106](https://github.com/universalrp2003/RP-Android-Apps/releases/tag/live-guard-v3.01) | [`CleanSweep-v3.01.apk`](https://github.com/universalrp2003/RP-Android-Apps/releases/download/live-guard-v3.01/CleanSweep-v3.01.apk) |

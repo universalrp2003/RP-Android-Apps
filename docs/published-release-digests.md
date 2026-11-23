@@ -677,3 +677,10 @@ Exact `CleanSweep-v2.97.apk`: **14,784,299B**, SHA-256 `121b2c757996910849c76b70
 - APK: `Tamilan-Store-v0.15.apk`, 20,713,379 bytes, SHA-256 `c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b`, same package and signer, code 17. Ships 17 catalog entries (adds Animal Sounds 0.21 experimental); catalog-v4.json with the frozen v3/v2/legacy endpoints.
 - Android 15 same-key in-place upgrade over public 0.14: same UID, private marker, language and motion preferences preserved, restart and manual catalog refresh passed, debug-over-release rejected, identical permissions. Not installed on a physical phone. [Receipt](tamilan-store-0.15-publication-receipt.json).
 
+## Animal Sounds 0.22 — public
+
+- Release: https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22
+- Published: 2026-11-23T12:53:46Z. Exact successful candidate run 45177603476 attempt 1 artifact promoted by publisher 45178555446 without rebuilding; the public 0.21 assets were verified unchanged afterwards.
+- APK: `Animal-Sounds-v0.22.apk`, 52,813,729 bytes, SHA-256 `dcabd2d99a922b2634b76af5f4fa26db250a0122c527c68bb00716c985cdb708`, signer `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d`, package `com.universalrp.animalvoice.experimental`, code 22. Same package and signer as 0.21, so it installs over 0.21 in place. Tamil text is drawn at the English visual size, Settings shows every detail without collapsibles, About keeps only the website and GitHub links with the app list plain (Store, DailyVault first), reference photos default on (a persisted off is respected), and the Store entry name drops the experimental tag. [Receipt](animal-sounds-0.22-publication-receipt.json)
+- Unit tests, lint and 15 Android 15 emulator tests at 2.0x font scale in English and Tamil passed; no in-place upgrade was exercised on an emulator and the 0.22 bytes were not phone-tested before publication (owner reported the 0.21 screens this release fixes). [Approval](approved-animal-sounds-0.22.json)
+

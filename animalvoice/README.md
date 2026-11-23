@@ -105,7 +105,7 @@ Human speech is still shown as a guess, now with a note that people talking near
 
 ### Version 0.22
 
-Fixes from the owner's phone screenshots of 0.21.
+Fixes from the owner's phone screenshots of 0.21. Published 2026-11-23 from the exact signed bytes of candidate run 45177603476 (publisher run 45178555446); not phone-tested before publication.
 
 - **Tamil text at the same visual size as English.** Tamil glyphs are drawn larger than Latin letters at the same sp, so the Tamil title and heading broke into two lines on a phone. Tamil text is now drawn at 85% of the sp size through a density override; spacing and 48 dp touch targets are unchanged and the system font scale is still honoured.
 - **Settings shows every detail directly.** The "Advanced settings" and "What can it identify?" dropdowns are gone; the species model file controls and the full coverage text are always visible.

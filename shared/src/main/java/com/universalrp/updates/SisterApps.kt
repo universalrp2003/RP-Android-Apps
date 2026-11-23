@@ -184,7 +184,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "animalvoice", name = "Animal Sounds (விலங்கு ஒலிகள்)", tamilName = "விலங்கு ஒலிகள்",
-            tagPrefix = "animal-sounds", version = "0.21", publishedVersion = "0.21",
+            tagPrefix = "animal-sounds", version = "0.22", publishedVersion = "0.22",
             packageName = "com.universalrp.animalvoice.experimental",
             aboutLabel = "Animal Sounds (விலங்கு ஒலிகள்) — GitHub release",
         ),

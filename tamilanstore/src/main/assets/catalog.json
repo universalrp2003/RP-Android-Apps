@@ -183,11 +183,11 @@
       "name": "Animal Sounds",
       "tamilName": "விலங்கு ஒலிகள்",
       "packageName": "com.universalrp.animalvoice.experimental",
-      "version": "0.21",
-      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.21/Animal-Sounds-v0.21.apk",
+      "version": "0.22",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.22/Animal-Sounds-v0.22.apk",
       "size": 52813729,
-      "sha256": "24ba91656e44bbf8f140138bf282e8946af34c35e77ac9ca1ec3267366423a26",
-      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.21"
+      "sha256": "dcabd2d99a922b2634b76af5f4fa26db250a0122c527c68bb00716c985cdb708",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.22"
     }
   ]
 }
