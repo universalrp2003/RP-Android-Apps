@@ -45,11 +45,17 @@ def write_catalogs(result, directory):
     # Store0.5 requires exactly12 entries. Its endpoint stays frozen at that approved set:
     # DailyVault, Android TV Guard and System App Disabler only ship in catalog-v2.json.
     directory = Path(directory)
-    directory.joinpath('catalog-v3.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
-    v2 = dict(result, apps=[a for a in result['apps'] if a['id'] != 'weeklymoney'])
-    if len(v2['apps']) != 15: raise ValueError('Store0.13 endpoint must retain its15 identities')
+    # Store0.15 reads catalog-v4.json (seventeen entries); catalog-v3.json stays frozen at the
+    # sixteen identities Store0.14 knows, so an Animal Sounds entry never reaches a build that
+    # cannot validate it. Each older endpoint keeps its own approved id set.
+    directory.joinpath('catalog-v4.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')
+    v3 = dict(result, apps=[a for a in result['apps'] if a['id'] != 'animalvoice'])
+    if len(v3['apps']) != 16: raise ValueError('Store0.14 endpoint must retain its 16 identities')
+    directory.joinpath('catalog-v3.json').write_text(json.dumps(v3, ensure_ascii=False, indent=2)+'\n')
+    v2 = dict(result, apps=[a for a in result['apps'] if a['id'] not in ('weeklymoney', 'animalvoice')])
+    if len(v2['apps']) != 15: raise ValueError('Store0.13 endpoint must retain its 15 identities')
     directory.joinpath('catalog-v2.json').write_text(json.dumps(v2, ensure_ascii=False, indent=2)+'\n')
-    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] not in LEGACY_EXCLUDED | {'weeklymoney'}])
+    legacy = dict(result, apps=[a for a in result['apps'] if a['id'] not in LEGACY_EXCLUDED | {'weeklymoney', 'animalvoice'}])
     if len(legacy['apps']) != 12:
         raise ValueError('Legacy Store endpoint must retain exactly12 approved suite entries')
     directory.joinpath('catalog.json').write_text(json.dumps(legacy, ensure_ascii=False, indent=2)+'\n')

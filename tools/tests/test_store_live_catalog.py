@@ -58,8 +58,15 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
             module.write_catalogs(snapshot,directory)
             legacy=json.loads((Path(directory)/'catalog.json').read_text())
             current=json.loads((Path(directory)/'catalog-v2.json').read_text())
+            v3=json.loads((Path(directory)/'catalog-v3.json').read_text())
+            v4=json.loads((Path(directory)/'catalog-v4.json').read_text())
         self.assertEqual(12,len(legacy['apps']))
         self.assertEqual(15,len(current['apps']))
+        # Each newer endpoint is the previous id set plus exactly the app that release added.
+        self.assertEqual(16,len(v3['apps']))
+        self.assertEqual(17,len(v4['apps']))
+        self.assertEqual({a['id'] for a in current['apps']}|{'weeklymoney'},{a['id'] for a in v3['apps']})
+        self.assertEqual({a['id'] for a in v3['apps']}|{'animalvoice'},{a['id'] for a in v4['apps']})
         for added in ('dailyvault','tvguard','appdisabler'):
             self.assertNotIn(added,{a['id'] for a in legacy['apps']})
             self.assertIn(added,{a['id'] for a in current['apps']})
@@ -72,7 +79,7 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         # timestamps are independently recorded in release-dates.json.
         self.assertEqual(snapshot['updated'],served_current['updated'])
         self.assertEqual(served_legacy,dict(served_current,apps=[a for a in served_current['apps'] if a['id'] not in ('dailyvault','tvguard','appdisabler')]))
-        self.assertEqual({a['id'] for a in snapshot['apps'] if a['id'] != 'weeklymoney'},{a['id'] for a in served_current['apps']})
+        self.assertEqual({a['id'] for a in snapshot['apps'] if a['id'] not in ('weeklymoney','animalvoice')},{a['id'] for a in served_current['apps']})
         bundled={a['id']:a for a in snapshot['apps']}
         for app in served_current['apps']:
             before=bundled[app['id']]
@@ -81,7 +88,8 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
             numeric=lambda v:tuple(map(int,v.split('.')))+(0,)*(4-len(v.split('.')))
             self.assertGreaterEqual(numeric(app['version']),numeric(before['version']))
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
-        self.assertIn('"catalog-v2.json"',source)
+        # This build's bounded fallback is the frozen sixteen-entry endpoint older Stores read.
+        self.assertIn('"catalog-v3.json", false',source)
 
     def test_new_store_v3_adds_owner_notebook_without_changing_old_id_sets(self):
         snapshot=json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())
@@ -95,6 +103,22 @@ class CatalogEndpointCompatibilityTest(unittest.TestCase):
         source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
         self.assertIn('"catalog-v3.json"',source)
         self.assertIn('connection.responseCode == 404 && allowLegacy',source)
+
+    def test_new_store_v4_adds_animal_sounds_without_changing_old_id_sets(self):
+        bundled=json.loads((ROOT/'tamilanstore/src/main/assets/catalog.json').read_text())['apps']
+        current=json.loads((ROOT/'site/catalog-v4.json').read_text())
+        old=json.loads((ROOT/'site/catalog-v3.json').read_text())
+        self.assertEqual(17, len(current['apps']))
+        self.assertEqual(16, len(old['apps']))
+        self.assertEqual({a['id'] for a in old['apps']} | {'animalvoice'}, {a['id'] for a in current['apps']})
+        sounds=next(a for a in current['apps'] if a['id']=='animalvoice')
+        self.assertEqual('Animal Sounds · experimental',sounds['name'])
+        self.assertEqual('com.universalrp.animalvoice.experimental',sounds['packageName'])
+        # The bundled fallback carries the exact public release metadata the website serves.
+        self.assertEqual(bundled,current['apps'])
+        source=(ROOT/'tamilanstore/src/main/java/com/universalrp/tamilanstore/LiveCatalog.kt').read_text()
+        self.assertIn('const val URL = Catalog.WEBSITE + "catalog-v4.json"',source)
+        self.assertIn('"catalog-v3.json", false',source)
 
     def test_served_catalog_uses_exact_website_and_mirror_receipts(self):
         current=json.loads((ROOT/'site/catalog-v2.json').read_text())

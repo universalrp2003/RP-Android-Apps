@@ -177,6 +177,17 @@
       "size": 7499595,
       "sha256": "b2169439987275201c2a1b85d06f57f39e8791d87a0c782bbe5694d4744a56f6",
       "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/weekly-money-v1.5"
+    },
+    {
+      "id": "animalvoice",
+      "name": "Animal Sounds · experimental",
+      "tamilName": "விலங்கு ஒலிகள் · சோதனை முன்னோட்டம்",
+      "packageName": "com.universalrp.animalvoice.experimental",
+      "version": "0.21",
+      "url": "https://github.com/universalrp2003/RP-Android-Apps/releases/download/animal-sounds-v0.21/Animal-Sounds-v0.21.apk",
+      "size": 52813729,
+      "sha256": "24ba91656e44bbf8f140138bf282e8946af34c35e77ac9ca1ec3267366423a26",
+      "releaseUrl": "https://github.com/universalrp2003/RP-Android-Apps/releases/tag/animal-sounds-v0.21"
     }
   ]
 }
