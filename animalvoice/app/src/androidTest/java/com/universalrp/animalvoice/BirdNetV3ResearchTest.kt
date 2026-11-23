@@ -36,13 +36,17 @@ class BirdNetV3ResearchTest {
             assertTrue(BirdNetV3.ready(context))
         } finally { bad.delete() }
         if (InstrumentationRegistry.getArguments().getString("onlineDownload") == "1") {
-            V3Download.fetch(context, true) { true }
-            V3Download.fetch(context, false) { true }
+            V3Download.fetch(context, true, keepGoing = { true })
+            V3Download.fetch(context, false, keepGoing = { true })
             assertTrue(BirdNetV3.ready(context))
-            for (species in listOf("Corvus splendens", "Leptocoma zeylonica")) {
+            for (species in listOf("Corvus splendens", "Leptocoma zeylonica", "Lithobates sylvaticus")) {
                 val reference = ReferencePhoto.load(species)
                 assertTrue(reference.bitmap.width in 1..1024 && reference.bitmap.height in 1..1024)
                 assertTrue(reference.artist.isNotBlank() && reference.licence.isNotBlank())
+                if (species == "Lithobates sylvaticus") {
+                    assertEquals("CC BY 2.0", reference.licence)
+                    assertTrue(reference.licenceUrl.startsWith("https://creativecommons.org/licenses/by/2.0"))
+                }
             }
         }
         val tone = ShortArray(BirdNetV3.SAMPLES) { (5000 * sin(2.0 * PI * 1000 * it / BirdNetV3.RATE)).toInt().toShort() }

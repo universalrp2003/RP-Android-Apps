@@ -1,7 +1,7 @@
 name: Animal geographic labels research (no filtering)
 on:
   push:
-    branches: ["arena/b0b465b9-rp-android-apps"]
+    branches: ["arena/3c5adaf9-rp-android-apps"]
     paths: ["animalvoice/research/check_geo_labels.py", "animalvoice/tests/test_geo_labels.py", ".github/workflows/animal-geo-research.yml"]
   workflow_dispatch:
 permissions: {contents: read}

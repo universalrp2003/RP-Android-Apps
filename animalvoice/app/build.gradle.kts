@@ -4,6 +4,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val stableKeystore = rootProject.file("ci-keystore/release.p12")
+val releaseStorePassword = System.getenv("RP_RELEASE_KEYSTORE_PASSWORD")
+
 android {
     namespace = "com.universalrp.animalvoice"
     compileSdk = 36
@@ -11,9 +14,29 @@ android {
         applicationId = "com.universalrp.animalvoice.experimental"
         minSdk = 26
         targetSdk = 36
-        versionCode = 16
-        versionName = "0.16-experimental"
+        versionCode = 17
+        versionName = "0.17-experimental"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+    signingConfigs {
+        if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) {
+            create("stable") {
+                storeFile = stableKeystore
+                storePassword = releaseStorePassword
+                keyAlias = "cleansweep"
+                keyPassword = releaseStorePassword
+                storeType = "PKCS12"
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
+        }
+        release {
+            isMinifyEnabled = false
+            if (stableKeystore.exists() && !releaseStorePassword.isNullOrBlank()) signingConfig = signingConfigs.getByName("stable")
+        }
     }
     buildFeatures { compose = true }
     compileOptions {

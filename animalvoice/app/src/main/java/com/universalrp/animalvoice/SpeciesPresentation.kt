@@ -6,7 +6,9 @@ object SpeciesPresentation {
         "corvus splendens" to "வீட்டுக் காகம்",
         "felis catus" to "வீட்டுப் பூனை",
         "bos taurus" to "வீட்டு மாடு",
-        "hemidactylus frenatus" to "வீட்டுப் பல்லி"
+        "hemidactylus frenatus" to "வீட்டுப் பல்லி",
+        "lithobates sylvaticus" to "மரக் காட்டுத் தவளை",
+        "rana sylvatica" to "மரக் காட்டுத் தவளை"
     )
     fun display(scientific: String, common: String, tamil: Boolean): String {
         val prefix = if (tamil) names[scientific.trim().lowercase()] ?: common else common
@@ -31,6 +33,18 @@ object SpeciesPresentation {
             "cow" -> name == "bos taurus"
             "lizard" -> name == "hemidactylus frenatus"
             else -> null // Other animal groups have not been mapped; don't imply exclusion.
+        }
+    }
+
+    /** A transparent caveat, never a filter: the model can be wrong anywhere. */
+    fun geographicCaveat(scientific: String, tamil: Boolean): String? {
+        return when (scientific.trim().lowercase()) {
+            "lithobates sylvaticus", "rana sylvatica" -> if (tamil) {
+                "மரக் காட்டுத் தவளை வட அமெரிக்காவின் பூர்வீக உயிரினம். தமிழ்நாட்டில் இது தவறான ஊகமாக இருக்கலாம்; இதே ஒலியை எழுப்பும் உள்ளூர் தவளையும் இருக்கலாம். இடம் பயன்படுத்தப்படவில்லை."
+            } else {
+                "Wood frogs are native to North America. A guess in Tamil Nadu may be a false positive or a similar-sounding local frog. No location filter is used."
+            }
+            else -> null
         }
     }
 }

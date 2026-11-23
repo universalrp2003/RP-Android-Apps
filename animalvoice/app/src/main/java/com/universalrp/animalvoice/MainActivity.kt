@@ -5,17 +5,17 @@ import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
 import android.net.ConnectivityManager
-import java.io.IOException
 import android.os.Bundle
+import android.os.SystemClock
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -34,7 +35,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 class MainActivity : ComponentActivity() {
     private var engine: AudioEngine? = null
@@ -54,6 +57,11 @@ class MainActivity : ComponentActivity() {
     private var confirmReplay by mutableStateOf(false)
     private var confirmDownload by mutableStateOf(false)
     private var downloadingV3 by mutableStateOf(false)
+    private var downloadBytes by mutableStateOf(0L)
+    private var downloadTotal by mutableStateOf<Long?>(null)
+    private var downloadIsModel by mutableStateOf(true)
+    private var downloadWaiting by mutableStateOf(false)
+    private val lastProgressUpdate = AtomicLong(0)
     private val photos = mutableStateMapOf<String, ReferencePhoto.Result>()
     private val photoFailures = mutableStateMapOf<String, Boolean>()
     private var autoPhotos by mutableStateOf(false)
@@ -68,7 +76,7 @@ class MainActivity : ComponentActivity() {
     private var showCoverage by mutableStateOf(false)
     private var sampleRate = AudioEngine.RATE
     private var birdnetReady by mutableStateOf(false)
-    private var wantV3 = false
+    private var wantV3 by mutableStateOf(false)
     private var v3ModelReady by mutableStateOf(false)
     private var v3LabelsReady by mutableStateOf(false)
     private var v3Guesses by mutableStateOf<List<BirdNetV3.Guess>?>(null)
@@ -95,26 +103,31 @@ class MainActivity : ComponentActivity() {
             }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF276A54), secondary = Color(0xFF94703A), surface = Color(0xFFF7FAF4))) {
                 Surface(Modifier.fillMaxSize()) {
-                    Column(Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Column(
+                        Modifier.fillMaxSize().safeDrawingPadding().verticalScroll(rememberScrollState()).padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(tr("🌿  விலங்கு ஒலிகள்", "🌿  Animal Sounds"), fontSize = 20.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            TextButton(onClick = { tamil = !tamil }) { Text(if (tamil) "English" else "தமிழ்") }
+                            TextButton(onClick = { tamil = !tamil }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (tamil) "English" else "தமிழ்") }
                         }
                         Text(tr("ஒலி அறிதல் · சோதனை", "SOUND IDENTIFICATION · EXPERIMENTAL"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF276A54))
-                        Text(tr("ஒலியைக் கேட்டு அறியுங்கள்", "Listen and identify"), fontSize = 22.sp, lineHeight = 30.sp, fontWeight = FontWeight.Bold)
-                        Text(tr("இது ஒலி வகையை ஊகிக்கும் ஒரு சோதனை. விலங்கின் எண்ணத்தை மொழிபெயர்க்காது.", "This experiment guesses sound categories. It does not translate an animal's thoughts or words."))
-                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE4F1E7)), shape = RoundedCornerShape(20.dp)) {
-                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                Text(tr("முதலில் கேளுங்கள்", "Listen first"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                Text(tr("இன மாடல்: 3 அல்லது 9 விநாடி. பொது மாடல்: சுமார் 3 விநாடி. ஒலி சேமிக்கப்படாது.", "Species model: 3 or 9 seconds. Basic model: about 3 seconds. Audio is not saved."), style = MaterialTheme.typography.bodyMedium)
+                        Text(tr("ஒலியைக் கேட்டு அறியுங்கள்", "Listen and identify"), fontSize = 22.sp, lineHeight = 28.sp, fontWeight = FontWeight.Bold)
+                        Text(tr("இது ஒலி வகையை ஊகிக்கும் ஒரு சோதனை. விலங்கின் எண்ணத்தை மொழிபெயர்க்காது. ஒலி இந்தப் போனிலிருந்து வெளியே போகாது.", "This experiment guesses sound categories. It does not translate an animal's thoughts. Audio never leaves this phone."), style = MaterialTheme.typography.bodyMedium)
+                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE4F1E7)), shape = RoundedCornerShape(16.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(tr("உயிரின மாடல்", "Species model"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                                 if (v3ModelReady && v3LabelsReady) {
-                                    Text(tr("புதிய உயிரின மாடல் தயார். கீழே உள்ள பொத்தானை அழுத்தவும்.", "The newer species model is ready. Use the button below."), style = MaterialTheme.typography.bodySmall)
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        RadioButton(selected = v3WindowCount == 1, onClick = { v3WindowCount = 1 }, enabled = !busy)
-                                        Text(tr("3 விநாடி", "3 seconds"))
-                                        Spacer(Modifier.width(8.dp))
-                                        RadioButton(selected = v3WindowCount == 3, onClick = { v3WindowCount = 3 }, enabled = !busy)
-                                        Text(tr("9 விநாடி", "9 seconds"))
+                                    Text(tr("தயார் ✓ · பதிவிறக்கத்திற்குப் பிறகு இணையமின்றி வேலை செய்யும். மதிப்பெண்கள் சரிசெய்யப்படாத ஊகங்கள்.", "Ready ✓ · works offline after download. Scores are uncalibrated guesses."), style = MaterialTheme.typography.bodySmall)
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(Modifier.weight(1f).heightIn(min = 48.dp).selectable(selected = v3WindowCount == 1, role = Role.RadioButton, onClick = { v3WindowCount = 1 }, enabled = !busy), verticalAlignment = Alignment.CenterVertically) {
+                                            RadioButton(selected = v3WindowCount == 1, onClick = null, enabled = !busy)
+                                            Text(tr("3 விநாடி", "3 seconds"))
+                                        }
+                                        Row(Modifier.weight(1f).heightIn(min = 48.dp).selectable(selected = v3WindowCount == 3, role = Role.RadioButton, onClick = { v3WindowCount = 3 }, enabled = !busy), verticalAlignment = Alignment.CenterVertically) {
+                                            RadioButton(selected = v3WindowCount == 3, onClick = null, enabled = !busy)
+                                            Text(tr("9 விநாடி", "9 seconds"))
+                                        }
                                     }
                                     if (v3WindowCount == 3) Text(tr("மெல்லிய ஒலிக்காக அதிக நேரம் கேட்கும். தவறான ஊகங்களும் அதிகரிக்கலாம்.", "Longer listening may catch a quiet call, but may also increase false guesses."), style = MaterialTheme.typography.bodySmall)
                                     Button(enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
@@ -122,25 +135,43 @@ class MainActivity : ComponentActivity() {
                                         if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listenV3()
                                         else permission.launch(Manifest.permission.RECORD_AUDIO)
                                     }) { Text(tr("🎙  உயிரின ஒலியைக் கேள்", "🎙  Identify animal sound")) }
+                                } else {
+                                    Text(tr("உயிரின ஊகங்களுக்கு ஒரு முறை சுமார் 79 MB பதிவிறக்கவும். அடிப்படை இணையமில்லாத மாடல் கீழே உள்ள விருப்ப அமைப்புகளில் உள்ளது. ஒலி எப்போதும் பதிவேற்றப்படாது.", "Download about 79 MB once for species guesses. The basic offline model is in Optional settings below. Audio is never uploaded."), style = MaterialTheme.typography.bodyMedium)
+                                    Button(enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = { confirmDownload = true }) { Text(tr("உயிரின மாடலைப் பதிவிறக்கு (~79 MB)", "Download species model (~79 MB)")) }
+                                    Text(tr("பதிவிறக்கத்திற்குப் பிறகு கோப்புகள் சரிபார்க்கப்படும். செயலியைத் திறந்தே வைக்கவும்.", "Files are verified after download. Keep the app open."), style = MaterialTheme.typography.bodySmall)
                                 }
-                                if (!v3ModelReady || !v3LabelsReady) {
-                                    Text(tr("சிறந்த உயிரின ஊகத்துக்கு மாடலை முதலில் பதிவிறக்கவும். கீழே பொதுவான ஒலியை உடனே கேட்கலாம்.", "For species guesses, download the model first. You can also use basic listening immediately."))
-                                    Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { confirmDownload = true }) { Text(tr("உயிரின மாடலைப் பதிவிறக்கு", "Download species model")) }
+                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                                if (busy && !downloadingV3) {
+                                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                                    TextButton(onClick = { stopAndClear() }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("நிறுத்து", "Stop")) }
                                 }
-                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
-                                OutlinedButton(enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
-                                    wantV3 = false
-                                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
-                                    else permission.launch(Manifest.permission.RECORD_AUDIO)
-                                }) { Text(tr("🎙  பொது ஒலியைக் கேள்", "🎙  Listen with basic model")) }
-                                if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = { if (downloadingV3) { stopAndClear(); setV3Notice("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") } else stopAndClear() }) { Text(if (downloadingV3) tr("பதிவிறக்கத்தை நிறுத்து", "Stop download") else tr("நிறுத்து", "Stop")) } }
-                                if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error)
+                                if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                        if (downloadingV3) {
+                            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(16.dp)) {
+                                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(if (downloadIsModel) tr("உயிரின மாடல் பதிவிறக்கப்படுகிறது", "Downloading species model") else tr("பெயர் பட்டியல் பதிவிறக்கப்படுகிறது", "Downloading label list"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    if (downloadWaiting) {
+                                        LinearProgressIndicator(Modifier.fillMaxWidth())
+                                        Text(tr("இணையத்திற்காகக் காத்திருக்கிறது…", "Waiting for internet…"), style = MaterialTheme.typography.bodySmall)
+                                    } else {
+                                        val fraction = DownloadProgress.fraction(downloadBytes, downloadTotal)
+                                        if (fraction != null) {
+                                            val progress = fraction
+                                            LinearProgressIndicator(progress = { progress }, modifier = Modifier.fillMaxWidth())
+                                        } else LinearProgressIndicator(Modifier.fillMaxWidth())
+                                        Text(DownloadProgress.summary(downloadBytes, downloadTotal, tamil), style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Text(tr("செயலியைத் திறந்தே வைக்கவும். நிறுத்தினால் நிலுவையில் உள்ள கோப்பு மட்டும் ரத்தாகும்; சரிபார்க்கப்பட்ட கோப்புகள் நீக்கப்படாது.", "Keep the app open. Stop cancels the missing file; verified files stay installed."), style = MaterialTheme.typography.bodySmall)
+                                    TextButton(onClick = { stopAndClear(); v3NoticeOk = false; setV3Notice("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பதிவிறக்கத்தை நிறுத்து", "Stop download")) }
+                                }
                             }
                         }
                         v3Guesses?.let { found ->
-                            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(20.dp)) {
-                              Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(tr("சாத்தியமான ஒலி வகைகள்", "Possible sound sources"), fontWeight = FontWeight.Bold)
+                            Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(16.dp)) {
+                                Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(tr("சாத்தியமான ஒலி வகைகள்", "Possible sound sources"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                                     if (v3ResultWindows == 3) Text(tr("மூன்று பகுதிகளிலிருந்தும் அதிக மதிப்பெண் பெற்ற மூன்று ஊகங்கள் வரை; இவை உறுதி அல்ல.", "Up to three highest-scoring guesses across all three windows; these are not confirmations."), style = MaterialTheme.typography.bodySmall)
                                     if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
                                     else found.forEach { guess ->
@@ -149,111 +180,108 @@ class MainActivity : ComponentActivity() {
                                             val ranges = v3Candidates.firstOrNull { it.guess == guess }?.windows.orEmpty().joinToString(", ") { "${it * 3}–${it * 3 + 3}" }
                                             Text(tr("பகுதிகள்: $ranges விநாடி", "Qualifying windows: $ranges seconds"), style = MaterialTheme.typography.bodySmall)
                                         }
+                                        SpeciesPresentation.geographicCaveat(guess.scientific, tamil)?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Color(0xFF8A5A00)) }
                                         if (ReferencePhoto.validScientific(guess.scientific) && !guess.scientific.equals("Homo sapiens", true)) {
-                                            TextButton(onClick = { imageSearchSpecies = guess.scientific }) { Text(tr("இணையத்தில் படங்களைத் தேடு", "Search images in browser")) }
+                                            TextButton(onClick = { imageSearchSpecies = guess.scientific }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("இணையத்தில் படங்களைத் தேடு", "Search images in browser")) }
                                             val photo = photos[guess.scientific]
                                             if (photo != null) {
                                                 Image(photo.bitmap.asImageBitmap(), contentDescription = tr("மாதிரிப் படம்", "Reference image"), modifier = Modifier.fillMaxWidth().heightIn(max = 360.dp))
                                                 Text(tr("மாதிரிப் படம்; இது கேட்ட உயிரினத்தை உறுதி செய்யாது.", "Reference image; it does not confirm what you heard."), style = MaterialTheme.typography.bodySmall)
                                                 Text("${photo.title} · ${photo.artist} · ${photo.licence} · Wikimedia Commons", style = MaterialTheme.typography.bodySmall)
-                                                Row {
-                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo.creditUrl))) } }) { Text(tr("பட விவரம்", "Photo details")) }
-                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo.licenceUrl))) } }) { Text(tr("உரிமம்", "Licence")) }
+                                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo.creditUrl))) } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(tr("பட விவரம்", "Photo details")) }
+                                                    TextButton(onClick = { runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(photo.licenceUrl))) } }, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) { Text(tr("உரிமம்", "Licence")) }
                                                 }
                                             } else {
-                                                OutlinedButton(enabled = !photoLoading, onClick = { requestedPhoto = guess.scientific; confirmPhoto = true }) { Text(if (photoLoading && requestedPhoto == guess.scientific) tr("படம் வருகிறது…", "Loading photo…") else tr("மாதிரிப் படம் காட்டு", "Show reference photo")) }
+                                                OutlinedButton(enabled = !photoLoading, onClick = { requestedPhoto = guess.scientific; confirmPhoto = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (photoLoading && requestedPhoto == guess.scientific) tr("படம் வருகிறது…", "Loading photo…") else tr("மாதிரிப் படம் காட்டு", "Show reference photo")) }
                                                 if (photoFailures[guess.scientific] == true) Text(tr("படம் கிடைக்கவில்லை. இணையத்தைச் சரிபார்க்கவும்; எல்லா இனங்களுக்கும் படம் கிடைக்காது.", "Photo unavailable. Check your connection; not every species has a usable image."), style = MaterialTheme.typography.bodySmall)
                                             }
                                         }
-                                        SpeciesPresentation.description(guess.scientific, tamil)?.let { detail ->
-                                            Text(detail, style = MaterialTheme.typography.bodySmall)
-                                        }
+                                        SpeciesPresentation.description(guess.scientific, tamil)?.let { detail -> Text(detail, style = MaterialTheme.typography.bodySmall) }
                                     }
-                                    Text(tr("இவை உறுதியற்ற ஊகங்கள். மனிதர் அல்லது பிற சத்தங்களையும் காட்டலாம். இடம் பயன்படுத்தப்படவில்லை.", "Unverified guesses; results can include human or other sounds. No location filter is used."), style = MaterialTheme.typography.bodySmall)
-                                    if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
-                              }
+                                    Text(tr("இவை உறுதியற்ற ஊகங்கள். மனிதர் அல்லது பிற சத்தங்களையும் காட்டலாம். இடம் பயன்படுத்தப்படவில்லை. படங்கள் ஊகத்தை உறுதிப்படுத்தாது.", "Unverified guesses; results can include human or other sounds. No location filter is used. Images do not confirm the guess."), style = MaterialTheme.typography.bodySmall)
+                                    if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
+                                }
                             }
                         }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(tr("மாதிரிப் படங்களைத் தானாகக் காட்டு", "Load reference photos automatically"), modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
                             Switch(checked = autoPhotos, onCheckedChange = { enabled ->
                                 if (enabled) confirmAutoPhotos = true else {
                                     autoPhotos = false
                                     getPreferences(MODE_PRIVATE).edit().putBoolean("auto_photos", false).apply()
-                                    photoEpoch++; photoJob?.cancel(); photoJob = null; photoLoading = false; photos.clear(); photoFailures.clear()
+                                    photoEpoch++; photoJob?.cancel(); photoJob = null; photoLoading = false; photos.clear(); photoFailures.clear(); requestedPhoto = ""
                                 }
                             })
                         }
-                        TextButton(onClick = { advancedModels = !advancedModels }) { Text(if (advancedModels) tr("மற்ற மாடல் அமைப்புகளை மறை ▴", "Hide other model settings ▴") else tr("மற்ற மாடல் அமைப்புகள் ▾", "Other model settings ▾")) }
-                        if (advancedModels) {
-                        if (birdnetReady) {
-                            Text(tr("பழைய பறவை மாடல் இனி பயன்படுத்தப்படாது.", "The old bird-only model is no longer used."), style = MaterialTheme.typography.bodyMedium)
-                            TextButton(enabled = !busy, onClick = {
-                                val removed = BirdNet.file(this@MainActivity).delete()
-                                birdnetReady = BirdNet.installed(this@MainActivity)
-                                if (!removed && birdnetReady) setMessage("பழைய மாடலை நீக்க முடியவில்லை.", "Could not remove the old model.")
-                            }) { Text(tr("பழைய பறவை மாடலை நீக்கு", "Remove old bird model")) }
-                        }
-                        Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(20.dp)) {
-                            Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                                Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."))
-                                Text(tr("இந்த மாடலையும் பெயர் பட்டியலையும் ஒரே பொத்தானில் பதிவிறக்கலாம். இரண்டையும் சரிபார்த்துச் சேர்க்கும்.", "Download and verify the model and labels together with one button."), style = MaterialTheme.typography.bodySmall)
-                                if (!v3ModelReady || !v3LabelsReady) {
-                                    Button(enabled = !busy, onClick = { confirmDownload = true }) { Text(tr("மாடலைப் பதிவிறக்கு", "Download model")) }
-                                } else Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"))
-                                if (downloadingV3) {
-                                    LinearProgressIndicator(Modifier.fillMaxWidth())
-                                    TextButton(onClick = { stopAndClear(); v3NoticeOk = false; setV3Notice("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") }) { Text(tr("பதிவிறக்கத்தை நிறுத்து", "Stop download")) }
+                        Text(tr("விருப்பம். இனப் பெயர்கள் மட்டும் Wikipedia/Wikimedia-க்கு அனுப்பப்படும்; ஒலி அனுப்பப்படாது. படங்கள் ஊகத்தை உறுதிப்படுத்தாது.", "Optional. Only species names are sent to Wikipedia/Wikimedia; no audio. Photos do not confirm the guess."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(tr("விருப்ப அமைப்புகள்", "Optional settings"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                                    TextButton(onClick = { advancedModels = !advancedModels }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (advancedModels) tr("மேலதிக அமைப்புகளை மறை ▴", "Hide advanced settings ▴") else tr("மேலதிக அமைப்புகள் ▾", "Advanced settings ▾")) }
                                 }
-                                Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
+                                Text(tr("அடிப்படை இணையமில்லாத கேட்பு", "Basic offline listening"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(tr("உட்பொதிக்கப்பட்ட YAMNet: பரந்த ஒலி வகைகள் மட்டும்; பல்லி வகை இல்லை. பதிவிறக்கம் தேவையில்லை; இணையமில்லாமல் வேலை செய்யும்.", "Bundled YAMNet: broad sound categories only; no lizard class. No download; works offline."), style = MaterialTheme.typography.bodySmall)
                                 OutlinedButton(enabled = !busy, onClick = {
-                                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
-                                        .onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
-                                }) { Text(tr("இரண்டு கோப்புகளின் பக்கத்தைத் திற", "Open both files' download page")) }
-                                Text(tr("மாடல் கோப்பு .tflite என முடிய வேண்டும்; .onnx கோப்பைத் தேர்வு செய்ய வேண்டாம்.", "The model must end in .tflite, not .onnx."), style = MaterialTheme.typography.bodySmall)
-                                TextButton(enabled = !busy, onClick = {
-                                    runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite?download=1"))) }
-                                        .onFailure { v3NoticeOk = false; setV3Notice("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
-                                }) { Text(tr("சரியான .tflite மாடலைப் பதிவிறக்கு", "Download the correct .tflite model")) }
-                                OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
-                                OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
-                                if (v3ModelReady && v3LabelsReady) {
-                                    Text(tr("மேலே தேர்வு செய்த நேரம்: ${v3WindowCount * 3} விநாடி", "Duration selected above: ${v3WindowCount * 3} seconds"), style = MaterialTheme.typography.bodySmall)
-                                    Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = {
-                                        wantV3 = true
-                                        if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listenV3()
-                                        else permission.launch(Manifest.permission.RECORD_AUDIO)
-                                    }) { Text(tr("உயிரின ஒலியைக் கேள்", "Identify an animal sound")) }
-                                    TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
-                                }
-                            }
-                        }
-                        }
-                        guesses?.let { found ->
-                            Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(20.dp)) {
-                                Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text(tr("சாத்தியமான ஒலிகள்", "Possible sounds"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
+                                    wantV3 = false
+                                    if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
+                                    else permission.launch(Manifest.permission.RECORD_AUDIO)
+                                }, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)) { Text(tr("🎙  பொது ஒலியைக் கேள்", "🎙  Listen with basic model")) }
+                                if (!wantV3 && message.isNotEmpty() && guesses == null) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                                guesses?.let { found ->
+                                    HorizontalDivider(Modifier.padding(vertical = 2.dp))
+                                    Text(tr("அடிப்படை மாடல் முடிவு", "Basic model result"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                     if (found.isEmpty()) Text(tr("தெளிவாக அடையாளம் காண முடியவில்லை. அமைதியான இடத்தில் மீண்டும் முயற்சிக்கவும்.", "Unknown. The sound was too quiet, ambiguous or not supported. Try again in a quieter place."))
-                                    else found.forEach { Text("• " + (if (tamil) "${it.tamil} (${it.label})" else it.label), fontSize = 17.sp) }
-                                    Text(tr("இவை ஊகங்கள் மட்டுமே; பல ஒலிகள் ஒன்றுபோல் இருக்கலாம். இதன் பொருள் தெரியாது.", "These are guesses, not verified identities. Similar sounds can be confused; the meaning is unknown."), style = MaterialTheme.typography.bodySmall)
-                                    if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
+                                    else found.forEach { Text("• " + (if (tamil) "${it.tamil} (${it.label})" else it.label)) }
+                                    Text(tr("இவை பரந்த ஒலி வகைகள் மட்டுமே; இனம் அல்லது பொருள் அல்ல. இதே ஒலி வேறு விலங்குகளுக்கும் இருக்கலாம்.", "Broad categories only; not species or meaning. Similar sounds can come from different animals."), style = MaterialTheme.typography.bodySmall)
+                                    if (samples != null) OutlinedButton(enabled = !busy, onClick = { confirmReplay = true }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பதிவைக் கேள்", "Replay my sample")) }
+                                }
+                                if (advancedModels) {
+                                    HorizontalDivider(Modifier.padding(vertical = 2.dp))
+                                    if (birdnetReady) {
+                                        Text(tr("பழைய பறவை மாடல் இனி பயன்படுத்தப்படாது.", "The old bird-only model is no longer used."), style = MaterialTheme.typography.bodySmall)
+                                        TextButton(enabled = !busy, onClick = {
+                                            val removed = BirdNet.file(this@MainActivity).delete()
+                                            birdnetReady = BirdNet.installed(this@MainActivity)
+                                            if (!removed && birdnetReady) setMessage("பழைய மாடலை நீக்க முடியவில்லை.", "Could not remove the old model.")
+                                        }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பழைய பறவை மாடலை நீக்கு", "Remove old bird model")) }
+                                    }
+                                    Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                    Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."), style = MaterialTheme.typography.bodySmall)
+                                    Text(tr("கோப்புகள் நிறுவுவதற்கு முன் SHA-256 மூலம் சரிபார்க்கப்படும்.", "Files are verified by SHA-256 before installation."), style = MaterialTheme.typography.bodySmall)
+                                    if (v3ModelReady && v3LabelsReady) Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"), style = MaterialTheme.typography.bodySmall)
+                                    else Text(tr("நிறுவப்படவில்லை. மேலே உள்ள Download species model பொத்தானைப் பயன்படுத்தவும்.", "Not installed. Use Download species model above."), style = MaterialTheme.typography.bodySmall)
+                                    OutlinedButton(enabled = !busy, onClick = {
+                                        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
+                                            .onFailure { setMessage("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("இரண்டு கோப்புகளின் பக்கத்தைத் திற", "Open both files' download page")) }
+                                    Text(tr("மாடல் கோப்பு .tflite என முடிய வேண்டும்; .onnx கோப்பைத் தேர்வு செய்ய வேண்டாம்.", "The model must end in .tflite, not .onnx."), style = MaterialTheme.typography.bodySmall)
+                                    TextButton(enabled = !busy, onClick = {
+                                        runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite?download=1"))) }
+                                            .onFailure { v3NoticeOk = false; setV3Notice("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                    }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("சரியான .tflite மாடலைப் பதிவிறக்கு", "Download the correct .tflite model")) }
+                                    OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
+                                    OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
+                                    if (v3ModelReady && v3LabelsReady) {
+                                        TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
+                                    }
+                                    Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }
-                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(20.dp)) {
-                            Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                TextButton(onClick = { showCoverage = !showCoverage }) {
+                        Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                TextButton(onClick = { showCoverage = !showCoverage }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                                     Text(if (showCoverage) tr("எதை அறியலாம்? ▴", "What can it identify? ▴") else tr("எதை அறியலாம்? ▾", "What can it identify? ▾"))
                                 }
                                 if (showCoverage) {
                                     Text(tr("BirdNET+ V3 பட்டியலில் 11,709 உயிரினங்கள்: 9,788 பறவைகள், 802 பூச்சிகள், 649 நீர்நில வாழ்வன, 419 பாலூட்டிகள் (மனிதர் உட்பட), 35 மீன்கள், 15 ஊர்வன, 1 சிலந்தி வகை. மேலும் 16 உயிரினமல்லாத ஒலி வகைகள்.", "BirdNET+ V3 lists 11,709 animal species: 9,788 birds, 802 insects, 649 amphibians, 419 mammals (including humans), 35 fishes, 15 reptiles and 1 arachnid; plus 16 non-animal sound classes."), style = MaterialTheme.typography.bodyMedium)
                                     Text(tr("பட்டியலில் இருப்பது சரியாக அறியும் என்பதற்கு உறுதியல்ல. பெரும்பாலும் பறவைகளே உள்ளன. பூனை, மாடு, வீட்டுக் காகம், வீட்டுப் பல்லி பட்டியலில் உள்ளன. எல்லா நாய் அல்லது எலி இனங்களும் உள்ளனவா என உறுதியில்லை. மெல்லிய ஒலி தவறவிடப்படலாம்.", "A listed species is not a guarantee of identification; most are birds. House Crow, Domestic Cat, Domestic Cattle and Asian House Gecko are listed. Coverage of dogs and rats is not established. Quiet calls can be missed."), style = MaterialTheme.typography.bodyMedium)
-                                    Text(tr("சில எலி ஒலிகள் மீயொலி; மீன் ஒலிக்குத் தண்ணீருக்கேற்ற ஒலிவாங்கி தேவைப்படலாம். பொருள் அறியவோ பதில் உருவாக்கவோ முடியாது.", "Some rat calls are ultrasonic; fish sounds may need an underwater microphone. The app does not determine meaning or generate replies."), style = MaterialTheme.typography.bodyMedium)
+                                    Text(tr("சில எலி ஒலிகள் மீயொலி; மீன் ஒலிக்குத் தண்ணீருக்கேற்ற ஒலிவாங்கி தேவைப்படலாம். எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது. பொருள் அறியவோ பதில் உருவாக்கவோ முடியாது.", "Some rat calls are ultrasonic; fish sounds may need an underwater microphone. Ant chemical signals cannot be heard. The app does not determine meaning or generate replies."), style = MaterialTheme.typography.bodyMedium)
                                 }
                             }
                         }
-                        Text(tr("பொது மாடல் காகம், நாய், பூனை, மாடு போன்ற ஒலிகளை ஊகிக்கும்; அதில் பல்லி இல்லை. புதிய உயிரின மாடலின் முடிவுகள் உறுதியானவை அல்ல. எலியின் மீயொலிக்குத் தனி கருவி தேவைப்படலாம்; எறும்புகளின் இரசாயனத் தகவலைக் கேட்க முடியாது.", "The basic model guesses broad sounds such as dog, cat, cattle, crow and birds; it has no lizard class. The optional species model is separate and unverified. Rat ultrasound may need special hardware; ant chemical signals cannot be heard."), style = MaterialTheme.typography.bodyMedium)
                         Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                     }
                 }
@@ -289,7 +317,7 @@ class MainActivity : ComponentActivity() {
                 if (confirmDownload) AlertDialog(
                     onDismissRequest = { confirmDownload = false },
                     title = { Text(tr("மாடலைப் பதிவிறக்கவா?", "Download the model?")) },
-                    text = { Text(tr("இணையத்தில் சுமார் 79 MB வரை பயன்படுத்தும். மொபைல் டேட்டாவுக்கு கட்டணம் வரலாம். Zenodo-விலிருந்து விடுபட்ட கோப்புகள் மட்டும் வரும்; உங்கள் ஒலி பதிவை அனுப்பாது. இணையம் இல்லாவிட்டால், செயலி திறந்திருக்கும் வரை காத்திருக்கும்.", "Downloads up to about 79 MB from Zenodo; mobile data charges may apply. Only missing files are downloaded. No audio is uploaded. If offline, it waits while the app stays open.")) },
+                    text = { Text(tr("இணையத்தில் சுமார் 79 MB வரை பயன்படுத்தும். மொபைல் டேட்டாவுக்கு கட்டணம் வரலாம். Zenodo-விலிருந்து விடுபட்ட கோப்புகள் மட்டும் வரும்; உங்கள் ஒலி பதிவை அனுப்பாது. இணையம் இல்லாவிட்டால், செயலி திறந்திருக்கும் வரை காத்திருக்கும். பதிவிறக்க முன்னேற்றம் காட்டப்படும்.", "Downloads up to about 79 MB from Zenodo; mobile data charges may apply. Only missing files are downloaded. No audio is uploaded. If offline, it waits while the app stays open. Download progress is shown.")) },
                     confirmButton = { TextButton(onClick = { confirmDownload = false; downloadV3() }) { Text(tr("பதிவிறக்கு", "Download")) } },
                     dismissButton = { TextButton(onClick = { confirmDownload = false }) { Text(tr("வேண்டாம்", "Cancel")) } }
                 )
@@ -367,6 +395,7 @@ class MainActivity : ComponentActivity() {
     private fun downloadV3() {
         if (busy || BirdNetV3.ready(this)) return
         busy = true; downloadingV3 = true; v3NoticeOk = false; setV3Notice("", "")
+        downloadBytes = 0L; downloadTotal = null; downloadIsModel = true; downloadWaiting = false; lastProgressUpdate.set(0L)
         val thisGeneration = ++generation
         val active = AtomicBoolean(true); importRunning = active
         val cm = getSystemService(ConnectivityManager::class.java)
@@ -375,14 +404,27 @@ class MainActivity : ComponentActivity() {
                 for (isModel in listOf(true, false)) {
                     val target = if (isModel) BirdNetV3.model(this@MainActivity) else BirdNetV3.labels(this@MainActivity)
                     if (target.isFile) continue
+                    downloadIsModel = isModel; downloadBytes = 0L; downloadTotal = null
                     var disconnects = 0
                     while (true) {
-                        if (!V3Download.isOnline(cm)) setV3Notice("இணையத்திற்குக் காத்திருக்கிறது. செயலியைத் திறந்தே வைக்கவும்.", "Waiting for internet. Keep the app open.")
+                        if (!V3Download.isOnline(cm)) {
+                            downloadWaiting = true
+                            setV3Notice("இணையத்திற்குக் காத்திருக்கிறது. செயலியைத் திறந்தே வைக்கவும்.", "Waiting for internet. Keep the app open.")
+                        }
                         V3Download.awaitNetwork(cm)
+                        downloadWaiting = false
                         if (!active.get()) throw CancellationException()
                         if (isModel) setV3Notice("மாடல் பதிவிறக்கப்படுகிறது…", "Downloading model…") else setV3Notice("பெயர் பட்டியல் பதிவிறக்கப்படுகிறது…", "Downloading labels…")
                         try {
-                            withContext(Dispatchers.IO) { V3Download.fetch(this@MainActivity, isModel) { active.get() } }
+                            withContext(Dispatchers.IO) {
+                                V3Download.fetch(this@MainActivity, isModel, { active.get() }) { bytes, total ->
+                                    val now = SystemClock.elapsedRealtime()
+                                    val last = lastProgressUpdate.get()
+                                    if ((now - last >= 200 || (total != null && bytes >= total)) && lastProgressUpdate.compareAndSet(last, now)) {
+                                        runOnUiThread { if (generation == thisGeneration) { downloadBytes = bytes; downloadTotal = total } }
+                                    }
+                                }
+                            }
                             updateV3Status()
                             break
                         } catch (e: IOException) {
@@ -394,7 +436,7 @@ class MainActivity : ComponentActivity() {
                 if (generation == thisGeneration) { v3NoticeOk = true; setV3Notice("மாடல் சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "Model downloaded and verified.") }
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) { v3NoticeOk = false; setV3Notice("பதிவிறக்கம் முடியவில்லை. இணையம் அல்லது சேமிப்பு இடத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Download failed. Check internet and storage, then try again.") } }
-            finally { if (generation == thisGeneration) { updateV3Status(); downloadingV3 = false; busy = false } }
+            finally { if (generation == thisGeneration) { updateV3Status(); downloadingV3 = false; downloadWaiting = false; downloadBytes = 0L; downloadTotal = null; busy = false } }
         }
     }
     private fun listenV3() {
@@ -440,7 +482,7 @@ class MainActivity : ComponentActivity() {
     private fun stopAndClear() {
         clearPhoto()
         generation++; importRunning?.set(false); importRunning = null; engine?.stop(); engine = null; job?.cancel(); job = null; samples?.fill(0); samples = null
-        guesses = null; v3Guesses = null; confirmReplay = false; confirmDownload = false; downloadingV3 = false; busy = false
+        guesses = null; v3Guesses = null; confirmReplay = false; confirmDownload = false; downloadingV3 = false; downloadWaiting = false; downloadBytes = 0L; downloadTotal = null; busy = false
     }
     override fun onStop() { stopAndClear(); super.onStop() }
 }

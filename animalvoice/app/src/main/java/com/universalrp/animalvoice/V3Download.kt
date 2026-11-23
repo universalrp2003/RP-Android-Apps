@@ -57,7 +57,12 @@ object V3Download {
         }
     }
 
-    fun fetch(context: Context, isModel: Boolean, keepGoing: () -> Boolean) {
+    fun fetch(
+        context: Context,
+        isModel: Boolean,
+        keepGoing: () -> Boolean,
+        onProgress: (bytes: Long, total: Long?) -> Unit = { _, _ -> },
+    ) {
         var url = URL(if (isModel) modelUrl else labelsUrl)
         for (attempt in 0..4) {
             if (!keepGoing()) throw InterruptedException("Download stopped")
@@ -75,7 +80,10 @@ object V3Download {
                 if (status != 200) throw IOException("Download failed (HTTP $status)")
                 val limit = if (isModel) 80_000_000L else 10_000_000L
                 if (connection.contentLengthLong > limit) throw IOException("File too large")
-                connection.inputStream.use { BirdNetV3.installStream(context, it, isModel, keepGoing) }
+                val total = connection.contentLengthLong.takeIf { it > 0 }
+                connection.inputStream.use {
+                    BirdNetV3.installStream(context, it, isModel, keepGoing) { bytes, _ -> onProgress(bytes, total) }
+                }
                 return
             } finally { connection.disconnect() }
         }

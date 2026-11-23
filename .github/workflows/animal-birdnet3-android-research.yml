@@ -1,7 +1,7 @@
 name: BirdNET v3 Android research probe (no publication)
 on:
   push:
-    branches: ["arena/b0b465b9-rp-android-apps"]
+    branches: ["arena/3c5adaf9-rp-android-apps"]
     paths: ["animalvoice/app/**", "animalvoice/research/run_birdnet_v3_android.sh", ".github/workflows/animal-birdnet3-android-research.yml"]
 permissions: {contents: read}
 jobs:

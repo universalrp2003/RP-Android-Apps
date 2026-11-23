@@ -30,7 +30,13 @@ object BirdNetV3 {
     }
 
     /** Also used by the one-click downloader. Existing verified files survive failures. */
-    fun installStream(context: Context, source: java.io.InputStream, isModel: Boolean, shouldContinue: () -> Boolean = { true }) {
+    fun installStream(
+        context: Context,
+        source: java.io.InputStream,
+        isModel: Boolean,
+        shouldContinue: () -> Boolean = { true },
+        onProgress: (bytes: Long, total: Long?) -> Unit = { _, _ -> },
+    ) {
         val target = if (isModel) model(context) else labels(context)
         val expectedHash = if (isModel) MODEL_SHA else LABEL_SHA
         val limit = if (isModel) 80_000_000L else 10_000_000L
@@ -47,6 +53,7 @@ object BirdNetV3 {
                     count += n
                     require(count <= limit) { "File too large" }
                     digest.update(bytes, 0, n); output.write(bytes, 0, n)
+                    onProgress(count, null)
                 }
             }
             val actual = digest.digest().joinToString("") { "%02x".format(it) }

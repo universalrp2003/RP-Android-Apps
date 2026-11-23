@@ -1,7 +1,7 @@
 name: BirdNET v3 host research probe (no publication)
 on:
   push:
-    branches: ["arena/b0b465b9-rp-android-apps"]
+    branches: ["arena/3c5adaf9-rp-android-apps"]
     paths: ["animalvoice/research/probe_birdnet_v3*.py", ".github/workflows/animal-birdnet3-research.yml"]
 permissions: {contents: read}
 jobs:

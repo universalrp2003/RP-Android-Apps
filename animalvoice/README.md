@@ -55,3 +55,19 @@ Reference photos are larger and each of up to three qualifying candidates can ha
 
 ### Version 0.16
 Nine-second captures now show up to three distinct qualifying labels ranked by their best score across all three non-overlapping windows; each label lists the windows where it appeared among that window's top three above the existing threshold. More windows can increase false positives, and scores are not calibrated probabilities. Switching automatic photos off cancels downloads and clears currently displayed reference photos; manual requests remain available after confirmation.
+
+### Version 0.17
+The first-run species-model setup is now a clear card: it explains the one-time ~79 MB download, that the basic offline model remains available in Optional settings, and that audio never leaves the phone. Download progress is real byte-level progress (MB downloaded/total and percent; indeterminate when the server does not provide a length), with model and label files shown separately and a Stop control. The layout uses smaller card and spacing gaps, full-row radio targets and 48 dp+ controls so Tamil and English remain readable at large text sizes without unnecessary scrolling.
+
+“Listen with basic model” moved into Optional settings; it is still an offline fallback for broad sound categories, not a species identifier. BirdNET+ file import/removal controls remain under Advanced settings.
+
+Reference photos now accept the eligible CC BY 2.0 licence with the same attribution and licence-link checks as CC BY/BY-SA 3.0 and 4.0. This fixes the Wood Frog (*Lithobates sylvaticus*) lookup: Wikipedia redirects the scientific name to Wood frog, and the selected Commons file is Brian Gratwicke's CC BY 2.0 photograph. The app also uses Wikipedia's `page_image_free` when it is a free image that differs from the lead image, and falls back to Commons `Credit` when `Artist` is blank. Non-commercial or no-derivatives licences, missing credit, non-HTTPS URLs and unexpected hosts are still rejected.
+
+A Wood Frog guess in Tamil Nadu is treated as a possible geographic false positive, not as proof: the result shows a per-species caveat that the species is native to North America and that a similar local frog or a model error is possible. No location permission is requested, no region model is used, and no species is silently suppressed. The geomodel label-comparison research above is not a validated region filter.
+
+The app continues to state that guesses and reference images do not confirm a species, scores are uncalibrated, and multiple windows can increase false positives. Audio remains on-device; only species names are sent when a reference photo is requested.
+
+#### Signing and updates
+From 0.17 the experimental APK is signed with the owner-backed RP release key already used by the repository's other Android apps. The private key lives only in GitHub Actions secrets (`RP_RELEASE_KEYSTORE_BASE64`, `RP_RELEASE_KEYSTORE_PASSWORD`); it is never committed. The release artifact is verified against certificate SHA-256 `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d` and is not debuggable.
+
+0.16 and earlier were signed with a per-run debug key, so a 0.17 APK signed with the persistent key **cannot update that installation**; Android will report a signature conflict. Uninstall 0.16 once first, which deletes the downloaded BirdNET model and the app settings. There is no model export and `allowBackup` is disabled, so re-download the ~79 MB model after installing 0.17. From 0.17 onward, same-key updates preserve app data, including the downloaded model and settings, as long as the application ID and signing certificate remain the same.

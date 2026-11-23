@@ -1,7 +1,7 @@
 name: Inspect zebra finch research archive (no model execution)
 on:
   push:
-    branches: ["arena/b0b465b9-rp-android-apps"]
+    branches: ["arena/3c5adaf9-rp-android-apps"]
     paths: ["animalvoice/research/**", "animalvoice/tests/**", ".github/workflows/animal-zf-research.yml"]
 permissions: {contents: read}
 jobs:
