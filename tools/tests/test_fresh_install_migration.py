@@ -24,7 +24,7 @@ class FreshInstallMigrationTest(unittest.TestCase):
             ('oor-arivippu-v1.1.26', 'Oor-Arivippu-v1.1.26.apk', '1.1.26', 12941104, '96ff45915749f5f1a851ff246ee9ddcd0b83886b3d1017e6ab5f22661d17d22c'),
             ('tamil-podcast-v1.6', 'Tamil-Podcast-Player-v1.6.apk', '1.6', 11967239, 'f654c5966d59daf5ff1489e503f97db53e20e202c93eacee91cb5b12597e04ec'),
             ('daily-vault-v0.5', 'DailyVault-v0.5.apk', '0.5', 11712552, '8842606659442a1e2b8c7d28fd2affac56bb40c0bc679acf86785f3167903d55'),
-            ('tamilan-store-v0.15', 'Tamilan-Store-v0.15.apk', '0.15', 20713379, 'c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b'),
+            ('tamilan-store-v0.16', 'Tamilan-Store-v0.16.apk', '0.16', 20713343, '7bf87fc4508db6f3e034ddc86fbef2121ce12593259f086efc5e8dadac27c552'),
             ('expense-tracker-v1.2', 'Expense-Tracker-v1.2.apk', '1.2', 11564299, '286ea8027042b014fb2f8a28198ee01b569eb270577993189c2f5d7be3277108'),
             ('elderly-launcher-v1.8', 'Elderly-Launcher-v1.8.apk', '1.8', 11538139, '6f633cd543dee244a0a231efe9a8ac71ec6c891ae258867c6307f0e938f3f46c'),
             ('voice-notes-v1.3.4', 'Voice-Notes-v1.3.4.apk', '1.3.4', 13135195, '1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a'),
