@@ -2,7 +2,10 @@
 name: Live Guard 3.00 my-plan and expired-booster regressions (candidate only)
 on:
   push:
-    branches: ["main", "arena/**"]
+    # Historical 3.00 candidate gate, like the 298/299 workflows pinned to the session branch that
+    # produced them. Live Guard moved to 3.01 on 16 November 2026, so this 3.00 identity check must
+    # not run for later branches or main (it would fail on the version it deliberately pins).
+    branches: ["arena/9e6fefe4-rp-android-apps"]
     paths: ["releases/live-guard-v3.00.md", "cleaner/**", "shared/**", "tools/inspect_liveguard_300_candidate.py", "tools/liveguard_298_native_smoke.py", "tools/verify_liveguard_300_installed.py", "tools/run_liveguard_300_native.py", "tools/verify_liveguard_300_native.py", ".github/workflows/liveguard-300-candidate.yml"]
 permissions:
   contents: read

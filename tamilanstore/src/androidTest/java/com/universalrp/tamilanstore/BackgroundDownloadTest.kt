@@ -93,10 +93,11 @@ class BackgroundDownloadTest {
         val context = i.targetContext.applicationContext as Application
         ManagedApkDownload(context).cancel()
         val holder = AtomicReference<StoreModel>()
-        i.runOnMainSync { holder.set(StoreModel(context)); holder.get().refreshCatalog() }
+        i.runOnMainSync { holder.set(StoreModel(context)) }
         val model = holder.get()
-        val deadline = SystemClock.elapsedRealtime() + 45_000
-        while(model.refreshing && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
+        // One real refresh per attempt; retried only because a cold emulator may not reach the
+        // public site yet. The assertions below stay strict about the outcome.
+        LiveCatalogRetry.awaitLive(model) { i.runOnMainSync { model.refreshCatalog() } }
         assertFalse("Refresh must finish", model.refreshing)
         assertEquals("Actual official catalog must validate", "live", model.catalogMessage)
         val oor = model.apps.single { it.id == "oorarivippu" }
