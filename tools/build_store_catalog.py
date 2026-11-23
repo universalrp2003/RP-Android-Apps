@@ -45,7 +45,7 @@ def write_catalogs(result, directory):
     # Store0.5 requires exactly12 entries. Its endpoint stays frozen at that approved set:
     # DailyVault, Android TV Guard and System App Disabler only ship in catalog-v2.json.
     directory = Path(directory)
-    # Store0.15 reads catalog-v4.json (seventeen entries); catalog-v3.json stays frozen at the
+    # Store0.15 and 0.16 read catalog-v4.json (seventeen entries); catalog-v3.json stays frozen at the
     # sixteen identities Store0.14 knows, so an Animal Sounds entry never reaches a build that
     # cannot validate it. Each older endpoint keeps its own approved id set.
     directory.joinpath('catalog-v4.json').write_text(json.dumps(result, ensure_ascii=False, indent=2)+'\n')

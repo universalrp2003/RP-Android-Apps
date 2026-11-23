@@ -55,7 +55,7 @@ jobs:
               # byte-checked at GitHub instead of duplicated in the Pages artifact. The Pages artifact is capped at 1 GB, so older
               # builds stay on their GitHub release page instead of being mirrored a second time.
               ("live-guard-v3.01", "CleanSweep-v3.01.apk", 14781231, "b5850343f4788d9c499024da8ea53b534a20e317bf57b071d855e565a360174f"),
-              ("tamilan-store-v0.15", "Tamilan-Store-v0.15.apk", 20713379, "c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b"),
+              ("tamilan-store-v0.16", "Tamilan-Store-v0.16.apk", 20713343, "7bf87fc4508db6f3e034ddc86fbef2121ce12593259f086efc5e8dadac27c552"),
               ("voice-notes-v1.3.4", "Voice-Notes-v1.3.4.apk", 13135195, "1aa2ea8eb1037098881ce4a0a4329b6164f77a77e0ab31112610fa2d03f8094a"),
               ("secret-message-v1.1.3", "Secret-Message-v1.1.3.apk", 29460361, "2a3baf666490bec882a7f6ff85e5080a72e6c57f2c92e527601a7aca3216007c"),
               ("sms-guard-v1.1.17", "SMS-Guard-v1.1.17.apk", 12840884, "b9a7befd1e2c2b3afac8272994f374efdf92fa2151b6d4b624e25168566cd8dd"),
@@ -113,8 +113,8 @@ jobs:
           test -s site/apks/Animal-Sounds-v0.22.zip
           test -s site/apks/Weekly-Money-v1.5.apk
           test -s site/apks/Weekly-Money-v1.5.zip
-          test -s site/apks/Tamilan-Store-v0.15.apk
-          test -s site/apks/Tamilan-Store-v0.15.zip
+          test -s site/apks/Tamilan-Store-v0.16.apk
+          test -s site/apks/Tamilan-Store-v0.16.zip
           test -s site/apks/Voice-Notes-v1.3.4.apk
           test -s site/apks/Voice-Notes-v1.3.4.zip
           test -s site/apks/Secret-Message-v1.1.3.apk
