@@ -44,7 +44,10 @@ class MainActivity : ComponentActivity() {
     private var message by mutableStateOf("")
     private var legacyNotice by mutableStateOf("")
     private var legacyNoticeOk by mutableStateOf(false)
-    private var v3Notice by mutableStateOf("")
+    private var v3NoticeTa by mutableStateOf("")
+    private var v3NoticeEn by mutableStateOf("")
+    private val v3Notice: String get() = tr(v3NoticeTa, v3NoticeEn)
+    private fun setV3Notice(ta: String, en: String) { v3NoticeTa = ta; v3NoticeEn = en }
     private var v3NoticeOk by mutableStateOf(false)
     private var tamil by mutableStateOf(true)
     private var confirmReplay by mutableStateOf(false)
@@ -137,13 +140,13 @@ class MainActivity : ComponentActivity() {
                                     Text(tr("சிறந்த உயிரின ஊகத்துக்கு மாடலை முதலில் பதிவிறக்கவும். கீழே பொதுவான ஒலியை உடனே கேட்கலாம்.", "For species guesses, download the model first. You can also use basic listening immediately."))
                                     Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { confirmDownload = true }) { Text(tr("உயிரின மாடலைப் பதிவிறக்கு", "Download species model")) }
                                 }
-                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
+                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
                                 OutlinedButton(enabled = !busy && selected.supported, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
                                     wantV3 = false; wantBirdnet = false
                                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
                                     else permission.launch(Manifest.permission.RECORD_AUDIO)
-                                }) { Text(if (busy) tr("கேட்கிறது / ஆய்வு செய்கிறது…", "Listening / analysing…") else tr("🎙  பொது ஒலியைக் கேள்", "🎙  Listen with basic model")) }
-                                if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = { stopAndClear() }) { Text(tr("நிறுத்து", "Stop")) } }
+                                }) { Text(tr("🎙  பொது ஒலியைக் கேள்", "🎙  Listen with basic model")) }
+                                if (busy) { LinearProgressIndicator(Modifier.fillMaxWidth()); TextButton(onClick = { if (downloadingV3) { stopAndClear(); setV3Notice("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") } else stopAndClear() }) { Text(if (downloadingV3) tr("பதிவிறக்கத்தை நிறுத்து", "Stop download") else tr("நிறுத்து", "Stop")) } }
                                 if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error)
                             }
                         }
@@ -213,7 +216,7 @@ class MainActivity : ComponentActivity() {
                                 } else Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"))
                                 if (downloadingV3) {
                                     LinearProgressIndicator(Modifier.fillMaxWidth())
-                                    TextButton(onClick = { stopAndClear(); v3NoticeOk = false; v3Notice = tr("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") }) { Text(tr("பதிவிறக்கத்தை நிறுத்து", "Stop download")) }
+                                    TextButton(onClick = { stopAndClear(); v3NoticeOk = false; setV3Notice("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") }) { Text(tr("பதிவிறக்கத்தை நிறுத்து", "Stop download")) }
                                 }
                                 Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
                                 OutlinedButton(enabled = !busy, onClick = {
@@ -223,7 +226,7 @@ class MainActivity : ComponentActivity() {
                                 Text(tr("மாடல் கோப்பு .tflite என முடிய வேண்டும்; .onnx கோப்பைத் தேர்வு செய்ய வேண்டாம்.", "The model must end in .tflite, not .onnx."), style = MaterialTheme.typography.bodySmall)
                                 TextButton(enabled = !busy, onClick = {
                                     runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite?download=1"))) }
-                                        .onFailure { v3NoticeOk = false; v3Notice = tr("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
+                                        .onFailure { v3NoticeOk = false; setV3Notice("உலாவியைத் திறக்க முடியவில்லை.", "Could not open a browser.") }
                                 }) { Text(tr("சரியான .tflite மாடலைப் பதிவிறக்கு", "Download the correct .tflite model")) }
                                 OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
                                 OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
@@ -236,7 +239,7 @@ class MainActivity : ComponentActivity() {
                                     }) { Text(tr("உயிரின ஒலியைக் கேள்", "Identify an animal sound")) }
                                     TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
                                 }
-                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
+                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
                             }
                         }
                         }
@@ -331,22 +334,22 @@ class MainActivity : ComponentActivity() {
     }
     private fun importV3(uri: Uri, isModel: Boolean) {
         if (busy) return
-        busy = true; message = ""; v3Notice = ""; v3NoticeOk = false
+        busy = true; message = ""; setV3Notice("", ""); v3NoticeOk = false
         val thisGeneration = ++generation
         val isActive = AtomicBoolean(true); importRunning = isActive
         job = lifecycleScope.launch {
             try {
                 withContext(Dispatchers.IO) { BirdNetV3.import(this@MainActivity, uri, isModel) { isActive.get() } }
                 updateV3Status()
-                if (generation == thisGeneration) { v3NoticeOk = true; v3Notice = tr("கோப்பு சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "File verified and imported.") }
+                if (generation == thisGeneration) { v3NoticeOk = true; setV3Notice("கோப்பு சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "File verified and imported.") }
             } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) v3Notice = tr("சரியான பதிப்பு 3.0 கோப்பைத் தேர்வு செய்யவும். இடத்தையும் சரிபார்க்கவும்.", "Import failed. Select the exact v3.0 file and check storage space.") }
+              catch (_: Exception) { if (generation == thisGeneration) setV3Notice("சரியான பதிப்பு 3.0 கோப்பைத் தேர்வு செய்யவும். இடத்தையும் சரிபார்க்கவும்.", "Import failed. Select the exact v3.0 file and check storage space.") }
             finally { if (generation == thisGeneration) busy = false }
         }
     }
     private fun downloadV3() {
         if (busy || BirdNetV3.ready(this)) return
-        busy = true; downloadingV3 = true; v3NoticeOk = false; v3Notice = ""
+        busy = true; downloadingV3 = true; v3NoticeOk = false; setV3Notice("", "")
         val thisGeneration = ++generation
         val active = AtomicBoolean(true); importRunning = active
         val cm = getSystemService(ConnectivityManager::class.java)
@@ -357,10 +360,10 @@ class MainActivity : ComponentActivity() {
                     if (target.isFile) continue
                     var disconnects = 0
                     while (true) {
-                        if (!V3Download.isOnline(cm)) v3Notice = tr("இணையத்திற்குக் காத்திருக்கிறது. செயலியைத் திறந்தே வைக்கவும்.", "Waiting for internet. Keep the app open.")
+                        if (!V3Download.isOnline(cm)) setV3Notice("இணையத்திற்குக் காத்திருக்கிறது. செயலியைத் திறந்தே வைக்கவும்.", "Waiting for internet. Keep the app open.")
                         V3Download.awaitNetwork(cm)
                         if (!active.get()) throw CancellationException()
-                        v3Notice = if (isModel) tr("மாடல் பதிவிறக்கப்படுகிறது…", "Downloading model…") else tr("பெயர் பட்டியல் பதிவிறக்கப்படுகிறது…", "Downloading labels…")
+                        if (isModel) setV3Notice("மாடல் பதிவிறக்கப்படுகிறது…", "Downloading model…") else setV3Notice("பெயர் பட்டியல் பதிவிறக்கப்படுகிறது…", "Downloading labels…")
                         try {
                             withContext(Dispatchers.IO) { V3Download.fetch(this@MainActivity, isModel) { active.get() } }
                             updateV3Status()
@@ -371,9 +374,9 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                if (generation == thisGeneration) { v3NoticeOk = true; v3Notice = tr("மாடல் சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "Model downloaded and verified.") }
+                if (generation == thisGeneration) { v3NoticeOk = true; setV3Notice("மாடல் சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "Model downloaded and verified.") }
             } catch (e: CancellationException) { throw e }
-              catch (_: Exception) { if (generation == thisGeneration) { v3NoticeOk = false; v3Notice = tr("பதிவிறக்கம் முடியவில்லை. இணையம் அல்லது சேமிப்பு இடத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Download failed. Check internet and storage, then try again.") } }
+              catch (_: Exception) { if (generation == thisGeneration) { v3NoticeOk = false; setV3Notice("பதிவிறக்கம் முடியவில்லை. இணையம் அல்லது சேமிப்பு இடத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Download failed. Check internet and storage, then try again.") } }
             finally { if (generation == thisGeneration) { updateV3Status(); downloadingV3 = false; busy = false } }
         }
     }
