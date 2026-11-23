@@ -39,8 +39,8 @@ class LargeTextLayoutTest {
 
     @Test fun tamilOptionalSettingsHeadingIsNotSqueezedAndStillToggles() {
         rule.onNodeWithText("விருப்ப அமைப்புகள்").performScrollTo().assertIsDisplayed().assertWidthIsAtLeast(220.dp)
-        rule.onNodeWithText("மேலதிக அமைப்புகள் ▾").performClick()
-        rule.onNodeWithText("மேலதிக அமைப்புகளை மறை ▴").assertIsDisplayed()
+        rule.onNodeWithText("மேலதிக அமைப்புகள் ▾").performScrollTo().assertIsDisplayed().performClick()
+        rule.onNodeWithText("மேலதிக அமைப்புகளை மறை ▴").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("இரண்டு கோப்புகளின் பக்கத்தைத் திற").performScrollTo().assertIsDisplayed()
     }
 }
