@@ -44,3 +44,7 @@ project(":appdisabler").projectDir = file("appdisabler/app")
 // Offline-only Weekly Money preview; no release/signing/publication integration.
 include(":weeklymoney")
 project(":weeklymoney").projectDir = file("weeklymoney/app")
+
+// Isolated, experimental offline bioacoustics prototype; not a public sister-app release.
+include(":animalvoice")
+project(":animalvoice").projectDir = file("animalvoice/app")

@@ -1,0 +1,29 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner chose 'Publish Store 0.15 once its candidate CI is green' when asked on 2026-11-23; same signing key and package; in-place upgrade over the public 0.14.",
+  "publications": [
+    {
+      "app": "tamilanstore",
+      "run_id": 45165949849,
+      "run_attempt": 1,
+      "source": "84063468a643ef19a16b811848180a525fc0eabe",
+      "source_branch": "arena/3c5adaf9-rp-android-apps",
+      "artifact": "Tamilan-Store-0.15-release-key-upgrade-candidate",
+      "artifact_id": 14814139670,
+      "artifact_sha256": "a12dbdf031b2bdefb7c427a23381667f560bec0d65a4beb8463823c1fd5682c7",
+      "input_file": "Tamilan-Store-v0.15.apk",
+      "asset": "Tamilan-Store-v0.15.apk",
+      "sha256": "c9284fbf067c664bf496c39bc0dee9230b8e1510a4882757d933013d9bcfb84b",
+      "bytes": 20713379,
+      "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+      "package": "com.universalrp.tamilanstore",
+      "code": 17,
+      "version": "0.15",
+      "tag": "tamilan-store-v0.15",
+      "title": "தமிழன் · Tamilan Store 0.15",
+      "notes": "releases/tamilan-store-v0.15.md",
+      "prerelease": false
+    }
+  ],
+  "publication_policy": "Promote the exact signed candidate from successful run 45165949849 (attempt 1: unit tests, lint, release and debug builds, signer and permission identity, and an Android 15 emulator upgrade over the public Store 0.14 preserving UID, preferences and a private marker) without rebuild or overwrite. The public 0.14 assets must stay unchanged."
+}

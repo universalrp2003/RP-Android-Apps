@@ -1,0 +1,91 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner attached eleven 0.20 screenshots and wrote: 'i will attach screenshot for website and app store attachment. You can do all works and finish task.'",
+  "visual_review_completed": true,
+  "reviewed_on": "2026-11-23",
+  "privacy": "All eleven source screens were viewed: Animal Sounds UI only (main screen, results with Wikimedia Commons reference photos and credits, Settings, About/licence card). The status bar shows only the time and battery level; no name, number, account, message, OTP, location or notification appears. Two pairs were near-duplicates (Settings top/bottom) and were not used. Resized to 720x1640 (website) and 702x1599 (Store) with EXIF/ICC metadata stripped.",
+  "version_note": "Screens are from 0.20. Version 0.21 adds the 'Guide & about' card at the end of Settings; captions say so rather than relabelling the pictures.",
+  "images": [
+    {
+      "bytes": 152910,
+      "sha256": "cd1e0ac7988b26b5461ab632ad613c2a2772e0c01d5331e4259ff889c0c3c1c7",
+      "website": "images/animal-sounds-v0.20/1-main-ta.jpg"
+    },
+    {
+      "bytes": 124956,
+      "sha256": "326105f5c94124fc6cd846cfe9a0675ca7b560ec4ae412c7a6027cb38ec50e26",
+      "website": "images/animal-sounds-v0.20/2-results-ta.jpg"
+    },
+    {
+      "bytes": 138738,
+      "sha256": "c83a86812bb35e7dabdc8874ca27fc3296c67e76bd4af72a86ec3c0d9a742f88",
+      "website": "images/animal-sounds-v0.20/3-result-credit-ta.jpg"
+    },
+    {
+      "bytes": 139779,
+      "sha256": "eae9a1f3fd946642fe885e52266f2c4a3dbbcd126c4f37d7c08959fff0d8d396",
+      "website": "images/animal-sounds-v0.20/4-settings-ta.jpg"
+    },
+    {
+      "bytes": 153667,
+      "sha256": "190b79a1cf446e806ee779ea2d92228bfff9af140b59bdd0272362cff56bda2b",
+      "website": "images/animal-sounds-v0.20/5-model-files-ta.jpg"
+    },
+    {
+      "bytes": 206360,
+      "sha256": "f025b4d7c170d54f5b8d8afbc067400f97a46bdf35749b3419675bf1f6ba272d",
+      "website": "images/animal-sounds-v0.20/6-recognise-ta.jpg"
+    },
+    {
+      "bytes": 120207,
+      "sha256": "0d4f721536e3a95da95e0aaf88a5ab5bd5c0708b03dd9ebb1b53f585aab648a6",
+      "website": "images/animal-sounds-v0.20/7-results-en.jpg"
+    },
+    {
+      "bytes": 143143,
+      "sha256": "ec2d2c16745a62f7f3548052e5540b1daab757c3a7acc7d9d1728c138a797bb7",
+      "website": "images/animal-sounds-v0.20/8-main-3s-ta.jpg"
+    },
+    {
+      "bytes": 136178,
+      "sha256": "45ad28e18d227a947ae8cbc97e718c3a944c7abf51324cf0a73d9107fb9b841f",
+      "website": "images/animal-sounds-v0.20/9-magpie-robin-ta.jpg"
+    }
+  ],
+  "store_images": [
+    {
+      "file": "tamilanstore/src/main/assets/screenshots/animalvoice-1.jpg",
+      "bytes": 144881,
+      "sha256": "6fdb845208c0fb0998a646731381ac7fa602328e03288d50048b4efaca1ef43d"
+    },
+    {
+      "file": "tamilanstore/src/main/assets/screenshots/animalvoice-2.jpg",
+      "bytes": 120163,
+      "sha256": "88f0a31059c5342438865396f3042f94aeb2e4109fa72fdc2c35d4962ecb80d1"
+    },
+    {
+      "file": "tamilanstore/src/main/assets/screenshots/animalvoice-3.jpg",
+      "bytes": 117111,
+      "sha256": "49ef498fb78d7c6b4426c94bc8c072b87d5c6eeb26b6972750149aa0878b1695"
+    },
+    {
+      "file": "tamilanstore/src/main/assets/screenshots/animalvoice-4.jpg",
+      "bytes": 135923,
+      "sha256": "725c101246f5f0d26fca4a320d7a53556ad9e76c4928a9522dbbe77981c9c028"
+    },
+    {
+      "file": "tamilanstore/src/main/assets/screenshots/animalvoice-5.jpg",
+      "bytes": 148704,
+      "sha256": "26e14136358bb0632769eb8b54649bdbcf21bcb39b4e66144f4a9bdb3f72060b"
+    },
+    {
+      "file": "tamilanstore/src/main/assets/screenshots/animalvoice-6.jpg",
+      "bytes": 139242,
+      "sha256": "843f78fc410937fa99786b39775a7cce4338a53fd77c60f388b832b0de98f64d"
+    }
+  ],
+  "unused_sources": [
+    "Screenshot_2026-11-23-15-29-10-713 (near-duplicate of Settings top)",
+    "Screenshot_2026-11-23-15-29-15-267 (near-duplicate of Settings bottom)"
+  ]
+}

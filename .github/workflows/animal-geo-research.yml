@@ -1,0 +1,25 @@
+name: Animal geographic labels research (no filtering)
+on:
+  push:
+    branches: ["arena/3c5adaf9-rp-android-apps"]
+    paths: ["animalvoice/research/check_geo_labels.py", "animalvoice/tests/test_geo_labels.py", ".github/workflows/animal-geo-research.yml"]
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  labels:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Test comparison and fetch publisher labels
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s animalvoice/tests -p test_geo_labels.py -v
+          curl -fL --retry 2 --max-time 180 -o "$RUNNER_TEMP/audio.csv" 'https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_Labels.csv?download=1'
+          curl -fL --retry 2 --max-time 180 -o "$RUNNER_TEMP/geo.txt" 'https://github.com/birdnet-team/geomodel/releases/download/v3.0.4/BirdNET%2B_Geomodel_V3.0.4_Global_14K_Labels.txt'
+          echo '88d976477fac81127ac8ac4c215c37749d0a6537944112ea606d321317cb7640  '"$RUNNER_TEMP/audio.csv" | sha256sum -c
+          echo '8250b457e45d43fc3e77b5cbd06a1d311baf585ab9c51ed8d42e011d98534835  '"$RUNNER_TEMP/geo.txt" | sha256sum -c
+          python animalvoice/research/check_geo_labels.py "$RUNNER_TEMP/audio.csv" "$RUNNER_TEMP/geo.txt" | tee "$GITHUB_STEP_SUMMARY" > "$RUNNER_TEMP/geo-report.json"
+          echo "::notice title=Label coverage::$(python -c 'import json,sys; print(json.dumps(json.load(open(sys.argv[1])), separators=(",", ":")))' "$RUNNER_TEMP/geo-report.json")"

@@ -1,0 +1,23 @@
+name: Publish verified Animal Sounds 0.21
+on:
+  push:
+    branches: ["arena/3c5adaf9-rp-android-apps"]
+    paths: ["docs/approved-animal-sounds-0.21.json"]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-animal-sounds-0-21
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/arena/3c5adaf9-rp-android-apps'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish verified APK without rebuilding
+        run: python3 tools/promote_animal_sounds_0_21.py

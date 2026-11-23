@@ -1,0 +1,11 @@
+# தமிழன் · Tamilan Store 0.15
+
+Adds **விலங்கு ஒலிகள் · Animal Sounds experimental** as the eighteenth app in the RP Ideas suite and the seventeenth entry in the Store's catalog. It is labelled experimental in the catalog: the app listens for 3 or 9 seconds and lists possible bird and animal sound sources on the device, and it says so when it is not sure. The existing sixteen identities remain in the catalog; package, version, size, SHA-256 and pinned signer are still verified before offering Android's installer. Installation remains user-confirmed. The Animal Sounds entry carries six owner-supplied 0.20 screenshots, resized with metadata removed.
+
+The new Store uses `catalog-v4.json` (seventeen entries), with a bounded v3 fallback during website rollout. Older Store builds retain their known 12/15/16-entry endpoints; Animal Sounds is never injected into a catalog an old Store does not recognise. Draft and prerelease metadata remains rejected for every entry.
+
+Same package `com.universalrp.tamilanstore`, version code 17, existing pinned release signer. No new permission. Update in place without uninstalling or clearing app data; uninstalling may erase local data. The signed candidate is tested over public Store 0.14 for same UID, language/motion preferences, a synthetic private marker, restart and the newly listed Animal Sounds entry before promotion of exact bytes. Phone/OEM/Play Protect acceptance is not claimed by emulator evidence.
+
+## தமிழ்
+
+**விலங்கு ஒலிகள் · Animal Sounds experimental** RP Ideas தொகுப்பின் பதினெட்டாவது செயலியாகவும் அங்காடியின் பதினேழாவது பதிவாகவும் புதிதாக இணைக்கப்பட்டது. இது பட்டியலில் சோதனை முன்னோட்டம் என்று குறிக்கப்பட்டுள்ளது: 3 அல்லது 9 விநாடி கேட்டு, பறவை மற்றும் விலங்கு ஒலிகளின் சாத்தியமான ஆதாரங்களை செல்போனிலேயே பட்டியலிடும்; உறுதியாக தெரியாதபோது அதையும் காட்டும். முந்தைய பதினாறு செயலிகளும் தொடரும்; பழைய அங்காடிகளின் 12/15/16 பதிவு endpoints மாறாது. அளவு, SHA-256, package, version மற்றும் கையொப்பச் சரிபார்ப்பு தொடரும். Animal Sounds பதிவில் உரிமையாளர் வழங்கிய ஆறு 0.20 திரைப்படங்கள், மெட்டாடேட்டா நீக்கப்பட்டு சிறிதாக்கப்பட்டு, உள்ளன. அதே கையொப்பத்துடன் நீக்காமல் புதுப்பிக்கவும். பழைய/வேறு கையொப்பம் இருந்தால் நிறுவல் மறுக்கப்படும்; பாதுகாப்பை மீற வேண்டாம். Uninstall செய்தால் local data / உள்ளூர் தரவு அழியலாம்; backup இல்லாமல் நீக்க வேண்டாம்.

@@ -1,0 +1,28 @@
+{
+  "owner_authorized": true,
+  "publications": [
+    {
+      "app": "animalvoice",
+      "run_id": 45159623048,
+      "run_attempt": 1,
+      "source": "7c9609939bb651462064769831ef243f6924477a",
+      "source_branch": "arena/3c5adaf9-rp-android-apps",
+      "artifact": "animal-voices-experimental-signed",
+      "artifact_id": 14811235356,
+      "artifact_sha256": "80ae4867f3f17f1cb6bfd65a183862cbd7a690ee1daf675c6edc3f8d24c896ca",
+      "input_file": "animalvoice-release.apk",
+      "asset": "Animal-Sounds-v0.21.apk",
+      "sha256": "24ba91656e44bbf8f140138bf282e8946af34c35e77ac9ca1ec3267366423a26",
+      "bytes": 52813729,
+      "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+      "package": "com.universalrp.animalvoice.experimental",
+      "code": 21,
+      "version": "0.21",
+      "tag": "animal-sounds-v0.21",
+      "title": "விலங்கு ஒலிகள் · Animal Sounds 0.21",
+      "notes": "releases/animal-sounds-v0.21.md",
+      "prerelease": false
+    }
+  ],
+  "publication_policy": "Promote the exact signed artifact from successful run 45159623048 (attempt 1: 15 Android 15 emulator tests at 1.0x and 2.0x font scale, model smoke tests, signer and size checks) without rebuild or overwrite. First public Animal Sounds release; a regular release so the Store catalog generator can list it. Owner installed 0.20 on a phone and accepted it; the exact 0.21 bytes were not phone-tested before publication."
+}

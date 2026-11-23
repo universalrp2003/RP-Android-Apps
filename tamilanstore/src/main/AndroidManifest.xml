@@ -19,6 +19,7 @@
         <package android:name="com.universalrp.tvguard" />
         <package android:name="com.universalrp.appdisabler" />
         <package android:name="com.universalrp.weeklymoney.preview.notebook" />
+        <package android:name="com.universalrp.animalvoice.experimental" />
     </queries>
     <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="@string/app_name" android:icon="@drawable/ic_store" android:theme="@style/Theme.Tamilan">
         <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">

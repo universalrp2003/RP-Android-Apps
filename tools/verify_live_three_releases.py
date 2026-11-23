@@ -52,7 +52,7 @@ def validate_zip(data, name, size, digest):
 
 
 def check_metadata():
-    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'images/social-preview-v17.png'):
+    for name in ('index.html', 'oor-arivippu-guide.html', 'release-dates.json', 'catalog.json', 'catalog-v2.json', 'catalog-v3.json', 'catalog-v4.json', 'weekly-money-guide.html', 'live-guard-guide.html', 'animal-sounds-guide.html', 'images/social-preview-v18.png'):
         data = get_bounded(name, 2_000_000)
         local = (ROOT / 'site' / name).read_bytes()
         matches = data == local if name.endswith(('.html', '.png')) else json.loads(data) == json.loads(local)
@@ -94,8 +94,10 @@ def main():
     checks.append(('Elderly-Launcher-v1.8.apk', json.loads((ROOT/'docs/launcher-1.8-publication.json').read_text())))
     checks.append(('System-App-Disabler-v0.4.1.apk', json.loads((ROOT/'docs/appdisabler-0.4.1-publication.json').read_text())))
     current_names = {app['url'].rsplit('/', 1)[-1] for app in json.loads((ROOT/'site/catalog-v2.json').read_text())['apps']}
-    current_names.add('Tamilan-Store-v0.14.apk')
+    # Store 0.14 stays byte-checked from its immutable GitHub release; 0.15 is the mirrored current build.
     checks.append(('Tamilan-Store-v0.14.apk', json.loads((ROOT/'docs/tamilan-store-0.14-publication-receipt.json').read_text())))
+    current_names.add('Tamilan-Store-v0.15.apk')
+    checks.append(('Tamilan-Store-v0.15.apk', json.loads((ROOT/'docs/tamilan-store-0.15-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.10.apk', json.loads((ROOT/'docs/weekly-money-0.10-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v0.11.apk', json.loads((ROOT/'docs/weekly-money-0.11-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v1.0.apk', json.loads((ROOT/'docs/weekly-money-1.0-publication-receipt.json').read_text())))
@@ -105,11 +107,15 @@ def main():
     checks.append(('Weekly-Money-v1.4.apk', json.loads((ROOT/'docs/weekly-money-1.4-publication-receipt.json').read_text())))
     checks.append(('Weekly-Money-v1.5.apk', json.loads((ROOT/'docs/weekly-money-1.5-publication-receipt.json').read_text())))
     current_names.add('Weekly-Money-v1.5.apk')
+    current_names.add('Animal-Sounds-v0.22.apk')
+    checks.append(('Animal-Sounds-v0.22.apk', json.loads((ROOT/'docs/animal-sounds-0.22-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v3.00.apk', json.loads((ROOT/'docs/live-guard-3.00-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v3.01.apk', json.loads((ROOT/'docs/live-guard-3.01-publication-receipt.json').read_text())))
     checks.append(('CleanSweep-v2.99.apk', json.loads((ROOT/'docs/live-guard-2.99-publication-receipt.json').read_text())))
     for name, pin in checks:
-        assert 0 < pin['bytes'] < 40_000_000
+        # 80 MB keeps every post-deploy download bounded while admitting Animal Sounds (52.8 MB,
+        # two on-device models); the pinned size and SHA-256 are what the bytes are checked against.
+        assert 0 < pin['bytes'] < 80_000_000
         if name not in current_names:
             # Retain immutable historical releases, but not duplicate Pages mirrors.
             historical_tags = {'Elderly-Launcher-v1.7.apk': 'elderly-launcher-v1.7', 'SMS-Guard-v1.1.16.apk': 'sms-guard-v1.1.16', 'CleanSweep-v2.82.apk': 'live-guard-v2.82'}
@@ -121,7 +127,7 @@ def main():
             print(f'PASS: immutable historical GitHub APK {name}', flush=True)
             continue
         validate_apk(get_bounded('apks/' + name, pin['bytes']), pin['bytes'], pin['apk_sha256'])
-        validate_zip(get_bounded('apks/' + name[:-4] + '.zip', 40_000_000), name, pin['bytes'], pin['apk_sha256'])
+        validate_zip(get_bounded('apks/' + name[:-4] + '.zip', 80_000_000), name, pin['bytes'], pin['apk_sha256'])
         print(f'PASS: live APK and ZIP {name}: {pin["bytes"]}B SHA256 {pin["apk_sha256"]}', flush=True)
     gallery = json.loads((ROOT/'docs/launcher-1.7-gallery-review.json').read_text())
     for image in gallery['images']:
@@ -134,6 +140,10 @@ def main():
         validate_apk(data,image['bytes'],image['sha256'])
     for image in json.loads((ROOT/'docs/oor-compass-1.1.22-gallery-review.json').read_text())['images']:
         validate_apk(get_bounded(image['website'], 1_000_000), image['bytes'], image['sha256'])
+    animal_gallery = json.loads((ROOT / 'docs/animal-sounds-0.20-gallery-review.json').read_text())
+    for image in animal_gallery['images']:
+        validate_apk(get_bounded(image['website'], 1_000_000), image['bytes'], image['sha256'])
+    print(f"PASS: {len(animal_gallery['images'])} owner-authorized Animal Sounds screenshots match pinned bytes on the live website", flush=True)
     print('::notice title=Live redacted Oor gallery::Four reviewed masked screenshots and artwork ZIP match pinned bytes on the live website; originals are not published.',flush=True)
     print(f'PASS: main Pages serves all {len(checks)} exact APK/ZIP pairs and safe Launcher screenshots; no Google/device clearance claimed', flush=True)
 

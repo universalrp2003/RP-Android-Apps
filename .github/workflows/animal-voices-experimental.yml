@@ -1,0 +1,133 @@
+name: Animal Voices experimental Android test (no publication)
+on:
+  push:
+    branches: ["arena/3c5adaf9-rp-android-apps"]
+    paths:
+      - "animalvoice/app/**"
+      - "animalvoice/run-emulator-checks.sh"
+      - "settings.gradle.kts"
+      - ".github/actions/prepare-release-signing/**"
+      - "tools/prepare_release_signing.py"
+      - ".github/workflows/animal-voices-experimental.yml"
+permissions: {contents: read}
+jobs:
+  prototype:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      RP_RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Prepare owner-backed fresh-install signing identity
+        uses: ./.github/actions/prepare-release-signing
+        with:
+          keystore-base64: ${{ secrets.RP_RELEASE_KEYSTORE_BASE64 }}
+          keystore-password: ${{ secrets.RP_RELEASE_KEYSTORE_PASSWORD }}
+      - name: Verify model and compile isolated prototype
+        run: |
+          set -o pipefail
+          echo '10c95ea3eb9a7bb4cb8bddf6feb023250381008177ac162ce169694d05c317de  animalvoice/app/src/main/assets/yamnet.tflite' | sha256sum -c
+          ./gradlew :animalvoice:testDebugUnitTest :animalvoice:lintDebug :animalvoice:assembleDebug :animalvoice:assembleDebugAndroidTest :animalvoice:assembleRelease --no-daemon --stacktrace 2>&1 | tee "$RUNNER_TEMP/animal-build.log"
+      - name: Verify APK identity, permissions and stable signer
+        run: |
+          set -euo pipefail
+          tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          debug_apk="$(find animalvoice/app/build/outputs/apk/debug -maxdepth 1 -name '*.apk' -print -quit)"
+          release_apk="$(find animalvoice/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -print -quit)"
+          test -n "$debug_apk"
+          test -n "$release_apk"
+          echo "Debug APK: $debug_apk"
+          echo "Release APK: $release_apk"
+          check_apk() {
+            local apk="$1" badging="$2"
+            "$tools/aapt" dump badging "$apk" > "$badging"
+            cat "$badging"
+            grep -F "name='com.universalrp.animalvoice.experimental'" "$badging"
+            grep -F "versionCode='22'" "$badging"
+            grep -F "versionName='0.22'" "$badging"
+            grep -F "uses-permission: name='android.permission.RECORD_AUDIO'" "$badging"
+            grep -F "uses-permission: name='android.permission.INTERNET'" "$badging"
+            grep -F "uses-permission: name='android.permission.ACCESS_NETWORK_STATE'" "$badging"
+            if grep -E "uses-permission: name='android.permission.(READ_PHONE_STATE|READ_EXTERNAL_STORAGE|WRITE_EXTERNAL_STORAGE)'" "$badging"; then
+              echo "FAIL: forbidden permission present"
+              exit 1
+            fi
+          }
+          check_apk "$debug_apk" "$RUNNER_TEMP/animal-debug-badging.txt"
+          check_apk "$release_apk" "$RUNNER_TEMP/animal-release-badging.txt"
+          cat "$RUNNER_TEMP/animal-debug-badging.txt" "$RUNNER_TEMP/animal-release-badging.txt" > "$RUNNER_TEMP/animal-badging.txt"
+          if grep -F "application-debuggable" "$RUNNER_TEMP/animal-release-badging.txt"; then
+            echo "FAIL: release APK carries the debuggable flag"
+            exit 1
+          fi
+          "$tools/apksigner" verify --print-certs "$release_apk" > "$RUNNER_TEMP/animal-signature.txt"
+          cat "$RUNNER_TEMP/animal-signature.txt"
+          signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' "$RUNNER_TEMP/animal-signature.txt" | tr -d ' :\r' | tr 'A-F' 'a-f' | sort -u)"
+          test -n "$signer"
+          test "$signer" = "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d"
+          "$tools/apksigner" verify --print-certs "$debug_apk" > "$RUNNER_TEMP/animal-debug-signature.txt"
+          debug_signer="$(sed -n 's/.*certificate SHA-256 digest:[[:space:]]*//p' "$RUNNER_TEMP/animal-debug-signature.txt" | tr -d ' :\r' | tr 'A-F' 'a-f' | sort -u)"
+          test -n "$debug_signer"
+          test "$debug_signer" = "$signer"
+          echo "OK: debug and release APKs use the persistent owner-backed certificate"
+      - name: Report APK contents and guard the size
+        run: |
+          set -euo pipefail
+          apk="$(find animalvoice/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -print -quit)"
+          bytes="$(stat -c %s "$apk")"
+          echo "Release APK: $apk"
+          echo "Release APK size: $bytes bytes ($(awk -v b="$bytes" 'BEGIN {printf "%.1f", b/1000000}') MB)"
+          sha="$(sha256sum "$apk" | cut -d' ' -f1)"
+          sha256sum "$apk" > "$apk.sha256"
+          echo "Release APK SHA-256: $sha"
+          # The exact bytes the publication record must pin; a notice survives without the raw log.
+          echo "::notice title=Animal Sounds signed candidate::$apk | $bytes bytes | SHA-256 $sha"
+          echo "Largest entries (uncompressed bytes):"
+          unzip -l "$apk" | awk '$1 ~ /^[0-9]+$/ {printf "%12d  %s\n", $1, $4}' | sort -n -r | head -12
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            unzip -l "$apk" | awk -v dir="lib/$abi/" '$1 ~ /^[0-9]+$/ && index($4, dir) == 1 {total += $1} END {printf "lib/%s: %.1f MB\n", dir, total/1000000}'
+          done
+          if [ "$bytes" -gt 150000000 ]; then
+            echo "FAIL: release APK is larger than 150 MB; a native runtime or asset was probably re-added"
+            exit 1
+          fi
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Run synthetic native model and permission checks (no animal recordings)
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: bash animalvoice/run-emulator-checks.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: animal-voices-experimental-signed
+          path: animalvoice/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
+      - name: Surface bounded build or native failures
+        if: failure()
+        shell: python
+        run: |
+          import os,pathlib
+          r=pathlib.Path(os.environ['RUNNER_TEMP'])
+          for p in (r/'animal-build.log',r/'animal-native.txt',r/'animal-setup.txt',r/'animal-badging.txt',r/'animal-signature.txt',r/'animal-debug-signature.txt'):
+              if p.exists():
+                  lines=p.read_text(errors='replace').splitlines()
+                  selected=lines if p.name.endswith('setup.txt') or p.name.endswith('badging.txt') or p.name.endswith('signature.txt') else [x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'error:', 'Error:', 'Lint found', 'Exception', 'What went wrong'))]
+                  if p.name.endswith('native.txt'):
+                      # Every test's start/end status plus the first line of each failure, so a truncated annotation still shows which tests passed.
+                      selected=[x[:300] for x in lines if any(y in x for y in ('INSTRUMENTATION_STATUS: test=', 'INSTRUMENTATION_STATUS: stack=', 'INSTRUMENTATION_STATUS_CODE', 'OK (', 'FAILURES', 'shortMsg', 'Process crashed', 'INSTRUMENTATION_FAILED'))]
+                  msg=(p.name+'\n'+'\n'.join(selected or lines[-20:]))[-8000:]
+                  print('::error title=Animal Voices check::'+msg.replace('%','%25').replace('\n','%0A'))
+          # Lint findings live in the text report, not the Gradle console; surface every error with its location.
+          for report in pathlib.Path('animalvoice/app/build/reports').glob('lint-results-*.txt'):
+              if 'Error:' in report.read_text(errors='replace'):
+                  body='\n'.join(x for x in report.read_text(errors='replace').splitlines() if ': Error:' in x)[-8000:]
+                  print('::error title=Animal Voices lint errors::'+report.name+'\n'+body.replace('%','%25').replace('\n','%0A'))

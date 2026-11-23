@@ -11,7 +11,7 @@
     'sms-guard': 'security', 'live-guard': 'security', 'secret-message': 'security',
     'ramesh-radio': 'media', 'pulseeq': 'media', 'rp-vocal-remover-studio': 'media', 'tamil-podcast': 'media',
     'weekly-money': 'productivity', 'daily-vault': 'productivity', 'expense-tracker': 'productivity', 'voice-notes': 'productivity',
-    'oor-arivippu': 'utility', 'elderly-launcher': 'utility', 'vasanthi-ai': 'utility', 'tamilan-store': 'utility',
+    'animal-sounds': 'utility', 'oor-arivippu': 'utility', 'elderly-launcher': 'utility', 'vasanthi-ai': 'utility', 'tamilan-store': 'utility',
     'tv-guard': 'utility',
     'system-app-disabler': 'utility'
   };

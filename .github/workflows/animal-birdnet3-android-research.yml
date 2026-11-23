@@ -1,0 +1,49 @@
+name: BirdNET v3 Android research probe (no publication)
+on:
+  push:
+    branches: ["arena/3c5adaf9-rp-android-apps"]
+    paths: ["animalvoice/app/**", "animalvoice/research/run_birdnet_v3_android.sh", ".github/workflows/animal-birdnet3-android-research.yml"]
+permissions: {contents: read}
+jobs:
+  android-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: gradle/actions/setup-gradle@v4
+        with: {gradle-version: '8.14.3'}
+      - name: Build experimental app and instrumented probe
+        run: |
+          set -o pipefail
+          ./gradlew :animalvoice:assembleDebug :animalvoice:assembleDebugAndroidTest --no-daemon 2>&1 | tee "$RUNNER_TEMP/v3-build.log"
+      - name: Fetch exact v3 research model
+        run: |
+          set -o pipefail
+          curl --fail --location --max-time 180 --max-filesize 80000000 --output "$RUNNER_TEMP/v3.tflite" 'https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_FP16_pruned.tflite?download=1'
+          echo "f1fcdefebfba04b34fb9d8856b318c4d924738f2a78087d6d0950cdcce215a88  $RUNNER_TEMP/v3.tflite" | sha256sum -c
+          curl --fail --location --max-time 120 --max-filesize 10000000 --output "$RUNNER_TEMP/v3-labels.csv" 'https://zenodo.org/records/24162518/files/BirdNET+_V3.0_Global_12K_Labels.csv?download=1'
+          echo "88d976477fac81127ac8ac4c215c37749d0a6537944112ea606d321317cb7640  $RUNNER_TEMP/v3-labels.csv" | sha256sum -c
+      - run: sudo chmod a+rw /dev/kvm
+      - name: Run synthetic inference on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
+          script: bash animalvoice/research/run_birdnet_v3_android.sh
+      - name: Surface test or build failures
+        if: failure()
+        shell: python
+        run: |
+          import pathlib,os
+          r=pathlib.Path(os.environ['RUNNER_TEMP'])
+          for p in (r/'v3-build.log', r/'v3-native.log', r/'v3-setup.log'):
+              if p.exists():
+                  lines=p.read_text(errors='replace').splitlines()
+                  chosen=[x for x in lines if any(y in x for y in ('e: file:', 'FAILURE:', 'Exception', 'Error', 'failed', 'FAILURES', 'shortMsg', 'Caused by'))]
+                  msg=(p.name+'\n'+'\n'.join(chosen or lines[-30:]))[-8000:]
+                  print('::error title=BirdNET v3 Android probe::'+msg.replace('%','%25').replace('\n','%0A'))
