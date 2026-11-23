@@ -225,7 +225,6 @@ class MainActivity : ComponentActivity() {
                                     }) { Text(tr("உயிரின ஒலியைக் கேள்", "Identify an animal sound")) }
                                     TextButton(enabled = !busy, onClick = { BirdNetV3.model(this@MainActivity).delete(); BirdNetV3.labels(this@MainActivity).delete(); updateV3Status(); v3Guesses = null }) { Text(tr("புதிய மாடல் கோப்புகளை நீக்கு", "Remove v3 files")) }
                                 }
-                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
                             }
                         }
                         }
@@ -307,6 +306,11 @@ class MainActivity : ComponentActivity() {
         if (photoLoading) return
         val eligible = names.distinct().filter { ReferencePhoto.validScientific(it) && !it.equals("Homo sapiens", true) && !photos.containsKey(it) }.take(3)
         if (eligible.isEmpty()) return
+        val connectivity = getSystemService(ConnectivityManager::class.java)
+        if (!V3Download.isOnline(connectivity)) {
+            eligible.forEach { photoFailures[it] = true }
+            return
+        }
         photoLoading = true
         val thisGeneration = generation
         photoJob = lifecycleScope.launch {
