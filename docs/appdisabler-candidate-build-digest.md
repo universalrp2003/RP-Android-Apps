@@ -4,12 +4,12 @@ Written by `.github/workflows/appdisabler-candidate.yml`; do not edit by hand.
 
 | Field | Value |
 | --- | --- |
-| run | 43859201389 |
-| commit | 285a201da82507319317b0e337ef5c8242917715 |
+| run | 45164105690 |
+| commit | 2a2fa2ea9c1ed7ec46a08493d8c0e8e690533d65 |
 | artifact | appdisabler-0.3.0-release-candidate |
 | apk | appdisabler-release.apk |
-| bytes | 11668005 |
-| apk_sha256 | b8a506b78c63a9fc254741cded4a588b61fd72fe00c43b2c125f097ffc93ba22 |
+| bytes | 11684389 |
+| apk_sha256 | 366304329d29614179d4c8d83292c0bcaecf106c23fae34ee0c9febf23fba5dc |
 | archive_sha256 | (read from the Actions artifact API; not the APK) |
 
 A publisher must pin `apk_sha256` above. `archive_sha256` is the ZIP GitHub
