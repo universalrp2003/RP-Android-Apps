@@ -1,0 +1,29 @@
+{
+  "owner_authorized": true,
+  "authorization": "Owner wrote 'Ok you can publish now but without any error bug in future' on 2026-11-23 after reading the Store 0.16 candidate summary (cause, fix, CI evidence and the publication hold); same signing key and package; in-place upgrade over the public 0.15.",
+  "publications": [
+    {
+      "app": "tamilanstore",
+      "run_id": 45205877709,
+      "run_attempt": 2,
+      "source": "ea6344181742e86f20035ed9fb80133f63070846",
+      "source_branch": "arena/c1856bf9-rp-android-apps",
+      "artifact": "Tamilan-Store-0.16-release-key-upgrade-candidate",
+      "artifact_id": 14834103442,
+      "artifact_sha256": "38985802234da9a0c9cf7c8d942bab579e456f6526a3fca4deb51bdc0d87e42d",
+      "input_file": "Tamilan-Store-v0.16.apk",
+      "asset": "Tamilan-Store-v0.16.apk",
+      "sha256": "7bf87fc4508db6f3e034ddc86fbef2121ce12593259f086efc5e8dadac27c552",
+      "bytes": 20713343,
+      "signer": "7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d",
+      "package": "com.universalrp.tamilanstore",
+      "code": 18,
+      "version": "0.16",
+      "tag": "tamilan-store-v0.16",
+      "title": "தமிழன் · Tamilan Store 0.16",
+      "notes": "releases/tamilan-store-v0.16.md",
+      "prerelease": false
+    }
+  ],
+  "publication_policy": "Promote the exact signed candidate from successful run 45205877709 attempt 2 (unit tests, lint, release and debug builds, signer, permission and version identity pins, and an Android 15 emulator upgrade over the public Store 0.15 preserving UID, preferences and a private marker, reproducing the kept-copy state on 0.15, removing it on 0.16 and rendering a catalog refresh; attempt 1 died in the emulator runner before any test ran) without rebuild or overwrite. Source ea634418 is an ancestor of main through PR #198. The public 0.15 assets must stay unchanged."
+}

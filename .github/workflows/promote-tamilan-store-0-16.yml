@@ -1,7 +1,7 @@
 name: Publish verified Tamilan Store 0.16
 on:
   push:
-    branches: ["arena/c1856bf9-rp-android-apps"]
+    branches: ["arena/c856a625-rp-android-apps"]
     paths: ["docs/approved-tamilan-store-0.16.json"]
   workflow_dispatch:
 permissions:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    if: github.ref == 'refs/heads/arena/c1856bf9-rp-android-apps'
+    if: github.ref == 'refs/heads/arena/c856a625-rp-android-apps'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
