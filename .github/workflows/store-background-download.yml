@@ -46,8 +46,11 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('background-results/native.txt')
-          if p.exists(): print('::error title=Store screen-off regression::'+p.read_text()[-10000:].replace('%','%25').replace('\n','%0A'))
+          # Both instrumentation blocks: the second (CatalogRefreshRecoveryTest) is where a stale
+          # live-catalog pin shows up, and without it the job only reports "exit code 1".
+          for name in ('native.txt', 'refresh.txt'):
+            p=Path('background-results')/name
+            if p.exists(): print('::error title=Store screen-off regression ('+name+')::'+p.read_text()[-10000:].replace('%','%25').replace('\n','%0A'))
           PY
       - uses: actions/upload-artifact@v4
         if: always()
