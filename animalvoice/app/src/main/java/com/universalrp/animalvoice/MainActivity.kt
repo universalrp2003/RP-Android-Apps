@@ -368,16 +368,20 @@ class MainActivity : ComponentActivity() {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 // Every model-file control is listed below in full (owner choice, November 2026): no dropdown.
                                 Text(tr("உயிரின மாடல் கோப்புகள்", "Species model files"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
-                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                                if (message.isNotEmpty()) Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                                    if (birdnetReady) {
+                                if (v3Notice.isNotEmpty()) {
+                                    Text(v3Notice, color = if (v3NoticeOk || downloadingV3) Color(0xFF276A54) else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (message.isNotEmpty()) {
+                                    Text(message, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (birdnetReady) {
                                         Text(tr("பழைய பறவை மாடல் இனி பயன்படுத்தப்படாது.", "The old bird-only model is no longer used."), style = MaterialTheme.typography.bodySmall)
                                         TextButton(enabled = !busy, onClick = {
                                             val removed = BirdNet.file(this@MainActivity).delete()
                                             birdnetReady = BirdNet.installed(this@MainActivity)
                                             if (!removed && birdnetReady) setMessage("பழைய மாடலை நீக்க முடியவில்லை.", "Could not remove the old model.")
                                         }, modifier = Modifier.heightIn(min = 48.dp)) { Text(tr("பழைய பறவை மாடலை நீக்கு", "Remove old bird model")) }
-                                    }
+                                }
                                 Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம். பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong. It does not determine meaning or generate replies."), style = MaterialTheme.typography.bodySmall)
                                 Text(tr("கோப்புகள் நிறுவுவதற்கு முன் SHA-256 மூலம் சரிபார்க்கப்படும்.", "Files are verified by SHA-256 before installation."), style = MaterialTheme.typography.bodySmall)
