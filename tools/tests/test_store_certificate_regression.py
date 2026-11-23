@@ -53,7 +53,11 @@ class StoreCertificateRegression(unittest.TestCase):
     def test_published_store_matches_the_exact_verified_release(self):
         receipt = json.loads((ROOT/'docs/tamilan-store-0.15-publication-receipt.json').read_text())
         text = (ROOT/'shared/src/main/java/com/universalrp/updates/SisterApps.kt').read_text()
-        self.assertIn('tagPrefix = "tamilan-store", version = "0.15", publishedVersion = "0.15"', text)
+        # 0.16 is only a candidate: the directory may name it as the next version, but the published
+        # version every About screen links to must stay the exact verified public release.
+        directory = re.search(r'tagPrefix = "tamilan-store", version = "([^"]+)", publishedVersion = "([^"]+)"', text)
+        self.assertIsNotNone(directory)
+        self.assertEqual(directory.group(2), '0.15')
         site = (ROOT/'site/index.html').read_text()
         mirrors = (ROOT/'.github/workflows/pages.yml').read_text()
         self.assertIn(receipt['url'],site)

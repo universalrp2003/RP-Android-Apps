@@ -164,9 +164,45 @@ class StoreModel(application: Application) : AndroidViewModel(application) {
     private val managed = ManagedApkDownload(application)
     init {
         managed.restore()?.let { saved ->
-            // Restore exactly the immutable release the user chose, not a newly refreshed version.
-            apps = apps.map { if (it.id == saved.app.id) saved.app else it }
-            downloadInternal(saved.app, saved)
+            if (retainedAlreadyInstalled(saved)) discardRetained(saved)
+            else {
+                // Restore exactly the immutable release the user chose, not a newly refreshed version.
+                apps = apps.map { if (it.id == saved.app.id) saved.app else it }
+                downloadInternal(saved.app, saved)
+            }
+        }
+    }
+    /**
+     * A retained download or verified copy whose release is already installed has nothing left to
+     * do: for example the installer ran while this process was dead, so the return that normally
+     * clears the transfer never arrived. Keeping it would hold "Refresh catalog" closed with no
+     * installation left to perform, so it is dropped instead. Only the version decides; a copy for
+     * a release that is still installable is never touched here.
+     */
+    fun reconcileRetainedTransfer() {
+        val saved = managed.restore() ?: return
+        val current = _transfer.value
+        if (current.appId != saved.app.id || current.busy || !current.verified || batch.active) return
+        if (retainedAlreadyInstalled(saved)) discardRetained(saved)
+    }
+    private fun retainedAlreadyInstalled(saved: ManagedApkDownload.Saved): Boolean {
+        val installed = runCatching { installed(saved.app) }.getOrNull() ?: return false
+        // Version comparison only: this decides whether to delete a cache file, never whether to install.
+        val status = InstalledStatus.resolve(InstalledApp(installed.version, trustedSigner = true), saved.app.version)
+        return status == AppStatus.CURRENT || status == AppStatus.NEWER_INSTALLED
+    }
+    private fun discardRetained(saved: ManagedApkDownload.Saved) {
+        // Only called while no copy or verification job is active; still join any finished transport
+        // job before deleting, exactly as cancelTransport does.
+        viewModelScope.launch {
+            withContext(NonCancellable) {
+                job?.cancelAndJoin()
+                withContext(Dispatchers.IO) {
+                    managed.cancel()
+                    File(directory, "${saved.app.id}.apk").delete()
+                }
+                _transfer.value = Transfer()
+            }
         }
     }
     fun installed(app: StoreApp): InstalledApp? = StoreInventory.inspect(getApplication(), app)

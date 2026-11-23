@@ -41,6 +41,10 @@ jobs:
             cat background-results/refresh.txt
             grep -F 'OK (1 test)' background-results/refresh.txt
             grep -F 'INSTRUMENTATION_CODE: -1' background-results/refresh.txt
+            adb shell am instrument -w -r -e class com.universalrp.tamilanstore.RetainedTransferTest com.universalrp.tamilanstore.test/androidx.test.runner.AndroidJUnitRunner > background-results/retained.txt
+            cat background-results/retained.txt
+            grep -F 'OK (1 test)' background-results/retained.txt
+            grep -F 'INSTRUMENTATION_CODE: -1' background-results/retained.txt
       - name: Bounded actual native failures
         if: failure()
         run: |
@@ -48,7 +52,7 @@ jobs:
           from pathlib import Path
           # Both instrumentation blocks: the second (CatalogRefreshRecoveryTest) is where a stale
           # live-catalog pin shows up, and without it the job only reports "exit code 1".
-          for name in ('native.txt', 'refresh.txt'):
+          for name in ('native.txt', 'refresh.txt', 'retained.txt'):
             p=Path('background-results')/name
             if p.exists(): print('::error title=Store screen-off regression ('+name+')::'+p.read_text()[-10000:].replace('%','%25').replace('\n','%0A'))
           PY
