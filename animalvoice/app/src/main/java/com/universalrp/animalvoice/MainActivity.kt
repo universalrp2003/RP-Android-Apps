@@ -52,6 +52,7 @@ class MainActivity : ComponentActivity() {
     private var downloadingV3 by mutableStateOf(false)
     private var selected by mutableStateOf(AnimalOptions.all.first())
     private var selectionExpanded by mutableStateOf(false)
+    private var advancedModels by mutableStateOf(false)
     private var birdGuesses by mutableStateOf<List<BirdNet.Guess>?>(null)
     private var sampleRate = AudioEngine.RATE
     private var birdnetReady by mutableStateOf(false)
@@ -132,7 +133,12 @@ class MainActivity : ComponentActivity() {
                                         else permission.launch(Manifest.permission.RECORD_AUDIO)
                                     }) { Text(tr("🎙  உயிரின ஒலியைக் கேள்", "🎙  Identify animal sound")) }
                                 }
-                                Button(enabled = !busy && selected.supported, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
+                                if (!v3ModelReady || !v3LabelsReady) {
+                                    Text(tr("சிறந்த உயிரின ஊகத்துக்கு மாடலை முதலில் பதிவிறக்கவும். கீழே பொதுவான ஒலியை உடனே கேட்கலாம்.", "For species guesses, download the model first. You can also use basic listening immediately."))
+                                    Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = { confirmDownload = true }) { Text(tr("உயிரின மாடலைப் பதிவிறக்கு", "Download species model")) }
+                                }
+                                if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
+                                OutlinedButton(enabled = !busy && selected.supported, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
                                     wantV3 = false; wantBirdnet = false
                                     if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listen()
                                     else permission.launch(Manifest.permission.RECORD_AUDIO)
@@ -164,6 +170,8 @@ class MainActivity : ComponentActivity() {
                               }
                             }
                         }
+                        TextButton(onClick = { advancedModels = !advancedModels }) { Text(if (advancedModels) tr("மற்ற மாடல் அமைப்புகளை மறை ▴", "Hide other model settings ▴") else tr("மற்ற மாடல் அமைப்புகள் ▾", "Other model settings ▾")) }
+                        if (advancedModels) {
                         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE5EEF8)), shape = RoundedCornerShape(20.dp)) {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(tr("பறவை இன ஆய்வு · BirdNET", "Bird species · BirdNET"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
@@ -230,6 +238,7 @@ class MainActivity : ComponentActivity() {
                                 }
                                 if (v3Notice.isNotEmpty()) Text(v3Notice, color = if (v3NoticeOk) Color(0xFF276A54) else MaterialTheme.colorScheme.error)
                             }
+                        }
                         }
                         guesses?.let { found ->
                             Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(20.dp)) {

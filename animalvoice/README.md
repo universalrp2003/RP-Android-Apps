@@ -33,3 +33,6 @@ In 0.7, the optional v3 model can listen for 3 or 9 seconds. The 9-second mode c
 ### Version 0.8 network and identification details
 
 With explicit confirmation, **Download model** fetches missing BirdNET+ 3.0 files from Zenodo over HTTPS (up to approximately 79 MB total) and verifies pinned SHA-256 hashes before installation. The button leaves already present files alone. It may use mobile data. If the device is offline, it waits only while the app remains open; Stop or leaving the app cancels, and a later retry starts the missing file again. Only model files are downloaded: no recordings, account credentials or observations are uploaded. There is no hosted identification or AI reply yet. The app now requests internet and network-state permissions for this download, while local listening remains offline. Per-species notes for a few supported identities are general curated information, not descriptions of the specific call or inferred intentions.
+
+### Version 0.9
+The main screen presents BirdNET+ species listening and its download first, with the bundled basic sound classifier as an explicit fallback. Older BirdNET-Lite and manual file controls are under Other model settings; existing model files are not removed. The models are not merged and no automatic switching or reply generation is claimed.
