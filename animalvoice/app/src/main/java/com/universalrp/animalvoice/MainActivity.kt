@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
+import android.net.ConnectivityManager
+import java.io.IOException
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -46,6 +48,8 @@ class MainActivity : ComponentActivity() {
     private var v3NoticeOk by mutableStateOf(false)
     private var tamil by mutableStateOf(true)
     private var confirmReplay by mutableStateOf(false)
+    private var confirmDownload by mutableStateOf(false)
+    private var downloadingV3 by mutableStateOf(false)
     private var selected by mutableStateOf(AnimalOptions.all.first())
     private var selectionExpanded by mutableStateOf(false)
     private var birdGuesses by mutableStateOf<List<BirdNet.Guess>?>(null)
@@ -149,6 +153,9 @@ class MainActivity : ComponentActivity() {
                                     else found.forEach { guess ->
                                         val match = SpeciesPresentation.focusMatches(selected.id, guess.scientific)
                                         Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil) + if (match == true) tr(" · தேர்வுடன் பொருந்தலாம்", " · may match your choice") else "")
+                                        SpeciesPresentation.description(guess.scientific, tamil)?.let { detail ->
+                                            Text(detail, style = MaterialTheme.typography.bodySmall)
+                                        }
                                     }
                                     if (selected.id != "all") Text(tr("தேர்வு மற்ற முடிவுகளை மறைக்காது; பொருத்தம் இருப்பது உறுதி அல்ல.", "Your choice does not hide other results; a match is not confirmation."), style = MaterialTheme.typography.bodySmall)
                                     Text(tr("இவை உறுதியற்ற ஊகங்கள். மனிதர் அல்லது பிற சத்தங்களையும் காட்டலாம். இடம் பயன்படுத்தப்படவில்லை.", "Unverified guesses; results can include human or other sounds. No location filter is used."), style = MaterialTheme.typography.bodySmall)
@@ -192,7 +199,14 @@ class MainActivity : ComponentActivity() {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                                 Text(tr("புதிய உயிரின ஒலி ஆய்வு · சோதனை", "New animal species recognizer · experimental"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
                                 Text(tr("BirdNET+ 3.0: பறவைகள் மற்றும் பிற விலங்குகளை ஊகிக்கும். தவறாக இருக்கலாம்; உங்கள் தேர்வு மற்ற முடிவுகளை மறைக்காது. பொருளையோ பதிலையோ அறியாது.", "BirdNET+ 3.0 guesses birds and other species. It can be wrong; your choice never hides other guesses. It does not determine meaning or generate replies."))
-                                Text(tr("இரண்டு கோப்புகள் தேவை: FP16 pruned TFLite மாடல் (71 MB) மற்றும் Labels CSV (8 MB). பதிப்பு 3.0 கோப்புகளை மட்டும் சேர்க்கவும்.", "Two separate files required: version 3.0 FP16 pruned TFLite model (71 MB) and Labels CSV (8 MB). The app verifies both files."), style = MaterialTheme.typography.bodySmall)
+                                Text(tr("இந்த மாடலையும் பெயர் பட்டியலையும் ஒரே பொத்தானில் பதிவிறக்கலாம். இரண்டையும் சரிபார்த்துச் சேர்க்கும்.", "Download and verify the model and labels together with one button."), style = MaterialTheme.typography.bodySmall)
+                                if (!v3ModelReady || !v3LabelsReady) {
+                                    Button(enabled = !busy, onClick = { confirmDownload = true }) { Text(tr("மாடலைப் பதிவிறக்கு", "Download model")) }
+                                } else Text(tr("இரண்டு கோப்புகளும் தயார் ✓", "Both files are ready ✓"))
+                                if (downloadingV3) {
+                                    LinearProgressIndicator(Modifier.fillMaxWidth())
+                                    TextButton(onClick = { stopAndClear(); v3NoticeOk = false; v3Notice = tr("பதிவிறக்கம் நிறுத்தப்பட்டது.", "Download stopped.") }) { Text(tr("பதிவிறக்கத்தை நிறுத்து", "Stop download")) }
+                                }
                                 Text("BirdNET+ V3.0 · Cornell Lab of Ornithology / Chemnitz University · Apache 2.0 · Zenodo 24162518", style = MaterialTheme.typography.bodySmall)
                                 OutlinedButton(enabled = !busy, onClick = {
                                     runCatching { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://zenodo.org/records/24162518"))) }
@@ -240,6 +254,13 @@ class MainActivity : ComponentActivity() {
                         Text("YAMNet / AudioSet · TensorFlow · Apache 2.0; AudioSet ontology CC BY-SA 4.0. github.com/tensorflow/models/tree/master/research/audioset/yamnet", style = MaterialTheme.typography.bodySmall)
                     }
                 }
+                if (confirmDownload) AlertDialog(
+                    onDismissRequest = { confirmDownload = false },
+                    title = { Text(tr("மாடலைப் பதிவிறக்கவா?", "Download the model?")) },
+                    text = { Text(tr("இணையத்தில் சுமார் 79 MB வரை பயன்படுத்தும். மொபைல் டேட்டாவுக்கு கட்டணம் வரலாம். Zenodo-விலிருந்து விடுபட்ட கோப்புகள் மட்டும் வரும்; உங்கள் ஒலி பதிவை அனுப்பாது. இணையம் இல்லாவிட்டால், செயலி திறந்திருக்கும் வரை காத்திருக்கும்.", "Downloads up to about 79 MB from Zenodo; mobile data charges may apply. Only missing files are downloaded. No audio is uploaded. If offline, it waits while the app stays open.")) },
+                    confirmButton = { TextButton(onClick = { confirmDownload = false; downloadV3() }) { Text(tr("பதிவிறக்கு", "Download")) } },
+                    dismissButton = { TextButton(onClick = { confirmDownload = false }) { Text(tr("வேண்டாம்", "Cancel")) } }
+                )
                 if (confirmReplay) AlertDialog(onDismissRequest = { confirmReplay = false }, title = { Text(tr("பதிவை மீண்டும் கேட்கவா?", "Replay the recording?")) },
                     text = { Text(tr("இது AI பதில் அல்ல. உங்கள் பதிவில் மனிதர்களின் குரலும் இருக்கலாம். விலங்குகள் அருகே இயக்காதீர்கள்; இயர்போன் பயன்படுத்துங்கள்.", "This is not an AI reply. Your sample may contain people's voices. Do not play near animals; use headphones.")) },
                     confirmButton = { TextButton(onClick = { confirmReplay = false; replay() }) { Text(tr("மீண்டும் கேள்", "Replay")) } },
@@ -314,6 +335,39 @@ class MainActivity : ComponentActivity() {
             finally { if (generation == thisGeneration) busy = false }
         }
     }
+    private fun downloadV3() {
+        if (busy || BirdNetV3.ready(this)) return
+        busy = true; downloadingV3 = true; v3NoticeOk = false; v3Notice = ""
+        val thisGeneration = ++generation
+        val active = AtomicBoolean(true); importRunning = active
+        val cm = getSystemService(ConnectivityManager::class.java)
+        job = lifecycleScope.launch {
+            try {
+                for (isModel in listOf(true, false)) {
+                    val target = if (isModel) BirdNetV3.model(this@MainActivity) else BirdNetV3.labels(this@MainActivity)
+                    if (target.isFile) continue
+                    var disconnects = 0
+                    while (true) {
+                        if (!V3Download.isOnline(cm)) v3Notice = tr("இணையத்திற்குக் காத்திருக்கிறது. செயலியைத் திறந்தே வைக்கவும்.", "Waiting for internet. Keep the app open.")
+                        V3Download.awaitNetwork(cm)
+                        if (!active.get()) throw CancellationException()
+                        v3Notice = if (isModel) tr("மாடல் பதிவிறக்கப்படுகிறது…", "Downloading model…") else tr("பெயர் பட்டியல் பதிவிறக்கப்படுகிறது…", "Downloading labels…")
+                        try {
+                            withContext(Dispatchers.IO) { V3Download.fetch(this@MainActivity, isModel) { active.get() } }
+                            updateV3Status()
+                            break
+                        } catch (e: IOException) {
+                            if (!active.get()) throw CancellationException()
+                            if (V3Download.isOnline(cm) || ++disconnects > 3) throw e
+                        }
+                    }
+                }
+                if (generation == thisGeneration) { v3NoticeOk = true; v3Notice = tr("மாடல் சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "Model downloaded and verified.") }
+            } catch (e: CancellationException) { throw e }
+              catch (_: Exception) { if (generation == thisGeneration) { v3NoticeOk = false; v3Notice = tr("பதிவிறக்கம் முடியவில்லை. இணையம் அல்லது சேமிப்பு இடத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Download failed. Check internet and storage, then try again.") } }
+            finally { if (generation == thisGeneration) { updateV3Status(); downloadingV3 = false; busy = false } }
+        }
+    }
     private fun listenV3() {
         if (busy || !BirdNetV3.ready(this)) return
         samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; message = ""; busy = true
@@ -350,7 +404,7 @@ class MainActivity : ComponentActivity() {
     }
     private fun stopAndClear() {
         generation++; importRunning?.set(false); importRunning = null; engine?.stop(); engine = null; job?.cancel(); job = null; samples?.fill(0); samples = null
-        guesses = null; birdGuesses = null; v3Guesses = null; confirmReplay = false; busy = false
+        guesses = null; birdGuesses = null; v3Guesses = null; confirmReplay = false; confirmDownload = false; downloadingV3 = false; busy = false
     }
     override fun onStop() { stopAndClear(); super.onStop() }
 }

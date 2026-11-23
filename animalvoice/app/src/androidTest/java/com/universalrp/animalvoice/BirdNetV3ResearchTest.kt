@@ -35,6 +35,11 @@ class BirdNetV3ResearchTest {
             catch (_: IllegalArgumentException) { }
             assertTrue(BirdNetV3.ready(context))
         } finally { bad.delete() }
+        if (InstrumentationRegistry.getArguments().getString("onlineDownload") == "1") {
+            V3Download.fetch(context, true) { true }
+            V3Download.fetch(context, false) { true }
+            assertTrue(BirdNetV3.ready(context))
+        }
         val tone = ShortArray(BirdNetV3.SAMPLES) { (5000 * sin(2.0 * PI * 1000 * it / BirdNetV3.RATE)).toInt().toShort() }
         val guesses = BirdNetV3.analyze(context, tone)
         val longer = ShortArray(BirdNetV3.SAMPLES * 3)

@@ -10,7 +10,7 @@ import android.media.MediaRecorder
 import org.tensorflow.lite.task.audio.classifier.AudioClassifier
 import kotlin.math.sqrt
 
-/** Foreground, fixed-length capture; audio remains only in RAM. No service or network. */
+/** Foreground, fixed-length capture; audio remains only in RAM. This audio engine has no service or network. */
 class AudioEngine(private val context: Context) {
     companion object { const val RATE = 16_000; const val WINDOW = 15_600; const val WINDOWS = 3 }
     @Volatile private var record: AudioRecord? = null

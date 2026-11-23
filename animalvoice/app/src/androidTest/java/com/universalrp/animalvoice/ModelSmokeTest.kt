@@ -37,7 +37,9 @@ class ModelSmokeTest {
         val info = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
         val permissions = info.requestedPermissions?.toList().orEmpty()
         assertTrue(Manifest.permission.RECORD_AUDIO in permissions)
-        assertFalse(Manifest.permission.INTERNET in permissions)
+        assertTrue(Manifest.permission.INTERNET in permissions)
+        assertTrue(Manifest.permission.ACCESS_NETWORK_STATE in permissions)
+        assertFalse(Manifest.permission.READ_PHONE_STATE in permissions)
         ActivityScenario.launch(MainActivity::class.java).use { it.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED) }
     }
     @Test fun staticTrackLoadsAndReplaysSyntheticSilence() {

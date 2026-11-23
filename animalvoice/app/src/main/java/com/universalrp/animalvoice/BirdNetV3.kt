@@ -24,6 +24,13 @@ object BirdNetV3 {
     fun ready(context: Context) = model(context).isFile && labels(context).isFile
 
     fun import(context: Context, uri: Uri, isModel: Boolean, shouldContinue: () -> Boolean = { true }) {
+        (context.contentResolver.openInputStream(uri) ?: error("Cannot open file")).use {
+            installStream(context, it, isModel, shouldContinue)
+        }
+    }
+
+    /** Also used by the one-click downloader. Existing verified files survive failures. */
+    fun installStream(context: Context, source: java.io.InputStream, isModel: Boolean, shouldContinue: () -> Boolean = { true }) {
         val target = if (isModel) model(context) else labels(context)
         val expectedHash = if (isModel) MODEL_SHA else LABEL_SHA
         val limit = if (isModel) 80_000_000L else 10_000_000L
@@ -31,17 +38,15 @@ object BirdNetV3 {
         try {
             val digest = MessageDigest.getInstance("SHA-256")
             var count = 0L
-            (context.contentResolver.openInputStream(uri) ?: error("Cannot open file")).use { input ->
-                temp.outputStream().use { output ->
-                    val bytes = ByteArray(65536)
-                    while (true) {
-                        val n = input.read(bytes)
-                        if (n < 0) break
-                        if (!shouldContinue() || Thread.currentThread().isInterrupted) throw InterruptedException()
-                        count += n
-                        require(count <= limit) { "File too large" }
-                        digest.update(bytes, 0, n); output.write(bytes, 0, n)
-                    }
+            temp.outputStream().use { output ->
+                val bytes = ByteArray(65536)
+                while (true) {
+                    if (!shouldContinue() || Thread.currentThread().isInterrupted) throw InterruptedException()
+                    val n = source.read(bytes)
+                    if (n < 0) break
+                    count += n
+                    require(count <= limit) { "File too large" }
+                    digest.update(bytes, 0, n); output.write(bytes, 0, n)
                 }
             }
             val actual = digest.digest().joinToString("") { "%02x".format(it) }
