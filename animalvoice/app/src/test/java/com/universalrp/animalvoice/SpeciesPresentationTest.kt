@@ -20,6 +20,16 @@ class SpeciesPresentationTest {
         assertNull(SpeciesPresentation.geographicCaveat("Corvus splendens", true))
         assertNull(SpeciesPresentation.geographicCaveat("Felis catus", false))
     }
+    @Test fun taxonGroupsArePublisherLabelsForDisplayOnly() {
+        assertEquals("Bird", SpeciesPresentation.taxonGroup("Aves", false))
+        assertEquals("பறவை", SpeciesPresentation.taxonGroup("aves", true))
+        assertEquals("Amphibian", SpeciesPresentation.taxonGroup(" Amphibia ", false))
+        assertEquals("நீர்நில வாழ்வன்", SpeciesPresentation.taxonGroup("Amphibia", true))
+        assertEquals("Human-made sound", SpeciesPresentation.taxonGroup("Anthropogenic", false))
+        assertEquals("மனிதரால் உருவான ஒலி", SpeciesPresentation.taxonGroup("Anthropogenic", true))
+        assertNull(SpeciesPresentation.taxonGroup("", true))
+        assertNull(SpeciesPresentation.taxonGroup("Mystery", false))
+    }
     @Test fun focusDoesNotClaimUnsupportedGroupsOrUnknownNames() {
         assertEquals(true, SpeciesPresentation.focusMatches("crow", "Corvus splendens"))
         assertEquals(false, SpeciesPresentation.focusMatches("cat", "Corvus splendens"))

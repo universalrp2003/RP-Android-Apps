@@ -36,6 +36,23 @@ object SpeciesPresentation {
         }
     }
 
+    /** Publisher label-table group for a small badge; display only, never a filter. Unknown groups show nothing. */
+    fun taxonGroup(raw: String, tamil: Boolean): String? {
+        return when (raw.trim().lowercase()) {
+            "aves" -> if (tamil) "பறவை" else "Bird"
+            "insecta" -> if (tamil) "பூச்சி" else "Insect"
+            "amphibia" -> if (tamil) "நீர்நில வாழ்வன்" else "Amphibian"
+            "mammalia" -> if (tamil) "பாலூட்டி" else "Mammal"
+            "actinopterygii" -> if (tamil) "மீன்" else "Fish"
+            "reptilia" -> if (tamil) "ஊர்வன" else "Reptile"
+            "arachnida" -> if (tamil) "சிலந்தி வகை" else "Arachnid"
+            "anthropogenic" -> if (tamil) "மனிதரால் உருவான ஒலி" else "Human-made sound"
+            "geophony" -> if (tamil) "இயற்கையான ஒலி (விலங்கு அல்ல)" else "Natural sound, not an animal"
+            "music" -> if (tamil) "இசை" else "Music"
+            else -> null
+        }
+    }
+
     /** A transparent caveat, never a filter: the model can be wrong anywhere. */
     fun geographicCaveat(scientific: String, tamil: Boolean): String? {
         return when (scientific.trim().lowercase()) {

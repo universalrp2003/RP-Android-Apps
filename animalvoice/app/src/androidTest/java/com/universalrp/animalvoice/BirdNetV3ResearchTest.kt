@@ -39,6 +39,11 @@ class BirdNetV3ResearchTest {
             V3Download.fetch(context, true, keepGoing = { true })
             V3Download.fetch(context, false, keepGoing = { true })
             assertTrue(BirdNetV3.ready(context))
+            val table = BirdNetV3.parseCsv(BirdNetV3.labels(context).readText(Charsets.UTF_8).removePrefix("\uFEFF"))
+            val scientific = table.first().indexOf("scientific_name"); val taxon = table.first().indexOf("taxon_group")
+            assertTrue("Publisher label table lost taxon_group", taxon >= 0)
+            assertEquals("Amphibia", table.first { it.size > taxon && it[scientific] == "Lithobates sylvaticus" }[taxon])
+            assertEquals("Aves", table.first { it.size > taxon && it[scientific] == "Corvus splendens" }[taxon])
             for (species in listOf("Corvus splendens", "Leptocoma zeylonica", "Lithobates sylvaticus")) {
                 val reference = ReferencePhoto.load(species)
                 assertTrue(reference.bitmap.width in 1..1024 && reference.bitmap.height in 1..1024)

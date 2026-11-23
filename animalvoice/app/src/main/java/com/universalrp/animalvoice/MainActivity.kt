@@ -31,6 +31,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.isActive
@@ -51,7 +52,14 @@ class MainActivity : ComponentActivity() {
     private fun setMessage(ta: String, en: String) { messageText = BilingualText(ta, en) }
     private var v3NoticeText by mutableStateOf(BilingualText.EMPTY)
     private val v3Notice: String get() = v3NoticeText.display(tamil)
-    private fun setV3Notice(ta: String, en: String) { v3NoticeText = BilingualText(ta, en) }
+    private var noticeSeq = 0
+    private fun setV3Notice(ta: String, en: String) { noticeSeq++; v3NoticeText = BilingualText(ta, en) }
+    /** Success confirmations fade after a few seconds; errors and waiting states stay until the next action. */
+    private fun showV3Success(ta: String, en: String) {
+        v3NoticeOk = true; setV3Notice(ta, en)
+        val seq = noticeSeq
+        lifecycleScope.launch { delay(6_000); if (noticeSeq == seq && v3NoticeOk) setV3Notice("", "") }
+    }
     private var v3NoticeOk by mutableStateOf(false)
     private var tamil by mutableStateOf(true)
     private var confirmReplay by mutableStateOf(false)
@@ -176,6 +184,7 @@ class MainActivity : ComponentActivity() {
                                     if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
                                     else found.forEach { guess ->
                                         Text("• " + SpeciesPresentation.display(guess.scientific, guess.common, tamil))
+                                        SpeciesPresentation.taxonGroup(guess.taxon, tamil)?.let { group -> Text(tr("வகை: ", "Group: ") + group, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary) }
                                         if (v3ResultWindows == 3) {
                                             val ranges = v3Candidates.firstOrNull { it.guess == guess }?.windows.orEmpty().joinToString(", ") { "${it * 3}–${it * 3 + 3}" }
                                             Text(tr("பகுதிகள்: $ranges விநாடி", "Qualifying windows: $ranges seconds"), style = MaterialTheme.typography.bodySmall)
@@ -217,10 +226,9 @@ class MainActivity : ComponentActivity() {
                         Text(tr("விருப்பம். இனப் பெயர்கள் மட்டும் Wikipedia/Wikimedia-க்கு அனுப்பப்படும்; ஒலி அனுப்பப்படாது. படங்கள் ஊகத்தை உறுதிப்படுத்தாது.", "Optional. Only species names are sent to Wikipedia/Wikimedia; no audio. Photos do not confirm the guess."), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Card(colors = CardDefaults.cardColors(containerColor = Color.White), shape = RoundedCornerShape(16.dp)) {
                             Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                    Text(tr("விருப்ப அமைப்புகள்", "Optional settings"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                                    TextButton(onClick = { advancedModels = !advancedModels }, modifier = Modifier.heightIn(min = 48.dp)) { Text(if (advancedModels) tr("மேலதிக அமைப்புகளை மறை ▴", "Hide advanced settings ▴") else tr("மேலதிக அமைப்புகள் ▾", "Advanced settings ▾")) }
-                                }
+                                // Stacked on purpose: a side-by-side toggle squeezed the Tamil title into one-character lines.
+                                Text(tr("விருப்ப அமைப்புகள்", "Optional settings"), fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth())
+                                TextButton(onClick = { advancedModels = !advancedModels }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) { Text(if (advancedModels) tr("மேலதிக அமைப்புகளை மறை ▴", "Hide advanced settings ▴") else tr("மேலதிக அமைப்புகள் ▾", "Advanced settings ▾")) }
                                 Text(tr("அடிப்படை இணையமில்லாத கேட்பு", "Basic offline listening"), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                                 Text(tr("உட்பொதிக்கப்பட்ட YAMNet: பரந்த ஒலி வகைகள் மட்டும்; பல்லி வகை இல்லை. பதிவிறக்கம் தேவையில்லை; இணையமில்லாமல் வேலை செய்யும்.", "Bundled YAMNet: broad sound categories only; no lizard class. No download; works offline."), style = MaterialTheme.typography.bodySmall)
                                 OutlinedButton(enabled = !busy, onClick = {
@@ -361,7 +369,7 @@ class MainActivity : ComponentActivity() {
     private fun listen() {
         if (busy) return
         clearPhoto()
-        samples?.fill(0); samples = null; guesses = null; v3Guesses = null; sampleRate = AudioEngine.RATE; messageText = BilingualText.EMPTY; busy = true
+        samples?.fill(0); samples = null; guesses = null; v3Guesses = null; sampleRate = AudioEngine.RATE; messageText = BilingualText.EMPTY; setV3Notice("", ""); busy = true
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
         job = lifecycleScope.launch {
@@ -386,7 +394,7 @@ class MainActivity : ComponentActivity() {
             try {
                 withContext(Dispatchers.IO) { BirdNetV3.import(this@MainActivity, uri, isModel) { isActive.get() } }
                 updateV3Status()
-                if (generation == thisGeneration) { v3NoticeOk = true; setV3Notice("கோப்பு சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "File verified and imported.") }
+                if (generation == thisGeneration) showV3Success("கோப்பு சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "File verified and imported.")
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) setV3Notice("சரியான பதிப்பு 3.0 கோப்பைத் தேர்வு செய்யவும். இடத்தையும் சரிபார்க்கவும்.", "Import failed. Select the exact v3.0 file and check storage space.") }
             finally { if (generation == thisGeneration) busy = false }
@@ -433,7 +441,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
-                if (generation == thisGeneration) { v3NoticeOk = true; setV3Notice("மாடல் சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "Model downloaded and verified.") }
+                if (generation == thisGeneration) showV3Success("மாடல் சரிபார்க்கப்பட்டு சேர்க்கப்பட்டது.", "Model downloaded and verified.")
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) { v3NoticeOk = false; setV3Notice("பதிவிறக்கம் முடியவில்லை. இணையம் அல்லது சேமிப்பு இடத்தைச் சரிபார்த்து மீண்டும் முயற்சிக்கவும்.", "Download failed. Check internet and storage, then try again.") } }
             finally { if (generation == thisGeneration) { updateV3Status(); downloadingV3 = false; downloadWaiting = false; downloadBytes = 0L; downloadTotal = null; busy = false } }
@@ -442,7 +450,7 @@ class MainActivity : ComponentActivity() {
     private fun listenV3() {
         if (busy || !BirdNetV3.ready(this)) return
         clearPhoto()
-        samples?.fill(0); samples = null; guesses = null; v3Guesses = null; messageText = BilingualText.EMPTY; busy = true
+        samples?.fill(0); samples = null; guesses = null; v3Guesses = null; messageText = BilingualText.EMPTY; setV3Notice("", ""); busy = true
         sampleRate = BirdNetV3.RATE
         val windows = v3WindowCount
         v3Candidates = emptyList(); v3ResultWindows = windows

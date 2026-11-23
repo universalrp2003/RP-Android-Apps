@@ -63,7 +63,8 @@ object BirdNetV3 {
         } finally { temp.delete() }
     }
 
-    data class Guess(val common: String, val scientific: String, val score: Float)
+    /** taxon is the publisher label-table group (Aves, Amphibia, Anthropogenic...), display only. */
+    data class Guess(val common: String, val scientific: String, val score: Float, val taxon: String = "")
 
     // CSV quoting includes commas, escaped double quotes and newlines inside fields.
     fun parseCsv(text: String): List<List<String>> {
@@ -116,7 +117,8 @@ object BirdNetV3 {
         val table = parseCsv(labels(context).readText(Charsets.UTF_8).removePrefix("\uFEFF"))
         require(table.size == CLASSES + 1)
         val common = table.first().indexOf("common_name"); val scientific = table.first().indexOf("scientific_name")
-        require(common >= 0 && scientific >= 0 && table.drop(1).all { it.size > maxOf(common, scientific) })
+        val taxon = table.first().indexOf("taxon_group") // Optional column; only used for a display badge, never filtering.
+        require(common >= 0 && scientific >= 0 && table.drop(1).all { it.size > maxOf(common, scientific, taxon) })
         val results = mutableListOf<List<Guess>>()
         RandomAccessFile(model(context), "r").use { f ->
             val mapped = f.channel.map(FileChannel.MapMode.READ_ONLY, 0, f.length())
@@ -143,7 +145,7 @@ object BirdNetV3 {
                         val scores = FloatArray(CLASSES) { data.float }
                         require(scores.all { it.isFinite() && it in 0f..1f })
                         results.add(scores.indices.filter { scores[it] >= SCORE_GATE }
-                            .sortedByDescending { scores[it] }.take(3).map { i -> Guess(table[i + 1][common], table[i + 1][scientific], scores[i]) })
+                            .sortedByDescending { scores[it] }.take(3).map { i -> Guess(table[i + 1][common], table[i + 1][scientific], scores[i], if (taxon >= 0) table[i + 1][taxon] else "") })
                     }
                 }
             }

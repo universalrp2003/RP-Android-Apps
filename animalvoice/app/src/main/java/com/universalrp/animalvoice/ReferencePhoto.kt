@@ -50,7 +50,7 @@ object ReferencePhoto {
             val conn = url.openConnection() as HttpsURLConnection
             conn.instanceFollowRedirects = false
             conn.connectTimeout = 15_000; conn.readTimeout = 15_000
-            conn.setRequestProperty("User-Agent", "AnimalSounds/0.17 (https://github.com/universalrp2003/RP-Android-Apps)")
+            conn.setRequestProperty("User-Agent", "AnimalSounds/0.18 (https://github.com/universalrp2003/RP-Android-Apps)")
             try {
                 val status = conn.responseCode
                 if (status in setOf(301, 302, 303, 307, 308)) {

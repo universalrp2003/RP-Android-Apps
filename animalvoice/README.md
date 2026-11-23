@@ -71,3 +71,12 @@ The app continues to state that guesses and reference images do not confirm a sp
 From 0.17 the experimental APK is signed with the owner-backed RP release key already used by the repository's other Android apps. The private key lives only in GitHub Actions secrets (`RP_RELEASE_KEYSTORE_BASE64`, `RP_RELEASE_KEYSTORE_PASSWORD`); it is never committed. The release artifact is verified against certificate SHA-256 `7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d` and is not debuggable.
 
 0.16 and earlier were signed with a per-run debug key, so a 0.17 APK signed with the persistent key **cannot update that installation**; Android will report a signature conflict. Uninstall 0.16 once first, which deletes the downloaded BirdNET model and the app settings. There is no model export and `allowBackup` is disabled, so re-download the ~79 MB model after installing 0.17. From 0.17 onward, same-key updates preserve app data, including the downloaded model and settings, as long as the application ID and signing certificate remain the same.
+
+### Version 0.18
+Fixes a Tamil layout bug reported from a phone test of 0.17: in Optional settings the side-by-side "Hide advanced settings" button squeezed the Tamil heading "விருப்ப அமைப்புகள்" into one-character lines. The heading and the Advanced settings toggle are now stacked, each full width, so no language can be squeezed mid-word at any font size. The large-text CI check also asserts that the heading keeps its width and that the toggle still expands the advanced section.
+
+The success confirmations "File verified and imported." and "Model downloaded and verified." now fade after six seconds and are cleared when a new recording starts. Errors, waiting and stop messages stay until the next action; the Ready ✓ state stays in the card.
+
+Each guess can show a small "Group:" badge (Bird, Insect, Amphibian, Mammal, Fish, Reptile, Arachnid, or Human-made sound / Natural sound, not an animal / Music, with Tamil labels) taken from the publisher's `taxon_group` column in the BirdNET+ V3 label table. It is display only: nothing is hidden, filtered or reordered, an unknown or missing group shows no badge, and the badge does not confirm the guess. Regional filtering stays disabled (see the geomodel research); the Wood Frog caveat still appears in Tamil Nadu.
+
+0.18 is signed with the same key as 0.17, so it installs as an in-place update over 0.17 and keeps the downloaded model and settings.
