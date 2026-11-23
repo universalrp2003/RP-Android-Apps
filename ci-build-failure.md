@@ -6,25 +6,6 @@
 
 ## Gradle summary
 ```
-[Incubating] Problems report is available at: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/build/reports/problems/problems-report.html
-
-FAILURE: Build failed with an exception.
-
-* What went wrong:
-Execution failed for task ':cleaner:testDebugUnitTest'.
-> There were failing tests. See the report at: file:///home/runner/work/RP-Android-Apps/RP-Android-Apps/cleaner/build/reports/tests/testDebugUnitTest/index.html
-
-* Try:
-> Run with --scan to get full insights.
-
-Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
-
-You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-
-BUILD FAILED in 2m 57s
-500 actionable tasks: 247 executed, 253 from cache
 ```
 com.universalrp.cleansweep.data.FeatureDiscoveryTest :: futureNotNowDoesNotActivate
     java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:14-robolectric-10818077-i7
@@ -524,6 +505,63 @@ com.universalrp.cleansweep.notify.RoutineStatusTest :: radioStopPreservesMonitor
 com.universalrp.cleansweep.notify.RoutineStatusTest :: monitorStopPreservesRadio
     java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:14-robolectric-10818077-i7
 
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: completedStoryCheckpointIsDurableWithoutClaimingACompletedBulletin
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: dueExactAlarmStartsTheVisibleServiceNotAnActivityCoroutine
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: deniedAccessUsesInexactFallbackWithoutCrashing
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: readOnlyStoryStatusNeverWaitsBehindDurableHistoryMonitor
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: intervalPreferenceIsPreservedAcrossRescheduling
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: resyncUpdatesOneAlarmRatherThanDuplicating
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: settingsReopenKeepsFutureRetryWhenNoAudioWasPlayed
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: mainThreadAudioStartSchedulesCheckpointWithoutTakingHistoryLock
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: grantedAccessCreatesWakeupAlarmAllowedWhileIdle
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: completedPlaybackDeadlineSurvivesFreshSchedulerSync
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: cancellingManualPreparationReleasesAutomaticGate
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: screenOnCheckIsRecordedAndRetriedWithoutConsumingHeadlines
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: delayedStartCheckpointCannotOverwriteNewerAudioActivity
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: manualPreparationBlocksAutomaticNewsBeforeAnySound
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: permissionGrantBroadcastRearmsWithoutStartingPlayback
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: disablingNewsCancelsTheAlarm
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: disablingMasterVoiceCancelsTheAlarm
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: audibleFailureReschedulesAtSelectedIntervalButConsumesNoStory
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
+com.universalrp.cleansweep.voice.NewsAutoScheduleTest :: laterFullCompletionAdvancesClockWithoutLosingEarlierStoryCheckpoint
+    java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:15-robolectric-12650502-i7
+
 com.universalrp.cleansweep.widget.DisasterWidgetCacheTest :: manualViewDoesNotEnableNewsOrConsumeReadCounts
     java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:14-robolectric-10818077-i7
 
@@ -569,7 +607,7 @@ com.universalrp.cleansweep.widget.DisasterWidgetCacheTest :: expiresAndRejectsFu
 com.universalrp.cleansweep.widget.DisasterWidgetCacheTest :: staleStatusRequestsRefresh
     java.lang.AssertionError: Failed to fetch maven artifact org.robolectric:android-all-instrumented:14-robolectric-10818077-i7
 
-(181 failing test(s))
+(200 failing test(s))
 
 ## Store artwork step
 ```
