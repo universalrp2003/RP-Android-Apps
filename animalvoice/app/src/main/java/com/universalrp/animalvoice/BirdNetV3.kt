@@ -78,17 +78,25 @@ object BirdNetV3 {
         return rows
     }
 
-    fun analyze(context: Context, pcm: ShortArray): List<Guess> {
-        require(pcm.size == SAMPLES && ready(context))
-        val rms = sqrt(pcm.sumOf { val x = it.toDouble() / 32768.0; x * x } / pcm.size)
-        if (rms < 0.003) return emptyList() // Model yields NaNs for silence.
+    data class Analysis(val guesses: List<Guess>, val windowIndex: Int?)
+
+    /** Picks one 3-second window with the strongest qualifying score; never combines or promotes a selection. */
+    fun strongestWindow(windows: List<List<Guess>>): Analysis {
+        val best = windows.withIndex().filter { it.value.isNotEmpty() }
+            .maxByOrNull { it.value.first().score }
+        return if (best == null) Analysis(emptyList(), null) else Analysis(best.value, best.index)
+    }
+
+    fun analyze(context: Context, pcm: ShortArray): List<Guess> = analyzeRecording(context, pcm).guesses
+
+    /** 3s or 9s; more windows can increase both detections and false positives. */
+    fun analyzeRecording(context: Context, pcm: ShortArray, shouldContinue: () -> Boolean = { true }): Analysis {
+        require(pcm.size in setOf(SAMPLES, 3 * SAMPLES) && ready(context))
         val table = parseCsv(labels(context).readText(Charsets.UTF_8).removePrefix("\uFEFF"))
         require(table.size == CLASSES + 1)
         val common = table.first().indexOf("common_name"); val scientific = table.first().indexOf("scientific_name")
         require(common >= 0 && scientific >= 0 && table.drop(1).all { it.size > maxOf(common, scientific) })
-        val input = ByteBuffer.allocateDirect(SAMPLES * 4).order(ByteOrder.nativeOrder())
-        pcm.forEach { input.putFloat(it / 32768f) }; input.rewind()
-        val scores = FloatArray(CLASSES)
+        val results = mutableListOf<List<Guess>>()
         RandomAccessFile(model(context), "r").use { f ->
             val mapped = f.channel.map(FileChannel.MapMode.READ_ONLY, 0, f.length())
             Interpreter(mapped, Interpreter.Options().setNumThreads(2)).use { interpreter ->
@@ -96,14 +104,29 @@ object BirdNetV3 {
                 require(interpreter.inputTensorCount == 1 && interpreter.outputTensorCount == 2)
                 val sizes = (0 until 2).map { interpreter.getOutputTensor(it).shape().reduce(Int::times) }
                 require(sizes.toSet() == setOf(CLASSES, 1280))
+                val input = ByteBuffer.allocateDirect(SAMPLES * 4).order(ByteOrder.nativeOrder())
                 val outputs = sizes.map { ByteBuffer.allocateDirect(it * 4).order(ByteOrder.nativeOrder()) }
-                interpreter.runForMultipleInputsOutputs(arrayOf(input), outputs.mapIndexed { i, b -> i to b as Any }.toMap())
-                val data = outputs[sizes.indexOf(CLASSES)]; data.rewind()
-                repeat(CLASSES) { scores[it] = data.float }
+                repeat(pcm.size / SAMPLES) { window ->
+                    if (!shouldContinue()) throw InterruptedException("Analysis stopped")
+                    val offset = window * SAMPLES
+                    var energy = 0.0
+                    for (i in offset until offset + SAMPLES) { val a = pcm[i] / 32768.0; energy += a * a }
+                    if (sqrt(energy / SAMPLES) < 0.003) {
+                        results.add(emptyList()) // Digital silence gives NaNs in this model.
+                    } else {
+                        input.clear()
+                        for (i in offset until offset + SAMPLES) input.putFloat(pcm[i] / 32768f)
+                        input.rewind(); outputs.forEach { it.clear() }
+                        interpreter.runForMultipleInputsOutputs(arrayOf(input), outputs.mapIndexed { i, b -> i to b as Any }.toMap())
+                        val data = outputs[sizes.indexOf(CLASSES)]; data.rewind()
+                        val scores = FloatArray(CLASSES) { data.float }
+                        require(scores.all { it.isFinite() && it in 0f..1f })
+                        results.add(scores.indices.filter { scores[it] >= SCORE_GATE }
+                            .sortedByDescending { scores[it] }.take(3).map { i -> Guess(table[i + 1][common], table[i + 1][scientific], scores[i]) })
+                    }
+                }
             }
         }
-        require(scores.all { it.isFinite() && it in 0f..1f })
-        return scores.indices.filter { scores[it] >= SCORE_GATE }
-            .sortedByDescending { scores[it] }.take(3).map { i -> Guess(table[i + 1][common], table[i + 1][scientific], scores[i]) }
+        return strongestWindow(results)
     }
 }

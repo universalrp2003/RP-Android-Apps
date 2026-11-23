@@ -28,6 +28,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -55,6 +56,9 @@ class MainActivity : ComponentActivity() {
     private var v3ModelReady by mutableStateOf(false)
     private var v3LabelsReady by mutableStateOf(false)
     private var v3Guesses by mutableStateOf<List<BirdNetV3.Guess>?>(null)
+    private var v3WindowCount by mutableIntStateOf(1)
+    private var v3ResultWindow by mutableStateOf<Int?>(null)
+    private var v3ResultWindows by mutableIntStateOf(1)
     private var importRunning: AtomicBoolean? = null
     private fun tr(ta: String, en: String) = if (tamil) ta else en
 
@@ -107,9 +111,17 @@ class MainActivity : ComponentActivity() {
                         Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE4F1E7)), shape = RoundedCornerShape(20.dp)) {
                             Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                 Text(tr("முதலில் கேளுங்கள்", "Listen first"), fontSize = 19.sp, fontWeight = FontWeight.Bold)
-                                Text(tr("சுமார் 3 விநாடிகள் மட்டுமே கேட்கும். இணையம் தேவையில்லை; ஒலி சேமிக்கப்படாது.", "Listens for about 3 seconds. No internet or audio file storage."))
+                                Text(tr("பொது மாடல் 3 விநாடிகள் கேட்கும். புதிய மாடலில் 3 அல்லது 9 விநாடிகள் தேர்வு செய்யலாம். ஒலி சேமிக்கப்படாது.", "Basic listening is about 3 seconds; the newer model offers 3 or 9 seconds. Audio is not saved."))
                                 if (v3ModelReady && v3LabelsReady) {
                                     Text(tr("புதிய உயிரின மாடல் தயார். கீழே உள்ள பொத்தானை அழுத்தவும்.", "The newer species model is ready. Use the button below."), style = MaterialTheme.typography.bodySmall)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        RadioButton(selected = v3WindowCount == 1, onClick = { v3WindowCount = 1 }, enabled = !busy)
+                                        Text(tr("3 விநாடி", "3 seconds"))
+                                        Spacer(Modifier.width(8.dp))
+                                        RadioButton(selected = v3WindowCount == 3, onClick = { v3WindowCount = 3 }, enabled = !busy)
+                                        Text(tr("9 விநாடி", "9 seconds"))
+                                    }
+                                    if (v3WindowCount == 3) Text(tr("மெல்லிய ஒலிக்காக அதிக நேரம் கேட்கும். தவறான ஊகங்களும் அதிகரிக்கலாம்.", "Longer listening may catch a quiet call, but may also increase false guesses."), style = MaterialTheme.typography.bodySmall)
                                     Button(enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp), onClick = {
                                         wantV3 = true; wantBirdnet = false
                                         if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listenV3()
@@ -129,6 +141,10 @@ class MainActivity : ComponentActivity() {
                             Card(colors = CardDefaults.cardColors(containerColor = Color(0xFFE8F2EE)), shape = RoundedCornerShape(20.dp)) {
                               Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(tr("சாத்தியமான ஒலி வகைகள்", "Possible sound sources"), fontWeight = FontWeight.Bold)
+                                    if (v3ResultWindows == 3 && v3ResultWindow != null) {
+                                        val from = v3ResultWindow!! * 3
+                                        Text(tr("${from}–${from + 3} விநாடியில் அதிக மதிப்பெண் வந்தது; இது உறுதி அல்ல.", "Highest score was in seconds $from–${from + 3}; this is not confirmation."), style = MaterialTheme.typography.bodySmall)
+                                    }
                                     if (found.isEmpty()) Text(tr("தெளிவாகத் தெரியவில்லை.", "Unknown: no qualifying match."))
                                     else found.forEach { guess ->
                                         val match = SpeciesPresentation.focusMatches(selected.id, guess.scientific)
@@ -190,6 +206,7 @@ class MainActivity : ComponentActivity() {
                                 OutlinedButton(enabled = !busy, onClick = { v3ModelPicker.launch(arrayOf("*/*")) }) { Text(tr("புதிய மாடல் கோப்பைத் தேர்வு செய்", "Select v3 model file") + if (v3ModelReady) " ✓" else "") }
                                 OutlinedButton(enabled = !busy, onClick = { v3LabelPicker.launch(arrayOf("*/*")) }) { Text(tr("பெயர் பட்டியல் CSV கோப்பைத் தேர்வு செய்", "Select v3 labels CSV") + if (v3LabelsReady) " ✓" else "") }
                                 if (v3ModelReady && v3LabelsReady) {
+                                    Text(tr("மேலே தேர்வு செய்த நேரம்: ${v3WindowCount * 3} விநாடி", "Duration selected above: ${v3WindowCount * 3} seconds"), style = MaterialTheme.typography.bodySmall)
                                     Button(enabled = !busy, modifier = Modifier.fillMaxWidth(), onClick = {
                                         wantV3 = true; wantBirdnet = false
                                         if (ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) listenV3()
@@ -301,13 +318,18 @@ class MainActivity : ComponentActivity() {
         if (busy || !BirdNetV3.ready(this)) return
         samples?.fill(0); samples = null; guesses = null; birdGuesses = null; v3Guesses = null; message = ""; busy = true
         sampleRate = BirdNetV3.RATE
+        val windows = v3WindowCount
+        v3ResultWindow = null; v3ResultWindows = windows
         val thisGeneration = ++generation
         val activeEngine = AudioEngine(this); engine = activeEngine
         job = lifecycleScope.launch {
             try {
-                val captured = withContext(Dispatchers.IO) { activeEngine.capture(BirdNetV3.RATE, BirdNetV3.SAMPLES) }
-                val found = withContext(Dispatchers.Default) { BirdNetV3.analyze(this@MainActivity, captured) }
-                if (generation == thisGeneration) { samples = captured; v3Guesses = found } else captured.fill(0)
+                val captured = withContext(Dispatchers.IO) { activeEngine.capture(BirdNetV3.RATE, BirdNetV3.SAMPLES * windows) }
+                val found = withContext(Dispatchers.Default) {
+                    val active = coroutineContext
+                    BirdNetV3.analyzeRecording(this@MainActivity, captured) { active.isActive }
+                }
+                if (generation == thisGeneration) { samples = captured; v3Guesses = found.guesses; v3ResultWindow = found.windowIndex } else captured.fill(0)
             } catch (e: CancellationException) { throw e }
               catch (_: Exception) { if (generation == thisGeneration) message = tr("புதிய மாடல் செயல்படவில்லை. மீண்டும் முயற்சிக்கவும்.", "Could not record or analyse with the new model on this device.") }
             finally { if (generation == thisGeneration) busy = false }

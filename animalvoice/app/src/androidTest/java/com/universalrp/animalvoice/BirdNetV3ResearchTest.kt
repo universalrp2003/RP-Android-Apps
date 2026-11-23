@@ -37,6 +37,13 @@ class BirdNetV3ResearchTest {
         } finally { bad.delete() }
         val tone = ShortArray(BirdNetV3.SAMPLES) { (5000 * sin(2.0 * PI * 1000 * it / BirdNetV3.RATE)).toInt().toShort() }
         val guesses = BirdNetV3.analyze(context, tone)
+        val longer = ShortArray(BirdNetV3.SAMPLES * 3)
+        tone.copyInto(longer, BirdNetV3.SAMPLES)
+        val multi = BirdNetV3.analyzeRecording(context, longer)
+        assertEquals(guesses, multi.guesses)
+        assertEquals(if (guesses.isEmpty()) null else 1, multi.windowIndex)
+        try { BirdNetV3.analyzeRecording(context, longer) { false }; fail("Stopped analysis continued") }
+        catch (_: InterruptedException) { }
         assertTrue(guesses.size <= 3)
         assertTrue(guesses.all { it.score in 0.5f..1f })
         val digest = MessageDigest.getInstance("SHA-256")
