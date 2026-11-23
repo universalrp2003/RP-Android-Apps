@@ -47,15 +47,26 @@ def ui():
     return text, list(ET.fromstring(text).iter('node'))
 
 
-def wait_text(label):
-    deadline = time.monotonic() + 45
+def visible_texts(limit=40):
+    # Bounded evidence only: node labels of the Store's own screen, never device data.
+    _, nodes = ui()
+    return [n.get('text').strip() for n in nodes if n.get('text', '').strip()][:limit]
+
+def wait_text_if_present(label, timeout=45):
+    deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         text, nodes = ui()
         match = next((n for n in nodes if n.get('text') == label), None)
         if match is not None:
             return match
         time.sleep(1)
-    raise AssertionError('Missing native UI text: ' + label)
+    return None
+
+def wait_text(label, timeout=45):
+    match = wait_text_if_present(label, timeout)
+    if match is not None:
+        return match
+    raise AssertionError('Missing native UI text: ' + label + ' | visible: ' + ' || '.join(visible_texts())[:1200])
 
 
 def scroll_until_text(label, swipes=8):
@@ -184,6 +195,12 @@ def run(out):
     wait_text('Enable scrolling text')
     assert 'Debug preview' not in ui()[0], 'Release artifact must not masquerade as a debug preview'
     # The header status is at the top, so check it before scrolling into the longer app list.
+    # The first foreground refresh races the emulator's network after the reinstall; if it has not
+    # succeeded within 60 s, record the status the Store showed and use the same manual "Refresh
+    # catalog" control a user has. No install or data operation is repeated.
+    if wait_text_if_present('Last catalog refresh succeeded', 60) is None:
+        (out / 'catalog-status-before-manual-refresh.txt').write_text('\n'.join(visible_texts()) + '\n')
+        click('Refresh catalog')
     wait_text('Last catalog refresh succeeded')
     click('Refresh catalog')
     wait_text('Last catalog refresh succeeded')
