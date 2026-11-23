@@ -13,6 +13,10 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
+import com.universalrp.updates.AppLanguage
+import com.universalrp.updates.AppLanguageState
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,11 +26,19 @@ import org.junit.runner.RunWith
  * reachable by scrolling, visible, tappable and at least 48 dp tall in both languages.
  * The main screen holds only the identify controls; everything optional lives behind the
  * ⚙ Settings button, with the built-in Guide and About at the end of Settings. No microphone
- * access, no network, no model download.
+ * access and no model download here; the app's only network use is the read-only, once-a-day
+ * release-metadata check, which these tests do not exercise.
  */
 @RunWith(AndroidJUnit4::class)
 class LargeTextLayoutTest {
     @get:Rule val rule = createAndroidComposeRule<MainActivity>()
+
+    @Before fun startEveryTestInTamil() {
+        // 0.21 keeps the interface language in the shared RP Ideas preference, like every other
+        // RP Ideas app, so a test that switched to English would otherwise leak into the next one.
+        AppLanguageState.set(InstrumentationRegistry.getInstrumentation().targetContext, AppLanguage.TAMIL)
+        dismissUpdateNoticeIfShown()
+    }
 
     private fun openSettings(description: String) {
         dismissUpdateNoticeIfShown()
