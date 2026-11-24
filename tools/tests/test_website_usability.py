@@ -178,6 +178,8 @@ class WebsiteUsabilityTest(unittest.TestCase):
         for summary in summaries:
             self.assertEqual(help_box.count('<summary>' + summary), 1, summary)
         for text in ('Android 8.0 or newer, except RP Vocal Remover Studio (Android 10+)', 'Android 16 (API 36)',
+                     'except Secret Message 1.1.3, which targets Android 15 (API 35)',
+                     'Secret Message 1.1.3 மட்டும் Android 15 (API 35)',
                      'arm64-v8a, armeabi-v7a', 'not for x86 devices', "the project's own release-key-signed builds, not Play Store builds",
                      'unrestricted background use', 'href="live-guard-guide.html"', 'nothing here asks you to disable Play Protect or system warnings',
                      '<strong>Ramesh Radio</strong>: a radio player', 'it is not a weather alert app',
@@ -194,6 +196,77 @@ class WebsiteUsabilityTest(unittest.TestCase):
         # visible intro paragraph per language because answers live in collapsed details.
         self.assertEqual(help_box.count('data-content-lang="en"'), help_box.count('data-content-lang="ta"'))
         self.assertGreaterEqual(help_box.count('<details>'), 7)
+
+    # Android version names as the card badges write them; extend this and the Install help answer
+    # when a build raises its minimum.
+    ANDROID_VERSION_OF_API = {26: '8.0', 29: '10'}
+    STORE_PACKAGE = 'com.universalrp.tamilanstore'   # the Store card; the Store is not in its own feed
+
+    def _cards(self):
+        """card slug -> card markup (the slug is the h2 id inside each <article>)."""
+        cards = {}
+        for chunk in self.source.split('<article')[1:]:
+            slug = re.search(r'<h2 id="(app-[^"]+)"', chunk)
+            if slug:
+                cards[slug.group(1)] = chunk
+        return cards
+
+    def _shipping_gradle_facts(self):
+        """(card slug, display name, minSdk, targetSdk) for every published app, read from the gradle
+        file whose applicationId matches the website catalog, and the card that carries the
+        catalog's SHA-256. Folder names mislead — the shipping Secret Message app lives in
+        secretmessage/wifi-test and secretmessage/product is only a local UI preview — so match on
+        the package, never on the directory."""
+        cards = self._cards()
+        catalog = json.loads((ROOT / 'site/catalog-v4.json').read_text(encoding='utf-8'))['apps']
+        catalog.append({'packageName': self.STORE_PACKAGE, 'name': 'Tamilan Store', 'sha256': None})
+        facts = []
+        for entry in catalog:
+            if entry['sha256'] is None:
+                card_slug = 'app-tamilan-store'
+            else:
+                hits = [slug for slug, chunk in cards.items() if entry['sha256'] in chunk]
+                self.assertEqual(len(hits), 1, (entry['name'], hits))
+                card_slug = hits[0]
+            facts.append((entry['packageName'], card_slug, entry['name']))
+        resolved = []
+        for pattern in ('*/build.gradle.kts', '*/*/build.gradle.kts', '*/*/*/build.gradle.kts'):
+            for path in sorted(ROOT.glob(pattern)):
+                text = path.read_text(encoding='utf-8')
+                for app_id in re.findall(r'applicationId\s*=\s*"([^"]+)"', text):
+                    for package, card_slug, name in facts:
+                        if package == app_id or package.startswith(app_id + '.'):
+                            resolved.append((card_slug, name, int(re.search(r'minSdk\s*=\s*(\d+)', text).group(1)),
+                                             int(re.search(r'targetSdk\s*=\s*(\d+)', text).group(1)), str(path.relative_to(ROOT))))
+        return resolved
+
+    def test_install_help_sdk_claims_match_the_shipping_gradle_files(self):
+        facts = self._shipping_gradle_facts()
+        self.assertEqual(len(facts), 18, sorted(f[0] for f in facts))
+        self.assertEqual(len({f[0] for f in facts}), 18)
+        cards = self._cards()
+        lowest_min = min(f[2] for f in facts)
+        highest_target = max(f[3] for f in facts)
+        block = self.source.split('<section id="install-help"', 1)[1].split('</section>', 1)[0]
+        block = block.split('<summary>Which phones can install these APKs?', 1)[1].split('</details>', 1)[0]
+        for lang in ('en', 'ta'):
+            answer = re.search(r'<p data-content-lang="%s"[^>]*>(.*?)</p>' % lang, block, re.S).group(1)
+            # Tamil says "Android 8.0 அல்லது அதற்குப் பிந்தைய பதிப்பு" (8.0 or a later version).
+            self.assertIn(('Android %s or newer' if lang == 'en' else 'Android %s') % self.ANDROID_VERSION_OF_API[lowest_min], answer, lang)
+            for level in sorted({f[3] for f in facts}):
+                self.assertIn('API %d' % level, answer, (lang, level))
+            for card_slug, name, min_sdk, target_sdk, _ in facts:
+                # Every app with a higher minimum or an older target is named in the answer ...
+                if min_sdk != lowest_min:
+                    self.assertIn(name, answer, (lang, name))
+                    self.assertIn('Android %s+' % self.ANDROID_VERSION_OF_API[min_sdk], answer, (lang, name))
+                if target_sdk != highest_target:
+                    self.assertIn(name, answer, (lang, name))
+                # ... and the badge on its card carries the minimum the build really enforces.
+                badge = re.sub(r'<[^>]+>', '', re.search(r'<span class="ver">(.*?)</span>', cards[card_slug], re.S).group(1)).strip()
+                shown = re.search(r'(\d+(?:\.\d+)?)\+\s*$', badge)
+                self.assertIsNotNone(shown, (card_slug, badge))
+                self.assertEqual(shown.group(1), self.ANDROID_VERSION_OF_API[min_sdk], (card_slug, badge))
 
     def test_social_preview_is_local_small_and_1200_by_630(self):
         image = (ROOT / 'site/images/social-preview-v18.png').read_bytes()
