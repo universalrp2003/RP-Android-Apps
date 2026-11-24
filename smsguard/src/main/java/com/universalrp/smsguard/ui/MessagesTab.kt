@@ -1295,11 +1295,12 @@ private fun deliveryLabel(
     val plain = if (tamil) "↗ நீங்கள் அனுப்பியது" else "↗ Sent by you"
     val status = delivery ?: return plain to palette.accent
     return when (status.state) {
-        SmsDeliveryState.SENDING -> "🕒 ${ui.statusSending}" to palette.warnAmber
-        SmsDeliveryState.SENT -> "✓ ${ui.statusSent}" to palette.accent
-        SmsDeliveryState.DELIVERED -> "✓✓ ${ui.statusDelivered}" to palette.accent
-        SmsDeliveryState.NOT_DELIVERED -> "✗ ${ui.statusNotDelivered} · ${reasonLabel(status.reason, ui)}" to palette.dangerRed
-        SmsDeliveryState.NOT_SENT -> "✗ ${ui.statusNotSent} · ${reasonLabel(status.reason, ui)}" to palette.dangerRed
+        // The catalog strings already carry their own ✓ / ✓✓ / ✗; do not prefix a second set.
+        SmsDeliveryState.SENDING -> ui.statusSending to palette.warnAmber
+        SmsDeliveryState.SENT -> ui.statusSent to palette.accent
+        SmsDeliveryState.DELIVERED -> ui.statusDelivered to palette.accent
+        SmsDeliveryState.NOT_DELIVERED -> "${ui.statusNotDelivered} · ${reasonLabel(status.reason, ui)}" to palette.dangerRed
+        SmsDeliveryState.NOT_SENT -> "${ui.statusNotSent} · ${reasonLabel(status.reason, ui)}" to palette.dangerRed
         SmsDeliveryState.PLAIN_SENT -> plain to palette.accent
     }
 }

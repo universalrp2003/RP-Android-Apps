@@ -1,3 +1,13 @@
+## Owner evidence — SMS Guard 1.1.18 candidate installed and working — 24 November 2026
+
+Owner installed the CI candidate (`SMS-Guard-v1.1.18.apk`, 12.87 MB on the phone, from artifact `SMS-Guard-signed-candidate` of run 45372490739 on `2343e4f`) over 1.1.17 and sent four screenshots with "See its working":
+
+- Google Play Protect install prompt for that file: "This app looks safe — You can continue to install it". **One phone's observation only — never claim Google clearance.**
+- Tamil inbox with the new **📦 காப்பகம்** chip; thread view shows the per-message row ஒலி / நகலெடு / **காப்பகப்படுத்து** / நீக்கு.
+- Thread "Sasikala" (9486726876), sent "how" at 4:03 PM on the owner's Vodafone Idea (Vi) SIM → bubble showed **Delivered ✓✓** from the network's real delivery report.
+- Screenshot also showed a cosmetic defect: the label read "✓✓ Delivered ✓✓" (check marks prefixed by `deliveryLabel` *and* suffixed in the catalog strings). Fixed in the source afterwards (prefix removed; no logic change); that fix passed CI but was **not** re-installed on a phone — the release note says so.
+- Not archive-exercised on the phone yet (button and chip visible only). No publish approval given at this point.
+
 ## Owner request — SMS Guard delivery report + archive — 24 November 2026
 
 Owner: "Sms guard application need sms delivery report and need sms archive option also". Asked which shape he wanted; he chose **archive individual messages** (not whole conversations) and **inline status under each sent message** (no failure notification). Implemented as the **1.1.18 / code 24 candidate** (public 1.1.17 untouched; SisterApps `publishedVersion` stays 1.1.17):

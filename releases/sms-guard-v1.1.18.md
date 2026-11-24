@@ -6,9 +6,9 @@
 
 Normal same-key update from 1.1.17: do not uninstall or clear app data. Existing messages, default-SMS role and preferences should remain. No new permissions; the new status receiver is reachable only by the system radio's own callbacks. SMS-only default mode remains explicit; MMS is not implemented.
 
-This release is not a physical-phone, carrier/MMS, audible-playback or Google Play Protect certification. Historical legacy-key installations cannot update across signing identities; do not erase data as a workaround.
+One phone's successful install is not a carrier/MMS, audible-playback or Google Play Protect certification. Historical legacy-key installations cannot update across signing identities; do not erase data as a workaround.
 
-This candidate is not installed on a phone; delivery-report behaviour depends on the carrier and must be checked on a real SIM. Exact release bytes are not installed on a phone as part of this CI verification. Emulator and unit tests are separate evidence, not phone acceptance.
+Installed on a phone on 24 November 2026 (the owner's, with the CI-built candidate): a message sent on a Vodafone Idea (Vi) SIM showed "Delivered" after the network's report, and the Archive button and the Archived chip were present. Google Play Protect on that one phone showed "This app looks safe" — one phone's observation, not a Google clearance. The published APK is a CI rebuild of the same source plus one display-only fix (the status text no longer repeats its check marks); that label fix passed CI and was not re-installed on a phone.
 
 ## தமிழ்
 
@@ -16,4 +16,4 @@ This candidate is not installed on a phone; delivery-report behaviour depends on
 
 எந்த உரையாடலிலும் ஒவ்வொரு செய்திக்கும் **காப்பகப்படுத்து** செயல் உள்ளது. காப்பகப்படுத்தப்பட்ட செய்திகள் உரையாடலிலிருந்து மறைந்து புதிய **📦 காப்பகம்** சிப்பில் பட்டியலிடப்படும்; **காப்பகத்தை நீக்கு** என்பது செய்தியை மீண்டும் காட்டும். காப்பகம் என்பது செயலிக்குள் சேமிக்கப்பட்ட செய்தி எண்களின் பட்டியல் மட்டுமே; செய்தி நகர்த்தப்படவோ நீக்கப்பவோ இல்லை, எனவே எதுவும் இழக்க முடியாது. ஒரு உரையாடலின் அனைத்துச் செய்திகளும் காப்பகப்படுத்தப்பட்டால் அது முதன்மைப் பட்டியலிலிருந்து மறையும்.
 
-1.1.17 இலிருந்து சாதாரண புதுப்பிப்பு செய்யவும். செயலியை நீக்கவோ உள்ளூர் தரவு அழியும்படி அழிக்கவோ வேண்டாம். குறுஞ்செய்திகள், அமைப்புகள் மற்றும் இயல்புநிலை SMS தேர்வு பாதுகாக்கப்பட வேண்டும். புதிய அனுமதிகள் இல்லை; MMS ஆதரவு இல்லை. இந்த வேட்பாளர் கைப்பேசியில் நிறுவப்படவில்லை; டெலிவரி அறிக்கை நெட்வொர்க்கைப் பொறுந்தது, உண்மையான SIM-இல் சரிபார்க்க வேண்டும். கைப்பேசி ஒலி அல்லது Google ஒப்புதல் சான்று அல்ல.
+1.1.17 இலிருந்து சாதாரண புதுப்பிப்பு செய்யவும். செயலியை நீக்கவோ உள்ளூர் தரவு அழியும்படி அழிக்கவோ வேண்டாம். குறுஞ்செய்திகள், அமைப்புகள் மற்றும் இயல்புநிலை SMS தேர்வு பாதுகாக்கப்பட வேண்டும். புதிய அனுமதிகள் இல்லை; MMS ஆதரவு இல்லை. 24 நவம்பர் 2026 அன்று கைப்பேசியில் நிறுவப்பட்டு சரிபார்க்கப்பட்டது (உரிமையாளரின் கைப்பேசி, CI உருவாக்கிய வேட்பாளர்): Vodafone Idea (Vi) SIM-இல் அனுப்பிய செய்தி நெட்வொர்க் அறிக்கைக்குப் பிறகு "வழங்கப்பட்டது" எனக் காட்டியது; ஒவ்வொரு செய்திக்கும் காப்பகப்படுத்து பொத்தானும் 📦 காப்பகம் சிப்பும் இருந்தன. அந்த ஒரு கைப்பேசியில் Google Play Protect "This app looks safe" எனக் காட்டியது — ஒரு கைப்பேசியின் கவனிப்பு மட்டுமே, Google ஒப்புதல் அல்ல. வெளியிடப்படும் APK இதே மூலத்தின் CI மறுகட்டமைப்புடன் ஒரு காட்சி மட்டுமான திருத்தம் (நிலை உரையில் டிக் குறிகள் இருமுறை தெரிவதில்லை); அந்தத் திருத்தம் CI-இல் வெற்றி பெற்றது, கைப்பேசியில் மீண்டும் நிறுவப்படவில்லை. ஒரு கைப்பேசியில் வெற்றிகரமான நிறுவல் என்பது நெட்வொர்க்/MMS, ஒலி அல்லது Google Play Protect சான்று அல்ல.
