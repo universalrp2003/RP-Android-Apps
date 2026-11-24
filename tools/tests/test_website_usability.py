@@ -171,6 +171,30 @@ class WebsiteUsabilityTest(unittest.TestCase):
         self.assertIn('Copying a hash does not verify a downloaded file.', self.source)
         self.assertIn('not a safety approval', self.source)
 
+    def test_install_help_answers_phone_compatibility_battery_and_alert_roles(self):
+        help_box = self.source.split('<section id="install-help"', 1)[1].split('</section>', 1)[0]
+        summaries = ('Which phones can install these APKs?', 'Background voice alerts and battery',
+                     'Three apps mention alerts — which one?')
+        for summary in summaries:
+            self.assertEqual(help_box.count('<summary>' + summary), 1, summary)
+        for text in ('Android 8.0 or newer, except RP Vocal Remover Studio (Android 10+)', 'Android 16 (API 36)',
+                     'arm64-v8a, armeabi-v7a', 'not for x86 devices', "the project's own release-key-signed builds, not Play Store builds",
+                     'unrestricted background use', 'href="live-guard-guide.html"', 'nothing here asks you to disable Play Protect or system warnings',
+                     '<strong>Ramesh Radio</strong>: a radio player', 'it is not a weather alert app',
+                     'turn off the alert you do not want in that app rather than uninstalling it',
+                     'எந்தப் போனில் நிறுவலாம்?', 'Android 10+', 'x86 சாதனங்களுக்கு அல்ல',
+                     'Play Store செயலிகள் அல்ல', 'கட்டுப்பாடற்ற பின்னணிப் பயன்பாட்டை அனுமதிக்கவும்',
+                     'இது வானிலை எச்சரிக்கை செயலி அல்ல', 'செயலியை நீக்க வேண்டாம்'):
+            self.assertIn(text, help_box, text)
+        for summary in summaries:
+            block = help_box.split('<summary>' + summary, 1)[1].split('</details>', 1)[0]
+            self.assertEqual(block.count('data-content-lang="en"'), 1, summary)
+            self.assertEqual(block.count('data-content-lang="ta"'), 1, summary)
+        # Every answer in the install help stays paired; the browser usability test still sees one
+        # visible intro paragraph per language because answers live in collapsed details.
+        self.assertEqual(help_box.count('data-content-lang="en"'), help_box.count('data-content-lang="ta"'))
+        self.assertGreaterEqual(help_box.count('<details>'), 7)
+
     def test_social_preview_is_local_small_and_1200_by_630(self):
         image = (ROOT / 'site/images/social-preview-v18.png').read_bytes()
         self.assertEqual(image[:8], b'\x89PNG\r\n\x1a\n')

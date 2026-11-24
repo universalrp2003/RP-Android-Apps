@@ -104,3 +104,15 @@ Bundle these into the next Store release; do not start a Store-only build just f
 - The Shizuku persistence experiment is isolated to an emulator-only debug activity and a fixed
   disposable fixture. The candidate pipeline checks that its activity is absent from the release
   manifest and DEX. Experimental results must not be described as a shipped persistence fix.
+
+## Third-party page review (pasted by the owner, 24 November 2026) — triage
+
+The review described a six-app page; the live page lists 18 apps (17 regular + the optional Store). Already present, so no action: category filter buttons (Security / Audio & media / Finance & notes / Utilities & store), a jump-to-app selector, the latest-releases table with links to every card, APK sizes in the table and on every card, one-tap SHA-256 copy buttons, and an Install help & FAQ section (sideloading, Play Protect, uninstall, what SHA-256 proves, help). Done in this change: FAQ answers on which phones can install the APKs (Android minimum, ARM-only builds vs. no-native-code apps, target API 36, release-key signed), on background voice alerts and battery settings, and on how Live Guard / Ramesh Radio / Oor Arivippu alerts differ (rain alerts are optional per app; Oor Arivippu is travel announcements, not weather).
+
+Candidate ideas from the same review — recorded only, not started, each needs its own scoping, privacy review and owner approval:
+
+- [ ] **Tamil Nadu bus / route stop & fare tracker (offline-first)** — saved routes, upcoming-stop voice alerts, custom local landmark names that work without data between towns. Extends the Oor Arivippu GPS-voice concept; needs an offline stop data source and a licence review.
+- [ ] **Offline Tamil OCR & document scanner** — on-device Tamil + English text recognition for notices and bills with no upload. Needs an on-device model (size, accuracy and licence trade-offs like Animal Sounds').
+- [ ] **Smart charger & battery health logger** — charge-session log, temperature-spike warnings, slow-cable/charger detection from the readings Android exposes. Extends Live Guard's device-health readings; must label vendor-specific readings as such.
+- [ ] **Local voice note & meeting transcriber** — fully offline Tamil/English speech-to-text notes. Needs an on-device recogniser; the cloud-speech consent pattern from SMS Guard stays off by default.
+- [ ] **QR & link safety inspector before opening** — share-target scanner that previews a full URL, flags redirects/trackers and opens the clean link in the chosen browser. Must be a preview tool, not a "safe" verdict.
