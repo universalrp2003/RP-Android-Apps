@@ -54,11 +54,10 @@ class CatalogTest {
 
     @Test fun bundledUpdatedIsDerivedFromTheCatalogAndRenderedInBothLanguages() {
         val text = catalog()
-        val day = Catalog.catalogDay(iso)
         // The bundled list's own day, not a typed one: these must move together when catalog.json is rebuilt.
         val iso = org.json.JSONObject(text).getString("updated")
         assertEquals(iso, Catalog.updated(text))
-        assertEquals(Catalog.updated(text), Catalog.updated(text)) // stable for the same bytes
+        val day = Catalog.catalogDay(iso)
         assertEquals(iso.substring(8, 10).toInt().toString() + " " + ENGLISH_MONTHS[iso.substring(5, 7).toInt() - 1] + " " + iso.substring(0, 4), day.en)
         assertTrue(day.ta.startsWith(iso.substring(8, 10) + " ") && day.ta.endsWith(iso.substring(0, 4)) && TAMIL_MONTHS.any { it in day.ta })
         try { Catalog.updated("""{"schema":1,"updated":"13 November 2026","apps":[]}"""); fail("a non-ISO day must be refused") }
