@@ -1,3 +1,14 @@
+## Owner evidence — Vasanthi AI 1.1.6 candidate installed and working — 24 November 2026
+
+Owner downloaded the CI artifact `vasanthi-stable-candidate-1167` (run 45331600666, source 97d252e), installed
+`Vasanthi-AI-v1.1.6.apk` (45.79 MB) on his phone and wrote "Its working" with six screenshots: Play Protect
+"This app looks safe" on that one phone, "App installed", and four history screens showing the picture in front of
+every sound line, speech lines with no %, urgent cards, பேச்சு/ஒலி filters, no அமைதி rows. Record with the
+screenshots in `docs/vasanthi-1.1.6-device-verification.md` and `docs/images/vasanthi/owner-1-1-6-*.jpg`. Not
+shown on a phone: Export share sheet, quiet-window gate and battery effect. **"Its working" is a test result, not
+publication approval** — Vasanthi 1.1.6 and Tamilan Store 0.17 remain unpublished candidates (Store not yet
+phone-tested by the owner); the published APK will be a rebuild of the same source, not the installed file.
+
 ## Owner instruction — fix the Store in the next app build — 24 November 2026
 
 **Done 24 November 2026 — bundled into the Vasanthi AI 1.1.6 build cycle as Tamilan Store 0.17 / versionCode 19** (same

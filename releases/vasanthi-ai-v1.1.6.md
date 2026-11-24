@@ -15,7 +15,8 @@
 
 ## Testing limits
 
-- This exact build is **not installed on a phone** and has **no physical-device test** in this session. The new gate, the picture map and the history rule are covered by JVM unit tests, and CI builds and lints the release APK, but CI is not proof of microphone behaviour, battery life or the floating panel on your specific phone.
+- **The candidate was installed on a phone.** The owner installed the candidate APK from CI run 45331600666 (source 97d252e) on his own phone on 24 November 2026 and confirmed it works. His screenshots show the picture in front of every sound line in the history, speech lines with no percentage, the urgent cards, the பேச்சு / ஒலி filters and a recognised speech line; Google Play Protect showed "This app looks safe" on that one phone. Not shown on a phone: the history **Export** share sheet, the quiet-window gate over a long silent stretch and its battery effect.
+- **The published APK is a rebuild, not the file he installed.** The publish run builds from the same source with the same key and verifies its own bytes; no second phone has been tested. The new gate, the picture map and the history rule are covered by JVM unit tests, but CI is not proof of microphone behaviour, battery life or the floating panel on your specific phone.
 
 ## தமிழ்
 
@@ -26,4 +27,5 @@
 - ஒலியின்றி இருக்கும் நேரத்தில் மாதிரியாக்கப்படாத அமைதி ஜன்னல் இனி வகைப்படுத்தப்படாது: "மிக அமைதி" நிலையில் காப்டர் த்ரெட் மாடலைத் தவிர்த்து நேரடியாக அமைதி எனக் காட்டும். இது அமைதியான நேரத்தில் பேட்டரியை மிச்சப்படுத்தும், சத்தலில் இல்லாத ஒலியை மாடல் கற்பனை செய்யாமல் தடுக்கும்.
 - அமைதி இனி வரலாற்றில் சேமிக்கப்படாது. அமைதியான நேரம் உண்மையான ஒலிகளைப் பட்டியலிலிருந்து தள்ளாது; அமைதியாக இருக்கும்போது சாளரம் 0% பட்டையும் "மிக அமைதி" குறிப்பும் காட்டும்.
 - வரலாற்றுத் தலைப்பில் **ஏற்றுமதி** பொத்தான் சேர்க்கப்பட்டது. முழுப் பட்டியலையும் சாதாரண உரையாக (பழையது முதலில், ஒலி அல்லது பேச்சு, நேரம், நம்பிக்கை விழுக்காடு) Android பகிர்வு முறை வழியாகப் பகிரலாம். நீங்கள் பகிர்வு இலக்கைத் தேர்ந்தெடுக்காத வரை எதுவும் எங்கும் அனுப்பப்படாது.
-- **இந்தச் சரியான பதிப்பு தொலைபேசியில் நிறுவிச் சோதிக்கப்படவில்லை.** புதிய அமைதி-வாயில், பட அட்டவணை, வரலாற்று விதி ஆகியவை JVM அலகுத் தேர்வுகளில் உள்ளன; CI வெளியீட்டு APK-ஐ உருவாக்கி சரிபார்க்கிறது, ஆனால் அது உங்கள் தொலைபேசியில் மைக்ரோஃபோன், பேட்டரி அல்லது மிதக்கும் சாளர நடத்தைக்கு ஆதாரம் அல்ல.
+- **வேட்பாளர் தொலைபேசியில் நிறுவப்பட்டது.** உரிமையாளர் CI இயக்கம் 45331600666-இன் (மூலம் 97d252e) வேட்பாளர் APK-ஐ 24 நவம்பர் 2026 அன்று தன் தொலைபேசியில் நிறுவி சரியாக இயங்குவதாக உறுதிப்படுத்தினார். அவரது திரைப்பிடிப்புகளில் வரலாற்றில் ஒவ்வொரு ஒலி வரியின் முன்னும் படம், சதவீதம் இல்லாத பேச்சு வரிகள், அவசர அட்டைகள், பேச்சு / ஒலி வடிகட்டிகள் மற்றும் அறியப்பட்ட ஒரு பேச்சு வரி தெரிகின்றன; அந்த ஒரு தொலைபேசியில் Google Play Protect "This app looks safe" எனக் காட்டியது. தொலைபேசியில் காட்டப்படவில்லை: வரலாற்று **ஏற்றுமதி** பகிர்வு, நீண்ட அமைதியின் போது அமைதி-வாயிலும் அதன் பேட்டரி விளைவும்.
+- **வெளியிடப்படும் APK அவர் நிறுவிய கோப்பு அல்ல; அதே மூலத்திலிருந்து அதே கையொப்பத்துடன் மீண்டும் உருவாக்கப்படும்.** இரண்டாவது தொலைபேசி சோதிக்கப்படவில்லை. புதிய அமைதி-வாயில், பட அட்டவணை, வரலாற்று விதி ஆகியவை JVM அலகுத் தேர்வுகளில் உள்ளன; CI உங்கள் தொலைபேசியின் மைக்ரோஃபோன், பேட்டரி அல்லது மிதக்கும் சாளர நடத்தைக்கு ஆதாரம் அல்ல.
