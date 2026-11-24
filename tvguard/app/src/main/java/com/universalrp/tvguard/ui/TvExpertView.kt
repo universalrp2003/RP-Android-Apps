@@ -100,7 +100,7 @@ fun TvExpertView(settings: TvFeatureSettings, onChange: (TvFeatureSettings) -> U
 }
 
 @Composable
-private fun TvFeatureSwitch(
+internal fun TvFeatureSwitch(
     title: String,
     description: String,
     checked: Boolean,
@@ -143,6 +143,7 @@ internal val USER_SWITCHES: List<TvFeature> = listOf(
     TvFeature.NETWORK_TOOLS,
     TvFeature.RAM_BOOST,
     TvFeature.RUNNING_APPS,
+    TvFeature.SECURITY_AUDIT,
 )
 
 private fun featureTitle(feature: TvFeature): Int = when (feature) {
@@ -156,6 +157,7 @@ private fun featureTitle(feature: TvFeature): Int = when (feature) {
     TvFeature.RAM_BOOST -> R.string.feature_ram_boost
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps
     TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay
+    TvFeature.SECURITY_AUDIT -> R.string.feature_security_audit
 }
 
 private fun featureDescription(feature: TvFeature): Int = when (feature) {
@@ -169,4 +171,5 @@ private fun featureDescription(feature: TvFeature): Int = when (feature) {
     TvFeature.RAM_BOOST -> R.string.feature_ram_boost_desc
     TvFeature.RUNNING_APPS -> R.string.feature_running_apps_desc
     TvFeature.STATUS_OVERLAY -> R.string.feature_status_overlay_desc
+    TvFeature.SECURITY_AUDIT -> R.string.feature_security_audit_desc
 }

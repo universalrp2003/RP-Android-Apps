@@ -69,6 +69,20 @@ class TvFeatureSettingsTest {
     }
 
     @Test
+    fun securityAuditIsOffByDefaultAndIndependentOfThePill() {
+        // The audit is read-only but still an Expert choice: nothing runs until it is on, and the
+        // shield switch inside it never turns the audit or the pill on by itself.
+        val keys = TvFeature.entries.map { it.key }
+        assertTrue("security_audit" in keys)
+        assertFalse(TvFeatureSettings().enabled(TvFeature.SECURITY_AUDIT))
+        val expert = TvFeatureSettings(expertMode = true).withFeature(TvFeature.SECURITY_AUDIT, true)
+        assertTrue(expert.enabled(TvFeature.SECURITY_AUDIT))
+        assertFalse("the audit must not switch the pill on", expert.enabled(TvFeature.STATUS_OVERLAY))
+        assertTrue("the audit must not need the pill", expert.enabled(TvFeature.SECURITY_AUDIT))
+        assertFalse(expert.copy(expertMode = false).enabled(TvFeature.SECURITY_AUDIT))
+    }
+
+    @Test
     fun overlayIsOffByDefaultAndNeedsExpertMode() {
         val fresh = TvFeatureSettings()
         assertFalse(fresh.enabled(TvFeature.STATUS_OVERLAY))

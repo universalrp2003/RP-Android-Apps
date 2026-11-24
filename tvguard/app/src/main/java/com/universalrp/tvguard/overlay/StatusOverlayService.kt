@@ -18,6 +18,7 @@ import android.view.WindowManager
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.universalrp.tvguard.R
+import com.universalrp.tvguard.security.SecurityAuditPreferences
 import com.universalrp.tvguard.settings.TvFeature
 import com.universalrp.tvguard.settings.TvFeaturePreferences
 import com.universalrp.tvguard.ui.MainActivity
@@ -31,7 +32,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
- * Draws the five readings over other apps while the user has it switched on.
+ * Draws the five readings over other apps while the user has it switched on, plus the opt-in
+ * security shield as a sixth cell when the user turned that on in the Security audit.
  *
  * Deliberate properties:
  *  - The window is NOT_FOCUSABLE, so remote keys never reach it. D-pad navigation in the
@@ -180,6 +182,9 @@ class StatusOverlayService : Service() {
                     // The network probe is the expensive one; keep it to the same cadence as
                     // the in-app pill rather than every CPU tick.
                     if (networkDue()) update("net", OverlaySampler.network(this@StatusOverlayService))
+                    // The shield cell exists only when opted in; its readings are package-manager
+                    // queries, so they run on a slow cadence instead of every CPU tick.
+                    if (shieldDue()) update(OVERLAY_SHIELD, OverlaySampler.shield(this@StatusOverlayService))
                 } catch (cancelled: CancellationException) {
                     throw cancelled
                 } catch (_: Exception) {
@@ -189,6 +194,17 @@ class StatusOverlayService : Service() {
                 delay(CPU_INTERVAL_MS)
             }
         }
+    }
+
+    private var lastShield = 0L
+    private fun shieldDue(): Boolean {
+        if (!rows.containsKey(OVERLAY_SHIELD)) return false
+        val now = SystemClock.elapsedRealtime()
+        if (lastShield == 0L || now - lastShield >= SHIELD_INTERVAL_MS) {
+            lastShield = now
+            return true
+        }
+        return false
     }
 
     private var lastNetwork = 0L
@@ -278,6 +294,7 @@ class StatusOverlayService : Service() {
         // Temperature changes slowly; there is no value in reading it more often.
         private const val TEMP_INTERVAL_MS = 20_000L
         private const val NETWORK_INTERVAL_MS = 15_000L
+        private const val SHIELD_INTERVAL_MS = 60_000L
 
         /** True only when the saved settings ask for the overlay; the caller checks permission. */
         fun wanted(context: Context): Boolean {
@@ -321,12 +338,25 @@ class StatusOverlayService : Service() {
         fun sync(context: Context) {
             if (wanted(context) && Settings.canDrawOverlays(context)) start(context) else stop(context)
         }
+
+        /**
+         * Applies a change to the pill's shape (the shield cell switched on or off): the cells are
+         * built once in onCreate, so the window is rebuilt. A no-op when the pill is off.
+         */
+        fun restart(context: Context) {
+            if (!wanted(context) || !Settings.canDrawOverlays(context)) return
+            stop(context)
+            sync(context)
+        }
     }
 }
 
 /** Exactly the five readings asked for; Wi-Fi strength is deliberately absent. */
 // Left to right, exactly the order the readings were asked for.
 internal val OVERLAY_METRICS = listOf("cpu", "ram", "storage", "temp", "net")
+
+/** The opt-in sixth cell, appended on the right only when the Security audit's shield switch is on. */
+internal const val OVERLAY_SHIELD = "shield"
 
 /**
  * Builds the pill: one fixed-height row, one weight-shared single-line cell per reading.
@@ -344,7 +374,9 @@ internal fun buildPill(context: Context): Pair<LinearLayout, Int> {
         gravity = Gravity.CENTER_VERTICAL
         setPadding(px(10), px(2), px(10), px(2))
     }
-    OVERLAY_METRICS.forEach { key ->
+    // The shield is opt-in and saved in the Security audit; by default the pill has five cells.
+    val keys = if (SecurityAuditPreferences(context).overlayShield) OVERLAY_METRICS + OVERLAY_SHIELD else OVERLAY_METRICS
+    keys.forEach { key ->
         val label = TextView(context).apply {
             setTextColor(Color.WHITE)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)

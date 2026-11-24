@@ -120,6 +120,37 @@ class OverlayRenderTest {
     }
 
     @Test
+    fun theSecurityShieldIsAnOptInSixthCellOnTheRight() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        // Default: the user never asked for it, so the pill keeps exactly five cells.
+        val (plain, _) = buildPill(context)
+        assertEquals(OVERLAY_METRICS.size, plain.childCount)
+
+        // Opted in through the Security audit: one more cell, tagged for the sampler, last in the row.
+        com.universalrp.tvguard.security.SecurityAuditPreferences(context).overlayShield = true
+        val (withShield, _) = buildPill(context)
+        assertEquals("five readings plus the shield", OVERLAY_METRICS.size + 1, withShield.childCount)
+        assertEquals("shield", withShield.getChildAt(withShield.childCount - 1).tag)
+        for (i in 0 until withShield.childCount) {
+            (withShield.getChildAt(i) as TextView).text =
+                listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good", "unavailable")[i]
+        }
+        withShield.measure(
+            android.view.View.MeasureSpec.makeMeasureSpec(pillWidth, android.view.View.MeasureSpec.EXACTLY),
+            android.view.View.MeasureSpec.makeMeasureSpec(0, android.view.View.MeasureSpec.UNSPECIFIED)
+        )
+        withShield.layout(0, 0, withShield.measuredWidth, withShield.measuredHeight)
+        assertEveryCellFits(withShield)
+        val widths = (0 until withShield.childCount).map { cell(withShield, it).width }
+        assertTrue("six equal shares, got $widths", widths.max() - widths.min() <= 1)
+
+        // Switching it off again restores the five-cell pill.
+        com.universalrp.tvguard.security.SecurityAuditPreferences(context).overlayShield = false
+        val (again, _) = buildPill(context)
+        assertEquals(OVERLAY_METRICS.size, again.childCount)
+    }
+
+    @Test
     fun theTextIsReadableAtTVDistance() {
         val container = pill(listOf("62%", "832 MB", "26.0 GB", "50.3 °C", "good"))
         // 15sp on a 1080p panel: the readings must not shrink below a legible size.

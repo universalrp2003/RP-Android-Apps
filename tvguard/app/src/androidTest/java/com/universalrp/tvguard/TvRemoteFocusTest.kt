@@ -389,6 +389,46 @@ class TvRemoteFocusTest {
         compose.onNodeWithTag("home-first-app").assertIsFocused()
     }
 
+    /**
+     * The Security audit is a Tools card behind its Expert switch. Focus lands on the back button,
+     * Down walks summary -> shield switch -> first finding -> its link -> the next finding, the
+     * last finding is reachable by scrolling, and Home leaves the screen like every other one.
+     */
+    @Test
+    fun securityAuditOpensFromToolsAndDpadReachesActions() {
+        enableFeature(TvFeature.SECURITY_AUDIT)
+        compose.onNodeWithTag("tools-security").performClick()
+        awaitFocus("security-back")
+        press("security-back", Key.DirectionDown, "security-summary")
+        press("security-summary", Key.DirectionDown, "security-shield")
+        compose.onNodeWithTag("security-shield").assertIsOff()
+        press("security-shield", Key.DirectionDown, "security-finding-adb")
+        press("security-finding-adb", Key.DirectionDown, "security-action-adb")
+        press("security-action-adb", Key.DirectionDown, "security-finding-unknown_sources")
+
+        // The HOME finding is the last lazy row; it only exists once scrolled into view.
+        compose.onNodeWithTag("security-list").performScrollToNode(hasTestTag("security-finding-home"))
+        compose.waitUntil(timeoutMillis = 10_000) {
+            compose.onAllNodes(hasTestTag("security-finding-home")).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithTag("security-finding-home").assertExists()
+        compose.onNodeWithTag("security-action-home").assertExists()
+        // The last link is the end of the D-pad chain: Down there stays put. (The links are not
+        // pressed here; each opens a system screen outside this app.)
+        compose.onNodeWithTag("security-list").performScrollToNode(hasTestTag("security-action-home"))
+        compose.onNodeWithTag("security-action-home").performSemanticsAction(SemanticsActions.RequestFocus)
+        compose.onNodeWithTag("security-action-home").performKeyInput { pressKey(Key.DirectionDown) }
+        compose.onNodeWithTag("security-action-home").assertIsFocused()
+
+        // The shield is opt-in and off; OK turns it on, OK again turns it back off.
+        compose.onNodeWithTag("security-list").performScrollToNode(hasTestTag("security-shield"))
+        compose.onNodeWithTag("security-shield").performClick().assertIsOn()
+        compose.onNodeWithTag("security-shield").performClick().assertIsOff()
+        sendLauncherHomeIntent()
+        compose.onNodeWithTag("security-back").assertDoesNotExist()
+        compose.onNodeWithTag("home-first-app").assertIsFocused()
+    }
+
     @Test
     fun networkAndAboutHeadersLeadIntoTheirOwnContent() {
         enableFeature(TvFeature.NETWORK_TOOLS)

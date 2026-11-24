@@ -6,7 +6,7 @@ set -euo pipefail
 work="$RUNNER_TEMP/tvguard-signed-candidate"
 old="$RUNNER_TEMP/tvguard-old-debug/tvguard-debug.apk"
 fixture="$work/synthetic-older-same-key.apk"
-candidate="$work/Android-TV-Guard-1.5.1-signed-candidate.apk"
+candidate="$work/Android-TV-Guard-1.5.2-signed-candidate.apk"
 test_apk="$work/tvguard-release-androidTest.apk"
 package=com.universalrp.tvguard
 runner=com.universalrp.tvguard.test/androidx.test.runner.AndroidJUnitRunner
@@ -61,7 +61,8 @@ python3 tvguard/tools/verify_instrumentation.py "$work/tv-focus.log" \
   --test expertSwitchesNavigateWithDpadAndRevokeAndRestoreHub \
   --test downFromDebloaterHeaderEntersItsControlsAndHomeReturnsToFirstApp \
   --test networkAndAboutHeadersLeadIntoTheirOwnContent \
-  --test appendedExpertSwitchesAreReachableScrolledAndOffByDefault
+  --test appendedExpertSwitchesAreReachableScrolledAndOffByDefault \
+  --test securityAuditOpensFromToolsAndDpadReachesActions
 
 # Also check that the focus tests restored the synthetic choices.
 run_probe verify

@@ -66,6 +66,29 @@ class StatusThresholdsTest {
     }
 
     @Test
+    fun securityShieldBandsFollowTheAuditSeverities() {
+        // Any alert is red, otherwise any warning is amber, otherwise green.
+        assertEquals(Band.GOOD, StatusThresholds.security(0, 0))
+        assertEquals(Band.WARN, StatusThresholds.security(0, 1))
+        assertEquals(Band.WARN, StatusThresholds.security(0, 3))
+        assertEquals(Band.BAD, StatusThresholds.security(1, 0))
+        assertEquals(Band.BAD, StatusThresholds.security(2, 4))
+        // Nonsense input is never shown as healthy.
+        assertEquals(Band.UNAVAILABLE, StatusThresholds.security(null, 0))
+        assertEquals(Band.UNAVAILABLE, StatusThresholds.security(0, null))
+        assertEquals(Band.UNAVAILABLE, StatusThresholds.security(-1, 0))
+        assertEquals(Band.UNAVAILABLE, StatusThresholds.security(0, -1))
+    }
+
+    @Test
+    fun theShieldIsOneShortWordPerBand() {
+        assertEquals("secure", StatusThresholds.securityWord(Band.GOOD))
+        assertEquals("review", StatusThresholds.securityWord(Band.WARN))
+        assertEquals("alert", StatusThresholds.securityWord(Band.BAD))
+        assertEquals("unavailable", StatusThresholds.securityWord(Band.UNAVAILABLE))
+    }
+
+    @Test
     fun percentRefusesImpossibleInput() {
         assertEquals(50, StatusThresholds.percent(50, 100))
         assertEquals(100, StatusThresholds.percent(100, 100))
