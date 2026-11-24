@@ -95,6 +95,10 @@ import com.universalrp.smsguard.engine.FinanceLedgerEngine
 import com.universalrp.smsguard.engine.LinkScanResult
 import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.SenderTrustLevel
+import com.universalrp.smsguard.engine.SmsDeliveryState
+import com.universalrp.smsguard.engine.SmsDeliveryStatus
+import com.universalrp.smsguard.engine.SmsDeliveryStatusPolicy
+import com.universalrp.smsguard.engine.SmsFailureReason
 import com.universalrp.smsguard.engine.SpoofClassification
 import com.universalrp.smsguard.engine.TxDirection
 
@@ -123,8 +127,9 @@ fun MessagesTab(
     onOpenNewCompose: () -> Unit,
 ) {
     val context = LocalContext.current
-    val visibleThreads = remember(threads, filter, searchQuery) {
-        vm.filterThreads(threads, filter, searchQuery)
+    val archivedThreads by vm.archivedThreads.collectAsState()
+    val visibleThreads = remember(threads, archivedThreads, filter, searchQuery) {
+        vm.filterThreads(if (filter == InboxFilter.ARCHIVED) archivedThreads else threads, filter, searchQuery)
     }
     var searchExpanded by remember { mutableStateOf(searchQuery.isNotBlank()) }
     var loadingSeconds by remember { mutableIntStateOf(0) }
@@ -329,6 +334,7 @@ fun MessagesTab(
                     InboxFilter.LINKS to ui.filterLinks,
                     InboxFilter.SCAM to ui.filterScam,
                     InboxFilter.PROMO to ui.filterPromo,
+                    InboxFilter.ARCHIVED to ui.filterArchived,
                 )
                 Row(
                     modifier = Modifier
@@ -355,9 +361,18 @@ fun MessagesTab(
                             .padding(vertical = 36.dp, horizontal = 16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Text(ui.emptyInboxTitle, fontWeight = FontWeight.Bold, fontSize = 18.sp, color = palette.textPrimary)
+                        Text(
+                            text = if (filter == InboxFilter.ARCHIVED) ui.archivedEmptyTitle else ui.emptyInboxTitle,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = palette.textPrimary,
+                        )
                         Spacer(Modifier.height(6.dp))
-                        Text(ui.emptyInboxBody, fontSize = 13.sp, color = palette.textMuted)
+                        Text(
+                            text = if (filter == InboxFilter.ARCHIVED) ui.archivedEmptyBody else ui.emptyInboxBody,
+                            fontSize = 13.sp,
+                            color = palette.textMuted,
+                        )
                     }
                 }
             } else {
@@ -780,6 +795,7 @@ fun ThreadDetailScreen(
     ui: GuardUiStrings,
     sims: List<SimCardInfo>,
     isDefaultSms: Boolean,
+    initialShowArchived: Boolean = false,
 ) {
     val context = LocalContext.current
     val isSpeaking by vm.speakingFlow.collectAsState()
@@ -788,8 +804,14 @@ fun ThreadDetailScreen(
     var blockedLinkDialog by remember { mutableStateOf<LinkScanResult?>(null) }
     var confirmDeleteThread by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    val orderedMessages = remember(thread.messages) {
-        thread.messages.sortedWith(
+    // Archived messages stay part of this thread's data; which set is on screen is only a view
+    // choice, so nothing is moved or deleted and "Unarchive" is immediate.
+    val archivedIds = prefs.archivedMessageIds
+    val archivedMessages = remember(thread.messages, archivedIds) { thread.messages.filter { it.id in archivedIds } }
+    val conversationMessages = remember(thread.messages, archivedIds) { thread.messages.filterNot { it.id in archivedIds } }
+    var showArchived by remember(thread.threadKey) { mutableStateOf(initialShowArchived) }
+    val orderedMessages = remember(conversationMessages, archivedMessages, showArchived) {
+        (if (showArchived) archivedMessages else conversationMessages).sortedWith(
             compareByDescending<EnrichedSmsMessage> { it.dateMs }
                 .thenByDescending { it.id },
         )
@@ -868,6 +890,27 @@ fun ThreadDetailScreen(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
+            if (archivedMessages.isNotEmpty()) {
+                item(key = "archived-banner") {
+                    ArchivedMessagesBanner(
+                        count = archivedMessages.size,
+                        showingArchived = showArchived,
+                        palette = palette,
+                        ui = ui,
+                        onToggle = { showArchived = !showArchived },
+                    )
+                }
+            }
+            if (orderedMessages.isEmpty()) {
+                item(key = "thread-empty") {
+                    Text(
+                        text = if (showArchived) ui.archivedEmptyTitle else ui.allArchivedTitle,
+                        fontSize = 13.sp,
+                        color = palette.textMuted,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
+                    )
+                }
+            }
             items(orderedMessages, key = { it.id }) { msg ->
                 MessageBubbleCard(
                     msg = msg,
@@ -875,6 +918,9 @@ fun ThreadDetailScreen(
                     palette = palette,
                     ui = ui,
                     canDelete = isDefaultSms,
+                    trackingSinceMs = prefs.deliveryTrackingSinceMs,
+                    archived = msg.id in archivedIds,
+                    onToggleArchive = { vm.toggleArchive(msg) },
                     onCopyOtp = { vm.copyOtp(it) },
                     onSpeak = { vm.replayMessageVoice(msg) },
                     onCopyBody = {
@@ -1019,6 +1065,9 @@ private fun MessageBubbleCard(
     palette: GuardPalette,
     ui: GuardUiStrings,
     canDelete: Boolean,
+    trackingSinceMs: Long,
+    archived: Boolean,
+    onToggleArchive: () -> Unit,
     onCopyOtp: (String) -> Unit,
     onSpeak: () -> Unit,
     onCopyBody: () -> Unit,
@@ -1050,11 +1099,22 @@ private fun MessageBubbleCard(
             }
         }
 
-        // Clear label on outgoing messages sent by the user
+        // Clear label on outgoing messages sent by the user, carrying the radio's own report:
+        // "Sending…" until the tower answers, "Sent" once it does, "Delivered" only when the
+        // recipient's network confirmed it, and the carrier's reason when it did not.
         if (msg.isSentByMe) {
+            val delivery = SmsDeliveryStatusPolicy.resolve(
+                isSentByMe = true,
+                type = msg.smsType,
+                status = msg.status,
+                errorCode = msg.errorCode,
+                dateMs = msg.dateMs,
+                trackingSinceMs = trackingSinceMs,
+            )
+            val (label, labelColor) = deliveryLabel(delivery, tamil, ui, palette)
             Text(
-                text = if (tamil) "↗ நீங்கள் அனுப்பியது" else "↗ Sent by you",
-                color = palette.accent,
+                text = label,
+                color = labelColor,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
             )
@@ -1165,6 +1225,18 @@ private fun MessageBubbleCard(
                     Spacer(Modifier.width(4.dp))
                     Text(ui.copyTextBtn, fontSize = 11.5.sp, color = palette.textMuted, maxLines = 1, softWrap = false)
                 }
+                TextButton(
+                    onClick = onToggleArchive,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = if (archived) ui.unarchiveMsgBtn else ui.archiveMsgBtn,
+                        fontSize = 11.5.sp,
+                        color = palette.accent,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
                 if (canDelete) {
                     TextButton(
                         onClick = onDelete,
@@ -1176,6 +1248,70 @@ private fun MessageBubbleCard(
             }
         }
     }
+}
+
+@Composable
+private fun ArchivedMessagesBanner(
+    count: Int,
+    showingArchived: Boolean,
+    palette: GuardPalette,
+    ui: GuardUiStrings,
+    onToggle: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(palette.accent.copy(alpha = 0.12f))
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "📦 $count ${ui.archivedMessagesLabel}",
+            color = palette.accent,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.weight(1f),
+        )
+        TextButton(onClick = onToggle, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)) {
+            Text(
+                text = if (showingArchived) ui.hideArchivedBtn else ui.showArchivedBtn,
+                fontSize = 12.sp,
+                color = palette.accent,
+                maxLines = 1,
+                softWrap = false,
+            )
+        }
+    }
+}
+
+private fun deliveryLabel(
+    delivery: SmsDeliveryStatus?,
+    tamil: Boolean,
+    ui: GuardUiStrings,
+    palette: GuardPalette,
+): Pair<String, Color> {
+    val plain = if (tamil) "↗ நீங்கள் அனுப்பியது" else "↗ Sent by you"
+    val status = delivery ?: return plain to palette.accent
+    return when (status.state) {
+        SmsDeliveryState.SENDING -> "🕒 ${ui.statusSending}" to palette.warnAmber
+        SmsDeliveryState.SENT -> "✓ ${ui.statusSent}" to palette.accent
+        SmsDeliveryState.DELIVERED -> "✓✓ ${ui.statusDelivered}" to palette.accent
+        SmsDeliveryState.NOT_DELIVERED -> "✗ ${ui.statusNotDelivered} · ${reasonLabel(status.reason, ui)}" to palette.dangerRed
+        SmsDeliveryState.NOT_SENT -> "✗ ${ui.statusNotSent} · ${reasonLabel(status.reason, ui)}" to palette.dangerRed
+        SmsDeliveryState.PLAIN_SENT -> plain to palette.accent
+    }
+}
+
+private fun reasonLabel(reason: SmsFailureReason, ui: GuardUiStrings): String = when (reason) {
+    SmsFailureReason.RADIO_OFF -> ui.reasonRadioOff
+    SmsFailureReason.NO_SERVICE -> ui.reasonNoService
+    SmsFailureReason.LIMIT_EXCEEDED -> ui.reasonLimitExceeded
+    SmsFailureReason.FDN_BLOCKED -> ui.reasonFdnBlocked
+    SmsFailureReason.ENCODING -> ui.reasonEncoding
+    SmsFailureReason.NONE -> ui.reasonGeneric
+    SmsFailureReason.GENERIC -> ui.reasonGeneric
 }
 
 @Composable

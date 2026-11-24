@@ -68,6 +68,7 @@ import com.universalrp.smsguard.data.GuardSettingsStore
 import com.universalrp.smsguard.data.SmsRepository
 import com.universalrp.smsguard.service.SmsStateChangeSignal
 import com.universalrp.smsguard.ui.AboutSmsGuardScreen
+import com.universalrp.smsguard.ui.InboxFilter
 import com.universalrp.smsguard.ui.BilingualCatalog
 import com.universalrp.smsguard.ui.BillsTab
 import com.universalrp.smsguard.ui.ControlsTab
@@ -601,8 +602,12 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .padding(padding),
                     ) {
+                        val archivedThreads by vm.archivedThreads.collectAsState()
+                        // A conversation reached from the Archived chip may consist of archived
+                        // messages only, so it is looked up in both lists.
                         val activeThread = openThreadKey?.let { key ->
                             threads.firstOrNull { it.threadKey == key }
+                                ?: archivedThreads.firstOrNull { it.threadKey == key }
                         }
                         when {
                             showGuide -> {
@@ -633,6 +638,7 @@ class MainActivity : ComponentActivity() {
                                     ui = ui,
                                     sims = sims,
                                     isDefaultSms = isDefaultSms,
+                                    initialShowArchived = filter == InboxFilter.ARCHIVED,
                                 )
                             }
                             else -> {

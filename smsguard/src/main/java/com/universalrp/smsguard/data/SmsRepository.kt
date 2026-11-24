@@ -2,11 +2,13 @@ package com.universalrp.smsguard.data
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.PendingIntent
 import android.app.role.RoleManager
 import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.ContentUris
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
@@ -26,6 +28,9 @@ import com.universalrp.smsguard.engine.LinkVerdict
 import com.universalrp.smsguard.engine.OtpDetector
 import com.universalrp.smsguard.engine.OtpResult
 import com.universalrp.smsguard.engine.SenderIdentity
+import com.universalrp.smsguard.engine.SmsDeliveryStatusPolicy
+import com.universalrp.smsguard.engine.SmsPartEvent
+import com.universalrp.smsguard.engine.SmsPartOutcome
 import com.universalrp.smsguard.engine.SenderIdentityEngine
 import com.universalrp.smsguard.engine.SpoofClassification
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -62,6 +67,10 @@ data class EnrichedSmsMessage(
     val otp: OtpResult,
     val links: List<LinkScanResult>,
     val finance: FinanceParseResult,
+    // Delivery-report state straight from the provider row; see SmsDeliveryStatusPolicy.
+    val smsType: Int = SmsDeliveryStatusPolicy.TYPE_INBOX,
+    val status: Int = SmsDeliveryStatusPolicy.STATUS_NONE,
+    val errorCode: Int = 0,
 )
 
 data class SmsThreadSummary(
@@ -321,6 +330,8 @@ object SmsRepository {
             Telephony.Sms.TYPE,
             Telephony.Sms.READ,
             Telephony.Sms.SUBSCRIPTION_ID,
+            Telephony.Sms.STATUS,
+            Telephony.Sms.ERROR_CODE,
         )
 
         while (rows.size < targetCount) {
@@ -380,6 +391,8 @@ object SmsRepository {
                     val typeIdx = c.getColumnIndex(Telephony.Sms.TYPE)
                     val readIdx = c.getColumnIndex(Telephony.Sms.READ)
                     val subIdx = c.getColumnIndex(Telephony.Sms.SUBSCRIPTION_ID)
+                    val statusIdx = c.getColumnIndex(Telephony.Sms.STATUS)
+                    val errorIdx = c.getColumnIndex(Telephony.Sms.ERROR_CODE)
 
                     check(idIdx >= 0 && addrIdx >= 0 && bodyIdx >= 0 && dateIdx >= 0) { "SMS provider columns unavailable" }
 
@@ -403,6 +416,8 @@ object SmsRepository {
                                     type = if (typeIdx >= 0) c.getInt(typeIdx) else Telephony.Sms.MESSAGE_TYPE_INBOX,
                                     isUnread = readIdx >= 0 && c.getInt(readIdx) == 0,
                                     subId = if (subIdx >= 0) c.getInt(subIdx) else -1,
+                                    status = if (statusIdx >= 0) c.getInt(statusIdx) else SmsDeliveryStatusPolicy.STATUS_NONE,
+                                    errorCode = if (errorIdx >= 0) c.getInt(errorIdx) else 0,
                                 ),
                             )
                         } catch (_: Throwable) {
@@ -521,6 +536,9 @@ object SmsRepository {
                         otp = otp,
                         links = links,
                         finance = finance,
+                        smsType = row.type,
+                        status = row.status,
+                        errorCode = row.errorCode,
                     ),
                 )
             }
@@ -625,6 +643,13 @@ object SmsRepository {
         return -1L
     }
 
+    /**
+     * Sends one text message and tracks it honestly. The provider row is written first as an
+     * outbox ("Sending…") entry so the conversation shows it immediately, then the radio is given a
+     * sent callback and a delivery callback per part. Nothing marks the message sent or delivered
+     * here: only the radio's own broadcasts, handled in [onDeliveryBroadcast], change the row, and a
+     * carrier that sends no delivery report leaves it at "Sent" rather than inventing "Delivered".
+     */
     fun sendSmsMessage(
         context: Context,
         destinationAddress: String,
@@ -659,25 +684,115 @@ object SmsRepository {
             }
 
             val parts = smsManager.divideMessage(cleanBody)
-            if (parts.size > 1) {
-                smsManager.sendMultipartTextMessage(cleanDest, null, parts, null, null)
-            } else {
-                smsManager.sendTextMessage(cleanDest, null, cleanBody, null, null)
+            val partCount = parts.size.coerceAtLeast(1)
+
+            // Only the default SMS app may write the provider; without the role there is no row to
+            // update later, so the callbacks simply have nothing to do (messageId stays -1).
+            val messageId = insertOutgoingRow(context, cleanDest, cleanBody, sentNowMs, subscriptionId)
+            if (messageId > 0) {
+                GuardSettingsStore.markDeliveryTrackingSince(context, sentNowMs)
+                SmsDeliveryTracker.start(context, messageId, partCount, sentNowMs)
+            }
+            val sentIntents = ArrayList<PendingIntent>(partCount)
+            val deliveryIntents = ArrayList<PendingIntent>(partCount)
+            for (i in 0 until partCount) {
+                sentIntents.add(SmsDeliveryPendingIntents.forPart(context, SmsDeliveryPendingIntents.ACTION_SENT, messageId, i, partCount))
+                deliveryIntents.add(SmsDeliveryPendingIntents.forPart(context, SmsDeliveryPendingIntents.ACTION_DELIVERED, messageId, i, partCount))
             }
 
-            if (isDefaultSmsApp(context)) {
-                val values = ContentValues().apply {
-                    put(Telephony.Sms.ADDRESS, cleanDest)
-                    put(Telephony.Sms.BODY, cleanBody)
-                    put(Telephony.Sms.DATE, sentNowMs)
-                    put(Telephony.Sms.READ, 1)
-                    put(Telephony.Sms.SEEN, 1)
-                    if (subscriptionId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subscriptionId)
+            try {
+                if (partCount > 1) {
+                    smsManager.sendMultipartTextMessage(cleanDest, null, parts, sentIntents, deliveryIntents)
+                } else {
+                    smsManager.sendTextMessage(cleanDest, null, cleanBody, sentIntents[0], deliveryIntents[0])
                 }
-                context.contentResolver.insert(Telephony.Sms.Sent.CONTENT_URI, values)
+            } catch (failure: Throwable) {
+                // The radio refused the request outright: the row must not stay "Sending…" forever.
+                if (messageId > 0) {
+                    updateDeliveryRow(context, messageId, SmsDeliveryStatusPolicy.TYPE_FAILED, SmsDeliveryStatusPolicy.STATUS_FAILED, SmsDeliveryStatusPolicy.RESULT_ERROR_GENERIC_FAILURE)
+                    SmsDeliveryTracker.clear(context, messageId)
+                }
+                throw failure
             }
             SmsEvents.notifyChanged()
         }
+    }
+
+    /** The outbox row every later status update refers to; -1 when this app is not the default SMS app. */
+    private fun insertOutgoingRow(
+        context: Context,
+        address: String,
+        body: String,
+        timestampMs: Long,
+        subscriptionId: Int,
+    ): Long {
+        if (!isDefaultSmsApp(context)) return -1L
+        return runCatching {
+            val values = ContentValues().apply {
+                put(Telephony.Sms.ADDRESS, address)
+                put(Telephony.Sms.BODY, body)
+                put(Telephony.Sms.DATE, timestampMs)
+                put(Telephony.Sms.DATE_SENT, timestampMs)
+                put(Telephony.Sms.READ, 1)
+                put(Telephony.Sms.SEEN, 1)
+                put(Telephony.Sms.TYPE, SmsDeliveryStatusPolicy.TYPE_OUTBOX)
+                put(Telephony.Sms.STATUS, SmsDeliveryStatusPolicy.STATUS_PENDING)
+                put(Telephony.Sms.ERROR_CODE, 0)
+                if (subscriptionId >= 0) put(Telephony.Sms.SUBSCRIPTION_ID, subscriptionId)
+            }
+            context.contentResolver.insert(Telephony.Sms.Outbox.CONTENT_URI, values)
+                ?.lastPathSegment?.toLongOrNull() ?: -1L
+        }.getOrDefault(-1L)
+    }
+
+    /** Moves one provider row to its new delivery state; the inbox reads these columns directly. */
+    private fun updateDeliveryRow(
+        context: Context,
+        messageId: Long,
+        type: Int,
+        status: Int,
+        errorCode: Int,
+    ): Boolean {
+        if (messageId <= 0 || !isDefaultSmsApp(context)) return false
+        return runCatching {
+            val values = ContentValues().apply {
+                put(Telephony.Sms.TYPE, type)
+                put(Telephony.Sms.STATUS, status)
+                put(Telephony.Sms.ERROR_CODE, errorCode)
+                put(Telephony.Sms.READ, 1)
+                put(Telephony.Sms.SEEN, 1)
+            }
+            context.contentResolver.update(ContentUris.withAppendedId(Telephony.Sms.CONTENT_URI, messageId), values, null, null) > 0
+        }.getOrDefault(false)
+    }
+
+    /**
+     * One radio callback for one part of one message. Per-part results are merged through
+     * [SmsDeliveryTracker]; the row only advances to "Sent" or "Delivered" once every part agrees,
+     * and any negative report is recorded with its reason. Returns the outcome for logging/tests.
+     */
+    fun onDeliveryBroadcast(
+        context: Context,
+        messageId: Long,
+        partIndex: Int,
+        event: SmsPartEvent,
+        resultCode: Int,
+    ): SmsPartOutcome {
+        if (messageId <= 0) return SmsPartOutcome.PENDING
+        if (!isDefaultSmsApp(context)) {
+            SmsDeliveryTracker.clear(context, messageId)
+            return SmsPartOutcome.PENDING
+        }
+        val outcome = SmsDeliveryTracker.apply(context, messageId, partIndex, event, System.currentTimeMillis())
+        val reason = if (resultCode == 0) SmsDeliveryStatusPolicy.RESULT_ERROR_GENERIC_FAILURE else resultCode
+        when (outcome) {
+            SmsPartOutcome.SEND_FAILED -> updateDeliveryRow(context, messageId, SmsDeliveryStatusPolicy.TYPE_FAILED, SmsDeliveryStatusPolicy.STATUS_FAILED, reason)
+            SmsPartOutcome.SENT -> updateDeliveryRow(context, messageId, SmsDeliveryStatusPolicy.TYPE_SENT, SmsDeliveryStatusPolicy.STATUS_PENDING, 0)
+            SmsPartOutcome.DELIVERED -> updateDeliveryRow(context, messageId, SmsDeliveryStatusPolicy.TYPE_SENT, SmsDeliveryStatusPolicy.STATUS_COMPLETE, 0)
+            SmsPartOutcome.DELIVERY_FAILED -> updateDeliveryRow(context, messageId, SmsDeliveryStatusPolicy.TYPE_SENT, SmsDeliveryStatusPolicy.STATUS_FAILED, reason)
+            SmsPartOutcome.PENDING -> false
+        }
+        return outcome
     }
 
     fun markThreadRead(context: Context, messagesInThread: List<EnrichedSmsMessage>) {
@@ -750,5 +865,7 @@ object SmsRepository {
         val type: Int,
         val isUnread: Boolean,
         val subId: Int,
+        val status: Int,
+        val errorCode: Int,
     )
 }
