@@ -101,9 +101,9 @@ class WebsiteRequestsTest(unittest.TestCase):
         self.assertEqual({asset for asset, _ in cards}, ld_assets)
         self.assertEqual({tag for _, tag in table}, ld_tags)
         self.assertEqual({tag for _, tag in cards}, ld_tags)
-        self.assertIn('Tamilan-Store-v0.16.apk', ld_assets)
+        self.assertIn('Tamilan-Store-v0.17.apk', ld_assets)
         self.assertIn('DailyVault-v0.5.apk', ld_assets)
-        optional_tags = {'tamilan-store-v0.16'}
+        optional_tags = {'tamilan-store-v0.17'}
         self.assertTrue(optional_tags.issubset(ld_tags))
         self.assertEqual(len(optional_tags), 1)
         self.assertEqual(len(ld_tags - optional_tags), 17)

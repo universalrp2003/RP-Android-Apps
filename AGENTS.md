@@ -1,3 +1,16 @@
+## Published — Tamilan Store 0.17 and Vasanthi AI 1.1.6 — 24 November 2026
+
+- **Tamilan Store 0.17 / code 19**: release `tamilan-store-v0.17` (id 456415619), `Tamilan-Store-v0.17.apk` **20,713,347 B**,
+  SHA-256 `c38bed526fc53e0276f64c853665b60f29ad9cc687b623b3e1c7bf6013be66c7`, published 2026-11-24T07:12:00Z by promote run
+  45346064452 from candidate run 45331600676 attempt 1 (source 97d252e) — exact bytes, not rebuilt; the owner installed
+  these bytes before approving. Receipt `docs/tamilan-store-0.17-publication-receipt.json`. Public 0.16 unchanged.
+- **Vasanthi AI 1.1.6 / code 9**: release `vasanthi-ai-v1.1.6` (id 456417461), `Vasanthi-AI-v1.1.6.apk` **45,794,346 B**,
+  SHA-256 `5b59ba8dbe7cf2624ac3e50000547350dd6b6af846f38a39010e2ba5feadc829`, published 2026-11-24T07:14:13Z by publish run
+  45346272162 (marker commit 52cc795; tag target main@3a0254e, identical vasanthi/ + shared/ source). Rebuild, not the file the
+  owner installed (candidate run 45331600666); said so in the note, README and website card. Public 1.1.5 unchanged.
+- Website cards/table/JSON-LD, Pages mirrors, `release-dates.json`, SisterApps `publishedVersion`, catalog feeds, digest
+  records and Python pins updated in the follow-up pins commit.
+
 ## Owner approval — publish Vasanthi AI 1.1.6 and Tamilan Store 0.17 — 24 November 2026
 
 Owner: **"All working you can publish both"** (2026-11-24, ~11:51 phone time) after installing the Store 0.17

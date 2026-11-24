@@ -134,7 +134,7 @@ object SisterApps {
             tamilName = "என்னைச் சுற்றி",
             tagPrefix = "vasanthi-ai",
             version = "1.1.6",
-            publishedVersion = "1.1.5",
+            publishedVersion = "1.1.6",
             packageName = "com.universalrp.vasanthi",
             aboutLabel = "Vasanthi AI — GitHub release",
         ),
@@ -190,7 +190,7 @@ object SisterApps {
         ),
         SisterApp(
             id = "tamilanstore", name = "Tamilan Store", tamilName = "தமிழன்",
-            tagPrefix = "tamilan-store", version = "0.17", publishedVersion = "0.16",
+            tagPrefix = "tamilan-store", version = "0.17", publishedVersion = "0.17",
             packageName = "com.universalrp.tamilanstore", aboutLabel = "தமிழன் / Tamilan Store — GitHub release",
         ),
     )

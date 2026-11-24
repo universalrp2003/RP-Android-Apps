@@ -9,13 +9,14 @@
 
 - [ ] **Decode numeric HTML/XML character entities (`&#x1f537;`, `&#8217;`, etc.) in RSS news headlines (`NewsPolicy.kt`)** so external news feeds containing hex/decimal HTML entities render real Unicode symbols (`🔷`, `’`) cleanly on the Home news banner.
 
-## Queued for the next Tamilan Store build — DONE in the 0.17 candidate (bundled with Vasanthi AI 1.1.6, 24 November 2026)
+## Queued for the next Tamilan Store build — DONE and PUBLISHED as Store 0.17 (bundled with Vasanthi AI 1.1.6, 24 November 2026)
 
 **Owner instruction, 24 November 2026: when the next new application is built, fix the Store also.** The next new
 app build was Vasanthi AI 1.1.6, so the items below were bundled into that build cycle as Tamilan Store 0.17 /
 versionCode 19 (same package, same release key, in-place upgrade over the public 0.16). They are implemented,
-unit- and instrumentation-tested and built by `store-017-candidate.yml`; **0.17 is a candidate and not yet
-published** — publication waits for the owner's approval of the exact candidate bytes, like every release.
+unit- and instrumentation-tested, built by `store-017-candidate.yml`, phone-tested by the owner on 24 November 2026
+(in-place over 0.16) and **published as exact candidate bytes** with his approval (release `tamilan-store-v0.17`,
+`docs/tamilan-store-0.17-publication-receipt.json`).
 
 - [x] **In-progress download not restored after relaunch when it was started from a shorter live feed
       (`ManagedApkDownload.restore()`).** `restore()` now parses the saved snapshot with `Catalog.parseLive(text)`
