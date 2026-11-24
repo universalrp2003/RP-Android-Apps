@@ -1,3 +1,7 @@
+## Owner approval — publish SMS Guard 1.1.18 — 24 November 2026
+
+Owner re-installed the **label-fixed** candidate (run 45376638202 on `0d0f3e3`, shown as `SMS-Guard-v1.1.18.apk`, "App info 1.1.18 (24)", Play Protect again "This app looks safe"), sent two more screenshots — thread "Sasikala" with two bubbles reading **Delivered ✓✓** (single check marks, final wording) and the English inbox with the **📦 Archived** chip — and wrote verbatim: **"Yes its all ok you can publish now"**. Publication approved for 1.1.18 / code 24. Marker commit `[publish-smsguard]` pushed on the subject line; the release note states the published APK is a CI rebuild of the exact source the owner tested (same key), not the identical file.
+
 ## Owner evidence — SMS Guard 1.1.18 candidate installed and working — 24 November 2026
 
 Owner installed the CI candidate (`SMS-Guard-v1.1.18.apk`, 12.87 MB on the phone, from artifact `SMS-Guard-signed-candidate` of run 45372490739 on `2343e4f`) over 1.1.17 and sent four screenshots with "See its working":
