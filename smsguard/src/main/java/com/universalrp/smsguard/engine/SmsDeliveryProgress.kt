@@ -23,7 +23,7 @@ data class SmsPartProgress(
     val allDelivered: Boolean get() = deliveredMask.covers(partCount)
 
     private fun Long.covers(count: Int): Boolean {
-        for (i in 0 until count) if (this and (1L shl i)) == 0L) return false
+        for (i in 0 until count) if ((this and (1L shl i)) == 0L) return false
         return true
     }
 

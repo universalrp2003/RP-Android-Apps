@@ -50,17 +50,17 @@ class SmsDeliveryProgressTest {
             assertEquals(SmsPartOutcome.PENDING, outcome)
             p = next
         }
-        assertEquals(1L, java.lang.Long.bitCount(p.deliveredMask))
+        assertEquals(1L, p.deliveredMask)
     }
 
     @Test fun aDeliveryReportMayArriveBeforeTheSentCallback() {
         var p = SmsPartProgress(partCount = 1)
         val (p1, outcome) = SmsDeliveryProgress.next(p, SmsPartEvent.DELIVERED_OK, 0, t0)
         assertEquals(SmsPartOutcome.DELIVERED, outcome)
-        p = p1
-        val (_, laterSent) = SmsDeliveryProgress.next(p, SmsPartEvent.SENT_OK, 0, t0 + 1)
+        val (p2, laterSent) = SmsDeliveryProgress.next(p1, SmsPartEvent.SENT_OK, 0, t0 + 1)
         assertEquals(SmsPartOutcome.SENT, laterSent)
-        assertTrue(p.allSent)
+        assertTrue(p2.allSent)
+        assertTrue(p2.allDelivered)
     }
 
     @Test fun anyFailedPartFailsTheWholeStep() {
