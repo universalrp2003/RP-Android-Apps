@@ -82,12 +82,12 @@ class FreshInstallMigrationTest(unittest.TestCase):
             'smsguard': ('1.1.17', '23', 'sms-guard-v1.1.17'),
             'voicenotes': ('1.3.4', '8', 'voice-notes-v1.3.4'),
             'expensetracker': ('1.2', '3', 'expense-tracker-v1.2'),
-            'vasanthi': ('1.1.5', '8', 'vasanthi-ai-v1.1.5'),
+            'vasanthi': ('1.1.6', '9', 'vasanthi-ai-v1.1.6'),
             'podcast': ('1.6', '8', 'tamil-podcast-v1.6'),
             'launcher': ('1.8', '9', 'elderly-launcher-v1.8'),
             'dailyvault': ('0.5', '5', 'daily-vault-v0.5'),
-            # Store0.16 is the in-flight candidate: 17-app catalog, same stable key.
-            'tamilanstore': ('0.16', '18', 'tamilan-store-v0.16'),
+            # Store0.17 is the in-flight candidate: 17-app catalog, same stable key.
+            'tamilanstore': ('0.17', '19', 'tamilan-store-v0.17'),
         }
         seen_codes = {}
         for module, (expected_version, expected_code, slug) in modules.items():

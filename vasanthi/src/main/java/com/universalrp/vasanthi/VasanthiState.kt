@@ -154,6 +154,9 @@ object VasanthiState {
         if (sameAsLast && timestampMs - lastSoundAt < SOUND_COOLDOWN_MS) return
         lastSoundLabel = score.englishLabel
         lastSoundAt = timestampMs
+        // Silence belongs on the panel, not in the history. A quiet room used to add "அமைதி"
+        // every twelve seconds until nothing else could be found in the list.
+        if (score.englishLabel == SoundGate.SILENCE_LABEL) return
         val urgent = SoundLabelMap.isUrgent(score.englishLabel)
         val entry = VasanthiEntry(
             id = idSource.incrementAndGet(),

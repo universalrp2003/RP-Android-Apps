@@ -1,6 +1,7 @@
 package com.universalrp.vasanthi
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -46,6 +47,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -364,6 +369,10 @@ private fun VasanthiScreen() {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
                 )
+                OutlinedButton(onClick = { shareHistory(context) }) {
+                    Text(tr("ஏற்றுமதி", "Export"), fontSize = 12.sp)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 OutlinedButton(onClick = { VasanthiState.clearHistory() }) {
                     Text(tr("அழி", "Clear"), fontSize = 12.sp)
                 }
@@ -525,6 +534,43 @@ private fun PermissionRow(
     }
 }
 
+/** The saved line with its picture in front. Speech lines have no picture and read as saved. */
+private fun historyText(entry: VasanthiEntry): AnnotatedString {
+    val cue = if (entry.kind == EntryKind.SOUND) SoundCue.emojiForTamil(entry.text) else ""
+    if (cue.isEmpty()) return AnnotatedString(entry.text)
+    return buildAnnotatedString {
+        withStyle(SpanStyle(fontSize = 26.sp)) { append(cue); append(' ') }
+        append(entry.text)
+    }
+}
+
+/**
+ * Hands the saved history to whichever app the reader chooses — a message, a note, a file. Plain
+ * text only, oldest first so it reads like a diary, and nothing leaves the phone unless she
+ * chooses where to send it. No storage permission is involved.
+ */
+private fun shareHistory(context: Context) {
+    val entries = VasanthiState.entries
+    if (entries.isEmpty()) return
+    val text = buildString {
+        appendLine(tr("என்னைச் சுற்றி — செமித்த விவரம்", "என்னைச் சுற்றி — saved history"))
+        for (entry in entries.asReversed()) {
+            append(timeText(entry.timestampMs))
+            append(" · ")
+            append(if (entry.kind == EntryKind.SOUND) tr("ஒலி", "sound") else tr("பேச்சு", "speech"))
+            append(": ")
+            append(entry.text)
+            if (entry.kind == EntryKind.SOUND) append(" · ").append((entry.confidence * 100).toInt()).append("%")
+            appendLine()
+        }
+    }
+    val send = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TEXT, text.toString())
+    }
+    context.startActivity(Intent.createChooser(send, tr("அனுப்பு", "Share")))
+}
+
 @Composable
 private fun HistoryRow(entry: VasanthiEntry) {
     Card(
@@ -543,7 +589,7 @@ private fun HistoryRow(entry: VasanthiEntry) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = entry.text,
+                    text = historyText(entry),
                     fontSize = if (entry.kind == EntryKind.SOUND) 18.sp else 16.sp,
                     fontWeight = if (entry.kind == EntryKind.SOUND) FontWeight.Bold else FontWeight.Normal,
                 )

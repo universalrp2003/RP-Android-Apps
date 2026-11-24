@@ -18,7 +18,12 @@ internal class ManagedApkDownload(private val context: Context) {
 
     fun restore(): Saved? = runCatching {
         val text = prefs.getString("catalog", null) ?: return null
-        val app = Catalog.parse(text).single { it.id == prefs.getString("app", null) }
+        // The snapshot is whatever catalog the user was browsing when the download began, and the
+        // live feed may legitimately carry fewer entries than this build's bundled contract
+        // (Catalog.parseLive accepts 1..17). The strict parse rejected exactly that, so a download
+        // started from a shorter feed was never restored after a relaunch. The saved app must
+        // still be inside the snapshot, and every entry is still validated field by field.
+        val app = Catalog.parseLive(text).single { it.id == prefs.getString("app", null) }
         val name = prefs.getString("file", null) ?: return null
         require(name.matches(Regex("[a-f0-9-]+\\.transfer")))
         Saved(app, prefs.getLong("id", -1), name)

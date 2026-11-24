@@ -47,6 +47,17 @@ object SoundMeter {
     fun levelOf(samples: ShortArray, count: Int = samples.size): Float =
         levelFor(rmsToDb(rmsOf(samples, count)))
 
+    /** RMS of a window already normalised to [-1, 1], the form the classifier consumes. */
+    fun rmsOf(window: FloatArray): Double {
+        if (window.isEmpty()) return 0.0
+        var sum = 0.0
+        for (value in window) sum += value.toDouble() * value.toDouble()
+        return sqrt(sum / window.size)
+    }
+
+    /** Loudness (0..1) of a normalised window, for the decision whether to classify it at all. */
+    fun levelOf(window: FloatArray): Float = levelFor(rmsToDb(rmsOf(window)))
+
     /**
      * The room's loudness in Tamil and English.
      *

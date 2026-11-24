@@ -20,6 +20,22 @@ object Catalog {
      */
     const val EXPECTED_APPS = 17
     fun parse(text: String): List<StoreApp> = parse(text, EXPECTED_APPS)
+    /** The catalog's own "updated" day, so the About screen can never quote a date the list does not carry. */
+    fun updated(text: String): String {
+        val day = JSONObject(text).getString("updated")
+        require(Regex("""\d{4}-\d{2}-\d{2}""").matches(day)) { "catalog updated must be an ISO day" }
+        return day
+    }
+    /** The bundled day in the two forms the About screen shows, so a stale literal can never come back. */
+    data class CatalogDay(val en: String, val ta: String)
+    fun catalogDay(iso: String): CatalogDay {
+        require(Regex("""\d{4}-\d{2}-\d{2}""").matches(iso)) { "catalog updated must be an ISO day" }
+        val (y, m, d) = iso.split('-').map { it.toInt() }
+        require(m in 1..12 && d in 1..31) { "catalog updated must be a real day" }
+        val en = listOf("January","February","March","April","May","June","July","August","September","October","November","December")[m - 1]
+        val ta = listOf("ஜனவரி","பிப்ரவரி","மார்ச்","ஏப்ரல்","மே","ஜூன்","ஜூலை","ஆகஸ்ட்","செப்டம்பர்","அக்டோபர்","நவம்பர்","டிசம்பர்")[m - 1]
+        return CatalogDay("$d $en $y", "$d $ta $y")
+    }
     /**
      * A live feed may be shorter than this build's snapshot for a while after an app is added: the
      * website is regenerated from public releases on its own deployment, and a phone that refreshes

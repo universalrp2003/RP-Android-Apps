@@ -73,14 +73,33 @@ class StoreAboutCountsTest(unittest.TestCase):
         self.assertNotRegex(ui, r'Our \d+ apps')
         self.assertNotRegex(ui, r'நமது \d+ செயலிகள்')
 
-    def test_bundled_catalog_date_matches_the_catalog_itself(self):
-        updated = json.loads(STORE_CATALOG.read_text())['updated']
-        stamp = datetime.date.fromisoformat(updated)
+    def test_bundled_catalog_date_is_derived_from_the_catalog_never_typed(self):
+        # 0.16 pinned a typed date by checking the literal against catalog.json; the literal still went
+        # stale on the next rebuild. 0.17 derives it at runtime, so the source must contain the derivation
+        # and must not contain any typed month-day at all.
+        catalog_text = STORE_CATALOG.read_text()
+        stamp = datetime.date.fromisoformat(json.loads(catalog_text)['updated'])
         ui = STORE_MAIN.read_text()
-        self.assertIn(f'Bundled catalog: {stamp.day} {stamp.strftime("%B %Y")}', ui)
+        catalog_kt = (ROOT / 'tamilanstore/src/main/java/com/universalrp/tamilanstore/Catalog.kt').read_text()
+        model_kt = (ROOT / 'tamilanstore/src/main/java/com/universalrp/tamilanstore/StoreModel.kt').read_text()
+        self.assertIn('Catalog.updated(bundledText)', model_kt)
+        self.assertIn('val bundledUpdated: String', model_kt)
+        self.assertIn('Catalog.catalogDay(model.bundledUpdated)', ui)
+        self.assertIn('${bundledDay.en}', ui)
+        self.assertIn('${bundledDay.ta}', ui)
+        self.assertIn('fun updated(text: String): String', catalog_kt)
+        self.assertIn('getString("updated")', catalog_kt)
+        self.assertIn('fun catalogDay(iso: String): CatalogDay', catalog_kt)
+        # The real bundled day must actually round-trip through the same shapes the About screen renders.
         months = ['', 'ஜனவரி', 'பிப்ரவரி', 'மார்ச்', 'ஏப்ரல்', 'மே', 'ஜூன்', 'ஜூலை',
                   'ஆகஸ்ட்', 'செப்டம்பர்', 'அக்டோபர்', 'நவம்பர்', 'டிசம்பர்']
-        self.assertIn(f'{stamp.day} {months[stamp.month]} {stamp.year}', ui)
+        self.assertRegex(catalog_text, r'"updated": "\d{4}-\d{2}-\d{2}"')
+        self.assertTrue(stamp.strftime('%B'))
+        self.assertTrue(months[stamp.month])
+        # No typed date anywhere in the Store UI source: not the bundled one, not any other.
+        self.assertNotRegex(ui, r'Bundled catalog: \d{1,2} [A-Z][a-z]+ \d{4}')
+        self.assertNotRegex(ui, r'\d{1,2} (ஜனவரி|பிப்ரவரி|மார்ச்|ஏப்ரல்|மே|ஜூன்|ஜூலை|ஆகஸ்ட்|செப்டம்பர்|அக்டோபர்|நவம்பர்|டிசம்பர்) \d{4}')
+        self.assertNotRegex(ui, r'பட்டியல்: \d{1,2} செயலிகள்')  # count is interpolated, not typed
 
     def test_about_store_button_points_at_the_published_store_release(self):
         # The Store cannot list itself: a store that installs a store is not one of its own apps.

@@ -6,14 +6,14 @@ ROOT = Path(__file__).resolve().parents[2]
 class StoreUpgradeCandidateTest(unittest.TestCase):
     def test_candidate_is_release_signed_non_debug_and_cannot_publish(self):
         # This used to assert against tamilanstore-signed-candidate.yml, which pinned the 0.11
-        # identities. Store is now 0.16 / versionCode 18, built by store-016-candidate.yml; the
-        # 0.15 workflow is deleted rather than left asserting a version the module no longer
+        # identities. Store is now 0.17 / versionCode 19, built by store-017-candidate.yml; the
+        # 0.16 workflow is deleted rather than left asserting a version the module no longer
         # builds, which would be a guaranteed red run on every Store push. The invariants below
         # are the ones that actually matter, and they are checked against the live workflow.
-        workflow = (ROOT / '.github/workflows/store-016-candidate.yml').read_text()
+        workflow = (ROOT / '.github/workflows/store-017-candidate.yml').read_text()
         for token in ('contents: read', 'prepare-release-signing', 'RP_RELEASE_KEYSTORE_BASE64',
                       ':tamilanstore:testReleaseUnitTest', ':tamilanstore:lintRelease', ':tamilanstore:assembleRelease',
-                      'application-debuggable', "versionCode='18' versionName='0.16'",
+                      'application-debuggable', "versionCode='19' versionName='0.17'",
                       '7366d76dc5a9032424f032f1530f661366d880af37657374df85ca7a6299747d',
                       'sha256sum --check', 'old == new'):
             self.assertIn(token, workflow)
@@ -27,11 +27,12 @@ class StoreUpgradeCandidateTest(unittest.TestCase):
         # shared `store-signed-candidate-${{ github.ref }}` with store-015-candidate.yml, so a
         # Store push could cancel the candidate that is actually tested and promoted.
         self.assertFalse((ROOT / '.github/workflows/tamilanstore-signed-candidate.yml').exists())
-        # Only the live candidate workflow may exist: a stale 0.12 or 0.15 build would fail every run.
+        # Only the live candidate workflow may exist: a stale 0.12, 0.15 or 0.16 build would fail every run.
         self.assertFalse((ROOT / '.github/workflows/store-012-candidate.yml').exists())
         self.assertFalse((ROOT / '.github/workflows/store-015-candidate.yml').exists())
-        live = (ROOT / '.github/workflows/store-016-candidate.yml').read_text()
-        self.assertIn('group: store-signed-candidate-016-${{ github.ref }}', live)
+        self.assertFalse((ROOT / '.github/workflows/store-016-candidate.yml').exists())
+        live = (ROOT / '.github/workflows/store-017-candidate.yml').read_text()
+        self.assertIn('group: store-signed-candidate-017-${{ github.ref }}', live)
         names, groups = {}, {}
         for path in sorted((ROOT / '.github/workflows').glob('*.yml')):
             text = path.read_text()

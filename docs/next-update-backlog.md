@@ -9,29 +9,28 @@
 
 - [ ] **Decode numeric HTML/XML character entities (`&#x1f537;`, `&#8217;`, etc.) in RSS news headlines (`NewsPolicy.kt`)** so external news feeds containing hex/decimal HTML entities render real Unicode symbols (`🔷`, `’`) cleanly on the Home news banner.
 
-## Queued for the next Tamilan Store build (owner asked 13 November 2026; instruction repeated 24 November 2026)
+## Queued for the next Tamilan Store build — DONE in the 0.17 candidate (bundled with Vasanthi AI 1.1.6, 24 November 2026)
 
-**Owner instruction, 24 November 2026: when the next new application is built, fix the Store also** — bundle the items
-below into that build cycle; do not start a Store-only build just for them (publication still needs the usual approval).
+**Owner instruction, 24 November 2026: when the next new application is built, fix the Store also.** The next new
+app build was Vasanthi AI 1.1.6, so the items below were bundled into that build cycle as Tamilan Store 0.17 /
+versionCode 19 (same package, same release key, in-place upgrade over the public 0.16). They are implemented,
+unit- and instrumentation-tested and built by `store-017-candidate.yml`; **0.17 is a candidate and not yet
+published** — publication waits for the owner's approval of the exact candidate bytes, like every release.
 
-- [ ] **In-progress download not restored after relaunch when it was started from a shorter live feed
-      (`ManagedApkDownload.restore()`).** `begin()` snapshots whatever catalog the user was browsing — and the live
-      feed may legitimately carry fewer than 17 entries (`Catalog.parseLive` accepts 1..17) — but `restore()` parses
-      that saved snapshot with the strict `Catalog.parse(text)`, which demands exactly 17 entries. The `require`
-      throws inside `runCatching`, `restore()` returns `null`, and the running copy disappears from the Store after a
-      relaunch. Fix: parse the saved snapshot with `Catalog.parseLive(text)` (or `parse(text, count)`); keep `begin()`
-      strict; add a unit test that saves a 15-entry snapshot and restores it. Known gap left out of 0.16.
-- [ ] **The Store's About screen still says "Our 13 apps" while the catalog ships 15.** The banner
-      already says "15 apps", so the two disagree on the same screen. The owner explicitly said to
-      ride this along with the next Store change rather than publish a build for it alone.
-- [ ] **The About screen reports a stale bundled-catalog date.** It reads "Bundled catalog: 30
-      October 2026" even though the shipped `catalog.json` is newer (System App Disabler 0.2.0,
-      Tamilan Store 0.13 are pinned in it). Either the date constant is not regenerated when the
-      catalog is rebuilt, or it is hard-coded; make it derive from the catalog itself so it cannot
-      drift again.
-- [ ] While in there, check that the About screen's app count and the catalog cannot disagree again:
-      derive the number from the parsed catalog instead of a literal in the layout, and cover it with
-      a unit test.
+- [x] **In-progress download not restored after relaunch when it was started from a shorter live feed
+      (`ManagedApkDownload.restore()`).** `restore()` now parses the saved snapshot with `Catalog.parseLive(text)`
+      (1..17 entries, each still validated field by field); `begin()` stays strict. Covered by
+      `CatalogTest.aShorterSavedSnapshotRestoresTheSameAppWithoutLooseningEntryValidation` (JVM) and
+      `RetainedTransferTest.aDownloadKeptFromAShorterLiveFeedIsRestoredAfterRelaunch` (emulator, 15-entry snapshot).
+- [x] **The About screen's app count is derived, not typed.** Already `${model.apps.size}` in 0.16; the Python gate
+      keeps any literal count out of the About block.
+- [x] **The About screen's bundled-catalog date is derived from the catalog.** 0.16 replaced one typed date with
+      another typed date ("13 November 2026"). 0.17 reads `updated` from `catalog.json` (`Catalog.updated`), exposes it
+      on `StoreModel.bundledUpdated`, and renders it in English and Tamil through `Catalog.catalogDay`; there is no
+      date literal left in the Store UI source, and `test_bundled_catalog_date_is_derived_from_the_catalog_never_typed`
+      fails if one comes back. The line also names the Store version the list shipped with.
+- [x] **Count and catalog cannot disagree.** Both come from the same parsed catalog; covered by the test above and by
+      `CatalogTest.bundledUpdatedIsDerivedFromTheCatalogAndRenderedInBothLanguages`.
 
 ## Known gap: update awareness (owner asked 13 November 2026)
 

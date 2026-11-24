@@ -1,5 +1,13 @@
 ## Owner instruction — fix the Store in the next app build — 24 November 2026
 
+**Done 24 November 2026 — bundled into the Vasanthi AI 1.1.6 build cycle as Tamilan Store 0.17 / versionCode 19** (same
+package and release key, in-place over public 0.16): `ManagedApkDownload.restore()` now uses `Catalog.parseLive` (JVM +
+emulator tests), and the About date is derived from `catalog.json` via `Catalog.updated`/`catalogDay` instead of the
+typed "13 November 2026" literal that 0.16 introduced (Python gate forbids any typed date). `store-017-candidate.yml` +
+`signed-upgrade-017-smoke.py` build and emulator-test the candidate over public 0.16; `promote-tamilan-store-0-17.yml`
++ `tools/promote_tamilan_store_0_17.py` publish exact verified bytes only once `docs/approved-tamilan-store-0.17.json`
+exists (owner approval). **Nothing published yet; no Store-only release was made.**
+
 Owner: "Remember and fix; next time (at) new application build time, fix the Store also." Meaning: do not publish a Store-only release now; when the next new app build happens, bundle the queued Store items with it. Recorded at the top of the "Queued for the next Tamilan Store build" section in `docs/next-update-backlog.md`: the `ManagedApkDownload.restore()` bug (saved download snapshot parsed with the strict 17-entry `Catalog.parse`, so a download started from a shorter live feed is not restored after relaunch — fix with `Catalog.parseLive`), plus the older About-screen count/date items from 13 Nov. Publication of the resulting Store build still needs the owner's explicit approval.
 
 ## Third-party (Gemini) page review pasted by the owner — triage — 24 November 2026

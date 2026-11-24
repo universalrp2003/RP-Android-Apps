@@ -19,8 +19,12 @@ class StoreBackgroundDownloadContracts(unittest.TestCase):
     def test_persistent_user_selected_system_request_has_no_installer_or_credentials(self):
         source=(SRC/'ManagedApkDownload.kt').read_text()
         for token in ('DownloadManager.Request','setDestinationInExternalFilesDir','putLong("id", id).commit()',
-                      'Catalog.parse(snapshot)','application/octet-stream','manager.remove(saved.id)'):
+                      'Catalog.parse(snapshot)','application/octet-stream','manager.remove(saved.id)',
+                      # restore() reads back whatever catalog the download began from; the live feed may be
+                      # shorter than the bundled contract, so the strict parse must stay out of it.
+                      'Catalog.parseLive(text).single'):
             self.assertIn(token,source)
+        self.assertNotIn('Catalog.parse(text)',source)
         for token in ('ACTION_INSTALL_PACKAGE','REQUEST_IGNORE_BATTERY_OPTIMIZATIONS','addRequestHeader','startForeground'):
             self.assertNotIn(token,source)
         manifest=(ROOT/'tamilanstore/src/main/AndroidManifest.xml').read_text()

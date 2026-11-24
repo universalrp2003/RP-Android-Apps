@@ -51,4 +51,43 @@ class CatalogTest {
         assertFalse(Catalog.allowedDownloadHost("github.com.evil.example"))
         assertTrue(Catalog.allowedDownloadHost("release-assets.githubusercontent.com"))
     }
+
+    @Test fun bundledUpdatedIsDerivedFromTheCatalogAndRenderedInBothLanguages() {
+        val text = catalog()
+        // The bundled list's own day, not a typed one: these must move together when catalog.json is rebuilt.
+        val iso = org.json.JSONObject(text).getString("updated")
+        assertEquals(iso, Catalog.updated(text))
+        val day = Catalog.catalogDay(iso)
+        assertEquals(iso.substring(8, 10).toInt().toString() + " " + ENGLISH_MONTHS[iso.substring(5, 7).toInt() - 1] + " " + iso.substring(0, 4), day.en)
+        assertTrue(day.ta.startsWith(iso.substring(8, 10) + " ") && day.ta.endsWith(iso.substring(0, 4)) && TAMIL_MONTHS.any { it in day.ta })
+        try { Catalog.updated("""{"schema":1,"updated":"13 November 2026","apps":[]}"""); fail("a non-ISO day must be refused") }
+        catch (e: Exception) { assertTrue(e is IllegalArgumentException || e is org.json.JSONException) }
+        try { Catalog.catalogDay("2026-13-01"); fail("month 13 must be refused") } catch (e: IllegalArgumentException) { }
+        try { Catalog.catalogDay("2026-02-32"); fail("day 32 must be refused") } catch (e: IllegalArgumentException) { }
+    }
+    @Test fun aShorterSavedSnapshotRestoresTheSameAppWithoutLooseningEntryValidation() {
+        // The live feed may carry fewer entries than the bundled contract for a while; parseLive accepts that,
+        // but every entry is still validated exactly as strictly as the bundled one.
+        val text = catalog()
+        val full = Catalog.parse(text)
+        assertEquals(Catalog.EXPECTED_APPS, full.size)
+        val root = org.json.JSONObject(text)
+        val apps = root.getJSONArray("apps")
+        for (keep in listOf(1, 8, full.size - 1)) {
+            val shorter = org.json.JSONObject(text).put("apps", org.json.JSONArray().also { out -> for (i in 0 until keep) out.put(apps.getJSONObject(i)) })
+            val parsed = Catalog.parseLive(shorter.toString())
+            assertEquals(keep, parsed.size)
+            assertEquals(full.take(keep).map { it.id }, parsed.map { it.id })
+            try { Catalog.parse(shorter.toString()); fail("strict parse must still demand every bundled entry") } catch (e: IllegalArgumentException) { }
+        }
+        val broken = org.json.JSONObject(text).put("apps", org.json.JSONArray().also { out -> for (i in 0 until 5) out.put(apps.getJSONObject(i)) })
+        broken.getJSONArray("apps").getJSONObject(2).put("url", "https://example.com/evil.apk")
+        try { Catalog.parseLive(broken.toString()); fail("a foreign download host must still be refused") } catch (e: IllegalArgumentException) { }
+        val tooMany = org.json.JSONObject(text).put("apps", org.json.JSONArray().also { out -> for (i in 0..full.size) out.put(apps.getJSONObject(i % apps.length())) })
+        try { Catalog.parseLive(tooMany.toString()); fail("more entries than the contract must still be refused") } catch (e: IllegalArgumentException) { }
+    }
+    private companion object {
+        val ENGLISH_MONTHS = listOf("January","February","March","April","May","June","July","August","September","October","November","December")
+        val TAMIL_MONTHS = listOf("ஜனவரி","பிப்ரவரி","மார்ச்","ஏப்ரல்","மே","ஜூன்","ஜூலை","ஆகஸ்ட்","செப்டம்பர்","அக்டோபர்","நவம்பர்","டிசம்பர்")
+    }
 }
